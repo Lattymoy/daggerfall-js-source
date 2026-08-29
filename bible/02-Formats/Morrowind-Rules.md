@@ -2696,3 +2696,2002 @@ There are rules about skinning and materials but none about geometry. Unread: `c
 - **The stop-key truncation rule.** "truncated to `groupname.size()+2+stop.size()`" — C++ `compare(pos, len, ...)` is well-defined when the string is shorter; a naive JS `slice()` is not equivalent. The exact predicate is needed.
 - **Rule 17's node existence test.** Not stated that the lookup is against `getNodeMap()`, case-insensitive, and that failure silently keeps `Weapon Bone` (`npcanimation.cpp:780-796`).
 - **The first-person FOV rule** gives OpenMW's mechanism (`modelView * newProj * inverse(oldProj)`) but not what a WebGL port must do — second pass with its own projection, or the matrix trick — and the two are only equivalent if the depth clear also happens, which lives in a **disputed** rule (render bin 12).
+
+---
+
+# Part IV - the gap pass, stopped early and harvested honestly
+
+MW-R5 (2026-08-29). Nine readers over the gaps Part III named, each pointed at
+the exact files the critic cited, with the same three-lens adversarial
+verification.
+
+THE RUN WAS STOPPED PART-WAY, ON COST. All nine readers had finished, so the
+extraction is complete - 63 rules - but only part of the verification had
+returned. Rather than discard the run or quietly present everything as
+verified, the rules are recorded in THREE TIERS by how much checking each
+actually received. The tier is the rule's confidence and it is stated on
+every entry.
+
+    63 rules extracted by 9 readers (all complete)
+     7 tier A - all three lenses, unanimous
+    17 tier B - all three lenses, caveat recorded
+    39 tier C - EXTRACTED BUT UNVERIFIED, the run stopped before their turn
+
+TIER C IS NOT A SECOND-CLASS TIER A. It is the state the whole first arc
+shipped in: read once, written down, never challenged. Where a tier C rule is
+load-bearing it must be verified before code depends on it. The two
+verification passes that have run refuted nothing outright but attached a
+caveat to well over half of what they touched, so the base rate says roughly
+half of these 39 need a condition they do not yet carry.
+
+# Tier A - all three lenses, unanimous
+
+## [A] Exact index order: setScale and setRotation(Matrix3) both write _matrix(i,j) = mRotationScale.mValues[j][i] * mScale (a TRANSPOSE); setRotation(Quat) reads the 3x3 back out before scaling; setTranslation touches only the translation row
+- `components/nifosg/matrixtransform.cpp:19-73` - importance **critical**
+
+All four mutators rebuild from the cached components and each ends with `_inverseDirty = true; dirtyBound();`. OSG's operator()(row,col) is _mat[row][col] and OSG is ROW-VECTOR (p' = p*M), so translation lives in ROW 3 (_mat[3][0..2]). Nif::Matrix3::mValues is [row][col] as read from the file. (1) setScale(float s): sets mScale = s, then `for i in 0..2, for j in 0..2: _matrix(i,j) = mRotationScale.mValues[j][i] * mScale;` — index order is [j][i], i.e. the OSG 3x3 block is the TRANSPOSE of the NIF 3x3, uniformly scaled. Rows 3 and column 3 are never touched, so translation survives. (2) setRotation(const Nif::Matrix3& r): sets mRotationScale = r, then runs the IDENTICAL [j][i] * mScale loop — the previously stored mScale is reapplied, so a rotation-only update never loses scale. (3) setRotation(const osg::Quat& q): first `_matrix.setRotate(q)` (OSG writes ONLY _mat[0..2][0..2], leaving the translation row intact — Matrix_implementation.cpp:67-135; note a zero-length quat writes an ALL-ZERO 3x3 there, not identity), then one combined loop `for i, for j: mRotationScale.mValues[j][i] = float(_matrix(i,j)); _matrix(i,j) *= mScale;` — the unscaled quaternion matrix is harvested INTO the cache (again transposed, [j][i]) and only then is mScale multiplied in place. (4) setTranslation(const osg::Vec3f& t): `_matrix.setTrans(translation);` only — writes _mat[3][0..2], leaves the 3x3 and both cached members alone; the source comment is 'The translation is independent from the rotation and scale so we can apply it directly.' COLUMN-VECTOR PORT (three.js / gl-matrix, m[col*4+row]): because the OSG store is the transpose, all of this collapses to standard math — keep R = mRotationScale indexed [row][col] and s = mScale, and after any of setScale/setRotation write upper3x3[row][col] = R[row][col] * s while leaving the translation column untouched; for the quaternion overload set R = quatToMat3(q) in ordinary [row][col] form first, then apply s. The effective local transform is p_parent = s * R * p_local + t.
+
+```cpp
+    void MatrixTransform::setScale(float scale)
+    {
+        // Update the decomposed scale.
+        mScale = scale;
+
+        // Rescale the node using the known components.
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                _matrix(i, j) = mRotationScale.mValues[j][i] * mScale; // NB: column/row major difference
+...
+    void MatrixTransform::setRotation(const osg::Quat& rotation)
+    {
+        // First override the rotation ignoring the scale.
+        _matrix.setRotate(rotation);
+
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                // Update the current decomposed rotation and restore the known scale.
+                mRotationScale.mValues[j][i] = static_cast<float>(_matrix(i, j)); // NB: column/row major difference
+                _matrix(i, j) *= mScale;
+            }
+        }
+...
+    void MatrixTransform::setTranslation(const osg::Vec3f& translation)
+    {
+        // The translation is independent from the rotation and scale so we can apply it directly.
+        _matrix.setTrans(translation);
+```
+
+## [A] What breaks in first person with a 4x4-only port: RotateController writes the matrix but NEVER the cached components, so without the every-frame mRotationScale reset the neck pitch compounds without bound
+- `apps/openmw/mwrender/rotatecontroller.hpp:15-17` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE 31
+
+MWRender::RotateController is a node callback appended AFTER the keyframe callback on the same node (Animation::resetActiveGroups adds the keyframe/blend callback at animation.cpp:1174 and only then calls addControllers() at :1194; animblendcontroller.cpp:323 confirms the ordering with '(if it appears after this callback)'). Each update it does `osg::Matrix matrix = node->getMatrix(); ... orient = worldOrient * mRotate * worldOrientInverse * matrix.getRotate(); matrix.setRotate(orient); matrix.setTrans(matrix.getTrans() + worldOrientInverse * mOffset); node->setMatrix(matrix);` — it goes through raw setMatrix, so NEITHER mRotationScale NOR mScale is updated. Its own header states the contract it depends on: 'Assumes that the node being rotated has its "original" orientation set every frame by a different controller. The rotation is then applied on top of that orientation.' The KeyframeController's unconditional `node->setRotation(node->mRotationScale)` IS that reset, and it works precisely because mRotationScale is a clean copy that RotateController's setMatrix could not dirty. A port that stores only a 4x4 per bone has nowhere clean to reset from, so on any first-person animation whose neck track carries no rotation keys the pitch quaternion is re-multiplied onto the already-pitched matrix every frame: the head/neck spins away and the first-person camera (which is a node of the rig) goes with it. The engine names this failure twice: 'This is necessary to prevent first person animations glitching out due to RotationController' (controller.cpp:189) and, at the neck controller's creation site, 'If there is no active animation, then the bip01 neck node will not be updated each frame, and the RotateController will accumulate rotations' (npcanimation.cpp:933-934) — which is why the neck RotateController is only created when mViewMode == VM_FirstPerson AND mStates.size() > 0. Animation::addRotateController applies the same guard generally (animation.cpp:1945-1974): it walks the node's update-callback chain for a NifAnimBlendController, BoneAnimBlendController or SceneUtil::KeyframeController and returns nullptr if none is found — 'Without KeyframeController the orientation will not be reseted each frame, so RotateController shouldn't be used for such nodes.' NOTE THE ASYMMETRY: there is no equivalent else-branch for translation, so RotateController's `+= worldOrientInverse * mOffset` is undone only by a track that actually has translation keys — the first-person sneak offset (npcanimation.cpp:712-724, setOffset(mFirstPersonOffset)) relies on that, and NifAnimBlendController has to subtract the offset explicitly at blend start to stop it being applied twice.
+
+```cpp
+    /// Applies a rotation in \a relativeTo's space.
+    /// @note Assumes that the node being rotated has its "original" orientation set every frame by a different
+    /// controller. The rotation is then applied on top of that orientation.
+
+// apps/openmw/mwrender/npcanimation.cpp:931-945
+        if (mViewMode == VM_FirstPerson)
+        {
+            // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
+            // RotateController will accumulate rotations.
+            if (mStates.size() > 0)
+            {
+                NodeMap::iterator found = mNodeMap.find("bip01 neck");
+
+// apps/openmw/mwrender/animation.cpp:1964-1968
+        // Note: AnimBlendController also does the reset so if one is present - we should add the rotation node
+        // Without KeyframeController the orientation will not be reseted each frame, so
+        // RotateController shouldn't be used for such nodes.
+        if (!foundKeyframeCtrl)
+            return nullptr;
+```
+
+## [A] Which channels exist is decided per-track at CONSTRUCTION, and the six interpolators are independent - there is no combined 'has keys' flag
+- `components/nifosg/controller.cpp:100-177` - importance **high**
+
+KeyframeController holds six independent interpolators (controller.hpp:255-262): QuaternionInterpolator mRotations; FloatInterpolator mXRotations, mYRotations, mZRotations; Vec3Interpolator mTranslations; FloatInterpolator mScales; plus Nif::NiKeyframeData::AxisOrder mAxisOrder defaulting to Order_XYZ. Two construction paths. (a) NiTransformInterpolator with non-empty mData: all six are built from interp->mData (mRotations/mTranslations/mScales additionally carry defaultTransform.mRotation / .mTranslation / .mScale as their default value) and mAxisOrder = interp->mData->mAxisOrder. (b) NiTransformInterpolator with EMPTY mData: mXRotations/mYRotations/mZRotations are left default-constructed (permanently empty) and mRotations/mTranslations/mScales are built from NULL key-map pointers carrying only the default value — which, per the empty() gate in getCurrentTransformation, means the controller writes NOTHING but the mRotationScale rotation reset. (c) Plain NiKeyframeData (the Morrowind path): all six from keydata, with mScales given a default of 1.f, and mAxisOrder = keydata->mAxisOrder. A channel is 'missing' iff `!mKeys || mKeys->mKeys.empty()`. Because the three axis floats are separate, a track can supply, say, only Z rotation: getXYZRotation then takes xrot = yrot = 0 and composes osg::Quat(xrot, X_AXIS) * osg::Quat(yrot, Y_AXIS) * osg::Quat(zrot, Z_AXIS) in mAxisOrder — nine orders are handled (XYZ, XZY, YZX, YXZ, ZXY, ZYX, XYX, YZY, ZXZ) and anything else falls through to xr*yr*zr. Operand order in those products is left-to-right as written and is NOT commutative. Separately, KeyframeController::getTranslation(float) — the accumulation-root query used for root motion — returns mTranslations.interpKey(time) when non-empty and osg::Vec3f() (0,0,0) otherwise, so a missing translation track reports zero root motion rather than the interpolator's default value.
+
+```cpp
+                    mRotations = QuaternionInterpolator(interp->mData->mRotations, defaultTransform.mRotation);
+                    mXRotations = FloatInterpolator(interp->mData->mXRotations);
+                    mYRotations = FloatInterpolator(interp->mData->mYRotations);
+                    mZRotations = FloatInterpolator(interp->mData->mZRotations);
+                    mTranslations = Vec3Interpolator(interp->mData->mTranslations, defaultTransform.mTranslation);
+                    mScales = FloatInterpolator(interp->mData->mScales, defaultTransform.mScale);
+
+                    mAxisOrder = interp->mData->mAxisOrder;
+...
+            mScales = FloatInterpolator(keydata->mScales, 1.f);
+...
+    osg::Vec3f KeyframeController::getTranslation(float time) const
+    {
+        if (!mTranslations.empty())
+            return mTranslations.interpKey(time);
+        return osg::Vec3f();
+    }
+```
+
+## [A] TCB: tension/continuity/bias collapse to mA..mD per key at read, then three DIFFERENT tangent formulas for first / interior / last
+- `components/nif/nifkey.hpp:34-45, 153-214` - importance **critical**
+
+TCB is fully baked at LOAD time into the same mInTan/mOutTan the Quadratic path uses; nothing TCB-specific survives to evaluation.
+STEP 1, per key while reading (nifkey.hpp:153-169) — after reading time, value, then three floats tension t, continuity c, bias b in that order:
+  mA = (1-t)*(1-c)*(1+b)
+  mB = (1-t)*(1+c)*(1-b)
+  mC = (1-t)*(1+c)*(1+b)
+  mD = (1-t)*(1-c)*(1-b)
+Note the pattern: A = (1-c)(1+b), B = (1+c)(1-b), C = (1+c)(1+b), D = (1-c)(1-b). There is no 0.5 factor at this stage.
+STEP 2, once the whole group is read, generateTCBTangents over the vector (nifkey.hpp:171-204), with n = number of keys:
+  - If n <= 1: return immediately. Every tangent stays at its default (0 for float/Vec3/Vec4). A lone TCB key therefore has zero tangents.
+  - FIRST key (index 0), NO time scaling: delta = value[1] - value[0];
+      inTan[0]  = delta * ((A0 + B0) * 0.5)
+      outTan[0] = delta * ((C0 + D0) * 0.5)
+  - INTERIOR keys i = 1 .. n-2: timeSpan = time[i+1] - time[i-1]; if timeSpan == 0.0f EXACTLY then `continue` — that key is skipped and BOTH its tangents remain zero. Otherwise prevDelta = value[i] - value[i-1], nextDelta = value[i+1] - value[i], and
+      inTan[i]  = (prevDelta*A_i + nextDelta*B_i) * ((time[i]   - time[i-1]) / timeSpan)
+      outTan[i] = (prevDelta*C_i + nextDelta*D_i) * ((time[i+1] - time[i])   / timeSpan)
+    i.e. the in tangent is scaled by the fraction of the two-segment span that lies BEFORE the key, the out tangent by the fraction that lies after.
+  - LAST key (index n-1), NO time scaling, and note the delta is BACKWARD: delta = value[n-1] - value[n-2];
+      inTan[n-1]  = delta * ((A + B) * 0.5)
+      outTan[n-1] = delta * ((C + D) * 0.5)
+  - With n == 2 both keys use the same delta = value[1] - value[0], but each with its own key's A..D coefficients.
+STEP 3: mA..mD are scratch — they live only on the temporary TCBKey vector and are dropped when the keys are moved into the runtime KeyT (nifkey.hpp:102-104); only mInTan/mOutTan survive.
+Two overloads are deliberate empty stubs and generate NOTHING: std::vector<TCBKey<bool>> (nifkey.hpp:206-209) and std::vector<TCBKey<osg::Quat>> (nifkey.hpp:211-214, "TODO: implement TCB interpolation for quaternions"). TCB bool and TCB quaternion keys therefore keep default tangents forever.
+
+```cpp
+value.mA = (1.f - tension) * (1.f - continuity) * (1.f + bias);
+value.mB = (1.f - tension) * (1.f + continuity) * (1.f - bias);
+value.mC = (1.f - tension) * (1.f + continuity) * (1.f + bias);
+value.mD = (1.f - tension) * (1.f - continuity) * (1.f - bias);
+...
+key.mInTan = (prevDelta * key.mA + nextDelta * key.mB) * ((key.mTime - prev.mTime) / timeSpan);
+key.mOutTan = (prevDelta * key.mC + nextDelta * key.mD) * ((next.mTime - key.mTime) / timeSpan);
+```
+
+## [A] XYZ rotation (type 4): a uint32 axis order plus three separate float key groups, composed in OSG's REVERSED quaternion product
+- `components/nifosg/controller.cpp:136-170, 202-223 (with components/nif/data.cpp:534-553 and components/nif/data.hpp:332-345)` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE Refines the unnumbered gap note at Morrowind-Rules.md:2638, which says data.cpp "eats a float" for XYZ tracks (repeating the stale nifkey.hpp comment) and that the three sub-tracks are LINEAR: data.cpp:541 reads a uint32 AxisOrder gated on version <= 10.1.0.0, and each sub-track carries its own interpolation type.
+
+PARSING (NiKeyframeData::read, data.cpp:534-553). The quaternion rotation group is read first. If its interpolation type came back as 4 (XYZ) then, and only then:
+  - if file version <= 10.1.0.0 (every Morrowind NIF is 4.0.0.2, so always for Morrowind) read ONE uint32 and cast it to AxisOrder: `mAxisOrder = static_cast<AxisOrder>(nif->get<uint32_t>());`. It is a uint32 axis-order enum, NOT a float to be discarded — the in-source comment at nifkey.hpp:106-113 ("Eats a floating point number") is STALE and must not be ported. For version > 10.1.0.0 no field is read and mAxisOrder stays Order_XYZ.
+  - then three COMPLETE float key groups are read back-to-back in the order X, Y, Z, each with its own uint32 count and its own uint32 interpolation type (usually Linear, but any type is legal and each sub-track is evaluated by its own rule, including the zero-count early-out).
+  - only then come the translation (Vec3) and scale (float) groups.
+The quaternion group itself ends with count > 0 and ZERO keys, so its interpolator reports empty — and that is precisely the selector at evaluation time (controller.cpp:210-213): `if (!mRotations.empty()) rotation = mRotations.interpKey(time); else if (!mXRotations.empty() || !mYRotations.empty() || !mZRotations.empty()) rotation = getXYZRotation(time);`. If all three are empty too, NO rotation is emitted at all.
+EVALUATION (KeyframeController::getXYZRotation, controller.cpp:136-170): xrot = yrot = zrot = 0; each angle is sampled only if its own sub-track is non-empty (a missing axis contributes 0, i.e. identity). Build xr = quat(angle xrot about (1,0,0)), yr about (0,1,0), zr about (0,0,1); angles are RADIANS and the constructor is the half-angle form (xyz = axis*sin(angle/2), w = cos(angle/2)).
+The nine AxisOrder values (data.hpp:332-343, uint32) and their OSG products:
+  0 Order_XYZ -> xr*yr*zr    1 Order_XZY -> xr*zr*yr    2 Order_YZX -> yr*zr*xr
+  3 Order_YXZ -> yr*xr*zr    4 Order_ZXY -> zr*xr*yr    5 Order_ZYX -> zr*yr*xr
+  6 Order_XYX -> xr*yr*xr    7 Order_YZY -> yr*zr*yr    8 Order_ZXZ -> zr*xr*zr
+Any other value falls through to the trailing `return xr * yr * zr;`. For orders 6/7/8 the repeated axis uses the SAME sampled angle twice — there is no second X/Y/Z track.
+OPERAND ORDER IS THE TRAP: osg::Quat::operator* is REVERSED relative to the standard Hamilton product — OSG's `A * B` computes Hamilton(B x A) (include/osg/Quat:208-214, where the returned x is `rhs.w*self.x + rhs.x*self.w + rhs.y*self.z - rhs.z*self.y`), while OSG applies a quat to a vector with the ordinary v + 2w(q x v) + 2(q x (q x v)) active rotation. So OSG's `xr*yr*zr` means "rotate about X first, then Y, then Z", and in a Hamilton-convention library (three.js, gl-matrix) the identical rotation is written qz.multiply(qy).multiply(qx) — reverse the listed order. Orders 6/7/8 are palindromes, so their written order is unchanged under reversal; orders 0-5 must all be reversed.
+
+```cpp
+osg::Quat xr(xrot, osg::X_AXIS);
+osg::Quat yr(yrot, osg::Y_AXIS);
+osg::Quat zr(zrot, osg::Z_AXIS);
+switch (mAxisOrder)
+{
+    case Nif::NiKeyframeData::AxisOrder::Order_XYZ:
+        return xr * yr * zr;
+...
+// data.cpp:538-547
+if (mRotations->mInterpolationType == InterpolationType_XYZ)
+{
+    if (nif->getVersion() <= NIFStream::generateVersion(10, 1, 0, 0))
+        mAxisOrder = static_cast<AxisOrder>(nif->get<uint32_t>());
+    mXRotations = std::make_shared<FloatKeyMap>();
+```
+
+## [A] The naked-body fill loop runs PRT_Neck(2)..PRT_Count(27) only where priority == 0; head and hair are excluded THREE times over
+- `apps/openmw/mwrender/npcanimation.cpp:680-690` - importance **high**
+- REFINES OR CORRECTS RECORDED RULE 7
+
+The final fill is `for (int part = ESM::PRT_Neck; part < ESM::PRT_Count; ++part) if (mPartPriorities[part] < 1) if (const ESM::BodyPart* bodypart = parts[part]) addOrReplaceIndividualPart((ESM::PartReferenceType)part, -1, 1, correctMeshPath(bodypart->mModel.getNormalized()));`. Bounds: PRT_Neck == 2, PRT_Count == 27, so indices 2..26 inclusive. Condition `< 1` means exactly 0, i.e. untouched — any reservation (>= 1) skips it. Group is -1 (owned by nobody, so removePartGroup can never clear it) and priority is 1 (the floor). `parts` is `getBodyParts(race, !mNpc->isMale(), mViewMode == VM_FirstPerson, isWerewolf)`, which does `parts.resize(ESM::PRT_Count, nullptr)` and returns immediately (all-null) when werewolf, so a werewolf gets no fill at all. HEAD AND HAIR ARE EXCLUDED BY THREE INDEPENDENT MECHANISMS: (1) the loop bound — it starts at PRT_Neck == 2, so PRT_Head(0) and PRT_Hair(1) are never visited, in ANY view mode; (2) the data — sBodyPartMap (npcanimation.cpp:1187-1197) contains no MP_Head and no MP_Hair entry, so parts[0] and parts[1] are permanently nullptr even though ESM::BodyPart::MP_Head == 0 and MP_Hair == 1 exist in the record enum; (3) the view test — head and hair come from a separate earlier block, `if (mViewMode != VM_FirstPerson) { if (mPartPriorities[PRT_Head] < 1 && !mHeadModel.empty()) addOrReplaceIndividualPart(PRT_Head, -1, 1, mHeadModel); ... }` at :650-656, sourced from mHeadModel/mHairModel (the NPC record's own head/hair body part, vampire-overridden at :472-498), NOT from the race table. Note PRT_Shield(10) and PRT_Weapon(25) fall inside the loop range but also have no sBodyPartMap entry, so they are likewise always nullptr there. REFINEMENT OF RULE 7: rule 7 says 'in first person only head and hair are suppressed' and 'everything else in the race's table is present'. Both halves need qualifying — head and hair are not in the race's table at all (they are a separate model pair), and equipment can and does suppress other parts in first person: a robe deletes both forearms and both upper arms via the reservation at priority 24, in every view mode including first person.
+
+```cpp
+const std::vector<const ESM::BodyPart*>& parts
+    = getBodyParts(race, !mNpc->isMale(), mViewMode == VM_FirstPerson, isWerewolf);
+for (int part = ESM::PRT_Neck; part < ESM::PRT_Count; ++part)
+{
+    if (mPartPriorities[part] < 1)
+    {
+        if (const ESM::BodyPart* bodypart = parts[part])
+            addOrReplaceIndividualPart(static_cast<ESM::PartReferenceType>(part), -1, 1,
+                Misc::ResourceHelpers::correctMeshPath(bodypart->mModel.getNormalized()));
+    }
+}
+```
+
+## [A] The follow section has small/medium/large buckets at 0.33 and 0.66 — and the bucket prefix is OMITTED entirely when mAttackType == "shoot"
+- `apps/openmw/mwmechanics/character.cpp:1792-1816` - importance **high**
+
+The third play() call of the attack triad (character.cpp:1795-1812) builds its start/stop action names in two steps.
+
+Step 1, the base: start = "follow start", stop = "follow stop".
+Step 2, the bucket, applied ONLY when mAttackType != "shoot":
+  strength = (mAttackStrength < 0.33f) ? "small" : (mAttackStrength < 0.66f) ? "medium" : "large"
+  start = strength + " " + start;  stop = strength + " " + stop;
+Step 3, unconditional: the keys passed to play() are mAttackType + " " + start and mAttackType + " " + stop.
+
+So the resolved text keys are:
+- Melee (chop/slash/thrust): "<group>: <type> <bucket> follow start" .. "<group>: <type> <bucket> follow stop", e.g. "weapononehand: chop large follow start".
+- Ranged AND thrown (mAttackType == "shoot"): "<group>: shoot follow start" .. "<group>: shoot follow stop" — NO small/medium/large token at all. Do not synthesise one.
+
+Thresholds are half-open, tested with strict less-than against float literals 0.33f and 0.66f, on the raw mAttackStrength (a [0,1] float):
+  [0, 0.33)   -> "small"
+  [0.33, 0.66)-> "medium"
+  [0.66, 1]   -> "large"
+Ties land in the HIGHER bucket: exactly 0.33 is medium, exactly 0.66 is large. A missed melee swing (mAttackStrength forced to 0) therefore always plays the "small" follow.
+
+This call passes startpoint 0.0f, loops 0, speedmult weapSpeed, and is preceded by mReadyToHit = false (:1807) and, if the group is still playing, mAnimation->disable(mCurrentWeapon) (:1809-1810). It sets mUpperBodyState = AttackEnd.
+
+```cpp
+1795:  std::string start = "follow start";
+1796:  std::string stop = "follow stop";
+1797:
+1798:  if (mAttackType != "shoot")
+1799:  {
+1800:      std::string strength = mAttackStrength < 0.33f ? "small"
+1801:          : mAttackStrength < 0.66f                  ? "medium"
+1802:                                                     : "large";
+1803:      start = strength + ' ' + start;
+1804:      stop = strength + ' ' + stop;
+1805:  }
+```
+
+---
+
+# Tier B - all three lenses, caveat recorded
+
+## [B] A KeyframeController with NO rotation track rewrites the rotation EVERY frame from the node's own mRotationScale; a missing translation or scale writes NOTHING
+- `components/nifosg/controller.cpp:179-223` - importance **critical**
+
+NifOsg::KeyframeController::operator()(MatrixTransform* node, NodeVisitor* nv) does exactly four things, in this order. (1) It calls getCurrentTransformation(nv), which returns a KfTransform of three std::optional fields {mTranslation, mRotation, mScale} (components/sceneutil/keyframe.hpp:27-32), ALL THREE default to nullopt. (2) ROTATION IS UNCONDITIONAL: `if (rotation) node->setRotation(*rotation); else node->setRotation(node->mRotationScale);` — when the track has no rotation data the engine writes the node's OWN currently-stored decomposed 3x3 straight back into the 4x4. This runs every single frame, for every animated node, forever; it is never skipped. (3) TRANSLATION IS CONDITIONAL WITH NO ELSE: `if (translation) node->setTranslation(*translation);` — a track without translation keys leaves the matrix's translation untouched from the previous frame. (4) SCALE IS CONDITIONAL WITH NO ELSE: `if (scale) node->setScale(*scale);`. Then traverse(node, nv). WHEN IS EACH OPTIONAL SET (controller.cpp:202-223): only inside `if (hasInput())` — a controller with no input source leaves all three nullopt, so the rotation reset still fires. mRotation is set from mRotations.interpKey(time) when the quaternion track is non-empty; ELSE IF any one of mXRotations/mYRotations/mZRotations is non-empty it is set from getXYZRotation(time) (per-axis floats composed in mAxisOrder, default Order_XYZ = xr*yr*zr, controller.cpp:136-170); otherwise it stays nullopt. mTranslation is set iff mTranslations is non-empty; mScale iff mScales is non-empty. empty() is `!mKeys || mKeys->mKeys.empty()` (controller.hpp:131). EDGE CASE THAT BITES: the interpolators are constructed WITH default values taken from NiTransformInterpolator::mDefaultValue (controller.cpp:105-119) and with 1.f for NiKeyframeData scales (controller.cpp:130), but because getCurrentTransformation gates on empty() and never calls interpKey on an empty track, those defaults are DEAD for playback — an empty channel means 'do not write', not 'write the default'. Port shape: per frame, always write rotation (from the track, or from the node's stored rotation); write translation/scale only when their key lists are non-empty.
+
+```cpp
+    void KeyframeController::operator()(NifOsg::MatrixTransform* node, osg::NodeVisitor* nv)
+    {
+        auto [translation, rotation, scale] = getCurrentTransformation(nv);
+
+        if (rotation)
+        {
+            node->setRotation(*rotation);
+        }
+        else
+        {
+            // This is necessary to prevent first person animations glitching out due to RotationController
+            node->setRotation(node->mRotationScale);
+        }
+
+        if (translation)
+            node->setTranslation(*translation);
+
+        if (scale)
+            node->setScale(*scale);
+
+        traverse(node, nv);
+    }
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Almost every claim verifies line-for-line, but the rule states as always-true something that is conditional, and mis-describes the matrix write in the else branch. VERIFIED CORRECT (against /home/user/openmw/openmw): the four-step body and order; rotation unconditional with `else node->setRotation(node->mRotationScale)`; translation and scale conditional with no else; the `if (hasInput())` gate at controller.cpp:206 (hasInput() == `mSource.get() != nullptr`, sceneutil/controller.cpp:17-20), so a source-less controller leaves all three nullopt and the rotation reset still fires; quaternion-track-then-else-if-any-per-axis; mTranslation/mScale set iff their tracks are non-empty; `empty()` == `!mKeys || mKeys->mKeys.empty()` at controller.hpp:131; mAxisOrder default Order_XYZ = xr*yr*zr (controller.hpp:264, nif/data.hpp:345); KfTransform's three optionals all defaulting to nullopt at keyframe.hpp:27-32. The dead-defaults edge case is also right: interpKey does return mDefaultVal on an empty track (controller.hpp:101-102), but every call site gates on empty() first, so the defaults installed at controller.cpp:105-119 and :130 are never read during playback. All cited line numbers are exact. REFUTED ON: "This runs every single frame, for every animated node, forever; it is never skipped." (1) Even at default settings this is false. Animation::resetActiveGroups (apps/openmw/mwrender/animation.cpp:1110-1176) calls node->removeUpdateCallback for every entry in mActiveControllers (line 1116) whenever active groups change, then re-adds callbacks (line 1174) only for the single highest-priority active state per blend mask. A node whose AnimSource is not the active state has no callback attached; when no state is active for a mask (`active == mStates.end()`), nothing is added at all and the rotation reset never fires. The write is per-active-controller, not "for every animated node, forever." (2) With `smooth animation transitions` enabled (a shipped setting, files/settings-default.cfg:308, default false), animation.cpp:1162-1164 installs NifAnimBlendController INSTEAD of the KeyframeController for NifOsg::MatrixTransform nodes: handleBlendTransform returns the blend controller on that branch (animation.cpp:1107) and only returns keyframeController->getAsCallback() on the osgAnimation::Bone branch (animation.cpp:1104). NifOsg::KeyframeController::operator() then never ru ...
+
+
+## [B] The node keeps float mScale and Nif::Matrix3 mRotationScale beside the 4x4 because a 4x4 CANNOT be decomposed back into NIF components - the engine calls this a 'Hack'
+- `components/nifosg/matrixtransform.hpp:20-34` - importance **critical**
+
+NifOsg::MatrixTransform derives from osg::MatrixTransform and adds exactly two extra members, both PUBLIC: `float mScale{ 0.f };` and `Nif::Matrix3 mRotationScale;` (a plain float[3][3], row-major as stored in the file, identity by default - components/nif/niftypes.hpp:36-45). The header states the reason verbatim as a 'Hack': a NIF transform is (3x3 rotationScale, float scale, vec3 position), the 3x3 may itself already carry non-uniform or negative scale (niftypes.hpp:70), and once the three are multiplied into one 4x4 there is no way to recover which part of the 3x3 was rotation and which was the float scale. So the node caches them. Construction: `MatrixTransform(const Nif::NiTransform& t) : osg::MatrixTransform(t.toMatrix()), mScale(t.mScale), mRotationScale(t.mRotation)` — the cached pair is ALWAYS seeded from the file record, and the copy constructor copies both. The class exposes four virtual mutators — setScale(float), setRotation(const osg::Quat&), setRotation(const Nif::Matrix3&), setTranslation(const osg::Vec3f&) — and the header explicitly forbids any other route: the matrix must not be edited manually or via preMult/postMult. TWO TRAPS FOR A PORT: (a) the DEFAULT constructor leaves mScale at 0.f, so a node built without a NiTransform (e.g. AutoTransform's default ctor, or an OSG clone-type call) will have its whole 3x3 collapsed to zeros by the first setRotation/setScale — always seed mScale from the NIF (nifloader.cpp:699 is the only site that builds one: `node = new NifOsg::MatrixTransform(nifNode->mTransform);`). (b) mScale is a SINGLE float, not a vec3; non-uniform scale lives inside mRotationScale.
+
+```cpp
+        // Hack: account for Transform differences between OSG and NIFs.
+        // OSG uses a 4x4 matrix, NIF's use a 3x3 rotationScale, float scale, and vec3 position.
+        // Decomposing the original components from the 4x4 matrix isn't possible, which causes
+        // problems when a KeyframeController wants to change only one of these components. So
+        // we store the scale and rotation components separately here.
+        float mScale{ 0.f };
+        Nif::Matrix3 mRotationScale;
+
+        // Utility methods to transform the node and keep these components up-to-date.
+        // The matrix's components should not be overridden manually or using preMult/postMult
+        // unless you're sure you know what you are doing.
+        virtual void setScale(float scale);
+        virtual void setRotation(const osg::Quat& rotation);
+        virtual void setRotation(const Nif::Matrix3& rotation);
+        virtual void setTranslation(const osg::Vec3f& translation);
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The bulk of the rule is faithful to components/nifosg/matrixtransform.hpp and components/nif/niftypes.hpp (two public members, mScale{0.f} default, Nif::Matrix3 = float mValues[3][3] identity-by-default at niftypes.hpp:36-45, the "negative and nonuniform scales" comment at line 70, the NiTransform ctor and copy ctor seeding both, four virtual mutators, scale as a single float). But trap (a) states as always-true something that is only true for setRotation. In components/nifosg/matrixtransform.cpp:19-31, setScale assigns mScale = scale BEFORE the rebuild loop (`mScale = scale;` then `_matrix(i,j) = mRotationScale.mValues[j][i] * mScale;`), so the stale 0.f is overwritten and never read: a default-constructed node given setScale(2.f) yields diag(2,2,2), not zeros (verified by simulating the exact loops). Only setRotation(const osg::Quat&) (lines 33-50) and setRotation(const Nif::Matrix3&) (lines 52-64) consume the pre-existing mScale and therefore zero the 3x3. Two further overreaches: (1) "nifloader.cpp:699 is the only site that builds one" is false - nifloader.cpp:677/679/681/686 build NifOsg::AutoTransform, which derives from MatrixTransform (autotransform.hpp:8) and whose Mode-only ctor (autotransform.cpp:9-13) delegates to the default MatrixTransform(), and components/sceneutil/serialize.cpp:149 registers createInstanceFunc<NifOsg::MatrixTransform> (plus AutoTransformSerializer at 159) which default-constructs instances during .osgb deserialization with no serializer for mScale or mRotationScale, so they stay 0.f/identity; (2) line 699 is guarded, not unconditional - createNode only reaches it in the non-billboard branch and only when `!(nifNode->mParents.empty() && nifNode->mController.empty() && nifNode->mTransform.isIdentity())`, otherwise a plain osg::Group is created. The rule also hardens the header's hedged comment ("should not be overridden ... unless you're sure you know what you are doing") into an absolute prohibition, while AutoTransform legitimately does its own matrix math in computeMatrix/computeLocalToWorldMatrix.
+
+> Everything structural in the rule checks out verbatim against OpenMW master, but one clause is wrong and it is wrong precisely in the first-person player path, so it cannot be confirmed as stated. CONFIRMED PARTS. components/nifosg/matrixtransform.hpp:11-35 has exactly the two public members (`float mScale{ 0.f };`, `Nif::Matrix3 mRotationScale;`), the "Hack: account for Transform differences between OSG and NIFs." comment, `MatrixTransform() = default`, and the four virtuals setScale/setRotation(Quat)/setRotation(Matrix3)/setTranslation. matrixtransform.cpp:5-17 seeds both from the record and copies both. components/nif/niftypes.hpp:36-45 is Matrix3 (`float mValues[3][3]`, identity default) and :70 carries the "can contain scale components too, including negative and nonuniform scales" comment — both line refs exact. Trap (a) is real and severe: setScale/setRotation write `_matrix(i,j) = mRotationScale.mValues[j][i] * mScale` (matrixtransform.cpp:27, 44, 60), so mScale==0 collapses the 3x3; NifOsg::AutoTransform's default ctor (autotransform.cpp:9-13) reaches that state, and so does components/sceneutil/serialize.cpp:144-152, whose MatrixTransformSerializer builds via `createInstanceFunc<NifOsg::MatrixTransform>` (default ctor) and serializes neither mScale nor mRotationScale. Trap (b) is real. Werewolves/beast races change only which skeleton NIF is picked (apps/openmw/mwrender/actorutil.cpp:8-30) — no transform special case. WHAT REFUTES IT. The rule says "the header explicitly forbids any other route: the matrix must not be edited manually or via preMult/postMult." The header (matrixtransform.hpp:28-30) actually says the matrix "should not be overridden manually or using preMult/postMult *unless you're sure you know what you are doing*" — a soft rule with an explicit escape hatch — and a first-class caller takes that hatch on the first-person player body. MWRender::RotateController (apps/openmw/mwrender/rotatecontroller.cpp:30-54) is a NodeCallback over `osg::MatrixTransform*` that does `matrix = node->getMatrix(); matrix.setRotate(orient); matrix.setTrans(...); node->setMatrix(matrix);` — a direct manual matrix edit, never touching mScale/mRotationScale. It is attached to NifOsg::MatrixTransform bones: "bip01 head", "bip01 spine1", "bip01" (animation.cpp:1938-1942 via addRotateController, animation.cpp:1945-1973), "bip01 neck" for the player in VM_First ...
+
+
+## [B] NifAnimBlendController repeats the identical missing-rotation reset, and seeds its blend from mRotationScale/mScale rather than from the matrix, because the matrix is polluted by RotateController
+- `apps/openmw/mwrender/animblendcontroller.cpp:313-392` - importance **high**
+
+When smooth animation blending is on, a NifOsg::MatrixTransform gets a NifAnimBlendController wrapping the KeyframeController (animation.cpp:1162-1166). Its operator() calls mKeyframeTrack->getCurrentTransformation(nv) and then reproduces the same rule in BOTH branches: while interpolating, `if (rotation) { slerp(mInterpFactor, mBlendStartRot, *rotation) -> setRotation(lerped); } else { node->setRotation(node->mRotationScale); }` with the comment 'This is necessary to prevent first person animation glitching out'; and when not interpolating, `if (rotation) node->setRotation(*rotation); else node->setRotation(node->mRotationScale);`. So the every-frame rotation rewrite holds on the blending path too — a port must implement it in both. Three further exact behaviours. (1) BLEND START READS THE DECOMPOSED COPY, NOT THE MATRIX: `mBlendStartRot = node->mRotationScale.toOsgMatrix().getRotate(); mBlendStartTrans = node->getMatrix().getTrans(); mBlendStartScale = node->mScale;` — rotation and scale come from the cached components, only translation comes from the 4x4, with the stated reason 'Nif mRotationScale is used here because it's unaffected by the side-effects of RotationController'. (Matrix3::toOsgMatrix is itself the transpose: osgMat(i,j) = mValues[j][i], niftypes.hpp:56-65.) (2) THE ROTATE-CONTROLLER OFFSET IS SUBTRACTED FROM THE BLEND START: it walks node->getUpdateCallback()->getNestedCallback() down the chain, and for each MWRender::RotateController found computes worldOrient from computeLocalToWorld(first parental node path to rotateController->getRelativeTo()), then `worldOrient = worldOrient * rotate.inverse(); mBlendStartTrans -= worldOrient.inverse() * offset;` — the comment names the symptom: 'fixes an issue with camera jumping during first person sneak jumping camera'. (3) SCALE IS NEVER BLENDED: it is applied outside both branches as `if (scale) node->setScale(*scale);` with the reason 'Scale is not lerped based on the idea that it is much more likely that scale animation will be used to instantly hide/show objects in which case the scale interpolation is undesirable.' Translation IS lerped (vec3fLerp) while interpolating.
+
+```cpp
+            // Nif mRotationScale is used here because it's unaffected by the side-effects of RotationController
+            mBlendStartRot = node->mRotationScale.toOsgMatrix().getRotate();
+            mBlendStartTrans = node->getMatrix().getTrans();
+            mBlendStartScale = node->mScale;
+
+            // Subtract any rotate controller's offset from start transform (if it appears after this callback)
+            // this is required otherwise the blend start will be with an offset, then offset could be applied again
+            // fixes an issue with camera jumping during first person sneak jumping camera
+...
+            else
+            {
+                // This is necessary to prevent first person animation glitching out
+                node->setRotation(node->mRotationScale);
+            }
+...
+            if (rotation)
+                node->setRotation(*rotation);
+            else
+                node->setRotation(node->mRotationScale);
+        }
+
+        if (scale)
+            // Scale is not lerped based on the idea that it is much more likely that scale animation will be used to
+            // instantly hide/show objects in which case the scale interpolation is undesirable.
+            node->setScale(*scale);
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Refuted on an omitted guard in claim (2), not on the main thesis. Verified against upstream OpenMW: animation.cpp:1162-1166 is indeed the `dynamic_cast<NifOsg::MatrixTransform*>` -> `handleBlendTransform<NifAnimBlendController>` block gated on Settings::game().mSmoothAnimTransitions; both branches of NifAnimBlendController::operator() do reproduce the rotation fallback verbatim; claim (1)'s three blend-start reads are verbatim and mRotationScale/mScale are genuinely the cached decomposed components on NifOsg::MatrixTransform (matrixtransform.hpp), with toOsgMatrix being the transpose osgMat(i,j)=mValues[j][i]; claim (3) is verbatim and mBlendStartScale is written at line 321 and never read anywhere in the file, so scale really is never blended; vec3fLerp(t, start, end) matches the stated operand order. The failure is that claim (2) is presented as an "exact behaviour" but drops the only conditional in the block. The code is: osg::NodePathList nodepaths = node->getParentalNodePaths(rotateController->getRelativeTo()); osg::Quat worldOrient; if (!nodepaths.empty()) { osg::Matrixf worldMat = osg::computeLocalToWorld(nodepaths[0]); worldOrient = worldMat.getRotate(); } worldOrient = worldOrient * rotate.inverse(); The rule says worldOrient is computed from computeLocalToWorld of the first parental node path, unconditionally. It is not. When the node has no parental path to getRelativeTo(), worldOrient stays default-constructed (identity) and — the part that changes meaning — the subtraction STILL executes, degenerating to mBlendStartTrans -= rotate * offset. It is not skipped. A port written from the rule as stated has two wrong options and no right one: index [0] on an empty list (crash / undefined in a JS port), or treat "no node path" as "skip this RotateController" (silently wrong blend start, which is precisely the camera-jump symptom the block exists to fix). This is an omitted guard with reachable, behaviour-changing consequences in a rule that claims exactness.
+
+
+## [B] AutoTransform (billboards) overrides ONLY setRotation, so the every-frame missing-rotation reset also rewrites mBaseRotation - and its default constructor leaves mScale at 0
+- `components/nifosg/autotransform.cpp:15-53` - importance **medium**
+- REFINES OR CORRECTS RECORDED RULE 60
+
+NifOsg::AutoTransform derives from NifOsg::MatrixTransform and overrides exactly two of the four mutators: `void setRotation(const osg::Quat&) override;` and `void setRotation(const Nif::Matrix3&) override;` (autotransform.hpp:33-34). setScale and setTranslation are inherited unchanged. Each override calls the base implementation FIRST and then refreshes the billboard's own cached orientation: the quaternion overload does `MatrixTransform::setRotation(rotation); mBaseRotation = rotation; mRotation = rotation;`; the Matrix3 overload does `MatrixTransform::setRotation(rotation);` then rebuilds `rotMat(i, j) = rotation.mValues[j][i]` (same [j][i] transpose) and sets mBaseRotation = rotMat.getRotate(), mRotation = mBaseRotation. CONSEQUENCE FOR THE MISSING-CHANNEL RULE: a NiBillboardNode that carries a NiKeyframeController with no rotation track receives node->setRotation(node->mRotationScale) every frame, which through this override re-derives mBaseRotation and mRotation from the cached 3x3 on every single frame — it is not a one-time construction value, and any code that mutates mRotation (computeMatrixForFrame caches into the mutable mRotation) is reset by the animation callback. The constructor taking a NiTransform performs the same rotMat(i,j) = mRotationScale.mValues[j][i] conversion, so mBaseRotation is always the transpose-read quaternion of the cached NIF 3x3. FINALLY: `AutoTransform(Mode mode)` chains to `MatrixTransform()`, the defaulted base constructor, which leaves mScale at 0.f — a node built that way and then given any setRotation/setScale gets an all-zero 3x3.
+
+```cpp
+    AutoTransform::AutoTransform(const Nif::NiTransform& transform, Mode mode)
+        : MatrixTransform(transform)
+        , mMode(mode)
+    {
+        osg::Matrixd rotMat;
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                rotMat(i, j) = mRotationScale.mValues[j][i];
+        mBaseRotation = rotMat.getRotate();
+        mRotation = mBaseRotation;
+    }
+...
+    void AutoTransform::setRotation(const osg::Quat& rotation)
+    {
+        MatrixTransform::setRotation(rotation);
+        mBaseRotation = rotation;
+        mRotation = rotation;
+    }
+
+    void AutoTransform::setRotation(const Nif::Matrix3& rotation)
+    {
+        MatrixTransform::setRotation(rotation);
+
+        osg::Matrixd rotMat;
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                rotMat(i, j) = rotation.mValues[j][i];
+
+        mBaseRotation = rotMat.getRotate();
+        mRotation = mBaseRotation;
+    }
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The core of the rule checks out against the real sources, but two of its stated consequences are wrong as written. VERIFIED (no issue): AutoTransform : public MatrixTransform overrides exactly the two setRotation forms at autotransform.hpp:33-34, while the base's four virtual mutators (matrixtransform.hpp:31-34) leave setScale and setTranslation inherited; both overrides call the base first (autotransform.cpp:37, 44); the quoted bodies, the ctor's rotMat(i,j) = mRotationScale.mValues[j][i] transpose, and the identical transpose in the Matrix3 override are all exact. The missing-channel premise is also real: KeyframeController::operator() (controller.cpp:179-197) takes the else branch and calls node->setRotation(node->mRotationScale), which virtual-dispatches into AutoTransform's Matrix3 override, so mBaseRotation and mRotation are re-derived from the cached 3x3 every update traversal, not once at construction. DEFECT 1 (states as always-true something conditional on which mutator): "a node built that way and then given any setRotation/setScale gets an all-zero 3x3" is false for setScale. MatrixTransform::setScale (matrixtransform.cpp:19-31) assigns mScale = scale FIRST and only then rebuilds _matrix(i,j) = mRotationScale.mValues[j][i] * mScale, so the rebuild uses the new scale, never the stale 0.f. On an AutoTransform(Mode) node, setScale(1.f) yields the identity 3x3 (Nif::Matrix3's default ctor is identity, niftypes.hpp:40-44) — a well-formed matrix, all-zero only if the caller passes 0.f. The all-zero outcome belongs solely to the two setRotation paths, which multiply by the still-zero mScale (matrixtransform.cpp:44 and :60). setScale is in fact the cure for the zero-scale state, not another instance of it. DEFECT 2 (misattributed write site): "computeMatrixForFrame caches into the mutable mRotation" is false. computeMatrixForFrame (autotransform.cpp:90-152) is const and never touches mRotation; it only reads mBaseRotation, mScale and _matrix.getTrans(). The cache write is mRotation = mat.getRotate() at autotransform.cpp:79, inside computeMatrix, and only on the branch where nv->asCullStack() is non-null. This guard matters for the rule's conclusion: mRotation is read back only on the opposite, no-CullStack fallback path (line 85), since the cull path recomputes the orientation from mBaseRotation every time — so "any code that mutates mRotation is reset b ...
+
+
+## [B] A key group is uint32 count then uint32 type, a zero count omits the type field entirely, and the four key layouts differ in width
+- `components/nif/nifkey.hpp:16-24, 62-122, 133-169` - importance **critical**
+
+Every animation track in a NIF is a "key group" read by KeyMapT::read (nifkey.hpp:62-122). Non-morph read order is EXACTLY: (1) uint32 count. (2) If count == 0, RETURN IMMEDIATELY — the interpolation-type field is NOT present in the stream; the group keeps mInterpolationType = InterpolationType_Unknown (0) and zero keys. Reading a type dword here desynchronises the whole file. (3) Otherwise read uint32 mInterpolationType. (4) Read exactly `count` keys back-to-back, layout chosen by type:
+  - Linear(1) and Constant(5): float time, then one value. mInTan/mOutTan are left default-constructed (0 for float/Vec3/Vec4, (x=0,y=0,z=0,w=1) for Quat).
+  - Quadratic(2) (nifkey.hpp:133-145): float time, value, then inTan and outTan of the same value type — EXCEPT when the value type is osg::Quat, where `if constexpr (std::is_same_v<T, osg::Quat>)` reads the value ONLY. A quadratic quaternion key is 4 bytes time + 16 bytes quat = 20 bytes, NOT 52.
+  - TCB(3) (nifkey.hpp:153-169): float time, value, float tension, float continuity, float bias. No tangents are stored in the file; they are derived (see the TCB rule).
+  - XYZ(4): NOTHING is read here. mKeys.reserve(count) runs but zero keys are appended, so the group ends up with count > 0 and an EMPTY key vector. This emptiness is load-bearing (see the XYZ rule).
+  - any other type with count != 0: throw Nif::Exception("Unhandled interpolation type: " + type).
+Value widths: float = 4; osg::Vec3f = 12; osg::Vec4f = 16; osg::Quat = 16 read in the order w, x, y, z (nifstream.cpp:129-137 — NOT x,y,z,w); bool = int32 when file version < 4.1.0.0 (every Morrowind NIF is 4.0.0.2, so int32 there) else int8, nonzero meaning true (nifstream.cpp:171-177).
+The group stores a flat std::vector<std::pair<float,KeyT<T>>> in FILE ORDER. Keys are never sorted and duplicates are never removed — the source says so outright at nifkey.hpp:121. The interpolation type is a property of the WHOLE group; there is no per-key type. Concrete instantiations: FloatKeyMap, Vector3KeyMap, Vector4KeyMap, QuaternionKeyMap, BoolKeyMap (nifkey.hpp:227-231).
+
+```cpp
+const uint32_t count = nif->get<uint32_t>();
+
+if (count == 0 && !morph)
+    return;
+
+nif->read(mInterpolationType);
+
+mKeys.reserve(count);
+...
+// Note: NetImmerse does NOT sort keys or remove duplicates
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The description of KeyMapT::read itself is accurate and implementable — I verified every mechanical claim against master. All line refs are right (enum 16-24, read 62-122, readQuadratic 133-145, readTCBKey 153-169, instantiations 227-231). Confirmed correct: `if (count == 0 && !morph) return;` before the type dword (nifkey.hpp:82-83), so non-morph count==0 leaves mInterpolationType=0 and no keys; Linear/Constant = time+value via readValuePair (127-131); the `if constexpr (std::is_same_v<T, osg::Quat>)` quadratic exception (135-138), so a quadratic quat key really is 20 bytes not 52; TCB = time, value, tension, continuity, bias with tangents derived (153-169); XYZ reads nothing while mKeys.reserve(count) still runs, and data.cpp:538-548 confirms the caller eats a float and re-runs read 3x; `else if (count != 0)` throws; Quat is 16 bytes in w,x,y,z order (nifstream.cpp:129-137); flat vector, no sorting or dedup (121). The mInTan/mOutTan zero claim also holds — readVectorOfRecords does `T value;` on std::pair, whose default ctor value-initializes the aggregate KeyT. Two claims overreach, and they break in the same place. (1) "Every animation track in a NIF is a 'key group' read by KeyMapT::read" is false, and it is falsified by the one track Morrowind actually needs. NiVisData — the data for NiVisController (controller.hpp:290-296) — is NOT a KeyMapT at all. data.hpp:197-203 declares it as a bare `std::shared_ptr<std::vector<std::pair<float, bool>>>`, and data.cpp:318-328 reads uint32 count, then immediately `count` pairs of {float time, uint8 flag}. There is NO interpolation-type dword in that stream. A reader built from the rule would consume 4 (count) + 4 (bogus type) + count*(4+4) where the file holds 4 + count*(4+1) — desynchronising every Morrowind NIF with a visibility controller, which is exactly the failure the rule warns about. (2) "bool = int32 when file version < 4.1.0.0 (every Morrowind NIF is 4.0.0.2, so int32 there)" is stated as the on-disk width for bool keys and is backwards for both real bool-key readers. NiVisData reads `stream.get<uint8_t>() != 0` unconditionally (data.cpp:322). The other bool-key path, the readKeyMapPair<float,bool> specialization (nifkey.hpp:220-225) used at particle.cpp:679 for NiPSysEmitterCtlrData::mVisKeyList, ALSO reads `stream.get<uint8_t>()` unconditionally and reads no type dword — and mVisKeyList is a BoolKeyMap, ...
+
+
+## [B] interpKey(time): clamp to the endpoint values, lower_bound for the high key, low = high-1, fraction = (t-lo)/(hi-lo)
+- `components/nifosg/controller.hpp:44-62, 99-131` - importance **critical**
+
+Sampling a track at time t (ValueInterpolator::interpKey, controller.hpp:99-129) is exactly:
+ 1. If the track has no key list or the list is empty -> return mDefaultVal. NOTE: for bone tracks this branch is unreachable because the caller tests empty() first, which means a NiTransformInterpolator whose mData is empty produces NO rotation/translation/scale at all and its mDefaultValue is silently DISCARDED (controller.cpp:114-119 constructs the interpolators with null key maps, and controller.cpp:206-220 only writes an output when !empty()).
+ 2. `if (time <= keys.front().first) return keys.front().second.mValue;` — at or before the first key, return the first key's value VERBATIM. No extrapolation, tangents ignored.
+ 3. hi = first index with keys[hi].time >= t (std::lower_bound with predicate `key.first < t`, so on a run of equal times it lands on the FIRST of the run).
+ 4. If no such index exists (t is greater than every key time) -> `return keys.back().second.mValue;` verbatim. Again no extrapolation.
+ 5. lo = hi - 1. This is always in range: step 2 already removed t <= keys[0].time, and lower_bound's predicate is true at index 0, so hi >= 1.
+ 6. `if (highTime == lowTime) return mLastLowKey->second.mValue;` — equal-time bracket returns the LOW key's value, never divides. With sorted keys lower_bound makes this unreachable, so it is defensive cover for the unsorted/duplicated key data the loader deliberately preserves.
+ 7. a = (t - keys[lo].time) / (keys[hi].time - keys[lo].time), which lies in (0, 1].
+ 8. return interpolate(keys[lo], keys[hi], a, group.mInterpolationType).
+A port may implement steps 3-8 with a plain binary search every call. OpenMW additionally caches the last bracket (retrieveKey, controller.hpp:44-62): if t > lastHigh.time it advances both iterators by one, and if t then lies inclusively inside [lastLow.time, lastHigh.time] it uses that bracket instead of searching. The only divergence from a fresh lower_bound is t exactly equal to lastLow.time, where the cache yields (lo,hi,a=0) and lower_bound yields (lo-1,lo,a=1); both evaluate to keys[lo].value under all six interpolation types, so the cache is a pure optimisation and can be omitted.
+The t handed in is already mapped by ControllerFunction::calculate when a function is attached (controller.cpp:30-71): t = mFrequency*source + mPhase, then if outside [mStartTime, mStopTime] it is Cycle-wrapped, Reverse-ping-ponged, or (Constant / default) clamped to mStartTime / mStopTime.
+
+```cpp
+if (time <= keys.front().first)
+    return keys.front().second.mValue;
+
+typename MapT::MapType::const_iterator it = retrieveKey(time);
+
+// now do the actual interpolation
+if (it != keys.end())
+{
+    // cache for next time
+    mLastHighKey = it;
+    mLastLowKey = --it;
+
+    const float highTime = mLastHighKey->first;
+    const float lowTime = mLastLowKey->first;
+    if (highTime == lowTime)
+        return mLastLowKey->second.mValue;
+
+    const float a = (time - lowTime) / (highTime - lowTime);
+
+    return interpolate(mLastLowKey->second, mLastHighKey->second, a, mKeys->mInterpolationType);
+}
+
+return keys.back().second.mValue;
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Steps 1-8, the empty-branch NOTE (controller.cpp:116-118 builds the interpolators with null key maps and 206-220 only writes an output when !empty(), so NiTransformInterpolator::mDefaultValue is indeed discarded), the equal-time guard analysis, and the ControllerFunction::calculate summary all check out against the real source. The rule is refuted on two points, one load-bearing. (1) PRIMARY — "The only divergence from a fresh lower_bound is t exactly equal to lastLow.time ... both evaluate to keys[lo].value under all six interpolation types, so the cache is a pure optimisation and can be omitted" is stated as always-true but is conditional on strictly increasing key times. The rule itself invokes the opposite premise in step 6, and components/nif/nifkey.hpp:119 confirms it verbatim: "// Note: NetImmerse does NOT sort keys or remove duplicates". When a run of equal times exists, lower_bound always lands on the FIRST of the run (as step 3 correctly says), but the cache's low iterator can be a LATER member of that run — because interpKey stores mLastLowKey = it-1, and retrieveKey's ++ advance can walk the pair forward across the run. The two paths then read DIFFERENT key records, not the same one at a=0 vs a=1. Simulated on keys [(0,A),(1,B),(1,C),(2,D)]: sample t=1.5 (both give lerp(C,D,0.5)), then t=1.0 — cache returns bracket (C,D) with a=0 -> C; a fresh lower_bound returns bracket (A,B) with a=1 -> B. C != B, under every interpolation type, since the endpoint identities differ rather than the fractions. So the cache is NOT a pure optimisation and a port that omits it will produce different output on duplicate-time tracks. For genuinely unsorted keys the claim is weaker still: lower_bound over an unsorted range yields an unspecified partition point while the cache walks linearly, so no equivalence holds at all. (2) SECONDARY — step 7's "a ... lies in (0, 1]" is presented as part of what interpKey "exactly" does, but is contradicted by the rule's own later paragraph and by the code: via the cache path a = 0 is reachable (t == lastLow.time, no advance, inclusive test passes). For the actual function a is in [0, 1]. A port asserting the (0,1] invariant would trip.
+
+
+## [B] Constant (type 5) is a midpoint FLIP with a strict >, not hold-previous
+- `components/nifosg/controller.hpp:138-141, 167-170` - importance **high**
+
+InterpolationType_Constant does NOT hold the previous key's value across the segment. Both the generic overload (controller.hpp:140-141) and the quaternion overload (controller.hpp:169-170) are the identical one-liner `return fraction > 0.5f ? b.mValue : a.mValue;`. So across a segment [lo, hi] the output is keys[lo].value for fraction in [0, 0.5] and switches to keys[hi].value only once fraction exceeds 0.5. The comparison is STRICT: at fraction exactly 0.5 (t exactly halfway between the two key times) the LOW key wins. The switch point in time is lowTime + 0.5*(highTime - lowTime); a port that snaps t to the nearest key time, or that holds keys[lo] for the whole segment, will be visibly wrong for half of every constant segment. Tangents are never consulted. Outside the key range the endpoint-clamp of interpKey (return front value at or before the first key, back value past the last) applies before this code is reached.
+
+```cpp
+case Nif::InterpolationType_Constant:
+    return fraction > 0.5f ? b.mValue : a.mValue;
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The mechanical core of the rule is right, but its central porting claim is false, and it omits a guard that fires before the constant branch. (1) FALSE: "a port that snaps t to the nearest key time ... will be visibly wrong for half of every constant segment." Nearest-key snapping IS what this code computes. fraction = (time - lowTime) / (highTime - lowTime), so `fraction > 0.5f` is true exactly when time is closer to highTime than to lowTime. A nearest-key-time snap therefore agrees with `fraction > 0.5f ? b.mValue : a.mValue` at every time in the segment except the single tie point fraction == 0.5, where this code picks the LOW key and a naive nearest-snap may pick either. The rule itself states the switch point as lowTime + 0.5*(highTime - lowTime), which is the definition of nearest-key snapping, so the rule contradicts itself. Only the second listed mistake (holding keys[lo] across the whole segment) is wrong for half the segment. A porter following this rule would reject a correct implementation. (2) OMITTED GUARD: interpKey (controller.hpp:117-121) contains `if (highTime == lowTime) return mLastLowKey->second.mValue;` BEFORE fraction is computed and before interpolate() is called. For duplicate-timestamp keys the low key wins unconditionally and the constant branch is never reached; the rule's "switch point is lowTime + 0.5*(highTime - lowTime)" formula is undefined there (0/0), and the rule lists only the endpoint clamp as a preceding guard. Everything else checks out: both overloads are the identical one-liner; the comparison is strict so exact 0.5 yields a.mValue (the low key); tangents are unread in this branch; `if (time <= keys.front().first) return keys.front().second.mValue;` clamps at or before the first key and `return keys.back().second.mValue;` clamps past the last. Source read: https://raw.githubusercontent.com/OpenMW/openmw/master/components/nifosg/controller.hpp (saved locally at /tmp/claude-0/-home-user-project-dagger/0ec83e1e-fa7a-575c-b46a-fc71a6754acb/scratchpad/controller.hpp). The file does not exist anywhere in /home/user/project-dagger.
+
+
+## [B] Quadratic and TCB share ONE cubic Hermite; the low key gives mOutTan, the high key gives mInTan, and tangents are used unscaled
+- `components/nifosg/controller.hpp:134-163` - importance **critical**
+
+Types Quadratic(2) and TCB(3) fall through to the SAME code (controller.hpp:142-159) and differ only in how the tangents were produced at load time. With t = fraction in (0,1], t2 = t*t, t3 = t2*t:
+  b1 = 2*t3 - 3*t2 + 1
+  b2 = -2*t3 + 3*t2
+  b3 = t3 - 2*t2 + t
+  b4 = t3 - t2
+  result = a.mValue*b1 + b.mValue*b2 + a.mOutTan*b3 + b.mInTan*b4
+where `a` is the LOW key and `b` is the HIGH key. The pairing is the part most often got wrong: the low key contributes its OUT tangent (with b3) and the high key contributes its IN tangent (with b4). The tangents are used RAW — they are never multiplied by (highTime - lowTime) nor divided by it, so they are in value-units-per-SEGMENT, not per second. Note b4 = t3 - t2 (i.e. t^3 - t^2), not the textbook t^3 - t^2 + ... variant; check b3(0)=0, b3(1)=0, b4(0)=0, b4(1)=0, b1(0)=1, b2(1)=1, so the curve passes through both key values exactly.
+This runs component-wise for float, osg::Vec3f and osg::Vec4f (and, degenerately, for bool via integer promotion). Every other type — Linear(1), XYZ(4), Unknown(0) and any unrecognised value — falls to the `default:` branch: `a.mValue + ((b.mValue - a.mValue) * fraction)`. Quaternions NEVER reach this function at all (separate overload).
+
+```cpp
+const float t = fraction;
+const float t2 = t * t;
+const float t3 = t2 * t;
+const float b1 = 2.f * t3 - 3.f * t2 + 1;
+const float b2 = -2.f * t3 + 3.f * t2;
+const float b3 = t3 - 2.f * t2 + t;
+const float b4 = t3 - t2;
+return a.mValue * b1 + b.mValue * b2 + a.mOutTan * b3 + b.mInTan * b4;
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The Hermite half of the rule is accurate — I confirmed at controller.hpp:142-159 that Quadratic(2) and TCB(3) share one block, that the basis functions are exactly b1=2t^3-3t^2+1, b2=-2t^3+3t^2, b3=t^3-2t^2+t, b4=t^3-t^2, that the operand pairing is low-key `a.mOutTan*b3` + high-key `b.mInTan*b4`, that tangents are consumed raw (interpKey computes `a = (time-lowTime)/(highTime-lowTime)` at line 122 and never rescales the tangents by the segment span), and that osg::Quat is diverted to the separate non-template overload at line 164 which has no Quadratic/TCB case at all. The rule is refuted on its fall-through claim. It states: "Every other type — Linear(1), XYZ(4), Unknown(0) and any unrecognised value — falls to the `default:` branch: `a.mValue + ((b.mValue - a.mValue) * fraction)`." That presents an exhaustive partition of the remaining enum, and it is false. `Nif::InterpolationType_Constant = 5` exists in the enum (nifkey.hpp:23) and has its own case at controller.hpp:140-141, positioned ABOVE the Quadratic/TCB block: case Nif::InterpolationType_Constant: return fraction > 0.5f ? b.mValue : a.mValue; Constant(5) is a recognised type, so it is not covered by the rule's "any unrecognised value" escape hatch, and it never reaches `default:`. Anyone implementing from the rule as written would lerp Constant keys instead of stepping them — a smooth ramp where the code produces a hard switch at fraction = 0.5 (with the tie at exactly 0.5 going to the LOW key, since the test is strict `>`). This is an omitted guard that changes meaning, and it is a live path: nifkey.hpp:89 reads Constant key groups on the same code path as Linear, so real NIF data carries type 5. The same omission applies to the quaternion overload, which also has a Constant case (controller.hpp:169-170) before its slerp default.
+
+
+## [B] Rotation keys never take the Hermite path: everything except Constant is plain OSG slerp, with shortest-arc negation and a linear fallback
+- `components/nifosg/controller.hpp:164-179` - importance **critical**
+
+osg::Quat has its own interpolate() overload (controller.hpp:164-179) with only two branches. Constant(5) -> the midpoint flip. EVERY other type — Linear(1), Quadratic(2), TCB(3), XYZ(4), Unknown(0) — falls to `default:` and does `result.slerp(fraction, a.mValue, b.mValue)`. The source comment is explicit: "TODO: Implement Quadratic and TBC interpolation". Do NOT implement squad or Hermite for rotation tracks; OpenMW's observable output is slerp.
+The exact slerp (OSG src/osg/Quat.cpp:308-346), which a port must reproduce bit-for-bit-ish:
+  cosomega = dot4(from, to)   // all four components, w included
+  if (cosomega < 0) { cosomega = -cosomega; to = -to; }   // negate ALL FOUR components: shortest arc
+  if ((1.0 - cosomega) > 1e-5) { omega = acos(cosomega); s = sin(omega); scaleFrom = sin((1-t)*omega)/s; scaleTo = sin(t*omega)/s; }
+  else { scaleFrom = 1 - t; scaleTo = t; }   // near-identical endpoints: straight lerp
+  result = from*scaleFrom + to*scaleTo      // component-wise; NOT renormalised afterwards
+Argument order matters: from = the LOW key, to = the HIGH key, t = fraction.
+This is consistent with the file format: quadratic quaternion keys carry NO tangent data at all (nifkey.hpp:135-138 reads the value only), and TCB quaternion tangents are never generated (nifkey.hpp:211-214), so a quaternion key's mInTan/mOutTan are always the default identity (0,0,0,1) and would corrupt the result if fed to the Hermite basis. Quaternion components come off disk in the order w, x, y, z (nifstream.cpp:129-137).
+
+```cpp
+osg::Quat interpolate(
+    const Nif::KeyT<osg::Quat>& a, const Nif::KeyT<osg::Quat>& b, float fraction, unsigned int type) const
+{
+    switch (type)
+    {
+        case Nif::InterpolationType_Constant:
+            return fraction > 0.5f ? b.mValue : a.mValue;
+        // TODO: Implement Quadratic and TBC interpolation
+        default:
+        {
+            osg::Quat result;
+            result.slerp(fraction, a.mValue, b.mValue);
+            return result;
+        }
+    }
+}
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Most of the rule is exact, but the XYZ(4) claim is false and it drives a wrong porting directive. VERIFIED CORRECT: the quoted overload is byte-identical to upstream at controller.hpp:164-179. nifkey.hpp:135-138 is exactly the `if constexpr (std::is_same_v<T, osg::Quat>) readValue(nif, key);` quadratic branch that skips tangents. nifkey.hpp:211-214 is exactly the empty `generateTCBTangents(std::vector<TCBKey<osg::Quat>>&)` no-op. nifstream.cpp:129-137 is exactly the w,x,y,z read. KeyT (nifkey.hpp:28-32) has no member initializers, so a quat key's mInTan/mOutTan are osg::Quat's default (0,0,0,1) as claimed. OSG Quat.cpp:308-346 matches the transcribed formula line for line: epsilon 0.00001, `cosomega = from.asVec4() * to.asVec4()`, `if (cosomega < 0.0) { cosomega = -cosomega; quatTo = -to; }` negating all four, `(1.0 - cosomega) > epsilon` guarding the acos branch, the lerp fallback, and `*this = (from*scale_from) + (quatTo*scale_to)` with no renormalisation. Argument order (from = low key, to = high key) is right. THE DEFECT — XYZ(4): "EVERY other type ... XYZ(4) ... falls to default: and does result.slerp(...)" is true of the switch statement but never happens, and the rule builds the directive "Do NOT implement squad or Hermite for rotation tracks; OpenMW's observable output is slerp" on top of it. XYZ rotation is a separate, reachable code path that this overload never touches: 1. nifkey.hpp:106-114 — when mInterpolationType == InterpolationType_XYZ the quaternion key group reads ZERO keys ("XYZ keys aren't actually read here"). The QuaternionInterpolator is therefore empty(), and interpKey returns mDefaultVal without ever calling interpolate(). Type 4 can never reach the default: branch. 2. data.cpp:534-548 — NiKeyframeData::read sees the XYZ type, eats the axis-order uint32, then reads THREE separate FloatKeyMaps (mXRotations/mYRotations/mZRotations). 3. controller.cpp:210-213 — the dispatch is `if (!mRotations.empty()) out.mRotation = mRotations.interpKey(time); else if (!mXRotations.empty() || !mYRotations.empty() || !mZRotations.empty()) out.mRotation = getXYZRotation(time);` 4. controller.cpp:136-160 — getXYZRotation interpolates the three float channels independently, builds osg::Quat xr(xrot, osg::X_AXIS) etc., and composes them by one of six AxisOrder permutations (Order_XYZ -> xr*yr*zr, Order_XZY -> xr*zr*yr, Order_YZX, Order_YXZ, Order_ZXY, Ord ...
+
+
+## [B] The slotlist is 14 entries in a fixed order, and prio = ((basePriority + 1) << 1) + (isArmor ? 1 : 0)
+- `apps/openmw/mwrender/npcanimation.cpp:586-631` - importance **critical**
+
+updateParts() drives everything from one static table of {slot, basePriority}, in this exact order: Slot_Robe(11) base 11; Slot_Skirt(10) base 3; then Slot_Helmet(0), Slot_Cuirass(1), Slot_Greaves(2), Slot_LeftPauldron(3), Slot_RightPauldron(4), Slot_Boots(7), Slot_LeftGauntlet(5), Slot_RightGauntlet(6), Slot_Shirt(8), Slot_Pants(9), Slot_CarriedLeft(17), Slot_CarriedRight(16), all with base priority 0. (Parenthesised numbers are the InventoryStore slot ids from apps/openmw/mwworld/inventorystore.hpp:33-51; the base priority is the second field.) Slot_LeftRing(12), Slot_RightRing(13), Slot_Amulet(14), Slot_Belt(15) and Slot_Ammunition(18) are ABSENT from the table and therefore contribute no body parts at all. The loop is `for (size_t i = 0; i < slotlistsize && mViewMode != VM_HeadOnly; i++)` — the view-mode term is re-tested every iteration, so in VM_HeadOnly the body of the loop never executes even once. Per iteration: (1) `removePartGroup(slotlist[i].mSlot)` runs FIRST, before the equipped test, so an emptied slot's parts are always cleared; (2) `if (store == inv.end()) continue;`; (3) `int prio = 1;` — and prio stays 1 unless the item's record type is Clothing or Armor. If `store->getType() == ESM::Clothing::sRecordId`: `prio = ((base + 1) << 1) + 0`. If `ESM::Armor::sRecordId`: `prio = ((base + 1) << 1) + 1`. Any other type (Weapon, Light, Lockpick, Probe, Book, Apparatus, Repair) leaves prio == 1 and calls addPartGroup at all. Resulting concrete numbers, which a port should hardcode: Robe clothing 24 / armor 25; Skirt clothing 8 / armor 9; every other listed slot clothing 2 / armor 3; anything not Clothing or Armor 1. The naked body, the head, the hair and a carried Light's shield mesh are all added at priority 1, so ANY clothing or armor (>= 2) beats them. The armor +1 term exists purely to break ties: armor in a slot always beats clothing in the same slot by exactly 1.
+
+```cpp
+} slotlist[] = { // FIXME: Priority is based on the number of reserved slots. There should be a better way.
+    { MWWorld::InventoryStore::Slot_Robe, 11 }, { MWWorld::InventoryStore::Slot_Skirt, 3 },
+    { MWWorld::InventoryStore::Slot_Helmet, 0 }, { MWWorld::InventoryStore::Slot_Cuirass, 0 },
+    ...
+    int prio = 1;
+    ...
+    if (store->getType() == ESM::Clothing::sRecordId)
+    {
+        prio = ((slotlist[i].mBasePriority + 1) << 1) + 0;
+    ...
+    else if (store->getType() == ESM::Armor::sRecordId)
+    {
+        prio = ((slotlist[i].mBasePriority + 1) << 1) + 1;
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The table, order, slot ids, loop guard, removePartGroup-before-equipped-test ordering, the ((base+1)<<1)+0/+1 formula and all derived numbers (24/25, 8/9, 2/3) all check out against apps/openmw/mwrender/npcanimation.cpp:586-647 and apps/openmw/mwworld/inventorystore.hpp:32-50, and "priority 1 loses to >= 2" is confirmed by the strict `if (priority <= mPartPriorities[type]) return false;` at :771. The rule is refuted on three counts, all inside the `...` it elided from its own quote. (1) OMITTED GUARD THAT CHANGES MEANING — the rule gives an explicit numbered per-iteration sequence ("(1) removePartGroup ... (2) if (store == inv.end()) continue; (3) int prio = 1;") and drops npcanimation.cpp:614-615: `if (slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Helmet) removeIndividualPart(ESM::PRT_Hair);`. This runs after the equipped test and before prio is computed, so ANY item occupying the helmet slot deletes hair outright, regardless of its record type and regardless of any priority comparison. Together with the re-add guard at :654 (`mPartPriorities[PRT_Hair] < 1 && mPartPriorities[PRT_Head] <= 1`), hair is not governed purely by the priority table, contradicting the rule's claim that hair "is added at priority 1, so ANY clothing or armor (>= 2) beats them" — the mechanism is removal plus a head-priority gate, not a priority contest. A port hardcoding only the table leaves hair poking through helmets whose mParts list has no PRT_Hair entry. (2) OMITTED GUARD THAT CHANGES MEANING — the rule asserts updateParts "drives everything from one static table" and that the concrete numbers are what "a port should hardcode", yet drops the reserveIndividualPart blocks at :633-647 that are the entire reason base priorities 11 and 3 exist (they are the "reserved slots" the quoted FIXME refers to). Slot_Robe reserves PRT_Groin, Skirt, RLeg, LLeg, RUpperarm, LUpperarm, RKnee, LKnee, RForearm, LForearm, Cuirass at prio; Slot_Skirt reserves PRT_Groin, RLeg, LLeg at prio. Without them a port renders naked limbs and cuirass through an equipped robe while still matching every number the rule lists. (3) FALSE / UNIMPLEMENTABLE AS WRITTEN — "Any other type (Weapon, Light, Lockpick, Probe, Book, Apparatus, Repair) leaves prio == 1 and calls addPartGroup at all", echoed by "anything not Clothing or Armor 1" in the hardcode list. addPartGroup is called ONLY inside the `if (Clothing)`  ...
+
+
+## [B] reserveIndividualPart claims a part slot with NO mesh — the visual result is a hole that cannot be refilled
+- `apps/openmw/mwrender/npcanimation.cpp:731-751` - importance **critical**
+
+`reserveIndividualPart(type, group, priority)` is guarded by STRICTLY GREATER: `if (priority > mPartPriorities[type])`. If the test fails it does nothing whatsoever — an existing part at equal or higher priority survives untouched. If it passes it calls `removeIndividualPart(type)` first, then sets `mPartPriorities[type] = priority; mPartslots[type] = group;` and returns. It never assigns mObjectParts[type]. So the part index ends up marked as owned by `group` at `priority` with a null PartHolder — a claim, not a mesh. removeIndividualPart(type) (npcanimation.cpp:731-742) does four things: `mPartPriorities[type] = 0`, `mPartslots[type] = -1`, `mObjectParts[type].reset()` (the PartHolder destructor detaches the attached osg subgraph from its bone, so any mesh already drawn there disappears), and if `mSounds[type]` is non-null and sounds are enabled it stops that looping sound and nulls it. VISUAL RESULT: nothing at all is drawn for that part, and it stays that way for the rest of this updateParts() call, because every remaining path that could supply geometry is blocked by the same counter — addOrReplaceIndividualPart bails on `priority <= mPartPriorities[type]`, and the naked-body fill loop only runs where `mPartPriorities[part] < 1`. It is a deletion, not a placeholder or a stub mesh. A JS port must model this as a per-part {priority:int, slot:int, node:Node|null} triple where node may legitimately be null while priority > 0; collapsing 'reserved' into 'absent' will let the naked mesh leak back in and re-grow the arm.
+
+```cpp
+void NpcAnimation::reserveIndividualPart(ESM::PartReferenceType type, int group, int priority)
+{
+    if (priority > mPartPriorities[type])
+    {
+        removeIndividualPart(type);
+        mPartPriorities[type] = priority;
+        mPartslots[type] = group;
+    }
+}
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The mechanic half of the rule is exact, but the "VISUAL RESULT" half states as always-true something that is conditional. The claim "nothing at all is drawn for that part, and it stays that way for the rest of this updateParts() call, because every remaining path that could supply geometry is blocked by the same counter" is false on two counts. (1) It omits an unconditional wipe that is not a priority check at all. npcanimation.cpp:614-615, inside the same slot loop, runs `if (slotlist[i].mSlot == Slot_Helmet) removeIndividualPart(ESM::PRT_Hair);` whenever the Helmet slot is occupied. That resets mPartPriorities[PRT_Hair] to 0 no matter how high the reservation was — a PRT_Hair reservation made by the Robe slot at priority 24/25 (Robe is slot index 0, Helmet is index 2) is destroyed. Line 654 then reads `mPartPriorities[PRT_Hair] < 1 && mPartPriorities[PRT_Head] <= 1` and can add mHairModel. So a reservation demonstrably does not always survive the call, and geometry can appear where one was made. (2) addOrReplaceIndividualPart is not blocked by "the same counter" in general — it is blocked only by `priority <= mPartPriorities[type]` (line 771), so any later call with strictly greater priority overwrites the reservation and draws a mesh. What actually makes reservations usually survive is the priority ladder, which the rule never states: slotlist base priorities are Robe 11, Skirt 3, everything else 0 (line 591-...), and prio = ((base+1) << 1) + 0 for clothing / +1 for armor (lines 622, 628), giving Robe 24/25, Skirt 8/9, all other slots 2/3, evaluated in that slot order. Descending order is why the high reservations stick. Among the twelve equal-base slots the ladder is not monotonic: a clothing item reserves at 2 and a later armor slot adds at 3 (e.g. Shoes in Slot_Boots at index 7 reserving a part index that a Gauntlet/Bracer in Slot_LeftGauntlet/RightGauntlet at index 8/9 then supplies at priority 3) — the code places no restriction on which PRT_ indices an item's mParts list may name. A JS port written from the rule as stated would treat "reserved" as permanently sealed for the pass and would omit both the unconditional PRT_Hair clear and the higher-priority overwrite path.
+
+
+## [B] A Robe reserves exactly 11 parts (including both forearms and both upper arms); a Skirt reserves exactly 3
+- `apps/openmw/mwrender/npcanimation.cpp:633-647` - importance **critical**
+
+After the addPartGroup call, and keyed on the SLOT (not on the item type), updateParts runs an `if (slot == Slot_Robe) ... else if (slot == Slot_Skirt) ...` block using the same `prio` computed above. Robe reserves, in this source order, exactly these 11 ESM::PartReferenceType values: PRT_Groin(4), PRT_Skirt(5), PRT_RLeg(21), PRT_LLeg(22), PRT_RUpperarm(13), PRT_LUpperarm(14), PRT_RKnee(19), PRT_LKnee(20), PRT_RForearm(11), PRT_LForearm(12), PRT_Cuirass(3) — each via `reserveIndividualPart(parts[p], Slot_Robe, prio)`. Skirt reserves exactly 3: PRT_Groin(4), PRT_RLeg(21), PRT_LLeg(22). A Robe does NOT reserve: PRT_Head(0), PRT_Hair(1), PRT_Neck(2), PRT_RHand(6), PRT_LHand(7), PRT_RWrist(8), PRT_LWrist(9), PRT_Shield(10), PRT_RFoot(15), PRT_LFoot(16), PRT_RAnkle(17), PRT_LAnkle(18), PRT_RPauldron(23), PRT_LPauldron(24), PRT_Weapon(25), PRT_Tail(26). This is the whole reason first-person hands survive a robe while the arms do not: the hand and wrist indices are simply not in the list. The block is unconditional on item type — it runs for whatever is in Slot_Robe / Slot_Skirt, so a non-Clothing, non-Armor item in Slot_Robe would still reserve all 11 parts, at prio == 1. Because a robe is Clothing its prio is ((11+1)<<1)+0 = 24, the highest value the whole system can produce (only armor in Slot_Robe, prio 25, would be higher).
+
+```cpp
+if (slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Robe)
+{
+    ESM::PartReferenceType parts[] = { ESM::PRT_Groin, ESM::PRT_Skirt, ESM::PRT_RLeg, ESM::PRT_LLeg,
+        ESM::PRT_RUpperarm, ESM::PRT_LUpperarm, ESM::PRT_RKnee, ESM::PRT_LKnee, ESM::PRT_RForearm,
+        ESM::PRT_LForearm, ESM::PRT_Cuirass };
+    const size_t partsSize = sizeof(parts) / sizeof(parts[0]);
+    for (size_t p = 0; p < partsSize; ++p)
+        reserveIndividualPart(parts[p], slotlist[i].mSlot, prio);
+}
+else if (slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Skirt)
+{
+    reserveIndividualPart(ESM::PRT_Groin, slotlist[i].mSlot, prio);
+    reserveIndividualPart(ESM::PRT_RLeg, slotlist[i].mSlot, prio);
+    reserveIndividualPart(ESM::PRT_LLeg, slotlist[i].mSlot, prio);
+}
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The rule's structural anatomy is exactly right — verified against OpenMW master, where the quote sits at npcanimation.cpp:633-647 verbatim. The 11 Robe parts and their source order, Skirt's 3, every ESM::PartReferenceType number (checked against components/esm3/loadarmo.hpp), the 16-part complement, "keyed on slot not item type", the `int prio = 1;` default at line 617, and `prio = ((11+1)<<1)+0 = 24` (Slot_Robe's mBasePriority is 11 at line 591) all hold. But it fails on four counts. (1) OMITTED GUARD THAT CHANGES MEANING. reserveIndividualPart (line 744) is `if (priority > mPartPriorities[type]) { removeIndividualPart(type); ... }` — strictly greater, and it clears the slot first. The rule states Robe "reserves, in this source order, exactly these 11 ... each via reserveIndividualPart(parts[p], Slot_Robe, prio)" as an unconditional act. It is not. addPartGroup on line 624 has already stamped the same prio 24 on whatever parts the robe record itself declares, so for those parts the reserve is a no-op. An implementer porting the rule literally ("clear the slot and stamp prio, for all 11") would delete the robe's own just-attached PRT_Cuirass/PRT_Groin/PRT_Skirt/forearm/upperarm meshes and render an invisible robe. The strict `>` is precisely what preserves them, and the rule never mentions it. (2) THE FIRST-PERSON CAUSAL CLAIM IS OVERREACH AND WRONG ON THE ARMS. "This is the whole reason first-person hands survive a robe while the arms do not." addPartGroup contains an explicit first-person fallback (lines 886-893 and 902-909): when the `.1st` variant is missing it retries the plain bodypart and keeps it only if `mData.mPart` is MP_Hand, MP_Wrist, MP_Forearm or MP_Upperarm. Robe sleeve geometry therefore DOES render in first person. What the reserve suppresses is the bare-body forearm/upperarm supplied by the getBodyParts table at lines 681-689 (guarded by `if (mPartPriorities[part] < 1)`), not all arm geometry. "The arms do not [survive]" conflates "the naked arm parts are suppressed" with "no arms are drawn." (3) HANDS ARE NOT IMMUNE BY CONSTRUCTION. addPartGroup(slot, prio, clothes->mParts.mParts, ...) runs before the block and claims whatever the RECORD lists — including PRT_RHand/PRT_LHand/PRT_RWrist/PRT_LWrist if present — either attaching a mesh or, when the bodypart is not found, calling reserveIndividualPart at the same prio 24, which blanks the slo ...
+
+
+## [B] Strictly-greater wins and ties LOSE — which is exactly why a robe's own sleeves survive its own reserve pass
+- `apps/openmw/mwrender/npcanimation.cpp:744-776` - importance **critical**
+
+Two comparisons, both strict, decide every conflict. (a) `addOrReplaceIndividualPart`: `if (priority <= mPartPriorities[type]) return false;` — an equal priority is REJECTED and the incoming mesh is dropped; on a win it does removeIndividualPart(type), then `mPartslots[type] = group; mPartPriorities[type] = priority;` (slot assigned before priority, irrelevant to behaviour), then attaches, and returns true. If the attach throws, the catch logs and returns false but the slot and priority have ALREADY been overwritten — the part stays claimed and empty. (b) `reserveIndividualPart`: `if (priority > mPartPriorities[type])`. Consequence that a port must get right: within one slot's own iteration, addPartGroup adds the item's meshes at priority P and the Robe/Skirt reserve block then runs at the same P, so `P > P` is false and the reserve is a NO-OP on the item's own parts. The reserve only wipes parts owned by other, strictly lower-priority slots. Because both tests compare absolute numbers, the final set of visible parts is independent of slotlist iteration order — order only matters for the wipe. That wipe is `removePartGroup(group)`, npcanimation.cpp:754-761: `for (int i = 0; i < ESM::PRT_Count; i++) if (mPartslots[i] == group) removeIndividualPart(...)` — it matches on the OWNING SLOT ID, so naked-body parts (added with group == -1) and the head/hair (also group -1) are never cleared by it, since -1 never appears in the slotlist. Initial state, set in the NpcAnimation constructor (npcanimation.cpp:284-288): every mPartslots[i] = -1 and every mPartPriorities[i] = 0, for i in [0, ESM::PRT_Count=27). Both arrays are plain `int[ESM::PRT_Count]` (npcanimation.hpp:68-69).
+
+```cpp
+bool NpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type, int group, int priority,
+    VFS::Path::NormalizedView mesh, bool enchantedGlow, osg::Vec4f* glowColor, bool isLight)
+{
+    if (priority <= mPartPriorities[type])
+        return false;
+
+    removeIndividualPart(type);
+    mPartslots[type] = group;
+    mPartPriorities[type] = priority;
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Most of the rule checks out against /tmp/claude-0/-home-user-project-dagger/0ec83e1e-fa7a-575c-b46a-fc71a6754acb/scratchpad/openmw/apps/openmw/mwrender/npcanimation.cpp (identical in all five copies): the `<=` reject, the slot-then-priority assignment (harmless, since removeIndividualPart at :731-733 zeroes both), the catch at :804-808 returning false over an already-claimed empty slot, `priority > mPartPriorities[type]` in reserveIndividualPart (:744), removePartGroup matching the owning slot id at :754-761, the constructor init at :284-288, PRT_Count = 27 (loadarmo.hpp:48) and the plain int[27] arrays (npcanimation.hpp:68-69). The "reserve is a no-op on the item's own parts" point is also correct: addPartGroup passes the same `prio` (:917/:920) that the Robe/Skirt reserve block then re-uses (:640-646). But the load-bearing claim — "the final set of visible parts is independent of slotlist iteration order — order only matters for the wipe" — is false, and it contradicts the rule's own first sentence. Absolute-number comparison plus a STRICT test means ties are broken by arrival: first writer wins, every later equal-priority claimant is dropped. Ties are not exotic, they are the norm. The priority formula at :620/:627 is `((mBasePriority + 1) << 1) + 0|1`, and in the slotlist at :590-597 twelve of the fourteen slots carry mBasePriority 0, so every clothing item in Helmet/Cuirass/Greaves/both pauldrons/Boots/both gauntlets/Shirt/Pants/CarriedLeft/CarriedRight computes priority 2 and every armor piece computes 3. Only Robe (24/25) and Skirt (8/9) are distinct. Concretely: a shirt (idx 10) and pants (idx 11) are both ESM::Clothing at priority 2; if both declare a mesh for PRT_Groin, the shirt claims it first, then the pants' addOrReplaceIndividualPart hits `2 <= 2` and its mesh is discarded. Swap those two rows and the pants' groin renders instead. Same for Cuirass vs Greaves, LGauntlet vs RGauntlet, LPauldron vs RPauldron at armor priority 3. Order-independence holds only when all competing priorities are distinct — the rule states a conditional as always-true, which is exactly what a port would get wrong (e.g. iterating slots from a hash map). The rule also omits a second order-sensitive removal that is not the removePartGroup wipe: :615-616, `if (slotlist[i].mSlot == Slot_Helmet) removeIndividualPart(ESM::PRT_Hair);` — unconditional, with no priority test at ...
+
+
+## [B] In first person a robe leaves hands and wrists but deletes the forearms and upper arms
+- `apps/openmw/mwrender/npcanimation.cpp:617-641, 879-920, 682-690` - importance **critical**
+
+Compose the pieces for the case the port actually cares about. Robe equipped, mViewMode == VM_FirstPerson: prio = ((11+1)<<1)+0 = 24. addPartGroup(Slot_Robe, 24, clothes->mParts.mParts, ...) runs with `ext = ".1st"` (npcanimation.cpp:879): for each ESM::PartReference it searches the BodyPart store for `<femaleId or maleId> + ".1st"`; on a miss, and ONLY when mViewMode == VM_FirstPerson, it retries the bare id and keeps that third-person record only if its `mData.mPart` is MP_Hand(5), MP_Wrist(6), MP_Forearm(7) or MP_Upperarm(8), otherwise it sets bodypart = nullptr. Then `if (bodypart) addOrReplaceIndividualPart(part.mPart, group, priority, ...) else reserveIndividualPart((ESM::PartReferenceType)part.mPart, group, priority);` (:916-920) — so every robe part reference whose mesh could not be resolved still CLAIMS its part index at 24 with no mesh. Next the robe reserve block claims the 11 listed parts at 24, a no-op on anything the robe already set to 24. Net result at the fill loop: mPartPriorities[PRT_RForearm]=mPartPriorities[PRT_LForearm]=mPartPriorities[PRT_RUpperarm]=mPartPriorities[PRT_LUpperarm]=24, so `< 1` fails and the naked first-person forearm/upper-arm meshes are NEVER attached. The only geometry on those four bones is whatever the robe's own part list resolved to — which in first person can only be a THIRD-person mesh reached through the hand/wrist/forearm/upperarm fallback above. PRT_RHand(6), PRT_LHand(7), PRT_RWrist(8), PRT_LWrist(9) are not in the robe's reserve list, so unless the robe's own record references them they stay at priority 0 and get filled from the naked first-person table at priority 1. So: hands and wrists present, arm segments deleted, sleeves possibly present as third-person meshes. Nothing about this is first-person-specific in the reservation itself — a robe hides the naked chest, groin, legs and knees in third person by exactly the same mechanism.
+
+```cpp
+const char* ext = (mViewMode == VM_FirstPerson) ? ".1st" : "";
+...
+    bodypart = partStore.search(part.mMale);
+    if (bodypart
+        && !(bodypart->mData.mPart == ESM::BodyPart::MP_Hand
+            || bodypart->mData.mPart == ESM::BodyPart::MP_Wrist
+            || bodypart->mData.mPart == ESM::BodyPart::MP_Forearm
+            || bodypart->mData.mPart == ESM::BodyPart::MP_Upperarm))
+        bodypart = nullptr;
+...
+if (bodypart)
+    addOrReplaceIndividualPart(static_cast<ESM::PartReferenceType>(part.mPart), group, priority,
+        Misc::ResourceHelpers::correctMeshPath(bodypart->mModel.getNormalized()), enchantedGlow, glowColor);
+else
+    reserveIndividualPart((ESM::PartReferenceType)part.mPart, group, priority);
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> The priority arithmetic, the 11-part robe reserve list, the `reserveIndividualPart` no-op-on-equal semantics (:744, `if (priority > mPartPriorities[type])`), and the `< 1` fill-loop block at :682-690 are all faithful to the file. But the rule states as impossible something the code's FIRST branch does, and flattens two conditionals into constants. (1) Inverted/false universal. "The only geometry on those four bones is whatever the robe's own part list resolved to — which in first person can only be a THIRD-person mesh reached through the hand/wrist/forearm/upperarm fallback above." In first person the PRIMARY lookup at :882 / :898 is `partStore.search(<mFemale|mMale>.getRefIdString() + ext)` with `ext = ".1st"` (:879). If that `.1st` record exists, `bodypart` is non-null and the MP_Hand/MP_Wrist/MP_Forearm/MP_Upperarm filter is never reached — the mesh attached at priority 24 is a first-person equipment mesh. The bare-id retry at :883-891 / :899-907 is guarded by `if (!bodypart && mViewMode == VM_FirstPerson)`, i.e. it is a FALLBACK, reached only on a miss. Whether any given robe has a `.1st` part is a data question, not a code guarantee; the rule converts "usually absent in the data" into "can only be". A port written to this rule would omit the `.1st` equipment-part lookup entirely and invert the code's order of preference. (2) Omitted guard on the hand/wrist claim. "PRT_RHand(6), PRT_LHand(7), PRT_RWrist(8), PRT_LWrist(9) ... unless the robe's own record references them they stay at priority 0" ignores every other entry in `slotlist[]` (:590-598). Slot_LeftGauntlet / Slot_RightGauntlet (bracers and gauntlets) have mBasePriority 0, so armor there calls `addPartGroup(..., ((0+1)<<1)+1 = 3, ...)` and claims PRT_RHand/PRT_LHand — and a shirt (prio 2) can claim the wrists. They stay at 0 only when nothing else in the slotlist claims them, not merely "unless the robe references them". (3) prio = 24 is conditional, not fixed. `int prio = 1;` (:617) is overwritten only inside the Clothing branch (`((11+1)<<1)+0 = 24`, :622) or the Armor branch (`((11+1)<<1)+1 = 25`, :628). A robe-slot item that is neither leaves prio at 1, and the reserve block at :633-641 then reserves the 11 parts at 1 — which still blocks the `< 1` naked fill, but at a priority any clothing or armor can outrank. The rule presents 24 as the value of the case rather than as the Clothing-branch v ...
+
+
+## [B] A helmet force-deletes hair before its own parts are added, and hair only returns if the helmet left PRT_Head alone
+- `apps/openmw/mwrender/npcanimation.cpp:614-615, 650-655` - importance **medium**
+
+The only per-slot special case besides Robe/Skirt: `if (slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Helmet) removeIndividualPart(ESM::PRT_Hair);`. Placement matters — it sits AFTER `if (store == inv.end()) continue;` so it fires only when a helmet is actually equipped, and BEFORE prio is computed and addPartGroup runs, so the helmet's own part list can immediately re-add PRT_Hair at 2 (clothing) or 3 (armor). It is an unconditional removeIndividualPart, not a priority test: hair priority goes to 0 and its slot to -1 regardless of who owned it. Only PRT_Hair is force-removed; PRT_Head is not. Hair can then come back only through the later block, which requires BOTH conditions: `if (mPartPriorities[ESM::PRT_Hair] < 1 && mPartPriorities[ESM::PRT_Head] <= 1 && !mHairModel.empty())`. So a helmet whose part list supplies PRT_Head (priority 2 or 3, i.e. > 1) permanently suppresses hair — that is the closed-helm behaviour — while a helmet that touches only PRT_Hair or neither lets hair return at priority 1. Note the head test is `<= 1`, not `< 1`: head already added at priority 1 by the line above still permits hair. This whole block is additionally gated by `if (mViewMode != VM_FirstPerson)`, so in first person neither head nor hair is ever added and the helmet's forced hair removal simply stands.
+
+```cpp
+if (slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Helmet)
+    removeIndividualPart(ESM::PRT_Hair);
+...
+if (mViewMode != VM_FirstPerson)
+{
+    if (mPartPriorities[ESM::PRT_Head] < 1 && !mHeadModel.empty())
+        addOrReplaceIndividualPart(ESM::PRT_Head, -1, 1, mHeadModel);
+    if (mPartPriorities[ESM::PRT_Hair] < 1 && mPartPriorities[ESM::PRT_Head] <= 1 && !mHairModel.empty())
+        addOrReplaceIndividualPart(ESM::PRT_Hair, -1, 1, mHairModel);
+}
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Most of the rule is accurate — the placement analysis (after the `store == inv.end()` continue at 611-612, before `int prio` at 617), the helmet priorities (mBasePriority 0 → clothing 2, armor 3), the unconditional nature of removeIndividualPart (sets priority 0 and slot -1, npcanimation.cpp:731-742), the `<= 1` vs `< 1` head asymmetry, the VM_FirstPerson gate, and the claim that racial hair can only return at 654-655 (the terminal body-part loop at 681 starts at PRT_Neck, and the enum is PRT_Head=0, PRT_Hair=1, PRT_Neck=2, so it can never touch Head or Hair). But the closing case split inverts the very guard the rule quotes. "A helmet that touches only PRT_Hair ... lets hair return at priority 1" is false: if the helmet's part list contains a PRT_Hair entry, addPartGroup (873-922) calls addOrReplaceIndividualPart at prio 2 or 3 — or, when the BodyPart record is missing/empty, reserveIndividualPart at the same prio — so mPartPriorities[PRT_Hair] becomes 2 or 3. The condition `mPartPriorities[ESM::PRT_Hair] < 1` at line 654 then fails and mHairModel is never re-added. So a hair-supplying helmet blocks racial hair exactly as firmly as a head-supplying one; only the "touches neither" case actually lets hair return at priority 1.
+
+
+## [B] An attack is THREE play() calls on the same weapon group, and the wind-up's stop key is "<type> max attack", not "<type> stop"
+- `apps/openmw/mwmechanics/character.cpp:1667-1668, 1674, 1704-1719, 1726-1730, 1758-1759, 1762-1817` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE 11
+
+CharacterController::updateWeaponState drives a melee/ranged attack as three separate playBlendedAnimation() calls on the SAME group (mCurrentWeapon, the long weapon group e.g. "weapononehand"), across three frames/states. Signature order is playBlendedAnimation(groupname, priority, blendMask, autodisable, speedmult, start, stop, startpoint, loops[, loopfallback]) (character.hpp:259-261); all three attack calls pass blendMask=BlendMask_All, autodisable=false, speedmult=weapSpeed, loops=0.
+
+(1) WIND-UP, :1718-1719. startKey/stopKey are initialised to "start"/"stop" (:1667-1668). If mWeaponType != PickProbe AND !isRandomAttackAnimation(mCurrentWeapon), they are REPLACED at :1705-1706 by startKey = mAttackType + " start" and stopKey = mAttackType + " max attack". So the real text keys are e.g. "weapononehand: chop start" .. "weapononehand: chop max attack" — the stop key is "max attack", NOT "chop stop". startpoint=0. Sets mUpperBodyState = AttackWindUp (:1709) and clears mAttackSuccess=false, mAttackVictim=empty Ptr, mAttackHitPos=(0,0,0) (:1714-1716).
+
+(2) RELEASE, :1785-1787. Entered when the state is AttackWindUp and (mWeaponType == PickProbe || isRandomAttackAnimation(mCurrentWeapon) || !getAttackingOrSpell()) — i.e. the attack button was let go (:1726-1728); state becomes AttackRelease, breakInvisibility() fires, and prepareHit() runs (:1755) for everything except PickProbe. The release play only happens if minAttackTime <= currentTime <= maxAttackTime, where currentTime = mAnimation->getCurrentTime(mCurrentWeapon), minAttackTime = getTextKeyTime(group + ": " + mAttackType + " min attack"), maxAttackTime = getTextKeyTime(group + ": " + mAttackType + " max attack") (:1766-1769). Both keys missing gives -1/-1 and the test fails (currentTime >= 0), so the release call is SKIPPED. It first calls mAnimation->disable(mCurrentWeapon) (:1785), then plays from "<mAttackType> max attack" to "<mAttackType> " + hit, where hit = (mAttackType != "shoot") ? "hit" : "release" (:1771).
+
+(3) FOLLOW, :1811-1812. After re-reading animPlaying = getInfo(mCurrentWeapon, &complete) (:1790), it fires when !animPlaying || (currentTime >= maxAttackTime && complete >= 1.f) (:1793). Sets mReadyToHit = false (:1807), disables the group if still playing (:1809-1810), plays "<mAttackType> <maybe bucket >follow start" .. "<mAttackType> <maybe bucket >follow stop" with startpoint 0, then sets mUpperBodyState = AttackEnd (:1813).
+
+EXCEPTION — one call only: for mWeaponType == PickProbe or a random attack animation (attack1/2/3, swimattack1/2/3), the state jumps AttackRelease -> AttackEnd immediately at :1758-1759, so calls (2) and (3) never run; those animations play their single unprefixed "start".."stop" section to the end. The spell-casting branch is a different, single call at :1659-1660 with speedmult hardcoded to 1.
+
+```cpp
+1705:  startKey = mAttackType + ' ' + startKey;
+1706:  stopKey = mAttackType + " max attack";
+1718:  playBlendedAnimation(mCurrentWeapon, priorityWeapon, MWRender::BlendMask_All, false, weapSpeed,
+1719:      startKey, stopKey, 0.0f, 0);
+...
+1771:  std::string hit = mAttackType != "shoot" ? "hit" : "release";
+1785:  mAnimation->disable(mCurrentWeapon);
+1786:  playBlendedAnimation(mCurrentWeapon, priorityWeapon, MWRender::BlendMask_All, false, weapSpeed,
+1787:      mAttackType + " max attack", mAttackType + ' ' + hit, startPoint, 0);
+...
+1811:  playBlendedAnimation(mCurrentWeapon, priorityWeapon, MWRender::BlendMask_All, false, weapSpeed,
+1812:      mAttackType + ' ' + start, mAttackType + ' ' + stop, 0.0f, 0);
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Almost every structural claim checks out against apps/openmw/mwmechanics/character.cpp (verified copy: /tmp/claude-0/-home-user-project-dagger/0ec83e1e-fa7a-575c-b46a-fc71a6754acb/scratchpad/character.cpp) — the signature at character.hpp:259-261, the three same-group calls at 1718-1719 / 1786-1787 / 1811-1812 with BlendMask_All, autodisable=false, weapSpeed, loops=0; the "max attack" stop key at 1706; the AttackWindUp set at 1709 and result reset at 1714-1716; the release gate at 1726-1728 with prepareHit() at 1755; the follow gate at 1793 and AttackEnd at 1813; the PickProbe/random-attack short-circuit at 1758-1759; and the single speedmult=1 casting call at 1659-1660. But one asserted behaviour is inverted, and it is stated as unconditional fact. The rule says: "Both keys missing gives -1/-1 and the test fails (currentTime >= 0), so the release call is SKIPPED." currentTime >= 0 is NOT guaranteed. Animation::getCurrentTime returns -1.f when the group has no active AnimState (mwrender/animation.cpp:1247-1254: `if (iter == mStates.end()) return -1.f;`). That is exactly the state produced when the keys are missing: Animation::reset bails out with `return false` if the start key or the stop key is absent (animation.cpp:992-993, 1003-1004), so Animation::play never inserts a state for the group (animation.cpp:918-966). A weapon group with no "<type> max attack" key therefore fails the wind-up play at 1718-1719 while mUpperBodyState is still set to AttackWindUp unconditionally at 1709, leaving getCurrentTime(mCurrentWeapon) == -1.f. And the group is genuinely empty at that point: the previous cycle disables it at 1835-1836 before returning to WeaponEquipped, which is the state the wind-up branch requires (1514). So in the very case the rule describes, the test at 1769 is -1.f <= -1.f && -1.f <= -1.f, which is TRUE — the branch is entered, mAnimation->disable(mCurrentWeapon) runs at 1785 and the release playBlendedAnimation at 1786-1787 is issued (it then no-ops inside Animation::play for the same missing-key reason). The release call is not skipped; the guard passes. The stated conclusion and its stated justification are both wrong. Secondary (not the basis for refutation, but it blocks implementing from the rule): the rule pins startpoint=0 for calls (1) and (3) but leaves call (2)'s startPoint as an unexplained token, when it is computed at 1773-1783 as start ...
+
+
+## [B] The release startPoint is 1 - mAttackStrength, rescaled by (minHit-maxAttack)/(hit-maxAttack) ONLY when maxAttack <= minHit < hit
+- `apps/openmw/mwmechanics/character.cpp:1766-1787` - importance **high**
+
+The startpoint argument of the RELEASE play() call (call 2 of the attack triad) is computed at character.cpp:1773-1783 as a normalised fraction in [0,1) of the played span ("<type> max attack" -> "<type> hit"/"<type> release"):
+
+  startPoint = 0
+  if (minAttackTime != -1 && minAttackTime < maxAttackTime):
+      startPoint = 1 - mAttackStrength
+      minHitTime = getTextKeyTime(group + ": " + mAttackType + " min hit")
+      hitTime    = getTextKeyTime(group + ": " + mAttackType + " " + hit)   // hit = "hit", or "release" when mAttackType == "shoot"
+      if (maxAttackTime <= minHitTime && minHitTime < hitTime):
+          startPoint *= (minHitTime - maxAttackTime) / (hitTime - maxAttackTime)
+
+Exact conditions and edges:
+- The whole block is gated on the "min attack" key EXISTING (getTextKeyTime returns -1 when absent, per rule 46) and on minAttackTime < maxAttackTime STRICTLY. If either fails, startPoint stays 0.0 and the release section plays from its very beginning regardless of attack strength.
+- The rescale is a SEPARATE, stricter gate. It needs BOTH "min hit" and the hit/release key present and ordered maxAttackTime <= minHitTime < hitTime. A missing "min hit" gives minHitTime = -1, so maxAttackTime <= -1 is false (maxAttackTime >= 0 here) and no rescale happens. A missing hit key gives hitTime = -1, so minHitTime < -1 is false. Note NEITHER value is tested against the -1 sentinel directly — only the ordering comparisons filter them.
+- The multiplier is in [0,1) whenever the gate passes (numerator >= 0, strictly less than the denominator), so it only ever shrinks the skip.
+- Semantics: mAttackStrength == 1.0 (fully wound-up) gives startPoint 0 and the full pre-hit swing plays; mAttackStrength == 0.0 gives the maximum skip. Since a MISSED melee attack sets mAttackStrength = 0 (see the prepareHit rule), a whiff always takes the maximum skip.
+- No clamping is applied; mAttackStrength is already clamped to [0,1] upstream.
+- startPoint is passed as the 8th argument of playBlendedAnimation and is a FRACTION of the start->stop span, not a time.
+
+```cpp
+1773:  float startPoint = 0.f;
+1774:
+1775:  // Skip a bit of the pre-hit section based on the attack strength
+1776:  if (minAttackTime != -1.f && minAttackTime < maxAttackTime)
+1777:  {
+1778:      startPoint = 1.f - mAttackStrength;
+1779:      float minHitTime = mAnimation->getTextKeyTime(mCurrentWeapon + ": " + mAttackType + " min hit");
+1780:      float hitTime = mAnimation->getTextKeyTime(mCurrentWeapon + ": " + mAttackType + ' ' + hit);
+1781:      if (maxAttackTime <= minHitTime && minHitTime < hitTime)
+1782:          startPoint *= (minHitTime - maxAttackTime) / (hitTime - maxAttackTime);
+1783:  }
+```
+
+**Recorded caveat** (the mechanism is sound; this is the condition it
+must not be read past):
+
+> Every operative claim in the rule checks out against apps/openmw/mwmechanics/character.cpp:1762-1787 — the line numbers, the outer gate (minAttackTime != -1.f && minAttackTime < maxAttackTime), the nested rescale gate (maxAttackTime <= minHitTime && minHitTime < hitTime), the "shoot" -> "release" key swap, the observation that neither minHitTime nor hitTime is tested against -1 directly, the absence of clamping, and the 8th-argument fraction semantics (playBlendedAnimation at character.cpp:2610-2612; animation.hpp:392-393 documents "0 starts at the start marker, 1 starts at the stop marker"; Animation::reset at animation.cpp:1022 computes mStartTime + (mStopTime - mStartTime) * startpoint). getTextKeyTime returning -1.f when absent is confirmed at animation.cpp:853. mAttackStrength in [0,1] upstream is confirmed (calculateWindUp's std::clamp at character.cpp:1246-1247; prepareHit's std::min(1.f, 0.1f + roll) at 1259 and = 0.f on a melee miss at 1267), and the -1.f sentinel written at character.cpp:1517 cannot reach line 1778 because AttackRelease is only ever set at line 1730, immediately before prepareHit() at 1755. The defect is the headline range. The rule opens by asserting startPoint is "a normalised fraction in [0,1)", i.e. strictly less than 1. That is false on a reachable path and the rule contradicts itself two bullets later. When the outer gate passes, startPoint = 1.f - mAttackStrength (line 1778); the rescale at 1782 is a separate, stricter gate that the rule itself correctly says does NOT fire when the "min hit" key is absent. So with mAttackStrength == 0.f and no "min hit" key, startPoint stays exactly 1.0 and the play call starts at the stop marker, skipping the entire "max attack" -> "hit"/"release" section. Nothing clamps or decrements it. This is not a hypothetical: a missed melee attack sets mAttackStrength = 0.f exactly (character.cpp:1265-1267), and the "shoot" branch looks up "<type> min hit" even though its stop key is "<type> release" — the only reference to " min hit" anywhere in apps/openmw — so a bow whose animation lacks a "shoot min hit" key takes the un-rescaled path. The rule's own semantics bullet ("mAttackStrength == 0.0 gives the maximum skip") describes precisely the startPoint == 1.0 case that its stated interval excludes. The multiplier alone is correctly in [0,1); startPoint is not.
+
+
+---
+
+# Tier C - extracted, NOT yet verified
+
+The reader's words, unchallenged. Treat each as a strong lead rather than a
+settled rule, and verify before writing code against it.
+
+## [C] mAttackStrength is the wind-up fraction between "min attack" and "max attack", falls back to a random 0.1..1.0, and is ZEROED on a melee miss
+- `apps/openmw/mwmechanics/character.cpp:1235-1272, 2934-2938` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+mAttackStrength is the single float that drives both the release startPoint and the follow bucket. It is set exactly once per attack, in prepareHit() (character.cpp:1250-1272), which is called from the AttackWindUp -> AttackRelease transition at :1755 (for everything except PickProbe) and early, from the text-key handler, for random attack animations that have no "hit" key (:1140).
+
+prepareHit():
+1. `if (mReadyToHit) return;` — idempotent guard, so it never re-rolls within one attack.
+2. mAttackStrength = calculateWindUp(); mAttackWindUp = mAttackStrength;  (mAttackWindUp keeps the raw value, including -1)
+3. calculateWindUp() (:1235-1248) returns -1.f if (!mAnimation || mCurrentWeapon.empty() || mWeaponType == PickProbe || isRandomAttackAnimation(mCurrentWeapon)); it then reads minAttackTime = getTextKeyTime(group + ": " + mAttackType + " min attack") and maxAttackTime = getTextKeyTime(group + ": " + mAttackType + " max attack") and returns -1.f if (minAttackTime == -1.f || minAttackTime >= maxAttackTime); otherwise it returns std::clamp((getCurrentTime(mCurrentWeapon) - minAttackTime) / (maxAttackTime - minAttackTime), 0.f, 1.f).
+4. `if (mAttackStrength == -1.f) mAttackStrength = std::min(1.f, 0.1f + rollClosedProbability(prng));` — rollClosedProbability is [0.0, 1.0] INCLUSIVE (components/misc/rng.hpp:31-32), so the fallback is uniform on [0.1, 1.0] with a point mass at 1.0 from the min().
+5. weapclass = getWeaponType(mWeaponType)->mWeaponClass. If weapclass != Ranged: if weapclass != Thrown, mAttackSuccess = mPtr.getClass().evaluateHit(mPtr, mAttackVictim, mAttackHitPos) and, when that is false, mAttackStrength = 0.f. Then playSwishSound() runs (for melee AND thrown, not for ranged).
+6. mReadyToHit = true.
+
+Consequences a port must reproduce: a melee MISS drives mAttackStrength to 0, which makes the release startPoint the maximum skip (1 x the rescale factor) and forces the "small" follow bucket. Ranged and thrown attacks never zero it. isRandomAttackAnimation(group) is the exact set {"attack1","swimattack1","attack2","swimattack2","attack3","swimattack3"} (:2934-2938).
+
+```cpp
+1250:  void CharacterController::prepareHit()
+1251:  {
+1252:      if (mReadyToHit)
+1253:          return;
+1254:
+1255:      auto& prng = MWBase::Environment::get().getWorld()->getPrng();
+1256:      mAttackStrength = calculateWindUp();
+1257:      mAttackWindUp = mAttackStrength;
+1258:      if (mAttackStrength == -1.f)
+1259:          mAttackStrength = std::min(1.f, 0.1f + Misc::Rng::rollClosedProbability(prng));
+1260:      ESM::WeaponType::Class weapclass = getWeaponType(mWeaponType)->mWeaponClass;
+1261:      if (weapclass != ESM::WeaponType::Ranged)
+1262:      {
+1263:          if (weapclass != ESM::WeaponType::Thrown)
+1264:          {
+1265:              mAttackSuccess = mPtr.getClass().evaluateHit(mPtr, mAttackVictim, mAttackHitPos);
+1266:              if (!mAttackSuccess)
+1267:                  mAttackStrength = 0.f;
+```
+
+## [C] mAttackType is a five-branch decision: "shoot" for Ranged AND Thrown, then best-attack vs movement-based for the player (chosen by the [Game] "best attack" setting, default false), AI-desired for AI-disabled actors, and AiCombat's value otherwise
+- `apps/openmw/mwmechanics/character.cpp:65-78, 1674-1706, 2924-2932, 3014-3022` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Chosen once, at the start of the wind-up (character.cpp:1674-1706). The entire block is skipped when mWeaponType == ESM::Weapon::PickProbe OR isRandomAttackAnimation(mCurrentWeapon); in that case mAttackType is left untouched and the wind-up keys stay the unprefixed "start"/"stop".
+
+Order of branches, first match wins:
+1. weapclass (== getWeaponType(mWeaponType)->mWeaponClass) is Ranged OR Thrown  ->  mAttackType = "shoot". Note THROWN counts, not just bows.
+2. else if mPtr == getPlayer():
+   a. if Settings::game().mBestAttack — the config key is [Game] "best attack" (components/settings/categories/game.hpp:26), default `best attack = false` (files/settings-default.cfg:270):
+      - if mWeapon is non-empty AND mWeapon.getType() == ESM::Weapon::sRecordId -> getBestAttack(record)
+      - else (hand-to-hand; there is no best attack for H2H) -> getRandomAttackType()
+   b. else -> getMovementBasedAttackType()
+3. else if aiInactive, where aiInactive = actorControls->mDisableAI || !MechanicsManager::isAIActive() -> mAttackType = getDesiredAttackType() (i.e. CreatureStats::getAttackType()); if that is the empty string, mAttackType = getRandomAttackType().
+4. else (a non-player actor with AI running): mAttackType is NOT assigned — the value AiCombat previously pushed through setAIAttackType() is used as-is.
+
+The three producers, verbatim:
+- getBestAttack(const ESM::Weapon*) (character.cpp:65-78, file-static): slash = mData.mSlash[0] + mData.mSlash[1]; chop = mData.mChop[0] + mData.mChop[1]; thrust = mData.mThrust[0] + mData.mThrust[1] (each pair is {min,max} as unsigned char, summed in int). Then: if (slash == chop && slash == thrust) return "slash"; else if (thrust >= chop && thrust >= slash) return "thrust"; else if (slash >= chop && slash >= thrust) return "slash"; else return "chop". So a three-way tie yields slash, thrust wins any tie it is part of, and chop is only ever returned when it is the strict maximum.
+- getMovementBasedAttackType() (character.cpp:2924-2932): float* move = mPtr.getClass().getMovementSettings(mPtr).mPosition;  if (abs(move[1]) > abs(move[0]) + 0.2f) return "thrust";  if (abs(move[0]) > abs(move[1]) + 0.2f) return "slash";  return "chop". move[0] is the sideways (left/right) axis, move[1] the forward/back axis. The 0.2f is a deadband: an axis must exceed the other by MORE than 0.2 to win, so standing still, or moving diagonally, yields "chop".
+- getRandomAttackType() (character.cpp:3014-3022): random = Misc::Rng::rollProbability(world->getPrng()) in [0,1) (open upper bound); if (random >= 2/3.f) return "thrust"; if (random >= 1/3.f) return "slash"; return "chop" — three equal thirds, with the boundaries going to the higher tier.
+
+```cpp
+1676:  if (weapclass == ESM::WeaponType::Ranged || weapclass == ESM::WeaponType::Thrown)
+1677:      mAttackType = "shoot";
+1678:  else if (mPtr == getPlayer())
+1680:      if (Settings::game().mBestAttack)
+1684:              mAttackType = getBestAttack(mWeapon.get<ESM::Weapon>()->mBase);
+1689:              mAttackType = getRandomAttackType();
+1694:              mAttackType = getMovementBasedAttackType();
+1697:  else if (aiInactive)
+1699:      mAttackType = getDesiredAttackType();
+1700:      if (mAttackType == "")
+1701:          mAttackType = getRandomAttackType();
+...
+2926:  float* move = mPtr.getClass().getMovementSettings(mPtr).mPosition;
+2927:  if (std::abs(move[1]) > std::abs(move[0]) + 0.2f) // forward-backward
+2928:      return "thrust";
+2929:  if (std::abs(move[0]) > std::abs(move[1]) + 0.2f) // sideway
+2930:      return "slash";
+2931:  return "chop";
+```
+
+## [C] weapSpeed is the WEAP record's float mData.mSpeed, is 1.0 for everything else, and scales ONLY the three attack play() calls
+- `apps/openmw/mwmechanics/character.cpp:1298, 1320-1326, 1718, 1786, 1811` - importance **medium**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+weapSpeed is a function-local float in CharacterController::updateWeaponState, re-derived from scratch on every call. It is initialised `float weapSpeed = 1.f;` at character.cpp:1298 and is overwritten in exactly one place, character.cpp:1320-1326, under a conjunction of four conditions, ALL of which must hold:
+  cls.hasInventoryStore(mPtr)          (the enclosing `if` at :1299)
+  && stats.getDrawState() == DrawState::Weapon
+  && !mWeapon.isEmpty()
+  && mWeapon.getType() == ESM::Weapon::sRecordId
+and then `weapSpeed = mWeapon.get<ESM::Weapon>()->mBase->mData.mSpeed;`.
+
+That field is `float mSpeed` inside ESM::Weapon::WPDTstruct (components/esm3/loadweap.hpp:71 — `float mSpeed, mReach;`, a 32-byte struct laid out as float mWeight; int32_t mValue; int16_t mType; uint16_t mHealth; float mSpeed, mReach; uint16_t mEnchant; unsigned char mChop[2], mSlash[2], mThrust[2]; int32_t mFlags). It is a raw multiplier, NOT clamped or normalised anywhere on this path.
+
+weapSpeed therefore stays 1.0 for: hand-to-hand, spell casting, lockpicks and probes (Lockpick/Probe records, not WEAP), creatures with no inventory store, and any actor whose draw state is not Weapon.
+
+Where it is used: as the `speedmult` (5th) argument of the three attack play() calls only — the wind-up (:1718), the release (:1786) and the follow (:1811). It is NOT applied to the equip/unequip animations (:1406-1407 and :1465-1466 pass 1.0f), nor to the spell-cast animation (:1659 passes literal 1), nor to hit/recovery (:490 passes 1), nor to the torch animation (:1341 passes 1.0f). A port that multiplies the whole weapon group's playback rate by weapon speed instead of only the three attack sections will drift on the draw/sheathe timing.
+
+```cpp
+1298:  float weapSpeed = 1.f;
+...
+1323:  if (stats.getDrawState() == DrawState::Weapon && !mWeapon.isEmpty()
+1324:      && mWeapon.getType() == ESM::Weapon::sRecordId)
+1325:  {
+1326:      weapSpeed = mWeapon.get<ESM::Weapon>()->mBase->mData.mSpeed;
+```
+
+## [C] "equip attach"/"unequip detach" create and destroy the weapon mesh, but ONLY while mUpperBodyState is exactly Equipping/Unequipping — and a missing key is compensated for at animation start
+- `apps/openmw/mwrender/npcanimation.cpp:953-989 (plus 731-741, 768-796, 257); character.cpp:1074-1087, 1412-1414, 1451, 1469-1474` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+The weapon mesh node's whole lifetime is driven by two text keys, dispatched through CharacterController::handleTextKey (character.cpp:1074-1087) after the group filter of rule 47 has already guaranteed groupname == the currently playing group:
+
+  if (action == "equip attach")   { if (groupname == "shield") showCarriedLeft(true);  else if (mUpperBodyState == UpperBodyState::Equipping)   mAnimation->showWeapons(true); }
+  else if (action == "unequip detach") { if (groupname == "shield") showCarriedLeft(false); else if (mUpperBodyState == UpperBodyState::Unequipping) mAnimation->showWeapons(false); }
+
+The state test is an EXACT equality, not a range: an "equip attach" key crossed in any other upper-body state (WeaponEquipped, AttackWindUp, ...) is a no-op. "shield" is special-cased before the state test and is never state-gated.
+
+Missing-key compensation, both immediate rather than deferred:
+- Unequip (:1412-1414): right after starting the unequip animation and calling detachArrow(), `if (mAnimation->getTextKeyTime(weapgroup + ": unequip detach") < 0) mAnimation->showWeapons(false);`
+- Equip (:1469-1474): `if (weaptype != ESM::Weapon::Spell && mAnimation->getTextKeyTime(weapgroup + ": equip attach") < 0) mAnimation->showWeapons(true);`
+Note the equip path also calls showWeapons(false) UNCONDITIONALLY at :1451 immediately before entering the Equipping state, and :1377 forces showWeapons(true) when the weapon type changes mid-attack.
+
+NpcAnimation::showWeapons(bool) (mwrender/npcanimation.cpp:953-989) is the whole mechanism:
+  mShowWeapons = showWeapon; mAmmunition.reset();   // the arrow/bolt node is dropped on BOTH show and hide
+  if (showWeapon): look up inv slot Slot_CarriedRight; if present, glowColor = getEnchantmentColor(weapon), mesh = weapon.getClass().getCorrectedModel(weapon), then addOrReplaceIndividualPart(ESM::PRT_Weapon, Slot_CarriedRight, priority 1, mesh, enchantedGlow = !getEnchantment(weapon).empty(), &glowColor). Then, only for a WEAP record whose mData.mType == MarksmanCrossbow and whose Slot_Ammunition item's mData.mType equals getWeaponType(MarksmanCrossbow)->mAmmoType, attachArrow() is called — crossbows come out already loaded.
+  else: removeIndividualPart(ESM::PRT_Weapon); and, if mPtr is the player, getCreatureStats(mPtr).setAttackingOrSpell(false) — hiding the player's weapon cancels the attack.
+  Both branches end with updateHolsteredWeapon(!mShowWeapons); updateQuiver();
+
+removeIndividualPart (:731-741) is the destructor: mPartPriorities[type] = 0; mPartslots[type] = -1; mObjectParts[type].reset(); and, if mSounds[type] != nullptr && !mSoundsDisabled, stopSound(mSounds[type]) and mSounds[type] = nullptr.
+addOrReplaceIndividualPart (:768-...) begins with `if (priority <= mPartPriorities[type]) return false;` — since showWeapons always passes priority 1, calling showWeapons(true) while the weapon is ALREADY shown (mPartPriorities[PRT_Weapon] == 1) returns false and does NOT rebuild the mesh, though mAmmunition has already been reset. The attach bone is sPartList[PRT_Weapon] == "Weapon Bone" (:257, commented "Fallback. The real node name depends on the current weapon type."), overridden by the equipped weapon type's mAttachBone when that node exists in the actor (rule 17).
+
+```cpp
+953:  void NpcAnimation::showWeapons(bool showWeapon)
+955:      mShowWeapons = showWeapon;
+956:      mAmmunition.reset();
+965:          addOrReplaceIndividualPart(ESM::PRT_Weapon, MWWorld::InventoryStore::Slot_CarriedRight, 1, mesh,
+966:              !weapon->getClass().getEnchantment(*weapon).empty(), &glowColor);
+981:          removeIndividualPart(ESM::PRT_Weapon);
+983:          if (mPtr == MWMechanics::getPlayer())
+984:              mPtr.getClass().getCreatureStats(mPtr).setAttackingOrSpell(false);
+987:      updateHolsteredWeapon(!mShowWeapons);
+988:      updateQuiver();
+---- character.cpp ----
+1074:  if (action == "equip attach")
+1076:      if (groupname == "shield")
+1077:          mAnimation->showCarriedLeft(true);
+1078:      else if (mUpperBodyState == UpperBodyState::Equipping)
+1079:          mAnimation->showWeapons(true);
+1081:  else if (action == "unequip detach")
+1085:      else if (mUpperBodyState == UpperBodyState::Unequipping)
+1086:          mAnimation->showWeapons(false);
+```
+
+## [C] Actor scale is Npc::adjustScale, and first person multiplies ALL THREE axes by race HEIGHT only
+- `apps/openmw/mwclass/npc.cpp:1102-1136` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+There is no `getModelScale` in npc.cpp; the function is `void Npc::adjustScale(const MWWorld::ConstPtr& ptr, osg::Vec3f& scale, bool rendering) const` at apps/openmw/mwclass/npc.cpp:1102. It MULTIPLIES INTO the caller's vector in place and never assigns it. Every caller seeds it with the uniform cellref scale s as (s,s,s). Sex is `(NPC.mFlags & 0x01) == 0` -> male (ESM::NPC::Female = 0x01, loadnpc.cpp:240-243). Race is fetched per call as store.get<ESM::Race>().find(ref->mBase->mRace) — the NPC's own race, which does NOT change in werewolf form. THIRD PERSON (and every non-player NPC, always): pick w = mMaleWeight/mFemaleWeight and h = mMaleHeight/mFemaleHeight by sex, then scale.x *= w; scale.y *= w; scale.z *= h. Weight NEVER touches Z; height NEVER touches X or Y. Final node scale = (s*w, s*w, s*h). FIRST PERSON (player only, see the three-part condition rule): `scale *= h` — osg::Vec3f *= float scales ALL THREE components by the sex-matched HEIGHT — then `return`, so race WEIGHT is applied to no axis at all. Final node scale = (s*h, s*h, s*h), i.e. uniform. The branches are mutually exclusive: the first-person branch returns before the weight code. NpcAnimation itself never calls setScale anywhere (grep 'Scale' in npcanimation.cpp hits only line 305); the vector lands on the Ptr's base PositionAttitudeTransform, under which the first-person hand parts hang, so the hands inherit exactly this uniform factor.
+
+```cpp
+void Npc::adjustScale(const MWWorld::ConstPtr& ptr, osg::Vec3f& scale, bool rendering) const
+{
+    if (!rendering)
+        return; // collision meshes are not scaled based on race height
+                // having the same collision extents for all races makes the environments easier to test
+
+    const MWWorld::LiveCellRef<ESM::NPC>* ref = ptr.get<ESM::NPC>();
+
+    const ESM::Race* race = MWBase::Environment::get().getESMStore()->get<ESM::Race>().find(ref->mBase->mRace);
+
+    // Race weight should not affect 1st-person meshes, otherwise it will change hand proportions and can break
+    // aiming.
+    if (ptr == MWMechanics::getPlayer() && ptr.isInCell() && MWBase::Environment::get().getWorld()->isFirstPerson())
+    {
+        if (ref->mBase->isMale())
+            scale *= race->mData.mMaleHeight;
+        else
+            scale *= race->mData.mFemaleHeight;
+
+        return;
+    }
+
+    if (ref->mBase->isMale())
+    {
+        scale.x() *= race->mData.mMaleWeight;
+        scale.y() *= race->mData.mMaleWeight;
+        scale.z() *= race->mData.mMaleHeight;
+    }
+    else
+    {
+        scale.x() *= race->mData.mFemaleWeight;
+        scale.y() *= race->mData.mFemaleWeight;
+        scale.z() *= race->mData.mFemaleHeight;
+    }
+}
+```
+
+## [C] The first-person branch needs THREE conditions, and isInCell() is what keeps the inventory paperdoll on the third-person formula
+- `apps/openmw/mwclass/npc.cpp:1112-1122` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+The first-person scale path at npc.cpp:1114 fires only when all three of these hold, in this order: (1) `ptr == MWMechanics::getPlayer()` — MWWorld::PtrBase::operator== compares the mRef LiveCellRefBase POINTER, not the RefId and not the cell (ptr.hpp:116-119: `return mRef == other.mRef;`); (2) `ptr.isInCell()` — defined as `(mContainerStore == nullptr) && (mCell != nullptr)` (ptr.hpp:85); (3) `World::isFirstPerson()` — which reads the CAMERA, `mRendering->getCamera()->getMode() == MWRender::Camera::Mode::FirstPerson` (worldimp.cpp:2186-2189), NOT NpcAnimation::mViewMode. The engine's stated reason for the branch, verbatim at npc.cpp:1112-1113, is: "Race weight should not affect 1st-person meshes, otherwise it will change hand proportions and can break aiming." So: applying race weight to the X/Y of a first-person hand mesh is considered a correctness bug (broken aim), not a cosmetic one. The isInCell() clause is load-bearing for the inventory paperdoll: InventoryPreview::updatePtr builds `mCharacter = MWWorld::Ptr(ptr.getBase(), nullptr)` (characterpreview.cpp:478) — same mRef pointer, so condition (1) is TRUE, but mCell is null so isInCell() is FALSE. The paperdoll therefore always takes the third-person (weight-on-XY, height-on-Z) formula even while the player is in first person. RaceSelectionPreview uses its own separate LiveCellRef (characterpreview.cpp:502) so condition (1) is false for it as well.
+
+```cpp
+    // Race weight should not affect 1st-person meshes, otherwise it will change hand proportions and can break
+    // aiming.
+    if (ptr == MWMechanics::getPlayer() && ptr.isInCell() && MWBase::Environment::get().getWorld()->isFirstPerson())
+    {
+        if (ref->mBase->isMale())
+            scale *= race->mData.mMaleHeight;
+        else
+            scale *= race->mData.mFemaleHeight;
+
+        return;
+    }
+```
+
+## [C] The rendering-only guard: NPC collision extents carry NO race height or weight, and the physics actor computes BOTH scales
+- `apps/openmw/mwphysics/actor.cpp:250-262` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+When `rendering == false`, Npc::adjustScale returns at npc.cpp:1104-1105 having multiplied nothing, with the comment "collision meshes are not scaled based on race height / having the same collision extents for all races makes the environments easier to test". So an NPC's collision capsule is scaled ONLY by the cellref scale s, identically for every race and both sexes; race height/weight is a purely visual transform. MWPhysics::Actor::updateScaleUnsafe (mwphysics/actor.cpp:250-262) computes both variants in one pass: it seeds scaleVec = (s,s,s), calls adjustScale(..., false), stores mScale = scaleVec and mHalfExtents = componentMultiply(mOriginalHalfExtents, scaleVec); then it RE-SEEDS `scaleVec = osg::Vec3f(scale, scale, scale)` (this reset is essential — the vector is an in/out parameter) and calls adjustScale(..., true) to get mRenderingHalfExtents = componentMultiply(mOriginalHalfExtents, (s*w, s*w, s*h)). Consumers split by which one they take: the collision/movement solver uses mHalfExtents (ActorFrameData mHalfExtentsZ, physicssystem.cpp:900); the swim level uses the RENDERING extents — `waterlevel - (actor.getRenderingHalfExtents().z() * 2 * fSwimHeightScale)` (physicssystem.cpp:889-895) — as does World::isUnderwater, `pos.z() += heightRatio * 2 * mPhysics->getRenderingHalfExtents(object).z()` (worldimp.cpp:2135); World::getHalfExtents(object, rendering) routes on its bool to getRenderingHalfExtents vs getHalfExtents for actors (worldimp.cpp:3578-3588). Net effect for a port: a tall Nord and a short Bosmer have the same collision cylinder but different swim/wade thresholds and different visual heights.
+
+```cpp
+void Actor::updateScaleUnsafe()
+{
+    float scale = mPtr.getCellRef().getScale();
+    osg::Vec3f scaleVec(scale, scale, scale);
+
+    mPtr.getClass().adjustScale(mPtr, scaleVec, false);
+    mScale = scaleVec;
+    mHalfExtents = osg::componentMultiply(mOriginalHalfExtents, scaleVec);
+
+    scaleVec = osg::Vec3f(scale, scale, scale);
+    mPtr.getClass().adjustScale(mPtr, scaleVec, true);
+    mRenderingHalfExtents = osg::componentMultiply(mOriginalHalfExtents, scaleVec);
+}
+```
+
+## [C] setViewMode re-applies the scale BEFORE rebuild(), with a forced no-op scaleObject whose only purpose is to re-run adjustScale
+- `apps/openmw/mwrender/npcanimation.cpp:295-317` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+NpcAnimation::setViewMode (npcanimation.cpp:295-317) runs in this exact order, and the order matters: (1) `assert(viewMode != VM_HeadOnly)` — head-only is a construction-time mode only; (2) early return if mViewMode == viewMode, so re-entrant or repeated calls are free no-ops; (3) compute `bool viewChange = mViewMode == VM_FirstPerson || viewMode == VM_FirstPerson` from the OLD mViewMode, BEFORE assignment — true only when first person is on one side of the transition; (4) `mViewMode = viewMode`; (5) `World::scaleObject(mPtr, mPtr.getCellRef().getScale(), true)` with the comment "apply race height after view change" — it passes the scale the ref ALREADY has, so the value never changes; force=true exists purely to defeat the guard `if (!force && scale == ptr.getCellRef().getScale()) return;` (worldimp.cpp:1141-1142) and force a re-run of adjustScale now that isFirstPerson() reports the new mode; (6) mAmmunition.reset(); (7) rebuild(); (8) setRenderBin(); (9) only if viewChange AND Settings::game().mShieldSheathing, re-evaluate showCarriedLeft(updateCarriedLeftVisible(weaptype)). So the base-node scale is written while the OLD skeleton is still attached, and rebuild() — `mScabbard.reset(); mHolsteredShield.reset(); updateNpcBase();` plus a mechanics forceStateUpdate (npcanimation.cpp:435-442) — does not touch or restore it; the scale lives on the Ptr's base transform, above everything rebuild() replaces, so it survives. Re-entrancy to be aware of when porting: World::scaleObject -> Scene::updateObjectScale -> RenderingManager::scaleObject, which calls Camera::processViewChange() again when the ptr is the camera's tracking ptr; that inner call re-enters setViewMode, hits the step-2 early return, and picks a tracking node off the not-yet-rebuilt skeleton — the outer Camera::processViewChange re-assigns mTrackingNode after setViewMode returns (camera.cpp:352-356), which is what makes the final value correct.
+
+```cpp
+void NpcAnimation::setViewMode(NpcAnimation::ViewMode viewMode)
+{
+    assert(viewMode != VM_HeadOnly);
+    if (mViewMode == viewMode)
+        return;
+    // FIXME: sheathing state must be consistent if the third person skeleton doesn't have the necessary node, but
+    // third person skeleton is unavailable in first person view. This is a hack to avoid cosmetic issues.
+    bool viewChange = mViewMode == VM_FirstPerson || viewMode == VM_FirstPerson;
+    mViewMode = viewMode;
+    MWBase::Environment::get().getWorld()->scaleObject(
+        mPtr, mPtr.getCellRef().getScale(), true); // apply race height after view change
+
+    mAmmunition.reset();
+    rebuild();
+    setRenderBin();
+```
+
+## [C] Where the scale vector is seeded and where it lands - and Camera::mHeightScale IS the race height
+- `apps/openmw/mwrender/renderingmanager.cpp:818-824` - importance **medium**
+- REFINES OR CORRECTS RECORDED RULE 54
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+adjustScale(rendering=true) has exactly three seeding sites, and they do not all seed the same way. (a) Objects::insertBegin, at spawn: `const float scale = ptr.getCellRef().getScale(); osg::Vec3f scaleVec(scale, scale, scale); ptr.getClass().adjustScale(ptr, scaleVec, true); insert->setScale(scaleVec);` (mwrender/objects.cpp:66-69). (b) Scene::updateObjectScale, on every rescale: same three lines, then `mRendering.scaleObject(ptr, scaleVec); mPhysics->updateScale(ptr);` (mwworld/scene.cpp:341-348) — note the physics call re-seeds from the cellref itself, it does not reuse this vector. (c) InventoryPreview::onSetup seeds `osg::Vec3f scale(1.f, 1.f, 1.f)` — the identity, NOT the cellref scale — calls adjustScale(..., true), does `mNode->setScale(scale)`, and then builds its view matrix as `osg::Matrixf::lookAt(mPosition * scale.z(), mLookAt * scale.z(), osg::Vec3f(0,0,1))`, i.e. the paperdoll camera position and look-at are both scaled by the race HEIGHT so a tall race is framed identically (characterpreview.cpp:481-491). The landing point is RenderingManager::scaleObject: `ptr.getRefData().getBaseNode()->setScale(scale); if (ptr == mCamera->getTrackingPtr()) mCamera->processViewChange();` (renderingmanager.cpp:818-824) — that conditional call is the mechanism that refreshes the camera height. This pins down rule 54's mHeightScale: in third person Camera::processViewChange sets `mHeightScale = transform->getScale().z()` (camera.cpp:361-366), and that Z is exactly cellrefScale * race height (male or female) — NOT a weight and NOT the uniform ref scale; in first person mHeightScale is forced to 1.f, and calculateTrackedPosition adds `mHeight * mHeightScale` only when the mode is not FirstPerson. Hence a Nord's third-person camera sits at 124.f * s * mMaleHeight above the tracking node.
+
+```cpp
+void RenderingManager::scaleObject(const MWWorld::Ptr& ptr, const osg::Vec3f& scale)
+{
+    ptr.getRefData().getBaseNode()->setScale(scale);
+
+    if (ptr == mCamera->getTrackingPtr()) // update height of camera
+        mCamera->processViewChange();
+}
+```
+
+## [C] The RACE RADT subrecord is 140 bytes and stores both HEIGHTS before both WEIGHTS, as four float32
+- `components/esm3/loadrace.cpp:42-59` - importance **medium**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Race::RADTstruct::load reads a single fixed 140-byte RADT subrecord with no optional fields, in this strict order: 7 x { int32 skillIndex (converted via ESM::Skill::indexToRefId), int32 bonus } = 56 bytes; then ESM::Attribute::Length (8) x AttributeValues { int32 mMale, int32 mFemale } = 64 bytes; then FOUR float32 in the order mMaleHeight, mFemaleHeight, mMaleWeight, mFemaleWeight = 16 bytes — heights first, both of them, THEN both weights, which is the same order as the C++ declaration `float mMaleHeight, mFemaleHeight, mMaleWeight, mFemaleWeight;` (loadrace.hpp:60); then int32 mFlags (0x01 Playable, 0x02 Beast). 56+64+16+4 = 140, matching the struct's `// Size = 140 bytes` comment. Each field is read with esm.getT, i.e. a raw little-endian binary read of sizeof(T) — 4 bytes each, no scaling, no clamping, no default substitution. Getting the height/weight pair order wrong silently swaps a race's X/Y fatness with its Z height. Vanilla values sit near 1.0 but the loader enforces no range, so a mod value of 0 produces a zero scale and a negative value a mirrored mesh. The header also carries an untested note about eye level: "The actual eye level height (in game units) is (probably) given as 'height' times 128. This has not been tested yet." (loadrace.hpp:58-59) — treat that as a comment, not as engine behaviour; the engine's actual camera height is Camera::mHeight (124.f) times the Z scale.
+
+```cpp
+void Race::RADTstruct::load(ESMReader& esm)
+{
+    esm.getSubHeader();
+    for (auto& bonus : mBonus)
+    {
+        int32_t skill;
+        esm.getT(skill);
+        bonus.mSkill = ESM::Skill::indexToRefId(skill);
+        esm.getT(bonus.mBonus);
+    }
+    for (int i = 0; i < ESM::Attribute::Length; ++i)
+        mAttributeValues[ESM::Attribute::indexToRefId(i)].load(esm);
+    esm.getT(mMaleHeight);
+    esm.getT(mFemaleHeight);
+    esm.getT(mMaleWeight);
+    esm.getT(mFemaleWeight);
+    esm.getT(mFlags);
+}
+```
+
+## [C] Creature scale is uniform, ignores the rendering flag, and therefore DOES scale collision - the opposite of NPC race height
+- `apps/openmw/mwclass/creature.cpp:850-854` - importance **medium**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Creature::adjustScale (mwclass/creature.cpp:850-854) is the counterexample that defines the NPC rule by contrast. Its `rendering` parameter is deliberately unnamed (`bool /* rendering */`) so it is ignored: the body is a single uniform `scale *= ref->mBase->mScale` using the CREA record's own mScale. Consequences a port must reproduce: (1) a creature's collision capsule IS scaled — Actor::updateScaleUnsafe's rendering=false pass returns (s*mScale, s*mScale, s*mScale), not (s,s,s), so mHalfExtents and mRenderingHalfExtents are identical for creatures and differ for NPCs; (2) there is no first-person branch for creatures at all — a creature is never the first-person player, and no sex/race lookup happens; (3) the scale is uniform, so a creature never gets the anisotropic weight-on-XY/height-on-Z treatment. The base implementation MWWorld::Class::adjustScale (mwworld/class.cpp:307) is an empty body, `void Class::adjustScale(const MWWorld::ConstPtr& ptr, osg::Vec3f& scale, bool rendering) const {}`, so every non-actor class — statics, doors, containers, items — keeps the raw uniform cellref scale unchanged on both the rendering and collision paths. Only Npc and Creature override it.
+
+```cpp
+void Creature::adjustScale(const MWWorld::ConstPtr& ptr, osg::Vec3f& scale, bool /* rendering */) const
+{
+    const MWWorld::LiveCellRef<ESM::Creature>* ref = ptr.get<ESM::Creature>();
+    scale *= ref->mBase->mScale;
+}
+```
+
+## [C] NiGeometryData: exact stream layout, uint16 vertex count, and 4-byte bools in Morrowind files
+- `components/nif/data.cpp:87-174` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+NiGeometryData is the shared header of NiTriShapeData / NiTriStripsData / NiLinesData. All scalars are little-endian on disk (byte-swapped only on big-endian hosts, nifstream.hpp:40-53). A NIF `bool` is int32 (4 bytes, true = !=0) when version < 4.1.0.0 and int8 (1 byte) at 4.1.0.0+ (nifstream.cpp:171-177), so in Morrowind's 4.0.0.2 (VER_MW = 0x04000002, niffile.hpp:28) EVERY bool below is FOUR bytes. Read order (data.cpp:87-167):
+(a) int32 mGroupId — only if version >= 10.1.0.114. Absent in MW.
+(b) uint16 mNumVertices — the vertex count is 16-BIT (data.hpp:24), max 65535.
+(c) uint8 mKeepFlags + uint8 mCompressFlags — only if version >= 10.1.0.0. Absent in MW.
+(d) bool hasVertices; if true, mNumVertices * Vec3f (3 x float32 = 12 bytes).
+(e) uint16 mDataFlags — only if version >= 10.0.1.0. NOT here in MW.
+(f) bool hasNormals; if true, mNumVertices * Vec3f normals, and THEN only if (mDataFlags & 0x1000 = DataFlag_HasTangents) mNumVertices * Vec3f tangents followed by mNumVertices * Vec3f bitangents. In MW mDataFlags is still 0 at this point (it is read at step (i)), so a Morrowind file NEVER reads tangents/bitangents here.
+(g) bounding sphere: Vec3f centre + float32 radius = 16 bytes, unconditional (nifstream.cpp:140-144).
+(h) bool hasVertexColors; if true, mNumVertices * Vec4f RGBA float32 (16 bytes each).
+(i) uint16 mDataFlags — only if version <= 4.2.2.0. This is where MW reads it.
+(j) UV-set count: numUVs = mDataFlags; if version > 4.0.0.2 then numUVs &= 0x003F (DataFlag_NumUVsMask), and additionally &= 0x0001 for 20.2.0.7 with bethVersion > 0; ELSE (version <= 4.0.0.2) read one more bool and force numUVs = 0 if it is false. That trailing bool is read ONLY on the <= 4.0.0.2 branch, and MW applies NO mask — the full 16-bit mDataFlags is the set count.
+(k) numUVs UV sets, each mNumVertices * Vec2f (8 bytes). mUVList is a vector-of-vectors: outer size = numUVs, every inner size = mNumVertices.
+(l) uint16 mConsistencyType, plus 4 skipped bytes at version >= 20.0.0.4 — only if version >= 10.0.1.0. Absent in MW.
+NiTriBasedGeomData then appends uint16 mNumTriangles (data.cpp:169-174, data.hpp:42).
+mNormals, mTangents and mBitangents are three SEPARATE parallel Vec3f arrays (data.hpp:30), never interleaved. When a has-flag is false the corresponding array stays length 0 — it is not zero-filled and not sized to mNumVertices. readVector with size 0 is a no-op that leaves the vector untouched (nifstream.hpp:135-146).
+
+```cpp
+        nif->read(mNumVertices);
+...
+        if (nif->get<bool>() && hasData)
+            nif->readVector(mVertices, mNumVertices);
+...
+        if (nif->get<bool>() && hasData)
+        {
+            nif->readVector(mNormals, mNumVertices);
+            if (mDataFlags & DataFlag_HasTangents)
+            {
+                nif->readVector(mTangents, mNumVertices);
+                nif->readVector(mBitangents, mNumVertices);
+            }
+        }
+
+        nif->read(mBoundingSphere);
+
+        if (nif->get<bool>() && hasData)
+            nif->readVector(mColors, mNumVertices);
+
+        if (nif->getVersion() <= NIFStream::generateVersion(4, 2, 2, 0))
+            nif->read(mDataFlags);
+
+        // In 4.0.0.2 the flags field corresponds to the number of UV sets.
+        // In later revisions the part that corresponds to the number is narrower.
+        uint16_t numUVs = mDataFlags;
+        if (nif->getVersion() > NIFFile::NIFVersion::VER_MW)
+        {
+            numUVs &= DataFlag_NumUVsMask;
+            ...
+        }
+        else if (!nif->get<bool>())
+            numUVs = 0;
+```
+
+## [C] NiTriShapeData: a uint32 INDEX count (not a triangle count), one TRIANGLES draw call, and mNumTriangles is never used to size it
+- `components/nifosg/nifloader.cpp:1600-1608` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+After the NiGeometryData + NiTriBasedGeomData header, NiTriShapeData reads (data.cpp:176-186): uint32 numIndices — this is the number of INDICES (3 per triangle), not the triangle count; then, ONLY if version > 10.0.1.2 (VER_OB_OLD), a bool, and if that bool is false numIndices is forced to 0 while the uint32 has already been consumed; then numIndices * uint16 into mTriangles; then a uint16 match-group count, and per group a uint16 element count followed by that many uint16 (readNiTriShapeDataMatchGroup, data.cpp:20-23). Morrowind (4.0.0.2 <= 10.0.1.2) has NO has-triangles bool, so the layout is simply u32 count, count x u16, then the match-group tail. Indices are uint16 throughout (data.hpp:50), so a shape can never reference vertex 65536+. The uint16 mNumTriangles inherited from NiTriBasedGeomData is NOT used to size mTriangles and is never cross-checked against numIndices/3 — the render path ignores it entirely. Render: mTriangles becomes exactly ONE osg::DrawElementsUShort(GL_TRIANGLES) whose element count is mTriangles.size() (nifloader.cpp:1600-1608). If mTriangles is empty, handleNiGeometryData `return`s at :1605 BEFORE setting the vertex array, so the shape yields no drawable and no material state at all. RC_BSLODTriShape takes this same branch. RC_BSSegmentedTriShape passes isTypeNiGeometry (nifloader.cpp:160-172) but matches none of the three branches, so it silently produces zero primitive sets. Caveat for a physics/collision port: NiTriShape::getCollisionShape gates on `data->mNumTriangles != 0` (node.cpp:328-329), so there the u16 count DOES matter and a file with mNumTriangles == 0 but a non-empty mTriangles gets a renderable mesh and no collision.
+
+```cpp
+                if (niGeometry->mRecordType == Nif::RC_NiTriShape || nifNode->mRecordType == Nif::RC_BSLODTriShape)
+                {
+                    auto data = static_cast<const Nif::NiTriShapeData*>(niGeometryData);
+                    const std::vector<unsigned short>& triangles = data->mTriangles;
+                    if (triangles.empty())
+                        return;
+                    geometry->addPrimitiveSet(new osg::DrawElementsUShort(
+                        osg::PrimitiveSet::TRIANGLES, static_cast<unsigned>(triangles.size()), triangles.data()));
+                }
+```
+
+## [C] NiTriStripsData: lengths-then-data, one TRIANGLE_STRIP per strip, strips < 3 dropped, and the exact strip-to-triangle expansion
+- `components/nif/node.cpp:36-58` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+NiTriStripsData reads (data.cpp:188-202): uint16 numStrips; then numStrips * uint16 strip LENGTHS as one block; then, if version <= 10.0.1.2 OR a following bool reads true, numStrips consecutive index arrays, array i holding lengths[i] * uint16. When that bool is false the length block has already been consumed and mStrips stays EMPTY. Morrowind (4.0.0.2) always takes the read branch and has no bool. mStrips is a vector-of-vectors of uint16 (data.hpp:59).
+Render (nifloader.cpp:1609-1623): every strip becomes its OWN osg::DrawElementsUShort(GL_TRIANGLE_STRIP) with element count = strip.size() — never merged, never joined with degenerate indices. A strip with fewer than 3 indices is skipped outright (`if (strip.size() < 3) continue;`). If NO strip survives, handleNiGeometryData `return`s at :1622 before the vertex array is set and the whole shape is dropped.
+To expand a strip into an indexed triangle list with OpenMW's exact winding, use its own converter (components/nif/node.cpp:36-58): skip strips of size < 3; set b = strip[0], c = strip[1]; for i = 2 .. strip.size()-1: a = b; b = c; c = strip[i]; if (a == b || b == c || a == c) skip this triangle (degenerate); emit (a, b, c) when i is EVEN, (a, c, b) when i is ODD. The parity comes from the strip position i, NEVER from the count of emitted triangles, so dropping degenerates must not shift it. i starts at 2 (even), so the first triangle is (strip[0], strip[1], strip[2]) in order. This reproduces GL_TRIANGLE_STRIP winding exactly: (a,c,b) is a cyclic rotation of GL's odd-triangle order (v[k+1], v[k], v[k+2]).
+
+```cpp
+        for (const auto& strip : strips)
+        {
+            if (strip.size() < 3)
+                continue;
+
+            unsigned short a;
+            unsigned short b = strip[0];
+            unsigned short c = strip[1];
+            for (size_t i = 2; i < strip.size(); i++)
+            {
+                a = b;
+                b = c;
+                c = strip[i];
+                if (a == b || b == c || a == c)
+                    continue;
+                if (i % 2 == 0)
+                    mesh.addTriangleIndices(a, b, c);
+                else
+                    mesh.addTriangleIndices(a, c, b);
+            }
+        }
+```
+
+## [C] A skin PARTITION replaces the shape's own topology, and mTrueTriangles/mTrueStrips are DERIVED by mVertexMap at parse time
+- `components/nif/data.cpp:505-521` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE 38
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+If a NiGeometry has a NiSkinInstance, the loader calls skin->getPartitions() (data.cpp:360-369): it returns mSkin->mPartitions if non-empty, else mSkin->mData->mPartitions if non-empty, else nullptr. NiSkinInstance itself reads a partition link only at version >= 10.1.0.101, but NiSkinData reads one for 4.0.0.2 <= version <= 10.1.0.0, so a Morrowind file CAN reach a partition through NiSkinData.
+When getPartitions() != nullptr, hasPartitions is set and the NiTriShapeData/NiTriStripsData index data is NOT consulted at all (nifloader.cpp:1571-1598). Instead, for each Partition in mPartitions in order: if mTrueTriangles is non-empty add ONE DrawElementsUShort(TRIANGLES) of mTrueTriangles.size() elements; then for each entry of mTrueStrips with size >= 3 add one DrawElementsUShort(TRIANGLE_STRIP) of strip.size() elements (strips < 3 skipped). Several partitions therefore produce several primitive sets on one osg::Geometry.
+mTrueTriangles/mTrueStrips are NOT stored in the file except on Skyrim SE (data.cpp:498-502). They are computed at the end of Partition::read (data.cpp:505-521): if mTrueTriangles is empty AND mVertexMap is non-empty, then if mStrips is non-empty set mTrueStrips = mStrips with every index replaced by mVertexMap[index]; else if mTriangles is non-empty set mTrueTriangles = mTriangles with every index replaced by mVertexMap[index]. So a partition's own mTriangles/mStrips are partition-LOCAL indices into mVertexMap, and mVertexMap[i] is the index into the shape's single global mVertices array. Note the strips branch WINS: a partition holding both strips and triangles yields only mTrueStrips.
+Edge case that silently kills geometry: if mVertexMap is empty (its presence flag was 0 at version >= 10.1.0.0) both true-lists stay empty, yet hasPartitions is still true, so the `if (!hasPartitions)` fallback at :1598 is skipped and the shape gets ZERO primitive sets — handleNiGeometry then drops it via `geom->empty()` (nifloader.cpp:1687). Also: partition indices are uint16 (the source comment flags the <=65536 assumption at node.cpp:331), and the partition's own mWeights/mBoneIndices are never read by the renderer — skin weights always come from NiSkinData. Vertices, normals, colours and UVs are still taken whole and unremapped from NiGeometryData.
+
+```cpp
+        // Not technically a part of the loading process
+        if (mTrueTriangles.empty() && !mVertexMap.empty())
+        {
+            if (!mStrips.empty())
+            {
+                mTrueStrips = mStrips;
+                for (auto& strip : mTrueStrips)
+                    for (auto& index : strip)
+                        index = mVertexMap[index];
+            }
+            else if (!mTriangles.empty())
+            {
+                mTrueTriangles = mTriangles;
+                for (unsigned short& index : mTrueTriangles)
+                    index = mVertexMap[index];
+            }
+        }
+```
+
+## [C] Vertex/normal/colour arrays are set from array EMPTINESS, never from mNumVertices, and OpenMW generates nothing
+- `components/nifosg/nifloader.cpp:1635-1644` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+handleNiGeometryData aborts with no drawable when niGeometry->mData is empty OR mVertices is empty (nifloader.cpp:1562-1569) — the guard is on the parsed ARRAY, not on the has-vertices bool and not on mNumVertices. Otherwise the arrays are built as (nifloader.cpp:1635-1644):
+- vertex array: always set, osg::Vec3Array of mVertices.size() elements copied verbatim (no transform applied here — the shape's NiTransform lives on its scene node).
+- normal array: set ONLY if mNormals is non-empty, osg::Vec3Array of mNormals.size(), BIND_PER_VERTEX.
+- colour array: set ONLY if mColors is non-empty, osg::Vec4Array of mColors.size(), BIND_PER_VERTEX. Colours are RGBA float32 as parsed (data.hpp:32), NOT bytes — no /255 conversion anywhere.
+So the has-normals and has-vertex-colors booleans in NiGeometryData are the only source of truth: when false the array is length 0 and the renderer simply receives no such attribute. OpenMW never synthesises normals (there is no smoothing/normal-generation pass in the NIF path), never synthesises vertex colours, and never pads a short array up to mNumVertices. mTangents/mBitangents are parsed into their own arrays but are never uploaded by this function — nothing in the NiGeometry path reads them.
+Two related traps: (1) the `0x40` flag documented on NiGeometry as "mesh has no vertex normals ?" (node.hpp:128-133) is never tested by the loader — do not use it. (2) Whether vertex colours exist is forwarded separately as the 4th argument of applyDrawableProperties (nifloader.cpp:1675, `!niGeometryData->mColors.empty()`), and that flag is what disables colorMode when there are no colours.
+
+```cpp
+            const auto& normals = niGeometryData->mNormals;
+            const auto& colors = niGeometryData->mColors;
+
+            geometry->setVertexArray(new osg::Vec3Array(static_cast<unsigned>(vertices.size()), vertices.data()));
+            if (!normals.empty())
+                geometry->setNormalArray(new osg::Vec3Array(static_cast<unsigned>(normals.size()), normals.data()),
+                    osg::Array::BIND_PER_VERTEX);
+            if (!colors.empty())
+                geometry->setColorArray(new osg::Vec4Array(static_cast<unsigned>(colors.size()), colors.data()),
+                    osg::Array::BIND_PER_VERTEX);
+```
+
+## [C] UV sets are chosen per texture UNIT from boundTextures, with a clamp-to-0 fallback and a stage counter that advances even on skip
+- `components/nifosg/nifloader.cpp:1646-1663` - importance **high**
+- REFINES OR CORRECTS RECORDED RULE 61
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+mUVList is a vector of UV sets (data.hpp:33): outer length = the UV-set count derived from mDataFlags, each inner vector length = mNumVertices, elements Vec2f. Texture coordinates are NOT assigned per UV set — they are assigned per bound texture UNIT. boundTextures is a parallel vector built by attachTexture (nifloader.cpp:1154-1162): index = the OSG texture unit, VALUE = that texture stage's NiTexturingProperty mUVSet. handleNiGeometryData then walks it (nifloader.cpp:1646-1663) with a separate counter `int textureStage = 0` incremented in the for-loop increment expression, so `continue` STILL advances it. Per entry: uvSet = boundTextures[i]; if uvSet >= mUVList.size(), log "Out of bounds UV set" at Debug::Verbose, then — if mUVList is empty, `continue`, leaving that texture stage with NO texcoord array while textureStage still advances — otherwise clamp uvSet = 0 and carry on. Then setTexCoordArray(textureStage, new osg::Vec2Array(mUVList[uvSet].size(), mUVList[uvSet].data()), BIND_PER_VERTEX). Consequences to port exactly: each unit gets its OWN COPY of the array, so two units naming the same uvSet do not share one buffer; the number of texcoord arrays equals boundTextures.size() minus the skipped ones, and is unrelated to mUVList.size(); and if boundTextures is empty (no NiTexturingProperty in the ancestor chain) NO texcoord array is created at all even when mUVList is fully populated. Indexing mUVList[uvSet] directly, without the bounds test, reads out of range on malformed files.
+
+```cpp
+            const auto& uvlist = niGeometryData->mUVList;
+            int textureStage = 0;
+            for (auto it = boundTextures.begin(); it != boundTextures.end(); ++it, ++textureStage)
+            {
+                unsigned int uvSet = *it;
+                if (uvSet >= uvlist.size())
+                {
+                    Log(Debug::Verbose) << "Out of bounds UV set " << uvSet << " on shape \"" << nifNode->mName
+                                        << "\" in " << mFilename;
+                    if (uvlist.empty())
+                        continue;
+                    uvSet = 0;
+                }
+
+                geometry->setTexCoordArray(textureStage,
+                    new osg::Vec2Array(static_cast<unsigned>(uvlist[uvSet].size()), uvlist[uvSet].data()),
+                    osg::Array::BIND_PER_VERTEX);
+            }
+```
+
+## [C] Winding: indices are used verbatim, and the default front face is COUNTER_CLOCKWISE
+- `components/nifosg/nifloader.cpp:2494-2515` - importance **high**
+- REFINES OR CORRECTS RECORDED RULE 65
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Nothing in the NIF geometry path reverses, sorts, re-winds or re-orders indices. mTriangles, each NiTriStripsData strip, each partition's mVertexMap-remapped list, and NiLinesData's derived line list are all handed to GL in file order (nifloader.cpp:1584-1631). Front-face orientation is therefore decided entirely by the osg::FrontFace state attribute, which in the whole loader is set in exactly one place: the NiStencilProperty branch (nifloader.cpp:2494-2510). Mapping: DrawMode::Clockwise -> FrontFace::CLOCKWISE; DrawMode::Default, DrawMode::CounterClockwise, DrawMode::Both and any unknown value -> FrontFace::COUNTER_CLOCKWISE. Additionally GL_CULL_FACE is set ON for every DrawMode except Both, which sets it OFF (:2513-2515). With NO NiStencilProperty anywhere in the ancestor chain, no FrontFace is set at all and OpenGL's own default applies: COUNTER_CLOCKWISE. So the portable rule is: a triangle listed (i0, i1, i2) is FRONT-FACING when it appears counter-clockwise in screen space, and back-face culling is on by default. Strips inherit GL's alternating parity (see the strip-expansion rule) so that every expanded triangle has the same effective orientation as the first. Mirroring is likewise NOT done by reversing indices: SceneUtil::attach.cpp:166-181 mirrors a left-side rigid part with setScale(-1, 1, 1) and pushes a FrontFace CLOCKWISE stateset to compensate for the flip the negative scale causes.
+
+```cpp
+                    osg::ref_ptr<osg::FrontFace> frontFace = new osg::FrontFace;
+                    using DrawMode = Nif::NiStencilProperty::DrawMode;
+                    switch (stencilprop->mDrawMode)
+                    {
+                        case DrawMode::Clockwise:
+                            frontFace->setMode(osg::FrontFace::CLOCKWISE);
+                            break;
+                        case DrawMode::Default:
+                        case DrawMode::CounterClockwise:
+                        case DrawMode::Both:
+                        default:
+                            frontFace->setMode(osg::FrontFace::COUNTER_CLOCKWISE);
+                            break;
+                    }
+```
+
+## [C] The header is a magic-PREFIX test on a '\n'-terminated line, then a raw uint32 version — and there is NO version whitelist
+- `/tmp/nifc_niffile.cpp (OpenMW master components/nif/niffile.cpp):550-572 (plus components/nif/nifstream.hpp:106-109)` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Reading a NIF starts with getVersionString(): std::getline(stream, result) with the default '\n' delimiter — it consumes bytes up to and INCLUDING the first 0x0A, stores everything before it (a trailing 0x0D from CRLF would be kept), has no length cap, and throws if the stream fails. The file is accepted iff that line has one of exactly TWO byte-exact, case-sensitive prefixes: "NetImmerse File Format" or "Gamebryo File Format" (std::any_of over starts_with). Everything after the prefix — the human-readable ", Version 4.0.0.2" — is NEVER parsed; the textual version is ignored entirely. Immediately after the 0x0A comes a little-endian uint32 which is the real version, packed as version = (major<<24)+(minor<<16)+(patch<<8)+rev with each field a uint8 (NIFStream::generateVersion, nifstream.hpp:106-109). It is not BCD in the decimal sense: 4.0.0.2 == 0x04000002 (on disk: 02 00 00 04), 10.0.1.2 == 0x0A000102, 20.2.0.7 == 0x14020007. All version gates are plain unsigned integer >=/</== on this uint32. Reader::parse() contains exactly SIX throws and none of them is a version whitelist (niffile.cpp:559 bad magic, :586 big-endian, :636 hashed record types, :673 blank record type, :678 nonzero record separator, :683 unknown record type) — so any version with a matching magic line is attempted, and an unsupported one fails only when it hits a gate. versionToString (niffile.cpp:527-537) is log-only: decimal major.minor.patch.rev from those four bytes. JS port: read bytes to the first 0x0A as Latin-1, test the two prefixes, then read a LE uint32; store it as an integer and compare with numbers, never parse the text.
+
+```cpp
+        // Check the header string
+        std::string head = nif.getVersionString();
+        static const std::array<std::string, 2> verStrings = {
+            "NetImmerse File Format",
+            "Gamebryo File Format",
+        };
+        const bool supportedHeader = std::any_of(verStrings.begin(), verStrings.end(),
+            [&](const std::string& verString) { return head.starts_with(verString); });
+        if (!supportedHeader)
+            throw Nif::Exception("Invalid NIF header: " + head, mFilename);
+
+        // Get BCD version
+        nif.read(mVersion);
+
+// nifstream.hpp:106-109
+        static constexpr uint32_t generateVersion(uint8_t major, uint8_t minor, uint8_t patch, uint8_t rev)
+        {
+            return (major << 24) + (minor << 16) + (patch << 8) + rev;
+        }
+```
+
+## [C] Nine version-gated header blocks, in this exact stream order — and for Morrowind 4.0.0.2 every one of them is ABSENT
+- `/tmp/nifc_niffile.cpp (OpenMW master components/nif/niffile.cpp):564-662` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+After the uint32 version, parse() computes nine booleans (niffile.cpp:564-572) and then reads the guarded fields in this exact order. (1) endianness: uint8, present iff version >= 0x14000004 (20.0.0.4); when absent it defaults to 1; if the byte reads 0 -> throw "Big endian NIF files are unsupported"; ANY nonzero value is accepted. (2) userVersion: uint32, present iff version >= 0x0A000108 (10.0.1.8); otherwise stays 0. (3) recordsCount: uint32, ALWAYS present. (4) Bethesda stream header, present iff version == 0x0A000102, OR (userVersion >= 3 AND version >= 0x0A010000 AND (version <= 0x14000005 OR version == 0x14020007) AND (userVersion <= 11 OR version >= 0x14000005)); its contents in order are: bethVersion uint32; one export string (Author); then if bethVersion >= 131 a discarded uint32 else an export string (Process script); an export string (Export script); if bethVersion >= 103 an export string (Max file path). An export string is uint8 length + that many bytes. (5) Record-type listings, iff version >= 0x05000001 (5.0.0.1): if version == 0x14030102 exactly -> throw "Hashed record types are unsupported"; else uint16 typeCount, then typeCount uint32-length-prefixed strings, then recordsCount uint16 indices (note uint16, not uint32). (6) Record sizes, iff version >= 0x14020005 (20.2.0.5): recordsCount uint32s, read and discarded. (7) String table, iff version >= 0x14010001 (20.1.0.1): uint32 stringNum, uint32 maxStringLength, then stringNum uint32-length-prefixed strings. (8) Groups, iff version >= 0x05000006 (5.0.0.6): uint32 groupCount then groupCount uint32s, discarded. (9) Record separators, iff 0x0A000000 <= version < 0x0A020000: an int32 read BEFORE each record whose type name does not start with "bhk"; nonzero -> throw. For Morrowind's 0x04000002 all nine are false, so the entire header is literally: [version line][0x0A][uint32 0x04000002][uint32 recordsCount]; records follow immediately, then [uint32 rootsCount][rootsCount x int32].
+
+```cpp
+        const bool hasEndianness = mVersion >= NIFStream::generateVersion(20, 0, 0, 4);
+        const bool hasUserVersion = mVersion >= NIFStream::generateVersion(10, 0, 1, 8);
+        const bool hasRecTypeListings = mVersion >= NIFStream::generateVersion(5, 0, 0, 1);
+        const bool hasRecTypeHashes = mVersion == NIFStream::generateVersion(20, 3, 1, 2);
+        const bool hasRecordSizes = mVersion >= NIFStream::generateVersion(20, 2, 0, 5);
+        const bool hasGroups = mVersion >= NIFStream::generateVersion(5, 0, 0, 6);
+        const bool hasStringTable = mVersion >= NIFStream::generateVersion(20, 1, 0, 1);
+        const bool hasRecordSeparators
+            = mVersion >= NIFStream::generateVersion(10, 0, 0, 0) && mVersion < NIFStream::generateVersion(10, 2, 0, 0);
+...
+            std::uint8_t endianness = 1;
+            if (hasEndianness)
+                nif.read(endianness);
+            if (endianness == 0)
+                throw Nif::Exception("Big endian NIF files are unsupported", mFilename);
+        }
+        if (hasUserVersion)
+            nif.read(mUserVersion);
+        const std::uint32_t recordsCount = nif.get<std::uint32_t>();
+...
+                nif.getSizedStrings(recTypes, nif.get<std::uint16_t>());
+                nif.readVector(recTypeIndices, recordsCount);
+```
+
+## [C] getSizedString: uint32 length, the stream ALWAYS advances the full length, then truncate at the first NUL, then encode
+- `/tmp/nifc_nifstream.cpp (OpenMW master components/nif/nifstream.cpp):58-72 (plus nifstream.hpp:157-166 and nifstream.cpp:179-186)` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+getSizedString(length) does four things in this order: (a) checkStreamSize(length) — throws std::runtime_error if length > mStreamSize, where mStreamSize is the byte count from the stream position at NIFStream construction to EOF, i.e. the whole file (Files::getHash at niffile.cpp:545 reads the file but seeks back to start, and getStreamSizeLeft restores the position); so it is a sanity cap against the WHOLE FILE SIZE, not against bytes remaining; (b) read exactly `length` bytes — THE STREAM CURSOR ADVANCES BY `length` UNCONDITIONALLY, even when the payload contains an embedded NUL; (c) find the FIRST 0x00 and erase from it to the end (so "Bip01\0\0\0" of declared length 8 yields "Bip01" but consumes 8 bytes); (d) if an encoder is installed, convert the truncated bytes to UTF-8. Length widths differ by call site: getSizedString() with no argument reads a uint32 length (nifstream.hpp:160); getExportString() reads a uint8 length (nifstream.hpp:166) and is used only in the Bethesda stream header; getStringPalette() reads a uint32 size and then raw bytes with NO NUL truncation and NO encoder conversion (nifstream.cpp:92-101). read<std::string> switches on version (nifstream.cpp:179-186): version < 0x14010001 (20.1.0.1) -> inline getSizedString(); otherwise -> mReader.getString(get<uint32_t>()), where index 0xFFFFFFFF returns the empty string and any other out-of-range index throws from mStrings.at() (niffile.cpp:744-749). Morrowind 4.0.0.2 is below 20.1.0.1, so every node name, every NiStringExtraData, every NiTextKeyExtraData text blob AND every per-record type name is an inline uint32-length-prefixed, NUL-truncated, encoder-converted string. length == 0 yields the empty string with no read.
+
+```cpp
+    std::string NIFStream::getSizedString(size_t length)
+    {
+        checkStreamSize(length);
+        std::string str(length, '\0');
+        mStream->read(str.data(), length);
+        if (mStream->fail())
+            throw std::runtime_error(std::format(
+                "Failed to read sized string of {} chars: {}", length, std::generic_category().message(errno)));
+        size_t end = str.find('\0');
+        if (end != std::string::npos)
+            str.erase(end);
+        if (mEncoder)
+            str = mEncoder->getUtf8(str, ToUTF8::BufferAllocationPolicy::UseGrowFactor, mBuffer);
+        return str;
+    }
+
+// nifstream.hpp:160,166
+        std::string getSizedString() { return getSizedString(get<uint32_t>()); }
+        std::string getExportString() { return getSizedString(get<uint8_t>()); }
+```
+
+## [C] Morrowind node names are WINDOWS-1252, converted to UTF-8 at read — with five bytes that map to a SPACE, not to U+FFFD and not to the C1 control
+- `/tmp/nifc_toutf8.cpp (OpenMW master components/toutf8/toutf8.cpp) + components/toutf8/tablesgen.hpp:toutf8.cpp:105-135, 191-231, 361-372; tablesgen.hpp:118 (windows_1252, 1536 entries); engine.cpp:373,752,960; niffilemanager.cpp:50` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE 45
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+The encoder is chosen once at engine start and is NOT read from the file. OMW::Engine::mEncoding defaults to ToUTF8::WINDOWS_1252 (engine.cpp:373); the `encoding` option defaults to the string "win1252" (apps/openmw/options.cpp:77) and calculateEncoding accepts only "win1250"/"win1251"/"win1252", throwing otherwise (toutf8.cpp:361-372) — CP437 exists in the enum but is reachable only for .fnt fonts. Engine builds ToUTF8::Utf8Encoder(mEncoding) (engine.cpp:960) and hands &encoder.getStatelessEncoder() to ResourceSystem (engine.cpp:752), which passes the same pointer to NifFileManager (resourcesystem.cpp:19) and KeyframeManager (resourcesystem.cpp:24); NifFileManager::get constructs Nif::Reader(*file, mEncoder) (niffilemanager.cpp:50). So both .nif and .kf strings go through it. The table (components/toutf8/tablesgen.hpp) is 256 entries x 6 signed chars: entry[b*6] is the UTF-8 output byte count, entry[b*6+1 .. +5] the bytes. I decoded windows_1252 and verified: bytes 0x00-0x7F are all identity, length 1 (no exceptions); 0x80-0xFF are genuine CP1252 (0x92 -> E2 80 99 U+2019, 0xE9 -> C3 A9 U+00E9, 0xA0 -> C2 A0); and the five CP1252-UNDEFINED bytes 0x81, 0x8D, 0x8F, 0x90, 0x9D map to a single ASCII SPACE 0x20. getUtf8 has a fast path: getLength/skipAscii stop at the first byte that is 0 or >= 128, and if none is found the input is returned byte-identical with no allocation (toutf8.cpp:105-135, 191-231). What a JS port MUST do to decode a bone name: take the `length` raw bytes, cut at the first 0x00, then map each byte through a 256-entry CP1252 table in which 0x81/0x8D/0x8F/0x90/0x9D produce " ". Do NOT use TextDecoder('utf-8') (Morrowind bytes are not UTF-8) and do NOT use TextDecoder('windows-1252') unmodified — the WHATWG index maps those five bytes to U+0081/U+008D/U+008F/U+0090/U+009D, which will not compare equal to OpenMW's space. Critically, this conversion happens BEFORE any case folding: Misc::StringUtils::toLower is a 256-entry byte map that touches only 'A'-'Z' (lower.hpp:9-40) and ciEqual first requires EQUAL BYTE LENGTH (algorithm.hpp:31-37), so an accented bone name is multi-byte UTF-8 that can never fold or match its differently-accented or ASCII spelling. Byte-for-byte name equality after this pipeline is what rule 16's skeleton bone cache and rule 45's text-key compares actually rely on.
+
+```cpp
+// toutf8.cpp:117-124 (the ASCII fast path)
+    const auto [outlen, ascii] = getLength(input);
+    // If we're pure ascii, then don't bother converting anything.
+    if (ascii)
+        return std::string_view(input.data(), outlen);
+
+// toutf8.cpp:218-231 (per-byte translation)
+void StatelessUtf8Encoder::copyFromArray(unsigned char ch, char*& out) const
+{
+    // Optimize for ASCII values
+    if (ch < 128)
+    {
+        *(out++) = ch;
+        return;
+    }
+    const signed char* in = &mTranslationArray[ch * 6];
+    int len = *(in++);
+    memcpy(out, in, len);
+    out += len;
+}
+
+// apps/openmw/options.cpp:77
+        addOption("encoding", bpo::value<std::string>()->default_value("win1252"), ...
+// apps/openmw/engine.cpp:373
+    , mEncoding(ToUTF8::WINDOWS_1252)
+```
+
+## [C] In a Morrowind NIF every `bool` field on the wire is FOUR bytes, not one
+- `/tmp/nifc_nifstream.cpp (OpenMW master components/nif/nifstream.cpp):170-177 (call sites: node.cpp:151,242; data.cpp:113,125,137,152,320-323)` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+NIFStream::read<bool> switches on version: below 0x04010000 (4.1.0.0) it reads an int32 and tests != 0; at 4.1.0.0 and above it reads an int8 and tests != 0. Morrowind's 0x04000002 is BELOW 4.1.0.0, so every get<bool>()/read(bool&) in a Morrowind NIF consumes 4 little-endian bytes. The array form read<bool>(bool*, size) makes the same choice and reads size*4 bytes in Morrowind (nifstream.cpp:236-255). This changes the byte layout of records a JS port has to walk: NiAVObject::read reads a 4-byte 'has bounding volume' flag after the property list when version <= 4.2.2.0 (node.cpp:151); NiGeometryData::read reads a 4-byte hasVertices (data.cpp:113), a 4-byte hasNormals (data.cpp:125), a 4-byte hasVertexColors (data.cpp:137) and, on the 4.0.0.2 branch only, a 4-byte hasUV whose false value forces numUVs to 0 (data.cpp:152); NiExtraData-holder NiNode name lists use get<bool>() as a COUNT on old versions (node.cpp:242). Treating any of these as one byte desynchronises the stream by 3 bytes and corrupts every subsequent record. The one deliberate exception in the codebase: NiVisData reads its per-key visibility as an explicit uint8, never via get<bool> (data.cpp:320-323), so it is 1 byte in Morrowind too.
+
+```cpp
+    template <>
+    void NIFStream::read<bool>(bool& data)
+    {
+        if (getVersion() < generateVersion(4, 1, 0, 0))
+            data = get<int32_t>() != 0;
+        else
+            data = get<int8_t>() != 0;
+    }
+
+// data.cpp:113,125,137,152 - the four Morrowind geometry flags this makes 4 bytes each
+        if (nif->get<bool>() && hasData)
+            nif->readVector(mVertices, mNumVertices);
+...
+        else if (!nif->get<bool>())
+            numUVs = 0;
+```
+
+## [C] An unknown record type THROWS and kills the whole file — there is no skip path, and in Morrowind there cannot be one
+- `/tmp/nifc_niffile.cpp (OpenMW master components/nif/niffile.cpp):664-696 (factory table at 50-522)` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+The record loop runs recordsCount times. The type name comes from one of two places: for version >= 5.0.0.1 it is recTypes.at(recTypeIndices[i]) from the header listing; for Morrowind (below 5.0.0.1) it is a fresh inline nif.get<std::string>() per record — i.e. a uint32 length prefix, NUL-truncated and encoder-converted like any other sized string (see the getSizedString rule). An empty type string throws "Record type is blank (index i)". Lookup is factories.find(rec) on a std::map<std::string, CreateRecord> built once by makeFactory() (niffile.cpp:50-522, ~300 entries) with default std::less<std::string>, so the match is EXACT and CASE-SENSITIVE byte comparison — no prefix match, no case folding, no fallback entry. A miss throws Nif::Exception("Unknown record type " + rec) and the entire parse aborts; nothing is skipped and no partial model is produced. That is not a policy choice a port can relax for Morrowind: hasRecordSizes requires version >= 20.2.0.5, so a 4.0.0.2 file carries no per-record size and there is no way to know how many bytes to skip. The factory value also decouples the C++ class, the RecordType enum and the wire name: "AvoidNode" constructs a NiNode tagged RC_AvoidNode, "BSFadeNode" constructs a NiNode tagged RC_NiNode, "Lighting30ShaderProperty" constructs a BSShaderPPLightingProperty tagged RC_BSShaderPPLightingProperty — so a port needs a name -> (class, typeTag) table, not a name -> class one. After construction the reader sets r->mRecordName = the original wire string and r->mRecordIndex = i, the 0-based position in FILE order (not root order) — that index is what the 'discard the transform of record 0 unless it is named bip01' behaviour keys off.
+
+```cpp
+            std::string rec = hasRecTypeListings ? recTypes.at(recTypeIndices[i]) : nif.get<std::string>();
+            if (rec.empty())
+            {
+                std::stringstream error;
+                error << "Record type is blank (index " << i << ")";
+                throw Nif::Exception(error.str(), mFilename);
+            }
+            // Record separator. Some Havok records in Oblivion do not have it.
+            if (hasRecordSeparators && !rec.starts_with("bhk") && nif.get<int32_t>())
+                throw Nif::Exception("Non-zero separator precedes " + rec + ", index " + std::to_string(i), mFilename);
+
+            const auto entry = factories.find(rec);
+
+            if (entry == factories.end())
+                throw Nif::Exception("Unknown record type " + rec, mFilename);
+...
+            r->mRecordName = std::move(rec);
+            r->mRecordIndex = static_cast<unsigned>(i);
+            r->read(&nif);
+```
+
+## [C] Roots are a trailing int32 index list; a bad index becomes a KEPT null hole, and the mesh loader takes EVERY NiAVObject root, not just the first
+- `/tmp/nifc_niffile.cpp (OpenMW master components/nif/niffile.cpp):698-728 (consumers: components/nifosg/nifloader.cpp:341-357 and 432-444)` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Immediately after the last record the file has a uint32 rootsCount followed by rootsCount SIGNED int32 record indices. For each: if idx >= 0 && (size_t)idx < mRecords.size() the record pointer is appended; otherwise a nullptr is appended in its place — the hole is KEPT, so root slot i keeps its ordinal — and a warning is logged for the first 10 offenders, then one summary line for the rest. Negative and out-of-range are handled identically. Only after the whole root list is built does the reader run post() on every record in file order (niffile.cpp:726-728), which is when all record cross-references resolve. Consumers then differ by file kind. Mesh loading (nifloader.cpp:432-444) iterates ALL roots in order, skips nulls, dynamic_casts each to Nif::NiAVObject, and keeps every one that succeeds; if the survivor list is empty it throws Nif::Exception("Found no root nodes"). All survivors are loaded and added as children of ONE freshly created osg::Group — so a multi-root NIF produces a multi-child scene, and it is emphatically NOT 'root 0 only'. Non-NiAVObject roots are silently ignored rather than being an error. Keyframe loading (nifloader.cpp:341-357) uses the opposite rule: scan the roots in order and take the FIRST whose mRecordType == RC_NiSequenceStreamHelper; if there is none, log a warning and return with no animation loaded — it does not throw and it does not search deeper than the root list.
+
+```cpp
+        // Determine which records are roots
+        const std::uint32_t rootsCount = nif.get<uint32_t>();
+        mRoots.reserve(rootsCount);
+        ...
+            std::int32_t idx;
+            nif.read(idx);
+            if (idx >= 0 && static_cast<std::size_t>(idx) < mRecords.size())
+            {
+                mRoots.push_back(mRecords[idx].get());
+            }
+            else
+            {
+                mRoots.push_back(nullptr);
+                ++doesNotPointWarnings;
+
+// nifloader.cpp:432-444
+            const size_t numRoots = nif.numRoots();
+            std::vector<const Nif::NiAVObject*> roots;
+            for (size_t i = 0; i < numRoots; ++i)
+            {
+                const Nif::Record* r = nif.getRoot(i);
+                if (!r)
+                    continue;
+                const Nif::NiAVObject* nifNode = dynamic_cast<const Nif::NiAVObject*>(r);
+                if (nifNode)
+                    roots.emplace_back(nifNode);
+            }
+            if (roots.empty())
+                throw Nif::Exception("Found no root nodes", nif.getFilename());
+```
+
+## [C] Attached equipment reads the LOWER-BODY clock; only the head and the right-hand weapon get their own
+- `apps/openmw/mwrender/npcanimation.cpp:825-868` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE 26
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+After NpcAnimation::addOrReplaceIndividualPart instances and attaches a part mesh, it assigns a ControllerSource to the controllers INSIDE that part's subtree — but only if `node->getNumChildrenRequiringUpdateTraversal() > 0` (a part with no update callbacks is skipped entirely). The choice is a three-way branch on the ESM::PartReferenceType: (a) `PRT_Head` (0) -> `mHeadAnimationTime`, assigned with SceneUtil::ForceControllerSourcesVisitor, whose visit is `ctrl.setSource(mToAssign)` with NO null check (components/sceneutil/controller.cpp:128-131) — it OVERWRITES sources that are already set. Before assigning, it walks `node->getUserDataContainer()`'s user objects, takes the FIRST SceneUtil::TextKeyMapHolder (then `break`), and for every key in it does a case-insensitive full-string compare (Misc::StringUtils::ciEqual) against exactly "talk: start", "talk: stop", "blink: start", "blink: stop", feeding setTalkStart/setTalkStop/setBlinkStart/setBlinkStop. These are the head PART mesh's own text keys, not the skeleton's. (b) `PRT_Weapon` (25) -> `mWeaponAnimationTime`. (c) EVERY other of the 27 slots — Hair 1, Neck 2, Cuirass 3, Groin 4, Skirt 5, RHand 6, LHand 7, RWrist 8, LWrist 9, Shield 10, RForearm 11, LForearm 12, RUpperarm 13, LUpperarm 14, RFoot 15, LFoot 16, RAnkle 17, LAnkle 18, RKnee 19, LKnee 20, RLeg 21, LLeg 22, RPauldron 23, LPauldron 24, Tail 26 -> `mAnimationTimePtr[0]`, i.e. index 0 == BoneGroup_LowerBody (bonegroup.hpp: BoneGroup_LowerBody = 0), the shared playhead of whichever AnimState currently wins the LOWER BODY. So a shield (bone "Shield Bone", left-arm group), both pauldrons, both hands and both forearms drive their own embedded NIF controllers (UV scroll, vis, flipbook, particle) off the LEGS' clock, never off the bone group they hang from. (b) and (c) use SceneUtil::AssignControllerSourcesVisitor, whose visit is `if (!ctrl.getSource()) ctrl.setSource(mToAssign)` (controller.cpp:112-116) — an already-sourced controller is left alone. CreatureWeaponAnimation::updatePart repeats the same split (apps/openmw/mwrender/creatureanimation.cpp:167-175): Slot_CarriedRight -> mWeaponAnimationTime, every other slot -> mAnimationTimePtr[0]. Corroborating default: Animation::addAnimSource ends with `AssignControllerSourcesVisitor assignVisitor(mAnimationTimePtr[0]); mObjectRoot->accept(assignVisitor);` (animation.cpp:709-710), so anything still sourceless anywhere on the actor also falls to the lower-body clock. EXCEPTION: the ammunition attached by WeaponAnimation::attachArrow (weaponanimation.cpp:84-90) gets NO visitor at all and is attached after that sweep, so an arrow's own controllers stay sourceless.
+
+```cpp
+        osg::Node* node = mObjectParts[type]->getNode();
+        if (node->getNumChildrenRequiringUpdateTraversal() > 0)
+        {
+            std::shared_ptr<SceneUtil::ControllerSource> src;
+            if (type == ESM::PRT_Head)
+            {
+                src = mHeadAnimationTime;
+                ...
+                                if (Misc::StringUtils::ciEqual(key.second, "talk: start"))
+                                    mHeadAnimationTime->setTalkStart(key.first);
+                ...
+                SceneUtil::ForceControllerSourcesVisitor assignVisitor(std::move(src));
+                node->accept(assignVisitor);
+            }
+            else
+            {
+                if (type == ESM::PRT_Weapon)
+                    src = mWeaponAnimationTime;
+                else
+                    src = mAnimationTimePtr[0];
+                SceneUtil::AssignControllerSourcesVisitor assignVisitor(std::move(src));
+                node->accept(assignVisitor);
+            }
+        }
+```
+
+## [C] WeaponAnimationTime returns (weapon group playhead - mStartTime), and mStartTime is relative ONLY for weapon class Ranged
+- `apps/openmw/mwrender/weaponanimation.cpp:25-50` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+WeaponAnimationTime is a ControllerSource holding {Animation* mAnimation; std::string mWeaponGroup; float mStartTime = 0; bool mRelativeTime = false} (weaponanimation.hpp:15-32). getValue(): if mWeaponGroup is EMPTY return 0.0f; else `current = mAnimation->getCurrentTime(mWeaponGroup)`, which is the AnimState's live playhead `*mTime` for that group or exactly -1.0f when the group is not in mStates (animation.cpp:1247-1254); if `current == -1` (bare float equality against -1) return 0.0f; otherwise return `current - mStartTime`. setGroup(group, relativeTime) stores both and then sets `mStartTime = relativeTime ? mAnimation->getStartTime(group) : 0`. Animation::getStartTime (animation.cpp:827-838) walks mAnimSources in REVERSE (newest source first) and returns `keys.findGroupStart(groupname)->first` — the time of the group's FIRST text key, not its "start" key — and returns -1.0f if no source contains the group; a -1 there makes getValue return `current + 1`, so a missing group silently biases the clock by +1 second. updateStartTime() is just `setGroup(mWeaponGroup, mRelativeTime)`, i.e. re-resolves mStartTime against the CURRENT anim-source list without changing the group; it is called once at the very end of NpcAnimation::updateNpcBase (npcanimation.cpp:549), after every addAnimSource, because the source list has just been rebuilt. WHICH WEAPON CLASSES ARE RELATIVE: both call sites of Animation::setWeaponGroup compute `bool useRelativeDuration = weaponClass == ESM::WeaponType::Ranged;` — apps/openmw/mwmechanics/character.cpp:943-945 (on entering the weapon state) and character.cpp:1441-1443 (on a weapon change). So class Ranged (bow, crossbow) uses time measured from the group's first key; Melee, Thrown, Ammo and every other class use ABSOLUTE animation time (mStartTime = 0). The in-source reason: "controllers for ranged weapon should use time for beginning of animation to play shooting properly, for other weapons they should use absolute time. Some mods rely on this behaviour (to rotate throwing projectiles, for example)". setWeaponGroup is only reached when the weapon type is not None, not Spell and not HandToHand; the base Animation::setWeaponGroup is an empty virtual (animation.hpp:467), so creatures without a CreatureWeaponAnimation ignore it.
+
+```cpp
+    float WeaponAnimationTime::getValue(osg::NodeVisitor*)
+    {
+        if (mWeaponGroup.empty())
+            return 0;
+
+        float current = mAnimation->getCurrentTime(mWeaponGroup);
+        if (current == -1)
+            return 0;
+        return current - mStartTime;
+    }
+
+    void WeaponAnimationTime::setGroup(const std::string& group, bool relativeTime)
+    {
+        mWeaponGroup = group;
+        mRelativeTime = relativeTime;
+
+        if (mRelativeTime)
+            mStartTime = mAnimation->getStartTime(mWeaponGroup);
+        else
+            mStartTime = 0;
+    }
+
+    void WeaponAnimationTime::updateStartTime()
+    {
+        setGroup(mWeaponGroup, mRelativeTime);
+    }
+```
+
+## [C] HeadAnimationTime is the third clock: a blink ramp with a random negative delay, replaced by loudness-scaled talk while a voice line plays
+- `apps/openmw/mwrender/npcanimation.cpp:155-199` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+HeadAnimationTime holds mTalkStart/mTalkStop/mBlinkStart/mBlinkStop (all 0 by default, filled from the head PART mesh's text keys — see the PRT_Head branch), mBlinkTimer, mEnabled (default TRUE) and mValue (default 0). getValue() just returns mValue — it never computes anything; mValue is advanced once per frame by update(dt), called from NpcAnimation::runAnimation AFTER Animation::runAnimation has already stepped all AnimStates (npcanimation.cpp:708-710). update(dt) returns immediately if `!mEnabled`, and again if `dt == 0.f` exactly (so a paused frame freezes the eye/mouth rather than resetting it). Branch on `MWBase::Environment::get().getSoundManager()->sayActive(mReference)`: NOT saying -> `mBlinkTimer += dt; duration = mBlinkStop - mBlinkStart; if (mBlinkTimer >= 0 && mBlinkTimer <= duration) mValue = mBlinkStart + mBlinkTimer; else mValue = mBlinkStop; if (mBlinkTimer > duration) resetBlinkTimer();` — i.e. the head texture/UV controller is parked at mBlinkStop between blinks, then plays mBlinkStart..mBlinkStop in real time once the timer reaches 0. Saying -> `mValue = mTalkStart + (mTalkStop - mTalkStart) * std::min(1.f, getSaySoundLoudness(mReference) * 2)`, an instantaneous (unsmoothed) lerp; loudness is doubled then clamped at 1. resetBlinkTimer() sets `mBlinkTimer = -(2.0f + Misc::Rng::rollDice(6, prng))`, and rollDice(6) is uniform over [0,5] inclusive (components/misc/rng.hpp:34-39, "return value in range [0, max)"), so the pause between blinks is uniformly one of -2, -3, -4, -5, -6 or -7 seconds. EDGE CASE: a head with no blink keys leaves mBlinkStart = mBlinkStop = 0, so duration = 0, mValue is pinned to 0, and the timer is re-rolled on the first frame after it passes 0. mEnabled is toggled by NpcAnimation::enableHeadAnimation (npcanimation.cpp:1117-1120).
+
+```cpp
+    void HeadAnimationTime::resetBlinkTimer()
+    {
+        auto& prng = MWBase::Environment::get().getWorld()->getPrng();
+        mBlinkTimer = -(2.0f + Misc::Rng::rollDice(6, prng));
+    }
+
+    void HeadAnimationTime::update(float dt)
+    {
+        if (!mEnabled)
+            return;
+
+        if (dt == 0.f)
+            return;
+
+        if (!MWBase::Environment::get().getSoundManager()->sayActive(mReference))
+        {
+            mBlinkTimer += dt;
+
+            float duration = mBlinkStop - mBlinkStart;
+
+            if (mBlinkTimer >= 0 && mBlinkTimer <= duration)
+            {
+                mValue = mBlinkStart + mBlinkTimer;
+            }
+            else
+                mValue = mBlinkStop;
+
+            if (mBlinkTimer > duration)
+                resetBlinkTimer();
+        }
+        else
+        {
+            mValue = mTalkStart
+                + (mTalkStop - mTalkStart)
+                    * std::min(1.f,
+                        MWBase::Environment::get().getSoundManager()->getSaySoundLoudness(mReference)
+                            * 2);
+        }
+    }
+```
+
+## [C] The ranged aim pitch is TWO RotateControllers, on "bip01 spine1" and "bip01 spine2", each given HALF the pitch about -X
+- `apps/openmw/mwrender/weaponanimation.cpp:175-211` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+WeaponAnimation::addControllers(nodes, map, objectRoot) loops i = 0..1, sets `mSpineControllers[i] = nullptr` FIRST (so a bone that is missing leaves a null slot while the other slot can still be live), then looks up the literal lowercase names `i == 0 ? "bip01 spine1" : "bip01 spine2"` in the Animation::NodeMap. That map is an unordered_map keyed with Misc::StringUtils::CiHash/CiEqual (animation.hpp:126-128), so the lookup is CASE-INSENSITIVE and, per rule 16, the first matching MatrixTransform in traversal order wins. Each found node gets `new RotateController(objectRoot)` added as an UPDATE callback and recorded in the caller's active-controller vector (which is mActiveControllers, cleared and detached by Animation::resetActiveGroups). deleteControllers() only nulls the two pointers — it does not detach anything; detachment is resetActiveGroups' job. configureControllers(characterPitchRadians), called once per frame: if `mPitchFactor == 0.f || characterPitchRadians == 0.f` (both bare float equality tests, so any nonzero epsilon still counts as pitched) it calls setControllerEnabled(false) and RETURNS — the animated spine matrix is left untouched. Otherwise `pitch = characterPitchRadians * mPitchFactor` and BOTH controllers are given the IDENTICAL quaternion `osg::Quat(pitch / 2, osg::Vec3f(-1, 0, 0))` — a rotation of HALF the pitch about the NEGATIVE X axis — and both are enabled. Because "bip01 spine2" is a descendant of "bip01 spine1" in the Morrowind biped rig, the two halves compose and the net rotation carried down to the clavicles, arms and the weapon bone is the full `characterPitchRadians * mPitchFactor` about -X, delivered as a two-segment curve rather than a single hinge. Each RotateController conjugates its quaternion into the node's local frame relative to mRelativeTo == mObjectRoot and PRE-multiplies it onto the animated local rotation (`orient = worldOrient * mRotate * worldOrientInverse * matrix.getRotate()`, rule 31), so the pitch is expressed in ACTOR-ROOT space, not bone space, and it stacks on top of whatever the weapon animation wrote that frame. mPitchFactor is a float member of WeaponAnimation initialised to 0 in its constructor (weaponanimation.cpp:51-54, weaponanimation.hpp:76), written only by the setPitchFactor overrides in NpcAnimation (npcanimation.hpp:139) and CreatureWeaponAnimation (creatureanimation.hpp:66); Animation::setPitchFactor is an empty virtual (animation.hpp:470), so plain creatures and objects ignore it.
+
+```cpp
+    void WeaponAnimation::addControllers(const Animation::NodeMap& nodes,
+        std::vector<std::pair<osg::ref_ptr<osg::Node>, osg::ref_ptr<osg::Callback>>>& map, osg::Node* objectRoot)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            mSpineControllers[i] = nullptr;
+
+            Animation::NodeMap::const_iterator found = nodes.find(i == 0 ? "bip01 spine1" : "bip01 spine2");
+            if (found != nodes.end())
+            {
+                osg::Node* node = found->second;
+                mSpineControllers[i] = new RotateController(objectRoot);
+                node->addUpdateCallback(mSpineControllers[i]);
+                map.emplace_back(node, mSpineControllers[i]);
+            }
+        }
+    }
+...
+    void WeaponAnimation::configureControllers(float characterPitchRadians)
+    {
+        if (mPitchFactor == 0.f || characterPitchRadians == 0.f)
+        {
+            setControllerEnabled(false);
+            return;
+        }
+
+        float pitch = characterPitchRadians * mPitchFactor;
+        osg::Quat rotate(pitch / 2, osg::Vec3f(-1, 0, 0));
+        setControllerRotate(rotate);
+        setControllerEnabled(true);
+    }
+```
+
+## [C] The spine controllers are attached only in VM_Normal, but configureControllers runs every frame in every view mode
+- `apps/openmw/mwrender/npcanimation.cpp:706-729, 924-951` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+NpcAnimation::addControllers is an if / else-if with NO else. It always starts by calling Animation::addControllers(), setting `mFirstPersonNeckController = nullptr` and calling `WeaponAnimation::deleteControllers()` (which nulls both spine pointers). Then: `if (mViewMode == VM_FirstPerson)` -> attach the "bip01 neck" RotateController, and ONLY when `mStates.size() > 0` (rule 30) — the spine controllers are NOT attached; `else if (mViewMode == VM_Normal)` -> `WeaponAnimation::addControllers(mNodeMap, mActiveControllers, mObjectRoot.get())`. VM_HeadOnly (the third enum value, npcanimation.hpp:39-44) matches NEITHER branch and therefore gets no neck controller and no spine controllers. Independently of all that, NpcAnimation::runAnimation calls `WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians())` UNCONDITIONALLY, outside every view-mode test, on every frame, for every NPC. In first person and head-only this is a no-op by construction: setControllerRotate/setControllerEnabled iterate `for (int i = 0; i < 2; ++i) if (mSpineControllers[i])` over two null pointers. mPitchFactor is still being maintained by CharacterController every frame in first person — it is computed and stored and then consumed by nobody. THE ARGUMENT: `rot[0]` is the actor's PITCH in radians straight out of ESM::Position (positive = looking down in Morrowind's convention); `getBodyPitchRadians()` (animation.hpp:490) is mBodyPitchRadians, which CharacterController sets NONZERO only for a non-first-person biped swimming forward/back with the turn-to-movement-direction setting on, where it eases toward `-rot[0]` at a maximum of 3.0 rad/s (character.cpp:2333-2344) and is otherwise forced to 0. So the sum is normally just rot[0], and while swimming it converges to rot[0] + (-rot[0]) = 0, i.e. the spine aim pitch cancels itself out exactly when the whole root is already being pitched by mRootController (`legYaw * osg::Quat(mBodyPitchRadians, osg::Vec3f(1, 0, 0))`, animation.cpp:1417-1422 — note that one is about +X, the spine one about -X). CreatureWeaponAnimation has no view mode: its addControllers always calls WeaponAnimation::addControllers (guarded only by `if (mObjectRoot)`) and its runAnimation calls configureControllers with the identical argument (creatureanimation.cpp:259-272), so weapon-carrying creatures always get the spine pitch.
+
+```cpp
+    osg::Vec3f NpcAnimation::runAnimation(float timepassed)
+    {
+        osg::Vec3f ret = Animation::runAnimation(timepassed);
+
+        mHeadAnimationTime->update(timepassed);
+
+        if (mFirstPersonNeckController)
+        { ... }
+
+        WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
+
+        return ret;
+    }
+
+    void NpcAnimation::addControllers()
+    {
+        Animation::addControllers();
+
+        mFirstPersonNeckController = nullptr;
+        WeaponAnimation::deleteControllers();
+
+        if (mViewMode == VM_FirstPerson)
+        {
+            if (mStates.size() > 0)
+            { ... "bip01 neck" RotateController ... }
+        }
+        else if (mViewMode == VM_Normal)
+        {
+            WeaponAnimation::addControllers(mNodeMap, mActiveControllers, mObjectRoot.get());
+        }
+    }
+```
+
+## [C] setPitchFactor: 0 by default, 1 while attacking with Ranged or Thrown, with a wind-up ramp-in and two different ramp-outs
+- `apps/openmw/mwmechanics/character.cpp:1868-1895` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Every call of CharacterController::updateWeaponState first does `mAnimation->setPitchFactor(0.f)` unconditionally, then raises it only if BOTH: `mUpperBodyState > UpperBodyState::WeaponEquipped` (the enum is None=0, Equipping=1, Unequipping=2, WeaponEquipped=3, AttackWindUp=4, AttackRelease=5, AttackEnd=6, Casting=7 — character.hpp:107-117, so the condition is exactly AttackWindUp | AttackRelease | AttackEnd | Casting) AND the weapon class of mWeaponType is `ESM::WeaponType::Ranged` or `ESM::WeaponType::Thrown` (melee, spell, hand-to-hand, pick/probe never pitch). Baseline in that block is 1.0f, then two mutually exclusive overrides: (1) WIND-UP RAMP-IN — only when `mUpperBodyState == UpperBodyState::AttackWindUp` AND `!isRandomAttackAnimation(mCurrentWeapon)`, where isRandomAttackAnimation is the exact set {"attack1","attack2","attack3","swimattack1","swimattack2","swimattack3"} (character.cpp:2934-2938). It reads `currentTime = getCurrentTime(mCurrentWeapon)` (-1 if that group is not playing), `minAttackTime = getTextKeyTime(mCurrentWeapon + ": " + mAttackType + " min attack")` and `startTime = getTextKeyTime(mCurrentWeapon + ": " + mAttackType + " start")` — getTextKeyTime is a PREFIX match scanning anim sources in reverse and returns -1.0f when the key is absent (animation.cpp:840-854). Only if `startTime <= currentTime && currentTime < minAttackTime` does it set `factor = (currentTime - startTime) / (minAttackTime - startTime)`. There is no clamp; the guard alone confines it to [0,1). If either key is missing the guard normally fails and the factor stays at 1.0 — a hard snap, which is exactly what the comment means by "Random attack animations never have one [a pre-wind-up section]". (2) RAMP-OUT — only when `mUpperBodyState == UpperBodyState::AttackEnd`: if `mWeaponType == ESM::Weapon::MarksmanCrossbow` the factor is `std::max(0.f, 1.f - complete * 10.f)`, reaching 0 at complete == 0.1, i.e. the pitch is dumped over the FIRST TENTH of the reload and the rest of the reload plays unpitched; every other ranged/thrown weapon gets `1.f - complete`, a linear fade across the whole follow section. `complete` is AnimState::getCompletion() of mCurrentWeapon from Animation::getInfo — `(getTime() - mStartTime) / (mStopTime - mStartTime)`, or `mPlaying ? 0.0f : 1.0f` when mStopTime <= mStartTime, and 0.0f when the group is not in mStates (animation.cpp:1212-1229, 2160-2166). In the AttackEnd state that span is the "<attackType> follow start" -> "<attackType> follow stop" section just started at character.cpp:1811-1815, so complete is confined to [0,1] and 1-complete never goes negative. AttackRelease and Casting take NEITHER branch: the factor stays exactly 1.0. Immediately after, `mAnimation->setAccurateAiming(mUpperBodyState > UpperBodyState::WeaponEquipped)` uses the same state test but WITHOUT the weapon-class test.
+
+```cpp
+        mAnimation->setPitchFactor(0.f);
+        if (mUpperBodyState > UpperBodyState::WeaponEquipped
+            && (weapclass == ESM::WeaponType::Ranged || weapclass == ESM::WeaponType::Thrown))
+        {
+            mAnimation->setPitchFactor(1.f);
+
+            // A smooth transition can be provided if a pre-wind-up section is defined. Random attack animations never
+            // have one.
+            if (mUpperBodyState == UpperBodyState::AttackWindUp && !isRandomAttackAnimation(mCurrentWeapon))
+            {
+                float currentTime = mAnimation->getCurrentTime(mCurrentWeapon);
+                float minAttackTime = mAnimation->getTextKeyTime(mCurrentWeapon + ": " + mAttackType + " min attack");
+                float startTime = mAnimation->getTextKeyTime(mCurrentWeapon + ": " + mAttackType + " start");
+                if (startTime <= currentTime && currentTime < minAttackTime)
+                    mAnimation->setPitchFactor((currentTime - startTime) / (minAttackTime - startTime));
+            }
+            else if (mUpperBodyState == UpperBodyState::AttackEnd)
+            {
+                // technically we do not need a pitch for crossbow reload animation,
+                // but we should avoid abrupt repositioning
+                if (mWeaponType == ESM::Weapon::MarksmanCrossbow)
+                    mAnimation->setPitchFactor(std::max(0.f, 1.f - complete * 10.f));
+                else
+                    mAnimation->setPitchFactor(1.f - complete);
+            
+...(truncated; see the cited lines)
+```
+
+## [C] UNRESOLVED: OpenMW has NO code path that pitches a first-person arm for bow aim — do not invent one and call it parity
+- `apps/openmw/mwrender/weaponanimation.cpp:111-114` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Exhaustively, from source: (1) the only thing that applies aim pitch to a rig is the pair of spine RotateControllers, and they are attached ONLY under `else if (mViewMode == VM_Normal)`; (2) the first-person branch attaches the "bip01 neck" controller instead, which rotates the neck subtree — the head and the "Camera" bone — while the arms hang off the clavicles under spine1/spine2 and are therefore NOT moved by it; (3) the first-person camera's ORIENTATION does not come from the rig at all: Camera::getOrient() is `osg::Quat(mRoll+mExtraRoll,(0,1,0)) * osg::Quat(mPitch+mExtraPitch,(1,0,0)) * osg::Quat(mYaw+mExtraYaw,(0,0,1))` (apps/openmw/mwrender/camera.cpp:211-215) and the tracked bone supplies only the camera POSITION (camera.cpp:110-127); (4) the actor's scene node itself is rotated by YAW ONLY — `makeActorOsgQuat` is `osg::Quat(position.rot[2], osg::Vec3(0, 0, -1))` (apps/openmw/mwworld/scene.cpp:59-62), so rot[0] never tilts the rig; it is consumed solely by the neck controller, the spine controllers and the camera; (5) mPitchFactor is nevertheless computed and stored every frame in first person by CharacterController and configureControllers is still called every frame — it just finds two null controllers. NET BEHAVIOUR IN OPENMW FIRST PERSON: the bow and the arms sit at whatever the ".1st" animation authored, the camera pitches freely, and the two are visually decoupled. What the projectile does is independent of ALL of it: WeaponAnimation::releaseArrow takes the launch POSITION from the world transform of the ammunition node (so in third person the spine pitch does move the spawn point) but builds the direction purely from the actor's numbers — `orient = osg::Quat(rot[0], osg::Vec3f(-1,0,0)) * osg::Quat(rot[2], osg::Vec3f(0,0,-1))`, in that operand order, with the comment "Always the same as the actor orientation, even if the ArrowBone's orientation dictates otherwise" (weaponanimation.cpp:111-114) — so aim accuracy is unaffected by whether anything is pitched. WHAT IS UNRESOLVED: OpenMW gives no answer as to what a first-person arm SHOULD do with bow pitch — there is no first-person equivalent of the spine controllers, no first-person mPitchFactor consumer, and no comment explaining the omission. Whether original Morrowind pitched first-person arms cannot be decided from this source. A port that adds a first-person spine/arm pitch is DIVERGING from OpenMW, not matching it, and must be flagged as such; a port that omits it reproduces OpenMW exactly.
+
+```cpp
+        // The orientation of the launched projectile. Always the same as the actor orientation, even if the ArrowBone's
+        // orientation dictates otherwise.
+        osg::Quat orient = osg::Quat(actor.getRefData().getPosition().rot[0], osg::Vec3f(-1, 0, 0))
+            * osg::Quat(actor.getRefData().getPosition().rot[2], osg::Vec3f(0, 0, -1));
+
+// apps/openmw/mwworld/scene.cpp:59-62
+    osg::Quat makeActorOsgQuat(const ESM::Position& position)
+    {
+        return osg::Quat(position.rot[2], osg::Vec3(0, 0, -1));
+    }
+
+// apps/openmw/mwrender/camera.cpp:211-215
+    osg::Quat Camera::getOrient() const
+    {
+        return osg::Quat(mRoll + mExtraRoll, osg::Vec3d(0, 1, 0)) * osg::Quat(mPitch + mExtraPitch, osg::Vec3d(1, 0, 0))
+            * osg::Quat(mYaw + mExtraYaw, osg::Vec3d(0, 0, 1));
+    }
+```
+
+## [C] VFS path normalisation is three ordered byte passes: backslash→slash, ASCII-ONLY lowercase, collapse separator runs, drop the leading separator
+- `components/vfs/pathutil.hpp:15-77 (plus 156-161, 206-235, 289-297, 303-325)` - importance **critical**
+- REFINES OR CORRECTS RECORDED RULE 36
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+`VFS::Path::normalize(char c)` = `c == '\\' ? '/' : toLower(c)`, where `toLower` is a 256-entry byte table that maps ONLY 0x41-0x5A ('A'-'Z') to 0x61-0x7A and leaves every other byte value unchanged (components/misc/strings/lower.hpp:10-29). `normalizeFilenameInPlace` then runs exactly three passes, IN THIS ORDER: (1) transform every byte with `normalize`; (2) `std::unique` with predicate `a=='/' && b=='/'`, collapsing every RUN of consecutive separators to one; (3) if the first surviving byte is '/', drop exactly one — because step 2 already collapsed a leading run to a single '/', ANY number of leading separators ends up removed. Nothing else happens: '.'/'..' are NOT resolved, a TRAILING '/' is NOT removed (that is why the literals "meshes/" and "animations/" are legal), colons/drive letters are untouched, there is no Unicode case folding and no NFC. In JS you MUST use a hand-written A-Z map over bytes; `String.prototype.toLowerCase()` is wrong because it also folds non-ASCII (À→à, İ→i̇) and BSA names carry code-page bytes OpenMW never folds. `isNormalized(s)` (pathutil.hpp:23-43): empty → true; `s[0]=='/'` → false; any byte != normalize(byte) → false; any i>0 with `s[i]=='/' && s[i-1]=='/'` → false. Type contract: `Normalized(std::string_view)` normalizes on construction, but `NormalizedView(const char*)` THROWS `std::invalid_argument` when the literal is not already normalized (pathutil.hpp:156-161) — every path literal in the engine is lowercase / forward-slash / no leading slash. Accessors, exactly: `extension()` = everything after the LAST '.' in the WHOLE string, dot excluded, empty if there is no '.' — it does NOT stop at the last '/', so "a.b/c" yields "b/c"; `filename()` = everything after the last '/'; `stem()` = `filename()` truncated at ITS last '.'; `parent()` = everything before the last '/', empty when there is none. `changeExtension(ext)` scans backwards for the first '.'-or-'/'; if that is a '/' or nothing is found it returns false and changes nothing; otherwise it replaces everything after that '.' with `ext` (ext is stored WITHOUT a leading dot) and returns true — so "foo.nif"→"foo.kf" and "foo."→"foo.kf". `append(string_view)` inserts exactly one '/' first (none if the receiver is empty) and then normalizes ONLY the appended segment; `operator/` on two NormalizedViews joins with one '/' and re-normalizes nothing.
+
+```cpp
+inline constexpr char separator = '/';
+inline constexpr char extensionSeparator = '.';
+
+[[nodiscard]] inline constexpr char normalize(char c)
+{
+    return c == '\\' ? separator : Misc::StringUtils::toLower(c);
+}
+...
+[[nodiscard]] inline auto removeDuplicatedSeparators(auto begin, auto end)
+{
+    return std::unique(begin, end, [](char a, char b) { return a == separator && b == separator; });
+}
+
+[[nodiscard]] inline auto removeLeadingSeparator(auto begin, auto end)
+{
+    if (begin != end && *begin == separator)
+        return begin + 1;
+    return begin;
+}
+
+[[nodiscard]] inline auto normalizeFilenameInPlace(auto begin, auto end)
+{
+    std::transform(begin, end, begin, normalize);
+    end = removeDuplicatedSeparators(begin, end);
+    begin = removeLeadingSeparator(begin, end);
+    return std::pair(begin, end);
+}
+```
+
+## [C] "Does this file exist" is ONE exact byte lookup in a single flat sorted map — no directory walk, no case retry, no extension fallback
+- `components/vfs/manager.cpp:32-38, 55-72, 100-136 (with components/vfs/filemap.hpp:16 and components/vfs/recursivedirectoryiterator.hpp:19-21)` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+The whole VFS is one `std::map<Path::Normalized, File*, std::less<>>` (components/vfs/filemap.hpp:16) keyed by the fully normalized relative path, built once by `buildIndex()`. `Manager::exists(name)` is literally `mIndex.find(name) != mIndex.end()` — a single exact byte-wise string comparison. There is NO filesystem probe, NO case-insensitive rescan, NO extension fallback and NO directory traversal inside `exists`; every fallback chain (the .dds→original-ext→top-level-flatten walk of rule 36, the x-prefix KF probe of rule 18, the `_sh` scabbard probe) is spelled out by the CALLER as repeated `exists()` calls. Both overloads take an ALREADY-normalized argument (`Path::Normalized` or `NormalizedView`), so a port must apply rule A to the query string first; `getNormalized`/`findNormalized` `assert(Path::isNormalized(...))`. Sibling API contracts: `find(name)` returns an open stream or **nullptr**; `get(name)` throws `std::runtime_error("Resource '" + name + "' not found")`; `getLastModified`/`getStem` throw the same on a miss. Directory listing is a PURE SORTED-PREFIX RANGE over that same map, not a tree walk: `getRecursiveDirectoryIterator(path)` normalizes `path`, takes `lower_bound(path)`; if that is `end()` or its key does not `starts_with(path)` the range is EMPTY; otherwise the upper bound is `lower_bound(path with its LAST BYTE incremented by one)`. It therefore yields FULL normalized paths (not bare filenames), recurses implicitly through subdirectories, returns an empty range for a directory holding no files, and — because the test is a plain string prefix — matches siblings unless the caller appends a trailing '/' (which `Animation::loadAdditionalAnimations` does). An empty path yields the entire index. Implement `exists` as `index.has(normalize(p))` over a `Map`/sorted array and implement listing as a prefix range over the sorted keys; anything cleverer will diverge from OpenMW.
+
+```cpp
+bool Manager::exists(const Path::Normalized& name) const
+{
+    return mIndex.find(name) != mIndex.end();
+}
+...
+RecursiveDirectoryRange Manager::getRecursiveDirectoryIterator(std::string_view path) const
+{
+    if (path.empty())
+        return { mIndex.begin(), mIndex.end() };
+    std::string normalized = Path::normalizeFilename(path);
+    const auto it = mIndex.lower_bound(normalized);
+    if (it == mIndex.end() || !it->first.view().starts_with(normalized))
+        return { it, it };
+    ++normalized.back();
+    return { it, mIndex.lower_bound(normalized) };
+}
+```
+
+## [C] Load order: every BSA first in list order, then every data dir in list order, and the index is built by OVERWRITE — so the last archive wins and loose files always beat BSAs
+- `components/vfs/registerarchives.cpp:16-53 (with components/vfs/manager.cpp:27-38, components/vfs/filesystemarchive.cpp:14-61, components/vfs/bsaarchive.hpp:84-92, apps/openmw/engine.cpp:456-460 and 749)` - importance **critical**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+`registerArchives` does exactly three things, in order. (1) For each entry of `archives` IN LIST ORDER, resolve the name to a real file and `vfs->addArchive(makeBsaArchive(path, encoder))`; if a listed archive cannot be found it THROWS `std::runtime_error("Archive '<name>' not found")` — a missing BSA is fatal, never skipped. (2) If `useLooseFiles` (apps/openmw/engine.cpp:749 passes a hardcoded `true` for the game), for each data directory IN LIST ORDER add a `FileSystemArchive`, skipping any path already added (`std::set` dedupe, logged "Ignoring duplicate data directory"). (3) `buildIndex()` clears the index and calls `listResources(mIndex)` on each archive IN INSERTION ORDER; both implementations do `out[key] = &file` — plain ASSIGNMENT, not insert — so THE LAST ARCHIVE TO BE ADDED WINS. The exact consequences to implement: a loose file always beats any BSA (all BSAs are registered before any directory); a later `fallback-archive=` entry beats an earlier one (apps/openmw/options.cpp: "set fallback BSA archives (later archives have higher priority)"); a later `data=` directory beats an earlier one; OpenMW's own `resources/vfs` directory is inserted at the FRONT of the data-dir list (engine.cpp:456-460) making it the LOWEST-priority loose source. Archive-name→path resolution walks the data dirs in REVERSE (last first) and compares only the FILENAME case-insensitively, returning the first hit (components/files/collections.cpp:33-48) — so a same-named BSA in a later data dir shadows the earlier one. Inside ONE `FileSystemArchive`: files are enumerated with `recursive_directory_iterator(dir, follow_directory_symlink)`, directories are not entries, and the key is the path relative to the data dir (the prefix stripped is `dirString.size()`, +1 unless the dir string already ends in '\\' or '/') put through rule A. If two on-disk files normalize to the same key (they differ only in case), `mIndex.emplace` keeps the FIRST one the iterator reached — filesystem-defined, NOT deterministic — and logs "Found duplicate file for '<path>'".
+
+```cpp
+for (std::vector<std::string>::const_iterator archive = archives.begin(); archive != archives.end(); ++archive)
+{
+    if (collections.doesExist(*archive))
+    {
+        // Last BSA has the highest priority
+        const auto archivePath = collections.getPath(*archive);
+        ...
+        vfs->addArchive(makeBsaArchive(archivePath, encoder));
+    }
+    else
+    {
+        throw std::runtime_error("Archive '" + *archive + "' not found");
+    }
+}
+
+if (useLooseFiles)
+{
+    std::set<std::filesystem::path> seen;
+    for (const auto& dataDir : dataDirs)
+    {
+        if (seen.insert(dataDir).second)
+        {
+            // Last data dir has the highest priority
+            vfs->addArchive(std::make_unique<FileSystemArchive>(dataDir));
+        }
+        ...
+```
+
+## [C] Building the index from a Morrowind BSA: all-uint32 little-endian, magic 0x100, and the hash table is READ AND THROWN AWAY
+- `components/bsa/bsafile.cpp:77-215 (with components/vfs/bsaarchive.hpp:74-97)` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Uncompressed Morrowind BSA layout, all integers little-endian uint32 unless stated. Header = 12 bytes: `magic` (must equal 0x00000100 exactly, else fail "Unrecognized BSA header"), `dirsize`, `filenum`. Immediately after: `filenum` records of TWO uint32 each — (fileSize, offset) — i.e. 8*filenum bytes; then `filenum` uint32 name-offsets (4*filenum bytes) indexing into the name buffer; then the name buffer of exactly `dirsize - 12*filenum` bytes of NUL-terminated strings. Then `filenum` 8-byte hash entries (two uint32, mLow/mHigh). Then the data buffer. `fileDataOffset = 12 + dirsize + 8*filenum`, and every record's stored `offset` is RELATIVE to that, so absolute = stored + fileDataOffset. THE HASH TABLE IS READ AND DISCARDED — the comment is verbatim "8*filenum - hash table block, we currently ignore this"; lookup is never by hash. `getHash()` exists only for WRITING archives (bsafile.cpp:312). DO NOT implement Morrowind's BSA hash for lookups: OpenMW builds its own normalized-name index instead. Name bytes are decoded from the configured legacy code page (default `win1252`, apps/openmw/options.cpp:77) to UTF-8 by `ToUTF8::StatelessUtf8Encoder` BEFORE normalisation (components/vfs/bsaarchive.hpp:78, 89-90), and only then put through rule A — so "meshes\\Foo.NIF" becomes the key "meshes/foo.nif", while non-ASCII bytes are code-page converted but NOT case-folded. Validation OpenMW enforces and a port should reproduce: file smaller than 12 bytes → "File too small to be a valid BSA archive"; `filenum*21 > fsize-12` OR `dirsize + 8*filenum > fsize-12` → "Directory information larger than entire archive"; `nameOffset >= nameBufferSize` → "Archive contains names offset outside itself"; no NUL found after a name offset → "Archive contains non-zero terminated string"; `fileSize + absoluteOffset > fsize` → "Archive contains offsets outside itself".
+
+```cpp
+// - 8 bytes*numfiles, each record contains:
+//         fileSize
+//         offset into data buffer (see below)
+// - 4 bytes*numfiles, each record is an offset into the following name buffer
+// - name buffer, indexed by the previous table, each string is null-terminated. Size is (dirsize - 12*numfiles).
+// - 8*filenum - hash table block, we currently ignore this
+...
+    uint32_t head[3];
+    input.read(reinterpret_cast<char*>(head), 12);
+    if (head[0] != 0x100)
+        fail("Unrecognized BSA header");
+    dirsize = head[1];
+    filenum = head[2];
+...
+    const std::streamsize fileDataOffset = 12 + dirsize + 8 * filenum;
+```
+
+## [C] DO NOT IMPLEMENT weapon/shield sheathing — it is an off-by-default OpenMW feature that needs modded `_sh` assets; the vanilla rule is one line
+- `apps/openmw/mwrender/actoranimation.cpp:141-160, 162-184, 187-248, 252-283, 321-406 (with apps/openmw/mwrender/npcanimation.cpp:991-1013, 1127-1136, 311-316 and files/settings-default.cfg:318-322)` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Gated by two settings, BOTH defaulting to false (files/settings-default.cfg:318-322, "Render holstered weapons (with quivers and scabbards), requires modded assets" / "Render holstered shield when it is not in actor's hands, requires modded assets"): `Game/weapon sheathing` and `Game/shield sheathing`. They require assets no Morrowind install has: an `xbase_anim_sh.nif` carrying extra weapon bones injected into the skeleton, per-item meshes named by `addSuffixBeforeExtension(mesh, "_sh")` (insert `_sh` before the last '.', or append if there is no '.', apps/openmw/mwrender/actorutil.cpp:40-50), and named nodes `Bip01 AttachShield`, `Bip01 Sheath`, `Bip01 Weapon`. DO NOT PORT: `updateHolsteredShield` (actoranimation.cpp:187-248), `updateHolsteredWeapon` (:321-406), `updateQuiver` (:410-), `getSheathedShieldMesh` (:141-160), `useShieldAnimations` (:252-283), and the `_sh` existence probes. WHAT VANILLA DOES INSTEAD, exactly: `updateCarriedLeftVisible(weaptype)` must collapse to its final line — `return !(MWMechanics::getWeaponType(weaptype)->mFlags & ESM::WeaponType::TwoHanded);` — i.e. the carried-left (shield) part is shown unless the equipped weapon type is flagged two-handed, and nothing else is consulted (no draw state, no `Bip01 AttachShield` search, no inventory probe, and in NpcAnimation no `mViewMode == VM_FirstPerson` branch, npcanimation.cpp:991-1013). A holstered weapon/shield simply is not rendered when not in hand; there is no scabbard, no quiver and no back-mounted shield. `useShieldAnimations()` must return false, so the text keys `"shield: equip attach"` and `"shield: unequip detach"` are never looked up. Keep `getShieldMesh` itself (actoranimation.cpp:108-139) — resolving a shield through its `PRT_Shield` body part with a male/female pick and an MT_Armor type check, falling back to the ground model — that part IS vanilla and is used by normal equipping.
+
+```cpp
+bool ActorAnimation::updateCarriedLeftVisible(const int weaptype) const
+{
+    if (Settings::game().mShieldSheathing && mObjectRoot)
+    {
+        ...
+            SceneUtil::FindByNameVisitor findVisitor("Bip01 AttachShield");
+            mObjectRoot->accept(findVisitor);
+            if (findVisitor.mFoundNode)
+            { ... return false; }
+    }
+
+    return !(MWMechanics::getWeaponType(weaptype)->mFlags & ESM::WeaponType::TwoHanded);
+}
+...
+void ActorAnimation::updateHolsteredShield(bool showCarriedLeft)
+{
+    if (!Settings::game().mShieldSheathing)
+        return;
+```
+
+## [C] DO NOT IMPLEMENT smooth animation transitions / AnimBlendRules — off by default, driven by a YAML file OpenMW itself ships; vanilla switches poses with zero cross-fade
+- `apps/openmw/mwrender/animation.cpp:737-765 and 1155-1174 (with components/sceneutil/animblendrules.cpp:18-39, 116-163 and files/data/animations/animation-config.yaml)` - importance **high**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Gated by `Game/smooth animation transitions`, default FALSE (files/settings-default.cfg:306-308). With it OFF — the vanilla path — `Animation::resetActiveGroups` installs the raw keyframe controller: `osg::Callback* callback = it->second->getAsCallback();` and adds it directly (animation.cpp:1159, 1174). There is NO cross-fade whatsoever: on the frame a new group starts, its pose replaces the previous pose outright. Implement ONLY that. With it ON, `addSingleAnimSource` loads blend rules and — note the operand ORDER — for ACTORS calls `getRules(globalBlendConfigPath, blendConfigPath)` where the GLOBAL `"animations/animation-config.yaml"` is the template and the per-KF file (the .kf path with its extension changed to "yaml") is the OVERRIDE; `getRules` returns nullptr when the FIRST path is missing even if the override exists (components/resource/animblendrulesmanager.cpp:35-38). For non-actor objects it calls `getRules(blendConfigPath, blendConfigPath)` — objects have no default blending. That global YAML is authored by OpenMW and shipped in `files/data/animations/animation-config.yaml`; no Morrowind install contains it, so against a vanilla Data Files VFS the whole feature loads nothing. If ever ported, the matching contract is: rules are scanned from LAST to FIRST (`rbegin`→`rend`) and the FIRST match wins, so later rules override earlier ones and `addOverrideRules` appends the per-animation rules AFTER the global ones; each rule side is lowercased and split on the FIRST ':' into (group, key) with both halves trimmed — plain ':' here, NOT the ": " separator that splits text keys in rule 21; a side matches when the rule string is `"*"`, equals the value exactly, is `"*suffix"` and the value `ends_with(suffix)`, or is `"prefix*"` and the value `starts_with(prefix)` — wildcards are supported ONLY at the very first or very last character; an EMPTY key half matches anything; the literal `"$"` as the to-group means "the same group as the from-group"; a YAML entry missing any of from/to/duration/easing is skipped with a warning, and if zero rules survive `fromFile` returns nullptr rather than an empty rule set.
+
+```cpp
+// Get the blending rules
+if (Settings::game().mSmoothAnimTransitions)
+{
+    constexpr VFS::Path::ExtensionView yaml("yaml");
+    VFS::Path::Normalized blendConfigPath(kfname);
+    blendConfigPath.changeExtension(yaml);
+    // globalBlendConfigPath is only used with actors! Objects have no default blending.
+    constexpr VFS::Path::NormalizedView globalBlendConfigPath("animations/animation-config.yaml");
+    ...
+        blendRules = mResourceSystem->getAnimBlendRulesManager()->getRules(globalBlendConfigPath, blendConfigPath);
+...
+    osg::Callback* callback = it->second->getAsCallback();
+    if (useSmoothAnims) { ... callback = handleBlendTransform<NifAnimBlendController>(...); }
+```
+
+## [C] DO NOT IMPLEMENT the three remaining modded-asset features: additional anim sources (plus its skeleton-bone injection), day/night switch nodes, graphic herbalism
+- `apps/openmw/mwrender/animation.cpp:623-660, 1570-1600, 2104-2114 (with components/settings/categories/game.hpp:41, 68, 73 and files/settings-default.cfg:303-304, 369-370, 379-380)` - importance **medium**
+- **UNVERIFIED** - extracted by one reader, never challenged
+
+Three more OpenMW-only behaviours reachable from the animation path; none exist in Morrowind. (1) `Game/use additional anim sources`, default FALSE ("Allow to load per-group KF-files from Animations folder"). It does two separate things and BOTH must be skipped. (a) `loadAdditionalAnimations` (animation.cpp:623-644): if the model path does NOT start with "meshes/" it returns immediately; otherwise it replaces that 7-byte prefix with "animations/", finds the LAST '.' in the whole remaining path (returns if there is none), replaces everything from that '.' to the end with a single "/", and then adds EVERY entry under that prefix whose `extension()` is "kf" as an extra anim source — so "meshes/xbase_anim.kf" scans "animations/xbase_anim/" recursively. Vanilla has exactly one KF per skeleton and no Animations/ tree. (b) The SAME setting gates default-skeleton bone injection for actors (animation.cpp:1570-1600): with it off, a Creature flagged `Bipedal` gets no `xbase_anim` bones, and an NPC with a non-empty custom `mModel` gets NO bones injected from the race/sex default skeleton — the custom model stands alone. (2) `Game/day night switches`, default TRUE but still OpenMW-only: it only fires when the loaded model carries the `Constants::NightDayLabel` user description (animation.cpp:2104-2107); no vanilla NIF does, so a port that omits the AddSwitchCallbacksVisitor loses nothing. (3) `Game/graphic herbalism`, default TRUE: needs a harvestable container model plus custom data (animation.cpp:2110-2114); vanilla always opens the container menu instead. Reasoning for all three: each is guarded by a `Settings::game()` flag whose documented purpose is to consume assets shipped by mods ("Some mods add models which change visuals based on time of day", "Some mods add harvestable container models", "if you want to use several animation replacers without merging them"). Porting them adds code paths that can never trigger on vanilla data but can misfire on it — exactly the class of guessed behaviour that broke earlier attempts.
+
+```cpp
+void Animation::loadAdditionalAnimations(VFS::Path::NormalizedView model, const std::string& baseModel)
+{
+    constexpr VFS::Path::NormalizedView meshes("meshes/");
+    if (!model.value().starts_with(meshes.value()))
+        return;
+    std::string path(model.value());
+    constexpr VFS::Path::NormalizedView animations("animations/");
+    path.replace(0, meshes.value().size(), animations.value());
+    const std::string::size_type extensionStart = path.find_last_of(VFS::Path::extensionSeparator);
+    if (extensionStart == std::string::npos)
+        return;
+    path.replace(extensionStart, path.size() - extensionStart, "/");
+    constexpr VFS::Path::ExtensionView kf("kf");
+    for (const VFS::Path::Normalized& name : mResourceSystem->getVFS()->getRecursiveDirectoryIterator(path))
+        if (name.extension() == kf)
+            addSingleAnimSource(name, baseModel);
+}
+```

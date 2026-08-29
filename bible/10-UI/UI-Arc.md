@@ -8034,6 +8034,32 @@ PX28 (Mac: "when hitting tab a second time, it should minimize any UI"
 / "when looting, there's a 2nd popup when you take something, there
 shouldn't be"): TWO SMALL LAWS.
 
+PX28b (Mac: "Tab should also minimize any open UI menus, currently it
+only applies to the radial"): PX28 FIXED THE WRONG HALF. Teaching the
+DIAL to put a window away only works if Tab reaches the dial - and
+`openPixelDial` is reached through the HOST's key routing, while an
+enhanced window is up the WINDOW owns the keyboard, so Tab never got
+there. My verification called `openPixelDial` directly and proved
+only that the arm worked, not that anything would ever pull it.
+
+The fix that cannot miss a window is in the REGISTRY, which already
+knows what is open: ONE keydown listener in the capture phase, alive
+only while the stack is - registering starts it, the last unregister
+stops it, and closing the last one stops it too, or Tab would be eaten
+in a world with nothing open. Nothing was added to any window, and a
+window added later is covered by having registered at all.
+
+NOT through `overlayAction`'s 'back'. Escape means back a LEVEL in a
+window that has them - the wizard's steps, the pack's tooltip - and
+Tab means PUT THIS AWAY. Two different words, kept apart. A text field
+keeps Tab for itself, because the chronicle's composer and the
+spellbook's rename are both fields.
+
+Verified on all five surfaces - spellbook, chronicle, sheet page,
+pack, dial - each closing on Tab with no dial popping up behind it,
+the composer's Tab left alone, and no listener left behind afterwards.
+1 pin, 4 mutations, 4 dead.
+
 TAB MEANS PUT THIS AWAY. The dial already closed ITSELF on a second
 press - openPixelDial's own toggle - but it could not close what it
 had OPENED. Press Tab, press Items, and the pack was up with Tab doing
@@ -8079,7 +8105,33 @@ centred. This is the FOURTH shared-part fault of this arc (the head,
 the divider, the chips, now the stage), so it is fixed for the FAMILY
 and both shells are pinned as the ones the two windows mount.
 
-THE DOLL STANDS ON THE PACK'S OWN GLASS. DFU fills the panel with
+PX29b - THE DOLL CHANGE IS REVERTED (Mac: "revert the doll change, you
+removed the entire paperdoll"). It did, and the reason is the part
+worth keeping.
+
+`_pixels` publishes at the END of `refreshPaperDoll` - the file's own
+comment says "the composite swaps in whole when done" - and the mask
+published at the START, before a single layer had been blitted. Any
+pass that returned early left a VALID composite paired with an
+ALL-ZERO mask, and every pixel then read as background: the figure
+vanished entirely. The mechanism was exact; the LIFETIME was wrong.
+
+TWO BUFFERS DESCRIBING ONE IMAGE MUST SWAP IN TOGETHER. Whoever tries
+this again should build the mask locally and publish it beside
+`_pixels` in the same statement, or not at all - and the file and the
+pin both say so now, so the next attempt starts from the failure
+rather than repeating it.
+
+I could not have caught this here: there is no ARENA2 in this
+container, so there is no real composite to strip, and I said so when
+I shipped it. That was the right thing to say and the wrong thing to
+ship - a change whose whole effect is invisible to every check I can
+run is a change to hand over as a question, not as a result.
+
+What follows is the record of the attempt, kept because the reasoning
+about DFU's own compositing still holds.
+
+THE DOLL STANDS ON THE PACK'S OWN GLASS (REVERTED). DFU fills the panel with
 `backgroundSubRect` and blits the body and every item over it
 (PaperDollRenderer), so the composite has no notion of "figure" to
 hand out - PX20a could remove the CSS frame but not the art behind the
@@ -8095,10 +8147,11 @@ composite, background included, because that is what DFU draws. The
 enhanced pack has its own ground to stand a figure on; the classic one
 does not.
 
-Pins: 2, plus U59's and PX20's re-aimed at the figure - U59's law is
-unchanged, the doll is the compositor's and this window only draws
-what it is handed, and it now also pins that the window still never
-blits. 4 mutations, 4 dead.
+Pins: 1 for the centring, which stands. The doll's pin became the
+record of its own revert - the mask gone rather than merely unused,
+the accessor gone, the file's reason kept, and the composite's
+publish-whole law pinned as the thing the mask broke. U59's and PX20's
+went back to the whole composite. 3 mutations, 3 dead.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
