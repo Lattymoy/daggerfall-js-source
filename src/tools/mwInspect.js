@@ -478,8 +478,14 @@ export function checkRequiredBones(report) {
  *    "Tri " convention stripped. That is how a skinned part picks its
  *    side, where a rigid one uses the mirror.
  *
- * Rest pose only - no clip, no time. Animation is the next stage and
- * mixing them would make a failure ambiguous.
+ * MW-D7 SPLIT THIS IN TWO, and the sentence that used to end this block -
+ * "rest pose only, no clip, no time; animation is the next stage" - is
+ * gone because it stopped being true. This function still BINDS only:
+ * parse, skeleton, rule 15's filter, rule 13's mirror, the attach ref and
+ * the output buffers, none of which depend on time. It ends by calling
+ * poseAssembly once, so the rest pose is now "pose at t=0 with no tracks"
+ * rather than a second copy of the same arithmetic - which is what lets
+ * the result be re-posed at all.
  */
 export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
   const mod = {};
