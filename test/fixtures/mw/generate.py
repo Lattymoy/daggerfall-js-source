@@ -1009,6 +1009,560 @@ def make_weaponmesh():
     write_nif(HERE / "weapon.nif", [root])
 
 
+def make_collswitch():
+    # MW-D9e: NiCollisionSwitch, which pyffi's nif.xml does not know.
+    #
+    # Its payload IS a NiNode's, byte for byte (nif.xml gives it no fields
+    # of its own), so the fixture is a pyffi-authored three-node file with
+    # ONE type name substituted in the record list. Nothing else moves: a
+    # record's type is a sized string, so a longer name just shifts the
+    # bytes after it, and the payload the reader then parses is the one
+    # pyffi wrote. The count assert below is the guard - if a future pyffi
+    # writes a different number of NiNode records, this refuses rather
+    # than patching the wrong one.
+    root = NifFormat.NiNode()
+    root.name = b"Root"
+    ident(root.rotation)
+    root.scale = 1.0
+    switcher = _bone(root, "Switcher", (0.0, 0.0, 1.0))
+    # AFTER the switch in the file, so a desync shows up as a bad bone.
+    _bone(switcher, "Marker", (4.0, 5.0, 6.0))
+    path = HERE / "collswitch.nif"
+    write_nif(path, [root])
+    raw = path.read_bytes()
+    old = b"\x06\x00\x00\x00NiNode"
+    new = b"\x11\x00\x00\x00NiCollisionSwitch"
+    assert raw.count(old) == 3, raw.count(old)
+    head, sep, tail = raw.partition(old)          # root
+    body, sep2, rest = tail.partition(old)        # switcher
+    path.write_bytes(head + old + body + new + rest)
+
+
+def make_extras():
+    # MW-D9e: THE FIVE EXTRA-DATA RECORDS PYFFI CANNOT WRITE.
+    #
+    # Every other NIF fixture here is pyffi-authored on purpose - an
+    # independent implementation. This one is not, because pyffi's nif.xml
+    # is WRONG for these five at 4.0.0.2: it omits NiExtraData's `Num
+    # Bytes` (nif.xml: ver1 4.0.0.0, ver2 4.2.2.0) from NiBinaryExtraData,
+    # NiBooleanExtraData, NiIntegerExtraData, NiVectorExtraData,
+    # NiStringsExtraData and the bare NiExtraData, so what it writes is
+    # four bytes short of the format. The two authorities that agree -
+    # niftools nif.xml and OpenMW, whose Extra::read reads next + record
+    # size for every extra record at 4.2.2.0 and below - are what this
+    # file is written from, straight out of the documented layout, the way
+    # fixture.bsa is.
+    #
+    # The bare NiExtraData carries a payload of `Num Bytes` opaque bytes
+    # (OpenMW reads them; nif.xml stops at the count). NiLightRadiusController
+    # rides along for the same reason - pyffi has no such record. The
+    # marker node last says whether the reader stayed in step throughout.
+    import struct
+
+    def sstr(text):
+        raw = text.encode("ascii")
+        return struct.pack("<I", len(raw)) + raw
+
+    def extra(next_ref, payload):
+        return struct.pack("<iI", next_ref, len(payload)) + payload
+
+    def node(name, extra_ref, children, translation, controller_ref=-1):
+        out = sstr(name)
+        out += struct.pack("<ii", extra_ref, controller_ref)
+        out += struct.pack("<H", 0)                          # flags
+        out += struct.pack("<3f", *translation)
+        out += struct.pack("<9f", 1, 0, 0, 0, 1, 0, 0, 0, 1)  # rotation
+        out += struct.pack("<f", 1.0)                        # scale
+        out += struct.pack("<3f", 0, 0, 0)                   # velocity
+        out += struct.pack("<I", 0)                          # properties
+        out += struct.pack("<I", 0)                          # has bounding volume
+        out += struct.pack("<I", len(children))
+        for c in children:
+            out += struct.pack("<i", c)
+        out += struct.pack("<I", 0)                          # effects
+        return out
+
+    records = [
+        ("NiNode", node("Root", 1, [10], (0.0, 0.0, 0.0), controller_ref=7)),
+        ("NiBinaryExtraData", extra(2, struct.pack("<I", 3) + bytes((1, 2, 3)))),
+        ("NiBooleanExtraData", extra(3, bytes((1,)))),
+        ("NiIntegerExtraData", extra(4, struct.pack("<I", 4242))),
+        ("NiVectorExtraData", extra(5, struct.pack("<4f", 1.0, 2.0, 3.0, 4.0))),
+        ("NiStringsExtraData",
+         extra(6, struct.pack("<I", 2) + sstr("first") + sstr("second"))),
+        ("NiExtraData", extra(-1, bytes((7, 8, 9)))),
+        # NiLightRadiusController is a NiTimeController with NO tail at
+        # all, and pyffi's nif.xml does not know the type, so it lands
+        # here too: next, flags, frequency, phase, start, stop, target.
+        ("NiLightRadiusController",
+         struct.pack("<iH4fi", -1, 12, 1.0, 0.25, 0.5, 2.0, 0)),
+        # A palette whose count is neither 16 nor 256. pyffi always writes
+        # 256 entries whatever the count says; OpenMW reads the count, and
+        # so does the port.
+        ("NiPalette",
+         struct.pack("<BI", 1, 4) + bytes((1, 2, 3, 4, 5, 6, 7, 8,
+                                           9, 10, 11, 12, 13, 14, 15, 16))),
+        # NiBoolData: a KeyGroup whose values are single bytes. Nothing in
+        # a 4.0.0.2 file REFERENCES one (its readers are interpolators,
+        # ver1 10.1.0.106), so it is written standalone - the reader walks
+        # the record list in order and does not care who points at what.
+        ("NiBoolData",
+         struct.pack("<II", 2, 1) + struct.pack("<fB", 0.0, 1)
+         + struct.pack("<fB", 1.5, 0)),
+        ("NiNode", node("Marker", -1, [], (7.0, 8.0, 9.0))),
+    ]
+    out = b"NetImmerse File Format, Version 4.0.0.2\n"
+    out += struct.pack("<II", 0x04000002, len(records))
+    for name, payload in records:
+        out += sstr(name) + payload
+    out += struct.pack("<Ii", 1, 0)                          # one root: record 0
+    (HERE / "extras.nif").write_bytes(out)
+    print(f"wrote {HERE / 'extras.nif'}")
+
+
+def make_zoo():
+    # MW-D9e: ONE FILE CARRYING EVERY RECORD TYPE THE REGISTRY GREW.
+    #
+    # A 4.0.0.2 record has no size field, so an unimplemented type does
+    # not degrade the file - it ends it. Before this slice a mesh with a
+    # particle emitter, a light or a texture effect took the whole model
+    # down, which is how a NiCamera in a first-person skeleton killed the
+    # arms. Every type below is one that a Morrowind-era file can hold.
+    #
+    # The marker bone is written LAST on purpose: parseNif refuses
+    # trailing bytes, so a reader that over- or under-reads ANY record
+    # here fails the file rather than quietly returning a short graph, and
+    # the marker's own translation says the record stream stayed in step.
+    #
+    # pyffi's ancient nif.xml disagrees with nifxml/OpenMW on the INSIDE
+    # of three records - NiSphericalCollider, NiPixelData's header and
+    # NiParticleSystemController's spawn block - while agreeing on their
+    # WIDTH. Those three are pinned for width and sync only; their field
+    # values are left at zero rather than pinned to a layout the port
+    # does not follow.
+    root = NifFormat.NiNode()
+    root.name = b"Zoo"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    # --- extra data. Only the kinds pyffi writes CORRECTLY at 4.0.0.2 are
+    # here: its nif.xml omits NiExtraData's `Num Bytes` from five of the
+    # subclasses (see make_extras, which authors those by hand).
+    vw = NifFormat.NiVertWeightsExtraData()
+    vw.num_vertices = 2
+    vw.weight.update_size()
+    vw.weight[0] = 0.25
+    vw.weight[1] = 0.75
+    named = NifFormat.NiStringExtraData()
+    named.string_data = b"zoo extra"
+    vw.next_extra_data = named
+    root.extra_data = vw
+
+    # --- controller chain on the root.
+    float_data = NifFormat.NiFloatData()
+    float_data.data.num_keys = 1
+    float_data.data.interpolation = 1
+    float_data.data.keys.update_size()
+    float_data.data.keys[0].time = 0.5
+    float_data.data.keys[0].value = 1.5
+    pos_data = NifFormat.NiPosData()
+    pos_data.data.num_keys = 1
+    pos_data.data.interpolation = 1
+    pos_data.data.keys.update_size()
+    pos_data.data.keys[0].time = 0.25
+    pos_data.data.keys[0].value.x = 7.0
+    color_data = NifFormat.NiColorData()
+    color_data.data.num_keys = 1
+    color_data.data.interpolation = 1
+    color_data.data.keys.update_size()
+    color_data.data.keys[0].time = 0.125
+    color_data.data.keys[0].value.r = 1.0
+    color_data.data.keys[0].value.a = 0.5
+    uv_data = NifFormat.NiUVData()
+    uv_data.uv_groups[0].num_keys = 1
+    uv_data.uv_groups[0].interpolation = 1
+    uv_data.uv_groups[0].keys.update_size()
+    uv_data.uv_groups[0].keys[0].time = 1.0
+    uv_data.uv_groups[0].keys[0].value = 2.0
+    vis_data = NifFormat.NiVisData()
+    vis_data.num_keys = 2
+    vis_data.keys.update_size()
+    vis_data.keys[0].time = 0.0
+    vis_data.keys[0].value = 1
+    vis_data.keys[1].time = 1.0
+    vis_data.keys[1].value = 0
+    morph_data = NifFormat.NiMorphData()
+    morph_data.num_morphs = 2
+    morph_data.num_vertices = 2
+    morph_data.relative_targets = 1
+    morph_data.morphs.update_size()
+    m0 = morph_data.morphs[0]
+    m0.arg = morph_data.num_vertices     # pyffi resolves Morph's #ARG# from this
+    m0.num_keys = 1
+    m0.interpolation = 1
+    m0.keys.update_size()
+    m0.keys[0].time = 0.75
+    m0.keys[0].value = 0.5
+    m0.vectors.update_size()
+    m0.vectors[1].z = 3.0
+    # THE SECOND MORPH HAS NO KEYS, and still writes its interpolation
+    # word - that is exactly where Morph differs from KeyGroup, and a
+    # reader that treats it as a KeyGroup desyncs by four bytes here.
+    m1 = morph_data.morphs[1]
+    m1.arg = morph_data.num_vertices
+    m1.num_keys = 0
+    m1.interpolation = 2
+    m1.vectors.update_size()
+    m1.vectors[0].x = 5.0
+
+    bone_lod = NifFormat.NiBoneLODController()
+    bone_lod.unknown_int_1 = 1
+    # The two counts DIFFER on purpose: the node-group array is sized by
+    # the FIRST (Num LODs), and a reader that picks the second runs off
+    # the end of the record.
+    bone_lod.num_node_groups = 1
+    bone_lod.num_node_groups_2 = 3
+    bone_lod.node_groups.update_size()
+    bone_lod.node_groups[0].num_nodes = 1
+    bone_lod.node_groups[0].nodes.update_size()
+    bone_lod.node_groups[0].nodes[0] = root
+    bs_bone_lod = NifFormat.NiBSBoneLODController()
+    bs_bone_lod.num_node_groups = 0
+    bs_bone_lod.num_node_groups_2 = 0
+    look_at = NifFormat.NiLookAtController()
+    look_at.look_at_node = root
+    path_ctrl = NifFormat.NiPathController()
+    # pyffi types bank dir unsigned; nif.xml types it `int`. Writing the
+    # two's-complement bit pattern pins the port's SIGNED read.
+    path_ctrl.unknown_int_1 = 0xFFFFFFFD          # -3
+    path_ctrl.unknown_float_2 = 1.25
+    path_ctrl.unknown_float_3 = 2.5
+    path_ctrl.unknown_short = 2
+    path_ctrl.pos_data = pos_data
+    path_ctrl.float_data = float_data
+    uv_ctrl = NifFormat.NiUVController()
+    uv_ctrl.unknown_short = 1
+    uv_ctrl.data = uv_data
+    vis_ctrl = NifFormat.NiVisController()
+    vis_ctrl.data = vis_data
+    tex_a = NifFormat.NiSourceTexture()
+    tex_a.use_external = 1
+    tex_a.file_name = b"flip0.dds"
+    tex_b = NifFormat.NiSourceTexture()
+    tex_b.use_external = 1
+    tex_b.file_name = b"flip1.dds"
+    flip = NifFormat.NiFlipController()
+    flip.texture_slot = 4
+    # pyffi types accum time as a uint; nif.xml types it float. The bit
+    # pattern of 0.5f pins the port's FLOAT read.
+    flip.unknown_int_2 = 0x3F000000
+    flip.delta = 0.5
+    flip.num_sources = 2
+    flip.sources.update_size()
+    flip.sources[0] = tex_a
+    flip.sources[1] = tex_b
+    alpha_ctrl = NifFormat.NiAlphaController()
+    alpha_ctrl.data = float_data
+    matcolor = NifFormat.NiMaterialColorController()
+    matcolor.data = pos_data
+    roll = NifFormat.NiRollController()
+    roll.data = float_data
+    morpher = NifFormat.NiGeomMorpherController()
+    morpher.data = morph_data
+    morpher.always_update = 1
+    chain = [bone_lod, bs_bone_lod, look_at, path_ctrl, uv_ctrl, vis_ctrl,
+             flip, alpha_ctrl, matcolor, roll, morpher]
+    for a, b in zip(chain, chain[1:]):
+        a.next_controller = b
+    for c in chain:
+        c.frequency = 1.0
+        c.stop_time = 1.0
+    root.controller = chain[0]
+
+    # --- node kinds.
+    switch = NifFormat.NiSwitchNode()
+    switch.name = b"Switch"
+    ident(switch.rotation)
+    switch.scale = 1.0
+    root.add_child(switch)
+    lod = NifFormat.NiLODNode()
+    lod.name = b"LOD"
+    ident(lod.rotation)
+    lod.scale = 1.0
+    lod.lod_center.z = 5.0
+    lod.num_lod_levels = 2
+    lod.lod_levels.update_size()
+    lod.lod_levels[0].near_extent = 0.0
+    lod.lod_levels[0].far_extent = 10.0
+    lod.lod_levels[1].near_extent = 10.0
+    lod.lod_levels[1].far_extent = 99.0
+    root.add_child(lod)
+    sort = NifFormat.NiSortAdjustNode()
+    sort.name = b"Sort"
+    ident(sort.rotation)
+    sort.scale = 1.0
+    sort.sorting_mode = 1
+    root.add_child(sort)
+
+    # --- geometry kinds.
+    strips = NifFormat.NiTriStrips()
+    strips.name = b"Strips"
+    ident(strips.rotation)
+    strips.scale = 1.0
+    sd = NifFormat.NiTriStripsData()
+    sd.num_vertices = 4
+    sd.has_vertices = True
+    sd.vertices.update_size()
+    for v, (x, y, z) in zip(sd.vertices, ((0, 0, 0), (1, 0, 0), (0, 1, 0), (1, 1, 0))):
+        v.x, v.y, v.z = float(x), float(y), float(z)
+    # TWO strips of DIFFERENT lengths: with one strip, or two of equal
+    # length, a reader that sizes every strip from the first length reads
+    # the same bytes.
+    sd.num_triangles = 3
+    sd.num_strips = 2
+    sd.strip_lengths.update_size()
+    sd.strip_lengths[0] = 4
+    sd.strip_lengths[1] = 3
+    sd.points.update_size()
+    for i in range(4):
+        sd.points[0][i] = i
+    for i in range(3):
+        sd.points[1][i] = 3 - i
+    strips.data = sd
+    root.add_child(strips)
+
+    lines = NifFormat.NiLines()
+    lines.name = b"Lines"
+    ident(lines.rotation)
+    lines.scale = 1.0
+    ld = NifFormat.NiLinesData()
+    ld.num_vertices = 3
+    ld.has_vertices = True
+    ld.vertices.update_size()
+    ld.vertices[1].x = 1.0
+    ld.vertices[2].y = 1.0
+    ld.lines.update_size()
+    ld.lines[0] = 1
+    ld.lines[1] = 1
+    ld.lines[2] = 0
+    lines.data = ld
+    root.add_child(lines)
+
+    # --- particles: all three geometry flavours, the controller, the whole
+    # modifier chain and both colliders.
+    def particle_node(cls, datacls, name, radius):
+        node = cls()
+        node.name = name.encode()
+        ident(node.rotation)
+        node.scale = 1.0
+        d = datacls()
+        d.num_vertices = 2
+        d.has_vertices = True
+        d.vertices.update_size()
+        d.vertices[1].z = 1.0
+        d.num_particles = 2
+        d.particle_radius = radius
+        d.num_active = 1
+        d.has_sizes = True
+        d.sizes.update_size()
+        d.sizes[0] = 0.25
+        d.sizes[1] = 0.75
+        node.data = d
+        root.add_child(node)
+        return node, d
+
+    particle_node(NifFormat.NiParticles, NifFormat.NiParticlesData, "Parts", 0.5)
+    emitter, _ = particle_node(NifFormat.NiAutoNormalParticles,
+                               NifFormat.NiAutoNormalParticlesData, "AutoParts", 1.5)
+    _, rot_data = particle_node(NifFormat.NiRotatingParticles,
+                                NifFormat.NiRotatingParticlesData, "RotParts", 2.5)
+    rot_data.has_rotations_2 = True
+    rot_data.rotations_2.update_size()
+    rot_data.rotations_2[0].w = 1.0
+    rot_data.rotations_2[1].x = 1.0
+    # A SECOND one with the quaternion array switched OFF. Without it the
+    # has-rotations bool is a constant in the fixture, and a reader that
+    # ignores it entirely reads the same bytes.
+    _, plain_rot = particle_node(NifFormat.NiRotatingParticles,
+                                 NifFormat.NiRotatingParticlesData, "RotPlain", 3.5)
+    plain_rot.has_rotations_2 = False
+
+    gravity = NifFormat.NiGravity()
+    gravity.unknown_float_1 = 0.5          # decay
+    gravity.force = 9.8
+    gravity.type = 1
+    gravity.position.x = 1.0
+    gravity.direction.z = -1.0
+    bomb = NifFormat.NiParticleBomb()
+    bomb.decay = 1.0
+    bomb.duration = 2.0
+    bomb.delta_v = 3.0
+    bomb.start = 4.0
+    bomb.decay_type = 2
+    bomb.position.y = 5.0
+    bomb.direction.x = 6.0
+    colormod = NifFormat.NiParticleColorModifier()
+    colormod.color_data = color_data
+    growfade = NifFormat.NiParticleGrowFade()
+    growfade.grow = 0.1
+    growfade.fade = 0.2
+    prot = NifFormat.NiParticleRotation()
+    prot.random_initial_axis = 1
+    prot.initial_axis.y = 1.0
+    prot.rotation_speed = 2.5
+    mods = [gravity, bomb, colormod, growfade, prot]
+    for a, b in zip(mods, mods[1:]):
+        a.next_modifier = b
+    # 16 floats, in the port's order: bounce, height, width, position,
+    # x vector, y vector, plane normal, plane constant.
+    planar = NifFormat.NiPlanarCollider()
+    for i, v in enumerate((0.3, 2.0, 3.0,
+                           1.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0,
+                           0.0, 0.0, 1.0,
+                           0.0, 0.0, 1.0, 4.0)):
+        setattr(planar, f"unknown_float_{i + 1}", v)
+    spherical = NifFormat.NiSphericalCollider()
+    spherical.unknown_float_1 = 0.4        # bounce - the one field pyffi
+    planar.next_modifier = spherical       # and nifxml agree on here
+    psys = NifFormat.NiParticleSystemController()
+    psys.speed = 1.0
+    psys.speed_random = 0.25
+    psys.size = 0.75
+    psys.emit_start_time = 0.1
+    psys.emit_stop_time = 0.9
+    psys.unknown_byte = 1                  # reset particle system
+    psys.emit_rate = 3.0                   # birth rate
+    psys.lifetime = 2.0
+    psys.lifetime_random = 0.5
+    # THE TEN BYTES pyffi and nif.xml disagree about. pyffi calls them
+    # uint/uint/ushort; nif.xml and OpenMW call them spawn multiplier
+    # (ushort) + two floats. Writing this pattern makes the port's split
+    # read 9, 0.5 and 1.5 - a reader that takes pyffi's split cannot.
+    psys.unknown_int_1 = 9              # 09 00 | 00 00
+    psys.unknown_int_2 = 0x00003F00     # 00 3F | 00 00
+    psys.unknown_short_3 = 0x3FC0       # C0 3F
+    psys.num_particles = 1
+    psys.num_valid = 1
+    psys.particles.update_size()
+    psys.particles[0].velocity.x = 2.0
+    psys.particles[0].unknown_vector.z = 3.0
+    psys.particles[0].lifetime = 0.5
+    psys.particles[0].lifespan = 1.5
+    psys.particles[0].timestamp = 4.0
+    psys.particles[0].vertex_id = 7
+    psys.particle_extra = gravity
+    psys.unknown_link_2 = planar
+    psys.trailer = 1                       # static target bound
+    emitter.controller = psys
+    bsp = NifFormat.NiBSPArrayController()
+    bsp.speed = 5.0
+    bsp.lifetime = 6.0
+    psys.next_controller = bsp
+
+    # --- lights, one of each, and the colour controller on the last.
+    for cls, name in ((NifFormat.NiAmbientLight, "Ambient"),
+                      (NifFormat.NiDirectionalLight, "Directional"),
+                      (NifFormat.NiPointLight, "Point"),
+                      (NifFormat.NiSpotLight, "Spot")):
+        light = cls()
+        light.name = name.encode()
+        ident(light.rotation)
+        light.scale = 1.0
+        light.dimmer = 0.5
+        light.ambient_color.r = 0.1
+        light.diffuse_color.g = 0.2
+        light.specular_color.b = 0.3
+        if cls in (NifFormat.NiPointLight, NifFormat.NiSpotLight):
+            light.constant_attenuation = 1.0
+            light.linear_attenuation = 2.0
+            light.quadratic_attenuation = 3.0
+        if cls is NifFormat.NiSpotLight:
+            light.cutoff_angle = 45.0
+            light.exponent = 8.0
+            lightctrl = NifFormat.NiLightColorController()
+            lightctrl.data = pos_data     # pyffi types this ref NiPosData
+            lightctrl.frequency = 1.0
+            lightctrl.stop_time = 1.0
+            light.controller = lightctrl
+        root.add_child(light)
+
+    # --- a texture effect over an INTERNAL texture, which is the only way
+    # NiPixelData and NiPalette reach a file.
+    palette = NifFormat.NiPalette()
+    palette.unknown_byte = 1
+    palette.num_entries = 256
+    palette.palette.update_size()
+    palette.palette[1].r = 255
+    pixels = NifFormat.NiPixelData()
+    pixels.pixel_format = 0
+    pixels.red_mask = 0x000000ff
+    pixels.green_mask = 0x0000ff00
+    pixels.blue_mask = 0x00ff0000
+    pixels.alpha_mask = 0xff000000
+    pixels.bits_per_pixel = 32
+    pixels.palette = palette
+    pixels.num_mipmaps = 1
+    pixels.bytes_per_pixel = 4
+    pixels.mipmaps.update_size()
+    pixels.mipmaps[0].width = 1
+    pixels.mipmaps[0].height = 1
+    pixels.mipmaps[0].offset = 0
+    pixels.num_pixels = 4
+    pixels.pixel_data.update_size()
+    for i, b in enumerate((9, 8, 7, 6)):
+        pixels.pixel_data[0][i] = b     # pyffi shapes this [faces][pixels]
+    internal = NifFormat.NiSourceTexture()
+    internal.use_external = 0
+    internal.unknown_byte = 1
+    internal.pixel_data = pixels
+    # A short palette is NOT authored here: pyffi writes 256 entries
+    # whatever the count says. extras.nif carries that case by hand.
+    effect = NifFormat.NiTextureEffect()
+    effect.name = b"Effect"
+    ident(effect.rotation)
+    effect.scale = 1.0
+    ident(effect.model_projection_matrix)
+    effect.model_projection_transform.z = 2.0
+    effect.texture_filtering = 2
+    effect.texture_clamping = 3
+    effect.texture_type = 3
+    effect.coordinate_generation_type = 2
+    effect.source_texture = internal
+    effect.clipping_plane = 1
+    effect.unknown_vector.y = 1.0
+    effect.unknown_float = 0.25
+    effect.ps_2_l = 3
+    effect.ps_2_k = -4
+    effect.unknown_short = 5
+    root.add_child(effect)
+
+    # --- a fog property, the one property kind the registry was missing.
+    fogged = _tri(root, "Fogged", [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)])
+    fog = NifFormat.NiFogProperty()
+    fog.name = b"Fog"
+    fog.flags = 1
+    fog.fog_depth = 0.75
+    fog.fog_color.r = 0.5
+    fog.fog_color.g = 0.25
+    fog.fog_color.b = 0.125
+    fogged.num_properties = 1
+    fogged.properties.update_size()
+    fogged.properties[0] = fog
+
+    # LAST: the record that says the whole stream stayed in step.
+    _bone(root, "Marker", (11.0, 22.0, 33.0))
+
+    # A NiSequence as a second root - it has no parent in a 4.0.0.2 file.
+    seq = NifFormat.NiSequence()
+    seq.name = b"ZooSeq"
+    seq.text_keys_name = b"Accum"
+    seq.num_controlled_blocks = 1
+    seq.controlled_blocks.update_size()
+    seq.controlled_blocks[0].target_name = b"Marker"
+    write_nif(HERE / "zoo.nif", [root, seq])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -1027,5 +1581,8 @@ if __name__ == "__main__":
     make_armskel_weapon()
     make_armskel_camera()
     make_weaponmesh()
+    make_collswitch()
+    make_extras()
+    make_zoo()
     make_esm()
     make_bsa()
