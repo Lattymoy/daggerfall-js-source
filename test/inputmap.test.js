@@ -173,7 +173,10 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // interior host only picks the slot.
   const MOUNTS = [
     ['toggleCharSheet', /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/],
-    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(host\.makeInventory\?\.\(\)\); \}/],
+    // RE-ANCHORED at ID1 (F041): the inventory goes through this
+    // host's ONE door now (interiorInventory), which is still the OUTER
+    // host's window - it only folds in the interior drop pool.
+    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(interiorInventory\(\)\); \}/],
     ['toggleSpellbook', /toggleSpellbook\(\) \{ if \(magic\) mountInterior\(makeSpellbookWindow\(\)\); \}/],
     ['toggleLogbook', /toggleLogbook\(\) \{ mountInterior\(host\.makeJournal\?\.\('activeQuests'\)\); \}/],
     ['toggleNotebook', /toggleNotebook\(\) \{ mountInterior\(host\.makeJournal\?\.\('notebook'\)\); \}/],

@@ -9,6 +9,7 @@
 // which is exactly the dungeon convention already on record.
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
@@ -2264,6 +2265,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
   function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {}) {
+    markFoeStruck(foe, { fromPlayer });   // PX30: the enhanced HUD's target frame
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
     // re-hostiles it (and pre-loads the pursuit, the G1 shape). F041:
     // inside DFU's player-source gate, so a FALL cannot do it.

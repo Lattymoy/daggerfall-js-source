@@ -4916,3 +4916,93 @@ for can be swept when that thing ships; a flag that merely asserts a
 present-tense fact — *is* empty, *has* nothing, *cannot* yet — has no
 trigger at all, and goes on being read as a decision long after it
 stopped being one. Prefer the form that names the dependency.
+
+## ID1 — an item dropped indoors landed outside (2026-08-29)
+
+DT1 routed this and did not take it. Reading the DFU member made it
+larger than the detect gap that found it.
+
+`GameObjectHelper.CreateDroppedLootContainer` (:716-775) picks the
+container's **parent by context**:
+
+    if (GameManager.Instance.IsPlayerInside)
+        if (IsPlayerInsideDungeon) parent = playerEnterExit.Dungeon.transform;
+        else                       parent = playerEnterExit.Interior.transform;
+    else                           parent = StreamingTarget.transform;
+
+and only the outdoor arm enrols the container in the streaming world's
+bookkeeping:
+
+    if (!GameManager.Instance.IsPlayerInside)
+        GameManager.Instance.StreamingWorld.TrackLooseObject(loot.gameObject, true);
+
+The port had two of those three arms. `dungeonContext` mounts its own
+pool; `world.js` and `exterior.js` mount the streaming one; the
+**interior arm of `worldModes` mounted none**. So every inventory window
+this host opened came from `host.makeInventory`, whose `onDrop` is the
+world host's — dropping at `dropFeet()`, which reads the *exterior*
+player and raycasts the *exterior* collider, and stamping the pile with
+the map pixel that IS the port's `TrackLooseObject`.
+
+Three things followed from one missing pool:
+
+1. the item did not land where it was dropped;
+2. it could not be picked back up — the interior's E-ray had no pile
+   targets at all;
+3. it was enrolled in P2's out-of-range collection sweep, which DFU
+   never runs on an interior container, so walking far enough
+   **destroyed it**.
+
+`GivePc.cs:168` mints through the same member, so the quest reward pile
+had the identical three arms and the identical missing one.
+
+ID1 mounts the interior pool from the same `createDroppedLoot` factory
+the other two hosts use, on this host's collider, and gives it
+everything a pool needs to be real rather than merely present: the drop
+(at `FindGroundPosition` on the interior collider, with **no pixel key**
+— that argument is `TrackLooseObject`), the E-ray target and its
+activation arm on the dungeon's own `droppedLoot:` key vocabulary, the
+flat animation and draw, the CacheScene/RestoreCachedScene halves so
+walking out of a shop and back in does not empty the floor, both
+teardowns, and the Detect feed's `piles` — which closes the row DT1
+opened.
+
+**One door, one law.** Rather than patch `onDrop` into five call sites,
+every inventory window this host opens now goes through
+`interiorInventory`, which folds in the drop pool and the
+emptied-container free (`DaggerfallInventoryWindow.cs:697-722` mints and
+removes at the *window*, not at the last item). The caller's own
+`onClose` is **composed**, not overwritten: `...extra` last would have
+silently dropped the free, and that is the third mutant in the campaign.
+
+Pins: 10 in `test/interiordrop.test.js`, five of them behavioural
+against the real pool with only the GL stubbed. The sharpest is the
+`TrackLooseObject` gate itself — a keyless drop survives `collectPixel`
+where a keyed one is swept, which is the whole bug in two lines.
+
+Four pins elsewhere were re-anchored on the law rather than the literal
+(F041): audit26 F066, HC1's owner-access arm, U43's mount table, and
+RW1's mode split — whose claim genuinely **narrowed**, because
+"everyone else falls through" is the exterior alone now.
+
+Campaign: 16 mutants, 16 killed — after five survivors that were **all
+the pins' fault**, and each is worth keeping:
+
+- a source pin that quoted the raycast line but not what fed `p0`, so
+  dropping at the origin survived;
+- a cache pin that watched the pile list being **built** and never
+  checked that the scene state **returned** it;
+- a fixture whose icon roll was **constant**, so a restore that rerolled
+  could not be told from one that kept — the roll advances now;
+- no pin at all on the interior detect feed's own `piles`;
+- an anchor that matched twice, caught by the harness's uniqueness
+  check for the third time this run.
+
+**THE LESSON: A POOL THAT EXISTS IN THREE HOSTS IS A LAW; THE FOURTH
+HOST'S ABSENCE IS NOT A DEFAULT, IT IS A DECISION NOBODY MADE.** The
+FOUR HOSTS RULE has always been read as "name all four" — and the
+interior arm here was not named at all, in either direction. Nothing
+said "the interior has no ground pile" and nothing said it should; the
+window simply came from the outer host, and the outer host's handler was
+about somewhere else. A seam inherited from a parent is the one shape
+the rule cannot see, because there is nothing missing to point at.

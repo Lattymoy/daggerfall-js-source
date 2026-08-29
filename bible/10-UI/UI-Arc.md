@@ -8153,6 +8153,64 @@ the accessor gone, the file's reason kept, and the composite's
 publish-whole law pinned as the thing the mask broke. U59's and PX20's
 went back to the whole composite. 3 mutations, 3 dead.
 
+PX30 (Mac: "I want to develop the new gameplay UI... this reference as
+key... maximum fidelity"): THE HUD. The largest surface a player looks
+at, and the last one still wholly classic on the enhanced skin.
+
+MAC'S REFERENCE IS ESO'S CLEAN UI - a compass across the top, the
+target named beneath it, three vitals along the bottom, the effects
+under those - read back in this arc's own language rather than copied:
+square 2px frames, the Pixelify face, brass and bone, the classic
+shadowed pair for what is urgent, and states that SNAP.
+
+IT RIDES THE ONE HOST-AGNOSTIC CALL. `drawHud` is what all four hosts
+already make, "last, over the viewmodel", so the enhanced HUD rides it
+exactly as the damage flash does and no host can forget it or run it
+twice. It sits ABOVE the `!art` return, like the flash, because it
+reads no ARENA2 and a player whose HUD art failed still has vitals -
+and it RETURNS, so the classic bars, compass and icons do not draw
+underneath. Two HUDs at once is not a skin.
+
+THE COMPASS IS A STRIP, not DFU's box: a quarter of the circle with
+the eight points placed by heading, and a point off the span HIDDEN
+rather than clamped - a marker pinned to the rim says "north is
+exactly there", which is a lie the classic compass takes care not to
+tell either. The wrap is the shortest way round, so a point at 0.98 is
+just LEFT of a player facing 0.02.
+
+THE TARGET IS A DEPARTURE, and needs a source that does not exist:
+Daggerfall tells you nothing about a foe's health, ever. ESO's frame
+follows the reticle; this follows THE BLOW YOU LANDED, which is the
+same question a player is really asking - did I hurt it, how much is
+left - and costs nothing, where a reticle target would want a foe
+raycast every frame. Both damage paths mark it and neither was asked
+for anything new: `fromPlayer` is the flag each already took. It fades
+after six seconds and clears at once when the foe dies.
+
+IT IS A READOUT: pointer-events none, aria-hidden, no overlay
+registration, and Tab does not close it. It is the game's own face,
+which is why it does not go through a door.
+
+AND IT IS UPDATED, NOT REBUILT. A per-frame innerHTML is PX19k's
+entrance replay at sixty times a second, so the DOM is made once and
+each frame writes only what CHANGED - a width, a number, a name. The
+effect row is rebuilt only when the SET changes, or a countdown would
+rebuild it every frame.
+
+FOUND ON THE WAY: the first draft invented its own bundle walk rather
+than using `liveBundles`, the one the classic icons and the Dispel
+picker both read - and the effects row came back empty against a real
+entity. The same lesson as PX23's invented divider and PX24's
+flattened date, a third time: use what exists.
+
+Pins: 4 in a new test/enhancedHud.test.js. 6 mutations, 6 dead.
+Verified live with a struck foe, two effects and a real heading.
+
+ON THE HORIZON for this HUD: the readied spell and the equipped
+weapon (the reference's ability bar has no Daggerfall equivalent, but
+those two are what it would hold), a crosshair in the pixel face, and
+the breath bar.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
