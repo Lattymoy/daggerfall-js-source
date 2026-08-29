@@ -86,7 +86,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
-import { assetPickerOpen } from '../scenes/dataSource.js';   // MWFIX: the asset picker owns the keyboard while it is open
+import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -846,6 +846,47 @@ function paneEnhanced(body) {
   sizing.append(el('p', 'note', 'The compass, the bars and the effect chips together. '
     + 'Takes effect at once; half size still reads and double fills a phone.'));
   body.append(sizing);
+
+  // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
+  // every extra page at the SITE ROOT (vite.config's rollup inputs) but
+  // the game itself one directory down at /play/, so a bare relative
+  // 'mw-viewer.html' resolves against the running document: from
+  // menu.html at the root it works, and from the game it asks for
+  // /play/mw-viewer.html and 404s.
+  const sitePage = (page) => {
+    const dir = new URL('.', location.href);
+    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
+    return new URL(page, root).href;
+  };
+
+  // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window has
+  // its M key, but the enhanced skin never routes through it.
+  //
+  // THERE IS NO 3D TOGGLE HERE, DELIBERATELY. The first-person rig was
+  // reverted whole and has not been rebuilt yet; a switch for it would be
+  // the screen claiming a feature this tree does not have, which is
+  // exactly what the R7 pin exists to stop. The card offers what actually
+  // works today: attaching the data, and the two pages that read it.
+  const mw = el('div', 'card');
+  mw.append(el('h3', null, 'Morrowind assets'));
+  mw.append(el('p', 'meta',
+    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer and the '
+    + 'data inspector. Stored in this browser exactly like ARENA2; nothing uploads. The in-game '
+    + 'first-person layer is NOT built - it was removed, and it is being rebuilt against a cited '
+    + 'reference before it comes back.'));
+  mw.append(stats([['State', `${morrowindDataCount()} archive${morrowindDataCount() === 1 ? '' : 's'} attached`]]));
+  mw.append(acts([
+    { label: 'Attach data', primary: true, onClick: async () => {
+      const ds = await import('../scenes/dataSource.js');
+      await ds.pickMorrowindFiles();
+      render();
+    } },
+    { label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') },
+    // MW-D: the page that answers what is actually IN the archives - which
+    // is the question four failed fixes never asked.
+    { label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') },
+  ]));
+  body.append(mw);
 
   const waiting = el('div', 'card');
   waiting.append(el('h3', null, 'Not switchable here'));
