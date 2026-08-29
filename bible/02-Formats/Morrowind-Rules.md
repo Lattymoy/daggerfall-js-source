@@ -16,7 +16,8 @@ each stage is provable on the player's own data before the next begins:
         player's archives. MW-D2 skinned-vs-rigid, MW-D3 real parse +
         wireframe, MW-D4 the bones the rules name, MW-D5 assembly at
         rest pose, MW-D6 the assembled arm DRAWN - and the defect that
-        drawing found (below).
+        drawing found (below), MW-D7 an idle CLIP played through that
+        assembly.
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
@@ -55,12 +56,95 @@ layers to catch: x-symmetry off the downsampled canvas (0.63 against
 0.99) and a signed per-piece readback (3 pieces, `left hand` only). THE
 MEASUREMENT HAS TO BE ABLE TO FAIL THE WAY THE CODE ACTUALLY FAILS.
 
-NEXT, IN ORDER: (1) play an idle clip through the assembly - and note
-that assembleFirstPersonArm's RETURN VALUE cannot be re-posed as it
-stands, since each piece keeps only baked positions and drops the batch,
-its skin, attachRef, pose and mats; that is an additive change, not a
-rewrite; (2) only then a rig, and only then wiring into weaponRig.
-Nothing MW touches the game today.
+MW-D7 PLAYED THE CLIP. The blocker the last status line named is closed:
+`assembleFirstPersonArm` now SPLITS bind from pose. Each piece keeps what
+a re-pose needs (a skinned one its batch, a rigid one its authored
+positions and attach ref, both their own output buffer), the assembly
+carries the skeleton, the root ref and its resolved readers, and the one
+home for per-frame math is `poseAssembly`. The rest pose became "pose at
+t=0 with no tracks" - the same arithmetic, called once instead of inlined
+- so all 26 MW-D5/D6 pins keep seeing byte-identical numbers.
+
+The clip law itself is four OpenMW members that had no JS home, ported
+into mwAnim.js beside the text keys they read: `TextKeyMap::emplace`
+(rules 44/45/21), `Animation::reset` (22/23/49), `AnimState::shouldLoop`
+(49) and `Animation::runAnimation`'s stepping (50). NOT a modulo of the
+group range.
+
+WHAT MW-D7 HAD TO BE ABLE TO SEE, and could not have with MW-D6's
+measurements. `poseSkeleton` answers a bone with no matching track by
+handing back `node.rest` - correct, and the deadliest silent failure in
+this stage. A .kf keyed to bones the skeleton does not have poses NOTHING
+and draws a clean, static, entirely plausible arm: no error, no empty box,
+a perfect symmetry score and a full pixel count. Three things exist to
+catch it: `trackBinding` in mwSkin.js (the poser's OWN comparison, so the
+report cannot agree with the page while disagreeing with the pose), the
+page saying "an unmatched track poses nothing - the bone holds its rest
+pose, which looks exactly like a working idle", and a probe layer that
+hashes the canvas at six clip times and demands five distinct pictures.
+A seventh layer watches the LIVE canvas across real frames, because every
+other layer drives the pose itself and passes a page frozen on frame one.
+
+AND THE LOOP LAW IS THE PART THAT SEPARATES CORRECT FROM PLAUSIBLE. A
+`% span` player moves, stays symmetric, and draws - and replays the
+clip's INTRO on every wrap instead of the authored loop segment. Only a
+trace can tell them apart, so the probe runs the page's own advanceClip
+and asserts, in time-space AND in pose-space, that after the first
+`loop stop` crossing the playhead never re-enters [1.0, 1.5) and the
+right hand never returns below x=1.4.
+
+MEASURED FINDINGS FROM MW-D7:
+
+  F1  A TRACK ON THE SKELETON ROOT REACHES NO GEOMETRY, BY CONSTRUCTION.
+      `bindPart` sets `skeletonRoot === rootBone`; `skeletonSpaceMatrices`
+      makes the skeleton root identity; `skinToSkelMatrix` returns
+      identity when the two are equal. So keying `Bip01` moves nothing,
+      skinned or rigid. MW-D7 therefore pins accum-root extraction AT THE
+      POSE (`pose.get(bip01).translation` is [0,0,0] with `accumRoot` and
+      [1,0,0] without) and states in the test that the pixel version
+      cannot fail on this rig. The geometric pin stays where it is real,
+      on the SkinRoot/Bone0 fixture, where the tracked bone is BELOW the
+      skin root.
+  F2  `Infinity` does not survive `page.evaluate` - rule 49's default
+      `loopStopTime` JSON-serialises to `null`. `clipReport` carries
+      `loopStopFinite` beside the number so a probe never asserts on a
+      null it cannot read.
+  F3  `parseAnimGroups` produces a NONSENSE BUT NON-NULL group for data
+      that exercises the rules: on armidle.kf it reads `Idle [1.00 ->
+      0.50]`, a range that runs backwards, and is not deleted (the guard
+      only drops nulls). `mwViewer`'s `span = max(stop - start, 1e-6)`
+      would freeze on it. The page now shows both answers side by side.
+
+BOOKED, NOT DONE - each named here so it is not inherited silently:
+
+  * `mwViewer.js:342-348` is now a SECOND HOME for clip time, and the
+    worse one: `% span` with no loop window, a case-SENSITIVE
+    `groups.get` that bypasses findAnimGroup's own MWAUDIT fix, and
+    `accumRootRef` recomputed every frame. MW-D8's first task: replace
+    it with advanceClip or delete it.
+  * `parseAnimGroups` diverges from rules 21/22/44/45 in four ways
+    (splits on `\r\n` as a pair, accepts `Group:Marker`, compares the
+    stop marker exactly, takes file order rather than rule 22's reverse
+    scan). Deliberately NOT re-based here: three MWAUDIT pins assert its
+    present behaviour, and mixing that into the first slice that animates
+    anything would make a failure ambiguous. Its own audit slice.
+  * `KEY_TYPE.constant` is sampled by holding the previous key; the
+    reference flips at the segment midpoint with a strict `>`. Different
+    member, no fixture drives it. `clipReport` names the interpolation
+    type PER CHANNEL so a player can see how much of their own file rides
+    it, which is the most this slice can honestly offer.
+  * `track.frequency` / `phase` are read from every controller and used
+    nowhere. Unchanged, and now printed.
+
+AND THE HONEST SENTENCE ABOUT armidle.kf: no observation of a retail
+`xbase_anim.1st.kf` exists anywhere in this repository. Part VI records
+four skeletons and 1,125 body records and says nothing about the KF. So
+the fixture's SHAPE is read off OpenMW; its CONTENT is an assumption
+about retail idle data, and generate.py says so at the maker.
+
+NEXT, IN ORDER: (1) MW-D8 - the second-home cleanup above, and an idle
+clip run against Mac's own archives; (2) only then a rig, and only then
+wiring into weaponRig. Nothing MW touches the game today.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

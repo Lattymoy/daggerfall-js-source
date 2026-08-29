@@ -91,6 +91,10 @@ const bsa = buildBsa([
   // The UPPER ARM: a real RIGID part, asymmetric in x, which is what
   // makes rule 13's mirror measurable off the pixels.
   { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
+  // MW-D7: THE IDLE CLIP, at rule 6's own path. Until now this archive
+  // carried no animation source at all, so the page printed ABSENT for it
+  // and the assembly could only ever be drawn at rest.
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
 ]);
 const esm = Uint8Array.from([
   ...body('b_n_nord_m_hand.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
@@ -109,7 +113,7 @@ await page.setInputFiles('#file', [
 await page.waitForSelector('#out table', { timeout: 10000 });
 const text = await page.textContent('#out');
 
-ok(/5 files/.test(text), 'the archive is read and its file count shown');
+ok(/6 files/.test(text), 'the archive is read and its file count shown');
 ok(/xbase_anim\.1st\.nif[\s\S]{0,80}present/.test(text), 'the REAL first-person skeleton is reported present');
 ok(/base_anim\.1st\.nif[\s\S]{0,120}ABSENT/.test(text),
   'and the name the reverted rig hardcoded is reported ABSENT');
@@ -227,6 +231,161 @@ ok(/skinned/.test(armText) && /rigid/.test(armText), 'and both kinds by name');
 ok(/Not in the picture/.test(armText) && /forearm/.test(armText),
   'a slot with no data is listed WITH ITS REASON, never silently absent');
 
+// ── MW-D7: THE IDLE CLIP, PLAYED ──────────────────────────────────
+//
+// MW-D6's lesson, applied. A lit-pixel count passed a ONE-HANDED arm; it
+// will pass a rest-pose arm just as happily, and a rest pose is exactly
+// what an unbound clip produces. So the layers here have to separate
+// three outcomes that a picture cannot:
+//
+//   NOT ANIMATING  - poseSkeleton fell through to node.rest for every
+//                    bone. Clean, plausible, static. Layer 2 kills it.
+//   ANIMATING WRONGLY - a `% span` player replays the clip's intro on
+//                    every wrap instead of the loop segment. It moves,
+//                    it is symmetric, it draws. Only layer 5 kills it.
+//   ANIMATING CORRECTLY - the recorded law.
+await page.waitForSelector('#clip canvas', { timeout: 10000 });
+const clipText = await page.textContent('#clip');
+
+// L1 - it draws.
+const clipPixels = await page.evaluate(() => {
+  const c = document.querySelector('#clip canvas');
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  let n = 0;
+  for (let i = 3; i < d.length; i += 4) if (d[i] > 8) n++;
+  return n;
+});
+ok(clipPixels > 200, `the clip panel draws the arm (${clipPixels} lit pixels)`);
+
+// L1b - IT ANIMATES ON ITS OWN. Every layer below drives the pose through
+// __mwArmAt, which answers perfectly well with the rAF loop dead - a page
+// frozen on its first frame passes all of them. So watch the LIVE canvas
+// across real frames and nothing else.
+const live = await page.evaluate(async () => {
+  const c = document.querySelector('#clip canvas');
+  const g = c.getContext('2d');
+  const hash = () => {
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let h = 7;
+    for (let i = 3; i < d.length; i += 4) h = (h * 31 + (d[i] > 8 ? 1 : 0)) | 0;
+    return h;
+  };
+  const before = hash();
+  const start = window.__mwClipFrames;
+  await new Promise((r) => setTimeout(r, 400));
+  return { before, after: hash(), frames: window.__mwClipFrames - start };
+});
+ok(live.frames > 5, `the clip's own frame loop is running (${live.frames} frames in 400ms)`);
+ok(live.before !== live.after,
+  'and the picture changes WITHOUT being driven - a page frozen on frame one passes every layer below');
+
+const CLIP_TIMES = [1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
+
+// L2 - THE PICTURE CHANGES. This is the layer that kills "bound nothing,
+// fell back to rest", which no pixel count and no symmetry score can see.
+const shots = await page.evaluate((times) => {
+  const c = document.querySelector('#clip canvas');
+  const g = c.getContext('2d');
+  const B = 4; const W = Math.ceil(c.width / B); const H = Math.ceil(c.height / B);
+  const out = [];
+  for (const t of times) {
+    window.__mwArmAt(t);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    const cell = new Uint8Array(W * H);
+    for (let y = 0; y < c.height; y++) {
+      for (let x = 0; x < c.width; x++) {
+        if (d[(y * c.width + x) * 4 + 3] > 8) cell[((y / B) | 0) * W + ((x / B) | 0)] = 1;
+      }
+    }
+    let hit = 0; let tot = 0;
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        if (cell[j * W + i]) { tot++; if (cell[j * W + (W - 1 - i)]) hit++; }
+      }
+    }
+    out.push({ t, hash: cell.join(''), sym: tot ? hit / tot : 0, tot });
+  }
+  return out.map((r) => ({ ...r, hash: [...r.hash].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7) }));
+}, CLIP_TIMES);
+const distinct = new Set(shots.map((s2) => s2.hash)).size;
+ok(distinct >= 5,
+  `the picture CHANGES across the clip - a clip that bound nothing gives 1 (${distinct} distinct of ${shots.length})`);
+
+// L3 - symmetry at EVERY time, not once. The fixture's left arm track is
+// the right's negated about Y, which the x-mirror conjugates exactly, so
+// the assembly is x-symmetric at every instant. A one-sided binding or a
+// mirror lost under animation collapses this.
+const worst = shots.reduce((a, b) => (b.sym < a.sym ? b : a));
+ok(shots.every((s2) => s2.tot > 20 && s2.sym >= 0.9),
+  `and stays SYMMETRIC at every time (worst ${worst.sym.toFixed(2)} at t=${worst.t})`);
+
+// L4 - the signed readback, per piece, per time.
+const poses = await page.evaluate((times) => times.map((t) => {
+  const rows = window.__mwArmAt(t);
+  const pick = (b) => rows.find((r) => r.bone === b);
+  return {
+    t,
+    rh: pick('right hand').bounds,
+    lh: pick('left hand').bounds,
+    rc: pick('right upper arm').bounds,
+    lc: pick('left upper arm').bounds,
+  };
+}), CLIP_TIMES);
+const at = (t) => poses.find((p) => p.t === t);
+// ANTI-VACUITY: the intro pose must be REACHABLE, or L5's "never returns
+// to it" could pass by never arriving in the first place.
+ok(at(1.0).rh.maxX < 0,
+  `at the clip's start the right hand is still LEFT of centre (${at(1.0).rh.maxX.toFixed(3)})`);
+ok(at(2.0).rh.maxX > 2.4, `and by t=2.0 it has swung across (${at(2.0).rh.maxX.toFixed(3)})`);
+ok(poses.every((p) => Math.abs(p.lh.minX + p.rh.maxX) < 1e-3 && Math.abs(p.lc.minX + p.rc.maxX) < 1e-3),
+  'the two sides stay exact mirrors of each other at every time, hands and cuffs alike');
+ok(poses.some((p) => Math.abs(p.rc.maxX - at(1.0).rc.maxX) > 1e-3),
+  'and the RIGID pieces move too - a pose that re-skins and leaves the cuffs at rest is half a rig');
+
+// L5 - THE LOOP LAW, as a sequence. The one measurement that separates a
+// correct player from a plausible one, asserted in time-space AND in
+// pose-space so a time-bookkeeping fake cannot pass it.
+const trace = await page.evaluate(() => window.__mwClipTrace({ dt: 0.2, steps: 40, loopCount: 2 }));
+ok(trace.length > 6 && Math.abs(trace[0].time - 1.2) < 1e-3,
+  `the clip starts at 1.0, not 0 - a forward scan takes the decoy block (first step t=${trace[0] && trace[0].time})`);
+const stopIdx = trace.findIndex((r) => r.firedKeys.includes('idle: loop stop'));
+ok(stopIdx > 0, 'the loop-stop key is crossed at all');
+const after = trace.slice(stopIdx + 1);
+ok(after.length > 0 && after.every((r) => r.time >= 1.5 - 1e-6),
+  'and after it the playhead never re-enters the clip INTRO - a % span player replays it every wrap');
+ok(after.every((r) => r.rightHandMaxX == null || r.rightHandMaxX > 1.4),
+  'measured in the POSE too, not just the clock - the intro reaches x < 0 and the loop never does');
+ok(trace[trace.length - 1].loopStartTime === 1.5 && trace[trace.length - 1].loopStopTime === 2.5,
+  'the loop window ends at 1.5..2.5 - DISCOVERED by crossing the keys, not read at load');
+// loopCount is a count of ADDITIONAL passes, so a count of 2 CROSSES the
+// loop-stop key three times and WRAPS twice - the third crossing finds
+// the count exhausted and runs on to the stop key. Both numbers are
+// asserted, because an off-by-one in either direction moves exactly one
+// of them.
+const wraps = trace.filter((r, i) => i > 0 && r.loopCount < trace[i - 1].loopCount).length;
+ok(wraps === 2 && trace[trace.length - 1].loopCount === 0,
+  `two wraps for a loop count of 2 (${wraps}, ending at ${trace[trace.length - 1].loopCount})`);
+ok(trace.flatMap((r) => r.firedKeys).filter((k) => k === 'idle: loop stop').length === 3,
+  'and the loop SEGMENT plays three times - loops are ADDITIONAL passes, not total');
+const tail = trace[trace.length - 1];
+ok(!tail.playing && Math.abs(tail.time - 3.0) < 1e-6,
+  `then it runs on to the stop key and finishes (t=${tail.time}, playing=${tail.playing})`);
+const allFired = trace.flatMap((r) => r.firedKeys);
+ok(allFired.includes('idle: chop hit'), 'a key with no handler is still CROSSED and logged (rule 24)');
+ok(allFired.includes('soundgen: left'),
+  'and rule 47 lets a soundgen key through even though its group is not the playing one');
+ok(!allFired.some((k) => k.startsWith('idle1h:') || k.startsWith('sneak')),
+  'while another group\'s ordinary keys are dropped - "idle" must not swallow "idle1h"');
+
+// The page has to SAY the things a picture cannot.
+ok(/1\.00\s*…\s*3\.00s|1\.00 &hellip; 3\.00s|1\.00.{0,10}3\.00s/.test(clipText),
+  `the resolved clip range is printed (got: ${clipText.replace(/\s+/g, ' ').slice(0, 200)})`);
+ok(/5 of 5/.test(clipText), 'the binding count is printed - the answer to the silent failure');
+ok(/runs backwards/.test(clipText),
+  'and the group LISTING\'s divergent answer is shown beside it, not hidden');
+ok(/Right Hand|Left Hand/.test(clipText),
+  'bones the clip does not drive are named, since they are indistinguishable from an unbound clip');
+
 // MW-D4: the bone table. The fixture skeleton is a TEST RIG, not
 // Morrowind's, so the retail bone names are expected to be MISSING - and
 // the assertion is that the page SAYS so, in the row, rather than
@@ -238,6 +397,40 @@ ok(/Left Hand/.test(boneText) && /Weapon Bone Left/.test(boneText),
 ok(/MISSING/.test(boneText), 'and a bone this skeleton lacks is named MISSING');
 ok(/are missing[\s\S]{0,300}before a rig is written against them/.test(boneText),
   'with the consequence spelled out, not left for the reader to infer');
+
+// L6 - THE SILENT FAILURE, MADE VISIBLE. Swap in a .kf that keys bones
+// this skeleton does not have. The arm still draws, still symmetric,
+// still plausible - and the page must say so in words.
+const blindBsa = buildBsa([
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('xfixture.kf') },
+]);
+await page.setInputFiles('#file', [
+  { name: 'Morrowind.bsa', mimeType: 'application/octet-stream', buffer: Buffer.from(blindBsa) },
+  { name: 'Morrowind.esm', mimeType: 'application/octet-stream', buffer: Buffer.from(esm) },
+]);
+await page.waitForFunction(() => {
+  const el = document.getElementById('clip');
+  return el && /holds its rest pose|names no such animation/.test(el.textContent);
+}, { timeout: 10000 }).catch(() => {});
+const blindText = await page.textContent('#clip');
+const blindClip = await page.evaluate(() => window.__mwClip);
+ok(blindClip && blindClip.binding && blindClip.binding.matched.length === 0
+  && blindClip.binding.unmatched.join() === 'bone1',
+  `a .kf keyed to foreign bones binds NOTHING (${blindClip && blindClip.binding
+    ? blindClip.binding.matched.length + ' matched' : 'no report'})`);
+ok(blindClip && /names no such animation/.test(blindClip.refusal || ''),
+  'and the refusal itself is readable, not only the success path');
+// BOTH sentences, not either. The clip refusal and the empty binding are
+// two different failures of the same file, and an OR lets one stand in for
+// the other - which is how a page stops reporting the binding at all and
+// nothing notices.
+ok(/names no such animation/.test(blindText),
+  `the refused clip is named (got: ${blindText.replace(/\s+/g, ' ').slice(0, 160)})`);
+ok(/holds its rest pose/.test(blindText),
+  'AND the unmatched track is named, with the consequence spelled out - the failure a picture cannot show');
 
 // a corrupt archive must be named, not swallowed
 const bad = Uint8Array.from([...u32(0x102), ...u32(0), ...u32(0)]);

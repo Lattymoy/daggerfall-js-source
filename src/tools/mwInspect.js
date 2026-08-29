@@ -486,7 +486,8 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
   try {
     ({ parseNif: mod.parseNif } = await import('../formats/mwNifFile.js'));
     ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
-      skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch } = await import('../formats/mwSkin.js'));
+      skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
+      accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding } = await import('../formats/mwSkin.js'));
     ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform } = await import('../formats/mwCharacter.js'));
     ({ PART_BONES: mod.PART_BONES } = await import('../formats/mwNpc.js'));
   } catch (err) {
@@ -500,8 +501,6 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
     return { ok: false, stage: 'skeleton', error: err.message };
   }
   const rootRef = [...skeleton.nodes.entries()].find(([, n]) => n.parent < 0)?.[0] ?? -1;
-  const pose = mod.poseSkeleton(skeleton, null, null, 0);
-  const mats = mod.skelMats(skeleton, pose, rootRef);
 
   const pieces = [];
   const notes = [];
@@ -561,10 +560,13 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         const nameless = !String(batch.name || '').trim();
         if (nameless && tookNameless) continue;
         if (bone && !shapeMatchesBone(batch.name, bone)) continue;
-        const out = new Float32Array(batch.positions.length);
-        mod.skinBatch(batch, skeleton, pose, mod.skelMats(skeleton, pose, batch.skin.skeletonRoot), out, null);
+        // MW-D7: the piece KEEPS its batch, and `positions` is its own
+        // buffer - never an alias of batch.positions, which poseAssembly
+        // reads every frame. Aliasing them is the runaway the viewer
+        // documents at mwViewer.js:430-436.
         pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
-          positions: out, indices: batch.indices });
+          batch, source: null, attachRef: null,
+          positions: new Float32Array(batch.positions.length), indices: batch.indices });
         if (nameless) namelessHere = true;
       }
       tookNameless = tookNameless || namelessHere;
@@ -572,22 +574,85 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
       // RULE 12 + 13: a rigid part is PLACED at the bone, once per side,
       // with x negated on the left.
       if (bound.attached.length) {
-        const at = mod.attachmentTransform(mats, bound.attachRef);
+        // The mirror is fixed HERE, at bind time, because it is a fact
+        // about the bone's NAME, not about the pose. Re-deriving it per
+        // frame invites a pose-dependent mirror, which is a left hand
+        // that flips sides mid-clip.
         const mirror = !!(bone && /left/i.test(bone));
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
-            positions: placeAtBone(batch.positions, at, mirror), indices: batch.indices });
+            batch: null, source: batch.positions, attachRef: bound.attachRef,
+            positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
       }
     }
   }
-  return {
+  const assembly = {
     ok: pieces.length > 0,
     pieces,
     notes,
-    bounds: pieces.length ? meshBounds(pieces) : null,
+    skeleton,
+    rootRef,
+    // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
+    // A dynamic import inside a requestAnimationFrame body is a promise per
+    // frame; this function already paid for them once.
+    fns: mod,
+    bounds: null,
     error: pieces.length ? null : 'nothing bound - see the notes for why',
   };
+  // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
+  // MW-D5/D6 pins keep seeing byte-identical numbers because they are the
+  // same arithmetic, called once instead of inlined.
+  return pieces.length ? poseAssembly(assembly) : assembly;
+}
+
+/**
+ * MW-D7: POSE THE ASSEMBLY. The one home for everything that changes when
+ * time does - and the reason assembleFirstPersonArm's return value can be
+ * re-posed at all.
+ *
+ * What is recomputed here, and nothing else:
+ *   - the pose (one poseSkeleton over the whole skeleton);
+ *   - the skeleton-space matrices, MEMOISED PER SKELETON ROOT. The
+ *     assembly had been walking the chain once per skinned batch; the
+ *     distinct roots are what the walk actually depends on, and on an arm
+ *     that is one.
+ *   - per skinned piece: skinBatch into the piece's own buffer;
+ *   - per rigid piece: the attachment affine, which now carries the
+ *     bone's ANIMATED rotation, so rigid parts move too. A stage that
+ *     re-skinned the skinned half and left the rigid half at rest would
+ *     draw a hand that animates inside a cuff that does not.
+ *
+ * What is NOT recomputed, because it is a fact about the files and not
+ * about time: the parse, the skeleton, the bind, rule 15's shape filter,
+ * rule 13's mirror, the attach ref, the output buffers, and the draw
+ * mapper. A mapper that follows the per-frame bounds renormalises the
+ * picture every frame and hides the very motion this stage exists to show.
+ *
+ * Mutates `assembly` in place and returns it.
+ */
+export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
+  time = 0, accumRoot = null } = {}) {
+  const { fns, skeleton, rootRef, pieces } = assembly;
+  if (!fns || !skeleton) return assembly;
+  const pose = fns.poseSkeleton(skeleton, tracks, sampleTrack, time, { accumRoot });
+  const byRoot = new Map([[rootRef, fns.skelMats(skeleton, pose, rootRef)]]);
+  const matsFor = (root) => {
+    if (!byRoot.has(root)) byRoot.set(root, fns.skelMats(skeleton, pose, root));
+    return byRoot.get(root);
+  };
+  for (const p of pieces) {
+    if (p.kind === 'skinned') {
+      fns.skinBatch(p.batch, skeleton, pose, matsFor(p.batch.skin.skeletonRoot), p.positions, null);
+    } else {
+      const at = fns.attachmentTransform(byRoot.get(rootRef), p.attachRef);
+      placeAtBone(p.source, at, p.mirrored, p.positions);
+    }
+  }
+  assembly.pose = pose;
+  assembly.time = time;
+  assembly.bounds = pieces.length ? meshBounds(pieces) : null;
+  return assembly;
 }
 
 /** MW-D6: one row per assembled piece, for the page's table and the
@@ -633,8 +698,7 @@ export function shapeMatchesBone(shapeName, bone) {
  *  a full sweep. A rule that cannot be exercised is not pinned, whatever
  *  the test output says.
  */
-export function placeAtBone(positions, at, mirror) {
-  const out = new Float32Array(positions.length);
+export function placeAtBone(positions, at, mirror, out = new Float32Array(positions.length)) {
   for (let v = 0; v < positions.length; v += 3) {
     const x = mirror ? -positions[v] : positions[v];
     const y = positions[v + 1];
@@ -644,4 +708,108 @@ export function placeAtBone(positions, at, mirror) {
     out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
   }
   return out;
+}
+
+/**
+ * MW-D7: THE CLIP, READ AND REPORTED. One summary the page renders and the
+ * probe reads back, so the two cannot invent different accounts of the
+ * same file.
+ *
+ * `binding` is the field that earns its place. poseSkeleton answers an
+ * unmatched bone with its rest transform, so a .kf keyed to bones this
+ * skeleton does not have poses NOTHING and draws a clean, static,
+ * entirely plausible arm. That failure is invisible in a picture and
+ * invisible in a pixel count; it is only ever visible as a sentence.
+ *
+ * `tracks[].rotationType` is the second: it says how much of a player's
+ * real file rides KEY_TYPE.constant, whose sampler this tree holds at the
+ * previous key where the reference flips at the segment midpoint. That is
+ * a different member with no fixture, deliberately not touched here - but
+ * a player looking at their own data deserves to see how much of it is
+ * affected rather than being told nothing.
+ *
+ * `legacy` is parseAnimGroups' answer to the same question, carried so
+ * the page can show both. On the fixture they disagree by construction:
+ * the listing reports Idle [1.00 -> 0.50], a range that runs backwards,
+ * while the clip law reads [1.00 -> 3.00].
+ */
+export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', clipOpts = {} } = {}) {
+  const mod = {};
+  try {
+    ({ parseNif: mod.parseNif } = await import('../formats/mwNifFile.js'));
+    ({ collectTextKeys: mod.collectTextKeys, normalizeTextKeys: mod.normalizeTextKeys,
+      clipGroups: mod.clipGroups, resetClip: mod.resetClip, parseAnimGroups: mod.parseAnimGroups,
+      extractTracks: mod.extractTracks } = await import('../formats/mwAnim.js'));
+    ({ trackBinding: mod.trackBinding, accumRootRef: mod.accumRootRef } = await import('../formats/mwSkin.js'));
+  } catch (err) {
+    return { ok: false, error: `readers unavailable: ${err.message}` };
+  }
+  if (!kfBytes || !kfBytes.length) {
+    return { ok: false, error: 'no animation file - the archive carries no first-person .kf' };
+  }
+  let nif;
+  try {
+    nif = mod.parseNif(kfBytes);
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+  const rawKeys = mod.collectTextKeys(nif);
+  const keys = mod.normalizeTextKeys(rawKeys);
+  const tracks = mod.extractTracks(nif);
+  const clip = mod.resetClip(keys, group, clipOpts);
+  const legacyRaw = mod.parseAnimGroups(rawKeys).get(group);
+  const channels = (t) => ({
+    rotation: (t.rotationKeys?.length ?? 0) || (t.xyzRotations ? -1 : 0),
+    translation: t.translations?.keys?.length ?? 0,
+    scale: t.scales?.keys?.length ?? 0,
+  });
+  return {
+    ok: true,
+    header: readNifHeader(kfBytes),
+    rawKeys,
+    keys,
+    groups: mod.clipGroups(keys),
+    group,
+    clip,
+    // RULE 49's default loopStopTime is +Infinity, and JSON turns that
+    // into null on its way through a page evaluation. The boolean is what
+    // survives the trip, so a probe never asserts on a null it cannot read.
+    loopStopFinite: !!clip.ok && Number.isFinite(clip.loopStopTime),
+    legacy: legacyRaw
+      ? { start: legacyRaw.start, stop: legacyRaw.stop,
+        loopStart: legacyRaw.loopStart, loopStop: legacyRaw.loopStop }
+      : null,
+    tracks: [...tracks.entries()].map(([bone, t]) => ({
+      bone,
+      channels: channels(t),
+      rotationType: t.rotationType,
+      translationType: t.translations?.type ?? 0,
+      startTime: t.startTime,
+      stopTime: t.stopTime,
+      frequency: t.frequency,
+      phase: t.phase,
+    })),
+    binding: skeleton ? mod.trackBinding(skeleton, tracks) : null,
+    accumRoot: skeleton ? mod.accumRootRef(skeleton, tracks) : null,
+    trackMap: tracks,
+  };
+}
+
+/** MW-D7: the draw mapper's bounds, over the WHOLE clip rather than one
+ *  frame. A mapper recomputed per frame renormalises the picture every
+ *  time the arm moves, which cancels out exactly the motion this stage
+ *  exists to show - the arm would appear to hold still while its numbers
+ *  changed underneath. Sample, union, fix the mapper once. */
+export function clipUnionBounds(assembly, poseAt, times) {
+  let acc = null;
+  for (const t of times ?? []) {
+    poseAt(t);
+    const b = assembly.bounds;
+    if (!b) continue;
+    acc = acc ? {
+      minX: Math.min(acc.minX, b.minX), minY: Math.min(acc.minY, b.minY), minZ: Math.min(acc.minZ, b.minZ),
+      maxX: Math.max(acc.maxX, b.maxX), maxY: Math.max(acc.maxY, b.maxY), maxZ: Math.max(acc.maxZ, b.maxZ),
+    } : { ...b };
+  }
+  return acc;
 }

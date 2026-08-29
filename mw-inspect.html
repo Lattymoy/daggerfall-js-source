@@ -57,8 +57,9 @@ import {
   parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
   armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
   skeletonReport, checkRequiredBones,
-  assembleFirstPersonArm, armPieceRows,
+  assembleFirstPersonArm, armPieceRows, poseAssembly, clipReport, clipUnionBounds,
 } from '/src/tools/mwInspect.js';
+import { sampleTrack, resetClip, advanceClip } from '/src/formats/mwAnim.js';
 
 const out = document.getElementById('out');
 const drop = document.getElementById('drop');
@@ -128,7 +129,11 @@ function render() {
     // header of whichever skeletons are actually here
     const rows = [];
     for (const s of FP_SKELETONS) {
-      if (!s.path.endsWith('.nif')) continue;
+      // MW-D7: the .kf too. parseNif reads it like any NIF and the
+      // version / bool-width verdict means exactly the same thing. Left
+      // out, the animation source reads "present" in the table above and
+      // then vanishes from this one, for no reason a player can see.
+      if (!/\.(nif|kf)$/i.test(s.path)) continue;
       const f = bsa.index.files.find((x) => x.name === s.path);
       if (!f) continue;
       const hdr = readNifHeader(bsa.bytes.subarray(f.offset, f.offset + Math.min(f.size, 256)));
@@ -201,6 +206,7 @@ function render() {
         h += '</table>';
         h += '<div class="draws" id="draws"></div>';
         h += '<div id="assembly"></div>';
+        h += '<div id="clip"></div>';
         h += '<p class="note">This is a record-type <b>scan</b>, not a parse: it can tell you a '
           + '<code>NiSkinInstance</code> is present in the file, and nothing more. It is here because the last '
           + 'attempted fix assumed these meshes were <b>rigid</b> &mdash; parts hung off a bone &mdash; from '
@@ -224,7 +230,7 @@ function render() {
   if (fem) fem.addEventListener('change', () => { localStorage.setItem('mwi.female', fem.checked ? '1' : '0'); render(); });
 
   drawArms();
-  drawAssembly();
+  drawAssembly().then(drawClip);
   reportBones();
 
   document.getElementById('foot').innerHTML = (bsa || esm)
@@ -389,6 +395,10 @@ async function drawAssembly() {
     parts.push({ slot: pth.slot, bytes: fileBytes(f) });
   }
   const r = await assembleFirstPersonArm({ skeletonBytes: fileBytes(skel), parts });
+  // MW-D7: the assembly is now re-posable, so it outlives this draw. The
+  // clip stage takes THIS object - not a second assembly built from the
+  // same bytes - so the two pictures can never be of different arms.
+  arm = r.ok ? r : null;
   const rows = r.ok ? armPieceRows(r.pieces) : [];
   window.__mwArm = r.ok ? rows.map((x) => ({ ...x })) : null;   // the probe reads the same rows the table shows
 
@@ -441,6 +451,245 @@ async function drawAssembly() {
       + why.map((n) => `<li>${esc(n)}</li>`).join('') + '</ul>';
   }
   if (h) host.insertAdjacentHTML('beforeend', h);
+}
+
+// MW-D7: PLAY THE IDLE CLIP THROUGH THE ASSEMBLY.
+//
+// MW-D6 above draws the arm at REST. That picture answers "do the parts
+// land in the right places", and it cannot answer the next question,
+// because a rest pose and a clip that drives nothing look identical.
+// That is not a hypothetical: poseSkeleton hands back node.rest for every
+// bone with no matching track (mwSkin.js:151-154), so a .kf keyed to
+// bones this skeleton does not have poses NOTHING and draws a clean,
+// static, entirely plausible arm. No error. No empty box. So this panel
+// has to say, in words, which tracks bound - and then it has to MOVE.
+//
+// The time law is the recorded one, not a modulo: rule 22 picks the range
+// by walking backwards from the group's last key, rules 23/49 discover the
+// loop window by CROSSING its keys, and rule 50 steps the playhead onto
+// each key rather than over it. mwViewer.js:342-348 does none of that; see
+// the STATUS block, it is MW-D8's first task.
+//
+// NOT here, and deliberately: blend masks and priorities (rules 25/26),
+// the action vocabulary (rule 24 - keys are logged, nothing is dispatched),
+// and every camera and compositing rule (29/52/53/54). There is one clip
+// on one skeleton and no player eye; a mask with no second clip would be
+// code that cannot fail.
+let arm = null;
+let clipTimer = null;
+const CLIP_GROUP = 'Idle';
+
+function stopClip() {
+  if (clipTimer) cancelAnimationFrame(clipTimer);
+  clipTimer = null;
+}
+
+async function drawClip() {
+  stopClip();
+  const host = document.getElementById('clip');
+  if (!host || !bsa) return;
+  const kfFile = bsa.index.files.find((x) => x.name === 'meshes/xbase_anim.1st.kf');
+  const rep = await clipReport({
+    kfBytes: kfFile ? fileBytes(kfFile) : null,
+    skeleton: arm ? arm.skeleton : null,
+    group: CLIP_GROUP,
+  });
+  window.__mwClip = null;
+
+  let h = '<h2>The idle clip</h2>';
+  if (!rep.ok) {
+    host.innerHTML = `${h}<p class="err">${esc(rep.error)}</p>`
+      + '<p class="note">Rule 6 names <code>meshes/xbase_anim.1st.kf</code> as the first-person animation '
+      + 'source. Without it the arm can only be drawn at rest.</p>';
+    return;
+  }
+
+  const c = rep.clip;
+  h += '<table><tr><th>groups this file names</th><td colspan="2"><code>'
+    + (rep.groups.length ? rep.groups.map(esc).join('</code>, <code>') : '&mdash;') + '</code></td></tr>';
+  h += `<tr><th>clip <code>${esc(CLIP_GROUP)}</code></th><td colspan="2" class="${c.ok ? 'ok' : 'bad'}">`
+    + (c.ok ? `${c.startTime.toFixed(2)} &hellip; ${c.stopTime.toFixed(2)}s`
+      : `REFUSED &mdash; ${esc(c.reason)}`) + '</td></tr>';
+  if (c.ok) {
+    h += `<tr><th>loop window</th><td colspan="2">${c.loopStartTime.toFixed(2)} &hellip; `
+      + `${rep.loopStopFinite ? c.loopStopTime.toFixed(2) : '&infin;'}</td></tr>`;
+  }
+  h += '</table>';
+
+  if (c.ok && !rep.loopStopFinite) {
+    h += '<p class="note">The loop window opens at <b>&infin;</b> on purpose (rule 49): with '
+      + '<code>loopFallback</code> off, a clip that never crosses a <code>loop stop</code> key plays once '
+      + 'and stops. The window narrows below only when the playhead actually crosses those keys.</p>';
+  }
+
+  // THE DIVERGENCE, shown rather than argued. parseAnimGroups is the group
+  // LISTING and reads the same keys by different rules; on data that
+  // exercises them the two disagree, and this page has no business hiding
+  // which one it used.
+  if (rep.legacy) {
+    const bad = !(rep.legacy.start != null && rep.legacy.stop != null && rep.legacy.start <= rep.legacy.stop);
+    h += `<p class="note">The group <em>listing</em> (<code>parseAnimGroups</code>) reads the same keys as `
+      + `<code>${esc(CLIP_GROUP)} [${rep.legacy.start} &hellip; ${rep.legacy.stop}]</code>`
+      + (bad ? ' &mdash; <span class="bad">a range that runs backwards</span>' : '')
+      + '. It splits on <code>\\r\\n</code> where rule 44 splits on either character, accepts '
+      + '<code>Group:Marker</code> where rule 21 wants colon-and-one-space, and compares the stop marker '
+      + 'exactly where rule 22 truncates it. The clip above uses the recorded law; the listing is not '
+      + 'being corrected in this slice, it is being shown.</p>';
+  }
+
+  // THE BINDING TABLE - the only thing on this page that can see the
+  // failure the picture cannot.
+  const b = rep.binding;
+  if (b) {
+    const total = b.matched.length + b.unmatchedTracks.length;
+    h += `<p class="note"><b>${b.matched.length} of ${total}</b> tracks in this file bind to a bone in `
+      + 'the skeleton.</p>';
+    if (b.unmatchedTracks.length) {
+      h += '<ul class="note">' + b.unmatchedTracks.map((n) => `<li class="bad"><code>${esc(n)}</code></li>`).join('')
+        + '</ul><p class="err">An unmatched track poses nothing &mdash; the bone holds its rest pose, which '
+        + 'looks exactly like a working idle. That is why this table exists and the picture below does not '
+        + 'suffice.</p>';
+    }
+    if (b.untrackedBones.length) {
+      h += `<p class="note">Bones this clip does not drive: <code>${b.untrackedBones.map(esc).join('</code>, <code>')}`
+        + '</code>. They hold their rest transforms, which is correct &mdash; and is also what the whole '
+        + 'skeleton would do if nothing bound at all.</p>';
+    }
+  }
+
+  h += '<table><tr><th>track</th><th>rotation</th><th>translation</th><th>scale</th><th>interp</th></tr>';
+  const KEY_TYPES = { 1: 'linear', 2: 'quadratic', 3: 'TBC', 4: 'XYZ', 5: 'constant' };
+  for (const t of rep.tracks) {
+    const it = t.channels.rotation ? KEY_TYPES[t.rotationType] : KEY_TYPES[t.translationType];
+    h += `<tr><td><code>${esc(t.bone)}</code></td>`
+      + `<td>${t.channels.rotation < 0 ? 'XYZ' : t.channels.rotation}</td>`
+      + `<td>${t.channels.translation}</td><td>${t.channels.scale}</td>`
+      + `<td class="${it === 'constant' ? 'warn' : 'dim'}">${esc(it || '&mdash;')}</td></tr>`;
+  }
+  h += '</table>';
+  if (rep.tracks.some((t) => t.rotationType === 5 || t.translationType === 5)) {
+    h += '<p class="note"><b>constant</b> keys are sampled here by holding the previous key; the reference '
+      + 'flips at the segment midpoint. That is a different member with no fixture and it is not being '
+      + 'changed in this slice &mdash; the column is here so you can see how much of your file rides it.</p>';
+  }
+
+  host.innerHTML = h;
+  // The report is published BEFORE the early return, so a refusal is
+  // readable too. A probe that can only see the success path cannot
+  // measure the failure this panel exists to make visible.
+  window.__mwClip = {
+    groups: rep.groups,
+    clip: c.ok ? { start: c.startTime, stop: c.stopTime, loopStart: c.loopStartTime } : null,
+    refusal: c.ok ? null : c.reason,
+    loopStopFinite: rep.loopStopFinite,
+    binding: b ? { matched: b.matched.map((m) => m.bone), unmatched: b.unmatchedTracks } : null,
+    legacy: rep.legacy,
+  };
+  if (!c.ok || !arm || !arm.ok) return;
+
+  // --- the moving picture -------------------------------------------------
+  const tracks = rep.trackMap;
+  const accumRoot = rep.accumRoot;
+  const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
+  // ONE mapper, from the union of the WHOLE clip. Recomputed per frame it
+  // would renormalise the picture every time the arm moved, which cancels
+  // out exactly the motion this panel exists to show.
+  const N = 24;
+  const samples = Array.from({ length: N + 1 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / N);
+  const union = clipUnionBounds(arm, poseAt, samples);
+
+  const W = 380; const H = 380;
+  const box = document.createElement('div');
+  box.className = 'draw wide';
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  box.append(cv);
+  host.append(box);
+  const g = cv.getContext('2d');
+  const map = frontViewMapper(union, W, H);
+  const paint = () => {
+    g.clearRect(0, 0, W, H);
+    g.lineWidth = 0.6;
+    const rows = armPieceRows(arm.pieces);
+    arm.pieces.forEach((piece, i) => {
+      g.strokeStyle = inkFor(rows[i]);
+      strokePath(g, map, piece.positions, piece.indices);
+    });
+    return rows;
+  };
+
+  const readout = document.createElement('p');
+  readout.className = 'note';
+  host.append(readout);
+  const log = document.createElement('ul');
+  log.className = 'note';
+  host.append(log);
+
+  const state = resetClip(rep.keys, CLIP_GROUP);
+  let last = null;
+  const fired = [];
+  const onKey = (text, time, mine) => {
+    fired.push({ text, time, mine });
+    const li = document.createElement('li');
+    li.innerHTML = `<code>${time.toFixed(2)}</code> ${esc(text)}`
+      // RULE 47: "sound: " and "soundgen: " are handled BEFORE the group
+      // test and never dropped; anything else of another group is skipped
+      // with "Not ours". Logged, never dispatched - this page has no
+      // weapon, no inventory and no sound.
+      + (mine ? '' : (/^sounds?gen: |^sound: /.test(text)
+        ? ' <span class="dim">&mdash; another group, but rule 47 lets sound keys through</span>'
+        : ' <span class="dim">&mdash; not ours, skipped</span>'));
+    log.append(li);
+    while (log.children.length > 12) log.firstChild.remove();
+  };
+
+  // A frame counter, so a probe can tell the difference between "the arm
+  // is drawn correctly at every time it is asked for" and "the arm is
+  // actually animating". __mwArmAt answers the first question perfectly
+  // well with the rAF loop dead.
+  window.__mwClipFrames = 0;
+  const frame = (now) => {
+    const dt = last == null ? 0 : Math.min((now - last) / 1000, 0.1);
+    last = now;
+    window.__mwClipFrames++;
+    if (state.playing) advanceClip(state, rep.keys, dt, onKey);
+    poseAt(state.time);
+    paint();
+    readout.innerHTML = `t = <code>${state.time.toFixed(2)}</code> of `
+      + `<code>${c.startTime.toFixed(2)}&hellip;${c.stopTime.toFixed(2)}</code>`
+      + ` &middot; loop <code>${state.loopStartTime.toFixed(2)}&hellip;`
+      + `${Number.isFinite(state.loopStopTime) ? state.loopStopTime.toFixed(2) : '&infin;'}</code>`
+      + ` &middot; ${state.playing ? 'playing' : 'finished'}`;
+    clipTimer = requestAnimationFrame(frame);
+  };
+  clipTimer = requestAnimationFrame(frame);
+
+  // Probe hooks. Every one of them runs THE PAGE'S OWN code - the same
+  // poseAt, the same resetClip/advanceClip, the same rows the table shows.
+  // A probe with its own copy would measure the copy.
+  window.__mwArmAt = (t) => { poseAt(t); paint(); return armPieceRows(arm.pieces).map((x) => ({ ...x })); };
+  window.__mwClipTrace = ({ dt = 0.2, steps = 40, loopCount = 2 } = {}) => {
+    const s2 = resetClip(rep.keys, CLIP_GROUP, { loopCount });
+    const out = [];
+    for (let i = 0; i < steps && s2.playing; i++) {
+      const keys = [];
+      advanceClip(s2, rep.keys, dt, (text, time, mine) => keys.push({ text, time, mine }));
+      poseAt(s2.time);
+      const rows = armPieceRows(arm.pieces);
+      const rh = rows.find((r) => r.bone === 'right hand');
+      out.push({
+        time: s2.time,
+        playing: s2.playing,
+        loopCount: s2.loopCount,
+        loopStartTime: s2.loopStartTime,
+        loopStopTime: Number.isFinite(s2.loopStopTime) ? s2.loopStopTime : null,
+        loopStopFinite: Number.isFinite(s2.loopStopTime),
+        firedKeys: keys.map((k) => k.text),
+        rightHandMaxX: rh && rh.bounds ? rh.bounds.maxX : null,
+      });
+    }
+    return out;
+  };
 }
 </script>
 </body>

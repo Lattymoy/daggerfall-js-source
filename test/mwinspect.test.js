@@ -6,6 +6,7 @@ import {
   scanNifRecordTypes, skinVerdict, armMeshPaths, parseMeshForPreview, meshBounds, frontViewMapper,
   skeletonReport, checkRequiredBones, FP_REQUIRED_BONES,
   assembleFirstPersonArm, shapeMatchesBone, placeAtBone, armPieceRows,
+  poseAssembly, clipReport, clipUnionBounds,
 } from '../src/tools/mwInspect.js';
 
 // MW-D: the diagnostic that should have existed before any renderer.
@@ -545,4 +546,178 @@ test('MW-D6: armPieceRows keys by slot AND bone, and bounds are PER PIECE', asyn
   assert.ok(rows[0].bounds.maxX < 0 && rows[1].bounds.minX > 0,
     'per-piece bounds put each side on its own side of x=0');
   assert.deepEqual(armPieceRows(null), [], 'and nothing in, nothing out');
+});
+
+// --- MW-D7: THE ASSEMBLY, POSED -------------------------------------------
+
+/** The arm MW-D6 assembles, plus the clip that drives it. Both halves come
+ *  from files on disk written by pyffi, not by the code under test. */
+async function posedArm() {
+  const { readFileSync } = await import('node:fs');
+  const { parseNif } = await import('../src/formats/mwNifFile.js');
+  const { extractTracks, sampleTrack } = await import('../src/formats/mwAnim.js');
+  const { accumRootRef } = await import('../src/formats/mwSkin.js');
+  const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hand', bytes: f('armhand.nif') }, { slot: 'upperarm', bytes: f('armcuff.nif') }],
+  });
+  const tracks = extractTracks(parseNif(f('armidle.kf')));
+  return {
+    arm,
+    tracks,
+    sampleTrack,
+    accumRoot: accumRootRef(arm.skeleton, tracks),
+    at(time, opts = {}) {
+      poseAssembly(arm, { tracks, sampleTrack, time, accumRoot: this.accumRoot, ...opts });
+      return armPieceRows(arm.pieces);
+    },
+  };
+}
+
+test('MW-D7: the assembly carries what a re-pose needs, and nothing aliases', async () => {
+  const { arm } = await posedArm();
+  assert.equal(arm.ok, true);
+  assert.ok(arm.skeleton && arm.fns, 'the skeleton and the resolved readers ride along');
+  assert.ok(Number.isInteger(arm.rootRef), 'and the skeleton root, so the per-frame call is synchronous');
+  for (const p of arm.pieces) {
+    if (p.kind === 'skinned') {
+      assert.ok(p.batch && p.batch.skin, 'a skinned piece keeps its batch - skinBatch needs it every frame');
+      // THE ALIASING HAZARD, and it is not theoretical: mwViewer.js:430-436
+      // copies the bind positions for exactly this reason. Alias these and
+      // each frame skins the PREVIOUS frame's output and the pose runs away.
+      assert.notEqual(p.positions, p.batch.positions, 'and its output buffer is its own allocation');
+    } else {
+      assert.ok(p.source && Number.isInteger(p.attachRef),
+        'a rigid piece keeps its authored positions and its attach bone');
+      assert.notEqual(p.positions, p.source, 'and writes somewhere else');
+    }
+  }
+});
+
+test('MW-D7: posing moves BOTH kinds of piece - a rig that only re-skins is half a rig', async () => {
+  const h = await posedArm();
+  const a = h.at(1.0).map((r) => r.bounds.maxX);
+  const b = h.at(2.0).map((r) => r.bounds.maxX);
+  const rows = h.at(2.0);
+  assert.equal(rows.length, 4);
+  for (let i = 0; i < rows.length; i++) {
+    assert.ok(Math.abs(a[i] - b[i]) > 1e-3,
+      `${rows[i].key} (${rows[i].kind}) moved between t=1.0 and t=2.0`);
+  }
+  // The rigid half moves because the ATTACHMENT AFFINE is recomputed from
+  // the animated pose. Reuse the bind-time matrices and the cuffs freeze
+  // inside hands that animate.
+  const rigid = rows.filter((r) => r.kind === 'rigid');
+  assert.equal(rigid.length, 2);
+  assert.ok(rigid.every((r, i) => Math.abs(a[rows.indexOf(r)] - b[rows.indexOf(r)]) > 1e-3 || i < 0));
+});
+
+test('MW-D7: posing twice at one time gives the same numbers twice', async () => {
+  const h = await posedArm();
+  const once = h.at(2.0).map((r) => `${r.bounds.minX},${r.bounds.maxX}`).join('|');
+  const twice = h.at(2.0).map((r) => `${r.bounds.minX},${r.bounds.maxX}`).join('|');
+  assert.equal(once, twice, 'the pose is a function of time, not of how many frames have run');
+});
+
+test('MW-D7: the mirror is a fact about the BONE NAME, and survives the clip', async () => {
+  const h = await posedArm();
+  for (const t of [1.0, 1.5, 2.0, 2.5, 3.0]) {
+    const rows = h.at(t);
+    const by = (b) => rows.find((r) => r.bone === b);
+    assert.deepEqual(rows.filter((r) => r.kind === 'rigid').map((r) => r.mirrored), [true, false],
+      `t=${t}: the LEFT rigid piece is the mirrored one, and it does not change with the pose`);
+    // The fixture's left arm track is the right's rotation negated about
+    // Y, which the x-mirror conjugates exactly - so this holds at every
+    // instant, not just at rest.
+    assert.ok(Math.abs(by('left upper arm').bounds.minX + by('right upper arm').bounds.maxX) < 1e-5,
+      `t=${t}: the rigid sides stay exact mirrors`);
+    assert.ok(Math.abs(by('left hand').bounds.minX + by('right hand').bounds.maxX) < 1e-5,
+      `t=${t}: and so do the skinned ones`);
+  }
+});
+
+test('MW-D7: the accum root is extracted at the POSE, which is the only place it is real', async () => {
+  const h = await posedArm();
+  const bip = [...h.arm.skeleton.nodes.entries()].find(([, n]) => n.name === 'Bip01')[0];
+  h.at(3.0);
+  assert.deepEqual([...h.arm.pose.get(bip).translation], [0, 0, 0],
+    'the root track\'s x drift is extracted - only its z reaches the pose');
+  h.at(3.0, { accumRoot: null });
+  assert.equal(h.arm.pose.get(bip).translation[0], 1, 'and without it the root walks to x=+1');
+
+  // AND IT CANNOT BE PINNED AT THE PIXELS, on this rig. bindPart sets
+  // skeletonRoot === rootBone, skeletonSpaceMatrices makes that node
+  // identity, and skinToSkelMatrix returns identity when they are equal -
+  // so a track on Bip01 reaches no geometry at all, either half. The
+  // geometric pin lives on the SkinRoot/Bone0 rig in mwanim.test.js,
+  // where the tracked bone is BELOW the skin root. Claiming it here would
+  // be a measurement that cannot fail.
+  const withRoot = h.at(3.0).map((r) => r.bounds.maxX).join();
+  const without = h.at(3.0, { accumRoot: null }).map((r) => r.bounds.maxX).join();
+  assert.equal(withRoot, without, 'the geometry is identical either way, and this pin says so out loud');
+});
+
+test('MW-D7: a channel a track lacks is rewritten from REST every frame, not held', async () => {
+  const h = await posedArm();
+  // The forearm tracks are translation-only. Their rotation must come
+  // back from node.rest on EVERY pose - a port that caches the last
+  // frame's rotation compounds whatever the previous frame left, which is
+  // the bug OpenMW's own comment exists to prevent.
+  const fore = [...h.arm.skeleton.nodes.entries()].find(([, n]) => n.name === 'Right Forearm');
+  const rest = [...fore[1].rest.rotation];
+  for (const t of [1.0, 2.0, 3.0, 1.0]) {
+    h.at(t);
+    assert.deepEqual([...h.arm.pose.get(fore[0]).rotation], rest, `t=${t}: rotation is the rest rotation`);
+  }
+  // while its translation genuinely animates
+  h.at(1.0);
+  const a = h.arm.pose.get(fore[0]).translation[2];
+  h.at(2.0);
+  assert.ok(Math.abs(a - h.arm.pose.get(fore[0]).translation[2]) > 1e-3, 'and the keyed channel moves');
+});
+
+test('MW-D7: clipReport is one account of the file, refusal included', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { parseNif } = await import('../src/formats/mwNifFile.js');
+  const { buildSkeleton } = await import('../src/formats/mwSkin.js');
+  const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
+  const skel = buildSkeleton(parseNif(f('armskel.nif')));
+  const r = await clipReport({ kfBytes: f('armidle.kf'), skeleton: skel, group: 'Idle' });
+  assert.equal(r.ok, true);
+  assert.equal(r.clip.startTime, 1);
+  assert.equal(r.clip.stopTime, 3);
+  // Infinity does not survive a page evaluation - it JSON-serialises to
+  // null - so the boolean is what a probe can actually read.
+  assert.equal(r.loopStopFinite, false);
+  assert.equal(JSON.parse(JSON.stringify({ x: r.clip.loopStopTime })).x, null,
+    'which is exactly why the boolean exists');
+  assert.equal(r.binding.matched.length, 5);
+  assert.equal(r.tracks.length, 5);
+  // The divergence the page shows rather than argues.
+  assert.equal(r.legacy.start, 1);
+  assert.equal(r.legacy.stop, 0.5, 'the group LISTING reads a range that runs backwards on this data');
+
+  // A .kf keyed to foreign bones: the report must say BOTH things.
+  const blind = await clipReport({ kfBytes: f('xfixture.kf'), skeleton: skel, group: 'Idle' });
+  assert.equal(blind.ok, true, 'the file parses fine - that is the whole danger');
+  assert.equal(blind.clip.ok, false);
+  assert.equal(blind.binding.matched.length, 0);
+  assert.deepEqual(blind.binding.unmatchedTracks, ['bone1']);
+  const none = await clipReport({ kfBytes: null });
+  assert.equal(none.ok, false, 'and a missing animation source is named, not treated as an empty clip');
+});
+
+test('MW-D7: the draw mapper is fixed over the WHOLE clip, not per frame', async () => {
+  const h = await posedArm();
+  // The sample order matters to this pin. t=3.0 is the widest frame, so a
+  // "union" that simply kept the LAST frame would pass a monotone list by
+  // accident. Put the extremum in the middle.
+  const times = [1.0, 1.5, 3.0, 2.5, 2.0];
+  const union = clipUnionBounds(h.arm, (t) => h.at(t), times);
+  const each = times.map((t) => { h.at(t); return h.arm.bounds; });
+  assert.ok(union.maxX >= Math.max(...each.map((b) => b.maxX)) - 1e-9);
+  assert.ok(union.minX <= Math.min(...each.map((b) => b.minX)) + 1e-9);
+  assert.ok(each.some((b) => b.maxX < union.maxX - 1e-3),
+    'and it is genuinely WIDER than some frames - a per-frame mapper would rescale those and hide the motion');
 });

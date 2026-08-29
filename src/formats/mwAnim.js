@@ -312,3 +312,288 @@ export function sampleTrack(track, time) {
     scale: sampleGroup(track.scales, 1, time),
   };
 }
+
+// --- the clip law ----------------------------------------------------------
+//
+// MW-D7. Four OpenMW members that had no JS home, ported here beside the
+// text keys they read:
+//
+//   TextKeyMap::emplace          normalise + register groups (rules 44, 45, 21)
+//   Animation::reset             pick the clip's time range      (rules 22, 23, 49)
+//   AnimState::shouldLoop        the loop predicate              (rule 49)
+//   Animation::runAnimation      advance the playhead            (rule 50)
+//
+// WHY THIS IS NOT parseAnimGroups. parseAnimGroups above is the group
+// LISTING - what the viewer's dropdown shows, keyed by the name the file
+// wrote, with a marker map beside it. It is not reset(). It diverges from
+// the rules in ways that matter to a PLAYER and not at all to a listing:
+// it splits on /\r?\n/ where rule 44 splits on the CHARACTER SET [\r\n];
+// it accepts "Sneak:Start" where rule 21 requires colon-plus-one-space; it
+// compares the stop marker exactly where rule 22 truncates; and it takes
+// the last marker in file order where rule 22 walks backwards from the
+// group's LAST key. Re-basing it would move three MWAUDIT pins that
+// deliberately assert its present behaviour, and mixing that into the
+// first slice that animates anything would make a failure ambiguous - the
+// same reasoning assembleFirstPersonArm used to keep rest and clip apart.
+// So: two homes for two different questions, and resetClip takes a KEY
+// ARRAY where parseAnimGroups takes one too but answers with a map - a
+// call site cannot confuse them, because neither accepts the other's
+// output. The divergence is shown on the page, side by side, and booked.
+
+/** RULE 45's fold: a 256-entry ASCII table, A-Z only. NOT
+ *  String.prototype.toLowerCase, which is Unicode-aware and would fold
+ *  U+0130 and U+212A into ASCII - a byte the reference leaves alone. */
+export function asciiLower(s) {
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    out += c >= 65 && c <= 90 ? String.fromCharCode(c + 32) : s[i];
+  }
+  return out;
+}
+
+/** RULE 44, verbatim: split the blob on the CHARACTER SET [\r\n] - not on
+ *  the two-character sequence - trim, ASCII-lowercase, drop empties, and
+ *  keep every survivor AT THE SAME TIME. A CRLF blob yields an empty piece
+ *  between each pair, which is why the drop has to come after the split
+ *  and not instead of it.
+ *
+ *  Duplicate times are legal and load-bearing: "Idle: Stop\r\nIdle2: Start"
+ *  is two keys at one time, and rule 22 reads them in order. */
+export function normalizeTextKeys(textKeys) {
+  const out = [];
+  for (const { time, text } of textKeys ?? []) {
+    for (const piece of String(text ?? '').split(/[\r\n]/)) {
+      const line = asciiLower(piece.trim());
+      if (line) out.push({ time, text: line });
+    }
+  }
+  return out;
+}
+
+/** RULE 21: the group is everything before the FIRST ": " - colon plus
+ *  exactly one space. A key with no ": " registers no group at all; it is
+ *  still a key, it just never names an animation. */
+export function textKeyGroup(text) {
+  const s = String(text ?? '');
+  const at = s.indexOf(': ');
+  return at < 0 ? null : s.slice(0, at);
+}
+
+/** RULE 21's mGroups: the engine's list of available animations, which is
+ *  literally "does some key begin with '<name>: '". Sorted, deduplicated. */
+export function clipGroups(keys) {
+  const set = new Set();
+  for (const k of keys ?? []) {
+    const g = textKeyGroup(k.text);
+    if (g) set.add(g);
+  }
+  return [...set].sort();
+}
+
+/** RULE 22's `equalsParts`: starts_with then ==, i.e. exact equality with
+ *  the parts joined. Kept as its own function because the stop key uses it
+ *  on a TRUNCATED candidate and the start key does not. */
+const equalsParts = (s, ...parts) => s === parts.join('');
+
+/**
+ * ANIMATION::RESET - the clip's time range, and the refusal.
+ *
+ * RULE 22, four steps and one refusal:
+ *  1. `groupend` - walk the time-ordered keys IN REVERSE for the LAST key
+ *     of this group. That reverse scan is the whole point: undeadwolf_2.nif
+ *     carries two separate walkforward blocks and the later one wins.
+ *  2. the start key - backwards from groupend for an EXACT
+ *     "<group>: <start>".
+ *  3. if that missed AND the caller asked for "loop start", retry
+ *     backwards from groupend for "<group>: start".
+ *  4. the stop key - backwards from groupend, comparing only the first
+ *     group.length + 2 + stop.length characters, which is what tolerates
+ *     the Scrib's "Idle3: Stop." with its trailing period.
+ *  REFUSE when either key is missing or start > stop. Do NOT substitute 0,
+ *  the file duration, or the last key: `Animation::play` moves on to the
+ *  next anim source, and a page that guesses instead prints a plausible
+ *  wrong clip with no error. `getStartTime` (rule 46) is the forward,
+ *  any-action search that does exactly that - it is not this.
+ *
+ * RULES 23 + 49, the loop window, in reset's own three stages:
+ *  - loopStartTime := the start key's time, in BOTH branches.
+ *  - loopStopTime  := the stop key's time when `loopFallback`, else
+ *    +Infinity. That default is why a clip with no "loop stop" key plays
+ *    once and stops rather than looping: shouldLoop can never fire.
+ *  - then the playhead moves to start + (stop - start) * startPoint, and
+ *    reset RE-SCANS backwards applying any real "<group>: loop start" /
+ *    "loop stop" key AT OR BEFORE it. This third stage is the half rule 49
+ *    states as unconditional and its own caveat corrects: a resumed clip
+ *    can leave reset with a finite loopStopTime even with loopFallback
+ *    false. Everything later is discovered by CROSSING, in advanceClip.
+ *
+ * @returns {{ok:false, reason:string} | {ok:true, ...ClipState}}
+ */
+export function resetClip(keys, group, opts = {}) {
+  const {
+    loopFallback = false, startPoint = 0,
+    loopCount = Infinity, loopingEnabled = true, start = 'start', stop = 'stop',
+  } = opts;
+  const g = asciiLower(String(group ?? ''));
+  const list = keys ?? [];
+  if (!g) return { ok: false, reason: 'no group name given' };
+
+  let groupend = -1;
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (textKeyGroup(list[i].text) === g) { groupend = i; break; }
+  }
+  if (groupend < 0) return { ok: false, reason: `no key of group "${g}" - the file names no such animation` };
+
+  let startAt = -1;
+  for (let i = groupend; i >= 0; i--) {
+    if (equalsParts(list[i].text, g, ': ', start)) { startAt = i; break; }
+  }
+  if (startAt < 0 && start === 'loop start') {
+    for (let i = groupend; i >= 0; i--) {
+      if (equalsParts(list[i].text, g, ': start')) { startAt = i; break; }
+    }
+  }
+  if (startAt < 0) return { ok: false, reason: `group "${g}" has no "${g}: ${start}" key` };
+
+  // THE TRUNCATED COMPARE. C++ takes a string_view substr, which returns
+  // the whole string when it is shorter than the length asked for; JS
+  // slice does the same, so "idle: sto" stays "idle: sto" and still fails.
+  const checkLength = g.length + 2 + stop.length;
+  let stopAt = -1;
+  for (let i = groupend; i >= 0; i--) {
+    if (equalsParts(list[i].text.slice(0, checkLength), g, ': ', stop)) { stopAt = i; break; }
+  }
+  if (stopAt < 0) return { ok: false, reason: `group "${g}" has no "${g}: ${stop}" key` };
+
+  const startTime = list[startAt].time;
+  const stopTime = list[stopAt].time;
+  if (startTime > stopTime) {
+    return { ok: false, reason: `group "${g}" starts at ${startTime} and stops at ${stopTime}` };
+  }
+
+  const state = {
+    ok: true,
+    group: g,
+    startTime,
+    stopTime,
+    loopStartTime: startTime,
+    loopStopTime: loopFallback ? stopTime : Infinity,
+    time: startTime + (stopTime - startTime) * startPoint,
+    playing: true,
+    loopCount,
+    loopingEnabled,
+    nextKey: 0,
+  };
+
+  // Reset's THIRD stage: loop keys already behind the playhead.
+  for (let i = groupend; i >= 0; i--) {
+    const k = list[i];
+    if (k.time > state.time) continue;
+    if (equalsParts(k.text, g, ': loop start')) state.loopStartTime = k.time;
+    else if (equalsParts(k.text, g, ': loop stop')) state.loopStopTime = k.time;
+  }
+  state.nextKey = lowerBound(list, state.time);
+  return state;
+}
+
+/** The cursor into the key array, and it is `std::multimap::lower_bound`
+ *  verbatim: the first key whose time is AT OR AFTER `time`. Both the
+ *  reset seed and the wrap re-seed use it, so a key sitting exactly on the
+ *  playhead still fires - which is how the "<group>: start" key at the
+ *  clip's own start time reaches the listener on the first advance. */
+function lowerBound(keys, time) {
+  let i = 0;
+  while (i < keys.length && keys[i].time < time) i++;
+  return i;
+}
+
+/** ANIMSTATE::SHOULDLOOP, verbatim. All three terms matter: the +Infinity
+ *  loopStopTime of rule 49's default makes the first one unsatisfiable,
+ *  which is how a clip with no "loop stop" key plays exactly once. */
+export function shouldLoop(state) {
+  return !!state && state.time >= state.loopStopTime
+    && state.loopingEnabled && state.loopCount > 0;
+}
+
+/**
+ * ANIMATION::RUNANIMATION's stepping, rule 50.
+ *
+ * Time advances in TEXT-KEY-SIZED STEPS: the playhead never jumps over a
+ * key, it lands exactly on it, fires it, and continues with the time it
+ * has left. `onKey(text, time)` is called for every key crossed.
+ *
+ * The two halves are NOT an if/else - rule 50's own caveat is that the
+ * second `if (shouldLoop())` runs in the SAME iteration that just set
+ * `playing = false`, re-arming it and rewinding the playhead. A port that
+ * writes `else` there stops a looping clip dead at its stop key.
+ *
+ * The `break` after the rewind is the only guard against a degenerate
+ * window (loopStart >= loopStop) spinning forever, because timepassed
+ * never decreases on that branch.
+ *
+ * KEY FIRING IS SCOPED TO THIS GROUP. The key array is the whole file -
+ * both idle blocks, every other group - where OpenMW's handleTextKey
+ * discards a key whose group is not the playing one (rule 47). Unscoped,
+ * a wrap would report the other groups' keys as if this clip had crossed
+ * them. Only this group's loop keys narrow the window.
+ */
+export function advanceClip(state, keys, dt, onKey = null) {
+  const list = keys ?? [];
+  let timepassed = dt;
+  // ANIMATION::HANDLETEXTKEY, and it is TWO functions, not one.
+  //
+  //   Animation::handleTextKey (animation.cpp:856-873) narrows the loop
+  //     window from a "<playing group>: loop start"/"loop stop" key - THAT
+  //     half is group-checked - and then forwards the key to the listener
+  //     UNCONDITIONALLY.
+  //   CharacterController::handleTextKey (character.cpp:1012-1073) is the
+  //     listener, and it is where rule 47 lives: "sound: " and
+  //     "soundgen: " are handled and RETURN before any group test, so they
+  //     fire for a foreign group too; everything else not beginning with
+  //     "<playing group>: " is dropped with "Not ours, skip it".
+  //
+  // So the listener sees every key crossed and decides. `onKey` is the
+  // listener, and `mine` is the group test it would apply - a caller that
+  // wants rule 47 has what it needs, and one that wants the raw crossing
+  // is not lied to. Collapsing these into one group filter here would hide
+  // that a foreign group's key was crossed at all.
+  const fireTo = () => {
+    while (state.nextKey < list.length && list[state.nextKey].time <= state.time) {
+      const k = list[state.nextKey++];
+      // The loop-window assignment carries the group in its own compare
+      // ("<group>: loop start"), so it needs no separate group guard - one
+      // would be a branch no fixture could ever take. `mine` exists for the
+      // LISTENER's flag, which is a different question with a different
+      // answer for sound keys.
+      if (equalsParts(k.text, state.group, ': loop start')) state.loopStartTime = k.time;
+      else if (equalsParts(k.text, state.group, ': loop stop')) state.loopStopTime = k.time;
+      if (onKey) onKey(k.text, k.time, textKeyGroup(k.text) === state.group);
+    }
+  };
+  while (state.playing) {
+    if (!shouldLoop(state)) {
+      const target = state.time + timepassed;
+      const next = list[state.nextKey];
+      state.time = !next || next.time > target ? Math.min(target, state.stopTime) : next.time;
+      state.playing = state.time < state.stopTime;
+      timepassed = target - state.time;
+      fireTo();
+    }
+    if (shouldLoop(state)) {
+      state.loopCount--;
+      state.time = state.loopStartTime;
+      state.playing = true;
+      // The re-fire is lowerBound(newTime) then "while <= newTime", so it
+      // is the keys sitting exactly ON the loop-start time and nothing
+      // else. Re-firing the whole [startTime, loopStartTime] range would
+      // report the clip's intro keys on every wrap, which is the opposite
+      // of what a loop start means.
+      state.nextKey = lowerBound(list, state.time);
+      fireTo();
+      if (state.time >= state.loopStopTime) break;
+    }
+    if (timepassed <= 0) break;
+  }
+  return state;
+}
