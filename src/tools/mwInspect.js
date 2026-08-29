@@ -394,3 +394,68 @@ export function frontViewMapper(bounds, w, h, pad = 8) {
   const cz = (bounds.minZ + bounds.maxZ) / 2;
   return (x, y, z) => [w / 2 + (x - cx) * scale, h / 2 - (z - cz) * scale];
 }
+
+/** MW-D4: DOES YOUR SKELETON HAVE THE BONES THE RULES NAME?
+ *
+ * Rule 5 records OpenMW's part-to-bone table verbatim - "Right Hand",
+ * "Left Upper Arm", "Weapon Bone" and the rest - read out of
+ * npcanimation.cpp:200-260. Rule 16 records that lookup is CASE-
+ * INSENSITIVE, lowercased on both sides, and that duplicate names resolve
+ * to the first in depth-first order.
+ *
+ * All of that came off source. None of it has been checked against a
+ * skeleton in an actual archive. If a name is wrong, every attach silently
+ * finds nothing and the rig draws an empty view - which is the failure
+ * this whole effort keeps circling. So ask the file.
+ */
+export async function skeletonReport(bytes) {
+  let parseNif; let buildSkeleton;
+  try {
+    ({ parseNif } = await import('../formats/mwNifFile.js'));
+    ({ buildSkeleton } = await import('../formats/mwSkin.js'));
+  } catch (err) {
+    return { ok: false, error: `reader unavailable: ${err.message}` };
+  }
+  let skel;
+  try {
+    skel = buildSkeleton(parseNif(bytes));
+  } catch (err) {
+    return { ok: false, stage: 'parse', error: err.message };
+  }
+  const names = [...skel.nodes.values()].map((n) => n.name).filter(Boolean);
+  return {
+    ok: true,
+    boneCount: skel.nodes.size,
+    names,
+    // Rule 16: lowercased on both sides. The report must use the SAME
+    // comparison the binder will, or it answers a question nobody asked.
+    has: (name) => skel.byName.has(String(name).toLowerCase()),
+  };
+}
+
+/** The bones a first-person arm actually needs, per rule 5, plus the two
+ *  weapon bones rule 17 says are chosen per weapon type. Names are given
+ *  in the engine's own spelling; the lookup lowercases. */
+export const FP_REQUIRED_BONES = Object.freeze([
+  { name: 'Left Hand', why: 'hand, left side' },
+  { name: 'Right Hand', why: 'hand, right side' },
+  { name: 'Left Wrist', why: 'wrist, left side' },
+  { name: 'Right Wrist', why: 'wrist, right side' },
+  { name: 'Left Forearm', why: 'forearm, left side' },
+  { name: 'Right Forearm', why: 'forearm, right side' },
+  { name: 'Left Upper Arm', why: 'upper arm, left side' },
+  { name: 'Right Upper Arm', why: 'upper arm, right side' },
+  { name: 'Weapon Bone', why: 'every weapon type except the bow' },
+  { name: 'Weapon Bone Left', why: 'the BOW, and only the bow (rule 8)' },
+  { name: 'Bip01 Spine1', why: 'blend mask: Torso (rule 9)' },
+  { name: 'Bip01 L Clavicle', why: 'blend mask: LeftArm' },
+  { name: 'Bip01 R Clavicle', why: 'blend mask: RightArm' },
+]);
+
+/** Which of them this skeleton actually carries. A missing bone is
+ *  reported as missing, never worked around - a silent fallback here is
+ *  how an empty view gets called a working one. */
+export function checkRequiredBones(report) {
+  if (!report || !report.ok) return [];
+  return FP_REQUIRED_BONES.map((b) => ({ ...b, present: report.has(b.name) }));
+}
