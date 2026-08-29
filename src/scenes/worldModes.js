@@ -814,6 +814,65 @@ export function createWorldModes(host) {
     standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), false, ...args);
   const standDungeonQuestFlat = (...args) =>
     standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], true, ...args);
+  /** DQ1: a quest stand's activation target, for whichever list the
+   *  host keeps. Extracted at DQ1 because the DUNGEON ray needed the
+   *  same walk and the alternative was a second copy of it - the shape
+   *  of the stand record is identical in both lists by construction
+   *  (standQuestFlatIn builds both). */
+  const questFlatTargets = (list) => {
+    const out = [];
+    list.forEach((s, i) => {
+      if (!s.width || !s.active || s.dead) return;
+      const isPerson = s.behaviour?.targetResource?.isPerson === true;
+      out.push({
+        key: `questflat:${i}`,
+        aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },
+        distance: isPerson ? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,
+      });
+    });
+    return out;
+  };
+  /** DQ1: and the click itself. `buildingKey` is the one thing that
+   *  differs between the hosts - StaticNPC reads it from the runtime
+   *  data (:299-306), and a dungeon has no building, so it is 0 there
+   *  exactly as mapID is 0 in both. */
+  const clickQuestFlat = (s, buildingKey) => {
+    if (!s) return;
+    // PlayerActivate.StaticNPCClick:1521 stamps LastNPCClicked BEFORE
+    // the behaviour click - the quest NPC's StaticNPC peer carries
+    // SetLayoutData(marker position, person) (GameObjectHelper:1062 ->
+    // StaticNPC.cs:245-255): the hash from the SCALED marker ints
+    // truncated, flags/nameSeed from the Person (-1 falls back to the
+    // hash), buildingKey from the runtime data, mapID never written.
+    const person = s.behaviour?.targetResource;
+    if (questBridge && person?.isPerson) {
+      const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
+      // AUDIT 24 (the seven-slice sweep): through the bridge's
+      // SetLayoutData, not a hand-rolled literal. The literal carried
+      // eight of NPCData's thirteen fields - no race (so QuestMCP.Oath's
+      // clicked-NPC arm, the one the main quests lean on before a
+      // questor is set, read undefined every time) and no context.
+      questBridge.machine.setLastNPCClicked(questBridge.layoutNpcData({
+        hash,
+        gender: person.gender,
+        factionID: person.factionId ?? 0,
+        nameSeed: person.nameSeed ?? -1,
+        buildingKey,
+        mapID: 0,
+      }));
+    }
+    // AUDIT 24 (wave 25): PlayerActivate keeps DoClick's bool. The
+    // quest-resource arm (:326-339) calls it and FALLS THROUGH to the
+    // building/door/NPC checks either way, and StaticNPCClick
+    // (:1525-1528) returns only when it answered TRUE. Here the stand
+    // is the only thing under the ray, so there is nothing to fall
+    // through to - recorded rather than silently dropped, because the
+    // value is what says whether any live quest owned the click.
+    const foundInActiveQuest = s.behaviour?.doClick() ?? false;
+    if (!foundInActiveQuest) {
+      console.log('[quest] clicked a stand no active quest claims (DFU would fall through to the world here)');
+    }
+  };
   const questAdapter = {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
@@ -884,9 +943,9 @@ export function createWorldModes(host) {
   // stand as REAL enemies through the context's one build chain (B1's
   // spawnQuestFoe); the async build binds the behaviour host, and
   // addQuestFoe's own start() covers the window before it lands.
-  // FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-  // activation ray (the E-click routes only exit/loot/action keys), so
-  // "clicked npc/item" at a dungeon site does not fire yet - kills do.
+  // DQ1 closed the note that stood here: the dungeon E-ray routes
+  // quest stands now, through the same two helpers the interior arm
+  // uses, so "clicked npc" and "clicked item" fire underground.
   let dungeonFoeStands = [];   // behaviours standFoe accepted, listed before the async build lands
   const dungeonSceneBehaviours = () => {
     const out = dungeonQuestFlats.map((s) => s.behaviour);
@@ -3142,15 +3201,7 @@ export function createWorldModes(host) {
     // the whole activation when the resource is hit beyond 128; the
     // port's picker simply does not select it, so a too-far click
     // falls through to whatever is behind it and says nothing.
-    questFlats.forEach((s, i) => {
-      if (!s.width || !s.active || s.dead) return;
-      const isPerson = s.behaviour?.targetResource?.isPerson === true;
-      targets.push({
-        key: `questflat:${i}`,
-        aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },
-        distance: isPerson ? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,
-      });
-    });
+    targets.push(...questFlatTargets(questFlats));
     const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
     if (key === null) return false;
     if (key.startsWith('ladder:')) {
@@ -3181,46 +3232,7 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('questflat:')) {
-        const s = questFlats[Number(key.split(':')[1])];
-        if (s) {
-          // PlayerActivate.StaticNPCClick:1521 stamps LastNPCClicked
-          // BEFORE the behaviour click - the quest NPC's StaticNPC peer
-          // carries SetLayoutData(marker position, person)
-          // (GameObjectHelper:1062 -> StaticNPC.cs:245-255): the hash
-          // from the SCALED marker ints truncated, flags/nameSeed from
-          // the Person (-1 falls back to the hash), buildingKey from
-          // the runtime data (:299-306), mapID never written (0).
-          const person = s.behaviour?.targetResource;
-          if (questBridge && person?.isPerson) {
-            const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
-            // AUDIT 24 (the seven-slice sweep): through the bridge's
-            // SetLayoutData now, not a hand-rolled literal. The literal
-            // carried eight of NPCData's thirteen fields - no race (so
-            // QuestMCP.Oath's clicked-NPC arm, the one the main quests
-            // lean on before a questor is set, read undefined every
-            // time) and no context.
-            questBridge.machine.setLastNPCClicked(questBridge.layoutNpcData({
-              hash,
-              gender: person.gender,
-              factionID: person.factionId ?? 0,
-              nameSeed: person.nameSeed ?? -1,
-              buildingKey: interiorBuilding?.buildingKey ?? 0,
-              mapID: 0,
-            }));
-          }
-          // AUDIT 24 (wave 25): PlayerActivate keeps DoClick's bool.
-          // The quest-resource arm (:326-339) calls it and FALLS
-          // THROUGH to the building/door/NPC checks either way, and
-          // StaticNPCClick (:1525-1528) returns only when it answered
-          // TRUE. Here the stand is the only thing under the ray, so
-          // there is nothing to fall through to - recorded rather than
-          // silently dropped, because the value is what says whether
-          // any live quest owned the click.
-          const foundInActiveQuest = s.behaviour?.doClick() ?? false;
-          if (!foundInActiveQuest) {
-            console.log('[quest] clicked a stand no active quest claims (DFU would fall through to the world here)');
-          }
-        }
+        clickQuestFlat(questFlats[Number(key.split(':')[1])], interiorBuilding?.buildingKey ?? 0);
         return true;
       }
       if (key.startsWith('droppedLoot:')) {
@@ -3484,12 +3496,26 @@ export function createWorldModes(host) {
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
+    // DQ1: the quest stands. B2 mounted them underground and the ray
+    // never learned them, so `clicked npc` and `clicked item` at a
+    // DUNGEON site could not fire - only kills could. Everything the
+    // interior arm needs was already here: the stand records are the
+    // same shape (one factory builds both lists), and PlayerActivate
+    // has no scene gate on the quest-resource arm at all (:326-339).
+    targets.push(...questFlatTargets(dungeonQuestFlats));
     const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
     if (key === null) return false;
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
     if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {
       dungeonCtx.takeLoot(key);   // opens the inventory with the pile as the remote target
+      return true;
+    }
+    if (key.startsWith('questflat:')) {
+      // DQ1: buildingKey is 0 down here - StaticNPC reads it from the
+      // runtime data and a dungeon has no building, the same reason
+      // mapID is 0 in both hosts.
+      clickQuestFlat(dungeonQuestFlats[Number(key.split(':')[1])], 0);
       return true;
     }
     if (!key.startsWith('exit:')) {
