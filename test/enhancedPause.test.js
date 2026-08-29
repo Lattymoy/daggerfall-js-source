@@ -20,11 +20,14 @@
 // change to the law it names.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { join, dirname, resolve, relative } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 import { openPauseFlow, pauseDoorReady, pauseArtLoaded } from '../src/ui/pauseDoor.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
 
+const root = new URL('../', import.meta.url).pathname.replace(/\/$/, '');
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 // uiSkin reads globalThis.location.search when it is given no string,
@@ -583,4 +586,76 @@ test('PX29: the framed windows are CENTRED, and it is the family that is fixed',
   // ...and the shells really are the ones the two windows mount.
   assert.match(read('src/ui/enhancedSpellbook.js'), /'px-home px-over sb-shell'/);
   assert.match(read('src/ui/enhancedChronicle.js'), /'px-home px-over cr-shell'/);
+});
+
+// ── AUDIT UI 2 (2026-08-27): THE TWO FAULTS THAT KEPT RECURRING ───
+// Mac asked for a comprehensive audit before continuing. The live
+// sweep across three viewports and every enhanced surface came back
+// clean, so the value is in the two STATIC sweeps - because the two
+// faults this arc actually shipped were both invisible to a window's
+// own pins.
+test('AUDIT UI 2: no part is styled for one shell and left bare in another', () => {
+  // The recurring fault: PX23's divider, PX24's head, PX24c's chips
+  // and PX29's stage were each scoped to ONE shell while another
+  // window drew the same class - so each rendered as bare text until
+  // someone looked. Four times.
+  const css = read('src/ui/enhancedStyle.js');
+  const body = css.slice(css.indexOf('export const ENHANCED_CSS = `'));
+  const produces = (f) => new Set([...read(f).matchAll(/'([a-z][\w-]*(?: [a-z][\w-]*)*)'/g)]
+    .flatMap((m) => m[1].split(/\s+/)));
+  const shells = {
+    'sb-shell': produces('src/ui/enhancedSpellbook.js'),
+    'cr-shell': produces('src/ui/enhancedChronicle.js'),
+    'pack-shell': produces('src/ui/enhancedInventory.js'),
+    'px-home': produces('src/ui/enhancedMenu.js'),
+  };
+  const bare = [];
+  for (const m of body.matchAll(/^([^{@\n][^{]*)\{/gm)) {
+    const parts = m[1].trim().split(',').map((s) => s.trim());
+    for (const one of parts) {
+      const hit = /^\.([\w-]+-shell|px-home) \.([\w-]+)$/.exec(one);
+      if (!hit) continue;
+      const [, shell, part] = hit;
+      if (new RegExp(`^\\.${part}[\\s,{:]`, 'm').test(body)) continue;   // a base rule covers everyone
+      for (const [other, set] of Object.entries(shells)) {
+        if (other === shell || !set.has(part)) continue;
+        if (parts.some((q) => q.startsWith(`.${other} `))) continue;
+        if (new RegExp(`\\.${other} \\.${part}\\b`).test(body)) continue;
+        bare.push(`.${other} draws .${part}, styled only for .${shell}`);
+      }
+    }
+  }
+  assert.deepEqual([...new Set(bare)], [],
+    'a part one window styles and another draws unstyled renders as bare text');
+});
+
+test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
+  // PX24's fault, as a law: the chronicle's door and window were built,
+  // pinned and browser-verified, and NOTHING called the door. Every pin
+  // it wrote was about the door's own behaviour and all of them passed.
+  // Reachability has to follow DYNAMIC imports - the doors load their
+  // windows with import() - which is what made the first version of
+  // this sweep report every window as unreachable.
+  const files = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8' })
+    .split('\n').filter((f) => f.endsWith('.js'));
+  const text = Object.fromEntries(files.map((f) => [f, readFileSync(join(root, f), 'utf8')]));
+  const edges = {};
+  for (const f of files) {
+    edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\()\s*['"](\.[^'"]+)['"]/g)]
+      .map((m) => relative(root, resolve(join(root, dirname(f)), m[1])))
+      .filter((p) => text[p] !== undefined))];
+  }
+  // The roots are the hosts AND main.js: the cursor and the crash line
+  // hang off boot, not off a scene, and the first version of this
+  // sweep called them orphans for it.
+  const seen = new Set(['src/main.js', ...files.filter((f) => f.startsWith('src/scenes/'))]);
+  const q = [...seen];
+  while (q.length) for (const n of edges[q.pop()] ?? []) if (!seen.has(n)) { seen.add(n); q.push(n); }
+  const windows = files.filter((f) => /^src\/ui\/(enhanced|pixel|loot)/.test(f)
+    && !/enhancedStyle|enhancedOverlays/.test(f));
+  assert.ok(windows.length >= 8, `${windows.length} enhanced windows found`);
+  assert.deepEqual(windows.filter((w) => !seen.has(w)), [],
+    'a window nothing reaches is a window nobody can open');
+  // ...and no src/ui module at all is orphaned.
+  assert.deepEqual(files.filter((f) => f.startsWith('src/ui/') && !seen.has(f)), []);
 });
