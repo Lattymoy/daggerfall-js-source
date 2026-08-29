@@ -4695,3 +4695,97 @@ void Animation::loadAdditionalAnimations(VFS::Path::NormalizedView model, const 
             addSingleAnimSource(name, baseModel);
 }
 ```
+
+---
+
+# Part V - tier C promotions, verified by hand
+
+MW-R6 (2026-08-29). No fan-out; read solo, because the fan-outs were the
+expense and Mac flagged the budget. Five tier C rules promoted - chosen
+because they are exactly what MW-D, the diagnostic, touches first: open the
+player's BSA, read a NIF header, decode a bone name. TWO OF THE FIVE NEEDED
+CORRECTING, which is the tier C base rate showing up on schedule.
+
+## [VERIFIED] The Morrowind BSA directory is ONE contiguous block, and the hash table is skipped
+
+`components/bsa/bsafile.cpp:77-205`. Layout, exactly:
+
+    12-byte header: 3x uint32 LE - id (MUST be 0x100), dirsize, filenum
+    then 3*filenum uint32, read as ONE block of 12*filenum bytes:
+        offsets[i*2]              -> fileSize
+        offsets[i*2 + 1]          -> data offset, RELATIVE to fileDataOffset
+        offsets[2*filenum + i]    -> name offset into the string buffer
+    string buffer: dirsize - 12*filenum bytes, NUL-terminated names
+    hash table: 8*filenum bytes - READ AND IGNORED ("we currently ignore this")
+    fileDataOffset = 12 + dirsize + 8*filenum
+
+CORRECTION TO THE TIER C FORM, which said "8 bytes*numfiles then 4
+bytes*numfiles". That is the header comment's description of two tables; the
+CODE reads one contiguous run of `3 * filenum` uint32 and indexes into it as
+above. Same bytes, but a port that reads two separate arrays in sequence and
+a port that indexes one array must agree on where the name table starts, and
+only the second form is what runs.
+
+Sanity limits the engine enforces, worth copying: `filenum * 21 > fsize - 12`
+or `dirsize + 8*filenum > fsize - 12` is a corrupt archive; an entry whose
+`fileSize + offset` exceeds the file is corrupt; a name offset at or past the
+string buffer's end is corrupt; a name with no NUL is corrupt.
+
+## [VERIFIED] The NIF header is a PREFIX test on one '\n'-terminated line
+
+`components/nif/niffile.cpp:539-562` with `nifstream.cpp:82-90`.
+`getVersionString()` is `std::getline` - it reads to the first `\n`. The
+result must START WITH either `"NetImmerse File Format"` or `"Gamebryo File
+Format"` (`starts_with`, not equality - the line carries a trailing version
+in practice). Anything else throws `Invalid NIF header`. The BCD version is
+then a raw uint32 immediately after that line.
+
+## [VERIFIED] getSizedString always advances the full length, THEN truncates at NUL
+
+`components/nif/nifstream.cpp:58-72`:
+
+```cpp
+std::string str(length, '\0');
+mStream->read(str.data(), length);
+size_t end = str.find('\0');
+if (end != std::string::npos) str.erase(end);
+if (mEncoder) str = mEncoder->getUtf8(str, ...);
+```
+
+The stream advances by `length` REGARDLESS of where the NUL falls - a port
+that stops reading at the NUL desynchronises the stream and every subsequent
+field is garbage. Truncation is at the FIRST NUL, and the encoder runs after.
+
+## [VERIFIED, and the rule is the THRESHOLD not the conclusion] A NIF `bool` is 4 bytes below version 4.1.0.0
+
+`components/nif/nifstream.cpp:170-177`:
+
+```cpp
+if (getVersion() < generateVersion(4, 1, 0, 0)) data = get<int32_t>() != 0;
+else                                            data = get<int8_t>()  != 0;
+```
+
+Morrowind is 4.0.0.2, so in Morrowind files every `bool` on the wire is int32
+- the tier C claim is correct FOR MORROWIND. But the rule is the version
+threshold, and a port that hardcodes 4 bytes will misparse any 4.1.0.0+ file
+it is ever handed. Record the comparison, not the answer.
+
+(Same shape at `:179-186`: a `std::string` is a sized string below 20.1.0.1
+and a string-table INDEX at or above it. Morrowind takes the sized-string
+arm.)
+
+## [CORRECTED] Windows-1252 is a DEFAULT, not an invariant
+
+`apps/openmw/engine.cpp:373` initialises `mEncoding(ToUTF8::WINDOWS_1252)`,
+and `:1106-1108` is `setEncoding` - it is a configurable setting, fed from
+the user's config, because the localised Morrowind releases ship different
+code pages (Russian win1251, Polish win1250, and so on). The encoder is
+constructed at `:960` and handed to NIFStream, which applies it inside
+getSizedString.
+
+THE TIER C RULE SAID node names "are WINDOWS-1252". They are Windows-1252 in
+the English release, which is what this port targets, and that is what the
+port should implement - but as a NAMED DEFAULT with the reason written down,
+not as a property of the format. A Russian player's Morrowind.bsa would
+decode to mojibake bone names under a hardcoded win1252, and the failure mode
+would be "no bone matched" with nothing pointing at the cause.
