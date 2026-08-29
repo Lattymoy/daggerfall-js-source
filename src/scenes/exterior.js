@@ -103,7 +103,8 @@ import {
 // WM2b: the windmill's law, and the vendored rotor it turns.
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure, like the roads
+import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
+import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -187,20 +188,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // per-pixel pass: pixels from the swapped archive, UVs from the
   // original (verbatim MaterialReader.ChangeClimate; missing-record
   // remaps pruned - 27 corpus pairs, R1 audit).
+  const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
   for (const id of modelIds) {
     const gpu = gpuMeshes.get(id);
     if (!gpu) continue;
-    for (const sm of gpu.subMeshes) {
-      archives.add(sm.textureArchive);
-      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-      if (swapped === sm.textureArchive) continue;
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      if (texRemap.has(key)) continue;
-      const t = await getTexture(swapped);
-      if (sm.textureRecord >= t.recordCount) continue;
-      uploadRecord(swapped, sm.textureRecord);
-      texRemap.set(key, `${swapped}_${sm.textureRecord}`);
-    }
+    for (const sm of gpu.subMeshes) archives.add(sm.textureArchive);
+    await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
   }
   status(`loading ${archives.size} texture archives`);
   await Promise.all([...archives].map((a) => getTexture(a)));
@@ -318,7 +311,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places none,
     // so rmbLayout adds them - the tower is a placement like any other
     // and joins the static list, and only the SAIL needs a matrix per
-    // frame. Enhanced-skin only, the same door the roads take.
+    // frame. Enhanced-skin only - the door the roads used to share,
+    // and since RX removed them whole, the only departure standing here.
     if (millParts) {
       for (const w of b.layout.windmills) {
         const matrix = multiply(originMatrix, w.matrix);

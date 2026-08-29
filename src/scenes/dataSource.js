@@ -432,7 +432,23 @@ export const morrowindDataGeneration = () => _mwGeneration;
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
   const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  if (next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
+  // MW-D9g: `_mwCount` STARTS AT -1, MEANING "NOT COUNTED YET", AND
+  // LEARNING A COUNT IS NOT A CHANGE.
+  //
+  // Without the first term this bumped on every host's first boot, for
+  // every player, even with an empty store: -1 !== 0. And the bump is
+  // load-bearing - weaponRig latches the generation SYNCHRONOUSLY at
+  // construction while shared.js's bootstrap runs this asynchronously
+  // and does not wait, so the rig's latch is always taken BEFORE the
+  // count lands. Its first frame then saw a "change" that was really
+  // just the count arriving and called fpArm.unload(), throwing away an
+  // arm the player had already built. Measured in a browser through the
+  // real rig (tools/mwRigProbe.mjs): built, drawing, then reason
+  // "unloaded" on the first frame after boot.
+  //
+  // The generation means THE STORED SET CHANGED. It cannot mean that
+  // until there is a previous set to compare against.
+  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
   _mwCount = next;
   return _mwCount;
 }

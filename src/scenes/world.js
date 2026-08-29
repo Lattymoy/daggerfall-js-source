@@ -177,6 +177,7 @@ import {
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';   // WM2b: the sails
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
+import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
@@ -395,6 +396,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     assignTiles(generateTileData(samples, px, py), tilemap, true);
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
+    // WM3: this pixel's climate law, bound once - the one argument the
+    // shared remap seam takes that differs between the climate hosts
+    // and the dungeon.
+    const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
     const groundArchive = getGroundArchive(climateBase, season);
     const natureArchive = getNatureArchive(climate.natureArchive, season);
 
@@ -476,16 +481,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (placed.enhancedOnly && !isEnhanced()) continue;
           const gpu = await getGpuMesh(placed.modelIdNum);
           if (!gpu) continue;
-          for (const sm of gpu.subMeshes) {
-            const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-            if (swapped === sm.textureArchive) continue;
-            const key = `${sm.textureArchive}_${sm.textureRecord}`;
-            if (texRemap.has(key)) continue;
-            const t = await getTexture(swapped);
-            if (sm.textureRecord >= t.recordCount) continue;
-            uploadRecord(swapped, sm.textureRecord);
-            texRemap.set(key, `${swapped}_${sm.textureRecord}`);
-          }
+          await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
           const local = multiply(originMatrix, placed.matrix);
           models.push({ gpu, local });
           const cpu = cpuModels.get(placed.modelIdNum);
