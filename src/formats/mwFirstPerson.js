@@ -201,6 +201,178 @@ export function bodyParts(bytes) {
   return out;
 }
 
+/**
+ * MW-D9: THE WEAPON RECORDS.
+ *
+ * ESM::Weapon::Type, read off components/esm3/loadweap.hpp - explicit
+ * values, every one of them, including the four NEGATIVE pseudo-types
+ * that are not items at all. The reverted arc had FOUR weapon classes
+ * where the reference has fourteen, so every one-hander was forced onto
+ * one group; the whole table is here so that cannot recur by omission.
+ */
+export const MW_WEAPON_TYPE = Object.freeze({
+  PickProbe: -4,
+  HandToHand: -3,
+  Spell: -2,
+  None: -1,
+  ShortBladeOneHand: 0,
+  LongBladeOneHand: 1,
+  LongBladeTwoHand: 2,
+  BluntOneHand: 3,
+  BluntTwoClose: 4,
+  BluntTwoWide: 5,
+  SpearTwoWide: 6,
+  AxeOneHand: 7,
+  AxeTwoHand: 8,
+  MarksmanBow: 9,
+  MarksmanCrossbow: 10,
+  MarksmanThrown: 11,
+  Arrow: 12,
+  Bolt: 13,
+});
+
+/** RULE 8's attach-bone column, and RULE 17 is why it is a table rather
+ *  than a constant: for PRT_Weapon the generic "Weapon Bone" from the
+ *  part table is REPLACED by the equipped type's own mAttachBone when the
+ *  actor has that node. The bow is the reason the column exists - it is
+ *  the only weapon that goes on the LEFT - and the reverted arc, having
+ *  no such table, put every weapon on one bone. */
+export const WEAPON_ATTACH_BONE = Object.freeze({
+  [MW_WEAPON_TYPE.MarksmanBow]: 'Weapon Bone Left',
+  [MW_WEAPON_TYPE.Arrow]: 'Bip01 Arrow',
+  [MW_WEAPON_TYPE.Bolt]: 'ArrowBone',
+});
+export const DEFAULT_WEAPON_BONE = 'Weapon Bone';
+
+/** Rules 8 + 17: the bone this weapon type attaches at. The fallback is
+ *  the part table's own entry, exactly as the reference's comment says. */
+export const weaponAttachBone = (type) => WEAPON_ATTACH_BONE[type] ?? DEFAULT_WEAPON_BONE;
+
+/**
+ * The WEAP records in a player's .esm.
+ *
+ * WPDT is a 32-byte struct and its layout is CITED, not guessed
+ * (components/esm3/loadweap.hpp:71): float mWeight; int32 mValue; int16
+ * mType; uint16 mHealth; float mSpeed, mReach; uint16 mEnchant; uchar
+ * mChop[2], mSlash[2], mThrust[2]; int32 mFlags. Only the offset of
+ * mType matters here - byte 10 - and a short record is REFUSED rather
+ * than read past, because a wrong offset silently yields a plausible
+ * weapon type and this arc has already died of plausible.
+ */
+export function weaponRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'WEAP') continue;
+    const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false };
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+      else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+      else if (sub.name === 'ENAM') e.enchanted = true;
+      else if (sub.name === 'WPDT') {
+        if (sub.len < 32) continue;   // refused, not read past
+        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 10, 2).getInt16(0, true);
+      }
+    }
+    if (e.id && e.model) out.push(e);
+  }
+  return out;
+}
+
+/**
+ * THE DIVERGENCE, DECLARED. Daggerfall's weapon taxonomy is NOT
+ * Morrowind's, and this document's own warning is that any mapping
+ * between them is a PORT DECISION which "belongs in the recorded
+ * divergences with its reasoning visible - not inferred inside a lookup
+ * table, where the last attempt hid it wrong twice."
+ *
+ * So it is a table, it is exported, it is pinned, and every row is
+ * arguable. Keyed by the port's own WEAPONS template index, because
+ * Daggerfall's templates are finer than its WEAPON_TYPES: a Claymore and
+ * a Longsword are both LongBlade to the sprite layer, and they are a
+ * two-hander and a one-hander to Morrowind.
+ *
+ * THE ROWS THAT ARE JUDGEMENT, not translation:
+ *   - FLAIL. Morrowind has no flail. BluntOneHand is the nearest thing
+ *     that exists; nothing here is right.
+ *   - STAFF. Daggerfall's staff is a two-handed blunt; Morrowind's own
+ *     staves are BluntTwoWide, so that is where it goes.
+ *   - WAR AXE vs BATTLE AXE. Daggerfall splits them one/two-handed and
+ *     Morrowind's AxeOneHand / AxeTwoHand split the same way, which is
+ *     the cleanest row in the table.
+ *   - DAI-KATANA and CLAYMORE are LongBladeTwoHand, which costs them
+ *     Daggerfall's own one-handed animation - a real behavioural change,
+ *     not just a mesh swap.
+ */
+export const DF_TO_MW_WEAPON = Object.freeze({
+  Dagger: MW_WEAPON_TYPE.ShortBladeOneHand,
+  Tanto: MW_WEAPON_TYPE.ShortBladeOneHand,
+  Shortsword: MW_WEAPON_TYPE.ShortBladeOneHand,
+  Wakazashi: MW_WEAPON_TYPE.ShortBladeOneHand,
+  Broadsword: MW_WEAPON_TYPE.LongBladeOneHand,
+  Saber: MW_WEAPON_TYPE.LongBladeOneHand,
+  Longsword: MW_WEAPON_TYPE.LongBladeOneHand,
+  Katana: MW_WEAPON_TYPE.LongBladeOneHand,
+  Claymore: MW_WEAPON_TYPE.LongBladeTwoHand,
+  Dai_Katana: MW_WEAPON_TYPE.LongBladeTwoHand,
+  Mace: MW_WEAPON_TYPE.BluntOneHand,
+  Flail: MW_WEAPON_TYPE.BluntOneHand,
+  Warhammer: MW_WEAPON_TYPE.BluntTwoClose,
+  Staff: MW_WEAPON_TYPE.BluntTwoWide,
+  War_Axe: MW_WEAPON_TYPE.AxeOneHand,
+  Battle_Axe: MW_WEAPON_TYPE.AxeTwoHand,
+  Short_Bow: MW_WEAPON_TYPE.MarksmanBow,
+  Long_Bow: MW_WEAPON_TYPE.MarksmanBow,
+});
+
+/** Daggerfall's materials against Morrowind's, for picking WHICH record
+ *  of a type to draw. Only the seven Morrowind actually ships are here;
+ *  the rest fall through to whatever the type offers, and the caller
+ *  reports which record it took so a wrong pick is visible rather than
+ *  merely odd. */
+export const DF_TO_MW_MATERIAL = Object.freeze({
+  Iron: 'iron', Steel: 'steel', Silver: 'silver', Elven: 'glass',
+  Dwarven: 'dwarven', Mithril: 'glass', Adamantium: 'ebony',
+  Ebony: 'ebony', Orcish: 'ebony', Daedric: 'daedric',
+});
+
+/**
+ * Pick the WEAP record to put in the hand: the right TYPE first, then
+ * the closest material, then anything of that type. Enchanted records
+ * are avoided because in Morrowind they carry a glow this slice does not
+ * draw, so taking one would show an ordinary mesh under a name that
+ * promises light.
+ *
+ * Answers null rather than substituting a different type - a longsword
+ * standing in for a bow would be drawn on the wrong bone, in the wrong
+ * hand, and nothing on screen would say so.
+ */
+/**
+ * A Daggerfall item to a Morrowind weapon type, through the table above.
+ * Answers None for anything not in it - unarmed, a lockpick, a torch, a
+ * werecreature's claws - and None means NO WEAPON IS DRAWN, which is the
+ * honest answer for an item Morrowind has no weapon for.
+ *
+ * templateIndex is the key, not the sprite layer's WEAPON_TYPES, because
+ * WEAPON_TYPES folds a Claymore and a Longsword into one class and
+ * Morrowind holds them in different numbers of hands.
+ */
+export function dfWeaponToMw(item, weaponsTable) {
+  if (!item || item.werecreatureClaws) return MW_WEAPON_TYPE.None;
+  const idx = item.templateIndex;
+  for (const [name, tmpl] of Object.entries(weaponsTable ?? {})) {
+    if (tmpl === idx && name in DF_TO_MW_WEAPON) return DF_TO_MW_WEAPON[name];
+  }
+  return MW_WEAPON_TYPE.None;
+}
+
+export function pickWeaponRecord(records, type, material = null) {
+  const ofType = (records ?? []).filter((r) => r.type === type && !r.enchanted);
+  if (!ofType.length) return null;
+  const want = material ? DF_TO_MW_MATERIAL[material] : null;
+  return (want && ofType.find((r) => r.id.includes(want))) || ofType[0];
+}
+
 /** The report the reverted arc never printed: for one race, which
  *  first-person arm records actually exist, and what each one would fall
  *  back to. Answers are about the PLAYER'S data, never about ours. */

@@ -18,8 +18,10 @@ each stage is provable on the player's own data before the next begins:
         rest pose, MW-D6 the assembled arm DRAWN - and the defect that
         drawing found (below), MW-D7 an idle CLIP played through that
         assembly.
-  MW-D8 THE ARM IS IN THE GAME. Untextured, weaponless, idling. See
-        below - including the two defects that only DRAWING IT found.
+  MW-D8 THE ARM IS IN THE GAME. Untextured, idling. See below -
+        including the two defects that only DRAWING IT found.
+  MW-D9 AND THE WEAPON IS IN THE HAND. Rule 8's whole attach-bone
+        column, and the Daggerfall->Morrowind mapping DECLARED.
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
@@ -241,12 +243,73 @@ absent on purpose since the revert because no code had the mechanism, is
 RESTORED: the rig polls morrowindDataGeneration() and drops a stale arm,
 so attaching data mid-game is never silently ignored again.
 
+MW-D9: THE WEAPON, AND IT NEEDED NO NEW ATTACH PATH.
+
+A Morrowind weapon is a RIGID part at a bone - rule 12's rigid half, the
+same path armcuff has proved since MW-D6 - so it rides into the assembly
+as one more part with an explicit `bones` override instead of the
+PART_BONES table. Rule 17 IS that override: the generic "Weapon Bone" is
+replaced by the equipped type's own attach bone when the actor has that
+node.
+
+RULE 8's WHOLE COLUMN, not four classes. The reverted arc had four
+weapon classes where the reference has fourteen types, so every
+one-hander was forced onto one group and every weapon onto one bone.
+MW_WEAPON_TYPE carries all eighteen enumerators including the four
+NEGATIVE pseudo-types, read off components/esm3/loadweap.hpp - explicit
+values, every one. WEAPON_ATTACH_BONE carries the three rows that differ
+from the default: MarksmanBow -> "Weapon Bone Left", Arrow -> "Bip01
+Arrow", Bolt -> "ArrowBone". A crossbow is NOT a bow for this purpose,
+which is exactly the row a four-class taxonomy gets wrong by
+construction.
+
+AND THE BOW COMES OUT MIRRORED, which is faithful, surprising, and
+written down here so nobody later "fixes" it. Rule 13's mirror is a
+SUBSTRING TEST on the attach bone's name, and the function it lives in -
+SceneUtil::attach, components/sceneutil/attach.cpp - is the GENERIC
+attach path for every part, not a body-part-only one (checked at source,
+not recalled). "Weapon Bone Left" contains "Left", so the bow is drawn
+with X negated by the very same rule that mirrors the left hand. Nothing
+in this port special-cases it, and the probe pins it: the bow is the
+sword's own mesh with X negated, exactly, to within 1e-3.
+
+WPDT IS CITED, NOT GUESSED. components/esm3/loadweap.hpp:71 - float
+mWeight; int32 mValue; int16 mType; uint16 mHealth; float mSpeed,
+mReach; uint16 mEnchant; uchar mChop[2], mSlash[2], mThrust[2]; int32
+mFlags. mType is therefore at byte 10, and a record shorter than 32
+bytes is REFUSED rather than read past: a wrong type is not a visible
+failure, it is a sword drawn on the bow's bone in the wrong hand looking
+entirely deliberate. That branch is unreachable by any fixture and is
+pinned in node with a hand-built short record.
+
+THE DIVERGENCE IS DECLARED, WHICH THIS DOCUMENT ALREADY DEMANDED. Its
+own words: any mapping from Daggerfall's weapon taxonomy onto the short
+groups "is a PORT DECISION, not a ported rule, and belongs in the
+recorded divergences with its reasoning visible - not inferred inside a
+lookup table where the last attempt hid it twice." So DF_TO_MW_WEAPON is
+exported, pinned row by row, and keyed by the port's own WEAPONS
+TEMPLATE INDEX rather than by the sprite layer's WEAPON_TYPES - which
+folds a Claymore and a Longsword into one class and therefore cannot
+tell a one-hander from a two-hander. The rows that are judgement rather
+than translation: FLAIL (Morrowind has none; BluntOneHand is the nearest
+thing that exists, and nothing here is right), STAFF -> BluntTwoWide,
+and CLAYMORE / DAI-KATANA -> LongBladeTwoHand, which costs them
+Daggerfall's own one-handed animation and is a behavioural change rather
+than a mesh swap.
+
+REFUSALS, because a substitute is worse than an empty hand: a type your
+archives do not carry draws NOTHING and says so on the card; an
+enchanted record is never taken (it carries a glow this slice does not
+draw); a missing attach bone is NAMED; and none of these fail the arms -
+you get the arms, empty-handed, with the reason next to the button.
+
 NEXT, IN ORDER: (1) the texture - rules 36 and 61, which needs a dynamic
-vertex door on the textured program and a DDS upload; (2) rule 54's
-camera bone, now that the build reports whether the data has one, which
-retires the port mapper; (3) the weapon in the hand (rules 8, 17) and
-only then attack clips. Also booked from MW-D7 and NOT done here:
-mwViewer.js:342-348 is still a second home for clip time.
+vertex door on the textured program and a DDS upload, and is now the
+single biggest visible gap; (2) attack clips - rules 10 and 11, whose
+keys are namespaced by the LONG group; (3) rule 54's camera bone, now
+that the build reports whether the data has one, which retires the port
+mapper. Also booked from MW-D7 and NOT done: mwViewer.js:342-348 is
+still a second home for clip time.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

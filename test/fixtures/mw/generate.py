@@ -919,6 +919,55 @@ def make_arm_idle_kf():
     write_nif(HERE / "armidle.kf", [helper])
 
 
+def make_armskel_weapon():
+    # MW-D9: THE SAME ARM CHAIN, PLUS THE WEAPON BONES.
+    #
+    # A SECOND skeleton rather than an edit to armskel.nif, on purpose.
+    # armskel DELIBERATELY omits Weapon Bone, Weapon Bone Left, the spine
+    # and the clavicles, and MW-D4's report asserts that a skeleton
+    # lacking them SAYS so - that half must stay exercised. This one adds
+    # exactly the two the weapon needs, so both halves of rule 8's
+    # attach-bone column are reachable: the bone that is present and the
+    # bone that is not.
+    #
+    # The two bones are at DIFFERENT places (right hand vs left hand) so a
+    # port that puts the bow on Weapon Bone instead of Weapon Bone Left
+    # draws it in the wrong hand and the pixels say so.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    for side, sx in (("Right", 1.0), ("Left", -1.0)):
+        up = _bone(root, f"{side} Upper Arm", (sx, 0.0, 3.0))
+        fore = _bone(up, f"{side} Forearm", (0.0, 0.0, -1.0))
+        hand = _bone(fore, f"{side} Hand", (0.0, 0.0, -1.0))
+        # Rule 8: the generic bone hangs off the RIGHT hand; the bow's own
+        # bone hangs off the LEFT. Rule 17 replaces one with the other at
+        # attach time when the actor has the node.
+        _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left",
+              (0.0, 0.0, -0.5))
+    write_nif(HERE / "armskelw.nif", [root])
+
+
+def make_weaponmesh():
+    # A rigid weapon: ONE unskinned shape, asymmetric in every axis so
+    # that a wrong bone, a wrong mirror and a wrong rotation are three
+    # different pictures rather than one. Deliberately NOT skinned - a
+    # Morrowind weapon is a rigid part attached at a bone (rule 12's
+    # rigid path), which is the path armcuff already proves for the
+    # upper arm and which the weapon reuses rather than inventing.
+    root = NifFormat.NiNode()
+    root.name = b"WeaponRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+    # a blade: long in z, thin in x, thinner in y, and OFF-CENTRE in x so
+    # a lost mirror is visible
+    _tri(root, "Tri Blade",
+         [(0.0, 0.0, 0.0), (0.30, 0.0, 0.0), (0.15, 0.0, 2.0), (0.15, 0.10, 1.0)],
+         tris=((0, 1, 2), (0, 2, 3)))
+    write_nif(HERE / "weapon.nif", [root])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -934,5 +983,7 @@ if __name__ == "__main__":
     make_armcuff()
     make_armnameless()
     make_arm_idle_kf()
+    make_armskel_weapon()
+    make_weaponmesh()
     make_esm()
     make_bsa()

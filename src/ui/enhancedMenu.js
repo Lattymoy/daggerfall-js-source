@@ -88,6 +88,7 @@
 
 import { fpArm } from '../combat/fpArm.js';
 import { mwRaceId } from '../formats/mwNpc.js';
+import { EQUIP_SLOTS } from '../systems/equip.js';
 import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
@@ -892,6 +893,9 @@ function paneEnhanced(body) {
     ['Arms', armState.active
       ? `on - ${armState.pieces} pieces from ${armState.skeletonPath}`
       : armState.reason],
+    ['Weapon', armState.weapon
+      ? `${armState.weapon.name || armState.weapon.id} at ${armState.weapon.bone}`
+      : armState.active ? 'none - empty hands' : '-'],
   ]));
   const armActions = [
     { label: 'Attach data', primary: !count, onClick: async () => {
@@ -915,6 +919,10 @@ function paneEnhanced(body) {
         await fpArm.build({
           race: mwRaceId(playerEntity.race),
           female: !!playerEntity.gender,
+          // MW-D9: whatever is in the right hand right now. The mapping
+          // from Daggerfall's weapon templates onto Morrowind's types is
+          // a DECLARED DIVERGENCE (DF_TO_MW_WEAPON), not a translation.
+          weapon: playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
         });
         render();
       } });
