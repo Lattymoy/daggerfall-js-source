@@ -63,7 +63,8 @@
 // search window (route inside the pair's inflated bounding box, fall
 // back to the whole map on failure). It was written to make the bake
 // tractable and measurement killed it - at full Iliac Bay scale it
-// saved about half a second of a twenty-six second bake, two per cent,
+// saved about half a second of the twenty-six second bake OF THE DAY
+// (RA1 has since taken that bake to seconds), two per cent,
 // while producing a six and a half per cent DIFFERENT network, because
 // a box the optimal path leaves does not fail: it quietly returns the
 // best path INSIDE the box and the fallback never fires. It was an

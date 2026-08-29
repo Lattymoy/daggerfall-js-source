@@ -1129,3 +1129,285 @@ One pin went red on the way: DE1's own, an hour old, anchored on the
 `if (_yaw !== null) cam.yaw = _yaw;` one-liner that became a block. Its
 law - the host asks for the facing of the member it *is*, and applies
 it - was untouched. Re-anchored, per F041.
+
+## WM1 - THE WINDMILL'S TURN: the law, and the half that needs ARENA2 (2026-08-29)
+
+Mac handed over `WindMills.rar` - "Windmills of Daggerfall" (Kamer,
+DFU mod, v2.0) - on the roads' own precedent: *instead of taking their
+mod, I want us to develop our own and better*. This is the first half
+of doing that.
+
+### What the mod is, and what of it we may have
+
+The mod is three C# scripts, a set of `.dae` models with their `.PNG`
+textures, DFU prefabs for model ids 41600/41601, and WorldData `.RMB`
+JSON overrides for seven FARMAA blocks. The behaviour is two lines:
+`Spin_Up.Update` turns the blade assembly at `-13 * Time.deltaTime`
+about local Z, `SpinTime_Roller.Update` turns a roller about local X at
+the same rate, and `Start` loops a sound on it.
+
+**None of the assets can come here, and not only because they are
+someone else's work.** The textures are Daggerfall's own art exported
+to PNG, and the doctrine's second non-negotiable is explicit that a
+render of game data IS game data - `.gitignore` can block `ARENA2/`,
+it cannot recognise a PNG of the same art, which is why that rule is
+enforced by a test. So the models and textures were never candidates.
+
+What we take is a READING of the data, credited in the module header:
+the rotor turns about the model's local Z, and it turns at 13 degrees a
+second.
+
+### The 13 is the anchor; the rest is the wind
+
+13 deg/s is the number a Daggerfall player's eye already knows, so it
+is the one thing in `src/world/windmills.js` that is not invented. It
+is also the whole of the mod's motion: the blades turn at 13 in a
+thunderstorm and at 13 in a dead calm, because nothing is driving them.
+
+Ours are driven, and by something the port already had. ES1c gave the
+enhanced sky a per-weather wind vector and, because nothing about a sky
+changes in a frame, an EASED one - the controller keeps a row and walks
+it toward the row the sim asks for over `WEATHER_EASE_SECONDS`. That
+row is the port's only answer to "how hard is it blowing right now", so
+this module imports `WEATHER_SKY` and takes the eased row itself rather
+than restating a number of it.
+
+The property that buys is worth stating plainly: **the blades and the
+clouds are driven by the same number.** A storm rolls in, the sky's
+deck picks up over fourteen seconds, and the mill in the field below
+picks up on the same curve - not synchronised, the same value.
+
+And the anchor survives it, because `ROTOR_GAIN` is DERIVED rather than
+written down:
+
+    ROTOR_GAIN = 13 / (|WEATHER_SKY.sunny.wind| - STALL_WIND)
+
+so fair weather turns at exactly 13, and the day someone re-tunes the
+sunny row - ES1's rows have been re-tuned once already - a written-down
+gain would have quietly stopped meaning the only thing it is for. The
+pin reads the shipped row through the whole chain: re-tune the sky and
+it still passes, break the derivation and it fails.
+
+Two skin constants, stated as skin because classic has no turning mill
+to be faithful to. `STALL_WIND` is the floor the rate is measured from
+rather than scaled from zero; **no shipped sky row sits below it** -
+fog is the calmest at |wind| 0.0063 and crawls at about three degrees a
+second, which is the intent - and it would stop a becalmed row dead if
+one is ever tuned. `FURL_DEG_PER_SEC` is the miller furling in a gale:
+without it, thunder drives the blades to a blur that reads as a bug.
+Rain and thunder both furl, and the pins say so rather than pretending
+the top of the range is distinguishable.
+
+### The one law this module exists to get right
+
+**The angle is integrated, not computed.** `angle = rate * elapsed` is
+the obvious spelling and it is wrong the moment the rate changes: the
+whole history gets re-priced at the new rate, so a mill that has been
+turning for eight minutes jumps through a third of a revolution the
+instant the weather does. Blades that teleport when it starts raining
+are the one artefact this module could plausibly have shipped.
+
+The pin eases sunny to rain frame by frame and asserts no frame moves
+the blades further than one frame's turn - and then asserts the
+CONTRAST still bites. That second half earned itself: the fixture first
+settled for 600 seconds, where the naive spelling lands on the *same
+angle* for both rates (13 and 40 differ by 27, and 27 x 600 is exactly
+45 full turns), so it could not tell the two spellings apart and proved
+nothing about the one it guards. 500 seconds now, with the coincidence
+written into the test.
+
+### What is NOT built, and why it is flagged rather than guessed
+
+The mesh half. **Which** models carry a rotor and **where** its hub
+sits are questions about `ARCH3D.BSA`, and this container has no
+ARENA2 - the 198 corpus-gated tests skip. `WINDMILL_MODELS` therefore
+carries what Kamer's mod replaces (41600, 41601, and the watermill
+21411 from `LoadWindmill.cs`) marked FLAGGED on Home.md's board, and
+the module makes no claim at all about model 41600's geometry. A model
+id spinning something that should stand still is a visible bug, so the
+wiring slice confirms each against the real mesh first.
+
+**The instrument for answering it shipped with this slice.**
+`tools/windmillProbe.mjs`, run against a real ARENA2, prints each
+model's submeshes and its CONNECTED COMPONENTS - because there are two
+ways the split WM2 needs may already have been made by the art itself: a
+sail with its own texture record is one submesh, and a sail that shares
+no vertex with the tower is its own island. It also draws every
+component in its own colour from three sides, on this project's own
+rule that a claim about a picture is not settled by an assertion. It was
+written in the container that has no ARENA2, so it carries a
+`--selftest` that builds a synthetic windmill - a closed tower box and a
+sail slab standing clear of it - and asserts the analysis finds exactly
+two parts, isolates the sail, calls it flattest in the axis it turns
+about, and does NOT report a welded mesh as separable. That self-test
+failed on its first run, on its own fixture: the boxes were two facing
+quads sharing no corner, so every box was already two islands.
+
+That leaves the wiring itself for WM2, and it is not small: the layout
+hands the hosts one matrix per model (`rmbLayout.layoutRmbBlock`), so a
+turning model needs its rotor geometry separated from its tower and its
+matrix re-issued per frame - and it needs THE FOUR HOSTS RULE applied,
+each of `scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js`
+and `scenes/dungeonContext.js` either wired or flagged by name. R5's
+crash to main is the standing warning here: it wired a paint into
+`buildPixel`, lint passed, the build passed, 4,283 tests passed, and
+the world host was dead on its first terrain load, because nothing in
+the suite drives that path - it wants GL and ARENA2. Nothing in WM1 is
+wired into a host, and nothing in it can be reached by one yet.
+
+### WM2a: the permission, and the mesh question answered from the other side (2026-08-29)
+
+WM1's flag was wrong about what would answer it. It assumed the only
+route to a rotor was reading model 41600's geometry out of a real
+ARCH3D.BSA and splitting the sail from the tower ourselves - so the
+probe above was built to make that possible.
+
+The actual answer was that **Kamer had given permission**, confirmed by
+Mac, and WM1 had been treating the mod as reference-only on the roads'
+precedent. That precedent was about not lifting someone's work
+uninvited; an invitation settles it, and holding the line after one has
+been given is not doctrine, it is obstinacy. The record kept saying
+"nothing of the mod is vendored" after it stopped being true, which is
+the same doc-truth defect RF1 had just been filed for two commits
+earlier - corrected in the module header, the Ledger row and here.
+
+So WM2a vendors **the rotor geometry, and only that**:
+`vendor/windmills-kamer/Blade.dae` - node `Blades`, geometry
+`model41600_001-mesh`, 26 triangles - baked by
+`scripts/bakeWindmill.mjs` into `src/world/windmillMesh.js` in
+`meshReader`'s own `{positions, normals, uvs, indices, subMeshes}`
+shape, so the sail draws through the same path as every other model.
+
+**It settles WM1's flag for 41600 from the other side.** The sail's own
+geometry is named for the model it was built for, so the id is the
+author's rather than our inference, and the SPLIT the wiring needs was
+made by the art - no geometric heuristic required at all. 41601 and the
+watermill 21411 are still flagged: no vendored geometry names them.
+
+Three things the geometry confirmed rather than assumed. The sail is
+flat in **Z**, which is the axis WM1's law already turned about, taken
+from `Spin_Up.cs` before any mesh existed - the two agree, and a pin now
+fails if they ever stop. The hub **is the origin** (the sail is centred
+within a tenth of its own half-width on every axis), so `rotorMatrix`'s
+conjugation needs no offset a caller has to know. And the coordinates
+are already the port's: Blender writes `up_axis Z_UP` and bakes the
+object transform into the node matrix, and that matrix composed with the
+standard Z-up-to-Y-up conversion is the identity - so the bake applies
+NO transform, and ASSERTS the node matrix to earn that, because a
+re-export rotated differently would otherwise bake a ceiling fan.
+
+**His `.PNG` textures did not come across, and that is not about him.**
+They are Daggerfall's art exported to PNG; "a render of game data IS
+game data" is Bethesda's to waive, not a modder's. They are also
+unnecessary - the mesh names the classic textures it wants (`TEXTURE.000`
+record 77, `TEXTURE.067` record 1) and the port loads those from the
+player's own ARENA2 exactly as it does for every other model. A pin
+watches that door, and `Roller.dae` was vendored for one commit and
+removed: it is interior machinery, its three materials carry no texture
+at all, and the strict reader rejected it outright rather than baking a
+mesh with nothing to sample.
+
+8 pins in `test/windmillmesh.test.js`; 7 mutants, 7 killed - including
+the two that are not source edits, a dropped submesh and a Daggerfall
+texture export appearing in `vendor/`.
+
+**Still not wired.** WM2b owns the per-frame matrix and THE FOUR HOSTS
+RULE. One thing only the probe (or a run) can still answer: whether
+classic model 41600 already carries static sails of its own, which would
+need hiding rather than doubling.
+
+### WM2b: the sails turn - wired into both exterior hosts (2026-08-29)
+
+The rotor draws. `src/scenes/exterior.js` and `src/scenes/world.js` each
+select placed mills by model id as they build their model lists, upload
+the vendored rotor ONCE per scene through the pipeline's new
+`getRotorMesh()`, and draw it per frame at `mountRotor(matrix,
+ROTOR_HUB, angle)` with the angle advanced by `advanceRotor` on the
+sky's own eased wind.
+
+**THE FOUR HOSTS RULE (17e), all four named.**
+
+- `scenes/exterior.js` - **WIRED**. One draw list built at load, so the
+  rotor rides a separate `windmills` list: its matrix changes every
+  frame and a list built once cannot carry it.
+- `scenes/world.js` - **WIRED**, per streamed pixel. The rotor is
+  uploaded on the first mill that streams in and held for the session.
+- `scenes/worldModes.js` (interiors) - **FLAGGED, deliberately not
+  wired.** Mills are exterior scenery; an interior is an RMB building's
+  inside and never places model 41600.
+- `scenes/dungeonContext.js` - **FLAGGED, deliberately not wired**, for
+  the same reason.
+
+The last two are not left to prose: a pin asserts neither host mentions
+`WINDMILL_MODELS` or any mill model id, so if that ever stops being true
+the record has to be updated rather than quietly outlived - the failure
+this arc has now filed twice.
+
+### The transform defect this slice found in WM1
+
+WM1's `rotorMatrix` CONJUGATES about the hub (`T(hub) R T(-hub)`), which
+is correct for a sail already sitting at the hub inside a model - a
+rotor split out of a classic mesh in place, which is what WM1 imagined
+it would get. The vendored rotor is not that: it is modelled **centred
+on its own origin**, with its placement supplied separately.
+
+Conjugating origin-centred geometry does not spin it. It ORBITS it
+around the hub at the hub's own radius - the sail would swing about the
+mill like a gondola, and on screen that reads as a bug in the wind law
+rather than in the transform. So WM2b adds `mountRotor` (`model * T(hub)
+* R` - carry the sail out to the hub, then spin it about its own centre
+there), the hosts use it, and a pin holds the two apart by measuring the
+thing that distinguishes them: under `mountRotor` the sail's centre is
+the fixed point, under `rotorMatrix` it travels. `rotorMatrix` stays,
+because the in-place case is still live for 41601 and the watermill.
+
+### Where the hub came from
+
+`ROTOR_HUB = [3.96, 6.01, -5.5]`, and it is sourced rather than guessed:
+Kamer's prefab REPLACES model 41600, so its root is that model's origin,
+and its Blades child sits at exactly that local position with an
+identity rotation (`Models/Finished/41600.prefab`). The import applies
+no scale (`globalScale: 1`, `useFileScale: 1`), so it is in the port's
+world units already. Against his own tower body it puts the hub just
+past the +X face, high up - his body tops out at y 10.84 - and forward
+in Z.
+
+**The residual risk is the classic tower, not the number.** The offset
+is exact in HIS body's frame and lands correctly on classic 41600 only
+insofar as he built his replacement to match it. A sail floating beside
+a mill instead of mounted on it is what that looks like, and nobody in
+a container without ARENA2 can answer it. It is a one-look question,
+and it is the last one outstanding.
+
+### What is still not settled
+
+- **Nobody has seen this.** No GL and no ARENA2 here, so every pin above
+  is a source sweep. The sail's placement, its scale against the classic
+  tower, whether classic 41600 already carries static sails that would
+  need hiding, and whether the UVs (which run past 1 and so want REPEAT
+  wrapping) sample correctly - all of it wants one run.
+- **No climate swap on the rotor.** Every other model's submeshes go
+  through `applyClimate`; the rotor's do not, so a snowbound mill has
+  summer sails. The mod ships climate variants and this port has the
+  swap table already - a small slice, deliberately not smuggled into
+  this one.
+- **Sound.** Kamer loops a clip on the mill; the port does not.
+
+Pins: 7 in `test/windmillwiring.test.js`, source sweeps for R5's reason -
+it wired a paint into `buildPixel`, lint passed, the build passed, 4,283
+tests passed, and the world host was dead on its first terrain load,
+because nothing in the suite drives that path.
+
+### The slice ids were renamed
+
+W1/W2 became **WM1/WM2**: `W1` was already taken, 53 times, by the
+travel-map and live-weather slice - including `systems/weatherSim.js`'s
+own header. A slice id is a grep handle in this repo, and two meanings
+for one handle makes both useless.
+
+Pins: 15 in `test/windmills.test.js` (12 at WM1, 3 more at WM2b for the
+mount-versus-conjugate defect). Campaign: 15 mutants, 14 killed,
+and the survivor recorded rather than papered over - `over <= 0`
+weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
+fall-through computes `0 * gain = 0`, which is the answer the guard
+returns.
