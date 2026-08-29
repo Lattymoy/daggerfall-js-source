@@ -122,7 +122,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills } from './shared.js';   // TP1: PlayerEntity.RaiseSkills
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -1995,6 +1995,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       });
       if (clamp > 0) playerTicker.advance(clamp);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
+      // TP1 - performFastTravel's tail (:380): RaiseSkills fires AFTER
+      // the arrival clamp, so a trip that lands at 7:10am raises
+      // against the arrival minute rather than the departure one. It
+      // is the same one home the rest window's close calls, because
+      // DFU calls the same PlayerEntity.RaiseSkills at both.
+      raisePlayerSkills(playerEntity, {
+        say: (m) => townTalk.say(m),
+        onLevelUp: () => townTalk.showOverlay(new LevelUpScreen(playerEntity)),
+      });
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -2304,6 +2313,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       roadNetwork: () => roadNetwork,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      // TP1: the popup's GuildManager.FastTravel fold reads the
+      // player's guild memberships off the entity.
+      playerEntity: () => playerEntity,
       // GetGoldAmount is coins PLUS letters of credit; the popup's
       // second test and its label want the coins alone.
       gold: () => totalGoldAmount(playerEntity),
