@@ -15,6 +15,7 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
+import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -229,21 +230,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const ensureRemap = async (id) => {
     // NEVER TRAPS: cpuModels is written only on getGpuMesh's SUCCESS
     // path, so a model id this ARCH3D lacks arrives here as undefined.
-    // `?? []` guards the VALUE and not the RECEIVER - this was safe at
+    // The seam guards that VALUE and not the receiver - this was safe at
     // its placement call site only because `if (!gpu) continue` runs
     // one line before it, and the action-door arm below had no such
     // guard, so a missing door model threw here at LOAD.
-    const cpu = cpuModels.get(id);
-    for (const sm of cpu?.subMeshes ?? []) {
-      const swapped = remap(sm.textureArchive);
-      if (swapped === sm.textureArchive) continue;
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      if (texRemap.has(key)) continue;
-      const t = await getTexture(swapped);
-      if (sm.textureRecord >= t.recordCount) continue;
-      uploadRecord(swapped, sm.textureRecord);
-      texRemap.set(key, `${swapped}_${sm.textureRecord}`);
-    }
+    //
+    // The dungeon's law is its own RDB texture table, keyed on the
+    // archive alone; everything below it is the same law the climate
+    // hosts run (WM3 gave the four copies one home).
+    await remapSubMeshes(cpuModels.get(id)?.subMeshes, texRemap, (archive) => remap(archive), deps);
   };
 
   // One registration path for acting FLATS (audit 2026-08-16: flat and

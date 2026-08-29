@@ -90,15 +90,5 @@ Z-up-to-Y-up conversion is the IDENTITY. The bake ASSERTS the node
 matrix it expects, so a re-export rotated differently fails here instead
 of turning the sails into a ceiling fan.
 
-## Coordinates
-
-The mesh data is used AS EXPORTED. Blender writes `up_axis Z_UP` and
-bakes the object transform into the node matrix, and that matrix
-(`x, y, z -> x, -z, y`) composed with the standard Z-up-to-Y-up
-conversion is the IDENTITY - so these coordinates are already in the
-port's Y-up world units, and `scripts/bakeWindmill.mjs` applies no
-transform at all. Verified numerically by the bake, which fails if the
-sail is not flat in exactly one axis.
-
 Provenance: `WindMills.rar`, supplied by Mac 2026-08-29. Author contact
 per the mod manifest: DFU Discord.

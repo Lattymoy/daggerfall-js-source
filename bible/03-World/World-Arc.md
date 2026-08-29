@@ -1453,7 +1453,8 @@ So the port places its own. Three parts:
 
 Both hosts now draw the TOWER into their static list (with a collider,
 so you cannot walk through it) and the SAIL per frame. Enhanced skin
-only, the same door the roads take - the 1:1 lane sees Daggerfall's own
+only - the door the roads used to share, until RX removed them whole
+(see below); the 1:1 lane sees Daggerfall's own
 farms, unchanged.
 
 `WINDMILL_MODELS` is **retired**, table and flag together. It answered
@@ -1472,11 +1473,6 @@ looking at it.
   tower, whether classic 41600 already carries static sails that would
   need hiding, and whether the UVs (which run past 1 and so want REPEAT
   wrapping) sample correctly - all of it wants one run.
-- **No climate swap on the rotor.** Every other model's submeshes go
-  through `applyClimate`; the rotor's do not, so a snowbound mill has
-  summer sails. The mod ships climate variants and this port has the
-  swap table already - a small slice, deliberately not smuggled into
-  this one.
 - **Sound.** Kamer loops a clip on the mill; the port does not.
 
 Pins: 7 in `test/windmillwiring.test.js`, source sweeps for R5's reason -
@@ -1637,3 +1633,99 @@ the same law through one fewer door.
 `tools/enhancedMenuProbe.mjs` drove the pane through the roads switch -
 re-aimed at the sky, because what it tests is the pane's switch
 machinery and not which enhancement is sitting in it.
+
+## WM3 - THE ONE REMAP SEAM, and a slice overtaken mid-flight (2026-08-29)
+
+**WM3 set out to do what WM2e had already done better, and this is the
+record of both halves - the one that shipped and the one that was
+dropped.**
+
+WM2d left "no climate swap on the ROTOR ... so a snowbound mill has
+summer sails" on its open list. WM3 took it, and found first that the
+sentence named the wrong part: the rotor's two pairs are TEXTURE.000
+record 77 and TEXTURE.067 record 1, and neither archive classifies - 0
+and 67 are in no exterior, interior or nature set - so
+`ClimateSwaps.ApplyClimate` returns them unchanged in all four climate
+bases and all three seasons. **The sails were never going to swap.**
+What wore summer in the snow is the TOWER: walls `364_2`
+(Exterior_Village) and roof `369_3` (Exterior_Roofs).
+
+WM3's answer was to run the mill's submeshes through the location's
+climate table like any other model. **WM2e, in a parallel lane, reached
+the better one** and landed first: skin the mill from Kamer's own
+seventeen variant prefabs, uploading its mesh per climate rather than
+keying the scene-wide table.
+
+### Why the dropped half was wrong, stated so it stays dropped
+
+Two reasons, and the pins hold both.
+
+- **His roofs are not ApplyClimate's.** The walls agree exactly - his
+  wall ARCHIVE is the climate law's in every base and both seasons, only
+  the record differs, which the law never touches. The roofs part
+  company: he keeps the temperate `369` in mountain and swamp where the
+  law rebases to `169` and `469`, and every winter roof is his one snow
+  roof `103_1`, an archive ApplyClimate would never produce anywhere. A
+  generic swap would have put the wrong roof on half the mills.
+- **The scene table is scene-wide.** It is keyed `archive_record` over
+  the whole location, and the mill's walls are `364_2` - a key its
+  neighbours carry. WM2e says this outright; in WM3's case the entry
+  would have been the same one the neighbours' own pass produces, so it
+  was dead weight rather than corruption, but the rule is the rule and
+  the near-miss is worth a pin.
+
+The two agree on one thing from opposite directions, and that is worth
+keeping: **the desert mill never winters.** ApplyClimate clears
+`supportsWinter` for the whole desert base; Kamer ships no winter desert
+prefab. Neither knows about the other.
+
+### What DID ship: the loop had four copies, and this would have been the fifth
+
+`exterior.js`, `world.js`, `interiorContext.js` and `dungeonContext.js`
+each carried the same eleven lines: ask the law for a swapped archive,
+skip if unchanged, skip if already keyed, load the archive, PRUNE the
+pair if the swapped archive is short of the record (the R1 audit's 27
+corpus pairs - uploading past the end draws garbage), upload, key the
+table. Only the LAW differs: the three climate hosts pass
+`ApplyClimate` bound to a climate and season, the dungeon passes its RDB
+texture table.
+
+ONE DFU MEMBER, ONE EXPORT (17e). The loop now lives once, in
+`src/world/texRemap.js`, and takes the law as an argument. All four
+hosts call it; **none of them writes `texRemap` itself**, and a pin holds
+that - the tell of a re-grown copy is the write, not the read.
+
+THE FOUR HOSTS RULE (17e), named in full: no mill is wired by this slice
+at all - WM2e owns the mill's skin - but the SEAM is all four hosts'.
+`exterior.js` **seam**, `world.js` **seam**, `worldModes.js` **not
+touched and correctly so** (it is the interior/dungeon host; its
+contexts are the two below), `interiorContext.js` **seam**,
+`dungeonContext.js` **seam** (same loop, the RDB table as its law).
+
+One existing pin moved with the code rather than being deleted:
+`crashreport.test.js` held the receiver-vs-value guard that killed the
+"press E and nothing happens, for ever" interior bug, as a literal
+`for (const sm of cpu?.subMeshes ?? [])` in two hosts. That law now lives
+in two halves - the call site guards the RECEIVER with `?.subMeshes`, the
+seam guards the VALUE - and both halves are pinned, because either one
+alone resurrects the TypeError.
+
+### The lesson, which is not "check for parallel work"
+
+WM3's pins were all green before WM2e landed. They were green because
+they tested the thing WM3 built - that the mill goes through the climate
+table - and never asked whether the climate table is what the mill
+should go through. That is the AUDIT 17e shape again: **a pin that holds
+the implementation cannot tell you the design was wrong.** The pin that
+would have caught it is the one that shipped instead - the two laws
+compared against each other, where they agree and where they part.
+
+Pins: 5 in `test/windmillclimate.test.js`. The law half is kept as
+INDEPENDENT EVIDENCE for WM2e rather than as WM3's own claim: WM2e says
+the sail is 067_1 in every one of the seventeen prefabs, and these pins
+say ApplyClimate would not have moved it either, computed from the
+shipped classifier over the whole cross product. Two sources, one
+answer.
+
+Still open on the mill, unchanged: **sound** - Kamer loops a clip on it,
+the port does not.
