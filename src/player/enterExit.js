@@ -108,6 +108,29 @@ export function interiorLanding(exteriorDoorPos, enterMarkers, interiorDoors) {
 }
 
 /**
+ * Verbatim DaggerfallStaticDoors.FindClosestDoorToPlayer (:249-277):
+ * the door whose WORLD centre is nearest the given position. DFU's
+ * dungeon walk-in uses it to orient the player away from the door they
+ * just came through, which is the only thing that makes an entrance
+ * read as an entrance.
+ *
+ * The DFU signature returns a bool and writes two out-params; here a
+ * miss is null, which is the same information.
+ *
+ * @returns {{pos:[x,y,z], normal:[x,y,z], index:number}|null}
+ */
+export function closestDoorTo(pos, doors) {
+  let best = null;
+  let minDistance = Infinity;
+  (doors ?? []).forEach((door, i) => {
+    const c = doorWorldPosition(door);
+    const d = Math.hypot(c[0] - pos[0], c[1] - pos[1], c[2] - pos[2]);
+    if (d < minDistance) { minDistance = d; best = { pos: c, normal: doorWorldNormal(door), index: i }; }
+  });
+  return best;
+}
+
+/**
  * Verbatim PositionPlayerToDungeonExit: the LOWEST dungeon-entrance
  * door + normal * (radius + 0.1); the caller faces the normal.
  * @returns {{pos:[x,y,z], normal:[x,y,z]}|null}
