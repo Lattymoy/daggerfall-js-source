@@ -2471,7 +2471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the reference's four; every door below exists on this ctx, so
     // no arm is dead.
     toggleDial: () => openPixelDial([
-      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.openSheetPage() },
       { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
       // PX18: MAP on the dial is THE WORLD MAP (U61's overworld) -
       // Skyrim's own reading of the word; the local automap keeps its
@@ -2485,9 +2485,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // until now - rest existed only in the dungeon host - so neither
     // this ladder nor the large HUD's rest panel had anything to open.
     toggleRest: () => toggleRest(),
-    togglePause: () => {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage: () => hudCtx.togglePause({ at: 'stats' }),
+    togglePause: (opts = {}) => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
         openPack: () => townTalk.showOverlay(makeInventoryWindow()),
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },

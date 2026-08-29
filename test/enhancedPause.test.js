@@ -167,7 +167,9 @@ test('U51: the pause door mounts the FRONT DOOR, not a second design', () => {
   const src = read('src/ui/pauseDoor.js');
   assert.match(src, /import\('\.\/enhancedMenu\.js'\)/,
     'the pause screen IS ui/enhancedMenu.js');
-  assert.match(src, /mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act \}\)/,
+  // PX26 added the LANDING to this call; the law U51 guards is
+  // unchanged - pause mode, the host's own hooks, one front door.
+  assert.match(src, /mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null \}\)/,
     'mounted in pause mode with the host’s own hooks');
   // and it carries no design of its own, exactly as menu.html carries
   // none - the tokens and the layout live in ui/enhancedStyle.js
@@ -459,4 +461,54 @@ test('PX25: every host hands the pause window the arms it already had', () => {
       assert.ok(!call.includes('openChronicle:'), `${host} has no journal maker and honestly passes none`);
     }
   }
+});
+
+// ── PX26: THE DIAL'S NORTH, AND THE SHEET THAT SAT LEFT ───────────
+// Mac, two reports that are one window: "the north option should be
+// the new journal we developed" and "the skill ui opens on the
+// lefthand side of the screen when it should be center". North was
+// the F5 overlay - the last pre-PX surface, and the one whose
+// three-column grid fills the viewport from the left edge.
+test('PX26: the pause window lands on the page the door was pressed for', () => {
+  const menu = read('src/ui/enhancedMenu.js');
+  assert.match(menu, /^  at = null,$/m);
+  // The landing is applied AFTER the reset, which is what keeps the
+  // reset the default rather than something this works around.
+  const mount = menu.slice(menu.indexOf('export function mountEnhancedMenu'));
+  assert.ok(mount.indexOf("pauseTab = 'system';") < mount.indexOf("includes(at)) pauseTab = at;"),
+    'the reset runs first, then the landing');
+  // The tabbed window IS the pause home face, so a landing sets the
+  // TAB and leaves the section alone.
+  assert.match(menu, /if \(\['quests', 'stats', 'system'\]\.includes\(at\)\) pauseTab = at;/);
+  assert.doesNotMatch(mount.slice(0, mount.indexOf('render()')), /section = 'journal'/);
+  const door = read('src/ui/pauseDoor.js');
+  assert.match(door, /at: hooks\.at \?\? null/);
+  assert.match(door, /The CLASSIC flow takes the same hooks\n \* and ignores it/, 'the classic pause has no tabs to land on');
+});
+
+test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
+  // The pin that would have caught the first attempt. A scripted edit
+  // landed openSheetPage on one host and silently skipped three,
+  // leaving `openSheetPage?.()` optional-chaining into undefined - a
+  // dial whose north did NOTHING in three of four hosts, which is
+  // worse than one pointing at the wrong window. That branch was
+  // thrown away; this pin is why it cannot happen quietly again.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js',
+    'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
+    const s = read(host);
+    assert.match(s, /\{ id: 'skills', label: 'Skills', dir: 'n', open: \(\) => [\w.]*openSheetPage\(\) \}/,
+      `${host}: north asks for the sheet page`);
+    assert.doesNotMatch(s, /dir: 'n', open: \(\) => [\w.]*openSheetPage\?\.\(\)/,
+      `${host}: NOT optional-chained - a dead north must fail loudly`);
+    // The arm must be DEFINED here, not merely mentioned: north itself
+    // mentions it, so a loose match passes on a host that only calls
+    // it. That is exactly how the first attempt slipped through - the
+    // arm landed on one host and north on four.
+    assert.match(s, /^ {4}openSheetPage(\(\) \{|: \(\) =>)/m, `${host} DEFINES the arm north asks for`);
+    assert.match(s, /at: opts\.at \?\? null,/, `${host}'s pause flow carries the landing`);
+    assert.match(s, /togglePause\(([\w ]*=[^)]*)?\)/, `${host}'s togglePause takes its own options`);
+  }
+  // Each host calls its OWN pause flow - no host reaches into another's.
+  assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => hudCtx\.togglePause\(\{ at: 'stats' \}\),/);
+  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(null, \{ at: 'stats' \}\); \},/);
 });
