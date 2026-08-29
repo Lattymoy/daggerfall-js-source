@@ -36,6 +36,7 @@
 // (IsBlending -> an 8%-per-classic-update see-through roll).
 
 import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { dice100 } from '../combat/formulas.js';   // PT1: Dice100 has ONE home and this file had written it out twice
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
 import { CAPSULE_HEIGHT, CAPSULE_RADIUS, DF_WALK_BASE } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
@@ -166,7 +167,7 @@ export function blockedByIllusionEffect(seesThrough, { invisible = false, blendi
   // The roll happens ONLY in this branch (DFU rolls no dice for an
   // unconcealed target - sequences must match).
   const chance = blending ? 8 : 4;
-  return Math.floor(rolls() * 100) >= chance;   // Dice100.FailedRoll
+  return !dice100(chance, rolls());   // Dice100.FailedRoll
 }
 
 /** EnemySenses.CanHearTarget: inside the 25 radius (+HearingModifier
@@ -696,7 +697,7 @@ export class EnemyAI {
       : (senses.playerStealth ?? 0);
     const chance = stealthChance(this._dist, liveStealth);
     const rolls = senses.rolls ?? Math.random;
-    return Math.floor(rolls() * 100) >= chance;   // Dice100.FailedRoll(stealthChance) -> detected on a FAILED stealth roll
+    return !dice100(chance, rolls());   // Dice100.FailedRoll(stealthChance) -> detected on a FAILED stealth roll
   }
 
   /** The controller CENTRE - DFU's `transform.position` for a

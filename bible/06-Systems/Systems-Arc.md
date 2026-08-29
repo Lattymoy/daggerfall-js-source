@@ -5006,3 +5006,81 @@ said "the interior has no ground pile" and nothing said it should; the
 window simply came from the outer host, and the outer host's handler was
 about somewhere else. A seam inherited from a parent is the one shape
 the rule cannot see, because there is nothing missing to point at.
+
+## PT1 — stealing had no consequence (2026-08-29)
+
+Two flags stood in `worldModes`' interior arm, both routed to "the
+crime arc": the shop-shelf stealing roll beside `SetShopShelfStealing`,
+and the theft basket behind `loot.houseOwned`. FS1's question — *has
+the blocker shipped?* — answers yes on every one they named:
+`TallyCrimeGuildRequirements` at CG2, `SpawnCityGuards` at G1, the crime
+table and V4's SuppressCrime setter, `TallySkill` since the start. What
+was left was the two laws themselves.
+
+**And they are not one law.** The shop-shelf flag promised "the
+shoplifting ROLL and its crime tally". DFU's shop-shelf arm has no roll:
+
+    // DaggerfallInventoryWindow.cs:681-687, at the window's own teardown
+    if (shopShelfStealing && remoteItems.Count < lootTargetStartCount)
+        playerEntity.TallyCrimeGuildRequirements(true, 1);
+
+A count comparison against the shelf as it stood when the window opened,
+a Thieves Guild tally if it shrank, and nothing else. No chance, no
+guards, no crime record — robbing a closed shop earns you credit with
+the Thieves Guild and no trouble at all, which is classic's own answer.
+
+The roll belongs to the *other* arm, `AttemptPrivatePropertyTheft`
+(:1848-1863, reached from :2277-2281):
+
+    TallyCrimeGuildRequirements(true, 1);
+    weightAndNumItems = (int)basket.GetWeight() + basket.Count;
+    chance = CalculateShopliftingChance(player, buildingQuality, weightAndNumItems);
+    if (!Dice100.FailedRoll(chance)) { CrimeCommitted = Theft; SpawnCityGuards(true); }
+    else                             { TallySkill(Pickpocket, 1); }
+
+The tally is the member's first line and does not wait for the roll. The
+guards come for you in someone's house; they do not come for a shelf.
+`loot.houseOwned` (:919) is set in the *stranger* branch alone, so
+`isPrivateProperty` is exactly "rifling furniture that is not yours" —
+your own house or ship opens the same window with the flag off.
+
+**The basket, and why the port does not need one.** DFU accumulates
+`theftBasket` as the player clicks — added on a take, removed on a
+put-back — because the window must *weigh* what was taken. The set it
+ends up holding is exactly "present when the window opened, absent when
+it closed", so a snapshot diff answers the same question from the same
+two facts. Putting one of your own items *into* the container doesn't
+enter it either way.
+
+The `(int)GetWeight() + Count` truncation is load-bearing and pinned as
+such: three 1.25 kg trinkets give 6, one 12.5 kg breastplate gives 13.
+A pocketful of small things is caught by its count; one heavy thing by
+both.
+
+Pins: 10 in `test/theft.test.js`. Campaign: 18 mutants, 18 killed —
+including every *term's direction* in the chance formula, not merely its
+presence, because a formula pin that only proves a term exists is the
+proxy problem in miniature.
+
+**THE NEAR-MISS, and it is SD1's exactly.** The slice set out to give
+`Dice100.FailedRoll` one home: the tree had
+`Math.floor(rolls() * 100) >= chance` written out inline in three places,
+each commented with the member's name. I wrote a fourth export —
+`dice100FailedRoll` — and put it in `formulas.js` one screen below
+`dice100`, which has been there since T3a and *is* the same member
+(`!dice100(chance, roll)` is `FailedRoll`). Reading the neighbouring
+pickpocket call site is what caught it, the same way SD1's duplicate
+module was caught: **the fix for "this member has too many homes" is the
+one place you must not add a home without looking.** The three sites now
+route through the export that already existed.
+
+A pin sweeps for the hand-written comparison so it cannot come back —
+with the **comment bodies stripped first**, because `theft.js`'s own
+header quotes the expression it retired and the raw sweep read the
+quotation as a fourth copy. That is IN1's finding arriving in a
+different arc, and it took the same shape both times.
+
+Four pins elsewhere were re-anchored. Two of them were reaching a
+**fixed character count** into an arm this slice grew — `slice(0, 2000)`
+and `slice(0, ownedLatch + 200)` — which is a bet on how long a piece of
+code stays. Both now assert by index ordering, which is what they meant.
