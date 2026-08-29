@@ -4494,3 +4494,75 @@ That is a real finding and FS1 does not fix it, because the fix is a
 classification of 47 sentences one at a time and not a regex - and
 half-doing it would leave the count wrong in a new way. It goes on the
 board as its own slice.
+
+## EC1 - THE ENCHANT CTX READS THE LIVE FOE POOL (2026-08-29)
+
+`world.js`'s enchant mount answered `[]` for its foe pool in **every
+mode but exterior** - which is the mode the player does not fight in.
+
+DFU has no scene gate here at all. `PlayerGPS.UpdateNearbyObjects`
+(`PlayerGPS.cs:747-777`) walks
+`ActiveGameObjectDatabase.GetActiveEnemyBehaviours()`, every active
+enemy in the scene; and `CastWhenStrikes` does not look a foe up at
+all (`CastWhenStrikes.cs:105`) - it assigns the bundle straight to the
+entity behaviour the strike already handed it. The port's lookup
+exists **only** because it needs the foe RECORD to reach that foe's
+damage and heal sinks. The gate was never DFU's.
+
+What the gate cost, in the streaming host, inside a dungeon: a
+CastWhenStrikes weapon found no record for the foe it had just struck
+and returned, so **paralysis, Wizard's Fire and the other ten classic
+strike spells did nothing**; the vampiric drain and both artifact
+affinity scans saw an empty room. Nothing threw and nothing was
+logged - the enchantment simply had no effect where the fighting is.
+
+And it really was the only ctx in play: **no host passes an
+`enchantCtx` at the strike site** (`formulas.js:465` defaults it
+`null`), so `mergeCtx` folds this one mount under every dispatch, in
+every mode. FS1 had just found the other half of the same hole - the
+standalone `?dungeon` host mounts no ctx at all - and that half is
+still open, now narrowed to exactly what remains true.
+
+**Detect was already right, and checking that mattered.** The obvious
+reading is that the same gate blinds Detect Enemy in a dungeon. It
+does not: each host draws its own HUD off its own feed, and
+`dungeonContext` has always had one holding that host's foes and
+piles. Widening the shared getter *without looking* would have been a
+fix aimed at a bug that was not there.
+
+**One change, two consumers.** `world.js`'s own detect feed has two
+readers and both are exterior arms - this frame's HUD markers, and
+`onDispel`, which removes what it dispels through
+`exteriorFoes.removeFoe`. So the feed keeps an explicit
+`exteriorFoePool()` rather than following the widened getter; widening
+the shared one would have handed dungeon records to the exterior
+pool's remover.
+
+**The two spawn arms refuse rather than misroute.** SoulBound's break
+release and the Sanguine Rose stand a foe through
+`exteriorFoes.spawnFoe`, which puts it in the *streaming world*. Fired
+from inside a dungeon that is a foe alive, ticking and invisible, in a
+world the player is not in. They now refuse in dungeon mode, FLAGGED:
+the dungeon spawner is `spawnQuestFoe`, and it binds a quest
+*behaviour* to what it stands, which a released soul has not - the
+behaviour-free door needs splitting out before this can route.
+Refusing is the honest answer meanwhile.
+
+The law lives in `shared.js` as two small functions rather than inline
+in the host, because it is exact and worth testing on its own: which
+pool is live, and whose sinks a record from it must go through.
+
+Pins: 9 in `test/enchantpool.test.js`, most of them behavioural
+against the extracted law rather than source sweeps. Campaign: 18
+mutants, 18 killed - after two survivors, both of which were mine:
+
+- one mutant was **behaviourally equivalent** (a dungeon with no ctx
+  fell through to `return []` either way). Replaced with one that
+  really differs - the no-ctx dungeon borrowing the exterior pool -
+  which the "must not consult the exterior thunk" pin kills.
+- the other called a bluff in my own code. `liveEnchantFoeSinks` took
+  the MODE as well as the pool, and dropping the mode term SURVIVED -
+  because no record is ever in both pools, so the term could not
+  change an answer. The term is gone. **An unfalsifiable term is not
+  caution; it is a second law that no test is holding**, and the
+  campaign is what tells the two apart.

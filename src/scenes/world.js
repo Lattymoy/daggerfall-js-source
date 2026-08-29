@@ -122,7 +122,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills } from './shared.js';   // TP1: PlayerEntity.RaiseSkills
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -1386,9 +1386,46 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (the player's feet, and exterior mode's foe pool), and one
   // definition beats two that can drift.
   const enchantFeet = () => (walkMode && playerSpawned ? player.pos : cam.pos);
-  const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
+  // EC1 - THE LIVE FOE POOL. This answered `[]` in every mode but
+  // exterior, which is the mode the player does not fight in. DFU has
+  // NO scene gate here at all: PlayerGPS.UpdateNearbyObjects
+  // (PlayerGPS.cs:747-777) walks ActiveGameObjectDatabase
+  // .GetActiveEnemyBehaviours() - every active enemy in the scene -
+  // and CastWhenStrikes does not look a foe up at all
+  // (CastWhenStrikes.cs:105), it assigns the bundle to the entity
+  // behaviour the strike already handed it. The port needs the lookup
+  // only because it needs the RECORD to reach that foe's sinks; the
+  // gate was never DFU's.
+  //
+  // What the gate cost, in the streaming host, inside a dungeon: a
+  // CastWhenStrikes weapon found no record for the foe it had just
+  // struck and returned, so paralysis, Wizard's Fire and the other ten
+  // classic strike spells did NOTHING; the vampiric drain and both
+  // artifact affinity scans saw an empty room. Nothing threw and
+  // nothing was logged - the enchantment simply had no effect where
+  // the fighting is. The one ctx in play is this mount: no host passes
+  // an enchantCtx at the strike site (formulas.js:465 defaults it
+  // null), so mergeCtx folds this default under every dispatch.
+  // The law itself is in shared.js, tested on its own - which pool is
+  // live, and whose sinks a record from it must go through. This host
+  // supplies the three live reads it asks for.
+  const _mode = () => (modes?.mode ?? 'exterior');
+  const _dungeonPool = () => (_mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null);
+  const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes]);
+  const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks);
+  /** EC1: THIS host's own pools, exterior only - and deliberately NOT
+   *  enchantFoes(), which now answers the live mode's. Two consumers
+   *  read this feed and both are exterior arms: the HUD Detect markers
+   *  drawn by this frame (dungeon mode draws dungeonContext's HUD off
+   *  dungeonContext's own feed, which has always held that host's foes
+   *  and piles), and onDispel, which removes what it dispels through
+   *  exteriorFoes.removeFoe. Widening the shared getter without
+   *  splitting these would have handed dungeon records to the exterior
+   *  pool's remover - one change, two consumers, and only one of them
+   *  wanted it. */
+  const exteriorFoePool = () => [...cityGuards.guards, ...exteriorFoes.foes];
   const detectFeed = createDetectFeed(playerEntity, {
-    entities: () => enchantFoes().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    entities: () => exteriorFoePool().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     // FX1 (F207): UpdateNearbyObjects walks EVERY active DaggerfallLoot
     // with no scene gate (PlayerGPS.cs:747, :766-776) - the world piles
     // the player drops and the lootable corpse containers both mark
@@ -1396,7 +1433,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // piles above ground", false since droppedLoot mounted.
     loot: () => [
       ...droppedLoot._piles.map(lootNearbyRecord),
-      ...[...cityGuards.guards, ...exteriorFoes.foes]
+      ...exteriorFoePool()
         .filter((f) => !!f.corpse && !!f.entity)
         .map((f) => lootNearbyRecord({ pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null, items: f.entity.items ?? [] })),
     ],
@@ -1437,13 +1474,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         const casterOf = () => {
           if (!attacker) return null;
           if (attacker === playerEntity) return { entity: playerEntity, sinks: playerSpellSinks };
-          return af ? { entity: attacker, sinks: foeSinks(af) } : { entity: attacker };
+          return af ? { entity: attacker, sinks: enchantFoeSinks(af) } : { entity: attacker };
         };
         if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
         const f = enchantFoes().find((x) => !x.dead && x.entity === target);
         if (!f) return;
         const caster = casterOf();
-        const r = applySpell(record, attacker?.level ?? 1, target, foeSinks(f), Math.random, caster);
+        const r = applySpell(record, attacker?.level ?? 1, target, enchantFoeSinks(f), Math.random, caster);
         // The same re-target hostMagic does for the cast paths - this
         // door is the enchantment path's equivalent seam.
         if (r.reflected && caster?.entity) {
@@ -1465,14 +1502,29 @@ export async function bootWorld(canvas, renderer, params, status) {
             // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
             // .cs:47-48), so your own standing summons never count.
             team: f.entity?.team ?? 'PlayerEnemy',
-            hurt: (n) => foeSinks(f).hurt(n),
+            hurt: (n) => enchantFoeSinks(f).hurt(n),
           }));
       },
+      // EC1: the two SPAWN arms - SoulBound's break release and the
+      // Sanguine Rose - keep the exterior pool, and are refused rather
+      // than misrouted in the modes that have no spawner of their own.
+      // exteriorFoes.spawnFoe stands a foe in the STREAMING world; a
+      // dungeon record has to come off dungeonContext's build chain
+      // (buildFoeAt, through spawnQuestFoe) or it stands in a world
+      // the player is not currently in - alive, ticking, and invisible.
+      // FLAGGED: the dungeon spawner is spawnQuestFoe, and it binds a
+      // quest BEHAVIOUR to what it stands (bindQuestFoeHost); a plain
+      // released soul has none, so the arm needs the behaviour-free
+      // door split out of it before this can route. Refusing is the
+      // honest answer meanwhile - DFU's CreateFoeSpawner puts the foe
+      // in the scene the player is standing in, and nothing here can.
       spawnFoe: (mobileType) => {
+        if (_dungeonPool()) return;
         const pf = enchantFeet();
         exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
       },
       spawnAlliedFoe: (mobileType) => {
+        if (_dungeonPool()) return;
         const pf = enchantFeet();
         exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true }).catch(() => {});
       },
