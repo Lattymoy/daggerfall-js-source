@@ -62,6 +62,7 @@ import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { DeathScreen } from '../ui/deathScreen.js';
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
@@ -3608,7 +3609,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _openJournal(mode) {
       if (activeOverlay || !opts.questBridge) return;
       preloadQuestJournalArt({ renderer, fetchBytes, palette });
-      activeOverlay = new QuestJournalWindow({ ...questJournalHooks(), mode });
+      // PX24d: through the chronicle's door, the way the spellbook
+      // goes through its own. This host has no map, so it leaves
+      // gotoPlace unset - the same nothing a CanFindPlace miss gives.
+      activeOverlay = createChronicleWindow({
+        ...questJournalHooks(),
+        mode,
+        entity: playerEntity,
+        section: mode === 'messages' ? 'messages' : 'notes',
+      });
     },
     toggleInventory() {
       if (activeOverlay) return;

@@ -7999,6 +7999,37 @@ Stats, 0px off centre, carrying only the doors the host handed over,
 Escape closes it, and no `.sheet-shell` is left anywhere on the
 enhanced path.
 
+PX24d (Mac: "the new chronicles UI is nowhere to be found ingame"):
+THE DOOR WAS HUNG ON NOTHING. He was right, and it was worse than
+missing. PX24 built `ui/chronicleDoor.js` and the window behind it,
+pinned both, verified both in a browser - and never gave the door a
+CALLER. Every host still constructed the classic QuestJournalWindow
+directly, so the enhanced chronicle was unreachable in play, and
+PX25's Chronicle button on the Stats page opened the CLASSIC journal.
+The slice built a door and left it leaning against the wall.
+
+Wired now, the way the spellbook's is: world.js's `makeJournalWindow`
+and dungeonContext's `_openJournal` both go through
+`createChronicleWindow`, handing it what only that host knows.
+worldModes reaches it through world's host bag, which owns the only
+`makeJournal` there is. The exterior has NO journal and builds none -
+which is why PX25 gave it no Chronicle button, and that stays honest.
+
+FOUND WHILE WIRING: the first version of the page mapping was
+`mode === 'notebook' ? 'notes' : 'notes'` - a ternary with the same
+answer on both arms, which is a decision that was never made. The
+enhanced page follows the classic mode now (messages to Messages,
+everything else to Notes), and the classic window still gets the mode
+itself, because the two quest modes deliberately have no page here -
+the pause window has carried quests since PX4.
+
+THE PIN IS THE GENERAL LAW, not this one wiring: EVERY enhanced door
+must have a host that calls it. A door module exists to be the one way
+in, and one with no caller is a window nobody can reach - which no
+existing pin would have caught, because every pin PX24 wrote was about
+the door's own behaviour and all of them passed. 2 pins (10), 3
+mutations, 3 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
