@@ -23,6 +23,7 @@ import { createNetwork, linkPixels, hasRoad } from '../src/systems/roads.js';
 import { PREF_DEFAULTS } from '../src/systems/uiPrefs.js';
 import { CLIMATES, LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
+import { blankQuoted } from '../tools/flagSites.mjs';   // IN1: the ONE rule for "is this a quotation?"
 
 // ── fixtures ─────────────────────────────────────────────────────
 
@@ -334,4 +335,71 @@ test('the derived store is swept by an ARENA2 re-pick, and the other packs are n
   }
   assert.ok(/indexedDB\.open\(DB_NAME, 5\)/.test(src),
     'adding a store needs the version bump, or existing players never get it');
+});
+
+// ---------------------------------------------------------------------------
+// RF1 (2026-08-29, the road re-audit): THE HEADER MAY NOT DESCRIBE A DEFAULT
+// THE TREE DOES NOT SHIP.
+//
+// R7 flipped PREF_DEFAULTS.roads to true and flipped the pin above with it,
+// and left roadsBoot.js's header saying "the preference defaults false" under
+// a heading reading WHY IT IS OFF BY DEFAULT - on the one module a reader
+// opens to find out what the default IS. That is the AUDIT 17m shape exactly:
+// a comment that answers a question wrongly is worse than no comment, because
+// it stops the reader looking.
+//
+// So the header is held against the value, BOTH WAYS and self-retiring: flip
+// the preference back and this test demands the opposite prose. Deleting the
+// false sentence is not enough either - the header has to state the true one,
+// the same way AUDIT 18's touch-layer pin does.
+// ---------------------------------------------------------------------------
+
+test('RF1: roadsBoot\'s header describes the default the tree actually ships', () => {
+  const src = readFileSync(new URL('../src/systems/roadsBoot.js', import.meta.url), 'utf8');
+  // IN1's rule, imported not copied: a correction may QUOTE the sentence it
+  // retired, and the quote must not put the retired claim back on the board.
+  const header = blankQuoted(src.slice(0, src.indexOf('\nimport ')));
+  assert.ok(header.length > 500, 'roadsBoot.js lost its header block');
+
+  if (PREF_DEFAULTS.roads === true) {
+    assert.doesNotMatch(header, /WHY IT IS OFF BY DEFAULT/,
+      'the header still explains why roads are off; PREF_DEFAULTS.roads is true');
+    assert.doesNotMatch(header, /the preference defaults false/,
+      'the header still says the preference defaults false; it defaults true');
+    assert.match(header, /PREF_DEFAULTS\.roads is TRUE/,
+      'deleting the retired sentence is not enough - the header must state the shipping default');
+    assert.match(header, /R7/,
+      'the header must name the slice that reversed it, or the next reader relitigates R6');
+  } else {
+    assert.match(header, /defaults false|OFF BY DEFAULT/,
+      'roads default off and the header no longer says so');
+  }
+});
+
+test('RF1: no module still quotes the twenty-six second bake as a live cost', () => {
+  // RA1 took the same-scale bake from 17.2s to 2.3s (3.2s re-measured on the
+  // reference fixture's own shape, 2026-08-29), and six sites across five
+  // modules went on quoting twenty-six seconds - two of them building a
+  // DESIGN ARGUMENT on it. The number may still appear as history, which is
+  // why this forbids the present tense rather than the phrase.
+  const LIVE = [
+    /bake is about twenty-six seconds/i,
+    /bake costs about twenty-six seconds/i,
+    /runs\s*\n?\/*\s*in about twenty-six seconds -/i,
+    /the twenty-six seconds being\s*\n?\/*\s*VISIBLE/i,
+  ];
+  const offenders = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(new URL(`../${dir}/`, import.meta.url), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) walk(rel);
+      else if (entry.name.endsWith('.js')) {
+        const text = readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+        for (const re of LIVE) if (re.test(text)) offenders.push(`${rel} :: ${re}`);
+      }
+    }
+  };
+  walk('src');
+  assert.deepEqual(offenders, [],
+    `these state the retired bake time as the current one:\n${offenders.join('\n')}`);
 });

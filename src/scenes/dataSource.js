@@ -33,8 +33,9 @@ const TEXTURE_STORE = 'textures';
 const MW_STORE = 'morrowind';
 /** R6: DERIVED artifacts - bytes the game GENERATED from the player's
  *  own data, not bytes the player supplied. The road network is the
- *  first: a whole-map bake costs about twenty-six seconds, so it is
- *  computed once and kept.
+ *  first: a whole-map bake costs seconds (RA1 measured 2.3s at full
+ *  scale, 3.2s re-measured 2026-08-29; it was ~26s when R6 wrote this),
+ *  so it is computed once and kept.
  *
  *  It is a store of its own for the reason the others are, plus one
  *  more: a derived artifact is only valid FOR the data it came from,

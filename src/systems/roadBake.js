@@ -3,14 +3,16 @@
 //
 // R1 generates the network; this module decides what survives a page
 // reload. Measured at full Iliac Bay scale (1000x500, 15,251 locations
-// in Daggerfall's own type proportions, 460 hubs): the whole bake runs
-// in about twenty-six seconds - half a minute of a first boot, once,
-// behind a progress bar, and never again. That number is why the
-// artifact is CACHED rather than shipped: generating it costs the user
-// half a minute, and shipping it would cost every user a megabyte AND
-// raise the question of whether a table derived from WOODS heights is
-// game data. Generated on the player's own machine from the player's
-// own ARENA2, it is not distributed at all.
+// in Daggerfall's own type proportions, ~500 hubs): the whole bake ran
+// in about twenty-six seconds when R2 wrote this, and RA1's router
+// work took the same scale to a few - 17.2s -> 2.3s on RA1's own
+// fixture, 3.2s re-measured 2026-08-29 on this container. Seconds
+// rather than half a minute WEAKENS the case for caching and does not
+// end it: the artifact is still CACHED rather than shipped, because
+// shipping it would cost every user a megabyte AND raise the question
+// of whether a table derived from WOODS heights is game data.
+// Generated on the player's own machine from the player's own ARENA2,
+// it is not distributed at all.
 //
 // ── WHAT IS CACHED AND WHAT IS NOT ───────────────────────────────
 //

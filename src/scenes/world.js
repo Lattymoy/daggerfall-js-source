@@ -180,6 +180,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
+import { WINDMILL_MODELS, ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';   // WM2b: the sails
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
@@ -367,7 +368,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, cpuModels } = pipeline;
+  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getRotorMesh, cpuModels } = pipeline;
+  // WM2b: the vendored windmill rotor, uploaded on the first mill this
+  // session streams in and held for the rest of it. One mesh, however
+  // many mills - the per-mill state is the angle and nothing else.
+  let rotorMesh = null;
 
   // T2 towns: the person textures (climate People table pends - Breton
   // + guard, the T1 flag), loaded once on the first populated pixel.
@@ -481,6 +486,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MaterialReader.ChangeClimate semantics).
     const texRemap = new Map();
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
+    const windmills = []; // WM2b: { local, state } - mills whose rotor turns each frame
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
     let personBatches = null;
@@ -512,6 +518,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           const local = multiply(originMatrix, placed.matrix);
           models.push({ gpu, local });
+          // WM2b: a mill gets a sail. The tower is the classic model and
+          // rides the list above; only the rotor needs a matrix per frame.
+          // The phase is keyed on the MAP PIXEL plus the mill's local
+          // position, never its world position - the floating origin
+          // shifts the world under the player, and a phase that moved
+          // with it would re-seed every mill on every origin shift.
+          if (WINDMILL_MODELS[placed.modelIdNum]) {
+            rotorMesh = await getRotorMesh();
+            windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
+          }
           const cpu = cpuModels.get(placed.modelIdNum);
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
@@ -653,7 +669,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, tilemapTex, tilemap, groundArchive, models, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       locBlocks,   // T3d: the Where-is directory's block scan
@@ -4530,6 +4546,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
 
+    // WM2b: read the eased wind ONCE a frame, not once a mill.
+    const windNow = sky.wind();
     const allBatches = [];
     for (const p of built.values()) {
       const t = state.pixelTranslation(p.px, p.py);
@@ -4537,6 +4555,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.drawTerrain(p.terrain, pixelMatrix,
         renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
       for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
+      // WM2b: THE SAILS, on the same eased wind vector the cloud deck
+      // overhead is drawn with - so a storm picks the mills up on the
+      // same fourteen-second curve it picks the sky up on. A null row is
+      // "no wind is known" (the classic sky eases nothing), and a mill
+      // then stands still rather than guessing at one.
+      if (rotorMesh && windNow) {
+        for (const w of p.windmills) {
+          advanceRotor(w.state, dt, windNow);
+          renderer.drawMesh(rotorMesh, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
+        }
+      }
       // FA1: the flats that move. The animator is PER PIXEL because
       // the batches are - a pixel evicted takes its clocks with it -
       // so the tick rides the same walk that collects the batches.
