@@ -4,6 +4,7 @@ import {
   parseBsaIndex, readNifHeader, walkEsm, bodyParts, armReport,
   isFirstPersonId, FP_SKELETONS, ARM_PARTS, MW_BODY_PARTS,
   scanNifRecordTypes, skinVerdict, armMeshPaths, parseMeshForPreview, meshBounds, frontViewMapper,
+  skeletonReport, checkRequiredBones, FP_REQUIRED_BONES,
 } from '../src/tools/mwInspect.js';
 
 // MW-D: the diagnostic that should have existed before any renderer.
@@ -287,4 +288,50 @@ test('MW-D3: the front view is Z-UP and UNIFORMLY scaled', () => {
   assert.equal(Math.round(x1 - x0), 100, 'the 10-unit x span fills the 100px box');
   assert.equal(Math.round(y0 - y2), 50, 'and the 5-unit z span gets half of it, not all');
   assert.equal(meshBounds([{ positions: new Float32Array(0) }]), null, 'no vertices is null, not NaN');
+});
+
+// ── MW-D4: the bones the rules name, against a real skeleton ───────
+
+test('MW-D4: the skeleton is read and its bone lookup is CASE-INSENSITIVE', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  const r = await skeletonReport(bsa.get('meshes/base_anim.nif'));
+  assert.equal(r.ok, true, r.error);
+  assert.ok(r.boneCount > 0, 'the fixture skeleton has bones');
+  assert.ok(r.names.length > 0, 'and they are named');
+  // Rule 16: lowercased on BOTH sides. The report must use the same
+  // comparison the binder will, or it answers a question nobody asked.
+  const any = r.names.find((n) => /[a-z]/i.test(n));
+  assert.equal(r.has(any), true, 'found as written');
+  assert.equal(r.has(any.toUpperCase()), true, 'and in any case');
+  assert.equal(r.has('a bone no skeleton has'), false);
+});
+
+test('MW-D4: a missing bone is REPORTED missing, never quietly worked around', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  const rows = checkRequiredBones(await skeletonReport(bsa.get('meshes/base_anim.nif')));
+  assert.equal(rows.length, FP_REQUIRED_BONES.length, 'every required bone gets a row, present or not');
+  // the fixture skeleton is a test rig, not Morrowind's - so these are
+  // expected to be ABSENT, and the pin is that it SAYS so rather than
+  // returning a shorter list or a cheerful default
+  assert.ok(rows.some((b) => !b.present), 'the fixture lacks the retail bones and the report admits it');
+  for (const row of rows) assert.equal(typeof row.present, 'boolean', `${row.name} has a verdict`);
+  // the bow's bone is listed separately from every other weapon's (rule 8)
+  const bow = rows.find((b) => b.name === 'Weapon Bone Left');
+  assert.match(bow.why, /BOW/, 'and the bow bone says it is the bow, which is rule 8');
+  assert.ok(rows.find((b) => b.name === 'Weapon Bone'), 'beside the bone every other type uses');
+  // a failed read yields no rows rather than a list of false negatives
+  assert.deepEqual(checkRequiredBones({ ok: false }), []);
+});
+
+test('MW-D4: a skeleton that will not parse names its stage', async () => {
+  const bad = await skeletonReport(new Uint8Array([...ascii('not a nif'), 0x0a, 0, 0, 0, 0]));
+  assert.equal(bad.ok, false);
+  assert.equal(bad.stage, 'parse');
+  assert.ok(bad.error && bad.error.length);
 });

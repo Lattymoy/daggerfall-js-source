@@ -54,6 +54,7 @@
 import {
   parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
   armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
+  skeletonReport, checkRequiredBones,
 } from '/src/tools/mwInspect.js';
 
 const out = document.getElementById('out');
@@ -137,6 +138,7 @@ function render() {
       h += '<h2>NIF headers</h2><table><tr><th>file</th><th>format</th><th>version</th><th></th></tr>'
         + rows.join('') + '</table>';
     }
+    h += '<div id="bones"></div>';
   }
 
   if (esm) {
@@ -218,11 +220,51 @@ function render() {
   if (fem) fem.addEventListener('change', () => { localStorage.setItem('mwi.female', fem.checked ? '1' : '0'); render(); });
 
   drawArms();
+  reportBones();
 
   document.getElementById('foot').innerHTML = (bsa || esm)
     ? 'Every rule this page applies is cited in <code>bible/02-Formats/Morrowind-Rules.md</code>. '
       + 'It reports what is in your files; it makes no claim that anything will draw.'
     : '';
+}
+
+// MW-D4: the bones the rules NAME, against the skeleton in your archive.
+// Every attach in the rig resolves a bone by name; if a name is wrong the
+// attach finds nothing and the view comes up empty - which is the exact
+// failure this whole effort keeps circling. So the table below is the
+// difference between "binding will work on your data" and "binding will
+// silently do nothing", and it is worth knowing BEFORE the binder exists.
+async function reportBones() {
+  const host = document.getElementById('bones');
+  if (!host || !bsa) return;
+  const fem = localStorage.getItem('mwi.female') === '1';
+  const want = fem ? 'meshes/base_anim_female.1st.nif' : 'meshes/xbase_anim.1st.nif';
+  const f = bsa.index.files.find((x) => x.name === want)
+    || bsa.index.files.find((x) => x.name === 'meshes/xbase_anim.1st.nif');
+  if (!f) return;
+  const r = await skeletonReport(bsa.bytes.subarray(f.offset, f.offset + f.size));
+  let h = `<h2>Bones in <code>${esc(f.name)}</code></h2>`;
+  if (!r.ok) {
+    host.innerHTML = h + `<p class="err">${esc(r.stage || 'failed')}: ${esc(r.error)}</p>`;
+    return;
+  }
+  const rows = checkRequiredBones(r);
+  const missing = rows.filter((b) => !b.present).length;
+  h += `<p class="note">${r.boneCount} nodes in this skeleton. The rows below are the bones the recorded `
+    + 'rules say a first-person arm attaches to. Lookup is case-insensitive, matching the engine.</p>';
+  h += '<table><tr><th>bone</th><th>needed for</th><th></th></tr>';
+  for (const b of rows) {
+    h += `<tr><td><code>${esc(b.name)}</code></td><td class="dim">${esc(b.why)}</td>`
+      + `<td class="${b.present ? 'ok' : 'bad'}">${b.present ? 'present' : 'MISSING'}</td></tr>`;
+  }
+  h += '</table>';
+  h += `<p class="note">${missing === 0
+    ? '<b>Every bone the rules name is in your skeleton.</b> Binding the arms to it should resolve; '
+      + 'if the rig still draws nothing after that, the fault is downstream of the bone lookup.'
+    : `<b>${missing} of ${rows.length} are missing.</b> A bone the skeleton does not have is an attach that `
+      + 'finds nothing, so these have to be resolved - by a corrected name, or by the part genuinely not '
+      + 'existing for this actor - before a rig is written against them.'}</p>`;
+  host.innerHTML = h;
 }
 
 // MW-D3: run the REAL reader over each arm mesh and draw what comes back.

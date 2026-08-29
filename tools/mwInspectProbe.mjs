@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
+import { MwBsaFile } from '../src/formats/mwBsaFile.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 
@@ -57,13 +58,18 @@ await page.goto('http://localhost:5223/mw-inspect.html');
 // MW-D2: the two arm meshes differ ON PURPOSE - the hand carries a
 // NiSkinInstance and the wrist does not - because a page that reports one
 // verdict for everything would pass a fixture where they agree.
+// The fixture archive is the source for the real files below - a loose
+// base_anim.nif does not exist on disk, it lives inside it.
+const fixtureBsa = new MwBsaFile(new Uint8Array(readFileSync('test/fixtures/mw/fixture.bsa')));
 const nifRecs = (types) => {
   const out = [...ascii('NetImmerse File Format, Version 4.0.0.2'), 0x0a, ...u32(0x04000002)];
   for (const t of types) out.push(...u32(t.length), ...ascii(t), ...[7, 0, 0, 0, 1, 2, 3]);
   return Uint8Array.from(out);
 };
 const bsa = buildBsa([
-  { name: 'meshes\\XBase_Anim.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
+  // A REAL skeleton, so MW-D4's bone table is actually exercised rather
+  // than short-circuited by a header stub that cannot parse.
+  { name: 'meshes\\XBase_Anim.1st.nif', data: fixtureBsa.get('meshes/base_anim.nif') },
   { name: 'meshes\\Base_Anim_Female.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
   { name: 'meshes\\b\\H1.nif', data: nifRecs(['NiNode', 'NiTriShape', 'NiSkinInstance']) },
   // A REAL NIF, so the draw panel's SUCCESS path is proven live and not
@@ -126,6 +132,18 @@ ok(pixels.some((n) => n > 200), `and the wireframe actually DRAWS (${pixels.join
 ok(/parse:|flatten:|geometry:/.test(drawText),
   `a mesh the strict reader refuses names its STAGE (got: ${drawText.replace(/\s+/g, ' ').slice(0, 120)})`);
 ok(!/^\s*$/.test(drawText), 'and never an empty box - the reverted rig\'s defining behaviour');
+
+// MW-D4: the bone table. The fixture skeleton is a TEST RIG, not
+// Morrowind's, so the retail bone names are expected to be MISSING - and
+// the assertion is that the page SAYS so, in the row, rather than
+// shortening the list or defaulting to cheerful.
+await page.waitForSelector('#bones table', { timeout: 10000 });
+const boneText = await page.textContent('#bones');
+ok(/Left Hand/.test(boneText) && /Weapon Bone Left/.test(boneText),
+  'every required bone gets a row, including the bow-only one');
+ok(/MISSING/.test(boneText), 'and a bone this skeleton lacks is named MISSING');
+ok(/are missing[\s\S]{0,300}before a rig is written against them/.test(boneText),
+  'with the consequence spelled out, not left for the reader to infer');
 
 // a corrupt archive must be named, not swallowed
 const bad = Uint8Array.from([...u32(0x102), ...u32(0), ...u32(0)]);
