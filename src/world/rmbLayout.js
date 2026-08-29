@@ -19,6 +19,7 @@
 
 import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
 import { PLACEMENTS as WINDMILL_PLACEMENTS } from './windmillMesh.js';   // WM2d: the mills Daggerfall does not stand
+import { WINDMILL_INTERIOR } from './windmillInterior.js';   // WM2g: and the inside of one
 import { GLOBAL_SCALE } from './meshReader.js';
 import { trs, multiply } from './mat4.js';
 
@@ -97,9 +98,57 @@ export function layoutRmbBlock(dfBlock) {
   // recordIndex is undefined, so the door stands and does not open,
   // rather than throwing on a subrecord that is not there.
   const mills = windmillsFor(dfBlock.name);
-  for (const w of mills) if (w.building) models.push(w.building);
+  if (mills.length) {
+    const recordIndex = attachWindmillRecord(dfBlock);
+    for (const w of mills) {
+      if (!w.building) continue;
+      w.building.recordIndex = recordIndex;
+      models.push(w.building);
+    }
+  }
 
   return { models, windmills: mills, groundTiles: buildGroundTilemap(dfBlock) };
+}
+
+/**
+ * WM2g: THE MILL'S SUBRECORD, ATTACHED - so its door has an inside.
+ *
+ * A static door's interior is looked up as
+ * `subRecords[recordIndex].interior`, and the subrecord the mill's
+ * building belongs to is one Kamer ADDED: it is not in the block the
+ * port reads out of BLOCKS.BSA. WM2f left the building without a
+ * recordIndex for exactly that reason, so its door stood and never
+ * opened.
+ *
+ * This appends the subrecord the block is missing. Its EXTERIOR IS
+ * EMPTY, deliberately - the mill and its building are placed by
+ * windmillsFor above, and a subrecord carrying them as well would
+ * stand every one of them twice. What it exists for is the interior.
+ *
+ * Idempotent, because BlocksFile CACHES its parsed blocks: the same
+ * dfBlock object comes back for every location that uses this block and
+ * for every re-entry, and appending on each visit would grow the array
+ * without bound and change the recordIndex a saved door refers to.
+ */
+export function attachWindmillRecord(dfBlock) {
+  const subs = dfBlock.rmbBlock.subRecords;
+  const already = subs.findIndex((r) => r?.windmill);
+  if (already >= 0) return already;
+  subs.push({
+    windmill: true,
+    xPos: 0, zPos: 0, yRotation: 0,
+    exterior: {
+      header: {
+        position: 0, num3dObjectRecords: 0, numFlatObjectRecords: 0,
+        numSection3Records: 0, numPeopleRecords: 0, numDoorRecords: 0,
+        unknown1: 0, unknown2: 0, unknown3: 0, unknown4: 0, unknown5: 0, unknown6: 0,
+      },
+      block3dObjectRecords: [], blockFlatObjectRecords: [],
+      blockSection3Records: [], blockPeopleRecords: [], blockDoorRecords: [],
+    },
+    interior: WINDMILL_INTERIOR,
+  });
+  return subs.length - 1;
 }
 
 /**
