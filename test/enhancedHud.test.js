@@ -127,3 +127,51 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   assert.match(src, /if \(last\.readied !== readyName\) \{/);
   assert.match(src, /if \(last\.weapon !== weaponName\) \{/);
 });
+
+test('PX30c: the HUD scales from a SETTING, and the percentage lives in the bar', () => {
+  const src = read('src/ui/enhancedHud.js');
+  const css = read('src/ui/enhancedStyle.js');
+  // THE SCALE is a setting beside DFU's own LargeHUDUndockedScale and
+  // read the same way, so it lands in the catalog the enhanced screens
+  // already render and is saved with everything else - no new
+  // machinery for a number a player wants to change.
+  // IT IS NOT A DFU SETTING, and two pins said so before I listened:
+  // settingsDefaults.js is BAKED from DFU's vendored ini and nothing
+  // hand-edits it (AUDIT 17e F9), and the tier map's own law is that
+  // every key in it "is a real DFU setting". So it lives in the PORT'S
+  // OWN PREFS, beside the other things only this port has.
+  assert.doesNotMatch(read('src/systems/settingsDefaults.js'), /hudScale|EnhancedHUDScale/);
+  assert.doesNotMatch(read('src/systems/settings.js'), /EnhancedHUDScale/);
+  assert.match(read('src/systems/uiPrefs.js'), /^\s*hudScale: 1,$/m);
+  assert.match(src, /getPref\('hudScale'\)/);
+  assert.match(read('src/ui/enhancedMenu.js'), /setPref\('hudScale', next\);/);
+  assert.match(read('src/ui/enhancedMenu.js'), /'Gameplay HUD scale'/);
+  // NAMED apart from the classic HUD's own `hudScale(canvas)` - the
+  // one-home pin caught that collision on the first full run.
+  assert.match(src, /export const enhancedHudScale = \(\) => \{/);
+  assert.doesNotMatch(src, /export const hudScale\b/);
+  assert.match(read('src/ui/hud.js'), /hudScale\(/, 'the classic one keeps its name');
+  // CLAMPED: a HUD is not a place to let a typo hide the game.
+  assert.match(src, /export const HUD_SCALE_MIN = 0\.5;/);
+  assert.match(src, /export const HUD_SCALE_MAX = 2;/);
+  assert.match(src, /Math\.max\(HUD_SCALE_MIN, Math\.min\(HUD_SCALE_MAX, v\)\)/);
+  assert.match(src, /if \(!Number\.isFinite\(v\) \|\| v <= 0\) return 1;/, 'and an absent or broken value is 1, not 0');
+  // ONE VARIABLE the whole sheet reads, so a change moves every bar,
+  // chip and letter together rather than thirty rules drifting.
+  assert.match(css, /--hud-scale: 1; \}/);
+  assert.match(css, /\.hud-top \{[\s\S]{0,140}scale\(var\(--hud-scale\)\)/);
+  assert.match(css, /\.hud-bottom \{[\s\S]{0,140}scale\(var\(--hud-scale\)\)/);
+  assert.match(src, /host\.style\.setProperty\('--hud-scale', String\(scale\)\);/);
+  assert.match(src, /if \(last\.scale !== scale\) \{/, 'guarded, like every other write here');
+  // THE PERCENTAGE IS IN THE BAR, with the label beside it - a figure
+  // outside is a second thing to look at, and a colour alone is
+  // something a player has to learn.
+  assert.match(src, /track\.append\(fill, el\('span', 'hud-vlabel', label\), num\);/);
+  assert.match(css, /\.hud-vital \.hud-fill \{ position: absolute; inset: 0;/, 'the fill is behind them');
+  assert.match(css, /\.hud-vlabel \{ position: relative; z-index: 1;/);
+  assert.match(css, /\.hud-num \{ position: relative; z-index: 1;/);
+  // NEVER 0% WHILE ANYTHING IS LEFT - the quest timer's "never 0 min"
+  // law, on a bar this time.
+  assert.match(src, /const shown = now > 0 \? Math\.max\(1, Math\.round\(pct\)\) : 0;/);
+  assert.match(src, /`\$\{shown\}%`/);
+});

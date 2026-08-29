@@ -1450,10 +1450,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .hud { position: fixed; inset: 0; z-index: 4; pointer-events: none;
   font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
-  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.hud-top { position: absolute; left: 50%; top: 18px; transform: translateX(-50%);
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+  /* PX30c: ONE variable the whole HUD reads, so a scale change moves
+     every bar, chip and letter together rather than thirty rules
+     drifting apart. Set from GUI/EnhancedHUDScale each frame, guarded. */
+  --hud-scale: 1; }
+.hud-top { position: absolute; left: 50%; top: 18px;
+  transform: translateX(-50%) scale(var(--hud-scale)); transform-origin: top center;
   display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.hud-bottom { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+.hud-bottom { position: absolute; left: 50%; bottom: 22px;
+  transform: translateX(-50%) scale(var(--hud-scale)); transform-origin: bottom center;
   display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
 /* THE COMPASS. A strip of a quarter of the circle, the points placed
@@ -1479,11 +1485,23 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 /* THE VITALS. Magicka, health, fatigue - the reference's own order and
    DFU's own three, each with its number beside it. */
-.hud-bars { display: flex; align-items: center; gap: 18px; }
-.hud-vital { display: flex; align-items: center; gap: 8px; }
-.hud-vital .hud-track { width: min(180px, 22vw); height: 12px; }
-.hud-num { min-width: 3ch; font-size: 12px; color: #a89f88;
-  font-variant-numeric: tabular-nums; }
+/* PX30c: THE NUMBER IS IN THE BAR. A figure beside a bar is a second
+   thing to look at; a percentage ON it is the bar saying what it
+   means, and the label rides in there too so each names itself rather
+   than relying on a colour a player has to learn. Both sit ABOVE the
+   fill and take the shadow, which is what keeps them legible over a
+   full bar and an empty one alike. */
+.hud-bars { display: flex; align-items: center; gap: 14px; }
+.hud-vital { display: flex; align-items: center; }
+.hud-vital .hud-track { width: min(190px, 23vw); height: 20px;
+  display: flex; align-items: center; justify-content: space-between; }
+.hud-vital .hud-fill { position: absolute; inset: 0; width: 100%; }
+.hud-vlabel { position: relative; z-index: 1; padding-left: 8px;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
+.hud-num { position: relative; z-index: 1; padding-right: 8px;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
 .hud-health .hud-fill { background: #d98074; }
 .hud-magicka .hud-fill { background: #6f8fd9; }
 .hud-fatigue .hud-fill { background: #74d9a0; }
