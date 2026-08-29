@@ -176,97 +176,57 @@ test('U52: a host with no document keeps the canvas sheet, on either skin', () =
   assert.equal(createCharSheetWindow({ entity: hero() })?.constructor?.name, 'CharSheet');
 });
 
-test('U52: the enhanced skin gets the DOM sheet, and the host holds it', () => {
+test('PX27: the enhanced skin gets the PAUSE WINDOW\'s Stats page, and the host holds it', () => {
+  // U52 gave the enhanced skin its own DOM character sheet. PX25 gave
+  // the pause window's Stats page the four buttons that sheet carried,
+  // and PX27 retired the sheet: there were TWO enhanced character
+  // sheets reading the same four sections out of the same sheetModel,
+  // and one of them was the last pre-PX surface in the game.
+  //
+  // The DOOR's contract is unchanged - the host is handed an overlay it
+  // mounts - so no host learned anything new.
   skin('enhanced');
   withDocument((node) => {
     const win = createCharSheetWindow({ entity: hero() });
     assert.notEqual(win?.constructor?.name, 'CharSheet');
     assert.equal(win.done, false, 'a sheet that reports done on arrival is torn down on arrival');
-    assert.equal(node.id, 'enhanced-charsheet');
+    assert.equal(node.id, 'enhanced-sheetpage');
     assert.match(node.style.cssText, /position:fixed;inset:0/);
+    assert.match(node.style.cssText, /z-index:13/, 'the pause door\'s depth: peers, never stacked');
     win.dispose();
     assert.equal(win.done, true);
     assert.equal(node.removed, true);
   });
 });
 
-test('U52: the door needs classic art only where the classic sheet draws it', () => {
-  skin('classic');
-  assert.equal(charSheetDoorReady(), false, 'no INFO00I0 in this container');
-  skin('enhanced');
-  assert.equal(charSheetDoorReady(), true, 'the enhanced sheet reads no game data at all');
-});
-
-// ── THE SEAM ─────────────────────────────────────────────────────
-
-test('U52: no host builds a sheet past the door', () => {
-  for (const rel of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js']) {
-    const src = read(`src/${rel}`);
-    assert.match(src, /createCharSheetWindow\(\{/, `${rel} builds through the seam`);
-    assert.doesNotMatch(src, /new CharSheet\(/, `${rel} must not construct the window itself`);
-    assert.doesNotMatch(src, /charSheetHooks\(/, `${rel} must not build its own hook bag`);
-  }
-  // AUDIT 17i's finding, one window over: exterior.js had TWO builders
-  // for one window - `makeCharSheetWindow` for the interior host to
-  // borrow and a hand-rolled copy in its own F5 arm, the second having
-  // already lost the first's note about the withheld quest hooks.
-  const ext = read('src/scenes/exterior.js');
-  assert.equal([...ext.matchAll(/createCharSheetWindow\(\{/g)].length, 1,
-    'ONE builder in this file, and the F5 arm calls it');
-  assert.match(ext, /toggleCharSheet: \(\) => townTalk\.showOverlay\(makeCharSheetWindow\(\)\)/);
-});
-
-// ── THE CHILD CONTRACT, which is what makes this screen hard ─────
-// U42 is the warning and it is worth restating: the CLASSIC sheet
-// forwarded tick, wheel, input and click to a pushed window and NOT
-// hover, so every hover behaviour the child owned was dead on the route
-// three of the four hosts take - the spellbook lost its list highlight
-// and all three of its icon tooltips, silently, on that route only.
-// A missing arm is exactly what a sweep catches, so this counts them.
-test('U52: every arm of the contract forwards to a pushed child', () => {
+test('PX27: the child-push machinery went WITH the overlay, and nothing needs it', () => {
   const src = read('src/ui/charSheetDoor.js');
-  const overlay = src.slice(src.indexOf('const overlay = {'), src.indexOf('  // Mounted lazily'));
-  for (const arm of ['input', 'click', 'wheel', 'hover', 'tick', 'draw']) {
-    assert.ok(overlay.includes(`${arm}(`), `${arm} is missing from the contract`);
+  // The old overlay could PUSH a canvas child - hiding its own div
+  // while the child drew underneath, then popping back - because the
+  // sheet's four buttons opened CLASSIC windows. PX23 and PX24 gave
+  // all three of those an enhanced window, so the doors now CLOSE the
+  // sheet and hand over rather than stacking on top of it.
+  for (const gone of ["host.style.visibility = 'hidden'", 'stepChild', 'mountEnhancedCharSheet']) {
+    assert.ok(!src.includes(gone), `${gone} retired with the overlay it served`);
   }
-  // each one has to actually reach the child AND step it, or a
-  // finished child never pops and the sheet never comes back
-  for (const arm of ['input', 'click', 'wheel', 'hover', 'tick']) {
-    const at = overlay.indexOf(`${arm}(`);
-    const body = overlay.slice(at, overlay.indexOf('\n    },', at));
-    assert.match(body, /child/, `${arm} must consult the child`);
-    assert.match(body, /stepChild\(\)/, `${arm} must step the child, or a finished one never pops`);
+  // IT LANDS ON STATS. Without this the F5 key opens the pause MENU
+  // and the sheet is one press further in - which is the fault PX26
+  // fixed on the dial's north, arriving here by another road.
+  assert.match(src, /^\s*at: 'stats',$/m, 'F5 lands on the sheet, not on a menu with it inside');
+  // AND IT CLOSES BEFORE IT HANDS OVER. Two overlays at once is U55's
+  // stacking bug; the old sheet solved it by hiding itself and pushing
+  // a child, and this solves it by leaving.
+  for (const arm of ['inventory', 'spellbook', 'logbook']) {
+    assert.match(src, new RegExp(`hooks\\.${arm} \\? \\(\\) => \\{ close\\(\\); hooks\\.${arm}\\(\\); \\} : undefined`),
+      `${arm}: the door closes, THEN hands over`);
   }
-  assert.match(overlay, /draw\(renderer, canvas, font, s\) \{[^}]*child\.draw\?\.\(renderer, canvas, font, s\)/,
-    'draw exists ONLY because the child is canvas - it must pass the whole signature');
-});
-
-test('U52: the sheet hides itself while a canvas child is up', () => {
-  // The child draws on the canvas UNDERNEATH an opaque div. Hidden
-  // rather than removed, so popping back is instant and the scroll
-  // survives - and the pop must restore it or the sheet is invisible
-  // for the rest of its life.
-  const src = read('src/ui/charSheetDoor.js');
-  assert.match(src, /host\.style\.visibility = 'hidden';/, 'push hides');
-  assert.match(src, /host\.style\.visibility = '';/, 'pop restores');
-  const step = src.slice(src.indexOf('const stepChild = ()'), src.indexOf('const open = (which)'));
-  assert.match(step, /child\.dispose\?\.\(\)/, 'a popped child frees whatever it held');
-  assert.match(step, /view\?\.repaint\?\.\(\)/,
-    'the pack may have changed while the inventory was up, and this screen reads gold '
-    + 'and encumbrance FROM the pack');
-});
-
-test('U52: done goes true only after the view is down, and dispose takes the child', () => {
-  const src = read('src/ui/charSheetDoor.js');
-  const close = src.slice(src.indexOf('const close = ()'), src.indexOf('  /** A finished child pops'));
-  const unmountAt = close.indexOf('view?.unmount()');
-  const removeAt = close.indexOf('host.remove()');
-  const firedAt = close.indexOf('fired = true');
-  assert.ok(unmountAt > 0 && removeAt > unmountAt && firedAt > removeAt,
-    'unmount, remove, THEN fire - a DOM node outlives the object reporting done');
-  const dispose = src.slice(src.indexOf('    dispose() {'));
-  assert.match(dispose, /child\?\.dispose\?\.\(\)/,
-    'a host tearing the sheet out must not orphan the window the sheet had pushed');
+  // A host that hands no hook gets NO button - the same honest refusal
+  // the classic sheet gives, rather than a dead one.
+  assert.match(src, /: undefined,\n\s*openSpellbook:/);
+  // ui/enhancedCharSheet.js STAYS: sheetModel is the model both sheets
+  // always read, and the one that remains reads it.
+  assert.match(read('src/ui/enhancedMenu.js'), /import \{ sheetModel \} from '\.\/enhancedCharSheet\.js';/);
+  assert.match(read('src/ui/enhancedCharSheet.js'), /export function sheetModel/);
 });
 
 // ── THE SCREEN'S OWN INPUT ───────────────────────────────────────
