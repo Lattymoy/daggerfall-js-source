@@ -1453,7 +1453,8 @@ So the port places its own. Three parts:
 
 Both hosts now draw the TOWER into their static list (with a collider,
 so you cannot walk through it) and the SAIL per frame. Enhanced skin
-only, the same door the roads take - the 1:1 lane sees Daggerfall's own
+only - the door the roads used to share, until RX removed them whole
+(see below); the 1:1 lane sees Daggerfall's own
 farms, unchanged.
 
 `WINDMILL_MODELS` is **retired**, table and flag together. It answered
@@ -1492,6 +1493,78 @@ and the survivor recorded rather than papered over - `over <= 0`
 weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
 fall-through computes `0 * gain = 0`, which is the answer the guard
 returns.
+
+## RX: THE ROAD SYSTEM, REMOVED WHOLE (2026-08-29)
+
+Mac: *"entirely rip out our road system we have developed. Completely
+remove it entirely."* Done, and this is the record of what went and what
+was left standing.
+
+`03-World/Roads-Arc.md` is deleted with it - written the same day, in
+the same session that removed the thing it described.
+
+### What went
+
+About 5,200 lines.
+
+- **The system**: `systems/roads.js` (the router), `roadBake.js` (the
+  cache and envelope), `roadBakeClient.js` + `roadBakeWorker.js` (RA1's
+  off-thread bake), `roadTravel.js` (planJourney), `roadsBoot.js` (the
+  switch), `world/roadTiles.js` (the ground paint).
+- **The map layer**: `ui/overworldModel.js` loses `roadPoints`,
+  `roadModel`, the Chaikin smoothing and chain simplification, the
+  DISCOVERY half (`buildRevealMask`, `revealLines`,
+  `ROAD_REVEAL_RADIUS`) and the LOD half (`roadLayersForDistance`,
+  `TRACK_FADE_DIST`) - none had a consumer once the layer went.
+  `render/overworldRenderer.js` loses its road pass, its per-chain VAO
+  sets and their teardown.
+- **The switch**: the `roads` preference and its row on the Enhanced
+  pane.
+- **The host**: `scenes/world.js` loses the bake, the network, the
+  ground paint and the two travel-map deps.
+- **Nine suites**, and `tools/roadProbe.mjs` (DELETED).
+
+### What was left standing, and why
+
+- **`systems/travel.js` IS THE VERBATIM PORT AGAIN.** The road term in
+  `travelPixelMinutes` and the two optional deps on
+  `calculateTravelTime` (`path`, `roadAt`) are gone. The only departure
+  that ever touched the travel law is retired with the system, so that
+  module is now the C# and nothing else.
+- **One journey, three consumers.** R4W's property - the card's bill,
+  the drawn route and the camera flight are one computation - outlives
+  the system that prompted it. `_journey` is now verbatim what
+  `planJourney` answered with no network: `walkTravelPath`, priced once.
+  Before R4W these were two walks that agreed by coincidence, and going
+  back to that would be losing something the roads only happened to
+  occasion.
+- **`byRoad` survives as a permanent false**, because the trip card
+  reads it. A pin says so, and says that if it is ever true again
+  something has re-grown a router.
+- **`reliefPoint` / `overworldHeight`'s bilinear sampling.** RR1 added
+  bilinear because smoothed road vertices fell between pixels; nothing
+  feeds it a fractional point now. It stays because it is the correct
+  reading of the surface being drawn, and the next line that curves will
+  want it rather than rediscover the NaN.
+- **The derived-artifact IndexedDB store**, with NO consumer - the road
+  network was its first and only one. Kept as generic plumbing and said
+  out loud in `scenes/dataSource.js` so nobody reads it as live: tearing
+  out a store reclaims nothing and would churn the schema and four
+  unrelated suites that pin the store list.
+
+### Two pins re-aimed rather than deleted
+
+`enhancedMenu.test.js`'s "every switch on the Enhanced pane is REAL" was
+anchored on the roads row; on an empty list that law is vacuous, so it
+is re-aimed at the procedural sky AND now asserts the roads row does not
+come back without its system. `overworldmap.test.js`'s "the window
+computes no travel law of its own" listed `planJourney(` among the
+modules the view must call; it lists `walkTravelPath(` instead, which is
+the same law through one fewer door.
+
+`tools/enhancedMenuProbe.mjs` drove the pane through the roads switch -
+re-aimed at the sky, because what it tests is the pane's switch
+machinery and not which enhancement is sitting in it.
 
 ## WM3 - THE MILL TAKES THE CLIMATE TABLE, and four copies of one loop become one (2026-08-29)
 

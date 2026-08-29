@@ -165,7 +165,12 @@ test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', 
     assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`),
       `the pane toggles '${m[1]}', which is not a uiPrefs key`);
   }
-  assert.match(pane, /prefRow\('roads'/, 'roads is the switch this arc built');
+  // Roads was the switch this arc built, and it went with the road
+  // system (2026-08-29, Mac's call). The pane must still carry a REAL
+  // one, or the law above ("every switch is real") is vacuous on an
+  // empty list - the procedural sky is it.
+  assert.match(pane, /prefRow\('proceduralSky'/, 'the pane carries no live switch at all');
+  assert.doesNotMatch(pane, /prefRow\('roads'/, 'the roads switch is back without its system');
   assert.match(pane, /skinRow\(\)/, 'and the skin switch comes home here');
 
   // the inert half carries a reason and NO control

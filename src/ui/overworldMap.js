@@ -58,15 +58,13 @@ import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
 import { locationSummaryAt } from '../systems/mapDirectory.js';
-import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
-import { planJourney } from '../systems/roadTravel.js';   // R4W: one journey for the bill, the line and the flight
+import { calculateTravelTime, calculateTripCost, travelDays, walkTravelPath } from '../systems/travel.js';
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData } from '../systems/travelMapState.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
   buildOverworldGrid, buildMarkerModel, routePoints, overworldHeight,
   OVERWORLD_DOT_COLORS, OVERWORLD_DOT_SIZES,
-  roadModel, roadLayersForDistance,
 } from './overworldModel.js';
 import { OverworldRenderer } from '../render/overworldRenderer.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -333,9 +331,6 @@ export class OverworldMapWindow {
           cloudY: overworldHeight(0) + CLOUD_LIFT,
           cloudAlpha: this._cloudAlpha(),
           markerScale: clamp(220 / this._cam.dist, 0.35, 2.4),
-          // R3W: trunk roads are always on - they are the shape of the
-          // province - and tracks fade out above TRACK_FADE_DIST.
-          roadLayers: roadLayersForDistance(this._cam.dist),
           rings: this._rings(),
         });
         this._proj = proj; this._view = view; this._vw = w; this._vh = h;
@@ -406,19 +401,6 @@ export class OverworldMapWindow {
       this._grid = grid;
       this._ov.setTerrain(grid);
 
-      // R3W (2026-08-28): THE ROAD LAYER, wired. R1-R3 built the
-      // network, the tracer and the model and then stopped: nothing in
-      // src/ ever called roadModel, and this renderer had no slot to
-      // put one in, so the enhanced map drew no roads at all while the
-      // Switches row promised it did. The chains come in already
-      // traced (roadBake.traceNetwork); the model lifts them onto this
-      // same relief, through the same mapping the route uses.
-      const chains = this.deps.roads?.();
-      if (chains) {
-        this._ov.setRoads(roadModel(chains, {
-          heightBytes: bytes, width: this._size.width, height: this._size.height,
-        }));
-      }
     }
     if (this._markersDirty) {
       this._markersDirty = false;
@@ -584,29 +566,30 @@ export class OverworldMapWindow {
     if (o) setTravelMapPopUpState(o);
   }
 
-  /** R4W - ONE JOURNEY, THREE CONSUMERS: the card's bill, the drawn
-   *  route line and the camera flight. That was R4's whole promise and
-   *  it shipped unwired - the card called calculateTravelTime over
-   *  walkTravelPath and the flight called walkTravelPath again, so
-   *  they were two computations that happened to agree because neither
-   *  knew about roads. planJourney picks the path and the law prices
-   *  THAT path, so the minutes on the card are the minutes of the line
-   *  you watch. Memoised on the journey's inputs, because the card
-   *  re-renders on every toggle. */
+  /** ONE JOURNEY, THREE CONSUMERS: the card's bill, the drawn route
+   *  line and the camera flight. R4W's promise, and it outlives the
+   *  road system that prompted it - before it, the card called
+   *  calculateTravelTime over walkTravelPath and the flight called
+   *  walkTravelPath AGAIN, two computations that agreed only by
+   *  coincidence. One walk, priced once, drawn and flown.
+   *
+   *  This is verbatim what planJourney answered with no network, which
+   *  is the only arm left now that roads are gone:
+   *  `{ path: walkTravelPath(...), byRoad: false, ...calculate(...) }`.
+   *  byRoad stays and stays false - the trip card reads it, and a
+   *  journey by road is a thing this port no longer has.
+   *
+   *  Memoised on the journey's inputs, because the card re-renders on
+   *  every toggle. */
   _journey(dest, opts) {
     const start = this.deps.getPlayerPixel();
-    const network = this.deps.roadNetwork?.() ?? null;
-    const key = `${start.x},${start.y}>${dest.x},${dest.y}|${JSON.stringify(opts)}|${network ? 1 : 0}`;
+    const key = `${start.x},${start.y}>${dest.x},${dest.y}|${JSON.stringify(opts)}`;
     if (this._journeyKey === key) return this._journeyVal;
-    const j = planJourney(start, dest, {
-      enabled: Boolean(network),
-      width: this._size.width,
-      height: this._size.height,
-      climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
-      network,
-      opts,
-      calculate: (s, e, o) => calculateTravelTime(s, e, o, this.deps.getClimateIndex),
-    });
+    const j = {
+      path: walkTravelPath(start, dest),
+      byRoad: false,
+      ...calculateTravelTime(start, dest, opts, this.deps.getClimateIndex),
+    };
     this._journeyKey = key;
     this._journeyVal = j;
     return j;

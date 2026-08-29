@@ -322,13 +322,13 @@ test('U61: the world host builds through the door, once, and gates on it', () =>
     'BOTH openers gate on the door predicate - a single match let one drop its gate unnoticed (the review)');
   // R3W (2026-08-28): read as MEMBERSHIP of the one bag, not as two
   // adjacent lines. The first draft required `woods,` and
-  // `getPlayerPixel:` to be consecutive, so adding the roads dep
-  // between them failed a pin about the relief - a spelling, not the
-  // law it names.
+  // `getPlayerPixel:` to be consecutive, so a dep added between them
+  // failed a pin about the relief - a spelling, not the law it names.
+  // (The dep that taught this was the road layer's, removed 2026-08-29;
+  // the lesson is the reason this reads as membership.)
   const bag = src.slice(src.indexOf('createTravelMapWindow({'));
   assert.match(bag, /\bwoods,/, 'the relief rides the one dep bag');
   assert.match(bag, /getPlayerPixel: playerTravelPixel/, '...and so does the player pixel');
-  assert.match(bag, /roads: \(\) => \{/, '...and the road chains for the map layer');
 });
 
 test('U61: the other three hosts still refuse the map, by name', () => {
@@ -397,18 +397,19 @@ test('U61: the trip on the panel is the law\'s own answer, live per toggle', () 
         { sleepModeInn: opts.sleepModeInn, hasShip: false, travelShip: opts.travelShip });
       return { ...t, ...c, days: travelDays(t.minutes) };
     };
-    // R4W: the trip now rides planJourney, so it carries the chosen
-    // `path` and `byRoad` beside the numbers. Compare the NUMBERS -
-    // which is what this pin was ever about - and separately pin the
-    // property that matters: with NO road network the answer is
-    // classic's, exactly.
+    // R4W: the trip carries the walked `path` and a `byRoad` flag
+    // beside the numbers. Compare the NUMBERS - which is what this pin
+    // was ever about - and separately pin the property that matters:
+    // the answer is classic's, exactly. byRoad outlived the road system
+    // (removed 2026-08-29) as a permanent false, because the card reads
+    // it; if it is ever true again something has re-grown a router.
     const numbers = (t) => ({
       minutes: t.minutes, oceanPixels: t.oceanPixels,
       piecesCost: t.piecesCost, totalCost: t.totalCost, days: t.days,
     });
     assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)),
       'the numbers are calculateTravelTime/TripCost verbatim');
-    assert.equal(st.trip.byRoad, false, 'and with no network the journey is not by road');
+    assert.equal(st.trip.byRoad, false, 'the journey is never by road - there are no roads');
     win._toggleOpt('speedCautious');
     assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)), 'and they follow every toggle');
     win._toggleOpt('travelShip');
@@ -552,11 +553,11 @@ test('U61: the window computes no travel law of its own', () => {
     assert.doesNotMatch(src, new RegExp(forbidden.replace(/[*+()]/g, '\\$&')),
       `the law fragment "${forbidden}" must not be re-derived in the view`);
   }
-  // R4W: planJourney replaced the view's direct walkTravelPath call -
-  // it OWNS the walk now (classic's path is its fallback and its
-  // yardstick), so the view running it is the same law through one
-  // more door, not a law of its own.
-  for (const needle of ['planJourney(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
+  // R4W routed this through planJourney, which OWNED the walk; that
+  // module went with the road system (2026-08-29) and the view calls
+  // walkTravelPath directly again - still systems/travel.js's own
+  // export, still not a law of its own, which is all this pin asks.
+  for (const needle of ['walkTravelPath(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
     'travelMapPopUpState()', 'setTravelMapPopUpState(', 'travelMapFilters()', 'checkLocationDiscovered(']) {
     assert.ok(src.includes(needle), `the view runs the owning module: ${needle}`);
   }

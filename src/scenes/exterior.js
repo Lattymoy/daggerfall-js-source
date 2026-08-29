@@ -104,7 +104,7 @@ import {
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
 import { BODY, ROTOR } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider; WM3: both parts' archives
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure, like the roads
+import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -318,7 +318,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places none,
     // so rmbLayout adds them - the tower is a placement like any other
     // and joins the static list, and only the SAIL needs a matrix per
-    // frame. Enhanced-skin only, the same door the roads take.
+    // frame. Enhanced-skin only - the door the roads used to share,
+    // and since RX removed them whole, the only departure standing here.
     if (millParts) {
       for (const w of b.layout.windmills) {
         const matrix = multiply(originMatrix, w.matrix);
