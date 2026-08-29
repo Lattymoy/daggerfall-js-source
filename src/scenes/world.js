@@ -2474,6 +2474,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     togglePause: () => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        // PX25: the sheet's own doors, through this host's own arms.
+        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
+        openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
         // SAV4: the slot window's seams - the pause SAVE/LOAD doors

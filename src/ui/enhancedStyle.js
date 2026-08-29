@@ -1428,6 +1428,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; }
+/* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
+.px-sheetdoors { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; }
+.px-sheetdoors .act { min-height: 44px; }
 .sb-shell .sb-acts { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
 /* PX23b: the two icons the classic draws, as the words they mean. */
 .sb-shell .sb-frame, .cr-shell .sb-frame { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
