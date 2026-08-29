@@ -25,10 +25,39 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
+import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
 import { compassScroll, breathShortThreshold } from './hud.js';
 import { maxBreath, liveStat } from '../systems/statMods.js';   // PX30b: DFU's own breath ceiling
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
 import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
+
+/**
+ * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
+ * SCALE, as a setting rather than a constant.
+ *
+ * NAMED `enhancedHudScale`, not `hudScale`: the classic HUD already
+ * declares a `hudScale(canvas)` of its own - the canvas fit - and
+ * audit24's one-home pin caught the collision on the first full run.
+ * Two functions with one name in one UI is exactly what that pin is
+ * for.
+ *
+ * It lives in the PORT'S OWN PREFS (`uiPrefs`), not in DFU's settings,
+ * and two pins said so before I listened: settingsDefaults.js is BAKED
+ * from DFU's vendored ini and nothing hand-edits it, and the tier
+ * map's own law is that every key in it "is a real DFU setting". This
+ * is not one - DFU has no HUD of this shape to scale - so it sits
+ * beside the other things only this port has.
+ *
+ * Clamped, because a HUD is not a place to let a typo hide the game:
+ * half size still reads, and double fills a phone.
+ */
+export const HUD_SCALE_MIN = 0.5;
+export const HUD_SCALE_MAX = 2;
+export const enhancedHudScale = () => {
+  const v = Number(getPref('hudScale'));
+  if (!Number.isFinite(v) || v <= 0) return 1;
+  return Math.max(HUD_SCALE_MIN, Math.min(HUD_SCALE_MAX, v));
+};
 
 /** The compass strip's eight points, in the order a turning player
  *  meets them. DFU's own compass is a scrolling strip of the same
@@ -149,14 +178,19 @@ function build(doc) {
   breath.append(el('span', 'hud-breathlabel', 'Breath'), breathTrack);
   bottom.append(breath);
   const bars = el('div', 'hud-bars');
+  // PX30c (Mac: "for the status bars, can we use percentages and
+  // organize them within the bar itself"): THE NUMBER GOES INSIDE.
+  // A figure beside a bar is a second thing to look at; a percentage
+  // ON the bar is the bar saying what it means. The label rides in
+  // there too, so each bar names itself rather than relying on a
+  // colour a player has to learn.
   const vital = (kind, label) => {
     const wrap = el('div', `hud-vital hud-${kind}`);
     const track = el('div', 'hud-track');
     const fill = el('i', 'hud-fill');
-    track.append(fill);
     const num = el('span', 'hud-num');
-    wrap.append(track, num);
-    wrap.title = label;
+    track.append(fill, el('span', 'hud-vlabel', label), num);
+    wrap.append(track);
     bars.append(wrap);
     return { fill, num };
   };
@@ -202,6 +236,15 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   }
   if (last.hidden !== false) { last.hidden = false; host.style.display = ''; }
 
+  // PX30c: the scale, as a CSS variable the whole sheet reads - so one
+  // write moves every bar, chip and letter together rather than
+  // thirty. Guarded, like every other write here.
+  const scale = enhancedHudScale();
+  if (last.scale !== scale) {
+    last.scale = scale;
+    host.style.setProperty('--hud-scale', String(scale));
+  }
+
   // THE COMPASS. Each point is placed by the same shortest-way-round
   // law, and one off the span is hidden rather than clamped to an edge
   // - a marker pinned to the rim says "north is exactly there", which
@@ -237,8 +280,13 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     ['fatigue', parts.fatigue, vitals.fatigue ?? 0, vitals.maxFatigue || 1],
   ];
   for (const [key, part, now, max] of rows) {
-    width(part.fill, `${key}W`, (now / max) * 100);
-    put(part.num, `${key}N`, `${Math.round(now)}`);
+    const pct = (now / max) * 100;
+    width(part.fill, `${key}W`, pct);
+    // A percentage, rounded the way a player reads it - and never 0%
+    // while there is anything left, because "0%" on a living bar is
+    // the same lie "0 min" would have been on the quest timer.
+    const shown = now > 0 ? Math.max(1, Math.round(pct)) : 0;
+    put(part.num, `${key}N`, `${shown}%`);
   }
 
   // THE BREATH. DFU's own two laws: drawn only while holding breath,
