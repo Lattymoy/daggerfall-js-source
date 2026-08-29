@@ -252,7 +252,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1369` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/dungeonContext.js:1405` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3213` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3284` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3321` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:586` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:592` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:829` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -288,10 +288,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2700` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2708` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
 - `src/scenes/worldModes.js:3072` - basket behind `loot.houseOwned` (:919) stays FLAGGED to the
-- `src/scenes/worldModes.js:3658` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3800` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3899` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4237` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:3681` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3823` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3922` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4260` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:

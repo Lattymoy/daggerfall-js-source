@@ -3132,7 +3132,12 @@ export function createWorldModes(host) {
     return true;
   }
 
-  async function tryEnterDungeon(hit, entries) {
+  /** DE1: `preferEnterMarker` names WHICH DFU member the caller is.
+   *  Default FALSE, because the overwhelmingly common way into a
+   *  dungeon is walking through its door - PlayerActivate.cs:645 ->
+   *  TransitionDungeonInterior - and that member takes the START
+   *  marker. startInDungeon passes true for StartDungeonInterior. */
+  async function tryEnterDungeon(hit, entries, { preferEnterMarker = false } = {}) {
     const dfLocation = hit.dfLocation;
     if (!dfLocation || !dfLocation.hasDungeon) return false;
     transitioning = true;
@@ -3200,9 +3205,24 @@ export function createWorldModes(host) {
       mode = 'dungeon';
       dungeonLoc = dfLocation;
       player.collider = ctx.collider;
-      const spawn = ctx.startSpawn();   // ONE source: verbatim MovePlayerToMarker + FixStanding in the context
+      // DE1: WHICH DFU MEMBER THIS IS. Walking in through the door is
+      // TransitionDungeonInterior, which uses the START marker and
+      // aborts where there is none; startInDungeon (a new game) is
+      // StartDungeonInterior, which prefers the ENTER marker. This
+      // function serves both, so the caller says which.
+      const spawn = ctx.startSpawn({ preferEnterMarker });
+      // TransitionDungeonInterior destroys the dungeon and raises
+      // OnFailedTransition when the marker it needs is absent
+      // (:923-929) rather than dropping the player at an invented
+      // point. The port answers false, which is this door's "nothing
+      // happened" - the player stays outside, standing at the door.
+      if (!spawn) { console.error('[dungeon] no start marker; transition aborted'); return false; }
       player.spawn(spawn[0], spawn[1], spawn[2]);
       cam.pos = player.eye;
+      // ...and the orientation half of the same two members: away from
+      // the door you came through, or north for a start with no door.
+      const _yaw = ctx.entryFacingYaw(spawn, { preferEnterMarker });
+      if (_yaw !== null) cam.yaw = _yaw;
       mountQuestResources();   // B2: AddQuestResourceObjects(SiteTypes.Dungeon) on the transition, as PlayerEnterExit raises it
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
         `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris, ${ctx.enemies.length} enemies`);
@@ -3227,7 +3247,10 @@ export function createWorldModes(host) {
     const entries = doorTargets();
     const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
     if (!hit) return false;
-    return tryEnterDungeon(hit, entries);
+    // DE1: this is StartDungeonInterior, not the door transition - the
+    // player is placed inside without ever walking through, so the
+    // ENTER marker wins and the facing is plain north.
+    return tryEnterDungeon(hit, entries, { preferEnterMarker: true });
   }
 
   function tryExitDungeon() {

@@ -113,7 +113,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // The classic dungeon spawn - ONE source (ctx.startSpawn: verbatim
   // MovePlayerToMarker + FixStanding). The old raw-marker spawn put
   // the EYE at the marker - feet under the floor, wedged.
-  const spawn = loadedPos ?? ctx.startSpawn();   // U21: a loaded game resumes where it was saved
+  // DE1: the standalone host is StartDungeonInterior by definition -
+  // it starts the player inside a dungeon with no exterior to have
+  // walked in from - so it keeps preferEnterMarker's default TRUE.
+  // This is the host the enter-marker preference was written for; DE1
+  // found it applied to the door transition as well, which is the
+  // other member and takes the start marker.
+  const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');

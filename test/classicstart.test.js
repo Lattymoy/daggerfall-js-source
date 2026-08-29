@@ -83,8 +83,15 @@ test('U31: startInDungeon routes through tryEnterDungeon, which is what makes th
   // the player exactly as before.
   const body = modes.slice(modes.indexOf('async function startInDungeon()'));
   const fnEnd = body.indexOf('\n  }');
-  assert.match(body.slice(0, fnEnd), /return tryEnterDungeon\(hit, entries\)/,
+  // DE1 re-anchored this from the exact argument list onto the call.
+  // startInDungeon now passes { preferEnterMarker: true } - it is
+  // StartDungeonInterior, not the door transition - and the old
+  // literal match failed for a change that did not touch the law it
+  // holds: REUSE the door path so dungeonReturn is recorded.
+  assert.match(body.slice(0, fnEnd), /return tryEnterDungeon\(hit, entries[,)]/,
     'starting inside must go through the same door path that records dungeonReturn');
+  assert.match(body.slice(0, fnEnd), /\{ preferEnterMarker: true \}/,
+    'and it is the StartDungeonInterior member: the enter marker wins, the facing is north');
   assert.match(modes, /dungeonReturn = \{/, 'the exit landing still depends on dungeonReturn being recorded');
   // and it is on the API the host calls
   assert.match(modes, /^\s{4}startInDungeon,$/m, 'startInDungeon must be exposed to the host');
