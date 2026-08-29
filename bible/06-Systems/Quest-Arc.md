@@ -5351,3 +5351,47 @@ direct-add with a "You have been given" HUD line. It is GivePc.cs
   treasure billboard in this port's vocabulary.
 
 Pins: 4 in `test/questreward.test.js`. Campaign: 8 mutants, 8 killed.
+
+## DQ1 — a quest NPC or item standing in a dungeon could not be clicked (2026-08-29)
+
+B2 mounted quest stands underground. `standDungeonQuestFlat` builds them
+through the *same factory* as the interior's, into the same record
+shape; the frame draws them and ticks their behaviours; the teardown
+frees them. Everything was there except the ray.
+
+`tryExitDungeon` walked exit doors, action objects and loot targets,
+plus a separate `pickQuestFoe` pass for quest **foes** — and nothing
+else. So underground, `clicked npc` and `clicked item` never fired.
+
+**Only kills did, which is why this survived a whole arc.** A dungeon
+quest that asks you to kill something works. One that asks you to pick
+something up, or to speak to someone standing in a crypt, silently does
+not — no error, no log, the click simply lands on the floor behind the
+sprite.
+
+DFU has no scene gate here at all: PlayerActivate's quest-resource arm
+(:326-339) runs on whatever the ray hit, wherever the player is
+standing. The one thing that differs underground is `buildingKey`,
+which `StaticNPC` reads from the runtime data (:299-306) and which is 0
+in a dungeon — exactly as `mapID` is 0 in both.
+
+So the fix is a ray entry and a click route. The interior arm already
+carried forty lines of both, so each got **one home** rather than a
+second copy: `questFlatTargets(list)` and `clickQuestFlat(stand,
+buildingKey)`, with the buildingKey as the only parameter, because it
+is the only thing the two hosts disagree about. The pins assert that
+the `questflat:` key and the `setLastNPCClicked` stamp are each minted
+in exactly one place, so a third host cannot grow a third copy.
+
+Pins: 7 in `test/dungeonquestclick.test.js`. Campaign: 14 mutants, 14
+killed.
+
+**THE LESSON: A PARTIAL PATH REPORTS AS A WORKING ONE WHEN ITS OTHER
+HALF IS THE COMMON CASE.** Quest foes were clickable underground, and
+kills complete most dungeon quests, so every test of "does the quest
+machine work in a dungeon" came back green. The stands were built,
+drawn, updated and torn down correctly — four of five verbs — and the
+fifth was the one nothing exercised. The FOUR HOSTS RULE catches a host
+that is missing a seam; it does not catch a seam that is present and
+half-wired, and this run has now found that shape three times (DT1's
+detect feed, ID1's drop pool, and here).
