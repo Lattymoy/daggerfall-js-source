@@ -314,8 +314,8 @@ test('the world host paints roads from a BINDING, and bakes before it streams', 
 test('the derived store is swept by an ARENA2 re-pick, and the other packs are not', () => {
   // A derived artifact is an ANSWER ABOUT a folder, not a pack the
   // player supplied - keeping it across a re-pick hands the new data
-  // the old map. The music/texture packs have their own lifecycle
-  // and must survive.
+  // the old map. The music/texture/Morrowind packs have their own
+  // lifecycle and must survive.
   const src = readFileSync('src/scenes/dataSource.js', 'utf8');
   const wipe = src.slice(src.indexOf('export async function clearStoredData'));
   // comments stripped, and the assertion is on the CLEAR CALL, not on a
@@ -328,7 +328,7 @@ test('the derived store is swept by an ARENA2 re-pick, and the other packs are n
     'recovery must actually CLEAR the derived store, not merely name it');
   assert.ok(/transaction\(\s*\[[^\]]*DERIVED_STORE/.test(body),
     'and the store must be in the transaction scope or the clear throws');
-  for (const survivor of ['MUSIC_STORE', 'TEXTURE_STORE']) {
+  for (const survivor of ['MUSIC_STORE', 'TEXTURE_STORE', 'MW_STORE']) {
     assert.ok(!new RegExp(`objectStore\\(${survivor}\\)`).test(body),
       `${survivor} must survive a re-pick`);
   }
