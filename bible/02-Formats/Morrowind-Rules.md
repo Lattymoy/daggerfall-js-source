@@ -18,6 +18,8 @@ each stage is provable on the player's own data before the next begins:
         rest pose, MW-D6 the assembled arm DRAWN - and the defect that
         drawing found (below), MW-D7 an idle CLIP played through that
         assembly.
+  MW-D8 THE ARM IS IN THE GAME. Untextured, weaponless, idling. See
+        below - including the two defects that only DRAWING IT found.
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
@@ -142,9 +144,109 @@ four skeletons and 1,125 body records and says nothing about the KF. So
 the fixture's SHAPE is read off OpenMW; its CONTENT is an assumption
 about retail idle data, and generate.py says so at the maker.
 
-NEXT, IN ORDER: (1) MW-D8 - the second-home cleanup above, and an idle
-clip run against Mac's own archives; (2) only then a rig, and only then
-wiring into weaponRig. Nothing MW touches the game today.
+MW-D8: THE ARM REACHES THE SCREEN, and "nothing MW touches the game" is
+no longer true. It is opt-in, off by default, and behind a button on the
+Enhanced pane's Morrowind card.
+
+NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
+ALREADY shipped a first-person pass: renderCharacterSprite
+(render/renderer.js:751) binds an offscreen target with its own depth
+renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
+ones the caller hands it, draws, and restores; drawScreenOverlayQuad
+(:987) composites it fullscreen with an alpha cut and no depth test. It
+was written for a voxel viewmodel that was put on ice in August and has
+had no consumer since. Two recorded rules fall out of it for free:
+
+  rule 29 - the first-person subtree renders with its OWN field of view.
+    We hand the pass `perspective(Math.PI/3, ...)`, which IS the 60-degree
+    default, and the proj/view swap is exactly the mechanism for it.
+  rule 52 - first person gets a bin whose draw CLEARS DEPTH first, so the
+    arms are never clipped by the world. Here that is STRUCTURAL, not
+    emulated: no world geometry is ever drawn into that framebuffer, so
+    there is nothing to be clipped by.
+
+THE TWO DEFECTS DRAWING FOUND, both invisible to every node test:
+
+  D1  THE ARM RENDERED NOTHING - 0 lit texels - with a build that
+      otherwise reported four pieces bound and five clip tracks matched.
+      The placement was copied from the voxel viewmodel, which pushes its
+      rig BACKWARD from the eye and says why: that rig is the player's
+      whole BODY, the camera rides its head, and without the push you
+      render the inside of your own torso (Mac's "stuck in a hole"). This
+      assembly is arms ONLY. There is no head to hide, so the same push
+      put every triangle behind the lens. Arms go IN FRONT of the eye and
+      BELOW the view axis.
+  D2  THE ARM SWUNG AROUND THE PLAYER AS HE TURNED. The model matrix
+      spins the mesh about its own origin, so the centre offset has to be
+      ROTATED before it is backed out of the translation. Subtracting it
+      unrotated left the arm yaw-dependent: 60 lit texels facing one way
+      and 20 facing another with the pose held still. A still screenshot
+      cannot show this. Only a yaw sweep can, and the probe only got one
+      because the MUTATION CAMPAIGN pointed out that at yaw 0 the sine
+      term vanishes and an x-axis error is invisible.
+
+WHAT IT DRAWS, so nobody mistakes a scope boundary for a bug: UNTEXTURED
+grey flat-shaded arms, no weapon in them, playing bare `Idle` forever.
+Rules 36 and 61 (the texture path search, the positional slots) are
+deferred WHOLE, so there is no texture lookup and therefore no magenta
+miss-signal either. Flat shading comes from a face normal computed per
+triangle at pack time - and for a MIRRORED piece that normal is NEGATED,
+because rule 13's X negation reverses the winding and without it the left
+arm lights inside-out. That is rule 13's rendering consequence, which MW8
+also lacked.
+
+THE PORT MAPPER IS A PORT DECISION, RECORDED AS ONE. Rule 54 says the
+first-person camera is a NODE of the rig, tracking "Camera" and falling
+back to "Head". This slice does NOT implement it, because the actor-scale
+rules it needs are tier C - extracted, never verified - and this
+document's own warning is that a tier C rule must be verified before code
+depends on it. Instead a uniform scale is solved ONCE from the arm's
+bounds over the WHOLE clip, so it lands plausibly at any unit scale.
+Solved per frame instead it would renormalise the picture every time the
+arm moved and cancel out the motion it exists to show. The build REPORTS
+whether the skeleton carries a Camera/Head bone, so MW-D9 starts from a
+measurement rather than a guess.
+
+MEASURED, and by what. tools/mwArmProbe.mjs drives the REAL fpArm through
+its deps seam in a real browser against a real WebGL2 context, and reads
+the offscreen target back: no-data refuses without a broken screen; the
+build takes rule 6's skeleton; four pieces bind; the target has ink; the
+arm is in front of the player at EVERY heading; both hands bind and each
+sits on its own side of x=0 at rest; the picture changes across the clip
+in 7 distinct frames and opens to 67% of the frame width while staying
+x-symmetric at 0.86; the loop window is discovered by crossing; a .kf
+keyed to foreign bones REFUSES at the clip stage rather than drawing a
+static plausible arm; and Unload returns the classic sprite.
+
+WHAT THE PROBE CANNOT SEE, stated rather than implied: it does not boot
+the game, because that needs ARENA2 and the player's own Daggerfall data.
+weaponRig's branch, the four hosts' camera dep and the card are pinned in
+node (test/fparm.test.js, test/mwattach.test.js, test/enhancedMenu.test.js)
+and proven by Mac in play. Three mutation campaigns back them: 12/12 on
+the wiring pins, 6/8 on the probe layers, 24/24 inherited from MW-D7.
+
+TWO PROBE MUTANTS SURVIVED AND ARE RECORDED RATHER THAN PAPERED OVER. A
+mapper recomputed per frame still changes the picture, so no pixel layer
+can separate it from a correct one - it is pinned on the SOURCE instead
+(the draw reads built.framing and never arm.bounds). And an active() that
+drops its clip-state term is neutralised by the mesh term, which is
+deliberate defence in depth, not a hole.
+
+TWO SHIPPED PINS WERE STRENGTHENED, NEITHER LOOSENED. MWFIX's "the
+classic sprite path is the ONLY path" named its own successor in its
+comment - "when the rig returns this reverts to the else-of-an-active-view
+form" - and that is what it now is, asserting the ORDER and the RETURN
+where it used to grep one literal it could not condition on. MWFIX 3,
+absent on purpose since the revert because no code had the mechanism, is
+RESTORED: the rig polls morrowindDataGeneration() and drops a stale arm,
+so attaching data mid-game is never silently ignored again.
+
+NEXT, IN ORDER: (1) the texture - rules 36 and 61, which needs a dynamic
+vertex door on the textured program and a DDS upload; (2) rule 54's
+camera bone, now that the build reports whether the data has one, which
+retires the port mapper; (3) the weapon in the hand (rules 8, 17) and
+only then attack clips. Also booked from MW-D7 and NOT done here:
+mwViewer.js:342-348 is still a second home for clip time.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

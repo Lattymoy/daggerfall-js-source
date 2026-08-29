@@ -21,7 +21,12 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
-// and runs untouched otherwise.
+// MW-D8: the classic sprite is still the DEFAULT and still the fallback,
+// and runs untouched otherwise. The Morrowind arm below is an opt-in
+// layer that either draws whole or does not draw at all - there is no
+// state in which both reach the screen, and none in which neither does.
+import { fpArm } from './fpArm.js';
+import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
@@ -39,8 +44,29 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true }) {
   const playerWeapon = new PlayerWeapon({});
+  // MW-D8. `camera` is REQUIRED for the Morrowind arm and there is no
+  // fallback: a host that does not pass one gets the classic sprite and
+  // a named reason, never a plausible arm in the wrong place. An arm
+  // drawn at the world origin while the player stands elsewhere is the
+  // shape of failure this arc keeps shipping.
+  fpArm.attach(renderer, camera);
+  // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
+  // construction, so attaching data to a running game changed nothing
+  // until a reload - which is what "after uploading does not work at
+  // all" actually was. A monotonic generation is the cheapest honest
+  // signal a live consumer can poll. The rig does not rebuild by itself
+  // (the parse is seconds long and belongs behind a button); it drops a
+  // stale arm, so what is on screen never outlives the data it was
+  // built from.
+  let _mwGen = morrowindDataGeneration();
+  const fpRecheck = () => {
+    const g = morrowindDataGeneration();
+    if (g === _mwGen) return;
+    _mwGen = g;
+    fpArm.unload();
+  };
   // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
   // the two EXTERIOR hosts by hand, so the interior host (which owns
   // its own rig) kept swinging the interim dagger inside every
@@ -153,6 +179,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // swing sound at the HIT FRAME of a swing that hit no enemy
       // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
       // both of which ride the machine's events at the hosts now.
+      fpRecheck();
+      // Paralysis freezes the arm as it freezes the swing - a clip that
+      // keeps idling while the player cannot move is the animation
+      // saying something the game does not mean.
+      if (!paralyzed && fpArm.active()) fpArm.update(dt);
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
@@ -161,6 +192,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();
+      // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
+      // and the classic sprite draws exactly as it always has. The return
+      // is load-bearing: without it both composite and the player sees a
+      // weapon sprite pasted over a pair of hands.
+      if (fpArm.active()) { fpArm.draw(c); return; }
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     },

@@ -1243,6 +1243,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
+    // MW-D8: the Morrowind arm rides the player's eye. Required, not
+    // optional - a host that forgets it gets the classic sprite and a
+    // named reason rather than an arm at the world origin.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw }),
     spellArmed: () => magic.spellArmed(),   // M2
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.

@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+const exists = (p) => { try { read(p); return true; } catch { return false; } };
 
 // THE ENHANCED BRANCH ALONE. Two of the first pins here SURVIVED their
 // mutations because they searched the whole of main.js and matched the
@@ -196,6 +197,25 @@ test('R7: the pane does not claim a feature the tree does not have', () => {
     'the pane must not still label the shipped sky "not built"');
   assert.ok(!/Nothing procedural is built yet/.test(pane),
     'the stale ES1 denial sentence must be gone');
+
+  // MW-D8 EXTENDS THIS PIN RATHER THAN NEGOTIATING WITH IT. The bans
+  // above are the whole of what R7 could see - a `prefRow` that exists -
+  // so a CARD that describes a feature was invisible to it in both
+  // directions: it could not stop a lying card, and it could not notice
+  // a truthful one. The Morrowind card now names the first-person arms,
+  // so the claim has to be backed by a module the game actually imports.
+  if (/first-person arm/i.test(pane)) {
+    assert.ok(exists('src/combat/fpArm.js'),
+      'the pane names the arms, so the engine must exist');
+    assert.match(read('src/combat/weaponRig.js'), /import \{ fpArm \} from '\.\/fpArm\.js';/,
+      'and the weapon rig must actually import it - a card is not a feature');
+    assert.match(pane, /fpArm\.build\(/, 'and the button must call the real build');
+  }
+  // The stale denial, retired the way RA1 retired the sky's: the card
+  // said the layer "is NOT built - it was removed", and that sentence
+  // stopped being true the moment the arm shipped.
+  assert.ok(!/first-person layer is NOT built/.test(pane),
+    'the pre-MW-D8 denial sentence must go when the arm lands, exactly as the sky\'s did');
 });
 
 // AUDIT F3/F4: two destructive actions shipped without a confirm -
