@@ -119,6 +119,12 @@ export default defineConfig({
         // because the reverted first-person arc asked for a skeleton
         // file that is not in Morrowind.bsa and never said so.
         mwInspect: 'mw-inspect.html',
+        // MW-IMPORT SLICE 2: the Morrowind mesh viewer - user-supplied
+        // Morrowind.bsa / loose NIFs through a picker, nothing baked in.
+        // Doubles as the record-coverage scout for the strict NIF reader,
+        // and as the visual proving ground the first-person rig has to
+        // pass before it goes anywhere near the game.
+        mwViewer: 'mw-viewer.html',
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',
