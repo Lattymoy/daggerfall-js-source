@@ -787,3 +787,83 @@ the entry and got to initialise first. The failure only appeared when
 another module reached it earlier. Import order decides who lands in
 the dead zone, so the test that proves a cycle absent is the whole
 suite - a single load is a green light that means nothing.
+
+## IF1 - THE INFIGHTING AUDIT (2026-08-29)
+
+Mac: *"I noticed in the dungeon, that enemies don't attack each other.
+Can you do an audit on that."*
+
+**The audit's finding is that the machinery is complete and correct at
+every layer that can be measured off the tree.** That is a real result
+and not a shrug - it moves the question from "is it built?" to "which
+of two live-only explanations is it?", and it rules out the six things
+that would otherwise have been guessed at. Each layer is now a pin, so
+a change that breaks one fails in the suite rather than becoming this
+report again.
+
+What was checked, in order, and how:
+
+1. **The settings gate.** `Enhancements/EnemyInfighting` defaults
+   `"True"` in `settingsDefaults.js`, matching DFU's own "Ships True".
+   Off would have explained everything; it is on.
+2. **The data.** All 62 rows of `ENEMY_BASICS` carry a `team`, across
+   20 distinct teams. A row without one falls back to `PlayerEnemy`,
+   and a table where every monster fell back would make the team test
+   `targetEntity.team === selfTeam` true for every pair - silently no
+   infighting anywhere. Not the case.
+3. **The dungeons' own contents.** 43 of 45 encounter tables produce
+   MULTIPLE teams. This is the one that could have ended the audit the
+   other way: had most dungeons drawn from a single team, *no
+   infighting would be DFU-correct* and there would be nothing to fix.
+4. **Selection.** A probe over the real module: a Vermin rat picks an
+   Undead skeleton over a distant player.
+5. **The negative cases.** Same-team falls back to the player (DFU's
+   `if (targetEntity.Team == enemyEntity.Team) continue`), and so does
+   infighting-off (the else-arm rejects every non-player target).
+6. **The cadence.** `runTargetMachine` driven at 1/60s retargets after
+   0.283s - DFU's senses interval, not a stall.
+7. **The dungeon host's wiring, end to end.** Its live pool goes in as
+   `candidates`; `sensesContext` preserves the key rather than dropping
+   it in transit; `_armed` builds the per-foe closure; the motor sets
+   `_armedTargeting` from it; and all three action arms fork on a
+   non-player target - melee through `resolveFoeMeleeVsFoe`, missiles
+   through `hurtFromFoe`, casting through `f.ai.target.entity`.
+
+Two things nearly became the answer and were not, both worth recording
+because both were checked rather than assumed:
+
+- **The static-import grep said the dungeon never imports the target
+  machine.** It does - through `foeDeps`, loaded dynamically precisely
+  so a foe-less dungeon does not pay for `enemyMotor`. The grep was a
+  proxy; the call site is the measurement.
+- **`wouldBeSpawned` looked like a plausible silent gate.** It is
+  computed live per classic update in the motor.
+
+### What the audit could NOT do, and what it ships instead
+
+It could not run the game. This container has no ARENA2 data and the
+dungeon needs a browser, so "it works at every layer I can reach" is
+exactly as far as the evidence goes - and a fix invented past that
+point would be a guess dressed as a slice.
+
+So IF1 ships the **instrument**: an F8 census line reading
+
+    foes N  armed A  vsFoe V  deps yes/NO  teams Vermin,Undead,...
+
+off a real dungeon. It separates every remaining hypothesis in one
+keypress:
+
+| reading | meaning |
+|---|---|
+| `deps NO` | the foe subsystem failed to init; nothing else matters |
+| `armed 0` | the target machine is not running in this host |
+| `teams` shows one | one team present - no infighting is CORRECT here |
+| `vsFoe 0`, teams 2+ | selection is running and rejecting; the bug is in the gates |
+| `vsFoe > 0` | they ARE picking each other; the gap is downstream |
+
+Pins: 7 in `test/infighting.test.js`. Campaign: 12 mutants, 12 killed -
+including the census being *defined but never drawn*, which is the
+drawn-door rule applied to a diagnostic. The harness's new
+anchor-uniqueness check earned its keep a second time, refusing
+`'team': 'Undead'` (9 matches) before it could mutate a row the pins do
+not cover.

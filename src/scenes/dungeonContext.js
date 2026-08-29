@@ -496,6 +496,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      foeDeps = null;
    }
   }
+  /** IF1: the infighting census for the F8 debug HUD. Counts what the
+   *  target machine is actually doing to THIS host's live pool, so a
+   *  report of "enemies don't fight each other" can be read off the
+   *  screen instead of reasoned about. See the call site for how each
+   *  reading is diagnosed. */
+  function _foeCensus() {
+    const live = foes.filter((f) => !f.dead && f.ai);
+    const armed = live.filter((f) => f.ai._armedTargeting).length;
+    const vsFoe = live.filter((f) => f.ai._armedTargeting && f.ai.target
+      && !(foeDeps?.isPlayerTarget?.(f.ai.target) ?? true)).length;
+    const teams = [...new Set(live.map((f) => f.entity?.team ?? '?'))];
+    return `foes ${live.length}  armed ${armed}  vsFoe ${vsFoe}  deps ${foeDeps ? 'yes' : 'NO'}  teams ${teams.join(',') || 'none'}`;
+  }
+
   /** One foe from a spawn record { mobileType, gender, x, y, z,
    *  spawnDistanceType } - the load loop's body, extracted so the
    *  E-slice encounter spawner can mint foes at runtime (a rest
@@ -3059,6 +3073,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         `hp ${playerEntity.health}/${playerEntity.maxHealth}  mp ${playerEntity.magicka}/${playerEntity.maxMagicka}`,
         `mouse ${_mouseState}`,
         `input ${_inputState}`,
+        // IF1 (Mac: "in the dungeon, enemies don't attack each other"):
+        // the infighting census, because every layer of that feature
+        // reads correct on paper and the question is which one is not
+        // firing in a real dungeon. One line separates all of them:
+        //   armed 0        -> the target machine is not running here
+        //   teams 1        -> one team present, so NO infighting is
+        //                     DFU-correct and there is nothing to fix
+        //   vsFoe 0 with   -> selection is running and rejecting every
+        //     teams 2+        candidate; the bug is in getTargets' gates
+        //   vsFoe > 0      -> they ARE picking each other, and the gap
+        //                     is downstream in acting or in visibility
+        _foeCensus(),
       ];
       lines.forEach((t, i) => drawText(renderer, hudFont, t, 4 * s2, (4 + i * 9) * s2, s2, [0.4, 1, 0.5, 1]));
     }
