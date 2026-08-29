@@ -4,7 +4,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ROTOR } from '../src/world/windmillMesh.js';
+import { ROTOR, BODY } from '../src/world/windmillMesh.js';
+import { ROTOR_HUB } from '../src/world/windmills.js';
 import { parseCollada } from '../scripts/bakeWindmill.mjs';
 import { ROTOR_AXIS } from '../src/world/windmills.js';
 
@@ -122,4 +123,71 @@ test('WM2a: the reader REFUSES a mesh it does not fully understand', () => {
   assert.throws(() => parseCollada(src.replace(/TEXTURE[._]\d+[._]\d+/g, 'SomeModTexture')),
     /names no classic texture/,
     'a texture that is not a classic archive/record must not bake - we cannot ship the file it wants');
+});
+
+// ---------------------------------------------------------------------------
+// WM2e: THE HANDEDNESS, and the pin that should have existed at WM2a.
+//
+// Mac's screenshot: the sail hanging in mid-air beside the mill, and the
+// tower standing off its spot on a path. ONE root cause. Collada is
+// right-handed and Unity is left-handed, and every number the mod carries
+// - the prefab's hub offset, the placements - is written in Unity's
+// space. The bake now negates X to reach it.
+//
+// Both faults follow from not doing that. The hub offset (x +3.96) was
+// applied to a body whose cap sat at x -3.95, the mirror of it, so the
+// sail mounted on nothing. And mirroring a body whose bounds are NOT
+// symmetric about its origin (-12.06..3.89) swings its mass eight units
+// across the anchor, which is what stood the tower on the path.
+//
+// Every pin the arc had still passed, because they all asked about the
+// rotor ALONE - is it flat, is it centred, does it spin - and never once
+// asked whether it meets the mill. These do.
+// ---------------------------------------------------------------------------
+
+test('WM2e: the hub lands ON the windshaft, not in mid-air beside it', () => {
+  // The fault Mac could see, as a number. The hub is the point the sail
+  // turns about; if the nearest scrap of tower is further than a sail is
+  // thick, the sail is mounted on nothing.
+  let nearest = Infinity;
+  for (let i = 0; i < BODY.positions.length; i += 3) {
+    nearest = Math.min(nearest, Math.hypot(
+      BODY.positions[i] - ROTOR_HUB[0],
+      BODY.positions[i + 1] - ROTOR_HUB[1],
+      BODY.positions[i + 2] - ROTOR_HUB[2]));
+  }
+  assert.ok(nearest < 3, `the hub is ${nearest.toFixed(2)} from the nearest piece of mill `
+    + '- the sail is hanging in mid-air (it was 5.54 before the handedness fix)');
+});
+
+test('WM2e: the hub sits at the CENTRE of the cap, on the axis it turns about', () => {
+  // Closeness alone is not enough - a hub could be near the wrong corner.
+  // The cap is the mill's upper structure; the shaft comes out of its
+  // middle, so the hub must share its centre in the two axes across the
+  // shaft, and stand clear of it along the shaft.
+  const cap = [];
+  for (let i = 0; i < BODY.positions.length; i += 3) {
+    if (BODY.positions[i + 1] > 3) cap.push([BODY.positions[i], BODY.positions[i + 1], BODY.positions[i + 2]]);
+  }
+  assert.ok(cap.length > 50, 'the body has no cap to mount a sail on');
+  const mid = (k) => (Math.min(...cap.map((p) => p[k])) + Math.max(...cap.map((p) => p[k]))) / 2;
+  assert.ok(Math.abs(ROTOR_HUB[0] - mid(0)) < 1,
+    `the hub is at x ${ROTOR_HUB[0]}, the cap's centre is ${mid(0).toFixed(2)} - a mirrored body reads exactly like this`);
+  assert.ok(ROTOR_HUB[1] > Math.min(...cap.map((p) => p[1])) && ROTOR_HUB[1] < Math.max(...cap.map((p) => p[1])),
+    'the hub is above or below the cap entirely');
+  // ...and along the shaft it stands OUTSIDE the cap - a sail turning
+  // inside the roof is not a windmill.
+  const capMaxZ = Math.max(...cap.map((p) => p[2]));
+  assert.ok(ROTOR_HUB[2] > capMaxZ, `the hub (z ${ROTOR_HUB[2]}) is buried in the cap (reaches z ${capMaxZ.toFixed(2)})`);
+  assert.ok(ROTOR_HUB[2] - capMaxZ < 4, 'the hub stands too far off the cap to be on a shaft');
+});
+
+test('WM2e: the bake reaches the space the mod\'s own numbers are in', () => {
+  // The conversion itself, held from the source side: drop it and every
+  // number taken from a prefab or a WorldData block silently means its
+  // mirror image.
+  const bake = readFileSync(join(root, 'scripts/bakeWindmill.mjs'), 'utf8');
+  assert.match(bake, /positions\[i\] = -positions\[i\]/, 'the X negation is gone');
+  assert.match(bake, /normals\[i\] = -normals\[i\]/, 'the normals were not mirrored with the vertices');
+  assert.match(bake, /indices\[i \+ 2\] = t/, 'a mirror turns triangles inside out - the winding must reverse with it');
 });

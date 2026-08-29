@@ -102,7 +102,7 @@ import {
 } from '../world/weather.js';
 // WM2b: the windmill's law, and the vendored rotor it turns.
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
-import { BODY, ROTOR } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider; WM3: both parts' archives
+import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -264,21 +264,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // when a block here actually stands one - a town with no farm pays
   // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
   const millCount = loc.blocks.reduce((n, b) => n + b.layout.windmills.length, 0);
-  const millParts = (millCount && isEnhanced()) ? await getWindmillMeshes() : null;
+  const millParts = (millCount && isEnhanced())
+    ? await getWindmillMeshes(climateBase, season === SEASON.Winter) : null;
   console.log(`[windmills] ${millCount} placed in ${locationName}`
     + (millCount && !isEnhanced() ? ' - classic skin, not drawn' : '')
     + (millCount ? '' : ' - no block here stands one'));
-  // WM3: the mill takes the climate table like every other model. Its
-  // submeshes name CLASSIC (archive, record) pairs, so nothing about it
-  // is special here - and it MUST run, because a farm block can be the
-  // only thing on a map pixel and then no other model has put 364/369
-  // in the table. The tower's walls (364_2) and roof (369_3) are the
-  // two that move; the sail's own pair and the plank/door do not - see
-  // the note in test/windmillclimate.test.js.
-  if (millParts) {
-    await remapSubMeshes(BODY.subMeshes, texRemap, climateArchive, pipeline);
-    await remapSubMeshes(ROTOR.subMeshes, texRemap, climateArchive, pipeline);
-  }
   // Player collision (P1): every placed model's triangles, world-space,
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);

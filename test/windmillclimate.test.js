@@ -1,18 +1,27 @@
-// WM3 — THE MILL TAKES THE CLIMATE TABLE, and the four copies of the
-// remap loop become one.
+// WM3 — THE ONE REMAP SEAM, and the finding that arrived a slice late.
 //
-// Two halves, and they are pinned differently on purpose.
+// WM3 set out to run the mill through the climate table and was
+// OVERTAKEN by WM2e, which skins the mill from Kamer's own seventeen
+// variant prefabs instead - a better answer, because his roofs do NOT
+// follow ClimateSwaps (369_0 mountain, 369_1 swamp, 69_1 desert) and no
+// amount of ApplyClimate produces them. The mill half was dropped
+// rather than shipped beside it.
 //
-// THE LAW half is real behaviour: applyClimate is a pure function and
-// the mill's five (archive, record) pairs are constants, so what a
-// snowbound mill's walls become is computable here with no GL and no
-// ARENA2. It is also where the arc's own open item turns out to have
-// named the wrong part - see below.
+// What survives is the part WM2e did not touch and the part it
+// corroborates:
 //
-// THE WIRING half is a source sweep, for R5's reason this arc has now
-// quoted three times: R5 wired a paint into buildPixel, everything
-// passed, and the world host was dead on its first terrain load,
-// because nothing in the suite drives that path.
+// THE SEAM. The remap loop had four copies - exterior, world,
+// interiors, dungeons - and the mill would have been a fifth. It lives
+// once now, in src/world/texRemap.js, taking the LAW as an argument.
+//
+// THE LAW half is kept because it is INDEPENDENT EVIDENCE for a claim
+// WM2e makes from the other side. WM2e says the sail is 067_1 in every
+// one of the seventeen prefabs; these pins say ClimateSwaps would not
+// have moved it either, computed from the shipped classifier over the
+// whole climate/season cross product. Two sources, one answer - which
+// is worth more than either alone, and is why the arc's old open item
+// ("no climate swap on the ROTOR ... a snowbound mill has summer
+// sails") was naming the wrong part.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,31 +30,26 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { applyClimate, SEASON } from '../src/world/climateSwaps.js';
-import { BODY, ROTOR } from '../src/world/windmillMesh.js';
+import { BODY, ROTOR, CLIMATE_SKINS } from '../src/world/windmillMesh.js';
 import { remapSubMeshes } from '../src/world/texRemap.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
 
 const BASE = { Desert: 0, Mountain: 100, Temperate: 300, Swamp: 400 };
-const EXTERIOR_HOSTS = ['src/scenes/exterior.js', 'src/scenes/world.js'];
-// THE FOUR HOSTS (17e). Mills stand outdoors only, so the two exterior
-// hosts are the ones that wire the mill; the other two are named here
-// because the SEAM is theirs too - interiors run the same climate law
-// over their own submeshes, dungeons run the RDB texture table through
-// the same loop. Neither draws a windmill and neither should.
-const REMAP_HOSTS = [...EXTERIOR_HOSTS, 'src/scenes/interiorContext.js', 'src/scenes/dungeonContext.js'];
+// THE FOUR HOSTS (17e). No mill is wired here - WM2e owns the mill's
+// skin - but the SEAM is all four hosts': the three climate hosts run
+// ApplyClimate over their submeshes and the dungeon runs the RDB
+// texture table, through one loop.
+const REMAP_HOSTS = ['src/scenes/exterior.js', 'src/scenes/world.js',
+  'src/scenes/interiorContext.js', 'src/scenes/dungeonContext.js'];
 
-test('WM3: the mill answers ApplyClimate, and it is the TOWER that moves - not the sail', () => {
-  // The World-Arc's open item read "No climate swap on the ROTOR ... a
-  // snowbound mill has summer sails". Half right, and the wrong half is
-  // the interesting one: the rotor's two archives are TEXTURE.000
-  // record 77 and TEXTURE.067 record 1, and neither classifies - 0 and
-  // 67 are in no exterior, interior or nature set, so ApplyClimate
-  // returns them unchanged in every climate and every season. The
-  // sails were never going to swap. What was actually wearing summer in
-  // the snow is the TOWER: walls 364_2 (Exterior_Village) and roof
-  // 369_3 (Exterior_Roofs), both of which support winter.
+test('WM3: ApplyClimate would not have moved the sail either - WM2e from the other side', () => {
+  // The rotor's two archives are TEXTURE.000 record 77 and TEXTURE.067
+  // record 1, and neither classifies: 0 and 67 are in no exterior,
+  // interior or nature set. So the sail is fixed under the climate law
+  // in all twelve combinations - the same answer Kamer's prefabs give
+  // by carrying 067_1 in every one.
   for (const base of Object.values(BASE)) {
     for (const season of Object.values(SEASON)) {
       for (const sm of ROTOR.subMeshes) {
@@ -55,8 +59,9 @@ test('WM3: the mill answers ApplyClimate, and it is the TOWER that moves - not t
       }
     }
   }
-  // The tower's other three - plank 067_1 twice and door 332_0 - are
-  // equally inert, and for the same reason. Exactly two pairs move.
+  // And on the body, the two slots that move under the climate law are
+  // the two slots WM2e's skin table moves: walls and roof. The plank
+  // (067_1, twice) and the door (332_0) are inert both ways.
   const movers = new Set();
   for (const base of Object.values(BASE)) {
     for (const season of Object.values(SEASON)) {
@@ -70,10 +75,11 @@ test('WM3: the mill answers ApplyClimate, and it is the TOWER that moves - not t
   assert.deepEqual([...movers].sort(), ['364_2', '369_3']);
 });
 
-test('WM3: the mill wears every climate and its winter, byte for byte', () => {
-  // deepEqual against the whole table, not a spot check: a spot check
-  // on one climate survives a one-character mutation of the base
-  // arithmetic, and A PIN MUST FAIL (17e).
+test('WM3: where the two laws AGREE and where they part - and why the port follows Kamer', () => {
+  // This is the pin that says WM3's original plan was the wrong one.
+  // deepEqual against the whole table, not a spot check: a spot check on
+  // one climate survives a one-character mutation of the base
+  // arithmetic (A PIN MUST FAIL).
   const walls = (b, s) => applyClimate(364, 2, b, s);
   const roof = (b, s) => applyClimate(369, 3, b, s);
   const table = [];
@@ -83,13 +89,14 @@ test('WM3: the mill wears every climate and its winter, byte for byte', () => {
     }
   }
   assert.deepEqual(table, [
-    // Desert has no winter at all (ApplyClimate clears supportsWinter
-    // for the whole base), so its three seasons are one archive.
+    // Desert has no winter at all - ApplyClimate clears supportsWinter
+    // for the whole base, which is the SAME rule Kamer's prefabs state
+    // independently by shipping no winter desert mill.
     [BASE.Desert, SEASON.Summer, 64, 69],
     [BASE.Desert, SEASON.Winter, 64, 69],
     [BASE.Desert, SEASON.Rain, 64, 69],
-    // Mountain, temperate and swamp winter by +1. Exterior sets carry
-    // no rain variant, so rain reads as summer.
+    // Mountain, temperate and swamp winter by +1. Exterior sets carry no
+    // rain variant, so rain reads as summer.
     [BASE.Mountain, SEASON.Summer, 164, 169],
     [BASE.Mountain, SEASON.Winter, 165, 170],
     [BASE.Mountain, SEASON.Rain, 164, 169],
@@ -100,11 +107,31 @@ test('WM3: the mill wears every climate and its winter, byte for byte', () => {
     [BASE.Swamp, SEASON.Winter, 465, 470],
     [BASE.Swamp, SEASON.Rain, 464, 469],
   ]);
-  // And the temperate summer identity is the reason this was invisible:
-  // the vendored mill is authored in TEMPERATE archives, so in the one
-  // climate a developer is most likely to load, the missing swap is a
-  // no-op. It only ever showed somewhere else.
-  assert.equal(walls(BASE.Temperate, SEASON.Summer), 364);
+
+  // THE WALLS AGREE. Kamer's wall archive is exactly ApplyClimate's, in
+  // every base and both seasons - only the RECORD differs, which the
+  // climate law never touches.
+  for (const [base, skin] of CLIMATE_SKINS) {
+    assert.equal(skin.walls[0], walls(base, SEASON.Summer), `${skin.name} summer walls`);
+    assert.equal(skin.winterWalls[0], walls(base, SEASON.Winter), `${skin.name} winter walls`);
+  }
+  // THE ROOFS DO NOT, and that is the whole reason the mill is skinned
+  // from his prefabs rather than run through the table. HALF the summer
+  // roofs part company - he keeps the temperate 369 in mountain and
+  // swamp where the climate law rebases to 169 and 469 - and EVERY
+  // winter roof is his one snow roof, 103_1, an archive ApplyClimate
+  // would never produce in any base. Desert and temperate agree on the
+  // archive and differ only in the record, which the climate law never
+  // touches.
+  const disagree = [...CLIMATE_SKINS].filter(([base, skin]) =>
+    skin.roof[0] !== roof(base, SEASON.Summer));
+  assert.deepEqual(disagree.map(([, s]) => s.name).sort(), ['Mountain', 'Swamp']);
+  for (const [base, skin] of CLIMATE_SKINS) {
+    if (base === BASE.Desert) continue;   // the desert mill never winters
+    assert.equal(skin.winterRoof[0], 103, `${skin.name} winter roof is Kamer's snow roof`);
+    assert.notEqual(skin.winterRoof[0], roof(base, SEASON.Winter),
+      `${skin.name}'s winter roof happens to match the climate law - re-read this pin`);
+  }
 });
 
 test('WM3: the shared seam remaps, prunes the short archive, and never re-keys', async () => {
@@ -123,8 +150,8 @@ test('WM3: the shared seam remaps, prunes the short archive, and never re-keys',
   assert.deepEqual([...texRemap.entries()], [['369_3', '170_3']]);
   assert.deepEqual(uploaded, ['170_3']);
   // 364_2 is pruned, not mapped: 165 is two records long. A pruned pair
-  // keeps its ORIGINAL texture, which is a summer wall on a winter
-  // mill - honest, and better than sampling past the end.
+  // keeps its ORIGINAL texture - honest, and better than sampling past
+  // the end.
   assert.equal(texRemap.has('364_2'), false);
 
   // Asked twice (the world host asks per map pixel), the seam neither
@@ -135,20 +162,6 @@ test('WM3: the shared seam remaps, prunes the short archive, and never re-keys',
   // An absent model arrives as undefined - the seam guards the VALUE.
   await remapSubMeshes(undefined, texRemap, law, deps);
   assert.equal(texRemap.size, 1);
-});
-
-test('WM3: both exterior hosts run the mill through the climate table', () => {
-  for (const host of EXTERIOR_HOSTS) {
-    const text = src(host);
-    assert.match(text, /remapSubMeshes\(BODY\.subMeshes, texRemap, climateArchive/,
-      `${host} never climate-swaps the mill's tower`);
-    assert.match(text, /remapSubMeshes\(ROTOR\.subMeshes, texRemap, climateArchive/,
-      `${host} never climate-swaps the mill's sail`);
-    // The mill draws with the SAME table its neighbours draw with - a
-    // second map would be a second answer to one question.
-    assert.match(text, /drawMesh\(millParts\.rotor,[\s\S]{0,120}?texRemap\)/,
-      `${host} draws the sail without the remap table`);
-  }
 });
 
 test('WM3: ONE DFU MEMBER, ONE EXPORT - no host keeps its own copy of the loop', () => {
@@ -163,4 +176,17 @@ test('WM3: ONE DFU MEMBER, ONE EXPORT - no host keeps its own copy of the loop',
       `${host} writes the remap table itself - the loop has been copied back`);
   }
   assert.match(src('src/world/texRemap.js'), /texRemap\.set\(/);
+});
+
+test('WM3: the mill does NOT go through the scene table - WM2e owns its skin', () => {
+  // Recorded as a rule because it is the thing WM3 nearly shipped. The
+  // scene's texRemap is keyed "archive_record" over the WHOLE location:
+  // the mill's walls are 364_2, a key its neighbours carry, so remapping
+  // it for the mill re-skins them too. The mill's own mesh is uploaded
+  // per climate instead.
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    const text = src(host);
+    assert.doesNotMatch(text, /remapSubMeshes\((?:BODY|ROTOR)\.subMeshes/,
+      `${host} pushes the mill through the scene-wide remap table`);
+  }
 });

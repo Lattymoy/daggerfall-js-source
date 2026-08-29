@@ -176,7 +176,7 @@ import {
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';   // WM2b: the sails
-import { BODY, ROTOR } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider; WM3: both parts' archives
+import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
@@ -462,17 +462,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // player and a world-keyed phase would re-seed every mill in
         // sight on every shift.
         if (b.layout.windmills.length && isEnhanced()) {
-          const parts = await getWindmillMeshes();
+          const parts = await getWindmillMeshes(climateBase, season === SEASON.Winter);
           if (!millParts) {
             millParts = parts;
             console.log(`[windmills] first mill streamed in (${b.blockName})`);
           }
-          // WM3: the mill takes the climate table like every other
-          // model, and here it must be asked PER PIXEL - the table is
-          // per-pixel and a lone farm pixel has no other model to put
-          // 364/369 in it.
-          await remapSubMeshes(BODY.subMeshes, texRemap, climateArchive, pipeline);
-          await remapSubMeshes(ROTOR.subMeshes, texRemap, climateArchive, pipeline);
           for (const w of b.layout.windmills) {
             const local = multiply(originMatrix, w.matrix);
             models.push({ gpu: parts.body, local });

@@ -67,15 +67,28 @@ NOT here, and not because of the author:
   party's file we cannot draw and do not use is not attribution, it is
   clutter.
 
-## Coordinates
+## Coordinates - AND THE HANDEDNESS
 
-The mesh data is used AS EXPORTED. Blender writes `up_axis Z_UP` and
-bakes the object transform into the node matrix, and that matrix
-(`x, y, z -> x, -z, y`) composed with the standard Z-up-to-Y-up
-conversion is the IDENTITY - so these coordinates are already in the
-port's Y-up world units, and `scripts/bakeWindmill.mjs` applies no
-transform at all. Verified numerically by the bake, which fails if the
-sail is not flat in exactly one axis.
+**Collada is right-handed; Unity is left-handed, and every number in
+this folder is written in UNITY's space** - the prefab hub offset, the
+placements, all of it, because that is where the author worked. Unity's
+model importer negates X on the way in, and `scripts/bakeWindmill.mjs`
+does the same so those numbers are usable verbatim. Normals are mirrored
+and triangle winding reversed with it: a mirror turns every face inside
+out and the renderer culls back faces.
+
+WM2a shipped without that and it cost both of the faults in Mac's first
+screenshot - a sail hanging in mid-air beside the mill (its hub applied
+at x +3.96 to a body whose cap sat at the mirrored x -3.95) and a tower
+standing off its spot (mirroring bounds that are not symmetric about
+their origin, -12.06..3.89, swings the mass eight units).
+
+The Z-up part is separate and needs nothing: Blender writes
+`up_axis Z_UP` and bakes the object transform into the node matrix, and
+that matrix (`x, y, z -> x, -z, y`) composed with the standard
+Z-up-to-Y-up conversion is the IDENTITY. The bake ASSERTS the node
+matrix it expects, so a re-export rotated differently fails here instead
+of turning the sails into a ceiling fan.
 
 Provenance: `WindMills.rar`, supplied by Mac 2026-08-29. Author contact
 per the mod manifest: DFU Discord.
