@@ -78,6 +78,7 @@ export class RestWindow {
     this._allocatedBed = null;  // CanRest's out-parameters, both of
     this._remainingHoursRented = -1;   // them, carried to the session
     this._pendingEnemySpawn = false;   // a latch raised before a mode is picked
+    this._closeDispatched = false;     // onClose is owed ONCE, whichever door closes this
     // OnPush (:266-268): "Raise player resting flag when UI opens.
     // This is used for random enemy spawning and influences
     // CastWhenHeld durability loss" - DFU's own comment, and it names
@@ -105,6 +106,16 @@ export class RestWindow {
    *  the same as clearing it once, so the guard would be a branch no
    *  test could kill, and this file has already retired one of those. */
   _close() {
+    // The flags first and UNGUARDED, per the note above. Then the
+    // dispatch, ONCE: `dispose()` calls this method deliberately, so a
+    // host that drains a window which already closed itself would fire
+    // PopToHUD a second time. Harmless for a boolean, not harmless for
+    // a callback that closes a host's overlay slot - that is the door
+    // S40 opened and the crash of 2026-08-29 came through it, fifty
+    // frames of close -> onClose -> dispose -> close. The host's own
+    // ordering is fixed too (townTalk.dropOverlay); this half is the
+    // window's, so a window is safe to close from either side and no
+    // future host has to know the rule.
     this.done = true;
     this.deps.setResting?.(false);
     this.deps.setLoitering?.(false);
@@ -119,6 +130,8 @@ export class RestWindow {
     // the level-up screen never appeared: advancement.js took its
     // headless arm and dumped every point into the LOWEST stats, which
     // is the exact defect AUDIT 21 hosts F3 fixed for the ticker path.
+    if (this._closeDispatched) return;
+    this._closeDispatched = true;
     this.deps.onClose?.();
   }
 

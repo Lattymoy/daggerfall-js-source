@@ -748,12 +748,19 @@ test('U41: a window that finishes in its own tick is cleared by the host', () =>
   assert.ok(/overlay\?\.tick\?\.\(dt\)/.test(frame), 'the overlay ticks');
   assert.ok(frame.includes('if (overlay?.done)'), 'and a finished window is dropped in the same pass');
   assert.ok(frame.indexOf('overlay?.tick') < frame.indexOf('if (overlay?.done)'), 'in that order');
-  // ...and the dispose must be in the DRAIN, not merely somewhere in
-  // frame(): the font-less bail a few lines down carries one too, so
-  // a bare includes() over the whole function passed with the drain's
-  // own dispose deleted (found while re-proving this pin at U48).
+  // ...and the drain must FREE what it drops. The crash of 2026-08-29
+  // moved that dispose into townTalk's one drain (dropOverlay), so the
+  // pin follows it there rather than reading a literal this function no
+  // longer contains: the call is here, and the freeing is in the seam
+  // it calls. Both halves, because either alone leaks - and the seam is
+  // read for its ORDER too, the slot emptied before the window is told,
+  // which is the fix itself.
   const drain = frame.slice(frame.indexOf('if (overlay?.done)'), frame.indexOf('const s = hudScale'));
-  assert.ok(drain.includes('overlay.dispose?.()'), 'freeing its textures');
+  assert.ok(drain.includes('dropOverlay()'), 'the drain goes through the one seam');
+  const seam = tt.match(/function dropOverlay\([\s\S]*?\n {2}}/)?.[0] ?? '';
+  assert.ok(seam.includes('win.dispose?.()'), 'freeing its textures');
+  assert.ok(seam.indexOf('overlay = null') < seam.indexOf('win.dispose'),
+    'the seam disposes before it empties the slot - the 2026-08-29 recursion is back');
 });
 
 test('U41: the preload asks for exactly the classic files, and a missing one closes the door', async () => {
