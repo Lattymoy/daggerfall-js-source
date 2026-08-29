@@ -25,6 +25,7 @@
 // resolve), so the chronicle takes the two modes that have NO home -
 // the notebook and the messages - and the history beside them.
 import { isEnhanced } from '../systems/uiSkin.js';
+import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { QuestJournalWindow, questJournalArtLoaded } from './questJournal.js';
 import { PlayerHistoryWindow, playerHistoryArtLoaded } from './playerHistory.js';
 
@@ -80,9 +81,11 @@ function enhancedChronicleOverlay(deps, section) {
   let host = null;
   let view = null;
   let done = false;
+  let unregister = () => {};   // PX28
   const close = () => {
     if (done) return;
     done = true;
+    unregister();
     try { view?.destroy?.(); } catch { /* already gone */ }
     try { host?.remove(); } catch { /* ditto */ }
     host = null; view = null;
@@ -92,6 +95,7 @@ function enhancedChronicleOverlay(deps, section) {
   host.id = 'enhanced-chronicle';
   host.style.cssText = 'position:fixed;inset:0;z-index:11';
   document.body.append(host);
+  unregister = registerOverlay(close);
   import('./enhancedChronicle.js').then(({ mountEnhancedChronicle }) => {
     if (done) return;
     view = mountEnhancedChronicle(host, { ...deps, section, onExit: close });

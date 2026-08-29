@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
 import { closeSession } from '../systems/inventorySession.js';
 
@@ -89,9 +90,11 @@ function enhancedInventoryOverlay(deps) {
   // opaque draw; only the enhanced host goes glass.
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
+  let unregister = () => {};   // PX28: Tab must be able to put the pack away
 
   const close = () => {
     if (fired) return;
+    unregister();
     // THE PILE IS READ BEFORE THE UNMOUNT, which clears the view's
     // state. A drop that mints nothing is not a visible bug - it looks
     // like the player misremembered dropping something.
@@ -106,6 +109,7 @@ function enhancedInventoryOverlay(deps) {
     // handed onClose is owed the call whatever skin drew the window.
     closeSession(deps, { dropped });
   };
+  unregister = registerOverlay(close);
 
   const overlay = {
     isChoiceWindow: true,
