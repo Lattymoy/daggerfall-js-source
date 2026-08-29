@@ -1129,3 +1129,118 @@ One pin went red on the way: DE1's own, an hour old, anchored on the
 `if (_yaw !== null) cam.yaw = _yaw;` one-liner that became a block. Its
 law - the host asks for the facing of the member it *is*, and applies
 it - was untouched. Re-anchored, per F041.
+
+## W1 - THE WINDMILL'S TURN: the law, and the half that needs ARENA2 (2026-08-29)
+
+Mac handed over `WindMills.rar` - "Windmills of Daggerfall" (Kamer,
+DFU mod, v2.0) - on the roads' own precedent: *instead of taking their
+mod, I want us to develop our own and better*. This is the first half
+of doing that.
+
+### What the mod is, and what of it we may have
+
+The mod is three C# scripts, a set of `.dae` models with their `.PNG`
+textures, DFU prefabs for model ids 41600/41601, and WorldData `.RMB`
+JSON overrides for seven FARMAA blocks. The behaviour is two lines:
+`Spin_Up.Update` turns the blade assembly at `-13 * Time.deltaTime`
+about local Z, `SpinTime_Roller.Update` turns a roller about local X at
+the same rate, and `Start` loops a sound on it.
+
+**None of the assets can come here, and not only because they are
+someone else's work.** The textures are Daggerfall's own art exported
+to PNG, and the doctrine's second non-negotiable is explicit that a
+render of game data IS game data - `.gitignore` can block `ARENA2/`,
+it cannot recognise a PNG of the same art, which is why that rule is
+enforced by a test. So the models and textures were never candidates.
+
+What we take is a READING of the data, credited in the module header:
+the rotor turns about the model's local Z, and it turns at 13 degrees a
+second.
+
+### The 13 is the anchor; the rest is the wind
+
+13 deg/s is the number a Daggerfall player's eye already knows, so it
+is the one thing in `src/world/windmills.js` that is not invented. It
+is also the whole of the mod's motion: the blades turn at 13 in a
+thunderstorm and at 13 in a dead calm, because nothing is driving them.
+
+Ours are driven, and by something the port already had. ES1c gave the
+enhanced sky a per-weather wind vector and, because nothing about a sky
+changes in a frame, an EASED one - the controller keeps a row and walks
+it toward the row the sim asks for over `WEATHER_EASE_SECONDS`. That
+row is the port's only answer to "how hard is it blowing right now", so
+this module imports `WEATHER_SKY` and takes the eased row itself rather
+than restating a number of it.
+
+The property that buys is worth stating plainly: **the blades and the
+clouds are driven by the same number.** A storm rolls in, the sky's
+deck picks up over fourteen seconds, and the mill in the field below
+picks up on the same curve - not synchronised, the same value.
+
+And the anchor survives it, because `ROTOR_GAIN` is DERIVED rather than
+written down:
+
+    ROTOR_GAIN = 13 / (|WEATHER_SKY.sunny.wind| - STALL_WIND)
+
+so fair weather turns at exactly 13, and the day someone re-tunes the
+sunny row - ES1's rows have been re-tuned once already - a written-down
+gain would have quietly stopped meaning the only thing it is for. The
+pin reads the shipped row through the whole chain: re-tune the sky and
+it still passes, break the derivation and it fails.
+
+Two skin constants, stated as skin because classic has no turning mill
+to be faithful to. `STALL_WIND` is the floor the rate is measured from
+rather than scaled from zero; **no shipped sky row sits below it** -
+fog is the calmest at |wind| 0.0063 and crawls at about three degrees a
+second, which is the intent - and it would stop a becalmed row dead if
+one is ever tuned. `FURL_DEG_PER_SEC` is the miller furling in a gale:
+without it, thunder drives the blades to a blur that reads as a bug.
+Rain and thunder both furl, and the pins say so rather than pretending
+the top of the range is distinguishable.
+
+### The one law this module exists to get right
+
+**The angle is integrated, not computed.** `angle = rate * elapsed` is
+the obvious spelling and it is wrong the moment the rate changes: the
+whole history gets re-priced at the new rate, so a mill that has been
+turning for eight minutes jumps through a third of a revolution the
+instant the weather does. Blades that teleport when it starts raining
+are the one artefact this module could plausibly have shipped.
+
+The pin eases sunny to rain frame by frame and asserts no frame moves
+the blades further than one frame's turn - and then asserts the
+CONTRAST still bites. That second half earned itself: the fixture first
+settled for 600 seconds, where the naive spelling lands on the *same
+angle* for both rates (13 and 40 differ by 27, and 27 x 600 is exactly
+45 full turns), so it could not tell the two spellings apart and proved
+nothing about the one it guards. 500 seconds now, with the coincidence
+written into the test.
+
+### What is NOT built, and why it is flagged rather than guessed
+
+The mesh half. **Which** models carry a rotor and **where** its hub
+sits are questions about `ARCH3D.BSA`, and this container has no
+ARENA2 - the 198 corpus-gated tests skip. `WINDMILL_MODELS` therefore
+carries what Kamer's mod replaces (41600, 41601, and the watermill
+21411 from `LoadWindmill.cs`) marked FLAGGED on Home.md's board, and
+the module makes no claim at all about model 41600's geometry. A model
+id spinning something that should stand still is a visible bug, so the
+wiring slice confirms each against the real mesh first.
+
+That leaves the wiring itself for W2, and it is not small: the layout
+hands the hosts one matrix per model (`rmbLayout.layoutRmbBlock`), so a
+turning model needs its rotor geometry separated from its tower and its
+matrix re-issued per frame - and it needs THE FOUR HOSTS RULE applied,
+each of `scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js`
+and `scenes/dungeonContext.js` either wired or flagged by name. R5's
+crash to main is the standing warning here: it wired a paint into
+`buildPixel`, lint passed, the build passed, 4,283 tests passed, and
+the world host was dead on its first terrain load, because nothing in
+the suite drives that path - it wants GL and ARENA2. Nothing in W1 is
+wired into a host, and nothing in it can be reached by one yet.
+
+Pins: 12 in `test/windmills.test.js`. Campaign: 15 mutants, 14 killed,
+and the survivor recorded rather than papered over - `over <= 0`
+weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
+fall-through computes `0 * gain = 0`, which is the answer the guard
+returns.
