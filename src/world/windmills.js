@@ -3,14 +3,16 @@
 //
 // Classic Daggerfall's farm blocks stand a windmill on the ground and
 // it never moves. Turning it is an ENHANCED-ONLY DEPARTURE (Ledger A),
-// the same shape as the roads: the 1:1 lane sees the static model the
-// game shipped, and with the enhanced skin off not one byte of this
-// module is reached.
+// the 1:1 lane sees Daggerfall's own farms, and with the enhanced skin
+// off not one byte of this module is reached. (The roads were the same
+// shape and set the precedent; they were removed whole on 2026-08-29,
+// which is why this is now the only departure of its kind.)
 //
 // ── WHAT THIS OWES KAMER, AND WHAT IT TOOK ───────────────────────
 //
 // "Windmills of Daggerfall" (Kamer, DFU mod, v2.0). WM1 shipped this
 // module treating the mod as a reference only, on the roads' precedent
+// (that arc is gone now; the reasoning it set is what mattered here)
 // ("instead of taking their mod, I want us to develop our own and
 // better") - and that was the wrong call to keep once Mac confirmed
 // THE AUTHOR HAD GIVEN PERMISSION. An invitation is not a lift.
@@ -63,7 +65,7 @@
 // no clock of its own. It does not know what a mesh is: a host hands
 // it a rotor's hub and gets back the transform that turns it. The
 // laws below are therefore held by node pins with synthetic wind,
-// exactly as systems/roads.js is held with synthetic terrain.
+// with synthetic wind, no ARENA2 and no GL.
 // ═══════════════════════════════════════════════════════════════════
 
 import { WEATHER_SKY } from '../render/enhancedSky.js';
