@@ -22,6 +22,31 @@ each stage is provable on the player's own data before the next begins:
         including the two defects that only DRAWING IT found.
   MW-D9 AND THE WEAPON IS IN THE HAND. Rule 8's whole attach-bone
         column, and the Daggerfall->Morrowind mapping DECLARED.
+  MW-D9e THE REGISTRY IS NO LONGER THE BOTTLENECK. A 4.0.0.2 record has
+        no size field, so ONE unimplemented type ends the whole file -
+        that is what a NiCamera did to a first-person skeleton (MW-D9d),
+        and what the next particle emitter or light would have done to a
+        mesh. The reader went from 27 record types to 59: every type a
+        Morrowind-era file can hold, each layout nif.xml-gated to
+        4.0.0.2, each pinned against a fixture. Two are knowingly out
+        (NiSkinPartition's struct is ver1 4.2.1.0; three types OpenMW
+        registers have no nif.xml layout at all) and the reader's header
+        names them, so a refusal is now a real gap rather than a queue.
+
+WHERE THE AUTHORITIES DISAGREE (MW-D9e), and what the port reads. The
+fixtures are pyffi-authored on purpose - an independent implementation -
+but pyffi's nif.xml is old, and three records caught it out. (1) It omits
+NiExtraData's `Num Bytes` from five subclasses; nif.xml gates that field
+ver1 4.0.0.0 / ver2 4.2.2.0 and OpenMW's Extra::read reads it for every
+extra record at 4.2.2.0 and below, so the port reads it and those
+fixtures are hand-written. (2) It splits NiParticleSystemController's ten
+spawn bytes uint/uint/ushort where nif.xml and OpenMW read ushort + two
+floats; the port takes the second reading. (3) It writes 256 palette
+entries whatever the count says, and nif.xml says the array is 16 long
+when the count reads 16 and 256 otherwise - OpenMW just reads the count,
+and so does the port, because the count is what the retail files hold.
+Rule for the next disagreement: nif.xml gives the LAYOUT, OpenMW settles
+what the retail bytes actually mean, and pyffi is a witness, not a judge.
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
