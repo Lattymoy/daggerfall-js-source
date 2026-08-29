@@ -116,6 +116,7 @@ import { peopleAreVisible } from '../characters/interiorPeople.js';   // P1: Add
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
+import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';   // BG1: the shop quality + the householder's greeting
 import { discoverBuilding, undiscoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { getHolidayId } from '../systems/holidays.js';
@@ -2813,11 +2814,23 @@ export function createWorldModes(host) {
     // tallying Lockpicking before the roll, entering ONCE on success
     // (no persistent unlock - DFU's isBrokenIn is local) and recording
     // the skill on failure. DiscoverBuilding fires on the activation
-    // (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-    // their Breaking_And_Entering crimes (:571-583/:621-627 - no
-    // weapon-vs-static-door path exists yet), the house greeting
-    // (:585-628). TallyCrimeGuildRequirements landed at CG2 on the
-    // success arm below.
+    // (:515). X3 wired the Open-spell bypass (:519-520).
+    // TallyCrimeGuildRequirements landed at CG2 on the success arm
+    // below; BG1 took the greeting (:585-628) at the tail.
+    //
+    // FLAGGED, and narrowed to what is actually missing: the two BASH
+    // arms (:571-583 the failed bash -> 10% noticed ->
+    // Attempted_Breaking_And_Entering; :621-627 the bash of an ALREADY
+    // OPEN door -> 10% -> Breaking_And_Entering). Both hang off DFU's
+    // `isBash`, which is `PlayerActivate` being reached from a WEAPON
+    // SWING rather than the activation ray - and outdoors this port has
+    // no such path: `envAttack` runs against an action-object list, and
+    // an exterior static door is not one. So what is missing is not the
+    // two rolls (six lines, and the crime road they need shipped at CG2
+    // and PT1) but the INPUT that would reach them. `isBrokenIn` below
+    // is written as DFU writes it, starting from the isBash that does
+    // not exist yet, so the day that input lands the arms drop in
+    // beside it.
     {
       const bd = buildingDataForDoor?.(hit) ?? null;
       const locId = discoveryLocationId?.() ?? null;
@@ -2860,6 +2873,15 @@ export function createWorldModes(host) {
         // door: doorSpellFor only answers 'lock' when no Open is armed,
         // and the kind test below refuses it.
         let opened = unlocked;
+        // BG1: DFU carries TWO variables here and they answer different
+        // questions (:517-518). `buildingUnlocked` is this host's
+        // `opened`; `isBrokenIn` starts as isBash, is raised by the
+        // Open SPELL *together with* buildingUnlocked, and is raised
+        // ALONE by a successful pick - which is what makes a picked
+        // shop still state its quality while a magicked house says
+        // nothing at all. It has no bash arm to start from here (see
+        // the FLAGGED note above), so it starts false.
+        let isBrokenIn = false;
         const lockValue = buildingLockValue(bd.quality);
         if (!opened) {
           const spell = doorSpellFor(playerEntity);
@@ -2868,6 +2890,7 @@ export function createWorldModes(host) {
             consumeDoorSpell(playerEntity, 'open');
             if (r.alert) townTalk?.say?.(DOOR_SPELL_TEXT[r.alert]);
             opened = r.opened;
+            if (r.opened) isBrokenIn = true;   // `buildingUnlocked = isBrokenIn = true`
           }
         }
         if (!opened) {
@@ -2893,11 +2916,46 @@ export function createWorldModes(host) {
             tallyCrimeGuildRequirements(playerEntity, true, 1);
             townTalk?.say?.(LOCKPICKING_SUCCESS_TEXT);
             audio.playOneShot(SOUND.ActivateLockUnlock, 1);
+            isBrokenIn = true;   // :557 - the pick raises THIS and never buildingUnlocked
           } else {
             townTalk?.say?.(LOCKPICKING_FAILURE_TEXT);
             if (locId) setLastLockpickAttempt(locId, bd.buildingKey, lockpick);
             return true;
           }
+        }
+        // BG1: the greeting (:585-628). `buildingGreetingsEnabled` is a
+        // DFU static defaulted TRUE, not a settings key, so it is a
+        // named constant rather than an invented registry entry.
+        // PlayerActivate.cs:109 - `public static bool
+        // buildingGreetingsEnabled = true`. A static field, not a
+        // settings key, so it is a constant here rather than an
+        // invented registry entry (the port's own settings doctrine).
+        const greet = buildingGreeting({
+          buildingType: bd.buildingType,
+          quality: bd.quality ?? 0,
+          factionId: bd.factionId ?? 0,
+          buildingUnlocked: opened,
+          isBrokenIn,
+          houseOwned: isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, bd.buildingKey),
+          isShop: isShop(bd.buildingType),
+        });
+        if (greet) {
+          // The house greeting is a RANDOM variant of record 256
+          // (GetRandomText); the quality line is the record itself.
+          const lines = greet.kind === 'house'
+            ? [townTalk?.randomText?.(greet.textId) ?? ''].filter((l) => l.trim() !== '')
+            : (townTalk?.lines?.(greet.textId) ?? []).map((r) => r.text).filter((l) => l.trim() !== '');
+          const how = greet.kind === 'house'
+            ? 'popup'   // the house greeting is not behind ShopQualityPresentation
+            : shopQualityPresentation();   // the law reads the setting, as PresentShopQuality does
+          if (lines.length && how === 'popup' && townTalk?.showOverlay) {
+            // :617-623 - the transition DEFERS to the box closing.
+            townTalk.showOverlay(new ChoiceWindow({ lines }), () => { enterInteriorCore(hit, entries); });
+            return true;
+          }
+          // The HUD arm speaks and does NOT defer (:1379-1386); 'none'
+          // says nothing and also does not defer.
+          if (lines.length && how === 'hud') for (const l of lines) townTalk?.say?.(l);
         }
       }
     }

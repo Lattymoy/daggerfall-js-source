@@ -5084,3 +5084,92 @@ Four pins elsewhere were re-anchored. Two of them were reaching a
 **fixed character count** into an arm this slice grew — `slice(0, 2000)`
 and `slice(0, ownedLatch + 200)` — which is a bet on how long a piece of
 code stays. Both now assert by index ordering, which is what they meant.
+
+## BG1 — the building greeting: what kind of shop, and who lives here (2026-08-29)
+
+Open a shop door in classic and it tells you what you have walked into
+— *"Incense and soft music soothe your nerves"* for a fine one, *"Rusty
+relics lie wherever they were last tossed"* for a hovel. Open a
+stranger's front door and someone greets you. The port did neither:
+every door in Daggerfall opened onto silence.
+
+`PlayerActivate.cs:585-628` and `PresentShopQuality` (:1332-1391).
+
+**The gate is two variables answering different questions** (:517-518):
+
+    var isBrokenIn = isBash;                      // bashing IS breaking in
+    if (!buildingUnlocked && !isBash && HandleOpenEffectOnExteriorDoor(...))
+        buildingUnlocked = isBrokenIn = true;     // the Open SPELL sets BOTH
+    ... a successful PICK sets isBrokenIn ALONE, never buildingUnlocked
+
+    if (buildingUnlocked && House1..House4 && !TG && !DB && !IsHouseOwned)
+    {
+        if (!isBrokenIn) mb = MessageBox(GetRandomText(256));
+    }
+    else mb = PresentShopQuality(building);
+
+which gives four reachable answers:
+
+| how you got in | what you hear |
+|---|---|
+| walked in during open hours | the householder's greeting, or the shop's quality |
+| the **Open spell** | nothing at all — `buildingUnlocked` true so the else-arm never runs, `isBrokenIn` true so the greeting doesn't either |
+| **picked** the lock | `buildingUnlocked` stayed false, so the else-arm runs: a shop states its quality even to a burglar; a house says nothing |
+| your own house, TG, DB | the else-arm, and the same null |
+
+The port's `opened` was already exactly DFU's `buildingUnlocked`; what
+it lacked was `isBrokenIn`, which is now written where DFU writes it —
+raised by the Open spell *with* `opened`, raised alone by the pick.
+
+**The box defers the door** (:617-623): when a greeting is shown the
+interior transition waits for it to close, which is why the law answers
+a *decision* and the host performs it. The HUD arm (:1379-1386) speaks
+and does not defer.
+
+`ShopQualityPresentation` and `ShopQualityHUDDelay` were already in the
+store with DFU's own vendored defaults — they only needed a reader, so
+the slice flips one from `stored` to `live` rather than inventing a key.
+The read lives in the law, because that is where DFU reads it: the
+switch is inside `PresentShopQuality`, not in the door arm that calls
+it. `buildingGreetingsEnabled` is a static field defaulted true, not a
+settings key, and is a named constant here for the same reason.
+
+Pins: 12 in `test/buildinggreeting.test.js`. Campaign: 20 mutants, 20
+killed — after two survivors, **both real gaps in the pins**:
+
+- no test covered a **locked** building at all, so `buildingUnlocked`
+  could be replaced with `true` and nothing noticed;
+- the **nesting** mutant — rewriting `if (!isBrokenIn) mb = …` as a
+  fall-through — is behaviourally equivalent for every input the host
+  can produce, because a house is never a shop and the fall-through
+  lands on the same null. The pin now states the *contract* the nesting
+  protects (once the house branch is taken the shop arm is unreachable,
+  for any arguments) rather than an observable it does not have.
+
+And a drafted pin failed against the faithful port and was **the
+draft's** error: I expected a magicked *shop* to be silenced too. It is
+not — a shop fails the House1..House4 test whatever `isBrokenIn` says,
+so the else-arm runs and the quality is stated. `isBrokenIn` gates the
+greeting alone.
+
+**The bash flag narrowed rather than closing.** The old sentence
+bundled three things — the two bash arms, their crimes, and the house
+greeting — behind "no weapon-vs-static-door path exists yet". The
+greeting had nothing to do with bashing and has shipped. What is left is
+precisely DFU's `isBash`: `PlayerActivate` reached from a *weapon swing*
+rather than the activation ray, and outdoors this port has no such input
+(`envAttack` runs against an action-object list, and an exterior static
+door is not one). So the flag now says what is missing — the **input**,
+not the six lines of roll, and not the crime road, which CG2 and PT1
+already built. `isBrokenIn` is written starting from the `isBash` that
+does not exist yet, so the day that input lands the arms drop in beside
+it.
+
+**THE LESSON: A FLAG THAT NAMES THREE THINGS IS THREE FLAGS, AND THE
+CHEAPEST OF THEM IS HOLDING THE OTHERS HOSTAGE.** The greeting sat
+unbuilt behind a blocker it never had, because it shared a sentence with
+two arms that genuinely needed one. FS1 taught that a flag's blocker
+should be re-read when its dependencies land; BG1 adds that a flag
+covering more than one claim should be *split* when it is written, or
+the first reader to check the hardest claim will file the whole thing as
+blocked.

@@ -77,6 +77,13 @@ export const LIVE = Object.freeze({
   // two-step (:641-692) is the ONE branch on it, in ui/restWindow.js -
   // no host reads this key.
   'GUI/IllegalRestWarning': 'src/systems/restSession.js',
+  // BG1: ShopQualityPresentation. 0 shows the classic popup and DEFERS
+  // the door behind it, 1 puts the record's lines on the HUD and does
+  // not defer, 2 says nothing - the branch is
+  // buildingGreeting.shopQualityPresentation and the reader is the
+  // exterior door arm in worldModes. The HOUSE greeting is not behind
+  // it, which is DFU's own split.
+  'GUI/ShopQualityPresentation': 'src/systems/buildingGreeting.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
