@@ -8034,6 +8034,32 @@ PX28 (Mac: "when hitting tab a second time, it should minimize any UI"
 / "when looting, there's a 2nd popup when you take something, there
 shouldn't be"): TWO SMALL LAWS.
 
+PX28b (Mac: "Tab should also minimize any open UI menus, currently it
+only applies to the radial"): PX28 FIXED THE WRONG HALF. Teaching the
+DIAL to put a window away only works if Tab reaches the dial - and
+`openPixelDial` is reached through the HOST's key routing, while an
+enhanced window is up the WINDOW owns the keyboard, so Tab never got
+there. My verification called `openPixelDial` directly and proved
+only that the arm worked, not that anything would ever pull it.
+
+The fix that cannot miss a window is in the REGISTRY, which already
+knows what is open: ONE keydown listener in the capture phase, alive
+only while the stack is - registering starts it, the last unregister
+stops it, and closing the last one stops it too, or Tab would be eaten
+in a world with nothing open. Nothing was added to any window, and a
+window added later is covered by having registered at all.
+
+NOT through `overlayAction`'s 'back'. Escape means back a LEVEL in a
+window that has them - the wizard's steps, the pack's tooltip - and
+Tab means PUT THIS AWAY. Two different words, kept apart. A text field
+keeps Tab for itself, because the chronicle's composer and the
+spellbook's rename are both fields.
+
+Verified on all five surfaces - spellbook, chronicle, sheet page,
+pack, dial - each closing on Tab with no dial popping up behind it,
+the composer's Tab left alone, and no listener left behind afterwards.
+1 pin, 4 mutations, 4 dead.
+
 TAB MEANS PUT THIS AWAY. The dial already closed ITSELF on a second
 press - openPixelDial's own toggle - but it could not close what it
 had OPENED. Press Tab, press Items, and the pack was up with Tab doing

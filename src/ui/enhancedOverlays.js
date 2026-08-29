@@ -20,15 +20,57 @@
 // owns its own teardown.
 const stack = [];
 
+/* PX28b (Mac: "Tab should also minimize any open UI menus, currently
+   it only applies to the radial"). PX28 taught the DIAL to put a
+   window away, and that was the wrong half: `openPixelDial` is only
+   reached through the host's key routing, and while an enhanced
+   window is up the window owns the keyboard - so Tab never got there.
+   The fix that could not miss one is here, where the registry already
+   knows what is open: ONE listener, in the capture phase, alive only
+   while the stack is. Nothing needs adding to a window, and a window
+   added later is covered by having registered at all.
+
+   NOT through overlayAction's 'back'. Escape means back a LEVEL in a
+   window with levels - the wizard steps, the pack's tooltip pops -
+   and Tab means PUT THIS AWAY. Two different words, kept apart. */
+let _listening = false;
+
+function onTab(e) {
+  if (e.code !== 'Tab' || e.metaKey || e.ctrlKey || e.altKey) return;
+  // A text field owns Tab: the chronicle's note composer and the
+  // spellbook's rename are both fields, and Tab in one of them is the
+  // browser's own business.
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (!stack.length) return;
+  e.preventDefault();
+  e.stopPropagation();
+  closeTopOverlay();
+}
+
+function listen() {
+  if (_listening || typeof window === 'undefined') return;
+  window.addEventListener('keydown', onTab, true);
+  _listening = true;
+}
+
+function unlisten() {
+  if (!_listening || typeof window === 'undefined') return;
+  window.removeEventListener('keydown', onTab, true);
+  _listening = false;
+}
+
 /** Register an open overlay. Returns an unregister for the teardown to
  *  call - which it must, or the stack grows a dead arm. */
 export function registerOverlay(close) {
   if (typeof close !== 'function') return () => {};
   const entry = { close };
   stack.push(entry);
+  listen();
   return () => {
     const i = stack.indexOf(entry);
     if (i >= 0) stack.splice(i, 1);
+    if (!stack.length) unlisten();
   };
 }
 
@@ -43,10 +85,11 @@ export const overlayOpen = () => stack.length > 0;
  */
 export function closeTopOverlay() {
   const entry = stack.pop();
-  if (!entry) return false;
+  if (!entry) { unlisten(); return false; }
   try { entry.close(); } catch { /* a window already gone is still closed */ }
+  if (!stack.length) unlisten();
   return true;
 }
 
 /** For a host tearing down entirely. */
-export function clearOverlays() { stack.length = 0; }
+export function clearOverlays() { stack.length = 0; unlisten(); }
