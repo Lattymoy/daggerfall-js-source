@@ -102,7 +102,8 @@ import {
 } from '../world/weather.js';
 // WM2b: the windmill's law, and the vendored rotor it turns.
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
-import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
+import { BODY, ROTOR } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider; WM3: both parts' archives
+import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure, like the roads
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
@@ -187,20 +188,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // per-pixel pass: pixels from the swapped archive, UVs from the
   // original (verbatim MaterialReader.ChangeClimate; missing-record
   // remaps pruned - 27 corpus pairs, R1 audit).
+  const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
   for (const id of modelIds) {
     const gpu = gpuMeshes.get(id);
     if (!gpu) continue;
-    for (const sm of gpu.subMeshes) {
-      archives.add(sm.textureArchive);
-      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-      if (swapped === sm.textureArchive) continue;
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      if (texRemap.has(key)) continue;
-      const t = await getTexture(swapped);
-      if (sm.textureRecord >= t.recordCount) continue;
-      uploadRecord(swapped, sm.textureRecord);
-      texRemap.set(key, `${swapped}_${sm.textureRecord}`);
-    }
+    for (const sm of gpu.subMeshes) archives.add(sm.textureArchive);
+    await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
   }
   status(`loading ${archives.size} texture archives`);
   await Promise.all([...archives].map((a) => getTexture(a)));
@@ -275,6 +268,17 @@ export async function bootExterior(canvas, renderer, params, status) {
   console.log(`[windmills] ${millCount} placed in ${locationName}`
     + (millCount && !isEnhanced() ? ' - classic skin, not drawn' : '')
     + (millCount ? '' : ' - no block here stands one'));
+  // WM3: the mill takes the climate table like every other model. Its
+  // submeshes name CLASSIC (archive, record) pairs, so nothing about it
+  // is special here - and it MUST run, because a farm block can be the
+  // only thing on a map pixel and then no other model has put 364/369
+  // in the table. The tower's walls (364_2) and roof (369_3) are the
+  // two that move; the sail's own pair and the plank/door do not - see
+  // the note in test/windmillclimate.test.js.
+  if (millParts) {
+    await remapSubMeshes(BODY.subMeshes, texRemap, climateArchive, pipeline);
+    await remapSubMeshes(ROTOR.subMeshes, texRemap, climateArchive, pipeline);
+  }
   // Player collision (P1): every placed model's triangles, world-space,
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);

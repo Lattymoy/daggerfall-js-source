@@ -1472,11 +1472,6 @@ looking at it.
   tower, whether classic 41600 already carries static sails that would
   need hiding, and whether the UVs (which run past 1 and so want REPEAT
   wrapping) sample correctly - all of it wants one run.
-- **No climate swap on the rotor.** Every other model's submeshes go
-  through `applyClimate`; the rotor's do not, so a snowbound mill has
-  summer sails. The mod ships climate variants and this port has the
-  swap table already - a small slice, deliberately not smuggled into
-  this one.
 - **Sound.** Kamer loops a clip on the mill; the port does not.
 
 Pins: 7 in `test/windmillwiring.test.js`, source sweeps for R5's reason -
@@ -1497,3 +1492,80 @@ and the survivor recorded rather than papered over - `over <= 0`
 weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
 fall-through computes `0 * gain = 0`, which is the answer the guard
 returns.
+
+## WM3 - THE MILL TAKES THE CLIMATE TABLE, and four copies of one loop become one (2026-08-29)
+
+WM2d left three things open on the mill. This closes one of them, and in
+closing it found that the sentence describing it named the wrong part.
+
+**The open item said: "No climate swap on the ROTOR ... so a snowbound
+mill has summer sails."** Half right. The rotor's two texture pairs are
+TEXTURE.000 record 77 and TEXTURE.067 record 1, and neither of those
+archives classifies - 0 and 67 are in no exterior, interior or nature
+set, so `ClimateSwaps.ApplyClimate` returns them unchanged in all four
+climate bases and all three seasons. **The sails were never going to
+swap.** What was actually wearing summer in the snow is the TOWER: walls
+`364_2` (Exterior_Village) and roof `369_3` (Exterior_Roofs), both of
+which support winter. Exactly two of the mill's five pairs move, and the
+pin asserts that over the whole cross product rather than trusting the
+prose that sent the slice here.
+
+**And here is why nobody saw it.** The vendored mill is authored in
+TEMPERATE archives, so in temperate summer the swap is the identity -
+`364 -> 364`, `369 -> 369`. In the one climate a developer is most likely
+to load, a missing climate swap is a no-op. It only ever showed in a
+mountain, a desert, a swamp, or a winter.
+
+The fix is not special-case code. The mill's submeshes name classic
+`(archive, record)` pairs like every other model's, so they go through
+the same table the block's buildings go through - and they must be asked
+PER LOCATION in `exterior.js` and PER MAP PIXEL in `world.js`, because
+the table is per-pixel and **a lone farm pixel has no other model to put
+364/369 in it**. That is the case a "the neighbours already remapped it"
+shortcut would have got wrong.
+
+### The loop had four copies, and this would have been the fifth
+
+`exterior.js`, `world.js`, `interiorContext.js` and `dungeonContext.js`
+each carried the same eleven lines: ask the law for a swapped archive,
+skip if unchanged, skip if already keyed, load the archive, PRUNE the
+pair if the swapped archive is short of the record (the R1 audit's 27
+corpus pairs - uploading past the end draws garbage), upload, key the
+table. Only the LAW differs: the three climate hosts pass
+`ApplyClimate` bound to a climate and season, the dungeon passes its RDB
+texture table.
+
+ONE DFU MEMBER, ONE EXPORT (17e). The loop now lives once, in
+`src/world/texRemap.js`, and takes the law as an argument. All four hosts
+call it; **none of them writes `texRemap` itself**, and a pin holds that -
+the tell of a re-grown copy is the write, not the read.
+
+THE FOUR HOSTS RULE (17e), named in full: `exterior.js` **wired** (mill +
+seam), `world.js` **wired** (mill + seam), `worldModes.js` **not wired
+and correctly so** - it is the interior/dungeon host and draws no
+windmill; its contexts are the two below, `interiorContext.js` **seam
+only** (interiors run the climate law over their own submeshes; no mill
+stands indoors), `dungeonContext.js` **seam only** (same loop, the RDB
+table as its law; no mill stands in a dungeon).
+
+One existing pin moved with the code rather than being deleted:
+`crashreport.test.js` held the receiver-vs-value guard that killed the
+"press E and nothing happens, for ever" interior bug, as a literal
+`for (const sm of cpu?.subMeshes ?? [])` in two hosts. That law now lives
+in two halves - the call site guards the RECEIVER with `?.subMeshes`, the
+seam guards the VALUE - and both halves are pinned, because either one
+alone resurrects the TypeError.
+
+### What WM2d left, that this does NOT close
+
+- **Nobody has seen this either.** No GL and no ARENA2 here. The climate
+  half is real computation on constants and needs neither; the wiring
+  half is a source sweep, for R5's reason.
+- **Sound.** Kamer loops a clip on the mill; the port still does not.
+- The rest of WM2d's "not settled" list stands unchanged.
+
+Pins: 5 in `test/windmillclimate.test.js`. Campaign: 10 mutants, 9
+killed. The survivor - `subMeshes ?? []` weakened to `subMeshes || []` -
+is EQUIVALENT and is recorded rather than papered over: the two spellings
+differ only on falsy non-null values, and no submesh list is ever `0`,
+`''` or `false`.
