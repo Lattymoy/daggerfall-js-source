@@ -178,12 +178,16 @@ test('WM1: a full turn is a no-op, and a blade tip really moves', () => {
   assert.ok(near(r0, r1, 1e-4), `the sail changed length: ${r0} -> ${r1}`);
 });
 
-test('WM1: the rotor turns the way Kamer\'s does - clockwise seen from +Z', () => {
-  // ROTOR_SIGN is negative, so a sail at 12 o'clock goes to 3 o'clock.
+test('WM1: the rotor turns the way Kamer\'s does, through the mirror', () => {
+  // His Spin_Up.cs turns -13 deg/s about local Z. The bake mirrors his
+  // meshes on X to reach the space his numbers are written in, and a
+  // mirror reverses the sense of a rotation about an axis in its plane,
+  // so OUR sign is positive and the sails turn the same way his do.
+  // A sail at 12 o'clock goes to 9 o'clock.
   const spun = transformPoint(rotorMatrix(identity(), [0, 0, 0], 90), 0, 1, 0);
-  assert.ok(near(spun[0], 1, 1e-4) && near(spun[1], 0, 1e-4),
-    `+Y should turn to +X, got [${spun[0]}, ${spun[1]}]`);
-  assert.equal(ROTOR_SIGN, -1);
+  assert.ok(near(spun[0], -1, 1e-4) && near(spun[1], 0, 1e-4),
+    `+Y should turn to -X, got [${spun[0]}, ${spun[1]}]`);
+  assert.equal(ROTOR_SIGN, 1);
   assert.equal(ROTOR_AXIS, 'z');
   // Z is the axis, so it is the coordinate a Z-spin cannot change.
   assert.ok(near(transformPoint(rotorMatrix(identity(), [0, 0, 0], 47), 0, 1, 0.75)[2], 0.75, 1e-4));

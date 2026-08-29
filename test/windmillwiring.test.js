@@ -21,6 +21,7 @@ import { dirname, join } from 'node:path';
 
 import { ROTOR_HUB } from '../src/world/windmills.js';
 import { PLACEMENTS, BODY, ROTOR } from '../src/world/windmillMesh.js';
+import { skinnedBody } from '../src/world/windmills.js';
 import { windmillsFor } from '../src/world/rmbLayout.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,7 +34,7 @@ test('WM2b: both exterior hosts select mills, mount the rotor, and draw it', () 
     const text = src(host);
     assert.match(text, /b\.layout\.windmills/,
       `${host} does not read the mills rmbLayout places`);
-    assert.match(text, /getWindmillMeshes\(\)/, `${host} never uploads the mill`);
+    assert.match(text, /getWindmillMeshes\(/, `${host} never uploads the mill`);
     assert.match(text, /mountRotor\(/, `${host} never mounts the rotor`);
     assert.match(text, /advanceRotor\(/, `${host} never advances the rotor`);
     // The draw must go through mountRotor, not rotorMatrix: the vendored
@@ -67,13 +68,15 @@ test('WM2b: a mill only turns on a wind the sky actually knows', () => {
 test('WM2b: the rotor is uploaded lazily, and once', () => {
   // A town with no farm block must pay nothing, and a location with
   // twenty mills must upload one mesh.
-  assert.match(src('src/scenes/exterior.js'), /millCount && isEnhanced\(\)\) \? await getWindmillMeshes\(\) : null/,
+  assert.match(src('src/scenes/exterior.js'), /millCount && isEnhanced\(\)\)\s*\?\s*await getWindmillMeshes\(/,
     'exterior.js uploads the mill even when no block here stands one');
   const pipeline = src('src/scenes/dataPipeline.js');
   assert.match(pipeline, /if \(gpuMeshes\.has\(key\)\) return gpuMeshes\.get\(key\);/,
     'the mill parts no longer cache - every mill would upload its own copy');
-  assert.match(pipeline, /const ROTOR_KEY = -\d+, BODY_KEY = -\d+;/,
-    'the mill cache keys must be ones no ARCH3D record id can collide with');
+  assert.match(pipeline, /const ROTOR_KEY = -\d+;/,
+    'the rotor cache key must be one no ARCH3D record id can collide with');
+  assert.match(pipeline, /bodyKey = \(climateBase, isWinter\) => -\(/,
+    'the body is cached per climate and season, under a negative key');
 });
 
 test('WM2b: the streaming host phases mills on the MAP PIXEL, not the world', () => {
@@ -104,6 +107,30 @@ test('WM2b: the two unwired hosts really do not place mills', () => {
     const text = src(host);
     assert.doesNotMatch(text, /windmillMesh|getWindmillMeshes|layout\.windmills/,
       `${host} now knows about mills - the four-hosts record must be updated`);
+  }
+});
+
+test('WM2e: the mill is skinned for the climate it stands in', () => {
+  // Kamer ships seventeen variant prefabs; only the WALLS and the ROOF
+  // differ across them, and DESERT NEVER WINTERS - his prefabs and
+  // ClimateSwaps.cs's own rule agreeing.
+  for (const host of EXTERIOR_HOSTS) {
+    assert.match(src(host), /getWindmillMeshes\(climateBase, season === SEASON\.Winter\)/,
+      `${host} uploads the mill without telling it which climate it stands in`);
+  }
+  const tex = (m) => m.subMeshes.map((sm) => `${sm.textureArchive}_${sm.textureRecord}`);
+  assert.deepEqual(tex(skinnedBody(300, false)), ['364_2', '67_1', '369_3', '67_1', '332_0'],
+    "the temperate mill is not the one Kamer authored");
+  assert.deepEqual(tex(skinnedBody(300, true)), ['365_1', '67_1', '103_1', '67_1', '332_0'],
+    'winter must change the walls and the roof, and only those');
+  assert.deepEqual(tex(skinnedBody(0, false)), tex(skinnedBody(0, true)),
+    'the desert mill wintered - it must not');
+  assert.deepEqual(tex(skinnedBody(999, false)), tex(BODY),
+    'an unknown climate must keep the mill as authored, not strip its textures');
+  // Only the two slots ever move, in every climate.
+  for (const base of [0, 100, 300, 400]) {
+    const a = tex(skinnedBody(base, false)), b = tex(skinnedBody(base, true));
+    for (const i of [1, 3, 4]) assert.equal(a[i], b[i], `slot ${i} changed with the season and must not`);
   }
 });
 

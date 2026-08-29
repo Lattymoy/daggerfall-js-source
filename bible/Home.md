@@ -254,11 +254,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1430` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3266` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/dungeonContext.js:3374` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:619` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:625` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:863` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1101` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1444` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:620` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:626` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:864` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1102` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1445` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:311` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -382,7 +382,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the guild TELEPORT mode
 - `src/ui/travelPopUp.js:57` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
 - `src/world/actionSystem.js:467` - FLAGGED, a live gap, not parity.
-- `src/world/windmills.js:75` - carries a rotor", along with the FLAGGED note asking for the two it
+- `src/world/windmills.js:76` - carries a rotor", along with the FLAGGED note asking for the two it
 
 ## Audits
 

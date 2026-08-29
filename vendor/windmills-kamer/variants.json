@@ -1,0 +1,34 @@
+{
+  "_comment": [
+    "THE MILL'S CLIMATE AND SEASON SKINS, read out of the Models/Finished/",
+    "41600_*.prefab variants in Kamer's 'Windmills of Daggerfall' v2.0,",
+    "vendored with the author's permission (see README.md).",
+    "",
+    "Only TWO of the body's five texture groups ever change: Walls (slot 0)",
+    "and Roof (slot 2). Plank and Windmill stay 067_1 and the Door stays",
+    "332_0 in every one of his seventeen variant prefabs.",
+    "",
+    "These are HIS records, not a climate rebase. Daggerfall's own",
+    "ClimateSwaps law would rebase 364 -> 064/164/464 by climate base and",
+    "add 1 for winter, and his walls DO follow that - but his roofs do not",
+    "(369_3 temperate, 069_1 desert, 369_0 mountain, 369_1 swamp, and one",
+    "snow roof 103_1 shared by every winter). He picked them by eye, so",
+    "they are carried verbatim rather than derived.",
+    "",
+    "DESERT NEVER WINTERS: his DesertWinter prefab is identical to his",
+    "Desert one, which is the same rule ClimateSwaps.cs states outright.",
+    "Mountain has no Fall or Spring prefab (both ship EMPTY in the mod) -",
+    "they are the same as the base, as Fall and Spring are everywhere else.",
+    "",
+    "Applied through the port's own texRemap, the same door applyClimate",
+    "uses for every other model, so the mill is re-skinned the way the",
+    "game re-skins a building."
+  ],
+  "slots": { "walls": 0, "roof": 2 },
+  "climates": {
+    "0":   { "name": "Desert",    "walls": [64, 1],  "roof": [69, 1],  "winterWalls": [64, 1],  "winterRoof": [69, 1] },
+    "100": { "name": "Mountain",  "walls": [164, 1], "roof": [369, 0], "winterWalls": [165, 1], "winterRoof": [103, 1] },
+    "300": { "name": "Temperate", "walls": [364, 2], "roof": [369, 3], "winterWalls": [365, 1], "winterRoof": [103, 1] },
+    "400": { "name": "Swamp",     "walls": [464, 1], "roof": [369, 1], "winterWalls": [465, 1], "winterRoof": [103, 1] }
+  }
+}

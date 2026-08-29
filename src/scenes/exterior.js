@@ -271,7 +271,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // when a block here actually stands one - a town with no farm pays
   // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
   const millCount = loc.blocks.reduce((n, b) => n + b.layout.windmills.length, 0);
-  const millParts = (millCount && isEnhanced()) ? await getWindmillMeshes() : null;
+  const millParts = (millCount && isEnhanced())
+    ? await getWindmillMeshes(climateBase, season === SEASON.Winter) : null;
   console.log(`[windmills] ${millCount} placed in ${locationName}`
     + (millCount && !isEnhanced() ? ' - classic skin, not drawn' : '')
     + (millCount ? '' : ' - no block here stands one'));
