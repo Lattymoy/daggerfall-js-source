@@ -25,7 +25,7 @@
 // decide, because a throw here would take a scene host down over a
 // mis-clicked building.
 import { SKILLS } from './skills.js';
-import { GUILDS } from './guilds.js';
+import { GUILDS, activeMemberships } from './guilds.js';   // TP1: GuildManager's Memberships.Values
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 
 /** The two variant-keyed rank lists, from DFU's Internal_Strings
@@ -274,3 +274,40 @@ export function createGuildForGroup(guildGroup, buildingFactionId = 0, factionDi
     default: return null;
   }
 }
+
+/** TP1 - GuildManager.FastTravel (GuildManager.cs:380-386) folded over
+ *  Temple.FastTravel (Temple.cs:430-436).
+ *
+ *  DFU folds EVERY active membership through its guild's own
+ *  `FastTravel(duration)`, and `Guild.FastTravel` is the identity
+ *  (:241-244) - so exactly one guild in the game shortens a journey,
+ *  the Temple of AKATOSH, god of time:
+ *
+ *      return (int)(((95f - rank) / 100) * duration);
+ *
+ *  A rank-0 initiate travels in 95% of the time and a rank-9 Patriarch
+ *  in 86%. The cast TRUNCATES toward zero, and the float divide is
+ *  DFU's own - `95f`, not integer arithmetic - so the port keeps both.
+ *
+ *  Written as the FOLD rather than a lookup for Akatosh, because that
+ *  is the shape DFU has: the day another guild gains the perk it slots
+ *  in here, and a `if (temple is Akatosh)` special case would not.
+ *
+ *  The discount lands BEFORE the trip cost is computed
+ *  (DaggerfallTravelPopUp.cs:281-296 - CalculateTravelTime, FastTravel,
+ *  THEN CalculateTripCost), so Akatosh's blessing cuts the fare as well
+ *  as the days. That ordering is the whole reason the port's flag sat
+ *  on the line it did. */
+export function guildFastTravel(entity, minutes, { memberships = null } = {}) {
+  const book = memberships ?? activeMemberships(entity);
+  let out = minutes;
+  for (const m of Object.values(book ?? {})) {
+    // one home for the name: the Temple builds it, this reads it
+    if (m?.guild === templeOf(AKATOSH_DIVINE)?.name) {
+      out = Math.trunc(((95 - (m.rank ?? 0)) / 100) * out);
+    }
+  }
+  return out;
+}
+/** The one divine with a FastTravel override (Temple.cs:432). */
+export const AKATOSH_DIVINE = 'Akatosh';

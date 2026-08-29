@@ -80,7 +80,7 @@ import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';

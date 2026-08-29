@@ -271,12 +271,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:903` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:909` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1367` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2423` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2516` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2805` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3166` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3582` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4497` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2435` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2528` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2817` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3178` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3594` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4509` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -398,8 +398,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/teleportPopUp.js:37` - FLAGGED: the HUD smash-to-black/fade either side of the jump
 - `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the guild TELEPORT mode
-- `src/ui/travelPopUp.js:52` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
-- `src/ui/travelPopUp.js:155` - this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:284) FLAGGED
+- `src/ui/travelPopUp.js:57` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
 - `src/world/actionSystem.js:466` - FLAGGED, a live gap, not parity.
 
 ## Audits

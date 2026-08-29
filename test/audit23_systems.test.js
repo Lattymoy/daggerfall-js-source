@@ -18,7 +18,7 @@ import { GUILDS } from '../src/systems/guilds.js';
 import { MobileUnit, MOBILE_RAT } from '../src/characters/mobileUnit.js';
 import { ACTION_FLAGS } from '../src/world/rdbLayout.js';
 import { tickPlayerMinutes, setWorldMinutes, worldMinutes } from '../src/systems/worldTick.js';
-import { raiseAtRestEnd } from '../src/scenes/shared.js';
+import { raisePlayerSkills } from '../src/scenes/shared.js';
 import { RestWindow } from '../src/ui/restWindow.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { skillUsesForAdvancement } from '../src/systems/advancement.js';
@@ -197,7 +197,7 @@ test('AUDIT 23 entity-1: the tick never advances skills; the rest-finished close
   const said = [];
   const clock0 = worldMinutes();
   setWorldMinutes(CLASSIC_GAME_START_TIME + 400);
-  const raised = raiseAtRestEnd(e1, { say: (m) => said.push(m), rolls: () => 0.5 });
+  const raised = raisePlayerSkills(e1, { say: (m) => said.push(m), rolls: () => 0.5 });
   setWorldMinutes(clock0);
   assert.deepEqual(raised, [lb]);
   assert.equal(e1.skills[lb], 31);
