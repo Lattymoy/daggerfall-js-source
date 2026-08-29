@@ -225,13 +225,31 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     const archives = await d.loadMorrowindArchives();
     if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
 
-    const esmName = (await d.storedMorrowindNames()).find((n) => /\.esm$/i.test(n));
-    if (!esmName) return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the body records live there, not in the .bsa' };
+    // EVERY .esm, not the first one.
+    //
+    // THE DEFECT THIS REPLACES, reported by Mac with three archives
+    // attached: `.find()` took whichever .esm the store listed first. An
+    // expansion carries no base-race BODY records, so if Tribunal.esm or
+    // Bloodmoon.esm sorted ahead of Morrowind.esm every arm slot came
+    // back "no record for this actor" and the card had nothing more to
+    // say. loadMorrowindArchives (dataSource.js) already RANKS the .bsa
+    // files by name for exactly this reason; the .esm door simply never
+    // got the same treatment.
+    //
+    // Reading all of them is also what the engine does - later masters
+    // add to and override earlier ones - so this is the load order
+    // rather than a workaround for it.
+    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n));
+    if (!esmNames.length) {
+      return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the body records live there, not in the .bsa' };
+    }
+    const esmBytes = [];
+    for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
     // bodyParts(), not loadMorrowindEsm(). The store's parseEsm door
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
-    const parts = bodyParts(await d.loadMorrowindFile(esmName));
+    const parts = esmBytes.flatMap((e) => bodyParts(e.bytes));
 
     const find = (p) => archives.find((a) => a.has(p));
     const skelArc = find(skeletonPath);
@@ -270,7 +288,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     let weaponInfo = null;
     const mwType = dfWeaponToMw(weapon, WEAPONS);
     if (mwType !== MW_WEAPON_TYPE.None) {
-      const rec = pickWeaponRecord(weaponRecords(await d.loadMorrowindFile(esmName)), mwType,
+      const rec = pickWeaponRecord(esmBytes.flatMap((e) => weaponRecords(e.bytes)), mwType,
         weapon && weapon.materialName);
       if (!rec) {
         weaponNotes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
@@ -293,7 +311,18 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     archives.length = 0;   // release the mapped archives before any parsing
 
     if (!partBytes.length) {
-      return { ok: false, stage: 'parts', error: 'no arm mesh resolved', notes: missing, rows: wanted };
+      // "no record for this actor" is a dead end for whoever reads it.
+      // MW-D4's pattern: report the MEASUREMENT - what was asked for, and
+      // what the data actually offers - so the next step is obvious
+      // instead of a guess.
+      return {
+        ok: false,
+        stage: 'parts',
+        error: `no arm mesh resolved for race "${race}"`,
+        notes: missing,
+        rows: wanted,
+        esm: esmDiagnosis(esmNames, parts, race),
+      };
     }
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
     if (!arm.ok) {
@@ -337,6 +366,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
         : arm.skeleton.byName.has('head') ? 'Head (rule 54 fallback)' : null,
       rows: wanted,
       weapon: weaponInfo,
+      esm: esmDiagnosis(esmNames, parts, race),
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: clip.binding,
       pieces: armPieceRows(arm.pieces).length,
@@ -344,6 +374,21 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
   } catch (err) {
     return { ok: false, stage: 'build', error: err && err.message ? err.message : String(err) };
   }
+}
+
+/** What the .esm layer actually saw, so a refusal names its own cause.
+ *  A slot with no record is not information; the race that was asked
+ *  for, beside the races the files carry, is. */
+export function esmDiagnosis(names, parts, race) {
+  const races = [...new Set((parts ?? []).filter((p) => p.skin && p.playable).map((p) => p.race))].sort();
+  return {
+    files: names,
+    bodyRecords: (parts ?? []).length,
+    firstPerson: (parts ?? []).filter((p) => p.firstPerson).length,
+    raceWanted: race,
+    racesFound: races,
+    raceIsThere: races.includes(String(race || '').toLowerCase()),
+  };
 }
 
 /**
@@ -393,7 +438,7 @@ export function createFpArm() {
         built = res;
         packed = null;
         state = null;
-        if (!res.ok) { reason = `${res.stage}: ${res.error}`; return res; }
+        if (!res.ok) { reason = `${res.stage}: ${res.error}`; built = res; return res; }
         state = resetClip(res.keys, FP_CLIP_GROUP);
         if (!state.ok) {
           built = null; state = null;
@@ -482,6 +527,7 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         framing: built && built.ok ? { scale: built.framing.scale, span: built.framing.span } : null,
         clip: built && built.ok ? { start: built.clip.startTime, stop: built.clip.stopTime } : null,

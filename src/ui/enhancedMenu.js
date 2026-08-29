@@ -937,6 +937,16 @@ function paneEnhanced(body) {
   if (armState.notes && armState.notes.length) {
     mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
   }
+  // AND WHAT THE DATA ACTUALLY OFFERS. "no record for this actor" is a
+  // dead end for whoever reads it; the race asked for, beside the races
+  // the files carry, is a next step.
+  if (armState.esm) {
+    const e = armState.esm;
+    mw.append(el('p', 'meta',
+      `Read ${e.files.join(', ')} — ${e.bodyRecords.toLocaleString()} body records, `
+      + `${e.firstPerson} of them first-person. Looked for race "${e.raceWanted}": `
+      + (e.raceIsThere ? 'present in your data.' : `NOT among the races your files carry (${e.racesFound.join(', ') || 'none'}).`)));
+  }
   body.append(mw);
 
   const waiting = el('div', 'card');

@@ -334,3 +334,46 @@ test('MW-D9: the arm rides the SAME handedness mirror as the world it is composi
   assert.ok(Math.abs(mirrorProjectionX(lens())[5] - lens()[5]) < 1e-9,
     'the mirror negates x alone - the field of view is untouched');
 });
+
+test('MW-D9c: EVERY .esm is read, not the first - an expansion first must not empty the arms', async () => {
+  const { esmDiagnosis } = await import('../src/combat/fpArm.js');
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const PARTS = ['head', 'hair', 'neck', 'chest', 'groin', 'hand', 'wrist', 'forearm', 'upperarm'];
+  const bodyRec = (id, race, part, model) => {
+    const d = [...sub('NAME', Z(id)), ...sub('MODL', Z(model)), ...sub('FNAM', Z(race)),
+      ...sub('BYDT', [PARTS.indexOf(part), 0, 0, 0])];
+    return [...A('BODY'), ...U(d.length), ...U(0), ...U(0), ...d];
+  };
+  const bytes = (...recs) => Uint8Array.from(recs.flat());
+
+  // THE DEFECT, reported live by Mac with three archives attached: the
+  // build took the FIRST .esm the store listed. An expansion carries no
+  // base-race BODY records, so with Bloodmoon.esm ahead of
+  // Morrowind.esm every arm slot answered "no record for this actor" -
+  // and the card had nothing more to say than that.
+  const expansion = bytes(bodyRec('b_n_nord_m_hands.1st_x', 'nord', 'chest', 'b/x.nif'));
+  const morrowind = bytes(bodyRec('b_n_breton_m_hands.1st', 'breton', 'hand', 'b/h.nif'));
+
+  const { bodyParts, armReport, armMeshPaths } = await import('../src/formats/mwFirstPerson.js');
+  const firstOnly = bodyParts(expansion);                                   // the old behaviour
+  const allOfThem = [...bodyParts(expansion), ...bodyParts(morrowind)];     // the new one
+
+  assert.equal(armMeshPaths(armReport(firstOnly, 'breton', false)).filter((r) => r.path).length, 0,
+    'reading only the expansion resolves NO arm mesh - the reported failure, reproduced');
+  assert.equal(armMeshPaths(armReport(allOfThem, 'breton', false)).filter((r) => r.path).length, 1,
+    'and reading every .esm finds the hand, whatever order the store listed them in');
+
+  // THE DIAGNOSIS. A slot with no record is not information; the race
+  // asked for, beside the races the data actually carries, is.
+  const bad = esmDiagnosis(['Bloodmoon.esm'], firstOnly, 'breton');
+  assert.equal(bad.raceIsThere, false);
+  assert.deepEqual(bad.racesFound, ['nord'], 'it names what IS there');
+  assert.equal(bad.bodyRecords, 1);
+  assert.deepEqual(bad.files, ['Bloodmoon.esm'], 'and which file it read');
+  const good = esmDiagnosis(['Bloodmoon.esm', 'Morrowind.esm'], allOfThem, 'breton');
+  assert.equal(good.raceIsThere, true);
+  assert.deepEqual(good.racesFound, ['breton', 'nord']);
+});
