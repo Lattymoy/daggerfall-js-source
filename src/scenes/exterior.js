@@ -282,6 +282,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
+      // WM2f: the mill's companion building is part of an enhanced-skin
+      // departure; the 1:1 lane must not see it.
+      if (placed.enhancedOnly && !isEnhanced()) continue;
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);

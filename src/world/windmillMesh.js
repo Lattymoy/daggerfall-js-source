@@ -64,12 +64,16 @@ export const CLIMATE_SKINS = new Map([
  *  six blocks each gain one, which is what Kamer's WorldData overrides
  *  do on his side and what world/rmbLayout.js does on ours. Raw record
  *  fields in Daggerfall's own units; the matrix is built where every
- *  other model's is. */
+ *  other model's is.
+ *
+ *  TWO MODELS EACH, not one. The 'building' field is a CLASSIC model
+ *  (118) - the structure that carries the door - and the mill stands
+ *  beside it. WM2d read only the mill, which is why it had no way in. */
 export const PLACEMENTS = Object.freeze([
-  Object.freeze({ block: 'FARMAA00.RMB', subX: 1024, subZ: 896, subRot: 0, x: 1867, y: -663, z: -1575, rotY: -512 }),
-  Object.freeze({ block: 'FARMAA01.RMB', subX: 3200, subZ: 448, subRot: 0, x: -2339, y: -662, z: -3063, rotY: -1024 }),
-  Object.freeze({ block: 'FARMAA02.RMB', subX: 320, subZ: 2112, subRot: 0, x: 3162, y: -662, z: -263, rotY: -1022 }),
-  Object.freeze({ block: 'FARMAA05.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2962, y: -662, z: 1267, rotY: 0 }),
-  Object.freeze({ block: 'FARMAA06.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2025, y: -663, z: 2365, rotY: 0 }),
-  Object.freeze({ block: 'FARMAA07.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2025, y: -663, z: -268, rotY: -1024 }),
+  Object.freeze({ block: 'FARMAA00.RMB', subX: 1024, subZ: 896, subRot: 0, x: 1867, y: -663, z: -1575, rotY: -512, building: Object.freeze({ modelIdNum: 118, x: 1600, y: 0, z: -1736, rotY: 0 }) }),
+  Object.freeze({ block: 'FARMAA01.RMB', subX: 3200, subZ: 448, subRot: 0, x: -2339, y: -662, z: -3063, rotY: -1024, building: Object.freeze({ modelIdNum: 118, x: -2500, y: 0, z: -2800, rotY: -512 }) }),
+  Object.freeze({ block: 'FARMAA02.RMB', subX: 320, subZ: 2112, subRot: 0, x: 3162, y: -662, z: -263, rotY: -1022, building: Object.freeze({ modelIdNum: 118, x: 3000, y: 0, z: 0, rotY: -511 }) }),
+  Object.freeze({ block: 'FARMAA05.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2962, y: -662, z: 1267, rotY: 0, building: Object.freeze({ modelIdNum: 118, x: -2800, y: 0, z: 1000, rotY: 512 }) }),
+  Object.freeze({ block: 'FARMAA06.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2025, y: -663, z: 2365, rotY: 0, building: Object.freeze({ modelIdNum: 118, x: -1865, y: 0, z: 2100, rotY: 512 }) }),
+  Object.freeze({ block: 'FARMAA07.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2025, y: -663, z: -268, rotY: -1024, building: Object.freeze({ modelIdNum: 118, x: -2185, y: 0, z: 0, rotY: -512 }) }),
 ]);

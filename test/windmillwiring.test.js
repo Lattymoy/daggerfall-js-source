@@ -22,7 +22,8 @@ import { dirname, join } from 'node:path';
 import { ROTOR_HUB } from '../src/world/windmills.js';
 import { PLACEMENTS, BODY, ROTOR } from '../src/world/windmillMesh.js';
 import { skinnedBody } from '../src/world/windmills.js';
-import { windmillsFor } from '../src/world/rmbLayout.js';
+import { windmillsFor, attachWindmillRecord } from '../src/world/rmbLayout.js';
+import { WINDMILL_INTERIOR } from '../src/world/windmillInterior.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -173,4 +174,96 @@ test('WM2b: the hub the hosts mount at is the module\'s, not a copy', () => {
     assert.doesNotMatch(text, /3\.96/, `${host} spells the hub offset out instead of importing it`);
   }
   assert.deepEqual([...ROTOR_HUB], [3.96, 6.01, -5.5]);
+});
+
+test('WM2f: the mill comes with the building that carries its door', () => {
+  // Mac: "the door is covered and I can't enter it". Kamer's subrecord
+  // places TWO models - a CLASSIC building (118) and the mill beside it
+  // - and WM2d read only the mill, so the structure with the real door
+  // was never placed at all. His subrecord headers declare
+  // Num3dObjectRecords 1 while carrying 2, the same hand-edit slip as
+  // the subrecord counts, which is how the second record went unread.
+  for (const p of PLACEMENTS) {
+    assert.ok(p.building, `${p.block} places a mill with no building`);
+    assert.equal(p.building.modelIdNum, 118, 'the companion is classic model 118');
+  }
+  for (const b of new Set(PLACEMENTS.map((p) => p.block))) {
+    const [mill] = windmillsFor(b);
+    assert.ok(mill.building, `${b} lost its building on the way through the layout`);
+    assert.equal(mill.building.matrix.length, 16);
+    // Beside the mill, not on top of it and not across the farm.
+    const d = Math.hypot(mill.matrix[12] - mill.building.matrix[12],
+      mill.matrix[14] - mill.building.matrix[14]);
+    assert.ok(d > 2 && d < 20, `${b}: the building is ${d.toFixed(1)} units from its mill`);
+  }
+});
+
+test('WM2f: the building rides the ordinary model path, and the 1:1 lane never sees it', () => {
+  // It is a placed model like any other, so it takes its mesh, climate
+  // swap, collider and door geometry from the paths that already exist -
+  // which is also how it would leak into the classic skin, since those
+  // paths know nothing about the enhanced one. Hence the flag.
+  const layout = readFileSync(join(root, 'src/world/rmbLayout.js'), 'utf8');
+  assert.match(layout, /models\.push\(w\.building\)/, 'the building is not placed as an ordinary model');
+  assert.match(layout, /enhancedOnly: true/, 'the building is not marked as an enhanced-skin departure');
+  for (const host of EXTERIOR_HOSTS) {
+    assert.match(src(host), /placed\.enhancedOnly && !isEnhanced\(\)/,
+      `${host} would draw the mill's building on the classic skin`);
+  }
+  // WM2g: and it DOES claim a recordIndex now - the one the attached
+  // subrecord got. WM2f left it undefined on purpose, because the
+  // subrecord it belongs to is one Kamer added and the port's block did
+  // not have it; WM2g appends that subrecord, so the door has an inside.
+  assert.match(layout, /w\.building\.recordIndex = recordIndex/,
+    'the building has no subrecord index, so its door can never open');
+});
+
+test('WM2g: the mill\'s subrecord is attached, and attaching it twice does nothing', () => {
+  // BlocksFile CACHES its parsed blocks - the same object comes back for
+  // every location using this block and for every re-entry - so a second
+  // append would grow the array without bound AND move the recordIndex a
+  // live door already refers to.
+  const block = () => ({
+    name: 'FARMAA00.RMB',
+    rmbBlock: { subRecords: [{ exterior: { block3dObjectRecords: [] }, interior: {} }] },
+  });
+  const b = block();
+  const first = attachWindmillRecord(b);
+  assert.equal(attachWindmillRecord(b), first, 'a second attach made a second subrecord');
+  assert.equal(b.rmbBlock.subRecords.length, 2, 'the subrecord array grew twice');
+
+  const rec = b.rmbBlock.subRecords[first];
+  assert.equal(rec.interior, WINDMILL_INTERIOR, 'the attached subrecord carries something else');
+  // Its EXTERIOR must be empty: the mill and its building are placed by
+  // windmillsFor, and a subrecord carrying them too would stand each twice.
+  assert.equal(rec.exterior.block3dObjectRecords.length, 0,
+    'the attached subrecord places models - every mill would be doubled');
+  assert.equal(rec.exterior.header.num3dObjectRecords, 0);
+});
+
+test('WM2g: the interior is real, and its header counts its own arrays', () => {
+  const I = WINDMILL_INTERIOR;
+  assert.ok(I.block3dObjectRecords.length > 0, 'an interior with no models cannot be entered - layoutInterior throws');
+  // HIS header declares 44 models, 12 flats and 10 doors over arrays of
+  // 16, 11 and 0 - the third header-versus-data mismatch in these files.
+  // A consumer trusting the count walks off the end of the array.
+  assert.equal(I.header.num3dObjectRecords, I.block3dObjectRecords.length);
+  assert.equal(I.header.numFlatObjectRecords, I.blockFlatObjectRecords.length);
+  assert.equal(I.header.numSection3Records, I.blockSection3Records.length);
+  assert.equal(I.header.numPeopleRecords, I.blockPeopleRecords.length);
+  assert.equal(I.header.numDoorRecords, I.blockDoorRecords.length);
+  // The shape blocksFile parses, or interiorLayout reads undefined off
+  // every record: camelCase, and the fields it actually uses.
+  for (const o of I.block3dObjectRecords) {
+    for (const k of ['modelIdNum', 'objectType', 'xPos', 'yPos', 'zPos', 'yRotation']) {
+      assert.equal(typeof o[k], 'number', `an interior model is missing ${k}`);
+    }
+  }
+  for (const f of I.blockFlatObjectRecords) {
+    assert.equal(typeof f.textureArchive, 'number');
+    assert.equal(f.textureBitfield, (f.textureArchive << 7) | (f.textureRecord & 0x7f));
+  }
+  // His mill machinery is in there - 41601, the roller and the plank gear.
+  assert.ok(I.block3dObjectRecords.some((o) => o.modelIdNum === 41601),
+    'the mill interior lost its machinery');
 });
