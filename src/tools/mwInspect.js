@@ -459,3 +459,141 @@ export function checkRequiredBones(report) {
   if (!report || !report.ok) return [];
   return FP_REQUIRED_BONES.map((b) => ({ ...b, present: report.has(b.name) }));
 }
+
+/** MW-D5: ASSEMBLE THE ARM.
+ *
+ * The first step that PLACES parts relative to one another rather than
+ * examining them one at a time. Everything here is a recorded rule, and
+ * the two the reverted arc got backwards are the two doing the work:
+ *
+ *  rule 12 - skinned and rigid parts take COMPLETELY different paths. A
+ *    skinned part's geometry is skinned to the actor's skeleton and is
+ *    never parented to a bone. A rigid part is placed AT a bone.
+ *  rule 13 - a rigid part whose attach bone's name contains "Left" is
+ *    drawn with x negated. One mesh serves both sides. MW8 attached the
+ *    same mesh at both bones with no mirror, so its left hand was a
+ *    second right hand.
+ *  rule 15 - for a skinned part the bone name is ALSO a geometry filter:
+ *    a case-insensitive prefix match on the shape name with Morrowind's
+ *    "Tri " convention stripped. That is how a skinned part picks its
+ *    side, where a rigid one uses the mirror.
+ *
+ * Rest pose only - no clip, no time. Animation is the next stage and
+ * mixing them would make a failure ambiguous.
+ */
+export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
+  const mod = {};
+  try {
+    ({ parseNif: mod.parseNif } = await import('../formats/mwNifFile.js'));
+    ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
+      skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch } = await import('../formats/mwSkin.js'));
+    ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform } = await import('../formats/mwCharacter.js'));
+    ({ PART_BONES: mod.PART_BONES } = await import('../formats/mwNpc.js'));
+  } catch (err) {
+    return { ok: false, error: `readers unavailable: ${err.message}` };
+  }
+
+  let skeleton;
+  try {
+    skeleton = mod.buildSkeleton(mod.parseNif(skeletonBytes));
+  } catch (err) {
+    return { ok: false, stage: 'skeleton', error: err.message };
+  }
+  const rootRef = [...skeleton.nodes.entries()].find(([, n]) => n.parent < 0)?.[0] ?? -1;
+  const pose = mod.poseSkeleton(skeleton, null, null, 0);
+  const mats = mod.skelMats(skeleton, pose, rootRef);
+
+  const pieces = [];
+  const notes = [];
+  for (const part of parts) {
+    // `part.bones` overrides the table so a test can drive real assembly
+    // against a fixture skeleton whose bone names are not Morrowind's.
+    const bones = part.bones ?? mod.PART_BONES[part.slot] ?? [];
+    let nif;
+    try {
+      nif = mod.parseNif(part.bytes);
+    } catch (err) {
+      notes.push(`${part.slot}: ${err.message}`);
+      continue;
+    }
+    let tookSkinned = false;
+    for (const bone of bones.length ? bones : [null]) {
+      if (bone && !skeleton.byName.has(bone.toLowerCase())) {
+        notes.push(`${part.slot}: this skeleton has no bone "${bone}"`);
+        continue;
+      }
+      let bound;
+      try {
+        bound = mod.bindPart(skeleton, nif, bone ? { attachBone: bone } : {});
+      } catch (err) {
+        notes.push(`${part.slot} @ ${bone}: ${err.message}`);
+        continue;
+      }
+
+      // RULE 12 + 15: skinned geometry carries its own bones, so it binds
+      // ONCE - and picks its side by the shape NAME, not by the mirror.
+      if (!tookSkinned) {
+        for (const batch of bound.skinned) {
+          if (bone && !shapeMatchesBone(batch.name, bone)) continue;
+          const out = new Float32Array(batch.positions.length);
+          mod.skinBatch(batch, skeleton, pose, mod.skelMats(skeleton, pose, batch.skin.skeletonRoot), out, null);
+          pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
+            positions: out, indices: batch.indices });
+        }
+        if (bound.skinned.length) tookSkinned = true;
+      }
+
+      // RULE 12 + 13: a rigid part is PLACED at the bone, once per side,
+      // with x negated on the left.
+      if (bound.attached.length) {
+        const at = mod.attachmentTransform(mats, bound.attachRef);
+        const mirror = !!(bone && /left/i.test(bone));
+        for (const batch of bound.attached) {
+          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
+            positions: placeAtBone(batch.positions, at, mirror), indices: batch.indices });
+        }
+      }
+    }
+  }
+  return {
+    ok: pieces.length > 0,
+    pieces,
+    notes,
+    bounds: pieces.length ? meshBounds(pieces) : null,
+    error: pieces.length ? null : 'nothing bound - see the notes for why',
+  };
+}
+
+/** RULE 15's filter, verbatim: a case-insensitive PREFIX match on the
+ *  shape name, with Morrowind's "Tri " convention stripped first. A shape
+ *  with NO name matches everything, because a nameless shape in a
+ *  one-shape part file is the part. */
+export function shapeMatchesBone(shapeName, bone) {
+  const name = String(shapeName || '').trim().toLowerCase();
+  if (!name) return true;
+  const want = String(bone).toLowerCase();
+  if (name.startsWith(want)) return true;
+  return name.startsWith('tri ') && name.slice(4).startsWith(want);
+}
+
+/** RULE 13, alone and directly testable: place a rigid part's vertices at
+ *  a bone, mirroring x first when the part is going on the LEFT.
+ *
+ *  Extracted because the mirror could not be reached end-to-end - no
+ *  fixture skeleton carries a bone whose name contains "left", so an
+ *  assembly test simply never took this branch and three mutants survived
+ *  a full sweep. A rule that cannot be exercised is not pinned, whatever
+ *  the test output says.
+ */
+export function placeAtBone(positions, at, mirror) {
+  const out = new Float32Array(positions.length);
+  for (let v = 0; v < positions.length; v += 3) {
+    const x = mirror ? -positions[v] : positions[v];
+    const y = positions[v + 1];
+    const z = positions[v + 2];
+    out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
+    out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
+    out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
+  }
+  return out;
+}

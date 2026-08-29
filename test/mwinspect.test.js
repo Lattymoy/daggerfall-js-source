@@ -5,6 +5,7 @@ import {
   isFirstPersonId, FP_SKELETONS, ARM_PARTS, MW_BODY_PARTS,
   scanNifRecordTypes, skinVerdict, armMeshPaths, parseMeshForPreview, meshBounds, frontViewMapper,
   skeletonReport, checkRequiredBones, FP_REQUIRED_BONES,
+  assembleFirstPersonArm, shapeMatchesBone, placeAtBone,
 } from '../src/tools/mwInspect.js';
 
 // MW-D: the diagnostic that should have existed before any renderer.
@@ -334,4 +335,101 @@ test('MW-D4: a skeleton that will not parse names its stage', async () => {
   assert.equal(bad.ok, false);
   assert.equal(bad.stage, 'parse');
   assert.ok(bad.error && bad.error.length);
+});
+
+// ── MW-D5: assembly, and the two rules MW8 got backwards ──────────
+
+test('MW-D5: rule 15 - the bone name is a PREFIX filter, with "Tri " stripped', () => {
+  // How a SKINNED part picks its side. A rigid one uses the mirror
+  // instead (rule 13); confusing the two is what MW8 did.
+  assert.equal(shapeMatchesBone('Tri Left Hand', 'Left Hand'), true, 'the Tri convention is stripped');
+  assert.equal(shapeMatchesBone('Left Hand 01', 'Left Hand'), true, 'a prefix match, not equality');
+  assert.equal(shapeMatchesBone('TRI LEFT HAND', 'left hand'), true, 'case-insensitive both ways');
+  assert.equal(shapeMatchesBone('Tri Right Hand', 'Left Hand'), false, 'the OTHER side is excluded');
+  assert.equal(shapeMatchesBone('Right Hand', 'Left Hand'), false);
+  // a nameless shape in a one-shape part file IS the part
+  assert.equal(shapeMatchesBone('', 'Left Hand'), true);
+  assert.equal(shapeMatchesBone(null, 'Left Hand'), true);
+});
+
+test('MW-D5: rule 13 - the mirror negates X and ONLY X, and it always runs', () => {
+  // THE PIN THAT WOULD HAVE CAUGHT MW8, and it is here as a direct call
+  // because it could not be reached through assembly: no fixture skeleton
+  // has a bone whose name contains "left", so the assembly path never
+  // took this branch and the mirror mutant SURVIVED a full sweep. A rule
+  // that cannot be exercised is not pinned, whatever the output says.
+  const identity = { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] };
+  const src = new Float32Array([2, 3, 5, -7, 11, 13]);
+  assert.deepEqual([...placeAtBone(src, identity, false)], [2, 3, 5, -7, 11, 13], 'the right side is untouched');
+  assert.deepEqual([...placeAtBone(src, identity, true)], [-2, 3, 5, 7, 11, 13],
+    'the left side negates X and leaves Y and Z alone');
+  // and the bone transform still applies on top of the mirror
+  const shifted = { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [100, 0, 0] };
+  assert.deepEqual([...placeAtBone(new Float32Array([2, 0, 0]), shifted, true)], [98, 0, 0],
+    'mirror first, then the bone - not the other way round');
+});
+
+test('MW-D5: assembly places a rigid part ONCE PER SIDE, through the real readers', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  // The fixture skeleton's vocabulary is Bone0/Bone1, not Morrowind's, so
+  // the bones are named explicitly. Without that this test never reaches
+  // the assembly path at all - which is exactly how three mutants survived
+  // a full sweep the first time this was written.
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: bsa.get('meshes/base_anim.nif'),
+    parts: [{ slot: 'hand', bones: ['Bone0', 'Bone1'], bytes: bsa.get('meshes/fixture/plain.nif') }],
+  });
+  assert.equal(r.ok, true, `${r.error} :: ${r.notes.join(' | ')}`);
+  const rigid = r.pieces.filter((p) => p.kind === 'rigid');
+  assert.equal(rigid.length, 2, 'one placement per side - two bones, two pieces');
+  assert.deepEqual(rigid.map((p) => p.bone), ['Bone0', 'Bone1']);
+  // neither fixture bone is named "left", so neither is mirrored - the
+  // mirror itself is pinned directly above, because no fixture skeleton
+  // can reach it through this path
+  assert.deepEqual(rigid.map((p) => p.mirrored), [false, false]);
+  assert.ok(rigid[0].positions.length > 0 && rigid[0].indices.length > 0, 'with real geometry');
+});
+
+test('MW-D5: rule 15 excludes a skinned shape whose name does not match its bone', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  // skinned.nif's one shape is named "Skinned", which is not a prefix
+  // match for Bone0 - so the filter drops it and assembly yields nothing.
+  // THIS IS THE RULE WORKING, and it is pinned so that deleting the filter
+  // is visible: without it this returns a piece.
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: bsa.get('meshes/base_anim.nif'),
+    parts: [{ slot: 'hand', bones: ['Bone0'], bytes: bsa.get('meshes/fixture/skinned.nif') }],
+  });
+  assert.equal(r.pieces.filter((p) => p.kind === 'skinned').length, 0,
+    'a shape the bone filter rejects contributes nothing');
+  // RECORDED GAP, not an oversight: no fixture mesh is named after a bone
+  // this fixture skeleton carries, so the filter's ACCEPT path cannot be
+  // exercised end-to-end here. It is pinned directly on shapeMatchesBone
+  // above. Retail names its shapes "Tri Left Hand" and would exercise it.
+});
+
+test('MW-D5: assembly reports WHY it produced nothing, and never silently empties', async () => {
+  const bad = await assembleFirstPersonArm({
+    skeletonBytes: new Uint8Array([...ascii('not a nif'), 0x0a, 0, 0, 0, 0]),
+    parts: [],
+  });
+  assert.equal(bad.ok, false);
+  assert.equal(bad.stage, 'skeleton');
+  assert.ok(bad.error);
+  const { readFileSync } = await import('node:fs');
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  const noParts = await assembleFirstPersonArm({
+    skeletonBytes: bsa.get('meshes/base_anim.nif'), parts: [],
+  });
+  assert.equal(noParts.ok, false, 'no parts is not a success');
+  assert.match(noParts.error, /nothing bound/);
+  assert.deepEqual(noParts.pieces, []);
 });
