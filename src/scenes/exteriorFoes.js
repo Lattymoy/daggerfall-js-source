@@ -14,6 +14,7 @@
 // 13 fixed-list casters do not cast up here yet.
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
@@ -239,6 +240,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  former ally to its species (:204-213). resetAllyTeamOnPlayerAttack
    *  raises IsHostile itself, so a headless stub ai still stands up. */
   function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
+    markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
     if (fromPlayer && f.ai) {
       f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
       resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
