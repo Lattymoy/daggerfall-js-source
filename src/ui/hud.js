@@ -16,6 +16,8 @@
 //   reference), min 1 - integer scaling keeps the art crisp.
 
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
+import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
+import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
@@ -301,6 +303,20 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // host that never loaded the HUD art still takes damage.
   playerDamageFlash.tick(dt);
   playerDamageFlash.draw(renderer, canvas);
+  // PX30: THE ENHANCED HUD RIDES THE ONE HOST-AGNOSTIC CALL, for the
+  // reason the damage flash above rides it - drawHud is what all four
+  // hosts already make, last and over the viewmodel, so no host can
+  // forget it or run it twice. It is a DOM readout, so it returns
+  // before the canvas work below: the classic bars, the classic
+  // compass and the classic icons are the CLASSIC skin's, and drawing
+  // both would be two HUDs at once.
+  //
+  // Above the `!art` return, like the flash: the enhanced HUD reads no
+  // ARENA2, and a player whose HUD art failed to load still has vitals.
+  if (isEnhanced() && typeof document !== 'undefined') {
+    drawEnhancedHud(vitals, heading01, dt, { hidden: cursorActive });
+    return;
+  }
   if (!art) return;
   // VB1: the one vitals snapshot both rigs read - the same fallbacks
   // the plain bars carried since S15. `cursorActive` stands in for

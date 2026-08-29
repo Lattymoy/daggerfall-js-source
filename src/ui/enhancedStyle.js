@@ -1438,6 +1438,75 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; }
+/* ── PX30: THE GAMEPLAY HUD ─────────────────────────────────────
+   Mac's reference is ESO's Clean UI - a compass across the top, the
+   target named beneath it, three vitals along the bottom and the
+   effects under those - read back in this arc's own language: square
+   2px frames, the Pixelify face, brass and bone, the classic shadowed
+   pair for what is live, and states that SNAP.
+
+   IT IS A READOUT. pointer-events none everywhere, because nothing
+   here is pressed; the game is underneath and stays reachable. */
+.hud { position: fixed; inset: 0; z-index: 4; pointer-events: none;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.hud-top { position: absolute; left: 50%; top: 18px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hud-bottom { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* THE COMPASS. A strip of a quarter of the circle, the points placed
+   by heading and HIDDEN when they fall off it - a marker pinned to the
+   rim would say "north is exactly there", which is a lie. */
+.hud-compass { position: relative; width: min(520px, 60vw); height: 26px;
+  border-bottom: 2px solid rgba(125,116,96,0.55); }
+.hud-strip { position: absolute; inset: 0; overflow: hidden; }
+.hud-point { position: absolute; top: 2px; transform: translateX(-50%);
+  font-size: 12px; letter-spacing: 0.18em; color: #a89f88; }
+.hud-point.hud-cardinal { font-size: 15px; color: #d8cfae; }
+.hud-needle { position: absolute; left: 50%; bottom: -2px; width: 2px; height: 8px;
+  transform: translateX(-50%); background: var(--brass); }
+
+/* THE TARGET. Hidden until you strike something, and it fades. */
+.hud-foe { display: none; flex-direction: column; align-items: center; gap: 4px; }
+.hud-foe.on { display: flex; }
+.hud-foename { font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; }
+.hud-track { position: relative; width: min(320px, 46vw); height: 10px;
+  background: rgba(10,12,17,0.75); border: 2px solid rgba(125,116,96,0.55); }
+.hud-fill { display: block; height: 100%; width: 100%; background: #d98074; }
+.hud-foetrack { width: min(280px, 40vw); height: 8px; }
+
+/* THE VITALS. Magicka, health, fatigue - the reference's own order and
+   DFU's own three, each with its number beside it. */
+.hud-bars { display: flex; align-items: center; gap: 18px; }
+.hud-vital { display: flex; align-items: center; gap: 8px; }
+.hud-vital .hud-track { width: min(180px, 22vw); height: 12px; }
+.hud-num { min-width: 3ch; font-size: 12px; color: #a89f88;
+  font-variant-numeric: tabular-nums; }
+.hud-health .hud-fill { background: #d98074; }
+.hud-magicka .hud-fill { background: #6f8fd9; }
+.hud-fatigue .hud-fill { background: #74d9a0; }
+
+/* THE EFFECTS, beneath the bars. An expiring one takes the classic
+   shadowed pair, which is what this UI has always used for urgency. */
+.hud-effects { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  max-width: min(720px, 80vw); }
+.hud-eff { display: flex; align-items: baseline; gap: 8px; padding: 3px 8px;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  font-size: 12px; letter-spacing: 0.08em; }
+.hud-eff.item { border-style: dashed; }
+.hud-eff.expiring { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hud-effrounds { color: var(--brass); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 860px) {
+  .hud-top { top: 10px; }
+  .hud-bottom { bottom: 12px; gap: 8px; }
+  .hud-bars { gap: 10px; }
+  .hud-vital .hud-track { width: 26vw; }
+}
+
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
 .px-sheetdoors { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; }
 .px-sheetdoors .act { min-height: 44px; }
