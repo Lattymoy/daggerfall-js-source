@@ -7873,6 +7873,42 @@ chip, rail count) so there is no fourth.
 
 Pins: 8 in test/enhancedChronicle.test.js. 12 mutations, 12 dead.
 
+PX25 (Mac: "retire the ones you mentioned"; then "your lead"): THE
+SHEET'S DOORS, FIRST. The F5 overlay and the pause window's Stats page
+are the SAME character sheet - the same four sections read from the
+same `sheetModel`, which enhancedMenu imports out of
+enhancedCharSheet.js - and only one of them had a way out. The
+classic sheet has four buttons down its side and the overlay copied
+them; the Stats page had none, because the pause window takes four
+hooks and none of them opened a window.
+
+So the retirement starts by making the overlay REDUNDANT rather than
+merely replaced. Retiring it first would have shipped a window that
+can do less, which is the trap this arc has now been caught in twice
+(PX24's read-only chronicle, PX23's missing rename), and the third
+time it would have been on purpose.
+
+Each host hands the pause window the arms IT ALREADY HAD -
+toggleInventory, toggleSpellbook, toggleLogbook exist on every host
+and nothing new is built here. A door draws only when its hook is a
+function, so the exterior host, which has no journal maker, passes two
+and its Chronicle button never draws: the filter is the point, not a
+gap in it. And the window RESUMES before it opens, because two
+overlays at once is the stacking bug U55 found the other way round on
+this same seam.
+
+A CORRECTION TO THE SURVEY that preceded this. I told Mac the
+retirement was three jobs and that chargen's rail was "the small one,
+purely cosmetic". It is not: the wizard is a MODIFIER on the boot
+shell - `.wizard .railbtn`, `.wizard .pane`, and the style block says
+outright that "character creation borrows the menu's shell whole". So
+the boot Settings screen and the ten-stage wizard convert together or
+not at all, and the retirement is two jobs, not three.
+
+Pins: 2 in enhancedPause.test.js. 4 mutations, 4 dead. Verified live:
+with two hooks handed over, exactly two doors draw and pressing one
+fires that host's arm.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

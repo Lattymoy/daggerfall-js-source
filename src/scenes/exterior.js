@@ -1047,6 +1047,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     togglePause: () => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        // PX25: the sheet's own doors. This host has no journal maker,
+        // so it hands over two and the Chronicle button never draws -
+        // which is the point of the filter, not a gap in it.
+        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
@@ -1081,8 +1086,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // AUDIT 17e F41: preventDefault must run for F5 in EVERY mode -
     // the mode gate skipped the handler AND its preventDefault, so
     // pressing F5 inside a building reloaded the page and destroyed
-    // the session. Routing F5/F6 into interiors is its own arc
-    // (FLAGGED); swallowing the browser reload is not optional.
+    // the session. Swallowing the browser reload is not conditional
+    // on this ladder having a destination, which is why it runs above
+    // it. FS1: the arc this used to defer to is U43, and U43 shipped.
+    // This host is the standalone ?exterior one and builds no interior
+    // to step into, so the sentence was second-hand here in the first
+    // place - which is how it outlived the arc twice over.
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     // U45: the ladder below and the large HUD's panels are the SAME

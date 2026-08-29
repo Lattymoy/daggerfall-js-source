@@ -241,6 +241,32 @@ export function getPeopleOfCurrentRegion(factionDict, regionIndex) {
   return factions[0];
 }
 
+/** CQ1 - PlayerGPS.GetCourtOfCurrentRegion (PlayerGPS.cs:469-483),
+ *  verbatim: the region's single noble COURT (type 14, guild group
+ *  Region, social group ANY - DFU passes -1 there, unlike the People
+ *  lookup above, which pins Commoners).
+ *
+ *  Same refusal convention as its sibling: DFU throws "did not find
+ *  exactly 1 match" and the port answers null, because a host that
+ *  cannot name a court should show no court rather than take down the
+ *  frame. The two consumers - TalkManager's "tell me about" resolution
+ *  (:893, :903) and quest Person's court binding (Person.cs:1010) -
+ *  both already have a no-faction path.
+ *
+ *  world.js hardcoded `courtOfCurrentRegion: () => 0` before this,
+ *  which is not merely absent: 0 is a REAL faction id, so a palace
+ *  interior and the three generic Random_* factions resolved to
+ *  whatever faction 0 happens to be rather than to nothing. */
+export function getCourtOfCurrentRegion(factionDict, regionIndex) {
+  const factions = findFactions(factionDict, {
+    type: FACTION_TYPES.Courts,
+    guildGroup: GUILD_GROUPS.Region,
+    region: regionIndex,
+  });
+  if (factions.length !== 1) return null;   // DFU throws; the caller decides
+  return factions[0];
+}
+
 /** Ensure the entity carries the reaction-state fields (all zero at
  *  chargen; classic starts every social-group rep at 0). */
 export function ensureReactionState(entity) {

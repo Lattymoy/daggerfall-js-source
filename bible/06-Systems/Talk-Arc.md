@@ -1170,3 +1170,113 @@ Pins: 5 in `test/questorpool.test.js` (the walk on fixture blocks,
 the SetLayoutData law per person, an end-to-end walk-to-pool mint
 keyed by the walk's own seed, the two mounts). Campaign: 8 mutants,
 8 killed.
+
+## CQ1 - THE REGION'S NOBLE COURT (2026-08-29)
+
+`PlayerGPS.GetCourtOfCurrentRegion` (PlayerGPS.cs:469-483) finds the
+one Courts faction whose guild group is Region and whose region is the
+player's, and throws if it does not find exactly one - DFU's own
+comment is "Should always find a single court".
+
+The port hardcoded `courtOfCurrentRegion: () => 0` in world.js, and
+**that is worse than absent: 0 is a real faction id.** A palace
+interior and the three generic `Random_*` factions that `npcSession`
+routes through this getter resolved to whatever faction 0 happens to
+be - silently, and plausibly - rather than to nothing.
+
+The lookup needed no new machinery. `findFactions` is already
+`PersistentFactionData.FindFactions` verbatim, and
+`getPeopleOfCurrentRegion` two functions up is the same shape. What
+CQ1 adds is the Courts query and the honest refusal.
+
+**The social-group column is deliberately unconstrained.** The People
+lookup pins Commoners; DFU's court call passes `-1` there
+(`FindFactions(Courts, -1, Region, index)`). "Make it match its
+sibling" is the plausible wrong tidy-up and would drop every court
+whose social group is anything else - the campaign's fourth mutant,
+and the reason it is pinned rather than left to read as an oversight.
+
+Refusal follows the sibling's split: `talk.js` answers null where DFU
+throws, and `world.js` turns that into the bridge's own no-faction 0.
+A host that cannot name a court shows no court rather than taking down
+the frame.
+
+Pins: 5 in `test/regioncourt.test.js`, one of them ARENA2-gated and
+therefore half-blind by the known charter - it asserts on the shipped
+corpus that every region really does resolve exactly one court, which
+is what makes DFU's throw unreachable, and that a region's court is
+never its People faction. Campaign: 6 mutants, 6 killed.
+
+### CQ1b: the same claim had a second home, again (2026-08-29)
+
+CQ1 shipped with the bug it was about. It replaced the hardcoded
+`courtOfCurrentRegion: () => 0` and left a five-line comment **four
+lines above it** still reading *"PlayerGPS.GetCourtOfCurrentRegion is
+FLAGGED: the port has no Court-of lookup yet, so a faction id of 0
+inside a palace... still resolve to nothing"* - sitting directly above
+the correction that says the opposite.
+
+This is the second time in one session. EF1b was the same shape - the
+effect library's module header outlived the counter's flag by four
+lines - and EF1c wrote the lesson down in as many words: **A CLAIM
+USUALLY HAS MORE THAN ONE HOME. Grep the claim, not the line.**
+
+Writing it down did not stop the repeat, which is the same finding
+CG2's campaign made about the vacuous-pin lesson one slice earlier. The
+answer is not another note. Every slice that retires a sentence now
+carries a per-slice pin that the sentence has no second home, EF1c's
+unquote rule included so a correction may still quote what it retired,
+and CQ1's is mutation-checked by restoring the stale block and watching
+it fail. Open flags 168 -> 167.
+
+## RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT (2026-08-29)
+
+`createTownTalk` took `regionIndex` as a plain **number**, so the
+streaming world host had nothing to hand it but `startLoc.regionIndex`.
+Every region-keyed answer in the module therefore stayed the *boot*
+region's for the whole session, however far the player streamed. Three
+things went stale together:
+
+- **the wandering NPC race** - `const npcRace = REGION_RACES[...]`,
+  computed once at construction. It picks the oath pool, so a Redguard
+  region's oaths came out of Breton mouths (or the reverse) for anyone
+  who walked across a border;
+- **the People faction** the reaction law reads, resolved once inside
+  `ensureLoaded`;
+- **the map-discovery key**, `` `${region}:${city}` ``. That one is the
+  worst of the three. A building discovered in Daggerfall after walking
+  out of Betony was **filed under Betony**, so the reveal never appeared
+  where the player actually was, and never would.
+
+The flag standing over the call said this waited on *"the current-pixel
+region wiring [to land] with travel"*. It had landed. `world.js`'s
+`_questRegionIndex` - the same `PlayerGPS.CurrentRegionIndex` read that
+the quest bridge, the map table and the name bank already go through -
+was sitting eleven lines below the call that was waiting for it. This is
+the fifth *blocker retired, sentence stayed* of this run.
+
+**One parameter, two shapes.** `const regionNow = typeof regionIndex ===
+'function' ? regionIndex : () => regionIndex;` The streaming host hands
+a getter; the two dev hosts each build exactly one location and cannot
+stream out of it, so their plain number is correct and must not be
+churned into a getter for symmetry's sake (pinned, and the campaign's
+tenth mutant). Downstream, nothing may name the raw parameter again -
+that is exactly how one of the three sites would quietly stay stale -
+and a source sweep holds that line.
+
+**The People lookup is memoised by region, not cached outright.** `if (r
+!== _peopleRegion) { ... }`: FACTION.TXT is still parsed once and kept,
+and only the per-region walk re-runs, on a border crossing. The guard
+matters in both directions - no cache and every reaction roll re-walks
+the faction dict; no invalidation and the boot region's people answer
+for ever, which is the bug.
+
+The sweep pin needed **one line of self-exemption**: it starts *after*
+the normalising line, because that line is the single place the raw
+parameter is legitimately named and a sweep that flags its own subject
+can never pass. PY1's precedent, kept narrow - one line, not a whole
+block named after the slice, which is the mistake EF1c had to undo.
+
+Pins: 6 in `test/regionlive.test.js`, the sixth being CQ1b's per-slice
+second-home check, applied at the time rather than an hour later.
+Campaign: 11 mutants, 11 killed. Open flags 167 -> 166.

@@ -1271,6 +1271,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // same implementation - this host's enemy missiles and arrows stay
   // below and reuse the engine's explodeAt/applySpellToPlayer. The
   // absorb context is the dungeon constant (inside, no daylight).
+  //
+  // FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+  // MOUNTED HERE. setDefaultEnchantCtx (systems/enchantments.js:247)
+  // has exactly ONE caller in the tree, scenes/world.js, so in the
+  // standalone ?dungeon host every item-enchantment arm that needs a
+  // host runs against no ctx at all: CastWhenUsed's CasterOnly assign
+  // and its click-to-cast ready (:335-336), the vampiric-drain and
+  // affinity scans (:421, :624), and SoulBound's break release (:502).
+  // Every one of them is optional-chained, which is exactly the
+  // AUDIT 24 seam shape - a ported law that evaporates in SILENCE with
+  // a green suite. The world host's DUNGEON MODE used to share the
+  // second half of this gap - its mounted ctx answered an empty foe
+  // pool in every mode but exterior - and EC1 closed that one: the
+  // mount reads THIS context's foes and sinks through modes.dungeonCtx
+  // when the live mode is dungeon. What is still open is only the
+  // standalone host, which has no ctx to read them with.
+  //
+  // world.js:1373 claimed for several slices that this was "FLAGGED
+  // there with the rest of its enchant wiring". It was not; FS1 found
+  // the delegation pointing at a flag nobody had written. The mount
+  // itself is its own slice - the world host's is ~90 lines of live
+  // plumbing (spell reflection re-targeting, per-foe sinks, the say
+  // sink) and none of it is host-portable by copy.
   const magic = createPlayerMagic({
     // QG1: the ready-spell doors - this host's own cast engine raises
     // into the same machine the world lane's does (opts.questBridge is
@@ -3078,6 +3101,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
+        // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
+        // sheet. Each host passes the arms it already has; a host
+        // without one passes nothing and the button never draws.
+        openPack: () => { const w = api.makeInventory?.(); if (w) activeOverlay = w; },
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) activeOverlay = w; },
+        openChronicle: () => { const w = api.makeJournal?.('notebook'); if (w) activeOverlay = w; },
         // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
         // the F5 journal at :3449 and the notebook at :867) - the PX3
         // flag was too conservative, so it is paid with the same walk
