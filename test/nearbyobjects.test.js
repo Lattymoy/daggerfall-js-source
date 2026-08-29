@@ -252,15 +252,22 @@ test('FX1 (F207): the OUTDOOR feeds carry loot pools - piles and corpses mark ab
   // with no scene gate (:747, :766-776) - the "no loot piles above
   // ground" premise the two exterior feeds rested on has been false
   // since droppedLoot mounted. Both hosts feed the world piles AND
-  // the corpse containers now, the dungeonContext shape.
+  // the corpse containers.
+  //
+  // RE-ANCHORED at DT1 (F041's precedent - a pin anchored on the
+  // LITERAL breaks when the shape moves, so anchor on the law). DT1
+  // found this same defect alive in the dungeon and the interior
+  // hosts and gave all four ONE walk, so the inline corpse map this
+  // pin used to quote no longer exists anywhere. What it asserts is
+  // unchanged: each outdoor host names BOTH kinds to that walk.
   const ROOT2 = join(dirname(fileURLToPath(import.meta.url)), '..');
-  for (const [p, corpses] of [
-    ['src/scenes/world.js', /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]/],
-    ['src/scenes/exterior.js', /\.\.\.cityGuards\.guards\n/],
+  for (const [p, foes] of [
+    ['src/scenes/world.js', 'exteriorFoePool()'],
+    ['src/scenes/exterior.js', 'cityGuards.guards'],
   ]) {
     const s = readFileSync(join(ROOT2, p), 'utf8');
-    assert.match(s, /loot: \(\) => \[\n\s+\.\.\.droppedLoot\._piles\.map\(lootNearbyRecord\),/, `${p} feeds the world piles`);
-    assert.match(s, corpses, `${p} feeds its corpse containers`);
+    assert.ok(s.includes(`nearbyLootRecords({ piles: droppedLoot._piles, foes: ${foes} })`),
+      `${p} feeds the world piles AND its corpse containers`);
     assert.ok(!s.includes('There are no loot PILES above ground'), `${p}: the false premise is gone`);
     assert.ok(!s.includes('No loot piles above\n      // ground'), `${p}: the false premise is gone (short form)`);
   }

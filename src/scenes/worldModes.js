@@ -28,7 +28,7 @@ import { pickActivatable, worldAabb, activationTargets, pickQuestFoe } from '../
 import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
+import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -338,9 +338,45 @@ export function createWorldModes(host) {
     transferToCemetery: host.transferToCemetery ?? null,
   });
 
-  // X4: the interior arm's Detect scan (see the frame body). Both
-  // pools are empty until interior loot containers ship.
-  const detectFeed = createDetectFeed(playerEntity, { feet: () => player.pos });
+  // X4: the interior arm's Detect scan (see the frame body).
+  //
+  // DT1: BOTH pools were left empty here on the claim that this host
+  // has nothing to put in them. It has had both for slices. The
+  // entities are `interiorFoes` - a real foe pool since IF, carrying
+  // quest foes and the Daedric punishment wave - and the loot is what
+  // DaggerfallInterior.AddFurnitureAction (:780-841) hangs a
+  // DaggerfallLoot on: shop shelves (:796-801, E2) and house
+  // containers (:829-838, S2b), plus the corpse markers this pool
+  // mints like any other. `GetActiveLoot()` (PlayerGPS.cs:765-776)
+  // walks every one of them with no scene gate, so all three Detect
+  // spells were blind inside a building.
+  //
+  // An UNBROWSED shelf contributes NOTHING, and that is DFU's answer
+  // too rather than a port limit: AddFurnitureAction adds the empty
+  // component and PlayerActivate.cs:881-886 stocks it on FIRST ACCESS,
+  // so `Items.Count > 0` is false until the player has opened it and
+  // GetLootFlags (:822-836) withholds the Treasure bit. `items: null`
+  // is that same un-stocked state, and maps to a count of zero.
+  //
+  // FLAGGED, and named rather than quietly folded in: a pile the
+  // player DROPS indoors is not in this list, because this host mints
+  // no ground pile of its own - `mintRewardPile` falls interior drops
+  // through to the world host, whose `dropFeet` reads the EXTERIOR
+  // player and collider. In DFU the drop is a DaggerfallLoot in the
+  // interior scene and GetActiveLoot has it like any other. The fix is
+  // an interior droppedLoot pool, not a line here; when it lands it
+  // joins `piles` below and nothing else changes.
+  //
+  // The thunks are lazy - `interiorCtx` and `interiorFoes` are
+  // declared below and only read at tick time.
+  const detectFeed = createDetectFeed(playerEntity, {
+    entities: () => (interiorFoes?.foes ?? []).filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    loot: () => nearbyLootRecords({
+      containers: [...(interiorCtx?.shelves ?? []), ...(interiorCtx?.containers ?? [])],
+      foes: interiorFoes?.foes ?? [],
+    }),
+    feet: () => player.pos,
+  });
   // X7: set while an IDENTIFY SPELL's window is open ({chance, cost}),
   // null for the paid guild service. The trade window is one window
   // serving both, exactly as DFU's is.
@@ -1064,8 +1100,10 @@ export function createWorldModes(host) {
     } else if (mode === 'Sell' || mode === 'SellMagic') {
       // The proceeds were weighed before they were paid: a purse that
       // would push the player past MaxEncumbrance becomes a letter of
-      // credit instead. FLAGGED: there is nowhere to cash one yet, so
-      // the letter is minted and carried (banking's arc owns the rest).
+      // credit instead. B2 gave it its destination - DepositAll_LOC
+      // (banking.js:461, DaggerfallBankingWindow :377-389) takes EVERY
+      // letter in the pack at face value - so the note that once stood
+      // here saying there was nowhere to cash one is retired.
       if (proceeds?.kind === 'letterOfCredit') {
         playerEntity.items.unshift(letterOfCredit(proceeds.amount));
       } else {
@@ -1334,8 +1372,8 @@ export function createWorldModes(host) {
     // list), Talk (T - re-runs this routing with the merchant arm
     // skipped and menu:true, TalkButton_OnMouseClick :143-148), and
     // and Sell, which U40 landed - the popup's third button opens the
-    // trade window in Sell mode. The BANKING arm stays FLAGGED below;
-    // the tavern's landed with U39.
+    // trade window in Sell mode. The banking arm landed at B2 (it is
+    // the next arm below); the tavern's landed with U39.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
       openRepairService({
         onTalk: () => openStaticNpc(pn, { forceTalk: true }),
@@ -1963,8 +2001,9 @@ export function createWorldModes(host) {
         if (!access.allowed) {
           return { rows: access.textId ? rows(access.textId) : [access.text] };
         }
-        // U24: the three the port can perform. Every other arm is
-        // FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+        // U24 could perform three of these. DR2 closed the last of
+        // the twenty, so guildServiceFlow.SERVICE_DESTINATION maps
+        // every arm and there is no null left to name.
         const flow = openServiceFlow(serviceDestination(service), {
           guild, memberships, store, rows, route,
           // G6: the greeting's dismissal IS the service - the same
@@ -3697,17 +3736,15 @@ export function createWorldModes(host) {
     // last, over the viewmodel, under the overlay.
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
-      // X4: the Detect markers, interior arm. THE FOUR HOSTS RULE -
-      // the feed is mounted here even though both pools are empty
-      // today, so the seam is visible rather than a host silently
-      // missing an effect. What an interior would contribute in DFU
-      // is LOOT CONTAINERS: static interior NPCs are StaticNPC
-      // components and are NOT in PlayerGPS's list at all (only
-      // enemies and CIVILIAN MOBILE behaviours are, and the port has
-      // neither indoors), so an empty scan in a shop is DFU's answer
-      // too. FLAGGED: interior loot containers are the loot arc's -
-      // when they land they plug into `loot` below and Detect
-      // Treasure lights up indoors with no other change here.
+      // X4: the Detect markers, interior arm. THE FOUR HOSTS RULE
+      // mounted the feed here before this host had anything to put in
+      // it, and DT1 is what that rule is for: the pools filled (shop
+      // shelves, house containers, the foe pool, its corpses - see the
+      // feed's own construction) and the seam was already standing to
+      // receive them. Static interior NPCs remain correctly OUT: they
+      // are StaticNPC components, and PlayerGPS lists only enemy and
+      // CIVILIAN MOBILE behaviours, of which the port has none
+      // indoors.
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,

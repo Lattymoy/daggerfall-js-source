@@ -397,6 +397,68 @@ export const lootNearbyRecord = (p) => ({
   itemCount: (p?.items ?? []).length,
 });
 
+/** DT1: the CORPSE containers, as NearbyObject loot records.
+ *
+ *  A killed enemy's corpse marker IS a DaggerfallLoot
+ *  (GameObjectHelper.CreateEnemyCorpseMarker :836-839), so
+ *  UpdateNearbyObjects' `GetActiveLoot()` walk (PlayerGPS.cs:765-776)
+ *  includes it with no scene gate and no item test - an EMPTY corpse
+ *  is in the list, GetLootFlags (:822-836) simply gives it no Treasure
+ *  bit. That is why this maps every corpse rather than filtering on
+ *  items the way the ACTIVATION walks do: a corpse with nothing in it
+ *  is not a detect target, but it is still a nearby object.
+ *
+ *  The two foe pools name the same fact differently: `corpse` is the
+ *  flag exteriorFoes raises beside `corpseMarker`, `corpseBatch` is
+ *  the dungeon's own handle, and a foe that died with NEITHER is the
+ *  cull's "gone, no corpse" arm, which mints no container in DFU
+ *  either. */
+export const corpseNearbyRecords = (foes) => (foes ?? [])
+  .filter((f) => !!f?.entity && !!(f.corpse ?? f.corpseBatch))
+  .map((f) => lootNearbyRecord({
+    pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null,
+    items: f.entity.items ?? [],
+  }));
+
+/** DT1: a furniture container (a shop shelf or a house container) ->
+ *  a NearbyObject loot record. Its position is the model matrix's own
+ *  translation, which is what `loot.transform.position` reads off the
+ *  GameObject DaggerfallInterior.AddFurnitureAction (:780-841) hung
+ *  the DaggerfallLoot on.
+ *
+ *  `items: null` is a container the player has never opened. It counts
+ *  as EMPTY, and that is DFU's answer rather than a port limit:
+ *  AddFurnitureAction adds the component with no items and
+ *  PlayerActivate.cs:881-886 stocks it on FIRST ACCESS, so
+ *  `Items.Count > 0` is false until then and GetLootFlags withholds
+ *  the Treasure bit. */
+export const containerNearbyRecord = (c) => lootNearbyRecord({
+  pos: c?.matrix ? [c.matrix[12], c.matrix[13], c.matrix[14]] : null,
+  items: c?.items ?? [],
+});
+
+/** DT1: THE ONE LOOT WALK behind every host's Detect scan.
+ *
+ *  DFU has exactly one: `foreach (DaggerfallLoot loot in
+ *  ActiveGameObjectDatabase.GetActiveLoot())` (PlayerGPS.cs:765-776),
+ *  no scene gate and no kind gate. The port had FOUR hosts each
+ *  deciding for itself which of its own loot kinds counted, and
+ *  three of the four were short:
+ *
+ *    world.js / exterior.js  dropped piles + corpses (right, at FX1)
+ *    dungeonContext.js       RDB piles ONLY - no corpses, no drops
+ *    worldModes.js interior  NOTHING at all
+ *
+ *  so the same F207 defect survived in the two hosts where Detect
+ *  Treasure is actually cast. Each host now names its own kinds and
+ *  this walk does the rest, which is the only shape in which "every
+ *  active loot container" can be one sentence again. */
+export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {}) => [
+  ...piles.map(lootNearbyRecord),
+  ...containers.map(containerNearbyRecord),
+  ...corpseNearbyRecords(foes),
+];
+
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed. Open wins if both are somehow
  *  armed (it is the one that can still fail on the lock).

@@ -94,7 +94,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -668,12 +668,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // FX1 (F207): the world piles + guard corpses mark outdoors -
     // UpdateNearbyObjects walks every active loot container with no
     // scene gate (PlayerGPS.cs:747, :766-776).
-    loot: () => [
-      ...droppedLoot._piles.map(lootNearbyRecord),
-      ...cityGuards.guards
-        .filter((g) => !!g.corpse && !!g.entity)
-        .map((g) => lootNearbyRecord({ pos: g.corpseMarker?.pos ?? g.ai?.feet ?? null, items: g.entity.items ?? [] })),
-    ],
+    // DT1: this host names its loot KINDS and shared.js's
+    // nearbyLootRecords does the walk (see world.js's twin).
+    loot: () => nearbyLootRecords({ piles: droppedLoot._piles, foes: cityGuards.guards }),
     feet: detectFeet,
   });
   const cityGuards = createCityGuards({
