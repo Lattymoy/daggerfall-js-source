@@ -33,6 +33,28 @@ each stage is provable on the player's own data before the next begins:
         registers have no nif.xml layout at all) and the reader's header
         names them, so a refusal is now a real gap rather than a queue.
 
+WHY A BUILT ARM DID NOT APPEAR, TWICE (MW-D9f, MW-D9g). Both causes sat
+in the SEAM between the arm and the game, and neither was reachable by
+anything that existed: the node pins call fpArm.update() directly and
+mwArmProbe drives its own loop, so both ran the ENGINE and neither ran
+the CALLER. (1) MW-D9f: active() requires a GPU mesh, update() is the
+only thing that creates one, and the rig gated update() on active() - a
+deadlock, so a built arm never ran a frame. (2) MW-D9g: _mwCount started
+at -1, so the FIRST registerMorrowindData() always saw a "change" (an
+empty store went -1 to 0) and bumped the data generation; shared.js
+starts that call at host boot without waiting, while createWeaponRig
+latches the generation synchronously in the same setup, so the rig's
+first frame unloaded whatever the player had built. Building from the
+main menu could not survive to frame one.
+
+THE MEASUREMENT THAT WAS MISSING is now tools/mwRigProbe.mjs: the REAL
+createWeaponRig, a REAL WebGL2 renderer, the host's own frame()/draw()
+order, reading the DEFAULT framebuffer and comparing against the same
+frames with the arm unloaded. Its first version counted lit pixels and
+answered 691200 of 691200 - the whole screen, because the canvas is
+opaque - which is the same trap MW-D6 recorded and is why the pin is a
+DIFFERENCE, not a count.
+
 WHERE THE AUTHORITIES DISAGREE (MW-D9e), and what the port reads. The
 fixtures are pyffi-authored on purpose - an independent implementation -
 but pyffi's nif.xml is old, and three records caught it out. (1) It omits

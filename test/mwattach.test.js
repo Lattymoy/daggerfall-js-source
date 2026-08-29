@@ -179,3 +179,50 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
   }
   assert.ok(!rd('src/combat/fpsWeapon.js').includes('mwFp'), 'and fpsWeapon.js never learns about the 3D layer');
 });
+
+test('MW-D9g: LEARNING the archive count is not a data change - the boot must not unload the arm', async () => {
+  // THE DEFECT, reported by Mac as "it says built, now what do I do" and
+  // then "still not working" twice over. Nothing about his archives.
+  //
+  //   scenes/shared.js boots a host and STARTS registerMorrowindData()
+  //     without waiting for it (it is IndexedDB, it is async);
+  //   createWeaponRig latches morrowindDataGeneration() SYNCHRONOUSLY in
+  //     the same host setup, so the latch is always taken BEFORE the
+  //     count lands;
+  //   _mwCount started at -1, so the first count ALWAYS differed from it
+  //     - even an empty store went -1 -> 0 - and bumped the generation;
+  //   the rig's first frame saw the bump and called fpArm.unload().
+  //
+  // Every host boot therefore threw away any arm the player had already
+  // built. Building from the main menu before starting a game - which is
+  // what the player was told to do - could not survive to the first
+  // frame. Measured through the real rig in a real browser
+  // (tools/mwRigProbe.mjs): built and drawing 5346 changed pixels, then
+  // reason "unloaded" on the frame after boot.
+  const ds = await import('../src/scenes/dataSource.js');
+  const before = ds.morrowindDataGeneration();
+  // An EMPTY store, twice. Nothing has changed, so nothing may move.
+  await ds.registerMorrowindData().catch(() => 0);
+  const afterFirst = ds.morrowindDataGeneration();
+  await ds.registerMorrowindData().catch(() => 0);
+  const afterSecond = ds.morrowindDataGeneration();
+  assert.equal(afterFirst, before, 'the FIRST count is not a change - it is the count arriving');
+  assert.equal(afterSecond, before, 'and a second identical count is not one either');
+
+  // The generation still has to move on a REAL change, which is the
+  // whole reason MWFIX 3 put it there. The guard is the only thing
+  // between the two behaviours, so it is stated exactly.
+  const src = readFileSync(join(ROOT, 'src/scenes/dataSource.js'), 'utf8');
+  assert.match(src, /if \(_mwCount >= 0 && next !== _mwCount\) \{ _mwGeneration\+\+;/,
+    'a KNOWN count that differs still bumps; an unknown one never does');
+  assert.match(src, /let _mwCount = -1;/, '-1 is "not counted yet", and it must stay distinguishable from 0');
+});
+
+test('MW-D9g: the rig unloads on a CHANGE only, and the arm survives an unchanged poll', async () => {
+  // The other half of the same law, at the consumer. A rig that unloads
+  // whenever it re-reads the counter is the bug wearing the other face.
+  const rig = readFileSync(join(ROOT, 'src/combat/weaponRig.js'), 'utf8');
+  const body = rig.slice(rig.indexOf('const fpRecheck'), rig.indexOf('// AUDIT 17e F17 / THE FOUR HOSTS RULE'));
+  assert.match(body, /if \(g === _mwGen\) return;/, 'an unchanged generation returns before touching the arm');
+  assert.match(body, /_mwGen = g;\s*\n\s*fpArm\.unload\(\);/, 'and the latch moves BEFORE the unload, so one change unloads once');
+});
