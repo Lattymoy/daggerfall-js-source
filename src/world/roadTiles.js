@@ -178,7 +178,20 @@ function chainIndex(network) {
     for (const line of tracePolylines(network[plane], network.width, network.height)) {
       // pixel CENTRES, so the smoothed curve lives in the same space
       // the map layer's does
-      const smooth = chaikin(simplifyKeepingCorners(line), CHAIN_SMOOTH_PASSES);
+      // RZ6: NO SIMPLIFICATION on the ground, and this is the whole
+      // lesson of the arc. Simplifying deletes the intermediate
+      // vertices, so the curve ends up with no point inside most of
+      // the pixels it belongs to - and on the ground that is fatal,
+      // because a pixel paints only its OWN tilemap. A road whose
+      // curve has left the pixel leaves a HOLE there, however good the
+      // picture looks stitched together. The map layer can simplify
+      // freely; it draws one continuous mesh and owns no ground.
+      //
+      // So this rounds the corners and does not touch the route.
+      // Chaikin keeps the curve inside the convex hull of the pixel
+      // centres it came from, which is exactly the guarantee the
+      // ground needs: every pixel keeps its road.
+      const smooth = chaikin(line.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 })), CHAIN_SMOOTH_PASSES);
       for (const p of line) {
         const key = `${p.x},${p.y}`;
         if (!idx.has(key)) idx.set(key, []);
@@ -550,9 +563,11 @@ export function paintRoadTiles(tilemap, network, px, py, {
     // Both passes refuse a claimed cell, so the town's own ground is
     // exactly as safe as it was - this adds road where the road
     // already goes, and takes nothing from the 1:1 tile law.
+    let drewChain = false;
     if (network) {
       for (const c of chainIndex(network).get(`${px},${py}`) ?? []) {
         if (c.kind !== kind) continue;
+        drewChain = true;
         // CLIPPED to this pixel first, THEN masked. The chain begins
         // outside the pixel and isClaimed counts out-of-bounds as
         // claimed, so masking the raw path halts the run on its very
@@ -561,14 +576,57 @@ export function paintRoadTiles(tilemap, network, px, py, {
         // the mask the run would instead walk straight through the
         // footprint and fill the unstamped HOLES inside it, which is
         // the thing RW1 put the mask there to prevent.
-        painted += stampPath(tilemap, densifyChain(c.points, px, py), half, rec, claimed, false);
+        // The town is SKIPPED, not stopped at. stampPath breaks on its
+        // first claimed cell, which is right for a run that starts at
+        // the pixel's edge and ends at the town - and wrong for a road
+        // that passes THROUGH the pixel, because everything beyond the
+        // town is then never painted at all. Measured: the pixel drew
+        // only its eastern half, x 78..127, and the western approach
+        // vanished.
+        //
+        // Dropping the samples inside the footprint's box does both
+        // jobs at once: the road stops at the town's edge, picks up
+        // again on the far side, and cannot fill the unstamped HOLES
+        // inside the footprint that RW1's mask was guarding.
+        const dense = densifyChain(c.points, px, py).filter(([cx, cy]) => !(
+          box && cx >= box.x0 && cx <= box.x1 && cy >= box.y0 && cy <= box.y1));
+        painted += stampPath(tilemap, dense, half, rec, null);
       }
     }
-    for (const e of exits) {
-      // Inward from the EDGE, so a run that meets the town stops at
-      // its boundary instead of being erased cell by cell.
-      const t = located ? aimFor(streets, box, e) : { x: MID, y: MID };
-      painted += stampRun(tilemap, e.x, e.y, t.x, t.y, half, rec, claimed);
+    // RZ6 (Mac, 2026-08-28) - ONE ROAD, NOT TWO.
+    //
+    // RZ4 added the chain pass above and left these runs in place, so
+    // a located pixel painted BOTH: the chain's road AND a second one
+    // spoked out from the fixed exit tiles to the middle. Two roads
+    // through one pixel, on different lines - which is what Mac was
+    // looking at, and what every metric I had missed, because both of
+    // them are road and neither is far from where road should be.
+    //
+    // The exits are the FALLBACK now, for a pixel the tracer gave no
+    // chain. When there is a chain, it is the road.
+    // RZ6: the street connectors START ON THE ROAD. When a chain
+    // crosses this pixel, its boundary crossings are the road's own
+    // entry points, so a run from there to the nearest street is a
+    // BRANCH of the road rather than the separate second road RZ4
+    // left behind. Without a chain the fixed exits are the fallback,
+    // as they always were.
+    const from_ = [];
+    if (located && network) {
+      for (const c of chainIndex(network).get(`${px},${py}`) ?? []) {
+        if (c.kind === kind) from_.push(...chainCrossings(c.points, px, py));
+      }
+    }
+    // Not gated on there BEING streets: aimFor falls back to the
+    // footprint itself, which is what carries a road to a bare dungeon
+    // exterior - the CUST case, forced off-centre to tile (72,55),
+    // that a centre-aimed run used to miss by six tiles.
+    if (!drewChain || (located && from_.length)) {
+      for (const e of (from_.length ? from_ : exits)) {
+        // Inward from the EDGE, so a run that meets the town stops at
+        // its boundary instead of being erased cell by cell.
+        const t = located ? aimFor(streets, box, e) : { x: MID, y: MID };
+        painted += stampRun(tilemap, e.x, e.y, t.x, t.y, half, rec, claimed);
+      }
     }
   }
   return painted;

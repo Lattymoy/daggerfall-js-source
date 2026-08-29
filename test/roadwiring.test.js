@@ -315,52 +315,35 @@ test('RZ2: the control point is placed by how sharply the road turns', () => {
   assert.ok(toChord > 0, 'but is not perfectly straight - it still bends');
 });
 
-test('RZ2: a drifting road stays far nearer its own line than it did', () => {
-  // The behavioural half, stitched across five pixels the way the
-  // streamed world lays them - each painted independently, so this is
-  // the picture the player walks.
-  const chain = [[2, 5], [3, 5], [4, 4], [5, 4], [6, 3]];
-  const net = createNetwork(9, 9);
-  for (let i = 1; i < chain.length; i++) {
-    linkPixels(net.trunkExits, 9, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
-  }
-  const PX = [2, 3, 4, 5, 6], PY = [3, 4, 5];
-  const BW = PX.length * T, BH = PY.length * T;
-  const big = new Uint8Array(BW * BH);
-  for (let j = 0; j < PY.length; j++) {
-    for (let i = 0; i < PX.length; i++) {
+test('RZ6: the ground draws the ROUTE, rounded - it does not straighten it', () => {
+  // RZ2 and RZ3 tried to straighten a drifting road on the ground, and
+  // both are reverted here. Simplifying deletes the intermediate
+  // vertices, so the curve ends up with no point inside most of the
+  // pixels it belongs to - and a pixel paints only its OWN tilemap, so
+  // a road whose curve has left the pixel leaves a HOLE in it. The
+  // stitched picture hides that completely: every pixel draws the
+  // whole chain clipped to itself, so the union looks continuous while
+  // individual pixels are empty.
+  //
+  // What the ground keeps is the corner rounding. What it must
+  // guarantee is that EVERY road pixel carries road.
+  for (const chain of [
+    [[2, 10], [3, 10], [4, 9], [5, 9], [6, 8]],
+    [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10], [7, 10], [8, 9]],
+    [[2, 10], [3, 10], [4, 10], [5, 10], [6, 9], [7, 9], [8, 9], [9, 9]],
+  ]) {
+    const net = createNetwork(32, 32);
+    for (let i = 1; i < chain.length; i++) {
+      linkPixels(net.trunkExits, 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+    }
+    for (const [px, py] of chain) {
       const tm = new Uint8Array(T * T);
-      paintRoadTiles(tm, net, PX[i], PY[j]);
-      for (let y = 0; y < T; y++) {
-        for (let x = 0; x < T; x++) big[(i * T + x) + ((j * T) + (T - 1 - y)) * BW] = tm[x + y * T];
-      }
+      assert.ok(paintRoadTiles(tm, net, px, py) > 0,
+        `pixel ${px},${py} carries road bits and must paint road`);
     }
+    // ...and the stitched road is still one connected thing
+    assert.equal(deviation(stitchChain(chain)).connected, true);
   }
-  const pts = [];
-  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) if (big[x + y * BW]) pts.push([x, y]);
-  assert.ok(pts.length > 0);
-  let a = pts[0], b = pts[0];
-  for (const p of pts) { if (p[0] < a[0]) a = p; if (p[0] > b[0]) b = p; }
-  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
-  let max = 0;
-  for (const p of pts) {
-    const d = Math.abs(dy * p[0] - dx * p[1] + b[0] * a[1] - b[1] * a[0]) / len;
-    if (d > max) max = d;
-  }
-  // 45.9 with the centre control; the exit POINTS themselves set the
-  // floor, since a diagonal step must pass through a shared corner.
-  assert.ok(max < 40, `the drifting road stands ${max.toFixed(1)} tiles off its line`);
-  // and the road is still one connected thing across every seam
-  const road = (x, y) => x >= 0 && y >= 0 && x < BW && y < BH && big[x + y * BW] !== 0;
-  let cells = 0, orth = 0;
-  for (let y = 0; y < BH; y++) {
-    for (let x = 0; x < BW; x++) {
-      if (!road(x, y)) continue;
-      cells++;
-      if (road(x - 1, y) || road(x + 1, y) || road(x, y - 1) || road(x, y + 1)) orth++;
-    }
-  }
-  assert.equal(orth, cells, 'every tile of the stitched road has an orthogonal neighbour');
 });
 
 test('RR1: the MAP layer rounds its chains too - a right angle stops being one', () => {
@@ -696,26 +679,6 @@ function deviation({ big, W, H }) {
   return { max, connected: orth === cells };
 }
 
-test('RZ3: a road on a shallow gradient runs STRAIGHT, not flat-flat-step', () => {
-  // The measurement that found this: on a road climbing one pixel in
-  // three, the painted road sat dead flat across three whole pixels
-  // and then stepped 128 tiles at once - 63.4 tiles off its own line.
-  // The exits and the curve were faithfully drawing a staircase,
-  // because the ROUTE is a staircase at pixel resolution.
-  for (const [name, chain] of [
-    ['1 in 2', [[2, 10], [3, 10], [4, 9], [5, 9], [6, 8]]],
-    ['1 in 3', [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10], [7, 10], [8, 9]]],
-    ['1 in 4', [[2, 10], [3, 10], [4, 10], [5, 10], [6, 9], [7, 9], [8, 9], [9, 9]]],
-  ]) {
-    const r = deviation(stitchChain(chain));
-    assert.ok(r.max < 8, `a ${name} gradient stands ${r.max.toFixed(1)} tiles off its line`);
-    assert.equal(r.connected, true, `and the ${name} road is unbroken across every seam`);
-  }
-  // ...and the shapes that were already right have not moved
-  assert.ok(deviation(stitchChain([[2, 8], [3, 8], [4, 8], [5, 8], [6, 8]])).max < 4, 'straight');
-  assert.ok(deviation(stitchChain([[2, 10], [3, 9], [4, 8], [5, 7], [6, 6]])).max < 5, 'diagonal');
-});
-
 test('RZ3: a stair is dropped and a CORNER is kept - the turn tells them apart', () => {
   // A one-pixel corner and a one-pixel stair are the SAME shape: both
   // stand 0.707 off their chord, so no RDP tolerance can separate them
@@ -923,17 +886,19 @@ test('RZ4: a road on a GRADIENT does not tear where it reaches a town', () => {
     `the road tears at the town: neighbour rows ${left} vs town rows ${right}`);
 });
 
-test('RZ5: out of bounds is not the same as CLAIMED', () => {
-  // The chain pass begins OUTSIDE its pixel and only its width reaches
-  // in, so a stop mask that counts out-of-bounds as claimed halts the
-  // run before it paints anything - which is precisely how the tear
-  // above survived a first fix. A run that starts at the pixel's own
-  // edge still stops when it leaves.
+test('RZ6: the town is SKIPPED, not stopped at', () => {
+  // stampPath breaks on its first claimed cell, which is right for a
+  // run starting at the pixel's edge and ending at the town - and
+  // wrong for a road passing THROUGH, because everything beyond the
+  // town is then never painted. Measured before the fix: the pixel
+  // drew only its eastern half, x 78..127, and the western approach
+  // vanished. Dropping the samples inside the footprint's box lets the
+  // road stop at the wall, pick up on the far side, and still never
+  // fill the unstamped holes inside it.
   const s_ = src('src/world/roadTiles.js');
-  assert.match(s_, /function isClaimed\(mask, x, y, outOfBoundsStops = true\)/);
-  assert.match(s_, /return outOfBoundsStops;/, 'the caller decides what leaving the tilemap means');
-  assert.match(s_, /densifyChain\(c\.points, px, py\), half, rec, claimed, false\)/,
-    'the chain pass says leaving is not stopping');
+  assert.match(s_, /const dense = densifyChain\(c\.points, px, py\)\.filter/,
+    'the chain pass drops what falls inside the footprint');
+  assert.match(s_, /box && cx >= box\.x0 && cx <= box\.x1 && cy >= box\.y0 && cy <= box\.y1/);
 });
 
 test('RZ5: and the town keeps its ground, holes included', () => {
