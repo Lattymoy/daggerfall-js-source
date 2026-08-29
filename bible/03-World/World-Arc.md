@@ -1227,6 +1227,22 @@ the module makes no claim at all about model 41600's geometry. A model
 id spinning something that should stand still is a visible bug, so the
 wiring slice confirms each against the real mesh first.
 
+**The instrument for answering it shipped with this slice.**
+`tools/windmillProbe.mjs`, run against a real ARENA2, prints each
+model's submeshes and its CONNECTED COMPONENTS - because there are two
+ways the split W2 needs may already have been made by the art itself: a
+sail with its own texture record is one submesh, and a sail that shares
+no vertex with the tower is its own island. It also draws every
+component in its own colour from three sides, on this project's own
+rule that a claim about a picture is not settled by an assertion. It was
+written in the container that has no ARENA2, so it carries a
+`--selftest` that builds a synthetic windmill - a closed tower box and a
+sail slab standing clear of it - and asserts the analysis finds exactly
+two parts, isolates the sail, calls it flattest in the axis it turns
+about, and does NOT report a welded mesh as separable. That self-test
+failed on its first run, on its own fixture: the boxes were two facing
+quads sharing no corner, so every box was already two islands.
+
 That leaves the wiring itself for W2, and it is not small: the layout
 hands the hosts one matrix per model (`rmbLayout.layoutRmbBlock`), so a
 turning model needs its rotor geometry separated from its tower and its

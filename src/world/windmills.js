@@ -62,6 +62,17 @@ import { multiply, trs } from './mat4.js';
 // model id here that is not a mill turns something that should stand
 // still, so the wiring slice confirms each against the real mesh
 // before it spins anything.
+//
+// The instrument for that exists and needs no work first:
+//
+//   ARENA2_PATH=/path/to/ARENA2 node tools/windmillProbe.mjs
+//
+// prints each model's submeshes and its CONNECTED COMPONENTS - if the
+// sail is its own island of geometry, or carries its own texture
+// record, the rotor/tower split W2 needs is already made by the art -
+// and draws every component in its own colour from three sides,
+// because "that part is the sail" is a claim only an eye settles.
+// `--selftest` runs it against a synthetic windmill with no ARENA2.
 export const WINDMILL_MODELS = Object.freeze({
   41600: 'windmill',       // the farm windmill, the mod's own target
   41601: 'windmill',       // its second dressing
