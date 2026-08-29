@@ -418,3 +418,45 @@ test('PX22: the timer PX5 designed is still there, and only when there is one', 
   assert.equal((read('src/scenes/world.js').match(/clockSeconds = clockSeconds == null/g) ?? []).length, 2);
   assert.match(read('src/scenes/worldModes.js'), /questLog: \(\) => host\.pauseQuestLog\?\.\(\) \?\? \{ active: \[\], finished: \[\] \}/);
 });
+
+// ── PX25: THE SHEET'S DOORS, ON THE PAGE THAT IS THE SHEET ────────
+// The F5 overlay and the pause window's Stats page are the same
+// character sheet - same sheetModel, same four sections - and only one
+// of them had a way out. Before the overlay can retire, its four
+// buttons need somewhere to be, or retiring it ships a window that can
+// do less.
+test('PX25: the Stats page carries the doors, and only the ones a host handed over', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const at = src.indexOf('function pauseStats(body)');
+  const fn = src.slice(at, src.indexOf('\nfunction ', at + 10));
+  assert.match(fn, /\['Pack', hooks\.openPack\], \['Spellbook', hooks\.openSpellbook\], \['Chronicle', hooks\.openChronicle\],/);
+  // A button that opens nothing is PX14's drawn door, so each appears
+  // only when its hook is a function - the exterior host has no
+  // journal maker and its Chronicle button never draws, which is the
+  // point of the filter rather than a gap in it.
+  assert.match(fn, /\.filter\(\(\[, fn\]\) => typeof fn === 'function'\)/);
+  assert.match(fn, /if \(doors\.length\) \{/);
+  // The window RESUMES before it opens: two overlays at once is the
+  // stacking bug U55 found the other way round on this seam.
+  assert.match(fn, /b\.onclick = \(\) => \{ onAction\('resume'\); fn\(\); \};/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.px-sheetdoors \.act \{ min-height: 44px; \}/);
+});
+
+test('PX25: every host hands the pause window the arms it already had', () => {
+  // Each host already exposed toggleInventory / toggleSpellbook /
+  // toggleLogbook; nothing new is built here, the pause window is
+  // simply given the same reach. A host WITHOUT one passes nothing.
+  for (const [host, want] of [
+    ['src/scenes/dungeonContext.js', ['openPack', 'openSpellbook', 'openChronicle']],
+    ['src/scenes/worldModes.js', ['openPack', 'openSpellbook', 'openChronicle']],
+    ['src/scenes/world.js', ['openPack', 'openSpellbook', 'openChronicle']],
+    ['src/scenes/exterior.js', ['openPack', 'openSpellbook']],
+  ]) {
+    const s = read(host);
+    const call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 900);
+    for (const hook of want) assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);
+    if (!want.includes('openChronicle')) {
+      assert.ok(!call.includes('openChronicle:'), `${host} has no journal maker and honestly passes none`);
+    }
+  }
+});

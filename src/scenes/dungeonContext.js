@@ -3078,6 +3078,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
+        // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
+        // sheet. Each host passes the arms it already has; a host
+        // without one passes nothing and the button never draws.
+        openPack: () => { const w = api.makeInventory?.(); if (w) activeOverlay = w; },
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) activeOverlay = w; },
+        openChronicle: () => { const w = api.makeJournal?.('notebook'); if (w) activeOverlay = w; },
         // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
         // the F5 journal at :3449 and the notebook at :867) - the PX3
         // flag was too conservative, so it is paid with the same walk

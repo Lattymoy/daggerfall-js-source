@@ -4365,6 +4365,10 @@ export function createWorldModes(host) {
       // unbuilt serialization, not a law. The doors are the WORLD
       // host's own composer, riding in on the host bag.
       openPauseFlow((w) => { interiorOverlay = w; }, {
+        // PX25: the sheet's own doors, through this host's own arms.
+        openPack: () => mountInterior(host.makeInventory?.()),
+        openSpellbook: () => { if (magic) mountInterior(makeSpellbookWindow()); },
+        openChronicle: () => mountInterior(host.makeJournal?.('notebook')),
         quickSave: host.quickSave,
         quickLoad: host.quickLoad,
         playerName: host.playerName,
