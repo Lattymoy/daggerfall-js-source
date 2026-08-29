@@ -1467,7 +1467,6 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    divider, and the history is one page of prose rather than the
    classic's four-lines-and-a-Next-button. */
 .cr-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
-.cr-shell .px-qdetail { overflow-y: auto; }
 .cr-shell .cr-prose p, .cr-shell .cr-entry p { margin: 0 0 10px; font-size: 15px;
   line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .cr-shell .cr-prose { max-width: 62ch; }

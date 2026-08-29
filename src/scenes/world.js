@@ -123,7 +123,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -1514,12 +1514,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the player drops and the lootable corpse containers both mark
     // outdoors in DFU. The old entities-only feed rested on "no loot
     // piles above ground", false since droppedLoot mounted.
-    loot: () => [
-      ...droppedLoot._piles.map(lootNearbyRecord),
-      ...exteriorFoePool()
-        .filter((f) => !!f.corpse && !!f.entity)
-        .map((f) => lootNearbyRecord({ pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null, items: f.entity.items ?? [] })),
-    ],
+    // DT1: this host names its loot KINDS and shared.js's
+    // nearbyLootRecords does the walk - two hosts had it inline and
+    // two had it nowhere, which is how F207 survived in the two that
+    // matter most.
+    loot: () => nearbyLootRecords({ piles: droppedLoot._piles, foes: exteriorFoePool() }),
     feet: () => enchantFeet(),
   });
   {
