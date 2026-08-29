@@ -94,7 +94,11 @@ test('audit26 F066: a closed shop opens the steal-shaped inventory, never the Bu
     'the door-time latch rides the building record (:1120, latched once)');
   const shelf = m.slice(m.indexOf('function openShelf'), m.indexOf('function openMerchantSell'));
   assert.ok(shelf.includes('if (b.insideOpenShop === false) {'), 'the closed arm gates BEFORE the trade window');
-  assert.ok(shelf.includes("host.makeInventory?.({ loot: { items: () => shelf.items } })"),
+  // RE-ANCHORED at ID1 (F041): the host's inventory windows go through
+  // ONE door now (`interiorInventory`, which folds in the drop pool and
+  // the emptied-container free). What this asserts is unchanged - the
+  // shelf is the Remove-mode remote, SetShopShelfStealing's shape.
+  assert.ok(shelf.includes("interiorInventory({ loot: { items: () => shelf.items } })"),
     'and opens the inventory with the shelf as the Remove-mode remote - SetShopShelfStealing\'s shape');
   assert.ok(shelf.indexOf('insideOpenShop === false') < shelf.indexOf('openTradeWindow(shelf, b, \'Buy\')'),
     'the gate precedes the Buy window');

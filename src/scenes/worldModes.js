@@ -56,6 +56,7 @@ import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interi
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry
 import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
+import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
 import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
@@ -358,20 +359,16 @@ export function createWorldModes(host) {
   // GetLootFlags (:822-836) withholds the Treasure bit. `items: null`
   // is that same un-stocked state, and maps to a count of zero.
   //
-  // FLAGGED, and named rather than quietly folded in: a pile the
-  // player DROPS indoors is not in this list, because this host mints
-  // no ground pile of its own - `mintRewardPile` falls interior drops
-  // through to the world host, whose `dropFeet` reads the EXTERIOR
-  // player and collider. In DFU the drop is a DaggerfallLoot in the
-  // interior scene and GetActiveLoot has it like any other. The fix is
-  // an interior droppedLoot pool, not a line here; when it lands it
-  // joins `piles` below and nothing else changes.
+  // ID1 closed the gap DT1 recorded here: the player's own dropped
+  // piles are this host's now, so `piles` carries them exactly as the
+  // other three hosts do.
   //
   // The thunks are lazy - `interiorCtx` and `interiorFoes` are
   // declared below and only read at tick time.
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => (interiorFoes?.foes ?? []).filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     loot: () => nearbyLootRecords({
+      piles: interiorDropped._piles,
       containers: [...(interiorCtx?.shelves ?? []), ...(interiorCtx?.containers ?? [])],
       foes: interiorFoes?.foes ?? [],
     }),
@@ -381,6 +378,50 @@ export function createWorldModes(host) {
   // null for the paid guild service. The trade window is one window
   // serving both, exactly as DFU's is.
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
+
+  /** ID1: THE INTERIOR'S OWN GROUND PILE.
+   *
+   *  `CreateDroppedLootContainer` (GameObjectHelper.cs:716-775) picks
+   *  its parent BY CONTEXT - the Dungeon transform, the Interior
+   *  transform, or the streaming target - and only the outdoor arm
+   *  calls `TrackLooseObject` (:769-772). The port had two of the
+   *  three: dungeonContext mounts its own pool, world.js and
+   *  exterior.js mount the streaming one, and this host mounted
+   *  none. So an item dropped inside a building fell through
+   *  `host.makeInventory`'s onDrop to the WORLD pool, at the world
+   *  host's `dropFeet()` - the EXTERIOR player, on the EXTERIOR
+   *  collider - and was stamped with the map pixel that only the
+   *  outdoor arm should carry, which enrols it in P2's out-of-range
+   *  collection sweep. The item did not land where it was dropped,
+   *  could not be picked back up indoors, and could be destroyed by
+   *  a sweep DFU never runs on it.
+   *
+   *  Same factory as the other two hosts, this host's collider, and
+   *  NO pixel key - that argument is `TrackLooseObject`, and DFU puts
+   *  it behind `!IsPlayerInside`. */
+  const interiorDropped = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  /** PlayerMotor.FindGroundPosition, on the interior's own collider -
+   *  the world host's `dropFeet` in this host's frame. */
+  const interiorDropFeet = () => {
+    const p0 = [...player.pos];
+    const d = interiorCtx?.collider ? interiorCtx.collider.raycast(p0, [0, -1, 0], 10) : NaN;
+    if (Number.isFinite(d)) p0[1] -= d;
+    return p0;
+  };
+  /** ID1: EVERY inventory window this host opens, through one door,
+   *  so a drop cannot fall back into the world pool from whichever
+   *  call site the next slice adds. Two laws ride it: the drop mints
+   *  HERE (with no pixel key - TrackLooseObject is the outdoor arm),
+   *  and the close frees emptied containers, which is DFU's own
+   *  moment (DaggerfallInventoryWindow.cs:697-722 mints and removes
+   *  at the window, not at the last item). A caller's own onClose is
+   *  COMPOSED rather than overwritten - `...extra` last would have
+   *  silently dropped the free. */
+  const interiorInventory = ({ onClose, ...extra } = {}) => host.makeInventory?.({
+    onDrop: (items) => interiorDropped.dropPile(items, interiorDropFeet()),
+    ...extra,
+    onClose: () => { interiorDropped.releaseEmptied(); onClose?.(); },
+  });
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
   // failing to mount.
@@ -980,7 +1021,7 @@ export function createWorldModes(host) {
     // that window; the shoplifting ROLL and its crime tally stay
     // FLAGGED to the crime arc, as the Ledger records.
     if (b.insideOpenShop === false) {
-      const win = host.makeInventory?.({ loot: { items: () => shelf.items } });
+      const win = interiorInventory({ loot: { items: () => shelf.items } });
       if (win) interiorOverlay = win;
       return;
     }
@@ -1624,7 +1665,15 @@ export function createWorldModes(host) {
     ];
     const actionDoors = [...(ctx.actions?.objects?.values?.() ?? [])]
       .map((o) => ({ key: o.key, state: o.state }));
-    return { lootContainers, actionDoors };
+    // ID1: the player's own piles are DaggerfallLoot in the interior
+    // scene, so they cache and restore with it - the same trio
+    // LootContainerData_v1 carries and the dungeon already snapshots.
+    // Without this, walking out of a shop and back in emptied the
+    // floor.
+    const droppedPiles = interiorDropped._piles
+      .filter((pile) => pile.items.length)
+      .map((pile) => ({ pos: [...pile.pos], record: pile.record, items: pile.items.map((it) => ({ ...it })) }));
+    return { lootContainers, actionDoors, droppedPiles };
   }
 
   /** CacheScene on the way OUT (PlayerEnterExit.cs:860). */
@@ -1654,6 +1703,12 @@ export function createWorldModes(host) {
       const o = interiorCtx.actions?.objects?.get?.(d.key);
       if (o) o.state = d.state;
     }
+    // ID1: a scene cached before this shipped has no `droppedPiles`,
+    // and restorePiles CLEARS on an absent list - which is right: the
+    // pool was rebuilt empty on the way in, so clearing is a no-op,
+    // and a scene that really holds no piles must not keep the last
+    // building's.
+    interiorDropped.restorePiles(data.droppedPiles);
   }
 
   /** B2: the bank. Accounts are PER REGION and live on the entity, so
@@ -2185,7 +2240,7 @@ export function createWorldModes(host) {
         const refusal = rows?.(decision.textId) ?? [];
         return { rows: refusal.length ? refusal : [{ text: 'You have already received your armor for your current rank.', center: true }] };
       }
-      const win = host.makeInventory?.({
+      const win = interiorInventory({
         chooseOne: {
           items: decision.pieces,
           onChoose: () => { claimArmor(membership, decision.mask); surfacePlayer(); },
@@ -2995,6 +3050,7 @@ export function createWorldModes(host) {
     interiorCtx.ladders.forEach((l, i) => {
       targets.push({ key: `ladder:${i}`, aabb: objAabb(l) });
     });
+    targets.push(...interiorDropped.lootTargets());   // ID1: the player's own piles, the dungeon's key vocabulary
     // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
     // (PlayerActivate.cs:87), twice a door's, and a person with no
     // billboard size resolved is not a target at all.
@@ -3096,6 +3152,15 @@ export function createWorldModes(host) {
         }
         return true;
       }
+      if (key.startsWith('droppedLoot:')) {
+        // ID1: the pile the player dropped in this room. Activating a
+        // container opens the inventory WITH it as the remote target
+        // (PlayerActivate's default loot handling), which is the same
+        // OnPush law the dungeon and both exterior hosts ride.
+        const pile = interiorDropped.pileFor(key);
+        if (pile?.items.length) mountInterior(interiorInventory({ loot: { items: () => pile.items } }));
+        return true;
+      }
       if (key.startsWith('container:')) {
         // S2b/F209 -> HC1: the WHOLE HouseContainers arm of
         // PlayerActivate (:902-925). An owned interior - the house,
@@ -3115,7 +3180,7 @@ export function createWorldModes(host) {
         if (c) {
           const b = interiorBuilding;
           const openLoot = () => {
-            const win = host.makeInventory?.({ loot: { items: () => c.items } });
+            const win = interiorInventory({ loot: { items: () => c.items } });
             if (win) interiorOverlay = win;
           };
           const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
@@ -3156,6 +3221,7 @@ export function createWorldModes(host) {
     interiorCtx.destroy();
     interiorFoes?.destroy?.();   // IF: OnTransitionExterior tears the interior's enemies down with it
     interiorFoes = null;
+    interiorDropped.restorePiles(null);   // ID1: the piles are cached above; free their batches with the scene
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     exteriorDoor = null;       // IS1: ...and the way back in with them
@@ -3658,6 +3724,13 @@ export function createWorldModes(host) {
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // ID1: the player's own piles, on the same axis and the same call
+    // the dungeon host makes for its droppedLoot.
+    interiorDropped.tickFlats(dt);
+    {
+      const _dropBatches = interiorDropped.batches();
+      if (_dropBatches.length) renderer.drawBillboards(_dropBatches, camRight, new Float32Array([0, 1, 0]));
+    }
     // IF: the pool's own billboards ride the same axis, the same call
     // the exterior host makes for its foes.
     if (interiorFoes) {
@@ -4462,7 +4535,7 @@ export function createWorldModes(host) {
       openPauseFlow((w) => { interiorOverlay = w; }, {
         at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
-        openPack: () => mountInterior(host.makeInventory?.()),
+        openPack: () => mountInterior(interiorInventory()),
         openSpellbook: () => { if (magic) mountInterior(makeSpellbookWindow()); },
         openChronicle: () => mountInterior(host.makeJournal?.('notebook')),
         quickSave: host.quickSave,
@@ -4498,7 +4571,7 @@ export function createWorldModes(host) {
       mountInterior(new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
         .addNext(healthStatusRows(playerEntity, rows)));
     },
-    toggleInventory() { mountInterior(host.makeInventory?.()); },
+    toggleInventory() { mountInterior(interiorInventory()); },
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
@@ -4924,6 +4997,7 @@ export function createWorldModes(host) {
         interiorCtx.destroy();
         interiorFoes?.destroy?.();
         interiorFoes = null;
+        interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
         interiorCtx = null; interiorBuilding = null; interiorOverlay = null; exteriorDoor = null;
       }
       if (dungeonCtx) {
@@ -5004,12 +5078,25 @@ export function createWorldModes(host) {
       return false;
     },
     /** RW1: GivePc's reward container in the MODE that owns the
-     *  ground. The dungeon mints through its own droppedLoot and
-     *  answers the open thunk; interior and exterior fall through to
-     *  the world host's pile (null) - the same seam the inventory's
-     *  onDrop already rides. */
+     *  ground. GivePc mints through the SAME CreateDroppedLootContainer
+     *  the inventory's drop does (GivePc.cs:168), so it picks its
+     *  parent by the same context - and ID1 gave this host the
+     *  interior arm it was missing. The dungeon mints through its own
+     *  pool and answers the open thunk; the interior mints through
+     *  ITS pool now; exterior alone falls through to the world host. */
     mintRewardPile(dfItem) {
       if (mode === 'dungeon' && dungeonCtx?.offerRewardLoot) return dungeonCtx.offerRewardLoot(dfItem);
+      if (mode === 'interior' && interiorCtx) {
+        // The world host's own shape, on this host's ground: the mint
+        // is INSIDE the thunk so a reward offered behind a quest box
+        // lands where the player is standing when the box closes, not
+        // where they stood when it opened.
+        return () => {
+          const pile = interiorDropped.dropPile([dfItem], interiorDropFeet());
+          if (!pile) return;
+          mountInterior(interiorInventory({ loot: { items: () => pile.items } }));
+        };
+      }
       return undefined;   // not this mode's ground - the world host mints
     },
     // wave 21: the host asks whether the box it pushed is still the

@@ -126,7 +126,9 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
     'owned latches empty (stockedDate = 1) BEFORE the stranger arm ever stocks');
   // the storage is the loot-target inventory - DFU's LootTarget tail -
   // and it opens in BOTH arms through the one openLoot
-  assert.ok(arm.slice(0, ownedLatch + 200).includes('host.makeInventory?.({ loot: { items: () => c.items } })'),
+  // RE-ANCHORED at ID1 (F041): one door for this host's inventory
+  // windows. The claim is unchanged.
+  assert.ok(arm.slice(0, ownedLatch + 200).includes('interiorInventory({ loot: { items: () => c.items } })'),
     'the remote side IS the container collection - two-way, live');
   // the old stopgap is GONE: nothing in this arm dumps the container
   // into the player any more
