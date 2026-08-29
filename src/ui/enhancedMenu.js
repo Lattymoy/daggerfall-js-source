@@ -1515,6 +1515,10 @@ function releaseLock() {
  */
 export function mountEnhancedMenu(host, {
   onAction: handler = () => {}, mode: m = 'boot', hooks: h = {},
+  // PX26: which page the window opens ON. A door pressed for a page
+  // should land on that page rather than on a menu with it one press
+  // further in - the dial's north asked for the character sheet.
+  at = null,
 } = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
@@ -1530,6 +1534,11 @@ export function mountEnhancedMenu(host, {
   // Game the second row a thumb meets and Resume the first.
   section = 'home';
   pauseTab = 'system';
+  // ...and THEN the caller's landing, if it named one. After the reset,
+  // which is what keeps the reset the default rather than a thing this
+  // has to work around. The tabbed window IS the pause home face, so a
+  // landing sets the TAB and leaves the section alone.
+  if (['quests', 'stats', 'system'].includes(at)) pauseTab = at;
   questSel = null;
   statsSec = 'character';
   statsAllSkills = false;

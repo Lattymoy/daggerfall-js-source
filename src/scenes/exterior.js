@@ -1044,9 +1044,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     toggleSpellbook: () => toggleSpellbook(),
     // S40: the Rest door - world.js's twin (THE FOUR HOSTS RULE).
     toggleRest: () => toggleRest(),
-    togglePause: () => {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage: () => hudCtx.togglePause({ at: 'stats' }),
+    togglePause: (opts = {}) => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors. This host has no journal maker,
         // so it hands over two and the Chronicle button never draws -
         // which is the point of the filter, not a gap in it.
@@ -1103,7 +1112,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // overlay/mode gate as every sibling door. preventDefault only
       // when the dial answers, so classic Tab keeps its default.
       if (e.code === 'Tab' && openPixelDial([
-        { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.openSheetPage() },
         { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
         { id: 'map', label: 'Map', dir: 's', open: () => hudCtx.toggleAutomap() },
         { id: 'magic', label: 'Magic', dir: 'w', open: () => hudCtx.toggleSpellbook() },

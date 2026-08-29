@@ -7909,6 +7909,54 @@ Pins: 2 in enhancedPause.test.js. 4 mutations, 4 dead. Verified live:
 with two hooks handed over, exactly two doors draw and pressing one
 fires that host's arm.
 
+PX26 (Mac: "the north option should be the new journal we developed" /
+"the skill ui opens on the lefthand side of the screen when it should
+be center"): TWO REPORTS, ONE WINDOW. The dial's north was labelled
+Skills and called `toggleCharSheet` on all four hosts - the F5
+overlay, the last pre-PX surface, and the one that lays its three
+columns against the left edge because `.sheet-shell` fills the
+viewport with no centre. The pause window's Stats page IS that sheet -
+the same four sections off the same `sheetModel` - and it is centred
+by construction. So north opens that, and both reports close together.
+
+THE WINDOW CAN LAND. `mountEnhancedMenu` takes `at`, applied AFTER the
+reset - which is what keeps the reset the default rather than
+something the landing works around - and because the tabbed window IS
+the pause home face, a landing sets the TAB and leaves the section
+alone. `pauseDoor` carries it; the CLASSIC flow takes the same hooks
+and ignores it, having no tabs to land on.
+
+THE FIRST ATTEMPT WAS THROWN AWAY, and this is why the pin exists. A
+scripted edit added `openSheetPage` to one host and silently skipped
+three, because the anchors it matched did not exist in those files -
+leaving north calling `openSheetPage?.()`, which optional-chains into
+undefined. A dial whose north does NOTHING in three of four hosts is
+worse than one pointing at the wrong window, so the branch and the
+working tree went back. Each host's arm was then written BY HAND,
+because all four `togglePause` signatures differ - `()`, `(opts)`,
+`(setPlayerPos, opts)` - which is exactly what defeats a pattern
+match.
+
+The pin that would have caught it now does, and it took two passes to
+make honest: the first version looked for `openSheetPage` anywhere in
+the file and PASSED on a host that only CALLS it, since north itself
+mentions the name. It matches a DEFINITION at column four now, and
+removing the arm from any of the three hosts fails.
+
+FOUR MORE PINS CAUGHT THE SIGNATURE, which is what they are for. U51's,
+U43's, IS1's and I3's all read `togglePause` at its old shape - `()`,
+`(setPlayerPos = null)` - to guard laws that are UNCHANGED: one pause
+door per host, the interior Escape door opening the same flow, the
+world's composer handed through, setPlayerPos still first. Each was
+re-aimed at the new signature rather than loosened, and I3's "exactly
+one pause door" became a COUNT rather than a match, because that is
+what it was always claiming.
+
+Measured: the window lands on Stats with its four sections, 0px off
+the viewport's centre line.
+
+Pins: 2 more (24 in enhancedPause.test.js). 8 mutations, 8 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

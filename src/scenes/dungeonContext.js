@@ -3094,10 +3094,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  still has no pause menu (stated, not silent - preloadPauseArt
      *  logs its own failure), but the ENHANCED screen reads no game
      *  data at all and opens either way. ui/pauseDoor.js owns which. */
-    togglePause(setPlayerPos = null) {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage() { this.togglePause(null, { at: 'stats' }); },
+    togglePause(setPlayerPos = null, opts = {}) {
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
         // sheet. Each host passes the arms it already has; a host
         // without one passes nothing and the button never draws.
@@ -3586,7 +3595,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // are reached through `this` - routeKey calls ctx.toggleDial()
       // as a method, and the entry arrows inherit that binding.
       return openPixelDial([
-        { id: 'skills', label: 'Skills', dir: 'n', open: () => this.toggleCharSheet() },
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => this.openSheetPage() },
         { id: 'items', label: 'Items', dir: 'e', open: () => this.toggleInventory() },
         { id: 'map', label: 'Map', dir: 's', open: () => this.toggleAutomap() },
         { id: 'magic', label: 'Magic', dir: 'w', open: () => this.toggleSpellbook() },
