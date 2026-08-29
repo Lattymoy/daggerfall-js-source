@@ -143,6 +143,44 @@ function stampRun(tilemap, ax, ay, bx, by, half, record) {
  * @param {number} px @param {number} py - map pixel
  * @returns {number} tiles painted (0 when no road crosses this pixel)
  */
+/** RG1 (Mac, 2026-08-28) - THE ROAD MEETS THE TOWN'S OWN STREET.
+ *
+ *  A run aimed at the pixel CENTRE leaves the town's footprint
+ *  wherever the line from the centre happens to cross it, which has
+ *  nothing to do with where the town's roads come out - so a highway
+ *  could arrive at the back of a building while the gate sat round the
+ *  corner.
+ *
+ *  setLocationTiles has already stamped the town's RMB ground by the
+ *  time this runs, and a town's own streets are in it: records 46, 47
+ *  and 55, the three DFU's own nav law calls road
+ *  (cityNavigation.tileWeight :31, "Roads are great!"). Aiming the run
+ *  at the nearest of those puts the road against the wall beside the
+ *  street, which is where the gate is.
+ *
+ *  Nothing else changes. The run still stops at the town's ground
+ *  because stamp() refuses a claimed cell, so the 1:1 tile law is
+ *  untouched, and a pixel with no location has no street tiles and
+ *  keeps the centre exactly as before. */
+function townStreetTiles(tilemap) {
+  const out = [];
+  for (let i = 0; i < tilemap.length; i++) {
+    if (isRoadTile(tilemap[i])) out.push({ x: i % TDIM, y: (i / TDIM) | 0 });
+  }
+  return out;
+}
+
+/** The street nearest this exit, or the pixel centre when there is
+ *  none - which is every pixel that carries no location. */
+function nearestStreet(streets, edge) {
+  let best = null, bestD = Infinity;
+  for (const s of streets) {
+    const d = (s.x - edge.x) ** 2 + (s.y - edge.y) ** 2;
+    if (d < bestD) { bestD = d; best = s; }
+  }
+  return best ?? { x: MID, y: MID };
+}
+
 export function paintRoadTiles(tilemap, network, px, py, {
   record = ROAD_TILE_RECORD, halfWidth = ROAD_TILE_HALF_WIDTH,
 } = {}) {
@@ -157,6 +195,9 @@ export function paintRoadTiles(tilemap, network, px, py, {
   // doing the work.
   if (!trunk && !track) return 0;
 
+  // RG1: where the town's own paths are, found once for this pixel.
+  const streets = townStreetTiles(tilemap);
+
   let painted = 0;
   // Track first, trunk second, so where the two share a pixel the
   // trunk's wider band wins the middle - the same order the map layer
@@ -167,7 +208,9 @@ export function paintRoadTiles(tilemap, network, px, py, {
     for (let d = 0; d < 8; d++) {
       if (!(bits & DIRS[d].bit)) continue;
       const e = exitTile(d);
-      painted += stampRun(tilemap, MID, MID, e.x, e.y, half, record);
+      // RG1: aim at the town's own STREET, not the pixel centre.
+      const inner = nearestStreet(streets, e);
+      painted += stampRun(tilemap, inner.x, inner.y, e.x, e.y, half, record);
     }
   }
   return painted;

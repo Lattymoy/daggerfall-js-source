@@ -65,7 +65,7 @@ import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
 // the classic window draws - and this reads its finished pixels rather
 // than re-deriving PaperDollRenderer's layer order for a second time.
 import {
-  refreshPaperDoll, paperDollPixels, slotAtPaperDoll, PAPERDOLL_W, PAPERDOLL_H,
+  refreshPaperDoll, paperDollPixels, paperDollFigurePixels, slotAtPaperDoll, PAPERDOLL_W, PAPERDOLL_H,
 } from './paperDoll.js';
 import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
@@ -742,7 +742,9 @@ function equippedList() {
   // PX20a: 4x, not 3x - the cell is half again as tall as it was, and
   // a 3x sprite scaled up by object-fit is a blur where every other
   // pixel on this window is exact.
-  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 4 });
+  // PX29: the FIGURE, not the panel. The classic window draws DFU's
+  // whole composite; this one has the pack's own glass behind it.
+  const dollUrl = paperDollDataUrl(paperDollFigurePixels(), { scale: 4 });
   // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
   // with art the figure stands on the window's own glass.
   const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}`);

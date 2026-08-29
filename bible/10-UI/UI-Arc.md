@@ -8064,6 +8064,42 @@ placement; three were already right.
 
 Pins: 2 (one each). 5 mutations, 5 dead.
 
+PX29 (Mac: "the new chronicle UI appears on the lefthand side when it
+should be centered" / "remove the background from the paperdoll in the
+inventory UI"): TWO MORE.
+
+CENTRED - AND THE SPELLBOOK WAS WRONG TOO. `.px-home` is
+position:fixed inset:0 with no flex of its own; the pause face centres
+its window by putting it in a `.px-stage`, and neither of these two
+windows ever got one. Measured: BOTH sat 260px and 140px off the
+centre, and the spellbook had been that way since PX23. It was
+invisible to me because every screenshot I took of those windows was
+of the ELEMENT, not the viewport - a shot of a window always looks
+centred. This is the FOURTH shared-part fault of this arc (the head,
+the divider, the chips, now the stage), so it is fixed for the FAMILY
+and both shells are pinned as the ones the two windows mount.
+
+THE DOLL STANDS ON THE PACK'S OWN GLASS. DFU fills the panel with
+`backgroundSubRect` and blits the body and every item over it
+(PaperDollRenderer), so the composite has no notion of "figure" to
+hand out - PX20a could remove the CSS frame but not the art behind the
+character. It can now, and EXACTLY rather than by matching colours:
+every layer after the background goes through ONE `blit`, so a mask
+written there is the figure and nothing else. `paperDollFigurePixels`
+returns the composite with those pixels made TRANSPARENT - never
+recoloured, which would be a second guess about what the ground is -
+and falls back to the whole composite when there is no mask yet.
+
+THE CLASSIC WINDOW IS UNTOUCHED and pinned so: it draws DFU's whole
+composite, background included, because that is what DFU draws. The
+enhanced pack has its own ground to stand a figure on; the classic one
+does not.
+
+Pins: 2, plus U59's and PX20's re-aimed at the figure - U59's law is
+unchanged, the doll is the compositor's and this window only draws
+what it is handed, and it now also pins that the window still never
+blits. 4 mutations, 4 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
