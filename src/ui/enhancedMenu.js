@@ -1073,6 +1073,28 @@ function pauseStats(body) {
   wrap.append(rail);
   const detail = el('div', 'px-qdetail');
   ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, standing: statsStanding })[statsSec](detail, m);
+  // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
+  // has four buttons down its side - Inventory, Spellbook, Logbook,
+  // History - and the enhanced F5 overlay copied them. This page shows
+  // the same model from the same sheetModel, so it is the same sheet;
+  // it was simply the only one of the two with no way out. Each door
+  // appears ONLY when the host handed one over, because a button that
+  // opens nothing is PX14's drawn door.
+  const doors = [
+    ['Pack', hooks.openPack], ['Spellbook', hooks.openSpellbook], ['Chronicle', hooks.openChronicle],
+  ].filter(([, fn]) => typeof fn === 'function');
+  if (doors.length) {
+    const row = el('div', 'px-sheetdoors');
+    for (const [label, fn] of doors) {
+      const b = el('button', 'act', label);
+      // The pause window RESUMES first: two overlays at once is the
+      // stacking bug U55 found the other way round on this very seam,
+      // and 'resume' is the one exit this face already has.
+      b.onclick = () => { onAction('resume'); fn(); };
+      row.append(b);
+    }
+    detail.append(row);
+  }
   wrap.append(detail);
   body.append(wrap);
 }

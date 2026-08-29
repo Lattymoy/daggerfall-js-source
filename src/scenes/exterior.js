@@ -1047,6 +1047,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     togglePause: () => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        // PX25: the sheet's own doors. This host has no journal maker,
+        // so it hands over two and the Chronicle button never draws -
+        // which is the point of the filter, not a gap in it.
+        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
