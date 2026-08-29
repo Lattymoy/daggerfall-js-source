@@ -898,6 +898,10 @@ export class TravelMapWindow {
       poisonCount: this.deps.poisonCount,
       textRsc: _art?.textRsc ?? null,
       pick: this.deps.pick,
+      // TP1: GuildManager.FastTravel reads the player's memberships,
+      // so the popup needs the entity. Passed through rather than
+      // resolved here - this window knows about maps, not guilds.
+      playerEntity: this.deps.playerEntity,
       onExit: () => { this._rememberPopUpState(); this.popUp = null; },
       onTravel: (endPos, opts, computed) => {
         this._rememberPopUpState();

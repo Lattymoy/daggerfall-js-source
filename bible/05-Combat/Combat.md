@@ -665,3 +665,125 @@ wrongly"). Closed:
   is decided.
 
 Pins: 7 in `test/arrowfoes.test.js`. Campaign: 7 mutants, 7 killed.
+
+## EW1 - THE ENEMY WEIGHT TERM (2026-08-28)
+
+`GetEnemyEntityWeightInClassicUnits` (FormulaHelper.cs:2881-2898) is
+two halves and the port shipped one:
+
+```
+int itemWeightsClassic = (int)(e.Items.GetWeight() * 4);
+int baseWeight;
+if (EnemyMonster)  baseWeight = e.MobileEnemy.Weight;
+else if (Female)   baseWeight = 240;
+else               baseWeight = 350;
+return itemWeightsClassic + baseWeight;
+```
+
+The item half was absent, so every armed or armoured foe in the game
+weighed what a naked one does. Weight is `weaponKnockbackSpeed`'s
+DIVISOR, so this was not a rounding nit - a kitted foe was thrown
+further by every blow that landed. The city watch is the worst case:
+it spawns armed and armoured and has no unarmoured variant.
+
+**THE SHAPE MATTERED AS MUCH AS THE TERM.** The port opened with
+`if (!isClass) return mobileWeight ?? 0`, and DFU computes
+`itemWeightsClassic` BEFORE the type branch - it lands on the monster
+base as much as the class one. Bolting the term onto the class arm of
+an early-return function would have looked like the fix and left every
+monster in the game still weighing its bare mobile weight. The branch
+is a `baseWeight` assignment here, as it is in C#, and the monster arm
+is the pin this file was written for; the campaign's first mutant is
+exactly that plausible wrong fix.
+
+`totalWeight` (inventory.js:315) IS `ItemCollection.GetWeight`, so the
+only arithmetic added is the x4 and C#'s truncating `(int)` cast. Four
+pools call the formula (dungeon foes, the shared host-combat arm, the
+city watch, exterior foes) and all four now hand the foe's own list
+through; a source sweep holds them there, because a new pool copying a
+three-argument call is how one pool silently goes back to naked foes.
+
+Pins: 6 in `test/enemyweight.test.js`, one of them REGENERATING the
+constants from FormulaHelper.cs - including the assertion that DFU's
+item term is computed above the type branch, which is the law the
+shape depends on. Campaign: 5 mutants, 5 killed.
+
+**AND ONE OF THEM ONLY DIED ON THE SECOND TRY.** Swapping `Math.trunc`
+for `Math.round` SURVIVED the first version of the truncation pin,
+because the fixture kit's weight x 4 happened to be a whole number, and
+the assertion re-derived its expectation as `Math.trunc(kg * 4)` from
+that same value. Both implementations satisfy a pin like that. It is
+pinned now on 4 x 0.1 kg = 1.6 classic units, where truncation takes 1
+and rounding takes 2, asserted as the literal 1. **A pin that computes
+its expectation the way the code does is not a pin, and a fixture that
+cannot distinguish two implementations does not test between them.**
+
+## VU1 - THE VAMPIRE TAKES THE UNDEAD MODIFIER (2026-08-28)
+
+`GetBonusOrPenaltyByEnemyType` (FormulaHelper.cs:1042-1054) has TWO
+arms for a player target, and DFU comments the first itself:
+
+```csharp
+if (GameManager.Instance.PlayerEffectManager.HasVampirism())
+    // Vampires are undead, therefore use undead modifier
+    ...UndeadAttackModifier...
+else
+    // Player is assumed humanoid
+    ...HumanoidAttackModifier...
+```
+
+The port had only the else, behind a flag reading *"the vampirism
+effect is not ported, so only the humanoid arm exists here"*. By the
+time this slice read that sentence, `src/systems/vampirism.js` had
+shipped - the curse, the clans, the spells and a live `liveVampirism`
+predicate - some slices earlier. **THE BLOCKER RETIRED AND THE SENTENCE
+DID NOT**, so every vampire character in the port took the wrong
+modifier from every attacker that had one. That is now four in this
+run: EF1's counter, EF1c's four deferrals, FD1's "no tile lookup yet",
+and this.
+
+It is not a rounding difference. The two career flag sets are
+independent bitfields, so an attacker with a humanoid bonus and no
+undead flag was helping itself against a vampire it should have been
+neutral to, and one with an undead phobia lost its penalty entirely.
+An attacker carrying both flips SIGN when the player turns - pinned,
+because no single-arm port can do that.
+
+Pins: 5 in `test/vampireundead.test.js`. Campaign: 4 mutants, 4 killed,
+including the hand-rolled predicate that ignores `ended` - a cured
+vampire must be humanoid again, which is why the arm reads
+`liveVampirism` rather than re-testing the entry shape locally.
+
+Two things the pins caught in the pins:
+
+- The first draft invented the attack-modifier bit values instead of
+  reading the port's own `GROUP_BITS` table (`[[0x01,0x10],[0x02,0x20],
+  [0x04,0x40],[0x08,0x80]]`), and every behavioural arm failed.
+- It also asserted that a career carrying BOTH bits for one group nets
+  zero - the exact wrong belief AUDIT 18 had already found in the code
+  and corrected. `GetAttackModifier` tests bonus first and returns, so
+  both bits is a BONUS. The suite caught the pin repeating a mistake
+  the source had been fixed for.
+
+The flag sweep here reuses **EF1c's rule rather than a second
+mechanism**: strip quoted spans, then look for the claim in what is
+left, so a correction may quote the sentence it retired. The bare
+phrase test flagged VU1's own comment first, exactly as it did in EF1c.
+
+**AND THE IMPORT CYCLED.** `combat/formulas.js` importing
+`systems/vampirism.js` closes the loop `formulas -> vampirism -> loot ->
+formulas`, and the ESM binding lands in the temporal dead zone:
+`EFFECT_FLAGS` read undefined at module-eval time and roughly half the
+suite failed to *import*, never mind assert. `liveVampirism` moved into
+`systems/racialLive.js`, an import-free leaf, with `vampirism.js`
+re-exporting it so no consumer moved - the same answer wave 31 gave for
+`BreakNormalPowerConcealmentEffects`, and the trap this very file's
+header has warned about since the rest.js/specialAdvantages split.
+
+The lesson is about the CHECK, not the cycle: **loading a module in
+isolation does not show one.** `node -e "import('./formulas.js')"`
+passed cleanly with the bad import in place, because formulas.js was
+the entry and got to initialise first. The failure only appeared when
+another module reached it earlier. Import order decides who lands in
+the dead zone, so the test that proves a cycle absent is the whole
+suite - a single load is a green light that means nothing.

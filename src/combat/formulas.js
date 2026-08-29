@@ -27,6 +27,8 @@ import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvant
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
 import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
+import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
+import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
 import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
 
 // ---- Dice100.cs verbatim ----
@@ -174,16 +176,28 @@ export function enemyEntityGroup(careerIndex) {
  *     dreugh, lamia - is an ATTACKER on the player, so that arm is
  *     where the whole modifier lives.
  *
- *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
- *  player HasVampirism(); the vampirism effect is not ported, so only
- *  the humanoid arm exists here. */
+ *  VU1: the player arm takes the UNDEAD modifier while the player
+ *  has vampirism, as DFU's does. The flag that used to stand here said
+ *  "the vampirism effect is not ported, so only the humanoid arm
+ *  exists" - and systems/vampirism.js had shipped, `liveVampirism` and
+ *  all, some slices earlier. The blocker retired and the sentence did
+ *  not, so every vampire character in the port took the wrong
+ *  modifier. */
 export function bonusOrPenaltyByEnemyType(attacker, target) {
   if (!attacker || !target) return 0;
   const flags = attacker.attackModifierFlags ?? attacker.career?.attackModifierFlags ?? null;
   if (flags == null) return 0;
   let group = ENEMY_GROUPS.None;
   if (target.isPlayer) {
-    group = ENEMY_GROUPS.Humanoid;   // "Player is assumed humanoid" (:1048)
+    // VU1 - :1042-1048's TWO arms, not one. "Vampires are undead,
+    // therefore use undead modifier" is DFU's own comment on the
+    // HasVampirism() branch; only the else is "Player is assumed
+    // humanoid". A vampire player was taking the humanoid modifier
+    // from every attacker, which is the wrong sign as often as not -
+    // a career with a humanoid BONUS was quietly helping itself
+    // against a target it should have feared, and a monster with an
+    // undead phobia lost its penalty entirely.
+    group = liveVampirism(target) ? ENEMY_GROUPS.Undead : ENEMY_GROUPS.Humanoid;
   } else if (target.affinity === 'Human') {
     group = ENEMY_GROUPS.Humanoid;
   } else {
@@ -686,14 +700,34 @@ export function meleeHitConnects(dist, inSight, withinHitYaw) {
 // imported at the top).
 export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
 
-/** GetEnemyEntityWeightInClassicUnits, verbatim shape: monster =
- *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
- *  + (int)(Items.GetWeight() * 4) term is still absent - item weights
- *  themselves SHIPPED (AUDIT 23 corrected the stale blocker); the
- *  term needs the call sites to hand the foe's item list through. */
-export function enemyWeightClassicUnits(isClass, gender, mobileWeight) {
-  if (!isClass) return mobileWeight ?? 0;
-  return gender === 'female' ? 240 : 350;
+/** GetEnemyEntityWeightInClassicUnits (FormulaHelper.cs:2881-2898),
+ *  now whole:
+ *
+ *    itemWeightsClassic = (int)(e.Items.GetWeight() * 4)
+ *    baseWeight = monster ? MobileEnemy.Weight : female ? 240 : 350
+ *    return itemWeightsClassic + baseWeight
+ *
+ *  EW1: the item half was absent and the shape hid why it mattered.
+ *  DFU sums the term for MONSTERS TOO - it computes itemWeightsClassic
+ *  BEFORE the type branch and adds it to whichever base wins - where
+ *  the port opened with `if (!isClass) return mobileWeight`, an early
+ *  exit that would have skipped the term even after it was bolted onto
+ *  the class arm. So the branch is a baseWeight assignment here, as it
+ *  is in C#, rather than two returns.
+ *
+ *  Weight feeds weaponKnockbackSpeed as its DIVISOR, so a foe missing
+ *  its kit was thrown further by every blow: a plate-armoured knight
+ *  at 350 instead of ~570 takes roughly 60% more knockback speed.
+ *
+ *  `items` is the foe's own list; totalWeight IS ItemCollection
+ *  .GetWeight (inventory.js:315), so the kg->classic multiply and the
+ *  C# (int) truncation are the only arithmetic added here. A caller
+ *  with no list passes nothing and gets the old base-only answer,
+ *  which is the honest value for a foe the port gives no inventory. */
+export function enemyWeightClassicUnits(isClass, gender, mobileWeight, items = null) {
+  const itemWeightsClassic = Math.trunc(totalWeight(items ?? []) * 4);
+  const baseWeight = !isClass ? (mobileWeight ?? 0) : (gender === 'female' ? 240 : 350);
+  return itemWeightsClassic + baseWeight;
 }
 
 // ---- T3a: CalculatePickpocketingChance, verbatim ----

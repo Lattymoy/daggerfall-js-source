@@ -4234,3 +4234,174 @@ whole key set from the effect classes. Campaign: 5 mutants, 5 killed,
 including one that drops a single loop-keyed variant (8,4) and one that
 over-reaches a DIFFERENT family, so the sweep is proven to generalise
 past the case it was written for.
+
+## EF1c - THE SENTENCES THE LIBRARY OUTGREW (2026-08-28)
+
+EF1 retired the flag on `applySpell`'s skip counter. EF1b found the
+same claim four lines from the top of the same file. This is the rest
+of them: four sentences across two more modules that deferred work to
+"the effect-library slice", every one checked by RUNNING the thing it
+described.
+
+- `dungeonContext.js` said trap spells resolve "the classic
+  damage-health family... other effects FLAGGED to the effect-library
+  slice". M3 moved this host's missiles onto the shared cast engine, so
+  a landed bolt goes `explodeAt` / `applySpellToPlayer` -> `applySpell`:
+  a paralysis or drain trap has been landing whole for a long time.
+- `spellcast.js`'s header declared a SCOPE - "the RESOLVED effect
+  family is classic Damage Health... every other effect in a trap spell
+  is SKIPPED with a flag" - for a module that resolves no effects at
+  all. It owns the saving throw, the magnitude roll and the missile
+  constants. A scope note describing a NEIGHBOUR's old shape is worse
+  than none: it reads as current and nothing local contradicts it.
+- `spellcast.js` called ElementalResistance a family "the effect
+  library has not reached, so nothing can raise one yet" - written
+  directly above `elementalResistanceChance`, the function that sums
+  the entries it declared could not exist. Casting 8,0 raises Fire to
+  100 and leaves Frost at 0. Two neighbours, opposite claims, and only
+  one of them runs.
+- `spellcast.js` called continuous damage "instant application - the
+  rounds system pends". It enters `activeEffects` as a
+  `continuousDamage` entry and re-rolls its magnitude every round.
+
+None of the four changed behaviour; all four were the port lying to its
+next reader about where its own edges are - which is the more expensive
+kind of wrong, because it sends someone to build what is already built.
+
+**A CLAIM USUALLY HAS MORE THAN ONE HOME.** EF1 fixed the line it was
+looking at. Grep the claim, not the line.
+
+Pins: 3 appended to `test/effectcoverage.test.js` (one subject, one
+row) - the resistance law per element, the continuous-damage round
+tick, and a SOURCE SWEEP so a fifth sentence cannot land. Campaign: 4
+applicable mutants, 4 killed - and the sweep's design is the campaign's
+doing. Its first shape matched per line and flagged EF1c's own
+corrections, which quote the retired wording across line breaks; its
+second exempted any comment block naming EF1c, and a mutant pasting a
+BRAND-NEW "other effects pend the effect-library slice" into that same
+block SURVIVED. The shipped sweep strips quoted spans and reads what is
+left, so a correction may quote the old sentence and an assertion is
+still caught. **An exemption wide enough to cover the fix is wide
+enough to hide the next defect.**
+
+## CG2 - THE CRIME-GUILD TALLY: how the invitation is earned (2026-08-28)
+
+G2 pinned that neither the Thieves Guild nor the Dark Brotherhood can
+be joined by asking - `DaggerfallGuild`'s join arm throws
+`NotImplementedException` for both, because classic INVITES you. CG1
+never asked where the invitation comes from. This is it.
+
+`TallyCrimeGuildRequirements` (PlayerEntity.cs:1271-1299): every theft
+counts one toward ten, every murder counts toward fifteen - a murdered
+civilian weighing **five** where a killed watchman weighs **one**, so
+three dead townsfolk arm the Brotherhood against fifteen dead guards.
+Crossing either threshold stamps a clock 4320 classic minutes (three
+days) out. `HandleStartingCrimeGuildQuests` (:1503-1522), called from
+the tail of `PlayerEntity.Update`'s per-minute block at :531, delivers
+the letter when that clock runs down **and the player is outside**, then
+parks the tally at `InviteSent` (100) so it can never fire twice.
+
+**THE READER SHIPPED AND THE CONSUMER NEVER DID** - the third slice in
+a row with that shape, after EW1's weight term and FD1's water
+exemption. `formats/characterRecord.js` has parsed all four fields since
+the .SAV work (0x211, 0x21f, 0x222) and `systems/classicSave.js`
+imports every one onto the entity, so a player importing a classic save
+at nine thefts arrived carrying a tally nothing in the port would ever
+read again. Four live crime sites named the missing call in their own
+comments.
+
+Wired at all four: the killed watchman (`cityGuards`, weight 1), the
+murdered civilian (`cityGuards`, weight 5), the pinched purse
+(`talk.js` - only the arm that actually took gold, as DFU's call sits
+inside that branch), and the picked exterior lock (`worldModes`, before
+the success text as in C#). The shop-shelf and trade-window thefts stay
+recorded rather than wired: those windows have no crime path yet.
+
+Three things the port's own shape forced, each pinned:
+
+- **`?? 0` is load-bearing, not defensive noise.** The port mints
+  player entities lazily - `systems/save.js` reads every persistent
+  field with its own `?? 0` - so a fresh character reaches the tally
+  with these UNDEFINED where PlayerEntity.cs:90-93 declares them zero.
+  DFU's gate ported literally as `=== 0` reads false against undefined
+  and would have frozen the tally for every new game, leaving the guild
+  reachable only from a classic import. Caught while writing it; it is
+  the campaign's first mutant now.
+- **The three effects are atomic, so an unwired host does nothing.**
+  DFU parks the tally, clears the clock and starts the quest as one
+  act. A port that did the first two with no quest machine mounted
+  would mark the player permanently invited to a guild whose initiation
+  never ran - strictly worse than waiting. With no registered host the
+  letter simply stays pending.
+- **The four fields join the save.** AUDIT 18 F3's lesson exactly:
+  nobody steals ten times in one sitting, so a tally that resets on load
+  makes the guild unreachable by any player who saves.
+
+`crimeGuilds.js` is a LEAF on purpose, and the two faction ids moved
+into it from `court.js`, which now re-exports them: `talk.js` needs them
+for the pickpocket tally and cannot import `court.js`, because
+`court.js` imports `talk.js` - a cycle its own pickpocket comment names.
+
+Pins: 10 in `test/crimeguilds.test.js`. Campaign: 12 mutants, 12
+killed - **after three survived the first run, all three for the same
+reason EW1 recorded a slice ago.** The delay pin asserted
+`NOW + CRIME_GUILD_LETTER_DELAY_MINUTES` and the InviteSent pin asserted
+`=== INVITE_SENT`, so both moved with the constants they were meant to
+guard; the `inside` default had no arm at all, because every assertion
+passed it explicitly. They assert 4320 and 100 as literals now, and the
+omitted-`inside` case has its own arm. **Writing down "a pin that
+computes its expectation the way the code does is not a pin" did not
+stop me doing it again the next slice** - which is the argument for the
+campaign, not for the note.
+
+## TP1 - THE FAST-TRAVEL GUILD DISCOUNT + RAISESKILLS ON ARRIVAL (2026-08-29)
+
+`travelPopUp.js` flagged four things as "idling loudly". Two of them
+had stopped idling on anything:
+
+- **`GuildManager.FastTravel` (:284)**, flagged "no guild perk seam".
+  The seam is `activeMemberships`, which G2 shipped. `GuildManager`
+  folds every membership through its guild's own `FastTravel`
+  (:380-386), `Guild.FastTravel` is the identity (:241-244), and
+  exactly one guild in the game overrides it: the Temple of **Akatosh**,
+  god of time, returning `(int)(((95f - rank) / 100) * duration)`. A
+  rank-0 initiate travels in 95% of the time, a rank-9 Patriarch in 86%.
+- **`RaiseSkills` on arrival (:380)**. AUDIT 23 established that
+  `PlayerEntity.Update` runs NO advancement and that DFU calls
+  `RaiseSkills` from exactly two window-closings - rest, which shipped,
+  and this one. `shared.js`'s own doc named this site as *"the other
+  site, unported"*.
+
+**The discount lands BETWEEN `CalculateTravelTime` and
+`CalculateTripCost`** (DaggerfallTravelPopUp.cs:281-296), so Akatosh's
+blessing cuts the FARE as well as the days. That ordering is the whole
+reason the port's flag sat on the line it did, and putting the discount
+after the cost is the plausible wrong wiring - the campaign's seventh
+mutant.
+
+`raiseAtRestEnd` became **`raisePlayerSkills`**, DFU's own member name.
+The old name was true while rest was its only caller and became a small
+lie the moment travel used it; a name that misleads the next reader is
+the same defect as a stale comment, and this run has now found four of
+those.
+
+The two flags that genuinely DO still idle - the HUD smash-to-black
+fade and EXIT's key-up deferral - stay named, and a pin asserts they
+stay named, so this slice cannot be read as having closed the whole row.
+
+Pins: 6 in `test/travelguild.test.js`. Campaign: 9 mutants, 9 killed
+after two survived the first run, and the two survivors were different
+in kind:
+
+- **`break` after the discount survived every behavioural arm, and
+  always would.** Only one guild has the perk and all eight temples
+  share the HolyOrder slot, so no reachable membership book holds two -
+  the mutant is behaviourally EQUIVALENT under real data. What it
+  breaks is the contract `GuildManager.FastTravel` states: thread the
+  duration through *every* membership. The pin now guards that contract
+  explicitly rather than pretending an observable exists.
+- **Wrapping the arrival raise in `if (false)` survived**, because the
+  pin looked for the call as a substring. That is PY1's lesson in
+  another costume - *a pin that greps for a call does not test that the
+  call runs*. It matches the statement at its line start and
+  indentation now.

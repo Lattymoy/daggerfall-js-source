@@ -71,6 +71,7 @@ import { tickPlayerTorch } from './playerTorch.js';               // T1: EnableP
 import { checkOverdueLoans, settleOverdueLoan } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17)
 import { lowerRepForCrime } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70)
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
+import { handleStartingCrimeGuildQuests } from './crimeGuilds.js';   // CG2: PlayerEntity.Update:531
 
 export { MINUTES_PER_DAY };
 
@@ -338,6 +339,11 @@ export function tickPlayerMinutes({
   fatigueMultiplier = 1,
   rolls = Math.random,
   say = () => {},
+  // CG2: PlayerEnterExit.IsPlayerInside, the crime-guild letter's own
+  // gate. Defaults FALSE - the outdoor answer - because the handler is
+  // inert without a registered quest host anyway, so a host that has
+  // not wired the quest machine cannot deliver a letter early.
+  inside = false,
 } = {}) {
   const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
 
@@ -587,6 +593,15 @@ export function tickPlayerMinutes({
   // credited... not harmless now that it is [ported]") described a line that
   // was not there.
   if (entity.preventNormalizingReputations) entity.preventNormalizingReputations = false;
+
+  // CG2 - HandleStartingCrimeGuildQuests (:1503-1522), called from
+  // PlayerEntity.Update at :531: the line AFTER the two prevent-flag
+  // resets above, which is why it sits here and not with the quest
+  // starts further down. A theft or murder tally that crossed its
+  // threshold stamped a clock three days out; this is where the clock
+  // runs down and the invitation quest starts - and only OUTSIDE, so
+  // the letter never finds the player in a dungeon.
+  handleStartingCrimeGuildQuests(entity, { nowClassicMinutes: next, inside });
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits

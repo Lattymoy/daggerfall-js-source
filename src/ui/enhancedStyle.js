@@ -1428,7 +1428,28 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; }
-.sb-shell .sb-acts { display: flex; gap: 10px; margin-top: 22px; }
+/* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
+.px-sheetdoors { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; }
+.px-sheetdoors .act { min-height: 44px; }
+.sb-shell .sb-acts { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+/* PX23b: the two icons the classic draws, as the words they mean. */
+.sb-shell .sb-frame, .cr-shell .sb-frame { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.sb-shell .sb-chip, .cr-shell .sb-chip { padding: 4px 10px; border: 2px solid rgba(125,116,96,0.35);
+  color: #a89f88; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+/* ...and the numbers each effect record already held. */
+.sb-shell .sb-effect { display: block; }
+.sb-shell .sb-effline { display: flex; align-items: baseline; gap: 10px; }
+.sb-shell .sb-nums { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 4px 0 0 26px; }
+.sb-shell .sb-num { color: var(--brass); font-size: 12px; letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.sb-shell .sb-rename { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; }
+.sb-shell .sb-renamelabel { color: #7d7460; font-size: 12px; letter-spacing: 0.14em;
+  text-transform: uppercase; }
+.sb-shell .sb-rename input { flex: 1; min-width: 160px; min-height: 44px; padding: 8px 12px;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  color: #d8cfae; font: inherit; font-size: 15px; }
+.sb-shell .sb-rename input:focus { outline: none; border-color: var(--brass); }
 
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the
@@ -1461,6 +1482,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   font: inherit; font-size: 14px; cursor: pointer; }
 .cr-shell .cr-rm:hover, .cr-shell .cr-rm:focus-visible { outline: none;
   color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* PX24c: a message has no dated head; the card keeps its frame and the
+   head row collapses rather than printing a lie.
+   AND THE THIRD SCOPING FAULT: .sb-frame and .sb-chip were scoped to
+   the spellbook alone, so the chronicle's identity line rendered as
+   bare running text - after the head (PX24) and the divider (PX23).
+   The family's shared parts share their selector now, and the pin
+   below holds all three together so there is no fourth. */
+.cr-shell .cr-head.cr-headless { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.cr-shell .cr-head.cr-headless .cr-when { display: none; }
+.cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);

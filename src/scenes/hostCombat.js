@@ -398,7 +398,8 @@ export function applyDamageToNonPlayer(attacker, target, {
     // :336-350 - the knockback, on the ATTACKER-class guard
     if (target.ai && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
       tEnt?.basics?.weight)) {
-      const w = enemyWeightClassicUnits(tEnt?.isClass, tEnt?.gender, tEnt?.basics?.weight);
+      // EW1: the TARGET's kit, not the attacker's
+      const w = enemyWeightClassicUnits(tEnt?.isClass, tEnt?.gender, tEnt?.basics?.weight, tEnt?.items);
       if (w > 0) {
         target.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
         target.ai.knockbackDir = direction ?? target.ai.knockbackDir;

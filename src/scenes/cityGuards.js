@@ -38,6 +38,7 @@
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
+import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
 import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
@@ -306,10 +307,17 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);
       sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
-      // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-      // the thieves-guild arc. F035/MT-ii: and only when the PLAYER
-      // is the source - the whole block is inside DFU's player gate.
-      if (fromPlayer) setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
+      // IS Murder, and CG2 landed the second half -
+      // DaggerfallEntityBehaviour.cs:267's
+      // TallyCrimeGuildRequirements(false, 1). A guard is worth ONE to
+      // the Dark Brotherhood where a civilian is worth five: the
+      // Brotherhood is unimpressed by killing the watch, which is
+      // usually self-defence. F035/MT-ii: and only when the PLAYER is
+      // the source - the whole block is inside DFU's player gate.
+      if (fromPlayer) {
+        setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
+        tallyCrimeGuildRequirements(playerEntity, false, 1);
+      }
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home (this was the second copy of exteriorFoes' mint, to the
       // line). It gains FindGroundPosition (:817) - the watch walks, so
@@ -343,7 +351,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // should not be the place that remembers which arm applies to it.
     const guardWeight = ENEMY_BASICS[GUARD_MOBILE_TYPE]?.weight ?? 0;
     if (knockDir && weaponKnockbackApplies(g.ai.knockbackSpeed, true, guardWeight)) {
-      const w = enemyWeightClassicUnits(true, 'male', guardWeight);
+      // EW1: a guard is the one foe whose kit is never empty - the
+      // watch spawns armed and armoured, so this is the call site
+      // where the missing item term moved the answer most.
+      const w = enemyWeightClassicUnits(true, 'male', guardWeight, g.entity?.items);
       g.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
       g.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
     }
@@ -615,7 +626,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
 
   // G4: the weapon strike against WANDERING townsfolk (WeaponManager's
   // mobile-NPC branch, verbatim): a CIVILIAN dies to one hit - the
-  // motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+  // motor disables, TallyCrimeGuildRequirements(false, 5) (CG2),
   // Murder + SpawnCityGuards(true) through the host's onMurder; a
   // wandering GUARD NPC converts on the spot - Assault - and the
   // swing carries onto the fresh guard foe (DFU re-points the hit).
@@ -639,6 +650,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         [eye[0] + lookDir[0] * bestD, eye[1] + lookDir[1] * bestD, eye[2] + lookDir[2] * bestD]);
       best.disable();   // one weapon hit kills a civilian (SetActive(false))
       setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
+      // CG2: WeaponManager.cs:510's TallyCrimeGuildRequirements(false,
+      // 5) - the murdered civilian, worth FIVE to the Dark
+      // Brotherhood against a guard's one. Three such killings arm the
+      // invitation where it takes fifteen dead watchmen.
+      tallyCrimeGuildRequirements(playerEntity, false, 5);
       onMurder();       // SpawnCityGuards(true)
       return { crime: 'murder' };
     }

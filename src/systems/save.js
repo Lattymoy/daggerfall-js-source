@@ -196,6 +196,16 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // chanceToGoFree gained the whole missing penalty back.
   snap.crimeCommitted = entity.crimeCommitted ?? 0;
   snap.haveShownSurrenderDialogue = !!entity.haveShownSurrenderDialogue;
+  // CG2: the crime-guild tallies and their letter clocks
+  // (SerializablePlayer.cs:144-147 writes all four in this same player
+  // block). AUDIT 18 F3's lesson applies to them exactly: a tally that
+  // does not survive a save is a tally that can never reach ten, since
+  // no one steals ten times in one sitting - the Thieves Guild would
+  // have been reachable only by a player who never saved.
+  snap.thievesGuildRequirementTally = entity.thievesGuildRequirementTally ?? 0;
+  snap.darkBrotherhoodRequirementTally = entity.darkBrotherhoodRequirementTally ?? 0;
+  snap.timeForThievesGuildLetter = entity.timeForThievesGuildLetter ?? 0;
+  snap.timeForDarkBrotherhoodLetter = entity.timeForDarkBrotherhoodLetter ?? 0;
   // legalRep is a region-keyed object here, not DFU's 62-entry array;
   // it must be COPIED or the snapshot aliases live state.
   snap.legalRep = entity.legalRep ? { ...entity.legalRep } : null;
@@ -387,6 +397,14 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // take it, absent -> InitializeRegionData, i.e. every region at 0.
   entity.crimeCommitted = snap.crimeCommitted ?? 0;
   entity.haveShownSurrenderDialogue = snap.haveShownSurrenderDialogue ?? false;
+  // CG2: the four crime-guild fields, under the SAME older-snapshot
+  // rule as the line above - absent means the C# type default, 0, which
+  // is exactly "no tally, no letter pending" and is safe to restore
+  // onto a character saved before this shipped.
+  entity.thievesGuildRequirementTally = snap.thievesGuildRequirementTally ?? 0;
+  entity.darkBrotherhoodRequirementTally = snap.darkBrotherhoodRequirementTally ?? 0;
+  entity.timeForThievesGuildLetter = snap.timeForThievesGuildLetter ?? 0;
+  entity.timeForDarkBrotherhoodLetter = snap.timeForDarkBrotherhoodLetter ?? 0;
   entity.legalRep = snap.legalRep ? { ...snap.legalRep } : {};
   // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right
   // after restoring it (SerializablePlayer -> ClampLegalReputations) -

@@ -13,7 +13,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
-import { convertTilemap } from '../world/terrainSurface.js';
+import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
@@ -371,6 +371,29 @@ export async function bootExterior(canvas, renderer, params, status) {
   })();
   const identityMatrix = trs(0, 0, 0, 0, 0, 0);
 
+  /** FD1 - the RAW (pre-conversion) tilemap byte under the player,
+   *  this host's twin of world.js's FS1 `playerGroundTile`.
+   *
+   *  The ground quad above spans [0, loc.width * RMB_SIDE] x [0,
+   *  loc.height * RMB_SIDE] at the IDENTITY transform, and its
+   *  tilemap is `tilemapDim` tiles across, so one tile is
+   *  RMB_SIDE / GROUND_TILE_DIM world units. That stride is DERIVED
+   *  from the same two constants the layout uses rather than repeating
+   *  the 6.4 the draw call passes as a literal - a probe that agrees
+   *  with the picture only by coincidence is a probe that will stop
+   *  agreeing.
+   *
+   *  Answers null off the tilemap (the padding beyond the real extent,
+   *  and anywhere outside the location), which isOutdoorWaterTile
+   *  reads as DFU's -1: not water, so the fall bills normally. */
+  const TILE_WORLD = RMB_SIDE / GROUND_TILE_DIM;
+  const playerGroundTileRaw = () => {
+    const tx = Math.floor(player.pos[0] / TILE_WORLD);
+    const ty = Math.floor(player.pos[2] / TILE_WORLD);
+    if (tx < 0 || ty < 0 || tx >= tilemapDim || ty >= tilemapDim) return null;
+    return locationTilemap[tx + ty * tilemapDim];
+  };
+
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.
   status('loading flat archives');
@@ -469,6 +492,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedExterior();
   };
   const playerTicker = createPlayerTicker(playerEntity, {
+    // CG2: this host has no interior mode at all - the player is always
+    // outdoors here, so the crime-guild letter may always land.
+    isInside: () => false,
     say: (msg) => console.log('[player]', msg),
     onExhausted: onExhaustedExterior,
     onLevelUp: () => {
@@ -1021,6 +1047,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     togglePause: () => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        // PX25: the sheet's own doors. This host has no journal maker,
+        // so it hands over two and the Chronicle button never draws -
+        // which is the point of the filter, not a gap in it.
+        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
@@ -1527,9 +1558,16 @@ export async function bootExterior(canvas, renderer, params, status) {
       const zNowW = held(keys, 'ReadyWeapon');
       if (zNowW && !zPrevW) weaponRig.toggleSheath();
       zPrevW = zNowW;
-      // P14 fall damage (host parity; the outdoor-water exemption is
-      // FLAGGED here exactly as in world.js - no tile lookup yet).
-      applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+      // P14 fall damage (host parity). FD1: the outdoor-water
+      // exemption is live here too - playerGroundTileRaw below is this
+      // host's twin of world.js's FS1 probe, read off the same
+      // locationTilemap and the same 6.4-unit stride the ground draw
+      // uses, so the two hosts cannot answer differently for the same
+      // ground.
+      applyFallLanding(playerEntity, player.landedFallDistance, {
+        sound: (id) => audio.playOneShot(id),
+        inOutdoorWater: isOutdoorWaterTile(playerGroundTileRaw()),
+      });
       // FS-slice: PlayerFootsteps - the exterior stride.
       {
         const _step = footsteps.update(player.pos, {

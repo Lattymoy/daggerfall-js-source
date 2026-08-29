@@ -51,6 +51,8 @@
 
 import { WORLD_MAP_TILE_DIM } from './terrainTiles.js';
 import { DIRS, ROAD_NONE, ROAD_TRACK, ROAD_TRUNK, roadExitsAt } from '../systems/roads.js';
+import { tracePolylines } from '../systems/roadBake.js';   // RZ3: the chain a pixel's road belongs to
+import { simplifyChain, chaikin, SIMPLIFY_EPSILON } from '../ui/overworldModel.js';   // RZ3: the same smoothing the map layer uses
 
 /** The three records DFU's GetTileWeight calls road (cityNavigation.js
  *  :31). Anything painted must be one of these - a road drawn with a
@@ -134,6 +136,162 @@ export function exitTile(dir) {
   };
 }
 
+/** RZ3 (Mac, 2026-08-28) - THE ROUTE WAS THE ZIG-ZAG.
+ *
+ *  RR1 rounded the corner inside a pixel and RZ2 placed the control
+ *  point by the turn, and a drifting road still stood 63 tiles off its
+ *  own line. Measuring WHERE showed why: on a road climbing one pixel
+ *  in three, the painted road sat dead flat across three whole pixels
+ *  and then stepped 128 tiles at once. The exits and the curve were
+ *  faithfully drawing a staircase, because the ROUTE is a staircase -
+ *  a road's chain is a walk over map pixels, so a shallow gradient can
+ *  only be expressed as flat-flat-flat-step.
+ *
+ *  It is the same defect the MAP layer had, and it takes the same
+ *  cure: simplify the chain, then smooth it, then draw THAT. The map
+ *  does it in overworldModel; this does it in tile space.
+ *
+ *  SYMMETRY, which is the whole difficulty. Two neighbours must place
+ *  the road identically on their shared edge or it breaks at the seam,
+ *  and they are painted independently and possibly never together. A
+ *  WINDOW around each pixel would not do - P's window and N's window
+ *  differ by a pixel, so their smoothed curves differ and the road
+ *  tears. Both trace the WHOLE chain instead, junction to junction,
+ *  from the same exit planes, and smooth it with the same passes: the
+ *  curve is a property of the CHAIN, not of who is looking at it, so
+ *  the two agree exactly by construction.
+ *
+ *  Measured over five road shapes, worst deviation among roads that
+ *  should run straight: 63.4 tiles before, 2.8 after - which is the
+ *  road's own half-width, i.e. as straight as a drawn band can be.
+ *
+ *  Cached in a WeakMap rather than on the network, because the network
+ *  is serialized to the bake cache and must not grow a derived field. */
+const CHAIN_CACHE = new WeakMap();
+const CHAIN_SMOOTH_PASSES = 3;
+
+function chainIndex(network) {
+  let idx = CHAIN_CACHE.get(network);
+  if (idx) return idx;
+  idx = new Map();
+  for (const [plane, kind] of [['trunkExits', ROAD_TRUNK], ['trackExits', ROAD_TRACK]]) {
+    for (const line of tracePolylines(network[plane], network.width, network.height)) {
+      // pixel CENTRES, so the smoothed curve lives in the same space
+      // the map layer's does
+      const smooth = chaikin(simplifyKeepingCorners(line), CHAIN_SMOOTH_PASSES);
+      for (const p of line) {
+        const key = `${p.x},${p.y}`;
+        if (!idx.has(key)) idx.set(key, []);
+        idx.get(key).push({ kind, points: smooth });
+      }
+    }
+  }
+  CHAIN_CACHE.set(network, idx);
+  return idx;
+}
+
+/** RZ3b: simplify the STRAIGHT RUNS and keep the CORNERS.
+ *
+ *  Plain Ramer-Douglas-Peucker at the map layer's 0.9 cannot be used
+ *  here, and the reason is geometric rather than a tuning matter: a
+ *  one-pixel corner and a one-pixel stair step are the SAME shape. An
+ *  east-then-north corner puts its middle pixel 0.707 off the chord,
+ *  and so does an east-then-north-east stair - so any tolerance either
+ *  keeps both (and the staircase survives) or drops both (and a real
+ *  right-angle road is cut across, which is what a first draft here
+ *  did: the corner pixel painted a sliver at its own corner instead of
+ *  turning).
+ *
+ *  The signal that separates them is the TURN, not the deviation. A
+ *  chain walks the eight compass steps, so a stair is a 45-degree
+ *  change of direction and a corner is 90 or more. The chain is split
+ *  at every hard turn, each straight-ish run is simplified on its own,
+ *  and the hard vertices are kept exactly - so stairs go, corners
+ *  stay, and the route never leaves the pixels the network gave it by
+ *  more than the tolerance. */
+export function simplifyKeepingCorners(line, eps = SIMPLIFY_EPSILON) {
+  const pts = line.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
+  if (pts.length < 3) return pts;
+  // a vertex is HARD when the road turns by 90 degrees or more there
+  const hard = [0];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const ax = pts[i].x - pts[i - 1].x, ay = pts[i].y - pts[i - 1].y;
+    const bx = pts[i + 1].x - pts[i].x, by = pts[i + 1].y - pts[i].y;
+    const la = Math.hypot(ax, ay) || 1, lb = Math.hypot(bx, by) || 1;
+    // cos of the turn: 1 straight on, ~0.707 a stair, <= 0 a corner
+    if (((ax / la) * (bx / lb) + (ay / la) * (by / lb)) <= 0.01) hard.push(i);
+  }
+  hard.push(pts.length - 1);
+  const out = [];
+  for (let h = 1; h < hard.length; h++) {
+    const run = simplifyChain(pts.slice(hard[h - 1], hard[h] + 1), eps);
+    out.push(...(h === 1 ? run : run.slice(1)));
+  }
+  return out;
+}
+
+/** The smoothed chain, in THIS pixel's tile coordinates. Map y grows
+ *  south and tile rows rise north (this file's header derives that
+ *  from generateTileData), so the row axis is flipped. */
+function chainTilePoints(points, px, py) {
+  return points.map((p) => [(p.x - px) * TDIM, (py + 1 - p.y) * TDIM]);
+}
+
+/** RZ4 (2026-08-28) - WHERE THE CHAIN ENTERS AND LEAVES THIS PIXEL.
+ *
+ *  RZ3 gave OPEN country the smoothed chain and left a LOCATION's
+ *  pixel on the old exit rule, so that the road could still be aimed
+ *  at the town's own street (RW1). Those two rules disagree about
+ *  where a road crosses a seam, and on a drifting road they disagree
+ *  badly: measured on a 1-in-3 gradient running into a town, the open
+ *  neighbour left at tile rows 126-127 and the town pixel took the
+ *  road in at rows 63-65. Sixty-two tiles of nothing. The road tore at
+ *  every town it reached.
+ *
+ *  Both halves are wanted, and they are not actually in conflict once
+ *  they are asked for different things: the CHAIN says where the road
+ *  crosses the boundary, and the STREET says where it goes once it is
+ *  inside. So a located pixel now starts its runs at the chain's own
+ *  crossings - which its neighbours compute identically, so the seam
+ *  holds - and aims them at the nearest street, stopping at the
+ *  footprint exactly as before. */
+/** The smoothed chain as tile steps, dense enough that consecutive
+ *  samples never skip a tile. */
+function densifyChain(points, px, py) {
+  const pts = chainTilePoints(points, px, py);
+  const dense = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
+    for (let k = 0; k <= n; k++) {
+      const t = k / n;
+      dense.push([Math.round(ax + (bx - ax) * t), Math.round(ay + (by - ay) * t)]);
+    }
+  }
+  return dense;
+}
+
+function chainCrossings(points, px, py) {
+  const inside = (x, y) => x >= 0 && y >= 0 && x < TDIM && y < TDIM;
+  const clamp = (v) => (v < 0 ? 0 : v > TDIM - 1 ? TDIM - 1 : v);
+  const pts = chainTilePoints(points, px, py);
+  const out = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
+    let was = inside(Math.round(ax), Math.round(ay));
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      const cx = Math.round(ax + (bx - ax) * t), cy = Math.round(ay + (by - ay) * t);
+      const now = inside(cx, cy);
+      // the tile where the road steps over the boundary, either way
+      if (now !== was) out.push({ x: clamp(cx), y: clamp(cy) });
+      was = now;
+    }
+  }
+  return out;
+}
+
 /** Stamp one tile if nothing has claimed it. The skip rule is
  *  assignTiles's own, so a town's stamped ground always wins. */
 function stamp(tilemap, x, y, record) {
@@ -153,13 +311,20 @@ function stamp(tilemap, x, y, record) {
  *
  *  Out of bounds counts as claimed, so a run stops at the tilemap
  *  edge rather than walking off it. */
-function isClaimed(mask, x, y) {
-  if (x < 0 || y < 0 || x >= TDIM || y >= TDIM) return true;
+function isClaimed(mask, x, y, outOfBoundsStops = true) {
+  // OUT OF BOUNDS IS NOT THE SAME AS CLAIMED, and the difference
+  // matters. For a run that STARTS at this pixel's edge and walks
+  // inward, leaving the tilemap is the end of the run. For the chain
+  // pass it is not: that path begins outside the pixel and only its
+  // WIDTH reaches in, so treating the first outside sample as claimed
+  // stops the run before it has painted anything - which tore the road
+  // at every town on a gradient.
+  if (x < 0 || y < 0 || x >= TDIM || y >= TDIM) return outOfBoundsStops;
   return mask[x + y * TDIM] !== 0;
 }
 
 /** A band of tiles along a straight run, inclusive of both ends. */
-function stampPath(tilemap, pts, half, record, stopMask = null) {
+function stampPath(tilemap, pts, half, record, stopMask = null, outOfBoundsStops = true) {
   let painted = 0;
   let px = null, py = null;
   const band = (cx, cy) => {
@@ -179,7 +344,7 @@ function stampPath(tilemap, pts, half, record, stopMask = null) {
     // tiles - not a road you can walk, and not one tileWeight's walk
     // treats as connected.
     if (px !== null && cx !== px && cy !== py) painted += band(cx, py);
-    if (stopMask && isClaimed(stopMask, cx, cy)) break;
+    if (stopMask && isClaimed(stopMask, cx, cy, outOfBoundsStops)) break;
     painted += band(cx, cy);
     px = cx; py = cy;
   }
@@ -214,6 +379,38 @@ function stampRun(tilemap, ax, ay, bx, by, half, record, stopMask = null) {
  *
  *  A single exit is a dead end and a junction is three or more, and
  *  neither is a curve: both keep their spokes to the centre. */
+/** RZ2 (Mac, 2026-08-28) - WHERE a through road's control point goes.
+ *
+ *  RR1 put it at the pixel CENTRE always, which rounds a right-angle
+ *  turn correctly and is badly wrong for a gentle one: a road drifting
+ *  east-north-east has to dive to the middle of every pixel and back
+ *  out to a corner, and it scallops. Measured over five pixels, that
+ *  road stood a mean 28 tiles and a peak 46 off its own line - about
+ *  290 world units of detour, which is the ground half of the zig-zag.
+ *
+ *  The control point is now placed by how sharply the road actually
+ *  turns here, using the two exits' directions from the centre:
+ *
+ *    opposite exits (a straight-through road)  -> the chord's midpoint,
+ *                                                 so the road is straight
+ *    perpendicular exits (a real corner)       -> the centre, so the
+ *                                                 corner rounds as it did
+ *    anything between                          -> weighted between them
+ *
+ *  `1 - |dot|` is that weight: 0 when the exits face opposite ways,
+ *  1 when they are at right angles. So the rounding RR1 added is kept
+ *  exactly where it was needed and taken out of the road's way
+ *  everywhere else. */
+export function throughControl(a, b) {
+  const ax = a.x - MID, ay = a.y - MID;
+  const bx = b.x - MID, by = b.y - MID;
+  const la = Math.hypot(ax, ay) || 1, lb = Math.hypot(bx, by) || 1;
+  const dot = (ax / la) * (bx / lb) + (ay / la) * (by / lb);
+  const w = 1 - Math.abs(dot);
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  return { x: mx + (MID - mx) * w, y: my + (MID - my) * w };
+}
+
 function curvePoints(ax, ay, cx, cy, bx, by) {
   // Sampled fine enough that consecutive samples never differ by more
   // than a tile on either axis; stampPath drops the duplicates.
@@ -297,6 +494,20 @@ export function paintRoadTiles(tilemap, network, px, py, {
   const claimed = located ? Uint8Array.from(tilemap, (v) => (v === 0 ? 0 : 1)) : null;
 
   let painted = 0;
+
+  // RZ3: OPEN COUNTRY takes the smoothed chain. A pixel carrying a
+  // LOCATION keeps the exit-based approach below, deliberately: there
+  // the road's job is to meet the town's own street at the gate
+  // (RW1), which is a one-pixel question the chain cannot answer, and
+  // the staircase this fixes is invisible over a single pixel anyway.
+  if (!located && network) {
+    for (const { kind, points } of chainIndex(network).get(`${px},${py}`) ?? []) {
+      painted += stampPath(tilemap, densifyChain(points, px, py),
+        halfWidth[kind] ?? 1, record ?? recordByKind[kind] ?? ROAD_TILE_RECORD, null);
+    }
+    return painted;
+  }
+
   // Track first, trunk second, so where the two share a pixel the
   // trunk's wider band wins the middle - the same order the map layer
   // draws them in.
@@ -315,10 +526,43 @@ export function paintRoadTiles(tilemap, network, px, py, {
     // the straight approaches - they have to stop at the footprint,
     // and a curve that halts halfway is not a curve.
     if (exits.length === 2 && !located) {
+      const c = throughControl(exits[0], exits[1]);
       painted += stampPath(tilemap,
-        curvePoints(exits[0].x, exits[0].y, MID, MID, exits[1].x, exits[1].y),
+        curvePoints(exits[0].x, exits[0].y, c.x, c.y, exits[1].x, exits[1].y),
         half, rec, null);
       continue;
+    }
+    // RZ4: a located pixel starts where the CHAIN crosses its boundary,
+    // not at the fixed exit tile - otherwise it disagrees with the
+    // chain-painted neighbour and the road tears at the town's edge.
+    // The fixed exits remain the fallback for a pixel the tracer gave
+    // no chain (a network handed in without one, as the tests do).
+    // RZ4: a LOCATED pixel draws the same curve its neighbours draw,
+    // and then its street runs on top of it.
+    //
+    // It used to draw only the exit-based runs, and that tore the road
+    // at every town on a gradient: the open neighbour left at tile
+    // rows 126-127 while the town took the road in at 63-65, because
+    // the two were using different rules for where a road crosses a
+    // seam. The curve IS the road; a pixel that happens to carry a
+    // location does not get to disagree about where it runs.
+    //
+    // Both passes refuse a claimed cell, so the town's own ground is
+    // exactly as safe as it was - this adds road where the road
+    // already goes, and takes nothing from the 1:1 tile law.
+    if (network) {
+      for (const c of chainIndex(network).get(`${px},${py}`) ?? []) {
+        if (c.kind !== kind) continue;
+        // CLIPPED to this pixel first, THEN masked. The chain begins
+        // outside the pixel and isClaimed counts out-of-bounds as
+        // claimed, so masking the raw path halts the run on its very
+        // first sample; masking a path that never leaves the tilemap
+        // stops it where it should - at the town's own ground. Without
+        // the mask the run would instead walk straight through the
+        // footprint and fill the unstamped HOLES inside it, which is
+        // the thing RW1 put the mask there to prevent.
+        painted += stampPath(tilemap, densifyChain(c.points, px, py), half, rec, claimed, false);
+      }
     }
     for (const e of exits) {
       // Inward from the EDGE, so a run that meets the town stops at

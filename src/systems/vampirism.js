@@ -94,10 +94,13 @@ export const NOT_SATED_TEXT_ID = 36;
  *  no-localization departure). */
 export const SUNLIGHT_TRAVEL_TEXT = 'You cannot travel during the day, the sunlight would destroy you.';
 
-/** The live curse entry, or null. */
-export const liveVampirism = (entity) =>
-  (entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'
-    && a.racial === 'vampirism' && !a.ended) ?? null;
+/** The live curse entry, or null. VU1 moved the DECLARATION into
+ *  systems/racialLive.js - an import-free leaf - because
+ *  combat/formulas.js needs it and this module cycles back to formulas
+ *  through loot.js. Re-exported here so every existing consumer keeps
+ *  reading it from the module that owns the subject. */
+import { liveVampirism } from './racialLive.js';
+export { liveVampirism };
 
 /**
  * The deploy: DeployFullBlownVampirism's tail V1 could not own (the

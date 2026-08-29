@@ -312,7 +312,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const isClass = f.mobileType >= 128;
     const mobileWeight = ENEMY_BASICS[f.mobileType]?.weight ?? 0;
     if (knockDir && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {
-      const w = enemyWeightClassicUnits(isClass, f.gender, mobileWeight);
+      // EW1: the foe's own kit is half of DFU's weight
+      const w = enemyWeightClassicUnits(isClass, f.gender, mobileWeight, f.entity?.items);
       f.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
       f.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
     }

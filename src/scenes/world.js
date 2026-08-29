@@ -14,7 +14,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
+import { buildTerrainGrid, buildTerrainIndices, convertTilemap, isOutdoorWaterTile, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -56,6 +56,7 @@ import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFind
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
+import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
@@ -121,7 +122,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills } from './shared.js';   // TP1: PlayerEntity.RaiseSkills
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -158,7 +159,7 @@ import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
-import { getPeopleOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home
+import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
@@ -769,6 +770,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedExterior();
   };
   const playerTicker = createPlayerTicker(playerEntity, {
+    // CG2: PlayerEnterExit.IsPlayerInside - the crime-guild letter's
+    // gate. The same predicate this host already hands the quest
+    // machine at :1064, so the two cannot disagree about where the
+    // player is standing.
+    isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
     say: (msg) => console.log('[player]', msg),
     onLevelUp: () => {
@@ -1989,6 +1995,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       });
       if (clamp > 0) playerTicker.advance(clamp);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
+      // TP1 - performFastTravel's tail (:380): RaiseSkills fires AFTER
+      // the arrival clamp, so a trip that lands at 7:10am raises
+      // against the arrival minute rather than the departure one. It
+      // is the same one home the rest window's close calls, because
+      // DFU calls the same PlayerEntity.RaiseSkills at both.
+      raisePlayerSkills(playerEntity, {
+        say: (m) => townTalk.say(m),
+        onLevelUp: () => townTalk.showOverlay(new LevelUpScreen(playerEntity)),
+      });
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -2298,6 +2313,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       roadNetwork: () => roadNetwork,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      // TP1: the popup's GuildManager.FastTravel fold reads the
+      // player's guild memberships off the entity.
+      playerEntity: () => playerEntity,
       // GetGoldAmount is coins PLUS letters of credit; the popup's
       // second test and its label want the coins alone.
       gold: () => totalGoldAmount(playerEntity),
@@ -2456,6 +2474,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     togglePause: () => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        // PX25: the sheet's own doors, through this host's own arms.
+        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
+        openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
         // SAV4: the slot window's seams - the pause SAVE/LOAD doors
@@ -3157,12 +3179,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     factionData: (id) => _questStore()?.dict.get(id) ?? null,
     factionName: (id) => _questStore()?.dict.get(id)?.name ?? '',
     peopleOfCurrentRegion: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
-    // PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-    // Court-of lookup yet, so a faction id of 0 inside a palace and
-    // the three generic Random_* factions still resolve to nothing.
-    // The people arm is live; the court arm rides the automap/region
-    // slice that brings the rest of PlayerGPS.
-    courtOfCurrentRegion: () => 0,
+    // CQ1: PlayerGPS.GetCourtOfCurrentRegion, through the same store
+    // and the same region index its People sibling below reads. This
+    // was hardcoded 0, which is not "absent" - 0 is a real faction id,
+    // so a palace interior and the three generic Random_* factions
+    // resolved to whatever faction 0 is rather than to nothing. A
+    // region whose court cannot be resolved answers 0 as the bridge's
+    // own no-faction value (DFU throws; talk.js's getter returns null
+    // and the decision is made here, its sibling's convention).
+    courtOfCurrentRegion: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
     currentLocationIndex: () => _questLoc()?.locationIndex ?? 0,
     nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
@@ -3614,6 +3639,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       GUILD_GROUPS.Vampires, MEMBERSHIP_STATUS.Member, clanFactionId,
       (() => { const s = _questStore(); return s ? getReputation(s, clanFactionId) : 0; })(), level),
   });
+  // CG2: the crime-guild doors, beside the racial one because they are
+  // the same shape - PlayerEntity.Update starts a quest, so the machine
+  // is registered once here rather than threaded through the tick.
+  // startQuest carries the FACTION ID as DFU's StartQuest(name,
+  // factionId) does, so the initiation quest is owned by the guild that
+  // sent the letter.
+  setCrimeGuildQuestHost({
+    startQuest: (name, factionId) => questBridge.machine.startQuestByName(name, factionId),
+  });
+  // The clock the tally stamps its three-day letter from - the same
+  // classic minute every other dated law in this host reads.
+  setCrimeGuildClock(() => Math.floor(playerTicker.classicMinutes));
   if (_questStartPending) questInitAtGameStart();
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
@@ -4080,16 +4117,20 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (zNowW && !zPrevW) weaponRig.toggleSheath();
         zPrevW = zNowW;
         // P14 fall damage (host parity - CheckFallingDamage +
-        // PlayerHealth verbatim; sounds 91/92). The outdoor-water
-        // exemption (PlayerTileMapIndex == 0) is FLAGGED: a water
-        // landing still bills like ground. FS1 built the tile probe
-        // this was waiting on - playerGroundTile below - so what
-        // remains is only reading tile 0 off it and taking the
-        // exemption, which is a fall-damage law and wants its own
-        // pass rather than riding a footstep change. Death at 0 rides
-        // the shared entity; the exterior death screen pends with the
-        // world-mode UI arc.
-        applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+        // PlayerHealth verbatim; sounds 91/92). FD1 took the
+        // outdoor-water exemption off the board: playerGroundTile is
+        // FS1's probe and isOutdoorWaterTile is DFU's
+        // PlayerTileMapIndex == 0, so a landing in a lake now costs
+        // neither HP nor the hard-fall grunt. A null tile - the
+        // player over a pixel still streaming - is DFU's -1 and takes
+        // the damage, which is the safe direction: a missed exemption
+        // costs HP, an over-eager one makes every fall free. Death at
+        // 0 rides the shared entity; the exterior death screen pends
+        // with the world-mode UI arc.
+        applyFallLanding(playerEntity, player.landedFallDistance, {
+          sound: (id) => audio.playOneShot(id),
+          inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),
+        });
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
         // season + CLIMATE.PAK; the path/water tile arms ride the
         // tile-under-player flag above).

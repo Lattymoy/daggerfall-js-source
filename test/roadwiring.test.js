@@ -10,9 +10,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } from '../src/systems/roads.js';
+import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad, buildCostField, buildRoadNetwork } from '../src/systems/roads.js';
 import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
-import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile } from '../src/world/roadTiles.js';
+import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile, throughControl, simplifyKeepingCorners } from '../src/world/roadTiles.js';
 import { roadPoints, chaikin, simplifyChain, reliefPoint, sampleHeightByte, SIMPLIFY_EPSILON } from '../src/ui/overworldModel.js';
 import { ROAD_TILE_RECORD_BY_KIND, ROAD_TILE_RECORD } from '../src/world/roadTiles.js';
 import { pickFootstepSet, FOOTSTEP } from '../src/systems/footsteps.js';
@@ -285,26 +285,82 @@ test('RR1: a through road is ROUNDED - no mitred corner at the pixel centre', ()
   }
 });
 
-test('RR1: the curve bends toward the CENTRE, on a diagonal pair too', () => {
-  // The axis-aligned pair above cannot tell a centre control point
-  // from `(exits[0].x, exits[1].y)` - exitTile puts MID on the
-  // non-moving axis, so that expression lands ON the centre and the
-  // two are the same curve. A DIAGONAL exit separates them.
-  const net = createNetwork(8, 8);
-  linkPixels(net.trunkExits, 8, 4, 4, 5, 3);   // NE, exit tile (127,127)
-  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // W,  exit tile (0,64)
-  const tm = new Uint8Array(T * T);
-  paintRoadTiles(tm, net, 4, 4);
-  const nearRoad = (cx, cy, r = 3) => {
-    for (let y = cy - r; y <= cy + r; y++) {
-      for (let x = cx - r; x <= cx + r; x++) if (isRoad(tm, x, y)) return true;
+test('RZ2: the control point is placed by how sharply the road turns', () => {
+  // RR1 put it at the centre ALWAYS. That rounds a right angle
+  // correctly and scallops a gentle bend: a road drifting
+  // east-north-east had to dive to the middle of every pixel and back
+  // out to a corner, standing a mean 28 tiles and a peak 46 off its
+  // own line over five pixels.
+  const W = { x: 0, y: MID }, E = { x: T - 1, y: MID };
+  const N = { x: MID, y: T - 1 }, NE = { x: T - 1, y: T - 1 };
+
+  // opposite exits: the chord's midpoint, so a through road is STRAIGHT
+  const straight = throughControl(W, E);
+  // the chord's own midpoint - exits sit at 0 and 127, so that is
+  // 63.5, half a tile off MID and exactly where the straight line runs
+  assert.equal(straight.x, (W.x + E.x) / 2, 'a straight road stays on its chord');
+  assert.equal(straight.y, MID);
+
+  // perpendicular exits: the centre, so a real corner rounds as before
+  const corner = throughControl(W, N);
+  assert.equal(corner.x, MID, 'a right angle still bows to the centre');
+  assert.equal(corner.y, MID);
+
+  // 135 degrees: mostly the chord, a little of the centre
+  const gentle = throughControl(W, NE);
+  const chordMid = { x: (W.x + NE.x) / 2, y: (W.y + NE.y) / 2 };
+  const toChord = Math.hypot(gentle.x - chordMid.x, gentle.y - chordMid.y);
+  const toCentre = Math.hypot(gentle.x - MID, gentle.y - MID);
+  assert.ok(toChord < toCentre, 'a gentle bend sits nearer its chord than the centre');
+  assert.ok(toChord > 0, 'but is not perfectly straight - it still bends');
+});
+
+test('RZ2: a drifting road stays far nearer its own line than it did', () => {
+  // The behavioural half, stitched across five pixels the way the
+  // streamed world lays them - each painted independently, so this is
+  // the picture the player walks.
+  const chain = [[2, 5], [3, 5], [4, 4], [5, 4], [6, 3]];
+  const net = createNetwork(9, 9);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 9, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const PX = [2, 3, 4, 5, 6], PY = [3, 4, 5];
+  const BW = PX.length * T, BH = PY.length * T;
+  const big = new Uint8Array(BW * BH);
+  for (let j = 0; j < PY.length; j++) {
+    for (let i = 0; i < PX.length; i++) {
+      const tm = new Uint8Array(T * T);
+      paintRoadTiles(tm, net, PX[i], PY[j]);
+      for (let y = 0; y < T; y++) {
+        for (let x = 0; x < T; x++) big[(i * T + x) + ((j * T) + (T - 1 - y)) * BW] = tm[x + y * T];
+      }
     }
-    return false;
-  };
-  // centre control (64,64) puts the midpoint at (64, 80)
-  assert.ok(nearRoad(64, 80), 'the curve bows through the middle of the pixel');
-  // a control at (127,64) would put it out at (95, 80)
-  assert.equal(nearRoad(95, 80), false, 'not out toward the east edge');
+  }
+  const pts = [];
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) if (big[x + y * BW]) pts.push([x, y]);
+  assert.ok(pts.length > 0);
+  let a = pts[0], b = pts[0];
+  for (const p of pts) { if (p[0] < a[0]) a = p; if (p[0] > b[0]) b = p; }
+  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+  let max = 0;
+  for (const p of pts) {
+    const d = Math.abs(dy * p[0] - dx * p[1] + b[0] * a[1] - b[1] * a[0]) / len;
+    if (d > max) max = d;
+  }
+  // 45.9 with the centre control; the exit POINTS themselves set the
+  // floor, since a diagonal step must pass through a shared corner.
+  assert.ok(max < 40, `the drifting road stands ${max.toFixed(1)} tiles off its line`);
+  // and the road is still one connected thing across every seam
+  const road = (x, y) => x >= 0 && y >= 0 && x < BW && y < BH && big[x + y * BW] !== 0;
+  let cells = 0, orth = 0;
+  for (let y = 0; y < BH; y++) {
+    for (let x = 0; x < BW; x++) {
+      if (!road(x, y)) continue;
+      cells++;
+      if (road(x - 1, y) || road(x + 1, y) || road(x, y - 1) || road(x, y + 1)) orth++;
+    }
+  }
+  assert.equal(orth, cells, 'every tile of the stitched road has an orthogonal neighbour');
 });
 
 test('RR1: the MAP layer rounds its chains too - a right angle stops being one', () => {
@@ -591,4 +647,308 @@ test('RZ1: the tolerance sits just under one pixel, for a stated reason', () => 
   assert.ok(SIMPLIFY_EPSILON < 1, 'and keeps anything that bends by a whole pixel');
   // a chain too short to simplify comes back untouched
   assert.deepEqual(simplifyChain([{ x: 1, y: 1 }, { x: 2, y: 2 }]), [{ x: 1, y: 1 }, { x: 2, y: 2 }]);
+});
+
+
+// ── RZ3: the ROUTE was the zig-zag ───────────────────────────────
+/** Stitch a chain of map pixels the way the streamed world lays them -
+ *  each painted on its own, which is the only way a seam defect shows. */
+function stitchChain(chain, plane = 'trunkExits') {
+  const xs = [...new Set(chain.map((c) => c[0]))].sort((a, b) => a - b);
+  const ys = [...new Set(chain.map((c) => c[1]))].sort((a, b) => a - b);
+  const net = createNetwork(32, 32);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net[plane], 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const W = xs.length * T, H = ys.length * T;
+  const big = new Uint8Array(W * H);
+  for (let j = 0; j < ys.length; j++) {
+    for (let i = 0; i < xs.length; i++) {
+      const tm = new Uint8Array(T * T);
+      paintRoadTiles(tm, net, xs[i], ys[j]);
+      for (let y = 0; y < T; y++) {
+        for (let x = 0; x < T; x++) big[(i * T + x) + ((j * T) + (T - 1 - y)) * W] = tm[x + y * T];
+      }
+    }
+  }
+  return { big, W, H };
+}
+function deviation({ big, W, H }) {
+  const pts = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (big[x + y * W]) pts.push([x, y]);
+  let a = pts[0], b = pts[0];
+  for (const p of pts) { if (p[0] < a[0]) a = p; if (p[0] > b[0]) b = p; }
+  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
+  let max = 0;
+  for (const p of pts) {
+    const d = Math.abs(dy * p[0] - dx * p[1] + b[0] * a[1] - b[1] * a[0]) / len;
+    if (d > max) max = d;
+  }
+  const road = (x, y) => x >= 0 && y >= 0 && x < W && y < H && big[x + y * W] !== 0;
+  let cells = 0, orth = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!road(x, y)) continue;
+      cells++;
+      if (road(x - 1, y) || road(x + 1, y) || road(x, y - 1) || road(x, y + 1)) orth++;
+    }
+  }
+  return { max, connected: orth === cells };
+}
+
+test('RZ3: a road on a shallow gradient runs STRAIGHT, not flat-flat-step', () => {
+  // The measurement that found this: on a road climbing one pixel in
+  // three, the painted road sat dead flat across three whole pixels
+  // and then stepped 128 tiles at once - 63.4 tiles off its own line.
+  // The exits and the curve were faithfully drawing a staircase,
+  // because the ROUTE is a staircase at pixel resolution.
+  for (const [name, chain] of [
+    ['1 in 2', [[2, 10], [3, 10], [4, 9], [5, 9], [6, 8]]],
+    ['1 in 3', [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10], [7, 10], [8, 9]]],
+    ['1 in 4', [[2, 10], [3, 10], [4, 10], [5, 10], [6, 9], [7, 9], [8, 9], [9, 9]]],
+  ]) {
+    const r = deviation(stitchChain(chain));
+    assert.ok(r.max < 8, `a ${name} gradient stands ${r.max.toFixed(1)} tiles off its line`);
+    assert.equal(r.connected, true, `and the ${name} road is unbroken across every seam`);
+  }
+  // ...and the shapes that were already right have not moved
+  assert.ok(deviation(stitchChain([[2, 8], [3, 8], [4, 8], [5, 8], [6, 8]])).max < 4, 'straight');
+  assert.ok(deviation(stitchChain([[2, 10], [3, 9], [4, 8], [5, 7], [6, 6]])).max < 5, 'diagonal');
+});
+
+test('RZ3: a stair is dropped and a CORNER is kept - the turn tells them apart', () => {
+  // A one-pixel corner and a one-pixel stair are the SAME shape: both
+  // stand 0.707 off their chord, so no RDP tolerance can separate them
+  // - it either keeps both and the staircase survives, or drops both
+  // and a right-angle road is cut across. A first draft here did the
+  // latter: the corner pixel painted a sliver at its own corner
+  // instead of turning. The TURN separates them - a stair is 45
+  // degrees, a corner is 90 or more.
+  const stair = simplifyKeepingCorners([{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 3, y: 1 }]);
+  assert.ok(stair.length < 4, 'the stair steps are gone');
+
+  const corner = simplifyKeepingCorners([{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 1 }]);
+  assert.equal(corner.length, 3, 'a one-pixel right angle survives intact');
+  assert.deepEqual(corner[1], { x: 1.5, y: 2.5 }, 'and it is the corner pixel itself that is kept');
+
+  // a chain too short to simplify comes back as its own centres
+  assert.deepEqual(simplifyKeepingCorners([{ x: 0, y: 0 }, { x: 1, y: 0 }]),
+    [{ x: 0.5, y: 0.5 }, { x: 1.5, y: 0.5 }]);
+});
+
+test('RZ3: both neighbours draw the SAME road on their shared seam', () => {
+  // Symmetry is the whole difficulty: the two pixels are painted
+  // independently and possibly never together, so they must place the
+  // road identically or it tears. They trace the WHOLE chain, junction
+  // to junction, from the same exit planes - the curve belongs to the
+  // CHAIN, not to whoever is looking at it.
+  const chain = [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10]];
+  const net = createNetwork(32, 32);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  // pixels (3,11) and (4,11) share a vertical seam
+  const left = new Uint8Array(T * T), right = new Uint8Array(T * T);
+  paintRoadTiles(left, net, 3, 11);
+  paintRoadTiles(right, net, 4, 11);
+  const leftEdge = [], rightEdge = [];
+  for (let y = 0; y < T; y++) {
+    if (left[(T - 1) + y * T]) leftEdge.push(y);
+    if (right[0 + y * T]) rightEdge.push(y);
+  }
+  assert.ok(leftEdge.length > 0 && rightEdge.length > 0, 'both pixels reach the seam');
+  // they must OVERLAP, or the road tears at the boundary
+  assert.ok(leftEdge.some((y) => rightEdge.includes(y)),
+    `the seam tears: left rows ${leftEdge} vs right rows ${rightEdge}`);
+});
+
+test('RZ3: the chain cache does not touch the network the bake serializes', () => {
+  // The artifact is serialized to the cache; a derived field grafted
+  // onto it would ride along or break the envelope. A WeakMap keeps
+  // the index off the object entirely.
+  const src_ = src('src/world/roadTiles.js');
+  assert.match(src_, /const CHAIN_CACHE = new WeakMap\(\);/);
+  assert.equal(/network\.__chains/.test(src_), false, 'nothing is written onto the network');
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 2, 2, 3, 2);
+  paintRoadTiles(new Uint8Array(T * T), net, 2, 2);
+  assert.deepEqual(Object.keys(net).filter((k) => k.startsWith('_')), [], 'the network grew no fields');
+});
+
+
+// ── RC3: the trunk forest ────────────────────────────────────────
+/** A map whose hubs CLUMP, the way Daggerfall's towns clump by
+ *  province - which is the shape that splits the skeleton. */
+function clumpedMap(clusters, { wallAt = null, hubsPer = 6, W = 120, H = 80 } = {}) {
+  const hb = new Uint8Array(W * H).fill(40);
+  const locs = [];
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (const [cx, cy] of clusters) {
+    for (let i = 0; i < hubsPer; i++) {
+      locs.push({ x: Math.round(cx + (rnd() - 0.5) * 14), y: Math.round(cy + (rnd() - 0.5) * 14), locationType: 0 });
+    }
+  }
+  const field = buildCostField({ heightBytes: hb, climateAt: () => 2, width: W, height: H, isWater: () => false });
+  if (wallAt !== null) {
+    for (let y = 0; y < H; y++) for (let x = wallAt; x <= wallAt + 4; x++) field.cost[y * W + x] = Infinity;
+  }
+  const built = buildRoadNetwork({ field, locations: locs, heightBytes: hb });
+  // the caller needs the hubs to walk the road between them
+  return { ...built, locations: locs, hubs: locs.filter((l) => l.locationType === 0) };
+}
+
+test('RC3: a clumped map used to build three road systems that never met', () => {
+  // The candidate graph is the k nearest hubs and is not guaranteed
+  // connected, so stage 3 produced a spanning FOREST. Worse, every
+  // statistic reported contentment: no hub STRANDED, because each sits
+  // in a cluster of its own kind, and no spur ORPHANED, because each
+  // finds its own cluster's road. Three road systems, no complaint.
+  const r = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  assert.equal(r.stats.forestBefore, 3, 'the forest is real, and this is the shape that makes it');
+  assert.equal(r.stats.bridgesLaid, 2, 'joining N components takes N-1 bridges');
+  assert.equal(r.stats.trunkComponents, 1, 'and what comes out is ONE network');
+  // the old signals that stayed silent through all of it
+  assert.equal(r.stats.strandedHubs, 0);
+  assert.equal(r.stats.orphans, 0);
+});
+
+test('RC3: an ISLAND is reported, not looped on', () => {
+  // Two clusters either side of an impassable wall cannot be joined by
+  // any road. The loop must stop, say so, and not retry the same
+  // refusing pair for ever.
+  const r = clumpedMap([[20, 20], [95, 40]], { wallAt: 58 });
+  assert.equal(r.stats.forestBefore, 2);
+  assert.equal(r.stats.bridgesLaid, 0, 'no bridge is forced across water');
+  assert.equal(r.stats.trunkComponents, 2, 'the two islands are reported as they are');
+});
+
+test('RC3: a map that was already one network is not touched', () => {
+  const r = clumpedMap([[40, 40]], { hubsPer: 10 });
+  assert.equal(r.stats.forestBefore, 1, 'one cluster, one component');
+  assert.equal(r.stats.bridgesLaid, 0, 'so nothing to bridge');
+  assert.equal(r.stats.trunkComponents, 1);
+});
+
+/** Walk the road itself, on the GROUND, from one hub - the exit planes
+ *  are the road, so this asks whether a cart could actually get there.
+ *  union-find agreeing is not the same claim. */
+function hubsReachableOnTheRoad(network, hubs) {
+  const { width, height, trunkExits, trackExits } = network;
+  const seen = new Uint8Array(width * height);
+  const start = hubs[0];
+  const stack = [[start.x, start.y]];
+  seen[start.y * width + start.x] = 1;
+  const STEPS = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+  while (stack.length) {
+    const [x, y] = stack.pop();
+    const bits = trunkExits[y * width + x] | trackExits[y * width + x];
+    for (let d = 0; d < 8; d++) {
+      if (!(bits & (1 << d))) continue;
+      const nx = x + STEPS[d][0], ny = y + STEPS[d][1];
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      if (seen[ny * width + nx]) continue;
+      seen[ny * width + nx] = 1;
+      stack.push([nx, ny]);
+    }
+  }
+  return hubs.filter((h) => seen[h.y * width + h.x]).length;
+}
+
+test('RC3: the join lays ROAD, not just a union-find merge', () => {
+  // The exact lie RC1 caught one stage earlier, repeated here: a union
+  // without a layPath leaves the bookkeeping claiming two components
+  // joined with nothing on the ground between them. Every count agrees
+  // - one component, two bridges - and no cart can make the journey.
+  // So walk the EXIT PLANES from one hub and count how many others are
+  // actually reachable along road.
+  const r = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  assert.equal(r.stats.trunkComponents, 1, 'the bookkeeping says one network');
+  assert.equal(hubsReachableOnTheRoad(r.network, r.hubs), r.hubs.length,
+    'and every hub is reachable along the road ITSELF, not merely in the union-find');
+});
+
+test('RC3: the join is deterministic - the same map bakes the same roads', () => {
+  const a = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  const b = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  assert.deepEqual(a.stats, b.stats, 'same statistics');
+  assert.deepEqual([...a.network.trunkExits], [...b.network.trunkExits], 'and the same trunk plane, byte for byte');
+
+  // The FIRST tied pair wins, not the last. Read from the source
+  // because it is unobservable: `<` and `<=` are BOTH deterministic,
+  // so no reproducibility pin can separate them, and they differ only
+  // when two cross-component pairs are EXACTLY equidistant - which
+  // real hub coordinates essentially never are, and which cannot be
+  // staged here either, since a fixture tight enough to tie is also
+  // tight enough for the k=5 candidate graph to have joined the two
+  // clusters already. Recorded rather than contorted around: the day
+  // the scan order changes, this line is what says which pair the bake
+  // was supposed to pick.
+  assert.match(src('src/systems/roads.js'), /if \(d < bestD\) \{ bestD = d; best = \{ i, j, key \}; \}/);
+});
+
+
+// ── RZ4/RZ5: the seam a LOCATION sits on ─────────────────────────
+/** A stamped town footprint, as setLocationTiles leaves one. */
+const stampFootprint = () => {
+  const tm = new Uint8Array(T * T);
+  for (let y = 40; y <= 88; y++) for (let x = 40; x <= 88; x++) tm[x + y * T] = 0xff;
+  return tm;
+};
+
+test('RZ4: a road on a GRADIENT does not tear where it reaches a town', () => {
+  // RZ3 gave open country the smoothed chain and left a location's
+  // pixel on the exit rule, so the two disagreed about where a road
+  // crosses a seam. On a 1-in-3 gradient the open neighbour left at
+  // tile rows 126-127 and the town took the road in at 63-65 - sixty
+  // two tiles of nothing, at every town the road reached.
+  const chain = [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10], [7, 10], [8, 9]];
+  const net = createNetwork(32, 32);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const town = stampFootprint();
+  paintRoadTiles(town, net, 4, 11);
+  const open = new Uint8Array(T * T);
+  paintRoadTiles(open, net, 3, 11);
+
+  const rows = (tm, col) => {
+    const out = [];
+    for (let y = 0; y < T; y++) { const v = tm[col + y * T]; if (v && v !== 0xff) out.push(y); }
+    return out;
+  };
+  const left = rows(open, T - 1), right = rows(town, 0);
+  assert.ok(left.length && right.length, 'both pixels put road on the seam');
+  assert.ok(left.some((y) => right.includes(y)),
+    `the road tears at the town: neighbour rows ${left} vs town rows ${right}`);
+});
+
+test('RZ5: out of bounds is not the same as CLAIMED', () => {
+  // The chain pass begins OUTSIDE its pixel and only its width reaches
+  // in, so a stop mask that counts out-of-bounds as claimed halts the
+  // run before it paints anything - which is precisely how the tear
+  // above survived a first fix. A run that starts at the pixel's own
+  // edge still stops when it leaves.
+  const s_ = src('src/world/roadTiles.js');
+  assert.match(s_, /function isClaimed\(mask, x, y, outOfBoundsStops = true\)/);
+  assert.match(s_, /return outOfBoundsStops;/, 'the caller decides what leaving the tilemap means');
+  assert.match(s_, /densifyChain\(c\.points, px, py\), half, rec, claimed, false\)/,
+    'the chain pass says leaving is not stopping');
+});
+
+test('RZ5: and the town keeps its ground, holes included', () => {
+  // The mask still stops the run at the town's own stamped ground -
+  // dropping it entirely was the other way this went wrong, and it
+  // filled the unstamped HOLES inside the footprint with road.
+  const chain = [[2, 4], [3, 4], [4, 4]];
+  const net = createNetwork(9, 9);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 9, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const town = stampFootprint();
+  town[MID + MID * T] = 0;   // a hole at the town's centre, on the road's line
+  paintRoadTiles(town, net, 3, 4);
+  assert.equal(town[MID + MID * T], 0, 'the hole inside the footprint is still unpainted');
+  // ...and every stamped cell is untouched
+  assert.equal(town[(MID + 8) + (MID + 8) * T], 0xff, 'the 1:1 tile law holds');
 });

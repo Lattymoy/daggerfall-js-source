@@ -1170,3 +1170,61 @@ Pins: 5 in `test/questorpool.test.js` (the walk on fixture blocks,
 the SetLayoutData law per person, an end-to-end walk-to-pool mint
 keyed by the walk's own seed, the two mounts). Campaign: 8 mutants,
 8 killed.
+
+## CQ1 - THE REGION'S NOBLE COURT (2026-08-29)
+
+`PlayerGPS.GetCourtOfCurrentRegion` (PlayerGPS.cs:469-483) finds the
+one Courts faction whose guild group is Region and whose region is the
+player's, and throws if it does not find exactly one - DFU's own
+comment is "Should always find a single court".
+
+The port hardcoded `courtOfCurrentRegion: () => 0` in world.js, and
+**that is worse than absent: 0 is a real faction id.** A palace
+interior and the three generic `Random_*` factions that `npcSession`
+routes through this getter resolved to whatever faction 0 happens to
+be - silently, and plausibly - rather than to nothing.
+
+The lookup needed no new machinery. `findFactions` is already
+`PersistentFactionData.FindFactions` verbatim, and
+`getPeopleOfCurrentRegion` two functions up is the same shape. What
+CQ1 adds is the Courts query and the honest refusal.
+
+**The social-group column is deliberately unconstrained.** The People
+lookup pins Commoners; DFU's court call passes `-1` there
+(`FindFactions(Courts, -1, Region, index)`). "Make it match its
+sibling" is the plausible wrong tidy-up and would drop every court
+whose social group is anything else - the campaign's fourth mutant,
+and the reason it is pinned rather than left to read as an oversight.
+
+Refusal follows the sibling's split: `talk.js` answers null where DFU
+throws, and `world.js` turns that into the bridge's own no-faction 0.
+A host that cannot name a court shows no court rather than taking down
+the frame.
+
+Pins: 5 in `test/regioncourt.test.js`, one of them ARENA2-gated and
+therefore half-blind by the known charter - it asserts on the shipped
+corpus that every region really does resolve exactly one court, which
+is what makes DFU's throw unreachable, and that a region's court is
+never its People faction. Campaign: 6 mutants, 6 killed.
+
+### CQ1b: the same claim had a second home, again (2026-08-29)
+
+CQ1 shipped with the bug it was about. It replaced the hardcoded
+`courtOfCurrentRegion: () => 0` and left a five-line comment **four
+lines above it** still reading *"PlayerGPS.GetCourtOfCurrentRegion is
+FLAGGED: the port has no Court-of lookup yet, so a faction id of 0
+inside a palace... still resolve to nothing"* - sitting directly above
+the correction that says the opposite.
+
+This is the second time in one session. EF1b was the same shape - the
+effect library's module header outlived the counter's flag by four
+lines - and EF1c wrote the lesson down in as many words: **A CLAIM
+USUALLY HAS MORE THAN ONE HOME. Grep the claim, not the line.**
+
+Writing it down did not stop the repeat, which is the same finding
+CG2's campaign made about the vacuous-pin lesson one slice earlier. The
+answer is not another note. Every slice that retires a sentence now
+carries a per-slice pin that the sentence has no second home, EF1c's
+unquote rule included so a correction may still quote what it retired,
+and CQ1's is mutation-checked by restoring the stale block and watching
+it fail. Open flags 168 -> 167.

@@ -7739,6 +7739,35 @@ dropped. The probe surface is untouched: it reads the classic window's
 own fields and runs on the classic skin, where the door hands back
 exactly that window.
 
+PX23b (Mac: "revisit the spell UI and give it the same love"): THE
+SAME TWO FAULTS, FOUND AGAIN. The chronicle's lesson applied one
+window over, and both halves of it were here too.
+
+IT READ THE NAMES AND THREW AWAY THE NUMBERS. `spellEffects` hands
+back the effect RECORDS, and every one carries `magnitudeBaseLow/High`
+with its per-level step, `durationBase/Mod`, and `chanceBase/Mod` -
+the exact fields systems/effects.js:446-454 reads to resolve a live
+effect. The first draft printed the two names and dropped the rest,
+which is the chronicle's flattened date wearing a different hat. Each
+part now appears only when the effect HAS it, because "0 to 0" is
+worse than nothing.
+
+AND IT COULD DO LESS THAN THE CLASSIC. The classic asks "Enter spell
+name : " (:934) and the first draft had no rename. It has one now,
+with the edit surviving a re-render and a new pick abandoning it.
+
+TWO THINGS IT NOW SAYS THAT THE CLASSIC DOES NOT. The target and
+element are icons in the classic and their meaning appears only on
+HOVER (:384/:388); this window draws no icons - it reads no ARENA2 -
+so it prints TARGET_DESCRIPTIONS and ELEMENT_DESCRIPTIONS as words,
+imported not retyped, and an index off the end prints no chip rather
+than a blank one. And the cost line says NOT ENOUGH MAGICKA in the
+urgent gold when the spell is past the player's pool, which is the
+question a book is opened with and which the classic answers only by
+failing at the cast.
+
+Pins: 3 more (6). 5 more mutations, 5 dead.
+
 Verified live: the book opens through the door on the enhanced skin,
 Ready calls the engine with the free flag and closes the window, and
 Delete on a vampire spell answers "Cannot delete special vampire
@@ -7812,7 +7841,73 @@ comes back headless and the window says "continued" rather than
 inventing a date. The entries are cards now, each with its date in
 brass above its words.
 
-Pins: 6 in test/enhancedChronicle.test.js. 9 mutations, 9 dead.
+PX24c (Mac: "do it" - the same look for messages and history). Two
+faults, one of them mine from the pass before.
+
+PX24b PRINTED A LIE ON EVERY MESSAGE. `addMessage` builds a CENTRE
+token and the words (notebook.js:123) and never a highlight, so a
+message has no dated head - ever. The "- continued -" fallback,
+correct for a NOTE whose page split, ran on all fifty messages
+instead. It is the note's alone now; a message gets the only true
+thing there is to say, which of them is newest, and a headless card
+collapses its head row rather than printing an empty one.
+
+THE RING WAS CHECKED, NOT ASSUMED. It looked like a defect - a
+fifty-slot ring written in place must be unwrapped before "newest
+first" means anything - and `getMessages` already does it, walking
+from nextMessageIndex round to it (:114-118). So the window's reverse
+is right BECAUSE of that rather than by luck, and the pin now says so,
+which is worth more than the fix I did not need to make.
+
+THE HISTORY SAYS WHO IT IS ABOUT. The entity carries race, career and
+level - the same three the pause window's Stats page reads - and a
+life story with nobody's name on it is a page of prose. Each part only
+if it is there.
+
+AND THE THIRD SCOPING FAULT. `.sb-frame` and `.sb-chip` were scoped to
+the spellbook alone, so the identity line rendered as bare running
+text - after PX23's invented divider and PX24's stacked head, the same
+mistake three slices running. The family's shared parts share their
+selector now, and one pin holds all four together (head, chip row,
+chip, rail count) so there is no fourth.
+
+Pins: 8 in test/enhancedChronicle.test.js. 12 mutations, 12 dead.
+
+PX25 (Mac: "retire the ones you mentioned"; then "your lead"): THE
+SHEET'S DOORS, FIRST. The F5 overlay and the pause window's Stats page
+are the SAME character sheet - the same four sections read from the
+same `sheetModel`, which enhancedMenu imports out of
+enhancedCharSheet.js - and only one of them had a way out. The
+classic sheet has four buttons down its side and the overlay copied
+them; the Stats page had none, because the pause window takes four
+hooks and none of them opened a window.
+
+So the retirement starts by making the overlay REDUNDANT rather than
+merely replaced. Retiring it first would have shipped a window that
+can do less, which is the trap this arc has now been caught in twice
+(PX24's read-only chronicle, PX23's missing rename), and the third
+time it would have been on purpose.
+
+Each host hands the pause window the arms IT ALREADY HAD -
+toggleInventory, toggleSpellbook, toggleLogbook exist on every host
+and nothing new is built here. A door draws only when its hook is a
+function, so the exterior host, which has no journal maker, passes two
+and its Chronicle button never draws: the filter is the point, not a
+gap in it. And the window RESUMES before it opens, because two
+overlays at once is the stacking bug U55 found the other way round on
+this same seam.
+
+A CORRECTION TO THE SURVEY that preceded this. I told Mac the
+retirement was three jobs and that chargen's rail was "the small one,
+purely cosmetic". It is not: the wizard is a MODIFIER on the boot
+shell - `.wizard .railbtn`, `.wizard .pane`, and the style block says
+outright that "character creation borrows the menu's shell whole". So
+the boot Settings screen and the ten-stage wizard convert together or
+not at all, and the retirement is two jobs, not three.
+
+Pins: 2 in enhancedPause.test.js. 4 mutations, 4 dead. Verified live:
+with two hooks handed over, exactly two doors draw and pressing one
+fires that host's arm.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the

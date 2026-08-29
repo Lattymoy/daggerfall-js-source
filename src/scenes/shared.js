@@ -604,7 +604,22 @@ export function applyNightStars(bmp, random) {
  *  host routes damage through hurtPlayer (which mints the death
  *  screen) while the exterior hosts assign health directly - that
  *  difference is preserved, not unified. */
-export function applyFallLanding(entity, distance, { hurt = null, sound = null } = {}) {
+export function applyFallLanding(entity, distance, { hurt = null, sound = null, inOutdoorWater = false } = {}) {
+  // FD1 - CheckFallingDamage's FIRST statement after clearing `falling`
+  // (AcrobatMotor.cs:212-214): "don't take damage if landing in outdoor
+  // water", `if (StreamingWorld.PlayerTileMapIndex == 0) return;`.
+  //
+  // It returns BEFORE fallDistance is computed, so the exemption
+  // suppresses the BadFallDetected half too - a water landing costs
+  // neither HP nor the hard-fall grunt. Putting the test after the
+  // distance, or inside only the damage arm, would leave the player
+  // splashing into a lake and still hearing the ground-impact sound,
+  // which is the kind of half-port that reads as done.
+  //
+  // Hosts pass this from isOutdoorWaterTile(the tile under the
+  // player); it defaults FALSE, which is DFU's own answer for the
+  // -1 the streaming world reports off terrain (indoors, dungeons).
+  if (inOutdoorWater) return;
   if (distance > FALL_DAMAGE_THRESHOLD) {
     const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
@@ -714,12 +729,20 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  * This is the per-host carrier: it owns the minute accumulator and the
  * sink set, so a host adds the whole tick with one call.
  */
-/** AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: skills raise
- *  when the rest-finished popup CLOSES, and only there (PlayerEntity.
- *  Update runs no advancement; DaggerfallTravelPopUp.cs:380 is the
- *  other site, unported). Hosts hand this to their RestWindow deps as
- *  onRestFinished. */
-export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
+/** PlayerEntity.RaiseSkills(), the port's one home for it.
+ *
+ *  AUDIT 23 (entity-1) established that PlayerEntity.Update runs NO
+ *  advancement - DFU calls RaiseSkills from exactly two places, and
+ *  they are both a window closing: DaggerfallRestWindow.cs:729-732
+ *  when the rest-finished popup closes, and DaggerfallTravelPopUp.cs
+ *  :380 when a fast-travel arrival tears its windows down.
+ *
+ *  TP1 renamed this from `raiseAtRestEnd`. That name was true while
+ *  rest was the only caller and became a small lie the moment travel
+ *  used it - and a name that misleads the next reader is the same
+ *  defect as a stale comment, which this run has now found four of.
+ *  It is DFU's member name instead. */
+export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
   const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
   for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
   return raised;
@@ -757,7 +780,13 @@ export const plainLines = (rows) => (rows?.length
  * first-hour probe caught as a TypeError at draw time and no unit
  * test in either lane could have.
  */
-export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {
+export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null,
+  // CG2: PlayerEnterExit.IsPlayerInside, for the crime-guild letter's
+  // outside-only gate. Defaults to "inside" - the REFUSING answer -
+  // because a host that has not said where the player stands must not
+  // deliver a letter it cannot place, and the dungeon host is inside
+  // by construction anyway.
+  isInside = () => true } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
   // world, exterior, worldModes - each counted from zero and only while
@@ -810,7 +839,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
       const r = tickPlayerMinutes({
         entity, classicMinutes: worldMinutes(), dt, sinks, activity,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
-        say,
+        say, inside: isInside(),
       });
       setWorldMinutes(r.classicMinutes);
       // PlayerEntity.Update:380-384's 8-hour alert decay used to be
@@ -1282,7 +1311,7 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
-    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
+    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
     dead: () => entity.health <= 0,
