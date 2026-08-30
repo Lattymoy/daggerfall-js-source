@@ -430,6 +430,26 @@ export const weaponShortGroup = (type) => WEAPON_SHORT_GROUP[type] ?? '';
 export const weaponLongGroup = (type) => WEAPON_LONG_GROUP[type] ?? '';
 
 /**
+ * MWMechanics::getAllWeaponTypeShortGroups (weapontype.cpp:422-434):
+ * every type First(-4) through Last(13), non-empty short groups only,
+ * deduplicated "via a set" - std::set, which also SORTS them. The order
+ * is not load-bearing for the one consumer (isLoopingAnimation scans
+ * for the LONGEST suffix wherever it sits), but the pin asserts it so a
+ * second consumer inherits the reference's answer, not this table's
+ * iteration order. Arrow and Bolt sit inside [First, Last] with an
+ * empty short group and are dropped by the non-empty test, which is why
+ * eleven come out of eighteen.
+ */
+export function allWeaponShortGroups() {
+  const set = new Set();
+  for (let type = MW_WEAPON_TYPE.PickProbe; type <= MW_WEAPON_TYPE.Bolt; type++) {
+    const shortGroup = weaponShortGroup(type);
+    if (shortGroup) set.add(shortGroup);
+  }
+  return [...set].sort();
+}
+
+/**
  * THE OTHER TWO COLUMNS OF THE SAME TABLE (weapontype.cpp), which decide
  * every fallback below and which the port had been guessing at with a
  * hand-written list of "two-handed" types.

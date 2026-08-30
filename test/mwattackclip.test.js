@@ -10,6 +10,7 @@ import {
   isRealWeapon, isTwoHandedMelee, composeStanceGroup, composeWeaponGroup,
   weaponShortGroup, weaponLongGroup, mwAttackType, attackKeys, calculateWindUp,
   releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, DF_STRIKE_TO_MW_ATTACK,
+  allWeaponShortGroups,
 } from '../src/formats/mwFirstPerson.js';
 import { getTextKeyTime, getStartTime, resetClip, advanceClip } from '../src/formats/mwAnim.js';
 
@@ -180,6 +181,17 @@ test('MW-D12 rule 8: the animation weapon type is the STANCE, not the item', () 
   // And that is what makes the sheathed stance the BARE idle: type None
   // has no short group at all.
   assert.equal(weaponShortGroup(MW_WEAPON_TYPE.None), '');
+});
+
+test('MW-D17 rule 8: getAllWeaponTypeShortGroups is the ELEVEN, deduplicated and sorted', () => {
+  // weapontype.cpp:422-434 - every type First(-4)..Last(13), non-empty
+  // short groups "via a set to eliminate duplicates", and std::set also
+  // SORTS. The literal is typed from the reference's per-type values:
+  // dropping the dedupe doubles 1h/1b/2b/2w, dropping the non-empty
+  // test admits None/Arrow/Bolt's '', and starting the walk at 0 loses
+  // the four pseudo-types' 1h/spell/hh.
+  assert.deepEqual(allWeaponShortGroups(),
+    ['1b', '1h', '1s', '1t', '2b', '2c', '2w', 'bow', 'crossbow', 'hh', 'spell']);
 });
 
 // --- rule 10: the idle loop count -------------------------------------------

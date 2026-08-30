@@ -271,6 +271,43 @@ and the arm had been taking a `bow` flag from weaponRig's machine, which
 is a second source of truth for a question the data answers and one that
 would have missed a thrown weapon.
 
+MW-D17 RETIRED THE SECOND HOME FOR CLIP TIME. MW-D7's booking - "MW-D8's
+first task: replace it with advanceClip or delete it" - stood through
+nine slices. The viewer's own player was start plus elapsed-modulo-span:
+it looped EVERY group forever, replayed the clip's INTRO on each wrap,
+looked the group up with a case-SENSITIVE `groups.get` that bypassed
+findAnimGroup's own MWAUDIT fix, and recomputed the accum root every
+frame. The playhead is resetClip/advanceClip now - the one home
+mw-inspect and fpArm already ride - the case fold comes from the law
+itself, and rule 56's pick is made once per track set.
+
+THE PIECE THAT WAS MISSING WAS RULE 51's SECOND HALF. A viewer playing
+whatever group the user picked IS the scripted PlayGroup path
+(character.cpp:2631), and that path's loopFallback producer is
+Animation::isLoopingAnimation (animation.cpp:792-826), which had no JS
+home: a real "loop start" key anywhere loops - the guard is `>= 0`, so
+a key at time ZERO counts - else strip the LONGEST weapon short group
+that is a SUFFIX of the name ("so e.g. 'bow' doesn't get picked over
+'crossbow'" - the reference's own comment; and a suffix, so
+`spellturnleft`, which CONTAINS `spell`, is not stripped), and test what
+remains against the hardcoded forty-four-name set, verbatim. Its
+companion getAllWeaponTypeShortGroups (weapontype.cpp:422-434) walks
+every type First(-4)..Last(13) and dedupes "via a set" - ELEVEN come out
+of eighteen, rule 8's own count arriving from a second direction. The
+player-BODY paths hardcode their loopFallback (rule 51's recorded
+caveat) and fpArm keeps doing so, untouched: isLoopingAnimation lives in
+mwAnim.js for the paths that genuinely consult it.
+
+WHAT THE LAW CHANGES ON THE SCREEN: the fixture's "move" plays once and
+freezes on its stop key where it used to loop forever, and "idle" - in
+the set - still loops with no loop keys at all. Both are probe layers
+now, discovered by CROSSING rather than sleeps. parseAnimGroups stays
+what MW-D7 made it, the LISTING the dropdown shows, keyed by the name
+the file wrote; a group the listing names and the law refuses (F3's
+backwards Idle) now prints the refusal on the status line instead of
+freezing on a plausible pose. 13 mutants, 13 dead - one of them the pin
+that separates `>= 0` from `> 0`, a loop-start key at time zero.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
@@ -452,13 +489,9 @@ MEASURED FINDINGS FROM MW-D7:
       only drops nulls). `mwViewer`'s `span = max(stop - start, 1e-6)`
       would freeze on it. The page now shows both answers side by side.
 
-BOOKED, NOT DONE - each named here so it is not inherited silently:
+BOOKED, NOT DONE - each named here so it is not inherited silently
+(the mwViewer clip-time booking that led this list closed at MW-D17):
 
-  * `mwViewer.js:342-348` is now a SECOND HOME for clip time, and the
-    worse one: `% span` with no loop window, a case-SENSITIVE
-    `groups.get` that bypasses findAnimGroup's own MWAUDIT fix, and
-    `accumRootRef` recomputed every frame. MW-D8's first task: replace
-    it with advanceClip or delete it.
   * `parseAnimGroups` diverges from rules 21/22/44/45 in four ways
     (splits on `\r\n` as a pair, accepts `Group:Marker`, compares the
     stop marker exactly, takes file order rather than rule 22's reverse
@@ -685,13 +718,18 @@ the sign of +x - with a probe layer that reads the framebuffer at a clip
 time where the arms are UNCROSSED, since at the clip's start they swing
 across each other and either answer looks right.
 
-NEXT, IN ORDER: (1) the texture - rules 36 and 61, which needs a dynamic
-vertex door on the textured program and a DDS upload, and is now the
-single biggest visible gap; (2) attack clips - rules 10 and 11, whose
-keys are namespaced by the LONG group; (3) rule 54's camera bone, now
-that the build reports whether the data has one, which retires the port
-mapper. Also booked from MW-D7 and NOT done: mwViewer.js:342-348 is
-still a second home for clip time.
+NEXT, IN ORDER (recounted at MW-D17 - the list that stood here was
+MW-D9's and every item on it shipped: the texture at MW-D11, the attack
+clips at MW-D12, the camera bone at MW-D10, and the viewer's second
+clip-time home at MW-D17): (1) `parseAnimGroups`' four recorded
+divergences from rules 21/22/44/45 - its own audit slice, still
+deliberately unmixed because three MWAUDIT pins assert its present
+behaviour; (2) `KEY_TYPE.constant` is sampled by holding the previous
+key where the reference flips at the segment midpoint with a strict `>`
+(and rotation keys of that type take the flip too, never slerp); (3)
+`track.frequency`/`phase` are read from every controller and used
+nowhere - whether the ControllerFunction time map is reachable from
+first-person data is itself unread ground.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

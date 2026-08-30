@@ -16,6 +16,7 @@
 //   - XYZ: three float tracks composed as rotations about X, Y, Z
 
 import { deref, KEY_TYPE } from './mwNifFile.js';
+import { allWeaponShortGroups } from './mwFirstPerson.js';
 
 // --- text keys and groups --------------------------------------------------
 
@@ -413,6 +414,60 @@ export function getTextKeyTime(keys, textKey) {
   const want = String(textKey ?? '');
   for (const k of keys ?? []) if (k.text.startsWith(want)) return k.time;
   return -1;
+}
+
+/**
+ * ANIMATION::ISLOOPINGANIMATION (animation.cpp:792-826), RULE 51's
+ * second data fact - the hardcoded set, verbatim, all forty-four names.
+ * The reference's own comment: "In Morrowind, a some animation groups
+ * are always considered looping, regardless of loop start/stop keys."
+ *
+ * WHO CONSULTS IT is rule 51's recorded caveat and it matters here: the
+ * player BODY's movement/idle/weapon paths hardcode their loopFallback
+ * (fpArm does the same - character.cpp:757 et al.), and this function
+ * is the SCRIPTED path's producer - playGroup (character.cpp:2631),
+ * unpersistAnimationState (:2589), playGroupLua (:2708). A viewer page
+ * playing whatever group the user picked IS that path, which is why the
+ * mesh viewer rides this and fpArm does not.
+ */
+export const LOOPING_ANIMATIONS = Object.freeze([
+  'walkforward', 'walkback', 'walkleft', 'walkright',
+  'swimwalkforward', 'swimwalkback', 'swimwalkleft', 'swimwalkright',
+  'runforward', 'runback', 'runleft', 'runright',
+  'swimrunforward', 'swimrunback', 'swimrunleft', 'swimrunright',
+  'sneakforward', 'sneakback', 'sneakleft', 'sneakright',
+  'turnleft', 'turnright', 'swimturnleft', 'swimturnright',
+  'spellturnleft', 'spellturnright', 'torch',
+  'idle', 'idle2', 'idle3', 'idle4', 'idle5', 'idle6', 'idle7',
+  'idle8', 'idle9', 'idlesneak', 'idlestorm', 'idleswim', 'jump',
+  'inventoryhandtohand', 'inventoryweapononehand', 'inventoryweapontwohand',
+  'inventoryweapontwowide',
+]);
+const LOOPING_SET = new Set(LOOPING_ANIMATIONS);
+
+/**
+ * Three steps, in the reference's order:
+ *  1. a real "<group>: loop start" key anywhere loops, full stop - and
+ *     the test is getTextKeyTime's PREFIX match, not an exact key.
+ *  2. strip the LONGEST weapon short group that is a SUFFIX of the
+ *     group ("so e.g. 'bow' doesn't get picked over 'crossbow' when the
+ *     shortgroup is crossbow" - the reference's own comment), because
+ *     most looping groups have a variant per short group; nothing
+ *     stripped when none matches.
+ *  3. membership of what remains in the hardcoded set.
+ *
+ * The group is asciiLower-ed at the door - the reference's callers hand
+ * it already-normalised names, and this port folds once at each entry
+ * point (resetClip's own convention) instead of trusting every caller.
+ */
+export function isLoopingAnimation(keys, group) {
+  const g = asciiLower(String(group ?? ''));
+  if (getTextKeyTime(keys, `${g}: loop start`) >= 0) return true;
+  let suffixLength = 0;
+  for (const suffix of allWeaponShortGroups()) {
+    if (suffix.length > suffixLength && g.endsWith(suffix)) suffixLength = suffix.length;
+  }
+  return LOOPING_SET.has(suffixLength ? g.slice(0, g.length - suffixLength) : g);
 }
 
 /** getStartTime (animation.cpp:827-840) with findGroupStart's predicate
