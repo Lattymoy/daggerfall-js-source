@@ -21,8 +21,7 @@
 import { MwBsaFile, normalizeBsaPath } from '../formats/mwBsaFile.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
-import { decodeDds } from '../formats/mwDdsFile.js';
-import { correctTexturePath } from '../formats/mwTexture.js';
+import { correctTexturePath, decodeTextureImage } from '../formats/mwTexture.js';
 import {
   collectTextKeys,
   parseAnimGroups,
@@ -539,7 +538,7 @@ function resolveTexture(fileName, clampMode) {
   const bytes = textureBytes(name);
   if (bytes) {
     try {
-      const img = decodeDds(bytes);
+      const img = decodeTextureImage(name, bytes);   // MW-D34: by extension (imagemanager.cpp:104-118)
       const mip = img.mips[0];
       tex = new THREE.DataTexture(mip.rgba, mip.width, mip.height, THREE.RGBAFormat);
       // DDS rows are top-down and NIF UVs put v=0 at the top - with

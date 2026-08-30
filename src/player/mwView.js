@@ -33,11 +33,16 @@ let pendingClicks = 0;
  *
  * @returns {{eye:number[], thirdPerson:boolean, distance:number}}
  */
-export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null }) {
+export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null }) {
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
     pendingClicks = 0;
   }
+  // MW-D34: the focal height rides the actor's race HEIGHT (adjustScale's
+  // z, npc.cpp:1127/1134 - the camera tracks a node on the SCALED body).
+  // Answered here, once, by the rig itself - the hosts stay out of it
+  // (MW-D25's law); a caller may still hand an explicit value.
+  if (heightScale == null) heightScale = fpArm.raceHeightScale();
   mwCamera.update({ ready: fpArm.upperBodyReady() });
   if (mwCamera.thirdPerson()) {
     if (!fpArm.setViewMode('third')) {

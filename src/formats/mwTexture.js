@@ -16,6 +16,8 @@
 // of the rules wrong; it imports this now. Two ports of one rule drifting
 // apart is how MW7 died.
 
+import { decodeDds } from './mwDdsFile.js';
+
 /** VFS::Path normalization (vfs/pathutil.hpp:18-64): backslash becomes
  *  '/', every character lowercases, runs of '/' collapse to one, and a
  *  SINGLE leading '/' is stripped. A BSA index must be built the same way
@@ -210,4 +212,137 @@ export function correctActorModelPath(resPath, exists) {
   const ext = dot > xform.lastIndexOf('/') ? xform.slice(dot + 1) : '';
   const probe = ext === 'nif' ? changeExtension(xform, 'kf').path : xform;
   return exists(probe) ? xform : path;
+}
+
+// ---------------------------------------------------------------------------
+// MW-D34: DECODE BY EXTENSION, the other half of the ladder.
+//
+// correctResourcePath above deliberately answers the AUTHORED extension
+// when the .dds probe misses and the original file exists (`if
+// (isExtChanged && vfs.exists(origExt)) return origExt;`,
+// resourcehelpers.cpp:112-114) - and Morrowind's originals are .tga and
+// .bmp. The reference then decodes that path BY ITS EXTENSION, not by
+// assuming DDS: ImageManager reads the extension, aliases the
+// non-standard "targa" to "tga" ("Non-standard, but Morrowind supports
+// this", imagemanager.cpp:104-110), and asks osgDB for that format's
+// reader. The port fed every ladder answer to decodeDds, so a texture
+// the archives DO carry rendered as the magenta warning.
+
+
+/** TGA (types 1-3 and their RLE forms 9-11; 8/15/16/24/32 bpp), to the
+ *  same {width, height, mips:[{width,height,rgba}]} shape decodeDds
+ *  answers. Bottom-up unless descriptor bit 5 sets top-origin. */
+export function decodeTga(bytes) {
+  if (!(bytes instanceof Uint8Array) || bytes.length < 18) throw new Error('decodeTga: not a TGA file');
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const idLength = bytes[0];
+  const colorMapType = bytes[1];
+  const imageType = bytes[2];
+  const mapStart = dv.getUint16(3, true);
+  const mapLength = dv.getUint16(5, true);
+  const mapDepth = bytes[7];
+  const width = dv.getUint16(12, true);
+  const height = dv.getUint16(14, true);
+  const depth = bytes[16];
+  const descriptor = bytes[17];
+  const baseType = imageType & 7;
+  const rle = (imageType & 8) !== 0;
+  if (baseType < 1 || baseType > 3 || !width || !height) throw new Error('decodeTga: unsupported image type');
+  let off = 18 + idLength;
+  const mapBpp = mapDepth >> 3;
+  const palette = colorMapType === 1 ? bytes.subarray(off, off + mapLength * mapBpp) : null;
+  if (colorMapType === 1) off += mapLength * mapBpp;
+  const bpp = depth >> 3;
+  const rgba = new Uint8Array(width * height * 4);
+  const putBgr = (o, src, at, nb) => {
+    if (nb === 1) { rgba[o] = rgba[o + 1] = rgba[o + 2] = src[at]; rgba[o + 3] = 255; return; }
+    if (nb === 2) {
+      const px = src[at] | (src[at + 1] << 8);   // ARRRRRGG GGGBBBBB
+      rgba[o] = ((px >> 10) & 31) * 255 / 31;
+      rgba[o + 1] = ((px >> 5) & 31) * 255 / 31;
+      rgba[o + 2] = (px & 31) * 255 / 31;
+      rgba[o + 3] = 255;
+      return;
+    }
+    rgba[o] = src[at + 2]; rgba[o + 1] = src[at + 1]; rgba[o + 2] = src[at];
+    rgba[o + 3] = nb === 4 ? src[at + 3] : 255;
+  };
+  const putPixel = (i, src, at) => {
+    const x = i % width;
+    const yRow = (i / width) | 0;
+    const y = (descriptor & 0x20) ? yRow : height - 1 - yRow;   // bit 5: top origin
+    const o = (y * width + x) * 4;
+    if (baseType === 1) {
+      const idx = (bpp === 2 ? (src[at] | (src[at + 1] << 8)) : src[at]) - mapStart;
+      putBgr(o, palette, idx * mapBpp, mapBpp);
+    } else putBgr(o, src, at, bpp);
+  };
+  const count = width * height;
+  if (!rle) {
+    for (let i = 0; i < count; i++) putPixel(i, bytes, off + i * bpp);
+  } else {
+    let i = 0;
+    while (i < count && off < bytes.length) {
+      const packet = bytes[off++];
+      const n = (packet & 127) + 1;
+      if (packet & 128) {
+        for (let k = 0; k < n && i < count; k++) putPixel(i++, bytes, off);
+        off += bpp;
+      } else {
+        for (let k = 0; k < n && i < count; k++) { putPixel(i++, bytes, off); off += bpp; }
+      }
+    }
+  }
+  return { width, height, mips: [{ width, height, rgba }] };
+}
+
+/** BMP (uncompressed BI_RGB, 8-bit paletted / 24 / 32 bpp), same shape.
+ *  Positive height is bottom-up, per the format. */
+export function decodeBmp(bytes) {
+  if (!(bytes instanceof Uint8Array) || bytes.length < 54 || bytes[0] !== 0x42 || bytes[1] !== 0x4d) {
+    throw new Error('decodeBmp: not a BMP file');
+  }
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const dataOff = dv.getUint32(10, true);
+  const headerSize = dv.getUint32(14, true);
+  const width = dv.getInt32(18, true);
+  const rawH = dv.getInt32(22, true);
+  const height = Math.abs(rawH);
+  const bpp = dv.getUint16(28, true);
+  const compression = dv.getUint32(30, true);
+  if (compression !== 0 || (bpp !== 8 && bpp !== 24 && bpp !== 32) || !width || !height) {
+    throw new Error('decodeBmp: unsupported BMP format');
+  }
+  const palOff = 14 + headerSize;
+  const stride = ((width * bpp + 31) >> 5) << 2;   // rows pad to 4 bytes
+  const rgba = new Uint8Array(width * height * 4);
+  for (let row = 0; row < height; row++) {
+    const y = rawH > 0 ? height - 1 - row : row;   // positive height: bottom-up
+    for (let x = 0; x < width; x++) {
+      const o = (y * width + x) * 4;
+      if (bpp === 8) {
+        const p = palOff + bytes[dataOff + row * stride + x] * 4;   // BGRA quads
+        rgba[o] = bytes[p + 2]; rgba[o + 1] = bytes[p + 1]; rgba[o + 2] = bytes[p]; rgba[o + 3] = 255;
+      } else {
+        const at = dataOff + row * stride + x * (bpp >> 3);
+        rgba[o] = bytes[at + 2]; rgba[o + 1] = bytes[at + 1]; rgba[o + 2] = bytes[at];
+        rgba[o + 3] = bpp === 32 ? bytes[at + 3] : 255;
+      }
+    }
+  }
+  return { width, height, mips: [{ width, height, rgba }] };
+}
+
+/** ImageManager's routing (imagemanager.cpp:104-118): the path's own
+ *  extension picks the decoder, "targa" aliases to "tga", and a format
+ *  with no reader is an error the caller turns into the warning image. */
+export function decodeTextureImage(path, bytes) {
+  const p = String(path || '');
+  const dot = p.lastIndexOf('.');
+  let ext = dot >= 0 ? p.slice(dot + 1).toLowerCase() : '';
+  if (ext === 'targa') ext = 'tga';   // "Non-standard, but Morrowind supports this"
+  if (ext === 'dds') return decodeDds(bytes);
+  if (ext === 'tga') return decodeTga(bytes);
+  if (ext === 'bmp') return decodeBmp(bytes);
+  throw new Error(`no decoder for ".${ext}"`);
 }

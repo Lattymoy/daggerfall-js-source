@@ -476,7 +476,12 @@ test('MW-D23: the actor\'s RIGHT lands SCREEN-RIGHT through the pass\'s OWN comp
   // is how MW-D9's fix became MW-D23's bug.
   assert.match(src, /const proj = perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
     'the arm\'s projection is the bare 60-degree lens');
-  assert.ok(!/mirrorProjectionX/.test(src), 'and mirrorProjectionX appears nowhere in the arm');
+  // MW-D34 loosened this from "the word appears nowhere" to "is never
+  // imported or called": drawThird's comment now NAMES the world's
+  // mirror to explain the -u chirality flip, and a comment is not a
+  // lens. The FP pass still must not USE it.
+  assert.ok(!/import[^;]*mirrorProjectionX/.test(src) && !/mirrorProjectionX\(/.test(src),
+    'and mirrorProjectionX is never imported or called in the arm');
 });
 
 test('MW-D9c: EVERY .esm is read, not the first - an expansion first must not empty the arms', async () => {
@@ -2047,4 +2052,76 @@ test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flag
   assert.ok(r && r.beast && r.playable);
   assert.ok(Math.abs(r.height[0] - 1.05) < 1e-6 && Math.abs(r.height[1] - 0.95) < 1e-6);
   assert.ok(Math.abs(r.weight[0] - 1.1) < 1e-6 && Math.abs(r.weight[1] - 0.9) < 1e-6);
+});
+
+// --- MW-D34: render and scale ----------------------------------------------
+
+test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
+  // MEASURED through the real composite (mwArmProbe L5b): the 3P body
+  // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
+  // the port's world convention is left-handed (motor.js:573 - the
+  // player's right is +X at yaw 0), so a right-handed NIF actor placed
+  // with a pure rotation reads MIRRORED on screen. The -u on the local
+  // side axis is the same basis adaptation the mirror gives every
+  // Daggerfall asset; rs is adjustScale (npc.cpp:1124-1135) - x,y take
+  // WEIGHT, z HEIGHT, and in this frame local y is the MW vertical.
+  const src = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
+  assert.match(src, /trs\(feet\[0\], feet\[1\], feet\[2\], 0, yawDeg, 0, -u \* rs\.weight, u \* rs\.height, u \* rs\.weight\)/,
+    'the flip and the scale live in the model matrix');
+  assert.match(src, /halfH = \(\(maxZ - minZ\) \* u \* rs\.height\) \/ 2/,
+    'the sprite box grows with the height');
+  assert.match(src, /halfW = \(Math\.hypot\(maxX - minX, maxY - minY\) \* u \* rs\.weight\) \/ 2/,
+    'and with the weight');
+});
+
+test('MW-D34: textures decode BY EXTENSION - a TGA is not a failed DDS', async () => {
+  const { decodeTga, decodeBmp, decodeTextureImage } = await import('../src/formats/mwTexture.js');
+  // The ladder legitimately answers the AUTHORED .tga/.bmp when the
+  // .dds probe misses (resourcehelpers.cpp:112-114), and the reference
+  // decodes that path by its extension with the non-standard "targa"
+  // aliased to "tga" (imagemanager.cpp:104-110).
+  //
+  // A 2x1 uncompressed 24-bit TGA, TOP-origin (descriptor bit 5):
+  // red then blue, stored BGR.
+  const tgaTop = Uint8Array.from([
+    0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20,
+    0, 0, 255, /* red */ 255, 0, 0, /* blue */
+  ]);
+  const top = decodeTga(tgaTop);
+  assert.deepEqual([top.width, top.height], [2, 1]);
+  assert.deepEqual([...top.mips[0].rgba], [255, 0, 0, 255, 0, 0, 255, 255], 'BGR swizzled, top row first');
+  // The SAME pixels 1x2 BOTTOM-origin (descriptor 0): the file's first
+  // row is the image's BOTTOM row, so red ends up at y=1.
+  const tgaBottom = Uint8Array.from([
+    0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 24, 0x00,
+    0, 0, 255, 255, 0, 0,
+  ]);
+  const bot = decodeTga(tgaBottom);
+  assert.deepEqual([...bot.mips[0].rgba], [0, 0, 255, 255, 255, 0, 0, 255],
+    'bottom-up storage flips: file-first red lands on the BOTTOM row, so blue reads back first');
+  // RLE (type 10): one run packet covers both pixels.
+  const tgaRle = Uint8Array.from([
+    0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20,
+    0x81, 0, 255, 0, /* run of 2, green */
+  ]);
+  assert.deepEqual([...decodeTga(tgaRle).mips[0].rgba], [0, 255, 0, 255, 0, 255, 0, 255]);
+  // BMP: 1x2 24-bit, positive height = bottom-up, rows padded to 4
+  // bytes (3 -> 4). File rows: green (bottom), then red (top).
+  const bmp = Uint8Array.from([
+    0x42, 0x4d, ...[62, 0, 0, 0], 0, 0, 0, 0, ...[54, 0, 0, 0],
+    ...[40, 0, 0, 0], ...[1, 0, 0, 0], ...[2, 0, 0, 0], 1, 0, 24, 0,
+    ...[0, 0, 0, 0], ...new Array(20).fill(0),
+    0, 255, 0, 0, /* green + pad */ 0, 0, 255, 0, /* red + pad */
+  ]);
+  const b = decodeBmp(bmp);
+  assert.deepEqual([b.width, b.height], [1, 2]);
+  assert.deepEqual([...b.mips[0].rgba], [255, 0, 0, 255, 0, 255, 0, 255],
+    'bottom-up: the file\'s SECOND row (red) is the image\'s top');
+  // The router: extension picks the decoder, "targa" aliases, unknown
+  // extensions refuse (the caller turns that into the warning image).
+  assert.deepEqual(decodeTextureImage('textures/a.TGA', tgaTop).mips[0].rgba.length, 8);
+  assert.deepEqual(decodeTextureImage('textures/a.targa', tgaTop).mips[0].rgba.length, 8);
+  assert.throws(() => decodeTextureImage('textures/a.dds', tgaTop), /decodeDds/,
+    'a .dds path takes the DDS decoder, which refuses these bytes as its own error');
+  assert.throws(() => decodeTextureImage('textures/a.gif', tgaTop), /no decoder/);
 });

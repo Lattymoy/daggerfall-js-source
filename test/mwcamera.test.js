@@ -261,3 +261,20 @@ test('MW-D30: the pose carries the camera and the load FORCES it', () => {
   cam.restore(undefined);
   assert.equal(cam.mode(), 'third', 'a pose without a camera leaves the live camera standing');
 });
+
+test('MW-D34: the focal height rides the race HEIGHT through the one seam', () => {
+  // adjustScale's z (npc.cpp:1127/1134) scales the actor the camera
+  // tracks, so the third-person focal height scales with it. The
+  // answer comes from the rig itself, in mwViewFrame - the hosts stay
+  // out of the seam (MW-D25's law) and a caller may still pass an
+  // explicit value.
+  const view = readFileSync(new URL('../src/player/mwView.js', import.meta.url), 'utf8');
+  assert.match(view, /heightScale = null/, 'the default is "ask the rig", not 1');
+  assert.match(view, /if \(heightScale == null\) heightScale = fpArm\.raceHeightScale\(\);/);
+  const arm = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
+  assert.match(arm, /raceHeightScale: \(\) => \(built && built\.ok && built\.raceScale \? built\.raceScale\.height : 1\)/,
+    'and the rig answers its race height, 1 unbuilt');
+  // The camera really multiplies it into the focal (mwCamera.js).
+  const cam = readFileSync(new URL('../src/player/mwCamera.js', import.meta.url), 'utf8');
+  assert.match(cam, /FOCAL_HEIGHT \* heightScale \* u/);
+});

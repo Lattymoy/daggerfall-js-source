@@ -1690,7 +1690,16 @@ export function bindPartsInto(assembly, parts) {
             batch: null, source: applyPre(batch.positions, part.preTransform), attachRef: bound.attachRef,
             // Rule 14: the part's own BoneOffset node, resolved once at
             // bind time because it is a fact about the FILE.
-            boneOffset: bound.boneOffset || null,
+            //
+            // MW-D34: AMMUNITION is the one part that never takes it.
+            // attachArrow does not go through SceneUtil::attach - it is
+            // a bare `getInstance(model, parent)` under getArrowBone()
+            // (weaponanimation.cpp:87-93) - so the arrow mesh's own
+            // "BoneOffset" node is never searched for and never applied.
+            // What the arrow DOES inherit is its parent chain: the
+            // weapon's node (preTransform above) when it rides the
+            // weapon's ArrowBone, mirror and all.
+            boneOffset: part.ammo ? null : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }

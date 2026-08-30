@@ -56,7 +56,7 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, armorRecords, clothingRecords,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
@@ -64,8 +64,7 @@ import { PART_BONES } from '../formats/mwNpc.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds } from '../formats/mwItemMap.js';
-import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
-import { decodeDds } from '../formats/mwDdsFile.js';
+import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
@@ -521,7 +520,11 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                   + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
               } else {
                 parts.push({
+                  // MW-D34: `ammo` marks the one part attachArrow
+                  // instances BARE - no BoneOffset of its own
+                  // (weaponanimation.cpp:87-93, getInstance direct).
                   slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                  ammo: true,
                 });
                 arrowInfo = {
                   id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
@@ -701,6 +704,24 @@ export async function buildFpArm({
       for (const e of esmBytes) {
         const b = raceBeastFlag(e.bytes, race);
         if (b !== null) beast = b;
+      }
+    }
+    // MW-D34: Npc::adjustScale (npc.cpp:1102-1136) - the race record's
+    // RADT carries per-gender height and weight, and the rendered body
+    // scales x,y by WEIGHT and z by HEIGHT (:1124-1135). The player's
+    // own FIRST-person meshes take uniform HEIGHT only - "Race weight
+    // should not affect 1st-person meshes, otherwise it will change
+    // hand proportions and can break aiming" (:1112-1121); in this
+    // port's FP composition (rule 54: camera and rig share one space)
+    // a uniform scale of both cancels exactly, so the carve-out is the
+    // no-op the reference's comment wants. Collision never scales
+    // (:1104-1106) - the classic motor's collider is untouched. Last
+    // .esm wins, the load order as everywhere else.
+    let raceScale = { weight: 1, height: 1 };
+    for (const e of esmBytes) {
+      const rrec = raceRecords(e.bytes).get(String(race || '').toLowerCase());
+      if (rrec && rrec.radt) {
+        raceScale = { weight: rrec.weight[female ? 1 : 0], height: rrec.height[female ? 1 : 0] };
       }
     }
     // MW-D14 / RULE 18: the settings name is not the final name. The
@@ -965,6 +986,9 @@ export async function buildFpArm({
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: idlePick.source.binding,
       pieces: armPieceRows(arm.pieces).length,
+      // MW-D34: adjustScale's factors for the drawn body and the
+      // camera's focal height.
+      raceScale,
       // MW-D24: the third-person body, or its named refusal.
       third,
     };
@@ -997,7 +1021,12 @@ export function collectArmTextures(pieces, archives) {
       continue;
     }
     try {
-      out.set(file, { ok: true, path, image: decodeDds(arc.get(path).slice()) });
+      // MW-D34: decode BY EXTENSION (imagemanager.cpp:104-118) - the
+      // ladder legitimately answers the AUTHORED .tga/.bmp when the
+      // .dds probe misses (resourcehelpers.cpp:112-114), and feeding
+      // that to decodeDds turned a texture the archives DO carry into
+      // the magenta warning.
+      out.set(file, { ok: true, path, image: decodeTextureImage(path, arc.get(path).slice()) });
     } catch (err) {
       out.set(file, { ok: false, path, error: err.message, image: warningImage() });
     }
@@ -2043,6 +2072,12 @@ export function createFpArm() {
      *  player in first person with the reason on the card. */
     canThirdPerson: () => !!(thirdBuilt && thirdBuilt.ok),
 
+    /** MW-D34: the race's HEIGHT factor (adjustScale's z, npc.cpp:1127/
+     *  1134), which is what the camera's focal height rides - the
+     *  tracked node sits on the scaled actor. mwViewFrame passes it so
+     *  no host re-derives the seam (MW-D25's law). */
+    raceHeightScale: () => (built && built.ok && built.raceScale ? built.raceScale.height : 1),
+
     /**
      * MW-D24: THE THIRD-PERSON DRAW - the body composited into the world
      * through the pixelize standard (drawRigSpriteBox, the same law the
@@ -2058,14 +2093,34 @@ export function createFpArm() {
      * -Z... so the rig needs an extra half-turn to face the player's
      * forward, folded into the yaw term below and pinned by the probe's
      * facing layer rather than trusted.
+     *
+     * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
+     * composite - MW-D23's law): this pass composites through the
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:488 et al.),
+     * and the port's world convention puts the player's RIGHT at +X at
+     * yaw 0 (motor.js:573) - a LEFT-handed convention the mirror turns
+     * into correct screen imagery. A right-handed NIF actor placed with
+     * a pure rotation therefore reads MIRRORED on screen (measured:
+     * sword ink Δleft 1701 vs Δright -127 with the motor's +X anchor
+     * projecting screen-right). The -u on the local x axis is the SAME
+     * basis adaptation every Daggerfall asset already carries via that
+     * mirror: it puts the actor's right hand at the motor's right
+     * (+X), and through the lens, on SCREEN-RIGHT - where the FP pass
+     * (chirality-true by MW-D23's measurement) already shows it.
+     * Winding is safe: drawCharacter disables CULL_FACE.
      */
     drawThird(canvas, { proj, view, eye, feet, yaw }) {
       if (!thirdActive() || !canvas || !feet) return false;
       const t = thirdBuilt;
       const u = 1 / MW_UNITS_PER_METER;
       const yawDeg = (yaw * 180 / Math.PI) + 180;
+      // MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135):
+      // x,y take the race's WEIGHT, z its HEIGHT. In this frame the
+      // local x/z pair is the MW horizontal (side/forward through
+      // Rx(-90)) and local y is the MW vertical.
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
       const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, u, u, u),
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
       // The box the sprite law needs, measured off the POSED pieces in
@@ -2081,8 +2136,8 @@ export function createFpArm() {
         if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
       }
       if (!(maxX > minX)) return false;
-      const halfH = ((maxZ - minZ) * u) / 2;
-      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u) / 2;
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
       return true;
@@ -2098,6 +2153,7 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        raceScale: built && built.ok ? built.raceScale : null,
         esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         reach: built && built.ok ? built.reach : null,
