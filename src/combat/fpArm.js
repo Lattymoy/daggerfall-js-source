@@ -432,6 +432,22 @@ function skeletonHasBone(skeletonBytes, name) {
  *  esm files a data set carries, times three record kinds. */
 const ESM_WALK_CACHE = new Map();
 
+/** MW-D33: one line per worn piece for the card - what it resolved to
+ *  and what it dressed, or why it kept its sprite. Pure over the
+ *  composer's own output; the adds name their record in `slot`. */
+export function wornVerdicts(pieces, worn) {
+  const rows = [];
+  for (const p of pieces ?? []) {
+    const label = p.kind === 'clothing'
+      ? (p.name ?? `garment ${p.templateIndex}`)
+      : `armor ${p.templateIndex} (material ${p.material ?? 0})`;
+    const dressed = (worn?.adds ?? []).filter((a) => a.piece === p).map((a) => a.slot);
+    const reason = (worn?.notes ?? []).find((n) => n.startsWith(label.split(' (')[0]) || (p.kind !== 'clothing' && n.startsWith(`armor ${p.templateIndex}:`)));
+    rows.push({ label, dressed, reason: dressed.length ? null : (reason ?? 'no part reached the rig') });
+  }
+  return rows;
+}
+
 export function wornEquipKeyOf(pieces) {
   return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}`).join('|');
 }
@@ -915,6 +931,13 @@ export async function buildFpArm({
       tracks,
       accumRoot,
       keys: idlePick.source.keys,
+      // MW-D33: THE WORN VERDICTS, ON THE CARD. Mac's report - clothing
+      // and armor not showing - arrived with nothing on screen saying
+      // WHY, which is the reverted rig's defining failure wearing new
+      // clothes. Every piece the equip table handed over, and what
+      // became of it: the record it resolved to and the parts it
+      // dressed, or the reason it kept its sprite.
+      worn: wornVerdicts(armor ?? [], worn),
       // MW-D14: every source, in PUSH order, each with its own keys AND
       // its own tracks - because the source that wins a group is the one
       // whose tracks must pose it.
@@ -2045,6 +2068,7 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        worn: built && built.ok ? built.worn : null,
         esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         reach: built && built.ok ? built.reach : null,

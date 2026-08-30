@@ -165,6 +165,7 @@ const zstr = (bytes, s, n) => {
  *  unchanged for its page and its pins. */
 export { MW_BODY_PARTS } from './mwEsmFile.js';
 import { MW_BODY_PARTS } from './mwEsmFile.js';
+import FACE_TABLE from './mwFaceTable.json' with { type: 'json' };
 import { GRAPH_ROOT } from './mwSkin.js';
 
 /** The four parts allowed to fall back to a third-person mesh when the
@@ -1104,9 +1105,19 @@ export function armReport(parts, race, female) {
  * or the hair keeps index 0 - a chest has one skin record and a face
  * has six, and only the face was ever a choice in Daggerfall.
  */
-export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0 } = {}) {
+export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE } = {}) {
   const want = String(race || '').toLowerCase();
   const rows = [];
+  // MW-D33: THE CURATION TABLE. Mac's report: the derived head and hair
+  // do not match the portrait - the modulo walk is deterministic but
+  // it is not a LIKENESS, and a likeness is a judgement no arithmetic
+  // makes. mwFaceTable.json holds the judgements: race -> sex ->
+  // faceIndex -> { head, hair } record ids, authored by eye. A curated
+  // id wins when the pool carries it; an id the archives do not carry
+  // falls back to the walk (never traps), and the row's verdict says
+  // which happened. The data inspector prints every pool with its
+  // walk indices so the table can be written by id.
+  const curated = faceTable?.[want]?.[female ? 'female' : 'male']?.[String(faceIndex | 0)] ?? null;
   for (const slot of MW_BODY_PARTS) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot
       && p.skin && p.playable && !p.firstPerson);
@@ -1125,9 +1136,16 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
     // order untouched.
     const wants = slot === 'head' || slot === 'hair';
     let chosen;
+    let how = null;
     if (wants && pool.length) {
       const sorted = pool.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-      chosen = sorted[((faceIndex % sorted.length) + sorted.length) % sorted.length];
+      const wantId = curated ? String(curated[slot] || '').toLowerCase() : '';
+      chosen = wantId ? sorted.find((p) => p.id === wantId) ?? null : null;
+      how = chosen ? 'curated' : null;
+      if (!chosen) {
+        chosen = sorted[((faceIndex % sorted.length) + sorted.length) % sorted.length];
+        how = wantId ? `derived (curated "${wantId}" is not in these archives)` : 'derived';
+      }
     } else {
       chosen = pool[0] || null;
     }
@@ -1135,7 +1153,7 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
     rows.push({
       slot,
       record: chosen,
-      verdict: chosen ? 'third-person record found' : 'NOTHING for this slot',
+      verdict: chosen ? (how ? `third-person record found, ${how}` : 'third-person record found') : 'NOTHING for this slot',
       counts: { all: forSlot.length },
     });
   }

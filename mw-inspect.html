@@ -177,6 +177,34 @@ function render() {
         + 'engine lets fall back to a third-person mesh when the <code>1st</code> record is missing. That is a '
         + 'fallback rule, not the list of what gets drawn.</p>';
 
+      // MW-D33: THE FACE POOLS, so the curation table can be written by
+      // id. For the selected race and sex: every playable head and hair
+      // in id-sorted order, each with the portrait indices (0-9) that
+      // the modulo walk hands it, and the curated override if the table
+      // names one. Author mwFaceTable.json from this list, by eye.
+      {
+        const pool = (slot) => {
+          const forSlot = parts.filter((p) => p.race === sel && p.slot === slot && p.skin && p.playable && !p.firstPerson);
+          const sexed = forSlot.filter((p) => p.female === !!fem);
+          return (sexed.length ? sexed : forSlot.filter((p) => !p.female)).slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+        };
+        const heads = pool('head'); const hairs = pool('hair');
+        h += `<h2>The face pools &mdash; ${heads.length} heads, ${hairs.length} hairs for ${esc(sel)} ${fem ? 'female' : 'male'}</h2>`;
+        h += '<p class="note">Portrait index = the classic chargen face (0&ndash;9). Without a curated entry in '
+          + '<code>src/formats/mwFaceTable.json</code> the walk gives portrait i the i-th record, wrapping. '
+          + 'To match a portrait by eye: write <code>{"' + esc(sel) + '": {"' + (fem ? 'female' : 'male')
+          + '": {"3": {"head": "&lt;id&gt;", "hair": "&lt;id&gt;"}}}}</code> and rebuild.</p>';
+        for (const [name, list] of [['head', heads], ['hair', hairs]]) {
+          h += `<table><tr><th>${name} record</th><th>mesh</th><th>portrait indices (walk)</th></tr>`;
+          list.forEach((rec, i) => {
+            const idx = [];
+            for (let f = 0; f < 10; f++) if (list.length && (f % list.length) === i) idx.push(f);
+            h += `<tr><td>${esc(rec.id)}</td><td class="dim">${esc(rec.model)}</td><td>${idx.join(', ') || '&mdash;'}</td></tr>`;
+          });
+          h += '</table>';
+        }
+      }
+
       // MW-D28: THE ITEM MAP against THESE archives - which Daggerfall
       // armor will wear Morrowind, which keeps its sprite, and why.
       // Every row of the grid, no summaries: a player scans for red.

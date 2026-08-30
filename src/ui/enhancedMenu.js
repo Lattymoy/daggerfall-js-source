@@ -957,6 +957,21 @@ function paneEnhanced(body) {
   if (armState.notes && armState.notes.length) {
     mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
   }
+  // MW-D33: WHAT YOU ARE WEARING, AND WHETHER THE RIG AGREES. One line
+  // per equipped piece - the parts it dressed, or the reason it kept
+  // its sprite - because "it doesn't show" must never again arrive
+  // with nothing on screen to read.
+  if (armState.worn) {
+    if (!armState.worn.length) {
+      mw.append(el('p', 'meta', 'Worn: nothing equipped in the armor or clothing slots at build time.'));
+    } else {
+      for (const w of armState.worn) {
+        mw.append(el('p', 'meta', w.dressed.length
+          ? `Worn: ${w.label} \u2192 ${w.dressed.join(', ')}`
+          : `Worn: ${w.label} \u2192 classic sprite: ${w.reason}`));
+      }
+    }
+  }
   // AND WHAT THE DATA ACTUALLY OFFERS. "no record for this actor" is a
   // dead end for whoever reads it; the race asked for, beside the races
   // the files carry, is a next step.

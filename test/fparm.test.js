@@ -7,7 +7,7 @@ import { accumRootRef } from '../src/formats/mwSkin.js';
 import { PART_BONES } from '../src/formats/mwNpc.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornEquipKeyOf,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, wornEquipKeyOf,
   FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
   collectArmTextures,
 } from '../src/combat/fpArm.js';
@@ -1871,4 +1871,55 @@ test('MW-D32: the per-frame read in weaponRig hands the rig its worn list', () =
   assert.match(arm, /return this\.build\(\{ \.\.\.lastBuildOpts, armor: pieces, weapon: lastBuildOpts\.weapon \}\);/,
     'setWorn no longer rebuilds through build()');
   assert.match(arm, /if \(key === wornEquipKey\) return false;/, 'the fast path is gone - every frame would rebuild');
+});
+
+// ═══ MW-D33: the verdicts on the card, the curation table ═══════════
+test('MW-D33: a curated face wins, a missing curated id falls back, and the verdict says which', () => {
+  const P = (id, slot, { female = false } = {}) => ({
+    id, slot, race: 'fprace', female, skin: true, playable: true, firstPerson: false, model: `f/${id}.nif`,
+  });
+  const parts = [P('b_head_01', 'head'), P('b_head_02', 'head'), P('b_head_03', 'head'), P('b_hair_01', 'hair'), P('b_hair_02', 'hair')];
+  const table = { fprace: { male: { 0: { head: 'b_head_03', hair: 'b_hair_02' }, 1: { head: 'b_head_99', hair: 'b_hair_01' } } } };
+  const at = (i, t = table) => {
+    const rows = playerBodyRows(parts, 'fprace', false, { faceIndex: i, faceTable: t });
+    const m = new Map(rows.map((r) => [r.slot, r]));
+    return { head: m.get('head').record.id, hair: m.get('hair').record.id, hv: m.get('head').verdict };
+  };
+  // curated wins over the walk (the walk would give 01/01 at index 0).
+  assert.deepEqual([at(0).head, at(0).hair], ['b_head_03', 'b_hair_02'], 'the curated pair did not win');
+  assert.match(at(0).hv, /curated/);
+  // an id the archives lack falls back to the walk, and SAYS so.
+  assert.equal(at(1).head, 'b_head_02', 'a missing curated id did not fall back to the walk');
+  assert.match(at(1).hv, /derived \(curated "b_head_99" is not in these archives\)/);
+  assert.equal(at(1).hair, 'b_hair_01', 'the valid half of a pair must still apply');
+  // no table entry: the walk, labelled derived.
+  assert.equal(at(2).head, 'b_head_03');
+  assert.match(at(2).hv, /derived$/);
+  // the shipped table is valid JSON and an object (empty until curated).
+  assert.equal(typeof at(0, undefined).head, 'string');
+});
+
+test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or reasoned', () => {
+  const pieces = [
+    { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
+    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
+  ];
+  const worn = {
+    adds: [{ slot: 'cuirass (iron_cuirass)', bones: ['chest'], model: 'c.nif', recordId: 'b_cu', piece: pieces[0] }],
+    shadows: ['chest'],
+    notes: ['Short Shirt: no MW clothing of type 2 in these archives - the classic sprite stands'],
+  };
+  const v = wornVerdicts(pieces, worn);
+  assert.equal(v.length, 2);
+  assert.deepEqual(v[0].dressed, ['cuirass (iron_cuirass)']);
+  assert.equal(v[0].reason, null);
+  assert.deepEqual(v[1].dressed, []);
+  assert.match(v[1].reason, /classic sprite stands/);
+  // and the wiring: the build carries them, status exposes them, the
+  // card prints them.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /worn: wornVerdicts\(armor \?\? \[\], worn\),/);
+  assert.match(arm, /worn: built && built\.ok \? built\.worn : null,/);
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /armState\.worn/);
 });
