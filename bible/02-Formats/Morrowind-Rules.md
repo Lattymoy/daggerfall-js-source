@@ -1,6 +1,6 @@
 # Morrowind first-person: the rules, from the reference implementation
 
-STATUS (2026-08-29, PAUSED MID-REBUILD - read this first).
+STATUS (2026-08-30, PAUSED MID-REBUILD - read this first).
 
 WHERE THIS STANDS. The first import arc was reverted whole on 2026-08-28
 after four failed fixes. The rebuild since is deliberately staged, and
@@ -51,6 +51,77 @@ no diffuse map and overrides the NIF material defaults to white.
 ONE HOME: the mesh viewer carried its own two-line version of the path
 (a prefix and an extension swap) which got three of the rules wrong; it
 imports formats/mwTexture.js now.
+
+MW-D12 GAVE THE ARM SOMETHING TO DO (rules 8, 9, 10, 11). What MW-D11
+shipped was an arm holding a longsword and playing a BARE-HANDED idle for
+ever - one hardcoded group name, no draw, no swing, no sheathe. The
+groups are composed now, off the reference's own two tables, and the
+sequence is character.hpp's own UpperBodyState:
+
+  None -> Equipping -> WeaponEquipped -> AttackWindUp -> AttackRelease
+       -> AttackEnd -> WeaponEquipped, and Unequipping -> None.
+
+TWO COLUMNS THE PORT HAD NEVER READ. weapontype.cpp gives every type a
+CLASS (Melee, Ranged, Thrown, Ammo) and FLAGS (TwoHanded, HasHealth), and
+both fallback ladders are gated on `isRealWeapon` - which is a
+THREE-NAME test, `!= HandToHand && != Spell && != None`, and PickProbe
+IS a real weapon by it. Without that gate:
+
+  - a bare-handed player whose .kf has no `idlehh` idles in `idle1h`,
+    the one-handed SWORD stance, fist raised as if holding a blade;
+  - a missing `handtohand` becomes `weapononehand`, so empty hands MIME
+    a sword swing.
+
+Both are now the reference's answers instead: the bare `idle`, and no
+weapon animation at all. The two-handed test is likewise TWO tests -
+`mFlags & TwoHanded && mWeaponClass == Melee` - because Spell and
+HandToHand carry the flag and a bow is TwoHanded AND Ranged, so a port
+testing the flag alone sends three types down the wrong ladder.
+
+RULE 10's DICE ARE OFF BY ONE FROM ITS OWN COMMENT, and both readings are
+in the file: `numLoops = 1 + rollDice(4)` is 1..4 WRAPS, which is the
+comment's "2 to 5" PLAYS. A port that takes the comment's number as the
+loop count idles half again as long as Morrowind does, and no screenshot
+would say so. The roll is also CONDITIONAL: numLoops starts at uint32 max
+and only becomes the dice when the stance HAS a weapon short group, so a
+sheathed arm idles without end and a drawn one runs to its stop key every
+few seconds. The loop needs loopFallback, without which the idle plays
+once and freezes - which is what MW-D11's arm actually did.
+
+RULE 11's ATTACK TYPE IS A KEY PREFIX, never part of the group: one
+`weapononehand` group holds chop, slash and thrust, each as
+`<type> start` -> `<type> max attack` -> `<type> hit` (`shoot release`
+for a bow, which also has no strength word in its follow keys).
+calculateWindUp is a ratio with a -1 SENTINEL rather than a zero, because
+prepareHit replaces -1 with a random blow and would replace 0 with
+nothing; the release's skip-ahead is ordering-tested throughout and never
+sentinel-tested, which is rule 46's recorded caveat applied rather than
+quoted.
+
+THE SHEATHE IS NOT THE DRAW BACKWARDS. Drawing sets the weapon type as
+the equip animation STARTS (character.cpp:1495), so the stance becomes
+`idle1h` at once; sheathing holds the old type until the unequip
+animation ENDS (:1857). Flip it early and the unequip section is looked
+for in the bare-handed group, so the weapon blinks out instead of being
+put away.
+
+AND `showWeapons` HIDES RATHER THAN REMOVES, which is rule 57's own
+distinction: the weapon is a per-range flag the draw loop skips, not a
+shorter vertex stream. Repacking without it would change the buffer's
+length every time you drew or sheathed, orphaning the ranges the textures
+hang on.
+
+THE DIVERGENCE, RESTATED WHERE THE CODE IS. Daggerfall picks its attack
+by GESTURE and Morrowind by MOVEMENT or by the weapon record's damage
+spread; the port maps the six strikes onto the three types BY THE SHAPE
+OF THE MOTION and says so at the table. A second divergence falls out of
+it: a Daggerfall swing has no charge, so the wind-up is never held at max
+attack and the blow releases at full strength - the reference's own
+behaviour for a button released at the top of the window. The HELD
+wind-up the bow would need is wired to the port's machine (state
+StrikeUp) rather than to "is it a bow", because the in-game bow is DFU's
+BowDrawback-OFF instant shot; it becomes live the moment that path does,
+with nothing in the arm to change.
 
 AND THE RENDERER LEARNED A TRAP. A sampler is "used" whether or not the
 branch that reads it runs, so texture unit 0 must always hold a complete

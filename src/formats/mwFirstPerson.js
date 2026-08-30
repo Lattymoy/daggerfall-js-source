@@ -242,6 +242,353 @@ export const WEAPON_ATTACH_BONE = Object.freeze({
   [MW_WEAPON_TYPE.Arrow]: 'Bip01 Arrow',
   [MW_WEAPON_TYPE.Bolt]: 'ArrowBone',
 });
+/**
+ * MW-D12 / RULE 11's ATTACK TYPE, AND THIS ROW IS A PORT DECISION.
+ *
+ * The two games choose an attack differently and there is no translation
+ * between them, only a mapping somebody has to pick:
+ *
+ *   Morrowind picks by MOVEMENT at the moment of the swing
+ *   (getMovementBasedAttackType, character.cpp:2924-2932): forward or
+ *   back dominating is "thrust", sideways is "slash", otherwise "chop" -
+ *   or, with "always use best attack" on, the type with the highest
+ *   damage spread on the WEAP record.
+ *
+ *   Daggerfall picks by GESTURE: the mouse drag's 15-degree radial
+ *   section becomes one of six strikes, and the strike IS the attack.
+ *
+ * So the port maps Daggerfall's six onto Morrowind's three BY THE SHAPE
+ * OF THE MOTION, which is the only honest correspondence available:
+ *
+ *   StrikeDown, StrikeDownLeft, StrikeDownRight -> chop    (a downward arc)
+ *   StrikeLeft, StrikeRight                     -> slash   (a horizontal one)
+ *   StrikeUp                                    -> thrust  (the port's own
+ *       viewmodel already calls StrikeUp the thrust, Characters-Arc.md)
+ *
+ * and a BOW's swing is Morrowind's "shoot" whatever direction produced
+ * it, because the bow has no directional attacks at all.
+ *
+ * getBestAttack is NOT ported and is not a gap: it reads the damage
+ * spread off a WEAP record to answer a question Daggerfall never asks -
+ * the player's gesture has already chosen.
+ */
+export const DF_STRIKE_TO_MW_ATTACK = Object.freeze({
+  StrikeDown: 'chop',
+  StrikeDownLeft: 'chop',
+  StrikeDownRight: 'chop',
+  StrikeLeft: 'slash',
+  StrikeRight: 'slash',
+  StrikeUp: 'thrust',
+});
+
+/** Rule 11's ranged case: every bow swing is "shoot", and the release
+ *  key is "shoot release" where a melee blow is "<type> hit". */
+export const MW_SHOOT_ATTACK = 'shoot';
+
+export function mwAttackType(strike, { bow = false } = {}) {
+  if (bow) return MW_SHOOT_ATTACK;
+  return DF_STRIKE_TO_MW_ATTACK[strike] ?? null;
+}
+
+/**
+ * RULE 11's KEY NAMES, composed. The attack type never enters the GROUP -
+ * it is a prefix on the text keys inside the long group
+ * (character.cpp:1663-1718, 1762-1815):
+ *
+ *   wind-up   "<type> start"        -> "<type> max attack"
+ *   release   "<type> max attack"   -> "<type> hit"     ("shoot release")
+ *   follow    "<type> <strength> follow start" -> "... follow stop"
+ *
+ * where strength is small (<0.33), medium (<0.66) or large - and "shoot"
+ * has NO strength word at all.
+ */
+export function attackKeys(attackType, strength = 0) {
+  const shoot = attackType === MW_SHOOT_ATTACK;
+  const hit = shoot ? 'release' : 'hit';
+  const word = strength < 0.33 ? 'small' : strength < 0.66 ? 'medium' : 'large';
+  return {
+    windUp: { start: `${attackType} start`, stop: `${attackType} max attack` },
+    release: { start: `${attackType} max attack`, stop: `${attackType} ${hit}` },
+    follow: shoot
+      ? { start: `${attackType} follow start`, stop: `${attackType} follow stop` }
+      : { start: `${attackType} ${word} follow start`, stop: `${attackType} ${word} follow stop` },
+    hitKey: `${attackType} ${hit}`,
+    // THE THREE KEYS NOBODY PLAYS, which only ever have their TIMES read
+    // (character.cpp:1241-1242, :1779). They are not clip boundaries -
+    // they are the measuring stick the wind-up strength and the release's
+    // skip-ahead are computed against, and they are named here so the
+    // caller never has to spell one out and get a space wrong.
+    minAttack: `${attackType} min attack`,
+    maxAttack: `${attackType} max attack`,
+    minHit: `${attackType} min hit`,
+  };
+}
+
+/**
+ * CharacterController::calculateWindUp, verbatim (character.cpp:1235-1248).
+ *
+ * How far into the wind-up window the clip got, 0 to 1 - and -1, THE
+ * SENTINEL, when the window does not exist. The caller must not read -1
+ * as "no charge": prepareHit (:1256-1259) replaces it with a RANDOM
+ * `min(1, 0.1 + rollClosedProbability())`, which is a different thing
+ * from zero and is why the sentinel is a number rather than a null.
+ *
+ * @param currentTime   the playhead in the weapon group
+ * @param minAttackTime getTextKeyTime("<group>: <type> min attack")
+ * @param maxAttackTime getTextKeyTime("<group>: <type> max attack")
+ */
+export function calculateWindUp(currentTime, minAttackTime, maxAttackTime) {
+  if (minAttackTime === -1 || minAttackTime >= maxAttackTime) return -1;
+  const f = (currentTime - minAttackTime) / (maxAttackTime - minAttackTime);
+  return Math.min(1, Math.max(0, f));
+}
+
+/**
+ * The release's SKIP-AHEAD (character.cpp:1774-1784).
+ *
+ * A weak blow does not play the whole swing: it starts `1 - strength` of
+ * the way through, and that fraction is then RESCALED so it never eats
+ * into the part of the clip after the hit - `(minHit - maxAttack) /
+ * (hit - maxAttack)` - but ONLY when the file actually orders the three
+ * keys that way. Every term is an ordering test, never a sentinel test,
+ * which is the recorded caveat on rule 46: a missing `min hit` comes
+ * back as -1 and fails `maxAttackTime <= minHitTime` on its own.
+ */
+export function releaseStartPoint(strength, { minAttackTime, maxAttackTime, minHitTime, hitTime }) {
+  if (minAttackTime === -1 || minAttackTime >= maxAttackTime) return 0;
+  let startPoint = 1 - strength;
+  if (maxAttackTime <= minHitTime && minHitTime < hitTime) {
+    startPoint *= (minHitTime - maxAttackTime) / (hitTime - maxAttackTime);
+  }
+  return startPoint;
+}
+
+/** Rule 10's draw and sheathe, which are the long group's own keys
+ *  (character.cpp:1444-1478 and :1390-1414). */
+export const EQUIP_KEYS = Object.freeze({ start: 'equip start', stop: 'equip stop', attach: 'equip attach' });
+export const UNEQUIP_KEYS = Object.freeze({ start: 'unequip start', stop: 'unequip stop', detach: 'unequip detach' });
+
+/**
+ * MW-D12 / RULE 8's OTHER TWO COLUMNS, which the port never carried.
+ *
+ * `weapontype.cpp` gives every type TWO names and they are not derivable
+ * from one another:
+ *
+ *   mLongGroup  - the animation group for the whole draw/attack/sheathe
+ *                 cycle. The attack type is NOT part of it (rule 11).
+ *   mShortGroup - a SUFFIX for the stance variants: "idle" + "1h" =
+ *                 "idle1h", and the same for movement and jump (rule 9).
+ *
+ * The table is transcribed, not reasoned about. It deliberately collides:
+ * AxeOneHand shares BluntOneHand's pair, AxeTwoHand shares
+ * BluntTwoClose's, SpearTwoWide shares BluntTwoWide's - and PickProbe
+ * borrows the 1h SHORT group while keeping its own LONG one. The bible
+ * records that the reverted arc got this wrong in one direction (four
+ * classes for eleven groups) and that MWAUDIT's correction got it wrong
+ * in another (moving every two-hander to weapontwowide); both were
+ * reasoned rather than read.
+ */
+export const WEAPON_SHORT_GROUP = Object.freeze({
+  [MW_WEAPON_TYPE.ShortBladeOneHand]: '1s',
+  [MW_WEAPON_TYPE.LongBladeOneHand]: '1h',
+  [MW_WEAPON_TYPE.BluntOneHand]: '1b',
+  [MW_WEAPON_TYPE.AxeOneHand]: '1b',
+  [MW_WEAPON_TYPE.LongBladeTwoHand]: '2c',
+  [MW_WEAPON_TYPE.AxeTwoHand]: '2b',
+  [MW_WEAPON_TYPE.BluntTwoClose]: '2b',
+  [MW_WEAPON_TYPE.BluntTwoWide]: '2w',
+  [MW_WEAPON_TYPE.SpearTwoWide]: '2w',
+  [MW_WEAPON_TYPE.MarksmanBow]: 'bow',
+  [MW_WEAPON_TYPE.MarksmanCrossbow]: 'crossbow',
+  [MW_WEAPON_TYPE.MarksmanThrown]: '1t',
+  [MW_WEAPON_TYPE.HandToHand]: 'hh',
+  [MW_WEAPON_TYPE.Spell]: 'spell',
+  [MW_WEAPON_TYPE.PickProbe]: '1h',
+  [MW_WEAPON_TYPE.None]: '',
+});
+
+export const WEAPON_LONG_GROUP = Object.freeze({
+  [MW_WEAPON_TYPE.ShortBladeOneHand]: 'shortbladeonehand',
+  [MW_WEAPON_TYPE.LongBladeOneHand]: 'weapononehand',
+  [MW_WEAPON_TYPE.BluntOneHand]: 'bluntonehand',
+  [MW_WEAPON_TYPE.AxeOneHand]: 'bluntonehand',
+  [MW_WEAPON_TYPE.LongBladeTwoHand]: 'weapontwohand',
+  [MW_WEAPON_TYPE.AxeTwoHand]: 'blunttwohand',
+  [MW_WEAPON_TYPE.BluntTwoClose]: 'blunttwohand',
+  [MW_WEAPON_TYPE.BluntTwoWide]: 'weapontwowide',
+  [MW_WEAPON_TYPE.SpearTwoWide]: 'weapontwowide',
+  [MW_WEAPON_TYPE.MarksmanBow]: 'bowandarrow',
+  [MW_WEAPON_TYPE.MarksmanCrossbow]: 'crossbow',
+  [MW_WEAPON_TYPE.MarksmanThrown]: 'throwweapon',
+  [MW_WEAPON_TYPE.HandToHand]: 'handtohand',
+  [MW_WEAPON_TYPE.Spell]: 'spellcast',
+  [MW_WEAPON_TYPE.PickProbe]: 'pickprobe',
+  [MW_WEAPON_TYPE.None]: '',
+});
+
+export const weaponShortGroup = (type) => WEAPON_SHORT_GROUP[type] ?? '';
+export const weaponLongGroup = (type) => WEAPON_LONG_GROUP[type] ?? '';
+
+/**
+ * THE OTHER TWO COLUMNS OF THE SAME TABLE (weapontype.cpp), which decide
+ * every fallback below and which the port had been guessing at with a
+ * hand-written list of "two-handed" types.
+ *
+ * `mWeaponClass` is Melee, Ranged, Thrown or Ammo, and `mFlags` is a
+ * bitfield of TwoHanded (0x01) and HasHealth (0x02) (loadweap.hpp:91-105).
+ * Transcribed, and the surprises are transcribed with it: SPELL and
+ * HAND-TO-HAND BOTH CARRY THE TwoHanded BIT, and both are class Melee -
+ * so a test of "TwoHanded" alone would send bare fists to the two-handed
+ * ladder. The reference never asks that question alone; every use pairs
+ * the bit with the class, and so does isTwoHandedMelee below.
+ */
+export const MW_WEAPON_CLASS = Object.freeze({
+  Melee: 0, Ranged: 1, Thrown: 2, Ammo: 3,
+});
+export const MW_TWO_HANDED = 0x01;
+export const MW_HAS_HEALTH = 0x02;
+
+export const WEAPON_CLASS = Object.freeze({
+  [MW_WEAPON_TYPE.None]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.PickProbe]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.Spell]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.HandToHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.ShortBladeOneHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.LongBladeOneHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.BluntOneHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.AxeOneHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.LongBladeTwoHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.AxeTwoHand]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.BluntTwoClose]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.BluntTwoWide]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.SpearTwoWide]: MW_WEAPON_CLASS.Melee,
+  [MW_WEAPON_TYPE.MarksmanBow]: MW_WEAPON_CLASS.Ranged,
+  [MW_WEAPON_TYPE.MarksmanCrossbow]: MW_WEAPON_CLASS.Ranged,
+  [MW_WEAPON_TYPE.MarksmanThrown]: MW_WEAPON_CLASS.Thrown,
+  [MW_WEAPON_TYPE.Arrow]: MW_WEAPON_CLASS.Ammo,
+  [MW_WEAPON_TYPE.Bolt]: MW_WEAPON_CLASS.Ammo,
+});
+
+export const WEAPON_FLAGS = Object.freeze({
+  [MW_WEAPON_TYPE.None]: 0,
+  [MW_WEAPON_TYPE.PickProbe]: 0,
+  [MW_WEAPON_TYPE.Spell]: MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.HandToHand]: MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.ShortBladeOneHand]: MW_HAS_HEALTH,
+  [MW_WEAPON_TYPE.LongBladeOneHand]: MW_HAS_HEALTH,
+  [MW_WEAPON_TYPE.BluntOneHand]: MW_HAS_HEALTH,
+  [MW_WEAPON_TYPE.AxeOneHand]: MW_HAS_HEALTH,
+  [MW_WEAPON_TYPE.LongBladeTwoHand]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.AxeTwoHand]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.BluntTwoClose]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.BluntTwoWide]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.SpearTwoWide]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.MarksmanBow]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.MarksmanCrossbow]: MW_HAS_HEALTH | MW_TWO_HANDED,
+  [MW_WEAPON_TYPE.MarksmanThrown]: 0,
+  [MW_WEAPON_TYPE.Arrow]: 0,
+  [MW_WEAPON_TYPE.Bolt]: 0,
+});
+
+export const weaponClass = (type) => WEAPON_CLASS[type] ?? MW_WEAPON_CLASS.Melee;
+export const weaponFlags = (type) => WEAPON_FLAGS[type] ?? 0;
+
+/**
+ * isRealWeapon (character.cpp:316-320), verbatim, and it is the gate on
+ * BOTH fallback ladders below:
+ *
+ *   return weaponType != HandToHand && weaponType != Spell && weaponType != None;
+ *
+ * PickProbe IS a real weapon by this test, which is the one entry nobody
+ * guesses right. The consequence is the rule: bare fists, a readied
+ * spell, and an empty sheathed hand DO NOT take a sword's animation when
+ * their own is missing - they fall straight to the bare base group, or to
+ * nothing at all.
+ */
+export function isRealWeapon(type) {
+  return type !== MW_WEAPON_TYPE.HandToHand
+    && type !== MW_WEAPON_TYPE.Spell
+    && type !== MW_WEAPON_TYPE.None;
+}
+
+/** `weapInfo->mFlags & TwoHanded && mWeaponClass == Melee`
+ *  (character.cpp:584, :620). BOTH terms: bows are TwoHanded and Ranged,
+ *  so they take the ONE-handed ladder, and hand-to-hand is TwoHanded and
+ *  Melee but is filtered out before this by isRealWeapon. */
+export function isTwoHandedMelee(type) {
+  return !!(weaponFlags(type) & MW_TWO_HANDED)
+    && weaponClass(type) === MW_WEAPON_CLASS.Melee;
+}
+
+/**
+ * RULE 9's FALLBACK, which is a real function and not a guess
+ * (`CharacterController::fallbackShortWeaponGroup`, character.cpp:602-637).
+ *
+ *   0. NOT A REAL WEAPON    -> the BARE base group, at once (:604-611)
+ *   1. two-handed MELEE     -> base + "2c"  (LongBladeTwoHand's short)
+ *   2. anything else        -> base + "1h"  (LongBladeOneHand's short)
+ *   3. still missing        -> the BARE base group (:629-634)
+ *
+ * Step 0 is the one this port shipped without and it is not a nicety:
+ * without it a bare-handed player whose .kf has no "idlehh" idles in
+ * "idle1h" - the one-handed SWORD stance, fist raised as if holding a
+ * blade - where Morrowind gives them the plain "idle".
+ *
+ * The blend-mask half of the reference is deliberately absent: steps 0
+ * and 3 also narrow the animation to BlendMask_LowerBody, which is a
+ * first-person no-op (there is no lower body in shot) and would be a lie
+ * to carry as a field nothing reads.
+ *
+ * The reverted arc invented a different chain ending in "any idle in the
+ * file", which is how it drew a plausible wrong animation instead of
+ * saying it had none. There is no such tail here.
+ *
+ * @param base    "idle", "runforward", ... - the group WITHOUT the suffix
+ * @param type    an MW_WEAPON_TYPE
+ * @param hasGroup(name) -> boolean, the file's own answer
+ */
+export function composeStanceGroup(base, type, hasGroup) {
+  const short = weaponShortGroup(type);
+  const asked = short ? `${base}${short}` : base;
+  if (hasGroup(asked)) return { group: asked, fallback: null };
+  if (!isRealWeapon(type)) {
+    return hasGroup(base) ? { group: base, fallback: 'bare' } : { group: null, fallback: null };
+  }
+  const ladder = isTwoHandedMelee(type)
+    ? `${base}${WEAPON_SHORT_GROUP[MW_WEAPON_TYPE.LongBladeTwoHand]}`
+    : `${base}${WEAPON_SHORT_GROUP[MW_WEAPON_TYPE.LongBladeOneHand]}`;
+  if (ladder !== asked && hasGroup(ladder)) return { group: ladder, fallback: 'short' };
+  if (hasGroup(base)) return { group: base, fallback: 'bare' };
+  return { group: null, fallback: null };
+}
+
+/**
+ * getWeaponAnimation (character.cpp:573-592), the LONG group, and its
+ * ladder is gated the same way - `isRealWeapon(weaponType) &&
+ * !hasAnimation(weaponGroup)`.
+ *
+ * So a missing "handtohand" does NOT become "weapononehand": the
+ * reference returns the missing name and the caller finds no animation,
+ * which here is a null group and a stance that plays its idle and
+ * refuses to swing. That refusal is the correct outcome - an arm that
+ * mimes a sword swing with empty hands is worse than one that does not
+ * swing.
+ *
+ * The non-bipedal "attack1" arm (:589-590) is out of scope by
+ * construction: the player is bipedal and this module only ever animates
+ * the player's own first-person rig.
+ */
+export function composeWeaponGroup(type, hasGroup) {
+  const asked = weaponLongGroup(type);
+  if (asked && hasGroup(asked)) return { group: asked, fallback: null };
+  if (!isRealWeapon(type)) return { group: null, fallback: null };
+  const ladder = isTwoHandedMelee(type)
+    ? WEAPON_LONG_GROUP[MW_WEAPON_TYPE.LongBladeTwoHand]
+    : WEAPON_LONG_GROUP[MW_WEAPON_TYPE.LongBladeOneHand];
+  if (ladder !== asked && hasGroup(ladder)) return { group: ladder, fallback: 'long' };
+  return { group: null, fallback: null };
+}
+
 export const DEFAULT_WEAPON_BONE = 'Weapon Bone';
 
 /** Rules 8 + 17: the bone this weapon type attaches at. The fallback is

@@ -276,8 +276,12 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // null, so the player got a frozen bind-pose arm where the sprite had
   // been correct. Every term below independently prevents that.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && state\);/,
-    'built, built.ok, mesh, renderer, camera AND state - all five');
+  // MW-D12 split `state` into two slots. The term is now "SOME clip is
+  // playing", which is the same guarantee: an arm with neither an idle
+  // nor an action to pose from is the frozen bind pose, and the sprite
+  // is the correct picture instead.
+  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| idleState\)\);/,
+    'built, built.ok, mesh, renderer, camera AND a clip - all six');
 });
 
 test('MW-D8: the frame path is synchronous - no await, no dynamic import, in update or draw', () => {
@@ -556,8 +560,9 @@ test('MW-D9f: a built arm reaches the screen - the update gate is not the draw g
 
 test('MW-D9f: the rig gates the step on ready() and the draw on active()', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /if \(!paralyzed && fpArm\.ready\(\)\) fpArm\.update\(dt\);/,
+  assert.match(rig, /if \(!paralyzed && fpArm\.ready\(\)\) \{/,
     'the per-frame step rides ready()');
+  assert.match(rig, /fpArm\.update\(dt\);/, 'and update is what it gates');
   assert.ok(!/fpArm\.active\(\)\) fpArm\.update/.test(rig),
     'and never active(), which cannot be true until update has already run');
   assert.match(rig, /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/,
@@ -565,7 +570,7 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
 
   // ready() must not require the mesh, or the deadlock comes straight back.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && state && renderer\);/,
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| idleState\) && renderer\);/,
     'ready() is update()\'s own requirements - no mesh term, no camera term');
 });
 

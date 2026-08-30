@@ -877,14 +877,20 @@ def make_arm_idle_kf():
         k.value = txt
 
     # Rotation about Y by the given angles, right side; the left is negated.
-    # Z, not Y: in Morrowind's axes +Y is FORWARD, so a rotation about it
-    # is a ROLL and moves nothing across the frame. The swing that opens
-    # the arms out - and makes the on-screen WIDTH vary, which is the
-    # measurement that catches a per-frame renormalising framing - is
-    # about Z.
-    def rot_z(deg):
+    #
+    # Y IS CORRECT HERE and the axis note that belongs beside make_armfp_kf
+    # does not belong here. armidle.kf is MW-D7's CLIP-LAW fixture: what it
+    # has to produce is a big, unambiguous rotation whose samples a reader
+    # error would visibly miss, and +Y - Morrowind's forward - gives one.
+    # The first-person fixture needs the opposite thing (an angle that
+    # changes the arm's on-screen WIDTH, which a roll about forward cannot),
+    # which is why make_armfp_kf swings about Z instead. MW-D10 moved that
+    # reasoning here by mistake along with a rename this function's two call
+    # sites never took, leaving generate.py unable to run at all; the
+    # committed armidle.kf is and stays the Y version its pins measure.
+    def rot_y(deg):
         a = math.radians(deg) / 2.0
-        return (math.cos(a), 0.0, 0.0, math.sin(a))  # w,x,y,z
+        return (math.cos(a), 0.0, math.sin(a), 0.0)  # w,x,y,z
 
     arm_angles = [(0.0, 90.0), (0.5, 90.0), (1.0, 60.0), (1.5, 0.0),
                   (2.0, -20.0), (2.5, 0.0), (3.0, -60.0)]
@@ -1910,6 +1916,135 @@ def make_zoo():
     write_nif(HERE / "zoo.nif", [root, seq])
 
 
+def make_armfp_weapon_kf():
+    # MW-D12: THE WEAPON GROUPS, which armfpidle.kf has none of.
+    #
+    # armfpidle.kf carries MW-D7's eleven clip-law keys verbatim and must
+    # keep carrying them, so the attack machine gets its own file. Every
+    # key here is one branch of rules 8/9/10/11, and the ABSENCES are as
+    # deliberate as the presences:
+    #
+    #   idle1h   present, with a loop window   - rule 10's dice roll
+    #   idle2c   present, idle2b ABSENT        - rule 9's two-handed ladder
+    #   idlehh   ABSENT                        - rule 9's one-handed ladder
+    #   idlebow  present                       - the asked group, no fallback
+    #   idle     present                       - the bare-base tail, and the
+    #                                            sheathed stance (rule 8)
+    #   weapononehand  has "equip attach" and "unequip detach"
+    #   bowandarrow    has NEITHER             - showWeapons by hand
+    #   blunttwohand   ABSENT, weapontwohand present - the LONG ladder
+    #
+    # The three follow strengths are all present for chop, because which
+    # one a blow ends on is the only visible consequence of the wind-up
+    # strength and a fixture with one of them cannot tell them apart.
+    text_keys = [
+        (0.0, b"Idle: Start"),
+        (0.5, b"Idle: Stop"),
+        (0.6, b"Idle1h: Start"),
+        (0.8, b"Idle1h: Loop Start"),
+        (1.4, b"Idle1h: Loop Stop"),
+        (1.6, b"Idle1h: Stop"),
+        (1.7, b"Idle2c: Start"),
+        (1.9, b"Idle2c: Stop"),
+        (2.0, b"WeaponOneHand: Equip Start"),
+        (2.2, b"WeaponOneHand: Equip Attach"),
+        (2.4, b"WeaponOneHand: Equip Stop"),
+        (2.5, b"WeaponOneHand: Chop Start"),
+        (2.7, b"WeaponOneHand: Chop Min Attack"),
+        (2.9, b"WeaponOneHand: Chop Max Attack"),
+        (3.1, b"WeaponOneHand: Chop Min Hit"),
+        (3.3, b"WeaponOneHand: Chop Hit"),
+        (3.4, b"WeaponOneHand: Chop Small Follow Start"),
+        (3.5, b"WeaponOneHand: Chop Small Follow Stop"),
+        (3.6, b"WeaponOneHand: Chop Medium Follow Start"),
+        (3.7, b"WeaponOneHand: Chop Medium Follow Stop"),
+        (3.8, b"WeaponOneHand: Chop Large Follow Start"),
+        (4.0, b"WeaponOneHand: Chop Large Follow Stop"),
+        (4.1, b"WeaponOneHand: Slash Start"),
+        (4.2, b"WeaponOneHand: Slash Max Attack"),
+        (4.3, b"WeaponOneHand: Slash Hit"),
+        (4.4, b"WeaponOneHand: Slash Large Follow Start"),
+        (4.5, b"WeaponOneHand: Slash Large Follow Stop"),
+        (4.6, b"WeaponOneHand: Thrust Start"),
+        (4.7, b"WeaponOneHand: Thrust Max Attack"),
+        (4.8, b"WeaponOneHand: Thrust Hit"),
+        (4.9, b"WeaponOneHand: Thrust Large Follow Start"),
+        (5.0, b"WeaponOneHand: Thrust Large Follow Stop"),
+        (5.1, b"WeaponOneHand: Unequip Start"),
+        (5.2, b"WeaponOneHand: Unequip Detach"),
+        (5.4, b"WeaponOneHand: Unequip Stop"),
+        (5.5, b"BowAndArrow: Equip Start"),
+        (5.7, b"BowAndArrow: Equip Stop"),
+        (5.8, b"BowAndArrow: Shoot Start"),
+        (6.0, b"BowAndArrow: Shoot Min Attack"),
+        (6.2, b"BowAndArrow: Shoot Max Attack"),
+        (6.4, b"BowAndArrow: Shoot Release"),
+        (6.5, b"BowAndArrow: Shoot Follow Start"),
+        (6.7, b"BowAndArrow: Shoot Follow Stop"),
+        (6.8, b"BowAndArrow: Unequip Start"),
+        (7.0, b"BowAndArrow: Unequip Stop"),
+        (7.1, b"IdleBow: Start"),
+        (7.3, b"IdleBow: Stop"),
+        (7.4, b"WeaponTwoHand: Equip Start"),
+        (7.6, b"WeaponTwoHand: Equip Stop"),
+        (7.7, b"WeaponTwoHand: Chop Start"),
+        (7.8, b"WeaponTwoHand: Chop Max Attack"),
+        (7.9, b"WeaponTwoHand: Chop Hit"),
+        (8.0, b"WeaponTwoHand: Chop Large Follow Start"),
+        (8.1, b"WeaponTwoHand: Chop Large Follow Stop"),
+        (8.2, b"WeaponTwoHand: Unequip Start"),
+        (8.3, b"WeaponTwoHand: Unequip Stop"),
+    ]
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = len(text_keys)
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, text_keys):
+        k.time = t
+        k.value = txt
+
+    def rot_z(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), 0.0, 0.0, math.sin(a))
+
+    def rot_x(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), math.sin(a), 0.0, 0.0)
+
+    # A key at EVERY window boundary that matters, so two different
+    # sections of this file pose the arm differently - a pin that says
+    # "the release plays" has to be able to fail when the release does not.
+    swing = [(0.0, 0.0), (0.6, 4.0), (1.6, 10.0), (2.0, 2.0), (2.5, 6.0),
+             (2.9, 18.0), (3.3, 26.0), (4.0, 8.0), (5.4, 0.0), (5.8, 5.0),
+             (6.2, 16.0), (6.7, 3.0), (8.3, 0.0)]
+    lift = [(0.0, 0.0), (0.8, 5.0), (1.4, 9.0), (2.4, 3.0), (2.9, 12.0),
+            (3.3, 20.0), (4.0, 6.0), (6.2, 14.0), (8.3, 0.0)]
+    tracks = [
+        ("Right Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(-d)) for t, d in swing])),
+        ("Left Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(d)) for t, d in swing])),
+        ("Right Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+        ("Left Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+    ]
+
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"ArmFpWeapon"
+    helper.extra_data = tke
+    prev_extra = tke
+    prev_ctrl = None
+    for name, kd in tracks:
+        sed = NifFormat.NiStringExtraData()
+        sed.string_data = name.encode()
+        sed.bytes_remaining = 4 + len(name)
+        prev_extra.next_extra_data = sed
+        prev_extra = sed
+        kc = make_keyframe_controller(None, kd, 0.0, 8.3)
+        if prev_ctrl is None:
+            helper.controller = kc
+        else:
+            prev_ctrl.next_controller = kc
+        prev_ctrl = kc
+    write_nif(HERE / "armfpweapon.kf", [helper])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -1932,6 +2067,7 @@ if __name__ == "__main__":
     make_armfp_hand()
     make_armfp_arm()
     make_armfp_kf()
+    make_armfp_weapon_kf()
     make_armfp_esm()
     make_weaponmesh()
     make_armparts_esm()

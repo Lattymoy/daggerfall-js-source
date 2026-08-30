@@ -7,10 +7,13 @@
 // restating them. That is deliberate - MW7 failed by carrying a second
 // port of one rule, and two copies of a rule drift.
 //
-// WHAT IT DRAWS. An UNTEXTURED, flat-shaded, weaponless pair of arms
-// playing the Idle clip. Not a texture failure - a scope boundary, and
-// the card says so before you press the button. See the STATUS block in
-// bible/02-Formats/Morrowind-Rules.md for the full deferred list.
+// WHAT IT DRAWS, as of MW-D12: a TEXTURED pair of arms with the equipped
+// weapon in hand, playing the stance the drawn weapon composes (rule 9),
+// looping it the number of times rule 10's dice say, and running the
+// equip / wind-up / release / follow / unequip sections of the weapon's
+// own long group as the game asks for them. The scope boundary this note
+// used to draw has moved; what is still outside it is in the STATUS
+// block in bible/02-Formats/Morrowind-Rules.md, which is the one list.
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
@@ -38,13 +41,16 @@
 
 import { lookAt, perspective, trs, mirrorProjectionX } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
-import { sampleTrack, resetClip, advanceClip } from '../formats/mwAnim.js';
+import {
+  sampleTrack, resetClip, advanceClip, getTextKeyTime,
+} from '../formats/mwAnim.js';
 import { accumRootRef } from '../formats/mwSkin.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
-  firstPersonCameraRef,
+  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
+  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
 } from '../formats/mwFirstPerson.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { correctTexturePath, wrapModes, warningImage } from '../formats/mwTexture.js';
@@ -64,7 +70,101 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
 }
 /** Rule 6 again: the first-person animation source sits beside it. */
 export const FP_CLIP_PATH = 'meshes/xbase_anim.1st.kf';
-export const FP_CLIP_GROUP = 'Idle';
+
+/** Rule 9's BASE, which the weapon's short group is suffixed onto:
+ *  "idle" + "1h" = "idle1h". MW-D12 retired the hardcoded 'Idle' - a
+ *  constant group is a constant STANCE, and the arm held a bare-handed
+ *  idle with a longsword drawn. */
+export const FP_IDLE_BASE = 'idle';
+
+/**
+ * MW-D12 / RULE 10, and the arithmetic is worth spelling out because the
+ * comment and the code count DIFFERENT THINGS.
+ *
+ *   numLoops = 1 + Misc::Rng::rollDice(4, prng);   character.cpp:808-810
+ *   // play until the Loop Stop key 2 to 5 times, then play until the Stop key
+ *
+ * `rollDice(max)` is `uniform_int_distribution<int>(0, max - 1)`, so
+ * numLoops is 1..4 - and that is the number of WRAPS, each of which costs
+ * one decrement in advanceClip. One wrap is two traversals, so 1..4 wraps
+ * is the comment's 2 to 5 plays. A port that reads "2 to 5" off the
+ * comment and writes `2 + rollDice(4)` idles half again as long as
+ * Morrowind does, which is the kind of error no screenshot can show.
+ *
+ * AND IT IS CONDITIONAL. numLoops starts at uint32 max - effectively
+ * forever - and only becomes the dice roll when the actor HAS a weapon
+ * short group (:800-812). A sheathed arm idles without end; a drawn one
+ * runs to its stop key every few seconds. That condition is rule 10's
+ * real content and the reason it is a first-person rule at all.
+ */
+export const FP_IDLE_LOOPS = () => 1 + Math.floor(Math.random() * 4);
+
+/**
+ * RULE 8's ANIMATION weapon type, which is NOT the item in your hand.
+ *
+ * `mWeaponType` is `ESM::Weapon::None` while nothing is drawn - the bare
+ * "idle" group, no short suffix, and rule 10's endless loop - and it
+ * becomes HandToHand the moment empty fists are RAISED (getWeaponType
+ * returns HandToHand for an empty hand in a drawn stance, weapontype.cpp).
+ * So the same empty hand is two different animation states, and the port
+ * has both: playerWeapon.sheathed is the switch.
+ *
+ * Getting this wrong is not subtle: a sheathed player would idle in
+ * "idlehh" with fists up, which is Morrowind's ready stance played while
+ * Daggerfall says the weapon is away.
+ */
+export function animWeaponType(mwType, sheathed) {
+  if (sheathed) return MW_WEAPON_TYPE.None;
+  return mwType === MW_WEAPON_TYPE.None ? MW_WEAPON_TYPE.HandToHand : mwType;
+}
+
+/** CharacterController::UpperBodyState (character.hpp:107-117), in its own
+ *  order. Casting is out of scope for this slice - Daggerfall's spell
+ *  hand is the port's own viewmodel - and is absent rather than aliased,
+ *  because an enum with a member the code never reaches is a lie the next
+ *  reader has to disprove. */
+export const UPPER_BODY = Object.freeze({
+  None: 'none',
+  Equipping: 'equipping',
+  Unequipping: 'unequipping',
+  WeaponEquipped: 'weaponEquipped',
+  AttackWindUp: 'attackWindUp',
+  AttackRelease: 'attackRelease',
+  AttackEnd: 'attackEnd',
+});
+
+/** AnimState::getCompletion - the fraction of [startTime, stopTime] the
+ *  playhead has covered. refreshIdleAnims feeds it straight back in as
+ *  the next play's startPoint (:822-825), so a finished idle restarts AT
+ *  ITS OWN END and the loop window immediately wraps it. That is not a
+ *  bug being reproduced; it is why a re-armed idle does not visibly
+ *  stutter back to the beginning. */
+export function clipCompletion(state) {
+  if (!state) return 0;
+  const span = state.stopTime - state.startTime;
+  if (!(span > 0)) return 0;
+  return Math.min(1, Math.max(0, (state.time - state.startTime) / span));
+}
+
+/**
+ * THE RELEASE'S START POINT, resolved against the file's own key times.
+ *
+ * Split out of the runtime so it can be pinned without a GPU: it is the
+ * three getTextKeyTime calls of character.cpp:1767-1783 and nothing else.
+ * Every one of them is a PREFIX lookup that answers -1 when the key is
+ * absent (rule 46), and releaseStartPoint's ordering tests are what
+ * filter that - no sentinel test anywhere, exactly as the reference.
+ */
+export function releaseSkip(keys, group, attackType, strength) {
+  const k = attackKeys(attackType, strength);
+  const t = (name) => getTextKeyTime(keys, `${group}: ${name}`);
+  return releaseStartPoint(strength, {
+    minAttackTime: t(k.minAttack),
+    maxAttackTime: t(k.maxAttack),
+    minHitTime: t(k.minHit),
+    hitTime: t(k.hitKey),
+  });
+}
 
 /**
  * RULE 54, AND THE PORT MAPPER IS GONE.
@@ -209,7 +309,7 @@ export function packFpArm(pieces, out = null) {
     // several textures and the character path issues drawArrays. The
     // range carries the piece's own texture name; the caller resolves it
     // once and hangs the GL texture here.
-    ranges.push({ first, count, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null });
+    ranges.push({ first, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
     first += count;
   }
   return { packed: buf, ranges };
@@ -344,20 +444,45 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows: wanted };
     }
-    const clip = await clipReport({ kfBytes, skeleton: arm.skeleton, group: FP_CLIP_GROUP });
-    if (!clip.ok || !clip.clip.ok) {
+    // MW-D12: the report is asked for the BASE idle, and its `clip` is
+    // not what drives the arm any more. Rule 9 composes the real group
+    // from the drawn weapon's short suffix, and the drawn weapon changes
+    // while the game runs - so the group is resolved LIVE, below, and
+    // what the build needs from here is the key list and the group list.
+    const clip = await clipReport({ kfBytes, skeleton: arm.skeleton, group: FP_IDLE_BASE });
+    if (!clip.ok) {
       return {
-        ok: false,
-        stage: 'clip',
-        error: clip.ok ? clip.clip.reason : clip.error,
-        notes: [...missing, ...(arm.notes || [])],
-        rows: wanted,
+        ok: false, stage: 'clip', error: clip.error,
+        notes: [...missing, ...(arm.notes || [])], rows: wanted,
+      };
+    }
+    const groupSet = new Set(clip.groups);
+    // THE REFUSAL MOVES WITH THE RULE. MW-D8 refused when "Idle" did not
+    // reset; that group need not exist at all in a first-person .kf that
+    // only carries idle1h and friends. What must exist is SOME idle this
+    // actor's stance can reach, and composeStanceGroup is the reference's
+    // own ladder for finding it - asked group, short-group fallback, bare
+    // base. Nothing below that: the reverted arc's "any idle in the file"
+    // tail is what let it draw a plausible wrong animation.
+    const idleProbe = composeStanceGroup(FP_IDLE_BASE, animWeaponType(mwType, true), (n) => groupSet.has(n));
+    if (!idleProbe.group) {
+      return {
+        ok: false, stage: 'clip',
+        error: `this .kf names no "${FP_IDLE_BASE}" group and no weapon-suffixed variant of one`,
+        notes: [...missing, ...(arm.notes || [])], rows: wanted,
+      };
+    }
+    const idleCheck = resetClip(clip.keys, idleProbe.group, { loopFallback: true });
+    if (!idleCheck.ok) {
+      return {
+        ok: false, stage: 'clip', error: idleCheck.reason,
+        notes: [...missing, ...(arm.notes || [])], rows: wanted,
       };
     }
     const tracks = clip.trackMap;
     const accumRoot = accumRootRef(arm.skeleton, tracks);
     const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
-    const c = clip.clip;
+    const c = idleCheck;
     const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
     const union = clipUnionBounds(arm, poseAt, times);
     poseAt(c.startTime);
@@ -385,6 +510,16 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       accumRoot,
       keys: clip.keys,
       clip: c,
+      // MW-D12: the file's own answer to "does this animation exist",
+      // which rules 9 and 10 both consult. A Set, because
+      // composeStanceGroup calls it up to three times per stance change
+      // and composeWeaponGroup twice more.
+      groups: clip.groups,
+      groupSet,
+      // The Morrowind weapon type this arm was built holding. Rule 8's
+      // ANIMATION type is derived from it live (animWeaponType), because
+      // sheathing changes the answer without rebuilding anything.
+      mwType,
       textures,
       cameraRef,
       reach,
@@ -474,12 +609,37 @@ export function createFpArm() {
   let built = null;
   let mesh = null;
   let packed = null;
-  let state = null;
   let reason = 'not built';
   let frames = 0;
   let busy = false;
 
-  const active = () => !!(built && built.ok && mesh && renderer && camera && state);
+  // MW-D12: TWO CLIP SLOTS, because Morrowind's first-person arm plays
+  // TWO animations and the port had one.
+  //
+  // The reference keeps mCurrentIdle and mCurrentWeapon as separate
+  // AnimStates on separate priorities and lets rule 26 resolve them per
+  // bone group. In first person the weapon group is played on
+  // BlendMask_All at priorityWeapon, and the idle at a lower priority on
+  // the same mask, so the resolution is not a blend at all: WHILE A
+  // WEAPON ANIMATION IS PLAYING IT WINS EVERY BONE. That is why this can
+  // be two slots and a winner rather than the whole priority vector -
+  // and it is stated here so that when a third animation arrives
+  // (hit recoil, sneak) somebody ports rule 26 instead of adding a third
+  // `if`.
+  let idleState = null;
+  let actionState = null;
+  let idleGroup = null;
+  let weaponGroup = null;
+  let upper = UPPER_BODY.None;
+  let attackType = null;
+  let attackStrength = 1;
+  let sheathed = true;
+  let weaponShown = false;
+  let holdWindUp = false;
+  let resetIdleOnAttackEnd = false;
+  const notes = [];
+
+  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || idleState));
 
   /**
    * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.
@@ -499,7 +659,7 @@ export function createFpArm() {
    * These are exactly update()'s own requirements: a camera is a DRAW
    * term, and posing without one is harmless work, not a wrong picture.
    */
-  const ready = () => !!(built && built.ok && state && renderer);
+  const ready = () => !!(built && built.ok && (actionState || idleState) && renderer);
 
   function releaseMesh() {
     if (mesh && renderer && renderer.gl) {
@@ -512,6 +672,167 @@ export function createFpArm() {
       for (const r of mesh.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
     }
     mesh = null;
+  }
+
+  const hasGroup = (n) => !!built && built.groupSet.has(n);
+
+  /** The file's time for a key of the CURRENT weapon group, as
+   *  getTextKeyTime is always called (character.cpp:1241): the group, a
+   *  colon-space, and the action. -1 when the file has no such key. */
+  const keyTime = (action) => (weaponGroup && built
+    ? getTextKeyTime(built.keys, `${weaponGroup}: ${action}`) : -1);
+
+  /** Play a section of the weapon group. Returns FALSE and leaves the
+   *  slot empty when the file has no such window - it never substitutes
+   *  a different one, because a substituted attack animation is the
+   *  reverted arc's whole failure mode in miniature. */
+  function playAction(start, stop, startPoint = 0) {
+    if (!built || !weaponGroup) return false;
+    const s2 = resetClip(built.keys, weaponGroup, { start, stop, startPoint });
+    if (!s2.ok) {
+      actionState = null;
+      notes.push(`${weaponGroup}: ${s2.reason}`);
+      return false;
+    }
+    actionState = s2;
+    return true;
+  }
+
+  /**
+   * REFRESHIDLEANIMS, the first-person half (character.cpp:773-830).
+   *
+   * Called EVERY FRAME, exactly as the reference calls it, and its early
+   * return is what keeps that cheap: the same group still playing is left
+   * alone. What it is NOT is a one-shot at build time - the group depends
+   * on the drawn weapon, so sheathing has to be able to change it without
+   * anything else being torn down.
+   */
+  function refreshIdle(force = false) {
+    if (!built || !built.ok) return;
+    const type = animWeaponType(built.mwType, sheathed);
+    if (!force && idleState && idleState.playing) {
+      // Only the GROUP can have gone stale; a playing idle of the right
+      // group is left exactly where it is.
+      const composed = composeStanceGroup(FP_IDLE_BASE, type, hasGroup);
+      if (composed.group === idleGroup) return;
+    }
+    const composed = composeStanceGroup(FP_IDLE_BASE, type, hasGroup);
+    if (!composed.group) { idleState = null; idleGroup = null; return; }
+    // Rule 10's condition: the dice roll happens only when the stance HAS
+    // a short group. Bare hands away idle forever.
+    const short = weaponShortGroup(type);
+    const loopCount = short ? FP_IDLE_LOOPS() : Infinity;
+    // :822-825 - a restart of the SAME group resumes from where it was.
+    const startPoint = idleGroup === composed.group ? clipCompletion(idleState) : 0;
+    const s2 = resetClip(built.keys, composed.group, { loopFallback: true, loopCount, startPoint });
+    if (!s2.ok) { idleState = null; idleGroup = null; notes.push(`idle: ${s2.reason}`); return; }
+    idleGroup = composed.group;
+    idleState = s2;
+  }
+
+  /** resetCurrentIdleState (:1850-1853 via mResetIdleOnAttackEnd): drop
+   *  the idle so the next refresh replays it from its start with a fresh
+   *  loop count, rather than resuming mid-swing-shaped. */
+  function resetIdle() { idleState = null; idleGroup = null; refreshIdle(true); }
+
+  /** Rule 9's long group for the CURRENT stance, and the equip/unequip
+   *  and attack sections all live in it. */
+  function refreshWeaponGroup() {
+    if (!built || !built.ok) { weaponGroup = null; return; }
+    const type = animWeaponType(built.mwType, sheathed);
+    weaponGroup = composeWeaponGroup(type, hasGroup).group;
+  }
+
+  /** ANIMATION::HANDLETEXTKEY's first-person consequences. Rule 47's
+   *  group test is `mine` - a key of another group crossed by this
+   *  playhead is not this animation's business. */
+  function onActionKey(text, time, mine) {
+    if (!mine || !weaponGroup) return;
+    const action = text.slice(weaponGroup.length + 2);
+    // showWeapons(true/false) at the attach/detach keys
+    // (character.cpp:1468-1472, :1481-1483).
+    if (action === EQUIP_KEYS.attach) weaponShown = true;
+    else if (action === UNEQUIP_KEYS.detach) weaponShown = false;
+  }
+
+  /** PREPAREHIT's strength half (character.cpp:1250-1259), which is the
+   *  ONLY thing that decides which of small/medium/large follow keys the
+   *  blow ends on and how much of the release it skips. */
+  function windUpStrength() {
+    if (!actionState) return 1;
+    const f = calculateWindUp(actionState.time, keyTime(`${attackType} min attack`),
+      keyTime(`${attackType} max attack`));
+    // The sentinel is NOT zero: a group with no wind-up window gets a
+    // random 0.1..1.0 blow, which is how creature attacks with no
+    // min/max keys still vary.
+    return f === -1 ? Math.min(1, 0.1 + Math.random()) : f;
+  }
+
+  /** UpperBodyState::AttackWindUp -> AttackRelease (:1725-1790). */
+  function beginRelease() {
+    attackStrength = windUpStrength();
+    upper = UPPER_BODY.AttackRelease;
+    const k = attackKeys(attackType, attackStrength);
+    const startPoint = releaseSkip(built.keys, weaponGroup, attackType, attackStrength);
+    if (!playAction(k.release.start, k.release.stop, startPoint)) beginFollow();
+  }
+
+  /** AttackRelease -> AttackEnd (:1793-1812): the follow-through, whose
+   *  key names carry the strength word for a melee blow and do not for a
+   *  shot. */
+  function beginFollow() {
+    upper = UPPER_BODY.AttackEnd;
+    const k = attackKeys(attackType, attackStrength);
+    if (!playAction(k.follow.start, k.follow.stop, 0)) endAttack();
+  }
+
+  /** AttackEnd -> WeaponEquipped (:1821-1856). */
+  function endAttack() {
+    actionState = null;
+    upper = UPPER_BODY.WeaponEquipped;
+    attackType = null;
+    if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
+  }
+
+  /** UPDATEWEAPONSTATE's tail, run once per frame: every transition here
+   *  is "the section that was playing has finished". */
+  function stepUpper() {
+    const playing = !!(actionState && actionState.playing);
+    if (playing) return;
+    switch (upper) {
+      case UPPER_BODY.Equipping:
+        actionState = null;
+        upper = UPPER_BODY.WeaponEquipped;
+        if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
+        break;
+      case UPPER_BODY.Unequipping:
+        // :1857-1859 - THIS is where the weapon type becomes None, and
+        // with it the stance drops to the bare "idle" of rule 10's
+        // endless loop.
+        actionState = null;
+        upper = UPPER_BODY.None;
+        sheathed = true;
+        refreshWeaponGroup();
+        refreshIdle(true);
+        break;
+      case UPPER_BODY.AttackWindUp:
+        // THE BOW HOLDS HERE and nothing else does. The reference leaves
+        // AttackWindUp when getAttackingOrSpell() goes false - the button
+        // came up - so a weapon the player cannot charge leaves it the
+        // instant the wind-up section ends, at full strength. Daggerfall's
+        // melee swing is exactly that: uncharged, so released at max.
+        if (!holdWindUp) beginRelease();
+        break;
+      case UPPER_BODY.AttackRelease:
+        beginFollow();
+        break;
+      case UPPER_BODY.AttackEnd:
+        endAttack();
+        break;
+      default:
+        if (actionState) actionState = null;
+        break;
+    }
   }
 
   return {
@@ -528,27 +849,164 @@ export function createFpArm() {
         releaseMesh();
         built = res;
         packed = null;
-        state = null;
+        idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
+        upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
+        weaponShown = false; notes.length = 0;
+        // A REBUILT ARM STARTS SHEATHED, whatever the last one was doing.
+        // The build is triggered by a button, and the player is not
+        // mid-swing when they press it; carrying a stale AttackRelease
+        // across a rebuild would leave the machine waiting for a clip
+        // that no longer exists.
+        sheathed = true;
         if (!res.ok) { reason = `${res.stage}: ${res.error}`; built = res; return res; }
-        state = resetClip(res.keys, FP_CLIP_GROUP);
-        if (!state.ok) {
-          built = null; state = null;
-          reason = `clip: ${state.reason}`;
-          return { ok: false, stage: 'clip', error: state.reason };
+        refreshWeaponGroup();
+        refreshIdle(true);
+        if (!idleState) {
+          built = null;
+          reason = 'clip: no idle group this stance can reach';
+          return { ok: false, stage: 'clip', error: reason };
         }
         reason = 'built';
         return res;
       } finally { busy = false; }
     },
 
-    unload() { releaseMesh(); built = null; state = null; packed = null; reason = 'unloaded'; },
+    unload() {
+      releaseMesh(); built = null; packed = null;
+      idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
+      upper = UPPER_BODY.None; attackType = null; holdWindUp = false; weaponShown = false;
+      notes.length = 0;
+      reason = 'unloaded';
+    },
+
+    /**
+     * THE DRAWN/SHEATHED SWITCH, which is a whole animation state and not
+     * a boolean the draw path reads.
+     *
+     * Rule 8: sheathed is weapon type None - the bare "idle" group with
+     * rule 10's endless loop and no weapon in shot. Drawn is the weapon's
+     * own type, its "idle<short>" stance, and the equip section played
+     * once on the way in. The reference reaches this through
+     * updateWeaponState comparing `weaptype` to `mWeaponType`
+     * (character.cpp:1382-1500); here the caller says which it wants and
+     * the same two sections play.
+     */
+    setSheathed(next) {
+      const want = !!next;
+      if (!built || !built.ok) return false;
+      if (want === sheathed) return false;
+      // THE TWO HALVES ARE NOT SYMMETRIC, and that asymmetry is the rule.
+      //
+      // Drawing sets mWeaponType to the new type AS THE EQUIP ANIMATION
+      // STARTS (character.cpp:1495-1496), so the stance becomes "idle1h"
+      // immediately. Sheathing does NOT: mWeaponType stays the old type
+      // for the whole unequip section and only becomes None when it
+      // finishes (:1857-1859). Flipping it early would compose the
+      // unequip section's group name from a weapon that is already gone -
+      // the animation would look for "unequip start" in the bare-handed
+      // group and find nothing, and the weapon would vanish rather than
+      // be put away.
+      if (want) {
+        // :1384 - the guard against restarting the unequip we are
+        // already playing, which the per-frame sync makes load-bearing.
+        if (upper === UPPER_BODY.Unequipping) return false;
+        if (upper === UPPER_BODY.None || !weaponGroup) {
+          sheathed = true; weaponShown = false;
+          refreshWeaponGroup(); refreshIdle(true);
+          return true;
+        }
+        upper = UPPER_BODY.Unequipping;
+        // If the file has no "unequip detach" key the weapon is hidden
+        // by hand, immediately (:1481-1483).
+        const detach = keyTime(UNEQUIP_KEYS.detach);
+        if (!playAction(UNEQUIP_KEYS.start, UNEQUIP_KEYS.stop, 0)) {
+          upper = UPPER_BODY.None; sheathed = true; weaponShown = false;
+          refreshWeaponGroup(); refreshIdle(true);
+          return true;
+        }
+        if (detach < 0) weaponShown = false;
+        return true;
+      }
+      sheathed = false;
+      refreshWeaponGroup();
+      upper = UPPER_BODY.Equipping;
+      resetIdleOnAttackEnd = true;
+      const attach = keyTime(EQUIP_KEYS.attach);
+      if (!playAction(EQUIP_KEYS.start, EQUIP_KEYS.stop, 0)) { upper = UPPER_BODY.WeaponEquipped; weaponShown = true; }
+      // :1468-1472 - no "equip attach" key means show the weapon now.
+      if (attach < 0) weaponShown = true;
+      refreshIdle(true);
+      return true;
+    },
+
+    /**
+     * A BLOW STARTS. `strike` is Daggerfall's own six-way gesture result,
+     * which rule 11's recorded divergence maps onto Morrowind's three
+     * attack types by the SHAPE OF THE MOTION.
+     *
+     * The wind-up is all that is played here. What follows it is decided
+     * by the machine: a bow HOLDS at full draw until release() (which is
+     * what the port's own StrikeUp draw frame does), and everything else
+     * runs straight on into the release at full strength - because
+     * Daggerfall's swing has no charge, so the button is never "still
+     * held at max attack".
+     */
+    attack(strike, { bow = false, hold = false } = {}) {
+      if (!built || !built.ok || sheathed) return null;
+      if (upper !== UPPER_BODY.WeaponEquipped) return null;
+      const type = mwAttackType(strike, { bow });
+      if (!type) return null;
+      attackType = type;
+      attackStrength = 1;
+      resetIdleOnAttackEnd = true;
+      // `hold` is the caller's machine, not a guess about bows. The
+      // port's in-game bow is DFU's BowDrawback-OFF instant shot
+      // (playerWeapon.gesture:105-111), so it does NOT hold and does not
+      // ask to; the drawn-and-holding StrikeUp state exists in the same
+      // machine and the paperdoll viewer drives it. Coupling the hold to
+      // `bow` would hang the arm at full draw waiting for a release the
+      // game path never sends.
+      holdWindUp = !!hold;
+      upper = UPPER_BODY.AttackWindUp;
+      const k = attackKeys(type, 1);
+      if (!playAction(k.windUp.start, k.windUp.stop, 0)) {
+        upper = UPPER_BODY.WeaponEquipped;
+        attackType = null;
+        holdWindUp = false;
+        return null;
+      }
+      return type;
+    },
+
+    /** The held bow comes up. Everything else releases itself. */
+    release() {
+      if (upper !== UPPER_BODY.AttackWindUp) return false;
+      holdWindUp = false;
+      if (actionState && actionState.playing) return true;   // still winding up; the machine takes it
+      beginRelease();
+      return true;
+    },
 
     /** PER FRAME. Synchronous, no allocation after the first pack, no
      *  await and no dynamic import - a promise per frame in a rAF body
      *  is a stutter you cannot profile out. */
     update(dt) {
-      if (!built || !built.ok || !state || !renderer) return;
-      advanceClip(state, built.keys, dt, null);
+      if (!built || !built.ok || !renderer) return;
+      // refreshCurrentAnims' order, and it is not arbitrary: the weapon
+      // state is stepped FIRST because the idle refresh below depends on
+      // it - "idle handled last as it can depend on the other states"
+      // (character.cpp:842).
+      if (actionState) {
+        advanceClip(actionState, built.keys, dt, onActionKey);
+        stepUpper();
+      }
+      if (idleState) advanceClip(idleState, built.keys, dt, null);
+      refreshIdle();
+      if (!actionState && !idleState) return;
+      // THE WINNER, not a blend. See the two-slot note above: in first
+      // person both animations are played on BlendMask_All, so the higher
+      // priority takes every bone for as long as it is playing.
+      const state = actionState || idleState;
       // Rule 54's neck: the camera node hangs off "bip01 neck", so the
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
@@ -586,6 +1044,12 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
+      // Animation::showWeapons, and it HIDES rather than removes - which
+      // is rule 57's own distinction and the reason it is a per-range
+      // flag and not a shorter vertex stream. Repacking without the
+      // weapon would change the buffer's length every time you drew or
+      // sheathed, orphaning the ranges the textures hang on.
+      for (const r of mesh.ranges) if (r.slot === 'weapon') r.hidden = !weaponShown;
       frames++;
     },
 
@@ -660,7 +1124,19 @@ export function createFpArm() {
         cameraBone: built && built.ok ? built.cameraBone : null,
         reach: built && built.ok ? built.reach : null,
         clip: built && built.ok ? { start: built.clip.startTime, stop: built.clip.stopTime } : null,
-        time: state ? state.time : null,
+        // MW-D12: the card reports the ANIMATION state, because "built"
+        // stopped being the whole question the moment there were two
+        // clips and a machine between them. A frozen arm now has a name.
+        idleGroup,
+        weaponGroup,
+        upper,
+        attackType,
+        sheathed,
+        weaponShown,
+        loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
+        groups: built && built.ok ? built.groups : null,
+        clipNotes: notes.slice(-6),
+        time: actionState ? actionState.time : (idleState ? idleState.time : null),
         frames,
       };
     },
@@ -668,9 +1144,13 @@ export function createFpArm() {
     /** Probe readbacks. Every one runs THIS module's own code - a probe
      *  with its own copy measures the copy. */
     rows: () => (built && built.ok ? armPieceRows(built.arm.pieces).map((r) => ({ ...r })) : null),
-    trace({ dt = 0.2, steps = 40, loopCount = 2 } = {}) {
+    /** The GPU mesh, for the pins that have to see the RANGES - which
+     *  piece is hidden, and that the list never changes length. */
+    mesh: () => mesh,
+    trace({ dt = 0.2, steps = 40, loopCount = 2, group = null } = {}) {
       if (!built || !built.ok) return null;
-      const s2 = resetClip(built.keys, FP_CLIP_GROUP, { loopCount });
+      const s2 = resetClip(built.keys, group || idleGroup, { loopCount, loopFallback: true });
+      if (!s2.ok) return null;
       const out = [];
       for (let i = 0; i < steps && s2.playing; i++) {
         advanceClip(s2, built.keys, dt, null);

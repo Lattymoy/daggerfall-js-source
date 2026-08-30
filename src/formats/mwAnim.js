@@ -391,6 +391,42 @@ export function clipGroups(keys) {
   return [...set].sort();
 }
 
+/**
+ * RULE 46's TWO LOOKUPS, which are easy to conflate and are not the same
+ * search (animation.cpp:827-854).
+ *
+ * getTextKeyTime is a PREFIX test - `iterKey->second.starts_with(textKey)`
+ * - forward in time, first match wins, and it does NOT require an exact
+ * key. That is what lets `"weapononehand: chop min attack"` be asked for
+ * by a caller that never sees the key list.
+ *
+ * -1 IS THE NOT-FOUND VALUE, not null and not undefined, because the
+ * callers do ARITHMETIC on it. The recorded caveat on rule 46 is exactly
+ * this: two of the nine call sites never test the sentinel and instead
+ * let the ORDERING comparison filter it (character.cpp:1879-1882 guards
+ * `startTime <= currentTime && currentTime < minAttackTime` before
+ * dividing). A port that returned null here would turn those comparisons
+ * into `false` by coercion in some and NaN in others, and the arithmetic
+ * would stop matching.
+ */
+export function getTextKeyTime(keys, textKey) {
+  const want = String(textKey ?? '');
+  for (const k of keys ?? []) if (k.text.startsWith(want)) return k.time;
+  return -1;
+}
+
+/** getStartTime (animation.cpp:827-840) with findGroupStart's predicate
+ *  (components/sceneutil/textkeymap.hpp): the group's EARLIEST key
+ *  whatever its action, which is not the same as its "start" key. The
+ *  ": " test is what stops "idle" matching "idle2: start". */
+export function getStartTime(keys, group) {
+  const g = asciiLower(String(group ?? ''));
+  for (const k of keys ?? []) {
+    if (k.text.startsWith(g) && k.text.slice(g.length, g.length + 2) === ': ') return k.time;
+  }
+  return -1;
+}
+
 /** RULE 22's `equalsParts`: starts_with then ==, i.e. exact equality with
  *  the parts joined. Kept as its own function because the stop key uses it
  *  on a TRUNCATED candidate and the start key does not. */

@@ -771,6 +771,11 @@ export class Renderer {
     gl.uniform1i(c.tex, 0);
     if (mesh.ranges && mesh.ranges.length) {
       for (const r of mesh.ranges) {
+        // MW-D12: a HIDDEN range still owns its vertices and its texture
+        // - Morrowind's showWeapons hides the node, it does not delete it
+        // (rule 57), and a sheathed weapon has to come back without a
+        // repack.
+        if (r.hidden) continue;
         gl.uniform1f(c.useTex, r.tex ? 1 : 0);
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
