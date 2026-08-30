@@ -68,6 +68,11 @@ export const CAMERA_OBSTACLE_LIMIT = 5;
  *  collision area". */
 export const FOCAL_OBSTACLE_LIMIT = 10;
 
+/** MW-D30 / camera.cpp:323-331 - setPitch clamps to +/-(PI/2 - epsilon)
+ *  with epsilon 0.000001f. The hosts had a hand-rolled +/-1.5, which
+ *  stops the look ~4 degrees short of straight up and down. */
+export const PITCH_LIMIT = Math.PI / 2 - 0.000001;
+
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 /**

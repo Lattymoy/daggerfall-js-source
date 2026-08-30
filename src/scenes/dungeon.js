@@ -26,6 +26,7 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
@@ -241,7 +242,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
       cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
     attackTap: () => ctx.playerClickAttack(),
@@ -262,7 +263,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
     cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
 
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);

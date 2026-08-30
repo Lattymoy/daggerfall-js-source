@@ -6,6 +6,7 @@
 // there); this file is data loading, the fly camera, and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -101,12 +102,12 @@ export async function bootInterior(canvas, renderer, params, status) {
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
     },
   });
 

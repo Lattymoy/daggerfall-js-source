@@ -27,6 +27,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDea
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
@@ -1253,7 +1254,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       return;
     }
     cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
   // (dungeon.js:184, "a right-click on a window is the window's...
@@ -1266,7 +1267,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },

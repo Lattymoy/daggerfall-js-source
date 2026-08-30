@@ -82,6 +82,7 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
@@ -2183,7 +2184,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
       // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
       // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed },
+      // MW-D30: the camera's two persisted halves ride the pose - the
+      // reference saves the first/third flag in its own REC_CAM_ record
+      // (worldimp.cpp:425-427) and the zoom distance through the camera
+      // script's onSave (camera.lua:347-352).
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state() },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -2299,6 +2304,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
     if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+    // MW-D30: the saved camera is FORCED, exactly as the reference
+    // applies its REC_CAM_ flag on load (statemanagerimp.cpp:617-618
+    // togglePOV when the live view differs). A pose without one (an
+    // older save, the classic import - a Daggerfall .SAV carries no
+    // Morrowind camera) leaves the live camera standing.
+    mwCamera.restore(pose.camera);
   }
   /**
    * SAV3: the classic-save import arm - StartFromClassicSave's game
@@ -2793,7 +2804,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
     cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
   // (dungeon.js:184, "a right-click on a window is the window's...
@@ -2806,7 +2817,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2
