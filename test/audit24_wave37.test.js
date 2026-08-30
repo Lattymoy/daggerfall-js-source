@@ -66,14 +66,18 @@ function fireListener(lineSrc, event = {}) {
     width: 320, height: 200,
   };
   const townTalk = { pointerdown: () => false, wheel: () => false, overlayActive: false };
+  // MW-D25: the shipped wheel line falls through to the Morrowind
+  // camera; in this harness there is no data, so it answers false -
+  // which is the live no-data behaviour too (mwView.js's guard).
+  const mwViewWheel = () => false;
   const requestLook = () => seen.push({ type: 'requestLook' });
   // U43: the bar is off in this harness, which is the state that must
   // still reach requestLook - a HUD that swallowed the click when it
   // is not even drawn would be the same class of bug as the crash.
   const routeLargeHudClick = () => false;
   const hudCtx = {};
-  new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx',
-    `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx);
+  new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
+    `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);

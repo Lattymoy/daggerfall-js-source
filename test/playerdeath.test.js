@@ -175,7 +175,13 @@ test('DC1: the standalone dungeon sinks OUTSIDE the overlay-held walk branch, th
   assert.ok(flyBranch !== -1 && sinkAt > flyBranch, 'the sink sits after the held walk/fly branches close');
   // The view matrix is built from cam.pos BELOW the sink, or the sink
   // writes a camera nobody renders.
-  const view = scene.indexOf('const view = lookAt(cam.pos', sinkAt);
+  // MW-D25: the view is built from the camera machine's eye, and the
+  // machine reads cam.pos as its first-person eye - so the sink still
+  // flows into the frame through mwViewFrame's fpEye. Both halves of
+  // that route are asserted, below the sink.
+  const mwvAt = scene.indexOf('mwViewFrame({ fpEye: cam.pos', sinkAt);
+  assert.ok(mwvAt !== -1, 'the sink lands before the machine reads the eye');
+  const view = scene.indexOf('const view = lookAt(mwv.eye', mwvAt);
   assert.ok(view !== -1, 'the sink lands before the frame builds its view');
   // The seam's two halves: the context computes the drop off its own
   // overlay slot, and the scene binds the live motor for the start heights.

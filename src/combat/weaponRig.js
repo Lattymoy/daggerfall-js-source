@@ -260,6 +260,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();
+      // MW-D24: in THIRD PERSON nothing first-person draws at all - not
+      // the arm (its predicate is view-gated) and not the classic
+      // sprite either, or the player would wear a floating weapon
+      // overlay while watching their own back. Morrowind's third person
+      // has no viewmodel; the body carries the weapon.
+      if (fpArm.thirdActive()) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a

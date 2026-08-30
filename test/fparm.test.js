@@ -280,8 +280,14 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // playing", which is the same guarantee: an arm with neither an idle
   // nor an action to pose from is the frozen bind pose, and the sprite
   // is the correct picture instead.
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| idleState\)\);/,
-    'built, built.ok, mesh, renderer, camera AND a clip - all six');
+  // MW-D24 added the SEVENTH term: the first-person overlay is a
+  // first-person predicate, and in third person it answers false by
+  // design (the reference masks the whole FP root out of the scene,
+  // Mask_FirstPerson on view change) - so weaponRig's fallthrough is
+  // gated by the THIRD predicate at its own call site, never by this
+  // one going quietly stale.
+  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| idleState\)\s*&& viewMode === 'first'\);/,
+    'built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all seven');
 });
 
 test('MW-D8: the frame path is synchronous - no await, no dynamic import, in update or draw', () => {
@@ -924,4 +930,202 @@ test('MW-D22: mType reads from byte EIGHT, pinned against a layout the writer ca
   assert.equal(recs.length, 1);
   assert.equal(recs[0].type, MW_WEAPON_TYPE.BluntTwoWide,
     'the type is the int16 at offset 8 - not mHealth at 10, which retail play read for two slices');
+});
+
+// ── MW-D24: THE THIRD-PERSON BODY, TWO RIGS AND ONE MACHINE ─────────
+
+import { tpSkeletonPath } from '../src/combat/fpArm.js';
+import { tpAnimSources, playerBodyRows, TP_BASE_MODEL } from '../src/formats/mwFirstPerson.js';
+
+test('MW-D24 rule 6: the third-person skeleton column (actorutil.cpp:504-513)', () => {
+  assert.equal(tpSkeletonPath({}), 'meshes/base_anim.nif');
+  assert.equal(tpSkeletonPath({ female: true }), 'meshes/base_anim_female.nif');
+  assert.equal(tpSkeletonPath({ beast: true }), 'meshes/base_animkna.nif');
+  // beast wins over sex, exactly as the reference's if-ladder orders it
+  assert.equal(tpSkeletonPath({ female: true, beast: true }), 'meshes/base_animkna.nif');
+});
+
+test('MW-D24: the third-person anim sources - base first, own second, extension swap ONLY', () => {
+  // npcanimation.cpp:534-538 (base then defaultSkeleton) and
+  // animation.cpp:651-654 (the kf name is the model with .nif -> .kf,
+  // NO "x" inserted - base_anim.nif looks for base_anim.kf).
+  assert.equal(TP_BASE_MODEL, 'meshes/xbase_anim.nif');
+  const all = new Set(['meshes/xbase_anim.kf', 'meshes/base_anim.kf']);
+  assert.deepEqual(tpAnimSources('meshes/base_anim.nif', (p) => all.has(p)),
+    ['meshes/xbase_anim.kf', 'meshes/base_anim.kf']);
+  // retail has no base_anim.kf: the base alone serves
+  const baseOnly = new Set(['meshes/xbase_anim.kf']);
+  assert.deepEqual(tpAnimSources('meshes/base_anim.nif', (p) => baseOnly.has(p)),
+    ['meshes/xbase_anim.kf']);
+  // and a female skeleton adds ITS own kf when present, no x inserted
+  const fem = new Set(['meshes/xbase_anim.kf', 'meshes/base_anim_female.kf']);
+  assert.deepEqual(tpAnimSources('meshes/base_anim_female.nif', (p) => fem.has(p)),
+    ['meshes/xbase_anim.kf', 'meshes/base_anim_female.kf']);
+});
+
+test('MW-D24: playerBodyRows - third-person records, sex fallback, no 1st, tails only on beasts', () => {
+  const P = (id, slot, { race = 'fprace', female = false, skin = true, playable = true } = {}) => ({
+    id, slot, race, female, skin, playable, firstPerson: id.toLowerCase().endsWith('1st'),
+    model: `fixture/${id}.nif`,
+  });
+  const parts = [
+    P('b_hand_m', 'hand'), P('b_hand_f', 'hand', { female: true }),
+    P('b_chest_m', 'chest'),
+    P('b_hands.1st', 'hand'),                       // rule 1: never the visible body
+    P('b_head_01', 'head'), P('b_head_02', 'head'),  // first in file order wins
+    P('b_other', 'hand', { race: 'otherrace' }),
+  ];
+  const male = playerBodyRows(parts, 'fprace', false);
+  const bySlot = new Map(male.map((r) => [r.slot, r]));
+  assert.equal(bySlot.get('hand').record.id, 'b_hand_m');
+  assert.equal(bySlot.get('chest').record.id, 'b_chest_m');
+  assert.equal(bySlot.get('head').record.id, 'b_head_01', 'the FIRST head in file order');
+  assert.equal(bySlot.has('tail'), false, 'a missing tail on a non-beast race is the data being right');
+  const female = playerBodyRows(parts, 'fprace', true);
+  const fBySlot = new Map(female.map((r) => [r.slot, r]));
+  assert.equal(fBySlot.get('hand').record.id, 'b_hand_f', 'sex-matched when a female record exists');
+  assert.equal(fBySlot.get('chest').record.id, 'b_chest_m', 'male fallback when it does not');
+  // a beast race REPORTS its missing tail rather than skipping it
+  const beast = playerBodyRows(parts, 'fprace', false, { beast: true });
+  assert.equal(beast.find((r) => r.slot === 'tail').verdict, 'NOTHING for this slot');
+});
+
+/** A minimal TES3 BODY record, laid out by hand (record = name[4] +
+ *  size + 8 header bytes + subrecords; each sub = name[4] + size +
+ *  data) - so no writer shares the reader's guess. */
+function bodyRec(id, model, race, part, { female = false } = {}) {
+  const sub = (name, data) => {
+    const b = new Uint8Array(8 + data.length);
+    b.set([...name].map((c) => c.charCodeAt(0)), 0);
+    new DataView(b.buffer).setUint32(4, data.length, true);
+    b.set(data, 8);
+    return b;
+  };
+  const z = (s) => Uint8Array.from([...s].map((c) => c.charCodeAt(0)).concat(0));
+  const bydt = new Uint8Array(4);
+  bydt[0] = part; bydt[2] = female ? 1 : 0; bydt[3] = 0;   // BPF_Female=1; MT_Skin=0
+  const subs = [sub('NAME', z(id)), sub('MODL', z(model)), sub('FNAM', z(race)), sub('BYDT', bydt)];
+  const size = subs.reduce((a, s) => a + s.length, 0);
+  const rec = new Uint8Array(16 + size);
+  rec.set([..."BODY"].map((c) => c.charCodeAt(0)), 0);
+  new DataView(rec.buffer).setUint32(4, size, true);
+  let o = 16;
+  for (const s of subs) { rec.set(s, o); o += s.length; }
+  return rec;
+}
+
+async function fpFixtureBuildWithBody() {
+  // The FP fixture build, PLUS the third-person names: the same rig
+  // bytes serve as base_anim.nif (the 3P build asks no camera of it)
+  // and the same idle .kf as xbase_anim.kf - what is under test is the
+  // PATH LAW and the two-rig machine, not new geometry.
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+    // RULE 18 x-swaps the settings name when the x-form's kf exists -
+    // which retail HAS (xbase_anim.nif + xbase_anim.kf), so the fixture
+    // carries the retail arrangement and the 3P root resolves to the
+    // x-model exactly as OpenMW's does.
+    ['meshes/xbase_anim.nif', f('armfp.nif')],
+    ['meshes/xbase_anim.kf', f('armfpidle.kf')],
+  ]);
+  // hand=5, upperarm=8 in MW_BODY_PARTS order (loadbody.hpp MeshPart)
+  const esm = f('armfp.esm');
+  const extra = [
+    bodyRec('b_fprace_m_hand', 'fixture\\armfphand.nif', 'fprace', 5),
+    bodyRec('b_fprace_m_upperarm', 'fixture\\armfparm.nif', 'fprace', 8),
+  ];
+  const all = new Uint8Array(esm.length + extra.reduce((a, r) => a + r.length, 0));
+  all.set(esm, 0);
+  let o = esm.length;
+  for (const r of extra) { all.set(r, o); o += r.length; }
+  return {
+    files,
+    deps: {
+      loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+      storedMorrowindNames: async () => ['armfp.esm'],
+      loadMorrowindFile: async () => all,
+    },
+  };
+}
+
+test('MW-D24: the build carries the third-person body, through the same doors', async () => {
+  const fx = await fpFixtureBuildWithBody();
+  const res = await buildFpArm({ race: 'fprace', deps: fx.deps });
+  assert.equal(res.ok, true, `the arm still builds (${res.stage}: ${res.error})`);
+  const t = res.third;
+  assert.ok(t, 'the third-person body rode the build');
+  assert.equal(t.ok, true, `and it BUILT (${t && t.stage}: ${t && t.error})`);
+  assert.equal(t.skeletonPath, 'meshes/xbase_anim.nif',
+    'rule 6\'s other column through rule 18\'s x-swap - the retail 3P root IS the x-model');
+  assert.deepEqual(t.sourcePaths, ['meshes/xbase_anim.kf'], 'the base kf serves, extension-swapped, no x inserted');
+  // hand binds both sides (skinned pair), upperarm both sides (rigid
+  // pair with the mirror) - four pieces, exactly the arm fixture's own
+  // count through the SAME one assembly door.
+  assert.equal(t.pieces, 4, `both slots bound both sides (${t.pieces})`);
+  assert.ok(t.groupSet.has('idle'), 'the 3P kf names the idle the machine will resolve');
+});
+
+test('MW-D24: one machine, two rigs - the view switch re-resolves the stance on the OTHER kf', async () => {
+  const fx = await fpFixtureBuildWithBody();
+  const arm = createFpArm();
+  arm.attach({}, () => ({ pos: [0, 0, 0], yaw: 0, pitch: 0 }));
+  const res = await arm.build({ race: 'fprace', deps: fx.deps });
+  assert.equal(res.ok, true);
+  assert.equal(arm.status().viewMode, 'first', 'the machine boots in first person (camera.cpp:58)');
+  assert.equal(arm.canThirdPerson(), true, 'and the wheel has somewhere to go');
+  assert.equal(arm.upperBodyReady(), true, 'a rested stance crosses immediately');
+  // THE SWITCH: npcanimation.cpp:295-317's rebuild expressed as a
+  // re-resolution - the idle re-picks from the 3P sources.
+  assert.equal(arm.setViewMode('third'), true);
+  const st = arm.status();
+  assert.equal(st.viewMode, 'third');
+  assert.equal(st.idleSource, 'meshes/xbase_anim.kf', 'the idle now plays from the THIRD-person kf');
+  assert.equal(arm.active(), false, 'the FP overlay predicate answers false in third person - the seventh term');
+  // and back: the same machine re-resolves on the first-person sources
+  assert.equal(arm.setViewMode('first'), true);
+  assert.equal(arm.status().idleSource, FP_CLIP_PATH, 'and back onto the first-person kf');
+});
+
+test('MW-D24: a body that cannot build REFUSES the wheel, never the arm', async () => {
+  // The plain FP fixture has no third-person records at all: the arm
+  // builds, the body reports its refusal, and setViewMode says no.
+  const res = await fpFixtureBuild();
+  assert.equal(res.ok, true, 'the arm is untouched by the body\'s refusal');
+  assert.ok(res.third && res.third.ok === false, 'the body refusal is CARRIED, not silent');
+  assert.equal(res.third.stage, 'skeleton', `and named (${res.third.stage}: ${res.third.error})`);
+  const arm = createFpArm();
+  arm.attach({}, () => ({ pos: [0, 0, 0], yaw: 0 }));
+  await arm.build({ race: 'fprace', deps: (await (async () => {
+    const files = new Map([
+      [fpSkeletonPath({}), f('armfp.nif')],
+      [FP_CLIP_PATH, f('armfpidle.kf')],
+      ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+      ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+      ['textures/tx_fixture.dds', f('fixture.dds')],
+    ]);
+    return {
+      loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+      storedMorrowindNames: async () => ['armfp.esm'],
+      loadMorrowindFile: async () => f('armfp.esm'),
+    };
+  })()) });
+  assert.equal(arm.canThirdPerson(), false);
+  assert.equal(arm.setViewMode('third'), false, 'the switch refuses');
+  assert.equal(arm.status().viewMode, 'first', 'and the machine stays in the view that exists');
+});
+
+test('MW-D24: in third person NOTHING first-person draws - the rig\'s one seam is double-gated', () => {
+  // weaponRig.draw: the classic sprite is the fallthrough when the arm
+  // is inactive - and active() is now view-gated, so without its own
+  // gate the sprite would paste a floating weapon overlay over the
+  // player's back. Morrowind's third person has no viewmodel.
+  const src = rd('src/combat/weaponRig.js');
+  const drawAt = src.indexOf('if (fpArm.thirdActive()) return;');
+  const armAt = src.indexOf('if (fpArm.active()) { fpArm.draw(c); return; }');
+  assert.ok(drawAt !== -1, 'the third-person gate exists');
+  assert.ok(armAt !== -1 && drawAt < armAt, 'and it stands BEFORE the arm-or-sprite seam');
 });

@@ -906,6 +906,35 @@ export function armReport(parts, race, female) {
   return rows;
 }
 
+/**
+ * MW-D24: THE THIRD-PERSON BODY, one row per slot. The same question
+ * armReport answers for the four arm slots, asked for every slot the
+ * body has, in the THIRD-PERSON records (the ones whose id does not end
+ * "1st" - rule 1). Sex picks with the male fallback retail relies on
+ * (assembleNpc's law); head and hair are skin-type BODY records like
+ * everything else, and the FIRST one in file order is taken - a
+ * DECLARED DIVERGENCE: Daggerfall's chargen face index has no Morrowind
+ * analog, so the player wears the race's first playable face.
+ * A missing tail on a non-beast race is the data being right.
+ */
+export function playerBodyRows(parts, race, female, { beast = false } = {}) {
+  const want = String(race || '').toLowerCase();
+  const rows = [];
+  for (const slot of MW_BODY_PARTS) {
+    const forSlot = parts.filter((p) => p.race === want && p.slot === slot
+      && p.skin && p.playable && !p.firstPerson);
+    const chosen = forSlot.find((p) => p.female === !!female) || forSlot.find((p) => !p.female) || null;
+    if (!chosen && slot === 'tail' && !beast) continue;
+    rows.push({
+      slot,
+      record: chosen,
+      verdict: chosen ? 'third-person record found' : 'NOTHING for this slot',
+      counts: { all: forSlot.length },
+    });
+  }
+  return rows;
+}
+
 /** MW-D2: IS THIS MESH SKINNED, OR RIGID?
  *
  * The question MW8's entire design rested on and nobody ever asked of a
@@ -1714,8 +1743,32 @@ export function animSourceName(model) {
  * dropped here rather than refused, exactly as addSingleAnimSource does.
  */
 export function fpAnimSources(skeletonPath, exists) {
+  return animSourcesFor(FP_BASE_MODEL, skeletonPath, exists);
+}
+
+/** MW-D24: the reference's own unit bridge - constants.hpp:10,
+ *  UnitsPerMeter. The camera's distances and the body's world scale
+ *  both cross it, so it lives here in the format layer, once. */
+export const MW_UNITS_PER_METER = 69.99125109;
+
+/** MW-D24: the THIRD-PERSON base animation model (settings-default.cfg
+ *  [Models] xbaseanim, updateNpcBase's `base` for every non-werewolf -
+ *  npcanimation.cpp:506-508). Its .kf sibling is the file that carries
+ *  idle/walk/attack for the whole visible body. */
+export const TP_BASE_MODEL = 'meshes/xbase_anim.nif';
+
+/** The third-person source list, same push order and existence filter as
+ *  the first-person one: base first (npcanimation.cpp:534-535), then the
+ *  actor's own skeleton when it differs (npcanimation.cpp:537-538). The
+ *  kf name is the model with its extension swapped and NOTHING else -
+ *  no "x" is inserted (animation.cpp:651-654). */
+export function tpAnimSources(skeletonPath, exists) {
+  return animSourcesFor(TP_BASE_MODEL, skeletonPath, exists);
+}
+
+function animSourcesFor(baseModel, skeletonPath, exists) {
   const out = [];
-  const base = animSourceName(FP_BASE_MODEL);
+  const base = animSourceName(baseModel);
   if (exists(base)) out.push(base);
   const own = animSourceName(skeletonPath);
   if (own !== base && exists(own)) out.push(own);
