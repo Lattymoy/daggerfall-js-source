@@ -203,6 +203,34 @@ export function bodyParts(bytes) {
   return out;
 }
 
+/** MW-D32: the RACE records the build needs - the beast flag decides
+ *  the skeleton column (getActorSkeleton) and the height/weight pairs
+ *  scale the rig (npc.cpp's race scaling). RADT is 140 bytes
+ *  (loadrace.hpp:50-70): 7 skill pairs (56) + 8x2 attributes (64), then
+ *  maleHeight/femaleHeight/maleWeight/femaleWeight floats at 120..135
+ *  and the flags int32 at 136 (Playable 0x1, Beast 0x2). */
+export function raceRecords(bytes) {
+  const out = new Map();
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'RACE') continue;
+    const e = { id: '', beast: false, playable: false, height: [1, 1], weight: [1, 1], radt: false };
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'RADT' && sub.len >= 140) {
+        e.radt = true;
+        const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 140);
+        e.height = [dv.getFloat32(120, true), dv.getFloat32(124, true)];
+        e.weight = [dv.getFloat32(128, true), dv.getFloat32(132, true)];
+        const flags = dv.getInt32(136, true);
+        e.playable = (flags & 1) !== 0;
+        e.beast = (flags & 2) !== 0;
+      }
+    }
+    if (e.id) out.set(e.id, e);
+  }
+  return out;
+}
+
 /**
  * MW-D9: THE WEAPON RECORDS.
  *
@@ -853,21 +881,10 @@ export function clothingRecords(bytes) {
  *  slot silently skipped, and nothing on screen said so. The flag was
  *  in the player's own data the whole time. */
 export function raceBeastFlag(bytes, raceId) {
-  const want = String(raceId || '').toLowerCase();
-  let beast = null;
-  for (const rec of walkEsm(bytes)) {
-    if (rec.type !== 'RACE') continue;
-    let id = '';
-    let flags = null;
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') id = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'RADT' && sub.len === 140) {
-        flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 136, 4).getUint32(0, true);
-      }
-    }
-    if (id === want && flags !== null) beast = (flags & 2) !== 0;
-  }
-  return beast;   // null = this esm does not know this race
+  // ONE HOME: the full RACE reader below answers; this stays as the
+  // narrow question its callers ask. null = this esm does not know.
+  const rec = raceRecords(bytes).get(String(raceId || '').toLowerCase());
+  return rec && rec.radt ? rec.beast : null;
 }
 
 /** MW-D28: the ARMO records, read the WEAP way - id, model, display
@@ -1065,16 +1082,82 @@ export function pickWeaponRecord(records, type, material = null) {
 /** The report the reverted arc never printed: for one race, which
  *  first-person arm records actually exist, and what each one would fall
  *  back to. Answers are about the PLAYER'S data, never about ours. */
+/** MW-D32: sBodyPartMap's slot list (npcanimation.cpp:1187-1197) - the
+ *  mesh parts the skin sweep maps to visible slots. NO head, NO hair
+ *  (those come off the actor's own record - the chargen face law), NO
+ *  clavicle (deliberately never mapped to any PRT slot). */
+export const SKIN_SWEEP_SLOTS = Object.freeze([
+  'neck', 'chest', 'groin', 'hand', 'wrist', 'forearm', 'upperarm',
+  'foot', 'ankle', 'knee', 'upperleg', 'tail',
+]);
+
+const ARM_SLOT_SET = new Set(['hand', 'wrist', 'forearm', 'upperarm']);
+
+/**
+ * MW-D32: GETBODYPARTS, WHOLE (npcanimation.cpp:1167-1297). One record
+ * sweep in LOAD ORDER over the sBodyPartMap slots, with the reference's
+ * exact ladder:
+ *  - BPF_NotPlayable skipped, MT_Skin only, race matched - and NO
+ *    vampire filter: the sweep never had one (vampire heads live on the
+ *    actor's own record path, and head/hair are not in the map at all)
+ *  - a first-person HAND slot missing its .1st record falls back to
+ *    third-person skins (:1232-1254): same gender fills, same gender
+ *    upgrades an other-gender fallback, male fills for a female
+ *  - every other slot takes parts of ITS view only (:1258)
+ *  - male parts fall back for females: fill when empty, and a male
+ *    .1st upgrades a 3P hand fallback (:1261-1280)
+ *  - a PROPER match (right view, right gender) OVERWRITES - the LAST
+ *    record in load order wins (:1286-1293), which is how an expansion
+ *    overrides a base-game body
+ * @returns {Map} slot -> chosen record (absent: no record for the slot)
+ */
+export function resolveBodyParts(parts, race, female, { firstPerson = false } = {}) {
+  const want = String(race || '').toLowerCase();
+  const isF = !!female;
+  const out = new Map();
+  for (const p of parts ?? []) {
+    if (!p.playable || !p.skin) continue;
+    if (p.race !== want) continue;
+    const slot = p.slot;
+    if (!SKIN_SWEEP_SLOTS.includes(slot)) continue;
+    const isHand = ARM_SLOT_SET.has(slot);
+    const sameGender = !!p.female === isF;
+    if (firstPerson && isHand && !p.firstPerson) {
+      const cur = out.get(slot);
+      if (!cur && sameGender) out.set(slot, p);
+      else if (cur && sameGender && !!cur.female !== isF) out.set(slot, p);
+      else if (!cur && isF) out.set(slot, p);
+      continue;
+    }
+    if (!!p.firstPerson !== !!firstPerson) continue;
+    if (isF && !p.female) {
+      const cur = out.get(slot);
+      if (!cur) out.set(slot, p);
+      else if (isHand && !cur.firstPerson && p.firstPerson) out.set(slot, p);
+      continue;
+    }
+    if (isF !== !!p.female) continue;
+    out.set(slot, p);   // proper match: LAST in load order wins
+  }
+  return out;
+}
+
 export function armReport(parts, race, female) {
   const want = String(race || '').toLowerCase();
+  // MW-D32: the PICKS come from the one reference-whole resolver
+  // (getBodyParts, npcanimation.cpp:1167-1297) - the report keeps its
+  // verdict shape for the card, but no longer carries a second, subtly
+  // different copy of the ladder.
+  const fpResolved = resolveBodyParts(parts, race, female, { firstPerson: true });
+  const tpResolved = resolveBodyParts(parts, race, female, { firstPerson: false });
   const rows = [];
   for (const slot of ARM_PARTS) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot && p.skin && p.playable);
     const fp = forSlot.filter((p) => p.firstPerson);
     const tp = forSlot.filter((p) => !p.firstPerson);
-    const pick = (list) => list.find((p) => p.female === !!female) || list.find((p) => !p.female) || null;
-    const chosenFp = pick(fp);
-    const chosenTp = pick(tp);
+    const resolved = fpResolved.get(slot) ?? null;
+    const chosenFp = resolved && resolved.firstPerson ? resolved : null;
+    const chosenTp = resolved && !resolved.firstPerson ? resolved : (tpResolved.get(slot) ?? null);
     rows.push({
       slot,
       firstPerson: chosenFp,
@@ -1115,8 +1198,28 @@ export function armReport(parts, race, female) {
  */
 export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0 } = {}) {
   const want = String(race || '').toLowerCase();
+  // MW-D32: the sweep slots resolve through getBodyParts-whole
+  // (npcanimation.cpp:1167-1297 - LAST proper match wins, male-for-
+  // female fallback fills, no vampire filter, playable filtered), and
+  // clavicle is OUT: sBodyPartMap never maps it to a slot.
+  const resolved = resolveBodyParts(parts, race, female, { firstPerson: false });
   const rows = [];
-  for (const slot of MW_BODY_PARTS) {
+  for (const slot of SKIN_SWEEP_SLOTS) {
+    const forSlot = parts.filter((p) => p.race === want && p.slot === slot
+      && p.skin && p.playable && !p.firstPerson);
+    const chosen = resolved.get(slot) ?? null;
+    if (!chosen && slot === 'tail' && !beast) continue;
+    rows.push({
+      slot,
+      record: chosen,
+      verdict: chosen ? 'third-person record found' : 'NOTHING for this slot',
+      counts: { all: forSlot.length },
+    });
+  }
+  // Head and hair are NOT in the skin sweep (sBodyPartMap has no
+  // MP_Head/MP_Hair rows): the actor's own record names them, and the
+  // player's stand-in is the chargen face law below.
+  for (const slot of ['head', 'hair']) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot
       && p.skin && p.playable && !p.firstPerson);
     // The sex law, list-shaped: the matching sex's pool, else the male
@@ -1125,22 +1228,14 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
     const sexed = forSlot.filter((p) => p.female === !!female);
     const pool = sexed.length ? sexed : forSlot.filter((p) => !p.female);
     // AUDIT MW-A F2: the sort and the index are the FACE'S law and no
-    // one else's. D27's first cut sorted EVERY slot, silently
-    // rewriting the recorded first-in-file-order pick (assembleNpc's
-    // law) for chest, hands, feet - retail carries one skin record
-    // there so nothing showed, which is exactly how a divergence
-    // hides. Head and hair sort by id so a save's face survives any
-    // archive arrangement; everything else keeps the reference's own
-    // order untouched.
-    const wants = slot === 'head' || slot === 'hair';
-    let chosen;
-    if (wants && pool.length) {
+    // one else's. Head and hair sort by id so a save's face survives
+    // any archive arrangement; the sweep slots above keep the
+    // reference's own load order untouched.
+    let chosen = null;
+    if (pool.length) {
       const sorted = pool.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
       chosen = sorted[((faceIndex % sorted.length) + sorted.length) % sorted.length];
-    } else {
-      chosen = pool[0] || null;
     }
-    if (!chosen && slot === 'tail' && !beast) continue;
     rows.push({
       slot,
       record: chosen,

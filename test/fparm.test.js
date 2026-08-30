@@ -1020,13 +1020,16 @@ test('MW-D27: the face is DERIVED - classic faceIndex picks the head and hair, a
     return { head: m.get('head'), hair: m.get('hair'), chest: m.get('chest') };
   };
   // The walk, sorted: heads 01,02,03 then wraps; hairs 01,02 then
-  // wraps. The CHEST stays 02 - the fixture lists it first, and
-  // first-in-file-order is the recorded law for every slot that is
-  // not the face (AUDIT MW-A F2: D27's first cut sorted them all, and
-  // this very line asserted the over-reach back at it).
-  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_02' });
-  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_02' });
-  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_02' });
+  // wraps. The CHEST stays 01 - the fixture lists it LAST, and the
+  // reference's sweep OVERWRITES on every proper match, so the last
+  // record in load order wins (getBodyParts, npcanimation.cpp:1286-1293
+  // - how an expansion overrides a base-game body). The parity audit
+  // caught this pin asserting first-wins; the face law (MW-A F2's
+  // id-sort + index) is untouched, because head and hair are not in
+  // the sweep at all.
+  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_01' });
+  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_01' });
+  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_01' });
   assert.equal(at(3).head, 'b_head_01', 'the index wraps by modulo');
   assert.equal(at(9).hair, 'b_hair_02', 'classic\u2019s full 0..9 range resolves');
   // Sex pools stay separate: a female walks HER two heads, never his three.
@@ -1934,4 +1937,114 @@ test('MW-D31 rule 13: the mirror reads the RESOLVED node\'s own name, case-sensi
     parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
   });
   assert.equal(asm2.pieces.find((p) => p.kind === 'rigid').mirrored, true, 'the real "Left Hand" node mirrors');
+});
+
+// ── MW-D32: BODY-PART RESOLUTION BROUGHT TO GETBODYPARTS-WHOLE ──────
+
+import { resolveBodyParts, raceRecords } from '../src/formats/mwFirstPerson.js';
+import { indexSkins, assembleNpc } from '../src/formats/mwNpc.js';
+import { resolveWeaponParts } from '../src/combat/fpArm.js';
+
+test('MW-D32: the sweep is getBodyParts whole - last wins, filters exact, FP hand ladder', () => {
+  const P = (id, slot, o = {}) => ({ id, slot, race: 'fprace', female: false, skin: true,
+    playable: true, firstPerson: /1st$/.test(id), model: `f/${id}.nif`, ...o });
+  const parts = [
+    P('b_chest_base', 'chest'),
+    P('b_chest_expansion', 'chest'),          // LAST in load order WINS (:1286-1293)
+    P('b_chest_np', 'chest', { playable: false }),   // BPF_NotPlayable skipped (:1208)
+    P('b_chest_cloth', 'chest', { skin: false }),    // MT_Skin only (:1210)
+    P('b_neck_m', 'neck'),
+    P('b_clav', 'clavicle'),                   // sBodyPartMap never maps it
+    P('b_hand_m3p', 'hand'),
+    P('b_hand_f3p', 'hand', { female: true }),
+  ];
+  const tp = resolveBodyParts(parts, 'fprace', false, { firstPerson: false });
+  assert.equal(tp.get('chest').id, 'b_chest_expansion', 'the LAST proper record wins - expansions override');
+  assert.equal(tp.get('clavicle'), undefined, 'clavicle never resolves');
+  // female: her record wins where it exists, male fills where not (:1261-1280)
+  const tpF = resolveBodyParts(parts, 'fprace', true, { firstPerson: false });
+  assert.equal(tpF.get('hand').id, 'b_hand_f3p');
+  assert.equal(tpF.get('neck').id, 'b_neck_m', 'male fallback fills an empty female slot');
+  // FIRST PERSON: a hand slot without a .1st record falls back to the
+  // 3P skin (:1232-1254); a NON-hand slot does not (:1258).
+  const fp = resolveBodyParts(parts, 'fprace', false, { firstPerson: true });
+  assert.equal(fp.get('hand').id, 'b_hand_m3p', 'the arm slots fall back to third-person skins');
+  assert.equal(fp.get('chest'), undefined, 'a non-hand slot takes its own view only');
+});
+
+test('MW-D32: indexSkins filters playable, NOT vampire - the reference sweep never had a vampire test', () => {
+  // getBodyParts (npcanimation.cpp:1206-1214) filters BPF_NotPlayable
+  // and MT_Skin; there is no vampire condition in the sweep.
+  const B = (id, part, o = {}) => [id, { id, kind: 0, vampire: 0, part, female: false, playable: true, race: 'r', model: `${id}.nif`, ...o }];
+  const bodies = new Map([
+    B('chest_vamp', 3, { vampire: 1 }),
+    B('chest_np', 3, { playable: false }),
+  ]);
+  const idx = indexSkins(bodies);
+  const slots = idx.get('r');
+  assert.ok(slots && slots.get(3), 'the vampire-flagged skin IS swept');
+  assert.equal(slots.get(3).male.id, 'chest_vamp');
+  // and the not-playable one is not
+  assert.ok(!Object.values(slots.get(3)).some((b) => b && b.id === 'chest_np'), 'NotPlayable is filtered');
+});
+
+test('MW-D32: assembleNpc picks the FEMALE skeleton column', () => {
+  // getActorSkeleton (actorutil.cpp): beast > female > male, and the
+  // female column was silently missing.
+  const esm = {
+    npcs: new Map([['f', { id: 'f', name: 'F', race: 'r', female: true, head: null, hair: null, model: null }],
+      ['m', { id: 'm', name: 'M', race: 'r', female: false, head: null, hair: null, model: null }]]),
+    races: new Map([['r', { name: 'R', beast: false }]]),
+    bodies: new Map(),
+  };
+  assert.equal(assembleNpc(esm, 'f').animFile, 'meshes\\base_anim_female.nif');
+  assert.equal(assembleNpc(esm, 'm').animFile, 'meshes\\base_anim.nif');
+});
+
+test('MW-D32: the typed weapon bone is used only when the rig CARRIES it', async () => {
+  // npcanimation.cpp:787-795 - bonename starts as sPartList's "Weapon
+  // Bone" and becomes mAttachBone only `if (found != nodeMap.end())`.
+  const skel = f('armfp.nif');
+  const from = [...'Weapon Bone Left'].map((c) => c.charCodeAt(0));
+  const to = [...'Weapon Bone XLft'].map((c) => c.charCodeAt(0));
+  const patched = skel.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const blade = f('weapon.nif');
+  const find = () => ({ get: () => blade });
+  const bowRec = { id: 'bow', name: 'Bow', model: 'w/b.nif', type: 9, enchanted: false, speed: 1 };
+  // MarksmanBow (9) types to "Weapon Bone Left"; the patched rig lacks
+  // it, so the resolve lands on the generic bone instead of dropping.
+  const r = resolveWeaponParts({ weapon: { templateIndex: 130 }, allWeapons: [bowRec], find, skeletonBytes: patched });
+  assert.ok(r.weaponInfo, 'the bow still resolves');
+  assert.equal(r.weaponInfo.bone, 'Weapon Bone', 'fallback to the generic bone the rig has');
+  // and the unpatched rig keeps the typed bone
+  const r2 = resolveWeaponParts({ weapon: { templateIndex: 130 }, allWeapons: [bowRec], find, skeletonBytes: skel });
+  assert.equal(r2.weaponInfo.bone, 'Weapon Bone Left');
+});
+
+test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flags at 136', () => {
+  // loadrace.hpp:50-70. Values planted distinct so an off-by-four
+  // reader answers the wrong field and dies.
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const radt = new Uint8Array(140);
+  const dv = new DataView(radt.buffer);
+  dv.setFloat32(120, 1.05, true);   // male height
+  dv.setFloat32(124, 0.95, true);   // female height
+  dv.setFloat32(128, 1.1, true);    // male weight
+  dv.setFloat32(132, 0.9, true);    // female weight
+  dv.setInt32(136, 3, true);        // playable | beast
+  const d = [...sub('NAME', Z('argonian')), ...sub('RADT', [...radt])];
+  const rec = Uint8Array.from([...A('RACE'), ...U(d.length), ...U(0), ...U(0), ...d]);
+  const races = raceRecords(rec);
+  const r = races.get('argonian');
+  assert.ok(r && r.beast && r.playable);
+  assert.ok(Math.abs(r.height[0] - 1.05) < 1e-6 && Math.abs(r.height[1] - 0.95) < 1e-6);
+  assert.ok(Math.abs(r.weight[0] - 1.1) < 1e-6 && Math.abs(r.weight[1] - 0.9) < 1e-6);
 });

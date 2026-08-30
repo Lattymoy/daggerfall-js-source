@@ -56,7 +56,7 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag, armorRecords, clothingRecords,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, armorRecords, clothingRecords,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
@@ -470,7 +470,15 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       const arc = find(path);
       if (!arc) notes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
       else {
-        const bone = weaponAttachBone(mwType);
+        // MW-D32: the TYPED bone only when the rig CARRIES it - the
+        // reference starts from sPartList's "Weapon Bone" and switches
+        // to the type's own mAttachBone only `if (found != nodeMap
+        // .end())` (npcanimation.cpp:787-795). A rig without "Weapon
+        // Bone Left" hangs the bow on "Weapon Bone" rather than
+        // dropping it.
+        const typed = weaponAttachBone(mwType);
+        const bone = typed === 'Weapon Bone' || skeletonHasBone(skeletonBytes, typed)
+          ? typed : 'Weapon Bone';
         const weaponBytes = arc.get(path).slice();
         parts.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
         weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone,
@@ -728,6 +736,18 @@ export async function buildFpArm({
 
     const rows = armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
+    // MW-D32: updateParts sweeps EVERY slot in first person too
+    // (npcanimation.cpp:682, PRT_Neck..PRT_Count with
+    // getBodyParts(firstPerson=true)) - non-hand slots take .1st
+    // records only (:1258), which retail does not carry, so on vanilla
+    // data this adds nothing; a mod's .1st neck now appears exactly as
+    // the reference shows it. A missing non-arm slot is NOT noted -
+    // the reference leaves those null silently.
+    const fpAll = resolveBodyParts(parts, race, female, { firstPerson: true });
+    for (const [slot, rec] of fpAll) {
+      if (ARM_PARTS.includes(slot)) continue;
+      if (rec && rec.model) wanted.push({ slot, record: rec.id, firstPerson: true, path: `meshes/${rec.model}` });
+    }
     const partBytes = [];
     const missing = [];
     // The fp skin wears the same shadows: a right gauntlet hides the
