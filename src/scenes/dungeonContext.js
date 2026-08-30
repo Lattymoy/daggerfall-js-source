@@ -3783,6 +3783,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay) return;
       activeOverlay = openInventory(null);
     },
+    /** AUDIT 28 F-C2: PlayerMouseLook's swing gate excludes a bow
+     *  (:248, WeaponType != Bow) - the standalone host asks here. */
+    get weaponIsBow() { return !!playerWeapon.machine?.isBow; },
     /** AUDIT 28 W2c: DungeonWagonAccess_OnButtonClick's Yes arm
      *  (PlayerActivate.cs:1139-1142) - AllowDungeonWagonAccess() then
      *  dfuiOpenInventoryWindow: the inventory opens showing the wagon

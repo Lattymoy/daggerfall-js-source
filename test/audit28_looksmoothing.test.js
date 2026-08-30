@@ -96,7 +96,35 @@ test('AUDIT 28 W7: all four hosts route both look sites (mouse, touch) through t
     const s = read(host);
     assert.equal((s.match(/lookFilter\.add\(/g) || []).length, 2, `${host}: two look sites through the filter`);
     assert.equal((s.match(/cam\.yaw \+= [^\n]*lookScale\(\)/g) || []).length, 0, `${host}: no raw delta reaches the camera`);
-    assert.match(s, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);\n\s*lookFilter\.tick\(dt, cam\);/, `${host}: the tick rides the frame's dt`);
+    // F-C1 moved the tick behind the paused gate; it still rides the
+    // frame's dt, immediately after it.
+    assert.match(s, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);\n(\s*\/\/[^\n]*\n)*\s*if \(!\([^\n]*\)\) \{\s*\n\s*if \([^\n]*\) lookFilter\.settle\(\);\s*\n\s*else lookFilter\.tick\(dt, cam\);/, `${host}: the tick rides the frame's dt`);
     assert.match(s, /const lookFilter = new LookFilter\(\);/, `${host}: one filter per camera`);
   }
+});
+
+test('AUDIT 28 F-C1/F-C2: settle drops the owed look (SetFacing -> Init), and every host answers Update\'s three cases - paused waits, a held swing drops, else pays', () => {
+  const f = new LookFilter(); const cam = { yaw: 0, pitch: 0 };
+  f.add(1, 0.5); f.tick(1 / 60, cam, { smoothing: 0.5 });
+  f.settle();
+  assert.equal(f.residualYaw, 0); assert.equal(f.residualPitch, 0);
+  f.tick(1 / 60, cam, { smoothing: 0.5 });
+  assert.ok(near(cam.yaw, 0.5), 'nothing more is paid after a settle');
+  const gates = {
+    'src/scenes/world.js': ["townTalk.overlayActive || (modes?.overlayHeld ?? false)", "rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
+    'src/scenes/exterior.js': ["townTalk.overlayActive || (modes?.overlayHeld ?? false)", "rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
+    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', 'rightHeld && walkMode && !ctx.weaponIsBow'],
+    'src/scenes/interior.js': ['false', 'false'],
+  };
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const [host, [paused, swing]] of Object.entries(gates)) {
+    const s = read(host);
+    assert.match(s, new RegExp(`if \\(!\\(${esc(paused)}\\)\\) \\{\\s*\\n\\s*if \\(${esc(swing)}\\) lookFilter\\.settle\\(\\);\\s*\\n\\s*else lookFilter\\.tick\\(dt, cam\\);`), `${host}: the three answers`);
+    if (host !== 'src/scenes/interior.js') {
+      // The raw button, tracked on the window and never gated - HasAction(SwingWeapon).
+      assert.match(s, /addEventListener\('mousedown', \(e\) => \{ if \(e\.button === 2\) rightHeld = true;/, `${host}: down`);
+      assert.match(s, /addEventListener\('mouseup', \(e\) => \{ if \(e\.button === 2\) rightHeld = false;/, `${host}: up`);
+    }
+  }
+  assert.match(read('src/scenes/dungeonContext.js'), /get weaponIsBow\(\) \{ return !!playerWeapon\.machine\?\.isBow; \}/);
 });

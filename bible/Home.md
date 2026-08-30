@@ -282,17 +282,17 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:620` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:626` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:866` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1105` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1450` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1106` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1451` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:311` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:887` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:893` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2965` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3760` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4716` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:888` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:894` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2966` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3761` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4726` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1184` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1199` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1408` - is the quest machine's, FLAGGED with it.

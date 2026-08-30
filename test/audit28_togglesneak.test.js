@@ -53,7 +53,7 @@ test('AUDIT 28 W5: ToggleSneak - the press FLIPS the mode, holding does not flip
   resetToDefaults();
 });
 
-test('AUDIT 28 W5: running still beats sneaking, toggled or held (P15 unchanged)', () => {
+test('AUDIT 28 W5 + F-C3: running beats sneaking AND clears the mode - a run ENDS a toggled sneak (ApplyInputSpeedAdjustment :121-125)', () => {
   resetToDefaults();
   setValue('Controls', 'ToggleSneak', true);
   const m = new PlayerMotor(floored());
@@ -64,7 +64,21 @@ test('AUDIT 28 W5: running still beats sneaking, toggled or held (P15 unchanged)
   assert.equal(m.isRunning, true);
   assert.equal(m.isSneaking, false, 'running wins while it lasts');
   m.update(1 / 60, still(), 0);
-  assert.equal(m.isSneaking, true, 'the toggled mode survives the run and comes back');
+  // The first W5 pin asserted the opposite ("survives the run and comes
+  // back") - a wrong assumption, caught by self-audit 3: DFU sets
+  // sneakingMode = false while running.
+  assert.equal(m.isSneaking, false, 'the run switched the toggled sneak OFF');
+  m.update(1 / 60, { ...still(), sneak: true }, 0);
+  assert.equal(m.isSneaking, true, 'a fresh press toggles it back on');
+  // Held mode: re-latched from the key the frame after the run, as DFU's is.
+  resetToDefaults();
+  const h = new PlayerMotor(floored());
+  h.spawn(0, 0.1, 0); settle(h);
+  h.update(1 / 60, { ...still(), run: true, sneak: true }, 0);
+  assert.equal(h.isSneaking, false);
+  h.update(1 / 60, { ...still(), sneak: true }, 0);
+  assert.equal(h.isSneaking, true, 'held: the key is the mode again');
+  setValue('Controls', 'ToggleSneak', true);
   resetToDefaults();
   assert.equal(LIVE['Controls/ToggleSneak'], 'src/player/motor.js');
 });

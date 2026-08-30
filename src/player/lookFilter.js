@@ -48,6 +48,16 @@ export class LookFilter {
     this.residualPitch = 0;
   }
 
+  /** SetFacing -> Init (:274-279): lookTarget = lookCurrent - the owed
+   *  look is dropped. DFU's Update runs it EVERY frame the swing action
+   *  is held (WeaponSwingMode 0, not a bow: :248-253 "immediately stop
+   *  at current heading"), so a swing never pays out a look it
+   *  interrupted. F-C2 (self-audit 3). */
+  settle() {
+    this.residualYaw = 0;
+    this.residualPitch = 0;
+  }
+
   /** ApplyLook's `lookTarget += delta` (:126): the scaled deltas, in
    *  the camera's own units (radians; pitch already inverted). */
   add(dyaw, dpitch) {

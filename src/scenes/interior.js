@@ -126,7 +126,16 @@ export async function bootInterior(canvas, renderer, params, status) {
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
-    lookFilter.tick(dt, cam);   // AUDIT 28 W7: ApplySmoothing - the owed look paid out at the setting's fraction, before the camera is read
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(false)) {
+      if (false) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right

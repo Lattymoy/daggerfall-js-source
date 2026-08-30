@@ -1044,6 +1044,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     pitch: -0.08,
   };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   const keys = new Set();
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
@@ -1266,8 +1267,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
   // world behind the map.
-  addEventListener('mousedown', (e) => { if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -1505,7 +1506,16 @@ export async function bootExterior(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
-    lookFilter.tick(dt, cam);   // AUDIT 28 W7: ApplySmoothing - the owed look paid out at the setting's fraction, before the camera is read
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+      if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
     last = now;
     lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
 

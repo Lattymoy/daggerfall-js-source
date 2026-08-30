@@ -124,6 +124,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);
@@ -223,7 +224,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
   bindCursorToggle(canvas, () => ctx.uiOverlayActive, actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('mousedown', (e) => { if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
@@ -239,7 +240,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // character and left them standing wherever they were.
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
   });
-  addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -383,7 +384,16 @@ export async function bootDungeon(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
-    lookFilter.tick(dt, cam);   // AUDIT 28 W7: ApplySmoothing - the owed look paid out at the setting's fraction, before the camera is read
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(ctx.uiOverlayActive)) {
+      if (rightHeld && walkMode && !ctx.weaponIsBow) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right

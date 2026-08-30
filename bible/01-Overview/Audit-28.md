@@ -344,6 +344,36 @@ was "ours: 0..1"; it is DFU's clamp (0..0.9) now. The controller minimum
 (:159-160) has no controller to read and is not ported. 6 pins; 5
 mutants, 5 killed.
 
+## SELF-AUDIT 3 (2026-08-30, Mac: "a comprehensive audit on everything so far", the third)
+
+W5, W6 and W7 re-read against the C#; the LIVE and dead-export sweeps
+re-run clean. Three findings, all fixed here - two against W7's own
+framing, one against a W5 pin that had asserted the opposite of the
+law:
+
+- **F-C1** PlayerMouseLook.Update returns before ApplyLook while the
+  game is paused (`enableMouseLook = !IsGamePaused`, :241-244): the
+  owed look WAITS under a window. The port's filter ticked every frame.
+  All four hosts gate the tick on the same expression their lookGate
+  reads.
+- **F-C2** while the swing action is held (WeaponSwingMode 0, not a
+  bow, :248-253) DFU takes the ELSE arm - `SetFacing(lookCurrent)`,
+  whose Init sets target = current - so the look a swing interrupted is
+  DROPPED, never paid out afterwards. `LookFilter.settle()` is that;
+  the three swinging hosts track the raw right button (HasAction, on
+  the window, ungated) and settle while it is held with a non-bow in
+  hand; the dungeon ctx exposes `weaponIsBow` for its standalone host.
+- **F-C3** ApplyInputSpeedAdjustment CLEARS `sneakingMode` while
+  running (:121-125, "switch sneaking off if was previously sneaking"):
+  under ToggleSneak a run ENDS the toggled sneak. The W5 pin had
+  asserted "the toggled mode survives the run and comes back" - an
+  assumption written as a law. Motor and pin corrected; the held mode
+  is unchanged because it re-latches from the key next frame, as DFU's
+  does.
+
+4 mutants (settle always, pays while paused, run keeps the toggle,
+settle keeps the pitch), 4 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
