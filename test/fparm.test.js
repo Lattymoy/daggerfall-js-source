@@ -1677,3 +1677,29 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
     { templateIndex: ARMOR_ENUM.Kite_Shield, material: 4 },
   ]);
 });
+
+test('AUDIT 30 F1: a helmet hides the hair - the engine rule, not a part reference', () => {
+  // npcanimation.cpp:615 removes PRT_Hair the moment the helmet SLOT
+  // equips, before the armor's refs say anything - so a helm whose
+  // refs cover only the head still never shows hair through the
+  // shell. MUTANT: key the rule off the refs and the head-only helm
+  // leaks hair.
+  const armors = [{
+    id: 'iron_helmet', model: 'g.nif', name: '', enchanted: false,
+    parts: [{ part: 0, male: 'b_helm', female: null }],   // HEAD only, no hair ref
+  }];
+  const bodyPool = [{ id: 'b_helm', model: 'm/helm.nif' }];
+  const worn = composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Iron }],
+    armors, bodyPool, female: false,
+  });
+  assert.ok(worn.shadows.includes('hair'), 'the hair floats through the helm');
+  assert.ok(worn.shadows.includes('head'), 'the head ref itself still shadows');
+  // and a cuirass does NOT invoke the helmet rule.
+  const cuir = composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron }],
+    armors: [{ id: 'iron_cuirass', model: 'g.nif', name: '', enchanted: false, parts: [{ part: 3, male: 'b_helm', female: null }] }],
+    bodyPool, female: false,
+  });
+  assert.ok(!cuir.shadows.includes('hair'));
+});

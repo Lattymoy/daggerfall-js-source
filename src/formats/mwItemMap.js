@@ -46,6 +46,10 @@
 import { WEAPONS, WEAPON_MATERIALS } from '../characters/weapons.js';
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
+
+/** ARMOR_ENUM.Helm, held as its own name because the composer's
+ *  helmet-hides-hair rule (AUDIT 30 F1) keys on it. */
+const HELM_TEMPLATE = ARMOR_ENUM.Helm;
 import { DF_TO_MW_WEAPON } from './mwFirstPerson.js';
 
 /** DF armor material -> the token MW armor record ids carry. */
@@ -263,6 +267,13 @@ export function composeWornArmor({ pieces, armors, bodyPool, female = false }) {
   for (const piece of pieces ?? []) {
     const res = mwArmorRecords(armors, piece.templateIndex, piece.material);
     if (!res.records.length) { notes.push(`armor ${piece.templateIndex}: ${res.note}`); continue; }
+    // AUDIT 30 F1: A HELMET HIDES THE HAIR - an engine rule, not a
+    // part reference. The reference removes PRT_Hair the moment the
+    // helmet SLOT equips (npcanimation.cpp:615), before the armor's
+    // own refs say anything, which is why a helm whose refs cover only
+    // the head still never shows hair through the shell. D29 shipped
+    // without it and the hair floated through every closed helm.
+    if (piece.templateIndex === HELM_TEMPLATE) shadows.add('hair');
     for (const armo of res.records) {
       if (!armo.parts?.length) { notes.push(`${armo.id}: no worn part references - the ground mesh is not a body`); continue; }
       for (const ref of armo.parts) {
