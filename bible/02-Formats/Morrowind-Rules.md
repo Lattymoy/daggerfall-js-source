@@ -242,15 +242,34 @@ reads the same as a closed one.
     refreshIdle's early return, and it is load-bearing there for the same
     reason: the idle is asked for every frame.
 
-THE ONE REACHABLE GAP LEFT, named rather than buried: rule 24's
-"shoot attach" / "shoot follow attach" / "shoot release" attach and
-release an ARROW on the bow, and the port draws no ammunition at all - a
-drawn bow is empty-handed. Rule 8's attach-bone table already anticipates
-it (Arrow -> "Bip01 Arrow", Bolt -> "ArrowBone"), so the placement is
-known; what is missing is resolving Daggerfall's arrow stack onto a
-Morrowind ammo record and attaching it as one more rigid part. That is
-new scope - ammunition - rather than a rule left unread, which is why it
-is here and not silently absent.
+MW-D16 CLOSED THAT GAP: THE BOW HAS AN ARROW. Rule 8's LAST column is
+mAmmoType, and only the two marksman types have one - MarksmanThrown does
+NOT, because a thrown weapon IS its own ammunition, which is why
+attachArrow's Thrown branch shows the weapon again rather than adding a
+node. getArrowBone has TWO branches: the actor's own bone
+("Bip01 Arrow" / "ArrowBone") first, and failing that a node named
+"ArrowBone" INSIDE THE WEAPON'S MESH - which is the branch retail data
+takes, because Morrowind's bows carry that node and most skeletons do not
+carry "Bip01 Arrow". The fallback decides the whole placement, because a
+node inside the weapon's mesh brings the weapon's transform chain with
+it - AND ITS MIRROR: a bow hangs on "Weapon Bone Left", rule 13 negates
+its X, and the arrow is instanced under a node already inside that
+mirrored subtree.
+
+Rule 24's keys drive the visibility: "shoot attach" nocks it, "shoot
+release" looses it, "shoot follow attach" nocks the next one before the
+animation has finished, and detachArrow fires as the unequip section
+STARTS rather than at its "unequip detach" key. And the surprise is the
+reference's: only a CROSSBOW reloads itself at the end of a section, so a
+freshly drawn BOW is empty-handed until you begin to draw it.
+
+Two of the conditions cannot fire in the played game and are pinned as
+CONDITIONS rather than through a build, with the reason recorded: DAGGERFALL
+HAS NO CROSSBOW and no thrown-weapon row either. The second of them also
+corrected a live seam - "shoot" is a WEAPON CLASS test, not a bow test,
+and the arm had been taking a `bow` flag from weaponRig's machine, which
+is a second source of truth for a question the data answers and one that
+would have missed a thrown weapon.
 
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a

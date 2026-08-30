@@ -1932,6 +1932,8 @@ def make_armfp_weapon_kf():
     #                                            sheathed stance (rule 8)
     #   weapononehand  has "equip attach" and "unequip detach"
     #   bowandarrow    has NEITHER             - showWeapons by hand
+    #                  but DOES have rule 24's two "shoot attach" keys
+    #                  and its "shoot release", which are the arrow's
     #   blunttwohand   ABSENT, weapontwohand present - the LONG ladder
     #
     # The three follow strengths are all present for chop, because which
@@ -1976,10 +1978,12 @@ def make_armfp_weapon_kf():
         (5.5, b"BowAndArrow: Equip Start"),
         (5.7, b"BowAndArrow: Equip Stop"),
         (5.8, b"BowAndArrow: Shoot Start"),
+        (5.9, b"BowAndArrow: Shoot Attach"),
         (6.0, b"BowAndArrow: Shoot Min Attack"),
         (6.2, b"BowAndArrow: Shoot Max Attack"),
         (6.4, b"BowAndArrow: Shoot Release"),
         (6.5, b"BowAndArrow: Shoot Follow Start"),
+        (6.6, b"BowAndArrow: Shoot Follow Attach"),
         (6.7, b"BowAndArrow: Shoot Follow Stop"),
         (6.8, b"BowAndArrow: Unequip Start"),
         (7.0, b"BowAndArrow: Unequip Stop"),
@@ -2335,6 +2339,69 @@ def make_roottransform():
     write_nif(HERE / "rootshape.nif", [lone])
 
 
+def make_arrowparts():
+    # MW-D16 / RULE 24's ARROW, and getArrowBone's TWO branches.
+    #
+    #   arrow.nif      the ammunition mesh, deliberately unlike the bow so
+    #                  a pin can tell which piece it is looking at
+    #   bowmesh.nif    a weapon carrying an "ArrowBone" node NESTED one
+    #                  level down and rotated, so the fallback's
+    #                  ACCUMULATED transform is exercised and not just a
+    #                  leaf's own translation
+    #   armfparrow.nif armfp's skeleton PLUS a "Bip01 Arrow" bone, so the
+    #                  FIRST branch - the actor's own skeleton - has a
+    #                  file too. Retail skeletons mostly lack it, which is
+    #                  why the fallback is the one that runs on real data
+    #                  and why both need a fixture.
+    arrow = _quad("Arrow", colors=False)
+    write_nif(HERE / "arrow.nif", [arrow])
+
+    root = NifFormat.NiNode()
+    root.name = b"BowRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+    limb = _quad("Limb", colors=False)
+
+    mid = NifFormat.NiNode()
+    mid.name = b"BowMid"
+    ident(mid.rotation)
+    mid.scale = 1.0
+    mid.translation.x, mid.translation.y, mid.translation.z = 1.0, 0.0, 0.0
+
+    hook = NifFormat.NiNode()
+    hook.name = b"ArrowBone"
+    R = _rot_z(90.0)
+    (hook.rotation.m_11, hook.rotation.m_12, hook.rotation.m_13) = R[0]
+    (hook.rotation.m_21, hook.rotation.m_22, hook.rotation.m_23) = R[1]
+    (hook.rotation.m_31, hook.rotation.m_32, hook.rotation.m_33) = R[2]
+    hook.scale = 1.0
+    hook.translation.x, hook.translation.y, hook.translation.z = 0.0, 6.0, 0.0
+
+    mid.num_children = 1
+    mid.children.update_size()
+    mid.children[0] = hook
+    root.num_children = 2
+    root.children.update_size()
+    root.children[0] = limb
+    root.children[1] = mid
+    write_nif(HERE / "bowmesh.nif", [root])
+
+    skel = NifFormat.NiNode()
+    skel.name = b"Bip01"
+    ident(skel.rotation)
+    skel.scale = 1.0
+    neck = _bone(skel, "Bip01 Neck", ARM_FP_REST["Bip01 Neck"])
+    _bone(neck, "Camera", ARM_FP_REST["Camera"])
+    for side in ("Right", "Left"):
+        up = _bone(neck, f"{side} Upper Arm", ARM_FP_REST[f"{side} Upper Arm"])
+        fore = _bone(up, f"{side} Forearm", ARM_FP_REST[f"{side} Forearm"])
+        hand = _bone(fore, f"{side} Hand", ARM_FP_REST[f"{side} Hand"])
+        wb = _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left", (0.0, 0.18, 0.0))
+        if side == "Right":
+            _bone(wb, "Bip01 Arrow", (0.0, 0.5, 0.0))
+    write_nif(HERE / "armfparrow.nif", [skel])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -2362,6 +2429,7 @@ if __name__ == "__main__":
     make_boneoffset()
     make_markers()
     make_roottransform()
+    make_arrowparts()
     make_armfp_esm()
     make_weaponmesh()
     make_armparts_esm()

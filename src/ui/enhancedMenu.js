@@ -917,6 +917,11 @@ function paneEnhanced(body) {
           // from Daggerfall's weapon templates onto Morrowind's types is
           // a DECLARED DIVERGENCE (DF_TO_MW_WEAPON), not a translation.
           weapon: playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
+          // MW-D16 / rule 24: the bow's ARROW. attachArrow reads the
+          // AMMUNITION slot, so the arm needs to know whether the player
+          // has any - template 131 is Daggerfall's arrow, the same test
+          // the rig's out-of-arrows auto-sheathe already makes.
+          hasAmmo: !!playerEntity.items?.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0),
         });
         render();
       } });

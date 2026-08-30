@@ -44,11 +44,14 @@ import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
 } from '../formats/mwAnim.js';
-import { accumRootRef } from '../formats/mwSkin.js';
+import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
+import { nodeTransformOf } from '../formats/mwCharacter.js';
+import { parseNif } from '../formats/mwNifFile.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
+  ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
@@ -356,7 +359,29 @@ export function packFpArm(pieces, out = null) {
  * Morrowind.bsa for the life of the tab. Copy what we need, release the
  * rest.
  */
-export async function buildFpArm({ race, female = false, beast = false, weapon = null, deps = null } = {}) {
+/** MW-D16: the weapon mesh is parsed twice - once by the assembly and
+ *  once here, for getArrowBone's fallback - so it is cached per call
+ *  rather than parsed twice for the same bytes. */
+function parseNifOnce(bytes, cache = parseNifOnce.cache) {
+  if (cache.has(bytes)) return cache.get(bytes);
+  const nif = parseNif(bytes);
+  cache.set(bytes, nif);
+  return nif;
+}
+parseNifOnce.cache = new WeakMap();
+
+/** getArrowBone's FIRST branch: does the ACTOR's own skeleton carry the
+ *  ammo type's attach bone? */
+function skeletonHasBone(skeletonBytes, name) {
+  try {
+    const skel = buildSkeleton(parseNifOnce(skeletonBytes));
+    return skel.byName.has(String(name).toLowerCase());
+  } catch { return false; }
+}
+
+export async function buildFpArm({
+  race, female = false, beast = false, weapon = null, hasAmmo = false, deps = null,
+} = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   const settingsSkeleton = fpSkeletonPath({ female, beast });
   let skeletonPath = settingsSkeleton;
@@ -438,10 +463,11 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     // mirrors the left hand. Nothing here special-cases it.
     const weaponNotes = [];
     let weaponInfo = null;
+    let arrowInfo = null;
     const mwType = dfWeaponToMw(weapon, WEAPONS);
     if (mwType !== MW_WEAPON_TYPE.None) {
-      const rec = pickWeaponRecord(esmBytes.flatMap((e) => weaponRecords(e.bytes)), mwType,
-        weapon && weapon.materialName);
+      const allWeapons = esmBytes.flatMap((e) => weaponRecords(e.bytes));
+      const rec = pickWeaponRecord(allWeapons, mwType, weapon && weapon.materialName);
       if (!rec) {
         weaponNotes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
       } else {
@@ -450,8 +476,51 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
         if (!arc) weaponNotes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
         else {
           const bone = weaponAttachBone(mwType);
-          partBytes.push({ slot: 'weapon', bones: [bone], bytes: arc.get(path).slice() });
+          const weaponBytes = arc.get(path).slice();
+          partBytes.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
           weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
+
+          // MW-D16 / RULE 24's ARROW. A drawn bow with no round on it is
+          // what the port has been drawing; the reference instances the
+          // AMMUNITION SLOT's model under getArrowBone() at the
+          // "shoot attach" key.
+          const ammoType = ammoTypeFor(mwType);
+          if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
+            const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+            if (!ammoRec) {
+              weaponNotes.push(`arrow: your archives carry no unenchanted Morrowind ammunition of type ${ammoType}`);
+            } else {
+              const ammoPath = `meshes/${ammoRec.model}`;
+              const ammoArc = find(ammoPath);
+              if (!ammoArc) weaponNotes.push(`arrow: ${ammoPath} (${ammoRec.id}) is not in your archives`);
+              else {
+                // getArrowBone's two branches. The ACTOR's own bone
+                // first; failing that, a node named "ArrowBone" inside
+                // the WEAPON's mesh - which brings the weapon's whole
+                // transform chain, and its MIRROR, along with it.
+                const skelBone = arrowAttachBone(mwType);
+                const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
+                let pre = null;
+                let arrowBone = skelBone;
+                if (!onActor) {
+                  pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
+                  arrowBone = pre ? bone : null;
+                }
+                if (!arrowBone) {
+                  weaponNotes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
+                    + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
+                } else {
+                  partBytes.push({
+                    slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                  });
+                  arrowInfo = {
+                    id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
+                    bone: arrowBone, viaWeaponMesh: !onActor,
+                  };
+                }
+              }
+            }
+          }
         }
       }
     } else if (weapon) {
@@ -615,6 +684,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
         : arm.skeleton.byName.has('head') ? 'Head (rule 54 fallback)' : null,
       rows: wanted,
       weapon: weaponInfo,
+      arrow: arrowInfo,
       esm: esmDiagnosis(esmNames, parts, race),
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: idlePick.source.binding,
@@ -715,6 +785,11 @@ export function createFpArm() {
   let attackStrength = 1;
   let sheathed = true;
   let weaponShown = false;
+  // MW-D16: the held round. FALSE at build, because the reference does
+  // not attach one until a "shoot attach" key fires - a freshly drawn bow
+  // is empty until you start to draw it, and only the CROSSBOW reloads
+  // itself at the end of a section.
+  let arrowShown = false;
   let holdWindUp = false;
   let resetIdleOnAttackEnd = false;
   // mAimingFactor (npcanimation.cpp:712-719). It is STATE, not a
@@ -861,6 +936,13 @@ export function createFpArm() {
     // (character.cpp:1468-1472, :1481-1483).
     if (action === EQUIP_KEYS.attach) weaponShown = true;
     else if (action === UNEQUIP_KEYS.detach) weaponShown = false;
+    // RULE 24's ranged actions (character.cpp:1153-1165). Two keys
+    // attach and one releases, and "shoot follow attach" is the second
+    // attach - the round that goes on the string during the
+    // follow-through, which is why a bow looks loaded again before the
+    // animation has finished.
+    else if (action === 'shoot attach' || action === 'shoot follow attach') arrowShown = true;
+    else if (action === 'shoot release') arrowShown = false;
   }
 
   /** PREPAREHIT's strength half (character.cpp:1250-1259), which is the
@@ -898,9 +980,17 @@ export function createFpArm() {
   function endAttack() {
     actionState = null;
     actionSource = null;
+    reloadCrossbow();
     upper = UPPER_BODY.WeaponEquipped;
     attackType = null;
     if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
+  }
+
+  /** character.cpp:1827-1829 - the end of Equipping, AttackEnd or
+   *  Casting. The condition is reloadsItself's; see its header for why
+   *  Daggerfall can never satisfy it. */
+  function reloadCrossbow() {
+    if (built && built.ok && built.arrow && reloadsItself(built.mwType)) arrowShown = true;
   }
 
   /** UPDATEWEAPONSTATE's tail, run once per frame: every transition here
@@ -960,7 +1050,7 @@ export function createFpArm() {
         packed = null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
-        weaponShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
+        weaponShown = false; arrowShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
         idleSource = null; actionSource = null; poseSource = null;
         // A REBUILT ARM STARTS SHEATHED, whatever the last one was doing.
         // The build is triggered by a button, and the player is not
@@ -984,7 +1074,8 @@ export function createFpArm() {
     unload() {
       releaseMesh(); built = null; packed = null;
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
-      upper = UPPER_BODY.None; attackType = null; holdWindUp = false; weaponShown = false;
+      upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
+      weaponShown = false; arrowShown = false;
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
       reason = 'unloaded';
@@ -1022,7 +1113,7 @@ export function createFpArm() {
         // already playing, which the per-frame sync makes load-bearing.
         if (upper === UPPER_BODY.Unequipping) return false;
         if (upper === UPPER_BODY.None || !weaponGroup) {
-          sheathed = true; weaponShown = false;
+          sheathed = true; weaponShown = false; arrowShown = false;
           refreshWeaponGroup(); refreshIdle(true);
           return true;
         }
@@ -1031,11 +1122,14 @@ export function createFpArm() {
         // by hand, immediately (:1481-1483).
         const detach = keyTime(UNEQUIP_KEYS.detach);
         if (!playAction(UNEQUIP_KEYS.start, UNEQUIP_KEYS.stop, 0)) {
-          upper = UPPER_BODY.None; sheathed = true; weaponShown = false;
+          upper = UPPER_BODY.None; sheathed = true; weaponShown = false; arrowShown = false;
           refreshWeaponGroup(); refreshIdle(true);
           return true;
         }
         if (detach < 0) weaponShown = false;
+        // detachArrow() (character.cpp:1410), unconditionally, as the
+        // unequip section starts - not at its "unequip detach" key.
+        arrowShown = false;
         return true;
       }
       sheathed = false;
@@ -1062,10 +1156,20 @@ export function createFpArm() {
      * Daggerfall's swing has no charge, so the button is never "still
      * held at max attack".
      */
-    attack(strike, { bow = false, hold = false } = {}) {
+    attack(strike, { hold = false } = {}) {
       if (!built || !built.ok || sheathed) return null;
       if (upper !== UPPER_BODY.WeaponEquipped) return null;
-      const type = mwAttackType(strike, { bow });
+      // MW-D16: the SHOOT test is the weapon CLASS, not a flag the
+      // caller passes:
+      //   if (weapclass == Ranged || weapclass == Thrown)
+      //       mAttackType = "shoot";            character.cpp:1676-1677
+      // The arm already knows its weapon type, so asking the caller was
+      // a second source of truth for a question the data answers - and
+      // the port's own `isBow` would have missed MarksmanThrown, which
+      // shoots without being a bow.
+      const type = mwAttackType(strike, {
+        bow: shootsRatherThanSwings(animWeaponType(built.mwType, sheathed)),
+      });
       if (!type) return null;
       attackType = type;
       attackStrength = 1;
@@ -1181,7 +1285,10 @@ export function createFpArm() {
       // flag and not a shorter vertex stream. Repacking without the
       // weapon would change the buffer's length every time you drew or
       // sheathed, orphaning the ranges the textures hang on.
-      for (const r of mesh.ranges) if (r.slot === 'weapon') r.hidden = !weaponShown;
+      for (const r of mesh.ranges) {
+        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        else if (r.slot === 'arrow') r.hidden = !arrowShown;
+      }
       frames++;
     },
 
@@ -1269,6 +1376,8 @@ export function createFpArm() {
         sneaking,
         sneakDelta: built && built.ok ? built.sneakDelta : null,
         weaponShown,
+        arrowShown,
+        arrow: built && built.ok ? built.arrow : null,
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,
         sources: built && built.ok ? built.sourcePaths : null,

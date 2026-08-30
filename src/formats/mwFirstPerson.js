@@ -589,6 +589,79 @@ export function composeWeaponGroup(type, hasGroup) {
   return { group: null, fallback: null };
 }
 
+/**
+ * MW-D16 / RULE 8's LAST COLUMN: mAmmoType (weapontype.cpp). Only the two
+ * marksman types have one, and MarksmanThrown does NOT - a thrown weapon
+ * IS its own ammunition, which is why attachArrow's Thrown branch just
+ * shows the weapon again instead of adding a node
+ * (weaponanimation.cpp:70-79).
+ */
+export const WEAPON_AMMO_TYPE = Object.freeze({
+  [MW_WEAPON_TYPE.MarksmanBow]: MW_WEAPON_TYPE.Arrow,
+  [MW_WEAPON_TYPE.MarksmanCrossbow]: MW_WEAPON_TYPE.Bolt,
+});
+export const ammoTypeFor = (type) => WEAPON_AMMO_TYPE[type] ?? MW_WEAPON_TYPE.None;
+
+/**
+ * getArrowBone (npcanimation.cpp:1077-1102): the bone the held round sits
+ * on, which is the AMMO type's attach bone - "Bip01 Arrow" for an arrow,
+ * "ArrowBone" for a bolt - looked for in the ACTOR's skeleton first, and
+ * failing that as a node named "ArrowBone" INSIDE THE WEAPON'S OWN MESH.
+ *
+ * The fallback is not a nicety: Morrowind's bows carry that node and most
+ * skeletons do not carry "Bip01 Arrow", so on retail data the second
+ * branch is the one that runs. It also decides the arrow's whole
+ * placement, because a node inside the weapon's mesh brings the weapon's
+ * transform chain with it - and the weapon's own mirror. A bow hangs on
+ * "Weapon Bone Left", so rule 13 negates its X, and THE ARROW INHERITS
+ * THAT, because the reference instances it under a node that is already
+ * inside the mirrored subtree.
+ */
+export const ARROW_FALLBACK_NODE = 'ArrowBone';
+export function arrowAttachBone(weaponType) {
+  const ammo = ammoTypeFor(weaponType);
+  if (ammo === MW_WEAPON_TYPE.None) return null;
+  return WEAPON_ATTACH_BONE[ammo] ?? null;
+}
+
+/**
+ * character.cpp:1827-1829, as a condition rather than an `if` buried in a
+ * switch:
+ *
+ *   if (ammunition && mWeaponType == ESM::Weapon::MarksmanCrossbow)
+ *       mAnimation->attachArrow();
+ *
+ * at the end of Equipping, AttackEnd or Casting. A CROSSBOW puts the next
+ * bolt on itself; a BOW does not, and waits for the next "shoot attach"
+ * key - so a freshly drawn bow is empty-handed until you begin to draw
+ * it. That reads as a bug until you see the weapon type in the test.
+ *
+ * DAGGERFALL HAS NO CROSSBOW, so no row of DF_TO_MW_WEAPON reaches
+ * MarksmanCrossbow and this can never be true in the played game. It is
+ * here as a FUNCTION, pinned on its own, precisely because of that: a
+ * branch that cannot be exercised is not pinned, and a condition that can
+ * be is. If a crossbow row is ever added, the arm reloads correctly with
+ * nothing to change.
+ */
+export const reloadsItself = (type) => type === MW_WEAPON_TYPE.MarksmanCrossbow;
+
+/**
+ * character.cpp:1676-1677 - which attacks are "shoot":
+ *
+ *   if (weapclass == ESM::WeaponType::Ranged || weapclass == ESM::WeaponType::Thrown)
+ *       mAttackType = "shoot";
+ *
+ * A CLASS test, not a bow test, and the two are not the same: a THROWN
+ * weapon shoots without being a bow, which is the case the port's own
+ * `machine.isBow` would have missed. Daggerfall has no thrown-weapon row
+ * either, so like reloadsItself this is a condition the played game
+ * cannot reach today and a function that is right when it can.
+ */
+export const shootsRatherThanSwings = (type) => {
+  const cls = weaponClass(type);
+  return cls === MW_WEAPON_CLASS.Ranged || cls === MW_WEAPON_CLASS.Thrown;
+};
+
 export const DEFAULT_WEAPON_BONE = 'Weapon Bone';
 
 /** Rules 8 + 17: the bone this weapon type attaches at. The fallback is
@@ -1165,7 +1238,12 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         const mirror = !!(bone && /left/i.test(bone));
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
-            batch: null, source: batch.positions, attachRef: bound.attachRef,
+            // MW-D16: a part instanced under a node INSIDE another part's
+            // mesh (the arrow, under the bow's ArrowBone) carries that
+            // node's whole chain. It is baked in ONCE here rather than
+            // applied per frame, because it is a fact about two FILES and
+            // not about the pose.
+            batch: null, source: applyPre(batch.positions, part.preTransform), attachRef: bound.attachRef,
             // Rule 14: the part's own BoneOffset node, resolved once at
             // bind time because it is a fact about the FILE.
             boneOffset: bound.boneOffset || null,
@@ -1426,6 +1504,21 @@ export function armPieceRows(pieces) {
     triangles: p.indices ? p.indices.length / 3 : 0,
     bounds: meshBounds([p]),
   }));
+}
+
+/** MW-D16: bake a part's pre-transform into its authored vertices. Null
+ *  is the common case and returns the array untouched, so nothing pays
+ *  for a feature it does not use. */
+function applyPre(positions, pre) {
+  if (!pre) return positions;
+  const out = new Float32Array(positions.length);
+  for (let v = 0; v < positions.length; v += 3) {
+    const x = positions[v]; const y = positions[v + 1]; const z = positions[v + 2];
+    out[v] = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z + pre.t[0];
+    out[v + 1] = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z + pre.t[1];
+    out[v + 2] = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z + pre.t[2];
+  }
+  return out;
 }
 
 /** RULE 15's filter, verbatim: a case-insensitive PREFIX match on the

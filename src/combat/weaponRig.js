@@ -142,7 +142,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   function fpAttack(strike) {
     if (!fpArm.ready()) return;
     const m = playerWeapon.machine;
-    fpArm.attack(strike, { bow: m.isBow, hold: m.isBow && m.state === 'StrikeUp' });
+    // MW-D16: no `bow` flag. The arm derives "shoot" from its own
+    // weapon CLASS, which is what the reference tests - and which also
+    // catches MarksmanThrown, a type that shoots without being a bow.
+    fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp' });
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero

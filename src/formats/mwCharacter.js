@@ -73,30 +73,83 @@ import { skeletonSpaceMatrices } from './mwSkin.js';
  *
  * @returns {[number,number,number]|null}
  */
-export function boneOffsetOf(nif) {
-  const WANT = 'boneoffset';
+export function findNodeByName(nif, name) {
+  const want = String(name).toLowerCase();
   let found = null;
-  const walk = (ref) => {
+  const walk = (ref, parents) => {
     if (found) return;
     const rec = deref(nif, ref);
     if (!rec) return;
     // apply(osg::Geometry&) {} - a drawable is neither matched nor
     // descended into.
     if (rec.type === 'NiTriShape' || rec.type === 'NiTriStrips') return;
-    if (String(rec.name || '').toLowerCase() === WANT) {
-      const t = rec.translation;
-      found = t ? [t[0], t[1], t[2]] : [0, 0, 0];
-      return;
-    }
+    if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }
     if (!rec.children) return;
-    for (const child of rec.children) if (child >= 0) walk(child);
+    const chain = [...parents, rec];
+    for (const child of rec.children) if (child >= 0) walk(child, chain);
   };
   for (const root of nif.roots ?? []) {
-    if (root >= 0) walk(root);
+    if (root >= 0) walk(root, []);
     if (found) break;
   }
   return found;
 }
+
+/** Rule 14's own use of it. */
+export function boneOffsetOf(nif) {
+  const hit = findNodeByName(nif, 'BoneOffset');
+  if (!hit) return null;
+  const t = hit.rec.translation;
+  return t ? [t[0], t[1], t[2]] : [0, 0, 0];
+}
+
+/**
+ * MW-D16: THE ACCUMULATED transform of a named node INSIDE a mesh,
+ * root-first, which is what `getInstance(model, parent)` means when the
+ * parent is a node several levels down someone else's file.
+ *
+ * Rule 34 has already wiped the root's transform by the time this runs
+ * (it happens in the parser), so the chain this composes is exactly the
+ * chain the reference's scene graph would carry.
+ *
+ * @returns {{a: Float32Array, t: number[]}|null} an affine, or null when
+ *   the mesh has no such node.
+ */
+export function nodeTransformOf(nif, name) {
+  const hit = findNodeByName(nif, name);
+  if (!hit) return null;
+  let m = { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 0, 0] };
+  for (const node of [...hit.parents, hit.rec]) {
+    const local = affineOf(node);
+    m = mulAffine(m, local);
+  }
+  return m;
+}
+
+const affineOf = (rec) => {
+  const a = new Float32Array(9);
+  const s = rec.scale ?? 1;
+  for (let i = 0; i < 9; i++) a[i] = (rec.rotation ? rec.rotation[i] : (i % 4 === 0 ? 1 : 0)) * s;
+  const t = rec.translation || [0, 0, 0];
+  return { a, t: [t[0], t[1], t[2]] };
+};
+
+const mulAffine = (p, l) => {
+  const a = new Float32Array(9);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      a[r * 3 + c] = p.a[r * 3] * l.a[c] + p.a[r * 3 + 1] * l.a[3 + c] + p.a[r * 3 + 2] * l.a[6 + c];
+    }
+  }
+  return {
+    a,
+    t: [
+      p.a[0] * l.t[0] + p.a[1] * l.t[1] + p.a[2] * l.t[2] + p.t[0],
+      p.a[3] * l.t[0] + p.a[4] * l.t[1] + p.a[5] * l.t[2] + p.t[1],
+      p.a[6] * l.t[0] + p.a[7] * l.t[1] + p.a[8] * l.t[2] + p.t[2],
+    ],
+  };
+};
 
 export function bindPart(skeleton, partNif, opts = {}) {
   const batches = flattenNif(partNif);
