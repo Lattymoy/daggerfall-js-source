@@ -215,6 +215,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    THE ANTI-LIE LAW, borrowed from the char sheet's withheld
    logbook: a thing that does not work yet is shown and says why.
    It is never shown working, and never quietly absent. */
+/* CR1: the credits card - a modder's name beside the work, on the screen. */
+.credits-head { color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 400; margin: 18px 0 8px; }
+.credit { border-top: 1px solid var(--iron); padding: 12px 0 10px; }
+.credit-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.credit-name { font-family: var(--display); font-size: 19px; }
+.credit-by { color: var(--brass); font-size: 13px; }
+.credit-what { margin: 6px 0 0; font-size: 13px; line-height: 1.5; }
+.credit-terms { margin: 6px 0 0; color: var(--dim); font-size: 12px; }
+.credit-link { display: inline-block; margin-top: 6px; color: var(--brass); font-size: 12px; letter-spacing: 0.04em; text-decoration: none; border-bottom: 1px solid var(--iron); }
+.credit-link:hover, .credit-link:focus-visible { border-bottom-color: var(--brass); }
 .empty { border: 1px dashed var(--iron); padding: 26px 22px; margin-bottom: 16px; }
 .empty h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 8px; color: var(--dim); }
 .empty p { color: var(--dim); margin: 0 0 10px; max-width: 58ch; font-size: 14px; }
@@ -1379,6 +1389,11 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   background: rgba(0,0,0,0.35); }
 .shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
   letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+/* CR1: the credited work's title wears the pixel face like every other
+   heading in this shell - the serif is the old skin's, and it was the
+   one serif line on the screen. */
+.shell .credit-name { font-family: inherit; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   letter-spacing: 0.24em; background: none; border: 0; }

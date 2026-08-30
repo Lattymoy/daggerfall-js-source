@@ -16,8 +16,8 @@ VITALS INDICATORS - HUDVitals' smoothed loss trails and instant gain
 bars, with the health/fatigue colour swap - and the SPELL ICON PICKER
 both icon clicks had been waiting on, and the COLOUR PICKER that makes
 the settings screen's seven colour rows editable, and the HUD
-ESCORTING FACES - the quest escorts' portrait column, FE1).
-98 modules
+ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABLE the About pane renders, CR1).
+99 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

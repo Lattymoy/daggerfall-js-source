@@ -8573,3 +8573,35 @@ against a baseline verified green first.
 FLAGGED, not done: `tools/introProbe.mjs` is written and has NOT been
 run - nothing here is proven in a real browser, and the DOM host is
 precisely the part the node tests cannot reach.
+
+## CR1 - THE CREDITS on the About screen (2026-08-30)
+
+Mac's call, straight after the windmill closed 1:1: "I want to add a
+credits section in the about tab on the main menu, as we integrate
+these I really want to give credit to the mod developer who created
+it." A README in `vendor/` credits an author to whoever reads the repo;
+the About pane credits them to whoever PLAYS, which is the audience a
+modder cares about. The intro (U65) already puts Interkarma's and Nexus
+Mods' marks on the screen for a few seconds; this is the durable page.
+
+`src/ui/credits.js` is ONE table with two groups, kept apart because
+they are owed differently: BUILT ON (The Elder Scrolls II: Daggerfall,
+Bethesda Softworks - every byte from the player's own ARENA2; Daggerfall
+Unity, Gavin Clayton (Interkarma) and contributors - the source this
+port is a 1:1 of, its quests, book index and settings vendored under
+MIT) and MODS (Windmills of Daggerfall 2.0 by Kamer - what it is, the
+terms it is carried under, the contact his manifest gives). `paneAbout`
+renders it after the build card as its own card: a brass group heading,
+the work's title in the shell's pixel face, `by <author>` in brass, a
+line of what, a dim line of terms, a link only where one is real. No
+URL is invented; a contact is what the author's own manifest says.
+
+**The rule, enforced.** `test/credits.test.js` sweeps `vendor/` against
+the table both ways: every folder there has a credit on the screen,
+every credit names a folder that exists, and that folder's README names
+the same author the screen does. A mod row must carry title, author,
+what, terms and a vendor folder, and its terms must say permission -
+the roads were removed whole for lacking it. The renderer knows the
+SHAPE and no work by name. 3 pins; 5 mutants, 5 killed. Eyeballed on
+desktop and a Pixel 5 through the intro's skip: two cards, three works,
+the modder's name beside his mill.

@@ -118,6 +118,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
+import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -980,7 +981,43 @@ function paneAbout(body) {
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);
+  body.append(creditsCard());
   body.append(empty('Exit', 'A browser tab cannot close itself. Close it yourself; the quicksave survives.'));
+}
+
+// CR1: THE CREDITS (Mac, 2026-08-30). Rendered from ui/credits.js, the
+// one table every vendored work has a row in; this function knows the
+// shape and nothing about the works. Mods are the point - a modder's
+// name on the screen the player sees, not only in a README - so they
+// take their own heading, with the terms the work is carried under.
+function creditsCard() {
+  const c = el('div', 'card credits');
+  c.append(el('h3', null, 'Credits'));
+  c.append(el('p', 'meta', 'What this port is built on, and the mods carried in it with their authors\' permission.'));
+  const group = (heading, rows) => {
+    c.append(el('h4', 'credits-head', heading));
+    for (const r of rows) {
+      const row = el('div', 'credit');
+      const title = el('div', 'credit-title');
+      title.append(el('span', 'credit-name', r.version ? `${r.title} ${r.version}` : r.title));
+      title.append(el('span', 'credit-by', `by ${r.author}`));
+      row.append(title);
+      row.append(el('p', 'credit-what', r.what));
+      const foot = [];
+      if (r.terms) foot.push(r.terms);
+      if (r.contact) foot.push(`Contact: ${r.contact}.`);
+      if (foot.length) row.append(el('p', 'credit-terms', foot.join(' ')));
+      if (r.link) {
+        const a = el('a', 'credit-link', r.link.replace(/^https?:\/\//, ''));
+        a.href = r.link; a.target = '_blank'; a.rel = 'noopener';
+        row.append(a);
+      }
+      c.append(row);
+    }
+  };
+  group('Built on', CREDITS.builtOn);
+  group('Mods', CREDITS.mods);
+  return c;
 }
 
 // ── SHELL ────────────────────────────────────────────────────────
