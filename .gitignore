@@ -49,3 +49,7 @@ firsthour-shots/
 # on two slices (git add -A stages nothing ignored and says nothing),
 # a parallel session had to force-add it after CI went red.
 !test/fixtures/mw/fixture.bsa
+
+# Python bytecode from the fixture generators.
+__pycache__/
+*.pyc
