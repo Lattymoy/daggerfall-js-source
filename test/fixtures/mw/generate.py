@@ -429,7 +429,11 @@ def make_part():
         bones.append(b)
 
     tri = NifFormat.NiTriShape()
-    tri.name = b"PartSkin"
+    # "Tri Chest": the retail shape - a body part's drawable is named for
+    # its bone (rule 15's filter has to match it or the reference itself
+    # would drop the part in CopyRigVisitor). "PartSkin", which stood
+    # here, predates the filter and could never have survived it.
+    tri.name = b"Tri Chest"
     ident(tri.rotation)
     tri.scale = 1.0
     root.add_child(tri)
@@ -661,7 +665,7 @@ def make_bsa():
 # MW-D6: the ARM fixtures.
 #
 # Every fixture above speaks the vocabulary SkinRoot/Bone0/Bone1/Head/
-# Chest and names its shapes "Skinned"/"PartSkin"/"Hat". That vocabulary
+# Chest and names its shapes "Skinned"/"Tri Chest"/"Hat". That vocabulary
 # cannot exercise two of the attachment rules AT ALL, which is exactly
 # what MW-D5 recorded and what let three mutants survive a full sweep:
 #

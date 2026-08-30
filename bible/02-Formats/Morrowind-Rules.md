@@ -454,13 +454,34 @@ reads at <= 4.2.2.0 (data.cpp:140-153) and every committed fixture
 carries. generate.py corrects the attribute before writing, gated by
 regenerating armhand.nif BYTE-IDENTICAL to the committed file.
 
-6 mutants, 6 dead. NOT YET CLOSED by this slice and next in line: the
-viewer's NPC path still attaches paired limbs at their FIRST bone
-only (the recorded stub - Mac's missing right arm and right leg), and
-the viewer's bind-pose preview still shows skinned meshes at their
-AUTHORED positions (Mac's torso on the ground: a retail part is
-authored part-local, so its rest position exists only through the
-skinning equation the preview skips).
+6 mutants, 6 dead. The two doors it left open - the viewer NPC path's
+first-bone-only paired limbs and its authored-positions preview -
+closed at MW-D21, below.
+
+MW-D21: THE NPC RIDES THE ONE DOOR, against the rest of Mac's second
+screenshot. The viewer's loadNpc was a hand-rolled per-part loop:
+paired limbs attached at their FIRST bone only (the recorded stub -
+the missing right arm and right leg), no rule 15 filter, no rule 13
+mirror, no rule 14 offset, and skinned parts previewed at their
+AUTHORED positions - which for a retail part, authored part-local, is
+a torso on the ground. It rides bindPartsInto + poseAssembly now, the
+same door the game's arm uses: every attach bone both sides, filtered,
+mirrored, offset, in MW-D20's one graph space, with the rest pose
+computed at t=0 through the real skinning equation and the clip posed
+through the same assembly every frame. The chest fixture's shape is
+renamed "Tri Chest" on the way - the retail shape rule 15's filter
+exists for; "PartSkin" predated the filter and could never have
+survived it, which is its own small lesson about fixtures that only
+ever agree with the code.
+
+AND THE STAFF ROW IS PINNED. "The staff registers as a sword" - the
+row was never wrong (Staff -> BluntTwoWide, Morrowind's own staff
+class) and pickWeaponRecord never substitutes a type, so a blade in a
+staff hand is impossible from the mapping side; what Mac saw was the
+pre-MW-D19 snapshot arm holding whatever it was built with. The row,
+the resolver, and the staff-or-nothing pick are pinned end to end so
+the sentence stays true, and the card names the picked record beside
+the bone it hangs on.
 
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a

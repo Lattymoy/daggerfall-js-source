@@ -33,8 +33,9 @@ import {
   advanceClip,
   isLoopingAnimation,
 } from '../formats/mwAnim.js';
-import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch, accumRootRef } from '../formats/mwSkin.js';
+import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch, accumRootRef, GRAPH_ROOT } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
+import { assembleFirstPersonArm, poseAssembly } from '../formats/mwFirstPerson.js';
 import { parseEsm } from '../formats/mwEsmFile.js';
 import { assembleNpc, indexSkins } from '../formats/mwNpc.js';
 
@@ -205,7 +206,7 @@ function debugDump(label, batches) {
   }
 }
 
-function loadNpc(id) {
+async function loadNpc(id) {
   if (!esm || !bsa || !id) return;
   let a;
   try {
@@ -220,30 +221,80 @@ function loadNpc(id) {
     return;
   }
   loadNifBytes(bsa.get(baseKey), baseKey);
-  let bound = 0;
+  // MW-D21: THE PARTS RIDE THE ONE ASSEMBLY DOOR. What stood here was a
+  // per-part loop that attached paired limbs at their FIRST bone only
+  // (Mac's missing right arm and right leg), applied no rule 15 filter,
+  // no rule 13 mirror, no rule 14 offset - and previewed skinned parts
+  // at their AUTHORED positions, which for a retail part (authored
+  // part-local) is a torso on the ground. The assembly is the same
+  // bindPartsInto + poseAssembly the game's arm rides: every attach
+  // bone, filtered, mirrored, offset, in MW-D20's one graph space, and
+  // the rest pose is t=0 through the real skinning equation.
   const troubles = [];
-  loaded.npcBound = [];
+  const parts = [];
   for (const part of a.parts) {
     const key = normalizeBsaPath(part.model);
     if (!bsa.has(key)) {
       troubles.push(`${part.slot}: ${part.model} not in archive`);
       continue;
     }
-    // Paired limbs attach at their first bone for now - the mirror
-    // lands with the clothing slice; the data already names both.
-    if (addPartFromBytes(bsa.get(key), key, { attachBone: part.attachBones[0], quiet: true })) {
-      bound++;
-      loaded.npcBound.push(part.bodyId);
-    } else {
-      // addPartFromBytes wrote the error into status; keep it.
-      troubles.push(`${part.slot}: ${statusEl.textContent.split('\n').pop()}`);
-    }
+    parts.push({ slot: part.slot, bones: part.attachBones, bytes: bsa.get(key).slice(), bodyId: part.bodyId });
   }
+  const asm = parts.length
+    ? await assembleFirstPersonArm({ skeletonBytes: bsa.get(baseKey).slice(), parts })
+    : null;
+  loaded.npcAsm = null;
+  loaded.npcBound = [];
+  if (asm && asm.ok) {
+    const group = buildGroup(asm.pieces.map((p) => ({
+      positions: p.positions,
+      normals: null,
+      uvs: p.uvs,
+      colors: p.colors,
+      indices: p.indices,
+      material: p.material || { diffuse: [1, 1, 1], emissive: [0, 0, 0], alpha: 1 },
+      skinned: false,
+    })));
+    holder.add(group);
+    group.children.forEach((mesh, i) => {
+      mesh.matrixAutoUpdate = false;
+      // Rule 13's negation reverses the winding; the reference flips the
+      // front face, the scout draws both.
+      mesh.material.side = THREE.DoubleSide;
+      asm.pieces[i].viewerMesh = mesh;
+    });
+    loaded.parts.push({ name: `${id} (npc)`, group, attachedMeshes: [], attachRef: null });
+    loaded.npcAsm = asm;
+    const boundSlots = new Set(asm.pieces.map((p) => p.slot));
+    loaded.npcBound = parts.filter((p) => boundSlots.has(p.slot)).map((p) => p.bodyId);
+  } else if (asm) {
+    troubles.push(...(asm.notes || []).slice(0, 3));
+  }
+  frameCamera();
+  window.__mwviewer = { name: baseKey, loaded, error: null };
+  const notes = (asm && asm.notes) || [];
   setStatus(
-    `${a.npc.name} (${a.race.name ?? a.npc.race}) - ${bound}/${a.parts.length} parts bound` +
+    `${a.npc.name} (${a.race.name ?? a.npc.race}) - ${loaded.npcBound.length}/${a.parts.length} parts bound` +
       (troubles.length ? ` | ${troubles.slice(0, 3).join('; ')}` : '') +
+      (notes.length ? ` | ${notes.slice(0, 2).join('; ')}` : '') +
       (a.missing.length ? ` | ${a.missing.length} slots without skins` : ''),
   );
+}
+
+/** Re-pose the NPC assembly and push the pieces into their meshes. */
+function poseNpcAsm(opts) {
+  const asm = loaded && loaded.npcAsm;
+  if (!asm) return;
+  poseAssembly(asm, opts);
+  for (const p of asm.pieces) {
+    const mesh = p.viewerMesh;
+    if (!mesh) continue;
+    // buildGroup used p.positions as the attribute array itself for
+    // unskinned batches, so poseAssembly already wrote into it.
+    mesh.geometry.attributes.position.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+    mesh.geometry.computeBoundingSphere();
+  }
 }
 // `groups` is parseAnimGroups' LISTING - the dropdown, keyed by the
 // name the file wrote. `keys` is the normalized key array the CLIP LAW
@@ -301,6 +352,10 @@ function startGroup(name) {
   anim.last = performance.now();
   if (!anim.playing) {
     if (loaded) for (const s of loaded.skinnedMeshes) restoreBind(s);
+    // The NPC assembly's rest is t=0 through the real skinning equation
+    // - a retail part is authored part-local and has no on-screen
+    // position at all without it.
+    poseNpcAsm({ sampleTrack, time: 0 });
     return;
   }
   // The play request is the scripted PlayGroup path: resetClip picks the
@@ -332,12 +387,6 @@ function affineToMatrix4(m) {
   );
 }
 
-function skeletonRootRef() {
-  for (const [ref, node] of loaded.skeleton.nodes) {
-    if (node.parent < 0) return ref;
-  }
-  return -1;
-}
 
 // ADD-PART MODE: a character is base_anim + body parts, joined by bone
 // name. With the toggle on, the next mesh picked or dropped BINDS onto
@@ -375,7 +424,8 @@ function addPartFromBytes(bytes, name, opts = {}) {
     if (attachedMeshes.length) {
       // Rest placement now; the animation loop repositions when playing.
       const pose = poseSkeleton(loaded.skeleton, null, sampleTrack, 0);
-      const mats = skeletonSpaceMatrices(loaded.skeleton, pose, skeletonRootRef());
+      // MW-D20: one graph space - the same the bound skin now poses in.
+      const mats = skeletonSpaceMatrices(loaded.skeleton, pose, GRAPH_ROOT);
       const m4 = affineToMatrix4(attachmentTransform(mats, bound.attachRef));
       for (const mesh of attachedMeshes) mesh.matrix.copy(m4);
     }
@@ -432,13 +482,14 @@ function updateAnimation(nowMs) {
     accumRoot: anim.accumRoot,
   });
   const matsByRoot = new Map();
-  const rootRef = skeletonRootRef();
-  if (!matsByRoot.has(rootRef)) {
-    matsByRoot.set(rootRef, skeletonSpaceMatrices(loaded.skeleton, pose, rootRef));
+  // MW-D20: attached add-part pieces ride the same graph space as the
+  // rebound skins they accompany.
+  if (!matsByRoot.has(GRAPH_ROOT)) {
+    matsByRoot.set(GRAPH_ROOT, skeletonSpaceMatrices(loaded.skeleton, pose, GRAPH_ROOT));
   }
   for (const part of loaded.parts) {
     if (!part.attachedMeshes.length) continue;
-    const m4 = affineToMatrix4(attachmentTransform(matsByRoot.get(rootRef), part.attachRef));
+    const m4 = affineToMatrix4(attachmentTransform(matsByRoot.get(GRAPH_ROOT), part.attachRef));
     for (const mesh of part.attachedMeshes) mesh.matrix.copy(m4);
   }
   for (const s of loaded.skinnedMeshes) {
@@ -453,6 +504,9 @@ function updateAnimation(nowMs) {
     if (nrm) nrm.needsUpdate = true;
     s.mesh.geometry.computeBoundingSphere();
   }
+  // The NPC assembly poses whole, through the same one home the game
+  // uses; its pieces' buffers are the mesh attributes.
+  poseNpcAsm({ tracks: anim.tracks, sampleTrack, time: t, accumRoot: anim.accumRoot });
 }
 
 function setStatus(text) {

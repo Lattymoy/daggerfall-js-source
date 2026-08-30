@@ -375,6 +375,15 @@ test('MW-D9: the Daggerfall->Morrowind mapping is DECLARED, complete, and keyed 
   assert.equal(DF_TO_MW_WEAPON.War_Axe, MW_WEAPON_TYPE.AxeOneHand);
   assert.equal(DF_TO_MW_WEAPON.Battle_Axe, MW_WEAPON_TYPE.AxeTwoHand);
   assert.equal(DF_TO_MW_WEAPON.Long_Bow, MW_WEAPON_TYPE.MarksmanBow);
+  // MW-D21, after the retail report "the staff registers as a sword":
+  // the ROW was never the problem - BluntTwoWide IS Morrowind's own
+  // staff class, so this pin plus "never substitutes a type" below
+  // makes a blade in a staff hand impossible from the mapping side.
+  // What Mac saw was the pre-MW-D19 snapshot: an arm built holding a
+  // sword kept it whatever the hand later held.
+  assert.equal(DF_TO_MW_WEAPON.Staff, MW_WEAPON_TYPE.BluntTwoWide,
+    "a Staff is Morrowind's own staff class");
+  assert.equal(dfWeaponToMw({ templateIndex: WEAPONS.Staff }, WEAPONS), MW_WEAPON_TYPE.BluntTwoWide);
 
   // The resolver keys on templateIndex, NOT the sprite layer's
   // WEAPON_TYPES - which folds Claymore and Longsword into one class and
@@ -407,6 +416,15 @@ test('MW-D9: picking a record prefers the material, avoids the enchanted, and ne
   // wrong bone, in the wrong hand, and look entirely deliberate.
   assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.AxeTwoHand), null,
     'a type your archives do not carry is EMPTY HANDS, not a different weapon');
+  // MW-D21, the staff end to end: with a sword IN the archives, a staff
+  // hand picks the STAFF or nothing - never the blade.
+  const withStaff = weaponRecords(Uint8Array.from([
+    ...wpdtRec('iron longsword', 'w/i.nif', MW_WEAPON_TYPE.LongBladeOneHand),
+    ...wpdtRec('wooden staff', 'w/s.nif', MW_WEAPON_TYPE.BluntTwoWide),
+  ]));
+  assert.equal(pickWeaponRecord(withStaff, MW_WEAPON_TYPE.BluntTwoWide).id, 'wooden staff');
+  assert.equal(pickWeaponRecord(withStaff.filter((r) => r.type !== MW_WEAPON_TYPE.BluntTwoWide),
+    MW_WEAPON_TYPE.BluntTwoWide), null, 'no staff in the archives is EMPTY HANDS, never the sword');
 });
 
 test('MW-D9: the arm rides the SAME handedness mirror as the world it is composited over', async () => {

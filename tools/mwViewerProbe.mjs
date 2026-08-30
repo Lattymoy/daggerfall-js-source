@@ -153,14 +153,34 @@ await page.waitForTimeout(400);
 const npcStatus = await page.textContent('#status');
 ok(/Test NPC \(Test Race\) - 3\/3 parts bound/.test(npcStatus), `npc assembles: ${npcStatus}`);
 ok(/11 slots without skins/.test(npcStatus), 'the honest missing-slots census reaches the status line');
+// MW-D21: the NPC rides the ONE assembly door (bindPartsInto +
+// poseAssembly, the same the game's arm uses), so what the probe reads
+// is the assembly's own census: every attach bone, rule 15's filter
+// (the chest shape is "Tri Chest" - the retail naming the filter
+// exists for), the Hat riding as a rigid sibling, and the rest pose
+// computed through the real skinning equation.
 const npcParts = await page.evaluate(() => ({
   skins: window.__mwviewer.loaded.skinnedMeshes.length,
-  parts: window.__mwviewer.loaded.parts.length,
-  attach: window.__mwviewerAttachT(0),
+  pieces: window.__mwviewer.loaded.npcAsm.pieces
+    .map((p) => `${p.slot}:${p.kind}@${p.bone}`).sort().join(),
+  chestRest: (() => {
+    const c = window.__mwviewer.loaded.npcAsm.pieces.find((p) => p.kind === 'skinned');
+    return Array.from(c.positions).map((x) => +x.toFixed(3));
+  })(),
+  headMinZ: (() => {
+    const h = window.__mwviewer.loaded.npcAsm.pieces.find((p) => p.slot === 'head');
+    let m = Infinity;
+    for (let i = 2; i < h.positions.length; i += 3) m = Math.min(m, h.positions[i]);
+    return m;
+  })(),
 }));
-ok(npcParts.skins === 2, `base + chest skin both skinned (${npcParts.skins})`);
-ok(npcParts.parts === 3, `three parts bound (${npcParts.parts})`);
-ok(Array.isArray(npcParts.attach), 'head attaches with a live matrix');
+ok(npcParts.skins === 1, `the base file's own skin stays a same-file batch (${npcParts.skins})`);
+ok(npcParts.pieces === 'chest:rigid@chest,chest:skinned@chest,hair:rigid@head,head:rigid@head',
+  `the assembly census - four pieces, filtered and bone-placed (${npcParts.pieces})`);
+ok(JSON.stringify(npcParts.chestRest) === JSON.stringify([0.5, 0, 0, 1.5, 0, 0, 0.5, 0, 1]),
+  `the chest rests through the real skinning equation (${npcParts.chestRest})`);
+ok(npcParts.headMinZ > 1.0,
+  `the head sits on the Head bone above the chest (minZ ${npcParts.headMinZ})`);
 // The female NPC swaps in the female chest - read the bound part ids.
 await page.selectOption('#npcsel', 'test npc f');
 await page.waitForTimeout(400);
