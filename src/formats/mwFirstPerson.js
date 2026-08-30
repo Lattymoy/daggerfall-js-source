@@ -712,7 +712,18 @@ export function weaponRecords(bytes) {
       else if (sub.name === 'ENAM') e.enchanted = true;
       else if (sub.name === 'WPDT') {
         if (sub.len < 32) continue;   // refused, not read past
-        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 10, 2).getInt16(0, true);
+        // MW-D22: mType is at byte EIGHT. loadweap.hpp's WPDTstruct is
+        // float mWeight (0-3), int32 mValue (4-7), int16 mType (8-9),
+        // uint16 mHealth (10-11), ... - 32 bytes. MW-D9 recorded "byte
+        // 10" (4+4 does not make 10), the reader read 10, and the
+        // fixture writer was authored FROM THE SAME GUESS - so every
+        // pin passed while retail play read mHealth as the type:
+        // a shortsword (type 0) found no record with health 0 and drew
+        // EMPTY HANDS, and a staff (type 5) drew whatever record's
+        // health is 5. Mac's play was the first retail check this
+        // number ever got, which is the whole TEST-THE-SHAPE lesson
+        // wearing bytes.
+        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 8, 2).getInt16(0, true);
       }
     }
     if (e.id && e.model) out.push(e);

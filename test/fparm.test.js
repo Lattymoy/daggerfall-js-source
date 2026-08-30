@@ -312,7 +312,7 @@ const wpdtRec = (id, model, type, name = 'W', { short = false, enchanted = false
   const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
   const sub = (n, d) => [...A(n), ...U(d.length), ...d];
   const w = new Uint8Array(short ? 16 : 32);
-  new DataView(w.buffer).setInt16(10, type, true);
+  new DataView(w.buffer).setInt16(8, type, true);   // MW-D22: mType is at byte 8 (loadweap.hpp) - 10 was the shared guess
   const d = [...sub('NAME', Z(id)), ...sub('MODL', Z(model)), ...sub('FNAM', Z(name)),
     ...(enchanted ? sub('ENAM', Z('ench')) : []), ...sub('WPDT', [...w])];
   return [...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d];
@@ -891,4 +891,33 @@ test('MW-D20: the neck conjugates in the OBJECT ROOT frame - the file root\'s ro
     assert.ok(Math.abs(rot[i] - want[i]) < 1e-5,
       `element ${i}: ${rot[i]} vs Ry(-0.4)'s ${want[i]}`);
   }
+});
+
+test('MW-D22: mType reads from byte EIGHT, pinned against a layout the writer cannot share', async () => {
+  const { weaponRecords, MW_WEAPON_TYPE } = await import('../src/formats/mwFirstPerson.js');
+  // Every WPDT field planted with a DISTINCT value, laid out by hand
+  // from loadweap.hpp's struct - NOT through wpdtRec, which was authored
+  // from the same guess as the reader and so proved nothing for two
+  // slices: reader at 10, writer at 10, retail at 8. weight 1.5f,
+  // value 7, TYPE 5 at [8..9], health 999 at [10..11] - a reader still
+  // on byte 10 answers 999 and dies here.
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const w = new Uint8Array(32);
+  const dv = new DataView(w.buffer);
+  dv.setFloat32(0, 1.5, true);      // mWeight
+  dv.setInt32(4, 7, true);          // mValue
+  dv.setInt16(8, 5, true);          // mType = BluntTwoWide
+  dv.setUint16(10, 999, true);      // mHealth - the byte the old reader took
+  dv.setFloat32(12, 1.25, true);    // mSpeed
+  dv.setFloat32(16, 1.0, true);     // mReach
+  const d = [...sub('NAME', Z('wooden staff')), ...sub('MODL', Z('w/staff.nif')),
+    ...sub('FNAM', Z('Wooden Staff')), ...sub('WPDT', [...w])];
+  const esm = Uint8Array.from([...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d]);
+  const recs = weaponRecords(esm);
+  assert.equal(recs.length, 1);
+  assert.equal(recs[0].type, MW_WEAPON_TYPE.BluntTwoWide,
+    'the type is the int16 at offset 8 - not mHealth at 10, which retail play read for two slices');
 });

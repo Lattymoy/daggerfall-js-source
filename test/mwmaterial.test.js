@@ -257,7 +257,7 @@ const wpdtRec = (id, model, type) => {
   const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
   const sub = (n, d) => [...A(n), ...U(d.length), ...d];
   const w = new Uint8Array(32);
-  new DataView(w.buffer).setInt16(10, type, true);
+  new DataView(w.buffer).setInt16(8, type, true);   // MW-D22: mType is at byte 8 (loadweap.hpp) - 10 was the shared guess
   const d = [...sub('NAME', Z(id)), ...sub('MODL', Z(model)), ...sub('FNAM', Z('W')), ...sub('WPDT', [...w])];
   return Uint8Array.from([...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d]);
 };

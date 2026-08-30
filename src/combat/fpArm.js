@@ -414,6 +414,22 @@ export function fpWeaponKey(item, hasAmmo) {
   return `${dfWeaponToMw(item, WEAPONS)}:${(item && item.materialName) || ''}:${hasAmmo ? 1 : 0}`;
 }
 
+/**
+ * MW-D22: WHICH SIDE the weapon's attach bone rests on, made legible.
+ * In Morrowind's basis an actor faces +Y with +Z up, so the actor's
+ * right hand is +X (right = forward x up = y x z). The card prints this
+ * beside the bone so a bug report can tell "the weapon hangs on the
+ * wrong copy of the bone" (rule 16's duplicate trap) from "the view is
+ * mirrored" without a screenshot argument.
+ */
+export function weaponRestSide(arm, bone) {
+  const ref = arm && arm.skeleton && arm.skeleton.byName.get(String(bone || '').toLowerCase());
+  const node = ref !== undefined && arm.mats ? arm.mats.get(ref) : null;
+  if (!node) return 'unknown';
+  const x = node.t[0];
+  return x > 1e-4 ? 'right' : x < -1e-4 ? 'left' : 'centre';
+}
+
 /** Template 131 is Daggerfall's arrow. This test existed as THREE
  *  literals (the rig's out-of-arrows auto-sheathe, the card's build
  *  button, and the swap seam wanted a fourth) - one export now. */
@@ -683,6 +699,8 @@ export async function buildFpArm({
       };
     }
     const reach = armReach(firstPersonEye(arm.mats, cameraRef), union);
+    if (weaponInfo) weaponInfo.side = weaponRestSide(arm, weaponInfo.bone);
+    if (arrowInfo) arrowInfo.side = weaponRestSide(arm, arrowInfo.bone);
 
     return {
       ok: true,
@@ -1258,6 +1276,8 @@ export function createFpArm() {
           const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
           token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));
           poseAt(c.startTime);
+          if (token.weapon) token.weapon.side = weaponRestSide(arm, token.weapon.bone);
+          if (token.arrow) token.arrow.side = weaponRestSide(arm, token.arrow.bone);
           releaseMesh();
           packed = null;
           // The old action clip belonged to the old weapon's group.
