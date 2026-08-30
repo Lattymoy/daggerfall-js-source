@@ -100,6 +100,26 @@ duration - the presentation mode is live, its delay is not),
 `Experimental/TerrainHeightmapPixelError`, `Audio/SoundFont`,
 `Video/AmbientLitInteriors`, `GUI/GUIFilterMode`, `GUI/VideoFilterMode`.
 
+## W2 - THE DEFAULT-ON ABSENTEES
+
+### W2a CLOSED: the arrow counter (DaggerfallHUD.cs:270-292)
+
+With a bow drawn, DFU prints the arrow stack count left of the compass
+(grey; the translucent blue when the stack is conjured; "0" when the
+quiver is empty), and the port had never drawn it - `hud.js` mentioned
+the counter only to say the large HUD drops it. `hud.arrowCountLabel`
+is the pure half, three gates in DFU's order (the setting, the weapon
+drawn, a bow in the hand `BowLeftHandWithSwitching` names) over the
+same `GetItem(Arrow, allowQuestItem: false, priorityToConjured: true)`
+the bow spends from; the draw is :281-284's placement in the classic
+compass arm. All four hosts hand `drawHud` the drawn state.
+
+FOUND ON THE WAY: `worldModes`' interior frame had never handed `drawHud`
+a font, so nothing text-shaped on the classic HUD could draw indoors -
+the interaction-mode word included - while DFU draws its one HUD
+everywhere. It carries `townTalk.font` now. `EnableArrowCounter` and
+`BowLeftHandWithSwitching` are LIVE. 4 pins; 5 mutants, 5 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

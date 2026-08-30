@@ -29,6 +29,10 @@ import {
 } from './hudVitals.js';
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
+import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
+import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
+import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
 import { nativeMetrics } from './nativePanel.js';
 import { ToolTip } from './toolTip.js';
 
@@ -293,9 +297,57 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
 
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
+/** The bows, by template (ItemEnums.cs Weapons: Short_Bow 129,
+ *  Long_Bow 130). */
+export const BOW_TEMPLATES = Object.freeze([129, 130]);
+/** DaggerfallHUD.cs:27-28 - the two label colours. */
+export const REAL_ARROWS_COLOR = Object.freeze([0.6, 0.6, 0.6, 1]);
+export const CONJURED_ARROWS_COLOR = Object.freeze([0.18, 0.32, 0.48, 0.5]);
+
+/**
+ * AUDIT 28 W2: THE ARROW COUNTER (DaggerfallHUD.cs:270-292), a
+ * default-ON DFU feature the port never had. The pure half: answers
+ * what the label says and in what colour, or null when it does not
+ * draw. The gates are DFU's in DFU's order - the setting
+ * (`ShowArrowCount = Settings.EnableArrowCounter`, :155), the weapon
+ * DRAWN, and a bow in the bow hand (`BowLeftHandWithSwitching` picks
+ * which hand, :275). The large HUD's own gate is the caller's, as :273
+ * has it. The count is `GetItem(Weapons, Arrow, allowQuestItem: false,
+ * priorityToConjured: true)` - a conjured stack is counted first and
+ * drawn in the conjured colour - or "0" with no arrows at all.
+ */
+export function arrowCountLabel(entity, weaponSheathed, {
+  enabled = getBool('GUI', 'EnableArrowCounter'),
+  leftHand = getBool('Enhancements', 'BowLeftHandWithSwitching'),
+} = {}) {
+  if (!enabled || weaponSheathed) return null;
+  const slot = leftHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+  const held = entity?.equip?.slots?.[slot] ?? null;
+  if (!held || held.group !== 'Weapons' || !BOW_TEMPLATES.includes(held.templateIndex)) return null;
+  const arrows = getItem(entity?.items ?? [], 'Weapons', ARROW_TEMPLATE, { allowQuestItem: false, priorityToConjured: true });
+  return {
+    text: arrows ? String(arrows.stackCount ?? 1) : '0',
+    color: (arrows && isSummoned(arrows)) ? CONJURED_ARROWS_COLOR : REAL_ARROWS_COLOR,
+  };
+}
+
+/** The draw half: :281-284 - offset LEFT of the compass by its width
+ *  plus the label's width plus 8, centred on the compass's height.
+ *  In screen units, so the 8 is scaled with the rest. */
+function drawArrowCount(renderer, canvas, font, entity, weaponSheathed, compass, s) {
+  if (!font) return;
+  const label = arrowCountLabel(entity, weaponSheathed);
+  if (!label) return;
+  const w = measureText(font.fnt, label.text) * s;
+  const h = (font.fnt?.fixedHeight ?? 6) * s;
+  const x = canvas.width - compass.bw - w - 8 * s;
+  const y = canvas.height - compass.bh / 2 - h / 2;
+  drawText(renderer, font, label.text, x, y, s, label.color);
+}
+
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null,
-    readied = null, weapon = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques
+    readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -399,6 +451,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     { x: bx + COMPASS_BOX_OUTLINE * s, y: by + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
     { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
   renderer.drawScreenQuad(box.tex, { x: bx, y: by, w: bw, h: bh });
+  drawArrowCount(renderer, canvas, font, vitals, weaponSheathed, { bw, bh }, s);
   // X4: DrawTrackedObjects (HUDCompass.cs:198-217), AFTER the box -
   // HUDCompass.Draw() calls DrawCompass() then DrawTrackedObjects(),
   // so markers sit OVER the frame, and above it: DFU's marker y is

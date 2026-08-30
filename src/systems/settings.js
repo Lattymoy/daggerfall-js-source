@@ -94,6 +94,12 @@ export const LIVE = Object.freeze({
   'GUI/DisableEnemyDeathAlert': 'src/scenes/corpseMarker.js',
   'Enhancements/DungeonAmbientLightScale': 'src/world/dungeonLights.js',
   'Enhancements/NightAmbientLightScale': 'src/scenes/world.js',
+  // AUDIT 28 W2a: the arrow counter (DaggerfallHUD :270-292) - a
+  // default-ON feature the port never drew. The setting is the FIRST
+  // of its three gates; BowLeftHandWithSwitching picks the hand the
+  // bow is looked for in (:275). Both read in hud.arrowCountLabel.
+  'GUI/EnableArrowCounter': 'src/ui/hud.js',
+  'Enhancements/BowLeftHandWithSwitching': 'src/ui/hud.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
