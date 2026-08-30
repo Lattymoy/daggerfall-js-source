@@ -31,6 +31,7 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
+import { advanceMachinery, mountMachineryChild } from '../world/windmills.js';   // WM4b: the machinery's moving parts
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
@@ -380,7 +381,7 @@ export function createWorldModes(host) {
   // X7: set while an IDENTIFY SPELL's window is open ({chance, cost}),
   // null for the paid guild service. The trade window is one window
   // serving both, exactly as DFU's is.
-  const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
+  const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts } = pipeline;
 
   /** ID1: THE INTERIOR'S OWN GROUND PILE.
    *
@@ -3100,7 +3101,7 @@ export function createWorldModes(host) {
       // come back world-frame, landings run in one frame, and the walk
       // through the door is coordinate-seamless.
       const ctx = await buildInteriorContext(
-        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
+        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette, getMachineryParts },
         // DaggerfallInterior.IsBadInteriorModel (:530-548) keys the
         // 31000-overlap repair on EntryDoor.blockIndex, which
         // RMBLayout.cs:848 mints as blockData.Index. The literal 0 is
@@ -3856,6 +3857,11 @@ export function createWorldModes(host) {
     interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
+    // WM4b: the mill's machinery turns at Kamer's rate, in here too.
+    for (const r of interiorCtx.rotors) {
+      advanceMachinery(r.state, dt, r.child);
+      renderer.drawMesh(r.gpu, mountMachineryChild(r.parent, r.child, r.state.angle), interiorCtx.texRemap);
+    }
     for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
     // C13: interior arrows fly and draw with the meshes; a new
     // interior (different ctx) drops the stale flights.

@@ -44,7 +44,7 @@ const ints = (s) => s.trim().split(/\s+/).map((v) => parseInt(v, 10));
  * input it did not understand would bake a mesh missing its normals and
  * nothing would say so.
  */
-export function parseCollada(text, materialTextures = null) {
+export function parseCollada(text, materialTextures = null, { nodeMatrix = 'assert' } = {}) {
   const geoms = [...text.matchAll(/<geometry id="([^"]+)"[^>]*>([\s\S]*?)<\/geometry>/g)];
   if (geoms.length !== 1) throw new Error(`expected 1 geometry, found ${geoms.length}`);
   const [, geomId, geom] = geoms[0];
@@ -78,12 +78,18 @@ export function parseCollada(text, materialTextures = null) {
   // material id, and when it is given it is AUTHORITATIVE and must be
   // COMPLETE: a material it does not name throws, exactly as an unbound
   // one does, because a silently untextured submesh draws as garbage.
+  //
+  // WM4b: "complete" is measured against the materials the file DRAWS,
+  // not the ones it declares - Plank_Gear.dae declares nine and draws
+  // one. A drawn material the map does not name still throws (at the
+  // triangles below); a map entry no triangles use throws too, because
+  // a key that matches nothing is a typo waiting to be a missing skin.
   const matTexture = new Map();
+  const mapUsed = new Set();
   for (const m of text.matchAll(/<material id="([^"]+)"[^>]*>\s*<instance_effect url="#([^"]+)"/g)) {
     if (materialTextures) {
       const given = materialTextures[m[1]];
-      if (!given) throw new Error(`material ${m[1]} has no entry in the supplied material map`);
-      matTexture.set(m[1], { textureArchive: given[0], textureRecord: given[1] });
+      if (given) matTexture.set(m[1], { textureArchive: given[0], textureRecord: given[1] });
       continue;
     }
     const name = effectImage.get(m[2]) ?? '';
@@ -92,16 +98,25 @@ export function parseCollada(text, materialTextures = null) {
     matTexture.set(m[1], { textureArchive: Number(t[1]), textureRecord: Number(t[2]) });
   }
 
-  // The node transform, asserted rather than applied.
+  // The node transform, asserted rather than applied - or IGNORED, for
+  // a part Kamer's prefab draws as a bare MESH ASSET (m_Mesh straight
+  // into the DAE): Unity never applied that node's matrix in his scene
+  // either, the child GameObject's own transform is the whole placement,
+  // and Plank_Gear's node matrix is nothing like the expected one. See
+  // vendor/windmills-kamer/machinery.json.
   const nm = text.match(/<node id="([^"]+)"[^>]*>\s*<matrix[^>]*>([^<]+)<\/matrix>/);
   if (!nm) throw new Error('no <node> with a <matrix>');
-  const matrix = floats(nm[2]);
-  matrix.forEach((v, i) => {
-    if (Math.abs(v - EXPECTED_NODE_MATRIX[i]) > 1e-6) {
-      throw new Error(`node matrix differs at ${i}: ${v} vs ${EXPECTED_NODE_MATRIX[i]} - `
-        + 'this export is rotated differently and the no-transform bake would be wrong');
-    }
-  });
+  if (nodeMatrix === 'assert') {
+    const matrix = floats(nm[2]);
+    matrix.forEach((v, i) => {
+      if (Math.abs(v - EXPECTED_NODE_MATRIX[i]) > 1e-6) {
+        throw new Error(`node matrix differs at ${i}: ${v} vs ${EXPECTED_NODE_MATRIX[i]} - `
+          + 'this export is rotated differently and the no-transform bake would be wrong');
+      }
+    });
+  } else if (nodeMatrix !== 'ignore') {
+    throw new Error(`nodeMatrix must be 'assert' or 'ignore', got ${nodeMatrix}`);
+  }
 
   const positions = [], normals = [], uvs = [], indices = [], subMeshes = [];
   const seen = new Map();
@@ -120,6 +135,7 @@ export function parseCollada(text, materialTextures = null) {
     const tex = matTexture.get(material.replace(/-material$/, '') + '-material')
       ?? matTexture.get(material);
     if (!tex) throw new Error(`no texture for material ${material}`);
+    mapUsed.add(material);
 
     const startIndex = indices.length;
     for (let i = 0; i < p.length; i += stride) {
@@ -141,6 +157,12 @@ export function parseCollada(text, materialTextures = null) {
       indices.push(vi);
     }
     subMeshes.push({ ...tex, startIndex, primitiveCount: Number(count) });
+  }
+
+  if (materialTextures) {
+    for (const k of Object.keys(materialTextures)) {
+      if (!mapUsed.has(k)) throw new Error(`material map names ${k}, which no triangles use`);
+    }
   }
 
   // ── HANDEDNESS: COLLADA IS RIGHT-HANDED, UNITY IS LEFT ──────────
@@ -202,9 +224,14 @@ export function parseCollada(text, materialTextures = null) {
 // files, whose names ARE the classic (archive, record) pair. Read once
 // and written down here, because the prefab is not vendored.
 //
-// Roller.dae is not baked: interior machinery, three materials with no
-// texture at all, and the strict reader above rejected it outright -
-// the reader behaving exactly as intended.
+// WM4b: THE MACHINERY - 41601.dae and its two animated children,
+// Plank_Gear.dae and Roller.dae - bakes on the same terms, its material
+// maps read out of Models/Finished/41601.prefab and written down in
+// vendor/windmills-kamer/machinery.json. An earlier note here said
+// Roller.dae was "three materials with no texture at all" and left it
+// out; that was read off the DAE, and the PREFAB binds 067_1 / 091_2 /
+// 091_3 to it. The reader was right to refuse an unbound material; the
+// mistake was not supplying the binding.
 const BODY_MATERIALS = {
   'Walls-material': [364, 2],
   'Plank-material': [67, 1],
@@ -212,14 +239,18 @@ const BODY_MATERIALS = {
   'Windmill-material': [67, 1],
   'Door-material': [332, 0],
 };
+const machinery = JSON.parse(
+  readFileSync(new URL('../vendor/windmills-kamer/machinery.json', import.meta.url), 'utf8'));
 const PARTS = [
-  ['ROTOR', 'Blade.dae', null],
-  ['BODY', 'Windmill.dae', BODY_MATERIALS],
+  ['ROTOR', 'Blade.dae', null, 'assert'],
+  ['BODY', 'Windmill.dae', BODY_MATERIALS, 'assert'],
+  ['MACHINERY', machinery.body.file, machinery.body.materials, 'assert'],
+  ...machinery.children.map((c) => [c.name.toUpperCase(), c.file, c.materials, 'ignore']),
 ];
 const arr = (a, digits = 6) => `[${a.map((v) => (Number.isInteger(v) ? v : +v.toFixed(digits))).join(', ')}]`;
 
-const blocks = PARTS.map(([name, file, mats]) => {
-  const m = parseCollada(readFileSync(new URL(`../vendor/windmills-kamer/${file}`, import.meta.url), 'utf8'), mats);
+const blocks = PARTS.map(([name, file, mats, nodeMatrix]) => {
+  const m = parseCollada(readFileSync(new URL(`../vendor/windmills-kamer/${file}`, import.meta.url), 'utf8'), mats, { nodeMatrix });
   return `/** ${name} - \`${file}\`, node \`${m.node}\`, geometry \`${m.geomId}\`.
  *  ${m.positions.length / 3} vertices, ${m.indices.length / 3} triangles${m.flatAxis ? `, flat in ${m.flatAxis.toUpperCase()}` : ''}. */
 export const ${name} = Object.freeze({
@@ -296,6 +327,19 @@ ${skinRows}
  *  beside it. WM2d read only the mill, which is why it had no way in. */
 export const PLACEMENTS = Object.freeze([
 ${placementRows}
+]);
+
+/** THE MACHINERY'S MOVING PARTS - the two children of Kamer's 41601
+ *  prefab, each drawn with its own mesh above under the transform his
+ *  prefab gives it and turned by his script at his rate about its own
+ *  axis (Space.Self). Position and quaternion (x, y, z, w) are Unity's,
+ *  verbatim, in the machinery's root space - the space the port draws
+ *  in. See vendor/windmills-kamer/machinery.json. */
+export const MACHINERY_MODEL_ID = 41601;
+export const MACHINERY_CHILDREN = Object.freeze([
+${machinery.children.map((c) => `  Object.freeze({ name: '${c.name}', mesh: '${c.name.toUpperCase()}', `
+  + `position: Object.freeze(${arr(c.position)}), rotation: Object.freeze(${arr(c.rotation, 7)}), `
+  + `axis: '${c.axis}', degPerSec: ${c.degPerSec}, collider: ${c.collider} }),`).join('\n')}
 ]);
 `);
 console.log('wrote src/world/windmillMesh.js');

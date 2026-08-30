@@ -327,7 +327,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, cpuModels } = pipeline;
+  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, cpuModels } = pipeline;
   // WM2b/WM2d: the vendored mill's two parts, uploaded on the first mill
   // this session streams in and held for the rest of it. One pair of
   // meshes however many mills - the per-mill state is the angle alone.
@@ -3925,7 +3925,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // `is not a function` on the first enemy frame in a dungeon
     // entered from this host, while the standalone ?dungeon scene
     // (which spreads the whole pipeline) was fine.
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette },
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },   // WM4b: the mill machinery's moving parts, for the interior arm
     doorTargets: () => buildingDoors.map((e) => ({
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,

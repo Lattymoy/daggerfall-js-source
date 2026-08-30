@@ -70,7 +70,7 @@
 
 import { BODY, CLIMATE_SKINS, SKIN_SLOTS } from './windmillMesh.js';
 import { WEATHER_SKY } from '../render/enhancedSky.js';
-import { multiply, trs } from './mat4.js';
+import { multiply, trs, quatToMat4 } from './mat4.js';
 
 // WM2d RETIRED `WINDMILL_MODELS`, the table of "which classic model id
 // carries a rotor", along with the FLAGGED note asking for the two it
@@ -92,15 +92,20 @@ import { multiply, trs } from './mat4.js';
  *  sign lives here rather than in the angle so that "how fast" and
  *  "which way round" stay separable: a rate is never negative.
  *
- *  HIS SIGN IS NEGATIVE AND OURS IS POSITIVE, and that is not a
- *  disagreement. The bake converts his meshes from Collada's
- *  right-handed space into the left-handed one his numbers are written
- *  in, by negating X - and a mirror reverses the sense of a rotation
- *  about an axis in its plane: `M R(t) M-1 = R(-t)` for `M = diag(-1,
- *  1, 1)`. So +13 here turns the sails the way -13 turns his. Flip one
- *  without the other and the mill runs backwards. */
+ *  HIS SIGN IS NEGATIVE AND SO IS OURS (WM4b). WM2e set this to +1 on
+ *  the argument that the bake's X-mirror reverses the sense of a
+ *  rotation about an axis in its plane (`M R(t) M-1 = R(-t)`), and that
+ *  identity is true and does not apply: it describes rotating in DAE
+ *  space and THEN mirroring. The port does what Unity does - mirrors
+ *  the vertices once, at import, and applies the rotation AFTER, in
+ *  the same left-handed space his numbers are written in:
+ *  `W * T(hub) * R(t) * (M v)` on both sides, the same matrices, so the
+ *  same t. And mat4's handedness law (H1) means the port's picture of
+ *  that space is DFU's picture of it, not its mirror - so the same t
+ *  is the same way round on screen. Two flips were counted for one
+ *  mirror, and the sails ran backwards. */
 export const ROTOR_AXIS = 'z';
-export const ROTOR_SIGN = 1;
+export const ROTOR_SIGN = -1;
 
 /** Fair weather turns at the classic rate (see the header). */
 export const CALM_ROTOR_DEG_PER_SEC = 13;
@@ -248,6 +253,50 @@ export function rotorMatrix(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
   const spin = multiply(trs(hx, hy, hz, 0, 0, 0),
     multiply(rot, trs(-hx, -hy, -hz, 0, 0, 0)));
   return multiply(modelMatrix, spin);
+}
+
+/**
+ * WM4b: A MOVING PART OF THE MACHINERY, mounted and turned.
+ *
+ * Kamer's 41601 prefab is a root drawing the machinery with two
+ * children - Plank_Gear and Roller - each drawing its own mesh under
+ * its own transform and turned by its own script about its OWN axis
+ * (`Space.Self`). That is `parent * T(position) * R(rotation) *
+ * R_axis(angle)`: carry the part to its place in the machinery, stand
+ * it the way the prefab stands it, then spin it about the axis it now
+ * owns. The angle is SIGNED BY HIS RATE - Spin_Up's -13 about Z, the
+ * roller's +13 about X - applied verbatim (see ROTOR_SIGN for why
+ * verbatim is right).
+ *
+ * @param {Float32Array} parentMatrix - the machinery's placement
+ * @param {{position: number[], rotation: number[], axis: string}} child
+ * @param {number} angleDeg - signed, from advanceMachinery
+ */
+export function mountMachineryChild(parentMatrix, child, angleDeg) {
+  const [px, py, pz] = child.position;
+  const rot = child.axis === 'x' ? trs(0, 0, 0, angleDeg, 0, 0)
+    : child.axis === 'y' ? trs(0, 0, 0, 0, angleDeg, 0)
+      : trs(0, 0, 0, 0, 0, angleDeg);
+  const stand = quatToMat4(child.rotation);
+  stand[12] = px; stand[13] = py; stand[14] = pz;
+  return multiply(parentMatrix, multiply(stand, rot));
+}
+
+/**
+ * The machinery turns at HIS rate, always - `13 * Time.deltaTime` in
+ * both scripts, signed per part. No wind reaches the inside of a mill
+ * (shared.wind is the exterior hosts' door onto the sky, and there is
+ * no sky in here), so this is the one rotor in the port that keeps the
+ * mod's constant, and it is integrated the same way advanceRotor is:
+ * the state carries the angle, the rate only moves it on.
+ *
+ * @param {{angle: number}} state - mutated in place, degrees
+ * @param {number} dt - seconds
+ * @param {{degPerSec: number}} child
+ */
+export function advanceMachinery(state, dt, child) {
+  state.angle = ((state.angle + child.degPerSec * dt) % 360 + 360) % 360;
+  return state.angle;
 }
 
 /**

@@ -174,7 +174,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, gpuMeshes, cpuModels } = pipeline;
+  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels } = pipeline;
 
   // Collect the location's model ids + referenced texture archives.
   const modelIds = new Set();
@@ -1328,7 +1328,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // `is not a function` on the first enemy frame in a dungeon
     // entered from this host, while the standalone ?dungeon scene
     // (which spreads the whole pipeline) was fine.
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette },
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },   // WM4b: the mill machinery's moving parts, for the interior arm
     foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,

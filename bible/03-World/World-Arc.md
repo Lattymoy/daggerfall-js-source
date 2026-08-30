@@ -1938,3 +1938,53 @@ departure the "no exceptions" would delete; Mac: "keep that."
 and `LoadWindmill.cs` are outside the manifest's Files list; DFU never
 loads them. `LoadWindmill.cs` is the modding tutorial's class and asks
 for a `21411` watermill the archive does not contain.
+
+### WM4b: the machinery turns - model 41601, and the sails' sign (2026-08-30)
+
+The room WM2g vendored is built around model 41601, and since WM2g the
+port had been dropping it: an id ARCH3D does not carry, skipped loudly
+by the never-traps guard, so the mill's inside was a room with furniture
+and no mill in it. His `41601.prefab` is a root drawing `41601.dae` with
+TWO children, each a bare mesh asset under its own transform and each
+carrying one of his scripts: `Plank_Gear` at (11.02, 4.49, -2.28) with
+`Spin_Up` (the sail's script - -13 deg/s about its own Z), and `Roller`
+at (9.64, -7.14, -2.21) with `SpinTime_Roller` (+13 deg/s about its own
+X) and a MeshCollider. Read by guid out of the YAML; written down in
+`vendor/windmills-kamer/machinery.json` with the three DAEs beside it.
+
+**The bake grew two things it needed.** A material map is now measured
+against what a file DRAWS, not what it declares - `Plank_Gear.dae`
+declares nine materials and draws one - and it still refuses a drawn
+material it cannot name AND a map key nothing uses. And a part may bake
+with its node matrix IGNORED: Unity never applied it to a mesh asset
+referenced directly (the child's transform is the whole placement), and
+Plank_Gear's is nothing like the Z_UP one the sail and tower assert.
+The assertion stays on the body as the re-export guard it always was.
+
+**The wiring is DFU's shape.** `getGpuMesh(41601)` answers from the
+bake BEFORE it asks ARCH3D, which is where `MeshReplacement.TryImport-
+GameObject` sits in DFU, and from there it is an ordinary model:
+cached under its own id, textures from the player's ARENA2, a CPU copy
+for the collider, no doors. The two moving parts come through
+`getMachineryParts`, the interior context mounts them per placement
+(`mountMachineryChild`: `parent * T(p) * R(q) * R_axis(a)`, the spin
+LAST because `Space.Self`), puts the roller's rest pose in the collider
+and not the gear's (his prefab's choice), and both interior hosts
+advance and draw them each frame at HIS constant - no wind reaches the
+inside of a mill and the outside's coupling stays on Mac's word.
+
+**And the sails were running backwards.** Checking the gear's sign
+against the sail's found WM2e's `ROTOR_SIGN = +1` rested on a true
+identity applied to the wrong composition: `M R(t) M^-1 = R(-t)`
+describes rotating in DAE space and THEN mirroring, and the port does
+what Unity does - mirrors the vertices once at import and rotates
+AFTER, in the same space his numbers are in. Same matrices, same t. And
+H1's projection presents that space as DFU does, not mirrored, so the
+same t is the same way round on screen. `ROTOR_SIGN` is -1 now, his
+sign verbatim, and the pin says +Y goes to +X.
+
+8 pins in `test/windmillmachinery.test.js`; 6 mutants, 6 killed. Not
+seen: no GL and no ARENA2 here. The one-look questions are the gear
+standing as a vertical shaft at x 11 inside the machinery and the
+roller lying across at y -7, both computed from the prefab's numbers
+and both inside the body's bounds by the pin.

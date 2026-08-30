@@ -19,6 +19,7 @@ import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // 
 import { fetchBytes, parseSeason, ensureAudio } from './shared.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildInteriorContext } from './interiorContext.js';
+import { advanceMachinery, mountMachineryChild } from '../world/windmills.js';   // WM4b: the machinery's moving parts
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // AUDIT: the FOURTH host the SETT slice missed
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -140,6 +141,11 @@ export async function bootInterior(canvas, renderer, params, status) {
     renderer.setPointLights(lit.data, null, lit.colors);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
+    // WM4b: the mill's machinery turns at Kamer's rate, in here too.
+    for (const r of ctx.rotors) {
+      advanceMachinery(r.state, dt, r.child);
+      renderer.drawMesh(r.gpu, mountMachineryChild(r.parent, r.child, r.state.angle), ctx.texRemap);
+    }
     // Swing doors (P4) draw at rest through their ActionSystem matrices;
     // the standalone scene has no activation path, so they stay closed.
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);

@@ -86,12 +86,34 @@ NOT here, and not because of the author:
 - **The WorldData blocks themselves.** Each carries a WHOLE RMB block -
   Daggerfall's layout - which is game data. Only the added placement
   record travels, in `placements.json`.
-- **`Roller.dae`, and the prefabs.** The roller is interior machinery
-  whose three materials carry no texture at all, and this port does not
-  draw the inside of a windmill; the strict reader rejected it outright
-  rather than baking a mesh with nothing to sample. Vendoring a third
-  party's file we cannot draw and do not use is not attribution, it is
-  clutter.
+- **The prefabs, the `.mat` files, and the parts outside his manifest.**
+  The prefab and material files are Unity's format; what they SAY is
+  written down here as data (`variants.json`, `machinery.json`). And
+  `11511.prefab`, `11512.dae`, `WindNoDoor.dae`, `Door.dae`,
+  `41600 1/2/4.prefab`, `LoadWindmill.cs` are not in
+  `WindMills.dfmod.json`'s Files list, so DFU never loads them.
+
+An earlier version of this list left out `Roller.dae` as "three
+materials with no texture at all". That was read off the DAE; the
+PREFAB binds 067_1 / 091_2 / 091_3 to it. WM4b (2026-08-30) vendors the
+machinery whole:
+
+- `41601.dae` - node `House`, geometry `model41601_003-mesh`, 722
+  triangles in eight texture groups: the machinery his room is built
+  around. Materials from `41601.prefab`: Wall 366_0, Wheel 091_2,
+  WheelSide 091_3, Roof 166_4, Wood 067_1, Door 332_0, Floor 124_2,
+  Mill 091_3.
+- `Plank_Gear.dae` - node `Spin_Beam1`, 6 triangles, one drawn material
+  (067_1) of nine declared. The prefab's child `Plank_Gear` at
+  (11.02, 4.49, -2.28), rotation (0.5, 0.5, -0.5, 0.5), carrying
+  `Spin_Up.cs` - his sail script - so it turns -13 deg/s about its own Z.
+- `Roller.dae` - node `Roller`, 34 triangles, 067_1 / 091_2 / 091_3.
+  The child `Roller` at (9.64, -7.14, -2.21), rotation
+  (-0.7071, 0, 0, 0.7071), carrying `SpinTime_Roller.cs`: +13 deg/s
+  about its own X, with a MeshCollider.
+- `machinery.json` - the above, as data, with the note on why these two
+  parts bake with their node matrix IGNORED: his prefab references the
+  mesh asset directly, so Unity never applied it either.
 
 ## Coordinates - AND THE HANDEDNESS
 

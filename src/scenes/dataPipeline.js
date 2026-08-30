@@ -10,7 +10,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
-import { ROTOR } from '../world/windmillMesh.js';   // WM2b/WM2d: the vendored mill, uploaded like any other model
+import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
 
 /** @param deps {{renderer, arch: Arch3dFile, palette: DFPalette}} */
@@ -123,6 +123,19 @@ export function createDataPipeline({ renderer, arch, palette }) {
   const cpuModels = new Map(); // id -> {positions, indices} for the collider
   async function getGpuMesh(modelIdNum) {
     if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
+    // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
+    // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
+    // is asked first; ARCH3D only when it has nothing). Model 41601 is
+    // Kamer's machinery, the centrepiece of the room his mill adds, and
+    // no ARCH3D carries it - so it answers from the vendored bake and
+    // then is an ordinary model: cached on the same map under its own
+    // id, textures out of the player's ARENA2, a CPU copy for the
+    // collider, no doors of its own.
+    if (modelIdNum === MACHINERY_MODEL_ID) {
+      const gpu = await uploadPart(modelIdNum, MACHINERY);
+      cpuModels.set(modelIdNum, { positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
+      return gpu;
+    }
     const index = arch.getRecordIndex(modelIdNum);
     if (index === -1) {
       gpuMeshes.set(modelIdNum, null);
@@ -182,7 +195,28 @@ export function createDataPipeline({ renderer, arch, palette }) {
     };
   }
 
+  /** WM4b: THE MACHINERY'S MOVING PARTS - Plank_Gear and Roller, the
+   *  two children of Kamer's 41601 prefab, each its own mesh under its
+   *  own transform (windmillMesh.MACHINERY_CHILDREN). Uploaded once per
+   *  scene under negative keys like the sail, with a CPU copy alongside
+   *  for the part the prefab gives a collider. */
+  const CHILD_MESHES = { PLANK_GEAR, ROLLER };
+  async function getMachineryParts() {
+    const parts = [];
+    for (let i = 0; i < MACHINERY_CHILDREN.length; i++) {
+      const child = MACHINERY_CHILDREN[i];
+      const model = CHILD_MESHES[child.mesh];
+      if (!model) throw new Error(`machinery child ${child.name} names mesh ${child.mesh}, which the bake did not emit`);
+      parts.push({
+        child,
+        gpu: await uploadPart(-(MACHINERY_MODEL_ID * 10 + i + 1), model),
+        cpu: { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: [] },
+      });
+    }
+    return parts;
+  }
+
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, gpuMeshes, cpuModels, palette,
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

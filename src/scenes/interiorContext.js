@@ -27,6 +27,8 @@ import { Collider } from '../player/collider.js';
 import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
+import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
+import { mountMachineryChild } from '../world/windmills.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { trs } from '../world/mat4.js';
 import { buildRaceCharacter, raceOfArchive } from '../characters/raceCharacter.js';
@@ -68,7 +70,7 @@ export function attachInteriorDoorSounds(actions, sfx = audio) {
  *   enterMarkers, doors, collider, destroy()}}
  */
 export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null, opts = {}) {
-  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
+  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette, getMachineryParts } = deps;
   // P8: verbatim PlayerEnterExit.TransitionInterior parenting - the
   // interior sits at ownerPosition + buildingMatrix (the entered
   // building model's WORLD matrix), so every coordinate the context
@@ -115,6 +117,16 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   }
 
   const drawList = [];
+  // WM4b: the machinery's MOVING PARTS - {gpu, child, parent, state}.
+  // The body of 41601 is an ordinary draw above; its Plank_Gear and
+  // Roller are drawn by the host each frame under mountMachineryChild
+  // with the angle advanceMachinery keeps, because a draw list holds
+  // matrices and these have none that lasts a frame. The parts are
+  // fetched ONCE per context however many 41601s the room places,
+  // through the same deps door the body came through - a host that
+  // has no getMachineryParts (none today) would draw the body still.
+  const rotors = [];
+  let machineryParts = null;
   const ladders = []; // {cpu, matrix} - verbatim id 41409
   // S2b: house containers - the verbatim predicate lives in
   // systems/containers.js (pure, tested); private furniture starts
@@ -148,6 +160,22 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     }
     drawList.push({ mesh: gpu, matrix });
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
+    if (p.modelIdNum === MACHINERY_MODEL_ID && getMachineryParts) {
+      machineryParts ??= await getMachineryParts();
+      for (const part of machineryParts) {
+        // Kamer's prefab gives the Roller a MeshCollider and the
+        // Plank_Gear none. A turning collider is beyond this collider
+        // (it is built once, static), so the roller's stands at its
+        // rest pose - angle 0 - which is its whole footprint but for
+        // the turn.
+        if (part.child.collider) {
+          const rest = mountMachineryChild(matrix, part.child, 0);
+          collider.addMesh('interior', part.cpu.positions, part.cpu.indices, rest);
+        }
+        await remapSubMeshes(part.cpu.subMeshes, texRemap, climateArchive, deps);
+        rotors.push({ gpu: part.gpu, child: part.child, parent: matrix, state: { angle: 0 } });
+      }
+    }
     if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
     if (isShopShelfModel(p.modelIdNum)) {
       if (opts.houseOwned) {
@@ -357,6 +385,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     dynamicDraws,
     billboardBatches,
     flatAnims,   // FA1: the host ticks the flats it draws
+    rotors,      // WM4b: the machinery's moving parts; the host turns and draws them
     parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
     lights,
     texRemap,

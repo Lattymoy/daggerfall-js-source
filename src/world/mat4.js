@@ -61,6 +61,21 @@ export function trs(tx, ty, tz, rxDeg, ryDeg, rzDeg, sx = 1, sy = 1, sz = 1) {
   ]);
 }
 
+/** Rotation matrix (column-major, no translation) from a unit
+ *  quaternion [x, y, z, w] - Unity's component order, the standard
+ *  formula, so a prefab's m_LocalRotation is usable verbatim. */
+export function quatToMat4([x, y, z, w]) {
+  const xx = x * x, yy = y * y, zz = z * z;
+  const xy = x * y, xz = x * z, yz = y * z, wx = w * x, wy = w * y, wz = w * z;
+  // prettier-ignore
+  return new Float32Array([
+    1 - 2 * (yy + zz), 2 * (xy + wz),     2 * (xz - wy),     0,
+    2 * (xy - wz),     1 - 2 * (xx + zz), 2 * (yz + wx),     0,
+    2 * (xz + wy),     2 * (yz - wx),     1 - 2 * (xx + yy), 0,
+    0, 0, 0, 1,
+  ]);
+}
+
 /** Transform point (x,y,z,1) by m; returns [x,y,z]. */
 export function transformPoint(m, x, y, z) {
   return [

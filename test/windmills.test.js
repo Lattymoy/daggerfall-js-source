@@ -178,19 +178,26 @@ test('WM1: a full turn is a no-op, and a blade tip really moves', () => {
   assert.ok(near(r0, r1, 1e-4), `the sail changed length: ${r0} -> ${r1}`);
 });
 
-test('WM1: the rotor turns the way Kamer\'s does, through the mirror', () => {
-  // His Spin_Up.cs turns -13 deg/s about local Z. The bake mirrors his
-  // meshes on X to reach the space his numbers are written in, and a
-  // mirror reverses the sense of a rotation about an axis in its plane,
-  // so OUR sign is positive and the sails turn the same way his do.
-  // A sail at 12 o'clock goes to 9 o'clock.
+test('WM4b: the rotor turns the way Kamer\'s does - his sign, verbatim', () => {
+  // His Spin_Up.cs turns -13 deg/s about local Z, and so does ours.
+  // WM2e had this at +1 through a mirror argument that counted the
+  // bake's X-flip twice: the port mirrors the vertices at import as
+  // Unity does and applies the rotation AFTER, in the same space, so
+  // the same angle is the same rotation - and H1's projection presents
+  // that space as DFU does, not mirrored. A sail at 12 o'clock goes to
+  // 3 o'clock, the way R_z(-90) sends +Y.
   const spun = transformPoint(rotorMatrix(identity(), [0, 0, 0], 90), 0, 1, 0);
-  assert.ok(near(spun[0], -1, 1e-4) && near(spun[1], 0, 1e-4),
-    `+Y should turn to -X, got [${spun[0]}, ${spun[1]}]`);
-  assert.equal(ROTOR_SIGN, 1);
+  assert.ok(near(spun[0], 1, 1e-4) && near(spun[1], 0, 1e-4),
+    `+Y should turn to +X, got [${spun[0]}, ${spun[1]}]`);
+  assert.equal(ROTOR_SIGN, -1);
   assert.equal(ROTOR_AXIS, 'z');
   // Z is the axis, so it is the coordinate a Z-spin cannot change.
   assert.ok(near(transformPoint(rotorMatrix(identity(), [0, 0, 0], 47), 0, 1, 0.75)[2], 0.75, 1e-4));
+  // And the numbers agree with a plain trs of his angle - no sign
+  // lives anywhere but ROTOR_SIGN.
+  const plain = trs(0, 0, 0, 0, 0, -90);
+  const ours = rotorMatrix(identity(), [0, 0, 0], 90);
+  for (let i = 0; i < 16; i++) assert.ok(near(plain[i], ours[i], 1e-6), `matrix differs at ${i}`);
 });
 
 test('WM1: the roller axis is a different axis, not a different sign', () => {
