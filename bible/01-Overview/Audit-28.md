@@ -200,6 +200,19 @@ pinned on a synthetic table, because on the shipped 20-entry tables the
 product is an integer at every level and a round-for-trunc mutant
 survived until it was.
 
+### W3c CLOSED: RandomDungeonTextures (DaggerfallDungeon.cs:174-196)
+
+The port called `randomTextureTableClassic` bare - always mode 0 - and
+the setting sat stored. The whole fork is in `dungeonTextures.js` now:
+the five modes; `isMainStoryDungeon` on the RAW MapId (Summary.ID :104,
+fourteen ids), which takes the PLAIN classic table unless the mode is
+2 or 4; `randomTextureTableAlternate` - six draws from the 24-archive
+pool with slot 5 forced onto a sewer archive only when it is not one -
+seeded per dungeon on the MapId through the same xorshift that stands
+in for Unity's seeded stream everywhere else (Ledger A: the sequence
+differs from Unity's Xorshift128, the per-dungeon determinism does
+not). `dungeonLayout` routes through the fork.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

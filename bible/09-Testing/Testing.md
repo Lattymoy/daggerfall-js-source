@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 4808 tests across 492 files.
+Node 22). Suite: 4809 tests across 492 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -217,7 +217,7 @@ because the suite has never had non-English data.
 | imgcif.test.js | 8 | IMG table, palettized files, CIF/RCI/weapons |
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
-| dungeon.test.js | 14 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins, the P10 teleporter-resolution corpus gate (84 teleports, 82 resolve, N/W0000003 verbatim-dead like DFU's null NextObject) |
+| dungeon.test.js | 15 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins, the P10 teleporter-resolution corpus gate (84 teleports, 82 resolve, N/W0000003 verbatim-dead like DFU's null NextObject) | AUDIT 28 W3c (2026-08-30): the WHOLE RandomDungeonTextures fork (DaggerfallDungeon :174-196) behind a setting the port stored while always answering mode 0 - the five modes; the main-story gate on the RAW MapId (Summary.ID, :104; the fourteen ids of :146-172) taking the PLAIN classic table unless the mode is 2 or 4; RandomTextureTableAlternate (DungeonTextureTables :44-63) seeded per dungeon on the MapId through the same xorshift stand-in the slot reroll uses (Ledger A: Unity's InitState stream), six draws from the 24-archive pool and slot 5 forced onto a sewer archive ONLY when it is not one (a rigged rng proves the fix-up draw is conditional); GetInt clamped 0..4, read live; dungeonLayout routed through the fork with `mapTableData?.mapId ?? 0` (a fixture without a map-table entry is nobody's main story). 4 mutants (mode 2 spares the main story, main story keeps the mode, sewer always redrawn, wrong seed), 4 killed. |
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
 | actionchain.test.js | 9 | the Play cascade through EVERY flag (relays: Teleport/Activate/text/quest/Unknowns), chained doors keyed act:<position> running their OWN verb (OpenDoor unlock+open, CloseDoor close+relock-to-starting, Lock 16-if-unlocked, Unlock 0), special doors (verbatim DaggerfallActionDoorSpecial swing, C# `OpenDoor || CloseDoor && !door` precedence pinned), ExecuteActionOnToggle on the player toggle through the Door trigger gate (Direct-gated records stay silent), None-flag chained doors cascade without swinging, AttemptBash verbatim (open bash-closes, lock >= 20 magically held, d100 under 20 - lock bursts + clears) |
 | activate.test.js | 1 | activationTargets single source: effect objects target on their precomputed aabb (crash regression - scenes read o.cpu on cpu-less traps), relays excluded, cpu path transformed through the matrix, door reach default |

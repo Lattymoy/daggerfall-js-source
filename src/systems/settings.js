@@ -116,6 +116,9 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W3: AddRandomEnemies' fork (RDBLayout :512) - the classic
   // 256-entry lists, or AddRandomRDBEnemy's per-flat pick by power.
   'Enhancements/AlternateRandomEnemySelection': 'src/characters/dungeonEnemies.js',
+  // AUDIT 28 W3c: UseLocationDungeonTextureTable's fork (DaggerfallDungeon
+  // :174-196): classic / by-climate / randomized, with the main-story gate.
+  'Video/RandomDungeonTextures': 'src/world/dungeonTextures.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
