@@ -40,6 +40,7 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -124,6 +125,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
@@ -435,12 +437,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const paralyzed = ctx.playerParalyzed?.() ?? false;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
+      const axes = moveAxes.update(dt, mv);   // AUDIT 28 W8: one Update of the axes per frame the motor runs
       const moving = !paralyzed && anyMove(mv);
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement/jump only (DecideHeightAction has no check).
       player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
-        forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
-        strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+        forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+        strafe: axes.strafe,
         run: held(keys, 'Run'),
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)

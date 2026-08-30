@@ -185,6 +185,7 @@ import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave }
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
@@ -691,6 +692,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Camera: at the start location's origin, or the pixel centre.
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
@@ -4268,9 +4270,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         // false outdoors (no blockWaterLevel - PlayerEnterExit).
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
+        // AUDIT 28 W8: the axes advance only on frames the motor runs (a
+        // held overlay is DFU's timeScale 0 - no climb, no friction).
+        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
         if (!_overlayHeld) player.update(dt, {
-          forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
-          strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+          forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+          strafe: axes.strafe,
           run: held(keys, 'Run'),
           sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
           jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)

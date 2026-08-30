@@ -374,6 +374,21 @@ law:
 4 mutants (settle always, pays while paused, run keeps the toggle,
 settle keeps the pitch), 4 killed.
 
+## W8 CLOSED: MovementAcceleration (InputManager.cs:1445-1497)
+
+The second camera-feel control, default OFF. The hosts produced the
+movement axes as the bare held-key difference; `player/moveAxes.js` is
+one InputManager Update - a force per held action climbing the axis at
+9.8/s toward +/-1 (or the axis IS the key without acceleration), then
+friction decaying an axis whose impulse was not raised at 9.8/s to 0.
+All four producers hand the motor the axes and advance them only on
+frames the motor runs (a held overlay is timeScale 0). Two things worth
+knowing: under acceleration a reversal moves two steps a frame while the
+axis is still on the old side (force AND friction - DFU's own
+arithmetic), and in classic mode DFU's answer to two opposing keys
+depends on keybind dictionary order, so the port keeps its neutral
+difference there. 5 pins; 5 mutants, 4 killed + 1 proven equivalent.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
