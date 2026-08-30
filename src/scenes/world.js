@@ -116,6 +116,7 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -3002,7 +3003,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _liveQuestOverlay = (win) =>
     (modes?.questOverlay ?? null) === win || (townTalk?.overlay ?? null) === win;
   const questWorld = {
-    maps,
+    // AUDIT 28 W4 SELF-AUDIT (F-B2): DFU's smaller-dungeon law lives
+    // INSIDE MapsFile.GetLocation, so quest marker enumeration walks
+    // the FIVE-BLOCK dungeon when the law says so - the frozen quest
+    // state exists precisely so the same five blocks come back when
+    // the player arrives. The port sized only at the door: a quest
+    // set up under the setting picked markers from the FULL dungeon
+    // and could aim at a block the build does not have. The quest
+    // layer's maps therefore sizes getLocation/getLocationByName the
+    // way DFU's does, late-binding the machine (the bridge is created
+    // after this adapter, and DFU's GetLocation consults the global
+    // machine the same way - another quest's link on the same dungeon
+    // wins there too).
+    maps: Object.create(maps, {
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine }) },
+      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine }) },
+    }),
     getBlock: (name) => blocks.getBlockByName(name),
     // NPC1: the =symbol_ macro's flat caption. The quest machine has
     // declared this seam since Q2 and nothing production-side answered

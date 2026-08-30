@@ -274,6 +274,42 @@ load under the other setting warps to the start marker with a HUD line;
 story dungeons and old envelopes never (:462-472). 7 pins; 9 mutants,
 9 killed.
 
+## SELF-AUDIT 2 (2026-08-30, Mac: "a comprehensive audit on everything so far", again)
+
+The W4 commit and the whole session re-read once more. Verified sound:
+the quest layer touches exactly six maps methods and the F-B2 wrap
+covers the two that answer locations; `setSeed` wraps a negative int32
+MapId through uint exactly as the C# cast; `randomRange(0, n)` IS
+DFU's one-arg `random_range(n)`; the GenerateRDBBlock spread keeps
+waterLevel and the rest as the C# struct copy does; `quest.start()` is
+called by the machine at :486; there is exactly ONE quest bridge and
+one questWorld, so the wrap covers every quest-layer fetch. Three
+findings, fixed here:
+
+- **F-B1** the load-time warp set the RAW start-marker position while
+  every other spawn goes through the entry law (`floorLanding` over
+  `m.y + 1.08`) - a raw marker y can stand the player in the floor.
+  The warp is `startSpawn({ preferEnterMarker: false })` now, which is
+  also DFU's member: :470 names StartMarker explicitly.
+- **F-B2** (the real one) quest dungeon marker enumeration walked the
+  UNSIZED location. DFU's law lives INSIDE MapsFile.GetLocation, so
+  quests pick markers from the five-block dungeon - the frozen state
+  exists precisely so those five blocks come back. A quest set up under
+  the setting could aim at a block the build does not have. The quest
+  world's `maps` now wraps `getLocation`/`getLocationByName` through
+  `dungeonLocationFor`, late-binding the bridge's machine - and DFU's
+  GetLocation consults the global machine the same way, so another
+  quest's link on the same dungeon winning is DFU behaviour too.
+- **F-B3** DFU's QuestSmallerDungeonsState is NotSet, DISABLED,
+  ENABLED (DaggerfallUnityEnums.cs:758-763); the port shipped
+  Enabled=1/Disabled=2 - internally consistent and numerically
+  backwards, and these values are the save format. Enum, save stamp
+  (`? 2 : 1`) and warp compare corrected; the enum is pinned by value.
+
+4 self-audit-2 mutants (enter marker preferred, quest sees the full
+dungeon, enum backwards, stamp backwards) + the three W4 warp mutants
+re-run; all killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

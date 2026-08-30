@@ -3491,7 +3491,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the save, so a load under the OTHER setting can warp to the
         // start marker (:462-472) instead of standing in blocks that no
         // longer exist.
-        smallerDungeonsState: getBool('Experimental', 'SmallerDungeons') ? 1 : 2,
+        smallerDungeonsState: getBool('Experimental', 'SmallerDungeons') ? 2 : 1,   // Enabled : Disabled, DFU's enum order (F-B3)
         world: collectWorld(),
       });
       const r = saveSlot(playerEntity.name, saveName, snap);
@@ -3530,13 +3530,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // this build does not have - warp to the start marker and say so.
       // Story dungeons never use the setting, so they never warp
       // (:466-468), and an old envelope (no field) never warps either.
-      const savedSmaller = extras.smallerDungeonsState === 1;
+      const savedSmaller = extras.smallerDungeonsState === 2;   // QuestSmallerDungeonsState.Enabled (F-B3: DFU's order)
       if (extras.smallerDungeonsState && extras.locationKey === _locationKey && setPlayerPos
         && savedSmaller !== getBool('Experimental', 'SmallerDungeons')
         && !isMainStoryDungeon(dfLocation?.mapTableData?.mapId)) {
-        const sm = dungeon.startMarker;
-        if (sm) {
-          setPlayerPos([sm.x, sm.y, sm.z]);
+        // F-B1 (self-audit 2): the first cut set the RAW marker position;
+        // every other spawn in this port goes through the entry law -
+        // floorLanding over m.y + 1.08 - and a raw marker y can stand
+        // the player in the floor. startSpawn({ preferEnterMarker:
+        // false }) IS the start marker under that law, which is also
+        // DFU's member here (:470 names StartMarker explicitly).
+        const p = this.startSpawn({ preferEnterMarker: false });
+        if (p) {
+          setPlayerPos(p);
           hudText.add('Dungeon size setting changed - moved to dungeon start.');
         }
       }

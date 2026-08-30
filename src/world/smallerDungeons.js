@@ -26,8 +26,11 @@ import { getBool } from '../systems/settings.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { isMainStoryDungeon } from './dungeonTextures.js';
 
-/** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs). */
-export const SMALLER_DUNGEONS_STATE = Object.freeze({ NotSet: 0, Enabled: 1, Disabled: 2 });
+/** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
+ *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
+ *  first cut shipped Enabled=1/Disabled=2, internally consistent and
+ *  numerically backwards from DFU; the values are the save format. */
+export const SMALLER_DUNGEONS_STATE = Object.freeze({ NotSet: 0, Disabled: 1, Enabled: 2 });
 
 /** GenerateSmallerDungeon's threshold (:1369): five blocks or fewer
  *  is already small. */

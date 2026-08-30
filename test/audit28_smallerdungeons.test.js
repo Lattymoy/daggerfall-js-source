@@ -74,6 +74,10 @@ test('AUDIT 28 W4: DFRandom seeded on the raw MapId - the same small dungeon eve
   assert.notDeepEqual(c.dungeon.blocks.map((x) => x.blockName), expect);
 });
 
+test('AUDIT 28 F-B3: the enum is DFU\'s, in DFU\'s order - NotSet, Disabled, Enabled', () => {
+  assert.deepEqual(SMALLER_DUNGEONS_STATE, { NotSet: 0, Disabled: 1, Enabled: 2 });
+});
+
 test('AUDIT 28 W4: the threshold and the two verbatim throws', () => {
   assert.equal(SMALLER_DUNGEON_THRESHOLD, 5);
   const small = loc(['N0.RDB', 'B1.RDB', 'B2.RDB', 'B3.RDB', 'B4.RDB']);
@@ -142,15 +146,42 @@ test('AUDIT 28 W4: the entry seam - the location that gets BUILT is the sized cl
 
 test('AUDIT 28 W4: the save stamps the raw setting, and a load under the other setting warps to the start marker - story dungeons and old envelopes never', () => {
   const ctx = read('src/scenes/dungeonContext.js');
-  assert.match(ctx, /smallerDungeonsState: getBool\('Experimental', 'SmallerDungeons'\) \? 1 : 2,/, 'SerializablePlayer.cs:224 - the stamp');
-  const arm = ctx.slice(ctx.indexOf('const savedSmaller = extras.smallerDungeonsState === 1;'));
+  assert.match(ctx, /smallerDungeonsState: getBool\('Experimental', 'SmallerDungeons'\) \? 2 : 1,/, 'SerializablePlayer.cs:224 - the stamp, in DFU\'s enum order (F-B3)');
+  const arm = ctx.slice(ctx.indexOf('const savedSmaller = extras.smallerDungeonsState === 2;'));
   assert.ok(arm.length > 100, 'the warp arm exists');
   assert.match(arm, /extras\.smallerDungeonsState && extras\.locationKey === _locationKey/, 'an old envelope (no field) never warps, and neither does a different dungeon');
   assert.match(arm, /savedSmaller !== getBool\('Experimental', 'SmallerDungeons'\)/, ':463 - the states must DIFFER');
   assert.match(arm, /!isMainStoryDungeon\(dfLocation\?\.mapTableData\?\.mapId\)/, ':466-468 - story dungeons never warp');
-  assert.match(arm, /setPlayerPos\(\[sm\.x, sm\.y, sm\.z\]\)/, 'the start marker is the destination');
+  // F-B1: through the entry law (floorLanding over the START marker),
+  // not the raw marker position - :470 names StartMarker, and the
+  // port's spawn space is the landed one.
+  assert.match(arm, /const p = this\.startSpawn\(\{ preferEnterMarker: false \}\);/, 'the start marker under the entry law is the destination');
   // The warp sits AFTER the position restore, so it overrides it.
   const posAt = ctx.indexOf('if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);');
-  const warpAt = ctx.indexOf('const savedSmaller = extras.smallerDungeonsState === 1;');
+  const warpAt = ctx.indexOf('const savedSmaller = extras.smallerDungeonsState === 2;');
   assert.ok(posAt > 0 && warpAt > posAt, 'restore first, then the warp');
+});
+
+test('AUDIT 28 F-B2: the quest layer\'s maps sizes getLocation/getLocationByName - markers are picked from the dungeon that gets built', () => {
+  // DFU's law lives INSIDE MapsFile.GetLocation, so quest marker
+  // enumeration walks the five-block dungeon when the law says so. The
+  // port's quest world wraps the raw maps the same way, late-binding
+  // the bridge's machine.
+  const world = read('src/scenes/world.js');
+  const at = world.indexOf('const questWorld = {');
+  assert.ok(at > 0);
+  const wrap = world.slice(at, at + 2200);
+  assert.match(wrap, /maps: Object\.create\(maps, \{/, 'the quest maps is a wrap over the raw maps');
+  assert.match(wrap, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: questBridge\?\.machine \}\) \},/);
+  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(maps\.getLocationByName\(rn, ln\), \{ questMachine: questBridge\?\.machine \}\) \},/);
+  // The prototype delegation keeps every other maps method reachable -
+  // the quest layer also calls getClimateIndex, getRegion,
+  // getRmbBlockName and readLocationIdFast on this object.
+  const proto = { getRegion: () => 'r', getLocation: () => 'full' };
+  const wrapped = Object.create(proto, { getLocation: { value: () => 'sized' } });
+  assert.equal(wrapped.getLocation(), 'sized');
+  assert.equal(wrapped.getRegion(), 'r');
+  // And dungeonLocationFor(null) passes null through - getLocation can
+  // answer null and the wrap must not throw on it.
+  assert.equal(dungeonLocationFor(null, { setting: true }), null);
 });
