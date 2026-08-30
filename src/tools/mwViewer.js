@@ -813,3 +813,86 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
+
+// ── MW-D34: THE FACE SHEET ──────────────────────────────────────────
+// Mac's call: pair the classic portraits to Morrowind heads and hairs
+// METICULOUSLY. The pairing is a likeness judgement, so it needs both
+// sets in front of the same eye - and the Morrowind set lives only in
+// the player's own archives, which this page already renders textured.
+// One button: every playable head and hair for every race and sex,
+// front and back, on one PNG, each cell labelled with its record id
+// and the classic portrait indices the modulo walk currently hands it.
+// That file is what the curation table (mwFaceTable.json) is authored
+// against.
+async function exportFaceSheet() {
+  if (!esm || !bsa) { setStatus('face sheet needs an .esm and the .bsa attached'); return; }
+  const wasSpinning = spinning; spinning = false;
+  const races = [...esm.races.values()].filter((r) => r.playable).sort((a, b) => (a.id < b.id ? -1 : 1));
+  const pool = (race, female, part) => {
+    const all = [...esm.bodies.values()].filter((b) => b.kind === 0 && !b.vampire && b.playable
+      && b.race === race && b.part === part && !String(b.id).endsWith('1st'));
+    const sexed = all.filter((b) => b.female === female);
+    return (sexed.length ? sexed : all.filter((b) => !b.female)).sort((a, b) => (a.id < b.id ? -1 : 1));
+  };
+  const CELL = 112; const LABEL = 26; const PAD = 6;
+  const rows = [];
+  for (const race of races) {
+    for (const female of [false, true]) {
+      const heads = pool(race.id, female, 0); const hairs = pool(race.id, female, 1);
+      if (!heads.length && !hairs.length) continue;
+      rows.push({ title: `${race.id} ${female ? 'female' : 'male'}`, heads, hairs });
+    }
+  }
+  const cols = Math.max(1, ...rows.flatMap((r) => [r.heads.length, r.hairs.length])) * 2;   // front + back
+  const sheet = document.createElement('canvas');
+  sheet.width = PAD + cols * (CELL + PAD);
+  sheet.height = rows.reduce((h, r) => h + 22 + 2 * (CELL + LABEL + PAD), PAD);
+  const g = sheet.getContext('2d');
+  g.fillStyle = '#17140f'; g.fillRect(0, 0, sheet.width, sheet.height);
+  g.font = '11px monospace';
+  const snap = (rec, x, y, yawOffset) => {
+    const key = normalizeBsaPath(`meshes\\${rec.model}`);
+    if (!bsa.has(key)) { g.fillStyle = '#c66'; g.fillText('mesh missing', x + 4, y + CELL / 2); return; }
+    loadNifBytes(bsa.get(key), rec.id);
+    orbit.pitch = 0.05; orbit.yaw = yawOffset;
+    frameCamera();
+    orbit.dist *= 0.7;
+    applyOrbit();
+    renderer.setSize(CELL, CELL, false);
+    camera.aspect = 1; camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    g.drawImage(renderer.domElement, 0, 0, renderer.domElement.width, renderer.domElement.height, x, y, CELL, CELL);
+  };
+  let y = PAD;
+  for (const row of rows) {
+    g.fillStyle = '#e0a458'; g.fillText(row.title, PAD, y + 14); y += 22;
+    for (const [kind, list] of [['head', row.heads], ['hair', row.hairs]]) {
+      let x = PAD;
+      for (let i = 0; i < list.length; i++) {
+        const rec = list[i];
+        const idx = [];
+        for (let f = 0; f < 10; f++) if (f % list.length === i) idx.push(f);
+        for (const yaw of [Math.PI, 0]) {
+          snap(rec, x, y, yaw);
+          x += CELL + PAD;
+        }
+        g.fillStyle = '#ddd';
+        g.fillText(`${kind} ${rec.id}`, x - 2 * (CELL + PAD) + 2, y + CELL + 11);
+        g.fillStyle = '#9c8';
+        g.fillText(`portraits ${idx.join(',')}`, x - 2 * (CELL + PAD) + 2, y + CELL + 23);
+        // yield so the page stays alive across a few hundred renders
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      y += CELL + LABEL + PAD;
+    }
+  }
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  camera.aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight); camera.updateProjectionMatrix();
+  spinning = wasSpinning;
+  const a = document.createElement('a');
+  a.download = 'mw-face-sheet.png';
+  a.href = sheet.toDataURL('image/png');
+  a.click();
+  setStatus(`face sheet: ${rows.length} race/sex rows exported - upload it back and the table gets written by eye`);
+}
+$('facesheet')?.addEventListener('click', () => { exportFaceSheet(); });
