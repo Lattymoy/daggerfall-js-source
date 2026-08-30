@@ -28,3 +28,22 @@ with `ARENA2_PATH`.
 - `node tools/landingProbe.mjs` - the landing page and `/play/` in a real browser, no ARENA2 needed
 - `node tools/siteShots.mjs` - retakes the site's three pictures (public/site/); refuses to run with game data present
 - `node tools/verify-deploy.mjs` - after a push: proves the live `/play/` serves your commit
+
+## Desktop app
+
+`app/` is the downloadable build: an Electron shell that loads the
+same `dist/` the website deploys and adds what a browser can't -
+**saves as real files** (DFU's own layout: `Saves/SAVE<n>/SaveData.txt`
++ `SaveInfo.txt` + `Screenshot.jpg`, settings under `Prefs/`) and
+**ARENA2 read straight from your folder on disk** (picked once via a
+native dialog - no ingest, no diet, full sky sets). The browser build
+is unchanged; the storage seam is `src/systems/appStorage.js`.
+
+```
+npm run build && cd app && npm install && npm start
+```
+
+`npm run dist` in `app/` packages installers. Details in
+`bible/01-Overview/Desktop-App.md`; headless proof:
+`xvfb-run -a node tools/appShellProbe.mjs`. The packaged app bundles
+NO game data - same doctrine as the site.

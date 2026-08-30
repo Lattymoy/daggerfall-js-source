@@ -10,6 +10,8 @@
 // serializes KeyCode NAMES into KeyBindings.txt, so the port's stored
 // shape is the same idea one alphabet over.
 
+import { appStorage } from './appStorage.js';   // DA1: the storage seam
+
 /** InputManager.Actions (:324-384), names and ORDER verbatim.
  *  'Unknown' (:383) is the parse sentinel, not a bindable action -
  *  parseActionName answers it, the list does not carry it. */
@@ -254,8 +256,11 @@ export function loadKeyBinds(store, data) {
 // as systems/settings.js:150.
 const STORAGE_KEY = 'dagger.keybinds';
 
+// DA1: the storage seam - localStorage in a browser, the desktop
+// shell's file store (KeyBindings beside the settings, as DFU keeps
+// KeyBindings.txt beside settings.ini) in the app.
 function storage() {
-  try { return globalThis.localStorage ?? null; } catch { return null; }
+  return appStorage();
 }
 
 /** The startup path (:441-452): load the file if it exists then
