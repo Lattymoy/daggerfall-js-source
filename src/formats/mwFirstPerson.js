@@ -976,18 +976,39 @@ export function armReport(parts, race, female) {
  * body has, in the THIRD-PERSON records (the ones whose id does not end
  * "1st" - rule 1). Sex picks with the male fallback retail relies on
  * (assembleNpc's law); head and hair are skin-type BODY records like
- * everything else, and the FIRST one in file order is taken - a
- * DECLARED DIVERGENCE: Daggerfall's chargen face index has no Morrowind
- * analog, so the player wears the race's first playable face.
- * A missing tail on a non-beast race is the data being right.
+ * everything else. A missing tail on a non-beast race is the data
+ * being right.
+ *
+ * THE FACE IS DERIVED, NOT CHOSEN (Mac's call, 2026-08-30): classic
+ * chargen stays byte-for-byte - the portrait strip, faceIndex 0..9 -
+ * and the Morrowind head and hair are a pure function of what classic
+ * already saved. faceIndex indexes the race-and-sex's own playable
+ * head list and hair list, modulo their counts, so every classic face
+ * resolves to SOME real face, a save from before this slice resolves
+ * the same way forever, and no schema changed. The pools are sorted BY
+ * RECORD ID first: "first in file order" was the old law and file
+ * order is a property of the load, not of the character - two archive
+ * arrangements would give one save two faces. Sorted, index 0 lands on
+ * the _01 records vanilla names first, which is exactly what the old
+ * first-in-file pick chose on retail. Every slot that is not the head
+ * or the hair keeps index 0 - a chest has one skin record and a face
+ * has six, and only the face was ever a choice in Daggerfall.
  */
-export function playerBodyRows(parts, race, female, { beast = false } = {}) {
+export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0 } = {}) {
   const want = String(race || '').toLowerCase();
   const rows = [];
   for (const slot of MW_BODY_PARTS) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot
       && p.skin && p.playable && !p.firstPerson);
-    const chosen = forSlot.find((p) => p.female === !!female) || forSlot.find((p) => !p.female) || null;
+    // The sex law, list-shaped: the matching sex's pool, else the male
+    // pool retail relies on - never a mix, or the index would walk
+    // across sexes.
+    const sexed = forSlot.filter((p) => p.female === !!female);
+    const pool = (sexed.length ? sexed : forSlot.filter((p) => !p.female))
+      .slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const wants = slot === 'head' || slot === 'hair';
+    const idx = wants && pool.length ? ((faceIndex % pool.length) + pool.length) % pool.length : 0;
+    const chosen = pool[idx] || null;
     if (!chosen && slot === 'tail' && !beast) continue;
     rows.push({
       slot,

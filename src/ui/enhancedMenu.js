@@ -923,6 +923,11 @@ function paneEnhanced(body) {
         await fpArm.build({
           race: mwRaceId(playerEntity.race),
           female: !!playerEntity.gender,
+          // THE FACE IS DERIVED, NOT CHOSEN: the classic wizard's own
+          // faceIndex (0..9, the portrait strip) picks the Morrowind
+          // head and hair by modulo over the race's sorted playable
+          // pools - playerBodyRows' law. No new stage, no new field.
+          faceIndex: playerEntity.faceIndex | 0,
           // MW-D9: whatever is in the right hand right now. The mapping
           // from Daggerfall's weapon templates onto Morrowind's types is
           // a DECLARED DIVERGENCE (DF_TO_MW_WEAPON), not a translation.

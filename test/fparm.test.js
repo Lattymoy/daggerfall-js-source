@@ -982,7 +982,7 @@ test('MW-D24: playerBodyRows - third-person records, sex fallback, no 1st, tails
   const bySlot = new Map(male.map((r) => [r.slot, r]));
   assert.equal(bySlot.get('hand').record.id, 'b_hand_m');
   assert.equal(bySlot.get('chest').record.id, 'b_chest_m');
-  assert.equal(bySlot.get('head').record.id, 'b_head_01', 'the FIRST head in file order');
+  assert.equal(bySlot.get('head').record.id, 'b_head_01', 'faceIndex 0 lands on the id-sorted first');
   assert.equal(bySlot.has('tail'), false, 'a missing tail on a non-beast race is the data being right');
   const female = playerBodyRows(parts, 'fprace', true);
   const fBySlot = new Map(female.map((r) => [r.slot, r]));
@@ -991,6 +991,46 @@ test('MW-D24: playerBodyRows - third-person records, sex fallback, no 1st, tails
   // a beast race REPORTS its missing tail rather than skipping it
   const beast = playerBodyRows(parts, 'fprace', false, { beast: true });
   assert.equal(beast.find((r) => r.slot === 'tail').verdict, 'NOTHING for this slot');
+});
+
+test('MW-D27: the face is DERIVED - classic faceIndex picks the head and hair, and nothing else moves', () => {
+  // Mac's call: chargen stays byte-for-byte classic; the Morrowind face
+  // is a pure function of what the save already carries. faceIndex
+  // walks the race-and-sex's own head and hair pools, modulo, over an
+  // ID-SORTED order - file order is a property of the load, not the
+  // character, and two archive arrangements must not give one save two
+  // faces. MUTANT: drop the sort and the shuffled fixture fails; index
+  // the chest and its assert fails; forget the modulo and index 10
+  // throws or lands nowhere.
+  const P = (id, slot, { female = false } = {}) => ({
+    id, slot, race: 'fprace', female, skin: true, playable: true, firstPerson: false,
+    model: `fixture/${id}.nif`,
+  });
+  // DELIBERATELY SHUFFLED file order; sorted order is 01,02,03.
+  const parts = [
+    P('b_head_02', 'head'), P('b_head_03', 'head'), P('b_head_01', 'head'),
+    P('b_hair_02', 'hair'), P('b_hair_01', 'hair'),
+    P('b_chest_02', 'chest'), P('b_chest_01', 'chest'),
+    P('b_head_f1', 'head', { female: true }), P('b_head_f2', 'head', { female: true }),
+  ];
+  const at = (i, female = false) => {
+    const rows = playerBodyRows(parts, 'fprace', female, { faceIndex: i });
+    const m = new Map(rows.map((r) => [r.slot, r.record?.id]));
+    return { head: m.get('head'), hair: m.get('hair'), chest: m.get('chest') };
+  };
+  // The walk, sorted: heads 01,02,03 then wraps; hairs 01,02 then wraps.
+  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_01' });
+  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_01' });
+  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_01' });
+  assert.equal(at(3).head, 'b_head_01', 'the index wraps by modulo');
+  assert.equal(at(9).hair, 'b_hair_02', 'classic\u2019s full 0..9 range resolves');
+  // Sex pools stay separate: a female walks HER two heads, never his three.
+  assert.equal(at(0, true).head, 'b_head_f1');
+  assert.equal(at(1, true).head, 'b_head_f2');
+  assert.equal(at(2, true).head, 'b_head_f1', 'the female pool wraps at ITS count');
+  // The default is index 0 - every existing caller keeps its face.
+  const plain = playerBodyRows(parts, 'fprace', false);
+  assert.equal(new Map(plain.map((r) => [r.slot, r.record?.id])).get('head'), 'b_head_01');
 });
 
 /** A minimal TES3 BODY record, laid out by hand (record = name[4] +
@@ -1352,4 +1392,22 @@ test('MW-D26: movement WINS the pose over the idle - measured on the piece, not 
   const walkBounds = arm.rows().find((r) => r.bone === 'right forearm').bounds;
   const moved = Math.abs(walkBounds.maxX - idleBounds.maxX) + Math.abs(walkBounds.minZ - idleBounds.minZ);
   assert.ok(moved > 1e-3, `the piece is posed by the MOVEMENT clip (moved ${moved.toFixed(5)})`);
+});
+
+test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
+  // m5 of the derivation campaign cut faceIndex between buildFpArm and
+  // playerBodyRows and every behaviour pin stayed green, because they
+  // all test the picker directly - proving the thread live end-to-end
+  // needs a third-person fixture build this suite does not yet own. So
+  // the wiring is swept the way AUDIT 17i sweeps chargen construction:
+  // at the source, all three links, so a refactor cannot quietly strand
+  // the classic face at the door.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex,/,
+    'buildFpArm no longer hands the face to the body build');
+  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex \}\)/,
+    'the body build no longer hands the face to the picker');
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /faceIndex: playerEntity\.faceIndex \| 0/,
+    'the live player\u2019s classic face no longer reaches the build');
 });

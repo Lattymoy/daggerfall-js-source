@@ -536,7 +536,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, weapon, hasAmmo, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, weapon, hasAmmo, archives, parts, allWeapons, find,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -546,7 +546,7 @@ async function buildTpBody({
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
-    const rows = playerBodyRows(parts, race, female, { beast });
+    const rows = playerBodyRows(parts, race, female, { beast, faceIndex });
     const partBytes = [];
     const missing = [];
     for (const row of rows) {
@@ -633,7 +633,7 @@ async function buildTpBody({
 }
 
 export async function buildFpArm({
-  race, female = false, beast = false, weapon = null, hasAmmo = false, deps = null,
+  race, female = false, beast = false, faceIndex = 0, weapon = null, hasAmmo = false, deps = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   const settingsSkeleton = fpSkeletonPath({ female, beast });
@@ -736,7 +736,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, weapon, hasAmmo, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, archives, parts, allWeapons, find })
       : null;
     archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {
