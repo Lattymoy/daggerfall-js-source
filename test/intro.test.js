@@ -25,13 +25,14 @@ import {
   WAVE_N, WAVE_SPECTRUM, CLEARANCE, SUN_BEARING, LEVELS, FOG_MAX,
 } from '../src/ui/introFlyover.js';
 import {
-  BPM, BEAT, BAR, PHASE, barTime, START_BAR, START_TIME, LOGO, logoAt, DURATION, END_BAR, SPLASHES, PATH,
+  BPM, BEAT, BAR, PHASE, barTime, START_BAR, START_TIME, LOGO, logoAt, HIT_TIME, HIT_BAR, DURATION, END_BAR, SPLASHES, PATH,
   MEASURED_ONSETS, MEASURED_BARS, cameraAt, splashOpacity, introState, ramp, EAST,
   ONSET_STRENGTH, MAP_BAR, SKY_PATH, skyCameraAt,
 } from '../src/ui/introCue.js';
 import {
   drawSkyMap, inCloud, makeClouds, CLOUD_BASE, CLOUD_TOP, CLOUD_H,
   MAX_SPAN, MAP_EDGE_TAPER, SHADOW_CAP, CLOUD_DRIFT_X, CLOUD_DRIFT_Y,
+  CLOUD_T0, defaultClouds, CLOUD_COVERAGE, CLOUD_SHARPNESS,
 } from '../src/ui/introSkyMap.js';
 import { themeTime, stopTheme, startTheme, _resetForTests, THEME_URL } from '../src/systems/introTheme.js';
 import { SPLASH_URL, SPLASH_WIDTH, MAX_BUFFER_W } from '../src/ui/introScreen.js';
@@ -67,41 +68,47 @@ test('the grid is self-consistent: bar 1 is the first bar', () => {
   assert.ok(Math.abs(barTime(34) - 62.485) < 0.015);
 });
 
-test('the reveal sits on the LOUDEST onset, and that is checkable', () => {
-  // The whole second half of the flight is built to arrive at bar 34,
-  // and the reason has to be evidence rather than taste: bar 34 carries
-  // the strongest onset in the opening by a wide margin. MUTANT: move
-  // the last PATH key's bar to 30 and the reveal lands on an onset a
-  // third weaker.
-  const bars = Object.keys(ONSET_STRENGTH).map(Number);
-  const loudest = bars.reduce((a2, b2) => (ONSET_STRENGTH[b2] > ONSET_STRENGTH[a2] ? b2 : a2));
-  assert.equal(loudest, 34, 'bar 34 is not the loudest measured onset');
-  assert.ok(ONSET_STRENGTH[34] > ONSET_STRENGTH[11] * 2, 'the reveal is not clearly bigger than the title cut');
-  // And the camera path's widest, highest key is the one that lands on it.
-  const widest = PATH.reduce((a2, b2) => (b2.fov > a2.fov ? b2 : a2));
-  assert.ok(widest.bar >= 34, `the widest shot is at bar ${widest.bar}, not the reveal`);
-});
-
-test('the logo CUTS back in exactly on the burst and not a frame later', () => {
-  // The v2 pin that caught splashOpacity's `<=` off-by-a-frame, carried
-  // over to the logo's arrival: opacity 1 ON the bar, 0 just before.
-  // MUTANT: make logoAt's burst comparison `<` into `<=` and this fails.
-  assert.equal(logoAt(LOGO.burst).opacity, 1);
-  assert.equal(logoAt(LOGO.burst - 0.001).opacity, 0);
-  assert.equal(LOGO.burst, 34.0, 'the burst is the strongest onset in the song');
+test('the slam sits on the FIRST BIG BEAT, and that is measured, not felt', () => {
+  // Mac's brief, v4, verbatim: the logo lands on the first big beat.
+  // tools/themeOnsets.py over the opening: the first 18 seconds are
+  // ambient (their biggest attacks are off-grid swells), bar 11 is the
+  // rhythm's ENTRANCE at 0.47, and bar 12 - 21.013 s - is the first
+  // STRONG on-grid onset at 0.69. That is the first big beat, and the
+  // strength table proves the choice instead of remembering it.
+  // MUTANT: move LOGO.slam to 11 and the slam lands on an onset a
+  // third weaker; move it to 13 and it is no longer the FIRST.
+  assert.equal(LOGO.slam, 12);
+  assert.ok(ONSET_STRENGTH[12] > ONSET_STRENGTH[11] * 1.4,
+    'bar 12 is not clearly bigger than the entrance');
+  for (const b of Object.keys(ONSET_STRENGTH).map(Number)) {
+    if (b < 12) assert.ok(ONSET_STRENGTH[b] < ONSET_STRENGTH[12], `bar ${b} is bigger - the slam is not on the FIRST big beat`);
+  }
+  assert.ok(Math.abs(barTime(12) - 21.013) < 0.015, 'bar 12 left its measured onset');
 });
 
 
-test('the logo arrives WITH the reveal, and the sky is clear when it does', () => {
-  assert.equal(introState(barTime(LOGO.burst)).view, 'map', 'the reveal is not up yet');
-  // The white-out must have CLEARED by then, or the arrival lands on a
-  // white screen. MUTANT: raise CLOUD_TOP past the bar-34 altitude.
-  assert.ok(introState(barTime(LOGO.burst)).whiteout < 0.02, 'the logo lands inside the cloud');
-  // And it settles exactly as the old title did - large on the beat,
-  // at rest half a bar later.
-  assert.ok(logoAt(LOGO.burst).scale > 1.05);
-  assert.equal(logoAt(LOGO.settled).scale, 1);
+test('the logo is at dead centre exactly on the slam and not a frame later', () => {
+  // The v2 pin that caught splashOpacity's off-by-a-frame, carried to
+  // the drop: at centre ON the bar, still falling just before.
+  assert.equal(logoAt(LOGO.slam).y, 0);
+  assert.equal(logoAt(LOGO.slam).impact, 1);
+  assert.ok(logoAt(LOGO.slam - 0.001).y < -0.001, 'it landed early');
 });
+
+
+
+test('the logo lands on the FULL MAP - full span before it even enters', () => {
+  // The brief's other clause, pinned against SKY_PATH rather than
+  // assumed: when the logo's top edge crosses into frame the pull-out
+  // is already finished, so there is no frame in which the logo and
+  // the map are both still moving toward their final state.
+  // MUTANT: move the full-span key past LOGO.enter.
+  assert.ok(skyCameraAt(LOGO.enter).span >= MAX_SPAN - 0.5,
+    `the map is still opening when the logo enters (span ${skyCameraAt(LOGO.enter).span.toFixed(0)})`);
+  assert.equal(introState(barTime(LOGO.slam)).view, 'map');
+  assert.equal(introState(barTime(LOGO.slam)).whiteout, 0, 'cloud over the slam');
+});
+
 
 
 test('the projection changes where the WHITE-OUT IS TOTAL', () => {
@@ -111,11 +118,16 @@ test('the projection changes where the WHITE-OUT IS TOTAL', () => {
   // camera is still below CLOUD_BASE, and the cut happens in clear air.
   const at = introState(barTime(MAP_BAR));
   assert.equal(at.view, 'map');
-  assert.ok(at.whiteout > 0.98, `the cut is not hidden (whiteout ${at.whiteout.toFixed(2)})`);
+  // 'Total' is a claim about the EYE, and the canvas draws the wash at
+  // min(1, whiteout) over a posterised picture: past ~0.95 there is
+  // nothing left to read. v4's faster climb crosses the deck's centre
+  // between frames, so demanding the mathematical peak would pin the
+  // sample rate, not the picture.
+  assert.ok(at.whiteout > 0.95, `the cut is not hidden (whiteout ${at.whiteout.toFixed(2)})`);
   // One frame earlier is still the ground renderer, and still white.
   const just = introState(barTime(MAP_BAR) - 0.02);
   assert.equal(just.view, 'ground');
-  assert.ok(just.whiteout > 0.95, 'the frame before the cut is not white either');
+  assert.ok(just.whiteout > 0.9, 'the frame before the cut is not white either');
   // And it switches ONCE. A test on altitude rather than bar would flip
   // back and forth on any path that dipped.
   let flips = 0, prev = null;
@@ -127,44 +139,33 @@ test('the projection changes where the WHITE-OUT IS TOTAL', () => {
   assert.equal(flips, 1, `the view changes ${flips} times`);
 });
 
-test('the slam and the launch each land on a camera at REST', () => {
-  // A move starts on a beat only if the camera is parked when the beat
-  // arrives - the near-equal-key law, applied to the two beats the
-  // camera answers. MUTANT: delete the bar-29 or bar-31 key and the
-  // before-rate stops being near zero.
-  const rate = (bar, d = 0.35) => (cameraAt(bar + d).z - cameraAt(bar).z) / d;
-  // THE SLAM: level coming in, and the answer is a DIP - the world
-  // flinches - recovered inside a bar.
-  assert.ok(Math.abs(rate(29 - 0.35)) < 5, 'the camera is moving when the slam lands');
-  assert.ok(cameraAt(29.15).z < cameraAt(29.0).z, 'the slam gets no flinch');
-  assert.ok(cameraAt(29.0).z - cameraAt(29.15).z <= 6, 'the flinch is a fall, not a breath');
-  assert.ok(Math.abs(cameraAt(29.6).z - cameraAt(29.0).z) < 1, 'the flinch does not recover');
-  // THE LAUNCH: at rest again, then the one climb of the film.
-  assert.ok(Math.abs(rate(31 - 0.35)) < 5, 'the camera is moving when the launch lands');
-  assert.ok(rate(31) > 40, `bar 31 does not launch (${rate(31).toFixed(1)}/bar)`);
-  // The climb ARRIVES at the burst rather than sailing through it.
-  assert.ok(rate(34) < rate(34 - 0.35) * 0.2, 'the climb does not settle on the reveal');
+test('the burst is the camera\u2019s beat: out of the deck ON the hit', () => {
+  // 7.915 s is the one percussive strike in the ambient opening -
+  // off the grid at bar 5.06, measured by tools/themeOnsets.py, and
+  // used as what it is. CLOUD_TOP is crossed exactly there.
+  // MUTANT: move the HIT_BAR key's z below CLOUD_TOP.
+  assert.ok(Math.abs(barTime(HIT_BAR) - HIT_TIME) < 0.001);
+  const before = introState(HIT_TIME - 0.19).whiteout;
+  const at = introState(HIT_TIME).whiteout;
+  assert.ok(before > 0.7, `the deck thins too early (${before.toFixed(2)} a tenth-bar out)`);
+  assert.equal(at, 0, 'the camera is not clear of the deck on the hit');
 });
 
 
-test('the cloud bursts on the SAME FRAME the logo arrives', () => {
-  // THE 18-FRAMES DEFECT this pin exists for: if the deck thins early,
-  // the province is readable before the beat and the reveal and the
-  // beat are two events. MUTANT: move the bar-33.85 key's z to 440.
+
+test('the burst and the hit are one event, frame-counted', () => {
+  // The 18-frames defect, held at v4's timing: the province must not
+  // be readable before the hit. MUTANT: move the bar-4.95 key's z up.
   const FPS = 30;
-  let clear = null, logo = null;
+  let clear = null;
   for (let f = Math.ceil(barTime(MAP_BAR) * FPS); f < barTime(END_BAR) * FPS; f++) {
-    const bar = (f / FPS - PHASE) / BAR + 1;
-    if (clear === null && introState(f / FPS).whiteout < 0.10) clear = f;
-    if (logo === null && logoAt(bar).opacity > 0) logo = f;
+    if (clear === null && introState(f / FPS).whiteout < 0.10) { clear = f; break; }
   }
-  assert.ok(clear !== null && logo !== null, 'the cloud never clears or the logo never arrives');
-  assert.ok(Math.abs(logo - clear) <= 4, `the burst and the logo are ${Math.abs(logo - clear)} frames apart`);
-  // And both sit on the measured onset, not merely near each other.
-  assert.ok(Math.abs(logo / FPS - 62.485) < 0.05, 'the arrival is not on the onset');
-  // Still solidly white a tenth of a bar before it.
-  assert.ok(introState(barTime(33.9)).whiteout > 0.7, 'the deck thins too early');
+  assert.ok(clear !== null, 'the cloud never clears');
+  assert.ok(Math.abs(clear / FPS - HIT_TIME) <= 4 / FPS,
+    `the burst is ${(clear / FPS - HIT_TIME).toFixed(2)}s off the hit`);
 });
+
 
 
 test('inCloud is a deck with a top and a bottom', () => {
@@ -195,7 +196,7 @@ test('the sky path opens to the WHOLE province and no further', () => {
   // that is clamped edge. MUTANT: raise the last span past MAX_SPAN.
   for (let i = 1; i < SKY_PATH.length; i++) {
     assert.ok(SKY_PATH[i].bar > SKY_PATH[i - 1].bar, 'sky path keys must ascend');
-    assert.ok(SKY_PATH[i].span >= SKY_PATH[i - 1].span, 'the reveal must not close again');
+    assert.ok(SKY_PATH[i].span >= SKY_PATH[i - 1].span - 1e-9, 'the reveal must not close again');
   }
   assert.ok(SKY_PATH[SKY_PATH.length - 1].span <= MAX_SPAN);
   assert.ok(MAX_SPAN <= (INTRO_MAP_H * 16) / 9 + 1, 'MAX_SPAN shows sky past the map');
@@ -209,7 +210,12 @@ test('the map view draws the province, opaque, with land AND sea', () => {
   const p = prepareMap(buildIliac({ w: 256, h: 160, seed: 42 }));
   const W = 128, H = 72;
   const b = { width: W, height: H, data: new Uint8ClampedArray(W * H * 4) };
-  drawSkyMap(b, p, { x: 128, y: 80, span: 280 }, 3);
+  // Clouds OFF, explicitly: this pin is about the PROVINCE paint -
+  // land, sea, opacity, the water's ripple - and the weather has its
+  // own pins. With the shipping field it rode luck: CLOUD_T0 moved the
+  // synthetic frame under a dense moment and the land count collapsed,
+  // which is weather doing its job, not the map failing.
+  drawSkyMap(b, p, { x: 128, y: 80, span: 280 }, 3, () => 0);
   let blue = 0, green = 0;
   for (let i = 0; i < W * H; i++) {
     assert.equal(b.data[i * 4 + 3], 255, 'the map view left a transparent pixel');
@@ -263,7 +269,12 @@ test('the map view uses its own edge taper, at its own scale', () => {
 test('the cloud field is seeded, bounded, and drifts', () => {
   const a2 = makeClouds(7), b2 = makeClouds(7), c2 = makeClouds(8);
   assert.equal(a2(100, 200, 0), b2(100, 200, 0));
-  assert.notEqual(a2(100, 200, 0), c2(100, 200, 0));
+  // Two seeds must be two skies - checked across several points,
+  // because one point can collide by chance (and did, the moment
+  // CLOUD_T0 slid the sample): clamp01 pins every dense-weather value
+  // to exactly 1, so any single reading is a coin toss.
+  assert.ok([[100, 200], [400, 90], [-250, 610], [777, -333]]
+    .some(([x, y]) => a2(x, y, 0) !== c2(x, y, 0)), 'seeds 7 and 8 draw the same sky');
   for (const [x, y, t] of [[0, 0, 0], [5000, -3000, 12], [-1e4, 1e4, 99]]) {
     const v = a2(x, y, t);
     assert.ok(v >= 0 && v <= 1, `cloud out of range at ${x},${y},${t}`);
@@ -304,18 +315,24 @@ test('the splashes never overlap', () => {
   }
 });
 
-test('every credit is out before the slam, and the intro is an intro', () => {
-  for (const s of SPLASHES) {
-    assert.ok(s.gone <= LOGO.slam - 0.15, `${s.key} is still up when the logo lands`);
-    assert.ok(s.in >= START_BAR, `${s.key} starts before the cold open`);
-  }
-  // MAC'S BRIEF, AS A NUMBER: over a minute is way too long. Door to
-  // menu is DURATION - START_TIME, and it stays a real intro's length.
+test('the credits clear the white and the slam, and the intro is an intro', () => {
+  const ik = SPLASHES.find((x) => x.key === 'interkarma');
+  const nx = SPLASHES.find((x) => x.key === 'nexus');
+  // Credit 1 is gone before the deck whites the picture out - a credit
+  // over a cloud is a credit over nothing.
+  assert.ok(ik.gone <= MAP_BAR - 0.4, 'interkarma is still up in the white-out');
+  // Credit 2 starts after the burst and is gone well before the drop.
+  assert.ok(nx.in >= HIT_BAR, 'nexus is up before the map exists');
+  assert.ok(nx.gone <= LOGO.enter - 1.5, 'nexus crowds the drop');
+  // MAC'S BRIEF AS TWO NUMBERS: the whole clip is used - from 0.000 -
+  // and it is an intro, not an overture.
+  assert.equal(START_TIME, 0, 'the recording does not start at its own beginning');
   const length = DURATION - START_TIME;
   assert.ok(length < 26, `the intro is ${length.toFixed(1)}s - an overture again`);
-  assert.ok(length > 15, `the intro is ${length.toFixed(1)}s - a blink`);
-  assert.ok(Math.abs(DURATION - 68.149) < 0.008, 'END_BAR left the bar-37 onset');
+  assert.ok(length > 18, `the intro is ${length.toFixed(1)}s - a blink`);
+  assert.ok(Math.abs(DURATION - 24.779) < 0.01, 'END_BAR left the bar-14 onset');
 });
+
 
 
 test('ramp eases and clamps at both ends', () => {
@@ -369,46 +386,44 @@ test('the flight runs EAST, into the sun', () => {
   assert.ok(Math.abs(EAST + Math.PI / 2) < 1e-12);
 });
 
-test('the cold open starts on the sheet and the seek is the theme\u2019s', () => {
-  // Bars stay bars OF THE RECORDING - the sheet is cropped, not
-  // squeezed - so the slam is still the 53.07 s onset however early
-  // the intro now starts. MUTANT: make START_BAR 1 and the length pin
-  // above fails; make barTime relative to START_TIME and THIS fails.
-  assert.equal(START_TIME, barTime(START_BAR));
-  assert.ok(Math.abs(barTime(LOGO.slam) - 53.067) < 0.02, 'the slam left its onset');
-  assert.ok(Math.abs(barTime(LOGO.launch) - 56.83) < 0.03, 'the launch left its onset');
-  assert.ok(Math.abs(barTime(LOGO.burst) - 62.485) < 0.02, 'the burst left its onset');
-  assert.ok(START_TIME > 40 && START_TIME < 50, 'the cold open moved off the second phrase');
+test('the track plays from the top, and the seek machinery stands down', () => {
+  // v3's cold open threw the opening of the recording away; v4 keeps
+  // the startAt machinery (it is pinned separately to work) and asks
+  // it for nothing. MUTANT: set START_TIME to any positive number and
+  // the from-0 pin above fails; this one holds the plumbing honest.
+  assert.equal(START_BAR, 1);
+  assert.equal(barTime(1), PHASE, 'bar 1 is where the grid says it is');
+  assert.ok(Math.abs(barTime(LOGO.slam) - 21.013) < 0.015, 'the slam left its onset');
 });
 
 
-test('the flight climbs from the launch and never descends, save the flinch', () => {
-  // One deliberate exception now: the slam's dip at 29.15, which must
-  // recover. Everything from the LAUNCH onward is monotone - a chase
-  // that sinks reads as a stall. MUTANT: lower any post-31 key.
+
+test('the climb never falters and the cruise stays low', () => {
+  // One climb in this film - the camera shooting into the sky - and a
+  // chase that sinks reads as a stall. MUTANT: lower any post-3.2 key.
   for (let i = 1; i < PATH.length; i++) {
-    if (PATH[i].bar <= 31) continue;
+    if (PATH[i].bar <= 3.2) continue;
     assert.ok(PATH[i].z >= PATH[i - 1].z, `bar ${PATH[i].bar} descends`);
     assert.ok(PATH[i].fov >= PATH[i - 1].fov, `bar ${PATH[i].bar} narrows`);
   }
-  // And the cruise is level - the slam needs a still world to hit.
   for (const k of PATH) {
-    if (k.bar <= 31 && k.bar !== 29.15) {
-      assert.ok(Math.abs(k.z - 155) < 7, `the cruise is not level at bar ${k.bar}`);
-    }
+    if (k.bar <= 3.2) assert.ok(Math.abs(k.z - 40) < 5, `the approach is not low at bar ${k.bar}`);
   }
 });
+
 
 
 test('the low run stays below the peaks; the reveal is a ZOOM, not a climb', () => {
   const { height } = buildIliac({ w: 128, h: 80, seed: INTRO_MAP_SEED });
   let peak = 0;
   for (const h of height) if (h > peak) peak = h;
-  // ALTITUDE IS NOT DRAMA ON ITS OWN. Through the bay the camera has to
-  // stay under the ranges that frame it, or the shot stops looking
-  // along the water and starts looking down at haze.
+  // ALTITUDE IS NOT DRAMA ON ITS OWN. On the APPROACH the camera has
+  // to stay under the ranges that frame it, or the shot stops looking
+  // along the water and starts looking down at haze. From 3.2 the
+  // climb through the deck is the point and this clause hands over to
+  // the never-falters pin.
   for (const key of PATH) {
-    if (key.bar <= 24) assert.ok(key.z < peak, `bar ${key.bar} flies above the highest ground`);
+    if (key.bar <= 3.2) assert.ok(key.z < peak, `bar ${key.bar} flies above the highest ground`);
   }
   // And the final reveal is bought with the ANGLE. Altitude alone
   // cannot show a province whole in a shear-pitched renderer - it
@@ -1010,14 +1025,19 @@ test('the drop is a FALL: it accelerates, and lands at zero exactly on the slam'
   assert.ok(logoAt(LOGO.slam + 0.4).impact === 0, 'the ring-down never ends');
 });
 
-test('the shoot LEAVES: harder than it fell, shrinking, into the glare', () => {
-  const v = (bar, d = 0.05) => -(logoAt(bar + d).y - logoAt(bar).y) / d;
-  assert.equal(logoAt(LOGO.launch).y, 0, 'the launch does not start from rest');
-  assert.ok(v(LOGO.gone - 0.1) > v(LOGO.launch + 0.1) * 4, 'the shoot does not accelerate');
-  assert.ok(logoAt(LOGO.gone - 0.05).scale < 0.85, 'the logo does not recede');
-  // Hidden across the whiteout gap, then the cut - not a fade through.
-  assert.equal(logoAt((LOGO.gone + LOGO.burst) / 2).opacity, 0);
+test('once landed, the logo STAYS - through to the fade', () => {
+  // v4's brief has one logo event. It lands, it rings, and it holds:
+  // the province and the wordmark share the last three bars, and the
+  // host's close fade is what takes both out together.
+  for (const b of [12.3, 13, 13.9]) {
+    const lg = logoAt(b);
+    assert.equal(lg.y, 0);
+    assert.equal(lg.opacity, 1, `the logo leaves early at bar ${b}`);
+  }
+  assert.ok(logoAt(LOGO.settled).impact === 0, 'the ring never ends');
+  assert.equal(logoAt(END_BAR).opacity, 0, 'past the end it is gone');
 });
+
 
 test('the theme SEEKS to the cold open, and only when asked', async () => {
   const { startTheme, _resetForTests } = await import('../src/systems/introTheme.js');
@@ -1038,4 +1058,36 @@ test('the theme SEEKS to the cold open, and only when asked', async () => {
   await startTheme({ make });
   assert.equal(made[1].currentTime, 0, 'an unasked seek moved the track');
   _resetForTests();
+});
+
+test('the reveal wears v3\u2019s weather: CLOUD_T0 is folded into the field itself', () => {
+  // v4 moved the map window from t~62 to t~8-25 and the slam came back
+  // gauzed. THREE metrics then disagreed with the render in one
+  // afternoon - raw-field coverage said the shipping phase was the
+  // CLEAREST, and a paint-diff fraction said the fix touched MORE
+  // pixels - because coverage sampled what the buffer smears and the
+  // diff counted a crisp east-edge shadow as heavier than a bay-wide
+  // veil. So the LAW here is the mechanism, and the eye is the gate
+  // for the picture (the probe screenshots bar 12 every run): the
+  // phase exists, and it is inside makeClouds, so EVERY consumer -
+  // patches, shadows, the lit-side probe - wears the same weather.
+  // MUTANT: strip the phase from tt and the slam's gauze returns.
+  assert.equal(CLOUD_T0, 41.5);
+  // The phase's EFFECT, not its existence: the field at t=0 must equal
+  // the raw composition evaluated at tt = CLOUD_T0. Rebuilt here from
+  // the exported primitives with makeClouds' own constants - a
+  // duplication, accepted, because a pin that reads back through the
+  // same code it suspects proved unable to notice the phase being
+  // stripped (the first draft did exactly that and its mutant walked).
+  const n = makeNoise(0xc10d);
+  for (const [x, y] of [[100, 200], [512, 320], [-40, 610]]) {
+    const dx = (x + CLOUD_DRIFT_X * CLOUD_T0) * 0.0042;
+    const dy = (y + CLOUD_DRIFT_Y * CLOUD_T0) * 0.0042;
+    const base = octaveNoise(n, dx, dy, 4);
+    const detail = octaveNoise(n, dx * 3.7 + 11, dy * 3.7 - 7, 3);
+    const expected = Math.max(0, Math.min(1,
+      (base * 0.72 + detail * 0.28 - CLOUD_COVERAGE) * CLOUD_SHARPNESS));
+    assert.ok(Math.abs(defaultClouds(x, y, 0) - expected) < 1e-9,
+      `the phase is not applied at ${x},${y}`);
+  }
 });

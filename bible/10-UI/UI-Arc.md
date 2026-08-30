@@ -9,6 +9,40 @@ policies one by one.
 
 
 
+
+## U65d THE INTRO v4 - from the top, the first big beat (2026-08-30)
+
+Mac, after v3: the music starts wrong and the whole clip is unused;
+the logo lands when the FULL MAP is in view, on the FIRST BIG BEAT.
+Stop guessing. No exceptions.
+
+THE TRACK PLAYS FROM 0.000 and "first big beat" is a row in a table
+now: tools/themeOnsets.py is committed (U65 ran the analysis ad hoc
+and shipped only its conclusions, which is how a beat becomes an
+argument from memory). The opening's 18 seconds are ambient; 7.915 s
+is THE HIT, the one percussive strike in them, off-grid at bar 5.06;
+bar 11 is the rhythm's entrance at 0.47; bar 12 at 21.013 s is the
+first STRONG on-grid onset, 0.69. That is the slam.
+
+THE FILM: three bars low off the sea with credit 1, straight up
+through the deck, the burst crossing CLOUD_TOP exactly ON the hit,
+credit 2 over the opening map, FULL SPAN by bar 10.3 - a bar and a
+quarter before the logo enters, pinned against SKY_PATH - then the
+drop, the slam at 12, the hold, and the menu ON bar 14's onset.
+24.8 seconds, the whole clip's opening used.
+
+THE WEATHER, and the lesson: the slam frame came back gauzed while
+every metric said otherwise - raw coverage called the shipping phase
+clearest, a paint-diff called the fix heavier - because one measured
+what the cloud buffer smears and the other weighed a crisp shadow
+against a wide veil. The call was made by rendering phases and
+LOOKING. CLOUD_T0=41.5 folds v3's reveal weather - the one
+configuration an eye had already passed - into the field itself, and
+its pin pins the EFFECT from rebuilt primitives, because the draft
+that read back through the suspected code let the strip-the-phase
+mutant walk.
+
+
 ## U65c THE INTRO RECUT - the logo drops, and shoots (2026-08-30)
 
 Mac: over a minute is way too long, and the Daggerfall JavaScript logo

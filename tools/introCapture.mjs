@@ -91,9 +91,17 @@ try {
   writeFileSync(`${TMP}/list.txt`, lines.join('\n') + '\n');
 
   const total = frames[frames.length - 1].t - frames[0].t;
+  // A capture that starts BEFORE the song does yields a negative seek,
+  // and ffmpeg reads a negative -ss as zero - which slid the whole
+  // score 120 ms early on the first v4 render, in a video whose entire
+  // purpose is judging beats. The sign picks the mechanism instead:
+  // positive trims the front of the audio, negative DELAYS it.
+  const audioArgs = audioStart >= 0
+    ? ['-ss', audioStart.toFixed(3), '-i', 'src/assets/intro/theme.mp3']
+    : ['-itsoffset', (-audioStart).toFixed(3), '-i', 'src/assets/intro/theme.mp3'];
   execFileSync('ffmpeg', [
     '-y', '-f', 'concat', '-safe', '0', '-i', `${TMP}/list.txt`,
-    '-ss', audioStart.toFixed(3), '-t', total.toFixed(3), '-i', 'src/assets/intro/theme.mp3',
+    ...audioArgs, '-t', total.toFixed(3),
     '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
     '-preset', 'medium', '-crf', '20', '-c:a', 'aac', '-b:a', '192k', '-shortest', OUT,
   ], { stdio: 'pipe' });

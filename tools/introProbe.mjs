@@ -95,9 +95,15 @@ async function run() {
       errors.push(m.text());
     });
 
-    await page.goto(`${base}?introat=27`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${base}?introat=2.6`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#intro canvas', { timeout: 20000 });
     check('the intro mounts in front of the enhanced door', true);
+
+    const atBar = async (bar) => {
+      await page.goto(`${base}?introat=${bar}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#intro canvas', { timeout: 20000 });
+      await page.waitForTimeout(900);
+    };
 
     // ── 2. The flyover reaches the screen ──────────────────────────
     await page.waitForTimeout(1200);
@@ -108,10 +114,16 @@ async function run() {
     // fill - the failure mode where the ray walk never ran - would come
     // back with a handful of tones.
     check('the picture is a picture, not a fill', !!s && s.tones > 12, s ? `${s.tones}+ tones` : '');
-    // Dawn over water: the sky above is BRIGHTER than the ground below
-    // on the cruise. This is the cheapest proof the ray walk and the
-    // sky are both drawing and in the right order.
-    check('sky above, world below', !!s && s.top > s.bottom, s ? `top ${(s.top / 1000) | 0}k vs bottom ${(s.bottom / 1000) | 0}k` : '');
+    // The order proof moved off the opening frame: at bar 2.6 the shot
+    // is DESIGNED around the sun's path on the water, so the bottom
+    // third out-shines the sky and 'sky brighter than ground' fails a
+    // correct picture for being the intended picture. Measured at
+    // 3.6/3.9/4.2 (climbing, sun over the ranges) the premise holds
+    // with margin, so the check reads its own frame there.
+    await atBar(3.9);
+    const sc = await canvasStats(page);
+    check('sky above, world below (bar 3.9, on the climb)',
+      !!sc && sc.top > sc.bottom, sc ? `top ${(sc.top / 1000) | 0}k vs bottom ${(sc.bottom / 1000) | 0}k` : '');
 
     // ── 3. THE LOGO'S THREE BEATS, read off the real element ───────
     // The transform is the trajectory; reading it back is how a probe
@@ -132,48 +144,41 @@ async function run() {
         vh: innerHeight,
       };
     });
-    const atBar = async (bar) => {
-      await page.goto(`${base}?introat=${bar}`, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('#intro canvas', { timeout: 20000 });
-      await page.waitForTimeout(900);
-    };
+    // The deck, mid-climb: white wall, no logo yet.
+    await atBar(4.85);
+    const s48 = await canvasStats(page);
+    check('bar 4.85: inside the deck - the picture is white',
+      !!s48 && s48.mean > 200, `mean ${s48?.mean?.toFixed(0)}`);
 
-    await atBar(28.8);
+    // THE BURST: one bar-fraction past the hit, the province is there.
+    await atBar(5.2);
+    const s52 = await canvasStats(page);
+    check('bar 5.2: burst - the map is on screen, the white is gone',
+      !!s52 && s52.mean < 200 && s52.tones > 12, `mean ${s52?.mean?.toFixed(0)}, ${s52?.tones}+ tones`);
+    writeFileSync(`${OUT}/bar-5.2-burst.png`, await page.screenshot());
+
+    // THE DROP, over the finished map.
+    await atBar(11.75);
     let lg = await logoState();
-    check('bar 28.8: the logo is FALLING - visible, above centre',
+    check('bar 11.75: the logo is FALLING - visible, above centre',
       !!lg && lg.opacity === 1 && lg.yPx < -0.1 * lg.vh, JSON.stringify(lg));
-    writeFileSync(`${OUT}/bar-28.8-drop.png`, await page.screenshot());
+    writeFileSync(`${OUT}/bar-11.75-drop.png`, await page.screenshot());
 
-    await atBar(29);
+    await atBar(12);
     lg = await logoState();
-    check('bar 29: THE SLAM - dead centre on the onset',
+    check('bar 12: THE SLAM - dead centre on the first big beat',
       !!lg && lg.opacity === 1 && Math.abs(lg.yPx) < 8, JSON.stringify(lg));
-    const op29 = await splashOpacities(page);
-    check('bar 29: the credits are gone', (op29.interkarma ?? 0) === 0 && (op29.nexus ?? 0) === 0);
-    writeFileSync(`${OUT}/bar-29-slam.png`, await page.screenshot());
+    const op12 = await splashOpacities(page);
+    check('bar 12: the credits are gone', (op12.interkarma ?? 0) === 0 && (op12.nexus ?? 0) === 0);
+    writeFileSync(`${OUT}/bar-12-slam.png`, await page.screenshot());
 
-    await atBar(31.6);
+    // Landed and HOLDING, two bars later.
+    await atBar(13.6);
     lg = await logoState();
-    check('bar 31.6: THE SHOOT - climbing off the top',
-      !!lg && lg.yPx < -0.12 * lg.vh, JSON.stringify(lg));
-    writeFileSync(`${OUT}/bar-31.6-shoot.png`, await page.screenshot());
-
-    await atBar(33);
-    lg = await logoState();
-    const s33 = await canvasStats(page);
-    check('bar 33: inside the deck - logo hidden, picture white',
-      !!lg && lg.opacity === 0 && !!s33 && s33.mean > 200, `logo ${lg?.opacity}, mean ${s33?.mean?.toFixed(0)}`);
-
-    await atBar(34);
-    lg = await logoState();
-    const s34 = await canvasStats(page);
-    check('bar 34: THE BURST - logo back at centre over a clear sky map',
-      !!lg && lg.opacity === 1 && Math.abs(lg.yPx) < 8 && !!s34 && s34.mean < 200,
-      `logo ${JSON.stringify(lg)}, mean ${s34?.mean?.toFixed(0)}`);
-    writeFileSync(`${OUT}/bar-34-burst.png`, await page.screenshot());
+    check('bar 13.6: landed and holding', !!lg && lg.opacity === 1 && Math.abs(lg.yPx) < 8, JSON.stringify(lg));
 
     // ── 4. The credits at their bars ───────────────────────────────
-    for (const [bar, key] of [[25.8, 'interkarma'], [28.1, 'nexus']]) {
+    for (const [bar, key] of [[2.9, 'interkarma'], [7.0, 'nexus']]) {
       await atBar(bar);
       const op = await splashOpacities(page);
       check(`bar ${bar} shows ${key} alone`,
@@ -203,7 +208,7 @@ async function run() {
     // ── 7. It runs on a phone ──────────────────────────────────────
     const phone = await browser.newContext({ ...devices['Pixel 5'] });
     const pp = await phone.newPage();
-    await pp.goto(`${base}?introat=29`, { waitUntil: 'domcontentloaded' });
+    await pp.goto(`${base}?introat=12`, { waitUntil: 'domcontentloaded' });
     await pp.waitForSelector('#intro canvas', { timeout: 20000 });
     await pp.waitForTimeout(1200);
     const ps = await canvasStats(pp);
@@ -220,7 +225,7 @@ async function run() {
     await pp.tap('#intro');
     await pp.waitForSelector('#enhanced-menu', { timeout: 10000 });
     check('a tap skips on a phone', !(await pp.$('#intro')));
-    writeFileSync(`${OUT}/phone-bar-29.png`, await pp.screenshot());
+    writeFileSync(`${OUT}/phone-bar-12.png`, await pp.screenshot());
     await phone.close();
   } finally {
     await browser.close();

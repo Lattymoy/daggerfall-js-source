@@ -85,11 +85,29 @@ const mix = (a, b, t) => a + (b - a) * t;
  * never in two places at once, which is what happens the moment two
  * fields are allowed to drift apart.
  */
+/** THE WEATHER'S PHASE, and it was chosen by LOOKING, because the
+ *  metric lied. v4 moved the map window from t~62 (v3's reveal) to
+ *  t~8-25, and the slam frame came back gauzed - yet the field's mean
+ *  coverage over the province measured LOWEST at the shipping phase
+ *  (0.05). The number and the picture disagreed because the number
+ *  sampled the raw field while the paint runs it through a 96x96
+ *  bilinear buffer (every wisp smeared soft over ~20 cells) plus a
+ *  span-capped shadow offset that drags off-frame weather onto the
+ *  land. Renders at candidate phases, viewed side by side across the
+ *  whole window (burst frame, mid, slam, end), picked +41.5 s: the
+ *  system sits at the frame's east edge, both coasts and the bay read
+ *  clean, and it is exactly the weather v3's reveal wore at t~62.5 -
+ *  the one configuration of this field that had already passed an
+ *  eye. The flyover's white-out is altitude-only and this field is
+ *  consumed by the map view alone, so nothing else moves. */
+export const CLOUD_T0 = 41.5;
+
 export function makeClouds(seed = 0xc10d) {
   const n = makeNoise(seed);
   return (x, y, t) => {
-    const dx = (x + CLOUD_DRIFT_X * t) * 0.0042;
-    const dy = (y + CLOUD_DRIFT_Y * t) * 0.0042;
+    const tt = t + CLOUD_T0;
+    const dx = (x + CLOUD_DRIFT_X * tt) * 0.0042;
+    const dy = (y + CLOUD_DRIFT_Y * tt) * 0.0042;
     // Two octave-sums at different scales: the big one makes weather
     // systems, the small one makes their ragged edges.
     const base = octaveNoise(n, dx, dy, 4);
