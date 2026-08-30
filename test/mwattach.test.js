@@ -173,7 +173,8 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
     'an inactive arm falls STRAIGHT THROUGH to the sprite, and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.
-  assert.match(rig, /import \{ fpArm \} from '\.\/fpArm\.js';/, 'the arm branch is wired to a real module');
+  assert.match(rig, /import \{ fpArm(?:, [\w$, ]+)? \} from '\.\/fpArm\.js';/,
+    'the arm branch is wired to a real module (MW-D19 widened the import list)');
   for (const gone of ['mwView', 'createMwFpView', 'mwFp']) {
     assert.ok(!rig.includes(gone), `weaponRig must not mention ${gone} while the layer is absent`);
   }
@@ -225,4 +226,24 @@ test('MW-D9g: the rig unloads on a CHANGE only, and the arm survives an unchange
   const body = rig.slice(rig.indexOf('const fpRecheck'), rig.indexOf('// AUDIT 17e F17 / THE FOUR HOSTS RULE'));
   assert.match(body, /if \(g === _mwGen\) return;/, 'an unchanged generation returns before touching the arm');
   assert.match(body, /_mwGen = g;\s*\n\s*fpArm\.unload\(\);/, 'and the latch moves BEFORE the unload, so one change unloads once');
+});
+
+test('MW-D19: the rig hands the worn item to the arm every frame, in machine order', () => {
+  const rig = rd('src/combat/weaponRig.js');
+  // The classic sprite already re-reads the equip slot per frame
+  // (syncWorn); the Morrowind arm rides the same read or it is a
+  // snapshot again. Sheathe state first (it is the cheaper compare and
+  // the reference's updateWeaponState reads stance before weapon), the
+  // swap next, the tick last so a swapped arm poses its OWN clip.
+  assert.match(rig,
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\) \}\);/,
+    'the swap seam reads the same worn item the sprite does, ammo included');
+  const sheatheAt = rig.indexOf('fpArm.setSheathed(');
+  const swapAt = rig.indexOf('fpArm.setWeapon(');
+  const tickAt = rig.indexOf('fpArm.update(dt)');
+  assert.ok(sheatheAt >= 0 && sheatheAt < swapAt, 'sheathe state before the swap');
+  assert.ok(swapAt < tickAt, 'and the swap before the tick');
+  // ONE home for the arrow test - the rig's own guard rides the export.
+  assert.match(rig, /hasDaggerfallArrows\(entity\.items\)/, 'the bow guard rides the same export');
+  assert.ok(!/templateIndex === 131/.test(rig), 'no third literal copy of the arrow template');
 });

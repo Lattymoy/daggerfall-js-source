@@ -25,7 +25,7 @@ import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
-import { fpArm } from './fpArm.js';
+import { fpArm, hasDaggerfallArrows } from './fpArm.js';
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -153,7 +153,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   function bowArrowGuard() {
     if (playerWeapon.sheathed) return;
     if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
-    if (entity.items?.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0)) return;
+    if (hasDaggerfallArrows(entity.items)) return;
     playerWeapon.sheathed = true;
     say('You have no arrows.');
   }
@@ -239,6 +239,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // rule 10's endless loop, and no weapon in shot. Drawn plays the
         // equip section of the weapon's long group and raises "idle1h".
         fpArm.setSheathed(playerWeapon.sheathed);
+        // MW-D19: THE WEAPON FOLLOWS THE HAND. syncWorn above already
+        // reads the equip slot every frame for the classic sprite; the
+        // Morrowind arm now rides the same read. setWeapon's fast path
+        // is one key compare - the swap itself runs only when the item
+        // in the hand actually changed.
+        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.

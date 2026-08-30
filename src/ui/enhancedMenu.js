@@ -86,7 +86,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
-import { fpArm } from '../combat/fpArm.js';
+import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
@@ -879,8 +879,8 @@ function paneEnhanced(body) {
     + 'ARENA2; nothing uploads.'));
   mw.append(el('p', 'meta',
     'The arms draw textured, in the stance of the drawn weapon, holding the Morrowind counterpart '
-    + 'of what your right hand held when you pressed Build - swap weapons and you must rebuild for '
-    + 'now. While the arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
+    + 'of what your right hand holds - the weapon follows your equipment as you play. While the '
+    + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
   const count = morrowindDataCount();
   mw.append(stats([
     ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
@@ -919,9 +919,8 @@ function paneEnhanced(body) {
           weapon: playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
           // MW-D16 / rule 24: the bow's ARROW. attachArrow reads the
           // AMMUNITION slot, so the arm needs to know whether the player
-          // has any - template 131 is Daggerfall's arrow, the same test
-          // the rig's out-of-arrows auto-sheathe already makes.
-          hasAmmo: !!playerEntity.items?.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0),
+          // has any - the rig's own out-of-arrows test, one home.
+          hasAmmo: hasDaggerfallArrows(playerEntity.items),
         });
         render();
       } });

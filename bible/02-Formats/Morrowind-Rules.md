@@ -359,6 +359,35 @@ standing rule decides that - nothing is fixed until it is visible on
 Mac's own files. If the hands are still missing, the card's new
 sentences ARE the diagnosis to send back.
 
+MW-D19: THE WEAPON FOLLOWS THE HAND, against Mac's "weapons aren't
+working". The structural finding: the arm was a ONE-SHOT SNAPSHOT of
+the equip state at build time - the card's button is build()'s only
+caller - so a weapon equipped after the button never reached the hand,
+and one equipped before never left. The classic sprite re-reads the
+equip slot every frame (weaponRig's syncWorn); the Morrowind arm had
+no equivalent seam at all.
+
+It does now. fpArm.setWeapon(item, {hasAmmo}) is called from the rig's
+frame beside setSheathed, and its FAST PATH is synchronous: fpWeaponKey
+(the Morrowind type + the material + whether an arrow rides) is one
+compare, so nothing happens until the identity actually changes. The
+slow path reopens the stored archives for the one mesh fetch, resolves
+through resolveWeaponParts - the build's own weapon door, EXTRACTED so
+the swap cannot drift from it - swaps the weapon and arrow pieces on
+the live assembly through bindPartsInto (the build's own part loop,
+same extraction, same reason), decodes only the textures the new mesh
+names, recomputes the reach with the build's own 25-pose sweep, and
+re-equips when the old weapon was drawn. The reference's shape:
+updateEquippedWeapon destroys and re-creates the weapon's PartHolder
+on an equip change; rule 57's hide-not-remove is for draw/sheathe of
+the SAME weapon, and weaponShown still does exactly that.
+
+A swap overtaken by unload() or a rebuild walks away (the token
+guard) - the newer state carries its own worn identity. And the
+arrow-template test (Daggerfall's template 131) was THREE literal
+copies about to become four; it is one export now,
+hasDaggerfallArrows. 8 mutants, 8 dead.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make

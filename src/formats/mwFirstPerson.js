@@ -1176,6 +1176,36 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 
   const pieces = [];
   const notes = [];
+  bindPartsInto({ pieces, notes, skeleton, fns: mod }, parts);
+  const assembly = {
+    ok: pieces.length > 0,
+    pieces,
+    notes,
+    skeleton,
+    rootRef,
+    // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
+    // A dynamic import inside a requestAnimationFrame body is a promise per
+    // frame; this function already paid for them once.
+    fns: mod,
+    bounds: null,
+    error: pieces.length ? null : 'nothing bound - see the notes for why',
+  };
+  // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
+  // MW-D5/D6 pins keep seeing byte-identical numbers because they are the
+  // same arithmetic, called once instead of inlined.
+  return pieces.length ? poseAssembly(assembly) : assembly;
+}
+
+/**
+ * MW-D19: THE PART LOOP, callable on a LIVE assembly. The build calls it
+ * once with every part; a weapon swap calls it again with just the new
+ * weapon and arrow, through the very same bind, filter, mirror and note
+ * paths - a second copy of any of those is how MW7 died. Mutates
+ * `assembly.pieces` and `assembly.notes` in place.
+ */
+export function bindPartsInto(assembly, parts) {
+  const mod = assembly.fns;
+  const { skeleton, pieces, notes } = assembly;
   for (const part of parts) {
     // `part.bones` overrides the table so a test can drive real assembly
     // against a fixture skeleton whose bone names are not Morrowind's.
@@ -1313,23 +1343,6 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
       notes.push(`${part.slot}: nothing bound - the mesh has no geometry to bind`);
     }
   }
-  const assembly = {
-    ok: pieces.length > 0,
-    pieces,
-    notes,
-    skeleton,
-    rootRef,
-    // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
-    // A dynamic import inside a requestAnimationFrame body is a promise per
-    // frame; this function already paid for them once.
-    fns: mod,
-    bounds: null,
-    error: pieces.length ? null : 'nothing bound - see the notes for why',
-  };
-  // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
-  // MW-D5/D6 pins keep seeing byte-identical numbers because they are the
-  // same arithmetic, called once instead of inlined.
-  return pieces.length ? poseAssembly(assembly) : assembly;
 }
 
 /**
