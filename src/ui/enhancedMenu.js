@@ -961,6 +961,11 @@ function paneEnhanced(body) {
   // per equipped piece - the parts it dressed, or the reason it kept
   // its sprite - because "it doesn't show" must never again arrive
   // with nothing on screen to read.
+  // MW-D35: THE FACE, MATCHED - the measured likeness and its distances,
+  // so "the head doesn't match the portrait" arrives with the numbers.
+  if (armState.face && armState.face.reasons && armState.face.reasons.length) {
+    mw.append(el('p', 'meta', `Face: ${armState.face.reasons.join('; ')}`));
+  }
   if (armState.worn) {
     if (!armState.worn.length) {
       mw.append(el('p', 'meta', 'Worn: nothing equipped in the armor or clothing slots at build time.'));

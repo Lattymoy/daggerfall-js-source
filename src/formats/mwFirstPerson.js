@@ -1105,7 +1105,22 @@ export function armReport(parts, race, female) {
  * or the hair keeps index 0 - a chest has one skin record and a face
  * has six, and only the face was ever a choice in Daggerfall.
  */
-export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE } = {}) {
+/** MW-D35: the race-and-sex's head and hair pools, id-sorted - THE
+ *  SAME pools playerBodyRows walks, exposed so the matcher measures
+ *  exactly the candidates the walk would have chosen among. */
+export function facePools(parts, race, female) {
+  const want = String(race || '').toLowerCase();
+  const pool = (slot) => {
+    const forSlot = (parts ?? []).filter((p) => p.race === want && p.slot === slot
+      && p.skin && p.playable && !p.firstPerson);
+    const sexed = forSlot.filter((p) => p.female === !!female);
+    return (sexed.length ? sexed : forSlot.filter((p) => !p.female))
+      .slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  };
+  return { heads: pool('head'), hairs: pool('hair') };
+}
+
+export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null } = {}) {
   const want = String(race || '').toLowerCase();
   const rows = [];
   // MW-D33: THE CURATION TABLE. Mac's report: the derived head and hair
@@ -1142,6 +1157,14 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
       const wantId = curated ? String(curated[slot] || '').toLowerCase() : '';
       chosen = wantId ? sorted.find((p) => p.id === wantId) ?? null : null;
       how = chosen ? 'curated' : null;
+      // MW-D35: the MEASURED match sits between the hand-curated table
+      // and the walk - a likeness computed from the player's own data,
+      // named as such on the row.
+      if (!chosen && faceMatch?.[slot]) {
+        const mid = String(faceMatch[slot]).toLowerCase();
+        chosen = sorted.find((p) => p.id === mid) ?? null;
+        how = chosen ? 'matched to the portrait' : null;
+      }
       if (!chosen) {
         chosen = sorted[((faceIndex % sorted.length) + sorted.length) % sorted.length];
         how = wantId ? `derived (curated "${wantId}" is not in these archives)` : 'derived';
