@@ -120,6 +120,29 @@ the interaction-mode word included - while DFU draws its one HUD
 everywhere. It carries `townTalk.font` now. `EnableArrowCounter` and
 `BowLeftHandWithSwitching` are LIVE. 4 pins; 5 mutants, 5 killed.
 
+### W2b CLOSED: melee friendly protection (WeaponManager.cs:930-944, :1057-1064)
+
+`MeleeDamage` has two arms. The bounding-box pass strikes every entity
+in reach and, under `MeleeAttackFriendlyProtection` (ships True), skips
+a PlayerAlly, a foe whose motor is not hostile, and a MobilePersonNPC.
+Only when NOTHING was struck does the vanilla SphereCast fall through
+"for bashing and hitting pacified NPCs and wandering commoners" - so a
+pacified foe or a townsperson can be hit only when it is the sole thing
+in front of the player. The port's `resolveHit` (all three foe pools)
+had no team or hostility filter: a pacified foe beside a hostile one
+took the swing, and the setting sat stored.
+
+`friendlyProtected` is the filter; `resolveHit` keeps the protected foes
+it passed over and, if the box pass struck nobody, strikes the NEAREST
+of them. That last word is the one departure and it is recorded: DFU's
+fallback is a ray down the look direction and the port's `canSee` is an
+FOV + LOS test with no ray, so "first collider on the ray" becomes
+"nearest in reach". Townspeople are not in any pool; the world host's
+civilian arm already runs only after the pools miss, which is :1057's
+order. 5 pins; 5 mutants, 5 killed - one of them survived a `deepEqual`
+over structurally identical fixtures until the pin was rewritten on
+identity, which is worth remembering.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

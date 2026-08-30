@@ -29,6 +29,7 @@ import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection
 
 export const DEFAULT_WEAPON_REACH = 2.25;   // WeaponManager.cs:35
 export const SPHERE_CAST_RADIUS = 0.25;     // WeaponManager.cs:51
@@ -66,6 +67,24 @@ export const INTERIM_WEAPON = Object.freeze({
  */
 export function playerMeleeCanHit(dist, inView, losClear) {
   return dist <= WEAPON_REACH && inView && losClear;
+}
+
+/**
+ * AUDIT 28 W2b: MeleeDamage's FRIENDLY PROTECTION (WeaponManager.cs
+ * :930-944). Under Settings.MeleeAttackFriendlyProtection (ships True)
+ * the bounding-box pass skips three kinds of entity: a PlayerAlly
+ * (`behaviour.Entity.Team`, the LIVE team), a foe whose motor is not
+ * hostile (pacified), and a MobilePersonNPC (a townsperson - not in
+ * any foe pool here; the hosts' civilian arm runs only after the pools
+ * miss, which is :1057's fallback order already). A protected foe is
+ * not immune: :1057-1064's vanilla SphereCast still strikes one when
+ * it is the ONLY thing in front of the player.
+ */
+export function friendlyProtected(foe, { protection = getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') } = {}) {
+  if (!protection) return false;
+  if (foe?.entity?.team === 'PlayerAlly') return true;
+  if (foe?.ai && foe.ai.isHostile === false) return true;
+  return false;
 }
 
 /** Per-player weapon driver over the shared machine + gesture input. */
@@ -219,12 +238,19 @@ export class PlayerWeapon {
    * @param playerCombat the player entity
    * @returns [{foe, damage}] - one entry per foe in reach
    */
-  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0, say = null, onPoison = null) {
+  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0, say = null, onPoison = null, { protection } = {}) {
     const results = [];
-    for (const foe of foes) {
-      if (foe.dead || !foe.entity) continue;
-      const { dist, inView, losClear } = canSee(foe);
-      if (!playerMeleeCanHit(dist, inView, losClear)) continue;
+    // AUDIT 28 W2b: TWO ARMS, as MeleeDamage has them. The box pass
+    // strikes every unprotected foe in reach; the protected ones it
+    // passed over are kept, and if NOTHING was struck the vanilla arm
+    // (:1057-1064, one SphereCast down the look ray) takes the NEAREST
+    // of them - "pacified NPCs and commoners can only be attacked if
+    // they are the only targets in front of the player." The port has
+    // no ray here (canSee is the hosts' FOV + LOS test), so the nearest
+    // in-reach protected foe stands in for the first collider on the
+    // ray; recorded in Audit-28.md.
+    const protectedInReach = [];
+    const strike = (foe) => {
       const damage = calculateAttackDamage(playerCombat, foe.entity, {
         ...playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls), say,
         // C2-slice (AUDIT 23 combat-11): the PLAYER's poisoned blade
@@ -233,6 +259,17 @@ export class PlayerWeapon {
         onInflictPoison: onPoison ? (att, tgt, pt) => onPoison(foe, pt) : null,
       });
       results.push({ foe, damage });
+    };
+    for (const foe of foes) {
+      if (foe.dead || !foe.entity) continue;
+      const { dist, inView, losClear } = canSee(foe);
+      if (!playerMeleeCanHit(dist, inView, losClear)) continue;
+      if (friendlyProtected(foe, protection === undefined ? {} : { protection })) { protectedInReach.push({ foe, dist }); continue; }
+      strike(foe);
+    }
+    if (results.length === 0 && protectedInReach.length) {
+      protectedInReach.sort((a, b) => a.dist - b.dist);
+      strike(protectedInReach[0].foe);
     }
     return results;
   }
