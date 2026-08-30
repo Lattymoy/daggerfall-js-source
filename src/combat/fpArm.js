@@ -42,9 +42,9 @@
 import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
-  sampleTrack, resetClip, advanceClip, getTextKeyTime, animVelocity,
+  sampleTrack, resetClip, advanceClip, getTextKeyTime,
 } from '../formats/mwAnim.js';
-import { accumRootRef, buildSkeleton, ACCUM_ROOT_NAMES } from '../formats/mwSkin.js';
+import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import {
@@ -53,11 +53,12 @@ import {
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
-  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
+  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag, armorRecords, clothingRecords,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
+  sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES } from '../formats/mwNpc.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
@@ -472,7 +473,9 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
         const bone = weaponAttachBone(mwType);
         const weaponBytes = arc.get(path).slice();
         parts.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
-        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
+        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone,
+          // MW-D28: the record's own attack speed (character.cpp:1326).
+          speed: rec.speed || 1 };
 
         // MW-D16 / RULE 24's ARROW. A drawn bow with no round on it is
         // what the port has been drawing; the reference instances the
@@ -1045,6 +1048,7 @@ export function createFpArm() {
   let movementGroup = null;
   let movementSource = null;
   let movementBase = null;
+  let movementStance = null;
   let movementRate = 1;
   // character.cpp:2355-2366 - the turn animation HOLDS 0.05s past the
   // last actual rotation, so mouse jitter does not flicker it.
@@ -1146,8 +1150,10 @@ export function createFpArm() {
   /** The file's time for a key of the CURRENT weapon group, as
    *  getTextKeyTime is always called (character.cpp:1241): the group, a
    *  colon-space, and the action. -1 when the file has no such key. */
+  // MW-D29: getTextKeyTime asks EVERY source in reverse
+  // (animation.cpp:840-854), not the one the idle was picked from.
   const keyTime = (action) => (weaponGroup && rig()
-    ? getTextKeyTime(rig().keys, `${weaponGroup}: ${action}`) : -1);
+    ? sourcesKeyTime(rig().sources, `${weaponGroup}: ${action}`) : -1);
 
   /** Play a section of the weapon group. Returns FALSE and leaves the
    *  slot empty when the file has no such window - it never substitutes
@@ -1211,6 +1217,7 @@ export function createFpArm() {
 
   function resetMovement() {
     movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+    movementStance = null;
   }
 
   /** The velocity the clip itself travels at, so the played speed can
@@ -1258,14 +1265,30 @@ export function createFpArm() {
       turning: turnDir,
       thirdPerson: viewMode === 'third',
     });
-    if (!base) { if (movementState) resetMovement(); return; }
+    if (!base) {
+      // MW-D29: the frame the movement EMPTIES while one was playing,
+      // the idle resets with it (character.cpp:646-651) - so it replays
+      // from its start with freshly rolled loop dice (:824, :811)
+      // instead of resuming mid-clip on a stale counter.
+      if (movementState) { resetMovement(); resetIdle(); }
+      return;
+    }
     const isTurn = base.startsWith('turn');
-    const fresh = !(movementState && movementState.playing && movementBase === base);
+    // MW-D29: the STANCE is part of the early-out key. The reference
+    // forces refreshMovementAnims on every weapon-type transition
+    // (forcestateupdate at character.cpp:1361/:1372/:1431 flows into
+    // refreshCurrentAnims -> refreshMovementAnims(force)), so drawing a
+    // sword mid-walk re-composes walkforward -> walkforward1h THAT
+    // frame - the port's old gate keyed on the movestate name alone and
+    // kept the bare-handed walk playing with the sword out.
+    const stance = animWeaponType(built.mwType, sheathed);
+    const fresh = !(movementState && movementState.playing
+      && movementBase === base && movementStance === stance);
     if (fresh) {
-      const composed = composeMovementGroup(base, animWeaponType(built.mwType, sheathed), hasGroup);
+      const composed = composeMovementGroup(base, stance, hasGroup);
       if (!composed.group) {
-        if (movementState) resetMovement();
-        movementBase = base;
+        if (movementState) { resetMovement(); resetIdle(); }   // :701-707 resets BOTH
+        movementBase = base; movementStance = stance;
         return;
       }
       if (!(movementState && movementState.playing && movementGroup === composed.group)) {
@@ -1280,15 +1303,20 @@ export function createFpArm() {
         movementGroup = composed.group;
         movementState = pick.state;
         movementSource = pick.source;
-        const accName = ACCUM_ROOT_NAMES.find((n) => pick.source.trackMap.has && pick.source.trackMap.has(n));
-        const vel = accName ? animVelocity(pick.source.keys, pick.source.trackMap.get(accName), composed.group) : 0;
-        // "If there's no velocity" is the reference's own > 1 test
-        // (animation.cpp:1292), and the fallbacks are its own constants.
-        movementAnimSpeed = vel > 1 ? vel
-          : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
-            : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
       }
-      movementBase = base;
+      movementBase = base; movementStance = stance;
+      // MW-D29: the clip speed refreshes on EVERY state change, not only
+      // a re-pick - the reference assigns mMovementAnimSpeed whenever
+      // refreshMovementAnims runs (character.cpp:743-752), and the
+      // fallback constant reads the FRESH state's run/sneak, which is
+      // exactly the run->walk-swap case where the clip stays put and
+      // the state does not. The velocity itself is getVelocity's
+      // multi-source walk (animation.cpp:1267-1338), not the one picked
+      // source's answer.
+      const vel = sourcesVelocity(rig().sources, movementGroup);
+      movementAnimSpeed = vel > 1 ? vel
+        : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
+          : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
     }
     // The rate follows the LIVE speed every frame (character.cpp:2392-2408),
     // AFTER the pick so a fresh clip's own velocity is what divides: a
@@ -1385,6 +1413,10 @@ export function createFpArm() {
     switch (upper) {
       case UPPER_BODY.Equipping:
         actionState = null; actionSource = null;
+        // MW-D28: attachArrow runs when Equipping OR AttackEnd finishes
+        // (character.cpp:1824-1828) - the crossbow comes up LOADED, not
+        // empty until the first shot's follow-through.
+        reloadCrossbow();
         upper = UPPER_BODY.WeaponEquipped;
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         break;
@@ -1510,6 +1542,13 @@ export function createFpArm() {
         // :1384 - the guard against restarting the unequip we are
         // already playing, which the per-frame sync makes load-bearing.
         if (upper === UPPER_BODY.Unequipping) return false;
+        // MW-D28: the OTHER half of :1383-1384's guard, which the port
+        // had dropped - `mUpperBodyState <= UpperBodyState::AttackWindUp`.
+        // The wind-up may be interrupted by a sheathe; the release and
+        // the follow-through may NOT: the attack runs out first and the
+        // per-frame sync starts the unequip on the next frame, exactly
+        // as the reference's per-frame updateWeaponState does.
+        if (upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd) return false;
         if (upper === UPPER_BODY.None || !weaponGroup) {
           sheathed = true; weaponShown = false; arrowShown = false;
           refreshWeaponGroup(); refreshIdle(true);
@@ -1588,6 +1627,7 @@ export function createFpArm() {
           for (const [file, tex] of collectArmTextures(fresh, archives)) {
             if (!token.textures.has(file)) token.textures.set(file, tex);
           }
+          const oldType = token.mwType;
           token.mwType = resolved.mwType;
           token.weapon = resolved.weaponInfo;
           token.arrow = resolved.arrowInfo;
@@ -1634,16 +1674,35 @@ export function createFpArm() {
           packed = null;
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
-          weaponShown = false; arrowShown = false;
           wornKey = key;
           const wasDrawn = !sheathed;
-          sheathed = true;
-          upper = UPPER_BODY.None;
-          refreshWeaponGroup();
-          refreshIdle(true);
-          // A drawn hand equips the NEW weapon - the same section the
-          // reference plays when the equip slot changes mid-draw.
-          if (wasDrawn) { busy = false; api.setSheathed(false); }
+          // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
+          // swapping one real weapon for another plays NO unequip and NO
+          // equip: "We should not play equipping animation and sound
+          // during weapon->weapon transition". The unequip block is
+          // gated `&& !isStillWeapon` (:1385) and the whole equip body
+          // is wrapped `if (!isStillWeapon)` (:1445); only the group
+          // and the stance re-resolve (:1443, :1495-1496), and a
+          // mid-attack swap is forced to WeaponEquipped with the weapon
+          // SHOWN first (:1370-1377). The mesh swaps in the hand.
+          const stillWeapon = wasDrawn && isRealWeapon(oldType) && isRealWeapon(resolved.mwType);
+          if (stillWeapon) {
+            weaponShown = true;    // :1377 showWeapons(true)
+            arrowShown = false;    // a fresh round attaches at its own shoot keys (MW-D16)
+            upper = UPPER_BODY.WeaponEquipped;
+            refreshWeaponGroup();
+            resetIdle();           // forcestateupdate (:1372) - the new stance's idle
+          } else {
+            weaponShown = false; arrowShown = false;
+            sheathed = true;
+            upper = UPPER_BODY.None;
+            refreshWeaponGroup();
+            refreshIdle(true);
+            // A drawn hand equips the NEW weapon - the same section the
+            // reference plays when the equip slot changes mid-draw
+            // (real-weapon-to-real-weapon never reaches here any more).
+            if (wasDrawn) { busy = false; api.setSheathed(false); }
+          }
           return true;
         } finally { busy = false; }
       })();
@@ -1719,13 +1778,27 @@ export function createFpArm() {
       // it - "idle handled last as it can depend on the other states"
       // (character.cpp:842) - and MW-D26's movement sits between them,
       // exactly where refreshMovementAnims runs (:842-845).
+      // MW-D29: EACH clip advances against ITS OWN source's text keys -
+      // a state minted from one .kf and stepped through another's key
+      // list crosses the wrong markers the moment two sources serve
+      // different groups (the base .kf plus a skeleton's own is the
+      // everyday retail case for a female or beast actor).
       if (actionState) {
-        advanceClip(actionState, rig().keys, dt, onActionKey);
+        // MW-D28: the weapon record's mSpeed scales EXACTLY the three
+        // attack sections - wind-up, release, follow - and nothing else
+        // (character.cpp:1718/:1786/:1811 pass weapSpeed as speedmult;
+        // the equip/unequip plays at :1408/:1465 pass 1.0f). A dagger
+        // swings fast and a warhammer slow, off the record, not a guess.
+        const attacking = upper === UPPER_BODY.AttackWindUp
+          || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
+        const weapSpeed = attacking && built.weapon && Number.isFinite(built.weapon.speed)
+          ? built.weapon.speed : 1;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * weapSpeed, onActionKey);
         stepUpper();
       }
       refreshMovement(cam, dt);
-      if (movementState) advanceClip(movementState, rig().keys, dt * movementRate, null);
-      if (idleState) advanceClip(idleState, rig().keys, dt, null);
+      if (movementState) advanceClip(movementState, (movementSource || rig()).keys, dt * movementRate, null);
+      if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !movementState && !idleState) return;

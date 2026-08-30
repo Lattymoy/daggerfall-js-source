@@ -165,7 +165,8 @@ const zstr = (bytes, s, n) => {
  *  unchanged for its page and its pins. */
 export { MW_BODY_PARTS } from './mwEsmFile.js';
 import { MW_BODY_PARTS } from './mwEsmFile.js';
-import { GRAPH_ROOT } from './mwSkin.js';
+import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
+import { getTextKeyTime, animVelocity } from './mwAnim.js';
 
 /** The four parts allowed to fall back to a third-person mesh when the
  *  first-person record is missing (rule 3 / npcanimation.cpp:1217-1253).
@@ -768,7 +769,7 @@ export function weaponRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'WEAP') continue;
-    const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false };
+    const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false, speed: 1 };
     for (const sub of subrecords(bytes, rec)) {
       if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
       else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
@@ -787,7 +788,15 @@ export function weaponRecords(bytes) {
         // health is 5. Mac's play was the first retail check this
         // number ever got, which is the whole TEST-THE-SHAPE lesson
         // wearing bytes.
-        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 8, 2).getInt16(0, true);
+        const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 32);
+        e.type = dv.getInt16(8, true);
+        // MW-D28: mSpeed at byte 12 (loadweap.hpp:70, after mHealth's
+        // uint16 at 10-11). It is the ONLY record field that changes an
+        // attack's played speed: character.cpp:1326 reads it for the
+        // drawn weapon and :1718/:1786/:1811 pass it as the speedmult of
+        // exactly the three attack sections - equip and unequip play at
+        // 1.0f (:1408, :1465).
+        e.speed = dv.getFloat32(12, true);
       }
     }
     if (e.id && e.model) out.push(e);
@@ -1992,6 +2001,47 @@ function animSourcesFor(baseModel, skeletonPath, exists) {
  * @param sources ordered as pushed; index 0 is the base
  * @returns {{index:number, source:object, state:object}|null}
  */
+/**
+ * MW-D29: ANIMATION::GETTEXTKEYTIME across EVERY source
+ * (animation.cpp:840-854): the sources are walked in REVERSE - the
+ * last-pushed wins - and the first key that starts with the asked text
+ * answers. The port had asked ONE source (the idle pick's), so an
+ * equip-attach key living only in the base .kf while a female skeleton's
+ * own .kf won the idle went unseen.
+ */
+export function sourcesKeyTime(sources, textKey) {
+  for (let i = (sources ? sources.length : 0) - 1; i >= 0; i--) {
+    const t = getTextKeyTime(sources[i].keys, textKey);
+    if (t >= 0) return t;
+  }
+  return -1;
+}
+
+/**
+ * MW-D29: ANIMATION::GETVELOCITY's two searches (animation.cpp:1267-1338):
+ * first the sources in REVERSE for one that carries the group's start
+ * key; that source's accum-root velocity answers - and "if there's no
+ * velocity" (the > 1 test, :1292/:1312) the walk CONTINUES through the
+ * remaining earlier sources until one yields more. The port had stopped
+ * at the single source the clip was picked from.
+ */
+export function sourcesVelocity(sources, group) {
+  const list = sources || [];
+  const velOf = (so) => {
+    const acc = ACCUM_ROOT_NAMES.find((n) => so.trackMap && so.trackMap.has && so.trackMap.has(n));
+    return acc ? animVelocity(so.keys, so.trackMap.get(acc), group) : 0;
+  };
+  let i = list.length - 1;
+  for (; i >= 0; i--) {
+    if (getTextKeyTime(list[i].keys, `${group}: start`) >= 0
+      || getTextKeyTime(list[i].keys, `${group}: loop start`) >= 0) break;
+  }
+  if (i < 0) return 0;
+  let velocity = velOf(list[i]);
+  for (let j = i - 1; !(velocity > 1) && j >= 0; j--) velocity = velOf(list[j]);
+  return velocity;
+}
+
 export function pickAnimSource(sources, group, resetClip, opts = {}) {
   for (let i = (sources?.length ?? 0) - 1; i >= 0; i--) {
     const state = resetClip(sources[i].keys, group, opts);

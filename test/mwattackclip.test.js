@@ -28,15 +28,18 @@ import { getTextKeyTime, getStartTime, resetClip, advanceClip } from '../src/for
 // none of which a picture would show to be wrong.
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
+const fpMod = await import('../src/formats/mwFirstPerson.js');
 
 /** A WEAP record, byte-shaped as loadweap.hpp:71 says. */
-const wpdtRec = (id, model, type) => {
+const wpdtRec = (id, model, type, speed = 1) => {
   const A = (x) => [...x].map((c) => c.charCodeAt(0));
   const Z = (x) => [...A(x), 0];
   const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
   const sub = (n, d) => [...A(n), ...U(d.length), ...d];
   const w = new Uint8Array(32);
-  new DataView(w.buffer).setInt16(8, type, true);   // MW-D22: mType is at byte 8 (loadweap.hpp) - 10 was the shared guess
+  const dv = new DataView(w.buffer);
+  dv.setInt16(8, type, true);   // MW-D22: mType is at byte 8 (loadweap.hpp) - 10 was the shared guess
+  dv.setFloat32(12, speed, true);   // MW-D28: mSpeed at byte 12 (loadweap.hpp:70)
   const d = [...sub('NAME', Z(id)), ...sub('MODL', Z(model)), ...sub('FNAM', Z('W')), ...sub('WPDT', [...w])];
   return Uint8Array.from([...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d]);
 };
@@ -623,4 +626,253 @@ test('MW-D19: a swap overtaken by unload walks away instead of arming a ghost', 
   release();
   assert.equal(await p, false, 'the stale swap declines');
   assert.equal(arm.status().active, false, 'and nothing was armed');
+});
+
+// ── MW-D28: THE WEAPON MACHINE, BROUGHT TO 1:1 ──────────────────────
+
+test('MW-D28: the record\'s mSpeed scales EXACTLY the three attack sections - the equip plays at 1.0', async () => {
+  // character.cpp:1326 reads mData.mSpeed for the drawn weapon;
+  // :1718/:1786/:1811 pass it as speedmult of the wind-up, release and
+  // follow plays; the equip/unequip plays pass 1.0f (:1408, :1465).
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => ({ pitch: 0 }));
+  const res = await arm.build({
+    race: 'fprace', weapon: LONGSWORD,
+    deps: fpDeps(wpdtRec('iron longsword', 'w/blade.nif', MW_WEAPON_TYPE.LongBladeOneHand, 2.0)),
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.equal(arm.status().weapon.speed, 2.0, 'the record speed reaches the card');
+  // THE EQUIP advances at 1.0 whatever the record says.
+  arm.setSheathed(false);
+  let st = arm.status();
+  assert.equal(st.upperName, 'Equipping');
+  const t0 = st.time;
+  arm.update(0.05);
+  const equipDelta = arm.status().time - t0;
+  assert.ok(Math.abs(equipDelta - 0.05) < 1e-9, `equip advances at 1.0 (${equipDelta})`);
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped) >= 0, 'the draw finishes');
+  // THE WIND-UP advances at 2.0.
+  assert.equal(arm.attack('StrikeDown'), 'chop');
+  st = arm.status();
+  assert.equal(st.upperName, 'AttackWindUp');
+  const w0 = st.time;
+  arm.update(0.05);
+  const windDelta = arm.status().time - w0;
+  assert.ok(Math.abs(windDelta - 0.10) < 1e-9, `the wind-up advances at the record's 2.0 (${windDelta})`);
+});
+
+test('MW-D28: a drawn weapon-to-weapon swap is isStillWeapon - the mesh swaps, NOTHING plays', async () => {
+  // character.cpp:1364 "We should not play equipping animation and sound
+  // during weapon->weapon transition": the unequip block is gated
+  // `&& !isStillWeapon` (:1385), the equip body is wrapped
+  // `if (!isStillWeapon)` (:1445), and the weapon stays SHOWN (:1377).
+  const twoWeapons = Uint8Array.from([
+    ...wpdtRec('iron longsword', 'w/blade.nif', MW_WEAPON_TYPE.LongBladeOneHand),
+    ...wpdtRec('iron claymore', 'w/blade.nif', MW_WEAPON_TYPE.LongBladeTwoHand),
+  ]);
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => ({ pitch: 0 }));
+  const res = await arm.build({ race: 'fprace', weapon: LONGSWORD, deps: fpDeps(twoWeapons) });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  arm.setSheathed(false);
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped) >= 0, 'the sword is drawn');
+  assert.equal(arm.status().weaponShown, true);
+  // Swap to the claymore (template 122, LongBladeTwoHand - its idle2c
+  // IS in the fixture, so the stance change is observable). The machine
+  // must NEVER pass through Equipping/Unequipping, and the weapon must
+  // never blink off.
+  const swapped = await arm.setWeapon({ templateIndex: 122 }, {});
+  assert.equal(swapped, true, 'the swap ran');
+  const st = arm.status();
+  assert.equal(st.weapon.id, 'iron claymore', 'the NEW record is in the hand');
+  assert.equal(st.upperName, 'WeaponEquipped', 'no equip section played - isStillWeapon');
+  assert.equal(st.weaponShown, true, 'and the weapon never blinked off');
+  assert.equal(st.sheathed, false, 'still drawn');
+  assert.equal(st.idleGroup, 'idle2c', 'and the stance re-resolved to the two-hander\'s idle');
+});
+
+test('MW-D28: the release and follow-through cannot be sheathed away - the wind-up can', async () => {
+  // character.cpp:1383-1384: the unequip starts only while
+  // `mUpperBodyState <= AttackWindUp && != Unequipping` - AttackRelease
+  // (5) and AttackEnd (6) sit ABOVE the gate, so a sheathe during them
+  // waits for the attack to run out (:1857), exactly one more frame of
+  // the same per-frame sync.
+  const arm = await drawnArm();
+  arm.setSheathed(false);
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped) >= 0);
+  arm.attack('StrikeDown');
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.AttackRelease, { dt: 0.02 }) >= 0, 'the blow releases');
+  assert.equal(arm.setSheathed(true), false, 'mid-release the sheathe REFUSES');
+  assert.equal(arm.status().upperName, 'AttackRelease', 'and the release keeps playing');
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped) >= 0, 'the attack runs out');
+  assert.equal(arm.setSheathed(true), true, 'and THEN the sheathe starts');
+  // The wind-up half of the gate: a fresh draw and swing, sheathed
+  // during the wind-up, goes down immediately (<= AttackWindUp).
+  const arm2 = await drawnArm();
+  arm2.setSheathed(false);
+  assert.ok(run(arm2, (s) => s.upper === UPPER_BODY.WeaponEquipped) >= 0);
+  arm2.attack('StrikeDown');
+  assert.equal(arm2.status().upperName, 'AttackWindUp');
+  assert.equal(arm2.setSheathed(true), true, 'the wind-up may be sheathed away');
+});
+
+test('MW-D28: the WPDT speed field is read from byte 12 - hand-laid, no writer shared', async () => {
+  const wr = await import('../src/formats/mwFirstPerson.js');
+  // The MW-D22 pattern on the next field over: every value planted
+  // distinct so a reader one field off answers the wrong number and
+  // dies. loadweap.hpp: mWeight f32[0..3], mValue i32[4..7],
+  // mType i16[8..9], mHealth u16[10..11], mSpeed f32[12..15],
+  // mReach f32[16..19].
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const w = new Uint8Array(32);
+  const dv = new DataView(w.buffer);
+  dv.setFloat32(0, 12.5, true);    // weight
+  dv.setInt32(4, 240, true);       // value
+  dv.setInt16(8, 5, true);         // type: BluntTwoWide
+  dv.setUint16(10, 999, true);     // health - the byte-10 trap, again
+  dv.setFloat32(12, 1.75, true);   // SPEED
+  dv.setFloat32(16, 1.5, true);    // reach - the byte-16 trap
+  const d = [...sub('NAME', Z('x')), ...sub('MODL', Z('w/x.nif')), ...sub('FNAM', Z('X')), ...sub('WPDT', [...w])];
+  const rec = Uint8Array.from([...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d]);
+  const got = wr.weaponRecords(rec);
+  assert.equal(got.length, 1);
+  assert.equal(got[0].type, 5);
+  assert.ok(Math.abs(got[0].speed - 1.75) < 1e-6,
+    `mSpeed is the float at [12..15] - a reader on 16 answers the reach 1.5 (${got[0].speed})`);
+});
+
+// ── MW-D29: THE MOVEMENT MACHINE'S FOUR CROSS-SOURCE LAWS ───────────
+
+/** TWO SOURCES, the everyday retail arrangement for a female actor:
+ *  the base xbase_anim.1st.kf (here: the weapon fixture, equip/attack
+ *  groups) pushed first, the skeleton's OWN base_anim_female.1st.kf
+ *  (here: the movement fixture, walk/turn groups) pushed second and
+ *  winning reverse searches. */
+function twoSourceDeps(weapEsm = null) {
+  const files = new Map([
+    [fpSkeletonPath({ female: true }), f('armfp.nif')],
+    ['meshes/xbase_anim.1st.kf', f('armfpweapon.kf')],
+    ['meshes/base_anim_female.1st.kf', f('armfpmove.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['meshes/w/blade.nif', f('weapon.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  const names = weapEsm ? ['armfp.esm', 'weap.esm'] : ['armfp.esm'];
+  return {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => names,
+    loadMorrowindFile: async (n) => (n === 'weap.esm' ? weapEsm : f('armfp.esm')),
+  };
+}
+
+async function twoSourceArm() {
+  const cam = { pitch: 0, yaw: 0, move: { forward: 0, strafe: 0, running: false, speed: 0 } };
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => cam);
+  const res = await arm.build({
+    race: 'fprace', female: true, weapon: LONGSWORD,
+    deps: twoSourceDeps(wpdtRec('iron longsword', 'w/blade.nif', MW_WEAPON_TYPE.LongBladeOneHand)),
+  });
+  assert.ok(res.ok, `build: ${res.stage} ${res.error}`);
+  assert.equal(res.sources.length, 2, 'both .kf sources loaded, base first (push order)');
+  return { arm, cam };
+}
+
+test('MW-D29: an equip key living only in the BASE source still fires - keys and clips are per-source', async () => {
+  // getTextKeyTime walks every source in reverse (animation.cpp:840-854),
+  // and each clip advances against ITS OWN source's key list. The
+  // movement fixture wins the idle pick (last-pushed), so the equip
+  // section's keys live in the OTHER source - under the old single-list
+  // wiring the "equip attach" key never crossed and the weapon never
+  // appeared.
+  const { arm } = await twoSourceArm();
+  arm.setSheathed(false);
+  assert.equal(arm.status().upperName, 'Equipping');
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped, { dt: 0.02 }) >= 0, 'the draw finishes');
+  assert.equal(arm.status().weaponShown, true,
+    'the "equip attach" key CROSSED - the action clip stepped through its own source\'s keys');
+});
+
+test('MW-D29: drawing a weapon mid-walk re-composes the movement group THAT frame', async () => {
+  // forcestateupdate flows into refreshMovementAnims(force) on every
+  // weapon-type transition (character.cpp:1361/:1372/:1431), so the walk
+  // picks up the stance suffix the moment the stance changes.
+  const { arm, cam } = await twoSourceArm();
+  cam.move.forward = 1; cam.move.speed = 1;
+  arm.update(0.05);
+  assert.equal(arm.status().movementGroup, 'walkforward', 'bare hands walk the bare group');
+  arm.setSheathed(false);
+  arm.update(0.05);
+  assert.equal(arm.status().movementGroup, 'walkforward1h',
+    'the sword STANCE re-composed the movement group without stopping');
+  // and sheathing walks it back
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped, { dt: 0.02 }) >= 0);
+  arm.setSheathed(true);
+  assert.ok(run(arm, (s) => s.sheathed, { dt: 0.02 }) >= 0, 'the sheathe finishes');
+  arm.update(0.05);
+  assert.equal(arm.status().movementGroup, 'walkforward', 'and the bare walk returns');
+});
+
+test('MW-D29: stopping resets the IDLE with the movement - fresh start, fresh dice', async () => {
+  // character.cpp:646-651/:701-707 - when the movement group empties
+  // while one was playing, resetCurrentIdleState() runs too, so the next
+  // refreshIdleAnims replays from startPoint 0 with a new numLoops roll.
+  const { arm, cam } = await twoSourceArm();
+  arm.setSheathed(false);
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped, { dt: 0.02 }) >= 0);
+  // let the drawn idle advance INTO its clip
+  for (let i = 0; i < 6; i++) arm.update(0.05);
+  cam.move.forward = 1; cam.move.speed = 1;
+  for (let i = 0; i < 4; i++) arm.update(0.05);
+  assert.equal(arm.status().movementGroup, 'walkforward1h');
+  cam.move.forward = 0; cam.move.speed = 0;
+  arm.update(0.05);
+  const st = arm.status();
+  assert.equal(st.movementGroup, null, 'the movement slot emptied');
+  // the idle replayed from its start: idle1h's window opens at 0.6, and
+  // one 0.05 step in it sits at <= 0.7 rather than wherever it had got to
+  assert.ok(st.time <= 0.75, `the idle restarted from its start key (${st.time})`);
+  assert.ok(st.loopsLeft >= 1 && st.loopsLeft <= 4, 'with freshly rolled loop dice');
+});
+
+test('MW-D29: sourcesKeyTime and sourcesVelocity walk EVERY source, reverse, with the keep-looking tail', () => {
+  const { sourcesKeyTime, sourcesVelocity } = fpMod;
+  const K = (arr) => arr.map(([t, x]) => ({ time: t, text: x }));
+  const base = { keys: K([[1.0, 'walkforward: start'], [1.5, 'walkforward: loop start'], [2.5, 'walkforward: loop stop'], [9.0, 'onlybase: start']]),
+    trackMap: new Map([['bip01', { translations: { keys: [{ time: 1.5, value: [0, 0, 0] }, { time: 2.5, value: [0, 3.0, 0] }] } }]]) };
+  const own = { keys: K([[0.2, 'walkforward: start'], [0.4, 'walkforward: loop start'], [1.4, 'walkforward: loop stop']]),
+    trackMap: new Map() };   // the own source CARRIES the group but no accum track
+  // reverse: the last-pushed (own) answers first for a shared key...
+  assert.equal(sourcesKeyTime([base, own], 'walkforward: start'), 0.2);
+  // ...and a key only the base carries is still found (animation.cpp:842)
+  assert.equal(sourcesKeyTime([base, own], 'onlybase: start'), 9.0);
+  // getVelocity: own wins the reverse group search but yields NO
+  // velocity, so the walk CONTINUES into base (animation.cpp:1310-1332)
+  // and answers its 3.0 units over 1.0s.
+  const v = sourcesVelocity([base, own], 'walkforward');
+  assert.ok(Math.abs(v - 3.0) < 1e-9, `the keep-looking tail found the base source's velocity (${v})`);
+});
+
+test('MW-D29: the unequip DETACH key in the other source keeps the weapon in hand while it is put away', async () => {
+  // The compensations mask the equip case (a missing "equip attach"
+  // key shows the weapon by hand), so the WITNESS is the unequip:
+  // keyTime must FIND "unequip detach" in the base source
+  // (animation.cpp:840-854 walks every source) - found, the weapon
+  // stays shown until the key crosses; unfound, :1481-1483's manual
+  // hide blanks it the instant the sheathe starts, which is a weapon
+  // vanishing from the hand instead of being put away.
+  const { arm } = await twoSourceArm();
+  arm.setSheathed(false);
+  assert.ok(run(arm, (s) => s.upper === UPPER_BODY.WeaponEquipped, { dt: 0.02 }) >= 0);
+  assert.equal(arm.status().weaponShown, true);
+  arm.setSheathed(true);
+  assert.equal(arm.status().upperName, 'Unequipping');
+  assert.equal(arm.status().weaponShown, true,
+    'the weapon is STILL IN HAND at the start of the sheathe - the detach key was found across sources');
+  assert.ok(run(arm, (s) => s.sheathed, { dt: 0.02 }) >= 0, 'the sheathe finishes');
+  assert.equal(arm.status().weaponShown, false, 'and the detach key hid it on crossing');
 });
