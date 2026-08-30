@@ -417,6 +417,44 @@ export function getTextKeyTime(keys, textKey) {
 }
 
 /**
+ * CALCANIMVELOCITY (animation.cpp:180-224) - the distance a movement
+ * clip's ACCUM ROOT travels over the clip, per second, which is what
+ * the played animation speed is scaled by (character.cpp:2400-2408).
+ *
+ * The reference's own quirks, kept: the LAST "group: start"/"group:
+ * loop start" key and the LAST "loop stop" (falling back over plain
+ * "stop"s until one appears) are taken in REVERSE scan - the comment
+ * cites AshVampire.nif's doubled Loop Stop keys, whose broken velocity
+ * "must be replicated". The displacement is masked by the accumulate
+ * vector (1,1,0) - character.cpp:925 - so only the HORIZONTAL travel
+ * counts; MW's z is the vertical and never accumulates for walking.
+ * Matching is equalsParts' exact concatenation, not a prefix test.
+ */
+export function animVelocity(keys, track, group) {
+  if (!keys || !keys.length || !track) return 0;
+  const g = String(group || '').toLowerCase();
+  let starttime = null;
+  let stoptime = null;
+  for (let i = keys.length - 1; i >= 0; i--) {
+    const t = keys[i].text;
+    if (t === `${g}: start` || t === `${g}: loop start`) { starttime = keys[i].time; break; }
+  }
+  for (let i = keys.length - 1; i >= 0; i--) {
+    const t = keys[i].text;
+    if (t === `${g}: stop`) stoptime = keys[i].time;
+    else if (t === `${g}: loop stop`) { stoptime = keys[i].time; break; }
+  }
+  if (starttime == null || stoptime == null || !(stoptime > starttime)) return 0;
+  // The accum root's TRANSLATION channel alone - getTranslation() is
+  // all the reference samples here (animation.cpp:218-219).
+  const a = track.translations ? sampleGroup(track.translations, 3, starttime) : null;
+  const b = track.translations ? sampleGroup(track.translations, 3, stoptime) : null;
+  if (!a || !b) return 0;
+  // accumulate (1,1,0): the third component is MW's vertical.
+  return Math.hypot(a[0] - b[0], a[1] - b[1]) / (stoptime - starttime);
+}
+
+/**
  * ANIMATION::ISLOOPINGANIMATION (animation.cpp:792-826), RULE 51's
  * second data fact - the hardcoded set, verbatim, all forty-four names.
  * The reference's own comment: "In Morrowind, a some animation groups

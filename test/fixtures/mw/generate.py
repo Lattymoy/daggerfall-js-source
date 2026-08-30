@@ -2066,6 +2066,67 @@ def make_armfp_weapon_kf():
     write_nif(HERE / "armfpweapon.kf", [helper])
 
 
+def make_armfpmove_kf():
+    # MW-D26: THE MOVEMENT GROUPS, which no earlier fixture carries.
+    # The ABSENCES are the fallback ladders' proof:
+    #   walkforward      present, loop window, and the ACCUM ROOT WALKS
+    #   runforward       ABSENT - the run->walk swap (character.cpp:697-699)
+    #   walkforward1h    ABSENT - the weapon-suffix ladder falls to bare
+    #   turnleft/right   present - the 3P-only turn states
+    # The Bip01 track travels 2.0 units of MW y between the loop keys
+    # (velocity exactly 2.0/s) AND 5.0 of MW z - which calcAnimVelocity's
+    # (1,1,0) mask must ignore, or the pin dies.
+    text_keys = [
+        (0.0, b"Idle: Start"),
+        (0.5, b"Idle: Stop"),
+        (1.0, b"WalkForward: Start"),
+        (1.2, b"WalkForward: Loop Start"),
+        (2.2, b"WalkForward: Loop Stop"),
+        (2.4, b"WalkForward: Stop"),
+        (2.6, b"TurnLeft: Start"),
+        (3.0, b"TurnLeft: Stop"),
+        (3.2, b"TurnRight: Start"),
+        (3.6, b"TurnRight: Stop"),
+    ]
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = len(text_keys)
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, text_keys):
+        k.time = t
+        k.value = txt
+
+    def rot_z(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), 0.0, 0.0, math.sin(a))
+
+    tracks = [
+        ("Bip01", make_keyframe_data(trans_keys=[(1.2, (0.0, 0.0, 0.0)), (2.2, (0.0, 2.0, 5.0))])),
+        ("Right Upper Arm", make_keyframe_data(rot_keys=[
+            (0.0, rot_z(0.0)), (0.5, rot_z(0.0)),
+            (1.2, rot_z(10.0)), (1.7, rot_z(30.0)), (2.2, rot_z(10.0)),
+            (2.6, rot_z(-15.0)), (3.6, rot_z(15.0)),
+        ])),
+    ]
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"ArmFpMove"
+    helper.extra_data = tke
+    prev_extra = tke
+    prev_ctrl = None
+    for name, kd in tracks:
+        sed = NifFormat.NiStringExtraData()
+        sed.string_data = name.encode()
+        sed.bytes_remaining = 4 + len(name)
+        prev_extra.next_extra_data = sed
+        prev_extra = sed
+        kc = make_keyframe_controller(None, kd, 0.0, 3.6)
+        if prev_ctrl is None:
+            helper.controller = kc
+        else:
+            prev_ctrl.next_controller = kc
+        prev_ctrl = kc
+    write_nif(HERE / "armfpmove.kf", [helper])
+
+
 def _quad(name, colors=True, z=0.0):
     """One 4-vertex, 2-triangle shape, optionally with vertex colours."""
     tri = NifFormat.NiTriShape()

@@ -42,9 +42,9 @@
 import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
-  sampleTrack, resetClip, advanceClip, getTextKeyTime,
+  sampleTrack, resetClip, advanceClip, getTextKeyTime, animVelocity,
 } from '../formats/mwAnim.js';
-import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
+import { accumRootRef, buildSkeleton, ACCUM_ROOT_NAMES } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import {
@@ -57,6 +57,7 @@ import {
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER,
+  movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES } from '../formats/mwNpc.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
@@ -978,6 +979,23 @@ export function createFpArm() {
   let actionState = null;
   let idleGroup = null;
   let weaponGroup = null;
+  // MW-D26: THE THIRD SLOT - MOVEMENT. The reference plays movement at
+  // Priority_Movement, above the idle and below the weapon action, and
+  // in first person everything rides BlendMask_All - so the two-slot
+  // winner grows to three: action beats movement beats idle. The
+  // per-bone-group blend (a swing on the torso OVER a walk on the legs,
+  // rule 26's real vector) is NOT this - recorded in the bible as the
+  // known gap, so nobody mistakes the ladder for the vector.
+  let movementState = null;
+  let movementGroup = null;
+  let movementSource = null;
+  let movementBase = null;
+  let movementRate = 1;
+  // character.cpp:2355-2366 - the turn animation HOLDS 0.05s past the
+  // last actual rotation, so mouse jitter does not flicker it.
+  let lastYaw = null;
+  let turnHold = 0;
+  let turnDir = 0;
   let upper = UPPER_BODY.None;
   let attackType = null;
   let attackStrength = 1;
@@ -1023,10 +1041,10 @@ export function createFpArm() {
   let thirdPacked = null;
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
 
-  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || idleState)
+  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || idleState)
     && viewMode === 'first');
   const thirdActive = () => !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
-    && renderer && (actionState || idleState) && viewMode === 'third');
+    && renderer && (actionState || movementState || idleState) && viewMode === 'third');
 
   /**
    * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.
@@ -1046,7 +1064,7 @@ export function createFpArm() {
    * These are exactly update()'s own requirements: a camera is a DRAW
    * term, and posing without one is harmless work, not a wrong picture.
    */
-  const ready = () => !!(built && built.ok && (actionState || idleState) && renderer);
+  const ready = () => !!(built && built.ok && (actionState || movementState || idleState) && renderer);
 
   function releaseGpu(m) {
     if (m && renderer && renderer.gl) {
@@ -1135,6 +1153,99 @@ export function createFpArm() {
    *  the idle so the next refresh replays it from its start with a fresh
    *  loop count, rather than resuming mid-swing-shaped. */
   function resetIdle() { idleState = null; idleGroup = null; refreshIdle(true); }
+
+  function resetMovement() {
+    movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+  }
+
+  /** The velocity the clip itself travels at, so the played speed can
+   *  scale to the actor's real speed (character.cpp:743-752): the
+   *  accum root's horizontal displacement over the clip, falling back
+   *  to the reference's own constants when a clip carries none. */
+  let movementAnimSpeed = MOVEMENT_FALLBACK_SPEED.walk;
+
+  /**
+   * MW-D26: REFRESHMOVEMENTANIMS + the movestate selection, per frame
+   * (character.cpp:639-759, :2297-2330). The state derives from the
+   * frame's movement INPUT (the reference's movement-settings vector)
+   * carried on the camera dep; the group composes the weapon's short
+   * suffix through the same one ladder the idle rides, plus movement's
+   * own run->walk swap; a same-group refresh resumes from where it was
+   * (:711-713); and a group nothing serves RESETS the slot rather than
+   * substituting a wrong clip (:701-707).
+   *
+   * TURNING (character.cpp:2321-2329, 2355-2366): third person only,
+   * never sneaking; the state holds 0.05s past the last rotation so
+   * per-frame mouse deltas do not flicker it. The reference's
+   * isTurning() reads the movement-settings rotation channel; this
+   * port's yaw is mouse-driven per frame, so the hold IS the port of
+   * the threshold, stated rather than smuggled.
+   */
+  function refreshMovement(cam, dt) {
+    if (!built || !built.ok) return;
+    const yaw = cam ? (cam.yaw || 0) : 0;
+    let yawRate = 0;
+    if (lastYaw != null && dt > 0) {
+      let d = yaw - lastYaw;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      yawRate = d / dt;
+      if (d !== 0) { turnDir = Math.sign(d); turnHold = 0.05; }
+      else { turnHold -= dt; if (turnHold <= 0) turnDir = 0; }
+    }
+    lastYaw = yaw;
+    const mv = (cam && cam.move) || null;
+    const base = movementAnimState({
+      forward: mv ? mv.forward : 0,
+      strafe: mv ? mv.strafe : 0,
+      running: !!(mv && mv.running),
+      sneaking,
+      turning: turnDir,
+      thirdPerson: viewMode === 'third',
+    });
+    if (!base) { if (movementState) resetMovement(); return; }
+    const isTurn = base.startsWith('turn');
+    const fresh = !(movementState && movementState.playing && movementBase === base);
+    if (fresh) {
+      const composed = composeMovementGroup(base, animWeaponType(built.mwType, sheathed), hasGroup);
+      if (!composed.group) {
+        if (movementState) resetMovement();
+        movementBase = base;
+        return;
+      }
+      if (!(movementState && movementState.playing && movementGroup === composed.group)) {
+        const startPoint = movementGroup === composed.group ? clipCompletion(movementState) : 0;
+        const pick = pickAnimSource(rig().sources, composed.group, resetClip,
+          { loopFallback: true, loopCount: Infinity, startPoint });
+        if (!pick) {
+          resetMovement();
+          notes.push(`movement: no source gives "${composed.group}" a start and a stop key`);
+          return;
+        }
+        movementGroup = composed.group;
+        movementState = pick.state;
+        movementSource = pick.source;
+        const accName = ACCUM_ROOT_NAMES.find((n) => pick.source.trackMap.has && pick.source.trackMap.has(n));
+        const vel = accName ? animVelocity(pick.source.keys, pick.source.trackMap.get(accName), composed.group) : 0;
+        // "If there's no velocity" is the reference's own > 1 test
+        // (animation.cpp:1292), and the fallbacks are its own constants.
+        movementAnimSpeed = vel > 1 ? vel
+          : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
+            : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
+      }
+      movementBase = base;
+    }
+    // The rate follows the LIVE speed every frame (character.cpp:2392-2408),
+    // AFTER the pick so a fresh clip's own velocity is what divides: a
+    // turn plays at min(1.5, |rot|/dt/pi); everything else at actual
+    // speed / clip speed, capped at 10 - the port's meters crossing to
+    // MW units through the one bridge, because the clip's velocity is
+    // in MW units.
+    movementRate = isTurn
+      ? turnAnimSpeed(yawRate)
+      : Math.min(MOVEMENT_SPEED_CAP,
+        ((mv && mv.speed ? mv.speed : 0) * MW_UNITS_PER_METER) / movementAnimSpeed);
+  }
 
   /** Rule 9's long group for the CURRENT stance, and the equip/unequip
    *  and attack sections all live in it. */
@@ -1276,6 +1387,8 @@ export function createFpArm() {
         wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
+        movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+        lastYaw = null; turnDir = 0; turnHold = 0;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
         weaponShown = false; arrowShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
         idleSource = null; actionSource = null; poseSource = null;
@@ -1301,6 +1414,8 @@ export function createFpArm() {
     unload() {
       releaseMesh(); built = null; packed = null;
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
+      movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+      lastYaw = null; turnDir = 0; turnHold = 0;
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
       weaponShown = false; arrowShown = false;
@@ -1542,32 +1657,38 @@ export function createFpArm() {
      *  is a stutter you cannot profile out. */
     update(dt) {
       if (!built || !built.ok || !renderer) return;
+      const cam = camera && camera();
+      sneaking = !!(cam && cam.sneaking);
       // refreshCurrentAnims' order, and it is not arbitrary: the weapon
       // state is stepped FIRST because the idle refresh below depends on
       // it - "idle handled last as it can depend on the other states"
-      // (character.cpp:842).
+      // (character.cpp:842) - and MW-D26's movement sits between them,
+      // exactly where refreshMovementAnims runs (:842-845).
       if (actionState) {
         advanceClip(actionState, rig().keys, dt, onActionKey);
         stepUpper();
       }
+      refreshMovement(cam, dt);
+      if (movementState) advanceClip(movementState, rig().keys, dt * movementRate, null);
       if (idleState) advanceClip(idleState, rig().keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
-      if (!actionState && !idleState) return;
+      if (!actionState && !movementState && !idleState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
       // person both animations are played on BlendMask_All, so the higher
       // priority takes every bone for as long as it is playing.
-      const state = actionState || idleState;
+      // THE THREE-SLOT WINNER (MW-D26): weapon action, then movement,
+      // then idle - the reference's priority order with BlendMask_All
+      // everywhere. The per-bone-group vector is the recorded gap.
+      const state = actionState || movementState || idleState;
       // MW-D14: and the TRACKS come from the same file as the clip. A
       // female actor can win her idle from xbase_anim_female.1st.kf and
       // her swing from the base xbase_anim.1st.kf, and posing one with
       // the other's tracks is a bind pose with no error.
-      poseSource = actionState ? actionSource : idleSource;
+      poseSource = actionState ? actionSource : (movementState ? movementSource : idleSource);
       // Rule 54's neck: the camera node hangs off "bip01 neck", so the
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
-      const cam = camera && camera();
-      sneaking = !!(cam && cam.sneaking);
       // MW-D24: THE THIRD-PERSON FRAME. One machine advanced the clip
       // above; which ASSEMBLY takes the pose is the view's question.
       // The body takes NO neck pitch and no sneak delta: rule 54's neck
@@ -1751,6 +1872,7 @@ export function createFpArm() {
       }
       viewMode = want;
       actionState = null; actionSource = null; attackType = null; holdWindUp = false;
+      resetMovement();
       if (upper !== UPPER_BODY.None && upper !== UPPER_BODY.WeaponEquipped) {
         upper = weaponShown ? UPPER_BODY.WeaponEquipped : UPPER_BODY.None;
       }
@@ -1847,6 +1969,10 @@ export function createFpArm() {
         sources: built && built.ok ? built.sourcePaths : null,
         idleSource: idleSource && idleSource.name,
         actionSource: actionSource && actionSource.name,
+        // MW-D26: the movement slot, on the card like the others.
+        movementGroup,
+        movementRate: movementState ? +movementRate.toFixed(3) : null,
+        movementSource: movementSource && movementSource.name,
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
         frames,

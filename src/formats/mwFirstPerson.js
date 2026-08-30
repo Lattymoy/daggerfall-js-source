@@ -599,6 +599,70 @@ export function composeStanceGroup(base, type, hasGroup) {
  * construction: the player is bipedal and this module only ever animates
  * the player's own first-person rig.
  */
+/**
+ * MW-D26: THE MOVEMENT STATE - refreshCurrentAnims' movestate ladder
+ * (character.cpp:2297-2330) minus the swim family (deferred with the
+ * port's swim animations; recorded, not faked). The strafe test is the
+ * reference's own 2:1 (character.cpp:2085 - mIsStrafing when the side
+ * component more than doubles the forward one); sneak beats run beats
+ * walk exactly as the nested ternaries order them; and the TURN states
+ * exist only for a third-person biped that is not sneaking
+ * (character.cpp:2321-2329 - "do not use turning animations in the
+ * first-person view and when sneaking"). Returns the base group name
+ * ("runforward", "turnleft", ...) or null for standing still.
+ */
+export function movementAnimState({
+  forward = 0, strafe = 0, running = false, sneaking = false,
+  turning = 0, thirdPerson = false,
+} = {}) {
+  const prefix = sneaking ? 'sneak' : running ? 'run' : 'walk';
+  const strafing = Math.abs(strafe) > Math.abs(forward) * 2;
+  if (strafing) return strafe > 0 ? `${prefix}right` : `${prefix}left`;
+  if (forward !== 0 || strafe !== 0) return forward >= 0 ? `${prefix}forward` : `${prefix}back`;
+  if (turning && thirdPerson && !sneaking) return turning > 0 ? 'turnright' : 'turnleft';
+  return null;
+}
+
+/**
+ * MW-D26: the movement group's WEAPON suffix and its fallbacks
+ * (refreshMovementAnims, character.cpp:674-708). The suffix ladder is
+ * fallbackShortWeaponGroup's, which composeStanceGroup already IS
+ * (asked short, then the 2c/1h fallback for real weapons, then the
+ * bare base) - one home, reused. What movement adds on top is the
+ * run -> walk swap (character.cpp:697-699) when the composed name has
+ * no animation, and a null when even that misses (:701-707 - the
+ * movement state RESETS rather than substituting a wrong clip).
+ */
+export function composeMovementGroup(base, type, hasGroup) {
+  const short = weaponShortGroup(type);
+  let name = base;
+  if (short) {
+    const r = composeStanceGroup(base, type, hasGroup);
+    name = r.group ?? base;
+  }
+  if (!hasGroup(name)) {
+    const walked = name.replace('run', 'walk');
+    if (walked !== name && hasGroup(walked)) return { group: walked, walked: true };
+    return { group: null, walked: false };
+  }
+  return { group: name, walked: false };
+}
+
+/** character.cpp:750-752 - the animation speeds assumed when a clip
+ *  carries no accum-root velocity ("the first person anims don't have
+ *  any velocity to calculate a speed multiplier from"), in MW units
+ *  per second: sneak, run, walk. */
+export const MOVEMENT_FALLBACK_SPEED = Object.freeze({
+  sneak: 33.5452, run: 222.857, walk: 154.064,
+});
+
+/** character.cpp:2403 - "Vanilla caps the played animation speed." */
+export const MOVEMENT_SPEED_CAP = 10;
+
+/** character.cpp:2396 - the turning animation's own speed law. */
+export const turnAnimSpeed = (yawRatePerSec) =>
+  Math.min(1.5, Math.abs(yawRatePerSec) / Math.PI);
+
 export function composeWeaponGroup(type, hasGroup) {
   const asked = weaponLongGroup(type);
   if (asked && hasGroup(asked)) return { group: asked, fallback: null };

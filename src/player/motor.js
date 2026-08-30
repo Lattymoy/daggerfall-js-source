@@ -254,6 +254,9 @@ export class PlayerMotor {
     // held input only while grounded; airborne keeps the takeoff
     // state (the swim quirk rides it too: waterWalking's Speed read).
     this.isRunning = false;
+    this.moveForward = 0;
+    this.moveStrafe = 0;
+    this.moveSpeed = 0;
     this.isSneaking = false;
     // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
     // sneak condition, recomputed each update from the frame's input.
@@ -667,6 +670,15 @@ export class PlayerMotor {
     }
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);
+    // MW-D26: the frame's movement INPUT and applied speed, reported
+    // for the Morrowind animation machine - the reference selects its
+    // movement state from the movement-settings vector, not from
+    // observed velocity (character.cpp:2126-2331), so the input is the
+    // honest source. Written on the walk path only; the swim/climb
+    // paths leave the last values (their animation families are
+    // recorded as deferred).
+    this.moveForward = input.forward || 0;
+    this.moveStrafe = input.strafe || 0;
 
     // fwd = (sin, 0, cos); screen-right = (cos, 0, -sin) - Unity's
     // own. HANDEDNESS (mat4's law): the projection now mirrors NDC x,
@@ -685,6 +697,7 @@ export class PlayerMotor {
       vx = this._airVelX;
       vz = this._airVelZ;
     }
+    this.moveSpeed = Math.hypot(vx, vz);   // MW-D26: the applied horizontal speed, m/s
 
     // HandleJumpInput, verbatim gates: 0.1 s of grounded time (the
     // bunny-hop gate - a HELD jump re-fires each landing past it, as
