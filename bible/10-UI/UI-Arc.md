@@ -8,6 +8,44 @@ policies one by one.
 
 
 
+
+## U65c THE INTRO RECUT - the logo drops, and shoots (2026-08-30)
+
+Mac: over a minute is way too long, and the Daggerfall JavaScript logo
+must DROP on the beat and SHOOT INTO THE SKY through the clouds on the
+beat.
+
+THE COLD OPEN. The track starts at bar 24.5 (44.57 s in) and ends on
+bar 37's onset: 23.6 seconds door to menu, down from 74. The sheet was
+CROPPED, NOT SQUEEZED - bars stay bars of the recording, so every cue
+still sits on its measured onset. The seek is introTheme's
+(`startAt`), and the wall-clock fallback starts there too or a silent
+intro would replay the cut half.
+
+THE LOGO IS THE SUBJECT, not a caption. Three events, three onsets:
+SLAM at bar 29 (53.07 s, 0.50) - it falls under gravity, ease-in
+square, and is at dead centre with the impact ringing exactly on the
+beat, while the camera answers with a four-unit flinch; LAUNCH at 31
+(56.83 s) - straight up, ease-in cube, harder than it fell, shrinking
+into the deck's glare, with the camera going after it; BURST at 34
+(62.49 s, the strongest onset in the song) - out the top of the deck,
+the province whole beneath, and the logo cuts back in at centre with
+the old title's settle. The credits are out before the slam so the
+drop owns an empty frame.
+
+THE PROBE RAN, and U65's flag is paid - 19/19 in a real browser,
+reading the logo's position off its own transform. It caught two
+defects that had shipped: `calc(-50% + -242px)` is a calc() SYNTAX
+ERROR and the invalid assignment is silently ignored, so both
+negative-y halves of the brief left the logo pinned at centre (the
+sign is spelled now); and EVERY INTRO ASSET HAD 404'D SINCE U65
+SHIPPED - the app lives at /play/, public/ ships at the site root, and
+page-relative 'intro/...' resolved under /play/ in dev and deployed
+alike, so the intro Mac watched had no music, no credits and no logo.
+The assets live in src/assets/intro now and resolve off
+import.meta.url, correct at any base and depth.
+
+
 ## THE BOARD, as of U61 (2026-08-26) — OPEN, not shipped
 
 Logged so the queue survives the session that found it. Every count

@@ -47,16 +47,16 @@ const PUBLIC_ALLOWLIST = new Map([
   // is Mac's, it was made deliberately when he supplied the files, and
   // it is recorded here rather than buried so the next person reading
   // this list knows it was asked.
-  ['public/intro/interkarma.webp', "OURS TO SHIP - Interkarma's Daggerfall Workshop mark, credit for the project this port follows. Not ARENA2 data; a third-party trademark used as attribution"],
-  ['public/intro/nexus.webp', 'OURS TO SHIP - the Nexus Mods mark, where the port is distributed. Not ARENA2 data; a third-party trademark, supplied by Mac'],
-  ['public/intro/title.webp', 'OURS - the Daggerfall JavaScript wordmark, the project logo, same standing as public/logo.png'],
+  ['src/assets/intro/interkarma.webp', "OURS TO SHIP - Interkarma's Daggerfall Workshop mark, credit for the project this port follows. Not ARENA2 data; a third-party trademark used as attribution"],
+  ['src/assets/intro/nexus.webp', 'OURS TO SHIP - the Nexus Mods mark, where the port is distributed. Not ARENA2 data; a third-party trademark, supplied by Mac'],
+  ['src/assets/intro/title.webp', 'OURS - the Daggerfall JavaScript wordmark, the project logo, same standing as public/logo.png'],
   // THE ONE PIECE OF MUSIC THIS PORT SHIPS, and a real departure:
   // every other note is synthesised from the player's own MIDI.BSA
   // (systems/songPlayer.js, the A5 arc) precisely so nothing has to
   // ship. This is an original recording of the main theme, Mac's, and
   // it can ship for the same reason it can play before the ARENA2
   // pick - it is not game data. Ledger A.
-  ['public/intro/theme.mp3', "OURS - an original recording of the main theme; the intro's clock, and the only audio the port ships"],
+  ['src/assets/intro/theme.mp3', "OURS - an original recording of the main theme; the intro's clock, and the only audio the port ships"],
   // THE SITE'S PICTURES (U60c). Screens of the ENHANCED skin - type and
   // layout - taken by tools/siteShots.mjs with NO ARENA2 anywhere: the
   // tool boots its own vite with no data folder, proves the game's own
@@ -183,7 +183,12 @@ test('AUDIT 27: the allow-list is checked BOTH ways - no row outlives its file',
   // a tracked file must have a row - so a row could be written for a
   // file that never landed, or outlive one that was deleted, and the
   // list would still pass while meaning less than it claims.
-  const stale = [...PUBLIC_ALLOWLIST.keys()].filter((f) => !tracked('public').includes(f));
+  // The list stopped being public-only when the intro's assets moved
+  // into src/assets - Vite emits them into the build, so they are just
+  // as PUBLISHED as public/ and their rows stay. The reverse check now
+  // reads each row's own directory rather than assuming public/.
+  const stale = [...PUBLIC_ALLOWLIST.keys()]
+    .filter((f) => !tracked(f.split('/')[0]).includes(f));
   assert.deepEqual(stale, [],
     'these rows name files that are not tracked. A row is a CLAIM that a published\n'
     + 'file is ours; a claim about a file that does not exist is not a claim.');

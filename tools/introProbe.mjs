@@ -82,9 +82,20 @@ async function run() {
     let page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
-    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('console', (m) => {
+      if (m.type() !== 'error') return;
+      // A sandbox with no cert store cannot fetch the menu's webfont;
+      // that is this machine's networking, not the intro. Only
+      // resource-load failures against REMOTE origins are excused -
+      // anything from our own server, and any real page error, still
+      // fails the run.
+      const url = m.location()?.url ?? '';
+      const offsite = /^https?:\/\//.test(url) && !url.includes('localhost');
+      if (offsite && /Failed to load resource/.test(m.text())) return;
+      errors.push(m.text());
+    });
 
-    await page.goto(`${base}?introat=11`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${base}?introat=27`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#intro canvas', { timeout: 20000 });
     check('the intro mounts in front of the enhanced door', true);
 
@@ -97,27 +108,78 @@ async function run() {
     // fill - the failure mode where the ray walk never ran - would come
     // back with a handful of tones.
     check('the picture is a picture, not a fill', !!s && s.tones > 12, s ? `${s.tones}+ tones` : '');
-    // Dawn over water: the sky above is BRIGHTER than the sea below at
-    // bar 11. This is the cheapest proof the ray walk and the sky are
-    // both drawing and in the right order.
+    // Dawn over water: the sky above is BRIGHTER than the ground below
+    // on the cruise. This is the cheapest proof the ray walk and the
+    // sky are both drawing and in the right order.
     check('sky above, world below', !!s && s.top > s.bottom, s ? `top ${(s.top / 1000) | 0}k vs bottom ${(s.bottom / 1000) | 0}k` : '');
 
-    // ── 3. The title is up on bar 11 ───────────────────────────────
-    const op11 = await splashOpacities(page);
-    check('the title is at full on bar 11', op11.title === 1, JSON.stringify(op11));
-    check('no other splash is up on bar 11', (op11.interkarma ?? 0) === 0 && (op11.nexus ?? 0) === 0);
-
-    // ── 4. Each splash is up at its own bar and nowhere else ───────
-    for (const [bar, key] of [[5, 'interkarma'], [9, 'nexus'], [13, 'title']]) {
+    // ── 3. THE LOGO'S THREE BEATS, read off the real element ───────
+    // The transform is the trajectory; reading it back is how a probe
+    // checks a position rather than an opacity. y comes out of the
+    // translate's calc() as the vh-fraction term the host wrote.
+    const logoState = () => page.evaluate(() => {
+      const img = [...document.querySelectorAll('#intro img')]
+        .find((i) => (i.getAttribute('src') || '').includes('title'));
+      if (!img) return null;
+      // The y term is the SECOND calc; sign and magnitude are separate
+      // tokens because that is how the host must write them (see the
+      // sign-is-spelled note in introScreen) - so the probe reads the
+      // same grammar it enforces.
+      const m = /calc\(-50% (-|\+) ([\d.]+)px\)\) scale/.exec(img.style.transform);
+      return {
+        opacity: Number(img.style.opacity || 0),
+        yPx: m ? Number(m[2]) * (m[1] === '-' ? -1 : 1) : null,
+        vh: innerHeight,
+      };
+    });
+    const atBar = async (bar) => {
       await page.goto(`${base}?introat=${bar}`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#intro canvas', { timeout: 20000 });
       await page.waitForTimeout(900);
+    };
+
+    await atBar(28.8);
+    let lg = await logoState();
+    check('bar 28.8: the logo is FALLING - visible, above centre',
+      !!lg && lg.opacity === 1 && lg.yPx < -0.1 * lg.vh, JSON.stringify(lg));
+    writeFileSync(`${OUT}/bar-28.8-drop.png`, await page.screenshot());
+
+    await atBar(29);
+    lg = await logoState();
+    check('bar 29: THE SLAM - dead centre on the onset',
+      !!lg && lg.opacity === 1 && Math.abs(lg.yPx) < 8, JSON.stringify(lg));
+    const op29 = await splashOpacities(page);
+    check('bar 29: the credits are gone', (op29.interkarma ?? 0) === 0 && (op29.nexus ?? 0) === 0);
+    writeFileSync(`${OUT}/bar-29-slam.png`, await page.screenshot());
+
+    await atBar(31.6);
+    lg = await logoState();
+    check('bar 31.6: THE SHOOT - climbing off the top',
+      !!lg && lg.yPx < -0.12 * lg.vh, JSON.stringify(lg));
+    writeFileSync(`${OUT}/bar-31.6-shoot.png`, await page.screenshot());
+
+    await atBar(33);
+    lg = await logoState();
+    const s33 = await canvasStats(page);
+    check('bar 33: inside the deck - logo hidden, picture white',
+      !!lg && lg.opacity === 0 && !!s33 && s33.mean > 200, `logo ${lg?.opacity}, mean ${s33?.mean?.toFixed(0)}`);
+
+    await atBar(34);
+    lg = await logoState();
+    const s34 = await canvasStats(page);
+    check('bar 34: THE BURST - logo back at centre over a clear sky map',
+      !!lg && lg.opacity === 1 && Math.abs(lg.yPx) < 8 && !!s34 && s34.mean < 200,
+      `logo ${JSON.stringify(lg)}, mean ${s34?.mean?.toFixed(0)}`);
+    writeFileSync(`${OUT}/bar-34-burst.png`, await page.screenshot());
+
+    // ── 4. The credits at their bars ───────────────────────────────
+    for (const [bar, key] of [[25.8, 'interkarma'], [28.1, 'nexus']]) {
+      await atBar(bar);
       const op = await splashOpacities(page);
       check(`bar ${bar} shows ${key} alone`,
-        op[key] === 1 && Object.entries(op).every(([k, v]) => k === key || v === 0),
+        op[key] === 1 && Object.entries(op).every(([k, v]) => k === key || v === 0 || k === 'title'),
         JSON.stringify(op));
-      const png = await page.screenshot();
-      writeFileSync(`${OUT}/bar-${String(bar).padStart(2, '0')}-${key}.png`, png);
+      writeFileSync(`${OUT}/bar-${bar}-${key}.png`, await page.screenshot());
     }
 
     // ── 5. A keypress skips it, and the menu is there ──────────────
@@ -141,7 +203,7 @@ async function run() {
     // ── 7. It runs on a phone ──────────────────────────────────────
     const phone = await browser.newContext({ ...devices['Pixel 5'] });
     const pp = await phone.newPage();
-    await pp.goto(`${base}?introat=11`, { waitUntil: 'domcontentloaded' });
+    await pp.goto(`${base}?introat=29`, { waitUntil: 'domcontentloaded' });
     await pp.waitForSelector('#intro canvas', { timeout: 20000 });
     await pp.waitForTimeout(1200);
     const ps = await canvasStats(pp);
@@ -158,7 +220,7 @@ async function run() {
     await pp.tap('#intro');
     await pp.waitForSelector('#enhanced-menu', { timeout: 10000 });
     check('a tap skips on a phone', !(await pp.$('#intro')));
-    writeFileSync(`${OUT}/phone-bar-11.png`, await pp.screenshot());
+    writeFileSync(`${OUT}/phone-bar-29.png`, await pp.screenshot());
     await phone.close();
   } finally {
     await browser.close();

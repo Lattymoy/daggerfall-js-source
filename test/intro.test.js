@@ -25,7 +25,7 @@ import {
   WAVE_N, WAVE_SPECTRUM, CLEARANCE, SUN_BEARING, LEVELS, FOG_MAX,
 } from '../src/ui/introFlyover.js';
 import {
-  BPM, BEAT, BAR, PHASE, barTime, DURATION, END_BAR, SPLASHES, PATH,
+  BPM, BEAT, BAR, PHASE, barTime, START_BAR, START_TIME, LOGO, logoAt, DURATION, END_BAR, SPLASHES, PATH,
   MEASURED_ONSETS, MEASURED_BARS, cameraAt, splashOpacity, introState, ramp, EAST,
   ONSET_STRENGTH, MAP_BAR, SKY_PATH, skyCameraAt,
 } from '../src/ui/introCue.js';
@@ -82,30 +82,27 @@ test('the reveal sits on the LOUDEST onset, and that is checkable', () => {
   assert.ok(widest.bar >= 34, `the widest shot is at bar ${widest.bar}, not the reveal`);
 });
 
-test('the title CUTS in exactly on the reveal and not a frame later', () => {
-  const title = SPLASHES.find((s) => s.key === 'title');
-  assert.equal(title.in, 34.0);
-  assert.equal(title.up, title.in, 'the title is a cut, not a fade');
-  // THE PIN THAT CAUGHT THE REAL BUG. splashOpacity used `bar <= s.in`,
-  // so at bar 11.0 exactly - the downbeat the whole sheet is built
-  // around - it returned 0 and the title arrived a frame late.
-  // MUTANT: restore `<=` and this fails.
-  assert.equal(splashOpacity(title, 34.0), 1);
-  assert.equal(splashOpacity(title, 33.999), 0);
+test('the logo CUTS back in exactly on the burst and not a frame later', () => {
+  // The v2 pin that caught splashOpacity's `<=` off-by-a-frame, carried
+  // over to the logo's arrival: opacity 1 ON the bar, 0 just before.
+  // MUTANT: make logoAt's burst comparison `<` into `<=` and this fails.
+  assert.equal(logoAt(LOGO.burst).opacity, 1);
+  assert.equal(logoAt(LOGO.burst - 0.001).opacity, 0);
+  assert.equal(LOGO.burst, 34.0, 'the burst is the strongest onset in the song');
 });
 
-test('the title lands WITH the reveal, and the sky is clear when it does', () => {
-  // The point of the whole third act: the biggest onset, the widest
-  // picture and the title on one beat. It used to cut at bar 11 and be
-  // gone before the climax, which stranded it in the middle of a long
-  // flight. MUTANT: put title.in back to 11 and this fails.
-  const title = SPLASHES.find((s) => s.key === 'title');
-  assert.equal(title.in, 34.0);
-  assert.equal(introState(barTime(34)).view, 'map', 'the reveal is not up yet');
-  // And the white-out must have CLEARED by then, or the title lands on
-  // a white screen. MUTANT: raise CLOUD_TOP past the bar-34 altitude.
-  assert.ok(introState(barTime(34)).whiteout < 0.02, 'the title lands inside the cloud');
+
+test('the logo arrives WITH the reveal, and the sky is clear when it does', () => {
+  assert.equal(introState(barTime(LOGO.burst)).view, 'map', 'the reveal is not up yet');
+  // The white-out must have CLEARED by then, or the arrival lands on a
+  // white screen. MUTANT: raise CLOUD_TOP past the bar-34 altitude.
+  assert.ok(introState(barTime(LOGO.burst)).whiteout < 0.02, 'the logo lands inside the cloud');
+  // And it settles exactly as the old title did - large on the beat,
+  // at rest half a bar later.
+  assert.ok(logoAt(LOGO.burst).scale > 1.05);
+  assert.equal(logoAt(LOGO.settled).scale, 1);
 });
+
 
 test('the projection changes where the WHITE-OUT IS TOTAL', () => {
   // Two projections cannot be cross-faded - they disagree about where
@@ -130,45 +127,45 @@ test('the projection changes where the WHITE-OUT IS TOTAL', () => {
   assert.equal(flips, 1, `the view changes ${flips} times`);
 });
 
-test('every move in the climb STARTS on a measured onset', () => {
-  // A smooth ease from bar 24 to bar 34 puts the camera in the sky
-  // without ever arriving anywhere - the move has no onset, so there is
-  // nothing for the music to land on, and it reads as drift however
-  // well the splash is timed. The climb rate has to be near zero going
-  // into the beat and unmistakable coming out of it.
-  // MUTANT: delete the bar-29 key and the ratio collapses to ~1.
+test('the slam and the launch each land on a camera at REST', () => {
+  // A move starts on a beat only if the camera is parked when the beat
+  // arrives - the near-equal-key law, applied to the two beats the
+  // camera answers. MUTANT: delete the bar-29 or bar-31 key and the
+  // before-rate stops being near zero.
   const rate = (bar, d = 0.35) => (cameraAt(bar + d).z - cameraAt(bar).z) / d;
-  const before = rate(29 - 0.35), after = rate(29);
-  assert.ok(before < 5, `the camera is already climbing at bar 29 (${before.toFixed(1)}/bar)`);
-  assert.ok(after > 25, `bar 29 does not launch (${after.toFixed(1)}/bar)`);
-  assert.ok(after / Math.max(0.1, before) > 8, 'bar 29 is not a change of pace');
-  // And the second kick is a real acceleration, not a continuation.
-  assert.ok(rate(31) > rate(31 - 0.35) * 2, 'bar 31 does not kick');
-  // The climb ARRIVES at bar 34 rather than sailing through it.
+  // THE SLAM: level coming in, and the answer is a DIP - the world
+  // flinches - recovered inside a bar.
+  assert.ok(Math.abs(rate(29 - 0.35)) < 5, 'the camera is moving when the slam lands');
+  assert.ok(cameraAt(29.15).z < cameraAt(29.0).z, 'the slam gets no flinch');
+  assert.ok(cameraAt(29.0).z - cameraAt(29.15).z <= 6, 'the flinch is a fall, not a breath');
+  assert.ok(Math.abs(cameraAt(29.6).z - cameraAt(29.0).z) < 1, 'the flinch does not recover');
+  // THE LAUNCH: at rest again, then the one climb of the film.
+  assert.ok(Math.abs(rate(31 - 0.35)) < 5, 'the camera is moving when the launch lands');
+  assert.ok(rate(31) > 40, `bar 31 does not launch (${rate(31).toFixed(1)}/bar)`);
+  // The climb ARRIVES at the burst rather than sailing through it.
   assert.ok(rate(34) < rate(34 - 0.35) * 0.2, 'the climb does not settle on the reveal');
 });
 
-test('the cloud bursts on the SAME FRAME the title lands', () => {
-  // THE DEFECT THIS PIN EXISTS FOR. The deck used to thin from bar 33.2
-  // onward, so the province was fully readable eighteen frames before
-  // the title arrived: the reveal and the beat were two separate
-  // events, and that is exactly what it looked like.
-  // MUTANT: move the bar-33.85 key's z up to 440 and the gap returns.
+
+test('the cloud bursts on the SAME FRAME the logo arrives', () => {
+  // THE 18-FRAMES DEFECT this pin exists for: if the deck thins early,
+  // the province is readable before the beat and the reveal and the
+  // beat are two events. MUTANT: move the bar-33.85 key's z to 440.
   const FPS = 30;
-  let clear = null, title = null;
+  let clear = null, logo = null;
   for (let f = Math.ceil(barTime(MAP_BAR) * FPS); f < barTime(END_BAR) * FPS; f++) {
-    const st = introState(f / FPS);
-    if (clear === null && st.whiteout < 0.10) clear = f;
-    if (title === null && st.splashes.find((x) => x.key === 'title').opacity > 0) title = f;
+    const bar = (f / FPS - PHASE) / BAR + 1;
+    if (clear === null && introState(f / FPS).whiteout < 0.10) clear = f;
+    if (logo === null && logoAt(bar).opacity > 0) logo = f;
   }
-  assert.ok(clear !== null && title !== null, 'the cloud never clears or the title never lands');
-  assert.ok(Math.abs(title - clear) <= 4,
-    `the burst and the title are ${Math.abs(title - clear)} frames apart`);
+  assert.ok(clear !== null && logo !== null, 'the cloud never clears or the logo never arrives');
+  assert.ok(Math.abs(logo - clear) <= 4, `the burst and the logo are ${Math.abs(logo - clear)} frames apart`);
   // And both sit on the measured onset, not merely near each other.
-  assert.ok(Math.abs(title / FPS - 62.485) < 0.05, 'the title is not on the onset');
+  assert.ok(Math.abs(logo / FPS - 62.485) < 0.05, 'the arrival is not on the onset');
   // Still solidly white a tenth of a bar before it.
   assert.ok(introState(barTime(33.9)).whiteout > 0.7, 'the deck thins too early');
 });
+
 
 test('inCloud is a deck with a top and a bottom', () => {
   assert.equal(inCloud(CLOUD_BASE), 0);
@@ -307,10 +304,19 @@ test('the splashes never overlap', () => {
   }
 });
 
-test('every splash is over before the intro is', () => {
-  for (const s of SPLASHES) assert.ok(s.gone <= END_BAR, `${s.key} outlives the intro`);
-  assert.ok(Math.abs(DURATION - 71.925) < 0.008);
+test('every credit is out before the slam, and the intro is an intro', () => {
+  for (const s of SPLASHES) {
+    assert.ok(s.gone <= LOGO.slam - 0.15, `${s.key} is still up when the logo lands`);
+    assert.ok(s.in >= START_BAR, `${s.key} starts before the cold open`);
+  }
+  // MAC'S BRIEF, AS A NUMBER: over a minute is way too long. Door to
+  // menu is DURATION - START_TIME, and it stays a real intro's length.
+  const length = DURATION - START_TIME;
+  assert.ok(length < 26, `the intro is ${length.toFixed(1)}s - an overture again`);
+  assert.ok(length > 15, `the intro is ${length.toFixed(1)}s - a blink`);
+  assert.ok(Math.abs(DURATION - 68.149) < 0.008, 'END_BAR left the bar-37 onset');
 });
+
 
 test('ramp eases and clamps at both ends', () => {
   assert.equal(ramp(0, 1, 2), 0);
@@ -363,32 +369,36 @@ test('the flight runs EAST, into the sun', () => {
   assert.ok(Math.abs(EAST + Math.PI / 2) < 1e-12);
 });
 
-test('bar 11 is a LIFT, not a leap', () => {
-  // The first sheet jumped the altitude fivefold in one bar and it read
-  // as a jerk - the music's event at bar 11 is the rhythm ARRIVING, and
-  // the title cutting is what lands on it. MUTANT: put z back to 105 at
-  // bar 11 and this fails.
-  const before = cameraAt(10.0), after = cameraAt(11.0), later = cameraAt(14.0);
-  assert.ok(after.z > before.z, 'bar 11 does not lift at all');
-  assert.ok(after.z < before.z * 1.6, `bar 11 leaps (${before.z} -> ${after.z})`);
-  assert.ok(later.z > after.z, 'the rise does not continue past the lift');
+test('the cold open starts on the sheet and the seek is the theme\u2019s', () => {
+  // Bars stay bars OF THE RECORDING - the sheet is cropped, not
+  // squeezed - so the slam is still the 53.07 s onset however early
+  // the intro now starts. MUTANT: make START_BAR 1 and the length pin
+  // above fails; make barTime relative to START_TIME and THIS fails.
+  assert.equal(START_TIME, barTime(START_BAR));
+  assert.ok(Math.abs(barTime(LOGO.slam) - 53.067) < 0.02, 'the slam left its onset');
+  assert.ok(Math.abs(barTime(LOGO.launch) - 56.83) < 0.03, 'the launch left its onset');
+  assert.ok(Math.abs(barTime(LOGO.burst) - 62.485) < 0.02, 'the burst left its onset');
+  assert.ok(START_TIME > 40 && START_TIME < 50, 'the cold open moved off the second phrase');
 });
 
-test('the flight climbs the whole way and never descends', () => {
-  // A flyover that sinks in the middle reads as a stall. MUTANT: lower
-  // any key below the one before it.
-  // FROM THE LIFT ONWARD. Act I deliberately settles a few units lower
-  // as it runs in off the ocean - the pin was written as "never
-  // descends" and caught that drift, which is design and not a stall.
-  // What must not happen is the RISE faltering once it has begun.
+
+test('the flight climbs from the launch and never descends, save the flinch', () => {
+  // One deliberate exception now: the slam's dip at 29.15, which must
+  // recover. Everything from the LAUNCH onward is monotone - a chase
+  // that sinks reads as a stall. MUTANT: lower any post-31 key.
   for (let i = 1; i < PATH.length; i++) {
-    if (PATH[i].bar < 11) continue;
+    if (PATH[i].bar <= 31) continue;
     assert.ok(PATH[i].z >= PATH[i - 1].z, `bar ${PATH[i].bar} descends`);
     assert.ok(PATH[i].fov >= PATH[i - 1].fov, `bar ${PATH[i].bar} narrows`);
   }
-  // And Act I is level, not a dive.
-  for (const k of PATH) if (k.bar < 11) assert.ok(Math.abs(k.z - PATH[0].z) < 6, 'Act I is not level');
+  // And the cruise is level - the slam needs a still world to hit.
+  for (const k of PATH) {
+    if (k.bar <= 31 && k.bar !== 29.15) {
+      assert.ok(Math.abs(k.z - 155) < 7, `the cruise is not level at bar ${k.bar}`);
+    }
+  }
 });
+
 
 test('the low run stays below the peaks; the reveal is a ZOOM, not a climb', () => {
   const { height } = buildIliac({ w: 128, h: 80, seed: INTRO_MAP_SEED });
@@ -960,15 +970,72 @@ test('the theme reads MusicVolume rather than carrying its own', async () => {
   _resetForTests();
 });
 
-test('every splash in the sheet has art and a width, and no orphans', () => {
+test('every cue has art and a width, and no orphans', () => {
   // A cue with no art draws nothing and a URL with no cue never loads:
-  // both are silent, which is why they get a pin.
+  // both are silent, which is why they get a pin. The logo is a cue
+  // too - its art lives under the title key.
   for (const s of SPLASHES) {
     assert.ok(SPLASH_URL[s.key], `no art for ${s.key}`);
     assert.ok(SPLASH_WIDTH[s.key] > 0, `no width for ${s.key}`);
   }
-  assert.deepEqual(Object.keys(SPLASH_URL).sort(), SPLASHES.map((s) => s.key).sort());
-  assert.deepEqual(Object.keys(SPLASH_WIDTH).sort(), SPLASHES.map((s) => s.key).sort());
-  assert.ok(THEME_URL.startsWith('intro/'));
+  const cues = [...SPLASHES.map((s) => s.key), 'title'].sort();
+  assert.deepEqual(Object.keys(SPLASH_URL).sort(), cues);
+  assert.deepEqual(Object.keys(SPLASH_WIDTH).sort(), cues);
+  // Module-relative, not page-relative - the /play/ page is one level
+  // below the site root and a page-relative 'intro/...' 404'd every
+  // asset the intro has, everywhere, since U65 shipped. MUTANT: put
+  // the bare string back and this fails in node too, because the
+  // resolved URL is absolute here as well.
+  assert.ok(THEME_URL.includes('/assets/intro/theme.mp3'));
+  assert.ok(/^(file|https?):/.test(THEME_URL), 'THEME_URL did not resolve to an absolute URL');
   assert.ok(MAX_BUFFER_W >= 256 && MAX_BUFFER_W <= 1024);
+});
+
+
+// ── THE LOGO'S OWN PHYSICS (v3) ─────────────────────────────────────
+test('the drop is a FALL: it accelerates, and lands at zero exactly on the slam', () => {
+  // Ease-in square is constant acceleration; an eased-OUT drop reads
+  // as lowered on a string. MUTANT: swap k*k for smoothstep.
+  const v = (bar, d = 0.05) => (logoAt(bar + d).y - logoAt(bar).y) / d;
+  assert.ok(logoAt(LOGO.enter + 0.001).y < -0.8, 'the drop starts on screen');
+  assert.ok(v(LOGO.enter + 0.05) < v(LOGO.slam - 0.1), 'the fall does not accelerate');
+  // AND IT IS STILL ACCELERATING WHEN IT HITS - that is what falling
+  // IS. An eased drop slows into the landing, which reads as lowered
+  // on a string, and the first mutation campaign proved the ramp check
+  // alone cannot tell them apart: smoothstep also speeds up early.
+  // MUTANT: smoothstep the drop and this fails.
+  assert.ok(v(LOGO.slam - 0.03) > v(LOGO.slam - 0.3), 'the fall slows into the landing');
+  assert.equal(logoAt(LOGO.slam).y, 0, 'the logo is not at centre on the beat');
+  assert.equal(logoAt(LOGO.slam).impact, 1, 'the slam does not ring');
+  assert.ok(logoAt(LOGO.slam + 0.4).impact === 0, 'the ring-down never ends');
+});
+
+test('the shoot LEAVES: harder than it fell, shrinking, into the glare', () => {
+  const v = (bar, d = 0.05) => -(logoAt(bar + d).y - logoAt(bar).y) / d;
+  assert.equal(logoAt(LOGO.launch).y, 0, 'the launch does not start from rest');
+  assert.ok(v(LOGO.gone - 0.1) > v(LOGO.launch + 0.1) * 4, 'the shoot does not accelerate');
+  assert.ok(logoAt(LOGO.gone - 0.05).scale < 0.85, 'the logo does not recede');
+  // Hidden across the whiteout gap, then the cut - not a fade through.
+  assert.equal(logoAt((LOGO.gone + LOGO.burst) / 2).opacity, 0);
+});
+
+test('the theme SEEKS to the cold open, and only when asked', async () => {
+  const { startTheme, _resetForTests } = await import('../src/systems/introTheme.js');
+  const made = [];
+  const make = () => {
+    const el = {
+      currentTime: 0, paused: false, volume: 1, readyState: 4,
+      play: async () => {}, pause: () => {},
+      addEventListener: () => {}, removeEventListener: () => {},
+    };
+    made.push(el);
+    return el;
+  };
+  _resetForTests();
+  await startTheme({ make, startAt: START_TIME });
+  assert.equal(made[0].currentTime, START_TIME, 'the seek did not land');
+  _resetForTests();
+  await startTheme({ make });
+  assert.equal(made[1].currentTime, 0, 'an unasked seek moved the track');
+  _resetForTests();
 });

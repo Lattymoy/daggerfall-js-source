@@ -48,8 +48,21 @@
 import { musicGain } from './songPlayer.js';
 import { onSettingChange } from './settings.js';
 
-/** Where the track lives. public/ is served at the site root. */
-export const THEME_URL = 'intro/theme.mp3';
+/** Where the track lives - AS A MODULE-RELATIVE URL, because the game
+ *  page does not live at the site root and a page-relative string was
+ *  the whole intro's undoing: the app ships at /play/, public/ ships
+ *  beside it at the root, so 'intro/theme.mp3' resolved to
+ *  /play/intro/theme.mp3 and 404'd - in dev AND in the deployed build.
+ *  The probe that would have caught it was the one U65 flagged as
+ *  never run: every splash, the logo and the music were silently
+ *  absent from the shipped intro, and the opacity-only checks stayed
+ *  green because a broken <img> holds its style perfectly well.
+ *
+ *  new URL(..., import.meta.url) is the one spelling that is correct
+ *  everywhere: dev serves the source tree so the file is beside this
+ *  module; the build statically rewrites the pattern to the emitted
+ *  asset, hashed, at whatever base and page depth the site uses. */
+export const THEME_URL = new URL('../assets/intro/theme.mp3', import.meta.url).href;
 
 /** How long to wait for the track before starting anyway. The intro is
  *  not worth a black screen on a slow connection, and 2.5 s is about
@@ -73,7 +86,7 @@ export function themeElement() { return _el; }
  * `make` is injected so the tests can drive this without a DOM; the
  * default builds a real <audio>.
  */
-export async function startTheme({ url = THEME_URL, make, timeoutMs = READY_TIMEOUT_MS } = {}) {
+export async function startTheme({ url = THEME_URL, make, timeoutMs = READY_TIMEOUT_MS, startAt = 0 } = {}) {
   try {
     if (_el) return { playing: !_el.paused, element: _el };
     const el = make ? make(url) : makeAudio(url);
@@ -87,6 +100,18 @@ export async function startTheme({ url = THEME_URL, make, timeoutMs = READY_TIME
 
     // Wait for enough buffer OR the timeout, whichever comes first.
     await Promise.race([canPlay(el), delay(timeoutMs)]);
+    // THE COLD OPEN. The intro starts mid-song (introCue.START_TIME),
+    // and the SEEK is this module's job because the element is: the cue
+    // sheet reads currentTime as absolute track time, so the sheet's
+    // bars stay bars of the recording and every cue still sits on its
+    // measured onset. Seeking after the ready race means the metadata
+    // is normally in; if the browser is not ready even then, the
+    // assignment lands when it can (currentTime sets are queued against
+    // metadata by every engine this port supports), and the worst case
+    // is the same silent wall-clock intro a blocked autoplay gets.
+    if (startAt > 0) {
+      try { el.currentTime = startAt; } catch { /* pre-metadata; the queued set stands */ }
+    }
     try {
       await el.play();
       return { playing: true, element: el };

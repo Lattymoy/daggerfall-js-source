@@ -84,14 +84,17 @@
 import { buildIliac } from './introMap.js';
 import { prepareMap, drawFlyover, SCALE } from './introFlyover.js';
 import { drawSkyMap } from './introSkyMap.js';
-import { introState, DURATION, SPLASHES } from './introCue.js';
+import { introState, DURATION, SPLASHES, START_TIME, logoAt, barTime } from './introCue.js';
 import { startTheme, themeTime } from '../systems/introTheme.js';
 
-/** Where the splash art lives, keyed to introCue's SPLASHES. */
+/** Where the splash art lives, keyed to introCue's SPLASHES. Module-
+ *  relative for the reason THEME_URL is (see systems/introTheme.js):
+ *  the page lives at /play/ and page-relative strings 404'd every one
+ *  of these, everywhere, since the day they shipped. */
 export const SPLASH_URL = Object.freeze({
-  interkarma: 'intro/interkarma.webp',
-  nexus: 'intro/nexus.webp',
-  title: 'intro/title.webp',
+  interkarma: new URL('../assets/intro/interkarma.webp', import.meta.url).href,
+  nexus: new URL('../assets/intro/nexus.webp', import.meta.url).href,
+  title: new URL('../assets/intro/title.webp', import.meta.url).href,
 });
 
 /** The widest the buffer is ever allowed to be, in art pixels.
@@ -178,9 +181,40 @@ export async function runIntro({
     return 'skipped';
   }
 
-  // The track. Its own module owns it, so it survives this host.
+  // THE LOGO, its own element - not a splash. A splash has an opacity;
+  // this has a trajectory. Same never-traps shape though: a missing
+  // file is a broken <img> that simply never becomes visible.
+  const logo = doc.createElement('img');
+  logo.src = SPLASH_URL.title;
+  logo.alt = '';
+  logo.decoding = 'async';
+  logo.style.cssText =
+    'position:absolute;left:50%;top:50%;opacity:0;pointer-events:none;' +
+    'transform:translate(-50%,-50%);will-change:opacity,transform';
+  host.append(logo);
+
+  // ?introat=<bar> FREEZES the intro at one bar. A probe hook and only
+  // that: tools/introProbe.mjs runs in headless Chromium, where audio
+  // never autoplays and SwiftShader makes "wait 19 s then look" a coin
+  // toss about which bar it lands on - so the probe asks for the bar it
+  // means to read. U65 shipped the probe written against this hook and
+  // the hook unbuilt, which is how "FLAGGED: never run" happens.
+  let frozenAt = null;
+  try {
+    const q = new URLSearchParams(globalThis.location?.search ?? '');
+    if (q.has('introat')) {
+      const b = Number(q.get('introat'));
+      if (Number.isFinite(b)) frozenAt = barTime(b);
+    }
+  } catch { /* no location outside a browser; the hook simply absent */ }
+
+  // The track, sought to the cold open. Its own module owns both the
+  // element and the seek, so it survives this host. A frozen intro
+  // plays no music - it is a still, not a performance.
   let playing = false;
-  try { ({ playing } = await theme()); } catch { playing = false; }
+  if (frozenAt === null) {
+    try { ({ playing } = await theme({ startAt: START_TIME })); } catch { playing = false; }
+  }
   const wallStart = now();
 
   return new Promise((resolve) => {
@@ -224,7 +258,9 @@ export async function runIntro({
         // THE SONG IS THE CLOCK. The wall clock is the fallback for a
         // browser that refused to autoplay, and it runs the same sheet.
         const songT = playing ? clock() : null;
-        const t = songT ?? (now() - wallStart);
+        // The wall clock starts at the cold open too, or a silent
+        // intro replays the half the cut removed.
+        const t = frozenAt ?? songT ?? (START_TIME + (now() - wallStart));
         const st = introState(t);
 
         // Size the buffer to the viewport, capped. Re-derived every
@@ -274,19 +310,43 @@ export async function runIntro({
           const el = imgs.get(s.key);
           if (!el) continue;
           el.style.opacity = String(s.opacity);
-          // A slow drift so a credit is never a sticker. The title
-          // SETTLES - it lands large on the downbeat and eases down to
-          // rest, which is the move that makes a cut read as an
-          // arrival rather than a pop.
+          // A slow drift so a credit is never a sticker.
           const w2 = Math.min(vw, vh) * SPLASH_WIDTH[s.key] * (vw > vh ? 1.5 : 1.15);
           el.style.width = `${Math.round(w2)}px`;
-          const settle = s.key === 'title'
-            ? 1 + 0.06 * Math.max(0, 1 - (st.bar - 11) / 1.2)
-            : 1 + 0.015 * Math.sin(st.bar * 0.6);
-          el.style.transform = `translate(-50%,-50%) scale(${settle.toFixed(4)})`;
+          const drift = 1 + 0.015 * Math.sin(st.bar * 0.6);
+          el.style.transform = `translate(-50%,-50%) scale(${drift.toFixed(4)})`;
         }
 
-        if (st.done || t >= DURATION) return finish('done');
+        // THE LOGO. The sheet gives a trajectory; this host only wears
+        // it. `y` is a fraction of the viewport height so the drop
+        // travels the same portion of any screen; `impact` is a jitter
+        // in CSS pixels, decaying with the sheet's own ring-down - the
+        // slam shakes the LOGO, and the camera's dip (a PATH key)
+        // shakes the WORLD, and the two reading differently is what
+        // sells the weight.
+        {
+          const lg = logoAt(st.bar);
+          const lw = Math.min(vw, vh) * SPLASH_WIDTH.title * (vw > vh ? 1.5 : 1.15);
+          logo.style.width = `${Math.round(lw)}px`;
+          logo.style.opacity = String(lg.opacity);
+          const jx = lg.impact ? ((Math.random() * 2 - 1) * 3 * lg.impact) : 0;
+          const jy = lg.impact ? ((Math.random() * 2 - 1) * 2 * lg.impact) : 0;
+          // THE SIGN IS SPELLED, NOT INTERPOLATED. `calc(-50% + -242px)`
+          // is a calc() SYNTAX ERROR - two operators in a row - and an
+          // invalid transform assignment is silently ignored, leaving
+          // the previous one standing. Which is exactly what happened:
+          // the drop and the shoot, the two halves of the brief, both
+          // have negative y, so the logo sat pinned at dead centre
+          // through both and only the probe's transform read-back
+          // caught it. The slam frame worked by accident - its jitter
+          // happened to be positive.
+          const term = (v) => `${v < 0 ? '-' : '+'} ${Math.abs(v).toFixed(1)}px`;
+          logo.style.transform =
+            `translate(calc(-50% ${term(jx)}), calc(-50% ${term(lg.y * vh + jy)})) ` +
+            `scale(${lg.scale.toFixed(4)})`;
+        }
+
+        if (frozenAt === null && (st.done || t >= DURATION)) return finish('done');
       } catch (e) {
         // A throw in the loop costs the intro, never the boot.
         console.warn('[intro] stopping early:', e?.message ?? e);
