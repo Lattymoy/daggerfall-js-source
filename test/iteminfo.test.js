@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { setValue, resetToDefaults, LIVE } from '../src/systems/settings.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  INFO_TEXT, HELM_AND_SHIELD_MATERIAL_DISPLAY, armorShouldShowMaterial, itemInfoTextId,
+  INFO_TEXT, armorShouldShowMaterial, itemInfoTextId,
   CONDITION_WORDS, CONDITION_THRESHOLDS, conditionPercentage, conditionWord,
   weightString, weaponDamageString, armourModString, materialName, expandItemInfo, itemInfoRows,
   setBookAuthor, getBookAuthor,
@@ -29,19 +30,33 @@ test('U25: the thirteen info records are DFU\'s literals', () => {
 });
 
 test('U25: armor and weapons each pick between a WITH- and WITHOUT-material record', () => {
-  // classic behaviour (setting 0): a helm or a shield never shows its
-  // material, everything else does
-  assert.equal(HELM_AND_SHIELD_MATERIAL_DISPLAY, 0);
+  // classic behaviour (setting 0, DFU's shipped default): a helm or a
+  // shield never shows its material, everything else does
   const cuirass = { group: 'Armor', templateIndex: 102, material: ARMOR_MATERIAL.Iron };
   const helm = { group: 'Armor', templateIndex: TEMPLATES.Helm, material: ARMOR_MATERIAL.Iron };
   const shield = { group: 'Armor', templateIndex: 109, material: ARMOR_MATERIAL.Iron };
   assert.equal(armorShouldShowMaterial(cuirass), true);
   assert.equal(armorShouldShowMaterial(helm), false);
   assert.equal(armorShouldShowMaterial(shield), false);
+  // AUDIT 28 W3: the other three values (ItemHelper.cs:833-840),
+  // through the parameter and through the live setting.
+  const leatherHelm = { ...helm, material: ARMOR_MATERIAL.Leather };
+  const chainHelm = { ...helm, material: ARMOR_MATERIAL.Chain };
+  assert.deepEqual([leatherHelm, chainHelm, helm].map((h) => armorShouldShowMaterial(h, 1)), [false, false, true], '1: all but leather and chain');
+  assert.deepEqual([leatherHelm, chainHelm, helm].map((h) => armorShouldShowMaterial(h, 2)), [false, true, true], '2: all but leather');
+  assert.deepEqual([leatherHelm, chainHelm, helm].map((h) => armorShouldShowMaterial(h, 3)), [true, true, true], '3: all');
+  assert.equal(armorShouldShowMaterial({ ...helm, artifact: true }, 3), false, 'an artifact never, even at 3');
+  assert.equal(armorShouldShowMaterial(leatherHelm, 1), false); assert.equal(armorShouldShowMaterial(cuirass, 0), true);
+  setValue('GUI', 'HelmAndShieldMaterialDisplay', 2);
+  assert.equal(armorShouldShowMaterial(chainHelm), true, 'read live');
+  setValue('GUI', 'HelmAndShieldMaterialDisplay', 9);
+  assert.equal(armorShouldShowMaterial(leatherHelm), true, 'GetInt clamps 9 to 3');
+  resetToDefaults();
   assert.equal(itemInfoTextId(cuirass), INFO_TEXT.armor);
   assert.equal(itemInfoTextId(helm), INFO_TEXT.armorNoMaterial);
   // an ARTIFACT never shows a material, whatever it is
   assert.equal(armorShouldShowMaterial({ ...cuirass, artifact: true }), false);
+  assert.equal(LIVE['GUI/HelmAndShieldMaterialDisplay'], 'src/systems/itemInfo.js');
   // weapons: an arrow has its own record, an artifact drops the material
   assert.equal(itemInfoTextId({ group: 'Weapons', templateIndex: 118 }), INFO_TEXT.weapon);
   assert.equal(itemInfoTextId({ group: 'Weapons', templateIndex: TEMPLATES.Arrow }), INFO_TEXT.arrow);

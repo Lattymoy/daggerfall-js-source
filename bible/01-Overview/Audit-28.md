@@ -176,6 +176,30 @@ than pinned: the `condition != Wounded` guard on the gain arm is
 overwritten by the Wounded arm every frame in DFU as here. 6 pins;
 6 mutants, 5 killed + 1 equivalent.
 
+## W3 - THE DEFAULT-OFF KEYS, as they are cheap and real
+
+### W3a CLOSED: HelmAndShieldMaterialDisplay (ItemHelper.cs:822-848)
+
+`itemInfo.armorShouldShowMaterial` read a constant 0 under a note that
+"the port has no settings layer", stale since U29. It reads the setting
+at the point of use now, all four values: 0 classic (a helm or shield
+never shows its material), 1 all but leather and chain, 2 all but
+leather, 3 all; an artifact never. `item.material` IS DFU's raw
+nativeMaterialValue, so the `>=` compares hold.
+
+### W3b CLOSED: AlternateRandomEnemySelection (RDBLayout.cs:512, :1290-1346)
+
+The classic arm - the 256-entry lists off DFRandom seeded with the
+LocationId - was ported since C3; the alternate arm was not, and the
+setting sat stored. `alternateRandomEnemyType` is AddRandomRDBEnemy:
+per flat, the table by water, base index `(int)(len * clamp01(level /
+20))`, +/- RandomMonsterVariance 4 clamped, `Random.Range(min, max+1)`.
+Unity's stream is the locationId xorshift the slot reroll already uses
+(Ledger A - DFU seeds it with `DateTime.Now.Ticks`). The `(int)` cast is
+pinned on a synthetic table, because on the shipped 20-entry tables the
+product is an integer at every level and a round-for-trunc mutant
+survived until it was.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

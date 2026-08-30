@@ -26,6 +26,7 @@ import { expandLetterSignoff } from './quest/questMacros.js';   // ResolveItemLo
 import { materialArmorValue, isShieldTemplate } from './armorMaterials.js';
 import { weaponMaterialModifier, weaponMinDamage, weaponMaxDamage, WEAPON_MATERIALS } from '../characters/weapons.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
+import { getInt } from './settings.js';   // AUDIT 28 W3: HelmAndShieldMaterialDisplay
 import { srand, rand, randomRangeInclusive } from '../formats/dfRandom.js';   // the painting identity's whole PRNG
 import { fullName } from '../characters/nameHelper.js';   // %an: NameHelper.FullName(race, gender)
 import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongName's soul arm
@@ -50,12 +51,18 @@ export const INFO_TEXT = Object.freeze({
 });
 
 /** ArmorShouldShowMaterial (:822-848). The HelmAndShieldMaterialDisplay
- *  setting has four values and DFU's DEFAULT is 0 - "classic
- *  behavior", where a helm or a shield never shows its material. The
- *  port has no settings layer, so it ships classic's answer; an
- *  artifact never shows one either way. */
-export const HELM_AND_SHIELD_MATERIAL_DISPLAY = 0;
-export function armorShouldShowMaterial(item) {
+ *  setting has four values (SettingsManager: GetInt, 0..3) and DFU's
+ *  DEFAULT is 0 - "classic behavior", where a helm or a shield never
+ *  shows its material:
+ *    1 : show for all but leather and chain  (nativeMaterialValue >= Iron)
+ *    2 : show for all but leather            (>= Chain)
+ *    3 : show for all
+ *  An artifact never shows one; any other armor always does. AUDIT 28
+ *  W3: this read the constant 0 with a "the port has no settings
+ *  layer" note that U29 made stale - it reads the setting now, at the
+ *  point of use as DFU does. `item.material` IS DFU's raw
+ *  nativeMaterialValue (equip.js:138), so the `>=` compares hold. */
+export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact`/`oghmaInfinium`/`azurasStar` are minted by loot.js's
   // createArtifact since Q2b-ii (the quest Item mint's artifact arm) -
   // AUDIT 22 F11's producerless-flags pin retired that day, replaced
@@ -63,8 +70,11 @@ export function armorShouldShowMaterial(item) {
   if (item?.artifact) return false;
   const isHelmOrShield = isShieldTemplate(item?.templateIndex) || item?.templateIndex === TEMPLATES.Helm;
   if (isHelmOrShield) {
-    // every arm of the setting switch is false at 0
-    return HELM_AND_SHIELD_MATERIAL_DISPLAY === 3;
+    const m = item?.material ?? ARMOR_MATERIAL.None;
+    if (setting === 1 && m >= ARMOR_MATERIAL.Iron) return true;
+    if (setting === 2 && m >= ARMOR_MATERIAL.Chain) return true;
+    if (setting === 3) return true;
+    return false;
   }
   return true;
 }

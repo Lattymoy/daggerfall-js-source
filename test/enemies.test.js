@@ -6,8 +6,9 @@ import { srand, randomRangeInclusive } from '../src/formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from '../src/characters/encounterTables.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { setValue, resetToDefaults, LIVE } from '../src/systems/settings.js';
 import {
-  chooseRandomEnemyType, collectDungeonEnemies, makeSlotRng,
+  chooseRandomEnemyType, collectDungeonEnemies, makeSlotRng, alternateRandomEnemyType, RANDOM_MONSTER_VARIANCE,
 } from '../src/characters/dungeonEnemies.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
@@ -152,4 +153,50 @@ test('enemies: Privateer\'s Hold corpus pin', { skip: skipReal }, () => {
   assert.deepEqual([...new Set(enemies.map((e) => e.mobileType))].sort((a, b) => a - b),
     [0, 1, 3, 4, 7, 15, 136, 138, 141]);
   for (const e of enemies) assert.ok(ENEMY_BASICS[e.mobileType], `basics ${e.mobileType}`);
+});
+
+test('AUDIT 28 W3: AlternateRandomEnemySelection - AddRandomRDBEnemy\'s per-flat pick by power, behind the setting', () => {
+  const block = (markers, waterLevel = 10000) => ({ markers, waterLevel, originX: 0, originZ: 0 });
+  const base = { x: 1, y: 2, z: 3, rawY: 0, flags: 0, soundIndex: 7, actionByte: 0 };
+  // The band: base = (int)(len * clamp01(level/20)), +/- 4, clamped.
+  const table = ENCOUNTER_TABLES[0];
+  const len = table.length;
+  const seen = (level, rng) => alternateRandomEnemyType(table, level, rng);
+  // Level 1: base = trunc(len * 0.05); min clamps at 0.
+  const b1 = Math.trunc(len * 0.05);
+  assert.equal(seen(1, (lo, hi) => { assert.equal(lo, Math.max(0, b1 - 4)); assert.equal(hi, Math.min(len - 1, b1 + 4) + 1); return lo; }), table[Math.max(0, b1 - 4)]);
+  // Level 20 and above: power clamps at 1, base = len, max clamps to len - 1.
+  seen(20, (lo, hi) => { assert.equal(lo, len - 4); assert.equal(hi, len); return lo; });
+  seen(45, (lo, hi) => { assert.equal(lo, len - 4); assert.equal(hi, len); return lo; });
+  // (int) is a TRUNCATION: on a synthetic 7-entry table at level 5 the
+  // base is trunc(1.75) = 1, not 2. On the shipped 20-entry tables the
+  // product is an integer at every level, so this is the only place the
+  // cast is observable.
+  const synth = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+  alternateRandomEnemyType(synth, 5, (lo, hi) => { assert.equal(lo, 0); assert.equal(hi, 1 + 4 + 1); return lo; }, 4);
+  alternateRandomEnemyType(synth, 5, (lo, hi) => { assert.equal(lo, 1); assert.equal(hi, 2); return lo; }, 0);
+  // Range is max EXCLUSIVE as Unity's int Range is: the pick can land on
+  // max itself only because the arm passes max + 1.
+  assert.equal(seen(20, (lo, hi) => hi - 1), table[len - 1]);
+  // Through the collector: the classic arm fills the 256 lists, the
+  // alternate arm never touches DFRandom - a classic pick and an
+  // alternate pick of the same flat differ in kind, and the alternate
+  // pick is deterministic on the locationId stream.
+  const marker = { ...base, record: 15, factionOrMobileId: 0, flags: 3 };
+  const classic = collectDungeonEnemies([block([marker])], { locationId: 5, dungeonType: 0, playerLevel: 1, alternate: false });
+  const alt1 = collectDungeonEnemies([block([marker])], { locationId: 5, dungeonType: 0, playerLevel: 1, alternate: true });
+  const alt2 = collectDungeonEnemies([block([marker])], { locationId: 5, dungeonType: 0, playerLevel: 1, alternate: true });
+  assert.equal(classic.length, 1); assert.equal(alt1.length, 1);
+  assert.equal(alt1[0].mobileType, alt2[0].mobileType, 'deterministic on the seed');
+  assert.ok(table.slice(0, b1 + 5).includes(alt1[0].mobileType), 'a level-1 alternate pick comes from the low band');
+  // Water: the underwater table when the marker is below the water level (:1323 inverted).
+  const wet = collectDungeonEnemies([block([{ ...marker, rawY: 500 }], 100)], { locationId: 5, dungeonType: 0, playerLevel: 20, alternate: true });
+  assert.ok(ENCOUNTER_TABLES[19].includes(wet[0].mobileType) || wet.length === 0, 'the underwater table (or the water-species veto)');
+  // The setting is the default source.
+  setValue('Enhancements', 'AlternateRandomEnemySelection', true);
+  const live = collectDungeonEnemies([block([marker])], { locationId: 5, dungeonType: 0, playerLevel: 1 });
+  assert.equal(live[0].mobileType, alt1[0].mobileType, 'read live');
+  resetToDefaults();
+  assert.equal(LIVE['Enhancements/AlternateRandomEnemySelection'], 'src/characters/dungeonEnemies.js');
+  assert.equal(RANDOM_MONSTER_VARIANCE, 4);
 });

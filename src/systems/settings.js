@@ -110,6 +110,12 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W2d: HUDFlickerController.NextCycle's first gate (:45) -
   // the fast flicker under 40% health, the slow throb under 20%.
   'Enhancements/NearDeathWarning': 'src/ui/hud.js',
+  // AUDIT 28 W3: ArmorShouldShowMaterial (ItemHelper :822-848) - the
+  // four-way helm/shield material display, read at the point of use.
+  'GUI/HelmAndShieldMaterialDisplay': 'src/systems/itemInfo.js',
+  // AUDIT 28 W3: AddRandomEnemies' fork (RDBLayout :512) - the classic
+  // 256-entry lists, or AddRandomRDBEnemy's per-flat pick by power.
+  'Enhancements/AlternateRandomEnemySelection': 'src/characters/dungeonEnemies.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
