@@ -107,6 +107,9 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W2c: the exit-door wagon prompt (PlayerActivate :649-664):
   // a dungeon exit with a cart in the pack asks TEXT.RSC 38 first.
   'GUI/DungeonExitWagonPrompt': 'src/scenes/worldModes.js',
+  // AUDIT 28 W2d: HUDFlickerController.NextCycle's first gate (:45) -
+  // the fast flicker under 40% health, the slow throb under 20%.
+  'Enhancements/NearDeathWarning': 'src/ui/hud.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

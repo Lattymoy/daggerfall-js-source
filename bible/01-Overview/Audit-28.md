@@ -160,6 +160,22 @@ first, `exitDungeonNow` is the exit split out so No can take it, and
 gate (:651) has no counterpart here - the exit door is not a bash
 target in this host. 3 pins; 4 mutants, 4 killed.
 
+### W2d CLOSED: the near-death warning (HUDFlickerController.cs)
+
+`Enhancements/NearDeathWarning` ships True and the port had nothing
+behind it. `ui/hudFlicker.js` is the four classes whole and pure:
+below 40% health a fast red flicker (7/s to alpha 0.4, seven reversals
+and out, restarted by every new HealthLost), below 20% a slow throb
+(0.1..0.4 at 0.2/s, never timing out on its own) between bursts. The
+colour is the HUD's PARENT PANEL background, so it draws as a screen
+quad under the bars in both HUD branches, off the detector's HealthLost
+the vitals rig just computed. Two gates read DFU's fade system
+(`FadeInProgress`, the parent's alpha > 0.9) and this HUD has no fade
+to read; they answer false, recorded. One equivalence proven rather
+than pinned: the `condition != Wounded` guard on the gain arm is
+overwritten by the Wounded arm every frame in DFU as here. 6 pins;
+6 mutants, 5 killed + 1 equivalent.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

@@ -196,7 +196,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
 - `01-Overview/Audit-UI.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE AUDIT. Twelve sweeps over the PX arc's 54 slices, nine modules and 7,130 lines - and LIVE, not static, because a sheet this size answers grep questions with grep answers. Two findings, both fixed: the 44px touch rule hung off a SCREEN WIDTH and failed on the device the proxy stands in for (measured on an iPad in landscape: skin switch 28px, steppers 34px, value buttons 38px), and the reason the fix at first did not take - three controls sized INLINE in JavaScript, which no media query can reach. Eight sweeps came back clean, including the class-collision shape that has bitten this file four times.
 - `01-Overview/Audit-UI-2.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE, SECOND PASS. 38 PX slices on from the first, and shaped by what actually went wrong since - six faults, every one of which passed its own pins, because they verified the thing built and not the PATH a player takes to it. Six sweeps: every surface at desktop/tablet/phone (12 combinations, clean), and the two recurring faults turned into PINS - no part styled for one shell and left bare in another (four occurrences), and every enhanced window reachable from a host following DYNAMIC imports (PX24's unhung door). Both mutation-tested against the real historical faults.
-- `01-Overview/Audit-28.md` - IN PROGRESS 2026-08-30: THE POST-26 SWEEP. One reader against the DFU checkout over the 240 modules changed since AUDIT 26. W1 - the settings sweep: every `stored` key has a DFU consumer, so the stored list IS a list of unported laws; four were ported WITH THE SETTING NAMED IN THEIR OWN COMMENT and never read (QuestRumorWeight, DisableEnemyDeathAlert, DungeonAmbientLightScale, NightAmbientLightScale) - closed, 6 pins, 5 mutants killed; 35 gameplay keys classified, the default-ON absentees queued for W2: W2a THE ARROW COUNTER shipped (DaggerfallHUD :270-292, never drawn; found on the way that the interior frame handed the classic HUD no font), W2b MELEE FRIENDLY PROTECTION shipped (WeaponManager :930-944 - a pacified foe beside a hostile one took the swing); W2c THE EXIT-DOOR WAGON PROMPT shipped (PlayerActivate :649-664 - the producer inventorySession's NT3 note had been waiting for); then the near-death flicker. Refutations recorded.
+- `01-Overview/Audit-28.md` - IN PROGRESS 2026-08-30: THE POST-26 SWEEP. One reader against the DFU checkout over the 240 modules changed since AUDIT 26. W1 - the settings sweep: every `stored` key has a DFU consumer, so the stored list IS a list of unported laws; four were ported WITH THE SETTING NAMED IN THEIR OWN COMMENT and never read (QuestRumorWeight, DisableEnemyDeathAlert, DungeonAmbientLightScale, NightAmbientLightScale) - closed, 6 pins, 5 mutants killed; 35 gameplay keys classified, the default-ON absentees queued for W2: W2a THE ARROW COUNTER shipped (DaggerfallHUD :270-292, never drawn; found on the way that the interior frame handed the classic HUD no font), W2b MELEE FRIENDLY PROTECTION shipped (WeaponManager :930-944 - a pacified foe beside a hostile one took the swing); W2c THE EXIT-DOOR WAGON PROMPT shipped (PlayerActivate :649-664 - the producer inventorySession's NT3 note had been waiting for); W2d THE NEAR-DEATH WARNING shipped (HUDFlickerController + the three curves, whole). The default-ON queue is CLOSED; the default-OFF keys stand on the page. Refutations recorded.
 - `01-Overview/Audit-27.md` - CLOSED 2026-08-27: THE STATE-OF-THE-TREE AUDIT. Not a parity sweep (AUDIT 26 was the day before): ten mechanical sweeps over the tree and the bible for the things a parity read does not look at - dead exports, four-hosts seams, citation integrity, allow-list drift, URL flags, Ledger and Testing.md consistency - plus a doctrine read of the day's own work. 6 findings, 3 fixed on the spot.
 - `07-Rendering/Rendering-Arc.md` - ACTIVE. The R-slices, and since 2026-08-27 the ENHANCED SKY (ES1-ES1f): a procedural dome behind the skin toggle, drawn with no game data at all - sun and moons on the port's own clock and DFU's phase law, weather from the sim eased over 14 s, two sun-lit cloud decks, a star field that wheels, the cloud in front of the sun dimming the world's key light, and a RETRO pass on the painted sky's own angular pixel (256 cells a face, 512 across 180 degrees) posterised with a Bayer dither. 13 pins, probe 10/10.
 - `01-Overview/Audit-25.md` - CLOSED 2026-08-23: THE COMPLETENESS AUDIT. The first audit whose denominator is the DFU tree rather than `src/`: 27 subsystem groups over a real 849-file checkout, a surveyor and an adversarial refuter each, four reconciliation passes. 767 surviving gaps, ~63,400 JS lines. Six systems at or near zero (enchanting, both automaps, the magic crafting windows, banking, the classic `.SAV` reader, the pause menu + keybinding registry) and seven P0 host seams, all of them wire for laws already ported. The gap register and the slice order live in the page; the ledger rows it found are folded into `01-Overview/Port-Ledger.md` section C.
@@ -271,11 +271,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/dungeonContext.js:249` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:780` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1354` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1389` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1425` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3271` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3379` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:1355` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1390` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1426` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3272` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3380` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:619` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:625` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:864` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -290,25 +290,25 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2959` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:3739` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:4694` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1181` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1196` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1405` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1410` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1601` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:1841` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1873` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2094` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2216` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2491` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2536` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2555` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2660` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2885` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2897` - FLAGGED, and narrowed to what is actually missing: the two BASH
-- `src/scenes/worldModes.js:2959` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4131` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4230` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4568` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:1182` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1197` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1406` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1411` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1602` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:1842` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1874` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2095` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2217` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2492` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2537` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2556` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2661` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2886` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2898` - FLAGGED, and narrowed to what is actually missing: the two BASH
+- `src/scenes/worldModes.js:2960` - the FLAGGED note above), so it starts false.
+- `src/scenes/worldModes.js:4156` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4255` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4593` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:

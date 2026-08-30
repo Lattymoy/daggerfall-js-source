@@ -235,12 +235,19 @@ export function updateAllVitals(rig, cur, dt) {
 let _detector = createVitalsDetector();
 let _rigs = { small: createVitalsRig(), large: createVitalsRig() };
 let _lastLarge = null;
+// AUDIT 28 W2d: VitalsChangeDetector.HealthLost as this frame's field -
+// HUDFlickerController reads it off the same detector (:56-58).
+let _lastHealthLost = 0;
+/** The detector's HealthLost for the frame updateHudVitals last ran
+ *  (0 on a reset frame, 0 while paused, negative on a gain). */
+export const lastHealthLost = () => _lastHealthLost;
 
 /** The tests' door, and what a fresh boot gets for free. */
 export function _resetHudVitals() {
   _detector = createVitalsDetector();
   _rigs = { small: createVitalsRig(), large: createVitalsRig() };
   _lastLarge = null;
+  _lastHealthLost = 0;
 }
 
 /**
@@ -257,8 +264,10 @@ export function updateHudVitals(isLarge, cur, dt, paused = false) {
   _lastLarge = isLarge;
   const indicators = vitalsIndicatorsEnabled();
   // VitalsChangeDetector.Update - skipped while paused (:68-69).
+  _lastHealthLost = 0;
   if (!paused) {
     const ev = detectVitals(_detector, cur);
+    _lastHealthLost = ev.health?.lost ?? 0;
     if (ev.reset) {
       // OnReset is STATIC (:45) - both instances hear it.
       synchronizeImmediately(_rigs.small, cur, indicators);

@@ -30,6 +30,8 @@ import {
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
+import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
+import { lastHealthLost } from './hudVitals.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
@@ -297,6 +299,26 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
 
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
+/** AUDIT 28 W2d: THE NEAR-DEATH WARNING. DaggerfallHUD holds one
+ *  HUDFlickerController (:39) and calls NextCycle every Update (:328);
+ *  the colour it writes is the HUD's PARENT PANEL background - a tint
+ *  under every element - so it draws here as a screen quad before the
+ *  bars, with the detector's HealthLost the vitals rig just computed.
+ *  The two fade gates have no reader in this HUD and answer false
+ *  (recorded in Audit-28.md). */
+let _flicker = new HudFlickerController();
+export function _resetNearDeathFlicker() { _flicker = new HudFlickerController(); }
+export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
+  const c = _flicker.nextCycle({
+    health: cur.health, maxHealth: cur.maxHealth, healthLost: lastHealthLost(), dt,
+    enabled: getBool('Enhancements', 'NearDeathWarning'),
+  });
+  const color = c ?? _flicker.backColor;
+  if (!(color[3] > 0)) return false;
+  renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, color);
+  return true;
+}
+
 /** The bows, by template (ItemEnums.cs Weapons: Short_Bow 129,
  *  Long_Bow 130). */
 export const BOW_TEMPLATES = Object.freeze([129, 130]);
@@ -400,9 +422,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     const s2 = hudScale(canvas.width, canvas.height);
     // VB1: HUDLarge owns its OWN HUDVitals instance (HUDLarge.cs:66) -
     // the second rig, updated only while this branch is the live HUD.
+    const largeRig = updateHudVitals(true, cur, dt, cursorActive);
+    drawNearDeathFlicker(renderer, canvas, cur, dt);   // AUDIT 28 W2d: the parent panel's tint, under the bar
     lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
       ...largeHud,
-      vitalsBars: { rig: updateHudVitals(true, cur, dt, cursorActive), skin, indicators },
+      vitalsBars: { rig: largeRig, skin, indicators },
     });
     drawCrosshairAndModeIcon(renderer, canvas, font,
       { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
@@ -427,6 +451,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // HUDVitals.cs:108-119) - and the skin carries the F149 swap.
   {
     const rig = updateHudVitals(false, cur, dt, cursorActive);
+    drawNearDeathFlicker(renderer, canvas, cur, dt);   // AUDIT 28 W2d: the parent panel's tint, under the bars
     let x = HUD_BORDER;
     const rects = {};
     for (const k of VITAL_KEYS) {
