@@ -2045,6 +2045,263 @@ def make_armfp_weapon_kf():
     write_nif(HERE / "armfpweapon.kf", [helper])
 
 
+def _quad(name, colors=True, z=0.0):
+    """One 4-vertex, 2-triangle shape, optionally with vertex colours."""
+    tri = NifFormat.NiTriShape()
+    tri.name = name.encode()
+    ident(tri.rotation)
+    tri.scale = 1.0
+    tri.translation.z = z
+    d = NifFormat.NiTriShapeData()
+    tri.data = d
+    d.num_vertices = 4
+    d.has_vertices = True
+    d.vertices.update_size()
+    for v, (x, y, zz) in zip(d.vertices, [(0, 0, 0), (2, 0, 0), (2, 1, 0), (0, 1, 0)]):
+        v.x, v.y, v.z = x, y, zz
+    d.has_normals = True
+    d.normals.update_size()
+    for n in d.normals:
+        n.x, n.y, n.z = 0.0, 0.0, 1.0
+    if colors:
+        d.has_vertex_colors = True
+        d.vertex_colors.update_size()
+        for c, (r, g, b, a) in zip(d.vertex_colors,
+                                   [(0.2, 0.4, 0.6, 1.0), (0.2, 0.4, 0.6, 1.0),
+                                    (0.2, 0.4, 0.6, 1.0), (0.2, 0.4, 0.6, 1.0)]):
+            c.r, c.g, c.b, c.a = r, g, b, a
+    d.num_uv_sets = 1
+    d.has_uv = True
+    d.uv_sets.update_size()
+    for uv, (u, v) in zip(d.uv_sets[0], [(0, 0), (1, 0), (1, 1), (0, 1)]):
+        uv.u, uv.v = u, v
+    d.num_triangles = 2
+    d.num_triangle_points = 6
+    d.triangles.update_size()
+    for t, (a, b, c) in zip(d.triangles, [(0, 1, 2), (0, 2, 3)]):
+        t.v_1, t.v_2, t.v_3 = a, b, c
+    d.update_center_radius()
+    return tri
+
+
+def _material(diffuse, ambient=(1.0, 1.0, 1.0), emissive=(0.0, 0.0, 0.0), alpha=1.0):
+    mat = NifFormat.NiMaterialProperty()
+    mat.name = b"M"
+    mat.diffuse_color.r, mat.diffuse_color.g, mat.diffuse_color.b = diffuse
+    mat.ambient_color.r, mat.ambient_color.g, mat.ambient_color.b = ambient
+    mat.emissive_color.r, mat.emissive_color.g, mat.emissive_color.b = emissive
+    mat.specular_color.r, mat.specular_color.g, mat.specular_color.b = 0.9, 0.9, 0.9
+    mat.glossiness = 42.0
+    mat.alpha = alpha
+    return mat
+
+
+def _vertexcolor(vertex_mode, lighting_mode):
+    vc = NifFormat.NiVertexColorProperty()
+    vc.vertex_mode = vertex_mode
+    vc.lighting_mode = lighting_mode
+    return vc
+
+
+def _stencil(draw_mode):
+    st = NifFormat.NiStencilProperty()
+    st.draw_mode = draw_mode
+    return st
+
+
+def _props(node, props):
+    node.num_properties = len(props)
+    node.properties.update_size()
+    for i, pr in enumerate(props):
+        node.properties[i] = pr
+
+
+def make_matprops():
+    # MW-D13: THE PROPERTY CHAIN, authored so the ORDER can be told from
+    # the result. Four shapes under one root, each reachable through a
+    # different ancestor chain:
+    #
+    #   "Plain"     - no properties anywhere: rule 64's white defaults
+    #   "Inherited" - the MATERIAL sits on an ancestor NiNode, which is
+    #                 the common Morrowind authoring pattern a port that
+    #                 reads only the shape's own properties drops
+    #   "Scoped"    - ancestor NiVertexColorProperty SrcAmbDif+Emissive,
+    #                 own NiVertexColorProperty SrcEmissive. The MODE
+    #                 comes from the nearer one and the BLACKOUT from the
+    #                 farther, because `lightmode` is only assigned in the
+    #                 SrcAmbDif branch and outlives the property that set
+    #                 it. A per-type map cannot produce this pair.
+    #   "NoColors"  - a NiVertexColorProperty on a mesh with NO colour
+    #                 array: the channel goes WHITE and the mode to None,
+    #                 never black.
+    root = NifFormat.NiNode()
+    root.name = b"MatRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    plain = _quad("Plain", colors=False)
+
+    inherited_parent = NifFormat.NiNode()
+    inherited_parent.name = b"InheritedParent"
+    ident(inherited_parent.rotation)
+    inherited_parent.scale = 1.0
+    _props(inherited_parent, [_material((1.0, 0.5, 0.25), alpha=0.75), _stencil(3)])
+    inherited = _quad("Inherited", colors=False)
+    inherited_parent.num_children = 1
+    inherited_parent.children.update_size()
+    inherited_parent.children[0] = inherited
+
+    scoped_parent = NifFormat.NiNode()
+    scoped_parent.name = b"ScopedParent"
+    ident(scoped_parent.rotation)
+    scoped_parent.scale = 1.0
+    _props(scoped_parent, [_material((1.0, 1.0, 0.0)), _vertexcolor(2, 0)])
+    scoped = _quad("Scoped")
+    _props(scoped, [_vertexcolor(1, 1)])
+    scoped_parent.num_children = 1
+    scoped_parent.children.update_size()
+    scoped_parent.children[0] = scoped
+
+    nocolors = _quad("NoColors", colors=False)
+    _props(nocolors, [_material((0.1, 0.2, 0.3)), _vertexcolor(2, 1), _stencil(2)])
+
+    #   "Colored"   - colours and a MATERIAL but NO NiVertexColorProperty,
+    #                 which is rule 64's one non-default pre-loop setting:
+    #                 the mode is AmbientAndDiffuse purely because a
+    #                 colour array exists, so the material's red diffuse
+    #                 is discarded in favour of the vertex colour.
+    colored = _quad("Colored")
+    _props(colored, [_material((1.0, 0.0, 0.0))])
+
+    root.num_children = 5
+    root.children.update_size()
+    root.children[0] = plain
+    root.children[1] = inherited_parent
+    root.children[2] = scoped_parent
+    root.children[3] = nocolors
+    root.children[4] = colored
+    write_nif(HERE / "matprops.nif", [root])
+
+
+def make_boneoffset():
+    # MW-D13 / RULE 14: a rigid part carrying a node literally named
+    # BoneOffset whose TRANSLATION is the attachment offset.
+    #
+    # Authored to make every clause of the visitor FAILABLE:
+    #   - the real node is named "BoneOFFSET", which ciEqual matches and
+    #     an == against the literal "BoneOffset" does not;
+    #   - a SHAPE named "boneoffset" sits BEFORE it in pre-order, so a
+    #     port that does not skip drawables takes the wrong node's
+    #     translation (apply(osg::Geometry&) is an empty override);
+    #   - a SECOND node named "BoneOffset" sits after the first with a
+    #     different translation, so a port that keeps scanning takes the
+    #     last rather than the first.
+    root = NifFormat.NiNode()
+    root.name = b"OffsetRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    decoy_shape = _quad("boneoffset", colors=False, z=0.0)
+    decoy_shape.translation.x = 99.0
+
+    marker = NifFormat.NiNode()
+    marker.name = b"BoneOFFSET"
+    ident(marker.rotation)
+    marker.scale = 1.0
+    marker.translation.x, marker.translation.y, marker.translation.z = 3.0, -4.0, 5.0
+
+    later = NifFormat.NiNode()
+    later.name = b"boneoffset"
+    ident(later.rotation)
+    later.scale = 1.0
+    later.translation.x, later.translation.y, later.translation.z = -7.0, -7.0, -7.0
+
+    blade = _quad("Blade", colors=False, z=1.0)
+
+    root.num_children = 4
+    root.children.update_size()
+    root.children[0] = decoy_shape
+    root.children[1] = marker
+    root.children[2] = later
+    root.children[3] = blade
+    write_nif(HERE / "boneoffset.nif", [root])
+
+
+def _string_extra(text):
+    sed = NifFormat.NiStringExtraData()
+    sed.string_data = text.encode()
+    sed.bytes_remaining = 4 + len(text)
+    return sed
+
+
+def _marker_tree(root_name, with_mrk):
+    root = NifFormat.NiNode()
+    root.name = root_name.encode()
+    ident(root.rotation)
+    root.scale = 1.0
+    # The MRK-less tree carries TWO decoys, because two separate wrong
+    # readings both draw the editor marker away and neither is visible in
+    # a file that simply lacks the flag:
+    #   - the ROOT carries "mrk" in lower case, which `sd->mData == "MRK"`
+    #     does NOT match (it is ==, not ciEqual);
+    #   - a NON-ROOT node carries a correct "MRK", which is ignored
+    #     because the check is `args.mRootNode == node`.
+    root.extra_data = _string_extra("MRK" if with_mrk else "mrk")
+
+    boxed = _quad("Inside Box", colors=False)
+    box = NifFormat.NiNode()
+    box.name = b"Bounding Box"
+    ident(box.rotation)
+    box.scale = 1.0
+    box.num_children = 1
+    box.children.update_size()
+    box.children[0] = boxed
+
+    marker_shape = _quad("Tri EditorMarker01", colors=False)
+    if not with_mrk:
+        deep = NifFormat.NiNode()
+        deep.name = b"DeepMarkerHolder"
+        ident(deep.rotation)
+        deep.scale = 1.0
+        deep.extra_data = _string_extra("MRK")
+        deep.num_children = 1
+        deep.children.update_size()
+        deep.children[0] = marker_shape
+        marker_shape = deep
+
+    kids = [
+        marker_shape,
+        _quad("Shadow", colors=False),
+        _quad("Tri Shadow Plane", colors=False),
+        _quad("Keep", colors=False),
+        box,
+    ]
+    root.num_children = len(kids)
+    root.children.update_size()
+    for i, k in enumerate(kids):
+        root.children[i] = k
+    return root
+
+
+def make_markers():
+    # MW-D13 / RULES 58 + 59. Two files that differ ONLY in the root's
+    # "MRK" string extra data, because two of the three skip-list entries
+    # are UNCONDITIONAL and one is gated - a single file cannot tell those
+    # apart, and a port that gates all three passes every test a single
+    # file could hold.
+    #
+    # Both carry a node literally named "Bounding Box" with a shape
+    # beneath it: the node AND ITS SUBTREE must not reach the draw.
+    write_nif(HERE / "markers.nif", [_marker_tree("MarkerRoot", True)])
+    write_nif(HERE / "nomarkers.nif", [_marker_tree("PlainRoot", False)])
+
+    # And rule 58's own exception: mRootNode is null on the FIRST call, so
+    # a NIF whose ROOT is named "Bounding Box" is NOT skipped. Such a file
+    # would otherwise load as nothing at all.
+    root = _marker_tree("Bounding Box", False)
+    write_nif(HERE / "boxroot.nif", [root])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -2068,6 +2325,9 @@ if __name__ == "__main__":
     make_armfp_arm()
     make_armfp_kf()
     make_armfp_weapon_kf()
+    make_matprops()
+    make_boneoffset()
+    make_markers()
     make_armfp_esm()
     make_weaponmesh()
     make_armparts_esm()

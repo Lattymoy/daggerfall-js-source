@@ -51,10 +51,12 @@ import {
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
+  aimingFactor,
 } from '../formats/mwFirstPerson.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { correctTexturePath, wrapModes, warningImage } from '../formats/mwTexture.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
+import { diffuseAt } from '../formats/mwNifMesh.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
  *  scope (it ships with Bloodmoon and Part VI records it ABSENT from a
@@ -124,14 +126,28 @@ export function animWeaponType(mwType, sheathed) {
  *  because an enum with a member the code never reaches is a lie the next
  *  reader has to disprove. */
 export const UPPER_BODY = Object.freeze({
-  None: 'none',
-  Equipping: 'equipping',
-  Unequipping: 'unequipping',
-  WeaponEquipped: 'weaponEquipped',
-  AttackWindUp: 'attackWindUp',
-  AttackRelease: 'attackRelease',
-  AttackEnd: 'attackEnd',
+  None: 0,
+  Equipping: 1,
+  Unequipping: 2,
+  WeaponEquipped: 3,
+  AttackWindUp: 4,
+  AttackRelease: 5,
+  AttackEnd: 6,
 });
+
+/** MW-D13: THE ORDER IS LOAD-BEARING, so these are numbers.
+ *  `setAccurateAiming(mUpperBodyState > UpperBodyState::WeaponEquipped)`
+ *  (character.cpp:1894) is a COMPARISON on this enum, and it is the only
+ *  thing that decides whether the neck takes 0.75 of the look or all of
+ *  it. A string enum cannot answer it. */
+export const UPPER_BODY_NAME = Object.freeze(
+  Object.fromEntries(Object.entries(UPPER_BODY).map(([k, v]) => [v, k])),
+);
+
+/** setAccurateAiming's argument, verbatim. Casting sits above
+ *  AttackEnd in the reference's enum and is out of scope here, so the
+ *  test is the same shape with one fewer state above the line. */
+export const accurateAiming = (upper) => upper > UPPER_BODY.WeaponEquipped;
 
 /** AnimState::getCompletion - the fraction of [startTime, stopTime] the
  *  playhead has covered. refreshIdleAnims feeds it straight back in as
@@ -271,7 +287,17 @@ export function packFpArm(pieces, out = null) {
     const idx = p.indices;
     if (!pos || !idx) continue;
     const uvs = p.uvs || null;
+    // MW-D13 / RULE 63: the colour written per vertex is the RESOLVED
+    // DIFFUSE, which is the vertex colour only when the mode says so.
+    // What stood here read p.colors directly and the shader MULTIPLIED
+    // it into the albedo - the exact error rule 63 opens by naming: "the
+    // single most likely place for a port to be silently wrong. OpenMW
+    // does not modulate the material by the vertex colour; the vertex
+    // colour SUBSTITUTES for whichever material channel the colour mode
+    // names." A mesh with both a material colour and vertex colours was
+    // being tinted twice and drawn dark.
     const cols = p.colors || null;
+    const mat = p.material || null;
     const flip = p.mirrored ? -1 : 1;
     const textured = !!(uvs && p.material && p.material.textureFile);
     // THE INVENTED SKIN TONE IS GONE. The reference's fragment starts at
@@ -294,11 +320,9 @@ export function packFpArm(pieces, out = null) {
       for (let k = 0; k < 3; k++) {
         const v = [a, b, c][k];
         const vi = idx[i + k] * 2;
-        const ci = idx[i + k] * 4;
         buf[o++] = pos[v]; buf[o++] = pos[v + 1]; buf[o++] = pos[v + 2];
-        buf[o++] = cols ? cols[ci] : 1;
-        buf[o++] = cols ? cols[ci + 1] : 1;
-        buf[o++] = cols ? cols[ci + 2] : 1;
+        const [dr, dg, db] = diffuseAt(mat, cols, idx[i + k]);
+        buf[o++] = dr; buf[o++] = dg; buf[o++] = db;
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
         buf[o++] = uvs ? uvs[vi] : 0;
         buf[o++] = uvs ? uvs[vi + 1] : 0;
@@ -637,6 +661,10 @@ export function createFpArm() {
   let weaponShown = false;
   let holdWindUp = false;
   let resetIdleOnAttackEnd = false;
+  // mAimingFactor (npcanimation.cpp:712-719). It is STATE, not a
+  // per-frame function: it snaps to 1 while aiming and ramps back down
+  // at 0.5 a second, so it has to survive between frames.
+  let aimFactor = 0;
   const notes = [];
 
   const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || idleState));
@@ -851,7 +879,7 @@ export function createFpArm() {
         packed = null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
-        weaponShown = false; notes.length = 0;
+        weaponShown = false; notes.length = 0; aimFactor = 0;
         // A REBUILT ARM STARTS SHEATHED, whatever the last one was doing.
         // The build is triggered by a button, and the player is not
         // mid-swing when they press it; carrying a stale AttackRelease
@@ -875,7 +903,7 @@ export function createFpArm() {
       releaseMesh(); built = null; packed = null;
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false; weaponShown = false;
-      notes.length = 0;
+      notes.length = 0; aimFactor = 0;
       reason = 'unloaded';
     },
 
@@ -1002,6 +1030,7 @@ export function createFpArm() {
       }
       if (idleState) advanceClip(idleState, built.keys, dt, null);
       refreshIdle();
+      aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !idleState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
       // person both animations are played on BlendMask_All, so the higher
@@ -1023,6 +1052,10 @@ export function createFpArm() {
         // a 0.25 look-up put every vertex out of frame instead of
         // sliding them a tenth of the way down it.
         neckPitch: cam ? -(cam.pitch || 0) : 0,
+        // MW-D13: and the factor that pitch is multiplied by, which is
+        // not the constant 0.75 this passed before. Stepped HERE, once
+        // per frame, because mAimingFactor is a decaying state.
+        neckAim: aimFactor,
       });
       packed = packFpArm(built.arm.pieces, packed);
       if (!mesh) {
@@ -1130,6 +1163,8 @@ export function createFpArm() {
         idleGroup,
         weaponGroup,
         upper,
+        upperName: UPPER_BODY_NAME[upper],
+        aimFactor,
         attackType,
         sheathed,
         weaponShown,
@@ -1147,6 +1182,10 @@ export function createFpArm() {
     /** The GPU mesh, for the pins that have to see the RANGES - which
      *  piece is hidden, and that the list never changes length. */
     mesh: () => mesh,
+    /** The build result, for pins that must pose the REAL assembly
+     *  rather than a re-implementation of it. A probe with its own copy
+     *  measures the copy. */
+    built: () => built,
     trace({ dt = 0.2, steps = 40, loopCount = 2, group = null } = {}) {
       if (!built || !built.ok) return null;
       const s2 = resetClip(built.keys, group || idleGroup, { loopCount, loopFallback: true });

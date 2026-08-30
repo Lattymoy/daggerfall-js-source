@@ -1112,6 +1112,9 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
             batch: null, source: batch.positions, attachRef: bound.attachRef,
+            // Rule 14: the part's own BoneOffset node, resolved once at
+            // bind time because it is a fact about the FILE.
+            boneOffset: bound.boneOffset || null,
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
@@ -1190,12 +1193,47 @@ export function firstPersonCameraRef(skeleton) {
 /** The node NpcAnimation hangs the first-person RotateController on. */
 export const FP_NECK_BONE = 'bip01 neck';
 
-/** NpcAnimation::runAnimation (:711-723):
- *    float rotateFactor = 0.75f + 0.25f * mAimingFactor;
- *  mAimingFactor decays to 0 unless the actor is accurately aiming, so
- *  0.75 is the resting value and 1.0 the aiming one. The arms therefore
- *  take THREE QUARTERS of the look, which is why they lag the view. */
+/**
+ * NpcAnimation::runAnimation (:711-723), whole:
+ *
+ *   if (mAccurateAiming) mAimingFactor = 1.f;
+ *   else mAimingFactor = std::max(0.f, mAimingFactor - timepassed * 0.5f);
+ *   float rotateFactor = 0.75f + 0.25f * mAimingFactor;
+ *
+ * MW-D13 CLOSED THE OTHER HALF. The factor is not the constant 0.75 the
+ * port shipped: it is 0.75 at rest and rises to 1.0 WHILE AIMING, which
+ * is `mUpperBodyState > UpperBodyState::WeaponEquipped`
+ * (character.cpp:1894) - every attack section, and nothing else. So the
+ * arms lag the look by a quarter of it normally and follow it EXACTLY
+ * while you are swinging, which is what makes a blow land where you are
+ * looking.
+ *
+ * The rise is INSTANT and the fall is a 0.5-per-second ramp, so the arms
+ * snap onto the aim and drift back off it over two seconds. An
+ * implementation that eased both ways, or that decayed per frame instead
+ * of per second, would look almost right and be wrong at every frame
+ * rate but one.
+ *
+ * MW-D12's upper-body machine is what makes this reachable at all - with
+ * a constant idle there was no aiming state to be in, which is why the
+ * constant was honest when it was written and is a gap now.
+ */
 export const FP_NECK_ROTATE_FACTOR = 0.75;
+export const FP_AIM_SPAN = 0.25;
+export const FP_AIM_DECAY_PER_SECOND = 0.5;
+
+/** mAimingFactor's own step. `prev` is last frame's value; the caller
+ *  keeps it, because it is a decaying state and not a function of the
+ *  current frame alone. */
+export function aimingFactor(prev, accurate, dt) {
+  if (accurate) return 1;
+  return Math.max(0, (prev || 0) - dt * FP_AIM_DECAY_PER_SECOND);
+}
+
+/** rotateFactor, which is what multiplies the pitch. */
+export function neckRotateFactor(aim = 0) {
+  return FP_NECK_ROTATE_FACTOR + FP_AIM_SPAN * aim;
+}
 
 const mul33 = (p, l) => {
   const a = new Float32Array(9);
@@ -1226,27 +1264,27 @@ const rotNegX = (rad) => {
  * already put there. Doing it in the node's local frame instead would
  * pitch the head sideways as soon as the neck is not axis-aligned.
  */
-export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch) {
+export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, aim = 0) {
   const ref = skeleton && skeleton.byName ? skeleton.byName.get(FP_NECK_BONE) : undefined;
   if (ref === undefined || !pitch) return false;
   const world = skelMats(skeleton, pose, rootRef).get(ref);
   if (!world) return false;
   const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
   const w = world.a;
-  const rotate = rotNegX(pitch * FP_NECK_ROTATE_FACTOR);
+  const rotate = rotNegX(pitch * neckRotateFactor(aim));
   const rotation = mul33(mul33(mul33(w, rotate), transpose33(w)), local.rotation);
   pose.set(ref, { rotation, translation: local.translation, scale: local.scale });
   return true;
 }
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
-  time = 0, accumRoot = null, neckPitch = 0 } = {}) {
+  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0 } = {}) {
   const { fns, skeleton, rootRef, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   const pose = fns.poseSkeleton(skeleton, tracks, sampleTrack, time, { accumRoot });
   // Rule 54's other half: the neck takes 0.75 of the look BEFORE any
   // matrix is composed, because the camera node hangs off it.
-  if (neckPitch) applyFirstPersonNeck(skeleton, pose, rootRef, fns.skelMats, neckPitch);
+  if (neckPitch) applyFirstPersonNeck(skeleton, pose, rootRef, fns.skelMats, neckPitch, neckAim);
   const byRoot = new Map([[rootRef, fns.skelMats(skeleton, pose, rootRef)]]);
   const matsFor = (root) => {
     if (!byRoot.has(root)) byRoot.set(root, fns.skelMats(skeleton, pose, root));
@@ -1257,7 +1295,7 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
       fns.skinBatch(p.batch, skeleton, pose, matsFor(p.batch.skin.skeletonRoot), p.positions, null);
     } else {
       const at = fns.attachmentTransform(byRoot.get(rootRef), p.attachRef);
-      placeAtBone(p.source, at, p.mirrored, p.positions);
+      placeAtBone(p.source, at, p.mirrored, p.positions, p.boneOffset);
     }
   }
   assembly.pose = pose;
@@ -1285,6 +1323,10 @@ export function armPieceRows(pieces) {
     bone: p.bone ?? null,
     kind: p.kind,
     mirrored: !!p.mirrored,
+    // Rule 14, on the card: a part placed at its bone's bare origin and
+    // one placed at its authored offset are the same picture until you
+    // know which you are looking at.
+    boneOffset: p.boneOffset || null,
     vertices: p.positions ? p.positions.length / 3 : 0,
     triangles: p.indices ? p.indices.length / 3 : 0,
     bounds: meshBounds([p]),
@@ -1312,11 +1354,21 @@ export function shapeMatchesBone(shapeName, bone) {
  *  a full sweep. A rule that cannot be exercised is not pinned, whatever
  *  the test output says.
  */
-export function placeAtBone(positions, at, mirror, out = new Float32Array(positions.length)) {
+export function placeAtBone(positions, at, mirror, out = new Float32Array(positions.length), offset = null) {
+  // RULE 14's OFFSET RIDES THE SAME TRANSFORM AS THE MIRROR, and the
+  // ORDER is decided by OSG rather than chosen here: both are set on one
+  // PositionAttitudeTransform, whose matrix is
+  // T(position) * R(attitude) * S(scale). So the mirror scales the
+  // vertex, the offset translates the result, and only then does the
+  // bone place it. Adding the offset BEFORE the mirror would negate its
+  // x on every left-hand part - the bow, among others.
+  const ox = offset ? offset[0] : 0;
+  const oy = offset ? offset[1] : 0;
+  const oz = offset ? offset[2] : 0;
   for (let v = 0; v < positions.length; v += 3) {
-    const x = mirror ? -positions[v] : positions[v];
-    const y = positions[v + 1];
-    const z = positions[v + 2];
+    const x = (mirror ? -positions[v] : positions[v]) + ox;
+    const y = positions[v + 1] + oy;
+    const z = positions[v + 2] + oz;
     out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
     out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
     out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];

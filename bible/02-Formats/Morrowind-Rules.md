@@ -111,6 +111,58 @@ shorter vertex stream. Repacking without it would change the buffer's
 length every time you drew or sheathed, orphaning the ranges the textures
 hang on.
 
+MW-D13 WALKED THE NUMBERED LIST AGAINST THE TREE, which is a different
+exercise from looking at the screen and the reason it found what it did:
+NOT ONE of these has a picture that says it is wrong. A mesh tinted twice
+looks like a dark mesh. A weapon at its bone's bare origin looks like a
+weapon. Six rules were read, recorded here, and never implemented:
+
+  RULE 63 - THE VERTEX COLOUR REPLACES THE MATERIAL, IT NEVER MULTIPLIES
+    IT. The doc's own words for this rule are "the single most likely
+    place for a port to be silently wrong", and the port was doing the
+    wrong one: the packer wrote the raw vertex colour and the shader
+    multiplied it into the albedo. OpenMW SUBSTITUTES the whole vec4 for
+    whichever material channel the colour MODE names, and the mode - not
+    the presence of a colour array - is the guard.
+  RULES 64 + 66 - THE MODE ITSELF, which the port had no notion of. A
+    colour array alone selects AmbientAndDiffuse; NiVertexColorProperty
+    then overrides it; and `lightmode` is assigned ONLY inside the
+    SrcAmbDif branch, so an ancestor property still blacks the surface
+    out after a nearer one has taken the mode. THAT ONE RULE is why the
+    property chain is now an ordered root-first LIST rather than a map
+    keyed by type: a map cannot produce the pair. Also from rule 64: a
+    colour mode on a COLOURLESS mesh is undone to white, never black; and
+    from rule 66, Morrowind specular is parsed and thrown away, so
+    glossiness is a constant zero rather than the file's value.
+  RULE 65 - NiStencilProperty is the winding property, and only DrawMode
+    3 (Both) is two-sided. "Default" is a synonym for counter-clockwise
+    WITH backface culling.
+  RULE 14 - `BoneOffset`, absent from the reverted arc and absent from
+    this port until now. A part may carry a node literally named
+    BoneOffset whose matrix TRANSLATION is the attachment offset; the
+    match is ciEqual and EXACT, the scan is pre-order and stops at the
+    first hit, and DRAWABLES are skipped (`apply(osg::Geometry&)` is an
+    empty override). It rides the same PositionAttitudeTransform as rule
+    13's mirror, and a PAT is T * R * S - so the offset is applied AFTER
+    the negation, not before. Every rigid part whose mesh carries the
+    node had been drawn at its bone's bare origin.
+  RULES 58 + 59 - THE NAMES THE LOADER REFUSES TO DRAW. "Bounding Box"
+    takes its whole SUBTREE out of the scene, except when it is the root
+    (`args.mRootNode` is null on the first call - it reads like an
+    oversight and is load-bearing). And the geometry name skip list is
+    not one rule but two: "shadow" and "tri shadow" are UNCONDITIONAL,
+    where "tri editormarker" is gated on the ROOT carrying a "MRK"
+    string extra data - compared with ==, not ciEqual. A port that gates
+    all three on the flag draws every shadow-caster mesh in the game as
+    solid geometry.
+  RULE 30's OTHER HALF - the neck factor is `0.75 + 0.25 * mAimingFactor`
+    and the port shipped the constant. The factor snaps to 1 while
+    `mUpperBodyState > WeaponEquipped` and ramps back down at 0.5 a
+    second, so the arms lag the look by a quarter of it normally and
+    follow it EXACTLY while you swing. MW-D12's machine is what made this
+    reachable: with a constant idle there was no aiming state to be in,
+    which is why the constant was honest when it was written.
+
 THE DIVERGENCE, RESTATED WHERE THE CODE IS. Daggerfall picks its attack
 by GESTURE and Morrowind by MOVEMENT or by the weapon record's damage
 spread; the port maps the six strikes onto the three types BY THE SHAPE
@@ -339,15 +391,16 @@ THE TWO DEFECTS DRAWING FOUND, both invisible to every node test:
       because the MUTATION CAMPAIGN pointed out that at yaw 0 the sine
       term vanishes and an x-axis error is invisible.
 
-WHAT IT DRAWS, so nobody mistakes a scope boundary for a bug: UNTEXTURED
-grey flat-shaded arms, no weapon in them, playing bare `Idle` forever.
-Rules 36 and 61 (the texture path search, the positional slots) are
-deferred WHOLE, so there is no texture lookup and therefore no magenta
-miss-signal either. Flat shading comes from a face normal computed per
-triangle at pack time - and for a MIRRORED piece that normal is NEGATED,
-because rule 13's X negation reverses the winding and without it the left
-arm lights inside-out. That is rule 13's rendering consequence, which MW8
-also lacked.
+WHAT IT DRAWS (current, MW-D13): TEXTURED arms with the equipped weapon
+in hand, in the stance the drawn weapon composes, running the equip,
+attack and sheathe sections of that weapon's own group. The three
+sentences that stood here - "untextured", "no weapon", "bare Idle
+forever" - are retired with the flags they described (MW-D11, MW-D12).
+Flat shading still comes from a face normal computed per triangle at pack
+time, and for a MIRRORED piece that normal is NEGATED, because rule 13's
+X negation reverses the winding and without it the left arm lights
+inside-out. That is rule 13's rendering consequence, which MW8 also
+lacked.
 
 THE PORT MAPPER IS RETIRED (MW-D10), AND RULE 54 IS THE PLACEMENT. The
 mapper solved a uniform scale from the arm's clip bounds, pushed it a

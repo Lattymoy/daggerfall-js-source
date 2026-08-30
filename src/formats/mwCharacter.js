@@ -29,6 +29,75 @@ import { skeletonSpaceMatrices } from './mwSkin.js';
  * @param {{attachBone?: string}} [opts] - bone name for unskinned
  *   batches; default is the base skeleton's root.
  */
+/**
+ * RULE 14: `BoneOffset`, a named node inside the part mesh whose matrix
+ * TRANSLATION becomes the attachment offset (attach.cpp:146-163).
+ *
+ *   FindByNameVisitor findBoneOffset("BoneOffset");
+ *   clonedToAttach->accept(findBoneOffset);
+ *   ...
+ *   trans->setPosition(boneOffset->getMatrix().getTrans());
+ *   // Now that we used it, get rid of the redundant node.
+ *
+ * Four details, each of which a port gets wrong by not reading the
+ * visitor (components/sceneutil/visitor.cpp:18-47):
+ *
+ *  1. the name test is `Misc::StringUtils::ciEqual` - CASE-INSENSITIVE
+ *     EXACT equality, not a prefix and not case-sensitive;
+ *  2. the traversal is depth-first PRE-ORDER and stops at the first
+ *     match (`if (!mFoundNode && !checkGroup(group)) traverse(group)`),
+ *     and once found nothing further is examined;
+ *  3. `apply(osg::Geometry&)` is an EMPTY override, so a DRAWABLE named
+ *     BoneOffset is neither matched nor descended into - only groups and
+ *     transforms can be the offset node;
+ *  4. it is the node's OWN LOCAL translation (`getMatrix().getTrans()`),
+ *     not its accumulated world position.
+ *
+ * AND IT IS ONLY REMOVED WHEN IT IS A LEAF: `if (getNumChildren() == 0
+ * && getNumParents() == 1)`. A BoneOffset node WITH children keeps
+ * transforming them and the offset is applied on top of that as well -
+ * which falls out for free here, because the flattener has already baked
+ * the node's transform into anything beneath it and this offset is added
+ * afterwards.
+ *
+ * WHERE IT LANDS. OSG inserts a PositionAttitudeTransform between the
+ * attach bone and the part, and a PAT is T(position) * R(attitude) *
+ * S(scale) - the same transform rule 13's mirror scale rides. So the
+ * offset is applied AFTER the mirror, in the BONE's space:
+ *
+ *   world = boneMatrix * (translate(offset) * mirror(v))
+ *
+ * Absent from the reverted arc entirely, and absent from this port until
+ * MW-D13 - which means every rigid part whose mesh carries the node has
+ * been drawn at the bone's bare origin.
+ *
+ * @returns {[number,number,number]|null}
+ */
+export function boneOffsetOf(nif) {
+  const WANT = 'boneoffset';
+  let found = null;
+  const walk = (ref) => {
+    if (found) return;
+    const rec = deref(nif, ref);
+    if (!rec) return;
+    // apply(osg::Geometry&) {} - a drawable is neither matched nor
+    // descended into.
+    if (rec.type === 'NiTriShape' || rec.type === 'NiTriStrips') return;
+    if (String(rec.name || '').toLowerCase() === WANT) {
+      const t = rec.translation;
+      found = t ? [t[0], t[1], t[2]] : [0, 0, 0];
+      return;
+    }
+    if (!rec.children) return;
+    for (const child of rec.children) if (child >= 0) walk(child);
+  };
+  for (const root of nif.roots ?? []) {
+    if (root >= 0) walk(root);
+    if (found) break;
+  }
+  return found;
+}
+
 export function bindPart(skeleton, partNif, opts = {}) {
   const batches = flattenNif(partNif);
   const skinned = [];
@@ -53,14 +122,20 @@ export function bindPart(skeleton, partNif, opts = {}) {
     skinned.push(batch);
   }
   let attachRef = null;
+  let boneOffset = null;
   if (attached.length) {
     const name = (opts.attachBone || '').toLowerCase();
     attachRef = name ? skeleton.byName.get(name) : firstRoot(skeleton);
     if (attachRef === undefined) {
       throw new Error(`bindPart: base skeleton has no bone "${opts.attachBone}" to attach to`);
     }
+    // Rule 14. Only the ATTACHED (rigid) path takes it: the skinned
+    // branch of attach() returns before the visitor ever runs, because a
+    // skinned part is placed by its own bones and has no attach node to
+    // offset from.
+    boneOffset = boneOffsetOf(partNif);
   }
-  return { skinned, attached, attachRef };
+  return { skinned, attached, attachRef, boneOffset };
 }
 
 function firstRoot(skeleton) {
