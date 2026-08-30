@@ -100,6 +100,10 @@ export const LIVE = Object.freeze({
   // bow is looked for in (:275). Both read in hud.arrowCountLabel.
   'GUI/EnableArrowCounter': 'src/ui/hud.js',
   'Enhancements/BowLeftHandWithSwitching': 'src/ui/hud.js',
+  // AUDIT 28 W2b: MeleeDamage's friendly protection (WeaponManager
+  // :930-944): the box pass skips allies and the pacified; the vanilla
+  // arm strikes one only when it is alone. Read in friendlyProtected.
+  'MeleeAttacks/MeleeAttackFriendlyProtection': 'src/combat/playerWeapon.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
