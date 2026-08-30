@@ -39,7 +39,7 @@
 // looks level because ITS pitch is an animation channel, where this one
 // takes the player's pitch through the neck the reference rotates.
 
-import { lookAt, perspective, trs, mirrorProjectionX } from '../world/mat4.js';
+import { lookAt, perspective, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
@@ -1471,32 +1471,33 @@ export function createFpArm() {
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
       const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
 
-      // AND IT RIDES THE HANDEDNESS MIRROR, which the viewmodel pass
-      // this technique was borrowed from does not.
+      // MW-D23: NO MIRROR. THIS PASS IS ALREADY CHIRALITY-TRUE, and the
+      // mirror MW-D9 borrowed from the world pass is what put Mac's
+      // sword in the LEFT hand - the one object in the frame that can
+      // betray a mirror, because a mirrored PAIR of hands looks exactly
+      // like a correct pair.
       //
-      // mat4's law: a right-handed lookAt puts world +x on screen-LEFT,
-      // which is the mirror image the port presented until M1 - every
-      // town flipped east-west, every sign reading backwards. The fix is
-      // ONE mirror at the projection, and EVERY world pass rides it. The
-      // voxel viewmodel was left out with the reason given as "its pass
-      // never culls" - why it was SAFE to leave, not a claim it was right.
+      // The measured law, through THIS pass's own composition
+      // (NIF_TO_PASS is Rx(-90), det +1; this lookAt faces -Z with +Y
+      // up; perspective is standard GL): a point one unit to the
+      // ACTOR'S RIGHT (+X in Morrowind's basis - actors face +Y with
+      // +Z up, right = forward x up) lands at POSITIVE NDC x, which is
+      // SCREEN-RIGHT, with no mirror at all.
       //
-      // For an arm it is the whole thing: measured, a point one metre to
-      // the player's RIGHT lands at NDC x -1.96 through the unmirrored
-      // pass and +1.96 through a world pass. Your sword hand would be on
-      // the wrong side of the screen and every left hand a right one, and
-      // no picture says so, because an arm looks like an arm either way.
-      //
-      // Mirroring is free for the reason the original note gives:
-      // drawCharacter disables back-face culling (renderer.js), so the
-      // winding flip a negative-x scale causes costs nothing.
+      // MW-D9's contrary measurement built its probe camera looking
+      // toward +Z while this pass looks toward -Z; through a +Z-facing
+      // camera the viewer's right is -X, so its "one metre to the
+      // player's right" test point was actually on the player's LEFT,
+      // and the mirror it demanded flipped a correct pass. The world's
+      // mirror belongs to the WORLD pass's own composition (Daggerfall
+      // content, its own yaw convention - towns and signage verify it
+      // visually); it was never a law about lookAt, and borrowing it
+      // across compositions is how a fix becomes a bug.
       //
       // The planes are in RIG UNITS and come off the arm's own reach, so
       // a file authored at any scale is framed by its own geometry
       // rather than by a constant that assumes metres.
-      const proj = mirrorProjectionX(
-        perspective(FP_FIELD_OF_VIEW, pw / ph, Math.max(built.reach / 200, 1e-4), built.reach * 4),
-      );
+      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, Math.max(built.reach / 200, 1e-4), built.reach * 4);
       const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph);
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;

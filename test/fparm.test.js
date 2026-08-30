@@ -427,42 +427,46 @@ test('MW-D9: picking a record prefers the material, avoids the enchanted, and ne
     MW_WEAPON_TYPE.BluntTwoWide), null, 'no staff in the archives is EMPTY HANDS, never the sword');
 });
 
-test('MW-D9: the arm rides the SAME handedness mirror as the world it is composited over', async () => {
-  const { perspective, lookAt, mirrorProjectionX, multiply } = await import('../src/world/mat4.js');
+test('MW-D23: the actor\'s RIGHT lands SCREEN-RIGHT through the pass\'s OWN composition - no mirror', async () => {
+  const { perspective, lookAt } = await import('../src/world/mat4.js');
   const src = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
 
-  // THE DEFECT THIS PINS, found by rendering the arm and looking at it.
-  // mat4's law: a right-handed lookAt puts world +x on screen-LEFT, and
-  // the port shipped that mirror image until M1 - towns flipped
-  // east-west, signs backwards. The fix is ONE mirror at the projection
-  // and EVERY world pass rides it. The viewmodel pass this technique was
-  // borrowed from does NOT, with the reason recorded as "its pass never
-  // culls" - which is why it was SAFE to leave, not why it was right.
-  //
-  // For an arm it is the whole thing: unmirrored, the player's sword
-  // hand draws on the wrong side of the screen, against a world drawn
-  // the other way round. An arm looks like an arm either way, so no
-  // picture and no symmetry score can see it - only this can.
-  const eye = [0, 1.6, 0];
-  const view = lookAt(eye, [eye[0], eye[1] - 0.2, eye[2] + 1], [0, 1, 0]);
-  const ndcX = (proj, p) => {
-    const m = multiply(proj, view);
-    return (m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12])
-      / (m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15]);
+  // THE PIN MW-D9 SHIPPED HERE MANUFACTURED ITS LAW WITH A BACKWARDS
+  // CAMERA: its probe view looked toward +Z while the real pass looks
+  // toward -Z, so its "one metre to the player's right" test point was
+  // on the player's LEFT, and the mirror it then demanded flipped a
+  // correct pass - Mac's sword in the left hand, undetectable by hands
+  // because a mirrored PAIR of hands looks like a correct pair. This
+  // pin uses THE PASS'S OWN pieces: NIF_TO_PASS, the -Z-facing lookAt,
+  // the unmirrored perspective, the same column-major multiply the
+  // shader runs (uProj * uView * world), and asserts all three axes.
+  const mul = (m, v) => [
+    m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12] * v[3],
+    m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13] * v[3],
+    m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14] * v[3],
+    m[3] * v[0] + m[7] * v[1] + m[11] * v[2] + m[15] * v[3],
+  ];
+  const eye = [0, 15, 0];                         // camera node at MW (0,0,15)
+  const view = lookAt(eye, [eye[0], eye[1], eye[2] - 1], [0, 1, 0]);
+  const proj = perspective(FP_FIELD_OF_VIEW, 1.5, 0.01, 100);
+  const ndc = (pmw) => {
+    const clip = mul(proj, mul(view, mul(NIF_TO_PASS, [...pmw, 1])));
+    return [clip[0] / clip[3], clip[1] / clip[3]];
   };
-  const P = [1, 1.32, 0.62];                       // one metre to the player's right
-  const lens = () => perspective(Math.PI / 3, 4 / 3, 0.05, 12);
-  const worldSide = Math.sign(ndcX(mirrorProjectionX(lens()), P));
-  const bareSide = Math.sign(ndcX(lens(), P));
-  assert.equal(worldSide, 1, 'a world pass puts the player\'s right on SCREEN RIGHT');
-  assert.equal(bareSide, -1, 'and an unmirrored lens puts it on screen LEFT - the two disagree');
+  // Morrowind's basis: actors face +Y with +Z up, so the actor's right
+  // is +X (right = forward x up). One unit right, one forward, at eye
+  // height:
+  assert.ok(ndc([1, 1, 15])[0] > 0, 'the actor\'s RIGHT (+X) lands at positive NDC x - SCREEN-RIGHT');
+  assert.ok(ndc([-1, 1, 15])[0] < 0, 'the actor\'s LEFT (-X) lands screen-left');
+  assert.ok(ndc([0, 1, 16])[1] > 0, 'and UP (+Z) lands screen-UP - the basis turn is the right way round');
+  assert.ok(ndc([0, 1, 14])[1] < 0, 'below the eye lands screen-down');
 
-  // So the arm's own pass must take the mirror, and the source says so.
-  assert.match(src, /const proj = mirrorProjectionX\(\s*\n\s*perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
-    'the arm\'s projection rides mat4\'s one mirror, like every other world pass');
-  // and rule 29's 60 degrees survives the mirror, which changes only x.
-  assert.ok(Math.abs(mirrorProjectionX(lens())[5] - lens()[5]) < 1e-9,
-    'the mirror negates x alone - the field of view is untouched');
+  // The source must NOT mirror this pass: the world's mirror belongs to
+  // the world's own composition, and borrowing it across compositions
+  // is how MW-D9's fix became MW-D23's bug.
+  assert.match(src, /const proj = perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
+    'the arm\'s projection is the bare 60-degree lens');
+  assert.ok(!/mirrorProjectionX/.test(src), 'and mirrorProjectionX appears nowhere in the arm');
 });
 
 test('MW-D9c: EVERY .esm is read, not the first - an expansion first must not empty the arms', async () => {
