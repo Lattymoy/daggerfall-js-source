@@ -5981,3 +5981,59 @@ unmeasured. The inspector reports whatever it is given, so widening this
 table costs nothing but attaching more archives and changing the dropdown -
 and until that is done, "three of four slots fall back" is a fact about
 nord/male and not yet a fact about Morrowind.
+
+# Part VII - THE PARITY AUDIT AND ITS FIX ARC (2026-08-30)
+
+Mac asked for a comprehensive 1:1 parity audit of the whole Morrowind
+lane, then: "Tackle everything and ensure 1:1." The audit (an Opus
+workflow over this ledger, the port, and the OpenMW reference read
+whole) produced 54 claims: 22 confirmed by adversarial verifiers, 2
+refuted, 32 unverified when Mac called the bypass. The fix arc took
+every claim, RE-VERIFIED it against the reference inline before
+touching anything (all fix-targeted claims proved TRUE; the audit's own
+2 refutations stand), and landed eight slices - each with pins,
+fixtures, and a mutation round, every mutant dead:
+
+- MW-D28/D29 - the weapon and movement machines: WPDT mSpeed scales
+  exactly the three attack plays; isStillWeapon skips the sheathe+draw
+  on weapon-to-weapon swap; sheathing blocked past AttackWindUp; the
+  crossbow reloads at Equipping's end too; multi-source key lookup and
+  velocity ride ALL sources (reverse, keep-looking >1); each clip
+  advances against its OWN source's keys; stance changes force a
+  movement recompose; stopping resets the idle. 10 mutants.
+- MW-D30 - the camera: mode and distance PERSIST (REC_CAM_ FIRS +
+  camera.lua's distance), wheel clicks accumulate per frame, the pitch
+  clamp is +/-(PI/2 - 1e-6) in all four hosts. 4 mutants.
+- MW-D31 - skinning: the skin/shape transform multiplies in ONCE after
+  the blend; hair filters on "hair"; skinned-vs-rigid is a per-FILE
+  choice; the mirror reads the RESOLVED node name case-sensitively.
+  9 mutants (with MW-D32).
+- MW-D32 - body parts: getBodyParts whole (LAST proper match wins,
+  male-for-female fill, the FP hand ladder, no vampire filter), the
+  female animation column, the typed weapon bone only when the rig
+  carries it, RADT read whole (beast, heights, weights).
+- MW-D33 - the clip law: quadratic in/out tangents un-swapped
+  (stream order nifkey.hpp:141-143, Hermite controller.hpp:158),
+  constant keys answer by WHICH HALF (quaternions too), TCB interior
+  tangents weight by time span (generateTCBTangents), reset's third
+  stage stops at the start key, the accum root's axes ZERO, and
+  getCompletion's zero-width answer is mPlaying ? 0 : 1. 8 mutants.
+- MW-D34 - render and scale: the third-person chirality MEASURED
+  through the real composite (mwArmProbe L5b - the unfixed pass leaned
+  the sword's ink screen-LEFT, Δ1701:-127) and fixed with the -u side
+  axis; Npc::adjustScale wired (weight on x,y, height on z, per
+  gender, focal height included); textures decode BY EXTENSION
+  (decodeTga/decodeBmp behind the ladder); ammunition instanced BARE
+  (no BoneOffset of its own). 8 mutants.
+- MW-D35 - the citation sweep, run LAST so every corrected line names
+  the final code.
+
+NUMBERING RECONCILIATION. A parallel session landed the AUDIT MW-A arc
+(chargen faceIndex, the item map, worn armor/clothing) on main during
+this arc and used the labels MW-D27 through MW-D31 for its own slices
+(chargen face, item map, worn armor, clothing, fp-worn). This arc's
+MW-D28..MW-D35 are DIFFERENT slices that merged around them; Testing.md
+rows carry both families' narratives side by side, dated, and the
+labels above are this arc's. Where both arcs touched one file (fpArm's
+build, playerBodyRows, the face law) the merge kept both laws and the
+pins of each.
