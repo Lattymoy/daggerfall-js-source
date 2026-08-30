@@ -16,6 +16,8 @@ import {
   resetClip,
   shouldLoop,
   advanceClip,
+  isLoopingAnimation,
+  LOOPING_ANIMATIONS,
 } from '../src/formats/mwAnim.js';
 import {
   buildSkeleton,
@@ -606,4 +608,84 @@ test('MW-D7: trackBinding names the tracks that bind and the ones that do not', 
   // The comparison must be the poser's own: lowercased both sides.
   assert.ok(good.matched.some((m) => m.bone === 'Right Upper Arm'),
     'and it matches on the LOWERCASED name, exactly as poseSkeleton does');
+});
+
+// --- MW-D17: THE LOOPING SET, AND THE VIEWER RIDES THE LAW -----------------
+//
+// Animation::isLoopingAnimation (animation.cpp:792-826) is the SCRIPTED
+// path's loopFallback producer - playGroup, character.cpp:2631 - and the
+// mesh viewer's dropdown IS that path: a group named from outside the
+// movement machine. The player body's own paths hardcode their answer
+// (rule 51's recorded caveat) and fpArm keeps doing so, untouched.
+
+test('MW-D17 rule 51: the hardcoded looping set, all forty-four names, verbatim', () => {
+  // Typed from the reference literal at animation.cpp:797-804, not
+  // computed from anything in the port - a dropped or misspelt name
+  // fails here and nowhere else.
+  assert.deepEqual([...LOOPING_ANIMATIONS], [
+    'walkforward', 'walkback', 'walkleft', 'walkright',
+    'swimwalkforward', 'swimwalkback', 'swimwalkleft', 'swimwalkright',
+    'runforward', 'runback', 'runleft', 'runright',
+    'swimrunforward', 'swimrunback', 'swimrunleft', 'swimrunright',
+    'sneakforward', 'sneakback', 'sneakleft', 'sneakright',
+    'turnleft', 'turnright', 'swimturnleft', 'swimturnright',
+    'spellturnleft', 'spellturnright', 'torch',
+    'idle', 'idle2', 'idle3', 'idle4', 'idle5', 'idle6', 'idle7',
+    'idle8', 'idle9', 'idlesneak', 'idlestorm', 'idleswim', 'jump',
+    'inventoryhandtohand', 'inventoryweapononehand', 'inventoryweapontwohand',
+    'inventoryweapontwowide',
+  ]);
+  assert.equal(LOOPING_ANIMATIONS.length, 44);
+});
+
+test('MW-D17 rule 51: a real "loop start" key loops ANY group - and at time 0, because the test is >= 0', () => {
+  // getTextKeyTime answers the key's TIME with -1 for absent, and the
+  // reference guards `>= 0`. A key sitting exactly at t=0 is the
+  // mutation that separates >= from >: real files start at zero.
+  const atZero = [{ time: 0, text: 'move: loop start' }, { time: 1, text: 'move: loop stop' }];
+  assert.equal(isLoopingAnimation(atZero, 'move'), true, 'loop start at t=0 still loops');
+  const stopOnly = [{ time: 1, text: 'move: loop stop' }];
+  assert.equal(isLoopingAnimation(stopOnly, 'move'), false, 'a loop STOP alone proves nothing');
+  assert.equal(isLoopingAnimation([], 'move'), false, 'and no keys at all is not a loop');
+});
+
+test('MW-D17 rule 51: the LONGEST short group is stripped - "bow" must not be picked over "crossbow"', () => {
+  // The reference's own comment names this case. Strip the shorter
+  // suffix and "idlecrossbow" becomes "idlecross", which is in no set.
+  assert.equal(isLoopingAnimation([], 'idlecrossbow'), true);
+  assert.equal(isLoopingAnimation([], 'idlebow'), true);
+  assert.equal(isLoopingAnimation([], 'idle1h'), true, 'the everyday variant, same rule');
+  assert.equal(isLoopingAnimation([], 'walkforward1s'), true, 'movement groups have variants too');
+});
+
+test('MW-D17 rule 51: the strip is a SUFFIX test, and set membership is of what remains', () => {
+  // "spellturnleft" CONTAINS the short group "spell" but does not end
+  // with it - an includes/startsWith mutant strips five letters off the
+  // tail and answers false. The reference answers true: nothing is
+  // stripped and the whole name is in the set.
+  assert.equal(isLoopingAnimation([], 'spellturnleft'), true);
+  assert.equal(isLoopingAnimation([], '1hidle'), false, 'a LEADING short group is not a suffix');
+  assert.equal(isLoopingAnimation([], 'idle9'), true, 'the set ends at idle9...');
+  assert.equal(isLoopingAnimation([], 'idle10'), false, '...and idle10 is outside it');
+  assert.equal(isLoopingAnimation([], 'move'), false, 'an arbitrary group does not loop');
+  assert.equal(isLoopingAnimation([], 'equip'), false, 'nor does a section name');
+});
+
+test('MW-D17 rule 51: the group is folded at the door, like every other entry point', () => {
+  assert.equal(isLoopingAnimation([], 'Idle'), true);
+  assert.equal(isLoopingAnimation([], 'IDLE1H'), true);
+});
+
+test('MW-D17: the viewer has ONE home for clip time - the law, not a modulo', () => {
+  const src = readFileSync(new URL('../src/tools/mwViewer.js', import.meta.url), 'utf8');
+  // The second home booked at MW-D7 ("MW-D8's first task") is retired:
+  // no `% span` player, no case-sensitive groups.get bypassing the
+  // MWAUDIT door, no per-frame accum-root recompute.
+  assert.ok(!src.includes('% span'), 'the modulo player is gone');
+  assert.ok(!/anim\.groups\.get\(/.test(src), 'no case-sensitive lookup drives the pose');
+  assert.ok(/advanceClip\(anim\.clip, anim\.keys/.test(src), 'the playhead is advanceClip\'s');
+  assert.ok(/loopFallback: isLoopingAnimation\(anim\.keys, name\)/.test(src),
+    'and loopFallback is rule 51\'s answer, not "always"');
+  assert.equal((src.match(/accumRootRef\(/g) || []).length, 1,
+    'rule 56\'s pick is made once per track set, not once per frame');
 });

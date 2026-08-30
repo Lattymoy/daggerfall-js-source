@@ -10,6 +10,7 @@ import {
   isRealWeapon, isTwoHandedMelee, composeStanceGroup, composeWeaponGroup,
   weaponShortGroup, weaponLongGroup, mwAttackType, attackKeys, calculateWindUp,
   releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, DF_STRIKE_TO_MW_ATTACK,
+  allWeaponShortGroups,
 } from '../src/formats/mwFirstPerson.js';
 import { getTextKeyTime, getStartTime, resetClip, advanceClip } from '../src/formats/mwAnim.js';
 
@@ -180,6 +181,17 @@ test('MW-D12 rule 8: the animation weapon type is the STANCE, not the item', () 
   // And that is what makes the sheathed stance the BARE idle: type None
   // has no short group at all.
   assert.equal(weaponShortGroup(MW_WEAPON_TYPE.None), '');
+});
+
+test('MW-D17 rule 8: getAllWeaponTypeShortGroups is the ELEVEN, deduplicated and sorted', () => {
+  // weapontype.cpp:422-434 - every type First(-4)..Last(13), non-empty
+  // short groups "via a set to eliminate duplicates", and std::set also
+  // SORTS. The literal is typed from the reference's per-type values:
+  // dropping the dedupe doubles 1h/1b/2b/2w, dropping the non-empty
+  // test admits None/Arrow/Bolt's '', and starting the walk at 0 loses
+  // the four pseudo-types' 1h/spell/hh.
+  assert.deepEqual(allWeaponShortGroups(),
+    ['1b', '1h', '1s', '1t', '2b', '2c', '2w', 'bow', 'crossbow', 'hh', 'spell']);
 });
 
 // --- rule 10: the idle loop count -------------------------------------------
@@ -528,4 +540,87 @@ test('MW-D12: the renderer SKIPS a hidden range rather than drawing it', () => {
   const src = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
   assert.match(src, /for \(const r of mesh\.ranges\) \{\n\s*\/\/[\s\S]*?if \(r\.hidden\) continue;/,
     'the skip is the FIRST thing in the range loop, before the texture bind');
+});
+
+// --- MW-D19: THE WEAPON FOLLOWS THE HAND ------------------------------------
+//
+// The arm was a one-shot snapshot of the equip state at build time - the
+// only caller of build() is the card's button, so a weapon equipped
+// after it was pressed never reached the hand, and one equipped before
+// never left. That is Mac's "weapons aren't working", structurally.
+// setWeapon resolves through resolveWeaponParts - the build's own door -
+// and swaps the weapon and arrow pieces on the live assembly.
+
+const TWO_WEAPON_ESM = () => Uint8Array.from([
+  ...wpdtRec('iron longsword', 'w/blade.nif', MW_WEAPON_TYPE.LongBladeOneHand),
+  ...wpdtRec('iron battle axe', 'w/blade.nif', MW_WEAPON_TYPE.AxeTwoHand),
+]);
+const BATTLE_AXE = { templateIndex: 127 };
+
+test('MW-D19: build once empty-handed, swap live - the sword arrives, repeats no-op, leaves', async () => {
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => ({ pitch: 0 }));
+  const res = await arm.build({ race: 'fprace', weapon: null, deps: fpDeps(TWO_WEAPON_ESM()) });
+  assert.ok(res.ok, `build: ${res.stage} ${res.error}`);
+  assert.equal(arm.status().weapon, null, 'built empty-handed');
+  const bare = arm.status().pieces;
+  // The fast path is SYNCHRONOUS: same identity, no promise, no work.
+  assert.equal(arm.setWeapon(null, { hasAmmo: false }), false);
+  // The swap.
+  assert.equal(await arm.setWeapon(LONGSWORD, { hasAmmo: false }), true);
+  let s = arm.status();
+  assert.equal(s.weapon && s.weapon.id, 'iron longsword');
+  assert.equal(s.weapon.type, MW_WEAPON_TYPE.LongBladeOneHand);
+  assert.equal(s.pieces, bare + 1, 'one weapon piece joined the arm');
+  // Same item again: no-op, synchronously.
+  assert.equal(arm.setWeapon(LONGSWORD, { hasAmmo: false }), false);
+  // A DIFFERENT weapon replaces, never stacks.
+  assert.equal(await arm.setWeapon(BATTLE_AXE, { hasAmmo: false }), true);
+  s = arm.status();
+  assert.equal(s.weapon && s.weapon.id, 'iron battle axe');
+  assert.equal(s.weapon.type, MW_WEAPON_TYPE.AxeTwoHand);
+  assert.equal(s.pieces, bare + 1, 'still exactly one weapon piece');
+  // And back to bare hands: the piece leaves the assembly.
+  assert.equal(await arm.setWeapon(null, { hasAmmo: false }), true);
+  s = arm.status();
+  assert.equal(s.weapon, null);
+  assert.equal(s.pieces, bare);
+});
+
+test('MW-D19: swapping while DRAWN re-equips the new weapon and lands back at WeaponEquipped', async () => {
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => ({ pitch: 0 }));
+  const res = await arm.build({ race: 'fprace', weapon: LONGSWORD, deps: fpDeps(TWO_WEAPON_ESM()) });
+  assert.ok(res.ok, `build: ${res.stage} ${res.error}`);
+  arm.setSheathed(false);
+  assert.ok(run(arm, (st) => st.upperName === 'WeaponEquipped') >= 0, 'the sword is drawn');
+  assert.ok(arm.status().weaponShown);
+  assert.equal(await arm.setWeapon(BATTLE_AXE, { hasAmmo: false }), true);
+  // The reference's shape for an equip change mid-draw: the NEW weapon
+  // is equipped - the machine runs its equip section rather than
+  // pretending the axe was always in hand.
+  assert.ok(run(arm, (st) => st.upperName === 'WeaponEquipped') >= 0, 'the axe finishes equipping');
+  const s = arm.status();
+  assert.equal(s.weapon && s.weapon.id, 'iron battle axe');
+  assert.ok(s.weaponShown, 'and it is IN the hand, not just in the record');
+  assert.equal(s.sheathed, false, 'the hand stayed drawn across the swap');
+});
+
+test('MW-D19: a swap overtaken by unload walks away instead of arming a ghost', async () => {
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => ({ pitch: 0 }));
+  const deps = fpDeps(TWO_WEAPON_ESM());
+  const res = await arm.build({ race: 'fprace', weapon: null, deps });
+  assert.ok(res.ok, `build: ${res.stage} ${res.error}`);
+  // Hold the archive open until after the arm is gone.
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const openArchives = deps.loadMorrowindArchives;
+  deps.loadMorrowindArchives = async () => { await gate; return openArchives(); };
+  const p = arm.setWeapon(LONGSWORD, { hasAmmo: false });
+  assert.ok(p && typeof p.then === 'function', 'a real swap is async');
+  arm.unload();
+  release();
+  assert.equal(await p, false, 'the stale swap declines');
+  assert.equal(arm.status().active, false, 'and nothing was armed');
 });

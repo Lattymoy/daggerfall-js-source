@@ -48,7 +48,7 @@ import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import {
-  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds,
+  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
@@ -379,6 +379,118 @@ function skeletonHasBone(skeletonBytes, name) {
   } catch { return false; }
 }
 
+/**
+ * MW-D9's WEAPON RESOLUTION, one home (extracted at MW-D19 so a live
+ * equip change resolves through the same door as the build).
+ *
+ * A Morrowind weapon is a RIGID part at a bone - rule 12's rigid half,
+ * the same path armcuff has proved since MW-D6 - so it rides in as one
+ * more part with an explicit `bones` override instead of the PART_BONES
+ * table. Rule 17 is that override: the generic "Weapon Bone" is
+ * replaced by the equipped type's own attach bone when the actor has
+ * that node, which is how a bow reaches "Weapon Bone Left" (rule 8).
+ *
+ * AND THE BOW COMES OUT MIRRORED, which is faithful and surprising
+ * enough to write down before someone "fixes" it. Rule 13's mirror is
+ * a SUBSTRING TEST on the attach bone's name (SceneUtil::attach,
+ * components/sceneutil/attach.cpp:166-181), and that function is the
+ * generic attach path for every part - weapons included, not body parts
+ * only. "Weapon Bone Left" contains "Left", so the bow is drawn with X
+ * negated by exactly the same rule that mirrors the left hand. Nothing
+ * here special-cases it.
+ *
+ * @returns {{mwType:number, parts:object[], weaponInfo:object|null,
+ *   arrowInfo:object|null, notes:string[]}}
+ */
+/**
+ * MW-D19: the identity a weapon swap compares. Everything that changes
+ * WHICH mesh hangs on the bone is in it - the Morrowind type (two
+ * Daggerfall templates mapping to one type are the same arm), the
+ * material (pickWeaponRecord matches the record id on it), and whether
+ * an arrow rides along. Two unknown items both fold to None and compare
+ * equal, which is right: both draw nothing.
+ */
+export function fpWeaponKey(item, hasAmmo) {
+  return `${dfWeaponToMw(item, WEAPONS)}:${(item && item.materialName) || ''}:${hasAmmo ? 1 : 0}`;
+}
+
+/** Template 131 is Daggerfall's arrow. This test existed as THREE
+ *  literals (the rig's out-of-arrows auto-sheathe, the card's build
+ *  button, and the swap seam wanted a fourth) - one export now. */
+export const DF_ARROW_TEMPLATE = 131;
+export function hasDaggerfallArrows(items) {
+  return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
+}
+
+export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
+  const notes = [];
+  const parts = [];
+  let weaponInfo = null;
+  let arrowInfo = null;
+  const mwType = dfWeaponToMw(weapon, WEAPONS);
+  if (mwType !== MW_WEAPON_TYPE.None) {
+    const rec = pickWeaponRecord(allWeapons, mwType, weapon && weapon.materialName);
+    if (!rec) {
+      notes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
+    } else {
+      const path = `meshes/${rec.model}`;
+      const arc = find(path);
+      if (!arc) notes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
+      else {
+        const bone = weaponAttachBone(mwType);
+        const weaponBytes = arc.get(path).slice();
+        parts.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
+        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
+
+        // MW-D16 / RULE 24's ARROW. A drawn bow with no round on it is
+        // what the port has been drawing; the reference instances the
+        // AMMUNITION SLOT's model under getArrowBone() at the
+        // "shoot attach" key.
+        const ammoType = ammoTypeFor(mwType);
+        if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
+          const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+          if (!ammoRec) {
+            notes.push(`arrow: your archives carry no unenchanted Morrowind ammunition of type ${ammoType}`);
+          } else {
+            const ammoPath = `meshes/${ammoRec.model}`;
+            const ammoArc = find(ammoPath);
+            if (!ammoArc) notes.push(`arrow: ${ammoPath} (${ammoRec.id}) is not in your archives`);
+            else {
+              // getArrowBone's two branches. The ACTOR's own bone
+              // first; failing that, a node named "ArrowBone" inside
+              // the WEAPON's mesh - which brings the weapon's whole
+              // transform chain, and its MIRROR, along with it.
+              const skelBone = arrowAttachBone(mwType);
+              const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
+              let pre = null;
+              let arrowBone = skelBone;
+              if (!onActor) {
+                pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
+                arrowBone = pre ? bone : null;
+              }
+              if (!arrowBone) {
+                notes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
+                  + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
+              } else {
+                parts.push({
+                  slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                });
+                arrowInfo = {
+                  id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
+                  bone: arrowBone, viaWeaponMesh: !onActor,
+                };
+              }
+            }
+          }
+        }
+      }
+    }
+  } else if (weapon) {
+    notes.push('weapon: Morrowind has no weapon type for what you are holding');
+  }
+  return { mwType, parts, weaponInfo, arrowInfo, notes };
+}
+
 export async function buildFpArm({
   race, female = false, beast = false, weapon = null, hasAmmo = false, deps = null,
 } = {}) {
@@ -443,89 +555,16 @@ export async function buildFpArm({
       if (!arc) { missing.push(`${w.slot}: ${w.path} is not in your archives`); continue; }
       partBytes.push({ slot: w.slot, bytes: arc.get(w.path).slice() });
     }
-    // MW-D9: THE WEAPON, and it needs no new attach path at all.
-    //
-    // A Morrowind weapon is a RIGID part at a bone - rule 12's rigid
-    // half, the same path armcuff has proved since MW-D6 - so it rides
-    // in as one more part with an explicit `bones` override instead of
-    // the PART_BONES table. Rule 17 is that override: the generic
-    // "Weapon Bone" is replaced by the equipped type's own attach bone
-    // when the actor has that node, which is how a bow reaches
-    // "Weapon Bone Left" (rule 8).
-    //
-    // AND THE BOW COMES OUT MIRRORED, which is faithful and surprising
-    // enough to write down before someone "fixes" it. Rule 13's mirror is
-    // a SUBSTRING TEST on the attach bone's name
-    // (SceneUtil::attach, components/sceneutil/attach.cpp:166-181), and
-    // that function is the generic attach path for every part - weapons
-    // included, not body parts only. "Weapon Bone Left" contains "Left",
-    // so the bow is drawn with X negated by exactly the same rule that
-    // mirrors the left hand. Nothing here special-cases it.
-    const weaponNotes = [];
-    let weaponInfo = null;
-    let arrowInfo = null;
-    const mwType = dfWeaponToMw(weapon, WEAPONS);
-    if (mwType !== MW_WEAPON_TYPE.None) {
-      const allWeapons = esmBytes.flatMap((e) => weaponRecords(e.bytes));
-      const rec = pickWeaponRecord(allWeapons, mwType, weapon && weapon.materialName);
-      if (!rec) {
-        weaponNotes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
-      } else {
-        const path = `meshes/${rec.model}`;
-        const arc = find(path);
-        if (!arc) weaponNotes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
-        else {
-          const bone = weaponAttachBone(mwType);
-          const weaponBytes = arc.get(path).slice();
-          partBytes.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
-          weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
-
-          // MW-D16 / RULE 24's ARROW. A drawn bow with no round on it is
-          // what the port has been drawing; the reference instances the
-          // AMMUNITION SLOT's model under getArrowBone() at the
-          // "shoot attach" key.
-          const ammoType = ammoTypeFor(mwType);
-          if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
-            const ammoRec = pickWeaponRecord(allWeapons, ammoType);
-            if (!ammoRec) {
-              weaponNotes.push(`arrow: your archives carry no unenchanted Morrowind ammunition of type ${ammoType}`);
-            } else {
-              const ammoPath = `meshes/${ammoRec.model}`;
-              const ammoArc = find(ammoPath);
-              if (!ammoArc) weaponNotes.push(`arrow: ${ammoPath} (${ammoRec.id}) is not in your archives`);
-              else {
-                // getArrowBone's two branches. The ACTOR's own bone
-                // first; failing that, a node named "ArrowBone" inside
-                // the WEAPON's mesh - which brings the weapon's whole
-                // transform chain, and its MIRROR, along with it.
-                const skelBone = arrowAttachBone(mwType);
-                const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
-                let pre = null;
-                let arrowBone = skelBone;
-                if (!onActor) {
-                  pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
-                  arrowBone = pre ? bone : null;
-                }
-                if (!arrowBone) {
-                  weaponNotes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
-                    + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
-                } else {
-                  partBytes.push({
-                    slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
-                  });
-                  arrowInfo = {
-                    id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
-                    bone: arrowBone, viaWeaponMesh: !onActor,
-                  };
-                }
-              }
-            }
-          }
-        }
-      }
-    } else if (weapon) {
-      weaponNotes.push('weapon: Morrowind has no weapon type for what you are holding');
-    }
+    // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
+    // gave it so a live weapon swap resolves through the very same door
+    // as the build.
+    const allWeapons = esmBytes.flatMap((e) => weaponRecords(e.bytes));
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    partBytes.push(...resolvedWeapon.parts);
+    const weaponNotes = resolvedWeapon.notes;
+    const weaponInfo = resolvedWeapon.weaponInfo;
+    const arrowInfo = resolvedWeapon.arrowInfo;
+    const mwType = resolvedWeapon.mwType;
 
     // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
     // as addSingleAnimSource filters it.
@@ -685,6 +724,12 @@ export async function buildFpArm({
       rows: wanted,
       weapon: weaponInfo,
       arrow: arrowInfo,
+      // MW-D19: what a live weapon swap needs without re-walking the
+      // .esm - the parsed WEAP records and the skeleton bytes the arrow
+      // branch tests bones against. The archives are NOT retained (they
+      // are the memory cost); setWeapon reopens them for one fetch.
+      allWeapons,
+      skeletonBytes,
       esm: esmDiagnosis(esmNames, parts, race),
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: idlePick.source.binding,
@@ -762,6 +807,10 @@ export function createFpArm() {
   let reason = 'not built';
   let frames = 0;
   let busy = false;
+  // MW-D19: the equip identity this arm currently wears, and the deps
+  // seam it was built through - the swap resolves through the same one.
+  let wornKey = null;
+  let buildDeps = null;
 
   // MW-D12: TWO CLIP SLOTS, because Morrowind's first-person arm plays
   // TWO animations and the port had one.
@@ -1034,7 +1083,7 @@ export function createFpArm() {
     }
   }
 
-  return {
+  const api = {
     attach(r, cam) { renderer = r || null; camera = cam || null; },
     active,
     ready,
@@ -1048,6 +1097,8 @@ export function createFpArm() {
         releaseMesh();
         built = res;
         packed = null;
+        wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
+        buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
         weaponShown = false; arrowShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
@@ -1142,6 +1193,88 @@ export function createFpArm() {
       if (attach < 0) weaponShown = true;
       refreshIdle(true);
       return true;
+    },
+
+    /**
+     * MW-D19: THE WEAPON FOLLOWS THE HAND. The arm was a one-shot
+     * snapshot of the equip state at build time - the ONLY caller of
+     * build() is the card's button, so a weapon equipped after it was
+     * pressed never reached the hand, and one equipped before it never
+     * left. The reference re-resolves the weapon whenever the equip
+     * slot changes (updateEquippedWeapon destroys and re-creates the
+     * weapon's PartHolder; rule 57's hide-not-remove is for
+     * draw/sheathe of the SAME weapon, which weaponShown still does).
+     *
+     * The fast path is synchronous and per-frame cheap: the caller
+     * hands in what the hand holds every frame, and nothing happens
+     * until fpWeaponKey says the identity changed. The slow path
+     * reopens the stored archives for the one mesh fetch, resolves
+     * through resolveWeaponParts - the build's own door - swaps the
+     * weapon and arrow pieces on the live assembly, and re-equips if
+     * the old weapon was drawn.
+     */
+    setWeapon(item, { hasAmmo = false } = {}) {
+      if (!built || !built.ok || busy) return false;
+      const key = fpWeaponKey(item, hasAmmo);
+      if (key === wornKey) return false;
+      busy = true;
+      const token = built;
+      return (async () => {
+        try {
+          const d = buildDeps || await import('../scenes/dataSource.js');
+          const archives = await d.loadMorrowindArchives();
+          // Unloaded or rebuilt while the archives opened: this swap's
+          // target is gone, and the newer state already carries its own
+          // wornKey. Walk away.
+          if (built !== token) return false;
+          const find = (p) => archives.find((a) => a.has(p));
+          const resolved = resolveWeaponParts({
+            weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
+            skeletonBytes: token.skeletonBytes,
+          });
+          const arm = token.arm;
+          arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
+          bindPartsInto(arm, resolved.parts);
+          // Textures the NEW pieces name, resolved while the archives
+          // are open; what the arm already decoded stays.
+          const fresh = arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
+          for (const [file, tex] of collectArmTextures(fresh, archives)) {
+            if (!token.textures.has(file)) token.textures.set(file, tex);
+          }
+          token.mwType = resolved.mwType;
+          token.weapon = resolved.weaponInfo;
+          token.arrow = resolved.arrowInfo;
+          token.notes = [
+            ...(token.notes || []).filter((n) => !/^(weapon|arrow)[ :@]/.test(n)),
+            ...resolved.notes,
+          ];
+          token.pieces = armPieceRows(arm.pieces).length;
+          // Reach follows the new silhouette - the build's own 25-pose
+          // sweep, same arithmetic.
+          const poseAt = (t) => poseAssembly(arm, {
+            tracks: token.tracks, sampleTrack, time: t, accumRoot: token.accumRoot,
+          });
+          const c = token.clip;
+          const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
+          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));
+          poseAt(c.startTime);
+          releaseMesh();
+          packed = null;
+          // The old action clip belonged to the old weapon's group.
+          actionState = null; actionSource = null; attackType = null; holdWindUp = false;
+          weaponShown = false; arrowShown = false;
+          wornKey = key;
+          const wasDrawn = !sheathed;
+          sheathed = true;
+          upper = UPPER_BODY.None;
+          refreshWeaponGroup();
+          refreshIdle(true);
+          // A drawn hand equips the NEW weapon - the same section the
+          // reference plays when the equip slot changes mid-draw.
+          if (wasDrawn) { busy = false; api.setSheathed(false); }
+          return true;
+        } finally { busy = false; }
+      })();
     },
 
     /**
@@ -1421,6 +1554,7 @@ export function createFpArm() {
       return out;
     },
   };
+  return api;
 }
 
 export const fpArm = createFpArm();

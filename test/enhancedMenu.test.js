@@ -212,7 +212,7 @@ test('R7: the pane does not claim a feature the tree does not have', () => {
   if (/first-person arm/i.test(pane)) {
     assert.ok(exists('src/combat/fpArm.js'),
       'the pane names the arms, so the engine must exist');
-    assert.match(read('src/combat/weaponRig.js'), /import \{ fpArm \} from '\.\/fpArm\.js';/,
+    assert.match(read('src/combat/weaponRig.js'), /import \{ fpArm(?:, [\w$, ]+)? \} from '\.\/fpArm\.js';/,
       'and the weapon rig must actually import it - a card is not a feature');
     assert.match(pane, /fpArm\.build\(/, 'and the button must call the real build');
   }

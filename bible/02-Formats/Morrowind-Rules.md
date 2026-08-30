@@ -1,5 +1,20 @@
 # Morrowind first-person: the rules, from the reference implementation
 
+THE GOAL, STATED BY MAC (2026-08-30): a COMPREHENSIVE 3D replacement -
+paperdoll, items, weapons, and in time NPCs and enemies all receive the
+Morrowind 3D treatment. The immediate focus is the PLAYER's first- and
+third-person aspect. This supersedes Port-Doctrine's voxel-characters
+plank (noted there, with this date); the staged discipline below is how
+we get there, not a smaller destination.
+
+TWO BUGS REPORTED FROM RETAIL PLAY (Mac, 2026-08-30): (1) HANDS ARE
+MISSING, (2) WEAPONS ARE NOT WORKING. MW-D18 closes the two doors that
+could eat a hand without a word; MW-D19 gives the weapon the live equip
+seam it never had. Neither is CONFIRMED fixed until Mac sees hands - the
+standing rule below - and if they are still missing after MW-D18, the
+card now prints the sentence that says why, and that sentence is the
+next bug report.
+
 STATUS (2026-08-30, PAUSED MID-REBUILD - read this first).
 
 WHERE THIS STANDS. The first import arc was reverted whole on 2026-08-28
@@ -271,6 +286,108 @@ and the arm had been taking a `bow` flag from weaponRig's machine, which
 is a second source of truth for a question the data answers and one that
 would have missed a thrown weapon.
 
+MW-D17 RETIRED THE SECOND HOME FOR CLIP TIME. MW-D7's booking - "MW-D8's
+first task: replace it with advanceClip or delete it" - stood through
+nine slices. The viewer's own player was start plus elapsed-modulo-span:
+it looped EVERY group forever, replayed the clip's INTRO on each wrap,
+looked the group up with a case-SENSITIVE `groups.get` that bypassed
+findAnimGroup's own MWAUDIT fix, and recomputed the accum root every
+frame. The playhead is resetClip/advanceClip now - the one home
+mw-inspect and fpArm already ride - the case fold comes from the law
+itself, and rule 56's pick is made once per track set.
+
+THE PIECE THAT WAS MISSING WAS RULE 51's SECOND HALF. A viewer playing
+whatever group the user picked IS the scripted PlayGroup path
+(character.cpp:2631), and that path's loopFallback producer is
+Animation::isLoopingAnimation (animation.cpp:792-826), which had no JS
+home: a real "loop start" key anywhere loops - the guard is `>= 0`, so
+a key at time ZERO counts - else strip the LONGEST weapon short group
+that is a SUFFIX of the name ("so e.g. 'bow' doesn't get picked over
+'crossbow'" - the reference's own comment; and a suffix, so
+`spellturnleft`, which CONTAINS `spell`, is not stripped), and test what
+remains against the hardcoded forty-four-name set, verbatim. Its
+companion getAllWeaponTypeShortGroups (weapontype.cpp:422-434) walks
+every type First(-4)..Last(13) and dedupes "via a set" - ELEVEN come out
+of eighteen, rule 8's own count arriving from a second direction. The
+player-BODY paths hardcode their loopFallback (rule 51's recorded
+caveat) and fpArm keeps doing so, untouched: isLoopingAnimation lives in
+mwAnim.js for the paths that genuinely consult it.
+
+WHAT THE LAW CHANGES ON THE SCREEN: the fixture's "move" plays once and
+freezes on its stop key where it used to loop forever, and "idle" - in
+the set - still loops with no loop keys at all. Both are probe layers
+now, discovered by CROSSING rather than sleeps. parseAnimGroups stays
+what MW-D7 made it, the LISTING the dropdown shows, keyed by the name
+the file wrote; a group the listing names and the law refuses (F3's
+backwards Idle) now prints the refusal on the status line instead of
+freezing on a plausible pose. 13 mutants, 13 dead - one of them the pin
+that separates `>= 0` from `> 0`, a loop-start key at time zero.
+
+MW-D18 CLOSED THE TWO DOORS THAT EAT A HAND SILENTLY, against Mac's
+"hands are missing". Part VI's retail fact frames the suspicion: a Nord
+male has ONE first-person arm record - the hands - and the other three
+slots ride rule 3's third-person fallback, so a defect specific to the
+.1st mesh's SHAPE takes exactly the hands and leaves the arm.
+
+DOOR ONE, RULE 40, AND THE OLD PIN ASSERTED THE DEFECT. bindPart THREW
+on a skinned bone the skeleton lacks, and a test demanded the throw by
+name. The reference logs "RigGeometry did not find bone", stores
+nullptr, and SKIPS those influences in the blend (riggeometry.cpp:
+195-196) - one absent finger bone costs its influences, not the hand.
+The blend semantics are ported exactly, all three cases: a skipped
+influence renormalises NOTHING (rule 39); a vertex weighted ONLY to
+missing bones goes through the ZERO accumulator and collapses onto the
+skin transform's bare translation with a zero normal (riggeometry.cpp:
+191-210, the rule 40 verification's own reading - faithful and ugly on
+purpose, because papering it over with bind pose would hide the very
+data problem the note names); and a vertex with no influences AT ALL
+keeps its authored position (rule 39's erased-empty-set). The card
+names every skipped bone.
+
+DOOR TWO, RULE 15's SILENT MISS. A bone whose every named shape failed
+the filter bound NOTHING and said NOTHING - the card read "on - N
+pieces" with a side simply absent, which is both the missing-hand hole
+and MW-D6's one-handed defect wearing a new face. It is a sentence now:
+the note lists the shapes the file offered against the filter that
+rejected them, per bone, and a healthy part still binds with no notes
+at all. One guard died on the way: "and nothing attached" was
+unreachable (rigid geometry always binds), so it was deleted rather
+than pinned. 7 mutants, 7 dead.
+
+WHAT MW-D18 DOES NOT CLAIM: that this WAS the retail cause. The
+standing rule decides that - nothing is fixed until it is visible on
+Mac's own files. If the hands are still missing, the card's new
+sentences ARE the diagnosis to send back.
+
+MW-D19: THE WEAPON FOLLOWS THE HAND, against Mac's "weapons aren't
+working". The structural finding: the arm was a ONE-SHOT SNAPSHOT of
+the equip state at build time - the card's button is build()'s only
+caller - so a weapon equipped after the button never reached the hand,
+and one equipped before never left. The classic sprite re-reads the
+equip slot every frame (weaponRig's syncWorn); the Morrowind arm had
+no equivalent seam at all.
+
+It does now. fpArm.setWeapon(item, {hasAmmo}) is called from the rig's
+frame beside setSheathed, and its FAST PATH is synchronous: fpWeaponKey
+(the Morrowind type + the material + whether an arrow rides) is one
+compare, so nothing happens until the identity actually changes. The
+slow path reopens the stored archives for the one mesh fetch, resolves
+through resolveWeaponParts - the build's own weapon door, EXTRACTED so
+the swap cannot drift from it - swaps the weapon and arrow pieces on
+the live assembly through bindPartsInto (the build's own part loop,
+same extraction, same reason), decodes only the textures the new mesh
+names, recomputes the reach with the build's own 25-pose sweep, and
+re-equips when the old weapon was drawn. The reference's shape:
+updateEquippedWeapon destroys and re-creates the weapon's PartHolder
+on an equip change; rule 57's hide-not-remove is for draw/sheathe of
+the SAME weapon, and weaponShown still does exactly that.
+
+A swap overtaken by unload() or a rebuild walks away (the token
+guard) - the newer state carries its own worn identity. And the
+arrow-template test (Daggerfall's template 131) was THREE literal
+copies about to become four; it is one export now,
+hasDaggerfallArrows. 8 mutants, 8 dead.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
@@ -452,13 +569,9 @@ MEASURED FINDINGS FROM MW-D7:
       only drops nulls). `mwViewer`'s `span = max(stop - start, 1e-6)`
       would freeze on it. The page now shows both answers side by side.
 
-BOOKED, NOT DONE - each named here so it is not inherited silently:
+BOOKED, NOT DONE - each named here so it is not inherited silently
+(the mwViewer clip-time booking that led this list closed at MW-D17):
 
-  * `mwViewer.js:342-348` is now a SECOND HOME for clip time, and the
-    worse one: `% span` with no loop window, a case-SENSITIVE
-    `groups.get` that bypasses findAnimGroup's own MWAUDIT fix, and
-    `accumRootRef` recomputed every frame. MW-D8's first task: replace
-    it with advanceClip or delete it.
   * `parseAnimGroups` diverges from rules 21/22/44/45 in four ways
     (splits on `\r\n` as a pair, accepts `Group:Marker`, compares the
     stop marker exactly, takes file order rather than rule 22's reverse
@@ -685,13 +798,18 @@ the sign of +x - with a probe layer that reads the framebuffer at a clip
 time where the arms are UNCROSSED, since at the clip's start they swing
 across each other and either answer looks right.
 
-NEXT, IN ORDER: (1) the texture - rules 36 and 61, which needs a dynamic
-vertex door on the textured program and a DDS upload, and is now the
-single biggest visible gap; (2) attack clips - rules 10 and 11, whose
-keys are namespaced by the LONG group; (3) rule 54's camera bone, now
-that the build reports whether the data has one, which retires the port
-mapper. Also booked from MW-D7 and NOT done: mwViewer.js:342-348 is
-still a second home for clip time.
+NEXT, IN ORDER (recounted at MW-D17 - the list that stood here was
+MW-D9's and every item on it shipped: the texture at MW-D11, the attack
+clips at MW-D12, the camera bone at MW-D10, and the viewer's second
+clip-time home at MW-D17): (1) `parseAnimGroups`' four recorded
+divergences from rules 21/22/44/45 - its own audit slice, still
+deliberately unmixed because three MWAUDIT pins assert its present
+behaviour; (2) `KEY_TYPE.constant` is sampled by holding the previous
+key where the reference flips at the segment midpoint with a strict `>`
+(and rotation keys of that type take the flip too, never slerp); (3)
+`track.frequency`/`phase` are read from every controller and used
+nowhere - whether the ControllerFunction time map is reachable from
+first-person data is itself unread ground.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

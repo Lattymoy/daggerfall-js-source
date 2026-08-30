@@ -170,6 +170,53 @@ const fBound = await page.evaluate(() => window.__mwviewer.loaded.npcBound);
 ok(fBound && fBound.includes('b_test_chest_f') && !fBound.includes('b_test_chest'),
   `sex matching bound the female chest (${fBound})`);
 
+// MW-D17: THE CLIP LAW IS THE VIEWER'S ONE HOME FOR TIME. The retired
+// player - start + (elapsed modulo span) - looped EVERY group forever
+// and replayed the intro on each wrap, so "does it stop" is the one
+// question that separates the law from the modulo. Both layers discover
+// their answer by CROSSING (waitForFunction polls on the page's own
+// frames), never by sleeping against SwiftShader's clock.
+await page.selectOption('#meshsel', 'meshes/fixture/animated.nif');
+await page.waitForTimeout(200);
+await page.selectOption('#animsel', 'Move');
+// "move" is in no hardcoded set and the fixture has no loop keys: rule
+// 51 answers loopFallback FALSE, so the clip plays once to its stop key
+// and freezes there. The modulo player can never satisfy this wait.
+await page.waitForFunction(
+  () => { const c = window.__mwviewerClip(); return c && c.playing === false; },
+  null, { timeout: 20000 },
+);
+const moveClip = await page.evaluate(() => window.__mwviewerClip());
+ok(moveClip && Math.abs(moveClip.time - 1.5) < 1e-6,
+  `"move" plays ONCE and freezes on its stop key (t=${moveClip && moveClip.time})`);
+ok(moveClip && moveClip.loopStopFinite === false,
+  'no loop keys, no fallback: the loop window never closes (rule 49\'s +Infinity)');
+const frozen = await page.evaluate(() => window.__mwviewerSkinnedPositions());
+ok(frozen && Math.abs(frozen[11] - 2) < 1e-3,
+  `and the POSE holds the stop key - v3 stays at z=2, got ${frozen && frozen[11].toFixed(3)}`);
+
+// "idle" IS rule 51's hardcoded set: same file, same absence of loop
+// keys, and it loops for ever. The wrap is observed, not assumed: the
+// playhead must approach the stop and then come back down.
+await page.selectOption('#animsel', 'Idle');
+await page.evaluate(() => { window.__probeMaxT = 0; });
+await page.waitForFunction(
+  () => {
+    const c = window.__mwviewerClip();
+    if (!c) return false;
+    if (c.time > window.__probeMaxT) window.__probeMaxT = c.time;
+    return window.__probeMaxT > 0.4 && c.time < window.__probeMaxT - 0.2;
+  },
+  null, { timeout: 20000 },
+);
+const idleClip = await page.evaluate(() => window.__mwviewerClip());
+ok(idleClip && idleClip.playing === true,
+  'rule 51: "idle" loops with NO loop keys - the hardcoded set is the fallback');
+ok(idleClip && idleClip.loopStopFinite === true && Math.abs(idleClip.loopStopTime - 0.5) < 1e-6,
+  `loopFallback closes the window at the stop key (${idleClip && idleClip.loopStopTime})`);
+ok(idleClip && idleClip.time >= -1e-6 && idleClip.time <= 0.5 + 1e-6,
+  `and the playhead lives inside the group (t=${idleClip && idleClip.time})`);
+
 ok(crashes.length === 0, `no pageerrors${crashes.length ? `: ${crashes[0]}` : ''}`);
 
 await browser.close();

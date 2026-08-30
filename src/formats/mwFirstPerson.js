@@ -430,6 +430,26 @@ export const weaponShortGroup = (type) => WEAPON_SHORT_GROUP[type] ?? '';
 export const weaponLongGroup = (type) => WEAPON_LONG_GROUP[type] ?? '';
 
 /**
+ * MWMechanics::getAllWeaponTypeShortGroups (weapontype.cpp:422-434):
+ * every type First(-4) through Last(13), non-empty short groups only,
+ * deduplicated "via a set" - std::set, which also SORTS them. The order
+ * is not load-bearing for the one consumer (isLoopingAnimation scans
+ * for the LONGEST suffix wherever it sits), but the pin asserts it so a
+ * second consumer inherits the reference's answer, not this table's
+ * iteration order. Arrow and Bolt sit inside [First, Last] with an
+ * empty short group and are dropped by the non-empty test, which is why
+ * eleven come out of eighteen.
+ */
+export function allWeaponShortGroups() {
+  const set = new Set();
+  for (let type = MW_WEAPON_TYPE.PickProbe; type <= MW_WEAPON_TYPE.Bolt; type++) {
+    const shortGroup = weaponShortGroup(type);
+    if (shortGroup) set.add(shortGroup);
+  }
+  return [...set].sort();
+}
+
+/**
  * THE OTHER TWO COLUMNS OF THE SAME TABLE (weapontype.cpp), which decide
  * every fallback below and which the port had been guessing at with a
  * hand-written list of "two-handed" types.
@@ -1156,6 +1176,36 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 
   const pieces = [];
   const notes = [];
+  bindPartsInto({ pieces, notes, skeleton, fns: mod }, parts);
+  const assembly = {
+    ok: pieces.length > 0,
+    pieces,
+    notes,
+    skeleton,
+    rootRef,
+    // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
+    // A dynamic import inside a requestAnimationFrame body is a promise per
+    // frame; this function already paid for them once.
+    fns: mod,
+    bounds: null,
+    error: pieces.length ? null : 'nothing bound - see the notes for why',
+  };
+  // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
+  // MW-D5/D6 pins keep seeing byte-identical numbers because they are the
+  // same arithmetic, called once instead of inlined.
+  return pieces.length ? poseAssembly(assembly) : assembly;
+}
+
+/**
+ * MW-D19: THE PART LOOP, callable on a LIVE assembly. The build calls it
+ * once with every part; a weapon swap calls it again with just the new
+ * weapon and arrow, through the very same bind, filter, mirror and note
+ * paths - a second copy of any of those is how MW7 died. Mutates
+ * `assembly.pieces` and `assembly.notes` in place.
+ */
+export function bindPartsInto(assembly, parts) {
+  const mod = assembly.fns;
+  const { skeleton, pieces, notes } = assembly;
   for (const part of parts) {
     // `part.bones` overrides the table so a test can drive real assembly
     // against a fixture skeleton whose bone names are not Morrowind's.
@@ -1170,6 +1220,8 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
     // MW-D6: the nameless-shape extension binds ONCE for the part; a
     // NAMED shape binds once PER SIDE, filtered. See the block below.
     let tookNameless = false;
+    const piecesBefore = pieces.length;
+    let shapeCensus = null;
     for (const bone of bones.length ? bones : [null]) {
       if (bone && !skeleton.byName.has(bone.toLowerCase())) {
         notes.push(`${part.slot}: this skeleton has no bone "${bone}"`);
@@ -1182,6 +1234,17 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         notes.push(`${part.slot} @ ${bone}: ${err.message}`);
         continue;
       }
+      const bonePiecesBefore = pieces.length;
+      // RULE 40's report: skipped influences draw wrong, not invisibly,
+      // so the card must say WHY a finger sags or a strip collapses.
+      // One note per part, not per bone - the names are the same.
+      if (bound.missingBones?.length) {
+        const say = `${part.slot}: this skeleton has no bone `
+          + `${bound.missingBones.map((b) => `"${b}"`).join(', ')} - `
+          + 'those influences are skipped (rule 40)';
+        if (!notes.includes(say)) notes.push(say);
+      }
+      shapeCensus ??= bound.skinned.map((b) => String(b.name || '').trim() || '(nameless)');
 
       // RULE 12 + 15: skinned geometry carries its own bones, so it is
       // never MIRRORED - it picks its side by the shape NAME. And it
@@ -1251,25 +1314,35 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
       }
+      // THE SILENT HOLE, CLOSED. A bone whose every NAMED skinned shape
+      // fails rule 15's filter used to bind NOTHING and say NOTHING -
+      // the card read "on - N pieces" with a side simply absent from
+      // the arm, which is both the missing-hand hole and the MW-D6
+      // one-handed defect wearing a new face. If this bone gained no
+      // piece and the part had named shapes to offer, the note lists
+      // them against the filter. (A nameless shape skipped by the
+      // once-per-part latch is correct and stays silent: `named` is
+      // empty for it.)
+      if (pieces.length === bonePiecesBefore && bone) {
+        const named = bound.skinned
+          .map((b) => String(b.name || '').trim())
+          .filter((s) => s);
+        // No attached-geometry guard: rigid geometry always binds, so
+        // reaching here with no new piece already means attached was
+        // empty - a guard on it would be a branch no fixture can take.
+        if (named.length) {
+          notes.push(`${part.slot} @ ${bone}: no shape matched - the mesh offers `
+            + `${named.map((s) => `"${s}"`).join(', ')} (rule 15's filter is a `
+            + 'case-insensitive prefix, "tri " stripped first)');
+        }
+      }
+    }
+    // And a part that contributed nothing AT ALL with geometry in hand
+    // (both sides missed, or an empty mesh) is one sentence, not a hole.
+    if (pieces.length === piecesBefore && shapeCensus && !shapeCensus.length) {
+      notes.push(`${part.slot}: nothing bound - the mesh has no geometry to bind`);
     }
   }
-  const assembly = {
-    ok: pieces.length > 0,
-    pieces,
-    notes,
-    skeleton,
-    rootRef,
-    // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
-    // A dynamic import inside a requestAnimationFrame body is a promise per
-    // frame; this function already paid for them once.
-    fns: mod,
-    bounds: null,
-    error: pieces.length ? null : 'nothing bound - see the notes for why',
-  };
-  // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
-  // MW-D5/D6 pins keep seeing byte-identical numbers because they are the
-  // same arithmetic, called once instead of inlined.
-  return pieces.length ? poseAssembly(assembly) : assembly;
 }
 
 /**

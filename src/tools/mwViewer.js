@@ -23,7 +23,16 @@ import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
 import { correctTexturePath } from '../formats/mwTexture.js';
-import { collectTextKeys, parseAnimGroups, extractTracks, sampleTrack } from '../formats/mwAnim.js';
+import {
+  collectTextKeys,
+  parseAnimGroups,
+  extractTracks,
+  sampleTrack,
+  normalizeTextKeys,
+  resetClip,
+  advanceClip,
+  isLoopingAnimation,
+} from '../formats/mwAnim.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch, accumRootRef } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
 import { parseEsm } from '../formats/mwEsmFile.js';
@@ -104,6 +113,24 @@ canvas.addEventListener(
 window.__mwviewerSetAnimTime = (t) => {
   anim.seek = t;
 };
+// The clip law's own state, readable from a probe. F2: Infinity does not
+// survive page.evaluate, so the finite flag rides beside the number -
+// clipReport's convention, kept so no probe asserts on a null it cannot
+// read.
+window.__mwviewerClip = () => {
+  const c = anim.clip;
+  if (!c) return null;
+  return {
+    group: c.group,
+    time: c.time,
+    playing: c.playing,
+    startTime: c.startTime,
+    stopTime: c.stopTime,
+    loopStartTime: c.loopStartTime,
+    loopStopFinite: Number.isFinite(c.loopStopTime),
+    loopStopTime: Number.isFinite(c.loopStopTime) ? c.loopStopTime : null,
+  };
+};
 window.__mwviewerSkinnedPositions = (i = 0) => {
   const s = loaded && loaded.skinnedMeshes[i];
   return s ? Array.from(s.mesh.geometry.attributes.position.array) : null;
@@ -131,6 +158,7 @@ let allMeshNames = [];
 // retail xbase_anim.kf arrangement.
 let kfTracks = null;
 let kfGroups = null;
+let kfKeys = null;
 // ESM state: parsed records + the skin index, for NPC assembly.
 let esm = null;
 let esmSkins = null;
@@ -217,16 +245,33 @@ function loadNpc(id) {
       (a.missing.length ? ` | ${a.missing.length} slots without skins` : ''),
   );
 }
-const anim = { tracks: null, groups: null, playing: null, t0: 0, seek: null };
+// `groups` is parseAnimGroups' LISTING - the dropdown, keyed by the
+// name the file wrote. `keys` is the normalized key array the CLIP LAW
+// reads (rules 44/45), and `clip` is resetClip's state advanced by
+// advanceClip - the same one home mw-inspect and fpArm ride. The two
+// answers can disagree (a group the listing names and the law refuses)
+// and the page shows the refusal instead of freezing on the listing.
+const anim = {
+  tracks: null, groups: null, keys: [], clip: null,
+  accumRoot: null, playing: null, last: 0, seek: null,
+};
 const animSel = $('animsel');
 
 function wireAnimation(nif) {
   const skinnedMeshes = loaded ? loaded.skinnedMeshes : [];
   const inlineTracks = extractTracks(nif);
-  const inlineGroups = parseAnimGroups(collectTextKeys(nif));
+  const rawTextKeys = collectTextKeys(nif);
+  const inlineGroups = parseAnimGroups(rawTextKeys);
   anim.tracks = kfTracks && kfTracks.size ? kfTracks : inlineTracks;
   anim.groups = kfGroups && kfGroups.size ? kfGroups : inlineGroups;
+  anim.keys = kfKeys && kfKeys.length ? kfKeys : normalizeTextKeys(rawTextKeys);
+  // Rule 56's pick, made ONCE per track set instead of every frame -
+  // the same skeleton and tracks always answer the same ref, so the
+  // per-frame recompute was waste wearing a second-home face.
+  anim.accumRoot =
+    loaded && loaded.skeleton ? accumRootRef(loaded.skeleton, anim.tracks) : null;
   anim.playing = null;
+  anim.clip = null;
   anim.seek = null;
   animSel.innerHTML = '';
   const usable = skinnedMeshes.length && anim.tracks.size && anim.groups.size;
@@ -251,11 +296,30 @@ function wireAnimation(nif) {
 
 function startGroup(name) {
   anim.playing = name || null;
-  anim.t0 = performance.now();
+  anim.clip = null;
   anim.seek = null;
-  if (!anim.playing && loaded) {
-    for (const s of loaded.skinnedMeshes) restoreBind(s);
+  anim.last = performance.now();
+  if (!anim.playing) {
+    if (loaded) for (const s of loaded.skinnedMeshes) restoreBind(s);
+    return;
   }
+  // The play request is the scripted PlayGroup path: resetClip picks the
+  // range (rule 22, with rule 21's own lowercase fold at the door - the
+  // MWAUDIT case fix, now coming from the law instead of a second
+  // lookup), and isLoopingAnimation answers loopFallback exactly as
+  // character.cpp:2631 does for a group a script names.
+  const clip = resetClip(anim.keys, name, {
+    loopFallback: isLoopingAnimation(anim.keys, name),
+  });
+  if (!clip.ok) {
+    // F3's case: the LISTING can name a group the LAW refuses (armidle's
+    // backwards Idle). The refusal is the answer - not a frozen pose.
+    setStatus(`${loaded ? `${loaded.name}\n` : ''}anim "${name}" refused: ${clip.reason}`);
+    anim.playing = null;
+    if (loaded) for (const s of loaded.skinnedMeshes) restoreBind(s);
+    return;
+  }
+  anim.clip = clip;
 }
 
 function affineToMatrix4(m) {
@@ -345,15 +409,27 @@ function restoreBind(s) {
 }
 
 function updateAnimation(nowMs) {
-  if (!loaded || !anim.playing || !loaded.skeleton) return;
-  const g = anim.groups.get(anim.playing);
-  if (!g) return;
-  const span = Math.max(g.stop - g.start, 1e-6);
-  const t = anim.seek != null ? anim.seek : g.start + (((nowMs - anim.t0) / 1000) % span);
+  if (!loaded || !anim.playing || !loaded.skeleton || !anim.clip) return;
+  // MW-D17: the SECOND HOME FOR CLIP TIME booked at MW-D7 is retired.
+  // What stood here - start plus elapsed-modulo-span - moved, stayed
+  // symmetric and drew, and replayed the clip's INTRO on every wrap
+  // instead of the authored loop window; it also looped EVERY group for
+  // ever, where the law loops only what has loop keys or sits in rule
+  // 51's hardcoded set, and plays the rest once to their stop key.
+  // `seek` poses a time directly (the probe's deterministic door) and
+  // deliberately does not advance the clip.
+  let t;
+  if (anim.seek != null) {
+    t = anim.seek;
+  } else {
+    advanceClip(anim.clip, anim.keys, (nowMs - anim.last) / 1000);
+    t = anim.clip.time;
+  }
+  anim.last = nowMs;
   // Root motion extracted (reference (1,1,0) accumulation) - the walk
   // stays under the actor instead of walking the mesh off the stage.
   const pose = poseSkeleton(loaded.skeleton, anim.tracks, sampleTrack, t, {
-    accumRoot: accumRootRef(loaded.skeleton, anim.tracks),
+    accumRoot: anim.accumRoot,
   });
   const matsByRoot = new Map();
   const rootRef = skeletonRootRef();
@@ -500,6 +576,7 @@ function loadNifBytes(bytes, name) {
   // from that mesh's own inline animation again.
   kfTracks = null;
   kfGroups = null;
+  kfKeys = null;
   try {
     const nif = parseNif(bytes);
     const batches = flattenNif(nif);
@@ -592,7 +669,9 @@ async function takeFiles(files) {
       try {
         const kfNif = parseNif(bytes);
         kfTracks = extractTracks(kfNif);
-        kfGroups = parseAnimGroups(collectTextKeys(kfNif));
+        const kfRawKeys = collectTextKeys(kfNif);
+        kfGroups = parseAnimGroups(kfRawKeys);
+        kfKeys = normalizeTextKeys(kfRawKeys);
         setStatus(`${f.name}: ${kfTracks.size} bone tracks, ${kfGroups.size} groups`);
         if (loaded) wireAnimation(kfNif);
       } catch (err) {

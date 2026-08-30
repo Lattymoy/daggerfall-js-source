@@ -724,3 +724,41 @@ test('MW-D11: a texture the archives do not carry becomes the warning image, not
   assert.equal(junk.get('tx_absent.tga').ok, false);
   assert.match(junk.get('tx_absent.tga').error, /DDS/);
 });
+
+// --- MW-D18: A MISSING HAND IS A SENTENCE, NOT A HOLE ----------------------
+//
+// Mac's report from retail: "hands are missing". Two doors could eat a
+// hand without a word: bindPart THREW on one absent weighted bone (rule
+// 40 says the reference skips it and draws), and a shape that fails rule
+// 15's filter on every bone bound nothing and said nothing. Both are
+// exercised through the REAL assembly on a byte-patched armhand - the
+// left bone (and with it the left shape) renamed to a name armskel has
+// never carried, same byte length, so the file stays valid.
+
+test('MW-D18 rules 40+15: the assembly binds what it can and NAMES what it cannot', async () => {
+  const patched = Buffer.from(f('armhand.nif'));
+  for (let i; (i = patched.indexOf('Left Hand')) >= 0;) patched.write('Left Xand', i);
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hand', bytes: new Uint8Array(patched) }],
+  });
+  assert.ok(arm.ok, 'one side still binds - the part is not dropped whole');
+  const hands = arm.pieces.filter((p) => p.slot === 'hand');
+  assert.equal(hands.length, 1, 'the right hand made it');
+  assert.equal(hands[0].bone, 'right hand');
+  assert.ok(arm.notes.some((n) => /hand: this skeleton has no bone "left xand" - those influences are skipped \(rule 40\)/.test(n)),
+    `rule 40 names the skipped bone (notes: ${arm.notes.join(' | ')})`);
+  assert.ok(arm.notes.some((n) => /hand @ left hand: no shape matched - the mesh offers "Tri Right Hand", "Tri Left Xand"/.test(n)),
+    `rule 15's miss lists what the file offered (notes: ${arm.notes.join(' | ')})`);
+});
+
+test('MW-D18: a healthy part still binds both sides with NO notes', async () => {
+  // The guard on the guard: notes must appear only when something is
+  // actually wrong, or the card cries wolf and Mac stops reading it.
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hand', bytes: f('armhand.nif') }],
+  });
+  assert.equal(arm.pieces.filter((p) => p.slot === 'hand').length, 2);
+  assert.deepEqual(arm.notes, []);
+});

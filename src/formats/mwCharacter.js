@@ -15,8 +15,11 @@ import { skeletonSpaceMatrices } from './mwSkin.js';
  * Rebind one part's batches onto the base skeleton.
  *
  * Skinned batches get their skin payload's bone refs remapped by NAME
- * into the base skeleton (a missing bone throws, naming it - a part that
- * doesn't fit the skeleton is a data problem to surface, not to hide).
+ * into the base skeleton. A missing bone is NOT fatal (rule 40): its
+ * ref is null, its influences are skipped in the blend, and its name is
+ * returned in `missingBones` so the caller can surface it - the
+ * reference logs and draws, and a port that throws instead drops a
+ * whole retail hand over one absent finger bone.
  * The skin's root bone follows the same name mapping, falling back to
  * the part's declared root when the base has no node of that name.
  *
@@ -155,16 +158,26 @@ export function bindPart(skeleton, partNif, opts = {}) {
   const batches = flattenNif(partNif);
   const skinned = [];
   const attached = [];
+  const missingBones = new Set();
   for (const batch of batches) {
     if (!batch.skinned || !batch.skin) {
       attached.push(batch);
       continue;
     }
     const skin = batch.skin;
+    // RULE 40: A MISSING BONE IS NOT FATAL. The reference logs
+    // "RigGeometry did not find bone", stores nullptr, and skips every
+    // influence naming it in the blend (riggeometry.cpp:195-196) - it
+    // does NOT abort the part. This used to THROW here, which on a
+    // retail mesh weighting one bone the first-person skeleton lacks
+    // (a finger, say) dropped the WHOLE hand where the reference draws
+    // it. The ref is null now, skinBatch skips it, and the caller gets
+    // the names so the card can say what was skipped.
     const bones = skin.bones.map((bone) => {
       const ref = skeleton.byName.get(bone.name);
       if (ref === undefined) {
-        throw new Error(`bindPart: base skeleton has no bone "${bone.name}"`);
+        missingBones.add(bone.name);
+        return { ...bone, ref: null };
       }
       return { ...bone, ref };
     });
@@ -188,7 +201,7 @@ export function bindPart(skeleton, partNif, opts = {}) {
     // offset from.
     boneOffset = boneOffsetOf(partNif);
   }
-  return { skinned, attached, attachRef, boneOffset };
+  return { skinned, attached, attachRef, boneOffset, missingBones: [...missingBones] };
 }
 
 function firstRoot(skeleton) {
