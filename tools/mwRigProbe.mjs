@@ -44,15 +44,21 @@ const body = (id, race, part, model) => {
   return [...ascii('BODY'), ...u32(d.length), ...u32(0), ...u32(0), ...d];
 };
 const loose = (n) => [...readFileSync(`test/fixtures/mw/${n}`)];
+// The FIRST-PERSON-SHAPED fixtures (MW-D10). armskel's arms hang
+// straight down like a T-pose and armidle swings them 90 degrees, which
+// is right for the clip laws they were built for and useless for
+// measuring where an arm lands on screen. These have an eye, arms
+// forward of and below it, and a quiet sway.
 const BSA = buildBsa([
-  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
-  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
-  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
-  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ]);
 const ESM = Uint8Array.from([
-  ...body('b_n_nord_m_hands.1st', 'nord', 'hand', 'b/H1.nif'),
-  ...body('b_n_nord_m_upper arm', 'nord', 'upperarm', 'b/U.nif'),
+  ...body('b_fp_hand_1st', 'fprace', 'hand', 'b/H1.nif'),
+  ...body('b_fp_forearm_1st', 'fprace', 'forearm', 'b/U.nif'),
 ]);
 
 const server = await createServer({ server: { port: 5231, strictPort: true } });
@@ -93,7 +99,7 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
     palette: null,
     audio: { playOneShot() {}, ensure() {} },
     entity,
-    camera: () => ({ pos: [0, 1.6, 0], yaw: 0 }),
+    camera: () => ({ pos: [0, 1.6, 0], yaw: 0, pitch: window.__pitch || 0 }),
     say: (s) => log.push(s),
     bindWorn: false,
   });
@@ -101,7 +107,7 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
   // The card's build: the SHIPPED singleton, which is what the rig holds.
   const archive = new MwBsaFile(bytes(bsa));
   const built = await fp.fpArm.build({
-    race: 'nord',
+    race: 'fprace',
     female: false,
     deps: {
       loadMorrowindArchives: async () => [archive],
@@ -123,13 +129,40 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
     gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
     return { px, w, h };
   };
+  // WHERE, not just whether. MW-D8's framing put the arms adrift at the
+  // horizon and every measurement in this tree still passed, because all
+  // of them asked "are there lit pixels" or "is the model symmetric" -
+  // questions a mis-framed arm answers yes to. This one asks where on
+  // the screen the ink landed.
   const diff = (a, b) => {
-    let n = 0;
-    for (let i = 0; i < a.px.length; i += 4) {
+    let n = 0; let sx = 0; let sy = 0;
+    let minY = 1e9; let maxY = -1e9;
+    // MW-D11: the fixture texture is four solid quadrants - RED, GREEN,
+    // BLUE and white - so a TEXTURED arm puts strongly-hued pixels on the
+    // screen and an untextured one (white lit by a white sun) cannot.
+    // "Is there ink" passed a flat arm for three slices; this asks what
+    // COLOUR the ink is.
+    let hued = 0;
+    for (let i = 0, p = 0; i < a.px.length; i += 4, p++) {
       if (Math.abs(a.px[i] - b.px[i]) > 6 || Math.abs(a.px[i + 1] - b.px[i + 1]) > 6
-        || Math.abs(a.px[i + 2] - b.px[i + 2]) > 6) n++;
+        || Math.abs(a.px[i + 2] - b.px[i + 2]) > 6) {
+        const x = p % a.w; const y = (p / a.w) | 0;
+        n++; sx += x; sy += y;
+        const r = a.px[i]; const g = a.px[i + 1]; const bl = a.px[i + 2];
+        const mx = Math.max(r, g, bl); const mn = Math.min(r, g, bl);
+        if (mx > 40 && mx - mn > 60) hued++;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
     }
-    return n;
+    // readPixels puts y = 0 at the BOTTOM, so a small y is low on screen.
+    return n ? {
+      n,
+      hued,
+      cx: sx / n / a.w,
+      cy: sy / n / a.h,
+      lowest: minY / a.h,
+      highest: maxY / a.h,
+    } : { n: 0 };
   };
 
   // A neutral world frame, then the host's two calls, in the host's order.
@@ -143,10 +176,17 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
       weaponRig.draw();
     }
   };
+  window.__pitch = 0;
   runFrames(4);
   const withArm = grab();
   const armFrames = fp.fpArm.frames;
   const activeWhenDrawn = fp.fpArm.active();
+  // Look UP. The arms are attached to the rig, not the lens, so they
+  // must slide DOWN the frame - the neck takes 0.75 of the pitch and
+  // the lens all of it, which is the lag rule 54 produces.
+  window.__pitch = 0.5;
+  runFrames(1);
+  const pitchedUp = grab();
 
   // THE CONTROL: the same host, the same frames, no arm. Whatever this
   // leaves on the screen is what Mac has been looking at.
@@ -164,7 +204,7 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
   // and throws away whatever the player built.
   const ds = await import('/src/scenes/dataSource.js');
   const rebuilt = await fp.fpArm.build({
-    race: 'nord',
+    race: 'fprace',
     female: false,
     deps: {
       loadMorrowindArchives: async () => [archive],
@@ -198,6 +238,7 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
     armFrames,
     activeWhenDrawn,
     changed: diff(withArm, withoutArm),
+    pitched: diff(pitchedUp, withoutArm),
     total: withArm.w * withArm.h,
     log,
     boot: {
@@ -215,8 +256,18 @@ ok(out.built.ok, 'the arm builds through the shipped singleton', out.built.error
 ok(out.sheathedAfter === false, 'the rig unsheathes on toggleSheath');
 ok(out.armFrames >= 4, 'the RIG steps the arm every frame', `frames=${out.armFrames}`);
 ok(out.activeWhenDrawn, 'and the arm is drawable after the rig has stepped it');
-ok(out.changed > 500, 'AND THE ARM CHANGES THE SCREEN vs the same frame without it',
-  `changed=${out.changed} of ${out.total}`);
+ok(out.changed.n > 500, 'AND THE ARM CHANGES THE SCREEN vs the same frame without it',
+  `changed=${out.changed.n} of ${out.total}`);
+ok(out.changed.cy < 0.5, 'THE ARMS HANG IN THE LOWER FRAME, where hands are',
+  `centroid y=${out.changed.cy && out.changed.cy.toFixed(3)} (0 = bottom)`);
+ok(out.changed.n / out.total > 0.02, 'and they are ARM-SIZED, not a distant speck',
+  `coverage=${(out.changed.n / out.total * 100).toFixed(1)}%`);
+ok(out.changed.hued > out.changed.n * 0.3,
+  'AND THE ARM IS TEXTURED - the fixture texture\'s red/green/blue quadrants reach the screen',
+  `hued=${out.changed.hued} of ${out.changed.n}`);
+ok(out.pitched.n > 500 && out.pitched.cy < out.changed.cy,
+  'looking UP slides them DOWN the frame - they ride the rig, not the lens',
+  `cy ${out.changed.cy && out.changed.cy.toFixed(3)} -> ${out.pitched.cy && out.pitched.cy.toFixed(3)}`);
 ok(out.boot.rebuiltOk, 'the arm rebuilds for the boot-order case');
 ok(out.boot.genAfter === out.boot.genBefore,
   'the FIRST count is not a data change - an empty store changed nothing',

@@ -22,6 +22,7 @@ import { MwBsaFile, normalizeBsaPath } from '../formats/mwBsaFile.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
+import { correctTexturePath } from '../formats/mwTexture.js';
 import { collectTextKeys, parseAnimGroups, extractTracks, sampleTrack } from '../formats/mwAnim.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch, accumRootRef } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
@@ -382,13 +383,21 @@ function setStatus(text) {
   statusEl.textContent = text;
 }
 
+/**
+ * MW-D11: THE PATH LAW LIVES IN formats/mwTexture.js NOW.
+ *
+ * What stood here was a "textures\\" prefix and a .tga->.dds swap - and it
+ * got three of the reference's rules wrong: it never re-rooted an
+ * absolute authoring path, it never tried the basename under textures/,
+ * and it took the LAST matching component rather than an inner one. The
+ * viewer is a coverage scout, so a texture it failed to find was read as
+ * "this mesh has none". One home, one answer.
+ */
 function textureBytes(name) {
-  if (looseTextures.has(name)) return looseTextures.get(name);
-  if (bsa && bsa.has(name)) return bsa.get(name);
-  // Retail NIFs frequently say "foo.tga" for a file shipped as foo.dds.
-  const asDds = name.replace(/\.[a-z0-9]+$/, '.dds');
-  if (looseTextures.has(asDds)) return looseTextures.get(asDds);
-  if (bsa && bsa.has(asDds)) return bsa.get(asDds);
+  const has = (p) => looseTextures.has(p) || !!(bsa && bsa.has(p));
+  const path = correctTexturePath(name, has);
+  if (looseTextures.has(path)) return looseTextures.get(path);
+  if (bsa && bsa.has(path)) return bsa.get(path);
   return null;
 }
 

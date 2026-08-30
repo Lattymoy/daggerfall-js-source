@@ -6,9 +6,11 @@ import { extractTracks, sampleTrack } from '../src/formats/mwAnim.js';
 import { accumRootRef } from '../src/formats/mwSkin.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, armFraming, armModelPoint, fpSkeletonPath, buildFpArm, createFpArm,
-  ARM_FORWARD, ARM_DROP, ARM_TARGET_SPAN, FP_CLIP_PATH,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm,
+  FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
+  collectArmTextures,
 } from '../src/combat/fpArm.js';
+import { firstPersonCameraRef, FP_NECK_ROTATE_FACTOR } from '../src/formats/mwFirstPerson.js';
 
 // MW-D8: THE ARM IN THE GAME.
 //
@@ -21,6 +23,28 @@ import {
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+
+/** The MW-D10 first-person rig: an eye, arms forward of and below it,
+ *  and a quiet sway - the shape rule 54 needs and no earlier fixture had. */
+async function fpFixtureBuild() {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    // The meshes name "tx_fixture.TGA"; the archive has only the .dds,
+    // which is the retail arrangement rule 36 exists for.
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  return buildFpArm({
+    race: 'fprace',
+    deps: {
+      loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+      storedMorrowindNames: async () => ['armfp.esm'],
+      loadMorrowindFile: async () => f('armfp.esm'),
+    },
+  });
+}
 
 async function fixtureArm() {
   const arm = await assembleFirstPersonArm({
@@ -52,18 +76,30 @@ test('MW-D8 rule 6: the skeleton is chosen by SEX and BEAST, and the reverted na
 test('MW-D8: packFpArm expands indexed triangles into the character vertex stream', async () => {
   const arm = await fixtureArm();
   const tris = arm.pieces.reduce((n, p) => n + p.indices.length / 3, 0);
-  const packed = packFpArm(arm.pieces);
+  const { packed, ranges } = packFpArm(arm.pieces);
   // drawCharacter issues drawArrays, not drawElements (renderer.js), so
-  // the stream is NON-INDEXED: three vertices per triangle, 9 floats each.
-  assert.equal(packed.length, tris * 3 * 9);
-  for (let i = 0; i < packed.length; i += 9) {
+  // the stream is NON-INDEXED: three vertices per triangle, ELEVEN floats
+  // each since MW-D11 put the UV pair on the end.
+  assert.equal(packed.length, tris * 3 * FP_FLOATS);
+  for (let i = 0; i < packed.length; i += FP_FLOATS) {
     const n = Math.hypot(packed[i + 6], packed[i + 7], packed[i + 8]);
     assert.ok(Math.abs(n - 1) < 1e-3, 'every face normal is unit length');
   }
+  // ONE RANGE PER PIECE, covering the stream exactly - a Morrowind arm is
+  // several meshes with several textures and this path issues drawArrays,
+  // so the ranges ARE the piece list.
+  assert.equal(ranges.length, arm.pieces.filter((p) => p.positions && p.indices).length);
+  let at = 0;
+  for (const r of ranges) {
+    assert.equal(r.first, at, 'the ranges are contiguous and in piece order');
+    at += r.count;
+  }
+  assert.equal(at, packed.length / FP_FLOATS, 'and together they cover every vertex');
+
   // The buffer is REUSED when it already fits - the frame path must not
   // allocate a megabyte per frame.
-  const again = packFpArm(arm.pieces, packed);
-  assert.equal(again, packed, 'a correctly-sized buffer is written in place, not replaced');
+  const again = packFpArm(arm.pieces, { packed, ranges });
+  assert.equal(again.packed, packed, 'a correctly-sized buffer is written in place, not replaced');
 });
 
 test('MW-D8 rule 13: a mirrored piece has its face normals negated, or it lights inside-out', async () => {
@@ -74,7 +110,7 @@ test('MW-D8 rule 13: a mirrored piece has its face normals negated, or it lights
   assert.equal(R.mirrored, false);
   // `+ 0` normalises IEEE negative zero, which deepEqual treats as
   // distinct from zero and which a rounded normal component hits often.
-  const n0 = (piece) => [...packFpArm([piece]).slice(6, 9)].map((x) => Math.round(x) + 0);
+  const n0 = (piece) => [...packFpArm([piece]).packed.slice(6, 9)].map((x) => Math.round(x) + 0);
   // Rule 13 negates X, which REVERSES the triangle winding, which flips
   // the computed face normal inward. Negating it back is what makes the
   // two sides agree - and agreeing is the correct answer: both arms are
@@ -86,53 +122,125 @@ test('MW-D8 rule 13: a mirrored piece has its face normals negated, or it lights
     'and without the negate they do not - which is what the pin is for');
 });
 
-test('MW-D8: the port mapper is solved ONCE, from the clip union, and says it is a port decision', async () => {
-  const arm = await fixtureArm();
-  const wide = armFraming({ minX: -3, maxX: 3, minY: 0, maxY: 0, minZ: 0, maxZ: 1 });
-  assert.ok(Math.abs(wide.scale * 6 - ARM_TARGET_SPAN) < 1e-6,
-    'the scale maps the LONGEST axis onto the target span');
-  assert.deepEqual(wide.centre, [0, 0, 0.5], 'and the centre is the bounds centre, not the authoring origin');
-  assert.equal(armFraming(null), null, 'no bounds, no framing - rather than a default that looks right');
-
-  // THE PIN THE PIXELS CANNOT CARRY. A mapper recomputed per frame from
-  // the live bounds renormalises the picture every time the arm moves and
-  // cancels out exactly the motion it exists to show. The probe cannot
-  // separate that from a correct player (measured: the mutant survives
-  // every pixel layer), so the law is pinned on the SOURCE instead.
-  const src = rd('src/combat/fpArm.js');
-  const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
-  assert.ok(draw.includes('built.framing'), 'the draw reads the framing solved at build');
-  assert.ok(!/\barm\.bounds\b|\bbuilt\.arm\.bounds\b/.test(draw),
-    'and never the live per-frame bounds');
+test('MW-D10 rule 54: the camera is a NODE OF THE RIG - Camera, then Head, then nothing', () => {
+  // camera.cpp:346-357, verbatim:
+  //   mTrackingNode = mAnimation->getNode("Camera");
+  //   if (!mTrackingNode) mTrackingNode = mAnimation->getNode("Head");
+  // There is no third fallback, and inventing one is what the retired
+  // port mapper did - it fitted the arm's clip bounds into a fixed span
+  // and pushed it a constant distance in front of the eye, which is the
+  // arrangement in Mac's screenshot: forearms adrift at the horizon.
+  const skel = (names) => ({ byName: new Map(names.map((n, i) => [n, i + 1])) });
+  assert.equal(firstPersonCameraRef(skel(['bip01', 'camera', 'head'])), 2, 'Camera wins');
+  assert.equal(firstPersonCameraRef(skel(['bip01', 'head'])), 2, 'Head is the fallback');
+  assert.equal(firstPersonCameraRef(skel(['bip01', 'bip01 neck'])), -1, 'and nothing else is');
+  assert.equal(firstPersonCameraRef(null), -1);
 });
 
-test('MW-D8: the placement rotates the centre offset, or the arm swings as you turn', () => {
-  const framing = { scale: 0.1, span: 7, centre: [0, 0, 2] };
-  const eye = [0, 1.6, 0];
-  // At every heading the arm must sit the SAME distance and direction
-  // from the eye, in the eye's own frame. The model matrix spins the mesh
-  // about its origin, so the centre offset has to be rotated before it is
-  // backed out - measured live: without it the arm drew 60 texels facing
-  // one way and 20 facing another with the pose held still.
-  const rel = (yaw) => {
-    const p = armModelPoint(framing, eye, yaw);
-    const c = Math.cos(-yaw); const s = Math.sin(-yaw);
-    const dx = p[0] - eye[0]; const dz = p[2] - eye[2];
-    // rotate the offset back into the eye's frame
-    return [c * dx + s * dz, p[1] - eye[1], -s * dx + c * dz].map((v) => +v.toFixed(6) + 0);
+test('MW-D10: a rig with neither node REFUSES, naming the stage', async () => {
+  // armskel deliberately carries no Camera and no Head (MW-D4 asserts a
+  // skeleton that lacks a bone SAYS so), which makes it exactly the
+  // refusal case rule 54 needs.
+  const files = new Map([
+    [fpSkeletonPath({}), f('armskel.nif')],
+    [FP_CLIP_PATH, f('armidle.kf')],
+    ['meshes/fixture/armhand.nif', f('armhand.nif')],
+    ['meshes/fixture/armcuff.nif', f('armcuff.nif')],
+  ]);
+  const built = await buildFpArm({
+    race: 'armrace',
+    deps: {
+      loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+      storedMorrowindNames: async () => ['armparts.esm'],
+      loadMorrowindFile: async () => f('armparts.esm'),
+    },
+  });
+  assert.equal(built.ok, false);
+  assert.equal(built.stage, 'camera');
+  assert.match(built.error, /no "Camera" bone and no "Head" bone/);
+});
+
+test('MW-D10: the Z-up rig turns into a Y-up pass - the conversion nothing in the chain made', async () => {
+  // A Morrowind NIF is Z-UP with +Y forward; this renderer is Y-UP with
+  // -Z forward. No reader, flattener, assembly or pass converted between
+  // them, so the rig was drawn lying on its side and pointing away from
+  // the viewer - the two end-on forearms in the report. Every existing
+  // assertion was in MODEL space, which cannot see the frame it is drawn
+  // in, so 38 mutants and three probes all passed.
+  const { transformPoint } = await import('../src/world/mat4.js');
+  const p = (x, y, z) => Array.from(transformPoint(NIF_TO_PASS, x, y, z)).map((v) => Math.round(v * 1e6) / 1e6 + 0);
+  assert.deepEqual(p(0, 0, 1), [0, 1, 0], 'Morrowind UP becomes the pass UP');
+  assert.deepEqual(p(0, 1, 0), [0, 0, -1], 'and Morrowind FORWARD becomes into the screen');
+  assert.deepEqual(p(1, 0, 0), [1, 0, 0], 'while right stays right');
+
+  // firstPersonEye reads the camera node's translation THROUGH the same
+  // change, or the eye and the geometry end up in different spaces.
+  const mats = new Map([[7, { t: [1, 2, 3] }]]);
+  assert.deepEqual(firstPersonEye(mats, 7), [1, 3, -2]);
+  assert.equal(firstPersonEye(mats, 9), null, 'and a missing node is not an eye at the origin');
+});
+
+test('MW-D10: the neck takes 0.75 of the look, and the port pitches the OTHER WAY', async () => {
+  const built = await fpFixtureBuild();
+  assert.equal(built.ok, true, built.error);
+  const eyeAt = (neckPitch) => {
+    poseAssembly(built.arm, {
+      tracks: built.tracks, sampleTrack, time: built.clip.startTime, accumRoot: built.accumRoot, neckPitch,
+    });
+    return firstPersonEye(built.arm.mats, built.cameraRef);
   };
-  const at0 = rel(0);
-  for (const yaw of [Math.PI / 2, Math.PI, -Math.PI / 2, 1.234]) {
-    assert.deepEqual(rel(yaw), at0, `the arm sits identically relative to the eye at yaw ${yaw}`);
+  const level = eyeAt(0);
+  const down = eyeAt(0.4);        // Morrowind's rot[0] counts DOWNWARD
+  assert.ok(down[2] < level[2], 'a positive neck pitch tips the eye forward, as rot[0] does');
+  const up = eyeAt(-0.4);
+  assert.ok(up[2] > level[2], 'and a negative one tips it back');
+  assert.ok(Math.abs(down[1] - level[1]) > 1e-4, 'the eye MOVES with the neck - it is not a lens tilt');
+
+  // 0.75, from npcanimation.cpp:719 `0.75f + 0.25f * mAimingFactor`,
+  // with the aiming factor at its resting zero.
+  assert.equal(FP_NECK_ROTATE_FACTOR, 0.75);
+  // files/settings-default.cfg: `first person field of view = 60.0`.
+  // Nothing in a picture says the lens is wrong - a narrower one just
+  // makes the arms bigger - so the number is pinned against the file it
+  // comes from.
+  assert.equal(FP_FIELD_OF_VIEW, Math.PI / 3);
+
+  // AND THE CONJUGATION. The controller expresses the pitch in the
+  // OBJECT ROOT's frame and conjugates it into the node's own; with an
+  // axis-aligned neck that is the identity, so armfp.nif TURNS its neck
+  // 8 degrees and a port that rotates in the local frame moves the eye
+  // somewhere else.
+  const src2 = rd('src/formats/mwFirstPerson.js');
+  assert.match(src2, /mul33\(mul33\(mul33\(w, rotate\), transpose33\(w\)\), local\.rotation\)/,
+    'worldOrient * rotate * worldOrient^-1 * localRot, in that order');
+
+  // AND THE SIGN CONVERSION. Morrowind counts pitch downward; this port
+  // counts it upward (world.js SUBTRACTS the mouse's y delta). Passed
+  // straight through, the neck rotates the arms the wrong way and
+  // DOUBLES the loss - measured, a 0.25 look-up put every vertex out of
+  // frame instead of sliding them a tenth of the way down it.
+  const src = rd('src/combat/fpArm.js');
+  assert.match(src, /neckPitch: cam \? -\(cam\.pitch \|\| 0\) : 0,/,
+    'the port\'s upward pitch is negated into Morrowind\'s downward one');
+});
+
+test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no invented scale', () => {
+  const src = rd('src/combat/fpArm.js');
+  const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
+  assert.match(draw, /const eye = firstPersonEye\(built\.arm\.mats, built\.cameraRef\);/,
+    'the eye is the camera node, read fresh from the pose');
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph\)/,
+    'and the model matrix is the basis change alone - no placement, no scale');
+  assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/, 'rule 29\'s own field of view');
+  // THE RETIRED MECHANISM, and the sentence goes with it: none of the
+  // mapper's constants may come back, in the draw or anywhere else.
+  for (const gone of ['ARM_FORWARD', 'ARM_DROP', 'ARM_CAST', 'ARM_TARGET_SPAN', 'armFraming', 'armModelPoint']) {
+    assert.ok(!new RegExp(`\\\\b${gone}\\\\b`).test(src.replace(/^ \* .*$/gm, '')),
+      `${gone} is retired, and code must not reach for it again`);
   }
-  // and it is IN FRONT of and BELOW the eye, which is the other half of
-  // the same lesson: the voxel viewmodel pushes its rig BACKWARD because
-  // it is a whole body hiding its own head, and this assembly is arms
-  // only, so the same push puts every triangle behind the lens.
-  assert.ok(ARM_FORWARD > 0, 'forward, not back');
-  assert.ok(ARM_DROP < 0, 'and below the view axis');
-  assert.ok(at0[2] > 0, 'so the arm centre lands in front of the eye');
-  assert.ok(at0[1] < 0, 'and under it');
+  // The planes come off the arm's own reach, in RIG units, because the
+  // file need not be authored in metres.
+  assert.match(draw, /Math\.max\(built\.reach \/ 200, 1e-4\), built\.reach \* 4/);
 });
 
 test('MW-D8: a build that cannot reach its data REFUSES with a stage, and never throws', async () => {
@@ -168,8 +276,12 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // null, so the player got a frozen bind-pose arm where the sprite had
   // been correct. Every term below independently prevents that.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && state\);/,
-    'built, built.ok, mesh, renderer, camera AND state - all five');
+  // MW-D12 split `state` into two slots. The term is now "SOME clip is
+  // playing", which is the same guarantee: an arm with neither an idle
+  // nor an action to pose from is the frozen bind pose, and the sprite
+  // is the correct picture instead.
+  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| idleState\)\);/,
+    'built, built.ok, mesh, renderer, camera AND a clip - all six');
 });
 
 test('MW-D8: the frame path is synchronous - no await, no dynamic import, in update or draw', () => {
@@ -328,7 +440,7 @@ test('MW-D9: the arm rides the SAME handedness mirror as the world it is composi
   assert.equal(bareSide, -1, 'and an unmirrored lens puts it on screen LEFT - the two disagree');
 
   // So the arm's own pass must take the mirror, and the source says so.
-  assert.match(src, /const proj = mirrorProjectionX\(perspective\(Math\.PI \/ 3, pw \/ ph, 0\.05, 12\)\);/,
+  assert.match(src, /const proj = mirrorProjectionX\(\s*\n\s*perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
     'the arm\'s projection rides mat4\'s one mirror, like every other world pass');
   // and rule 29's 60 degrees survives the mirror, which changes only x.
   assert.ok(Math.abs(mirrorProjectionX(lens())[5] - lens()[5]) < 1e-9,
@@ -395,15 +507,15 @@ test('MW-D9f: a built arm reaches the screen - the update gate is not the draw g
   // This one builds a real arm through the real build path (fixture
   // archives, fixture .esm) and then runs THE RIG'S OWN CONDITION.
   const files = new Map([
-    [fpSkeletonPath({}), f('armskel.nif')],
-    [FP_CLIP_PATH, f('armidle.kf')],
-    ['meshes/fixture/armhand.nif', f('armhand.nif')],
-    ['meshes/fixture/armcuff.nif', f('armcuff.nif')],
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
   ]);
   const deps = {
     loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
-    storedMorrowindNames: async () => ['armparts.esm'],
-    loadMorrowindFile: async () => f('armparts.esm'),
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
   };
   let made = 0;
   let sprites = 0; let composites = 0;
@@ -413,16 +525,17 @@ test('MW-D9f: a built arm reaches the screen - the update gate is not the draw g
     updateCharacterMesh: () => {},
     renderCharacterSprite: () => { sprites++; return { tex: {} }; },
     drawScreenOverlayQuad: () => { composites++; },
+    createCharacterTexture: (mips) => ({ mips }),
   };
   const arm = createFpArm();
   arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: 0 }));
 
-  const built = await arm.build({ race: 'armrace', deps });
+  const built = await arm.build({ race: 'fprace', deps });
   assert.equal(built.ok, true, built.ok ? '' : `${built.stage}: ${built.error}`);
   // Rule 3's missing-slot arm stays exercised: this .esm has hand and
   // upper arm only.
   assert.deepEqual(built.notes.filter((n) => /no record/.test(n)),
-    ['wrist: no record for this actor', 'forearm: no record for this actor']);
+    ['wrist: no record for this actor', 'upperarm: no record for this actor']);
 
   // A built arm is NOT yet drawable - there is no GPU mesh until a frame
   // runs, and drawing without one is the frozen-arm failure.
@@ -442,12 +555,14 @@ test('MW-D9f: a built arm reaches the screen - the update gate is not the draw g
     'and draw() no longer refuses');
   assert.equal(sprites, 1, 'the offscreen first-person pass ran');
   assert.equal(composites, 1, 'and it was composited over the scene');
+  assert.ok(arm.status().pieces > 0);
 });
 
 test('MW-D9f: the rig gates the step on ready() and the draw on active()', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /if \(!paralyzed && fpArm\.ready\(\)\) fpArm\.update\(dt\);/,
+  assert.match(rig, /if \(!paralyzed && fpArm\.ready\(\)\) \{/,
     'the per-frame step rides ready()');
+  assert.match(rig, /fpArm\.update\(dt\);/, 'and update is what it gates');
   assert.ok(!/fpArm\.active\(\)\) fpArm\.update/.test(rig),
     'and never active(), which cannot be true until update has already run');
   assert.match(rig, /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/,
@@ -455,6 +570,157 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
 
   // ready() must not require the mesh, or the deadlock comes straight back.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && state && renderer\);/,
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| idleState\) && renderer\);/,
     'ready() is update()\'s own requirements - no mesh term, no camera term');
+});
+
+test('MW-D11 rule 36: the texture path is FOUR PROBES over a re-rooted, extension-swapped name', async () => {
+  const { correctTexturePath, normalizeVfsPath, findDirectory, changeExtension } =
+    await import('../src/formats/mwTexture.js');
+
+  // THE REASON THE LAW EXISTS, in one line: Bethesda converted the BSA
+  // textures from TGA to DDS and left every reference saying .tga
+  // (resourcehelpers.cpp:133-135). A mesh asks for a file the archive
+  // does not have under that name.
+  const archive = new Set(['textures/tx_hand.dds']);
+  const has = (p) => archive.has(p);
+  assert.equal(correctTexturePath('tx_hand.tga', has), 'textures/tx_hand.dds');
+  assert.equal(correctTexturePath('TX_Hand.TGA', has), 'textures/tx_hand.dds', 'and it lowercases');
+  assert.equal(correctTexturePath('textures\\tx_hand.tga', has), 'textures/tx_hand.dds',
+    'backslashes are separators');
+
+  // RE-ROOTING: everything before the matched component is DISCARDED,
+  // which is how an absolute authoring path resolves. The SUBDIRECTORY
+  // has to survive the re-root, or the basename fallback silently
+  // rescues the easy case and hides a prefix-test that never re-roots at
+  // all - which is exactly what a mutant proved.
+  assert.equal(correctTexturePath('D:\\Bethesda\\Data Files\\Textures\\tx_hand.tga', has),
+    'textures/tx_hand.dds');
+  const deep = (p) => p === 'textures/deep/tx_sub.dds';
+  assert.equal(correctTexturePath('D:\\Morrowind\\Data Files\\Textures\\deep\\tx_sub.tga', deep),
+    'textures/deep/tx_sub.dds', 'the path BELOW the matched component is kept');
+  // ...but only on a WHOLE component that is not the LAST one.
+  assert.equal(findDirectory('mytextures/x.tga', 'textures'), -1, 'not a partial component');
+  assert.equal(findDirectory('foo/textures', 'textures'), -1, 'and not the final component');
+  assert.equal(findDirectory('x/textures/y/z.tga', 'textures'), 2, 'the inner component matches');
+  assert.equal(correctTexturePath('foo/textures', has), 'textures/foo/textures',
+    'so a trailing "textures" gets the prefix instead of being re-rooted');
+
+  // THE FOUR PROBES, each one reachable.
+  assert.equal(correctTexturePath('tx_a.tga', (p) => p === 'textures/tx_a.dds'),
+    'textures/tx_a.dds', '1: the swapped path');
+  assert.equal(correctTexturePath('tx_b.tga', (p) => p === 'textures/tx_b.tga'),
+    'textures/tx_b.tga', '2: the original extension');
+  assert.equal(correctTexturePath('deep/dir/tx_c.tga', (p) => p === 'textures/tx_c.dds'),
+    'textures/tx_c.dds', '3: the basename under the FRONT directory, swapped');
+  assert.equal(correctTexturePath('deep/dir/tx_d.tga', (p) => p === 'textures/tx_d.tga'),
+    'textures/tx_d.tga', '4: the basename under the front directory, original extension');
+  // ALL FOUR MISS -> the .dds candidate, NOT the authored name. The
+  // caller then fails to open it and gets the warning image, which is
+  // what makes a missing texture visible.
+  // ...and the candidate KEEPS the re-rooted directory; only the two
+  // basename fallbacks flatten it.
+  assert.equal(correctTexturePath('nope/tx_e.tga', () => false), 'textures/nope/tx_e.dds');
+
+  // bookart is the second top-level directory, and its MISSES fall back
+  // under textures/ - the fallbacks use the FRONT of the list, never the
+  // directory that matched.
+  assert.equal(correctTexturePath('bookart/cover.tga', (p) => p === 'bookart/cover.dds'),
+    'bookart/cover.dds');
+  assert.equal(correctTexturePath('bookart/cover.tga', (p) => p === 'textures/cover.dds'),
+    'textures/cover.dds');
+
+  // changeExtension refuses when there is no '.' after the last '/', and
+  // that refusal DISABLES probes 2 and 4 - so an extensionless name is
+  // two probes, not four.
+  assert.deepEqual(changeExtension('textures/tx_hand', 'dds'), { path: 'textures/tx_hand', changed: false });
+  assert.deepEqual(changeExtension('a.b/c.tga', 'dds'), { path: 'a.b/c.dds', changed: true });
+  const probed = [];
+  correctTexturePath('tx_noext', (p) => { probed.push(p); return false; });
+  assert.deepEqual(probed, ['textures/tx_noext', 'textures/tx_noext'],
+    'two probes, because there is no extension to swap back to');
+
+  // Normalization: duplicate separators collapse and ONE leading
+  // separator is stripped, because the archive index is built that way.
+  assert.equal(normalizeVfsPath('\\\\Textures\\\\\\\\tx.TGA'), 'textures/tx.tga');
+});
+
+test('MW-D11: the clamp bits are the other way round, and a miss is magenta', async () => {
+  const { wrapModes, warningImage, GL_REPEAT, GL_CLAMP_TO_EDGE } =
+    await import('../src/formats/mwTexture.js');
+  // property.hpp:70-71 - wrapT is bit 0 and wrapS is bit 1, which is the
+  // reverse of what the names suggest.
+  // The GL enums by VALUE, not by symbol: asserting wrapModes against
+  // the module's own constants passes even when the constant is wrong.
+  assert.equal(GL_REPEAT, 0x2901);
+  assert.equal(GL_CLAMP_TO_EDGE, 0x812f);
+  assert.deepEqual(wrapModes(3), { wrapS: 0x2901, wrapT: 0x2901 }, 'the common value repeats both');
+  assert.deepEqual(wrapModes(0), { wrapS: 0x812f, wrapT: 0x812f },
+    'and a clear bit is CLAMP_TO_EDGE, not GL_CLAMP and not REPEAT');
+  assert.deepEqual(wrapModes(1), { wrapS: 0x812f, wrapT: 0x2901 }, 'bit 0 is T');
+  assert.deepEqual(wrapModes(2), { wrapS: 0x2901, wrapT: 0x812f }, 'bit 1 is S');
+
+  // imagemanager.cpp:28-43. A MISSING TEXTURE IS NOT A REFUSAL - it is
+  // an 8x8 solid magenta that says so on the model.
+  const w = warningImage();
+  assert.equal(w.width, 8);
+  assert.equal(w.height, 8);
+  assert.deepEqual([...w.mips[0].rgba.slice(0, 4)], [255, 0, 255, 255]);
+  assert.equal(w.mips[0].rgba.length, 8 * 8 * 4);
+});
+
+test('MW-D11: the arm resolves, decodes and de-duplicates the textures its meshes name', async () => {
+  const built = await fpFixtureBuild();
+  assert.equal(built.ok, true, built.error);
+
+  // The fixture meshes name "tx_fixture.TGA" and the archive carries it
+  // as textures/tx_fixture.dds - the swap, end to end, on real bytes.
+  assert.equal(built.textures.size, 1, 'four pieces, two meshes, ONE decode');
+  const entry = built.textures.get('tx_fixture.tga');
+  assert.ok(entry, 'keyed by the name the mesh authored');
+  assert.equal(entry.ok, true, entry.error);
+  assert.equal(entry.path, 'textures/tx_fixture.dds');
+  assert.equal(entry.image.width, 8);
+  assert.equal(entry.image.height, 8);
+
+  // Every piece carries its material through to the pack, INCLUDING the
+  // rigid one - which used to keep only its positions, so its texture
+  // never reached the draw at all.
+  const rigid = built.arm.pieces.filter((p) => p.kind === 'rigid');
+  assert.ok(rigid.length > 0, 'the fixture has a rigid piece');
+  for (const p of built.arm.pieces) {
+    assert.equal(p.material.textureFile, 'tx_fixture.tga', `${p.kind} piece kept its material`);
+    assert.ok(p.uvs && p.uvs.length, `${p.kind} piece kept its UVs`);
+  }
+
+  // And the pack hands the draw one range per piece, each naming its own
+  // texture, with WHITE in the colour channel - the reference's material
+  // default, so texel * colour is the texel.
+  const { packed, ranges } = packFpArm(built.arm.pieces);
+  assert.ok(ranges.every((r) => r.textureFile === 'tx_fixture.tga'));
+  assert.deepEqual([...packed.slice(3, 6)], [1, 1, 1], 'no invented skin tone survives');
+  // The UV pair is the last two floats of each vertex.
+  const uvsSeen = new Set();
+  for (let i = 0; i < packed.length; i += FP_FLOATS) {
+    uvsSeen.add(`${packed[i + 9]},${packed[i + 10]}`);
+  }
+  assert.ok(uvsSeen.size > 1, 'the UVs vary across the mesh - they are not all zero');
+});
+
+test('MW-D11: a texture the archives do not carry becomes the warning image, not a refusal', async () => {
+  const { warningImage } = await import('../src/formats/mwTexture.js');
+  const pieces = [{ material: { textureFile: 'tx_absent.tga' } }];
+  const empty = collectArmTextures(pieces, [{ has: () => false, get: () => null }]);
+  const entry = empty.get('tx_absent.tga');
+  assert.equal(entry.ok, false);
+  assert.equal(entry.path, 'textures/tx_absent.dds', 'the .dds candidate is what it tried to open');
+  assert.deepEqual(entry.image.mips[0].rgba.slice(0, 4), warningImage().mips[0].rgba.slice(0, 4));
+
+  // A DECODE failure is the same answer - the arm still builds.
+  const junk = collectArmTextures(pieces, [{
+    has: (p) => p === 'textures/tx_absent.dds',
+    get: () => new Uint8Array(200),
+  }]);
+  assert.equal(junk.get('tx_absent.tga').ok, false);
+  assert.match(junk.get('tx_absent.tga').error, /DDS/);
 });

@@ -1716,9 +1716,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // placed at the origin.
   let _fpEye = null;
   let _fpYaw = 0;
+  let _fpPitch = 0;
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
-    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw } : null),
+    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch } : null),   // MW-D10: rule 54's neck pitch
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(),
@@ -2588,6 +2589,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // most of what a first-person arm does.
     _fpEye = eye;
     _fpYaw = Math.atan2(-view[2], -view[10]);
+    // The view matrix's third row is the camera's BACKWARD axis, so the
+    // look direction is its negation and the pitch is that vector's y.
+    _fpPitch = Math.asin(Math.max(-1, Math.min(1, -view[6])));
     // THE FOUR HOSTS RULE (2026-08-27, Mac: "blood texture stays static
     // in the air when attacking them in dungeons"). The splash pool's
     // clock was the HOST'S to run - dungeon.js ran it, worldModes never

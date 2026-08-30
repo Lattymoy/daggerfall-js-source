@@ -123,6 +123,28 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return v;
   }
 
+  /**
+   * MW-D12: the swing reaches the Morrowind arm.
+   *
+   * The strike is Daggerfall's, the attack type is Morrowind's, and the
+   * mapping between them is rule 11's recorded DIVERGENCE - by the shape
+   * of the motion, because Daggerfall chooses by gesture where Morrowind
+   * chooses from the weapon record's damage spread.
+   *
+   * `hold` is read off the machine rather than assumed from the weapon:
+   * a bow that is drawn AND HOLDING is state StrikeUp, which is DFU's
+   * BowDrawback-on arm. The in-game bow path fires StrikeDown instantly
+   * (playerWeapon.gesture:105-111), so today this is always false and the
+   * arm runs wind-up straight into release - which is what an uncharged
+   * Daggerfall swing is. It becomes live the moment the drawback path
+   * does, with nothing here to change.
+   */
+  function fpAttack(strike) {
+    if (!fpArm.ready()) return;
+    const m = playerWeapon.machine;
+    fpArm.attack(strike, { bow: m.isBow, hold: m.isBow && m.state === 'StrikeUp' });
+  }
+
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
    *  Arrows auto-sheathes with the classic line. */
   function bowArrowGuard() {
@@ -144,7 +166,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       _dx += dx; _dy += dy; _held = held;
     },
     /** ClickToAttack for the touch button. */
-    clickAttack() { if (!playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0) playerWeapon.clickAttack(); },
+    clickAttack() {
+      if (playerWeapon.sheathed || (entity?.equipCountdown ?? 0) > 0) return;
+      const strike = playerWeapon.clickAttack();
+      if (strike) fpAttack(strike);
+    },
     /** ToggleSheath + the draw sound on unsheathing a real weapon.
      *  AUDIT 26 F023: the clip is the WEAPON's own GetEquipSound
      *  (WeaponManager.SetWeapon :780 overwrites DrawWeaponSound with
@@ -173,7 +199,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         entity.equipCountdown = Math.max(0, entity.equipCountdown - dt * 980);
       }
       const c = cv();
-      if (!paralyzed && c) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight));
+      // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
+      // only signal that a blow has started. gesture() answers with the
+      // strike the drag resolved to (playerWeapon.js:128-131) and
+      // clickAttack() with the one the click rolled - the Morrowind arm
+      // needs exactly that to pick rule 11's attack type.
+      const strike = !paralyzed && c
+        ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight))
+        : null;
+      if (strike) fpAttack(strike);
       _dx = 0; _dy = 0;
       // AUDIT 23 (C9): the strike-ENTRY whoosh is gone - DFU plays the
       // swing sound at the HIT FRAME of a swing that hit no enemy
@@ -186,7 +220,29 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // MW-D9f: ready(), NOT active(). active() requires the GPU mesh
       // that update() is the only thing that creates, so gating the
       // update on it meant a built arm never ran a frame and never drew.
-      if (!paralyzed && fpArm.ready()) fpArm.update(dt);
+      if (!paralyzed && fpArm.ready()) {
+        // MW-D12: THE STANCE IS SYNCED EVERY FRAME, not at the toggle.
+        //
+        // That is the reference's own shape - updateWeaponState compares
+        // the live `weaptype` against `mWeaponType` on every call
+        // (character.cpp:1382-1385) - and here it is also the only
+        // correct one: playerWeapon.sheathed is written from THREE
+        // places, and the bow's out-of-arrows auto-sheathe
+        // (bowArrowGuard, in draw()) is not one of them that could ever
+        // call a toggle hook. setSheathed is a no-op when nothing
+        // changed, so this costs a comparison.
+        //
+        // Sheathed is rule 8's weapon type None: the bare "idle" group,
+        // rule 10's endless loop, and no weapon in shot. Drawn plays the
+        // equip section of the weapon's long group and raises "idle1h".
+        fpArm.setSheathed(playerWeapon.sheathed);
+        // The held draw comes up when the machine leaves StrikeUp - the
+        // arrow is loosed, so the arm's wind-up must stop holding at max
+        // attack and run to its release key.
+        const m = playerWeapon.machine;
+        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
+        fpArm.update(dt);
+      }
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the

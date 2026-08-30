@@ -877,6 +877,17 @@ def make_arm_idle_kf():
         k.value = txt
 
     # Rotation about Y by the given angles, right side; the left is negated.
+    #
+    # Y IS CORRECT HERE and the axis note that belongs beside make_armfp_kf
+    # does not belong here. armidle.kf is MW-D7's CLIP-LAW fixture: what it
+    # has to produce is a big, unambiguous rotation whose samples a reader
+    # error would visibly miss, and +Y - Morrowind's forward - gives one.
+    # The first-person fixture needs the opposite thing (an angle that
+    # changes the arm's on-screen WIDTH, which a roll about forward cannot),
+    # which is why make_armfp_kf swings about Z instead. MW-D10 moved that
+    # reasoning here by mistake along with a rename this function's two call
+    # sites never took, leaving generate.py unable to run at all; the
+    # committed armidle.kf is and stays the Y version its pins measure.
     def rot_y(deg):
         a = math.radians(deg) / 2.0
         return (math.cos(a), 0.0, math.sin(a), 0.0)  # w,x,y,z
@@ -947,6 +958,308 @@ def make_armskel_weapon():
         _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left",
               (0.0, 0.0, -0.5))
     write_nif(HERE / "armskelw.nif", [root])
+
+
+# MW-D10: THE FIRST-PERSON-SHAPED FIXTURE, skeleton and parts together.
+#
+# Every arm fixture before this one hangs straight DOWN from the shoulder
+# (armskel: upper arm z=3, forearm z=2, hand z=1, all at y=0) - a T-pose
+# arm, authored to prove SKINNING, and it cannot show where an arm lands
+# on screen. armskelcam has a Camera bone but the same flat geometry.
+#
+# Rule 54 places the eye INSIDE the rig, so the only thing that decides
+# what the player sees is where the arms sit relative to that node. To
+# measure that at all, a fixture needs arms FORWARD of and BELOW an eye,
+# which is what these numbers are: Morrowind's axes (x right, +y forward,
+# z up), the eye at the top, the hands about 0.9 forward and 0.4 down.
+#
+# Bone names are armskel's, so armidle.kf binds to this rig unchanged.
+ARM_FP_REST = {
+    "Bip01 Neck": (0.0, 0.0, 3.0),
+    "Camera": (0.0, 0.10, 0.45),          # under the neck: world z 3.45
+    "Right Upper Arm": (0.40, 0.45, 0.20), "Left Upper Arm": (-0.40, 0.45, 0.20),
+    "Right Forearm": (-0.14, 0.75, -0.05), "Left Forearm": (0.14, 0.75, -0.05),
+    "Right Hand": (-0.05, 0.45, 0.00), "Left Hand": (0.05, 0.45, 0.00),
+}
+
+# THE NECK IS SQUARE, and that is a DECISION with a cost, recorded here.
+#
+# Rule 54's controller conjugates the pitch into the node's own frame
+# (`worldOrient * mRotate * worldOrientInverse * localRot`,
+# rotatecontroller.cpp:57), and with an axis-aligned neck that
+# conjugation is the identity - so a port that drops it behaves
+# identically here and the mutant survives the picture. A yawed neck
+# WOULD catch it, and was tried: it also makes the rig asymmetric, which
+# breaks the x-symmetry and per-side layers MW-D6 built to catch a
+# one-handed arm. A rotation that preserves those (about X) commutes with
+# the pitch and catches nothing.
+#
+# So the rig stays square and the conjugation is pinned on the SOURCE
+# instead (test/fparm.test.js, MW-D10) - the same trade MW-D8 recorded
+# for the once-solved framing, and it is written down rather than
+# discovered later as a hole.
+ARM_FP_NECK_YAW_DEG = 0.0
+
+
+def _rot_z(deg):
+    a = math.radians(deg)
+    c, s = math.cos(a), math.sin(a)
+    return ((c, -s, 0.0), (s, c, 0.0), (0.0, 0.0, 1.0))
+
+
+def _apply(m, v):
+    return tuple(sum(m[r][k] * v[k] for k in range(3)) for r in range(3))
+
+
+def _fp_world():
+    """Skeleton-space rest of every first-person bone, composed rather
+    than restated - the neck's rotation propagates to its descendants and
+    a second hand-written table would drift from it on the first edit."""
+    R = _rot_z(ARM_FP_NECK_YAW_DEG)
+    neck = ARM_FP_REST["Bip01 Neck"]
+    out = {"Bip01 Neck": neck}
+    chains = [["Camera"]]
+    for side in ("Right", "Left"):
+        chains.append([f"{side} Upper Arm", f"{side} Forearm", f"{side} Hand"])
+    for chain in chains:
+        acc = (0.0, 0.0, 0.0)
+        for name in chain:
+            local = ARM_FP_REST[name]
+            acc = tuple(acc[i] + local[i] for i in range(3))
+            turned = _apply(R, acc)
+            out[name] = tuple(neck[i] + turned[i] for i in range(3))
+    return out
+
+
+ARM_FP_WORLD = _fp_world()
+
+
+def _texture_shape(tri, uvs, file_name="tx_fixture.tga", clamp=3):
+    # MW-D11: name a texture the way a retail mesh does - a .TGA
+    # reference that only exists in the archive as .DDS, which is the
+    # whole reason rule 36's path law has an extension swap in it.
+    d = tri.data
+    d.num_uv_sets = 1
+    d.has_uv = True
+    d.uv_sets.update_size()
+    for uv, (u, v) in zip(d.uv_sets[0], uvs):
+        uv.u, uv.v = u, v
+    src = NifFormat.NiSourceTexture()
+    src.use_external = 1
+    src.file_name = file_name.encode()
+    src.pixel_layout = 5
+    src.use_mipmaps = 2
+    src.alpha_format = 3
+    src.is_static = 1
+    texp = NifFormat.NiTexturingProperty()
+    texp.apply_mode = 2
+    texp.texture_count = 7
+    texp.has_base_texture = True
+    texp.base_texture.source = src
+    texp.base_texture.clamp_mode = clamp
+    texp.base_texture.filter_mode = 2
+    texp.base_texture.uv_set = 0
+    tri.num_properties = 1
+    tri.properties.update_size()
+    tri.properties[0] = texp
+
+
+def make_armfp():
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    neck = _bone(root, "Bip01 Neck", ARM_FP_REST["Bip01 Neck"])
+    # The turn that makes rule 54's conjugation observable.
+    R = _rot_z(ARM_FP_NECK_YAW_DEG)
+    (neck.rotation.m_11, neck.rotation.m_12, neck.rotation.m_13) = R[0]
+    (neck.rotation.m_21, neck.rotation.m_22, neck.rotation.m_23) = R[1]
+    (neck.rotation.m_31, neck.rotation.m_32, neck.rotation.m_33) = R[2]
+    _bone(neck, "Camera", ARM_FP_REST["Camera"])
+    for side in ("Right", "Left"):
+        up = _bone(neck, f"{side} Upper Arm", ARM_FP_REST[f"{side} Upper Arm"])
+        fore = _bone(up, f"{side} Forearm", ARM_FP_REST[f"{side} Forearm"])
+        hand = _bone(fore, f"{side} Hand", ARM_FP_REST[f"{side} Hand"])
+        _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left",
+              (0.0, 0.18, 0.0))
+    write_nif(HERE / "armfp.nif", [root])
+
+
+def make_armfp_noweapon():
+    # armfp WITHOUT the two weapon bones. Rule 8's attach-bone column has
+    # a present half and an absent half, and MW-D4's report asserts that a
+    # skeleton lacking a bone SAYS so - but rule 54 now refuses any rig
+    # with no Camera node, so the absent half needs a rig that HAS an eye
+    # and LACKS the weapon bones. armskel cannot serve both any more.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    neck = _bone(root, "Bip01 Neck", ARM_FP_REST["Bip01 Neck"])
+    R = _rot_z(ARM_FP_NECK_YAW_DEG)
+    (neck.rotation.m_11, neck.rotation.m_12, neck.rotation.m_13) = R[0]
+    (neck.rotation.m_21, neck.rotation.m_22, neck.rotation.m_23) = R[1]
+    (neck.rotation.m_31, neck.rotation.m_32, neck.rotation.m_33) = R[2]
+    _bone(neck, "Camera", ARM_FP_REST["Camera"])
+    for side in ("Right", "Left"):
+        up = _bone(neck, f"{side} Upper Arm", ARM_FP_REST[f"{side} Upper Arm"])
+        fore = _bone(up, f"{side} Forearm", ARM_FP_REST[f"{side} Forearm"])
+        _bone(fore, f"{side} Hand", ARM_FP_REST[f"{side} Hand"])
+    write_nif(HERE / "armfpnoweapon.nif", [root])
+
+
+def make_armfp_hand():
+    # Skinned, one shape per side, authored AT the skeleton-space bone and
+    # cancelled by an inverse bind of minus that position - the same round
+    # trip make_armhand relies on, at the first-person rest instead.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    for side in ("Right", "Left"):
+        bone_name = f"{side} Hand"
+        rest = ARM_FP_WORLD[bone_name]
+        node = _bone(root, bone_name, rest)
+        sx = 1.0 if side == "Right" else -1.0
+        # A palm-sized triangle pair, wider across x than deep in y.
+        verts = [
+            (rest[0] - 0.10 * sx, rest[1] - 0.10, rest[2] - 0.06),
+            (rest[0] + 0.10 * sx, rest[1] - 0.10, rest[2] - 0.06),
+            (rest[0] + 0.08 * sx, rest[1] + 0.12, rest[2] + 0.02),
+            (rest[0] - 0.08 * sx, rest[1] + 0.12, rest[2] + 0.02),
+        ]
+        tri = _tri(root, f"Tri {side} Hand", verts, tris=((0, 1, 2), (0, 2, 3)))
+        # The quad spans the whole texture, so all four of fixture.dds's
+        # solid quadrants (red, green, blue, white) reach the screen -
+        # colours a flat skin tone can never produce.
+        _texture_shape(tri, [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
+        _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
+                             [(0, 1.0), (1, 1.0), (2, 1.0), (3, 1.0)])])
+    write_nif(HERE / "armfphand.nif", [root])
+
+
+def make_armfp_arm():
+    # RIGID, like armcuff and for the same reason: rule 12's rigid half
+    # and rule 13's mirror only run on a part with no skin instance, and
+    # the mirror is only measurable on a shape that is ASYMMETRIC in x.
+    # Sized and placed for the first-person rest, so it lands on the
+    # forearm rather than wherever armcuff's numbers happen to fall.
+    root = NifFormat.NiNode()
+    root.name = b"FpSleeveRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+    sleeve = _tri(root, "Sleeve", [
+        (0.02, -0.28, -0.04),
+        (0.16, -0.24, -0.02),
+        (0.09, 0.26, 0.03),
+    ])
+    # The RIGID path carries a texture too - the piece that keeps only its
+    # positions is exactly the one whose material used to be dropped.
+    _texture_shape(sleeve, [(0.0, 0.0), (1.0, 0.0), (0.5, 1.0)])
+    write_nif(HERE / "armfparm.nif", [root])
+
+
+def make_armfp_kf():
+    # MW-D10: THE FIRST-PERSON IDLE - armidle's clip LAW with a first
+    # person's motion.
+    #
+    # armidle.kf is MW-D7's clip-law fixture and its eleven text keys are
+    # each a rule; its ROTATIONS reach 90 degrees, because a big swing is
+    # what makes a sampling error visible, and applied to a first-person
+    # rest pose they fling the arms out of frame. This file keeps the
+    # eleven keys VERBATIM - so every clip law stays exercised - and
+    # replaces the motion with a sway a first-person arm could actually
+    # make: the forearms swing out in y and lift in x, which moves the
+    # picture both across and down the frame. Both are needed: the width
+    # layer catches a framing that renormalises per frame, and the
+    # distinct-pictures layer catches a page frozen on frame one.
+    text_keys = [
+        (0.0, b"Idle: Start"),
+        (0.5, b"Idle: Stop"),
+        (0.6, b"Idle1h: Start"),
+        (0.9, b"Idle1h: Stop"),
+        (1.0, b"Idle: Start"),
+        (1.5, b"SoundGen: Left\rIdle: Loop Start"),
+        (2.0, b"Idle: Chop Hit"),
+        (2.5, b"Idle: Loop Stop"),
+        (3.0, b"Idle: Stop."),
+        (3.2, b"Sneak:Start"),
+        (3.4, b"Sneak:Stop"),
+    ]
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = len(text_keys)
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, text_keys):
+        k.time = t
+        k.value = txt
+
+    # Z, not Y: in Morrowind's axes +Y is FORWARD, so a rotation about it
+    # is a ROLL and moves nothing across the frame. The swing that opens
+    # the arms out - and makes the on-screen WIDTH vary, which is the
+    # measurement that catches a per-frame renormalising framing - is
+    # about Z.
+    def rot_z(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), 0.0, 0.0, math.sin(a))
+
+    def rot_x(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), math.sin(a), 0.0, 0.0)
+
+    swing = [(0.0, 0.0), (1.0, 6.0), (1.5, 14.0), (2.0, 20.0), (2.5, 10.0), (3.0, 0.0)]
+    lift = [(0.0, 0.0), (1.0, 8.0), (2.0, 18.0), (3.0, 4.0)]
+    tracks = [
+        ("Right Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(-d)) for t, d in swing])),
+        ("Left Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(d)) for t, d in swing])),
+        ("Right Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+        ("Left Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+    ]
+
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"ArmFpIdle"
+    helper.extra_data = tke
+    prev_extra = tke
+    prev_ctrl = None
+    for name, kd in tracks:
+        sed = NifFormat.NiStringExtraData()
+        sed.string_data = name.encode()
+        sed.bytes_remaining = 4 + len(name)
+        prev_extra.next_extra_data = sed
+        prev_extra = sed
+        kc = make_keyframe_controller(None, kd, 0.0, 3.4)
+        if prev_ctrl is None:
+            helper.controller = kc
+        else:
+            prev_ctrl.next_controller = kc
+        prev_ctrl = kc
+    write_nif(HERE / "armfpidle.kf", [helper])
+
+
+def make_armfp_esm():
+    # Two slots over the two meshes above, ids ending "1st" (rule 1).
+    def sub(tag, data):
+        return tag + struct.pack("<I", len(data)) + data
+
+    def rec(tag, subs):
+        data = b"".join(subs)
+        return tag + struct.pack("<III", len(data), 0, 0) + data
+
+    z = lambda t: t.encode() + b"\x00"
+
+    def body(bid, model, part):
+        return rec(b"BODY", [sub(b"NAME", z(bid)), sub(b"MODL", z(model)),
+                             sub(b"FNAM", z("FpRace")),
+                             sub(b"BYDT", bytes([part, 0, 0, 0]))])
+
+    hedr = struct.pack("<fI", 1.3, 1)
+    hedr += b"fixture".ljust(32, b"\x00")
+    hedr += b"first-person arm parts".ljust(256, b"\x00")
+    hedr += struct.pack("<I", 3)
+    out = rec(b"TES3", [sub(b"HEDR", hedr)])
+    out += body("b_fp_hand_1st", "fixture\\armfphand.nif", 5)      # hand
+    out += body("b_fp_forearm_1st", "fixture\\armfparm.nif", 7)    # forearm
+    (HERE / "armfp.esm").write_bytes(out)
+    print(f"wrote {HERE / 'armfp.esm'} {len(out)} bytes")
 
 
 def make_armskel_camera():
@@ -1603,6 +1916,392 @@ def make_zoo():
     write_nif(HERE / "zoo.nif", [root, seq])
 
 
+def make_armfp_weapon_kf():
+    # MW-D12: THE WEAPON GROUPS, which armfpidle.kf has none of.
+    #
+    # armfpidle.kf carries MW-D7's eleven clip-law keys verbatim and must
+    # keep carrying them, so the attack machine gets its own file. Every
+    # key here is one branch of rules 8/9/10/11, and the ABSENCES are as
+    # deliberate as the presences:
+    #
+    #   idle1h   present, with a loop window   - rule 10's dice roll
+    #   idle2c   present, idle2b ABSENT        - rule 9's two-handed ladder
+    #   idlehh   ABSENT                        - rule 9's one-handed ladder
+    #   idlebow  present                       - the asked group, no fallback
+    #   idle     present                       - the bare-base tail, and the
+    #                                            sheathed stance (rule 8)
+    #   weapononehand  has "equip attach" and "unequip detach"
+    #   bowandarrow    has NEITHER             - showWeapons by hand
+    #   blunttwohand   ABSENT, weapontwohand present - the LONG ladder
+    #
+    # The three follow strengths are all present for chop, because which
+    # one a blow ends on is the only visible consequence of the wind-up
+    # strength and a fixture with one of them cannot tell them apart.
+    text_keys = [
+        (0.0, b"Idle: Start"),
+        (0.5, b"Idle: Stop"),
+        (0.6, b"Idle1h: Start"),
+        (0.8, b"Idle1h: Loop Start"),
+        (1.4, b"Idle1h: Loop Stop"),
+        (1.6, b"Idle1h: Stop"),
+        (1.7, b"Idle2c: Start"),
+        (1.9, b"Idle2c: Stop"),
+        (2.0, b"WeaponOneHand: Equip Start"),
+        (2.2, b"WeaponOneHand: Equip Attach"),
+        (2.4, b"WeaponOneHand: Equip Stop"),
+        (2.5, b"WeaponOneHand: Chop Start"),
+        (2.7, b"WeaponOneHand: Chop Min Attack"),
+        (2.9, b"WeaponOneHand: Chop Max Attack"),
+        (3.1, b"WeaponOneHand: Chop Min Hit"),
+        (3.3, b"WeaponOneHand: Chop Hit"),
+        (3.4, b"WeaponOneHand: Chop Small Follow Start"),
+        (3.5, b"WeaponOneHand: Chop Small Follow Stop"),
+        (3.6, b"WeaponOneHand: Chop Medium Follow Start"),
+        (3.7, b"WeaponOneHand: Chop Medium Follow Stop"),
+        (3.8, b"WeaponOneHand: Chop Large Follow Start"),
+        (4.0, b"WeaponOneHand: Chop Large Follow Stop"),
+        (4.1, b"WeaponOneHand: Slash Start"),
+        (4.2, b"WeaponOneHand: Slash Max Attack"),
+        (4.3, b"WeaponOneHand: Slash Hit"),
+        (4.4, b"WeaponOneHand: Slash Large Follow Start"),
+        (4.5, b"WeaponOneHand: Slash Large Follow Stop"),
+        (4.6, b"WeaponOneHand: Thrust Start"),
+        (4.7, b"WeaponOneHand: Thrust Max Attack"),
+        (4.8, b"WeaponOneHand: Thrust Hit"),
+        (4.9, b"WeaponOneHand: Thrust Large Follow Start"),
+        (5.0, b"WeaponOneHand: Thrust Large Follow Stop"),
+        (5.1, b"WeaponOneHand: Unequip Start"),
+        (5.2, b"WeaponOneHand: Unequip Detach"),
+        (5.4, b"WeaponOneHand: Unequip Stop"),
+        (5.5, b"BowAndArrow: Equip Start"),
+        (5.7, b"BowAndArrow: Equip Stop"),
+        (5.8, b"BowAndArrow: Shoot Start"),
+        (6.0, b"BowAndArrow: Shoot Min Attack"),
+        (6.2, b"BowAndArrow: Shoot Max Attack"),
+        (6.4, b"BowAndArrow: Shoot Release"),
+        (6.5, b"BowAndArrow: Shoot Follow Start"),
+        (6.7, b"BowAndArrow: Shoot Follow Stop"),
+        (6.8, b"BowAndArrow: Unequip Start"),
+        (7.0, b"BowAndArrow: Unequip Stop"),
+        (7.1, b"IdleBow: Start"),
+        (7.3, b"IdleBow: Stop"),
+        (7.4, b"WeaponTwoHand: Equip Start"),
+        (7.6, b"WeaponTwoHand: Equip Stop"),
+        (7.7, b"WeaponTwoHand: Chop Start"),
+        (7.8, b"WeaponTwoHand: Chop Max Attack"),
+        (7.9, b"WeaponTwoHand: Chop Hit"),
+        (8.0, b"WeaponTwoHand: Chop Large Follow Start"),
+        (8.1, b"WeaponTwoHand: Chop Large Follow Stop"),
+        (8.2, b"WeaponTwoHand: Unequip Start"),
+        (8.3, b"WeaponTwoHand: Unequip Stop"),
+    ]
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = len(text_keys)
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, text_keys):
+        k.time = t
+        k.value = txt
+
+    def rot_z(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), 0.0, 0.0, math.sin(a))
+
+    def rot_x(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), math.sin(a), 0.0, 0.0)
+
+    # A key at EVERY window boundary that matters, so two different
+    # sections of this file pose the arm differently - a pin that says
+    # "the release plays" has to be able to fail when the release does not.
+    swing = [(0.0, 0.0), (0.6, 4.0), (1.6, 10.0), (2.0, 2.0), (2.5, 6.0),
+             (2.9, 18.0), (3.3, 26.0), (4.0, 8.0), (5.4, 0.0), (5.8, 5.0),
+             (6.2, 16.0), (6.7, 3.0), (8.3, 0.0)]
+    lift = [(0.0, 0.0), (0.8, 5.0), (1.4, 9.0), (2.4, 3.0), (2.9, 12.0),
+            (3.3, 20.0), (4.0, 6.0), (6.2, 14.0), (8.3, 0.0)]
+    tracks = [
+        ("Right Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(-d)) for t, d in swing])),
+        ("Left Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(d)) for t, d in swing])),
+        ("Right Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+        ("Left Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+    ]
+
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"ArmFpWeapon"
+    helper.extra_data = tke
+    prev_extra = tke
+    prev_ctrl = None
+    for name, kd in tracks:
+        sed = NifFormat.NiStringExtraData()
+        sed.string_data = name.encode()
+        sed.bytes_remaining = 4 + len(name)
+        prev_extra.next_extra_data = sed
+        prev_extra = sed
+        kc = make_keyframe_controller(None, kd, 0.0, 8.3)
+        if prev_ctrl is None:
+            helper.controller = kc
+        else:
+            prev_ctrl.next_controller = kc
+        prev_ctrl = kc
+    write_nif(HERE / "armfpweapon.kf", [helper])
+
+
+def _quad(name, colors=True, z=0.0):
+    """One 4-vertex, 2-triangle shape, optionally with vertex colours."""
+    tri = NifFormat.NiTriShape()
+    tri.name = name.encode()
+    ident(tri.rotation)
+    tri.scale = 1.0
+    tri.translation.z = z
+    d = NifFormat.NiTriShapeData()
+    tri.data = d
+    d.num_vertices = 4
+    d.has_vertices = True
+    d.vertices.update_size()
+    for v, (x, y, zz) in zip(d.vertices, [(0, 0, 0), (2, 0, 0), (2, 1, 0), (0, 1, 0)]):
+        v.x, v.y, v.z = x, y, zz
+    d.has_normals = True
+    d.normals.update_size()
+    for n in d.normals:
+        n.x, n.y, n.z = 0.0, 0.0, 1.0
+    if colors:
+        d.has_vertex_colors = True
+        d.vertex_colors.update_size()
+        for c, (r, g, b, a) in zip(d.vertex_colors,
+                                   [(0.2, 0.4, 0.6, 1.0), (0.2, 0.4, 0.6, 1.0),
+                                    (0.2, 0.4, 0.6, 1.0), (0.2, 0.4, 0.6, 1.0)]):
+            c.r, c.g, c.b, c.a = r, g, b, a
+    d.num_uv_sets = 1
+    d.has_uv = True
+    d.uv_sets.update_size()
+    for uv, (u, v) in zip(d.uv_sets[0], [(0, 0), (1, 0), (1, 1), (0, 1)]):
+        uv.u, uv.v = u, v
+    d.num_triangles = 2
+    d.num_triangle_points = 6
+    d.triangles.update_size()
+    for t, (a, b, c) in zip(d.triangles, [(0, 1, 2), (0, 2, 3)]):
+        t.v_1, t.v_2, t.v_3 = a, b, c
+    d.update_center_radius()
+    return tri
+
+
+def _material(diffuse, ambient=(1.0, 1.0, 1.0), emissive=(0.0, 0.0, 0.0), alpha=1.0):
+    mat = NifFormat.NiMaterialProperty()
+    mat.name = b"M"
+    mat.diffuse_color.r, mat.diffuse_color.g, mat.diffuse_color.b = diffuse
+    mat.ambient_color.r, mat.ambient_color.g, mat.ambient_color.b = ambient
+    mat.emissive_color.r, mat.emissive_color.g, mat.emissive_color.b = emissive
+    mat.specular_color.r, mat.specular_color.g, mat.specular_color.b = 0.9, 0.9, 0.9
+    mat.glossiness = 42.0
+    mat.alpha = alpha
+    return mat
+
+
+def _vertexcolor(vertex_mode, lighting_mode):
+    vc = NifFormat.NiVertexColorProperty()
+    vc.vertex_mode = vertex_mode
+    vc.lighting_mode = lighting_mode
+    return vc
+
+
+def _stencil(draw_mode):
+    st = NifFormat.NiStencilProperty()
+    st.draw_mode = draw_mode
+    return st
+
+
+def _props(node, props):
+    node.num_properties = len(props)
+    node.properties.update_size()
+    for i, pr in enumerate(props):
+        node.properties[i] = pr
+
+
+def make_matprops():
+    # MW-D13: THE PROPERTY CHAIN, authored so the ORDER can be told from
+    # the result. Four shapes under one root, each reachable through a
+    # different ancestor chain:
+    #
+    #   "Plain"     - no properties anywhere: rule 64's white defaults
+    #   "Inherited" - the MATERIAL sits on an ancestor NiNode, which is
+    #                 the common Morrowind authoring pattern a port that
+    #                 reads only the shape's own properties drops
+    #   "Scoped"    - ancestor NiVertexColorProperty SrcAmbDif+Emissive,
+    #                 own NiVertexColorProperty SrcEmissive. The MODE
+    #                 comes from the nearer one and the BLACKOUT from the
+    #                 farther, because `lightmode` is only assigned in the
+    #                 SrcAmbDif branch and outlives the property that set
+    #                 it. A per-type map cannot produce this pair.
+    #   "NoColors"  - a NiVertexColorProperty on a mesh with NO colour
+    #                 array: the channel goes WHITE and the mode to None,
+    #                 never black.
+    root = NifFormat.NiNode()
+    root.name = b"MatRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    plain = _quad("Plain", colors=False)
+
+    inherited_parent = NifFormat.NiNode()
+    inherited_parent.name = b"InheritedParent"
+    ident(inherited_parent.rotation)
+    inherited_parent.scale = 1.0
+    _props(inherited_parent, [_material((1.0, 0.5, 0.25), alpha=0.75), _stencil(3)])
+    inherited = _quad("Inherited", colors=False)
+    inherited_parent.num_children = 1
+    inherited_parent.children.update_size()
+    inherited_parent.children[0] = inherited
+
+    scoped_parent = NifFormat.NiNode()
+    scoped_parent.name = b"ScopedParent"
+    ident(scoped_parent.rotation)
+    scoped_parent.scale = 1.0
+    _props(scoped_parent, [_material((1.0, 1.0, 0.0)), _vertexcolor(2, 0)])
+    scoped = _quad("Scoped")
+    _props(scoped, [_vertexcolor(1, 1)])
+    scoped_parent.num_children = 1
+    scoped_parent.children.update_size()
+    scoped_parent.children[0] = scoped
+
+    nocolors = _quad("NoColors", colors=False)
+    _props(nocolors, [_material((0.1, 0.2, 0.3)), _vertexcolor(2, 1), _stencil(2)])
+
+    #   "Colored"   - colours and a MATERIAL but NO NiVertexColorProperty,
+    #                 which is rule 64's one non-default pre-loop setting:
+    #                 the mode is AmbientAndDiffuse purely because a
+    #                 colour array exists, so the material's red diffuse
+    #                 is discarded in favour of the vertex colour.
+    colored = _quad("Colored")
+    _props(colored, [_material((1.0, 0.0, 0.0))])
+
+    root.num_children = 5
+    root.children.update_size()
+    root.children[0] = plain
+    root.children[1] = inherited_parent
+    root.children[2] = scoped_parent
+    root.children[3] = nocolors
+    root.children[4] = colored
+    write_nif(HERE / "matprops.nif", [root])
+
+
+def make_boneoffset():
+    # MW-D13 / RULE 14: a rigid part carrying a node literally named
+    # BoneOffset whose TRANSLATION is the attachment offset.
+    #
+    # Authored to make every clause of the visitor FAILABLE:
+    #   - the real node is named "BoneOFFSET", which ciEqual matches and
+    #     an == against the literal "BoneOffset" does not;
+    #   - a SHAPE named "boneoffset" sits BEFORE it in pre-order, so a
+    #     port that does not skip drawables takes the wrong node's
+    #     translation (apply(osg::Geometry&) is an empty override);
+    #   - a SECOND node named "BoneOffset" sits after the first with a
+    #     different translation, so a port that keeps scanning takes the
+    #     last rather than the first.
+    root = NifFormat.NiNode()
+    root.name = b"OffsetRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    decoy_shape = _quad("boneoffset", colors=False, z=0.0)
+    decoy_shape.translation.x = 99.0
+
+    marker = NifFormat.NiNode()
+    marker.name = b"BoneOFFSET"
+    ident(marker.rotation)
+    marker.scale = 1.0
+    marker.translation.x, marker.translation.y, marker.translation.z = 3.0, -4.0, 5.0
+
+    later = NifFormat.NiNode()
+    later.name = b"boneoffset"
+    ident(later.rotation)
+    later.scale = 1.0
+    later.translation.x, later.translation.y, later.translation.z = -7.0, -7.0, -7.0
+
+    blade = _quad("Blade", colors=False, z=1.0)
+
+    root.num_children = 4
+    root.children.update_size()
+    root.children[0] = decoy_shape
+    root.children[1] = marker
+    root.children[2] = later
+    root.children[3] = blade
+    write_nif(HERE / "boneoffset.nif", [root])
+
+
+def _string_extra(text):
+    sed = NifFormat.NiStringExtraData()
+    sed.string_data = text.encode()
+    sed.bytes_remaining = 4 + len(text)
+    return sed
+
+
+def _marker_tree(root_name, with_mrk):
+    root = NifFormat.NiNode()
+    root.name = root_name.encode()
+    ident(root.rotation)
+    root.scale = 1.0
+    # The MRK-less tree carries TWO decoys, because two separate wrong
+    # readings both draw the editor marker away and neither is visible in
+    # a file that simply lacks the flag:
+    #   - the ROOT carries "mrk" in lower case, which `sd->mData == "MRK"`
+    #     does NOT match (it is ==, not ciEqual);
+    #   - a NON-ROOT node carries a correct "MRK", which is ignored
+    #     because the check is `args.mRootNode == node`.
+    root.extra_data = _string_extra("MRK" if with_mrk else "mrk")
+
+    boxed = _quad("Inside Box", colors=False)
+    box = NifFormat.NiNode()
+    box.name = b"Bounding Box"
+    ident(box.rotation)
+    box.scale = 1.0
+    box.num_children = 1
+    box.children.update_size()
+    box.children[0] = boxed
+
+    marker_shape = _quad("Tri EditorMarker01", colors=False)
+    if not with_mrk:
+        deep = NifFormat.NiNode()
+        deep.name = b"DeepMarkerHolder"
+        ident(deep.rotation)
+        deep.scale = 1.0
+        deep.extra_data = _string_extra("MRK")
+        deep.num_children = 1
+        deep.children.update_size()
+        deep.children[0] = marker_shape
+        marker_shape = deep
+
+    kids = [
+        marker_shape,
+        _quad("Shadow", colors=False),
+        _quad("Tri Shadow Plane", colors=False),
+        _quad("Keep", colors=False),
+        box,
+    ]
+    root.num_children = len(kids)
+    root.children.update_size()
+    for i, k in enumerate(kids):
+        root.children[i] = k
+    return root
+
+
+def make_markers():
+    # MW-D13 / RULES 58 + 59. Two files that differ ONLY in the root's
+    # "MRK" string extra data, because two of the three skip-list entries
+    # are UNCONDITIONAL and one is gated - a single file cannot tell those
+    # apart, and a port that gates all three passes every test a single
+    # file could hold.
+    #
+    # Both carry a node literally named "Bounding Box" with a shape
+    # beneath it: the node AND ITS SUBTREE must not reach the draw.
+    write_nif(HERE / "markers.nif", [_marker_tree("MarkerRoot", True)])
+    write_nif(HERE / "nomarkers.nif", [_marker_tree("PlainRoot", False)])
+
+    # And rule 58's own exception: mRootNode is null on the FIRST call, so
+    # a NIF whose ROOT is named "Bounding Box" is NOT skipped. Such a file
+    # would otherwise load as nothing at all.
+    root = _marker_tree("Bounding Box", False)
+    write_nif(HERE / "boxroot.nif", [root])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -1620,6 +2319,16 @@ if __name__ == "__main__":
     make_arm_idle_kf()
     make_armskel_weapon()
     make_armskel_camera()
+    make_armfp()
+    make_armfp_noweapon()
+    make_armfp_hand()
+    make_armfp_arm()
+    make_armfp_kf()
+    make_armfp_weapon_kf()
+    make_matprops()
+    make_boneoffset()
+    make_markers()
+    make_armfp_esm()
     make_weaponmesh()
     make_armparts_esm()
     make_collswitch()

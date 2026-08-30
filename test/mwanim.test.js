@@ -24,6 +24,7 @@ import {
   skinToSkelMatrix,
   skinBatch,
   accumRootRef,
+  ACCUM_ROOT_NAMES,
   trackBinding,
 } from '../src/formats/mwSkin.js';
 
@@ -31,6 +32,7 @@ const ANIMATED = new Uint8Array(
   readFileSync(new URL('./fixtures/mw/animated.nif', import.meta.url)),
 );
 const KF = new Uint8Array(readFileSync(new URL('./fixtures/mw/xfixture.kf', import.meta.url)));
+const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
 const SKINNED = new Uint8Array(
   readFileSync(new URL('./fixtures/mw/skinned.nif', import.meta.url)),
 );
@@ -255,14 +257,42 @@ const FLIGHT = new Uint8Array(
   readFileSync(new URL('./fixtures/mw/xflight.kf', import.meta.url)),
 );
 
-test('mwskin: the accumulation root is the topmost tracked bone', () => {
+test('MW-D14 rule 56: the accumulation root is a TWO-NAME TABLE, not a search', () => {
+  //   // Priority matters! bip01 is preferred.
+  //   accumRootNames = { "bip01", "root bone" }
+  // and a candidate is taken only when the KF DRIVES it. This was ported
+  // as "the topmost tracked bone", which on a first-person weapon .kf -
+  // which keys nothing on bip01 - answered an UPPER ARM, and would then
+  // have pinned that bone's X and Y to rest.
   const nif = parseNif(ANIMATED);
   const skeleton = buildSkeleton(nif);
   const tracks = extractTracks(parseNif(FLIGHT));
-  const ref = accumRootRef(skeleton, tracks);
-  assert.equal(skeleton.nodes.get(ref).name, 'Bone0');
-  // With no tracks there is nothing to accumulate.
-  assert.equal(accumRootRef(skeleton, new Map()), null);
+  // Bone0 IS the topmost tracked bone here and it is NOT the answer:
+  // this skeleton has neither name.
+  assert.equal(skeleton.nodes.get(skeleton.byName.get('bone0')).name, 'Bone0');
+  assert.equal(accumRootRef(skeleton, tracks), null,
+    'neither name resolves, so there is no accum root - which is an answer, not a failure');
+
+  // A Morrowind-vocabulary rig where bip01 IS driven.
+  const arm = buildSkeleton(parseNif(f('armfp.nif')));
+  const idle = extractTracks(parseNif(f('armidle.kf')));
+  assert.equal(arm.byName.get('bip01'), accumRootRef(arm, idle), 'bip01, because the KF drives it');
+  // The same skeleton with a KF that keys only the arms: no accum root,
+  // NOT the topmost bone that happens to be keyed.
+  const weapon = extractTracks(parseNif(f('armfpweapon.kf')));
+  assert.equal(accumRootRef(arm, weapon), null);
+  // Both halves of the AND: a name in the skeleton but not in the KF,
+  // and a name in the KF but not in the skeleton.
+  assert.equal(accumRootRef(arm, new Map()), null);
+  assert.equal(accumRootRef({ byName: new Map() }, idle), null);
+  assert.equal(accumRootRef(null, idle), null);
+  // Priority: bip01 wins over "root bone" when both are driven.
+  const both = new Map([['bip01', {}], ['root bone', {}]]);
+  const twoNamed = { byName: new Map([['root bone', 7], ['bip01', 9]]) };
+  assert.equal(accumRootRef(twoNamed, both), 9);
+  assert.equal(accumRootRef(twoNamed, new Map([['root bone', {}]])), 7,
+    'and "root bone" is taken when bip01 is not driven');
+  assert.deepEqual([...ACCUM_ROOT_NAMES], ['bip01', 'root bone']);
 });
 
 test('mwskin: root motion extracted - the flight stays under the actor', () => {
@@ -282,8 +312,12 @@ test('mwskin: root motion extracted - the flight stays under the actor', () => {
 
   // WITH extraction (reference (1,1,0): X,Y pinned, Z animated) the
   // authored verts come back exactly - the actor moved, the mesh didn't.
+  // The accum root is passed EXPLICITLY here: this fixture's bones are
+  // Bone0/Bone1, so rule 56's table finds nothing in it (that is the pin
+  // above). What this one measures is the EXTRACTION - poseSkeleton's
+  // (1,1,0) accumulation - which is a separate rule from the choice.
   const pinned = poseSkeleton(skeleton, tracks, sampleTrack, 1.0, {
-    accumRoot: accumRootRef(skeleton, tracks),
+    accumRoot: skeleton.byName.get('bone0'),
   });
   skinBatch(batch, skeleton, pinned, skeletonSpaceMatrices(skeleton, pinned, batch.skin.skeletonRoot), out, null);
   assert.ok(nearVec(Array.from(out), [0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1]));

@@ -58,28 +58,31 @@ const body = (id, race, part, { female = false, model = 'b/x.nif' } = {}) => {
 const loose = (n) => [...readFileSync(`test/fixtures/mw/${n}`)];
 
 const BSA = buildBsa([
-  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
-  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
-  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
-  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ]);
 // The FOREIGN-clip archive for L6: same arm, but the .kf keys "Bone1",
 // a bone this skeleton does not have. poseSkeleton then answers every
 // bone with node.rest and draws a clean, static, entirely plausible arm.
 const BSA_BLIND = buildBsa([
-  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
-  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
-  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('xfixture.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ]);
 // MW-D9: a SECOND skeleton, the one that HAS the weapon bones. armskel
 // deliberately lacks them (MW-D4 asserts a skeleton that lacks a bone
 // SAYS so), so both halves of rule 8's attach-bone column stay reachable.
 const BSA_WEAPON = buildBsa([
-  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskelw.nif') },
-  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
-  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
-  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
   { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
 ]);
 // The mesh IS here and the BONE is not - armskel omits Weapon Bone by
@@ -87,10 +90,11 @@ const BSA_WEAPON = buildBsa([
 // unreachable, because the plain archive lacks the weapon mesh too and
 // the build refuses one step earlier for a different reason.
 const BSA_NO_WEAPON_BONE = buildBsa([
-  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
-  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
-  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
-  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armfpnoweapon.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
   { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
 ]);
 const wpdt = (type) => { const b = new Uint8Array(32); new DataView(b.buffer).setInt16(10, type, true); return [...b]; };
@@ -100,7 +104,7 @@ const weap = (id, model, type, name) => {
 };
 const ESM_WEAPON = Uint8Array.from([
   ...body('b_n_nord_m_hands.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
-  ...body('b_n_nord_m_upper arm', 'nord', 'upperarm', { model: 'b/U.nif' }),
+  ...body('b_n_nord_m_forearm', 'nord', 'forearm', { model: 'b/U.nif' }),
   // ONE mesh, and the two rows below are what put it in two different
   // hands: type 1 goes on Weapon Bone, type 9 (the bow) on Weapon Bone
   // Left. Same bytes, two bones - which is the whole of rule 8's column.
@@ -257,10 +261,26 @@ ok(boot1.built.ok, `the arm BUILDS from a real archive${boot1.built.ok ? '' : ` 
 ok(boot1.status.skeletonPath === 'meshes/xbase_anim.1st.nif',
   `and it took rule 6's male non-beast skeleton, not the name the reverted rig hardcoded (${boot1.status.skeletonPath})`);
 ok(boot1.status.pieces === 4, `four pieces bound - a skinned hand per side, a rigid cuff per side (${boot1.status.pieces})`);
-ok(boot1.status.binding && boot1.status.binding.matched.length === 5,
-  `and all five clip tracks bind to a bone (${boot1.status.binding ? boot1.status.binding.matched.length : 'none'})`);
-ok(boot1.status.cameraBone === null,
-  'the skeleton carries NO Camera/Head bone and the build says so - rule 54 is measured, not assumed');
+ok(boot1.status.binding && boot1.status.binding.matched.length === 4,
+  `and all four clip tracks bind to a bone (${boot1.status.binding ? boot1.status.binding.matched.length : 'none'})`);
+// MW-D10: rule 54 is no longer "measured, not assumed" - it is the
+// placement. The rig has to carry the node the camera tracks, and a rig
+// that does not is REFUSED by name rather than framed by invention.
+ok(boot1.status.cameraBone === 'Camera',
+  `the rig carries the node rule 54 tracks (${boot1.status.cameraBone})`);
+const bootNoCam = await boot(b64(buildBsa([
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
+])));
+ok(bootNoCam.built.ok === false && bootNoCam.built.stage === 'camera',
+  `and a rig with neither Camera nor Head REFUSES by stage (${bootNoCam.built.stage}: ${bootNoCam.built.error})`);
+// boot() REPLACES the page's live arm, so the refusal above has to be
+// undone before the layers below measure one - found by watching every
+// later layer report zero.
+await boot(FIX.bsa);
 
 // ── L2: IT DRAWS, INTO THE FIRST-PERSON TARGET ──────────────────────
 const s1 = await shoot(0.016);

@@ -403,3 +403,29 @@ test('U42: every arc page that counts its own modules counts them right', () => 
       `${page} says ${m[1]} modules live under ${dir}/; there are ${real}`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// WM2h: NO CONFLICT MARKER REACHES THE BIBLE, in any file.
+//
+// This has now happened three times. "Repair: the previous merge went out
+// with conflict markers in Testing.md" is in the log; manifest.test.js
+// grew a marker check for THAT ONE FILE because of it; and then markers
+// went out in Port-Ledger.md's windmill row, which another lane had to
+// fix - and the row arrived back here NESTED, a conflict inside a
+// conflict, because the resolution that shipped them was a regex over
+// the markers rather than a reading of the two sides.
+//
+// A per-file guard was the wrong shape: the file that breaks next is the
+// one nobody has broken yet. This is every tracked bible document, and it
+// costs one walk.
+// ---------------------------------------------------------------------------
+
+test('WM2h: no bible document carries a merge conflict marker', () => {
+  const bad = [];
+  for (const f of BIBLE_FILES) {
+    lines(f).forEach((l, i) => {
+      if (/^(<{7}|={7}|>{7})(\s|$)/.test(l)) bad.push(`${f}:${i + 1} ${l.slice(0, 40)}`);
+    });
+  }
+  assert.deepEqual(bad, [], `merge conflict markers in the bible:\n${bad.join('\n')}`);
+});
