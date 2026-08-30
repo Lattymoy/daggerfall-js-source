@@ -122,6 +122,9 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W4: MapsFile.UseSmallerDungeon (:776-797) + Quest.Start's
   // frozen stamp (Quest.cs:284) - the five-block plus for big dungeons.
   'Experimental/SmallerDungeons': 'src/world/smallerDungeons.js',
+  // AUDIT 28 W5: PlayerSpeedChanger.CaptureInputSpeedAdjustment
+  // (:75-78) - a press FLIPS the sneak mode instead of holding it.
+  'Controls/ToggleSneak': 'src/player/motor.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

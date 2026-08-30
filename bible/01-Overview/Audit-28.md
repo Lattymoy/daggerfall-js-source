@@ -310,6 +310,16 @@ findings, fixed here:
 dungeon, enum backwards, stamp backwards) + the three W4 warp mutants
 re-run; all killed.
 
+## W5 CLOSED: ToggleSneak (PlayerSpeedChanger.cs:75-78)
+
+The port's sneak was held-only at all four host input sites and the
+setting sat stored. The capture is the motor's now, every frame: under
+`Controls/ToggleSneak` the mode is `sneakingMode ^= ActionStarted(Sneak)`
+- a press flips it, release keeps it - and the held key otherwise. P15's
+grounded latch still decides when the mode takes effect; running still
+beats sneaking and the toggled mode survives the run. 3 pins; 4 mutants,
+4 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
