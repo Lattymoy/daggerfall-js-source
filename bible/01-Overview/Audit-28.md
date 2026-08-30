@@ -389,6 +389,19 @@ arithmetic), and in classic mode DFU's answer to two opposing keys
 depends on keybind dictionary order, so the port keeps its neutral
 difference there. 5 pins; 5 mutants, 4 killed + 1 proven equivalent.
 
+## W9 CLOSED: CameraRecoilStrength (CameraRecoiler.cs, whole)
+
+The second default-feel one: the setting ships 3 (High), so DFU's
+camera reels on every hit above 2% of max health, and the port's never
+did. `player/cameraRecoiler.js` is the class whole - the timer of
+(5 + floor(pct*5))*PI falling at 2*PI/s, the rotation scalar dying with
+it, the random unit axis, the ADDITIVE rotate on the camera (x pitches
+down in Unity's frame, y turns right) - driven by the same per-frame
+HealthLost the near-death flicker reads. Three hosts run it after the
+look on the same paused gate; interior.js is a fly camera with no
+entity and has nothing to reel from. Unity's `insideUnitCircle` is
+`rolls` (Ledger A). 5 pins; 5 mutants, 5 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

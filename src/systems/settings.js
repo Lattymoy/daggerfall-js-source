@@ -134,6 +134,8 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W8: InputManager's ApplyHorizontalForce/ApplyVerticalForce/
   // ApplyFriction (:1445-1497) - the axes climb and decay at 9.8/s.
   'Controls/MovementAcceleration': 'src/player/moveAxes.js',
+  // AUDIT 28 W9: CameraRecoiler (whole) - the reel on a hit; GetInt 0..4.
+  'Controls/CameraRecoilStrength': 'src/player/cameraRecoiler.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

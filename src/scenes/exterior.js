@@ -114,6 +114,8 @@ import { addGold, setCrimeCommitted } from '../systems/court.js';   // U10 probe
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
+import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
@@ -1046,6 +1048,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
+  const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   const keys = new Set();
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
@@ -1518,6 +1521,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
     }
+    // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
+    // detector's loss from the vitals rig, same paused gate (:50-51).
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: townTalk.overlayActive || (modes?.overlayHeld ?? false) });
     last = now;
     lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
 

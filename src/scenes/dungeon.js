@@ -41,6 +41,8 @@ import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: t
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
+import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -126,6 +128,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
+  const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
@@ -396,6 +399,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (rightHeld && walkMode && !ctx.weaponIsBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
     }
+    // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
+    // detector's loss from the vitals rig, same paused gate (:50-51).
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: ctx.uiOverlayActive });
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
