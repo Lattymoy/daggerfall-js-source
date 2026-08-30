@@ -25,9 +25,9 @@ import {
   WAVE_N, WAVE_SPECTRUM, CLEARANCE, SUN_BEARING, LEVELS, FOG_MAX,
 } from '../src/ui/introFlyover.js';
 import {
-  BPM, BEAT, BAR, PHASE, barTime, START_BAR, START_TIME, LOGO, logoAt, HIT_TIME, HIT_BAR, DURATION, END_BAR, SPLASHES, PATH,
+  BPM, BEAT, BAR, PHASE, barTime, START_BAR, START_TIME, LOGO, logoAt, BURST_TIME, BURST_BAR, CLIMB_START, SLAM_LEAD, DURATION, END_BAR, SPLASHES, PATH,
   MEASURED_ONSETS, MEASURED_BARS, cameraAt, splashOpacity, introState, ramp, EAST,
-  ONSET_STRENGTH, MAP_BAR, SKY_PATH, skyCameraAt,
+  ONSET_STRENGTH, MAP_BAR, SKY_PATH, skyCameraAt, OPEN_FADE,
 } from '../src/ui/introCue.js';
 import {
   drawSkyMap, inCloud, makeClouds, CLOUD_BASE, CLOUD_TOP, CLOUD_H,
@@ -87,13 +87,21 @@ test('the slam sits on the FIRST BIG BEAT, and that is measured, not felt', () =
 });
 
 
-test('the logo is at dead centre exactly on the slam and not a frame later', () => {
-  // The v2 pin that caught splashOpacity's off-by-a-frame, carried to
-  // the drop: at centre ON the bar, still falling just before.
-  assert.equal(logoAt(LOGO.slam).y, 0);
-  assert.equal(logoAt(LOGO.slam).impact, 1);
-  assert.ok(logoAt(LOGO.slam - 0.001).y < -0.001, 'it landed early');
+test('the touchdown leads the beat by exactly one frame, and rings from it', () => {
+  // The v2 off-by-a-frame pin, now carrying SLAM_LEAD: the landing in
+  // the delivered v4 file measured +255 ms AFTER the beat
+  // (tools/introSyncCheck.mjs), and one structural slice of that is
+  // that a frame is drawn after its clock is read - so the touchdown
+  // sits a frame early and the ring starts there. MUTANT: strip the
+  // lead from logoAt and the just-before-touch sample is landed.
+  const touch = LOGO.slam - SLAM_LEAD;
+  assert.ok(SLAM_LEAD > 0.008 && SLAM_LEAD < 0.03, 'the lead is a frame, not a fudge');
+  assert.equal(logoAt(touch).y, 0);
+  assert.equal(logoAt(touch).impact, 1);
+  assert.ok(logoAt(touch - 0.001).y < -0.001, 'it landed before the lead');
+  assert.ok(logoAt(LOGO.slam).impact > 0.9, 'the ring is not still ringing ON the beat');
 });
+
 
 
 
@@ -139,32 +147,31 @@ test('the projection changes where the WHITE-OUT IS TOTAL', () => {
   assert.equal(flips, 1, `the view changes ${flips} times`);
 });
 
-test('the burst is the camera\u2019s beat: out of the deck ON the hit', () => {
-  // 7.915 s is the one percussive strike in the ambient opening -
-  // off the grid at bar 5.06, measured by tools/themeOnsets.py, and
-  // used as what it is. CLOUD_TOP is crossed exactly there.
-  // MUTANT: move the HIT_BAR key's z below CLOUD_TOP.
-  assert.ok(Math.abs(barTime(HIT_BAR) - HIT_TIME) < 0.001);
-  const before = introState(HIT_TIME - 0.19).whiteout;
-  const at = introState(HIT_TIME).whiteout;
+test('the burst is the camera\u2019s beat: out of the deck ON the accent', () => {
+  // 11.712 s is the strongest kick-band strike between the 7.9 s hit
+  // and the groove (3.61, tools/themeOnsets.py band-split) - off the
+  // grid at bar 7.08, and used as what it is. CLOUD_TOP is crossed
+  // exactly there. MUTANT: move the BURST_BAR key's z below CLOUD_TOP.
+  assert.ok(Math.abs(barTime(BURST_BAR) - BURST_TIME) < 0.001);
+  const before = introState(BURST_TIME - 0.19).whiteout;
   assert.ok(before > 0.7, `the deck thins too early (${before.toFixed(2)} a tenth-bar out)`);
-  assert.equal(at, 0, 'the camera is not clear of the deck on the hit');
+  assert.equal(introState(BURST_TIME).whiteout, 0, 'the camera is not clear of the deck on the accent');
 });
 
 
 
-test('the burst and the hit are one event, frame-counted', () => {
-  // The 18-frames defect, held at v4's timing: the province must not
-  // be readable before the hit. MUTANT: move the bar-4.95 key's z up.
+
+test('the burst and the accent are one event, frame-counted', () => {
   const FPS = 30;
   let clear = null;
   for (let f = Math.ceil(barTime(MAP_BAR) * FPS); f < barTime(END_BAR) * FPS; f++) {
-    if (clear === null && introState(f / FPS).whiteout < 0.10) { clear = f; break; }
+    if (introState(f / FPS).whiteout < 0.10) { clear = f; break; }
   }
   assert.ok(clear !== null, 'the cloud never clears');
-  assert.ok(Math.abs(clear / FPS - HIT_TIME) <= 4 / FPS,
-    `the burst is ${(clear / FPS - HIT_TIME).toFixed(2)}s off the hit`);
+  assert.ok(Math.abs(clear / FPS - BURST_TIME) <= 4 / FPS,
+    `the burst is ${(clear / FPS - BURST_TIME).toFixed(2)}s off the accent`);
 });
+
 
 
 
@@ -190,21 +197,28 @@ test('the flight climbs THROUGH the deck, not up to it', () => {
   assert.ok(cameraAt(END_BAR).z > CLOUD_TOP, 'the intro ends inside the deck');
 });
 
-test('the sky path opens to the WHOLE province and no further', () => {
-  // MAX_SPAN is geometry, not taste: past 640 * 16/9 the frame shows
-  // sky above and below the map as well as beside it, and every cell of
-  // that is clamped edge. MUTANT: raise the last span past MAX_SPAN.
+test('the sky path opens to the WHOLE province, and only the flinch dips', () => {
   for (let i = 1; i < SKY_PATH.length; i++) {
     assert.ok(SKY_PATH[i].bar > SKY_PATH[i - 1].bar, 'sky path keys must ascend');
-    assert.ok(SKY_PATH[i].span >= SKY_PATH[i - 1].span - 1e-9, 'the reveal must not close again');
+    const dip = SKY_PATH[i].span < SKY_PATH[i - 1].span - 1e-9;
+    const inFlinch = SKY_PATH[i].bar > LOGO.slam - 0.2 && SKY_PATH[i].bar < LOGO.slam + 0.2;
+    assert.ok(!dip || inFlinch, `the reveal closes outside the flinch at bar ${SKY_PATH[i].bar}`);
   }
   assert.ok(SKY_PATH[SKY_PATH.length - 1].span <= MAX_SPAN);
   assert.ok(MAX_SPAN <= (INTRO_MAP_H * 16) / 9 + 1, 'MAX_SPAN shows sky past the map');
-  // It has to actually reach the whole thing by the end.
   assert.ok(skyCameraAt(END_BAR).span >= INTRO_MAP_W, 'the province is never seen whole');
+  // THE FLINCH ITSELF: the world punches in a hair over one percent on
+  // the touchdown and recovers inside four tenths. The logo does not
+  // move; the province does. MUTANT: flatten the 12.05 key.
+  const touch = LOGO.slam - SLAM_LEAD;
+  const dip = skyCameraAt(LOGO.slam + 0.05).span;
+  assert.ok(dip < MAX_SPAN * 0.995, 'the slam gets no flinch');
+  assert.ok(skyCameraAt(touch - 0.05).span >= MAX_SPAN - 1e-6, 'the flinch starts early');
+  assert.ok(skyCameraAt(LOGO.slam + 0.45).span >= MAX_SPAN - 1e-6, 'the flinch never recovers');
   assert.deepEqual(skyCameraAt(-99), { ...SKY_PATH[0] });
   assert.deepEqual(skyCameraAt(1e6), { ...SKY_PATH[SKY_PATH.length - 1] });
 });
+
 
 test('the map view draws the province, opaque, with land AND sea', () => {
   const p = prepareMap(buildIliac({ w: 256, h: 160, seed: 42 }));
@@ -315,23 +329,23 @@ test('the splashes never overlap', () => {
   }
 });
 
-test('the credits clear the white and the slam, and the intro is an intro', () => {
-  const ik = SPLASHES.find((x) => x.key === 'interkarma');
-  const nx = SPLASHES.find((x) => x.key === 'nexus');
-  // Credit 1 is gone before the deck whites the picture out - a credit
-  // over a cloud is a credit over nothing.
-  assert.ok(ik.gone <= MAP_BAR - 0.4, 'interkarma is still up in the white-out');
-  // Credit 2 starts after the burst and is gone well before the drop.
-  assert.ok(nx.in >= HIT_BAR, 'nexus is up before the map exists');
-  assert.ok(nx.gone <= LOGO.enter - 1.5, 'nexus crowds the drop');
-  // MAC'S BRIEF AS TWO NUMBERS: the whole clip is used - from 0.000 -
-  // and it is an intro, not an overture.
+test('both credits ride the GROUND and are gone before the climb', () => {
+  // Mac's v5 brief, verbatim: both splash screens before the camera
+  // goes into the sky. CLIMB_START is the law they are pinned against.
+  // MUTANT: slide nexus past 6.15 and this names it.
+  for (const c of SPLASHES) {
+    assert.ok(c.gone <= CLIMB_START - 0.25, `${c.key} rides the climb (gone ${c.gone})`);
+    assert.ok(c.in >= OPEN_FADE.from, `${c.key} starts under the black`);
+  }
+  const [ik, nx] = SPLASHES;
+  assert.ok(ik.gone <= nx.in, 'the credits overlap');
+  // And the film's envelope: from 0.000, and an intro's length.
   assert.equal(START_TIME, 0, 'the recording does not start at its own beginning');
   const length = DURATION - START_TIME;
-  assert.ok(length < 26, `the intro is ${length.toFixed(1)}s - an overture again`);
-  assert.ok(length > 18, `the intro is ${length.toFixed(1)}s - a blink`);
+  assert.ok(length < 26 && length > 18, `the intro is ${length.toFixed(1)}s`);
   assert.ok(Math.abs(DURATION - 24.779) < 0.01, 'END_BAR left the bar-14 onset');
 });
+
 
 
 
@@ -398,18 +412,28 @@ test('the track plays from the top, and the seek machinery stands down', () => {
 
 
 
-test('the climb never falters and the cruise stays low', () => {
-  // One climb in this film - the camera shooting into the sky - and a
-  // chase that sinks reads as a stall. MUTANT: lower any post-3.2 key.
+test('the approach breathes low, the climb never falters', () => {
+  // The approach is alive - altitude breathing inside a low band, a
+  // slow S in yaw - and from CLIMB_START the one climb of the film
+  // never sinks or narrows. MUTANT: lower any post-climb key.
   for (let i = 1; i < PATH.length; i++) {
-    if (PATH[i].bar <= 3.2) continue;
+    if (PATH[i].bar <= CLIMB_START) continue;
     assert.ok(PATH[i].z >= PATH[i - 1].z, `bar ${PATH[i].bar} descends`);
     assert.ok(PATH[i].fov >= PATH[i - 1].fov, `bar ${PATH[i].bar} narrows`);
   }
+  let yawMin = 1e9, yawMax = -1e9;
   for (const k of PATH) {
-    if (k.bar <= 3.2) assert.ok(Math.abs(k.z - 40) < 5, `the approach is not low at bar ${k.bar}`);
+    if (k.bar > CLIMB_START) continue;
+    assert.ok(k.z >= 34 && k.z <= 46, `the approach leaves its band at bar ${k.bar} (z ${k.z})`);
+    yawMin = Math.min(yawMin, k.yaw); yawMax = Math.max(yawMax, k.yaw);
   }
+  assert.ok(yawMax - yawMin > 0.07, 'the approach is a rail - no S at all');
+  // The BREATH: the last ground key dips below the one before it.
+  const ground = PATH.filter((k) => k.bar <= CLIMB_START);
+  assert.ok(ground[ground.length - 1].z < ground[ground.length - 2].z,
+    'the leap has no anticipation dip');
 });
+
 
 
 
@@ -1012,16 +1036,16 @@ test('the drop is a FALL: it accelerates, and lands at zero exactly on the slam'
   // Ease-in square is constant acceleration; an eased-OUT drop reads
   // as lowered on a string. MUTANT: swap k*k for smoothstep.
   const v = (bar, d = 0.05) => (logoAt(bar + d).y - logoAt(bar).y) / d;
+  const touch = LOGO.slam - SLAM_LEAD;
   assert.ok(logoAt(LOGO.enter + 0.001).y < -0.8, 'the drop starts on screen');
-  assert.ok(v(LOGO.enter + 0.05) < v(LOGO.slam - 0.1), 'the fall does not accelerate');
+  assert.ok(v(LOGO.enter + 0.05) < v(touch - 0.1), 'the fall does not accelerate');
   // AND IT IS STILL ACCELERATING WHEN IT HITS - that is what falling
   // IS. An eased drop slows into the landing, which reads as lowered
   // on a string, and the first mutation campaign proved the ramp check
   // alone cannot tell them apart: smoothstep also speeds up early.
   // MUTANT: smoothstep the drop and this fails.
-  assert.ok(v(LOGO.slam - 0.03) > v(LOGO.slam - 0.3), 'the fall slows into the landing');
+  assert.ok(v(touch - 0.03) > v(touch - 0.3), 'the fall slows into the landing');
   assert.equal(logoAt(LOGO.slam).y, 0, 'the logo is not at centre on the beat');
-  assert.equal(logoAt(LOGO.slam).impact, 1, 'the slam does not ring');
   assert.ok(logoAt(LOGO.slam + 0.4).impact === 0, 'the ring-down never ends');
 });
 

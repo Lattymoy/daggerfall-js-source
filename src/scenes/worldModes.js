@@ -159,6 +159,7 @@ import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/facti
 import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES } from '../systems/daedraSummoning.js';   // IF: the punishment table
 import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
+import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
 // U39: the tavern - the window, the knightly free-room perk and the
 // two guild readers that recover the player's own order.
 import {
@@ -3541,6 +3542,30 @@ export function createWorldModes(host) {
       dungeonCtx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // X1
       return true;
     }
+    // AUDIT 28 W2c: THE EXIT-DOOR WAGON PROMPT (PlayerActivate.cs
+    // :649-664). A dungeon exit with a Small_cart in the pack and
+    // Settings.DungeonExitWagonPrompt raises TEXT.RSC 38 as a YesNo
+    // box and RETURNS: No leaves the dungeon (:1137), Yes calls
+    // AllowDungeonWagonAccess() and opens the inventory (:1141-1142),
+    // Escape closes the box and nothing happens (allowCancel). Without
+    // the cart, or with the setting off, the exit is immediate as
+    // before. The bash gate (:651) has no port counterpart here - the
+    // exit door is not a bash target in this host.
+    if (hasCart(playerEntity.items ?? []) && getBool('GUI', 'DungeonExitWagonPrompt')) {
+      const rows = (dungeonCtx.rscLines?.(38) ?? ['Do you wish to access your wagon?']).map((text) => ({ text, center: true }));
+      const prompt = new ServiceFlowWindow([{
+        rows, buttons: 'YesNo',
+        onYes: () => { dungeonCtx.openInventoryWithWagon(); return null; },
+        onNo: () => { exitDungeonNow(); return null; },
+        onEscape: () => null,
+      }]);
+      return mountSpellWindow(prompt);
+    }
+    return exitDungeonNow();
+  }
+  /** TransitionDungeonExterior(true): the exit itself, split from the
+   *  activation so the wagon prompt's No can take it a frame later. */
+  function exitDungeonNow() {
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
     teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown

@@ -19,6 +19,19 @@
 // video therefore sits against the recording exactly where the page
 // put it, dropped frames and all.
 //
+// ── AND THE FILE IS MEASURED BEFORE IT IS BELIEVED ───────────────
+//
+// v4's capture reported clean offsets and delivered a landing +255 ms
+// after the beat - the sampler's currentTime and the audible output
+// are different clocks, and SwiftShader's render latency sits between
+// the page's clock and every captured frame. So the mux is now a
+// LOOP: write the file, run tools/introSyncCheck.mjs on it (the beat
+// by cross-correlation, the landing by watching the wordmark), and
+// re-mux with the measured correction until the landing sits at
+// -20 ms of the beat - a breath EARLY, because an impact heard before
+// it is seen reads as a missed cue and one seen a breath early fuses.
+// Frames are captured once; only the audio placement iterates.
+//
 //     node tools/introCapture.mjs [out.mp4]
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
@@ -91,23 +104,51 @@ try {
   writeFileSync(`${TMP}/list.txt`, lines.join('\n') + '\n');
 
   const total = frames[frames.length - 1].t - frames[0].t;
-  // A capture that starts BEFORE the song does yields a negative seek,
-  // and ffmpeg reads a negative -ss as zero - which slid the whole
-  // score 120 ms early on the first v4 render, in a video whose entire
-  // purpose is judging beats. The sign picks the mechanism instead:
-  // positive trims the front of the audio, negative DELAYS it.
-  const audioArgs = audioStart >= 0
-    ? ['-ss', audioStart.toFixed(3), '-i', 'src/assets/intro/theme.mp3']
-    : ['-itsoffset', (-audioStart).toFixed(3), '-i', 'src/assets/intro/theme.mp3'];
-  execFileSync('ffmpeg', [
-    '-y', '-f', 'concat', '-safe', '0', '-i', `${TMP}/list.txt`,
-    ...audioArgs, '-t', total.toFixed(3),
-    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
-    '-preset', 'medium', '-crf', '20', '-c:a', 'aac', '-b:a', '192k', '-shortest', OUT,
-  ], { stdio: 'pipe' });
-
+  const mux = (startAt) => {
+    // A POSITIVE start trims the source; a NEGATIVE one must insert
+    // real silence. -itsoffset only moves container timestamps, and
+    // the delay silently vanished on decode - four correction passes
+    // measured the identical +150 ms because the file never changed.
+    // adelay writes actual samples, which every decoder must honour.
+    const src = startAt >= 0
+      ? ['-ss', startAt.toFixed(3), '-i', 'src/assets/intro/theme.mp3']
+      : ['-i', 'src/assets/intro/theme.mp3'];
+    const filt = startAt >= 0 ? [] : ['-af', `adelay=${Math.round(-startAt * 1000)}:all=1`];
+    execFileSync('ffmpeg', [
+      '-y', '-f', 'concat', '-safe', '0', '-i', `${TMP}/list.txt`,
+      ...src, ...filt,
+      '-t', total.toFixed(3),
+      '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+      '-preset', 'medium', '-crf', '20', '-c:a', 'aac', '-b:a', '192k', '-shortest', OUT,
+    ], { stdio: 'pipe' });
+  };
+  // The sign picks the mechanism (a negative -ss reads as zero and
+  // slid a whole score 120 ms early once): positive trims the front of
+  // the audio, negative DELAYS it.
+  let startAt = audioStart;
+  const TARGET = -20;   // ms; the landing sits a breath EARLY of the beat
+  let verdict = null;
+  for (let pass = 0; pass < 4; pass++) {
+    mux(startAt);
+    let out = '';
+    try {
+      out = execFileSync('node', ['tools/introSyncCheck.mjs', OUT, '--json'],
+        { encoding: 'utf8' });
+    } catch (e) { out = String(e.stdout ?? ''); }
+    const line = out.trim().split('\n').find((l) => l.startsWith('{'));
+    if (!line) { console.log(out); throw new Error('syncCheck gave no measurement'); }
+    verdict = JSON.parse(line);
+    console.log(`pass ${pass}: landing ${verdict.deltaMs >= 0 ? '+' : ''}${verdict.deltaMs.toFixed(0)} ms of the beat`);
+    if (Math.abs(verdict.deltaMs - TARGET) <= 12) break;
+    // Landing late means the audio must come later too: push the score
+    // by the miss. The frames never move; only the placement does.
+    startAt -= (verdict.deltaMs - TARGET) / 1000;
+  }
+  if (Math.abs(verdict.deltaMs - TARGET) > 12) {
+    throw new Error(`could not converge: landing ${verdict.deltaMs.toFixed(0)} ms off after re-muxing`);
+  }
   console.log(`wrote ${OUT}: ${frames.length} frames over ${total.toFixed(1)}s, `
-    + `audio from ${audioStart.toFixed(2)}s of the theme (${pairs.length} clock pairs)`);
+    + `audio placed by measurement (${pairs.length} clock pairs, landing ${verdict.deltaMs.toFixed(0)} ms)`);
 } finally {
   await browser.close();
   await server.close();

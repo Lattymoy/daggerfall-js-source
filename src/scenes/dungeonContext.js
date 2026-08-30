@@ -926,7 +926,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     notebook: () => opts.questBridge.notebook ?? null,
   } : {});
 
-  function openInventory(lootItems, onEmptied = null) {
+  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
     // transformed lycanthrope opens NO inventory, loot included; the
     // caller assigns the null and no overlay mounts.
@@ -943,6 +943,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // "your cart waits at the entrance" rule).
       dungeon: {
         inside: true,
+        wagonPrompt,   // AUDIT 28 W2c: AllowDungeonWagonAccess() before the push - CheckWagonAccess's FIRST arm
         nearExit: () => !!lastPlayerFeet && exitDoors.some((d) => {
           const p = [d.matrix[12], d.matrix[13], d.matrix[14]];
           return Math.hypot(p[0] - lastPlayerFeet[0], p[1] - lastPlayerFeet[1], p[2] - lastPlayerFeet[2]) <= WAGON_ACCESS_DISTANCE;
@@ -3755,6 +3756,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay) return;
       activeOverlay = openInventory(null);
     },
+    /** AUDIT 28 W2c: DungeonWagonAccess_OnButtonClick's Yes arm
+     *  (PlayerActivate.cs:1139-1142) - AllowDungeonWagonAccess() then
+     *  dfuiOpenInventoryWindow: the inventory opens showing the wagon
+     *  in Remove mode, wherever the player stands. */
+    openInventoryWithWagon() {
+      if (activeOverlay) return false;
+      activeOverlay = openInventory(null, null, { wagonPrompt: true });
+      return !!activeOverlay;
+    },
+    /** The TEXT.RSC rows the exit prompt reads (record 38). */
+    rscLines,
     // PX15b: THE DIAL - the dungeon ctx carries all four doors (the
     // PX15 flag's 'no native inventory' cited input.js:84's HISTORY;
     // toggleInventory above is the door it lacked then and has now).

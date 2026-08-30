@@ -126,6 +126,12 @@ export class ServiceFlowWindow {
     }
     if (t.buttons === 'YesNo') {
       if (code === 'KeyY') this._advance(t.onYes?.() ?? null);
+      // AUDIT 28 W2c: a box that names onEscape takes Escape as
+      // DaggerfallMessageBox's allowCancel does - CloseWindow with NO
+      // button clicked (Update: `if (allowCancel && exitKey)`), which
+      // is neither Yes nor No. The exit-door wagon prompt needs that:
+      // No leaves the dungeon, Escape stays where you are.
+      else if (code === 'Escape' && t.onEscape) this._advance(t.onEscape() ?? null);
       else if (code === 'KeyN' || code === 'Escape') this._advance(t.onNo?.() ?? null);
       return;
     }

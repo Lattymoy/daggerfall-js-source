@@ -89,17 +89,21 @@ export function openState(deps = {}) {
   // CheckWagonAccess (:1082-1097): the cart in the bag AND the player
   // within WAGON_ACCESS_DISTANCE of an exit door. Decided ON OPEN, so
   // walking away from the door mid-window does not revoke it.
+  // NT3 (F161): CheckWagonAccess has TWO branches and only the first
+  // selects Remove - the arm where the flag was PRE-SET by the
+  // EXIT-DOOR PROMPT flow (:1084-1088; AUDIT 28 W2c landed that
+  // producer: PlayerActivate's "access the wagon?" box at a dungeon
+  // exit, whose Yes calls AllowDungeonWagonAccess() and opens the
+  // inventory). Mere PROXIMITY (:1089-1096) only shows the wagon and
+  // leaves the action mode at OnPush's default, so a plain F6 near the
+  // exit with a cart still EQUIPS on a local click. A loot target
+  // outranks the wagon show: the corpse you just opened is what you meant.
+  if (deps.dungeon?.wagonPrompt) {
+    return { mode: 'remove', usingWagon: true, allowDungeonWagonAccess: true, chooseOne };
+  }
   const allowDungeonWagonAccess = !!(
     deps.dungeon?.inside && hasCart(deps.items?.() ?? []) && deps.dungeon?.nearExit?.()
   );
-  // NT3 (F161): CheckWagonAccess has TWO branches and only the first
-  // selects Remove - the arm where the flag was pre-set by the
-  // EXIT-DOOR PROMPT flow (:1084-1088, a producer the port does not
-  // have yet; when it lands it must pass a flag that forces Remove).
-  // Mere PROXIMITY (:1089-1096) only shows the wagon and leaves the
-  // action mode at OnPush's default, so a plain F6 near the exit with
-  // a cart still EQUIPS on a local click. A loot target outranks the
-  // wagon show: the corpse you just opened is what you meant.
   let usingWagon = false;
   if (allowDungeonWagonAccess && !deps.loot) usingWagon = true;
   return { mode, usingWagon, allowDungeonWagonAccess, chooseOne };

@@ -10,6 +10,37 @@ policies one by one.
 
 
 
+
+## U65e THE INTRO v5 - measured to the ear (2026-08-30)
+
+Mac, delegating: better camera work; both credits before the sky; and
+the logo must land ON the beat, which it did not. The last clause is
+the one that changed how this slice verifies.
+
+THE ARTIFACT IS MEASURED NOW. tools/introSyncCheck.mjs reads the
+delivered MP4 itself: the beat by envelope cross-correlation against
+the source recording, the landing by tracking the wordmark's centroid
+and fitting the fall into the hold, sub-frame. v4's file measured
++255 ms - a quarter second of audio-first, the jarring direction -
+while every upstream number said "on the beat", because cue arithmetic
+and frozen-bar transform reads are not about what an ear receives. The
+capture is a convergence loop against that measurement (and its first
+run caught -itsoffset's delay vanishing on decode; real silence via
+adelay converged in one pass). The shipped file lands -21 ms: a breath
+early, which fuses.
+
+THE CUE CARRIES THE SAME PHYSICS: SLAM_LEAD, one frame, because a
+frame is drawn after its clock is read everywhere, not just under a
+software rasteriser. Touchdown and ring lead the beat by design.
+
+THE FILM: six bars of composed approach - altitude breathing, a yaw S,
+gathering speed, an anticipation dip - then one gesture to the cloud
+top, bursting on 11.712 s (the strongest kick-band strike before the
+groove; band-split analysis). Both credits ride the ground, pinned
+against CLIMB_START. The world flinches 1.2% on the touchdown and
+recovers in a third of a bar. Every clause above is a pin.
+
+
 ## U65d THE INTRO v4 - from the top, the first big beat (2026-08-30)
 
 Mac, after v3: the music starts wrong and the whole clip is unused;
