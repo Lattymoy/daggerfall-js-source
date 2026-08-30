@@ -101,7 +101,16 @@ export function buildSkeleton(nif) {
       parent,
       rest: { rotation: rec.rotation, translation: rec.translation, scale: rec.scale },
     });
-    if (rec.name) byName.set(rec.name.toLowerCase(), ref);
+    // RULE 16: duplicates go to the FIRST. The reference's bone cache is
+    // an unordered_map filled with emplace (skeleton.cpp:23-29), which
+    // NEVER overwrites - so on a skeleton carrying two nodes of one name
+    // every lookup answers the first in traversal order. A plain
+    // Map.set answered the LAST, which on a retail rig with a
+    // duplicated attach bone hangs the weapon on the wrong copy.
+    if (rec.name) {
+      const key = rec.name.toLowerCase();
+      if (!byName.has(key)) byName.set(key, ref);
+    }
     for (const child of rec.children) {
       if (child >= 0) walk(child, ref);
     }

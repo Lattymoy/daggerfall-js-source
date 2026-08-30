@@ -889,6 +889,8 @@ function paneEnhanced(body) {
       : armState.reason],
     ['Weapon', armState.weapon
       ? `${armState.weapon.name || armState.weapon.id} at ${armState.weapon.bone}`
+        + (armState.weapon.side && armState.weapon.side !== 'unknown'
+          ? ` (${armState.weapon.side} side at rest)` : '')
       : armState.active ? 'none - empty hands' : '-'],
   ]));
   const armActions = [

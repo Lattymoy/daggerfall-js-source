@@ -481,7 +481,50 @@ staff hand is impossible from the mapping side; what Mac saw was the
 pre-MW-D19 snapshot arm holding whatever it was built with. The row,
 the resolver, and the staff-or-nothing pick are pinned end to end so
 the sentence stays true, and the card names the picked record beside
-the bone it hangs on.
+the bone it hangs on. (MW-D22 found the REST of this bug: the mapping
+side was sound and the BYTE side was not - see below.)
+
+MW-D22: THE TYPE WAS THE HEALTH, AND THE FIRST DUPLICATE WINS. Mac's
+second retest: hands PERFECT (MW-D20 confirmed on retail), staff still
+drawing a dagger, a shortsword drawing NOTHING, and one-handers on the
+left. Two defects and one diagnostic:
+
+THE WPDT OFFSET. mType is at byte 8 of the 32-byte WPDT (float mWeight
+0-3, int32 mValue 4-7, int16 mType 8-9, uint16 mHealth 10-11 -
+loadweap.hpp, re-read with working arithmetic this time). MW-D9 wrote
+"byte 10" in this file, the reader read 10, and wpdtRec - FIVE copies
+of it across the test files - was authored FROM THE SAME SENTENCE. So
+every pin passed, twice over, while retail play read mHealth as the
+type: a shortsword (type 0) found no record whose HEALTH is 0 and drew
+EMPTY HANDS; a staff (type 5) drew whatever record's health is 5,
+which on Mac's data wears a dagger-shaped mesh. This is TEST THE SHAPE
+THE PRODUCER MINTS wearing bytes: a fixture writer authored from the
+port's own guess certifies the guess, and Mac's play was the first
+retail check the number ever got. The new pin lays the struct out BY
+HAND, field by field with distinct values, so no writer shares the
+guess - a reader back on byte 10 answers 999 (the planted health) and
+dies.
+
+RULE 16, IMPLEMENTED AT LAST: duplicates go to the FIRST. The
+reference's bone cache fills with emplace, which never overwrites
+(skeleton.cpp:23-29); buildSkeleton's Map.set answered the LAST
+duplicate. On a retail rig carrying two nodes of one name - the reason
+the rule exists - every consumer (attach bones, camera, neck, accum
+root) could land on the wrong copy; the weapon on a duplicated attach
+bone is the visible case. First-wins now, pinned with a renamed-record
+collision.
+
+AND THE HAND IS ON THE CARD. Whether "one-handers on the left" (Mac's
+third finding) survives the two fixes above, the card now prints which
+SIDE the resolved attach bone rests on - +X is the actor's right in
+Morrowind's basis (faces +Y, Z up; right = forward x up) - beside the
+record and bone it already names. If the weapon still hangs left, that
+line separates "the wrong copy of the bone" and "the bone genuinely
+sits at -X on this skeleton" from "the view is mirrored" without a
+screenshot argument, and the answer picks the next fix.
+
+3 mutants, 3 dead (the reader back on 10, last-wins restored, a writer
+back on 10).
 
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
@@ -830,13 +873,18 @@ with X negated by the very same rule that mirrors the left hand. Nothing
 in this port special-cases it, and the probe pins it: the bow is the
 sword's own mesh with X negated, exactly, to within 1e-3.
 
-WPDT IS CITED, NOT GUESSED. components/esm3/loadweap.hpp:71 - float
-mWeight; int32 mValue; int16 mType; uint16 mHealth; float mSpeed,
+WPDT IS CITED, NOT GUESSED - AND THE ARITHMETIC ON THE CITATION WAS
+WRONG ANYWAY (corrected at MW-D22). components/esm3/loadweap.hpp:71 -
+float mWeight; int32 mValue; int16 mType; uint16 mHealth; float mSpeed,
 mReach; uint16 mEnchant; uchar mChop[2], mSlash[2], mThrust[2]; int32
-mFlags. mType is therefore at byte 10, and a record shorter than 32
-bytes is REFUSED rather than read past: a wrong type is not a visible
-failure, it is a sword drawn on the bow's bone in the wrong hand looking
-entirely deliberate. That branch is unreachable by any fixture and is
+mFlags. mType is therefore at byte EIGHT (4 + 4); this paragraph
+originally said "byte 10", the reader read 10, and the fixture writer
+was authored from the same sentence - so every pin passed while retail
+play read mHealth as the type. A record shorter than 32 bytes is still
+REFUSED rather than read past: a wrong type is not a visible failure,
+it is a sword drawn on the bow's bone in the wrong hand looking
+entirely deliberate - which is, word for word, what the wrong OFFSET
+did too. The short-record branch is unreachable by any fixture and is
 pinned in node with a hand-built short record.
 
 THE DIVERGENCE IS DECLARED, WHICH THIS DOCUMENT ALREADY DEMANDED. Its

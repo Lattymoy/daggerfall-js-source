@@ -158,3 +158,20 @@ test('mwcharacter rule 39: a vertex with NO influences at all keeps its authored
   assert.ok(nearVec([out[6], out[7], out[8]], [0.5, 0, 1]),
     'v2, now weightless, keeps (0.5, 0, 1) - it does not collapse and does not vanish');
 });
+
+test('mwcharacter rule 16: duplicate bone names go to the FIRST, not the last', () => {
+  // The reference's bone cache is filled with emplace, which never
+  // overwrites (skeleton.cpp:23-29). A Map.set answered the LAST
+  // duplicate - on a retail rig with a duplicated attach bone that
+  // hangs the weapon on the wrong copy of the name.
+  const nif = parseNif(ANIMATED);
+  // Rename a LATER-visited node to collide with Bone0's name; the
+  // lookup must keep answering the original.
+  const b0 = nif.records.findIndex((r) => r.name === 'Bone0');
+  const b1 = nif.records.findIndex((r) => r.name === 'Bone1');
+  assert.ok(b0 >= 0 && b1 >= 0 && b1 > -1);
+  nif.records[b1].name = 'Bone0';
+  const skel = buildSkeleton(nif);
+  assert.equal(skel.byName.get('bone0'), b0,
+    `the first Bone0 (record ${b0}) wins over the renamed later one (record ${b1})`);
+});
