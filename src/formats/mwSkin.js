@@ -15,8 +15,12 @@
 // relative to the SKELETON ROOT node, the weighted sum blends the affine
 // matrices (translations included), SkinToSkel cancels the transforms
 // between the skeleton root and the skin's root bone, and DataTransform
-// is NiSkinData's root transform. Skinned geometry's own node transform
-// is NOT applied - NetImmerse ignores it for skinned shapes.
+// is NiSkinData's root transform. The skinned shape's own transform
+// IS in the chain when the skin-root lookup falls back to it - the
+// reference cancels "everything up till the trishape" and takes the
+// trishape's parent as the root (riggeometry.cpp:301-307) - which is
+// the law MW-D20 landed below; the old "NetImmerse ignores it" claim
+// was this header's own overstatement.
 
 import { deref } from './mwNifFile.js';
 
@@ -214,7 +218,7 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
  * node is a CHILD of that group, so the root's own transform (which
  * rule 34 KEEPS when the root is a NiNode named bip01) is INCLUDED in
  * every bone matrix (Bone::update with no parent answers the node's own
- * matrix, skeleton.cpp:169; the loader adopts the root nodes as
+ * matrix, skeleton.cpp:171; the loader adopts the root nodes as
  * children, nifloader.cpp:450-480). Pass this as `skeletonRoot` to get
  * that space: no real ref equals it, so no node is zeroed out.
  *

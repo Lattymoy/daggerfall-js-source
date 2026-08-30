@@ -786,10 +786,10 @@ export const weaponAttachBone = (type) => WEAPON_ATTACH_BONE[type] ?? DEFAULT_WE
  * The WEAP records in a player's .esm.
  *
  * WPDT is a 32-byte struct and its layout is CITED, not guessed
- * (components/esm3/loadweap.hpp:71): float mWeight; int32 mValue; int16
+ * (components/esm3/loadweap.hpp:64-74): float mWeight; int32 mValue; int16
  * mType; uint16 mHealth; float mSpeed, mReach; uint16 mEnchant; uchar
  * mChop[2], mSlash[2], mThrust[2]; int32 mFlags. Only the offset of
- * mType matters here - byte 10 - and a short record is REFUSED rather
+ * mType matters here - byte EIGHT (MW-D22) - and a short record is REFUSED rather
  * than read past, because a wrong offset silently yields a plausible
  * weapon type and this arc has already died of plausible.
  */
@@ -2107,8 +2107,8 @@ export const MW_UNITS_PER_METER = 69.99125109;
 export const TP_BASE_MODEL = 'meshes/xbase_anim.nif';
 
 /** The third-person source list, same push order and existence filter as
- *  the first-person one: base first (npcanimation.cpp:534-535), then the
- *  actor's own skeleton when it differs (npcanimation.cpp:537-538). The
+ *  the first-person one: base first (npcanimation.cpp:529-530), then the
+ *  actor's own skeleton when it differs (npcanimation.cpp:532-533). The
  *  kf name is the model with its extension swapped and NOTHING else -
  *  no "x" is inserted (animation.cpp:651-654). */
 export function tpAnimSources(skeletonPath, exists) {
@@ -2154,7 +2154,7 @@ export function sourcesKeyTime(sources, textKey) {
  * MW-D29: ANIMATION::GETVELOCITY's two searches (animation.cpp:1267-1338):
  * first the sources in REVERSE for one that carries the group's start
  * key; that source's accum-root velocity answers - and "if there's no
- * velocity" (the > 1 test, :1292/:1312) the walk CONTINUES through the
+ * velocity" (the > 1 test, :1301/:1307) the walk CONTINUES through the
  * remaining earlier sources until one yields more. The port had stopped
  * at the single source the clip was picked from.
  */

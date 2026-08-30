@@ -402,7 +402,7 @@ camera. Three spaces. The reference has ONE: the full graph below the
 SceneUtil::Skeleton group - the file's root node is a CHILD of that
 group (nifloader.cpp:450-480), so the root's own transform, which rule
 34 KEEPS when the root is a NiNode named bip01, is inside every bone
-matrix (Bone::update's parentless case, skeleton.cpp:169). And the
+matrix (Bone::update's parentless case, skeleton.cpp:171). And the
 declared skin-root name is looked up on the copied rig's own RENDER
 path (updateSkinToSkelMatrix, riggeometry.cpp:288-324), where a base
 skeleton bone can never appear - so for a rebound part the lookup
@@ -578,7 +578,7 @@ resolution (groups, sources, keys) reads rig() - the active one - and
 xbase_anim.kf in third, with no second state machine to drift (MW7's
 death). The body builds INSIDE the arm's build while the archives are
 open: rule 6's other skeleton column (getActorSkeleton !firstPerson,
-actorutil.cpp:504-513 - and rule 18's x-swap RESOLVES it to
+actorutil.cpp:8-19 - and rule 18's x-swap RESOLVES it to
 xbase_anim.nif on retail, because the x-kf exists), rules 1-3's
 third-person BODY records through playerBodyRows (sex fallback, no
 "1st" ids, tails only report on beasts; the player wears the race's
@@ -588,7 +588,7 @@ index has no Morrowind analog), the one assembly door
 offset, one graph space), rule 8's weapon column against THIS
 skeleton's own bones, and the 3P anim sources (base xbase_anim.kf
 first, then the skeleton's own kf when it exists -
-npcanimation.cpp:534-538; the kf name is an extension swap ONLY, no x
+npcanimation.cpp:529-533; the kf name is an extension swap ONLY, no x
 inserted - animation.cpp:651-654). The body takes NO neck pitch and no
 sneak delta: rule 54's pitch controller runs only in VM_FirstPerson
 (npcanimation.cpp:719) and rule 32(a)'s GMST is "1stPerson" by name.
@@ -656,7 +656,7 @@ wrong clip (:701-707). The played speed is the reference's own
 arithmetic: clip velocity = calcAnimVelocity whole (animation.cpp:
 180-224 - LAST start/loop-start and LAST loop-stop in reverse scan,
 the AshVampire quirk replicated by its own comment's order, the
-(1,1,0) accumulate mask), the >1 test (:1292), the fallback constants
+(1,1,0) accumulate mask), the >1 test (:1301/:1307), the fallback constants
 (character.cpp:750-752), rate = actor speed / clip speed capped at 10
 (:2403) with the port's meters crossing at the one unit bridge, and
 turns at min(1.5, |rot|/dt/pi) (:2396). Same-group refreshes resume
@@ -1022,7 +1022,7 @@ in this port special-cases it, and the probe pins it: the bow is the
 sword's own mesh with X negated, exactly, to within 1e-3.
 
 WPDT IS CITED, NOT GUESSED - AND THE ARITHMETIC ON THE CITATION WAS
-WRONG ANYWAY (corrected at MW-D22). components/esm3/loadweap.hpp:71 -
+WRONG ANYWAY (corrected at MW-D22). components/esm3/loadweap.hpp:64-74 -
 float mWeight; int32 mValue; int16 mType; uint16 mHealth; float mSpeed,
 mReach; uint16 mEnchant; uchar mChop[2], mSlash[2], mThrust[2]; int32
 mFlags. mType is therefore at byte EIGHT (4 + 4); this paragraph
@@ -1206,7 +1206,7 @@ rule and never rendered anything else.
 { MP_Wrist, PRT_RWrist }, { MP_Wrist, PRT_LWrist },
 ...
 ```
-- `npcanimation.cpp:1197-1207` (a multimap: one mesh part, two slots)
+- `npcanimation.cpp:1187-1198` (a multimap: one mesh part, two slots; the hand/wrist rows quoted sit at :1189-1190)
 
 Each side is its own part reference at its own bone.
 
@@ -1435,7 +1435,7 @@ mObjectParts[type] = insertBoundedPart(mesh, bonename, bonefilter, ...);
 ```
 - `npcanimation.cpp:799-802` (hair is the documented sole exception)
 
-and the filter test, `attach.cpp:159-166` of CopyRigVisitor:
+and the filter test, `attach.cpp:68-76` of CopyRigVisitor::filterMatches:
 
 ```cpp
 if (ciStartsWith(name, mFilter)) return true;
@@ -4703,7 +4703,7 @@ weapSpeed is a function-local float in CharacterController::updateWeaponState, r
   && mWeapon.getType() == ESM::Weapon::sRecordId
 and then `weapSpeed = mWeapon.get<ESM::Weapon>()->mBase->mData.mSpeed;`.
 
-That field is `float mSpeed` inside ESM::Weapon::WPDTstruct (components/esm3/loadweap.hpp:71 — `float mSpeed, mReach;`, a 32-byte struct laid out as float mWeight; int32_t mValue; int16_t mType; uint16_t mHealth; float mSpeed, mReach; uint16_t mEnchant; unsigned char mChop[2], mSlash[2], mThrust[2]; int32_t mFlags). It is a raw multiplier, NOT clamped or normalised anywhere on this path.
+That field is `float mSpeed` inside ESM::Weapon::WPDTstruct (components/esm3/loadweap.hpp:70 — `float mSpeed, mReach;`, a 32-byte struct laid out as float mWeight; int32_t mValue; int16_t mType; uint16_t mHealth; float mSpeed, mReach; uint16_t mEnchant; unsigned char mChop[2], mSlash[2], mThrust[2]; int32_t mFlags). It is a raw multiplier, NOT clamped or normalised anywhere on this path.
 
 weapSpeed therefore stays 1.0 for: hand-to-hand, spell casting, lockpicks and probes (Lockpick/Probe records, not WEAP), creatures with no inventory store, and any actor whose draw state is not Weapon.
 

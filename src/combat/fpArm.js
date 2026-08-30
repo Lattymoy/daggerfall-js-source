@@ -82,7 +82,7 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
 
 /** MW-D24: rule 6's OTHER column - the THIRD-PERSON skeleton the same
  *  actor walks on (getActorSkeleton's !firstPerson branch,
- *  actorutil.cpp:504-513, through settings-default.cfg [Models]
+ *  actorutil.cpp:8-19, through settings-default.cfg [Models]
  *  baseanim/baseanimfemale/baseanimkna). Werewolf out of scope for the
  *  same reason as above. */
 export function tpSkeletonPath({ female = false, beast = false } = {}) {
@@ -548,7 +548,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * third-person BODY records (playerBodyRows), the one assembly seam
  * (assembleFirstPersonArm -> bindPartsInto), rule 8's weapon column on
  * THIS skeleton's own bones, and the third-person animation sources
- * (xbase_anim.kf first, npcanimation.cpp:534-538). Runs INSIDE the
+ * (xbase_anim.kf first, npcanimation.cpp:529-533). Runs INSIDE the
  * arm's build while the archives are still open, because a second
  * multi-second walk for the same bytes is pure waste.
  *
@@ -1398,8 +1398,10 @@ export function createFpArm() {
   function onActionKey(text, time, mine) {
     if (!mine || !weaponGroup) return;
     const action = text.slice(weaponGroup.length + 2);
-    // showWeapons(true/false) at the attach/detach keys
-    // (character.cpp:1468-1472, :1481-1483).
+    // showWeapons(true/false) at the attach/detach keys - the
+    // listener's own branches (CharacterController::handleTextKey,
+    // character.cpp:1074-1087), gated there on Equipping/Unequipping
+    // exactly as the machine is here.
     if (action === EQUIP_KEYS.attach) weaponShown = true;
     else if (action === UNEQUIP_KEYS.detach) weaponShown = false;
     // RULE 24's ranged actions (character.cpp:1153-1165). Two keys
@@ -1610,7 +1612,7 @@ export function createFpArm() {
         }
         upper = UPPER_BODY.Unequipping;
         // If the file has no "unequip detach" key the weapon is hidden
-        // by hand, immediately (:1481-1483).
+        // by hand, immediately (:1412-1414).
         const detach = keyTime(UNEQUIP_KEYS.detach);
         if (!playAction(UNEQUIP_KEYS.start, UNEQUIP_KEYS.stop, 0)) {
           upper = UPPER_BODY.None; sheathed = true; weaponShown = false; arrowShown = false;
@@ -1959,11 +1961,13 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
-      // Animation::showWeapons, and it HIDES rather than removes - which
-      // is rule 57's own distinction and the reason it is a per-range
-      // flag and not a shorter vertex stream. Repacking without the
-      // weapon would change the buffer's length every time you drew or
-      // sheathed, orphaning the ranges the textures hang on.
+      // NpcAnimation::showWeapons - the reference REMOVES the part
+      // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
+      // re-adds it on show. This port keeps the vertices and flips a
+      // per-range flag instead - a DECLARED mechanism divergence with
+      // the same visible behaviour: repacking without the weapon would
+      // change the buffer's length every time you drew or sheathed,
+      // orphaning the ranges the textures hang on.
       for (const r of mesh.ranges) {
         if (r.slot === 'weapon') r.hidden = !weaponShown;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
@@ -1974,8 +1978,8 @@ export function createFpArm() {
     draw(canvas) {
       // MW-D24: in third person the first-person overlay does not exist
       // - the reference masks the whole FP root out of the scene
-      // (Mask_FirstPerson, npcanimation.cpp:931 setNodeMask on view
-      // change). active() is already false in that mode; the guard here
+      // (Mask_FirstPerson, npcanimation.cpp:542-546 - setViewMode's
+      // setNodeMask on the whole object root). active() is already false in that mode; the guard here
       // keeps the sentence readable at the call site.
       if (!active() || !canvas) return false;
       const cam = camera();
@@ -2064,8 +2068,10 @@ export function createFpArm() {
     },
     viewMode: () => viewMode,
     thirdActive,
-    /** upperBodyReady (character.cpp:135's gate): a stable stance, no
-     *  action section in flight, no build in flight. */
+    /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
+     *  what the camera's queued-mode gate consults (camera.cpp:135):
+     *  a stable stance, no action section in flight, no build in
+     *  flight. */
     upperBodyReady: () => !busy && !actionState
       && (upper === UPPER_BODY.None || upper === UPPER_BODY.WeaponEquipped),
     /** What the wheel may cross INTO: a body that refused keeps the

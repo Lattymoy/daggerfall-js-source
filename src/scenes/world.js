@@ -2187,7 +2187,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // MW-D30: the camera's two persisted halves ride the pose - the
       // reference saves the first/third flag in its own REC_CAM_ record
       // (worldimp.cpp:425-427) and the zoom distance through the camera
-      // script's onSave (camera.lua:347-352).
+      // script's onSave (camera.lua:350-352).
       pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state() },
       locationKey: 'world',
       world: {

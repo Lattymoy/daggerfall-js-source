@@ -127,7 +127,7 @@ export function correctResourcePath(topLevelDirectories, resPath, exists, ext) {
 }
 
 /** The two top-level directories a TEXTURE may be re-rooted at, in the
- *  order they are tried (misc/resourcehelpers.cpp:20-21, 140). */
+ *  order they are tried (misc/resourcehelpers.cpp:18-19, 140). */
 export const TEXTURE_TOP_LEVEL = Object.freeze(['textures', 'bookart']);
 
 /** The substitute extension, with NO leading dot - changeExtension
@@ -141,7 +141,7 @@ export function correctTexturePath(resPath, exists) {
 
 /**
  * NiTexturingProperty's clamp bits (nif/property.hpp:70-71) and their GL
- * mapping (nifosg/nifloader.cpp:1145-1150).
+ * mapping (nifosg/nifloader.cpp:1152-1153).
  *
  * THE BITS ARE THE OTHER WAY ROUND FROM THE NAMES: bit 0 is wrapT and
  * bit 1 is wrapS. A set bit is REPEAT; a clear bit is CLAMP_TO_EDGE -

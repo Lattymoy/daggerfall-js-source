@@ -77,8 +77,13 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 /**
  * One per game, like the arm - there is one player. The machine holds
- * MODE and BASE DISTANCE (the two things the reference persists,
- * camera.lua:347-352); everything else is recomputed per frame.
+ * MODE and BASE DISTANCE - the two things the reference persists,
+ * each in its own home: the distance through the camera script's
+ * onSave (camera.lua:350-352, `distance = third_person.baseDistance`
+ * and nothing else), the mode through the save's own REC_CAM_ record
+ * (worldimp.cpp:425-427 writes FIRS; statemanagerimp.cpp:617-618
+ * force-applies it on load). Everything else is recomputed per
+ * frame.
  *
  * Hosts feed it three seams:
  *   wheel(clicks)  - wheel notches, +1 per click toward the actor
@@ -160,7 +165,7 @@ export function createMwCamera() {
       if (queuedFirstPerson !== null && ready) setFirstPerson(queuedFirstPerson, true);
     },
 
-    /** Restore/persist seam (camera.lua:347-352 saves the distance). */
+    /** Restore/persist seam (camera.lua:350-352 saves the distance). */
     state() { return { firstPerson, baseDistance }; },
     restore(s) {
       if (!s) return;
