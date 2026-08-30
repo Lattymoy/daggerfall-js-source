@@ -51,10 +51,10 @@ import {
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
-  aimingFactor,
+  aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
 } from '../formats/mwFirstPerson.js';
 import { WEAPONS } from '../characters/weapons.js';
-import { correctTexturePath, wrapModes, warningImage } from '../formats/mwTexture.js';
+import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
@@ -70,7 +70,10 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
   if (female) return 'meshes/base_anim_female.1st.nif';
   return 'meshes/xbase_anim.1st.nif';
 }
-/** Rule 6 again: the first-person animation source sits beside it. */
+/** Rule 6 again: the first-person animation source sits beside it. This
+ *  is the BASE source every first-person actor gets (mXbaseanim1st with
+ *  its extension swapped); MW-D14 added the SECOND one a female or beast
+ *  actor also gets - see fpAnimSources. */
 export const FP_CLIP_PATH = 'meshes/xbase_anim.1st.kf';
 
 /** Rule 9's BASE, which the weapon's short group is suffixed onto:
@@ -354,10 +357,16 @@ export function packFpArm(pieces, out = null) {
  */
 export async function buildFpArm({ race, female = false, beast = false, weapon = null, deps = null } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
-  const skeletonPath = fpSkeletonPath({ female, beast });
+  const settingsSkeleton = fpSkeletonPath({ female, beast });
+  let skeletonPath = settingsSkeleton;
   try {
     const archives = await d.loadMorrowindArchives();
     if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
+    // MW-D14 / RULE 18: the settings name is not the final name. The
+    // x-form is used only when its .kf is in the archive, which for a
+    // male is never (the entry is already x-form, so the insert yields
+    // "xx") and for a female or a beast is the whole question.
+    skeletonPath = correctActorModelPath(settingsSkeleton, (p) => archives.some((a) => a.has(p)));
 
     // EVERY .esm, not the first one.
     //
@@ -440,8 +449,10 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       weaponNotes.push('weapon: Morrowind has no weapon type for what you are holding');
     }
 
-    const clipArc = find(FP_CLIP_PATH);
-    const kfBytes = clipArc ? clipArc.get(FP_CLIP_PATH).slice() : null;
+    // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
+    // as addSingleAnimSource filters it.
+    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
+    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
 
     if (!partBytes.length) {
       // "no record for this actor" is a dead end for whoever reads it.
@@ -473,14 +484,34 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     // from the drawn weapon's short suffix, and the drawn weapon changes
     // while the game runs - so the group is resolved LIVE, below, and
     // what the build needs from here is the key list and the group list.
-    const clip = await clipReport({ kfBytes, skeleton: arm.skeleton, group: FP_IDLE_BASE });
-    if (!clip.ok) {
+    if (!sourceBytes.length) {
       return {
-        ok: false, stage: 'clip', error: clip.error,
+        ok: false, stage: 'clip',
+        error: `no first-person animation file - neither ${animSourceName(FP_BASE_MODEL)} `
+          + `nor ${animSourceName(skeletonPath)} is in your archives`,
         notes: [...missing, ...(arm.notes || [])], rows: wanted,
       };
     }
-    const groupSet = new Set(clip.groups);
+    const sources = [];
+    for (const sb of sourceBytes) {
+      const one = await clipReport({ kfBytes: sb.bytes, skeleton: arm.skeleton, group: FP_IDLE_BASE });
+      if (!one.ok) {
+        return {
+          ok: false, stage: 'clip', error: `${sb.name}: ${one.error}`,
+          notes: [...missing, ...(arm.notes || [])], rows: wanted,
+        };
+      }
+      sources.push({
+        name: sb.name, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups),
+        trackMap: one.trackMap, binding: one.binding,
+        // What THIS source would choose. The Animation's actual accum
+        // root is picked below, and it is not per-source.
+        wouldAccumRoot: accumRootRef(arm.skeleton, one.trackMap),
+      });
+    }
+    // hasAnimation: ANY source. The reverse search below picks WHICH.
+    const groupSet = new Set(sources.flatMap((so) => so.groups));
+    const clip = sources[sources.length - 1];
     // THE REFUSAL MOVES WITH THE RULE. MW-D8 refused when "Idle" did not
     // reset; that group need not exist at all in a first-person .kf that
     // only carries idle1h and friends. What must exist is SOME idle this
@@ -496,15 +527,24 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
         notes: [...missing, ...(arm.notes || [])], rows: wanted,
       };
     }
-    const idleCheck = resetClip(clip.keys, idleProbe.group, { loopFallback: true });
-    if (!idleCheck.ok) {
+    const idlePick = pickAnimSource(sources, idleProbe.group, resetClip, { loopFallback: true });
+    if (!idlePick) {
       return {
-        ok: false, stage: 'clip', error: idleCheck.reason,
+        ok: false, stage: 'clip',
+        error: `no source gives group "${idleProbe.group}" a start and a stop key`,
         notes: [...missing, ...(arm.notes || [])], rows: wanted,
       };
     }
-    const tracks = clip.trackMap;
-    const accumRoot = accumRootRef(arm.skeleton, tracks);
+    const idleCheck = idlePick.state;
+    const tracks = idlePick.source.trackMap;
+    // RULE 56's STICKINESS. `if (!mAccumRoot)` guards the whole block in
+    // addAnimSource, so the accum root is chosen by the FIRST source
+    // that resolves one - in PUSH order - and later sources do not
+    // re-pick it. It is ONE value for the whole rig, not one per clip:
+    // a per-source accum root would move the extraction bone when the
+    // player swung, which is a rig that walks away mid-blow.
+    const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
+    for (const so of sources) so.accumRoot = accumRoot;
     const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
     const c = idleCheck;
     const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
@@ -532,13 +572,18 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       arm,
       tracks,
       accumRoot,
-      keys: clip.keys,
+      keys: idlePick.source.keys,
+      // MW-D14: every source, in PUSH order, each with its own keys AND
+      // its own tracks - because the source that wins a group is the one
+      // whose tracks must pose it.
+      sources,
+      sourcePaths,
       clip: c,
       // MW-D12: the file's own answer to "does this animation exist",
       // which rules 9 and 10 both consult. A Set, because
       // composeStanceGroup calls it up to three times per stance change
       // and composeWeaponGroup twice more.
-      groups: clip.groups,
+      groups: [...groupSet].sort(),
       groupSet,
       // The Morrowind weapon type this arm was built holding. Rule 8's
       // ANIMATION type is derived from it live (animWeaponType), because
@@ -548,6 +593,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       cameraRef,
       reach,
       skeletonPath,
+      settingsSkeleton,
       // MW-D4's PATTERN, applied forward: report the bone the NEXT slice
       // needs rather than guessing it. Rule 54 says the first-person
       // camera tracks a node named "Camera", falling back to "Head". This
@@ -561,7 +607,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       weapon: weaponInfo,
       esm: esmDiagnosis(esmNames, parts, race),
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
-      binding: clip.binding,
+      binding: idlePick.source.binding,
       pieces: armPieceRows(arm.pieces).length,
     };
   } catch (err) {
@@ -665,6 +711,10 @@ export function createFpArm() {
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
   let aimFactor = 0;
+  // The source each slot won, kept beside the clip because a clip and
+  // the tracks that pose it come from the SAME file.
+  let idleSource = null;
+  let actionSource = null;
   const notes = [];
 
   const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || idleState));
@@ -702,7 +752,13 @@ export function createFpArm() {
     mesh = null;
   }
 
-  const hasGroup = (n) => !!built && built.groupSet.has(n);
+  // hasAnimation: ANY source names the group (animation.cpp). WHICH
+  // source plays it is a separate question, answered in reverse below.
+  const hasGroup = (n) => !!built && anySourceHasGroup(built.sources, n);
+
+  /** The source currently posing the arm - the one that won the clip
+   *  being drawn, because its tracks are the ones the pose reads. */
+  let poseSource = null;
 
   /** The file's time for a key of the CURRENT weapon group, as
    *  getTextKeyTime is always called (character.cpp:1241): the group, a
@@ -716,13 +772,14 @@ export function createFpArm() {
    *  reverted arc's whole failure mode in miniature. */
   function playAction(start, stop, startPoint = 0) {
     if (!built || !weaponGroup) return false;
-    const s2 = resetClip(built.keys, weaponGroup, { start, stop, startPoint });
-    if (!s2.ok) {
+    const pick = pickAnimSource(built.sources, weaponGroup, resetClip, { start, stop, startPoint });
+    if (!pick) {
       actionState = null;
-      notes.push(`${weaponGroup}: ${s2.reason}`);
+      notes.push(`${weaponGroup}: no source has "${weaponGroup}: ${start}" and "${weaponGroup}: ${stop}"`);
       return false;
     }
-    actionState = s2;
+    actionState = pick.state;
+    actionSource = pick.source;
     return true;
   }
 
@@ -752,10 +809,16 @@ export function createFpArm() {
     const loopCount = short ? FP_IDLE_LOOPS() : Infinity;
     // :822-825 - a restart of the SAME group resumes from where it was.
     const startPoint = idleGroup === composed.group ? clipCompletion(idleState) : 0;
-    const s2 = resetClip(built.keys, composed.group, { loopFallback: true, loopCount, startPoint });
-    if (!s2.ok) { idleState = null; idleGroup = null; notes.push(`idle: ${s2.reason}`); return; }
+    const pick = pickAnimSource(built.sources, composed.group, resetClip,
+      { loopFallback: true, loopCount, startPoint });
+    if (!pick) {
+      idleState = null; idleGroup = null;
+      notes.push(`idle: no source gives "${composed.group}" a start and a stop key`);
+      return;
+    }
     idleGroup = composed.group;
-    idleState = s2;
+    idleState = pick.state;
+    idleSource = pick.source;
   }
 
   /** resetCurrentIdleState (:1850-1853 via mResetIdleOnAttackEnd): drop
@@ -817,6 +880,7 @@ export function createFpArm() {
   /** AttackEnd -> WeaponEquipped (:1821-1856). */
   function endAttack() {
     actionState = null;
+    actionSource = null;
     upper = UPPER_BODY.WeaponEquipped;
     attackType = null;
     if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
@@ -829,7 +893,7 @@ export function createFpArm() {
     if (playing) return;
     switch (upper) {
       case UPPER_BODY.Equipping:
-        actionState = null;
+        actionState = null; actionSource = null;
         upper = UPPER_BODY.WeaponEquipped;
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         break;
@@ -837,7 +901,7 @@ export function createFpArm() {
         // :1857-1859 - THIS is where the weapon type becomes None, and
         // with it the stance drops to the bare "idle" of rule 10's
         // endless loop.
-        actionState = null;
+        actionState = null; actionSource = null;
         upper = UPPER_BODY.None;
         sheathed = true;
         refreshWeaponGroup();
@@ -880,6 +944,7 @@ export function createFpArm() {
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
         weaponShown = false; notes.length = 0; aimFactor = 0;
+        idleSource = null; actionSource = null; poseSource = null;
         // A REBUILT ARM STARTS SHEATHED, whatever the last one was doing.
         // The build is triggered by a button, and the player is not
         // mid-swing when they press it; carrying a stale AttackRelease
@@ -904,6 +969,7 @@ export function createFpArm() {
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false; weaponShown = false;
       notes.length = 0; aimFactor = 0;
+      idleSource = null; actionSource = null; poseSource = null;
       reason = 'unloaded';
     },
 
@@ -1036,12 +1102,22 @@ export function createFpArm() {
       // person both animations are played on BlendMask_All, so the higher
       // priority takes every bone for as long as it is playing.
       const state = actionState || idleState;
+      // MW-D14: and the TRACKS come from the same file as the clip. A
+      // female actor can win her idle from xbase_anim_female.1st.kf and
+      // her swing from the base xbase_anim.1st.kf, and posing one with
+      // the other's tracks is a bind pose with no error.
+      poseSource = actionState ? actionSource : idleSource;
       // Rule 54's neck: the camera node hangs off "bip01 neck", so the
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
       const cam = camera && camera();
       poseAssembly(built.arm, {
-        tracks: built.tracks, sampleTrack, time: state.time, accumRoot: built.accumRoot,
+        tracks: poseSource ? poseSource.trackMap : built.tracks,
+        sampleTrack,
+        time: state.time,
+        // Rule 56's accum root is STICKY and rig-wide, so it does not
+        // follow the source the way the tracks do.
+        accumRoot: built.accumRoot,
         // NEGATED, and the sign is a real difference between the two
         // engines rather than a fudge: Morrowind's rot[0] counts pitch
         // DOWNWARD (the controller takes `Quat(rot[0] * 0.75, (-1,0,0))`
@@ -1170,6 +1246,9 @@ export function createFpArm() {
         weaponShown,
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,
+        sources: built && built.ok ? built.sourcePaths : null,
+        idleSource: idleSource && idleSource.name,
+        actionSource: actionSource && actionSource.name,
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
         frames,

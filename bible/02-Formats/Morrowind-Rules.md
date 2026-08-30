@@ -163,6 +163,36 @@ weapon. Six rules were read, recorded here, and never implemented:
     reachable: with a constant idle there was no aiming state to be in,
     which is why the constant was honest when it was written.
 
+MW-D14 FOUND TWO MORE, AND ONE OF THEM WAS ALREADY SHIPPED.
+
+RULE 18 - THE SKELETON NAME IS NOT FINAL. correctActorModelPath inserts
+an `x` before the FILENAME, swaps .nif for .kf, and uses the x-form ONLY
+IF THAT KF EXISTS. So `base_anim_female.1st.nif` becomes
+`xbase_anim_female.1st.nif` exactly when `xbase_anim_female.1st.kf` is in
+the archive - and the MALE entry is already x-form in the settings, so
+the insert yields a non-existent `xx` name and the original always
+stands. A port tested on one male character sees nothing wrong.
+
+AND A FIRST-PERSON ACTOR HAS TWO ANIMATION SOURCES, not one.
+updateNpcBase adds `base` (mXbaseanim1st) and then, only if different,
+the corrected actor skeleton; addSingleAnimSource drops a source the
+archive lacks. play() searches them IN REVERSE - "last-inserted source
+has priority" - and takes the first whose text keys give the group a
+valid range, where the WHOLE of reset() must succeed. hasAnimation is a
+different question, answered by ANY source. For a male the two names
+collapse to one file, which is why one .kf was right until it wasn't.
+
+RULE 56 WAS WRONG IN A SHIPPED MODULE, and the mutation campaign found
+it, not a reading. The accum root was ported as "the topmost tracked
+bone" where the reference is a TWO-NAME TABLE - `{ "bip01", "root bone" }`,
+bip01 preferred, accepted only when the KF DRIVES it. On a first-person
+weapon .kf, which keys nothing on bip01, the old rule answered an UPPER
+ARM; any translation channel on that bone would then have had its X and Y
+pinned to rest, deforming the arm rather than moving the actor. It is
+also STICKY - `if (!mAccumRoot)` - so the FIRST source to resolve one
+wins for the life of the rig, and later sources neither re-pick it nor
+clear it. The old pin asserted the defect in as many words.
+
 THE DIVERGENCE, RESTATED WHERE THE CODE IS. Daggerfall picks its attack
 by GESTURE and Morrowind by MOVEMENT or by the weapon record's damage
 spread; the port maps the six strikes onto the three types BY THE SHAPE

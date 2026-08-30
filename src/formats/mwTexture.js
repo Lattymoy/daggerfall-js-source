@@ -180,3 +180,34 @@ export function warningImage() {
   }
   return { width, height, mips: [{ width, height, rgba }] };
 }
+
+/**
+ * RULE 18: correctActorModelPath (misc/resourcehelpers.cpp:180-198), the
+ * OTHER resource-path rule, and it lives here because this file is
+ * ResourceHelpers' one home and it needs the same two primitives.
+ *
+ *   insert 'x' before the FILENAME (after the last '/'), swap a .nif
+ *   extension for .kf, and USE THE X-FORM ONLY IF THAT KF EXISTS -
+ *   otherwise keep the original path.
+ *
+ * It REFINES RULE 6, which reads as though the skeleton names were
+ * fixed. They are not: `meshes/base_anim_female.1st.nif` is promoted to
+ * `meshes/xbase_anim_female.1st.nif` exactly when
+ * `meshes/xbase_anim_female.1st.kf` is in the archive. The male
+ * first-person entry is ALREADY x-form in the settings, so the insert
+ * yields a non-existent `xx` name and the original stands - which is why
+ * a port tested only on a male character sees nothing wrong.
+ *
+ * The extension swap is CONDITIONAL on the extension being exactly
+ * "nif": for anything else the probe is against the model name itself,
+ * not a .kf. Both branches are here because both are reachable.
+ */
+export function correctActorModelPath(resPath, exists) {
+  const path = normalizeVfsPath(resPath);
+  const at = path.lastIndexOf('/');
+  const xform = at < 0 ? `x${path}` : `${path.slice(0, at + 1)}x${path.slice(at + 1)}`;
+  const dot = xform.lastIndexOf('.');
+  const ext = dot > xform.lastIndexOf('/') ? xform.slice(dot + 1) : '';
+  const probe = ext === 'nif' ? changeExtension(xform, 'kf').path : xform;
+  return exists(probe) ? xform : path;
+}

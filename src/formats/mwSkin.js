@@ -113,28 +113,52 @@ export function buildSkeleton(nif) {
 }
 
 /**
- * The ACCUMULATION ROOT: the topmost tracked bone. Morrowind animations
- * carry the actor's locomotion in this bone's translation channel (a
- * flight cycle literally contains the flight path - OAAB's bat keys
- * y=1892 into it), and the engine extracts that motion for MOVEMENT
- * while the visual skeleton stays put. The reference accumulates X,Y
- * and leaves Z animated (jumps, hovers). Posing without extraction is
- * the geometry-all-over-the-place bug: every walk loop translates the
- * whole body away.
+ * RULE 56: THE ACCUMULATION ROOT IS A TWO-NAME TABLE, not a search.
+ *
+ * Morrowind animations carry the actor's locomotion in one bone's
+ * translation channel (a flight cycle literally contains the flight path
+ * - OAAB's bat keys y=1892 into it), and the engine extracts that motion
+ * for MOVEMENT while the visual skeleton stays put. The reference
+ * accumulates X,Y and leaves Z animated (jumps, hovers). Posing without
+ * extraction is the geometry-all-over-the-place bug: every walk loop
+ * translates the whole body away.
+ *
+ * WHICH bone, though, was ported as "the topmost tracked bone" and that
+ * is not the rule (Animation::addAnimSource, animation.cpp:712-734):
+ *
+ *   // Priority matters! bip01 is preferred.
+ *   static const std::initializer_list<std::string_view> accumRootNames
+ *       = { "bip01", "root bone" };
+ *
+ * and a candidate is accepted only if BOTH the name resolves in the node
+ * map AND the loaded KF drives a controller of that same name
+ * (case-insensitively). MW-D14 corrected it, and the difference is not
+ * academic: a first-person weapon .kf keys nothing on bip01, so "topmost
+ * tracked bone" answered an UPPER ARM - and any translation channel on
+ * that bone would then have had its X and Y pinned to rest, silently
+ * deforming the arm rather than moving the actor.
+ *
+ * With neither name driven the answer is NULL, which is the correct
+ * answer and not a failure: an animation with no accum root simply
+ * accumulates nothing.
+ *
+ * STICKINESS IS THE CALLER'S. `if (!mAccumRoot)` guards the whole block,
+ * so the choice is made by the FIRST anim source that resolves one and
+ * later sources do not re-pick it. This function answers for ONE source;
+ * a caller with several must ask them in push order and keep the first
+ * non-null answer.
  */
+export const ACCUM_ROOT_NAMES = Object.freeze(['bip01', 'root bone']);
+
 export function accumRootRef(skeleton, tracks) {
-  let best = null;
-  let bestDepth = Infinity;
-  for (const [ref, node] of skeleton.nodes) {
-    if (!tracks || !tracks.has(node.name.toLowerCase())) continue;
-    let d = 0;
-    for (let p = node.parent; p >= 0 && skeleton.nodes.has(p); p = skeleton.nodes.get(p).parent) d++;
-    if (d < bestDepth) {
-      bestDepth = d;
-      best = ref;
-    }
+  const byName = skeleton && skeleton.byName;
+  if (!byName) return null;
+  for (const name of ACCUM_ROOT_NAMES) {
+    if (!byName.has(name)) continue;
+    if (!tracks || !tracks.has(name)) continue;
+    return byName.get(name);
   }
-  return best;
+  return null;
 }
 
 /**

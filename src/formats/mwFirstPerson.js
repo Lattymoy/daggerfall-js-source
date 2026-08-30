@@ -1399,6 +1399,77 @@ export function placeAtBone(positions, at, mirror, out = new Float32Array(positi
  * the listing reports Idle [1.00 -> 0.50], a range that runs backwards,
  * while the clip law reads [1.00 -> 3.00].
  */
+/**
+ * MW-D14 / RULE 6 + 18 + the SOURCE LIST, which is not one file.
+ *
+ * NpcAnimation::updateNpcBase (npcanimation.cpp:499-537) adds TWO
+ * animation sources for a first-person actor, in this order:
+ *
+ *   base            = Settings::models().mXbaseanim1st  ("meshes/xbase_anim.1st.nif")
+ *   defaultSkeleton = correctActorModelPath(getActorSkeleton(...))
+ *
+ *   addAnimSource(base, smodel);
+ *   if (defaultSkeleton != base) addAnimSource(defaultSkeleton, smodel);
+ *
+ * and addAnimSource swaps a .nif extension for .kf and DROPS the source
+ * silently when that file is not in the archive
+ * (animation.cpp:646-671). For a MALE the two are the same string, so
+ * there is one source and the port's single .kf was right; for a FEMALE
+ * or a BEAST they differ, and the second one - when the archive carries
+ * it - is the LAST inserted and therefore the one that wins
+ * (`Look in reverse; last-inserted source has priority`,
+ * animation.cpp:918-923).
+ *
+ * `use additional anim sources` is deliberately absent: it is an OpenMW
+ * setting, default false, that scans an `animations/` folder Morrowind
+ * does not ship.
+ */
+export const FP_BASE_MODEL = 'meshes/xbase_anim.1st.nif';
+
+/** The .kf a model name names (animation.cpp:648-654): swap ONLY when
+ *  the extension is exactly "nif". */
+export function animSourceName(model) {
+  const p = String(model || '').toLowerCase();
+  return p.endsWith('.nif') ? `${p.slice(0, -4)}.kf` : p;
+}
+
+/**
+ * The ordered source list, in PUSH order - the caller searches it in
+ * REVERSE. `exists` is the archive probe; a source the archive lacks is
+ * dropped here rather than refused, exactly as addSingleAnimSource does.
+ */
+export function fpAnimSources(skeletonPath, exists) {
+  const out = [];
+  const base = animSourceName(FP_BASE_MODEL);
+  if (exists(base)) out.push(base);
+  const own = animSourceName(skeletonPath);
+  if (own !== base && exists(own)) out.push(own);
+  return out;
+}
+
+/**
+ * play()'s source search (animation.cpp:918-935): walk mAnimSources in
+ * REVERSE and take the FIRST source whose text keys give this group a
+ * valid range. Not "the first source that mentions the group" - the
+ * whole of reset() has to succeed, so a source carrying a start key and
+ * no stop key is passed over rather than refused.
+ *
+ * @param sources ordered as pushed; index 0 is the base
+ * @returns {{index:number, source:object, state:object}|null}
+ */
+export function pickAnimSource(sources, group, resetClip, opts = {}) {
+  for (let i = (sources?.length ?? 0) - 1; i >= 0; i--) {
+    const state = resetClip(sources[i].keys, group, opts);
+    if (state.ok) return { index: i, source: sources[i], state };
+  }
+  return null;
+}
+
+/** hasAnimation (animation.cpp): ANY source that names the group. */
+export function anySourceHasGroup(sources, group) {
+  return (sources ?? []).some((s) => s.groupSet.has(group));
+}
+
 export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', clipOpts = {} } = {}) {
   const mod = {};
   try {
