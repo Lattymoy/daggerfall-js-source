@@ -247,7 +247,24 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // Per-vertex blended affines, translations included - 12 floats each.
   const acc = new Float32Array(n * 12);
   const wsum = new Float32Array(n);
+  // RULE 40: an influence naming a MISSING bone (ref null, from
+  // bindPart) is skipped in the blend - and the remaining weights are
+  // NOT renormalised (rule 39). But the vertex is still marked TOUCHED,
+  // because the reference distinguishes two cases the sum alone cannot:
+  // a vertex with no influences AT ALL keeps its authored position
+  // (rule 39's erased-empty-set), while one weighted ONLY to missing
+  // bones goes through the blend with a ZERO accumulator - rows 0-2
+  // zero, row 3 the skin transform's - and collapses onto that
+  // translation with a zero normal (riggeometry.cpp:191-210, read at
+  // the rule 40 verification). Faithful, and ugly on purpose: papering
+  // it over with bind pose would hide exactly the data problem the
+  // missing-bone note names.
+  const touched = new Uint8Array(n);
   for (const bone of skin.bones) {
+    if (bone.ref == null) {
+      for (let k = 0; k < bone.indices.length; k++) touched[bone.indices[k]] = 1;
+      continue;
+    }
     const m = affineMul(affineMul(post, skelMats.get(bone.ref)), bone.invBind);
     for (let k = 0; k < bone.indices.length; k++) {
       const v = bone.indices[k];
@@ -258,12 +275,18 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
       acc[o + 10] += m.t[1] * w;
       acc[o + 11] += m.t[2] * w;
       wsum[v] += w;
+      touched[v] = 1;
     }
   }
+  const collapse = new Float32Array(12);
+  collapse[9] = post.t[0];
+  collapse[10] = post.t[1];
+  collapse[11] = post.t[2];
   for (let v = 0; v < n; v++) {
     const o = v * 12;
-    // An unweighted vertex keeps its authored position.
-    const a = wsum[v] > 0 ? acc.subarray(o, o + 12) : null;
+    // An untouched vertex keeps its authored position; a touched one
+    // with no surviving weight takes the zero-accumulator collapse.
+    const a = wsum[v] > 0 ? acc.subarray(o, o + 12) : touched[v] ? collapse : null;
     const x = batch.positions[v * 3];
     const y = batch.positions[v * 3 + 1];
     const z = batch.positions[v * 3 + 2];

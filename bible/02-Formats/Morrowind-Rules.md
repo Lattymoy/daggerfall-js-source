@@ -1,5 +1,20 @@
 # Morrowind first-person: the rules, from the reference implementation
 
+THE GOAL, STATED BY MAC (2026-08-30): a COMPREHENSIVE 3D replacement -
+paperdoll, items, weapons, and in time NPCs and enemies all receive the
+Morrowind 3D treatment. The immediate focus is the PLAYER's first- and
+third-person aspect. This supersedes Port-Doctrine's voxel-characters
+plank (noted there, with this date); the staged discipline below is how
+we get there, not a smaller destination.
+
+TWO BUGS REPORTED FROM RETAIL PLAY (Mac, 2026-08-30): (1) HANDS ARE
+MISSING, (2) WEAPONS ARE NOT WORKING. MW-D18 closes the two doors that
+could eat a hand without a word; MW-D19 gives the weapon the live equip
+seam it never had. Neither is CONFIRMED fixed until Mac sees hands - the
+standing rule below - and if they are still missing after MW-D18, the
+card now prints the sentence that says why, and that sentence is the
+next bug report.
+
 STATUS (2026-08-30, PAUSED MID-REBUILD - read this first).
 
 WHERE THIS STANDS. The first import arc was reverted whole on 2026-08-28
@@ -307,6 +322,42 @@ the file wrote; a group the listing names and the law refuses (F3's
 backwards Idle) now prints the refusal on the status line instead of
 freezing on a plausible pose. 13 mutants, 13 dead - one of them the pin
 that separates `>= 0` from `> 0`, a loop-start key at time zero.
+
+MW-D18 CLOSED THE TWO DOORS THAT EAT A HAND SILENTLY, against Mac's
+"hands are missing". Part VI's retail fact frames the suspicion: a Nord
+male has ONE first-person arm record - the hands - and the other three
+slots ride rule 3's third-person fallback, so a defect specific to the
+.1st mesh's SHAPE takes exactly the hands and leaves the arm.
+
+DOOR ONE, RULE 40, AND THE OLD PIN ASSERTED THE DEFECT. bindPart THREW
+on a skinned bone the skeleton lacks, and a test demanded the throw by
+name. The reference logs "RigGeometry did not find bone", stores
+nullptr, and SKIPS those influences in the blend (riggeometry.cpp:
+195-196) - one absent finger bone costs its influences, not the hand.
+The blend semantics are ported exactly, all three cases: a skipped
+influence renormalises NOTHING (rule 39); a vertex weighted ONLY to
+missing bones goes through the ZERO accumulator and collapses onto the
+skin transform's bare translation with a zero normal (riggeometry.cpp:
+191-210, the rule 40 verification's own reading - faithful and ugly on
+purpose, because papering it over with bind pose would hide the very
+data problem the note names); and a vertex with no influences AT ALL
+keeps its authored position (rule 39's erased-empty-set). The card
+names every skipped bone.
+
+DOOR TWO, RULE 15's SILENT MISS. A bone whose every named shape failed
+the filter bound NOTHING and said NOTHING - the card read "on - N
+pieces" with a side simply absent, which is both the missing-hand hole
+and MW-D6's one-handed defect wearing a new face. It is a sentence now:
+the note lists the shapes the file offered against the filter that
+rejected them, per bone, and a healthy part still binds with no notes
+at all. One guard died on the way: "and nothing attached" was
+unreachable (rigid geometry always binds), so it was deleted rather
+than pinned. 7 mutants, 7 dead.
+
+WHAT MW-D18 DOES NOT CLAIM: that this WAS the retail cause. The
+standing rule decides that - nothing is fixed until it is visible on
+Mac's own files. If the hands are still missing, the card's new
+sentences ARE the diagnosis to send back.
 
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a

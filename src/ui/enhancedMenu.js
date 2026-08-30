@@ -878,9 +878,9 @@ function paneEnhanced(body) {
     + 'data inspector, and the in-game first-person arms. Stored in this browser exactly like '
     + 'ARENA2; nothing uploads.'));
   mw.append(el('p', 'meta',
-    'The arms are UNTEXTURED and hold no weapon - grey, flat-shaded, playing the idle clip. That is '
-    + 'this stage, not a failure: textures and the weapon in the hand are the next slices. While the '
-    + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
+    'The arms draw textured, in the stance of the drawn weapon, holding the Morrowind counterpart '
+    + 'of what your right hand held when you pressed Build - swap weapons and you must rebuild for '
+    + 'now. While the arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
   const count = morrowindDataCount();
   mw.append(stats([
     ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
