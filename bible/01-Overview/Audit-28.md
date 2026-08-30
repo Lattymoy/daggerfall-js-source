@@ -328,6 +328,22 @@ passes the setting (GetInt 1..10) through `townTalk.say`'s new delay
 argument to `hudText.add`'s `delayInSeconds` - AddHUDText's own second
 argument. Key LIVE, with its NUMBER_LAW row on the screen.
 
+## W7 CLOSED: MouseLookSmoothingFactor (PlayerMouseLook.cs:154-166)
+
+The first of the camera-feel controls, and the one that changes the
+DEFAULT feel: the setting ships 0.5, so DFU's look is smoothed out of
+the box, and the port applied raw deltas straight to the camera on the
+event at all eight sites (mouse + touch, four hosts). `player/
+lookFilter.js` keeps the residual owed to the camera and pays DFU's
+frame-rate-scaled fraction of it each frame - the same arithmetic as
+lookCurrent/lookTarget, proven frame for frame, with the property the
+hosts need: an external write to the camera (a door's facing, a load, a
+teleport) needs no resync because the residual is a delta. The pitch
+clamp lands on the target as :142 has it. The settings screen's range
+was "ours: 0..1"; it is DFU's clamp (0..0.9) now. The controller minimum
+(:159-160) has no controller to read and is not ported. 6 pins; 5
+mutants, 5 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

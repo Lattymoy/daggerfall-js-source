@@ -39,6 +39,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -122,6 +123,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // other member and takes the start marker.
   const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);
@@ -240,8 +242,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
-      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
     attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
     attackTap: () => ctx.playerClickAttack(),
@@ -261,8 +262,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
-    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
 
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);
@@ -379,6 +383,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
+    lookFilter.tick(dt, cam);   // AUDIT 28 W7: ApplySmoothing - the owed look paid out at the setting's fraction, before the camera is read
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
