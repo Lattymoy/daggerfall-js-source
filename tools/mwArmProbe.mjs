@@ -97,7 +97,7 @@ const BSA_NO_WEAPON_BONE = buildBsa([
   { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
   { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
 ]);
-const wpdt = (type) => { const b = new Uint8Array(32); new DataView(b.buffer).setInt16(10, type, true); return [...b]; };
+const wpdt = (type) => { const b = new Uint8Array(32); new DataView(b.buffer).setInt16(8, type, true); return [...b]; };   // MW-D22: mType at byte 8 (loadweap.hpp)
 const weap = (id, model, type, name) => {
   const d = [...sub('NAME', zt(id)), ...sub('MODL', zt(model)), ...sub('FNAM', zt(name)), ...sub('WPDT', wpdt(type))];
   return [...ascii('WEAP'), ...u32(d.length), ...u32(0), ...u32(0), ...d];
@@ -393,13 +393,36 @@ ok(!!swordW, 'the weapon is a piece in the assembly, through the same rigid path
 ok(swordW && swordW.kind === 'rigid', `and it is RIGID, not skinned (${swordW && swordW.kind})`);
 ok(swordW && swordW.mirrored === false, 'and NOT mirrored, because "Weapon Bone" carries no "Left"');
 ok(swordW && swordW.bounds.maxX > 0, `it is on the RIGHT of centre (maxX ${swordW && swordW.bounds.maxX.toFixed(2)})`);
-const swordShot = await shoot(0.016);
-ok(swordShot.lit > 20, `and the weapon frame DRAWS (${swordShot.lit} lit texels)`);
+// RULE 57, ON SCREEN AND BOTH WAYS. An EQUIPPED weapon is not a DRAWN
+// one: fpArm boots sheathed and showWeapons keeps the range hidden
+// until the draw crosses the equip-attach key (or the .kf carries no
+// equip group, as this fixture's does, and it shows at once). The old
+// gate here counted lit texels of the WHOLE frame - the arm alone
+// satisfied it, and a sword that never rasterized passed as "draws".
+const sheathedShot = await shoot(0.016);
+ok(sheathedShot.lit > 20, `the sheathed frame draws the ARM (${sheathedShot.lit} lit texels)`);
+const drawn = await page.evaluate(() => {
+  const arm = window.__arm;
+  arm.setSheathed(false);
+  let guard = 0;
+  while (guard++ < 200 && !arm.status().weaponShown) { window.__frame(); arm.update(0.05); }
+  return { shown: arm.status().weaponShown };
+});
+ok(drawn.shown === true, 'setSheathed(false) SHOWS the weapon - rule 57\'s other half');
+const drawnShot = await shoot(0.016);
+ok(drawnShot.lit > sheathedShot.lit,
+  `and the sword's ink ARRIVES only once drawn (${sheathedShot.lit} sheathed vs ${drawnShot.lit} drawn texels)`);
 
-// HANDEDNESS, ON SCREEN. The pin in test/fparm.test.js proves the lens
-// agrees with the world's; this proves the pixels do. Driven at t=3.0,
-// where the clip has the arms UNCROSSED - at the clip's start they
-// legitimately swing across each other and either answer looks right.
+// HANDEDNESS, ON SCREEN - and CHIRAL this time. MW-D23's lesson: this
+// layer used to assert only "ink on both halves", which is symmetric
+// under a mirror, and the node pin it leaned on had built its probe
+// camera backwards - so a mirrored pass sailed through every layer and
+// only Mac's sword could say so. The pixel question now matches the
+// model question: at an UNCROSSED pose where the RIGHT hand extends
+// far right while the left stays near centre, the ink itself must lean
+// RIGHT. A mirrored pass leans it left and dies here. Driven at t=3.0
+// because at the clip's start the arms legitimately swing across each
+// other and either answer looks right.
 const handed = await page.evaluate(() => {
   const arm = window.__arm;
   // Step the live clip to an UNCROSSED pose. At the clip's start the
@@ -434,7 +457,15 @@ const handed = await page.evaluate(() => {
 ok(handed.rhMaxX > 0 && handed.lhMinX < 0,
   `at t=3.0 the hands are UNCROSSED, so the sides are a fair question (R ${handed.rhMaxX.toFixed(2)}, L ${handed.lhMinX.toFixed(2)})`);
 ok(handed.left > 0 && handed.right > 0,
-  `and the arm has ink on both halves of the screen (${handed.left} left, ${handed.right} right)`);
+  `the arm has ink on both halves of the screen (${handed.left} left, ${handed.right} right)`);
+// THE CHIRAL WITNESS. The fixture arms are x-symmetric by construction
+// (R 0.51 / L -0.51 above), so arm ink alone cannot see a mirror - the
+// same blindness that let MW-D9's flip ship. The SWORD is asymmetric:
+// it hangs at Weapon Bone (+X, asserted right-of-centre above), so with
+// it shown the total ink MUST lean right. A mirrored pass leans it left
+// and dies here - which is exactly what Mac's screen showed.
+ok(handed.right > handed.left,
+  `the INK leans RIGHT with the sword in hand (${handed.right} right vs ${handed.left} left) - a mirrored pass dies here`);
 
 // THE BOW: the SAME mesh bytes, a different WEAP type, and rule 8 sends
 // it to the other hand. If the attach-bone column is ignored this lands

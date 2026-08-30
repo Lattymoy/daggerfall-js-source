@@ -526,6 +526,45 @@ screenshot argument, and the answer picks the next fix.
 3 mutants, 3 dead (the reader back on 10, last-wins restored, a writer
 back on 10).
 
+MW-D23: THE MIRROR WAS THE BUG. Mac's third retest: the shortsword
+still sits in the LEFT hand. MW-D22's card line answered its own
+diagnostic question - the resolved bone genuinely rests at +X, the
+actor's right - so the remaining suspect was the view, and MEASURED
+through the pass's own composition (column-major uProj*uView*world,
+lookAt down -Z, NIF_TO_PASS's Rx(-90)) a point on the actor's right
+lands at NDC x +1.155 unmirrored and -1.155 - screen-LEFT - through
+the mirrorProjectionX the pass carried. The mirror MW-D9 shipped as a
+fix was the defect.
+
+HOW A FIX SHIPPED BACKWARDS. MW-D9's measurement built its probe
+camera looking +Z while the pass looks -Z, so the "point one metre to
+the player's right" it scored sat on the LEFT of the view it then
+judged, and the mirror that made its number come out "right" flipped a
+correct pass. The M1 world-pass mirror is real - it undoes that pass's
+own east-west flip - but the arm pass never had that composition, and
+"every pass rides the mirror" was an analogy where a measurement was
+needed. The MW-D9 handedness paragraphs above stand as written,
+marked, the way MW-D22 left the byte-10 sentence.
+
+WHY EVERY LAYER PASSED AND MAC'S SWORD DID NOT: a PAIR of hands is
+x-symmetric, and x-symmetry is invariant under a mirror - every ink
+test the probe had (both halves lit, the symmetry score) certifies a
+mirrored arm as happily as a true one. Only something ASYMMETRIC on
+screen can witness chirality, and the only asymmetric thing the arm
+ever draws is the weapon. The rebuilt gates use it: the node pin
+drives the pass's own pieces (same lookAt, same NIF_TO_PASS, same
+column-major order) and asserts actor-right lands NDC-positive with up
+staying up; the probe now UNSHEATHES - rule 57 had hidden the sword
+from every earlier readback, because equipped is not drawn, and the
+old "weapon frame DRAWS" gate was satisfied by arm ink alone - and
+asserts the sword's ink arrives only once drawn AND leans the total
+ink RIGHT of centre.
+
+4 mutants, 4 dead (the mirror reinstated - the node pin and the probe's
+ink lean, which reproduces Mac's screen exactly; the camera forward
+flipped to +Z - four probe layers; NIF_TO_PASS at +90 - two node pins;
+the weapon never hidden - the rule-57 gate).
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
@@ -931,6 +970,15 @@ Fixed at MW-D9: the arm's projection takes mirrorProjectionX like every
 other pass. It costs nothing, for the same reason the original note
 gives - drawCharacter disables back-face culling for its draw, so the
 winding flip a negative-x scale causes has no consequence.
+
+[REVERSED AT MW-D23. The "-1.96" above was measured through a probe
+camera looking +Z while the pass looks -Z, so the point it called the
+player's right sat on the LEFT of the view it judged - the mirror this
+paragraph ships flipped a CORRECT pass, and Mac's shortsword surfaced
+it as a left-handed weapon. The arm's projection is bare again and the
+pin is rebuilt from the pass's own composition; the world-pass mirror
+is untouched, because it undoes that pass's own flip, which the arm
+pass never had. See MW-D23.]
 
 WHY NO EXISTING LAYER CAUGHT IT, which is the lesson rather than the
 bug: every left/right assertion in the probe and the pins is in MODEL
