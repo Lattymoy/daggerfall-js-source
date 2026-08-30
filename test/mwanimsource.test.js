@@ -371,16 +371,18 @@ test('MW-D15 rule 32(a): the arm reads the stance off the camera dep, in all fou
   // THE FOUR HOSTS RULE, again. The pitch proved the camera dep is the
   // seam every host has; the stance is the same question about the same
   // body and rides the same dep rather than a fifth channel.
+  // MW-D26 widened the dep with the movement report; the stance still
+  // rides it, so the regex asks for the field, not the closing brace.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(rd(host), /camera: \(\) => \(\{[^}]*sneaking: !!player\.isSneaking \}\)/,
+    assert.match(rd(host), /camera: \(\) => \(\{[^)]*sneaking: !!player\.isSneaking,/,
       `${host} passes the live sneak stance`);
   }
   // The dungeon context latches it with the eye and the pitch, one frame
   // at a time, for the reason the pitch is latched there.
   assert.match(rd('src/scenes/dungeonContext.js'), /_fpSneaking = !!playerSneaking;/);
-  assert.match(rd('src/scenes/dungeonContext.js'), /sneaking: _fpSneaking \}/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /sneaking: _fpSneaking, move: _fpMove \}/);
   for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
-    assert.match(rd(host), /drawFoes\([^;]*!!player\.isSneaking\)/, `${host} hands it to the context`);
+    assert.match(rd(host), /drawFoes\([^;]*!!player\.isSneaking,/, `${host} hands it to the context`);
   }
   // And the arm takes it from there and nowhere else - no second source
   // of truth for a stance.

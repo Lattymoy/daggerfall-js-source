@@ -637,14 +637,44 @@ reasons in the module head rather than silence: Preview needs a
 TogglePOV binding the port lacks (the wheel is the requested switch);
 Vanity needs an idle timer and the fVanityDelay GMST.
 
+MW-D26: MOVEMENT - THE THIRD SLOT. The machine grows the slot the
+reference always had: movement at its own priority, above the idle and
+below the weapon action (the two-slot winner of MW-D12 becomes three;
+the per-bone-group vector - a swing on the torso OVER a walk on the
+legs, rule 26 whole - remains the recorded gap below). The movestate is
+selected from the frame's movement INPUT, the reference's own source
+(character.cpp:2126-2331; the motor reports its movement-settings
+vector on the camera dep every host already carries): the strict-2:1
+strafe test (:2085), sneak over run over walk, back on negative
+forward, and the turn states for a third-person non-sneaking biped
+only (:2321-2329) with the 0.05s hold (:2355-2366) standing in for
+isTurning() on a mouse-driven yaw - stated, not smuggled. The group
+composes the weapon's short suffix through the ONE ladder the idle
+rides (composeStanceGroup IS fallbackShortWeaponGroup), then movement's
+own run->walk swap (:697-699), then RESETS rather than substituting a
+wrong clip (:701-707). The played speed is the reference's own
+arithmetic: clip velocity = calcAnimVelocity whole (animation.cpp:
+180-224 - LAST start/loop-start and LAST loop-stop in reverse scan,
+the AshVampire quirk replicated by its own comment's order, the
+(1,1,0) accumulate mask), the >1 test (:1292), the fallback constants
+(character.cpp:750-752), rate = actor speed / clip speed capped at 10
+(:2403) with the port's meters crossing at the one unit bridge, and
+turns at min(1.5, |rot|/dt/pi) (:2396). Same-group refreshes resume
+where they were (:711-713). Both rigs ride it: the group resolves per
+active rig, so a first-person .kf with no walkforward simply leaves
+the arm to its idle - the reference's own outcome.
+
 STILL NOT PORTED, with reasons rather than silence:
-  MOVEMENT ANIM GROUPS (MW-D26, next): the third-person body currently
-    plays the stance idles and the equip/attack sections - the walk/run/
-    turn/strafe selection (character.cpp:2297-2330, the strafe test at
-    :2085, speed-scaled at :2400-2408) is the next slice, read and
-    ledgered under task MW-D26. Until it lands the body idles while the
-    player moves, and this sentence is the record that that is a KNOWN
-    stage, not a discovery waiting to happen.
+  RULE 26's PRIORITY VECTOR, per bone group: MW-D26's three slots
+    resolve whole-body, so a swing while walking shows the swing on
+    every bone where the reference blends the walk into the legs. The
+    ladder is the reference's PRIORITY ORDER exactly; what is missing
+    is the per-group half, and it is missing by name here rather than
+    approximated silently.
+  SWIM AND JUMP FAMILIES: the movestate ladder's swim column
+    (character.cpp:2300-2317) and the jump states (:2198-2293) wait on
+    the port's own swim/jump animation hosts; the selection nest is
+    structured so the columns drop in without re-deriving the rest.
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
     them visible later. The port skips a hidden subtree's drawables

@@ -286,7 +286,10 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // Mask_FirstPerson on view change) - so weaponRig's fallthrough is
   // gated by the THIRD predicate at its own call site, never by this
   // one going quietly stale.
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| idleState\)\s*&& viewMode === 'first'\);/,
+  // MW-D26 widened the clip term: SOME slot playing - action, movement
+  // or idle - is the same guarantee (a rig with none is the frozen bind
+  // pose, and the sprite is the correct picture).
+  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| idleState\)\s*&& viewMode === 'first'\);/,
     'built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all seven');
 });
 
@@ -598,8 +601,8 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
 
   // ready() must not require the mesh, or the deadlock comes straight back.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| idleState\) && renderer\);/,
-    'ready() is update()\'s own requirements - no mesh term, no camera term');
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| idleState\) && renderer\);/,
+    'ready() is update()\'s own requirements - no mesh term, no camera term (MW-D26 widened the clip term)');
 });
 
 test('MW-D11 rule 36: the texture path is FOUR PROBES over a re-rooted, extension-swapped name', async () => {
@@ -1128,4 +1131,225 @@ test('MW-D24: in third person NOTHING first-person draws - the rig\'s one seam i
   const armAt = src.indexOf('if (fpArm.active()) { fpArm.draw(c); return; }');
   assert.ok(drawAt !== -1, 'the third-person gate exists');
   assert.ok(armAt !== -1 && drawAt < armAt, 'and it stands BEFORE the arm-or-sprite seam');
+});
+
+// ── MW-D26: MOVEMENT - THE THIRD SLOT ───────────────────────────────
+
+import {
+  movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP,
+  turnAnimSpeed, MW_UNITS_PER_METER, MW_WEAPON_TYPE,
+} from '../src/formats/mwFirstPerson.js';
+import { animVelocity } from '../src/formats/mwAnim.js';
+
+test('MW-D26: the movestate ladder is the reference\'s own nest (character.cpp:2085, 2297-2330)', () => {
+  // sneak beats run beats walk, exactly as the ternaries order them
+  assert.equal(movementAnimState({ forward: 1 }), 'walkforward');
+  assert.equal(movementAnimState({ forward: 1, running: true }), 'runforward');
+  assert.equal(movementAnimState({ forward: 1, running: true, sneaking: true }), 'sneakforward');
+  assert.equal(movementAnimState({ forward: -1 }), 'walkback');
+  // the strafe test is 2:1, not a preference: equal parts go FORWARD
+  assert.equal(movementAnimState({ forward: 1, strafe: 1 }), 'walkforward');
+  assert.equal(movementAnimState({ forward: 0.4, strafe: 1 }), 'walkright');
+  assert.equal(movementAnimState({ forward: 0.5, strafe: 1 }), 'walkforward', 'exactly 2:1 is NOT strafing (strict >)');
+  assert.equal(movementAnimState({ strafe: -1, running: true }), 'runleft');
+  // turning: third person only, never sneaking (character.cpp:2321-2329)
+  assert.equal(movementAnimState({ turning: 1, thirdPerson: true }), 'turnright');
+  assert.equal(movementAnimState({ turning: -1, thirdPerson: true }), 'turnleft');
+  assert.equal(movementAnimState({ turning: 1, thirdPerson: false }), null, 'no turn anims in first person');
+  assert.equal(movementAnimState({ turning: 1, thirdPerson: true, sneaking: true }), null, 'nor sneaking');
+  assert.equal(movementAnimState({}), null, 'standing still is no state');
+});
+
+test('MW-D26: the movement group composes the weapon suffix through the ONE ladder, then run->walk', () => {
+  // suffix ladder = composeStanceGroup's (asked short, 2c/1h fallback,
+  // bare base - character.cpp:674-693); then the run->walk swap
+  // (:697-699); then null, never a substitute (:701-707).
+  const has = (set) => (n) => set.has(n);
+  const T = MW_WEAPON_TYPE.LongBladeOneHand;
+  assert.deepEqual(composeMovementGroup('runforward', T, has(new Set(['runforward1h']))),
+    { group: 'runforward1h', walked: false });
+  assert.deepEqual(composeMovementGroup('runforward', T, has(new Set(['runforward']))),
+    { group: 'runforward', walked: false }, 'bare-base tail of the suffix ladder');
+  assert.deepEqual(composeMovementGroup('runforward', T, has(new Set(['walkforward']))),
+    { group: 'walkforward', walked: true }, 'the run->walk swap');
+  assert.deepEqual(composeMovementGroup('runforward', T, has(new Set(['idle']))),
+    { group: null, walked: false }, 'nothing serves: RESET, never a wrong clip');
+  // no weapon: no suffix step at all (character.cpp:674's gate)
+  assert.deepEqual(composeMovementGroup('walkforward', MW_WEAPON_TYPE.None, has(new Set(['walkforward']))),
+    { group: 'walkforward', walked: false });
+});
+
+test('MW-D26: animVelocity is calcAnimVelocity - last keys in reverse, horizontal mask', () => {
+  // animation.cpp:180-224. The doubled Loop Stop is the reference's own
+  // AshVampire quirk: the reverse scan takes the LAST one.
+  const keys = [
+    { time: 1.0, text: 'walkforward: start' },
+    { time: 1.2, text: 'walkforward: loop start' },
+    { time: 1.8, text: 'walkforward: loop stop' },   // the broken early one
+    { time: 2.2, text: 'walkforward: loop stop' },   // the one the LAW takes
+    { time: 2.4, text: 'walkforward: stop' },
+  ];
+  const track = { translations: { keys: [
+    { time: 1.2, value: [0, 0, 0] },
+    { time: 2.2, value: [0, 2.0, 5.0] },
+  ] } };
+  // starttime = the LAST start/loop-start (1.2); stoptime = the LAST
+  // loop stop (2.2); displacement = |(0,2)| - the 5 units of MW z are
+  // MASKED by accumulate (1,1,0), character.cpp:925.
+  const v = animVelocity(keys, track, 'walkforward');
+  assert.ok(Math.abs(v - 2.0) < 1e-9, `2.0 units/s horizontal, vertical masked (${v})`);
+  assert.equal(animVelocity(keys, track, 'runforward'), 0, 'an absent group has no velocity');
+});
+
+test('MW-D26: the reference\'s own fallback speeds and caps', () => {
+  // character.cpp:750-752, :2403, :2396
+  assert.deepEqual(MOVEMENT_FALLBACK_SPEED, { sneak: 33.5452, run: 222.857, walk: 154.064 });
+  assert.equal(MOVEMENT_SPEED_CAP, 10);
+  assert.ok(Math.abs(turnAnimSpeed(Math.PI) - 1) < 1e-12, '|rot|/dt/pi');
+  assert.equal(turnAnimSpeed(100), 1.5, 'capped at 1.5');
+});
+
+/** A machine driven by a LIVE movement report - the caller's own shape. */
+function moveDriver() {
+  const cam = { pos: [0, 1.6, 0], yaw: 0, pitch: 0, sneaking: false, move: { forward: 0, strafe: 0, running: false, speed: 0 } };
+  const renderer = {
+    gl: null,
+    createCharacterMesh: () => ({ vao: {}, buffers: [] }),
+    updateCharacterMesh: () => {},
+    renderCharacterSprite: () => ({}),
+    drawScreenOverlayQuad: () => {},
+    createCharacterTexture: (mips) => ({ mips }),
+  };
+  const arm = createFpArm();
+  arm.attach(renderer, () => cam);
+  return { cam, arm };
+}
+
+test('MW-D26: the machine WALKS - the slot plays the group at the clip\'s own speed ratio', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpmove.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
+  };
+  const { cam, arm } = moveDriver();
+  const built = await arm.build({ race: 'fprace', deps });
+  assert.equal(built.ok, true, built.ok ? '' : `${built.stage}: ${built.error}`);
+  arm.update(1 / 60);
+  assert.equal(arm.status().movementGroup, null, 'standing still, no movement state');
+  // WALK at exactly the clip's own pace: the fixture's accum root
+  // travels 2.0 MW units/s, so a player at 2.0 MW units/s (through the
+  // one bridge) plays the clip at rate 1.
+  cam.move.forward = 1;
+  cam.move.speed = 2.0 / MW_UNITS_PER_METER;
+  arm.update(1 / 60);
+  let st = arm.status();
+  assert.equal(st.movementGroup, 'walkforward');
+  assert.ok(Math.abs(st.movementRate - 1) < 1e-6, `speed/animSpeed with a real accum velocity (${st.movementRate})`);
+  // RUN asks for runforward, which the fixture lacks: the run->walk
+  // swap serves, and the rate scales UP with the speed.
+  cam.move.running = true;
+  cam.move.speed = 8.0 / MW_UNITS_PER_METER;
+  arm.update(1 / 60);
+  st = arm.status();
+  assert.equal(st.movementGroup, 'walkforward', 'the run->walk swap in the LIVE machine');
+  assert.ok(Math.abs(st.movementRate - 4) < 1e-6, `the played speed follows the actor (${st.movementRate})`);
+  // the cap (character.cpp:2403)
+  cam.move.speed = 1000;
+  arm.update(1 / 60);
+  assert.equal(arm.status().movementRate, MOVEMENT_SPEED_CAP, 'vanilla caps the played speed at 10');
+  // and stopping RESETS the slot
+  cam.move.forward = 0; cam.move.running = false; cam.move.speed = 0;
+  arm.update(1 / 60);
+  assert.equal(arm.status().movementGroup, null, 'standing still again resets the slot');
+});
+
+test('MW-D26: a kf with NO movement groups moves nothing - the idle keeps the pose, no substitute', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
+  };
+  const { cam, arm } = moveDriver();
+  const built = await arm.build({ race: 'fprace', deps });
+  assert.equal(built.ok, true);
+  cam.move.forward = 1; cam.move.speed = 1;
+  arm.update(1 / 60);
+  const st = arm.status();
+  assert.equal(st.movementGroup, null, 'no walkforward in this file: the slot stays empty (character.cpp:701-707)');
+  assert.ok(st.idleGroup, 'and the idle still owns the pose');
+});
+
+test('MW-D26: turning plays turnleft/turnright in THIRD person only, at the turn\'s own speed law', async () => {
+  const fx = await fpFixtureBuildWithBody();
+  // swap both kfs for the movement fixture so the 3P rig carries the turn groups
+  fx.files.set(FP_CLIP_PATH, f('armfpmove.kf'));
+  fx.files.set('meshes/xbase_anim.kf', f('armfpmove.kf'));
+  const { cam, arm } = moveDriver();
+  const built = await arm.build({ race: 'fprace', deps: fx.deps });
+  assert.equal(built.ok, true, built.ok ? '' : `${built.stage}: ${built.error}`);
+  // FIRST PERSON: yaw spins, no turn state (character.cpp:2323's gate)
+  cam.yaw = 0;
+  arm.update(1 / 60);
+  cam.yaw = 0.3;
+  arm.update(1 / 60);
+  assert.equal(arm.status().movementGroup, null, 'no turn anims in first person');
+  // THIRD PERSON: the same spin picks the turn group and the rate is
+  // min(1.5, |rot|/dt/pi) (character.cpp:2396)
+  assert.equal(arm.setViewMode('third'), true);
+  arm.update(1 / 60);   // settle lastYaw on the new frame
+  cam.yaw += 0.3;
+  arm.update(1 / 60);
+  let st = arm.status();
+  assert.equal(st.movementGroup, 'turnright', 'yaw increasing = turning right');
+  assert.equal(st.movementRate, 1.5, 'a fast spin pins the turn clip at 1.5');
+  cam.yaw -= 0.001;
+  arm.update(1 / 60);
+  st = arm.status();
+  assert.equal(st.movementGroup, 'turnleft', 'and the sign flips the side');
+  assert.ok(st.movementRate < 1.5, `a slow turn plays slower (${st.movementRate})`);
+});
+
+test('MW-D26: movement WINS the pose over the idle - measured on the piece, not the label', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpmove.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
+  };
+  const { cam, arm } = moveDriver();
+  const built = await arm.build({ race: 'fprace', deps });
+  assert.equal(built.ok, true);
+  // settle the idle pose and take the arm's bounds
+  for (let i = 0; i < 3; i++) arm.update(0.05);
+  const idleBounds = arm.rows().find((r) => r.bone === 'right forearm').bounds;
+  // walk: the fixture's walkforward turns the right upper arm where the
+  // idle holds it still - and the forearm hangs off it, so the bound
+  // piece's bounds MUST move - a winner
+  // ladder that lets the idle keep the pose dies here, whatever the
+  // status labels say.
+  cam.move.forward = 1;
+  cam.move.speed = 2.0 / MW_UNITS_PER_METER;
+  // step into the clip's swing (walkforward loop 1.2..2.2, keys at 1.7)
+  for (let i = 0; i < 10; i++) arm.update(0.05);
+  assert.equal(arm.status().movementGroup, 'walkforward');
+  const walkBounds = arm.rows().find((r) => r.bone === 'right forearm').bounds;
+  const moved = Math.abs(walkBounds.maxX - idleBounds.maxX) + Math.abs(walkBounds.minZ - idleBounds.minZ);
+  assert.ok(moved > 1e-3, `the piece is posed by the MOVEMENT clip (moved ${moved.toFixed(5)})`);
 });
