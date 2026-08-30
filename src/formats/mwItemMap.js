@@ -461,6 +461,22 @@ function wornOrder(piece) {
   return 12;                                     // shields, the carried pair
 }
 
+/** MW-D31: WHAT THE FIRST PERSON WEARS. The reference shows the fp
+ *  camera your gauntlets, your sleeves, and your shield - the body
+ *  itself it hides with the neck-scale trick, so a helmet or a
+ *  cuirass never floats in your face. The port has no body in fp at
+ *  all, so the same picture falls out of a FILTER: worn adds pass
+ *  into the fp build only on the arm-family bones and the shield
+ *  bone. Everything else is the third person's business. */
+const FP_WORN_BONES = new Set([
+  'left hand', 'right hand', 'left wrist', 'right wrist',
+  'left forearm', 'right forearm', 'left upper arm', 'right upper arm',
+  'shield bone',
+]);
+export function fpWornAdds(adds) {
+  return (adds ?? []).filter((a) => (a.bones ?? []).some((b) => FP_WORN_BONES.has(b)));
+}
+
 /** Apply the shadows to the skin rows' bone lists: 'chest' hides the
  *  whole slot; 'hand:right' trims one side's bone and keeps the
  *  other. Returns the surviving rows - the input is not mutated. */

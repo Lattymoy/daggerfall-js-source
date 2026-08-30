@@ -62,7 +62,7 @@ import {
 import { PART_BONES } from '../formats/mwNpc.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
-import { composeWornArmor, shadowSkinRows } from '../formats/mwItemMap.js';
+import { composeWornArmor, shadowSkinRows, fpWornAdds } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
@@ -537,7 +537,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, clothes, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, weapon, hasAmmo, worn, archives, parts, allWeapons, find,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -549,14 +549,11 @@ async function buildTpBody({
 
     const rows = playerBodyRows(parts, race, female, { beast, faceIndex });
     const missing = [];
-    // MW-D29: WORN ARMOR composes onto the skin. The composer answers
-    // adds (part meshes on their sided bones), shadows (the skin the
-    // armor hides - whole slots or single sides), and notes for every
-    // piece that keeps its sprite instead; shadowSkinRows applies the
+    // MW-D29/D31: the worn verdicts arrive COMPOSED - one arbitration
+    // in buildFpArm serves both rigs. shadowSkinRows applies the
     // shadows to the skin rows' bone lists so a right gauntlet hides
     // the right hand and leaves the left on the body. Never-traps:
     // every miss is a note and the skin stands.
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
     missing.push(...worn.notes);
     const skinRows = shadowSkinRows(
       rows.filter((r) => r.record).map((r) => ({ slot: r.slot, bones: PART_BONES[r.slot] ?? [], model: r.record.model })),
@@ -721,15 +718,38 @@ export async function buildFpArm({
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
+    // MW-D31: ONE COMPOSITION for both rigs. The worn arbitration runs
+    // here, once, and the third person receives the verdicts instead
+    // of re-arguing them - one seam, one law, two views.
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
+
     const rows = armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
     const partBytes = [];
     const missing = [];
+    // The fp skin wears the same shadows: a right gauntlet hides the
+    // right 1st-person hand exactly as it hides the right skin hand on
+    // the body.
+    const fpRows = shadowSkinRows(
+      wanted.filter((w) => w.path).map((w) => ({ slot: w.slot, bones: PART_BONES[w.slot] ?? [], path: w.path })),
+      worn.shadows);
     for (const w of wanted) {
       if (!w.path) { missing.push(`${w.slot}: no record for this actor`); continue; }
+    }
+    for (const w of fpRows) {
       const arc = find(w.path);
       if (!arc) { missing.push(`${w.slot}: ${w.path} is not in your archives`); continue; }
-      partBytes.push({ slot: w.slot, bytes: arc.get(w.path).slice() });
+      partBytes.push({ slot: w.slot, bones: w.bones, bytes: arc.get(w.path).slice() });
+    }
+    // And the fp camera sees what the reference shows it: gauntlets,
+    // sleeves, the shield - fpWornAdds' filter - never a helmet in
+    // your face.
+    missing.push(...worn.notes);
+    for (const add of fpWornAdds(worn.adds)) {
+      const path = `meshes/${add.model}`;
+      const arc = find(path);
+      if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
+      partBytes.push({ slot: add.slot, bones: add.bones, bytes: arc.get(path).slice() });
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
@@ -771,7 +791,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, clothes, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, worn, archives, parts, allWeapons, find })
       : null;
     archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {

@@ -1422,7 +1422,7 @@ import {
   DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
   mwArmorRecords, itemMapCoverage, mwItemReport,
   ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor, dfWornEquipment,
-  MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord,
+  MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord, fpWornAdds,
 } from '../src/formats/mwItemMap.js';
 import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
@@ -1668,7 +1668,12 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female \}\)/);
   assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => armorRecords\(e\.bytes\)\);/);
-  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors,/);
+  // MW-D31: ONE composition serves both rigs - buildFpArm composes,
+  // the third person receives verdicts, the fp build filters and
+  // shadows from the same result.
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, weapon, hasAmmo, worn,/);
+  assert.match(arm, /for \(const add of fpWornAdds\(worn\.adds\)\)/, 'the fp build does not wear the filtered adds');
+  assert.match(arm, /shadowSkinRows\(\n      wanted\.filter/, 'the fp skin does not take the shadows');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
   assert.match(menu, /armor: dfWornEquipment\(equipTableOf\(playerEntity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
   // and the readout itself: armor slots in, shields from hands, a
@@ -1809,4 +1814,18 @@ test('MW-D30: the skirt reserve and the readout - garments ride the equip table'
     { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
     { kind: 'clothing', templateIndex: 154, name: 'Casual Cloak' },
   ]);
+});
+
+test('MW-D31: the first person wears gauntlets, sleeves and the shield - never a helmet in your face', () => {
+  const adds = [
+    { slot: 'right hand (iron_gauntlet)', bones: ['right hand'], model: 'g.nif', recordId: 'b_gr' },
+    { slot: 'left upper arm (shirt)', bones: ['left upper arm'], model: 's.nif', recordId: 'b_ua' },
+    { slot: 'shield (iron_shield)', bones: ['shield bone'], model: 'sh.nif', recordId: 'b_sh' },
+    { slot: 'head (iron_helmet)', bones: ['head'], model: 'h.nif', recordId: 'b_h' },
+    { slot: 'cuirass (iron_cuirass)', bones: ['chest'], model: 'c.nif', recordId: 'b_c' },
+    { slot: 'left foot (boots)', bones: ['left foot'], model: 'b.nif', recordId: 'b_f' },
+  ];
+  assert.deepEqual(fpWornAdds(adds).map((a) => a.recordId), ['b_gr', 'b_ua', 'b_sh'],
+    'the fp filter is not the reference\u2019s visible set');
+  assert.deepEqual(fpWornAdds([]), []);
 });
