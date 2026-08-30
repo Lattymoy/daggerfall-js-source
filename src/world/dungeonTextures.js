@@ -89,7 +89,7 @@ export function applyTextureTable(archive, textureTable, climateBaseType) {
 
 /** DaggerfallDungeon.IsMainStoryDungeon (:146-172), the fourteen ids,
  *  keyed on Summary.ID = MapTableData.MapId (raw, :104). */
-export const MAIN_STORY_DUNGEON_IDS = Object.freeze(new Set([
+const MAIN_STORY_DUNGEON_IDS = Object.freeze(new Set([
   187853213,    // Daggerfall/Privateer's Hold
   630439035,    // Wayrest/Wayrest
   1291010263,   // Daggerfall/Daggerfall
@@ -114,14 +114,14 @@ export const ALTERNATE_VALID_ARCHIVES = Object.freeze([
   319, 320, 322, 323, 324, 368,
   419, 420, 422, 423, 424, 468,
 ]);
-export const VALID_SEWER_ARCHIVES = Object.freeze([68, 168, 368, 468]);
+const VALID_SEWER_ARCHIVES = Object.freeze([68, 168, 368, 468]);
 
 /** AUDIT 28 W3c: the deterministic stand-in for Unity's seeded stream
  *  (Random.InitState(Summary.ID)) - the same xorshift32 shape the
  *  dungeon-enemies slot reroll uses, Range semantics max EXCLUSIVE.
  *  Ledger A: the SEQUENCE differs from Unity's Xorshift128, the
  *  determinism per dungeon does not. */
-export function makeSeededRng(seed) {
+function makeSeededRng(seed) {
   let s = (seed >>> 0) || 1;
   return (min, maxExclusive) => {
     s ^= s << 13; s >>>= 0;

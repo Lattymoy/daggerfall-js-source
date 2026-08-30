@@ -71,7 +71,9 @@ test('AUDIT 28 W2a: the count is GetItem(Arrow, allowQuestItem false, priorityTo
 test('AUDIT 28 W2a: drawn left of the compass, centred on its height, under the large-HUD gate; every host hands the drawn state, and the interior frame a font', () => {
   const hud = read('src/ui/hud.js');
   // :281-284 - x = width - compass.w - label.w - 8; y = height - compass.h/2 - label.h/2.
-  assert.match(hud, /const x = canvas\.width - compass\.bw - w - 8 \* s;/);
+  // F-A3: the 8 is raw screen pixels (:282 adds it after the scaled
+  // sizes), so it must NOT carry `* s`.
+  assert.match(hud, /const x = canvas\.width - compass\.bw - w - 8;/);
   assert.match(hud, /const y = canvas\.height - compass\.bh \/ 2 - h \/ 2;/);
   // The draw sits in the classic-compass arm, which the large-HUD branch
   // returns before (:273's !largeHUDEnabled).

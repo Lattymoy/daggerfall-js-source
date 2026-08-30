@@ -47,12 +47,18 @@ test('AUDIT 28 W2c: Escape on a box that names onEscape is a CANCEL - neither Ye
 });
 
 test('AUDIT 28 W2c: the exit door asks first - cart + setting, TEXT.RSC 38, No exits, Yes opens the wagon inventory, Escape does nothing', () => {
-  const modes = read('src/scenes/worldModes.js');
-  const fn = modes.slice(modes.indexOf('function tryExitDungeon()'), modes.indexOf('function exitDungeonNow()'));
+  const modesSrc = read('src/scenes/worldModes.js');
+  const fn = modesSrc.slice(modesSrc.indexOf('function tryExitDungeon()'), modesSrc.indexOf('function exitDungeonNow()'));
   assert.match(fn, /if \(hasCart\(playerEntity\.items \?\? \[\]\) && getBool\('GUI', 'DungeonExitWagonPrompt'\)\) \{/, 'the gate is the cart AND the setting');
   assert.match(fn, /rscLines\?\.\(38\)/, 'record 38');
   assert.match(fn, /onYes: \(\) => \{ dungeonCtx\.openInventoryWithWagon\(\); return null; \}/);
-  assert.match(fn, /onNo: \(\) => \{ exitDungeonNow\(\); return null; \}/);
+  // F-A5 (the self-audit): No defers through the flag - tearing the
+  // dungeon down from inside the ctx's own overlayInput dispatch was
+  // the 2026-08-29 crash's shape - and the frame takes it OUTSIDE any
+  // dispatch.
+  assert.match(fn, /onNo: \(\) => \{ pendingDungeonExit = true; return null; \}/);
+  const modes = read('src/scenes/worldModes.js');
+  assert.match(modes, /if \(mode === 'dungeon'\) \{\s*\n\s*if \(pendingDungeonExit\) \{ pendingDungeonExit = false; exitDungeonNow\(\); return true; \}/);
   assert.match(fn, /onEscape: \(\) => null,/);
   assert.match(fn, /return mountSpellWindow\(prompt\);/, 'the box goes into the dungeon slot and the activation returns');
   assert.match(fn, /\n    return exitDungeonNow\(\);\n/, 'no cart or no setting: the exit is immediate');

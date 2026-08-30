@@ -307,9 +307,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2887` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2899` - FLAGGED, and narrowed to what is actually missing: the two BASH
 - `src/scenes/worldModes.js:2961` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4157` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4256` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4594` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4167` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4266` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4604` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:

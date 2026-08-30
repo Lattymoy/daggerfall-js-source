@@ -24,7 +24,7 @@ export const INJURED_THRESHOLD = 0.4;
 export const WOUNDED_THRESHOLD = 0.2;
 
 /** HUDFlickerBase's AlphaDirection. */
-export const ALPHA_DIRECTION = Object.freeze({ None: 0, Decreasing: 1, Increasing: 2 });
+const ALPHA_DIRECTION = Object.freeze({ None: 0, Decreasing: 1, Increasing: 2 });
 
 /** RandomlyReverseAlphaDirection's constants (HUDFlickerBase.cs). */
 const MIN_CHANCE = -0.01;   // "negative so it takes a little while before it can reverse at least"

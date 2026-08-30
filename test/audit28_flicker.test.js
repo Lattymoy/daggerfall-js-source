@@ -121,13 +121,16 @@ test('AUDIT 28 W2d: NextCycle - the setting gates it, Normal clears, Injured run
 test('AUDIT 28 W2d: drawn as the parent panel\'s tint UNDER the bars in both HUD branches, off the detector\'s HealthLost', () => {
   const hud = read('src/ui/hud.js');
   const large = hud.indexOf('const largeRig = updateHudVitals(true, cur, dt, cursorActive);');
-  const largeFlicker = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, dt);', large);
+  const largeFlicker = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);', large);
   const largeDraw = hud.indexOf('lastLargeHudBar = drawHudLarge(', large);
   assert.ok(large > 0 && largeFlicker > large && largeDraw > largeFlicker, 'large HUD: detector, tint, then the bar');
   const small = hud.indexOf('const rig = updateHudVitals(false, cur, dt, cursorActive);');
-  const smallFlicker = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, dt);', small);
+  const smallFlicker = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);', small);
   assert.ok(small > 0 && smallFlicker > small && smallFlicker - small < 200, 'small HUD: the tint right after the detector, before the bars');
   assert.match(hud, /healthLost: lastHealthLost\(\)/);
+  // F-A6: a paused frame steps the flicker with dt 0, as Time.timeScale
+  // holds DFU's - both branches.
+  assert.equal((hud.match(/drawNearDeathFlicker\(renderer, canvas, cur, cursorActive \? 0 : dt\)/g) || []).length, 2);
   assert.match(hud, /enabled: getBool\('Enhancements', 'NearDeathWarning'\)/);
   assert.match(read('src/ui/hudVitals.js'), /_lastHealthLost = ev\.health\?\.lost \?\? 0;/);
   assert.equal(LIVE['Enhancements/NearDeathWarning'], 'src/ui/hud.js');

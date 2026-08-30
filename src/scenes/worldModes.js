@@ -3555,14 +3555,23 @@ export function createWorldModes(host) {
       const rows = (dungeonCtx.rscLines?.(38) ?? ['Do you wish to access your wagon?']).map((text) => ({ text, center: true }));
       const prompt = new ServiceFlowWindow([{
         rows, buttons: 'YesNo',
+        // AUDIT 28 SELF-AUDIT (F-A5): No must NOT tear the dungeon down
+        // from INSIDE the ctx's own overlayInput dispatch - after the
+        // handler returns, that dispatch still runs surfacePlayer() on
+        // the ctx, which exitDungeonNow has just destroyed. That is the
+        // 2026-08-29 crash's shape wearing a new coat. The flag defers
+        // the exit to the top of the next dungeon frame, outside any
+        // dispatch, which is also what the comment on exitDungeonNow
+        // promised.
         onYes: () => { dungeonCtx.openInventoryWithWagon(); return null; },
-        onNo: () => { exitDungeonNow(); return null; },
+        onNo: () => { pendingDungeonExit = true; return null; },
         onEscape: () => null,
       }]);
       return mountSpellWindow(prompt);
     }
     return exitDungeonNow();
   }
+  let pendingDungeonExit = false;   // F-A5: the wagon prompt's No, taken a frame later
   /** TransitionDungeonExterior(true): the exit itself, split from the
    *  activation so the wagon prompt's No can take it a frame later. */
   function exitDungeonNow() {
@@ -3817,6 +3826,7 @@ export function createWorldModes(host) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
+      if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:219's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);

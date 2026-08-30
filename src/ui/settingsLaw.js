@@ -35,6 +35,10 @@ export const ENUM_LAW = Object.freeze({
 
 /** {min,max,step,coarse,format,source}. format: pct | mult | a unit. */
 export const NUMBER_LAW = Object.freeze({
+  // AUDIT 28 SELF-AUDIT (F-A1): the key went LIVE in W1 and the screen
+  // still showed a dead readout - a number with no stated range stays
+  // text, and this one's range IS stated: GetInt(1, 100).
+  'GUI/QuestRumorWeight': { min: 1, max: 100, step: 1, coarse: 10, source: 'DFU GetInt(1,100) (SettingsManager:512)' },
   'Controls/SoundVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU DisplayUnits 100 (:268-271)' },
   'Controls/MusicVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:272-274)' },
   'Controls/MouseLookSensitivity': { min: 0.1, max: 4.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'the port clamps at 4.0 (lookSettings.js)' },
@@ -83,7 +87,9 @@ const fmtNumber = (n, law) => {
   if (law.format === 'mult') return `x${n.toFixed(1)}`;
   const unit = law.format;
   const shown = Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
-  return `${shown} ${unit}`;
+  // F-A1's own find: a law with NO unit (QuestRumorWeight is a bare
+  // weight) printed "50 undefined". A bare number reads as itself.
+  return unit ? `${shown} ${unit}` : shown;
 };
 
 /** The WORD a player reads. Never the raw ini string. */

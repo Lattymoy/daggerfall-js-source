@@ -307,7 +307,6 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
  *  The two fade gates have no reader in this HUD and answer false
  *  (recorded in Audit-28.md). */
 let _flicker = new HudFlickerController();
-export function _resetNearDeathFlicker() { _flicker = new HudFlickerController(); }
 export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
   const c = _flicker.nextCycle({
     health: cur.health, maxHealth: cur.maxHealth, healthLost: lastHealthLost(), dt,
@@ -355,14 +354,16 @@ export function arrowCountLabel(entity, weaponSheathed, {
 
 /** The draw half: :281-284 - offset LEFT of the compass by its width
  *  plus the label's width plus 8, centred on the compass's height.
- *  In screen units, so the 8 is scaled with the rest. */
+ *  AUDIT 28 SELF-AUDIT (F-A3): the 8 is RAW screen pixels - :282 adds
+ *  it to a screenRect position after the scaled sizes - so it does not
+ *  ride the HUD scale here either. It first shipped as `8 * s`. */
 function drawArrowCount(renderer, canvas, font, entity, weaponSheathed, compass, s) {
   if (!font) return;
   const label = arrowCountLabel(entity, weaponSheathed);
   if (!label) return;
   const w = measureText(font.fnt, label.text) * s;
   const h = (font.fnt?.fixedHeight ?? 6) * s;
-  const x = canvas.width - compass.bw - w - 8 * s;
+  const x = canvas.width - compass.bw - w - 8;
   const y = canvas.height - compass.bh / 2 - h / 2;
   drawText(renderer, font, label.text, x, y, s, label.color);
 }
@@ -423,7 +424,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     // VB1: HUDLarge owns its OWN HUDVitals instance (HUDLarge.cs:66) -
     // the second rig, updated only while this branch is the live HUD.
     const largeRig = updateHudVitals(true, cur, dt, cursorActive);
-    drawNearDeathFlicker(renderer, canvas, cur, dt);   // AUDIT 28 W2d: the parent panel's tint, under the bar
+    // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
+    // paused game holds at 0 (timeScale) - the tint FREEZES under a
+    // window rather than throbbing on. cursorActive is this HUD's
+    // paused, exactly as the vitals line above treats it.
+    drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d: the parent panel's tint, under the bar
     lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
       ...largeHud,
       vitalsBars: { rig: largeRig, skin, indicators },
@@ -451,7 +456,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // HUDVitals.cs:108-119) - and the skin carries the F149 swap.
   {
     const rig = updateHudVitals(false, cur, dt, cursorActive);
-    drawNearDeathFlicker(renderer, canvas, cur, dt);   // AUDIT 28 W2d: the parent panel's tint, under the bars
+    drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d + F-A6: the tint, frozen while paused like the bars
     let x = HUD_BORDER;
     const rects = {};
     for (const k of VITAL_KEYS) {

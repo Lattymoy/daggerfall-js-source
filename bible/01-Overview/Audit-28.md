@@ -213,6 +213,46 @@ in for Unity's seeded stream everywhere else (Ledger A: the sequence
 differs from Unity's Xorshift128, the per-dungeon determinism does
 not). `dungeonLayout` routes through the fork.
 
+## THE SELF-AUDIT (2026-08-30, Mac: "a comprehensive audit on everything so far")
+
+Every commit of the session re-read against its own claims, every DFU
+citation re-opened, and the sweeps AUDIT 27 runs pointed at the day's
+own work. Verified sound: all fourteen getter ranges against
+SettingsManager.cs itself; the arrow counter's colours and both
+placement axes (:281-284); the wagon prompt's record 38, its button
+handler and allowCancel (:653-664, :1133-1145); friendly protection's
+exact three exclusions and the unconditional box arm (:930-944); the
+night-scale lerp (`ExteriorNightAmbientLight * scale` as the lerp's
+START, :123); ROTOR_SIGN re-derived from the shipped code; both
+windmill bakes regenerate byte-identical; the string teams; LIVE's 63
+keys each named in their module. Six findings, all fixed in this
+commit:
+
+- **F-A1** `GUI/QuestRumorWeight` went LIVE in W1 and the settings
+  SCREEN still showed a dead readout - a number with no stated range
+  stays text, and this one's range IS stated (GetInt 1..100). It has
+  its NUMBER_LAW row now - which surfaced **its own find**: a law with
+  no unit printed "50 undefined". A bare number reads as itself.
+- **F-A3** the arrow counter's 8px gap shipped as `8 * s`; :282 adds 8
+  RAW screen pixels after the scaled sizes. Raw now, pinned raw.
+- **F-A5** (the serious one) the wagon prompt's No called
+  `exitDungeonNow()` from INSIDE the dungeon ctx's own `overlayInput`
+  dispatch, which goes on to run `surfacePlayer()` on the ctx the exit
+  just destroyed - the 2026-08-29 crash's shape wearing a new coat, and
+  the split function's comment had even promised "a frame later"
+  without delivering it. No sets `pendingDungeonExit`; the dungeon
+  frame takes it first thing, outside any dispatch.
+- **F-A6** the flicker stepped on raw dt under an open window; DFU's
+  steps on Time.deltaTime, which pause holds at 0. It freezes with the
+  bars now (`cursorActive ? 0 : dt`, both branches).
+- **F-A2/A4** five dead exports of the session's own making - the F301
+  shape - unexported (`ALPHA_DIRECTION`, `MAIN_STORY_DUNGEON_IDS`,
+  `VALID_SEWER_ARCHIVES`, `makeSeededRng`) or removed
+  (`_resetNearDeathFlicker`, a test door no test used).
+
+4 self-audit mutants (exit inside the dispatch, flag never taken, the
+scaled gap back, raw dt while paused), 4 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
