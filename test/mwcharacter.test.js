@@ -80,10 +80,75 @@ test('mwcharacter: unskinned parts attach at the named bone, posed', () => {
   assert.ok(near(z, 2.2));
 });
 
-test('mwcharacter: a part naming a bone the skeleton lacks throws with the name', () => {
+test('mwcharacter rule 40: a bone the skeleton lacks is SKIPPED with its name, never fatal', () => {
+  // The pin that stood here asserted the DEFECT in as many words: it
+  // demanded the throw. The reference logs "RigGeometry did not find
+  // bone", stores nullptr, and skips the influences - it draws the part.
+  // A port that threw instead dropped a whole retail hand over one
+  // absent finger bone.
   const { skeleton } = assemble();
   const rogue = parseNif(PART);
   // Rename the part's second bone to something the base has never heard of.
   rogue.records.find((r) => r.name === 'Bone1').name = 'Tail3';
-  assert.throws(() => bindPart(skeleton, rogue), /no bone "tail3"/);
+  const part = bindPart(skeleton, rogue);
+  assert.deepEqual(part.missingBones, ['tail3'], 'the caller is told WHICH bone was skipped');
+  assert.equal(part.skinned.length, 1, 'the part still binds');
+  const skin = part.skinned[0].skin;
+  assert.equal(skin.bones.find((b) => b.name === 'tail3').ref, null, 'the missing bone rides as null');
+  assert.equal(skin.bones.find((b) => b.name === 'bone0').ref, skeleton.byName.get('bone0'),
+    'and the present one still resolves');
+});
+
+test('mwcharacter rule 40: the blend SKIPS a missing bone - and a vertex weighted only to one COLLAPSES, reference-exact', () => {
+  const { skeleton } = assemble();
+  const rogue = parseNif(PART);
+  rogue.records.find((r) => r.name === 'Bone1').name = 'Tail3';
+  const part = bindPart(skeleton, rogue);
+  // A non-identity skin transform, so the collapse target is DISTINCT
+  // from the origin and the pin can tell "the transform's translation"
+  // from "zero" - the fixture's own identity transform could not.
+  const batch = {
+    ...part.skinned[0],
+    skin: {
+      ...part.skinned[0].skin,
+      transform: { ...part.skinned[0].skin.transform, translation: [3, 4, 5] },
+    },
+  };
+  const pose = poseSkeleton(skeleton, null, sampleTrack, 0);
+  const mats = skeletonSpaceMatrices(skeleton, pose, batch.skin.skeletonRoot);
+  const out = new Float32Array(batch.positions.length);
+  skinBatch(batch, skeleton, pose, mats, out, null);
+  // v0/v1 ride Bone0, shifted by the transform like any healthy vertex -
+  // no renormalisation, no disturbance from the miss (rule 39).
+  assert.ok(nearVec([out[0], out[1], out[2]], [3.5, 4, 5]));
+  assert.ok(nearVec([out[3], out[4], out[5]], [4.5, 4, 5]));
+  // v2 was weighted ONLY to the missing bone. The reference seeds the
+  // blend accumulator at ZERO (riggeometry.cpp:191) and skips nullptr
+  // bones (:195-196), so the vertex lands on the skin transform's BARE
+  // TRANSLATION - (3,4,5), NOT its authored position and NOT the origin.
+  // Faithful and ugly on purpose: the collapse is what the reference
+  // draws, and the missing-bone note is what names it.
+  assert.ok(nearVec([out[6], out[7], out[8]], [3, 4, 5]));
+  // A vertex with NO influences at all is a DIFFERENT case (rule 39's
+  // erased-empty-set keeps the authored position) - pinned below.
+});
+
+test('mwcharacter rule 39: a vertex with NO influences at all keeps its authored position', () => {
+  // The two do-nothing cases must not be conflated: influences that all
+  // name a MISSING bone collapse (above); no influences AT ALL keeps the
+  // authored position. The batch is the producer's own, with v2's one
+  // weight surgically removed rather than hand-built.
+  const { skeleton, part } = assemble();
+  const batch = part.skinned[0];
+  const b1 = batch.skin.bones[1];
+  const surgical = {
+    ...batch,
+    skin: { ...batch.skin, bones: [batch.skin.bones[0], { ...b1, indices: [], weights: [] }] },
+  };
+  const pose = poseSkeleton(skeleton, null, sampleTrack, 0);
+  const mats = skeletonSpaceMatrices(skeleton, pose, surgical.skin.skeletonRoot);
+  const out = new Float32Array(batch.positions.length);
+  skinBatch(surgical, skeleton, pose, mats, out, null);
+  assert.ok(nearVec([out[6], out[7], out[8]], [0.5, 0, 1]),
+    'v2, now weightless, keeps (0.5, 0, 1) - it does not collapse and does not vanish');
 });

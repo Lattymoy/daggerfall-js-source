@@ -201,6 +201,20 @@ export function createSkyController(gl, params) {
   return {
     renderer: enhancedSky ?? sky,
     enhanced: Boolean(enhancedSky),
+    /** WM2b: THE EASED WIND, and the ONE place anything but the sky can
+     *  read it. `easeWeather` walks this row toward the sim's over
+     *  WEATHER_EASE_SECONDS, and the cloud deck is drawn with it - so a
+     *  consumer that takes the same vector is not merely correlated with
+     *  the sky, it is driven by the same number. The windmills' rotor
+     *  rate is the first (src/world/windmills.js).
+     *
+     *  null until the first enhanced draw, and null forever under the
+     *  classic sky, which has no cloud field and eases nothing. Callers
+     *  treat null as "no wind is known" rather than "the wind is zero" -
+     *  the two differ, and only one of them should stop a mill. */
+    wind() {
+      return weatherRowNow ? weatherRowNow.wind : null;
+    },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a

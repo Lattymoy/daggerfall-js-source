@@ -21,7 +21,12 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
-// and runs untouched otherwise.
+// MW-D8: the classic sprite is still the DEFAULT and still the fallback,
+// and runs untouched otherwise. The Morrowind arm below is an opt-in
+// layer that either draws whole or does not draw at all - there is no
+// state in which both reach the screen, and none in which neither does.
+import { fpArm, hasDaggerfallArrows } from './fpArm.js';
+import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
@@ -39,8 +44,29 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true }) {
   const playerWeapon = new PlayerWeapon({});
+  // MW-D8. `camera` is REQUIRED for the Morrowind arm and there is no
+  // fallback: a host that does not pass one gets the classic sprite and
+  // a named reason, never a plausible arm in the wrong place. An arm
+  // drawn at the world origin while the player stands elsewhere is the
+  // shape of failure this arc keeps shipping.
+  fpArm.attach(renderer, camera);
+  // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
+  // construction, so attaching data to a running game changed nothing
+  // until a reload - which is what "after uploading does not work at
+  // all" actually was. A monotonic generation is the cheapest honest
+  // signal a live consumer can poll. The rig does not rebuild by itself
+  // (the parse is seconds long and belongs behind a button); it drops a
+  // stale arm, so what is on screen never outlives the data it was
+  // built from.
+  let _mwGen = morrowindDataGeneration();
+  const fpRecheck = () => {
+    const g = morrowindDataGeneration();
+    if (g === _mwGen) return;
+    _mwGen = g;
+    fpArm.unload();
+  };
   // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
   // the two EXTERIOR hosts by hand, so the interior host (which owns
   // its own rig) kept swinging the interim dagger inside every
@@ -97,12 +123,37 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return v;
   }
 
+  /**
+   * MW-D12: the swing reaches the Morrowind arm.
+   *
+   * The strike is Daggerfall's, the attack type is Morrowind's, and the
+   * mapping between them is rule 11's recorded DIVERGENCE - by the shape
+   * of the motion, because Daggerfall chooses by gesture where Morrowind
+   * chooses from the weapon record's damage spread.
+   *
+   * `hold` is read off the machine rather than assumed from the weapon:
+   * a bow that is drawn AND HOLDING is state StrikeUp, which is DFU's
+   * BowDrawback-on arm. The in-game bow path fires StrikeDown instantly
+   * (playerWeapon.gesture:105-111), so today this is always false and the
+   * arm runs wind-up straight into release - which is what an uncharged
+   * Daggerfall swing is. It becomes live the moment the drawback path
+   * does, with nothing here to change.
+   */
+  function fpAttack(strike) {
+    if (!fpArm.ready()) return;
+    const m = playerWeapon.machine;
+    // MW-D16: no `bow` flag. The arm derives "shoot" from its own
+    // weapon CLASS, which is what the reference tests - and which also
+    // catches MarksmanThrown, a type that shoots without being a bow.
+    fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp' });
+  }
+
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
    *  Arrows auto-sheathes with the classic line. */
   function bowArrowGuard() {
     if (playerWeapon.sheathed) return;
     if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
-    if (entity.items?.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0)) return;
+    if (hasDaggerfallArrows(entity.items)) return;
     playerWeapon.sheathed = true;
     say('You have no arrows.');
   }
@@ -118,7 +169,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       _dx += dx; _dy += dy; _held = held;
     },
     /** ClickToAttack for the touch button. */
-    clickAttack() { if (!playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0) playerWeapon.clickAttack(); },
+    clickAttack() {
+      if (playerWeapon.sheathed || (entity?.equipCountdown ?? 0) > 0) return;
+      const strike = playerWeapon.clickAttack();
+      if (strike) fpAttack(strike);
+    },
     /** ToggleSheath + the draw sound on unsheathing a real weapon.
      *  AUDIT 26 F023: the clip is the WEAPON's own GetEquipSound
      *  (WeaponManager.SetWeapon :780 overwrites DrawWeaponSound with
@@ -147,12 +202,56 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         entity.equipCountdown = Math.max(0, entity.equipCountdown - dt * 980);
       }
       const c = cv();
-      if (!paralyzed && c) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight));
+      // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
+      // only signal that a blow has started. gesture() answers with the
+      // strike the drag resolved to (playerWeapon.js:128-131) and
+      // clickAttack() with the one the click rolled - the Morrowind arm
+      // needs exactly that to pick rule 11's attack type.
+      const strike = !paralyzed && c
+        ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight))
+        : null;
+      if (strike) fpAttack(strike);
       _dx = 0; _dy = 0;
       // AUDIT 23 (C9): the strike-ENTRY whoosh is gone - DFU plays the
       // swing sound at the HIT FRAME of a swing that hit no enemy
       // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
       // both of which ride the machine's events at the hosts now.
+      fpRecheck();
+      // Paralysis freezes the arm as it freezes the swing - a clip that
+      // keeps idling while the player cannot move is the animation
+      // saying something the game does not mean.
+      // MW-D9f: ready(), NOT active(). active() requires the GPU mesh
+      // that update() is the only thing that creates, so gating the
+      // update on it meant a built arm never ran a frame and never drew.
+      if (!paralyzed && fpArm.ready()) {
+        // MW-D12: THE STANCE IS SYNCED EVERY FRAME, not at the toggle.
+        //
+        // That is the reference's own shape - updateWeaponState compares
+        // the live `weaptype` against `mWeaponType` on every call
+        // (character.cpp:1382-1385) - and here it is also the only
+        // correct one: playerWeapon.sheathed is written from THREE
+        // places, and the bow's out-of-arrows auto-sheathe
+        // (bowArrowGuard, in draw()) is not one of them that could ever
+        // call a toggle hook. setSheathed is a no-op when nothing
+        // changed, so this costs a comparison.
+        //
+        // Sheathed is rule 8's weapon type None: the bare "idle" group,
+        // rule 10's endless loop, and no weapon in shot. Drawn plays the
+        // equip section of the weapon's long group and raises "idle1h".
+        fpArm.setSheathed(playerWeapon.sheathed);
+        // MW-D19: THE WEAPON FOLLOWS THE HAND. syncWorn above already
+        // reads the equip slot every frame for the classic sprite; the
+        // Morrowind arm now rides the same read. setWeapon's fast path
+        // is one key compare - the swap itself runs only when the item
+        // in the hand actually changed.
+        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        // The held draw comes up when the machine leaves StrikeUp - the
+        // arrow is loosed, so the arm's wind-up must stop holding at max
+        // attack and run to its release key.
+        const m = playerWeapon.machine;
+        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
+        fpArm.update(dt);
+      }
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
@@ -161,6 +260,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();
+      // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
+      // and the classic sprite draws exactly as it always has. The return
+      // is load-bearing: without it both composite and the player sees a
+      // weapon sprite pasted over a pair of hands.
+      if (fpArm.active()) { fpArm.draw(c); return; }
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     },

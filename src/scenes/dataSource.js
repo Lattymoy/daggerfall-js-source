@@ -31,17 +31,21 @@ const TEXTURE_STORE = 'textures';
  *  only in the player's browser. Its lifecycle is its own: attaching
  *  or clearing it never touches the ARENA2 set. */
 const MW_STORE = 'morrowind';
-/** R6: DERIVED artifacts - bytes the game GENERATED from the player's
- *  own data, not bytes the player supplied. The road network is the
- *  first: a whole-map bake costs about twenty-six seconds, so it is
- *  computed once and kept.
+/** DERIVED artifacts - bytes the game GENERATED from the player's own
+ *  data, rather than bytes the player supplied. It is a store of its
+ *  own for the reason the others are, plus one more: a derived artifact
+ *  is only valid FOR the data it came from, so it must die with an
+ *  ARENA2 re-pick, and clearStoredData sweeps it - the only injected
+ *  store that recovery touches, deliberately, because handing new data
+ *  an artifact derived from the old folder is worse than rebuilding.
  *
- *  It is a store of its own for the reason the others are, plus one
- *  more: a derived artifact is only valid FOR the data it came from,
- *  so it must die with an ARENA2 re-pick. clearStoredData sweeps it -
- *  the only injected store that recovery touches, and deliberately,
- *  because keeping a road network baked from a folder the player has
- *  just replaced is worse than paying for a rebake. */
+ *  IT CURRENTLY HAS NO CONSUMER. The road network was the first and
+ *  the only one, and the road system was removed whole on 2026-08-29
+ *  (Mac's call). The store, its sweep and its version stay: they are
+ *  generic plumbing, the next derived artifact will want exactly this
+ *  contract, and tearing out an IndexedDB store to reclaim nothing
+ *  would churn the schema and four unrelated suites that pin the store
+ *  list. Said out loud here so nobody reads it as live. */
 const DERIVED_STORE = 'derived';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a domain is one entry. */
@@ -350,13 +354,15 @@ export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
 export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
 
-/** R6: one derived artifact, by key. Bytes in, bytes out - this door
- *  knows nothing about what it holds, and the artifact's OWN envelope
- *  (systems/roadBake.js: magic, version, checksum) is what decides
- *  whether what comes back is usable. That is why there is no version
- *  here: a stale or torn record is refused by the reader and rebaked,
- *  which is strictly better than a store-level stamp that can only
- *  answer "different", never "damaged". */
+/** One derived artifact, by key. Bytes in, bytes out - this door knows
+ *  nothing about what it holds, and the artifact's OWN envelope (magic,
+ *  version, checksum, whatever its writer chose) is what decides whether
+ *  what comes back is usable. That is why there is no version here: a
+ *  stale or torn record is refused by its reader and rebuilt, which is
+ *  strictly better than a store-level stamp that can only answer
+ *  "different", never "damaged".
+ *
+ *  No caller since the road system was removed - see DERIVED_STORE. */
 export async function storeDerived(key, bytes) {
   const d = await getDb();
   await new Promise((res, rej) => {
@@ -426,7 +432,23 @@ export const morrowindDataGeneration = () => _mwGeneration;
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
   const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  if (next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
+  // MW-D9g: `_mwCount` STARTS AT -1, MEANING "NOT COUNTED YET", AND
+  // LEARNING A COUNT IS NOT A CHANGE.
+  //
+  // Without the first term this bumped on every host's first boot, for
+  // every player, even with an empty store: -1 !== 0. And the bump is
+  // load-bearing - weaponRig latches the generation SYNCHRONOUSLY at
+  // construction while shared.js's bootstrap runs this asynchronously
+  // and does not wait, so the rig's latch is always taken BEFORE the
+  // count lands. Its first frame then saw a "change" that was really
+  // just the count arriving and called fpArm.unload(), throwing away an
+  // arm the player had already built. Measured in a browser through the
+  // real rig (tools/mwRigProbe.mjs): built, drawing, then reason
+  // "unloaded" on the first frame after boot.
+  //
+  // The generation means THE STORED SET CHANGED. It cannot mean that
+  // until there is a previous set to compare against.
+  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
   _mwCount = next;
   return _mwCount;
 }

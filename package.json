@@ -18,6 +18,7 @@
     "peoplegate": "node tools/peopleGateProbe.mjs",
     "deeds": "node tools/deedProbe.mjs",
     "mwinspect": "node tools/mwInspectProbe.mjs",
+    "mwarm": "node tools/mwArmProbe.mjs",
     "mwviewer": "node tools/mwViewerProbe.mjs",
     "mwattach": "node tools/mwAttachProbe.mjs"
   },

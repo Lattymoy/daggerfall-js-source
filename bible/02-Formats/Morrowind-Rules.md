@@ -1,6 +1,21 @@
 # Morrowind first-person: the rules, from the reference implementation
 
-STATUS (2026-08-29, PAUSED MID-REBUILD - read this first).
+THE GOAL, STATED BY MAC (2026-08-30): a COMPREHENSIVE 3D replacement -
+paperdoll, items, weapons, and in time NPCs and enemies all receive the
+Morrowind 3D treatment. The immediate focus is the PLAYER's first- and
+third-person aspect. This supersedes Port-Doctrine's voxel-characters
+plank (noted there, with this date); the staged discipline below is how
+we get there, not a smaller destination.
+
+TWO BUGS REPORTED FROM RETAIL PLAY (Mac, 2026-08-30): (1) HANDS ARE
+MISSING, (2) WEAPONS ARE NOT WORKING. MW-D18 closes the two doors that
+could eat a hand without a word; MW-D19 gives the weapon the live equip
+seam it never had. Neither is CONFIRMED fixed until Mac sees hands - the
+standing rule below - and if they are still missing after MW-D18, the
+card now prints the sentence that says why, and that sentence is the
+next bug report.
+
+STATUS (2026-08-30, PAUSED MID-REBUILD - read this first).
 
 WHERE THIS STANDS. The first import arc was reverted whole on 2026-08-28
 after four failed fixes. The rebuild since is deliberately staged, and
@@ -16,7 +31,447 @@ each stage is provable on the player's own data before the next begins:
         player's archives. MW-D2 skinned-vs-rigid, MW-D3 real parse +
         wireframe, MW-D4 the bones the rules name, MW-D5 assembly at
         rest pose, MW-D6 the assembled arm DRAWN - and the defect that
-        drawing found (below).
+        drawing found (below), MW-D7 an idle CLIP played through that
+        assembly.
+  MW-D8 THE ARM IS IN THE GAME. Untextured, idling. See below -
+        including the two defects that only DRAWING IT found.
+  MW-D9 AND THE WEAPON IS IN THE HAND. Rule 8's whole attach-bone
+        column, and the Daggerfall->Morrowind mapping DECLARED.
+  MW-D9e THE REGISTRY IS NO LONGER THE BOTTLENECK. A 4.0.0.2 record has
+        no size field, so ONE unimplemented type ends the whole file -
+        that is what a NiCamera did to a first-person skeleton (MW-D9d),
+        and what the next particle emitter or light would have done to a
+        mesh. The reader went from 27 record types to 59: every type a
+        Morrowind-era file can hold, each layout nif.xml-gated to
+        4.0.0.2, each pinned against a fixture. Two are knowingly out
+        (NiSkinPartition's struct is ver1 4.2.1.0; three types OpenMW
+        registers have no nif.xml layout at all) and the reader's header
+        names them, so a refusal is now a real gap rather than a queue.
+
+MW-D11 PUT THE TEXTURES ON (rules 36/61). The arm was flat skin tone
+because the port had no texture path at all; it has the reference's now,
+whole. Rule 36 is not "prepend textures/": Bethesda converted the BSA
+textures from TGA to DDS and left every NIF reference saying .tga, so
+correctResourcePath re-roots at the first WHOLE `textures`/`bookart`
+component that is not the last one - discarding everything before it,
+which is how `D:\Bethesda\Data Files\Textures\tx_hand.tga` resolves -
+swaps the extension, and probes four candidates. When all four miss it
+returns the .DDS candidate rather than the authored name, so the open
+fails and the caller gets ImageManager's 8x8 MAGENTA warning image. That
+is the rule: a missing texture is neither a refusal nor a silent skip, it
+is a texture that says it is missing. The port's own skin-tone fallback
+is retired with it - the reference's fragment starts at opaque white with
+no diffuse map and overrides the NIF material defaults to white.
+
+ONE HOME: the mesh viewer carried its own two-line version of the path
+(a prefix and an extension swap) which got three of the rules wrong; it
+imports formats/mwTexture.js now.
+
+MW-D12 GAVE THE ARM SOMETHING TO DO (rules 8, 9, 10, 11). What MW-D11
+shipped was an arm holding a longsword and playing a BARE-HANDED idle for
+ever - one hardcoded group name, no draw, no swing, no sheathe. The
+groups are composed now, off the reference's own two tables, and the
+sequence is character.hpp's own UpperBodyState:
+
+  None -> Equipping -> WeaponEquipped -> AttackWindUp -> AttackRelease
+       -> AttackEnd -> WeaponEquipped, and Unequipping -> None.
+
+TWO COLUMNS THE PORT HAD NEVER READ. weapontype.cpp gives every type a
+CLASS (Melee, Ranged, Thrown, Ammo) and FLAGS (TwoHanded, HasHealth), and
+both fallback ladders are gated on `isRealWeapon` - which is a
+THREE-NAME test, `!= HandToHand && != Spell && != None`, and PickProbe
+IS a real weapon by it. Without that gate:
+
+  - a bare-handed player whose .kf has no `idlehh` idles in `idle1h`,
+    the one-handed SWORD stance, fist raised as if holding a blade;
+  - a missing `handtohand` becomes `weapononehand`, so empty hands MIME
+    a sword swing.
+
+Both are now the reference's answers instead: the bare `idle`, and no
+weapon animation at all. The two-handed test is likewise TWO tests -
+`mFlags & TwoHanded && mWeaponClass == Melee` - because Spell and
+HandToHand carry the flag and a bow is TwoHanded AND Ranged, so a port
+testing the flag alone sends three types down the wrong ladder.
+
+RULE 10's DICE ARE OFF BY ONE FROM ITS OWN COMMENT, and both readings are
+in the file: `numLoops = 1 + rollDice(4)` is 1..4 WRAPS, which is the
+comment's "2 to 5" PLAYS. A port that takes the comment's number as the
+loop count idles half again as long as Morrowind does, and no screenshot
+would say so. The roll is also CONDITIONAL: numLoops starts at uint32 max
+and only becomes the dice when the stance HAS a weapon short group, so a
+sheathed arm idles without end and a drawn one runs to its stop key every
+few seconds. The loop needs loopFallback, without which the idle plays
+once and freezes - which is what MW-D11's arm actually did.
+
+RULE 11's ATTACK TYPE IS A KEY PREFIX, never part of the group: one
+`weapononehand` group holds chop, slash and thrust, each as
+`<type> start` -> `<type> max attack` -> `<type> hit` (`shoot release`
+for a bow, which also has no strength word in its follow keys).
+calculateWindUp is a ratio with a -1 SENTINEL rather than a zero, because
+prepareHit replaces -1 with a random blow and would replace 0 with
+nothing; the release's skip-ahead is ordering-tested throughout and never
+sentinel-tested, which is rule 46's recorded caveat applied rather than
+quoted.
+
+THE SHEATHE IS NOT THE DRAW BACKWARDS. Drawing sets the weapon type as
+the equip animation STARTS (character.cpp:1495), so the stance becomes
+`idle1h` at once; sheathing holds the old type until the unequip
+animation ENDS (:1857). Flip it early and the unequip section is looked
+for in the bare-handed group, so the weapon blinks out instead of being
+put away.
+
+AND `showWeapons` HIDES RATHER THAN REMOVES, which is rule 57's own
+distinction: the weapon is a per-range flag the draw loop skips, not a
+shorter vertex stream. Repacking without it would change the buffer's
+length every time you drew or sheathed, orphaning the ranges the textures
+hang on.
+
+MW-D13 WALKED THE NUMBERED LIST AGAINST THE TREE, which is a different
+exercise from looking at the screen and the reason it found what it did:
+NOT ONE of these has a picture that says it is wrong. A mesh tinted twice
+looks like a dark mesh. A weapon at its bone's bare origin looks like a
+weapon. Six rules were read, recorded here, and never implemented:
+
+  RULE 63 - THE VERTEX COLOUR REPLACES THE MATERIAL, IT NEVER MULTIPLIES
+    IT. The doc's own words for this rule are "the single most likely
+    place for a port to be silently wrong", and the port was doing the
+    wrong one: the packer wrote the raw vertex colour and the shader
+    multiplied it into the albedo. OpenMW SUBSTITUTES the whole vec4 for
+    whichever material channel the colour MODE names, and the mode - not
+    the presence of a colour array - is the guard.
+  RULES 64 + 66 - THE MODE ITSELF, which the port had no notion of. A
+    colour array alone selects AmbientAndDiffuse; NiVertexColorProperty
+    then overrides it; and `lightmode` is assigned ONLY inside the
+    SrcAmbDif branch, so an ancestor property still blacks the surface
+    out after a nearer one has taken the mode. THAT ONE RULE is why the
+    property chain is now an ordered root-first LIST rather than a map
+    keyed by type: a map cannot produce the pair. Also from rule 64: a
+    colour mode on a COLOURLESS mesh is undone to white, never black; and
+    from rule 66, Morrowind specular is parsed and thrown away, so
+    glossiness is a constant zero rather than the file's value.
+  RULE 65 - NiStencilProperty is the winding property, and only DrawMode
+    3 (Both) is two-sided. "Default" is a synonym for counter-clockwise
+    WITH backface culling.
+  RULE 14 - `BoneOffset`, absent from the reverted arc and absent from
+    this port until now. A part may carry a node literally named
+    BoneOffset whose matrix TRANSLATION is the attachment offset; the
+    match is ciEqual and EXACT, the scan is pre-order and stops at the
+    first hit, and DRAWABLES are skipped (`apply(osg::Geometry&)` is an
+    empty override). It rides the same PositionAttitudeTransform as rule
+    13's mirror, and a PAT is T * R * S - so the offset is applied AFTER
+    the negation, not before. Every rigid part whose mesh carries the
+    node had been drawn at its bone's bare origin.
+  RULES 58 + 59 - THE NAMES THE LOADER REFUSES TO DRAW. "Bounding Box"
+    takes its whole SUBTREE out of the scene, except when it is the root
+    (`args.mRootNode` is null on the first call - it reads like an
+    oversight and is load-bearing). And the geometry name skip list is
+    not one rule but two: "shadow" and "tri shadow" are UNCONDITIONAL,
+    where "tri editormarker" is gated on the ROOT carrying a "MRK"
+    string extra data - compared with ==, not ciEqual. A port that gates
+    all three on the flag draws every shadow-caster mesh in the game as
+    solid geometry.
+  RULE 30's OTHER HALF - the neck factor is `0.75 + 0.25 * mAimingFactor`
+    and the port shipped the constant. The factor snaps to 1 while
+    `mUpperBodyState > WeaponEquipped` and ramps back down at 0.5 a
+    second, so the arms lag the look by a quarter of it normally and
+    follow it EXACTLY while you swing. MW-D12's machine is what made this
+    reachable: with a constant idle there was no aiming state to be in,
+    which is why the constant was honest when it was written.
+
+MW-D14 FOUND TWO MORE, AND ONE OF THEM WAS ALREADY SHIPPED.
+
+RULE 18 - THE SKELETON NAME IS NOT FINAL. correctActorModelPath inserts
+an `x` before the FILENAME, swaps .nif for .kf, and uses the x-form ONLY
+IF THAT KF EXISTS. So `base_anim_female.1st.nif` becomes
+`xbase_anim_female.1st.nif` exactly when `xbase_anim_female.1st.kf` is in
+the archive - and the MALE entry is already x-form in the settings, so
+the insert yields a non-existent `xx` name and the original always
+stands. A port tested on one male character sees nothing wrong.
+
+AND A FIRST-PERSON ACTOR HAS TWO ANIMATION SOURCES, not one.
+updateNpcBase adds `base` (mXbaseanim1st) and then, only if different,
+the corrected actor skeleton; addSingleAnimSource drops a source the
+archive lacks. play() searches them IN REVERSE - "last-inserted source
+has priority" - and takes the first whose text keys give the group a
+valid range, where the WHOLE of reset() must succeed. hasAnimation is a
+different question, answered by ANY source. For a male the two names
+collapse to one file, which is why one .kf was right until it wasn't.
+
+RULE 56 WAS WRONG IN A SHIPPED MODULE, and the mutation campaign found
+it, not a reading. The accum root was ported as "the topmost tracked
+bone" where the reference is a TWO-NAME TABLE - `{ "bip01", "root bone" }`,
+bip01 preferred, accepted only when the KF DRIVES it. On a first-person
+weapon .kf, which keys nothing on bip01, the old rule answered an UPPER
+ARM; any translation channel on that bone would then have had its X and Y
+pinned to rest, deforming the arm rather than moving the actor. It is
+also STICKY - `if (!mAccumRoot)` - so the FIRST source to resolve one
+wins for the life of the rig, and later sources neither re-pick it nor
+clear it. The old pin asserted the defect in as many words.
+
+MW-D15 CLOSED TWO MORE AND FOUND A THIRD ON THE WAY.
+
+RULE 34 (marked CRITICAL, and the port did not have it). The record at
+INDEX 0 has its whole NiTransform replaced with identity unless it is a
+NiNode named "bip01" - IN THE PARSER, so no consumer can opt out. Both
+halves matter: applying the stored transform mis-orients every mesh whose
+author left one on the root, and zeroing it unconditionally breaks every
+skeleton whose root is Bip01 - which is also why a Bip01 root survives as
+a real transform node for rule 56 to find. "Only for NiNode-s for now":
+a NiTriShape at index 0 keeps its transform.
+
+RULE 32(a), THE SNEAK SINK. While the player has the Sneak stance the
+whole first-person body drops by the GMST i1stPersonSneakDelta in -Z, and
+it goes through the NECK - so the Camera bone and therefore the eye go
+with it. A step change, no smoothing. It rides the same RotateController
+line as the pitch (`matrix.setTrans(matrix.getTrans() + worldOrientInverse
+* mOffset)`), and the GMST is read from the player's own .esm rather than
+hardcoded. Daggerfall's SNEAK binding is the analogue; its CROUCH is a
+collider height, not an animation state. Rule 32(b), the Lua camera
+offset, is not ported and is not a gap: it is settable only from Lua,
+which this port has no counterpart for.
+
+AND A LATENT SCALE BUG the sink's arithmetic surfaced. RotateController
+takes `worldMat.getRotate()`; the port was conjugating with the
+skeleton-space 3x3, which is rotation TIMES SCALE (rule 55 folds a NIF's
+uniform scale into it). That gives s^2 * (R rot R^T) for the rotation and
+s * offset for the translation - both exactly right at s = 1, which every
+fixture and most retail rigs are, and both wrong the moment a rig scales
+its neck chain. MW-D10 shipped it; nothing could see it until there was a
+translation to get wrong as well.
+
+RULES 24 AND 48, AUDITED AND FOUND ALREADY RIGHT - recorded because
+"we looked" is worth as much as "we changed", and an unexamined rule
+reads the same as a closed one.
+
+  RULE 24's action chain: the port handles "equip attach" and
+    "unequip detach" and nothing else, which is correct for this arm.
+    The rest of the chain ("<type> hit", "shoot release", "start" for the
+    random-attack groups, the spellcast release, "loot") drives GAMEPLAY
+    that Daggerfall's own weapon machine already owns - the hit frame is
+    FPSWeapon's, not the .kf's - so handling them would be two clocks
+    disagreeing about when a blow lands. And the rule's own last line
+    confirms the port's reading of rule 11: "min attack"/"max attack"/
+    "min hit" are NOT events at all, only ever polled by time through
+    getTextKeyTime, which is exactly what keyTime() does with them.
+  RULE 48's "re-playing a live group does NOT restart it" is
+    refreshIdle's early return, and it is load-bearing there for the same
+    reason: the idle is asked for every frame.
+
+MW-D16 CLOSED THAT GAP: THE BOW HAS AN ARROW. Rule 8's LAST column is
+mAmmoType, and only the two marksman types have one - MarksmanThrown does
+NOT, because a thrown weapon IS its own ammunition, which is why
+attachArrow's Thrown branch shows the weapon again rather than adding a
+node. getArrowBone has TWO branches: the actor's own bone
+("Bip01 Arrow" / "ArrowBone") first, and failing that a node named
+"ArrowBone" INSIDE THE WEAPON'S MESH - which is the branch retail data
+takes, because Morrowind's bows carry that node and most skeletons do not
+carry "Bip01 Arrow". The fallback decides the whole placement, because a
+node inside the weapon's mesh brings the weapon's transform chain with
+it - AND ITS MIRROR: a bow hangs on "Weapon Bone Left", rule 13 negates
+its X, and the arrow is instanced under a node already inside that
+mirrored subtree.
+
+Rule 24's keys drive the visibility: "shoot attach" nocks it, "shoot
+release" looses it, "shoot follow attach" nocks the next one before the
+animation has finished, and detachArrow fires as the unequip section
+STARTS rather than at its "unequip detach" key. And the surprise is the
+reference's: only a CROSSBOW reloads itself at the end of a section, so a
+freshly drawn BOW is empty-handed until you begin to draw it.
+
+Two of the conditions cannot fire in the played game and are pinned as
+CONDITIONS rather than through a build, with the reason recorded: DAGGERFALL
+HAS NO CROSSBOW and no thrown-weapon row either. The second of them also
+corrected a live seam - "shoot" is a WEAPON CLASS test, not a bow test,
+and the arm had been taking a `bow` flag from weaponRig's machine, which
+is a second source of truth for a question the data answers and one that
+would have missed a thrown weapon.
+
+MW-D17 RETIRED THE SECOND HOME FOR CLIP TIME. MW-D7's booking - "MW-D8's
+first task: replace it with advanceClip or delete it" - stood through
+nine slices. The viewer's own player was start plus elapsed-modulo-span:
+it looped EVERY group forever, replayed the clip's INTRO on each wrap,
+looked the group up with a case-SENSITIVE `groups.get` that bypassed
+findAnimGroup's own MWAUDIT fix, and recomputed the accum root every
+frame. The playhead is resetClip/advanceClip now - the one home
+mw-inspect and fpArm already ride - the case fold comes from the law
+itself, and rule 56's pick is made once per track set.
+
+THE PIECE THAT WAS MISSING WAS RULE 51's SECOND HALF. A viewer playing
+whatever group the user picked IS the scripted PlayGroup path
+(character.cpp:2631), and that path's loopFallback producer is
+Animation::isLoopingAnimation (animation.cpp:792-826), which had no JS
+home: a real "loop start" key anywhere loops - the guard is `>= 0`, so
+a key at time ZERO counts - else strip the LONGEST weapon short group
+that is a SUFFIX of the name ("so e.g. 'bow' doesn't get picked over
+'crossbow'" - the reference's own comment; and a suffix, so
+`spellturnleft`, which CONTAINS `spell`, is not stripped), and test what
+remains against the hardcoded forty-four-name set, verbatim. Its
+companion getAllWeaponTypeShortGroups (weapontype.cpp:422-434) walks
+every type First(-4)..Last(13) and dedupes "via a set" - ELEVEN come out
+of eighteen, rule 8's own count arriving from a second direction. The
+player-BODY paths hardcode their loopFallback (rule 51's recorded
+caveat) and fpArm keeps doing so, untouched: isLoopingAnimation lives in
+mwAnim.js for the paths that genuinely consult it.
+
+WHAT THE LAW CHANGES ON THE SCREEN: the fixture's "move" plays once and
+freezes on its stop key where it used to loop forever, and "idle" - in
+the set - still loops with no loop keys at all. Both are probe layers
+now, discovered by CROSSING rather than sleeps. parseAnimGroups stays
+what MW-D7 made it, the LISTING the dropdown shows, keyed by the name
+the file wrote; a group the listing names and the law refuses (F3's
+backwards Idle) now prints the refusal on the status line instead of
+freezing on a plausible pose. 13 mutants, 13 dead - one of them the pin
+that separates `>= 0` from `> 0`, a loop-start key at time zero.
+
+MW-D18 CLOSED THE TWO DOORS THAT EAT A HAND SILENTLY, against Mac's
+"hands are missing". Part VI's retail fact frames the suspicion: a Nord
+male has ONE first-person arm record - the hands - and the other three
+slots ride rule 3's third-person fallback, so a defect specific to the
+.1st mesh's SHAPE takes exactly the hands and leaves the arm.
+
+DOOR ONE, RULE 40, AND THE OLD PIN ASSERTED THE DEFECT. bindPart THREW
+on a skinned bone the skeleton lacks, and a test demanded the throw by
+name. The reference logs "RigGeometry did not find bone", stores
+nullptr, and SKIPS those influences in the blend (riggeometry.cpp:
+195-196) - one absent finger bone costs its influences, not the hand.
+The blend semantics are ported exactly, all three cases: a skipped
+influence renormalises NOTHING (rule 39); a vertex weighted ONLY to
+missing bones goes through the ZERO accumulator and collapses onto the
+skin transform's bare translation with a zero normal (riggeometry.cpp:
+191-210, the rule 40 verification's own reading - faithful and ugly on
+purpose, because papering it over with bind pose would hide the very
+data problem the note names); and a vertex with no influences AT ALL
+keeps its authored position (rule 39's erased-empty-set). The card
+names every skipped bone.
+
+DOOR TWO, RULE 15's SILENT MISS. A bone whose every named shape failed
+the filter bound NOTHING and said NOTHING - the card read "on - N
+pieces" with a side simply absent, which is both the missing-hand hole
+and MW-D6's one-handed defect wearing a new face. It is a sentence now:
+the note lists the shapes the file offered against the filter that
+rejected them, per bone, and a healthy part still binds with no notes
+at all. One guard died on the way: "and nothing attached" was
+unreachable (rigid geometry always binds), so it was deleted rather
+than pinned. 7 mutants, 7 dead.
+
+WHAT MW-D18 DOES NOT CLAIM: that this WAS the retail cause. The
+standing rule decides that - nothing is fixed until it is visible on
+Mac's own files. If the hands are still missing, the card's new
+sentences ARE the diagnosis to send back.
+
+MW-D19: THE WEAPON FOLLOWS THE HAND, against Mac's "weapons aren't
+working". The structural finding: the arm was a ONE-SHOT SNAPSHOT of
+the equip state at build time - the card's button is build()'s only
+caller - so a weapon equipped after the button never reached the hand,
+and one equipped before never left. The classic sprite re-reads the
+equip slot every frame (weaponRig's syncWorn); the Morrowind arm had
+no equivalent seam at all.
+
+It does now. fpArm.setWeapon(item, {hasAmmo}) is called from the rig's
+frame beside setSheathed, and its FAST PATH is synchronous: fpWeaponKey
+(the Morrowind type + the material + whether an arrow rides) is one
+compare, so nothing happens until the identity actually changes. The
+slow path reopens the stored archives for the one mesh fetch, resolves
+through resolveWeaponParts - the build's own weapon door, EXTRACTED so
+the swap cannot drift from it - swaps the weapon and arrow pieces on
+the live assembly through bindPartsInto (the build's own part loop,
+same extraction, same reason), decodes only the textures the new mesh
+names, recomputes the reach with the build's own 25-pose sweep, and
+re-equips when the old weapon was drawn. The reference's shape:
+updateEquippedWeapon destroys and re-creates the weapon's PartHolder
+on an equip change; rule 57's hide-not-remove is for draw/sheathe of
+the SAME weapon, and weaponShown still does exactly that.
+
+A swap overtaken by unload() or a rebuild walks away (the token
+guard) - the newer state carries its own worn identity. And the
+arrow-template test (Daggerfall's template 131) was THREE literal
+copies about to become four; it is one export now,
+hasDaggerfallArrows. 8 mutants, 8 dead.
+
+STILL NOT PORTED, with reasons rather than silence:
+  RULE 57's second half - a hidden node whose own controller chain has a
+    NiVisController keeps its meshes, because the controller may make
+    them visible later. The port skips a hidden subtree's drawables
+    entirely, which is right for everything else rule 57 says and wrong
+    only for that case. Closing it needs a per-node visibility channel
+    the flattener does not have and nothing would read; the arm's parts
+    are never hidden, so it is deferred rather than faked.
+  RULES 25 + 26 - BlendMask and the priority vector. In first person both
+    animations are played on BlendMask_All, so the resolution is not a
+    blend at all and the two-slot winner in fpArm is exactly equivalent.
+    A third animation (hit recoil, sneak) would need the real thing, and
+    the code says so where the slots are declared.
+  RULE 65's DRAW MODE is READ and not ACTED ON: the first-person pass
+    disables backface culling for every draw, because rule 13's mirror
+    flips the winding. Any DrawMode can only agree with what is already
+    happening there.
+  RULE 60's billboard runtime, and rule 43's cull-traversal double
+    buffer - a viewer concern and a performance structure respectively,
+    neither reachable from the arm.
+
+THE DIVERGENCE, RESTATED WHERE THE CODE IS. Daggerfall picks its attack
+by GESTURE and Morrowind by MOVEMENT or by the weapon record's damage
+spread; the port maps the six strikes onto the three types BY THE SHAPE
+OF THE MOTION and says so at the table. A second divergence falls out of
+it: a Daggerfall swing has no charge, so the wind-up is never held at max
+attack and the blow releases at full strength - the reference's own
+behaviour for a button released at the top of the window. The HELD
+wind-up the bow would need is wired to the port's machine (state
+StrikeUp) rather than to "is it a bow", because the in-game bow is DFU's
+BowDrawback-OFF instant shot; it becomes live the moment that path does,
+with nothing in the arm to change.
+
+AND THE RENDERER LEARNED A TRAP. A sampler is "used" whether or not the
+branch that reads it runs, so texture unit 0 must always hold a complete
+texture: with nothing bound, the driver drops the whole draw. Measured
+the moment the UV channel landed - the arm's offscreen target went from
+203 lit texels to 0, with no error, no warning, and a program that links
+clean.
+
+AND THE ARMS WERE IN THE WRONG PLACE EVEN ONCE THEY DREW (MW-D10). The
+port mapper is retired for rule 54 and the Z-up rig now turns into the
+renderer's Y-up basis - see below. The measurement that could have
+caught either is new too: tools/mwRigProbe.mjs asks WHERE on the screen
+the ink landed, not just whether there is any. Every earlier layer asked
+"are there lit pixels" or "is the model x-symmetric", and a mis-framed
+arm answers yes to both.
+
+WHY A BUILT ARM DID NOT APPEAR, TWICE (MW-D9f, MW-D9g). Both causes sat
+in the SEAM between the arm and the game, and neither was reachable by
+anything that existed: the node pins call fpArm.update() directly and
+mwArmProbe drives its own loop, so both ran the ENGINE and neither ran
+the CALLER. (1) MW-D9f: active() requires a GPU mesh, update() is the
+only thing that creates one, and the rig gated update() on active() - a
+deadlock, so a built arm never ran a frame. (2) MW-D9g: _mwCount started
+at -1, so the FIRST registerMorrowindData() always saw a "change" (an
+empty store went -1 to 0) and bumped the data generation; shared.js
+starts that call at host boot without waiting, while createWeaponRig
+latches the generation synchronously in the same setup, so the rig's
+first frame unloaded whatever the player had built. Building from the
+main menu could not survive to frame one.
+
+THE MEASUREMENT THAT WAS MISSING is now tools/mwRigProbe.mjs: the REAL
+createWeaponRig, a REAL WebGL2 renderer, the host's own frame()/draw()
+order, reading the DEFAULT framebuffer and comparing against the same
+frames with the arm unloaded. Its first version counted lit pixels and
+answered 691200 of 691200 - the whole screen, because the canvas is
+opaque - which is the same trap MW-D6 recorded and is why the pin is a
+DIFFERENCE, not a count.
+
+WHERE THE AUTHORITIES DISAGREE (MW-D9e), and what the port reads. The
+fixtures are pyffi-authored on purpose - an independent implementation -
+but pyffi's nif.xml is old, and three records caught it out. (1) It omits
+NiExtraData's `Num Bytes` from five subclasses; nif.xml gates that field
+ver1 4.0.0.0 / ver2 4.2.2.0 and OpenMW's Extra::read reads it for every
+extra record at 4.2.2.0 and below, so the port reads it and those
+fixtures are hand-written. (2) It splits NiParticleSystemController's ten
+spawn bytes uint/uint/ushort where nif.xml and OpenMW read ushort + two
+floats; the port takes the second reading. (3) It writes 256 palette
+entries whatever the count says, and nif.xml says the array is 16 long
+when the count reads 16 and 256 otherwise - OpenMW just reads the count,
+and so does the port, because the count is what the retail files hold.
+Rule for the next disagreement: nif.xml gives the LAYOUT, OpenMW settles
+what the retail bytes actually mean, and pyffi is a witness, not a judge.
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
@@ -55,12 +510,306 @@ layers to catch: x-symmetry off the downsampled canvas (0.63 against
 0.99) and a signed per-piece readback (3 pieces, `left hand` only). THE
 MEASUREMENT HAS TO BE ABLE TO FAIL THE WAY THE CODE ACTUALLY FAILS.
 
-NEXT, IN ORDER: (1) play an idle clip through the assembly - and note
-that assembleFirstPersonArm's RETURN VALUE cannot be re-posed as it
-stands, since each piece keeps only baked positions and drops the batch,
-its skin, attachRef, pose and mats; that is an additive change, not a
-rewrite; (2) only then a rig, and only then wiring into weaponRig.
-Nothing MW touches the game today.
+MW-D7 PLAYED THE CLIP. The blocker the last status line named is closed:
+`assembleFirstPersonArm` now SPLITS bind from pose. Each piece keeps what
+a re-pose needs (a skinned one its batch, a rigid one its authored
+positions and attach ref, both their own output buffer), the assembly
+carries the skeleton, the root ref and its resolved readers, and the one
+home for per-frame math is `poseAssembly`. The rest pose became "pose at
+t=0 with no tracks" - the same arithmetic, called once instead of inlined
+- so all 26 MW-D5/D6 pins keep seeing byte-identical numbers.
+
+The clip law itself is four OpenMW members that had no JS home, ported
+into mwAnim.js beside the text keys they read: `TextKeyMap::emplace`
+(rules 44/45/21), `Animation::reset` (22/23/49), `AnimState::shouldLoop`
+(49) and `Animation::runAnimation`'s stepping (50). NOT a modulo of the
+group range.
+
+WHAT MW-D7 HAD TO BE ABLE TO SEE, and could not have with MW-D6's
+measurements. `poseSkeleton` answers a bone with no matching track by
+handing back `node.rest` - correct, and the deadliest silent failure in
+this stage. A .kf keyed to bones the skeleton does not have poses NOTHING
+and draws a clean, static, entirely plausible arm: no error, no empty box,
+a perfect symmetry score and a full pixel count. Three things exist to
+catch it: `trackBinding` in mwSkin.js (the poser's OWN comparison, so the
+report cannot agree with the page while disagreeing with the pose), the
+page saying "an unmatched track poses nothing - the bone holds its rest
+pose, which looks exactly like a working idle", and a probe layer that
+hashes the canvas at six clip times and demands five distinct pictures.
+A seventh layer watches the LIVE canvas across real frames, because every
+other layer drives the pose itself and passes a page frozen on frame one.
+
+AND THE LOOP LAW IS THE PART THAT SEPARATES CORRECT FROM PLAUSIBLE. A
+`% span` player moves, stays symmetric, and draws - and replays the
+clip's INTRO on every wrap instead of the authored loop segment. Only a
+trace can tell them apart, so the probe runs the page's own advanceClip
+and asserts, in time-space AND in pose-space, that after the first
+`loop stop` crossing the playhead never re-enters [1.0, 1.5) and the
+right hand never returns below x=1.4.
+
+MEASURED FINDINGS FROM MW-D7:
+
+  F1  A TRACK ON THE SKELETON ROOT REACHES NO GEOMETRY, BY CONSTRUCTION.
+      `bindPart` sets `skeletonRoot === rootBone`; `skeletonSpaceMatrices`
+      makes the skeleton root identity; `skinToSkelMatrix` returns
+      identity when the two are equal. So keying `Bip01` moves nothing,
+      skinned or rigid. MW-D7 therefore pins accum-root extraction AT THE
+      POSE (`pose.get(bip01).translation` is [0,0,0] with `accumRoot` and
+      [1,0,0] without) and states in the test that the pixel version
+      cannot fail on this rig. The geometric pin stays where it is real,
+      on the SkinRoot/Bone0 fixture, where the tracked bone is BELOW the
+      skin root.
+  F2  `Infinity` does not survive `page.evaluate` - rule 49's default
+      `loopStopTime` JSON-serialises to `null`. `clipReport` carries
+      `loopStopFinite` beside the number so a probe never asserts on a
+      null it cannot read.
+  F3  `parseAnimGroups` produces a NONSENSE BUT NON-NULL group for data
+      that exercises the rules: on armidle.kf it reads `Idle [1.00 ->
+      0.50]`, a range that runs backwards, and is not deleted (the guard
+      only drops nulls). `mwViewer`'s `span = max(stop - start, 1e-6)`
+      would freeze on it. The page now shows both answers side by side.
+
+BOOKED, NOT DONE - each named here so it is not inherited silently
+(the mwViewer clip-time booking that led this list closed at MW-D17):
+
+  * `parseAnimGroups` diverges from rules 21/22/44/45 in four ways
+    (splits on `\r\n` as a pair, accepts `Group:Marker`, compares the
+    stop marker exactly, takes file order rather than rule 22's reverse
+    scan). Deliberately NOT re-based here: three MWAUDIT pins assert its
+    present behaviour, and mixing that into the first slice that animates
+    anything would make a failure ambiguous. Its own audit slice.
+  * `KEY_TYPE.constant` is sampled by holding the previous key; the
+    reference flips at the segment midpoint with a strict `>`. Different
+    member, no fixture drives it. `clipReport` names the interpolation
+    type PER CHANNEL so a player can see how much of their own file rides
+    it, which is the most this slice can honestly offer.
+  * `track.frequency` / `phase` are read from every controller and used
+    nowhere. Unchanged, and now printed.
+
+AND THE HONEST SENTENCE ABOUT armidle.kf: no observation of a retail
+`xbase_anim.1st.kf` exists anywhere in this repository. Part VI records
+four skeletons and 1,125 body records and says nothing about the KF. So
+the fixture's SHAPE is read off OpenMW; its CONTENT is an assumption
+about retail idle data, and generate.py says so at the maker.
+
+MW-D8: THE ARM REACHES THE SCREEN, and "nothing MW touches the game" is
+no longer true. It is opt-in, off by default, and behind a button on the
+Enhanced pane's Morrowind card.
+
+NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
+ALREADY shipped a first-person pass: renderCharacterSprite
+(render/renderer.js:751) binds an offscreen target with its own depth
+renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
+ones the caller hands it, draws, and restores; drawScreenOverlayQuad
+(:987) composites it fullscreen with an alpha cut and no depth test. It
+was written for a voxel viewmodel that was put on ice in August and has
+had no consumer since. Two recorded rules fall out of it for free:
+
+  rule 29 - the first-person subtree renders with its OWN field of view.
+    We hand the pass `perspective(Math.PI/3, ...)`, which IS the 60-degree
+    default, and the proj/view swap is exactly the mechanism for it.
+  rule 52 - first person gets a bin whose draw CLEARS DEPTH first, so the
+    arms are never clipped by the world. Here that is STRUCTURAL, not
+    emulated: no world geometry is ever drawn into that framebuffer, so
+    there is nothing to be clipped by.
+
+THE TWO DEFECTS DRAWING FOUND, both invisible to every node test:
+
+  D1  THE ARM RENDERED NOTHING - 0 lit texels - with a build that
+      otherwise reported four pieces bound and five clip tracks matched.
+      The placement was copied from the voxel viewmodel, which pushes its
+      rig BACKWARD from the eye and says why: that rig is the player's
+      whole BODY, the camera rides its head, and without the push you
+      render the inside of your own torso (Mac's "stuck in a hole"). This
+      assembly is arms ONLY. There is no head to hide, so the same push
+      put every triangle behind the lens. Arms go IN FRONT of the eye and
+      BELOW the view axis.
+  D2  THE ARM SWUNG AROUND THE PLAYER AS HE TURNED. The model matrix
+      spins the mesh about its own origin, so the centre offset has to be
+      ROTATED before it is backed out of the translation. Subtracting it
+      unrotated left the arm yaw-dependent: 60 lit texels facing one way
+      and 20 facing another with the pose held still. A still screenshot
+      cannot show this. Only a yaw sweep can, and the probe only got one
+      because the MUTATION CAMPAIGN pointed out that at yaw 0 the sine
+      term vanishes and an x-axis error is invisible.
+
+WHAT IT DRAWS (current, MW-D13): TEXTURED arms with the equipped weapon
+in hand, in the stance the drawn weapon composes, running the equip,
+attack and sheathe sections of that weapon's own group. The three
+sentences that stood here - "untextured", "no weapon", "bare Idle
+forever" - are retired with the flags they described (MW-D11, MW-D12).
+Flat shading still comes from a face normal computed per triangle at pack
+time, and for a MIRRORED piece that normal is NEGATED, because rule 13's
+X negation reverses the winding and without it the left arm lights
+inside-out. That is rule 13's rendering consequence, which MW8 also
+lacked.
+
+THE PORT MAPPER IS RETIRED (MW-D10), AND RULE 54 IS THE PLACEMENT. The
+mapper solved a uniform scale from the arm's clip bounds, pushed it a
+constant distance in front of the eye and dropped it a constant below -
+recorded at the time as "a PORT DECISION, not a claim of parity", and
+deferred because the actor-scale rules it seemed to need are tier C. It
+needed none of them. Rule 54 puts the camera INSIDE the rig
+(camera.cpp:346-357: `getNode("Camera")` then `getNode("Head")`, and in
+first person no height term at all), so the arms are wherever Morrowind
+authored them relative to that node, at whatever scale the file uses,
+and there is nothing to convert or fit. The neck takes 0.75 of the look
+(npcanimation.cpp:719) so the arms lag it, and the lens is
+settings-default.cfg's 60 degrees.
+
+WHAT IT LOOKED LIKE UNTIL THEN, from Mac's screenshot: two forearms
+adrift at the horizon, detached, end-on. Two faults, and the second hid
+inside the first. A Morrowind NIF is Z-UP with +Y forward and this
+renderer is Y-UP with -Z forward, and NOTHING in the chain converted
+between them - not the reader, the flattener, the assembly or the pass -
+so the rig was drawn lying on its side; the fit-to-span framing then
+scaled whatever bounds that produced and landed it "plausibly". A
+90-degree frame error survived three probes and a mutation campaign
+because every assertion was in MODEL space, and model space cannot see
+the frame it is drawn in.
+
+A rig with neither node is REFUSED by name (stage `camera`). There is no
+third fallback in the reference and there is none here.
+
+MEASURED, and by what. tools/mwArmProbe.mjs drives the REAL fpArm through
+its deps seam in a real browser against a real WebGL2 context, and reads
+the offscreen target back: no-data refuses without a broken screen; the
+build takes rule 6's skeleton; four pieces bind; the target has ink; the
+arm is in front of the player at EVERY heading; both hands bind and each
+sits on its own side of x=0 at rest; the picture changes across the clip
+in 7 distinct frames and opens to 67% of the frame width while staying
+x-symmetric at 0.86; the loop window is discovered by crossing; a .kf
+keyed to foreign bones REFUSES at the clip stage rather than drawing a
+static plausible arm; and Unload returns the classic sprite.
+
+WHAT THE PROBE CANNOT SEE, stated rather than implied: it does not boot
+the game, because that needs ARENA2 and the player's own Daggerfall data.
+weaponRig's branch, the four hosts' camera dep and the card are pinned in
+node (test/fparm.test.js, test/mwattach.test.js, test/enhancedMenu.test.js)
+and proven by Mac in play. Three mutation campaigns back them: 12/12 on
+the wiring pins, 6/8 on the probe layers, 24/24 inherited from MW-D7.
+
+TWO PROBE MUTANTS SURVIVED AND ARE RECORDED RATHER THAN PAPERED OVER. A
+mapper recomputed per frame still changes the picture, so no pixel layer
+can separate it from a correct one - it is pinned on the SOURCE instead
+(the draw reads built.framing and never arm.bounds). And an active() that
+drops its clip-state term is neutralised by the mesh term, which is
+deliberate defence in depth, not a hole.
+
+TWO SHIPPED PINS WERE STRENGTHENED, NEITHER LOOSENED. MWFIX's "the
+classic sprite path is the ONLY path" named its own successor in its
+comment - "when the rig returns this reverts to the else-of-an-active-view
+form" - and that is what it now is, asserting the ORDER and the RETURN
+where it used to grep one literal it could not condition on. MWFIX 3,
+absent on purpose since the revert because no code had the mechanism, is
+RESTORED: the rig polls morrowindDataGeneration() and drops a stale arm,
+so attaching data mid-game is never silently ignored again.
+
+MW-D9: THE WEAPON, AND IT NEEDED NO NEW ATTACH PATH.
+
+A Morrowind weapon is a RIGID part at a bone - rule 12's rigid half, the
+same path armcuff has proved since MW-D6 - so it rides into the assembly
+as one more part with an explicit `bones` override instead of the
+PART_BONES table. Rule 17 IS that override: the generic "Weapon Bone" is
+replaced by the equipped type's own attach bone when the actor has that
+node.
+
+RULE 8's WHOLE COLUMN, not four classes. The reverted arc had four
+weapon classes where the reference has fourteen types, so every
+one-hander was forced onto one group and every weapon onto one bone.
+MW_WEAPON_TYPE carries all eighteen enumerators including the four
+NEGATIVE pseudo-types, read off components/esm3/loadweap.hpp - explicit
+values, every one. WEAPON_ATTACH_BONE carries the three rows that differ
+from the default: MarksmanBow -> "Weapon Bone Left", Arrow -> "Bip01
+Arrow", Bolt -> "ArrowBone". A crossbow is NOT a bow for this purpose,
+which is exactly the row a four-class taxonomy gets wrong by
+construction.
+
+AND THE BOW COMES OUT MIRRORED, which is faithful, surprising, and
+written down here so nobody later "fixes" it. Rule 13's mirror is a
+SUBSTRING TEST on the attach bone's name, and the function it lives in -
+SceneUtil::attach, components/sceneutil/attach.cpp - is the GENERIC
+attach path for every part, not a body-part-only one (checked at source,
+not recalled). "Weapon Bone Left" contains "Left", so the bow is drawn
+with X negated by the very same rule that mirrors the left hand. Nothing
+in this port special-cases it, and the probe pins it: the bow is the
+sword's own mesh with X negated, exactly, to within 1e-3.
+
+WPDT IS CITED, NOT GUESSED. components/esm3/loadweap.hpp:71 - float
+mWeight; int32 mValue; int16 mType; uint16 mHealth; float mSpeed,
+mReach; uint16 mEnchant; uchar mChop[2], mSlash[2], mThrust[2]; int32
+mFlags. mType is therefore at byte 10, and a record shorter than 32
+bytes is REFUSED rather than read past: a wrong type is not a visible
+failure, it is a sword drawn on the bow's bone in the wrong hand looking
+entirely deliberate. That branch is unreachable by any fixture and is
+pinned in node with a hand-built short record.
+
+THE DIVERGENCE IS DECLARED, WHICH THIS DOCUMENT ALREADY DEMANDED. Its
+own words: any mapping from Daggerfall's weapon taxonomy onto the short
+groups "is a PORT DECISION, not a ported rule, and belongs in the
+recorded divergences with its reasoning visible - not inferred inside a
+lookup table where the last attempt hid it twice." So DF_TO_MW_WEAPON is
+exported, pinned row by row, and keyed by the port's own WEAPONS
+TEMPLATE INDEX rather than by the sprite layer's WEAPON_TYPES - which
+folds a Claymore and a Longsword into one class and therefore cannot
+tell a one-hander from a two-hander. The rows that are judgement rather
+than translation: FLAIL (Morrowind has none; BluntOneHand is the nearest
+thing that exists, and nothing here is right), STAFF -> BluntTwoWide,
+and CLAYMORE / DAI-KATANA -> LongBladeTwoHand, which costs them
+Daggerfall's own one-handed animation and is a behavioural change rather
+than a mesh swap.
+
+REFUSALS, because a substitute is worse than an empty hand: a type your
+archives do not carry draws NOTHING and says so on the card; an
+enchanted record is never taken (it carries a glow this slice does not
+draw); a missing attach bone is NAMED; and none of these fail the arms -
+you get the arms, empty-handed, with the reason next to the button.
+
+AND ONE MORE DEFECT THAT ONLY RENDERING IT FOUND - THE HANDEDNESS.
+
+mat4's own law (src/world/mat4.js:90-115): a right-handed lookAt puts
+world +x on screen-LEFT, and the port shipped exactly that mirror image
+until M1 - every town flipped east-west, every sign reading backwards,
+and the input layer tuned against the mirror so it PLAYED correctly and
+only text could tell. The fix is ONE mirror at the projection, and EVERY
+world pass rides it.
+
+The viewmodel pass this technique was borrowed from does NOT, and the
+note beside it gives the reason as "its pass never culls" - which is why
+it was SAFE to leave unmirrored, not a claim that it was right. MW-D8
+inherited that, and for an arm it is not a nicety: MEASURED, a point one
+metre to the player's right lands at NDC x -1.96 through the unmirrored
+lens and +1.96 through a world pass. The arm was a mirror image of the
+world composited under it - the sword hand on the wrong side of the
+screen, every left hand a right one, and NOTHING in the picture saying
+so, because an arm looks like an arm either way.
+
+Fixed at MW-D9: the arm's projection takes mirrorProjectionX like every
+other pass. It costs nothing, for the same reason the original note
+gives - drawCharacter disables back-face culling for its draw, so the
+winding flip a negative-x scale causes has no consequence.
+
+WHY NO EXISTING LAYER CAUGHT IT, which is the lesson rather than the
+bug: every left/right assertion in the probe and the pins is in MODEL
+space (piece bounds), and x-symmetry is symmetric under a mirror by
+definition. Nothing measured which side of the SCREEN a hand landed on.
+The pin is now analytic - the arm's lens and a world lens must agree on
+the sign of +x - with a probe layer that reads the framebuffer at a clip
+time where the arms are UNCROSSED, since at the clip's start they swing
+across each other and either answer looks right.
+
+NEXT, IN ORDER (recounted at MW-D17 - the list that stood here was
+MW-D9's and every item on it shipped: the texture at MW-D11, the attack
+clips at MW-D12, the camera bone at MW-D10, and the viewer's second
+clip-time home at MW-D17): (1) `parseAnimGroups`' four recorded
+divergences from rules 21/22/44/45 - its own audit slice, still
+deliberately unmixed because three MWAUDIT pins assert its present
+behaviour; (2) `KEY_TYPE.constant` is sampled by holding the previous
+key where the reference flips at the segment midpoint with a strict `>`
+(and rotation keys of that type take the flip too, never slerp); (3)
+`track.frequency`/`phase` are read from every controller and used
+nowhere - whether the ControllerFunction time map is reachable from
+first-person data is itself unread ground.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

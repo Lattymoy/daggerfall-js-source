@@ -86,6 +86,9 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
+import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
+import { mwRaceId } from '../formats/mwNpc.js';
+import { EQUIP_SLOTS } from '../systems/equip.js';
 import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
@@ -123,9 +126,8 @@ import { overlayAction } from './input.js';   // U51: Escape, through the shared
 // hole in it teaches the player the hole is permanent.
 // R7 (Mac): ENHANCED is a section of its own, and on the BOOT rail
 // only. The port's own switches were scattered - the skin under the
-// brand and roads in no interface at all - and a switch a player
-// cannot find is
-// not shipped. It is absent from SECTIONS_PAUSE deliberately: these
+// brand, and the port's own additions in no interface at all - and a
+// switch a player cannot find is not shipped. It is absent from SECTIONS_PAUSE deliberately: these
 // answer "what kind of game am I about to play", which is settled by
 // the time a pause menu opens, and two of them cannot take effect
 // without a reload anyway.
@@ -802,11 +804,6 @@ function paneEnhanced(body) {
   // and never called. R3W wired the map and the claim came OUT rather
   // than being left standing as the sky row's was; R4W wired travel
   // and it goes back in. Every clause here is now reachable.
-  live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
-    + 'and travel follows them - the route you watch is the route you are charged for, and never '
-    + 'costs more than the direct road. The first world load bakes the network (about half a '
-    + 'minute, reported as it goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
@@ -862,30 +859,92 @@ function paneEnhanced(body) {
   // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window has
   // its M key, but the enhanced skin never routes through it.
   //
-  // THERE IS NO 3D TOGGLE HERE, DELIBERATELY. The first-person rig was
-  // reverted whole and has not been rebuilt yet; a switch for it would be
-  // the screen claiming a feature this tree does not have, which is
-  // exactly what the R7 pin exists to stop. The card offers what actually
-  // works today: attaching the data, and the two pages that read it.
+  // MW-D8: THERE IS NOW SOMETHING BEHIND THE BUTTON, which is the only
+  // thing that ever made one honest. MW-2 refused a 3D toggle because "a
+  // switch for one would be the screen lying about the build" - true then,
+  // when the rig was reverted and nothing had replaced it. The arm exists
+  // now, so a control for it states a fact.
+  //
+  // IT IS A BUTTON WITH A STATUS LINE, not a preference row. MWDIAG's
+  // lesson: five distinct causes were indistinguishable to the reporter
+  // for three fixes running because the reason lived in a console object
+  // nobody read. The reason belongs on the card, next to the button that
+  // produced it.
   const mw = el('div', 'card');
+  const armState = fpArm.status();
   mw.append(el('h3', null, 'Morrowind assets'));
   mw.append(el('p', 'meta',
-    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer and the '
-    + 'data inspector. Stored in this browser exactly like ARENA2; nothing uploads. The in-game '
-    + 'first-person layer is NOT built - it was removed, and it is being rebuilt against a cited '
-    + 'reference before it comes back.'));
-  mw.append(stats([['State', `${morrowindDataCount()} archive${morrowindDataCount() === 1 ? '' : 's'} attached`]]));
-  mw.append(acts([
-    { label: 'Attach data', primary: true, onClick: async () => {
+    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer, the '
+    + 'data inspector, and the in-game first-person arms. Stored in this browser exactly like '
+    + 'ARENA2; nothing uploads.'));
+  mw.append(el('p', 'meta',
+    'The arms draw textured, in the stance of the drawn weapon, holding the Morrowind counterpart '
+    + 'of what your right hand holds - the weapon follows your equipment as you play. While the '
+    + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
+  const count = morrowindDataCount();
+  mw.append(stats([
+    ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
+    ['Arms', armState.active
+      ? `on - ${armState.pieces} pieces from ${armState.skeletonPath}`
+      : armState.reason],
+    ['Weapon', armState.weapon
+      ? `${armState.weapon.name || armState.weapon.id} at ${armState.weapon.bone}`
+      : armState.active ? 'none - empty hands' : '-'],
+  ]));
+  const armActions = [
+    { label: 'Attach data', primary: !count, onClick: async () => {
       const ds = await import('../scenes/dataSource.js');
       await ds.pickMorrowindFiles();
       render();
     } },
-    { label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') },
-    // MW-D: the page that answers what is actually IN the archives - which
-    // is the question four failed fixes never asked.
-    { label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') },
-  ]));
+  ];
+  if (count) {
+    armActions.push(armState.active
+      ? { label: 'Unload arms', onClick: () => { fpArm.unload(); render(); } }
+      : { label: 'Build first-person arms', primary: true, onClick: async () => {
+        // Seconds long and synchronous - the BSA index, the whole ESM
+        // walk and every mesh parse, on the main thread. It happens with
+        // the game paused, once, and the card says so before you press
+        // rather than after the tab stops responding.
+        // Rule 6 picks the skeleton by SEX; rules 1-3 pick the body
+        // records by RACE. Both come from the live player, not a default
+        // - a hardcoded 'nord' would draw a Breton's arms on a Redguard
+        // and nothing on screen would say so.
+        await fpArm.build({
+          race: mwRaceId(playerEntity.race),
+          female: !!playerEntity.gender,
+          // MW-D9: whatever is in the right hand right now. The mapping
+          // from Daggerfall's weapon templates onto Morrowind's types is
+          // a DECLARED DIVERGENCE (DF_TO_MW_WEAPON), not a translation.
+          weapon: playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
+          // MW-D16 / rule 24: the bow's ARROW. attachArrow reads the
+          // AMMUNITION slot, so the arm needs to know whether the player
+          // has any - the rig's own out-of-arrows test, one home.
+          hasAmmo: hasDaggerfallArrows(playerEntity.items),
+        });
+        render();
+      } });
+  }
+  armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });
+  // MW-D: the page that answers what is actually IN the archives - which
+  // is the question four failed fixes never asked.
+  armActions.push({ label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') });
+  mw.append(acts(armActions));
+  // WHY, IN WORDS, WHEN IT DID NOT WORK. An empty box was the reverted
+  // rig's defining behaviour and is the one outcome forbidden here.
+  if (armState.notes && armState.notes.length) {
+    mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
+  }
+  // AND WHAT THE DATA ACTUALLY OFFERS. "no record for this actor" is a
+  // dead end for whoever reads it; the race asked for, beside the races
+  // the files carry, is a next step.
+  if (armState.esm) {
+    const e = armState.esm;
+    mw.append(el('p', 'meta',
+      `Read ${e.files.join(', ')} — ${e.bodyRecords.toLocaleString()} body records, `
+      + `${e.firstPerson} of them first-person. Looked for race "${e.raceWanted}": `
+      + (e.raceIsThere ? 'present in your data.' : `NOT among the races your files carry (${e.racesFound.join(', ') || 'none'}).`)));
+  }
   body.append(mw);
 
   const waiting = el('div', 'card');

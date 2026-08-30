@@ -451,6 +451,10 @@ export function createWorldModes(host) {
   const interiorWeapon = createWeaponRig({
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
+    // MW-D8: see world.js's twin note - the arm rides the eye, and the
+    // dep is required so a missing one is a reason, never a wrong place.
+    // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking }),
     say,
   });
   // C13: the interior arrow flights (collider late-resolved - each
@@ -3813,7 +3817,7 @@ export function createWorldModes(host) {
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),

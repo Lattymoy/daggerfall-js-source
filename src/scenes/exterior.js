@@ -100,6 +100,11 @@ import {
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
+// WM2b: the windmill's law, and the vendored rotor it turns.
+import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
+import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
+import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
+import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -169,7 +174,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels } = pipeline;
+  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, gpuMeshes, cpuModels } = pipeline;
 
   // Collect the location's model ids + referenced texture archives.
   const modelIds = new Set();
@@ -183,20 +188,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // per-pixel pass: pixels from the swapped archive, UVs from the
   // original (verbatim MaterialReader.ChangeClimate; missing-record
   // remaps pruned - 27 corpus pairs, R1 audit).
+  const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
   for (const id of modelIds) {
     const gpu = gpuMeshes.get(id);
     if (!gpu) continue;
-    for (const sm of gpu.subMeshes) {
-      archives.add(sm.textureArchive);
-      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-      if (swapped === sm.textureArchive) continue;
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      if (texRemap.has(key)) continue;
-      const t = await getTexture(swapped);
-      if (sm.textureRecord >= t.recordCount) continue;
-      uploadRecord(swapped, sm.textureRecord);
-      texRemap.set(key, `${swapped}_${sm.textureRecord}`);
-    }
+    for (const sm of gpu.subMeshes) archives.add(sm.textureArchive);
+    await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
   }
   status(`loading ${archives.size} texture archives`);
   await Promise.all([...archives].map((a) => getTexture(a)));
@@ -262,6 +259,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     return scaledBillboardSize(t.getSize(record), t.getScale(record));
   };
   const drawList = [];
+  const windmills = [];   // WM2b: placed mills whose rotor turns each frame
+  // WM2d: the mill's two parts, uploaded once for the location and only
+  // when a block here actually stands one - a town with no farm pays
+  // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
+  const millCount = loc.blocks.reduce((n, b) => n + b.layout.windmills.length, 0);
+  const millParts = (millCount && isEnhanced())
+    ? await getWindmillMeshes(climateBase, season === SEASON.Winter) : null;
+  console.log(`[windmills] ${millCount} placed in ${locationName}`
+    + (millCount && !isEnhanced() ? ' - classic skin, not drawn' : '')
+    + (millCount ? '' : ' - no block here stands one'));
   // Player collision (P1): every placed model's triangles, world-space,
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
@@ -275,6 +282,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
+      // WM2f: the mill's companion building is part of an enhanced-skin
+      // departure; the 1:1 lane must not see it.
+      if (placed.enhancedOnly && !isEnhanced()) continue;
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
@@ -298,6 +308,26 @@ export async function bootExterior(canvas, renderer, params, status) {
         }
       }
     }
+    // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places none,
+    // so rmbLayout adds them - the tower is a placement like any other
+    // and joins the static list, and only the SAIL needs a matrix per
+    // frame. Enhanced-skin only - the door the roads used to share,
+    // and since RX removed them whole, the only departure standing here.
+    if (millParts) {
+      for (const w of b.layout.windmills) {
+        const matrix = multiply(originMatrix, w.matrix);
+        drawList.push({ mesh: millParts.body, matrix });
+        collider.addMesh('world', BODY.positions, BODY.indices, matrix);
+        windmills.push({
+          matrix,
+          // Deterministic in the mill's own world position, so a farm's
+          // mills are not a chorus line and the same mill is at the same
+          // phase every time the player walks up to it.
+          state: { angle: rotorPhase(matrix[12], matrix[14]) },
+        });
+      }
+    }
+
     // Ground tiles gather into one location-wide tilemap for the R9
     // tilemap-shader pass. These bytes are PRE-conversion (tileBitfield
     // space); convertTilemap turns a byte b into texture record
@@ -393,6 +423,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (tx < 0 || ty < 0 || tx >= tilemapDim || ty >= tilemapDim) return null;
     return locationTilemap[tx + ty * tilemapDim];
   };
+
 
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.
@@ -802,6 +833,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
+    // MW-D8: the Morrowind arm rides the player's eye. Required, not
+    // optional - a host that forgets it gets the classic sprite and a
+    // named reason rather than an arm at the world origin.
+    // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking }),
     spellArmed: () => magic.spellArmed(),   // M2: HasReadySpell hides the weapon
   });
   // M2 (the AUDIT 23 hosts-2 priority row): SPELLCASTING ABOVE GROUND.
@@ -1735,6 +1771,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
+    // deck overhead is drawn with (shared.js's sky.wind()), so a storm
+    // picks the mills up on the same fourteen-second curve it picks the
+    // sky up on. A null row is "no wind is known" - the classic sky
+    // eases nothing - and a mill then stands still rather than guessing.
+    if (millParts && windmills.length) {
+      const wind = sky.wind();
+      if (wind) {
+        for (const w of windmills) {
+          advanceRotor(w.state, dt, wind);
+          renderer.drawMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
+        }
+      }
+    }
     if (rig && (riding || params.has('rig'))) {
       if (riding) {
         // Gait from live input over the SAME keys the motor reads;

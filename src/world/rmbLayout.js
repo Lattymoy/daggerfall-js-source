@@ -18,6 +18,8 @@
 // records are later features of this arc; see bible/03-World/World-Arc.md.
 
 import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
+import { PLACEMENTS as WINDMILL_PLACEMENTS } from './windmillMesh.js';   // WM2d: the mills Daggerfall does not stand
+import { WINDMILL_INTERIOR } from './windmillInterior.js';   // WM2g: and the inside of one
 import { GLOBAL_SCALE } from './meshReader.js';
 import { trs, multiply } from './mat4.js';
 
@@ -83,7 +85,126 @@ export function layoutRmbBlock(dfBlock) {
     });
   }
 
-  return { models, groundTiles: buildGroundTilemap(dfBlock) };
+  // WM2f: the mill's own subrecord places TWO models - a classic
+  // building (the one with the door) and the mill beside it. The
+  // building goes into `models` like any other placed model, so it
+  // takes the ordinary path: its mesh out of ARCH3D, its climate swap,
+  // its collider and its door geometry, none of which needs new code.
+  //
+  // It carries NO recordIndex, deliberately. A static door's interior is
+  // looked up as `subRecords[recordIndex].interior`, and the subrecord
+  // this building belongs to is one Kamer ADDED - it does not exist in
+  // the block the port reads. worldModes already refuses a door whose
+  // recordIndex is undefined, so the door stands and does not open,
+  // rather than throwing on a subrecord that is not there.
+  const mills = windmillsFor(dfBlock.name);
+  if (mills.length) {
+    const recordIndex = attachWindmillRecord(dfBlock);
+    for (const w of mills) {
+      if (!w.building) continue;
+      w.building.recordIndex = recordIndex;
+      models.push(w.building);
+    }
+  }
+
+  return { models, windmills: mills, groundTiles: buildGroundTilemap(dfBlock) };
+}
+
+/**
+ * WM2g: THE MILL'S SUBRECORD, ATTACHED - so its door has an inside.
+ *
+ * A static door's interior is looked up as
+ * `subRecords[recordIndex].interior`, and the subrecord the mill's
+ * building belongs to is one Kamer ADDED: it is not in the block the
+ * port reads out of BLOCKS.BSA. WM2f left the building without a
+ * recordIndex for exactly that reason, so its door stood and never
+ * opened.
+ *
+ * This appends the subrecord the block is missing. Its EXTERIOR IS
+ * EMPTY, deliberately - the mill and its building are placed by
+ * windmillsFor above, and a subrecord carrying them as well would
+ * stand every one of them twice. What it exists for is the interior.
+ *
+ * Idempotent, because BlocksFile CACHES its parsed blocks: the same
+ * dfBlock object comes back for every location that uses this block and
+ * for every re-entry, and appending on each visit would grow the array
+ * without bound and change the recordIndex a saved door refers to.
+ */
+export function attachWindmillRecord(dfBlock) {
+  const subs = dfBlock.rmbBlock.subRecords;
+  const already = subs.findIndex((r) => r?.windmill);
+  if (already >= 0) return already;
+  subs.push({
+    windmill: true,
+    xPos: 0, zPos: 0, yRotation: 0,
+    exterior: {
+      header: {
+        position: 0, num3dObjectRecords: 0, numFlatObjectRecords: 0,
+        numSection3Records: 0, numPeopleRecords: 0, numDoorRecords: 0,
+        unknown1: 0, unknown2: 0, unknown3: 0, unknown4: 0, unknown5: 0, unknown6: 0,
+      },
+      block3dObjectRecords: [], blockFlatObjectRecords: [],
+      blockSection3Records: [], blockPeopleRecords: [], blockDoorRecords: [],
+    },
+    interior: WINDMILL_INTERIOR,
+  });
+  return subs.length - 1;
+}
+
+/**
+ * WM2d: THE MILLS, PLACED - because classic Daggerfall places none.
+ *
+ * WM2b wired a rotor onto model 41600 on the strength of finding that id
+ * in Kamer's WorldData block overrides, and nothing ever turned, because
+ * those files are HIS blocks: `FARMAA01`'s declares
+ * `NumBlockDataRecords: 1` and carries TWO subrecords, `FARMAA00`'s
+ * declares 7 and puts the mill in subrecord 7. The extra subrecord in
+ * each is the mill he ADDS. No classic block stands one, so the port
+ * never placed one, so there was nothing to hang a sail on.
+ *
+ * This is the port's side of that override, and it lives HERE rather
+ * than in the hosts for the reason the rest of this module exists: the
+ * matrix a placed model gets is one law, and a mill placed by different
+ * arithmetic from its neighbours would drift from them the first time
+ * that law is touched. The subrecord frame and the model matrix are the
+ * SAME two lines the building loop above uses.
+ *
+ * Enhanced-skin only is enforced by the CALLER, not here - this module
+ * is pure layout and has no business reading a preference.
+ */
+export function windmillsFor(blockName) {
+  const out = [];
+  for (const p of WINDMILL_PLACEMENTS) {
+    if (p.block !== blockName) continue;
+    const subRecordMatrix = trs(
+      p.subX * GLOBAL_SCALE, 0, (RMB_DIMENSION - p.subZ) * GLOBAL_SCALE,
+      0, -p.subRot / ROTATION_DIVISOR, 0
+    );
+    const modelMatrix = trs(
+      p.x * GLOBAL_SCALE, -p.y * GLOBAL_SCALE, p.z * GLOBAL_SCALE,
+      0, -p.rotY / ROTATION_DIVISOR, 0
+    );
+    const entry = { matrix: multiply(subRecordMatrix, modelMatrix) };
+    if (p.building) {
+      const b = p.building;
+      entry.building = {
+        modelId: String(b.modelIdNum),
+        modelIdNum: b.modelIdNum,
+        // The whole mill is an ENHANCED-SKIN departure and this half of
+        // it is an ordinary placed model, so it would otherwise ride the
+        // hosts' generic model loop straight into the 1:1 lane - a
+        // building standing in a farm that Daggerfall leaves empty. The
+        // hosts skip it on the classic skin; this flag is how they know.
+        enhancedOnly: true,
+        matrix: multiply(subRecordMatrix, trs(
+          b.x * GLOBAL_SCALE, -b.y * GLOBAL_SCALE, b.z * GLOBAL_SCALE,
+          0, -b.rotY / ROTATION_DIVISOR, 0
+        )),
+      };
+    }
+    out.push(entry);
+  }
+  return out;
 }
 
 /**

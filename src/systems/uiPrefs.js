@@ -23,17 +23,6 @@ export const PREF_DEFAULTS = Object.freeze({
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.
   skin: 'enhanced',
-  // R7: ROADS ON BY DEFAULT (Mac, this session). R6 shipped them off
-  // on the argument that a twenty-six second bake should not be
-  // charged to someone who never asked - and the call here is that a
-  // player arriving at the ENHANCED skin has asked, because that is
-  // what the skin is. An enhancement nobody finds is not shipped.
-  //
-  // What that argument owes the player is the twenty-six seconds being
-  // VISIBLE and PAID ONCE: the world host reports every bake phase on
-  // the boot status line, the artifact is cached from then on, and the
-  // Enhanced screen turns it off in one press.
-  roads: true,
   // RA1 (Mac, 2026-08-28): THE ENHANCED SKY GETS ITS SWITCH. ES1 has
   // been the enhanced skin's default sky since it landed, but the
   // Enhanced pane still listed it "not built" with no control - a

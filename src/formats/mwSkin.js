@@ -113,28 +113,52 @@ export function buildSkeleton(nif) {
 }
 
 /**
- * The ACCUMULATION ROOT: the topmost tracked bone. Morrowind animations
- * carry the actor's locomotion in this bone's translation channel (a
- * flight cycle literally contains the flight path - OAAB's bat keys
- * y=1892 into it), and the engine extracts that motion for MOVEMENT
- * while the visual skeleton stays put. The reference accumulates X,Y
- * and leaves Z animated (jumps, hovers). Posing without extraction is
- * the geometry-all-over-the-place bug: every walk loop translates the
- * whole body away.
+ * RULE 56: THE ACCUMULATION ROOT IS A TWO-NAME TABLE, not a search.
+ *
+ * Morrowind animations carry the actor's locomotion in one bone's
+ * translation channel (a flight cycle literally contains the flight path
+ * - OAAB's bat keys y=1892 into it), and the engine extracts that motion
+ * for MOVEMENT while the visual skeleton stays put. The reference
+ * accumulates X,Y and leaves Z animated (jumps, hovers). Posing without
+ * extraction is the geometry-all-over-the-place bug: every walk loop
+ * translates the whole body away.
+ *
+ * WHICH bone, though, was ported as "the topmost tracked bone" and that
+ * is not the rule (Animation::addAnimSource, animation.cpp:712-734):
+ *
+ *   // Priority matters! bip01 is preferred.
+ *   static const std::initializer_list<std::string_view> accumRootNames
+ *       = { "bip01", "root bone" };
+ *
+ * and a candidate is accepted only if BOTH the name resolves in the node
+ * map AND the loaded KF drives a controller of that same name
+ * (case-insensitively). MW-D14 corrected it, and the difference is not
+ * academic: a first-person weapon .kf keys nothing on bip01, so "topmost
+ * tracked bone" answered an UPPER ARM - and any translation channel on
+ * that bone would then have had its X and Y pinned to rest, silently
+ * deforming the arm rather than moving the actor.
+ *
+ * With neither name driven the answer is NULL, which is the correct
+ * answer and not a failure: an animation with no accum root simply
+ * accumulates nothing.
+ *
+ * STICKINESS IS THE CALLER'S. `if (!mAccumRoot)` guards the whole block,
+ * so the choice is made by the FIRST anim source that resolves one and
+ * later sources do not re-pick it. This function answers for ONE source;
+ * a caller with several must ask them in push order and keep the first
+ * non-null answer.
  */
+export const ACCUM_ROOT_NAMES = Object.freeze(['bip01', 'root bone']);
+
 export function accumRootRef(skeleton, tracks) {
-  let best = null;
-  let bestDepth = Infinity;
-  for (const [ref, node] of skeleton.nodes) {
-    if (!tracks || !tracks.has(node.name.toLowerCase())) continue;
-    let d = 0;
-    for (let p = node.parent; p >= 0 && skeleton.nodes.has(p); p = skeleton.nodes.get(p).parent) d++;
-    if (d < bestDepth) {
-      bestDepth = d;
-      best = ref;
-    }
+  const byName = skeleton && skeleton.byName;
+  if (!byName) return null;
+  for (const name of ACCUM_ROOT_NAMES) {
+    if (!byName.has(name)) continue;
+    if (!tracks || !tracks.has(name)) continue;
+    return byName.get(name);
   }
-  return best;
+  return null;
 }
 
 /**
@@ -223,7 +247,24 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // Per-vertex blended affines, translations included - 12 floats each.
   const acc = new Float32Array(n * 12);
   const wsum = new Float32Array(n);
+  // RULE 40: an influence naming a MISSING bone (ref null, from
+  // bindPart) is skipped in the blend - and the remaining weights are
+  // NOT renormalised (rule 39). But the vertex is still marked TOUCHED,
+  // because the reference distinguishes two cases the sum alone cannot:
+  // a vertex with no influences AT ALL keeps its authored position
+  // (rule 39's erased-empty-set), while one weighted ONLY to missing
+  // bones goes through the blend with a ZERO accumulator - rows 0-2
+  // zero, row 3 the skin transform's - and collapses onto that
+  // translation with a zero normal (riggeometry.cpp:191-210, read at
+  // the rule 40 verification). Faithful, and ugly on purpose: papering
+  // it over with bind pose would hide exactly the data problem the
+  // missing-bone note names.
+  const touched = new Uint8Array(n);
   for (const bone of skin.bones) {
+    if (bone.ref == null) {
+      for (let k = 0; k < bone.indices.length; k++) touched[bone.indices[k]] = 1;
+      continue;
+    }
     const m = affineMul(affineMul(post, skelMats.get(bone.ref)), bone.invBind);
     for (let k = 0; k < bone.indices.length; k++) {
       const v = bone.indices[k];
@@ -234,12 +275,18 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
       acc[o + 10] += m.t[1] * w;
       acc[o + 11] += m.t[2] * w;
       wsum[v] += w;
+      touched[v] = 1;
     }
   }
+  const collapse = new Float32Array(12);
+  collapse[9] = post.t[0];
+  collapse[10] = post.t[1];
+  collapse[11] = post.t[2];
   for (let v = 0; v < n; v++) {
     const o = v * 12;
-    // An unweighted vertex keeps its authored position.
-    const a = wsum[v] > 0 ? acc.subarray(o, o + 12) : null;
+    // An untouched vertex keeps its authored position; a touched one
+    // with no surviving weight takes the zero-accumulator collapse.
+    const a = wsum[v] > 0 ? acc.subarray(o, o + 12) : touched[v] ? collapse : null;
     const x = batch.positions[v * 3];
     const y = batch.positions[v * 3 + 1];
     const z = batch.positions[v * 3 + 2];
@@ -270,4 +317,43 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
       normalsOut[v * 3 + 2] = oz / len;
     }
   }
+}
+
+/**
+ * MW-D7: WHICH BONES THE CLIP ACTUALLY DRIVES.
+ *
+ * poseSkeleton above answers a bone with no track by handing back
+ * `node.rest` (:151-154). That is correct - it is what the reference
+ * does - and it is also the deadliest silent failure in the animation
+ * stage: hand it a .kf that keys nothing this skeleton has, and every
+ * bone falls through to rest. The result is a clean, plausible, entirely
+ * static arm. No error, no warning, no empty picture. A pixel count
+ * passes it. A symmetry check passes it. It looks exactly like a working
+ * idle that happens to be holding still.
+ *
+ * So the match has to be reportable, and it has to be reported by THIS
+ * file, using the same comparison the poser uses one function up
+ * (`node.name.toLowerCase()` against the track map's own lowercased
+ * keys). A copy of that comparison in the page could agree with the page
+ * and disagree with the pose - which is the one way a binding report can
+ * be worse than no report at all.
+ *
+ * @returns {{matched:{bone:string, ref:number}[], unmatchedTracks:string[],
+ *   untrackedBones:string[]}}
+ */
+export function trackBinding(skeleton, tracks) {
+  const matched = [];
+  const untrackedBones = [];
+  const hit = new Set();
+  for (const [ref, node] of skeleton?.nodes ?? []) {
+    const key = node.name.toLowerCase();
+    if (tracks && tracks.has(key)) {
+      matched.push({ bone: node.name, ref });
+      hit.add(key);
+    } else {
+      untrackedBones.push(node.name);
+    }
+  }
+  const unmatchedTracks = [...(tracks?.keys() ?? [])].filter((k) => !hit.has(k));
+  return { matched, unmatchedTracks, untrackedBones };
 }

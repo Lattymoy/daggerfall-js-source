@@ -101,11 +101,27 @@ test('MWFIX 2b: the picker OWNS THE KEYBOARD while it is up - found by the probe
   assert.ok(yieldAt > 0 && stopAt > yieldAt, 'and yields before it stops propagation, or the picker never sees the key');
 });
 
-// MWFIX 3's pin is ABSENT ON PURPOSE. It held the weapon rig to
-// rebuilding its first-person view when data is attached or the
-// preference toggled - a real law, and it goes back the moment that rig
-// does. Pinning it now would assert a mechanism no code has, which is
-// the mirror image of the mistake this whole effort is recovering from.
+test('MWFIX 3 (restored at MW-D8): the rig watches the attach GENERATION, not a one-shot read', () => {
+  // ABSENT UNTIL NOW, on purpose: it held the weapon rig to rebuilding
+  // its first-person view when data is attached, and pinning it while no
+  // code had the mechanism would have asserted a mechanism no code has.
+  // MW-D8 built the arm, so the law is real again and the pin returns.
+  //
+  // THE DEFECT IT GUARDS: the reverted rig read hasStoredMorrowind() ONCE
+  // at construction, so attaching data to a running game changed nothing
+  // until a reload - which is what the report "after uploading does not
+  // work at all" actually was.
+  const rig = rd('src/combat/weaponRig.js');
+  assert.match(rig, /morrowindDataGeneration\(\)/, 'the rig polls the generation');
+  assert.match(rig, /let _mwGen = morrowindDataGeneration\(\);/, 'seeded once');
+  assert.match(rig, /const fpRecheck = \(\) => \{[\s\S]{0,240}?if \(g === _mwGen\) return;[\s\S]{0,200}?fpArm\.unload\(\);/,
+    'and compares it every frame, dropping a stale arm when it moves');
+  assert.match(rig, /fpRecheck\(\);/, 'the check is actually called');
+  // It drops rather than rebuilds ON PURPOSE: the parse is seconds long
+  // and synchronous, so it belongs behind a button, not in a frame.
+  assert.ok(!/fpRecheck[\s\S]{0,200}fpArm\.build/.test(rig),
+    'and it does NOT start a multi-second parse from inside the frame loop');
+});
 
 test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as well as the menu', () => {
   // THE DEFECT: the build puts every extra page at the site root
@@ -141,14 +157,93 @@ test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as w
 
 test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears of the layer', () => {
   const rig = rd('src/combat/weaponRig.js');
-  // Stronger than the pin this replaces. That one allowed a 3D view and
-  // required the sprite to be its else; today there is no view at all, so
-  // the sprite draw must stand unconditional and the rig must carry no
-  // reference to the removed layer. When the rig returns this reverts to
-  // the else-of-an-active-view form.
-  assert.match(rig, /const art = c && artFor\(playerWeapon\.weapon\);/, 'the sprite draw is unconditional');
+  // THE RIG HAS RETURNED, so this is the else-of-an-active-view form the
+  // previous version named as its own successor: "When the rig returns
+  // this reverts to the else-of-an-active-view form."
+  //
+  // AND IT IS STRICTLY STRONGER THAN WHAT IT REPLACES. That pin was a
+  // grep for one literal, so it could not see the condition its own label
+  // claimed - an arm branch inserted above it passed unchanged. This
+  // asserts the ORDER and the RETURN, so both mutations it was blind to
+  // now fail: an arm branch with no `return` (both composite, a weapon
+  // sprite pasted over a pair of hands), and a sprite draw hoisted above
+  // the branch.
+  assert.match(rig,
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    'an inactive arm falls STRAIGHT THROUGH to the sprite, and an active one returns so the two never both draw');
+  // and the branch must name a module the file actually imports, or it is
+  // a literal that satisfies a regex and does nothing.
+  assert.match(rig, /import \{ fpArm(?:, [\w$, ]+)? \} from '\.\/fpArm\.js';/,
+    'the arm branch is wired to a real module (MW-D19 widened the import list)');
   for (const gone of ['mwView', 'createMwFpView', 'mwFp']) {
     assert.ok(!rig.includes(gone), `weaponRig must not mention ${gone} while the layer is absent`);
   }
   assert.ok(!rd('src/combat/fpsWeapon.js').includes('mwFp'), 'and fpsWeapon.js never learns about the 3D layer');
+});
+
+test('MW-D9g: LEARNING the archive count is not a data change - the boot must not unload the arm', async () => {
+  // THE DEFECT, reported by Mac as "it says built, now what do I do" and
+  // then "still not working" twice over. Nothing about his archives.
+  //
+  //   scenes/shared.js boots a host and STARTS registerMorrowindData()
+  //     without waiting for it (it is IndexedDB, it is async);
+  //   createWeaponRig latches morrowindDataGeneration() SYNCHRONOUSLY in
+  //     the same host setup, so the latch is always taken BEFORE the
+  //     count lands;
+  //   _mwCount started at -1, so the first count ALWAYS differed from it
+  //     - even an empty store went -1 -> 0 - and bumped the generation;
+  //   the rig's first frame saw the bump and called fpArm.unload().
+  //
+  // Every host boot therefore threw away any arm the player had already
+  // built. Building from the main menu before starting a game - which is
+  // what the player was told to do - could not survive to the first
+  // frame. Measured through the real rig in a real browser
+  // (tools/mwRigProbe.mjs): built and drawing 5346 changed pixels, then
+  // reason "unloaded" on the frame after boot.
+  const ds = await import('../src/scenes/dataSource.js');
+  const before = ds.morrowindDataGeneration();
+  // An EMPTY store, twice. Nothing has changed, so nothing may move.
+  await ds.registerMorrowindData().catch(() => 0);
+  const afterFirst = ds.morrowindDataGeneration();
+  await ds.registerMorrowindData().catch(() => 0);
+  const afterSecond = ds.morrowindDataGeneration();
+  assert.equal(afterFirst, before, 'the FIRST count is not a change - it is the count arriving');
+  assert.equal(afterSecond, before, 'and a second identical count is not one either');
+
+  // The generation still has to move on a REAL change, which is the
+  // whole reason MWFIX 3 put it there. The guard is the only thing
+  // between the two behaviours, so it is stated exactly.
+  const src = readFileSync(join(ROOT, 'src/scenes/dataSource.js'), 'utf8');
+  assert.match(src, /if \(_mwCount >= 0 && next !== _mwCount\) \{ _mwGeneration\+\+;/,
+    'a KNOWN count that differs still bumps; an unknown one never does');
+  assert.match(src, /let _mwCount = -1;/, '-1 is "not counted yet", and it must stay distinguishable from 0');
+});
+
+test('MW-D9g: the rig unloads on a CHANGE only, and the arm survives an unchanged poll', async () => {
+  // The other half of the same law, at the consumer. A rig that unloads
+  // whenever it re-reads the counter is the bug wearing the other face.
+  const rig = readFileSync(join(ROOT, 'src/combat/weaponRig.js'), 'utf8');
+  const body = rig.slice(rig.indexOf('const fpRecheck'), rig.indexOf('// AUDIT 17e F17 / THE FOUR HOSTS RULE'));
+  assert.match(body, /if \(g === _mwGen\) return;/, 'an unchanged generation returns before touching the arm');
+  assert.match(body, /_mwGen = g;\s*\n\s*fpArm\.unload\(\);/, 'and the latch moves BEFORE the unload, so one change unloads once');
+});
+
+test('MW-D19: the rig hands the worn item to the arm every frame, in machine order', () => {
+  const rig = rd('src/combat/weaponRig.js');
+  // The classic sprite already re-reads the equip slot per frame
+  // (syncWorn); the Morrowind arm rides the same read or it is a
+  // snapshot again. Sheathe state first (it is the cheaper compare and
+  // the reference's updateWeaponState reads stance before weapon), the
+  // swap next, the tick last so a swapped arm poses its OWN clip.
+  assert.match(rig,
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\) \}\);/,
+    'the swap seam reads the same worn item the sprite does, ammo included');
+  const sheatheAt = rig.indexOf('fpArm.setSheathed(');
+  const swapAt = rig.indexOf('fpArm.setWeapon(');
+  const tickAt = rig.indexOf('fpArm.update(dt)');
+  assert.ok(sheatheAt >= 0 && sheatheAt < swapAt, 'sheathe state before the swap');
+  assert.ok(swapAt < tickAt, 'and the swap before the tick');
+  // ONE home for the arrow test - the rig's own guard rides the export.
+  assert.match(rig, /hasDaggerfallArrows\(entity\.items\)/, 'the bow guard rides the same export');
+  assert.ok(!/templateIndex === 131/.test(rig), 'no third literal copy of the arrow template');
 });
