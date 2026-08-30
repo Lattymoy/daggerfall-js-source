@@ -268,7 +268,7 @@ combat line numbers below are refreshed with it.
 - `src/combat/combatVoices.js:121` - * FLAGGED, both sites: DFU consults the racial override first -
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
 - `src/combat/playerWeapon.js:48` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
-- `src/combat/weaponRig.js:42` - *                     (FLAGGED at the call sites - their HUD pends),
+- `src/combat/weaponRig.js:44` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:199` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:267` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The

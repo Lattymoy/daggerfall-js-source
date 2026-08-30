@@ -7,7 +7,7 @@ import { accumRootRef } from '../src/formats/mwSkin.js';
 import { PART_BONES } from '../src/formats/mwNpc.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, fpSkeletonPath, buildFpArm, createFpArm,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornEquipKeyOf,
   FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
   collectArmTextures,
 } from '../src/combat/fpArm.js';
@@ -1667,7 +1667,8 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female \}\)/);
-  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => armorRecords\(e\.bytes\)\);/);
+  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
+  assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,
   // the third person receives verdicts, the fp build filters and
   // shadows from the same result.
@@ -1828,4 +1829,46 @@ test('MW-D31: the first person wears gauntlets, sleeves and the shield - never a
   assert.deepEqual(fpWornAdds(adds).map((a) => a.recordId), ['b_gr', 'b_ua', 'b_sh'],
     'the fp filter is not the reference\u2019s visible set');
   assert.deepEqual(fpWornAdds([]), []);
+});
+
+// ═══ MW-D32: THE BODY FOLLOWS THE EQUIP TABLE ═══════════════════════
+test('MW-D32: setWorn is one key compare per frame, and a change rebuilds through the same door', async () => {
+  // Mac's report: clothing does not show on the character. It did not
+  // - D29-D31 dressed the BUILD, and the build ran once, when the card
+  // was pressed. Equipping a cloak afterwards changed nothing on the
+  // rig. The body follows the equip table now, exactly as the weapon
+  // does (MW-D19): weaponRig hands the rig its worn list every frame,
+  // setWorn compares one key, and a change rebuilds with the pieces.
+  assert.equal(wornEquipKeyOf([]), '');
+  assert.equal(wornEquipKeyOf([{ kind: 'armor', templateIndex: 102, material: 3 }, { kind: 'clothing', templateIndex: 154 }]),
+    'armor:102:3|clothing:154:');
+  assert.notEqual(wornEquipKeyOf([{ templateIndex: 102, material: 3 }]), wornEquipKeyOf([{ templateIndex: 102, material: 4 }]),
+    'a material change must be a key change');
+  // The instance: before a build, setWorn is a no-op that returns
+  // false (nothing to re-dress); after a build, the same list is a
+  // no-op and a NEW list re-enters build() with the pieces.
+  const inst = createFpArm();
+  assert.equal(inst.setWorn([{ kind: 'armor', templateIndex: 102, material: 1 }]), false, 'dressed a rig that was never built');
+  const calls = [];
+  const deps = {
+    loadMorrowindArchives: async () => [],   // refuses at 'data' - the cheapest real build
+    storedMorrowindNames: async () => [],
+    loadMorrowindFile: async () => new Uint8Array(0),
+  };
+  await inst.build({ race: 'nord', armor: [], deps });
+  // a refused build (no archives) is not `built.ok`, so setWorn stays
+  // a no-op - the rig has nothing on it to re-dress. That is the
+  // never-traps shape: no rebuild storm against missing data.
+  assert.equal(inst.setWorn([{ kind: 'armor', templateIndex: 102, material: 1 }]), false);
+  void calls;
+});
+
+test('MW-D32: the per-frame read in weaponRig hands the rig its worn list', () => {
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+    'the game no longer dresses the rig from the equip table');
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /return this\.build\(\{ \.\.\.lastBuildOpts, armor: pieces, weapon: lastBuildOpts\.weapon \}\);/,
+    'setWorn no longer rebuilds through build()');
+  assert.match(arm, /if \(key === wornEquipKey\) return false;/, 'the fast path is gone - every frame would rebuild');
 });

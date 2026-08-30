@@ -426,6 +426,16 @@ function skeletonHasBone(skeletonBytes, name) {
  * an arrow rides along. Two unknown items both fold to None and compare
  * equal, which is right: both draw nothing.
  */
+/** MW-D32: the worn list as one comparable key - kind, template,
+ *  material, in the readout's own order. */
+/** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
+ *  esm files a data set carries, times three record kinds. */
+const ESM_WALK_CACHE = new Map();
+
+export function wornEquipKeyOf(pieces) {
+  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}`).join('|');
+}
+
 export function fpWeaponKey(item, hasAmmo) {
   return `${dfWeaponToMw(item, WEAPONS)}:${(item && item.materialName) || ''}:${hasAmmo ? 1 : 0}`;
 }
@@ -699,11 +709,23 @@ export async function buildFpArm({
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
-    const parts = esmBytes.flatMap((e) => bodyParts(e.bytes));
+    // MW-D32: the ESM walks are MEMOISED per file per data generation.
+    // A rebuild now happens whenever the equip table changes, and the
+    // records do not change between two rebuilds of the same data -
+    // only the pieces do. Keyed on the store's generation stamp, so a
+    // re-attached archive is a fresh walk and never a stale one.
+    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : 0;
+    const walk = (e, kind, fn) => {
+      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
+      let hit = ESM_WALK_CACHE.get(key);
+      if (!hit) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
+      return hit;
+    };
+    const parts = esmBytes.flatMap((e) => walk(e, 'parts', bodyParts));
     // MW-D29: the ARMO records ride the same esm walk, load order and
     // all - the composer resolves DF pieces against them by token.
-    const armors = esmBytes.flatMap((e) => armorRecords(e.bytes));
-    const clothes = esmBytes.flatMap((e) => clothingRecords(e.bytes));
+    const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
+    const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -1016,6 +1038,13 @@ export function createFpArm() {
   // seam it was built through - the swap resolves through the same one.
   let wornKey = null;
   let buildDeps = null;
+  // MW-D32: what the body last dressed in, and the opts to dress it
+  // again. The equip table is read every frame by weaponRig; when the
+  // worn list changes the rig rebuilds through the same door the card
+  // pressed, with the new pieces - the body FOLLOWS THE EQUIP TABLE,
+  // not the last time someone pressed Build.
+  let wornEquipKey = null;
+  let lastBuildOpts = null;
 
   // MW-D12: TWO CLIP SLOTS, because Morrowind's first-person arm plays
   // TWO animations and the port had one.
@@ -1440,6 +1469,8 @@ export function createFpArm() {
         thirdBuilt = res && res.ok ? (res.third || null) : null;
         viewMode = 'first';
         wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
+        wornEquipKey = wornEquipKeyOf(opts && opts.armor);
+        lastBuildOpts = opts ? { ...opts } : null;
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -1560,6 +1591,20 @@ export function createFpArm() {
      * weapon and arrow pieces on the live assembly, and re-equips if
      * the old weapon was drawn.
      */
+    /** MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. One key compare per
+     *  frame, exactly setWeapon's shape; a change rebuilds the whole
+     *  rig through build() with the new worn list, because worn
+     *  verdicts reshape the SKIN rows (shadows) and not just an
+     *  attachment - an in-place rebind cannot express "the right hand
+     *  skin is gone now". The rebuild runs while the inventory is open
+     *  and the game paused, which is when equipment changes. */
+    setWorn(pieces) {
+      if (!built || !built.ok || busy || !lastBuildOpts) return false;
+      const key = wornEquipKeyOf(pieces);
+      if (key === wornEquipKey) return false;
+      wornEquipKey = key;
+      return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
+    },
     setWeapon(item, { hasAmmo = false } = {}) {
       if (!built || !built.ok || busy) return false;
       const key = fpWeaponKey(item, hasAmmo);
