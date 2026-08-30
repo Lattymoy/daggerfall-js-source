@@ -1988,3 +1988,43 @@ seen: no GL and no ARENA2 here. The one-look questions are the gear
 standing as a vertical shaft at x 11 inside the machinery and the
 roller lying across at y -7, both computed from the prefab's numbers
 and both inside the body's bounds by the pin.
+
+### WM4c: the mill hums (2026-08-30)
+
+The last open line under the mill since WM2b: "Kamer loops a clip on it;
+the port does not." `Spin_Up.Start` adds a `DaggerfallAudioSource` and
+sets `SoundClips.ArenaFireDaemon` (index 11) to `LoopOnAwake` - and
+that is the whole of it. spatialBlend is 1 by `SetSound`'s default
+argument; rolloff, min and max distance are Unity's fresh-AudioSource
+defaults (logarithmic, 1, 500), which `DaggerfallAudioSource.Apply`
+never touches; the LoopOnAwake arm sets loop, playOnAwake and volume =
+`Settings.SoundVolume`, no player check and no random play. The second
+source the same method adds is never given a clip (BlowingWindIntro is
+commented out) and is not owed. `MILL_SOUND` in `windmills.js` is that
+profile with its citations, volume 1 because the port's master bus IS
+SoundVolume.
+
+The source rides the GameObject that carries the script: the Blade
+child outside, so it sits at ROTOR_HUB under the mill's placement, and
+the Plank_Gear inside (`loopsSound` in machinery.json - the roller's
+script adds none). `loop3d` took a `distanceModel` (linear by default,
+pinned, so A2's torches do not move; 'inverse' is play3d's own reading
+of Unity's logarithmic) and its handle a `move()`, because world.js
+shifts its origin under a built pixel and the listener is set in the
+shifted frame.
+
+Start and stop follow DFU's lifecycle rather than a range gate: every
+mill hums from the frame it is built (retried until the AudioContext
+exists, the torches' idiom, and NOT gated on the wind - his source has
+no idea what the weather is); the modal frame silences them all,
+because `PlayerEnterExit` disables the exterior parent indoors and a
+disabled AudioSource stops, and the retry brings them back on the way
+out; a destroyed pixel stops its own; the room's `destroy` stops the
+gear's. 5 pins in `test/windmillsound.test.js`; 6 mutants, 6 killed.
+
+**WM4 closes the rar.** Every file in it is now either carried,
+verified equal, or recorded as outside the shipped manifest. Nobody has
+heard it: no audio here, as no GL and no ARENA2. The one-listen question
+is whether ArenaFireDaemon at a fresh AudioSource's 500-unit reach is
+audible across the whole farm, which is what his numbers say and what
+the port now does.

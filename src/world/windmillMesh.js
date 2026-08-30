@@ -135,9 +135,10 @@ export const PLACEMENTS = Object.freeze([
  *  prefab gives it and turned by his script at his rate about its own
  *  axis (Space.Self). Position and quaternion (x, y, z, w) are Unity's,
  *  verbatim, in the machinery's root space - the space the port draws
- *  in. See vendor/windmills-kamer/machinery.json. */
+ *  in. loopsSound is Spin_Up.Start's looped clip (MILL_SOUND). See
+ *  vendor/windmills-kamer/machinery.json. */
 export const MACHINERY_MODEL_ID = 41601;
 export const MACHINERY_CHILDREN = Object.freeze([
-  Object.freeze({ name: 'Plank_Gear', mesh: 'PLANK_GEAR', position: Object.freeze([11.02, 4.49, -2.28]), rotation: Object.freeze([0.5, 0.5, -0.5, 0.5]), axis: 'z', degPerSec: -13, collider: false }),
-  Object.freeze({ name: 'Roller', mesh: 'ROLLER', position: Object.freeze([9.64, -7.14, -2.21]), rotation: Object.freeze([-0.7071068, 0, 0, 0.7071068]), axis: 'x', degPerSec: 13, collider: true }),
+  Object.freeze({ name: 'Plank_Gear', mesh: 'PLANK_GEAR', position: Object.freeze([11.02, 4.49, -2.28]), rotation: Object.freeze([0.5, 0.5, -0.5, 0.5]), axis: 'z', degPerSec: -13, loopsSound: true, collider: false }),
+  Object.freeze({ name: 'Roller', mesh: 'ROLLER', position: Object.freeze([9.64, -7.14, -2.21]), rotation: Object.freeze([-0.7071068, 0, 0, 0.7071068]), axis: 'x', degPerSec: 13, loopsSound: false, collider: true }),
 ]);

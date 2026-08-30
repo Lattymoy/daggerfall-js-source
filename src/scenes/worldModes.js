@@ -31,7 +31,7 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
-import { advanceMachinery, mountMachineryChild } from '../world/windmills.js';   // WM4b: the machinery's moving parts
+import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
@@ -3861,6 +3861,9 @@ export function createWorldModes(host) {
     for (const r of interiorCtx.rotors) {
       advanceMachinery(r.state, dt, r.child);
       renderer.drawMesh(r.gpu, mountMachineryChild(r.parent, r.child, r.state.angle), interiorCtx.texRemap);
+      // WM4c: the part that carries Spin_Up hums (the gear; the roller's
+      // script adds no source). Retried until the context is up.
+      if (r.child.loopsSound && !r.hum) r.hum = audio.loop3d(MILL_SOUND.clip, machineryChildPos(r.parent, r.child), MILL_SOUND.volume, MILL_SOUND);
     }
     for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
     // C13: interior arrows fly and draw with the meshes; a new

@@ -407,6 +407,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,
     destroy() {
+      for (const r of rotors) { r.hum?.stop(); r.hum = null; }   // WM4c: the gear's hum ends with the room
       for (const b of billboardBatches) renderer.destroyBatch(b);
       // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
       // meshes per context - every interior exit leaked them.

@@ -18,8 +18,9 @@ import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { fetchBytes, parseSeason, ensureAudio } from './shared.js';
 import { createDataPipeline } from './dataPipeline.js';
+import { audio } from '../systems/audio.js';   // WM4c
 import { buildInteriorContext } from './interiorContext.js';
-import { advanceMachinery, mountMachineryChild } from '../world/windmills.js';   // WM4b: the machinery's moving parts
+import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // AUDIT: the FOURTH host the SETT slice missed
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -145,6 +146,9 @@ export async function bootInterior(canvas, renderer, params, status) {
     for (const r of ctx.rotors) {
       advanceMachinery(r.state, dt, r.child);
       renderer.drawMesh(r.gpu, mountMachineryChild(r.parent, r.child, r.state.angle), ctx.texRemap);
+      // WM4c: the part that carries Spin_Up hums (the gear; the roller's
+      // script adds no source). Retried until the context is up.
+      if (r.child.loopsSound && !r.hum) r.hum = audio.loop3d(MILL_SOUND.clip, machineryChildPos(r.parent, r.child), MILL_SOUND.volume, MILL_SOUND);
     }
     // Swing doors (P4) draw at rest through their ActionSystem matrices;
     // the standalone scene has no activation path, so they stay closed.

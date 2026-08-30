@@ -179,7 +179,7 @@ test('WM4b: the wiring - the pipeline answers 41601 before ARCH3D, and both inte
   // through the module's law and not a local copy of it.
   for (const host of ['src/scenes/interior.js', 'src/scenes/worldModes.js']) {
     const h = src(host);
-    assert.match(h, /import \{ advanceMachinery, mountMachineryChild \} from '\.\.\/world\/windmills\.js'/, `${host}: no law import`);
+    assert.match(h, /import \{ advanceMachinery, mountMachineryChild(, [^}]*)? \} from '\.\.\/world\/windmills\.js'/, `${host}: no law import`);
     assert.match(h, /advanceMachinery\(r\.state, dt, r\.child\);\s*\n\s*renderer\.drawMesh\(r\.gpu, mountMachineryChild\(r\.parent, r\.child, r\.state\.angle\)/, `${host}: does not turn and draw`);
     // interior.js spreads the whole pipeline into the deps; worldModes
     // names each dep and so must name this one.

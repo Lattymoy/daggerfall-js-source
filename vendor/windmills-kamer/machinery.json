@@ -26,6 +26,11 @@
     "handedness law). The rates are degrees per second about the child's",
     "OWN axis after its rotation - Space.Self - and the signs are his.",
     "",
+    "loopsSound is Spin_Up.Start: it adds a DaggerfallAudioSource and sets",
+    "SoundClips.ArenaFireDaemon to LoopOnAwake, so the part that carries",
+    "Spin_Up hums; SpinTime_Roller adds none. (A second source in the same",
+    "method is never given a clip - BlowingWindIntro is commented out.)",
+    "",
     "Materials, in each DAE's triangle order, from the prefab's",
     "MeshRenderer lists through the .mat files whose names ARE the",
     "classic (archive, record) pair. Plank_Gear.dae declares nine",
@@ -54,6 +59,7 @@
       "axis": "z",
       "degPerSec": -13,
       "script": "Spin_Up.cs",
+      "loopsSound": true,
       "collider": false
     },
     {
@@ -69,6 +75,7 @@
       "axis": "x",
       "degPerSec": 13,
       "script": "SpinTime_Roller.cs",
+      "loopsSound": false,
       "collider": true
     }
   ]

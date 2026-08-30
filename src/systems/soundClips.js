@@ -2,6 +2,9 @@
 // DFU SoundClips.cs. Only the consumed subset lives here; grow it
 // with the consumers (the full 400+ enum stays in the source).
 export const SOUND = {
+  // WM4c: the mill. Kamer's Spin_Up.cs loops SoundClips.ArenaFireDaemon
+  // on the sail and on the machinery's plank gear (SoundClips.cs:40).
+  ArenaFireDaemon: 11,
   MakeItem: 364,            // M4: the enchanter's chime (SoundClips.cs:448)
   MakePotion: 365,          // M2: the cauldron's chime on a matched recipe (SoundClips.cs:449)
   ArrowShoot: 3,            // SoundClips.ArrowShoot - the bow loose (frame 4)

@@ -234,7 +234,15 @@ export class AudioEngine {
    *  everywhere"). The caller gates range (LoopIfPlayerNear disables
    *  the source outside maxDistance); returns a stop handle or null
    *  when the context/record is not ready. */
-  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5 } = {}) {
+  /** WM4c: `distanceModel` is a parameter here too, LINEAR by default so
+   *  the torches do not move. A DaggerfallAudioSource left at Unity's
+   *  defaults (Kamer's Spin_Up adds one and sets only the clip and
+   *  LoopOnAwake) is LOGARITHMIC, min 1, max 500 - play3d's profile -
+   *  and the mill's loop asks for exactly that. The handle also MOVES:
+   *  the streaming world shifts its origin under a built pixel, and a
+   *  source that stayed at the old numbers would drift away from the
+   *  mill it belongs to. */
+  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5, distanceModel = 'linear' } = {}) {
     if (!this._ready()) return null;
     const buf = this._buffer(index);
     if (!buf) return null;
@@ -243,7 +251,7 @@ export class AudioEngine {
     src.loop = true;
     const pan = this.ctx.createPanner();
     pan.panningModel = 'equalpower';
-    pan.distanceModel = 'linear';
+    pan.distanceModel = distanceModel;
     pan.refDistance = refDistance;
     pan.maxDistance = maxDistance;
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
@@ -252,6 +260,9 @@ export class AudioEngine {
     src.connect(gain).connect(pan).connect(this._out());
     src.start();
     return {
+      move(p) {
+        pan.positionX.value = p[0]; pan.positionY.value = p[1]; pan.positionZ.value = p[2];
+      },
       stop() {
         try { src.stop(); } catch { /* already stopped */ }
         src.disconnect();

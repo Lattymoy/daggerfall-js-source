@@ -70,7 +70,8 @@
 
 import { BODY, CLIMATE_SKINS, SKIN_SLOTS } from './windmillMesh.js';
 import { WEATHER_SKY } from '../render/enhancedSky.js';
-import { multiply, trs, quatToMat4 } from './mat4.js';
+import { multiply, trs, quatToMat4, transformPoint } from './mat4.js';
+import { SOUND } from '../systems/soundClips.js';
 
 // WM2d RETIRED `WINDMILL_MODELS`, the table of "which classic model id
 // carries a rotor", along with the FLAGGED note asking for the two it
@@ -106,6 +107,34 @@ import { multiply, trs, quatToMat4 } from './mat4.js';
  *  mirror, and the sails ran backwards. */
 export const ROTOR_AXIS = 'z';
 export const ROTOR_SIGN = -1;
+
+/** WM4c: THE MILL HUMS. Kamer's Spin_Up.Start adds a DaggerfallAudioSource
+ *  and calls `SetSound(SoundClips.ArenaFireDaemon, AudioPresets.LoopOnAwake)`
+ *  - spatialBlend 1 by the default argument, everything else Unity's
+ *  fresh-AudioSource defaults: logarithmic rolloff, minDistance 1,
+ *  maxDistance 500, and the volume set to Settings.SoundVolume at play
+ *  (DaggerfallAudioSource.cs Apply, the LoopOnAwake arm). No player
+ *  check, no random play: it loops from the moment it exists, wherever
+ *  the player is, and the rolloff does the rest.
+ *
+ *  The source sits on the GameObject that carries Spin_Up: the SAIL
+ *  (the prefab's Blade child, at ROTOR_HUB) outside, and the PLANK GEAR
+ *  inside. Volume 1 here because the port's master bus IS SoundVolume
+ *  (U29). 'inverse' is WebAudio's logarithmic (audio.js play3d). */
+export const MILL_SOUND = Object.freeze({
+  clip: SOUND.ArenaFireDaemon,
+  volume: 1,
+  refDistance: 1,
+  maxDistance: 500,
+  distanceModel: 'inverse',
+});
+
+/** Where the sail's source sits in the world: the hub, under the mill's
+ *  placement. The machinery's is the gear's own position under its
+ *  parent - the same shape, a different offset (see machineryChildPos). */
+export function millSoundPosition(modelMatrix) {
+  return transformPoint(modelMatrix, ROTOR_HUB[0], ROTOR_HUB[1], ROTOR_HUB[2]);
+}
 
 /** Fair weather turns at the classic rate (see the header). */
 export const CALM_ROTOR_DEG_PER_SEC = 13;
@@ -280,6 +309,11 @@ export function mountMachineryChild(parentMatrix, child, angleDeg) {
   const stand = quatToMat4(child.rotation);
   stand[12] = px; stand[13] = py; stand[14] = pz;
   return multiply(parentMatrix, multiply(stand, rot));
+}
+
+/** A child's own origin under its parent - where its AudioSource sits. */
+export function machineryChildPos(parentMatrix, child) {
+  return transformPoint(parentMatrix, child.position[0], child.position[1], child.position[2]);
 }
 
 /**

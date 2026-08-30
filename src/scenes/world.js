@@ -175,7 +175,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
-import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';   // WM2b: the sails
+import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
@@ -644,6 +644,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.destroyMesh(p.terrain);
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
+    for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
     // T3d fix: the pixel's doors leave with it - they accumulated
@@ -4160,6 +4161,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      // WM4c: the exterior parent is inactive indoors in DFU and its
+      // AudioSources stop with it; the mills fall silent and the
+      // per-frame retry restarts them on the way out.
+      for (const p of built.values()) for (const w of p.windmills) { w.hum?.stop(); w.hum = null; }
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -4515,6 +4520,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         for (const w of p.windmills) {
           advanceRotor(w.state, dt, windNow);
           renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
+        }
+      }
+      // WM4c: THE HUM - see exterior.js. Here the source MOVES every
+      // frame, because the floating origin shifts the pixel under it
+      // and the listener is set in the shifted frame (audio.setListener
+      // above takes cam.pos): a source left at the numbers it started
+      // with would drift away from its mill on every origin shift.
+      if (millParts) {
+        for (const w of p.windmills) {
+          const at = millSoundPosition(multiply(pixelMatrix, w.local));
+          if (!w.hum) w.hum = audio.loop3d(MILL_SOUND.clip, at, MILL_SOUND.volume, MILL_SOUND);
+          else w.hum.move(at);
         }
       }
       // FA1: the flats that move. The animator is PER PIXEL because

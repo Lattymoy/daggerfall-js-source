@@ -101,7 +101,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 // WM2b: the windmill's law, and the vendored rotor it turns.
-import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
+import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM4c: and the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
@@ -1526,6 +1526,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      // WM4c: inside a building or a dungeon the exterior parent is
+      // INACTIVE in DFU (PlayerEnterExit disables it), and a disabled
+      // AudioSource stops. The mills fall silent with it and start
+      // again on the way out, through the same retry that started them.
+      for (const w of windmills) { w.hum?.stop(); w.hum = null; }
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -1783,6 +1788,16 @@ export async function bootExterior(canvas, renderer, params, status) {
           advanceRotor(w.state, dt, wind);
           renderer.drawMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
         }
+      }
+      // WM4c: THE HUM. Kamer's Spin_Up loops ArenaFireDaemon on the sail
+      // from the moment it exists - LoopOnAwake, no player check - so
+      // every mill in the location hums at once and the rolloff sorts
+      // them. Retried each frame until the AudioContext is up (the
+      // torches' idiom: loop3d answers null before the first gesture),
+      // and NOT gated on the wind: his source has no idea what the
+      // weather is.
+      for (const w of windmills) {
+        if (!w.hum) w.hum = audio.loop3d(MILL_SOUND.clip, millSoundPosition(w.matrix), MILL_SOUND.volume, MILL_SOUND);
       }
     }
     if (rig && (riding || params.has('rig'))) {
