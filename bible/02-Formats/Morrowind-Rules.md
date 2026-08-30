@@ -224,6 +224,34 @@ fixture and most retail rigs are, and both wrong the moment a rig scales
 its neck chain. MW-D10 shipped it; nothing could see it until there was a
 translation to get wrong as well.
 
+RULES 24 AND 48, AUDITED AND FOUND ALREADY RIGHT - recorded because
+"we looked" is worth as much as "we changed", and an unexamined rule
+reads the same as a closed one.
+
+  RULE 24's action chain: the port handles "equip attach" and
+    "unequip detach" and nothing else, which is correct for this arm.
+    The rest of the chain ("<type> hit", "shoot release", "start" for the
+    random-attack groups, the spellcast release, "loot") drives GAMEPLAY
+    that Daggerfall's own weapon machine already owns - the hit frame is
+    FPSWeapon's, not the .kf's - so handling them would be two clocks
+    disagreeing about when a blow lands. And the rule's own last line
+    confirms the port's reading of rule 11: "min attack"/"max attack"/
+    "min hit" are NOT events at all, only ever polled by time through
+    getTextKeyTime, which is exactly what keyTime() does with them.
+  RULE 48's "re-playing a live group does NOT restart it" is
+    refreshIdle's early return, and it is load-bearing there for the same
+    reason: the idle is asked for every frame.
+
+THE ONE REACHABLE GAP LEFT, named rather than buried: rule 24's
+"shoot attach" / "shoot follow attach" / "shoot release" attach and
+release an ARROW on the bow, and the port draws no ammunition at all - a
+drawn bow is empty-handed. Rule 8's attach-bone table already anticipates
+it (Arrow -> "Bip01 Arrow", Bolt -> "ArrowBone"), so the placement is
+known; what is missing is resolving Daggerfall's arrow stack onto a
+Morrowind ammo record and attaching it as one more rigid part. That is
+new scope - ammunition - rather than a rule left unread, which is why it
+is here and not silently absent.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
