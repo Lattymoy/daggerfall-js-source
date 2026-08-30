@@ -39,6 +39,7 @@ export const NUMBER_LAW = Object.freeze({
   // still showed a dead readout - a number with no stated range stays
   // text, and this one's range IS stated: GetInt(1, 100).
   'GUI/QuestRumorWeight': { min: 1, max: 100, step: 1, coarse: 10, source: 'DFU GetInt(1,100) (SettingsManager:512)' },
+  'GUI/ShopQualityHUDDelay': { min: 1, max: 10, step: 1, coarse: 2, format: 'sec', source: 'DFU GetInt(1,10) (SettingsManager:494)' },
   'Controls/SoundVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU DisplayUnits 100 (:268-271)' },
   'Controls/MusicVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:272-274)' },
   'Controls/MouseLookSensitivity': { min: 0.1, max: 4.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'the port clamps at 4.0 (lookSettings.js)' },

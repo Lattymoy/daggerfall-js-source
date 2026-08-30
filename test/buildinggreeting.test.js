@@ -24,6 +24,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { LIVE } from '../src/systems/settings.js';
+import { NUMBER_LAW } from '../src/ui/settingsLaw.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -162,7 +164,7 @@ test('BG1: the door arm carries DFU\'s two variables and DEFERS behind the box',
   // the box defers the transition
   assert.match(arm, /townTalk\.showOverlay\(new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterInteriorCore\(hit, entries\); \}\);/);
   // the HUD arm speaks and does NOT defer
-  assert.match(arm, /if \(lines\.length && how === 'hud'\) for \(const l of lines\) townTalk\?\.say\?\.\(l\);/);
+  assert.match(arm, /if \(lines\.length && how === 'hud'\) for \(const l of lines\) townTalk\?\.say\?\.\(l, getInt\('GUI', 'ShopQualityHUDDelay', 1, 10\)\);/);
   // the house greeting is a RANDOM variant; the quality line is not
   assert.match(arm, /townTalk\?\.randomText\?\.\(greet\.textId\)/);
   // and the house greeting is not behind the shop setting
@@ -179,4 +181,14 @@ test('BG1: the bash flag is NARROWED to the input it actually needs', () => {
   assert.match(note, /:621-627/);
   assert.match(note, /`isBash`/);
   assert.doesNotMatch(note, /house greeting/, 'the greeting is no longer part of this flag');
+});
+
+test('AUDIT 28 W6: the shop-quality HUD lines stay up for ShopQualityHUDDelay seconds (PlayerActivate :1382)', () => {
+  // townTalk.say rides the delay through to hudText.add's delayInSeconds
+  // - AddHUDText's own second argument - and the setting's GetInt range
+  // is 1..10 (SettingsManager :494). The screen's law row matches.
+  const talk = readFileSync(new URL('../src/scenes/townTalk.js', import.meta.url), 'utf8');
+  assert.match(talk, /say: \(line, delayInSeconds = undefined\) => hud\.add\(line, delayInSeconds\),/);
+  assert.equal(LIVE['GUI/ShopQualityHUDDelay'], 'src/scenes/worldModes.js');
+  assert.deepEqual(NUMBER_LAW['GUI/ShopQualityHUDDelay'], { min: 1, max: 10, step: 1, coarse: 2, format: 'sec', source: "DFU GetInt(1,10) (SettingsManager:494)" });
 });

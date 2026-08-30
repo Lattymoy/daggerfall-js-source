@@ -125,6 +125,9 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W5: PlayerSpeedChanger.CaptureInputSpeedAdjustment
   // (:75-78) - a press FLIPS the sneak mode instead of holding it.
   'Controls/ToggleSneak': 'src/player/motor.js',
+  // AUDIT 28 W6: AddHUDText's duration for the shop-quality lines
+  // (PlayerActivate :1382), GetInt 1..10.
+  'GUI/ShopQualityHUDDelay': 'src/scenes/worldModes.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

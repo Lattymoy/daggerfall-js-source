@@ -133,7 +133,7 @@ import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
-import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
+import { getBool, getInt } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
 import { reducedRepairCost } from '../systems/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
   calculateItemRepairCost, updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
@@ -3034,7 +3034,11 @@ export function createWorldModes(host) {
           }
           // The HUD arm speaks and does NOT defer (:1379-1386); 'none'
           // says nothing and also does not defer.
-          if (lines.length && how === 'hud') for (const l of lines) townTalk?.say?.(l);
+          // AUDIT 28 W6: AddHUDText(text, Settings.ShopQualityHUDDelay)
+          // (:1382) - each line stays up for the setting's seconds,
+          // GetInt 1..10 (SettingsManager :494). The default hudText
+          // delay is not this law's.
+          if (lines.length && how === 'hud') for (const l of lines) townTalk?.say?.(l, getInt('GUI', 'ShopQualityHUDDelay', 1, 10));
         }
       }
     }

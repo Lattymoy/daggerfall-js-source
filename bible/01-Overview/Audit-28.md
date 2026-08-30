@@ -320,6 +320,14 @@ grounded latch still decides when the mode takes effect; running still
 beats sneaking and the toggled mode survives the run. 3 pins; 4 mutants,
 4 killed.
 
+## W6 CLOSED: ShopQualityHUDDelay (PlayerActivate.cs:1382)
+
+The HUD presentation mode was live since BG1 and its DURATION was not:
+every shop-quality line popped on hudText's default clock. The HUD arm
+passes the setting (GetInt 1..10) through `townTalk.say`'s new delay
+argument to `hudText.add`'s `delayInSeconds` - AddHUDText's own second
+argument. Key LIVE, with its NUMBER_LAW row on the screen.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
