@@ -565,7 +565,86 @@ ink lean, which reproduces Mac's screen exactly; the camera forward
 flipped to +Z - four probe layers; NIF_TO_PASS at +90 - two node pins;
 the weapon never hidden - the rule-57 gate).
 
+MW-D24: THE THIRD-PERSON BODY - TWO RIGS, ONE MACHINE. Mac's goal
+statement asks for the whole first/third-person aspect, and the
+reference's architecture decides the shape before any code does: the
+CharacterController never knows which view it drives - setViewMode
+REBUILDS the NpcAnimation on the other skeleton and part set
+(npcanimation.cpp:295-317) and the controller re-derives its state on
+it (forceStateUpdate -> refreshCurrentAnims(force), character.cpp:2798).
+So fpArm stays the ONE machine and gains a second rig: every clip
+resolution (groups, sources, keys) reads rig() - the active one - and
+"idle1h" resolves in xbase_anim.1st.kf in first person and
+xbase_anim.kf in third, with no second state machine to drift (MW7's
+death). The body builds INSIDE the arm's build while the archives are
+open: rule 6's other skeleton column (getActorSkeleton !firstPerson,
+actorutil.cpp:504-513 - and rule 18's x-swap RESOLVES it to
+xbase_anim.nif on retail, because the x-kf exists), rules 1-3's
+third-person BODY records through playerBodyRows (sex fallback, no
+"1st" ids, tails only report on beasts; the player wears the race's
+FIRST playable face - a DECLARED divergence, Daggerfall's chargen face
+index has no Morrowind analog), the one assembly door
+(assembleFirstPersonArm -> bindPartsInto, every attach bone, mirror,
+offset, one graph space), rule 8's weapon column against THIS
+skeleton's own bones, and the 3P anim sources (base xbase_anim.kf
+first, then the skeleton's own kf when it exists -
+npcanimation.cpp:534-538; the kf name is an extension swap ONLY, no x
+inserted - animation.cpp:651-654). The body takes NO neck pitch and no
+sneak delta: rule 54's pitch controller runs only in VM_FirstPerson
+(npcanimation.cpp:719) and rule 32(a)'s GMST is "1stPerson" by name.
+Rule 57 hides on the SAME weaponShown/arrowShown flags, so a sheathed
+weapon vanishes from the body exactly as vanilla's does. active()
+gained a SEVENTH term (viewMode first) and weaponRig's draw a second
+gate: in third person NOTHING first-person draws - no arm, no classic
+sprite - because Morrowind's third person has no viewmodel. The
+composite rides the pixelize standard's one home (drawRigSpriteBox,
+extracted verbatim from the foes' pass) at the reference's own scale:
+constants.hpp:10's UnitsPerMeter, so a Morrowind body is ~1.83m in
+this port's meters because that is what 128 units IS. A body that
+refuses does NOT refuse the arm: the card carries the sentence and the
+wheel simply cannot leave first person.
+
+MW-D25: THE CAMERA MACHINE, AND THE WHEEL. The reference's player
+camera lives in three homes read whole - camera.cpp (the position/mode
+machine), the omw camera.lua/third_person.lua scripts (the zoom and
+distance laws), actionbindings.lua (the wheel's units) - and the port
+is src/player/mwCamera.js with every constant the reference's own
+number in the reference's own units: focal height 124 (camera.cpp:63)
+above the actor's base (:96-97), base distance 192 (third_person.lua:16),
+min 30 (camera.lua:137), max 800 (settings.lua:43), 10 units a wheel
+click (actionbindings.lua:106), obstacle clearances 5 and 10
+(camera.cpp:172-180), all crossing into meters at ONE boundary through
+UnitsPerMeter. The zoom law is camera.lua:139-160 verbatim with the
+reference's DEFAULTS folded in (viewOverShoulder/bobbing/preview-if-
+standing all default OFF and absent from vanilla, so the preferred
+distance is the base, flat - third_person.lua:135-137): wheel-in at the
+30-ring crosses into first person; wheel-out of the head lands ON the
+30-ring, not the remembered distance; a wall-pinned camera zooms from
+where it actually IS (the obstacleDelta term) and out-zoom is pinned
+with it. The eye is camera.cpp:160-209: focal + pitched-forward
+pull-back, the backward cast backed off 5 units, the focal kept 10
+units under the ceiling and dropped at most its own offset length -
+with the hosts' RAY casts standing in for castSphere (head-on
+equivalent; a grazing hit keeps slightly less clearance, recorded).
+Crossing the first-person boundary QUEUES while the upper body is busy
+(camera.cpp:225-232, resolved at :135) - upperBodyReady() is fpArm's
+own stance test. The four hosts (streaming world, town exterior, the
+modal interior/dungeon pair, the standalone dungeon) ride ONE sync
+seam, src/player/mwView.js - MW-D15's lesson, the camera dep drifted
+per host until it had one home - and their wheel listeners fall
+through to it after the windows have had their turn. DEFERRED, with
+reasons in the module head rather than silence: Preview needs a
+TogglePOV binding the port lacks (the wheel is the requested switch);
+Vanity needs an idle timer and the fVanityDelay GMST.
+
 STILL NOT PORTED, with reasons rather than silence:
+  MOVEMENT ANIM GROUPS (MW-D26, next): the third-person body currently
+    plays the stance idles and the equip/attack sections - the walk/run/
+    turn/strafe selection (character.cpp:2297-2330, the strafe test at
+    :2085, speed-scaled at :2400-2408) is the next slice, read and
+    ledgered under task MW-D26. Until it lands the body idles while the
+    player moves, and this sentence is the record that that is a KNOWN
+    stage, not a discovery waiting to happen.
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
     them visible later. The port skips a hidden subtree's drawables

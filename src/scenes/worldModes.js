@@ -62,6 +62,7 @@ import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBlo
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
 import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
+import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
 import { areEnemiesNearby } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -3780,7 +3781,13 @@ export function createWorldModes(host) {
     if (mode === 'exterior') return true;
 
     const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 500));   // HANDEDNESS (mat4's law)
-    const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
+    // MW-D25: the modal hosts ride the same Morrowind camera machine as
+    // the walk hosts - one eye law, this context's own collider.
+    const mwv = mwViewFrame({
+      fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+      raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
+    });
+    const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
@@ -3808,6 +3815,7 @@ export function createWorldModes(host) {
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 the Light effect's candle; T1 the torch
         new Float32Array(DUNGEON_LIGHT_COLOR));
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       dungeonCtx.flatAnims.tick(dt);   // FA1
@@ -3856,6 +3864,7 @@ export function createWorldModes(host) {
     renderer.setPointLights(_itLit.data, null, _itLit.colors);
     interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     // WM4b: the mill's machinery turns at Kamer's rate, in here too.
     for (const r of interiorCtx.rotors) {

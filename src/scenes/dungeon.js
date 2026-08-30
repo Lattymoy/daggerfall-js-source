@@ -25,6 +25,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
+import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
@@ -208,7 +209,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // U-scroll: the wheel reaches an open window (question scroll, list
   // pickers); passive:false so the page never scrolls under the game.
   canvas.addEventListener('wheel', (e) => {
-    if (!ctx.uiOverlayActive) return;
+    if (!ctx.uiOverlayActive) {
+      // MW-D25: with no window up the wheel is the Morrowind camera.
+      if (walkMode && mwViewWheel(e.deltaY)) e.preventDefault();
+      return;
+    }
     e.preventDefault();
     ctx.overlayWheel?.(Math.sign(e.deltaY));
   }, { passive: false });
@@ -480,9 +485,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
 
-    const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
     const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800));   // HANDEDNESS (mat4's law)
-    const view = lookAt(cam.pos, target, [0, 1, 0]);
+    // MW-D25: the walk camera rides the Morrowind machine; the free-fly
+    // scout keeps its own eye (it has no player body to orbit).
+    const mwv = walkMode
+      ? mwViewFrame({ fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+          raycast: (o, d, m) => ctx.collider.raycast(o, d, m) })
+      : { eye: cam.pos, thirdPerson: false };
+    const target = [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];
+    const view = lookAt(mwv.eye, target, [0, 1, 0]);
 
     ctx.flicker.tick(dt);
     // AUDIT 26 F183: per FRAME, not once at load - the ambient depends
@@ -495,6 +506,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+    if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);

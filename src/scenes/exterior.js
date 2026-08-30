@@ -25,6 +25,7 @@ import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
+import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
@@ -1222,7 +1223,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       e.button, hudCtx, { windowUp: townTalk.overlayActive || (modes?.overlayHeld ?? false) })) return;
     requestLook(canvas);
   });   // U8b/U8c: native windows own the pointer
-  canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel
+  canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e) || mwViewWheel(e.deltaY)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel; MW-D25: otherwise the Morrowind camera zoom
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -1678,14 +1679,23 @@ export async function bootExterior(canvas, renderer, params, status) {
     // Shot vantage scales with the location extent.
     const riding = tpMode && walkMode && !!rig;
     const TP_DIST = 3.2;   // third-person pull-back along the view ray (camera-terrain clip: open, noted in the arc)
+    // MW-D25: the plain walk eye rides the Morrowind camera machine;
+    // the screenshot scout and the horse keep their own framing (the
+    // ride-view predates the machine and is its own recorded law).
+    const mwv = (!shotMode || walkMode) && !riding
+      ? mwViewFrame({ fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+          raycast: (o, d, m) => collider.raycast(o, d, m) })
+      : { eye: cam.pos, thirdPerson: false };
     const target = shotMode && !walkMode
       ? [extentX * 0.46, 6, extentZ * 0.5]
-      : [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
+      : riding
+        ? [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]]
+        : [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];   // MW-D25: ahead of the machine's eye
     const eye = shotMode && !walkMode
       ? [extentX * 0.565, 11, extentZ * 0.72]
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
-        : cam.pos;
+        : mwv.eye;
     const proj = mirrorProjectionX(perspective(   // HANDEDNESS (mat4's law)
       fieldOfView(),
       canvas.clientWidth / canvas.clientHeight,
@@ -1767,6 +1777,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       CITY_LIGHT_COLOR_F32
     );
     renderer.beginFrame(proj, view, sunDirection(minute));
+    mwViewDrawBody(canvas, { proj, view, eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;

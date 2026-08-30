@@ -39,7 +39,7 @@
 // looks level because ITS pitch is an animation channel, where this one
 // takes the player's pitch through the neck the reference rotates.
 
-import { lookAt, perspective, trs } from '../world/mat4.js';
+import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
@@ -56,7 +56,10 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER,
 } from '../formats/mwFirstPerson.js';
+import { PART_BONES } from '../formats/mwNpc.js';
+import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
@@ -73,6 +76,17 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
   if (beast) return 'meshes/base_animkna.1st.nif';
   if (female) return 'meshes/base_anim_female.1st.nif';
   return 'meshes/xbase_anim.1st.nif';
+}
+
+/** MW-D24: rule 6's OTHER column - the THIRD-PERSON skeleton the same
+ *  actor walks on (getActorSkeleton's !firstPerson branch,
+ *  actorutil.cpp:504-513, through settings-default.cfg [Models]
+ *  baseanim/baseanimfemale/baseanimkna). Werewolf out of scope for the
+ *  same reason as above. */
+export function tpSkeletonPath({ female = false, beast = false } = {}) {
+  if (beast) return 'meshes/base_animkna.nif';
+  if (female) return 'meshes/base_anim_female.nif';
+  return 'meshes/base_anim.nif';
 }
 /** Rule 6 again: the first-person animation source sits beside it. This
  *  is the BASE source every first-person actor gets (mXbaseanim1st with
@@ -507,6 +521,116 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   return { mwType, parts, weaponInfo, arrowInfo, notes };
 }
 
+/**
+ * MW-D24: THE THIRD-PERSON BODY, built through the very same doors as
+ * the arm - rule 6's other skeleton column (tpSkeletonPath), rules 1-3's
+ * third-person BODY records (playerBodyRows), the one assembly seam
+ * (assembleFirstPersonArm -> bindPartsInto), rule 8's weapon column on
+ * THIS skeleton's own bones, and the third-person animation sources
+ * (xbase_anim.kf first, npcanimation.cpp:534-538). Runs INSIDE the
+ * arm's build while the archives are still open, because a second
+ * multi-second walk for the same bytes is pure waste.
+ *
+ * A body that refuses does NOT refuse the arm: the player keeps first
+ * person and the card names the reason the wheel cannot leave it.
+ */
+async function buildTpBody({
+  race, female, beast, weapon, hasAmmo, archives, parts, allWeapons, find,
+}) {
+  const exists = (p) => archives.some((a) => a.has(p));
+  const settingsSkeleton = tpSkeletonPath({ female, beast });
+  const skeletonPath = correctActorModelPath(settingsSkeleton, exists);
+  try {
+    const skelArc = find(skeletonPath);
+    if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
+    const skeletonBytes = skelArc.get(skeletonPath).slice();
+
+    const rows = playerBodyRows(parts, race, female, { beast });
+    const partBytes = [];
+    const missing = [];
+    for (const row of rows) {
+      if (!row.record) { missing.push(`${row.slot}: no third-person record for this actor`); continue; }
+      const path = `meshes/${row.record.model}`;
+      const arc = find(path);
+      if (!arc) { missing.push(`${row.slot}: ${path} is not in your archives`); continue; }
+      partBytes.push({ slot: row.slot, bones: PART_BONES[row.slot] ?? [], bytes: arc.get(path).slice() });
+    }
+    if (!partBytes.length) {
+      return { ok: false, stage: 'parts', error: `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
+    }
+    // Rule 8 on THIS skeleton: the third-person rig carries its own
+    // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
+    // record hangs off the same column with no new law.
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    partBytes.push(...resolvedWeapon.parts);
+
+    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
+    if (!arm.ok) {
+      return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
+    }
+    const textures = collectArmTextures(arm.pieces, archives);
+
+    const sourcePaths = tpAnimSources(skeletonPath, exists);
+    if (!sourcePaths.length) {
+      return {
+        ok: false, stage: 'clip',
+        error: `no third-person animation file - neither ${animSourceName(TP_BASE_MODEL)} `
+          + `nor ${animSourceName(skeletonPath)} is in your archives`,
+        notes: missing, rows,
+      };
+    }
+    const sources = [];
+    for (const p of sourcePaths) {
+      const one = await clipReport({ kfBytes: find(p).get(p).slice(), skeleton: arm.skeleton, group: FP_IDLE_BASE });
+      if (!one.ok) return { ok: false, stage: 'clip', error: `${p}: ${one.error}`, notes: missing, rows };
+      sources.push({
+        name: p, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups),
+        trackMap: one.trackMap, binding: one.binding,
+        wouldAccumRoot: accumRootRef(arm.skeleton, one.trackMap),
+      });
+    }
+    const groupSet = new Set(sources.flatMap((so) => so.groups));
+    const idleProbe = composeStanceGroup(FP_IDLE_BASE, animWeaponType(resolvedWeapon.mwType, true), (n) => groupSet.has(n));
+    if (!idleProbe.group) {
+      return { ok: false, stage: 'clip', error: `this .kf names no "${FP_IDLE_BASE}" group and no weapon-suffixed variant of one`, notes: missing, rows };
+    }
+    const idlePick = pickAnimSource(sources, idleProbe.group, resetClip, { loopFallback: true });
+    if (!idlePick) {
+      return { ok: false, stage: 'clip', error: `no source gives group "${idleProbe.group}" a start and a stop key`, notes: missing, rows };
+    }
+    const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
+    for (const so of sources) so.accumRoot = accumRoot;
+    poseAssembly(arm, { tracks: idlePick.source.trackMap, sampleTrack, time: idlePick.state.startTime, accumRoot });
+
+    return {
+      ok: true,
+      arm,
+      tracks: idlePick.source.trackMap,
+      accumRoot,
+      keys: idlePick.source.keys,
+      sources,
+      sourcePaths,
+      clip: idlePick.state,
+      groups: [...groupSet].sort(),
+      groupSet,
+      mwType: resolvedWeapon.mwType,
+      textures,
+      skeletonPath,
+      settingsSkeleton,
+      weapon: resolvedWeapon.weaponInfo,
+      arrow: resolvedWeapon.arrowInfo,
+      rows,
+      notes: [...missing, ...resolvedWeapon.notes, ...(arm.notes || [])],
+      pieces: armPieceRows(arm.pieces).length,
+      // MW-D24: the live weapon swap re-resolves against THIS skeleton's
+      // bones, exactly as the arm's swap does against its own.
+      skeletonBytes,
+    };
+  } catch (err) {
+    return { ok: false, stage: 'build', error: err && err.message ? err.message : String(err) };
+  }
+}
+
 export async function buildFpArm({
   race, female = false, beast = false, weapon = null, hasAmmo = false, deps = null,
 } = {}) {
@@ -608,6 +732,11 @@ export async function buildFpArm({
     // a mesh wants is not knowable until the mesh is parsed, and parsing
     // twice to keep the release where it was would cost seconds.
     const textures = arm.ok ? collectArmTextures(arm.pieces, archives) : new Map();
+    // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
+    // Its refusal is a note on the card, never the arm's refusal.
+    const third = arm.ok
+      ? await buildTpBody({ race, female, beast, weapon, hasAmmo, archives, parts, allWeapons, find })
+      : null;
     archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows: wanted };
@@ -752,6 +881,8 @@ export async function buildFpArm({
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: idlePick.source.binding,
       pieces: armPieceRows(arm.pieces).length,
+      // MW-D24: the third-person body, or its named refusal.
+      third,
     };
   } catch (err) {
     return { ok: false, stage: 'build', error: err && err.message ? err.message : String(err) };
@@ -876,7 +1007,26 @@ export function createFpArm() {
   let actionSource = null;
   const notes = [];
 
-  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || idleState));
+  // MW-D24: TWO RIGS, ONE MACHINE. The reference's CharacterController
+  // never knows which view it is driving - setViewMode rebuilds the
+  // NpcAnimation with the other skeleton and part set
+  // (npcanimation.cpp:295-317) and the controller re-derives its state
+  // on it (forceStateUpdate -> refreshCurrentAnims(force),
+  // character.cpp:2798). Here both rigs are built up front (one archive
+  // walk) and the machine's clip resolution reads THE ACTIVE one:
+  // groups, sources and keys all come from rig(), so "idle1h" resolves
+  // in xbase_anim.1st.kf in first person and xbase_anim.kf in third,
+  // with one state machine between them - MW7 died of two copies.
+  let viewMode = 'first';
+  let thirdBuilt = null;
+  let thirdMesh = null;
+  let thirdPacked = null;
+  const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
+
+  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || idleState)
+    && viewMode === 'first');
+  const thirdActive = () => !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
+    && renderer && (actionState || idleState) && viewMode === 'third');
 
   /**
    * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.
@@ -898,22 +1048,23 @@ export function createFpArm() {
    */
   const ready = () => !!(built && built.ok && (actionState || idleState) && renderer);
 
-  function releaseMesh() {
-    if (mesh && renderer && renderer.gl) {
+  function releaseGpu(m) {
+    if (m && renderer && renderer.gl) {
       const gl = renderer.gl;
-      gl.deleteVertexArray(mesh.vao);
-      for (const b of mesh.buffers || []) gl.deleteBuffer(b);
+      gl.deleteVertexArray(m.vao);
+      for (const b of m.buffers || []) gl.deleteBuffer(b);
       // MW-D11: the textures go with the mesh that owns them. An arm
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
-      for (const r of mesh.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
     }
-    mesh = null;
   }
+  function releaseMesh() { releaseGpu(mesh); mesh = null; }
+  function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; }
 
   // hasAnimation: ANY source names the group (animation.cpp). WHICH
   // source plays it is a separate question, answered in reverse below.
-  const hasGroup = (n) => !!built && anySourceHasGroup(built.sources, n);
+  const hasGroup = (n) => { const r = rig(); return !!r && !!r.sources && anySourceHasGroup(r.sources, n); };
 
   /** The source currently posing the arm - the one that won the clip
    *  being drawn, because its tracks are the ones the pose reads. */
@@ -922,16 +1073,16 @@ export function createFpArm() {
   /** The file's time for a key of the CURRENT weapon group, as
    *  getTextKeyTime is always called (character.cpp:1241): the group, a
    *  colon-space, and the action. -1 when the file has no such key. */
-  const keyTime = (action) => (weaponGroup && built
-    ? getTextKeyTime(built.keys, `${weaponGroup}: ${action}`) : -1);
+  const keyTime = (action) => (weaponGroup && rig()
+    ? getTextKeyTime(rig().keys, `${weaponGroup}: ${action}`) : -1);
 
   /** Play a section of the weapon group. Returns FALSE and leaves the
    *  slot empty when the file has no such window - it never substitutes
    *  a different one, because a substituted attack animation is the
    *  reverted arc's whole failure mode in miniature. */
   function playAction(start, stop, startPoint = 0) {
-    if (!built || !weaponGroup) return false;
-    const pick = pickAnimSource(built.sources, weaponGroup, resetClip, { start, stop, startPoint });
+    if (!rig() || !weaponGroup) return false;
+    const pick = pickAnimSource(rig().sources, weaponGroup, resetClip, { start, stop, startPoint });
     if (!pick) {
       actionState = null;
       notes.push(`${weaponGroup}: no source has "${weaponGroup}: ${start}" and "${weaponGroup}: ${stop}"`);
@@ -968,7 +1119,7 @@ export function createFpArm() {
     const loopCount = short ? FP_IDLE_LOOPS() : Infinity;
     // :822-825 - a restart of the SAME group resumes from where it was.
     const startPoint = idleGroup === composed.group ? clipCompletion(idleState) : 0;
-    const pick = pickAnimSource(built.sources, composed.group, resetClip,
+    const pick = pickAnimSource(rig().sources, composed.group, resetClip,
       { loopFallback: true, loopCount, startPoint });
     if (!pick) {
       idleState = null; idleGroup = null;
@@ -1030,7 +1181,7 @@ export function createFpArm() {
     attackStrength = windUpStrength();
     upper = UPPER_BODY.AttackRelease;
     const k = attackKeys(attackType, attackStrength);
-    const startPoint = releaseSkip(built.keys, weaponGroup, attackType, attackStrength);
+    const startPoint = releaseSkip(rig().keys, weaponGroup, attackType, attackStrength);
     if (!playAction(k.release.start, k.release.stop, startPoint)) beginFollow();
   }
 
@@ -1113,8 +1264,15 @@ export function createFpArm() {
       try {
         const res = await buildFpArm(opts);
         releaseMesh();
+        releaseThirdMesh();
         built = res;
         packed = null;
+        thirdPacked = null;
+        // MW-D24: the body rides the same build. A refused body is a
+        // named note, and the machine stands back up in first person -
+        // the one view that cannot be missing.
+        thirdBuilt = res && res.ok ? (res.third || null) : null;
+        viewMode = 'first';
         wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
@@ -1142,6 +1300,7 @@ export function createFpArm() {
 
     unload() {
       releaseMesh(); built = null; packed = null;
+      releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
       weaponShown = false; arrowShown = false;
@@ -1278,6 +1437,29 @@ export function createFpArm() {
           poseAt(c.startTime);
           if (token.weapon) token.weapon.side = weaponRestSide(arm, token.weapon.bone);
           if (token.arrow) token.arrow.side = weaponRestSide(arm, token.arrow.bone);
+          // MW-D24: the SAME swap on the third-person body - same door
+          // (resolveWeaponParts), this rig's own skeleton bytes, so the
+          // bow lands on ITS "Weapon Bone Left" and the arrow test runs
+          // against bones this rig actually has.
+          if (thirdBuilt && thirdBuilt.ok) {
+            const t = thirdBuilt;
+            const tResolved = resolveWeaponParts({
+              weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
+              skeletonBytes: t.skeletonBytes,
+            });
+            t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
+            bindPartsInto(t.arm, tResolved.parts);
+            const tFresh = t.arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
+            for (const [file, tex] of collectArmTextures(tFresh, archives)) {
+              if (!t.textures.has(file)) t.textures.set(file, tex);
+            }
+            t.mwType = tResolved.mwType;
+            t.weapon = tResolved.weaponInfo;
+            t.arrow = tResolved.arrowInfo;
+            t.pieces = armPieceRows(t.arm.pieces).length;
+            releaseThirdMesh();
+            thirdPacked = null;
+          }
           releaseMesh();
           packed = null;
           // The old action clip belonged to the old weapon's group.
@@ -1365,10 +1547,10 @@ export function createFpArm() {
       // it - "idle handled last as it can depend on the other states"
       // (character.cpp:842).
       if (actionState) {
-        advanceClip(actionState, built.keys, dt, onActionKey);
+        advanceClip(actionState, rig().keys, dt, onActionKey);
         stepUpper();
       }
-      if (idleState) advanceClip(idleState, built.keys, dt, null);
+      if (idleState) advanceClip(idleState, rig().keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !idleState) return;
@@ -1386,6 +1568,47 @@ export function createFpArm() {
       // eye MOVES with the look, it is not a lens tilt.
       const cam = camera && camera();
       sneaking = !!(cam && cam.sneaking);
+      // MW-D24: THE THIRD-PERSON FRAME. One machine advanced the clip
+      // above; which ASSEMBLY takes the pose is the view's question.
+      // The body takes NO neck pitch and no sneak delta: rule 54's neck
+      // rotation and rule 32(a)'s i1stPersonSneakDelta are first-person
+      // laws by name (npcanimation.cpp:719 runs the pitch controller
+      // only in VM_FirstPerson; the GMST is "1stPerson"), and vanilla's
+      // visible body stands level however the player looks.
+      if (viewMode === 'third') {
+        const t = thirdBuilt;
+        if (!t || !t.ok) return;
+        poseAssembly(t.arm, {
+          tracks: poseSource ? poseSource.trackMap : t.tracks,
+          sampleTrack,
+          time: state.time,
+          accumRoot: t.accumRoot,
+        });
+        thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
+        if (!thirdMesh) {
+          thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
+          thirdMesh.ranges = thirdPacked.ranges;
+          for (const r of thirdMesh.ranges) {
+            if (!r.textureFile) continue;
+            const entry = t.textures.get(r.textureFile);
+            if (!entry) continue;
+            const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+            r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+            r.alphaCut = r.piece.material && r.piece.material.alphaTest
+              ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+          }
+        } else {
+          renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
+        }
+        // Rule 57 hides on the SAME flags: sheathed vanilla shows no
+        // weapon on the body, and the arrow follows the shoot keys.
+        for (const r of thirdMesh.ranges) {
+          if (r.slot === 'weapon') r.hidden = !weaponShown;
+          else if (r.slot === 'arrow') r.hidden = !arrowShown;
+        }
+        frames++;
+        return;
+      }
       poseAssembly(built.arm, {
         tracks: poseSource ? poseSource.trackMap : built.tracks,
         sampleTrack,
@@ -1446,6 +1669,11 @@ export function createFpArm() {
     },
 
     draw(canvas) {
+      // MW-D24: in third person the first-person overlay does not exist
+      // - the reference masks the whole FP root out of the scene
+      // (Mask_FirstPerson, npcanimation.cpp:931 setNodeMask on view
+      // change). active() is already false in that mode; the guard here
+      // keeps the sentence readable at the call site.
       if (!active() || !canvas) return false;
       const cam = camera();
       if (!cam) return false;
@@ -1503,6 +1731,88 @@ export function createFpArm() {
       return true;
     },
 
+    /**
+     * MW-D24: THE VIEW SWITCH, the port's setViewMode + forceStateUpdate
+     * (npcanimation.cpp:295-317; character.cpp:2798). The camera machine
+     * only crosses the first-person boundary when upperBodyReady() - the
+     * reference queues otherwise (camera.cpp:225-232) - so by the time
+     * this runs the machine is in a stable state (None or
+     * WeaponEquipped) and the re-derivation is exactly a force refresh:
+     * the action slot empties ("Changing the view will stop all playing
+     * animations"), the stance re-resolves on the NEW rig's sources, and
+     * weaponShown/sheathed carry over untouched.
+     */
+    setViewMode(mode) {
+      const want = mode === 'third' ? 'third' : 'first';
+      if (want === viewMode) return true;
+      if (want === 'third' && !(thirdBuilt && thirdBuilt.ok)) {
+        notes.push(`view: no third-person body - ${thirdBuilt ? `${thirdBuilt.stage}: ${thirdBuilt.error}` : 'not built'}`);
+        return false;
+      }
+      viewMode = want;
+      actionState = null; actionSource = null; attackType = null; holdWindUp = false;
+      if (upper !== UPPER_BODY.None && upper !== UPPER_BODY.WeaponEquipped) {
+        upper = weaponShown ? UPPER_BODY.WeaponEquipped : UPPER_BODY.None;
+      }
+      refreshWeaponGroup();
+      resetIdle();
+      return true;
+    },
+    viewMode: () => viewMode,
+    thirdActive,
+    /** upperBodyReady (character.cpp:135's gate): a stable stance, no
+     *  action section in flight, no build in flight. */
+    upperBodyReady: () => !busy && !actionState
+      && (upper === UPPER_BODY.None || upper === UPPER_BODY.WeaponEquipped),
+    /** What the wheel may cross INTO: a body that refused keeps the
+     *  player in first person with the reason on the card. */
+    canThirdPerson: () => !!(thirdBuilt && thirdBuilt.ok),
+
+    /**
+     * MW-D24: THE THIRD-PERSON DRAW - the body composited into the world
+     * through the pixelize standard (drawRigSpriteBox, the same law the
+     * voxel foes ride). The assembly is in Morrowind's Z-up units; the
+     * model matrix stands it at the player's feet with the player's
+     * heading and ONE scale, the reference's own unit bridge
+     * (constants.hpp:10) - a Morrowind body is 1.83m tall in this
+     * port's meters because that is what 128 units IS, not because it
+     * was fitted to anything.
+     *
+     * Yaw: the port's world forward is [sin yaw, 0, cos yaw]; a
+     * Morrowind actor faces +Y in model space, which Rx(-90) sends to
+     * -Z... so the rig needs an extra half-turn to face the player's
+     * forward, folded into the yaw term below and pinned by the probe's
+     * facing layer rather than trusted.
+     */
+    drawThird(canvas, { proj, view, eye, feet, yaw }) {
+      if (!thirdActive() || !canvas || !feet) return false;
+      const t = thirdBuilt;
+      const u = 1 / MW_UNITS_PER_METER;
+      const yawDeg = (yaw * 180 / Math.PI) + 180;
+      const model = multiply(
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, u, u, u),
+        NIF_TO_PASS,
+      );
+      // The box the sprite law needs, measured off the POSED pieces in
+      // MW axes and mapped: MW z is world up, MW x/y are the horizontal
+      // pair. The azimuth-safe half-width holds under yaw for free,
+      // exactly as the voxel rigs' does.
+      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      for (const r of armPieceRows(t.arm.pieces)) {
+        const b = r.bounds;
+        if (!b) continue;
+        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+      }
+      if (!(maxX > minX)) return false;
+      const halfH = ((maxZ - minZ) * u) / 2;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u) / 2;
+      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
+      return true;
+    },
+
     status() {
       return {
         active: active(),
@@ -1540,6 +1850,16 @@ export function createFpArm() {
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
         frames,
+        // MW-D24: which rig the machine is driving, and the body's own
+        // build verdict - a refusal is a sentence on the card, exactly
+        // like the arm's.
+        viewMode,
+        third: thirdBuilt
+          ? (thirdBuilt.ok
+            ? { ok: true, pieces: thirdBuilt.pieces, skeletonPath: thirdBuilt.skeletonPath,
+                weapon: thirdBuilt.weapon, groups: thirdBuilt.groups ? thirdBuilt.groups.length : 0 }
+            : { ok: false, stage: thirdBuilt.stage, error: thirdBuilt.error })
+          : null,
       };
     },
 

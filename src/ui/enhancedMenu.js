@@ -893,6 +893,13 @@ function paneEnhanced(body) {
         + (armState.weapon.side && armState.weapon.side !== 'unknown'
           ? ` (${armState.weapon.side} side at rest)` : '')
       : armState.active ? 'none - empty hands' : '-'],
+    // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
+    // game to see it, and when the wheel refuses, this line is why.
+    ['Body', armState.third
+      ? (armState.third.ok
+        ? `${armState.third.pieces} pieces from ${armState.third.skeletonPath} - scroll out for third person (view: ${armState.viewMode})`
+        : `refused - ${armState.third.stage}: ${armState.third.error}`)
+      : '-'],
   ]));
   const armActions = [
     { label: 'Attach data', primary: !count, onClick: async () => {
