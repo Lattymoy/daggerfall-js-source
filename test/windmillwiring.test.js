@@ -137,11 +137,16 @@ test('WM2e: the mill is skinned for the climate it stands in', () => {
 
 test('WM2d: the placement is real, and lives where every other model\'s does', () => {
   // The bug WM2b shipped was a rotor hung on a placement that never
-  // happened. So the placement itself is pinned: the six farm blocks
-  // each stand exactly one mill, and a block that is not one stands none.
+  // happened. So the placement itself is pinned: the SEVEN farm blocks
+  // his manifest names each stand exactly one mill, and a block that is
+  // not one stands none. Exact, not `>= 6`: the count was six for a day
+  // because FARMAA09 was recorded as a zero-byte file, and a floor pin
+  // let that stand.
   const blocks = new Set(PLACEMENTS.map((p) => p.block));
   assert.equal(blocks.size, PLACEMENTS.length, 'two placements claim the same block');
-  assert.ok(PLACEMENTS.length >= 6, `only ${PLACEMENTS.length} mills placed`);
+  assert.deepEqual([...blocks].sort(),
+    ['FARMAA00.RMB', 'FARMAA01.RMB', 'FARMAA02.RMB', 'FARMAA05.RMB', 'FARMAA06.RMB', 'FARMAA07.RMB', 'FARMAA09.RMB'],
+    'the seven blocks of WindMills.dfmod.json each place one mill');
   for (const b of blocks) {
     const mills = windmillsFor(b);
     assert.equal(mills.length, 1, `${b} stands ${mills.length} mills`);

@@ -244,7 +244,7 @@ const skinRows = Object.entries(variants.climates).map(([base, c]) =>
   + `walls: [${c.walls}], roof: [${c.roof}], `
   + `winterWalls: [${c.winterWalls}], winterRoof: [${c.winterRoof}] })],`).join('\n');
 
-// WHERE THE MILLS STAND - the six placements Kamer chose, carried as the
+// WHERE THE MILLS STAND - the seven placements Kamer chose, carried as the
 // RAW record fields rather than baked matrices, so the placement MATH
 // stays in world/rmbLayout.js where every other model's lives.
 const placements = JSON.parse(
@@ -286,7 +286,7 @@ ${skinRows}
 ]);
 
 /** WHERE THE MILLS STAND. Classic Daggerfall places NO windmill - these
- *  six blocks each gain one, which is what Kamer's WorldData overrides
+ *  seven blocks each gain one, which is what Kamer's WorldData overrides
  *  do on his side and what world/rmbLayout.js does on ours. Raw record
  *  fields in Daggerfall's own units; the matrix is built where every
  *  other model's is.

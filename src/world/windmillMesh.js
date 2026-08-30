@@ -61,7 +61,7 @@ export const CLIMATE_SKINS = new Map([
 ]);
 
 /** WHERE THE MILLS STAND. Classic Daggerfall places NO windmill - these
- *  six blocks each gain one, which is what Kamer's WorldData overrides
+ *  seven blocks each gain one, which is what Kamer's WorldData overrides
  *  do on his side and what world/rmbLayout.js does on ours. Raw record
  *  fields in Daggerfall's own units; the matrix is built where every
  *  other model's is.
@@ -76,4 +76,5 @@ export const PLACEMENTS = Object.freeze([
   Object.freeze({ block: 'FARMAA05.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2962, y: -662, z: 1267, rotY: 0, building: Object.freeze({ modelIdNum: 118, x: -2800, y: 0, z: 1000, rotY: 512 }) }),
   Object.freeze({ block: 'FARMAA06.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2025, y: -663, z: 2365, rotY: 0, building: Object.freeze({ modelIdNum: 118, x: -1865, y: 0, z: 2100, rotY: 512 }) }),
   Object.freeze({ block: 'FARMAA07.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2025, y: -663, z: -268, rotY: -1024, building: Object.freeze({ modelIdNum: 118, x: -2185, y: 0, z: 0, rotY: -512 }) }),
+  Object.freeze({ block: 'FARMAA09.RMB', subX: 3200, subZ: 3328, subRot: 0, x: -2850, y: -663, z: 788, rotY: -1535, building: Object.freeze({ modelIdNum: 118, x: -2585, y: 0, z: 950, rotY: 1024 }) }),
 ]);

@@ -65,8 +65,8 @@ writeFileSync(new URL('../src/world/windmillInterior.js', import.meta.url),
 // bake. test/windmillinterior.test.js pins this against the vendored
 // source, so a drifted bake fails.
 //
-// The interior of the subrecord Kamer adds to each of the six farm
-// blocks - identical in all six, so one copy serves them all. In
+// The interior of the subrecord Kamer adds to each of the seven farm
+// blocks - identical in all seven, so one copy serves them all. In
 // blocksFile's own parsed shape, so every consumer treats it as an
 // ordinary subrecord and none of them needs to know where it came from.
 //

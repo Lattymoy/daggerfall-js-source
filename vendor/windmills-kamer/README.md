@@ -3,7 +3,7 @@
 `Blade.dae` and `Windmill.dae` from **"Windmills of Daggerfall" v2.0 by
 Kamer** (Daggerfall Unity mod, GUID
 `aaac5c33-f615-444e-98fe-818b4a484b4c`), vendored VERBATIM as exported,
-plus `placements.json` - the six spots he chose to stand them.
+plus `placements.json` - the seven spots he chose to stand them.
 
 **Permission: granted by the author, confirmed by Mac 2026-08-29.** That
 is what makes these files admissible where the roads took the other
@@ -56,7 +56,7 @@ Here: the mill, and where it stands.
   Daggerfall's own farm blocks already stood a tower for the sail to
   hang on, so only the sail was taken. They do not - see below - so the
   port needs his tower too.
-- `placements.json` - the six placements, and ONLY the added record from
+- `placements.json` - the seven placements, and ONLY the added record from
   each block. See the note inside it.
 
 Its five materials carry no texture in the DAE; they are bound in the

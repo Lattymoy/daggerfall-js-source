@@ -1873,3 +1873,68 @@ answer.
 
 Still open on the mill, unchanged: **sound** - Kamer loops a clip on it,
 the port does not.
+
+## WM4 - THE 1:1 AUDIT AGAINST THE RAR, and the seventh mill (2026-08-30)
+
+Mac's call: "ensure our windmill implementation has everything from this
+file and is complete 1:1. No exceptions." The archive was opened and
+every file in it was checked against the port - the 3 scripts, the 26
+prefabs (materials, children, transforms, scripts, read out of the YAML
+by guid), the 10 DAEs, the 7 WorldData overrides (hand-edited and
+malformed: a missing comma between subrecords in FARMAA01, a raw `\0` in
+a name in FARMAA09, so they were read with a tolerant parser), and the
+manifest. What was verified equal: the sail hub, the axis and the
+handedness; all seventeen climate/season skins, this time against DFU's
+OWN lookup law (`MeshReplacement.GetName`, :329-343: ONE name per
+climate - `41600_Desert` for desert, `41600_{Climate}{Season}`
+otherwise, then `41600`); the six placements; the interior, identical
+in every override.
+
+### WM4a: FARMAA09 is not a zero-byte file
+
+The placements note said `FARMAA09.RMB.json` shipped empty while being
+named in the manifest, so six blocks got a mill. In this archive it is
+191,039 bytes: sub 1 of a block declaring 1, the mill at (-2850, -663,
+788) rotY -1535 and its building 118 at (-2585, 0, 950) rotY 1024, the
+same room inside. The seventh placement is in `placements.json` and
+baked; the wiring pin is EXACT over the seven block names now rather
+than `>= 6`, because a floor pin is what let six stand.
+
+Two more notes corrected on the same evidence: Mountain's Fall and
+Spring prefabs are full files identical to the base, not empty; and the
+`New_Windmill 2 Desert.dae` body (roof peak lowered to the eave, one
+vertex) sits only in `41600_DesertFall/Spring/Winter` and
+`41600_Desert 1`, none of which DFU's lookup ever asks for, so it is
+recorded and not carried.
+
+### What the audit found still open, and is built in the slices that follow
+
+- **Model 41601, the machinery, does not draw.** The room places it and
+  `layoutInterior` drops it as an id ARCH3D does not carry. His prefab is
+  `41601.dae` (eight material groups) plus two ANIMATED children:
+  `Plank_Gear` at (11.02, 4.49, -2.28), rotation (0.5, 0.5, -0.5, 0.5),
+  with `Spin_Up` (local Z, -13 deg/s in his space), and `Roller` at
+  (9.64, -7.14, -2.21), rotation (-0.7071, 0, 0, 0.7071), with
+  `SpinTime_Roller` (local X, +13 deg/s). The README's reason for
+  leaving the roller out - "no texture" - was read off the DAE; the
+  PREFAB binds 067_1 / 091_2 / 091_3 to it. WM4b.
+- **Sound.** `Spin_Up.Start` loops `SoundClips.ArenaFireDaemon`
+  (DAGGER.SND 11) `LoopOnAwake` at spatialBlend 1 on a fresh
+  AudioSource - Unity's defaults, logarithmic rolloff, min 1, max 500 -
+  with volume set to `Settings.SoundVolume` at play. It rides the
+  exterior mill AND the plank gear inside. The second source in the same
+  method is never given a clip (`BlowingWindIntro` is commented out) and
+  is not owed. WM4c.
+
+### Kept, on Mac's word: the wind-driven rate
+
+His sails turn at 13 always; ours turn at 13 in fair weather and take
+the rest from the sky's wind (WM1, Ledger A). Raised as the one
+departure the "no exceptions" would delete; Mac: "keep that."
+
+### Not in the shipped mod, so not owed
+
+`11511.prefab`, `11512.dae`, `WindNoDoor.dae`, `Door.dae`, `41600 1/2/4`
+and `LoadWindmill.cs` are outside the manifest's Files list; DFU never
+loads them. `LoadWindmill.cs` is the modding tutorial's class and asks
+for a `21411` watermill the archive does not contain.

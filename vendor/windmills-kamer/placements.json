@@ -29,9 +29,10 @@
     "stands a windmill, the port never placed one, and the rotor WM2b wired",
     "had nothing to hang on - which is exactly what Mac saw.",
     "",
-    "FARMAA09.RMB.json ships ZERO BYTES in the mod while being listed in its",
-    "manifest, so that block has no placement here. Six blocks, six mills.",
-    "Units are Daggerfall's own, as the block records store them."
+    "SEVEN BLOCKS, SEVEN MILLS. An earlier note here said FARMAA09.RMB.json",
+    "shipped zero bytes; the archive Mac handed over on 2026-08-30 carries",
+    "it whole (191,039 bytes, sub 1 of a block declaring 1), so its mill",
+    "stands too. Units are Daggerfall's own, as the block records store them."
   ],
   "placements": [
     {
@@ -134,6 +135,23 @@
         "y": 0,
         "z": 0,
         "rotY": -512
+      }
+    },
+    {
+      "block": "FARMAA09.RMB",
+      "subX": 3200,
+      "subZ": 3328,
+      "subRot": 0,
+      "x": -2850,
+      "y": -663,
+      "z": 788,
+      "rotY": -1535,
+      "building": {
+        "modelIdNum": 118,
+        "x": -2585,
+        "y": 0,
+        "z": 950,
+        "rotY": 1024
       }
     }
   ]
