@@ -1829,3 +1829,109 @@ test('MW-D31: the first person wears gauntlets, sleeves and the shield - never a
     'the fp filter is not the reference\u2019s visible set');
   assert.deepEqual(fpWornAdds([]), []);
 });
+
+// ── MW-D31: SKINNING BROUGHT TO 1:1 ─────────────────────────────────
+
+import { skinBatch, buildSkeleton as bSkel } from '../src/formats/mwSkin.js';
+
+test('MW-D31: the skin transform applies ONCE, after the blend - unnormalised weights prove it', () => {
+  // riggeometry.cpp:172-204: resultMat sums ONLY invBind*boneInSkel
+  // (W column pinned), then `resultMat *= transform` once. Folding the
+  // transform into each bone term multiplies its translation by the
+  // WEIGHT SUM - and rule 39 forbids renormalising, so a half-weighted
+  // vertex slid halfway to the origin.
+  const batch = {
+    positions: new Float32Array([0, 0, 0]),
+    normals: null,
+    skin: {
+      transform: { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], translation: [2, 0, 0], scale: 1 },
+      shapeTransform: null,
+      skeletonRoot: -1,
+      rootBone: -1,
+      bones: [{ ref: 7, indices: new Uint16Array([0]), weights: new Float32Array([0.5]),
+        invBind: { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] } }],
+    },
+  };
+  const skelMats = { get: () => ({ a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] }) };
+  const out = new Float32Array(3);
+  skinBatch(batch, null, null, skelMats, out, null);
+  // reference: v' = transform.a * (0.5*I * v) + transform.t = (2,0,0).
+  // the folded-per-bone wrong answer is 0.5*(2,0,0) = (1,0,0).
+  assert.ok(Math.abs(out[0] - 2) < 1e-6, `translation applied once, not weight-scaled (${out[0]})`);
+});
+
+test('MW-D31: the hair slot filters geometry on "hair", not on its attach bone', async () => {
+  // npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ? "hair" :
+  // bonename`. Byte-patch armhand's "Tri Left Hand" to the same-length
+  // "Tri Hairstyle": the hair slot must take it AT a bone whose name
+  // matches nothing in the file.
+  const bytes = f('armhand.nif');
+  const from = [...'Tri Left Hand'].map((c) => c.charCodeAt(0));
+  const to = [...'Tri Hairstyle'].map((c) => c.charCodeAt(0));
+  const patched = bytes.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hair', bones: ['left hand'], bytes: patched }],
+  });
+  const hair = asm.pieces.filter((p) => p.slot === 'hair');
+  assert.equal(hair.length, 1, `the "hair"-named shape bound at the head-stand-in bone (${hair.length})`);
+  // and the same file under a NON-hair slot at the same bone binds
+  // NOTHING - the bone-name filter matches neither remaining shape.
+  const asm2 = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'chest', bones: ['left hand'], bytes: patched }],
+  });
+  assert.equal(asm2.pieces.filter((p) => p.slot === 'chest' && p.kind === 'skinned').length, 0,
+    'every other slot still filters on its bone name');
+});
+
+test('MW-D31: one skinned shape makes the FILE a rig - its unskinned shapes never take the rigid path', async () => {
+  // node.cpp:275-276 (one skin sets mUseSkinning for the file) and
+  // attach.cpp:42-46 (CopyRigVisitor seeds ONLY RigGeometry - `if
+  // (!isRig) return;`). armmixed.nif is the mixed file: a skinned hand
+  // plus an unskinned "Trim".
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hand', bones: ['right hand'], bytes: f('armmixed.nif') }],
+  });
+  assert.equal(asm.pieces.filter((p) => p.kind === 'rigid').length, 0,
+    'no rigid piece out of a RIG file');
+  assert.ok(asm.notes.some((n) => /RIG file are not/.test(n)),
+    `the drop is a NOTE, not a silence (${asm.notes.join(' | ')})`);
+  assert.equal(asm.pieces.filter((p) => p.kind === 'skinned').length, 1, 'the skinned hand still binds');
+});
+
+test('MW-D31 rule 13: the mirror reads the RESOLVED node\'s own name, case-sensitively', async () => {
+  // attach.cpp:166 - `attachNode->getName().find("Left") != npos` on the
+  // node the skeleton actually carries, not the requested lowercase
+  // table entry. Byte-patch armskel's "Left Hand" to "LEFT HAND": the
+  // reference does NOT mirror there.
+  const skel = f('armskel.nif');
+  const from = [...'Left Hand'].map((c) => c.charCodeAt(0));
+  const to = [...'LEFT HAND'].map((c) => c.charCodeAt(0));
+  const patched = skel.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: patched,
+    parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
+  });
+  const rigid = asm.pieces.find((p) => p.kind === 'rigid');
+  assert.ok(rigid, 'the rigid cuff bound at the all-caps bone');
+  assert.equal(rigid.mirrored, false,
+    '"LEFT HAND" does not contain "Left" - the reference\'s test is case-sensitive on the node name');
+  // and the unpatched skeleton still mirrors
+  const asm2 = await assembleFirstPersonArm({
+    skeletonBytes: skel,
+    parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
+  });
+  assert.equal(asm2.pieces.find((p) => p.kind === 'rigid').mirrored, true, 'the real "Left Hand" node mirrors');
+});

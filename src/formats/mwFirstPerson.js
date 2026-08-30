@@ -1527,11 +1527,16 @@ export function bindPartsInto(assembly, parts) {
       // ciStartsWith("", filter) is false and the engine drops it), so a
       // nameless one-shape part would bind at every side and stack
       // duplicates in the same place. That one binds once.
+      // MW-D31 / rule 15's HAIR EXCEPTION: the hair part attaches at the
+      // Head bone but its geometry filter is the word "hair"
+      // (npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ?
+      // "hair" : bonename`). Every other slot filters on its bone name.
+      const geomFilter = part.slot === 'hair' ? 'hair' : bone;
       let namelessHere = false;
       for (const batch of bound.skinned) {
         const nameless = !String(batch.name || '').trim();
         if (nameless && tookNameless) continue;
-        if (bone && !shapeMatchesBone(batch.name, bone)) continue;
+        if (geomFilter && !shapeMatchesBone(batch.name, geomFilter)) continue;
         // MW-D7: the piece KEEPS its batch, and `positions` is its own
         // buffer - never an alias of batch.positions, which poseAssembly
         // reads every frame. Aliasing them is the runaway the viewer
@@ -1550,12 +1555,36 @@ export function bindPartsInto(assembly, parts) {
 
       // RULE 12 + 13: a rigid part is PLACED at the bone, once per side,
       // with x negated on the left.
-      if (bound.attached.length) {
+      //
+      // MW-D31: the skinned-vs-rigid branch is decided per FILE, not per
+      // shape. One skinned geometry makes the whole file a rig
+      // (node.cpp:275-276 sets mUseSkinning; nifloader wraps the roots
+      // in a Skeleton) and attach() then takes the CopyRigVisitor
+      // branch, which seeds ONLY RigGeometry drawables
+      // (attach.cpp:42-46 `if (!isRig) return;`) - an unskinned shape
+      // in that file never takes the rigid path's mirror/offset, it is
+      // drawn only as part of a copied rig ancestor's subtree, which
+      // this flattened graph cannot express. So a rig file's rigid
+      // batches are NOTED and dropped rather than mirrored into places
+      // the reference never draws them.
+      if (bound.attached.length && bound.skinned.length) {
+        const say = `${part.slot}: ${bound.attached.length} unskinned shape(s) in a RIG file are not `
+          + 'attached (attach.cpp:42-46 seeds only skinned geometry)';
+        if (!notes.includes(say)) notes.push(say);
+      } else if (bound.attached.length) {
         // The mirror is fixed HERE, at bind time, because it is a fact
         // about the bone's NAME, not about the pose. Re-deriving it per
         // frame invites a pose-dependent mirror, which is a left hand
         // that flips sides mid-clip.
-        const mirror = !!(bone && /left/i.test(bone));
+        //
+        // MW-D31 / rule 13: the reference tests the RESOLVED node's own
+        // name, case-SENSITIVELY (attach.cpp:166 - `attachNode->getName()
+        // .find("Left") != npos`). The requested name in the part table
+        // is lowercase; the node the skeleton actually carries is what
+        // decides.
+        const nodeRef = bone ? skeleton.byName.get(bone.toLowerCase()) : null;
+        const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
+        const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
             // MW-D16: a part instanced under a node INSIDE another part's

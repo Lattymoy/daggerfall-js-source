@@ -288,6 +288,16 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   }
   const n = batch.positions.length / 3;
   // Per-vertex blended affines, translations included - 12 floats each.
+  // MW-D31: the blend accumulates ONLY invBind * boneInSkelSpace - the
+  // reference's resultMat starts at zero with its W column pinned to
+  // (0,0,0,1) and sums exactly those per-bone products
+  // (riggeometry.cpp:172-202); `post` is applied ONCE to the blended
+  // result (`resultMat *= transform`, :204), never folded into each
+  // bone term. The difference is the translation column: folded per
+  // bone it comes out (sum w)*post.t, and rule 39 forbids
+  // renormalising, so any vertex whose weights do not sum to 1 - a
+  // missing-bone skip, or a file authored that way - slid toward the
+  // origin by the deficit.
   const acc = new Float32Array(n * 12);
   const wsum = new Float32Array(n);
   // RULE 40: an influence naming a MISSING bone (ref null, from
@@ -308,7 +318,7 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
       for (let k = 0; k < bone.indices.length; k++) touched[bone.indices[k]] = 1;
       continue;
     }
-    const m = affineMul(affineMul(post, skelMats.get(bone.ref)), bone.invBind);
+    const m = affineMul(skelMats.get(bone.ref), bone.invBind);
     for (let k = 0; k < bone.indices.length; k++) {
       const v = bone.indices[k];
       const w = bone.weights[k];
@@ -325,11 +335,31 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   collapse[9] = post.t[0];
   collapse[10] = post.t[1];
   collapse[11] = post.t[2];
+  // MW-D31: post composed onto the BLENDED affine, once per vertex -
+  // the row-vector `resultMat *= transform` in column terms. The
+  // collapse row is that same law on a zero accumulator: post.a*0 +
+  // post.t, which is why it stays post.t verbatim.
+  const composed = new Float32Array(12);
+  const pa = post.a;
+  const pt = post.t;
+  const composePost = (o) => {
+    for (let c = 0; c < 3; c++) {           // three columns of acc's 3x3
+      const x = acc[o + c]; const y = acc[o + 3 + c]; const z = acc[o + 6 + c];
+      composed[c] = pa[0] * x + pa[1] * y + pa[2] * z;
+      composed[3 + c] = pa[3] * x + pa[4] * y + pa[5] * z;
+      composed[6 + c] = pa[6] * x + pa[7] * y + pa[8] * z;
+    }
+    const tx = acc[o + 9]; const ty = acc[o + 10]; const tz = acc[o + 11];
+    composed[9] = pa[0] * tx + pa[1] * ty + pa[2] * tz + pt[0];
+    composed[10] = pa[3] * tx + pa[4] * ty + pa[5] * tz + pt[1];
+    composed[11] = pa[6] * tx + pa[7] * ty + pa[8] * tz + pt[2];
+    return composed;
+  };
   for (let v = 0; v < n; v++) {
     const o = v * 12;
     // An untouched vertex keeps its authored position; a touched one
     // with no surviving weight takes the zero-accumulator collapse.
-    const a = wsum[v] > 0 ? acc.subarray(o, o + 12) : touched[v] ? collapse : null;
+    const a = wsum[v] > 0 ? composePost(o) : touched[v] ? collapse : null;
     const x = batch.positions[v * 3];
     const y = batch.positions[v * 3 + 1];
     const z = batch.positions[v * 3 + 2];

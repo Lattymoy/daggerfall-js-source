@@ -824,6 +824,24 @@ def make_armnameless():
     write_nif(HERE / "armnameless.nif", [root])
 
 
+def make_armmixed():
+    # MW-D31: a MIXED file - one skinned shape and one unskinned one.
+    # One skin makes the whole file a rig (node.cpp:275-276), and
+    # attach() then seeds ONLY RigGeometry (attach.cpp:42-46), so the
+    # unskinned "Trim" must never take the rigid path's mirror/offset.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    rest = ARM_REST["Right Hand"]
+    node = _bone(root, "Right Hand", rest)
+    tri = _tri(root, "Tri Right Hand", [(0.8, 0.0, 0.6), (1.6, 0.0, 0.6), (1.2, 0.0, 1.4)])
+    _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
+                         [(0, 1.0), (1, 1.0), (2, 1.0)])])
+    _tri(root, "Trim", [(0.1, 0.0, -0.3), (0.9, 0.0, -0.3), (0.5, 0.0, 0.3)])
+    write_nif(HERE / "armmixed.nif", [root])
+
+
 def make_arm_idle_kf():
     # MW-D7: THE IDLE CLIP. The first fixture in this tree that a first-
     # person arm can actually be posed by, and every one of its eleven text
