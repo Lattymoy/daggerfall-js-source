@@ -795,6 +795,27 @@ export function weaponRecords(bytes) {
   return out;
 }
 
+/** MW-D28: the ARMO records, read the WEAP way - id, model, display
+ *  name, enchantment flag. AODT is not decoded: nothing this port
+ *  draws needs Morrowind's armor class, and a struct nobody consumes
+ *  is a guess waiting for its own MW-D22 (the byte-eight lesson, one
+ *  screen up). mwItemMap resolves DF armor against these by token. */
+export function armorRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'ARMO') continue;
+    const e = { id: '', model: '', name: '', enchanted: false };
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+      else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+      else if (sub.name === 'ENAM') e.enchanted = true;
+    }
+    if (e.id && e.model) out.push(e);
+  }
+  return out;
+}
+
 /**
  * MW-D15 / RULE 32(a): the GMST the SNEAK SINK is measured in.
  *

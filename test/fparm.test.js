@@ -1411,3 +1411,107 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
   assert.match(menu, /faceIndex: playerEntity\.faceIndex \| 0/,
     'the live player\u2019s classic face no longer reaches the build');
 });
+
+// ═══ MW-D28: THE ITEM MAP ═══════════════════════════════════════════
+import {
+  DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
+  mwArmorRecords, itemMapCoverage, mwItemReport,
+} from '../src/formats/mwItemMap.js';
+import { armorRecords } from '../src/formats/mwFirstPerson.js';
+import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
+import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
+
+test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the build fails', () => {
+  // Mac's brief as a pin: nothing may fall through silently. A row is
+  // allowed to keep the classic sprite, but it must SAY it. MUTANT:
+  // delete any weapon row, armor row or material row and the space
+  // names the hole.
+  const cover = itemMapCoverage();
+  const holes = cover.filter((c) => c.kind === 'UNMAPPED');
+  assert.deepEqual(holes, [], `unmapped item/material combinations:\n${holes.map((h) => `${h.material} ${h.item}`).join('\n')}`);
+  // The space is the REAL space: 19 weapons x 10 materials + 11 armors
+  // x 13 materials, so removing an enum entry cannot shrink the claim.
+  assert.equal(cover.length, 19 * 10 + 11 * 13);
+  // Declared sprites are present, named, and reasoned.
+  const sprites = cover.filter((c) => c.kind === 'sprite');
+  assert.ok(sprites.length >= 10, 'the Arrow rows are not declared');
+  assert.ok(sprites.every((s2) => s2.reason && s2.reason.length > 10), 'a sprite row without a reason is a lie');
+});
+
+test('MW-D28: armor resolves by token, in order, sided, and honestly empty', () => {
+  const R = (id) => ({ id, model: `m/${id}.nif`, name: id, enchanted: false });
+  const recs = [
+    R('iron_cuirass'), R('steel_cuirass'), R('netch_leather_cuirass'),
+    R('netch_leather_bracer_left'), R('netch_leather_bracer_right'),
+    // fictional on retail, load-bearing here: if a mod DID add netch
+    // gauntlets, the FIRST token must win - which is what "in order"
+    // means, and what a pooled filter cannot promise.
+    R('netch_leather_gauntlet_left'), R('netch_leather_gauntlet_right'),
+    R('iron_gauntlet_left'), R('iron_gauntlet_right'),
+    R('iron_pauldron_left'), R('iron_pauldron_right'),
+    R('iron_shield'), R('iron_towershield'), R('iron_helmet'),
+  ];
+  const one = (t, m) => mwArmorRecords(recs, t, m);
+  // material picks among families
+  assert.equal(one(ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Iron).records[0].id, 'iron_cuirass');
+  assert.equal(one(ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Leather).records[0].id, 'netch_leather_cuirass');
+  // SILVER IS A JUDGEMENT ROW: steel stands in, and the map says so.
+  assert.equal(one(ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Silver).records[0].id, 'steel_cuirass');
+  // token order: netch hands are BRACERS - the second token, found
+  // because the first matched nothing. MUTANT: try tokens as one pool
+  // and iron gauntlets shadow them.
+  const netchHands = one(ARMOR_ENUM.Gauntlets, ARMOR_MATERIAL.Leather);
+  assert.deepEqual(netchHands.records.map((r) => r.id),
+    ['netch_leather_gauntlet_left', 'netch_leather_gauntlet_right'],
+    'the first token wins when both exist; bracers are the FALLBACK');
+  const bracerOnly = mwArmorRecords(recs.filter((r) => !r.id.includes('netch_leather_gauntlet')),
+    ARMOR_ENUM.Gauntlets, ARMOR_MATERIAL.Leather);
+  assert.deepEqual(bracerOnly.records.map((r) => r.id), ['netch_leather_bracer_left', 'netch_leather_bracer_right']);
+  // sides: a pauldron template takes ITS side only.
+  assert.deepEqual(one(ARMOR_ENUM.Left_Pauldron, ARMOR_MATERIAL.Iron).records.map((r) => r.id), ['iron_pauldron_left']);
+  assert.deepEqual(one(ARMOR_ENUM.Right_Pauldron, ARMOR_MATERIAL.Iron).records.map((r) => r.id), ['iron_pauldron_right']);
+  // the shield split: three DF sizes on the plain shield, the tower on
+  // the tower - and the plain row must NOT swallow the towershield.
+  assert.equal(one(ARMOR_ENUM.Round_Shield, ARMOR_MATERIAL.Iron).records[0].id, 'iron_shield');
+  assert.equal(one(ARMOR_ENUM.Tower_Shield, ARMOR_MATERIAL.Iron).records[0].id, 'iron_towershield');
+  // honest emptiness: chain greaves in an archive with no chain KEEP
+  // THE SPRITE and the note says why. MUTANT: substitute another
+  // material here and this fails.
+  // an archive holding ONLY a towershield must NOT hand it to the
+  // plain-shield sizes - the sprite stands. MUTANT: drop the
+  // not-clause and the tower leaks.
+  const towerOnly = mwArmorRecords([R('daedric_towershield')], ARMOR_ENUM.Kite_Shield, ARMOR_MATERIAL.Daedric);
+  assert.equal(towerOnly.records.length, 0, 'the towershield leaked into a plain shield row');
+  const miss = one(ARMOR_ENUM.Greaves, ARMOR_MATERIAL.Chain);
+  assert.equal(miss.records.length, 0);
+  assert.match(miss.note, /classic sprite stands/);
+});
+
+test('MW-D28: the ARMO reader reads the WEAP way, and the report prints every row', () => {
+  // A tiny hand-built ESM: header + two ARMO records + one WEAP that
+  // must NOT leak into the armor list.
+  const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+  const sub = (name, payload) => [...enc(name), payload.length, 0, 0, 0, ...payload];
+  const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), body.length & 255, (body.length >> 8) & 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+  const z = (s2) => [...enc(s2), 0];
+  const bytes = new Uint8Array([
+    ...rec('TES3', [sub('HEDR', new Array(300).fill(0))]),
+    // the backslash is a BYTE (0x5c), so the fixture cannot lose an
+    // escape fight between the shell, python and JS - it already did
+    // once, and the reader was innocent both times.
+    ...rec('ARMO', [sub('NAME', z('Iron_Cuirass')), sub('MODL', [...enc('a'), 0x5c, ...z('ir_cuirass.nif')]), sub('FNAM', z('Iron Cuirass'))]),
+    ...rec('ARMO', [sub('NAME', z('glass_helmet')), sub('MODL', [...enc('a'), 0x5c, ...z('glass_helm.nif')]), sub('ENAM', z('x'))]),
+    ...rec('WEAP', [sub('NAME', z('iron_dagger')), sub('MODL', [...enc('w'), 0x5c, ...z('dag.nif')])]),
+  ]);
+  const armo = armorRecords(bytes);
+  assert.deepEqual(armo.map((a) => a.id), ['iron_cuirass', 'glass_helmet'], 'lowercased ids, WEAP excluded');
+  assert.equal(armo[0].model, 'a/ir_cuirass.nif', 'backslashes forward, lowercased');
+  assert.equal(armo[1].enchanted, true);
+  // The report covers the whole grid - 11 pieces x 12 materials (chain
+  // reported once) - and every line carries words, found or not.
+  const report = mwItemReport(armo);
+  assert.equal(report.length, 11 * 12);
+  assert.ok(report.every((r) => r.note && r.note.length > 5));
+  const hit = report.find((r) => r.item === 'Iron Cuirass');
+  assert.deepEqual(hit.found, ['iron_cuirass']);
+});

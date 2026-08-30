@@ -54,12 +54,13 @@
 
 <script type="module">
 import {
-  parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
+  parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS, armorRecords,
   armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
   skeletonReport, checkRequiredBones,
   assembleFirstPersonArm, armPieceRows, poseAssembly, clipReport, clipUnionBounds,
 } from '/src/tools/mwInspect.js';
 import { sampleTrack, resetClip, advanceClip } from '/src/formats/mwAnim.js';
+import { mwItemReport } from '/src/formats/mwItemMap.js';
 
 const out = document.getElementById('out');
 const drop = document.getElementById('drop');
@@ -92,7 +93,7 @@ async function take(files) {
     const bytes = new Uint8Array(await f.arrayBuffer());
     try {
       if (/\.bsa$/i.test(f.name)) bsa = { name: f.name, bytes, index: parseBsaIndex(bytes) };
-      else if (/\.esm$/i.test(f.name)) esm = { name: f.name, bytes, parts: bodyParts(bytes) };
+      else if (/\.esm$/i.test(f.name)) esm = { name: f.name, bytes, parts: bodyParts(bytes), armors: armorRecords(bytes) };
       else errors.push(`${f.name}: not a .bsa or .esm`);
     } catch (err) {
       errors.push(`${f.name}: ${err.message}`);
@@ -175,6 +176,27 @@ function render() {
       h += `<p class="note">These four slots &mdash; ${ARM_PARTS.join(', ')} &mdash; are the only parts the `
         + 'engine lets fall back to a third-person mesh when the <code>1st</code> record is missing. That is a '
         + 'fallback rule, not the list of what gets drawn.</p>';
+
+      // MW-D28: THE ITEM MAP against THESE archives - which Daggerfall
+      // armor will wear Morrowind, which keeps its sprite, and why.
+      // Every row of the grid, no summaries: a player scans for red.
+      if (esm.armors) {
+        const rep = mwItemReport(esm.armors);
+        const missing = rep.filter((r) => !r.found.length);
+        h += `<h2>The item map &mdash; ${esm.armors.length.toLocaleString()} armor records, `
+          + `${(rep.length - missing.length)}/${rep.length} Daggerfall pieces resolve</h2>`;
+        h += '<table><tr><th>Daggerfall piece</th><th>Morrowind record(s)</th><th>note</th></tr>';
+        for (const r of rep) {
+          const cls = r.found.length ? (r.note === 'resolved' ? 'ok' : 'warn') : 'bad';
+          h += `<tr><td>${esc(r.item)}</td>`
+            + `<td class="dim">${esc(r.found.join(', ') || '\u2014')}</td>`
+            + `<td class="${cls}">${esc(r.note)}</td></tr>`;
+        }
+        h += '</table>';
+        h += '<p class="note">A red row is not an error: that piece keeps its classic sprite, and this '
+          + 'table is where you find out BEFORE equipping it. Weapons resolve through their own table '
+          + 'above (MW-D9) and report at build time.</p>';
+      }
 
       // MW-D2: and now the question the whole rig design rests on.
       if (bsa) {
