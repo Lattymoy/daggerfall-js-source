@@ -10,6 +10,7 @@ import {
   skinBatch,
 } from '../src/formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../src/formats/mwCharacter.js';
+import { GRAPH_ROOT } from '../src/formats/mwSkin.js';
 
 const ANIMATED = new Uint8Array(
   readFileSync(new URL('./fixtures/mw/animated.nif', import.meta.url)),
@@ -35,9 +36,14 @@ test('mwcharacter: part skin rebinds onto the BASE skeleton by bone name', () =>
   assert.equal(skin.bones[1].ref, skeleton.byName.get('bone1'));
   // ...and those really are the base file's records, not the part's.
   assert.equal(baseNif.records[skin.bones[0].ref].name, 'Bone0');
-  // Part's "SkinRoot"-less root name doesn't exist in the base;
-  // rebinding fell back to the base skeleton's own root.
-  assert.equal(skeleton.nodes.get(skin.skeletonRoot).parent, -1);
+  // MW-D20: a rebound part lives in GRAPH SPACE, always. The old
+  // behaviour - resolve the part's declared root NAME into the base and
+  // make matrices relative to whatever answered - was a port invention:
+  // the reference looks that name up on the copied rig's own render
+  // path, where a base bone can never appear, so its bone matrices stay
+  // in the one space below the Skeleton group (riggeometry.cpp:288-324).
+  assert.equal(skin.skeletonRoot, GRAPH_ROOT);
+  assert.equal(skin.rootBone, GRAPH_ROOT);
 });
 
 test('mwcharacter: assembled bind pose round-trips the part verts', () => {

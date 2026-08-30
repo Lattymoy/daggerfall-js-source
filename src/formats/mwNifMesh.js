@@ -303,8 +303,14 @@ export function flattenNif(nif, opts = {}) {
     const positions = new Float32Array(n * 3);
     let normals = null;
     if (skinned) {
-      // NetImmerse ignores a skinned shape's own transform: verts stay in
-      // skin space, as authored, and the bones place them (mwSkin.js).
+      // A skinned shape's verts stay as authored - the bones place them
+      // (mwSkin.js). Its own transform is NOT baked here and NOT ignored:
+      // it rides the skin payload as `shapeTransform`, because the
+      // reference's render chain applies it AFTER the blend and its
+      // skin-root cancellation deliberately stops short of it (MW-D20;
+      // riggeometry.cpp:303-309). "NetImmerse ignores a skinned shape's
+      // own transform", which stood here, is folk wisdom the reference's
+      // own code contradicts.
       positions.set(data.vertices);
       if (data.normals) normals = Float32Array.from(data.normals);
     } else {
@@ -342,6 +348,15 @@ export function flattenNif(nif, opts = {}) {
         skeletonRoot: si.skeletonRoot,
         rootBone: si.skeletonRoot,
         transform: sd.transform,
+        // MW-D20: the shape's OWN local transform, which the reference's
+        // render chain applies to the blend's output and its skin-root
+        // cancellation deliberately stops short of (riggeometry.cpp:
+        // 303-309). Carried as data; skinBatch composes it outermost.
+        shapeTransform: {
+          rotation: shape.rotation ?? [1, 0, 0, 0, 1, 0, 0, 0, 1],
+          translation: shape.translation ?? [0, 0, 0],
+          scale: shape.scale ?? 1,
+        },
         bones: si.bones.map((ref, i) => ({
           ref,
           name: (deref(nif, ref)?.name || '').toLowerCase(),

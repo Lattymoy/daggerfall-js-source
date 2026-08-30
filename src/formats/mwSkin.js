@@ -191,7 +191,27 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
   return pose;
 }
 
-/** Affine per node RELATIVE TO skeletonRoot (root itself = identity). */
+/**
+ * MW-D20: THE GRAPH-SPACE SENTINEL. The reference's "skeleton space" is
+ * the full path below the SceneUtil::Skeleton GROUP - the file's root
+ * node is a CHILD of that group, so the root's own transform (which
+ * rule 34 KEEPS when the root is a NiNode named bip01) is INCLUDED in
+ * every bone matrix (Bone::update with no parent answers the node's own
+ * matrix, skeleton.cpp:169; the loader adopts the root nodes as
+ * children, nifloader.cpp:450-480). Pass this as `skeletonRoot` to get
+ * that space: no real ref equals it, so no node is zeroed out.
+ *
+ * Every fixture's root was identity, which is why matrices relative to
+ * the root REF (identity AT the root, its own transform excluded) were
+ * indistinguishable from the reference for two milestones - and why a
+ * retail skeleton whose Bip01 root carries a real transform pulled
+ * every skinned piece out from under the rigid ones.
+ */
+export const GRAPH_ROOT = -1;
+
+/** Affine per node RELATIVE TO skeletonRoot (root itself = identity);
+ *  pass GRAPH_ROOT for the reference's own space, every node's
+ *  transform included. */
 export function skeletonSpaceMatrices(skeleton, pose, skeletonRoot) {
   const out = new Map();
   function matOf(ref) {
@@ -239,10 +259,24 @@ export function skinToSkelMatrix(skeleton, pose, skeletonRoot, rootBone) {
  */
 export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normalsOut) {
   const skin = batch.skin;
-  const post = affineMul(
+  // MW-D20: THE SHAPE'S OWN TRANSFORM APPLIES. The blend's output rides
+  // the render chain, and the trishape's own transform node is the one
+  // part of that chain the reference never cancels: the rebound
+  // fallback stops its cancellation AT the trishape's parent
+  // ("cancel out everything up till the trishape",
+  // riggeometry.cpp:303-309), and the same-file path cancels only up
+  // THROUGH the named skin root. "NetImmerse ignores a skinned shape's
+  // own transform" - the sentence that stood in the flattener - is folk
+  // wisdom the reference's own code contradicts. Identity on every
+  // retail shape anyone has measured, which is why nothing saw it.
+  let post = affineMul(
     affineFrom(skin.transform.rotation, skin.transform.translation, skin.transform.scale),
     skinToSkelMatrix(skeleton, pose, skin.skeletonRoot, skin.rootBone),
   );
+  if (skin.shapeTransform) {
+    const st = skin.shapeTransform;
+    post = affineMul(affineFrom(st.rotation, st.translation, st.scale), post);
+  }
   const n = batch.positions.length / 3;
   // Per-vertex blended affines, translations included - 12 floats each.
   const acc = new Float32Array(n * 12);
