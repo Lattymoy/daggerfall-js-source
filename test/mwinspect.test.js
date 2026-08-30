@@ -646,16 +646,21 @@ test('MW-D7: the accum root is extracted at the POSE, which is the only place it
   h.at(3.0, { accumRoot: null });
   assert.equal(h.arm.pose.get(bip).translation[0], 1, 'and without it the root walks to x=+1');
 
-  // AND IT CANNOT BE PINNED AT THE PIXELS, on this rig. bindPart sets
-  // skeletonRoot === rootBone, skeletonSpaceMatrices makes that node
-  // identity, and skinToSkelMatrix returns identity when they are equal -
-  // so a track on Bip01 reaches no geometry at all, either half. The
-  // geometric pin lives on the SkinRoot/Bone0 rig in mwanim.test.js,
-  // where the tracked bone is BELOW the skin root. Claiming it here would
-  // be a measurement that cannot fail.
-  const withRoot = h.at(3.0).map((r) => r.bounds.maxX).join();
-  const without = h.at(3.0, { accumRoot: null }).map((r) => r.bounds.maxX).join();
-  assert.equal(withRoot, without, 'the geometry is identical either way, and this pin says so out loud');
+  // MW-D20 REACHED THE PIXELS. F1 recorded "a track on the skeleton
+  // root reaches no geometry, BY CONSTRUCTION" - and the construction
+  // was the port's own defect: matrices made identity AT the declared
+  // root. In the reference, bone matrices include the root's ANIMATED
+  // matrix (Bone::update's parentless case is the node's own matrix),
+  // so keying Bip01 moves EVERYTHING - which is precisely why rule 56's
+  // accum extraction exists: without it, a walk cycle's root channel
+  // walks the mesh off the actor. Extraction is now measurable where it
+  // is real: at the geometry.
+  const withRoot = h.at(3.0).map((r) => r.bounds.maxX);
+  const without = h.at(3.0, { accumRoot: null }).map((r) => r.bounds.maxX);
+  for (let i = 0; i < withRoot.length; i++) {
+    assert.ok(Math.abs((without[i] - withRoot[i]) - 1) < 1e-5,
+      `piece ${i}: the unextracted root track carries the geometry exactly its x=+1 drift`);
+  }
 });
 
 test('MW-D7: a channel a track lacks is rewritten from REST every frame, not held', async () => {

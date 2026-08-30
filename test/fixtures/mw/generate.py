@@ -23,6 +23,19 @@ from pathlib import Path
 
 from pyffi.formats.nif import NifFormat
 
+# pyffi 2.2.3 (the pip release) models NiGeometryData's "Num UV Sets" as a
+# lone unversioned UByte, so a 4.0.0.2 write loses a byte against the wire
+# OpenMW reads (data.cpp:140-153: mDataFlags is a uint16 at <= 4.2.2.0) and
+# against every fixture this file has ever produced. The port's reader
+# (mwNifFile.readGeometryData) and the committed fixtures agree on the
+# uint16 (pyffi names it 'ushort'); regeneration under the broken type produced files the strict
+# reader refuses mid-record. Correct the attribute before any file is
+# written - regenerating armhand.nif must stay byte-identical, which is
+# the check that gates this patch.
+for _a in NifFormat.NiGeometryData._attrs:
+    if _a.name == 'num_uv_sets' and getattr(_a.type_, '__name__', '') == 'UByte':
+        _a.type_ = NifFormat.ushort
+
 HERE = Path(__file__).parent
 MW_VERSION = 0x04000002
 
@@ -416,7 +429,11 @@ def make_part():
         bones.append(b)
 
     tri = NifFormat.NiTriShape()
-    tri.name = b"PartSkin"
+    # "Tri Chest": the retail shape - a body part's drawable is named for
+    # its bone (rule 15's filter has to match it or the reference itself
+    # would drop the part in CopyRigVisitor). "PartSkin", which stood
+    # here, predates the filter and could never have survived it.
+    tri.name = b"Tri Chest"
     ident(tri.rotation)
     tri.scale = 1.0
     root.add_child(tri)
@@ -648,7 +665,7 @@ def make_bsa():
 # MW-D6: the ARM fixtures.
 #
 # Every fixture above speaks the vocabulary SkinRoot/Bone0/Bone1/Head/
-# Chest and names its shapes "Skinned"/"PartSkin"/"Hat". That vocabulary
+# Chest and names its shapes "Skinned"/"Tri Chest"/"Hat". That vocabulary
 # cannot exercise two of the attachment rules AT ALL, which is exactly
 # what MW-D5 recorded and what let three mutants survive a full sweep:
 #
@@ -2438,3 +2455,108 @@ if __name__ == "__main__":
     make_zoo()
     make_esm()
     make_bsa()
+
+
+# ── MW-D20: THE HOSTILE RIG ────────────────────────────────────────────
+# Every fixture above has an IDENTITY root, a part whose declared skin
+# root is the base root, and identity shape transforms - the exact
+# conditions under which the port's wrong space law (matrices relative
+# to the DECLARED root, rigid pieces relative to the FILE root, shape
+# transforms ignored) is indistinguishable from the reference's one
+# graph space. Retail data holds none of those conditions, and the
+# result was a hand floating away from its forearm. These three files
+# break all of them at once, with numbers chosen for hand derivation:
+#
+#   armskelx  root "Bip01" AT (2,0,10) - rule 34 keeps a bip01 root's
+#             transform, so it is real and must reach every matrix -
+#             with "Spine" (0,0,5) carrying hands (+-1,0,0), a
+#             "Weapon Bone" (0,2,0) and a "Camera" (0,0,7).
+#   armhandx  hands declaring their skin root at the MID-CHAIN "Spine"
+#             (the old law made matrices relative to it - a different
+#             space from the rigid pieces), skin transform z+0.5, and
+#             the LEFT shape carrying its OWN z+0.25 the reference's
+#             cancellation deliberately stops short of.
+#   armcuffx  a rigid part with a BoneOffset of (0.5,0,0), so the PAT
+#             order bone o offset o mirror is pinned on a rig where
+#             every term is nonzero.
+def make_armskelx():
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    root.translation.x, root.translation.y, root.translation.z = (2.0, 0.0, 10.0)
+    spine = _bone(root, "Spine", (0.0, 0.0, 5.0))
+    _bone(spine, "Left Hand", (1.0, 0.0, 0.0))
+    _bone(spine, "Right Hand", (-1.0, 0.0, 0.0))
+    _bone(spine, "Weapon Bone", (0.0, 2.0, 0.0))
+    _bone(spine, "Camera", (0.0, 0.0, 7.0))
+    write_nif(HERE / "armskelx.nif", [root])
+
+
+def make_armhandx():
+    # Graph rests: Left Hand (3,0,15), Right Hand (1,0,15). The inverse
+    # binds are their negations so the blend collapses to identity at
+    # rest and the expected outputs are the authored verts plus the skin
+    # transform (z+0.5) plus, on the LEFT shape only, its own z+0.25.
+    root = NifFormat.NiNode()
+    root.name = b"Spine"
+    ident(root.rotation)
+    root.scale = 1.0
+    root.translation.z = 5.0
+    lh = _bone(root, "Left Hand", (1.0, 0.0, 0.0))
+    rh = _bone(root, "Right Hand", (-1.0, 0.0, 0.0))
+    lt = _tri(root, "Tri Left Hand",
+              [(3.2, 0.0, 15.2), (3.8, 0.0, 15.2), (3.5, 0.0, 15.8)])
+    # The left shape's OWN transform ROTATES (Rz90, wire-row-major - see
+    # the pyffi transpose trap at make_rotbind) as well as translating,
+    # and the skin transform gains an x component: all-translation terms
+    # commute, so a composition-order mutant would survive a fixture
+    # without a rotation somewhere in the middle.
+    lt.rotation.m_11, lt.rotation.m_21, lt.rotation.m_31 = 0.0, -1.0, 0.0
+    lt.rotation.m_12, lt.rotation.m_22, lt.rotation.m_32 = 1.0, 0.0, 0.0
+    lt.rotation.m_13, lt.rotation.m_23, lt.rotation.m_33 = 0.0, 0.0, 1.0
+    lt.translation.z = 0.25
+    _skin_to(lt, root, [(lh, (-3.0, 0.0, -15.0), [(0, 1.0), (1, 1.0), (2, 1.0)])])
+    lt.skin_instance.data.skin_transform.translation.x = 0.3
+    lt.skin_instance.data.skin_transform.translation.z = 0.5
+    rt = _tri(root, "Tri Right Hand",
+              [(0.7, 0.0, 15.2), (1.3, 0.0, 15.2), (1.0, 0.0, 15.8)])
+    _skin_to(rt, root, [(rh, (-1.0, 0.0, -15.0), [(0, 1.0), (1, 1.0), (2, 1.0)])])
+    rt.skin_instance.data.skin_transform.translation.z = 0.5
+    write_nif(HERE / "armhandx.nif", [root])
+
+
+def make_armcuffx():
+    root = NifFormat.NiNode()
+    root.name = b"CuffRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+    off = _bone(root, "BoneOffset", (0.5, 0.0, 0.0))  # leaf; rule 14 eats it
+    assert off is not None
+    _tri(root, "Cuff", [(0.2, 0.0, 0.1), (0.4, 0.0, 0.1), (0.3, 0.0, 0.3)])
+    write_nif(HERE / "armcuffx.nif", [root])
+
+
+def make_hostiles():
+    make_armskelx()
+    make_armhandx()
+    make_armcuffx()
+    make_armneckx()
+
+
+def make_armneckx():
+    # MW-D20's NECK-FRAME fixture. RotateController conjugates by the
+    # orientation RELATIVE TO THE OBJECT ROOT (rotatecontroller.cpp:41-47,
+    # constructed over mObjectRoot at npcanimation.cpp:941), and the
+    # object root sits ABOVE the file root - so the file root's own
+    # rotation is INSIDE the conjugation frame. Only a rig whose root
+    # actually rotates can tell that frame from the root-relative one.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    root.scale = 1.0
+    root.rotation.m_11, root.rotation.m_21, root.rotation.m_31 = 0.0, -1.0, 0.0
+    root.rotation.m_12, root.rotation.m_22, root.rotation.m_32 = 1.0, 0.0, 0.0
+    root.rotation.m_13, root.rotation.m_23, root.rotation.m_33 = 0.0, 0.0, 1.0
+    root.translation.z = 10.0
+    _bone(root, "Bip01 Neck", (0.0, 0.0, 5.0))
+    write_nif(HERE / "armneckx.nif", [root])

@@ -165,6 +165,7 @@ const zstr = (bytes, s, n) => {
  *  unchanged for its page and its pins. */
 export { MW_BODY_PARTS } from './mwEsmFile.js';
 import { MW_BODY_PARTS } from './mwEsmFile.js';
+import { GRAPH_ROOT } from './mwSkin.js';
 
 /** The four parts allowed to fall back to a third-person mesh when the
  *  first-person record is missing (rule 3 / npcanimation.cpp:1217-1253).
@@ -1525,29 +1526,31 @@ export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, a
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null } = {}) {
-  const { fns, skeleton, rootRef, pieces } = assembly;
+  const { fns, skeleton, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   const pose = fns.poseSkeleton(skeleton, tracks, sampleTrack, time, { accumRoot });
-  // Rule 54's other half: the neck takes 0.75 of the look BEFORE any
-  // matrix is composed, because the camera node hangs off it.
-  applyFirstPersonNeck(skeleton, pose, rootRef, fns.skelMats, neckPitch, neckAim, neckOffset);
-  const byRoot = new Map([[rootRef, fns.skelMats(skeleton, pose, rootRef)]]);
-  const matsFor = (root) => {
-    if (!byRoot.has(root)) byRoot.set(root, fns.skelMats(skeleton, pose, root));
-    return byRoot.get(root);
-  };
+  // MW-D20: ONE SPACE. The reference poses every piece - skinned, rigid,
+  // and the camera node rule 54 reads - in the same space, the full
+  // graph below the Skeleton group with the root node's own transform
+  // included. What stood here memoised matrices PER DECLARED SKIN ROOT
+  // and placed rigid pieces relative to the file root: two spaces that
+  // coincide exactly when every declared root is the root and the root's
+  // transform is identity - true of every fixture, false of retail data,
+  // where the difference is a hand floating away from its forearm.
+  applyFirstPersonNeck(skeleton, pose, GRAPH_ROOT, fns.skelMats, neckPitch, neckAim, neckOffset);
+  const mats = fns.skelMats(skeleton, pose, GRAPH_ROOT);
   for (const p of pieces) {
     if (p.kind === 'skinned') {
-      fns.skinBatch(p.batch, skeleton, pose, matsFor(p.batch.skin.skeletonRoot), p.positions, null);
+      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null);
     } else {
-      const at = fns.attachmentTransform(byRoot.get(rootRef), p.attachRef);
+      const at = fns.attachmentTransform(mats, p.attachRef);
       placeAtBone(p.source, at, p.mirrored, p.positions, p.boneOffset);
     }
   }
   assembly.pose = pose;
   // The rig-space transform of every node, kept so rule 54 can read the
   // camera node's translation without re-posing the skeleton.
-  assembly.mats = byRoot.get(rootRef);
+  assembly.mats = mats;
   assembly.time = time;
   assembly.bounds = pieces.length ? meshBounds(pieces) : null;
   return assembly;

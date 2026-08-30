@@ -375,6 +375,15 @@ test('MW-D9: the Daggerfall->Morrowind mapping is DECLARED, complete, and keyed 
   assert.equal(DF_TO_MW_WEAPON.War_Axe, MW_WEAPON_TYPE.AxeOneHand);
   assert.equal(DF_TO_MW_WEAPON.Battle_Axe, MW_WEAPON_TYPE.AxeTwoHand);
   assert.equal(DF_TO_MW_WEAPON.Long_Bow, MW_WEAPON_TYPE.MarksmanBow);
+  // MW-D21, after the retail report "the staff registers as a sword":
+  // the ROW was never the problem - BluntTwoWide IS Morrowind's own
+  // staff class, so this pin plus "never substitutes a type" below
+  // makes a blade in a staff hand impossible from the mapping side.
+  // What Mac saw was the pre-MW-D19 snapshot: an arm built holding a
+  // sword kept it whatever the hand later held.
+  assert.equal(DF_TO_MW_WEAPON.Staff, MW_WEAPON_TYPE.BluntTwoWide,
+    "a Staff is Morrowind's own staff class");
+  assert.equal(dfWeaponToMw({ templateIndex: WEAPONS.Staff }, WEAPONS), MW_WEAPON_TYPE.BluntTwoWide);
 
   // The resolver keys on templateIndex, NOT the sprite layer's
   // WEAPON_TYPES - which folds Claymore and Longsword into one class and
@@ -407,6 +416,15 @@ test('MW-D9: picking a record prefers the material, avoids the enchanted, and ne
   // wrong bone, in the wrong hand, and look entirely deliberate.
   assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.AxeTwoHand), null,
     'a type your archives do not carry is EMPTY HANDS, not a different weapon');
+  // MW-D21, the staff end to end: with a sword IN the archives, a staff
+  // hand picks the STAFF or nothing - never the blade.
+  const withStaff = weaponRecords(Uint8Array.from([
+    ...wpdtRec('iron longsword', 'w/i.nif', MW_WEAPON_TYPE.LongBladeOneHand),
+    ...wpdtRec('wooden staff', 'w/s.nif', MW_WEAPON_TYPE.BluntTwoWide),
+  ]));
+  assert.equal(pickWeaponRecord(withStaff, MW_WEAPON_TYPE.BluntTwoWide).id, 'wooden staff');
+  assert.equal(pickWeaponRecord(withStaff.filter((r) => r.type !== MW_WEAPON_TYPE.BluntTwoWide),
+    MW_WEAPON_TYPE.BluntTwoWide), null, 'no staff in the archives is EMPTY HANDS, never the sword');
 });
 
 test('MW-D9: the arm rides the SAME handedness mirror as the world it is composited over', async () => {
@@ -761,4 +779,116 @@ test('MW-D18: a healthy part still binds both sides with NO notes', async () => 
   });
   assert.equal(arm.pieces.filter((p) => p.slot === 'hand').length, 2);
   assert.deepEqual(arm.notes, []);
+});
+
+// --- MW-D20: ONE SPACE - THE HOSTILE RIG -----------------------------------
+//
+// armskelx's root is "Bip01" AT (2,0,10) - a transform rule 34 KEEPS -
+// with "Spine" (0,0,5) between it and the hands. armhandx declares its
+// skin root at that mid-chain "Spine", carries a skin transform of
+// z+0.5, and its LEFT shape carries its OWN z+0.25. armcuffx is rigid
+// with a BoneOffset of (0.5,0,0). Under the retired law (matrices
+// relative to the DECLARED root for skinned pieces, to the FILE root
+// for rigid ones, shape transforms ignored) every one of these terms
+// lands somewhere else; under the reference's one graph space the
+// numbers below fall out by hand:
+//
+//   Left Hand graph rest  = (2,0,10)+(0,0,5)+( 1,0,0) = (3,0,15)
+//   Right Hand graph rest = (2,0,10)+(0,0,5)+(-1,0,0) = (1,0,15)
+//   invBinds are the negations, so the blend is identity at rest and a
+//   skinned vert lands at authored + skinT(z+.5) [+ own z+.25 on the left]
+//   rigid: bone o boneOffset o mirror, every term nonzero.
+
+test('MW-D20: skinned pieces land in GRAPH space - declared roots and shape transforms included', async () => {
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskelx.nif'),
+    parts: [{ slot: 'hand', bytes: f('armhandx.nif') }],
+  });
+  assert.ok(arm.ok, arm.error);
+  const left = arm.pieces.find((p) => p.bone === 'left hand');
+  const right = arm.pieces.find((p) => p.bone === 'right hand');
+  assert.ok(left && right, 'both sides bind');
+  // Left, in the reference's order blend -> skinTransform -> shape's own
+  // transform (an Rz90 WITH translation, so the order cannot commute):
+  //   v0 (3.2,0,15.2) +skinT(0.3,0,0.5) = (3.5,0,15.7)
+  //      Rz90 (x'=-y, y'=x)             = (0,3.5,15.7)
+  //      +own t(0,0,0.25)               = (0,3.5,15.95)
+  assert.deepEqual(
+    [...left.positions].map((x) => +x.toFixed(4) + 0),
+    [0, 3.5, 15.95, 0, 4.1, 15.95, 0, 3.8, 16.55]);
+  // Right: authored + (0,0,0.5), no own transform.
+  assert.deepEqual(
+    [...right.positions].map((x) => +x.toFixed(4)),
+    [0.7, 0, 15.7, 1.3, 0, 15.7, 1.0, 0, 16.3]);
+});
+
+test('MW-D20: rigid pieces ride the SAME space - bone o boneOffset o mirror, every term live', async () => {
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskelx.nif'),
+    parts: [
+      { slot: 'hand', bytes: f('armhandx.nif') },
+      { slot: 'cuff', bones: ['Left Hand'], bytes: f('armcuffx.nif') },
+    ],
+  });
+  assert.ok(arm.ok, arm.error);
+  const cuff = arm.pieces.find((p) => p.slot === 'cuff');
+  assert.ok(cuff && cuff.kind === 'rigid' && cuff.mirrored, 'rigid, on the left, mirrored');
+  assert.deepEqual(cuff.boneOffset, [0.5, 0, 0], 'rule 14 found the offset');
+  // world = LeftHand(3,0,15) + offset(0.5,0,0) + mirror(v):
+  //   (0.2,0,0.1) -> (-0.2,0,0.1) -> (3.3, 0, 15.1)
+  assert.deepEqual(
+    [...cuff.positions].map((x) => +x.toFixed(4)),
+    [3.3, 0, 15.1, 3.1, 0, 15.1, 3.2, 0, 15.3]);
+  // One space is not asserted by proximity here - the left shape's own
+  // Rz90 rotates its geometry away on purpose - it is asserted by the
+  // EXACT values: the cuff's (3,0,15) anchor and the skinned pins above
+  // are both the same graph rest of the same bones, derived by hand.
+});
+
+test('MW-D20: the camera bone reads from the same space (rule 54 stays coherent)', async () => {
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskelx.nif'),
+    parts: [{ slot: 'hand', bytes: f('armhandx.nif') }],
+  });
+  const camRef = firstPersonCameraRef(arm.skeleton);
+  assert.ok(camRef >= 0);
+  const eye = firstPersonEye(arm.mats, camRef);
+  // Camera graph rest = (2,0,10)+(0,0,5)+(0,0,7) = (2,0,22); the eye is
+  // that point through rule 54's Z-up -> Y-up basis, [x, z, -y]. The old
+  // law answered (0,12,0) - the root's kept transform never reached it.
+  assert.deepEqual([...eye].map((x) => +x.toFixed(4) + 0), [2, 22, 0]);
+});
+
+test('MW-D20: the neck conjugates in the OBJECT ROOT frame - the file root\'s rotation is inside it', async () => {
+  // armneckx's root is Bip01 rotated Rz90 (kept by rule 34). The
+  // reference's RotateController conjugates by the orientation relative
+  // to mObjectRoot, which sits ABOVE the file root - so W includes that
+  // Rz90 and pitching the neck becomes a rotation about the GRAPH's Y:
+  //   W = Rz90;  W . Rx(-t) . W^T = Ry(-t)
+  //   rows: [c,0,-s],[0,1,0],[s,0,c]  with t = pitch * (0.75+0.25*aim)
+  // Under the retired root-relative frame W was identity and the answer
+  // stayed Rx(-t) - a neck that pitches about the wrong axis the moment
+  // a retail root carries rotation.
+  const { poseSkeleton, buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } =
+    await import('../src/formats/mwSkin.js');
+  const { applyFirstPersonNeck } = await import('../src/formats/mwFirstPerson.js');
+  const { sampleTrack: st } = await import('../src/formats/mwAnim.js');
+  const skel = buildSkeleton(parseNif(f('armneckx.nif')));
+  // Through poseAssembly - the REAL call site - so a caller that hands
+  // the conjugation a root-relative frame dies here, not only a direct
+  // call with the right argument.
+  void applyFirstPersonNeck; void GRAPH_ROOT;
+  const rootRef = [...skel.nodes.entries()].find(([, n]) => n.parent < 0)[0];
+  const assembly = {
+    fns: { poseSkeleton, skelMats: skeletonSpaceMatrices },
+    skeleton: skel, rootRef, pieces: [],
+  };
+  poseAssembly(assembly, { sampleTrack: st, neckPitch: 0.4, neckAim: 1 });
+  const rot = [...assembly.pose.get(skel.byName.get('bip01 neck')).rotation];
+  const c = Math.cos(0.4); const s = Math.sin(0.4);
+  const want = [c, 0, -s, 0, 1, 0, s, 0, c];
+  for (let i = 0; i < 9; i++) {
+    assert.ok(Math.abs(rot[i] - want[i]) < 1e-5,
+      `element ${i}: ${rot[i]} vs Ry(-0.4)'s ${want[i]}`);
+  }
 });

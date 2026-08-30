@@ -9,7 +9,7 @@
 
 import { deref } from './mwNifFile.js';
 import { flattenNif } from './mwNifMesh.js';
-import { skeletonSpaceMatrices } from './mwSkin.js';
+import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
 
 /**
  * Rebind one part's batches onto the base skeleton.
@@ -181,10 +181,21 @@ export function bindPart(skeleton, partNif, opts = {}) {
       }
       return { ...bone, ref };
     });
-    const partRootName = (deref(partNif, skin.skeletonRoot)?.name || '').toLowerCase();
-    const rootRef = skeleton.byName.get(partRootName);
-    const skeletonRoot = rootRef !== undefined ? rootRef : firstRoot(skeleton);
-    batch.skin = { ...skin, bones, skeletonRoot, rootBone: skeletonRoot };
+    // MW-D20: A REBOUND PART LIVES IN GRAPH SPACE, FULL STOP. The port
+    // used to resolve the part's declared skin-root NAME into the base
+    // skeleton and make matrices relative to whatever node answered -
+    // an invention the reference has no counterpart for. In OpenMW the
+    // copied rig looks its root name up on its own RENDER path
+    // (updateSkinToSkelMatrix, riggeometry.cpp:288-324), where a base
+    // skeleton bone can never appear, so the lookup ALWAYS falls back
+    // to "cancel the copied chain" and bone matrices stay in the one
+    // space below the Skeleton group - root transform included. Two
+    // parts declaring different roots therefore pose in the SAME space
+    // in the reference and posed in DIFFERENT spaces here: on retail
+    // data that is a hand floating away from the forearm it belongs
+    // to, and on every fixture (identity roots throughout) it was
+    // invisible.
+    batch.skin = { ...skin, bones, skeletonRoot: GRAPH_ROOT, rootBone: GRAPH_ROOT };
     skinned.push(batch);
   }
   let attachRef = null;

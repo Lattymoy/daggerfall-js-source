@@ -388,6 +388,101 @@ arrow-template test (Daggerfall's template 131) was THREE literal
 copies about to become four; it is one export now,
 hasDaggerfallArrows. 8 mutants, 8 dead.
 
+MW-D20: ONE SPACE. Mac's screenshots - the arm pieces floating apart
+in the inspector, the torso on the ground under the viewer's NPC -
+share one root cause, found by reading attach.cpp and riggeometry.cpp
+WHOLE rather than the slices earlier rules quoted:
+
+THE PORT INVENTED A SPACE THE REFERENCE DOES NOT HAVE. bindPart
+resolved a rebound part's declared skin-root NAME into the BASE
+skeleton and made bone matrices relative to whatever node answered;
+poseAssembly then memoised matrices PER DECLARED ROOT for skinned
+pieces and used FILE-root-relative ones for rigid pieces and the
+camera. Three spaces. The reference has ONE: the full graph below the
+SceneUtil::Skeleton group - the file's root node is a CHILD of that
+group (nifloader.cpp:450-480), so the root's own transform, which rule
+34 KEEPS when the root is a NiNode named bip01, is inside every bone
+matrix (Bone::update's parentless case, skeleton.cpp:169). And the
+declared skin-root name is looked up on the copied rig's own RENDER
+path (updateSkinToSkelMatrix, riggeometry.cpp:288-324), where a base
+skeleton bone can never appear - so for a rebound part the lookup
+ALWAYS falls back to "cancel out everything up till the trishape" and
+the name the port was resolving never touches the base at all. Rule
+41's cancellation is about the PART's own chain; reading it as
+licensing a base-skeleton rebind was the error.
+
+WHY NOTHING SAW IT: every fixture's root was IDENTITY and every
+fixture part declared the base root's own name, the exact conditions
+under which three spaces coincide. Retail data holds none of them.
+The hostile rig (armskelx/armhandx/armcuffx/armneckx, generate.py)
+now breaks all of them at once - a bip01 root AT (2,0,10), a part
+declaring a MID-CHAIN skin root, a shape whose own transform rotates
+as well as translates, a BoneOffset with every term nonzero - and
+every expected position is derived BY HAND from the reference's
+composition.
+
+TWO RECORDED FINDINGS FALL WITH IT, corrected rather than deleted:
+
+  F1 ("a track on the skeleton root reaches no geometry, BY
+  CONSTRUCTION") described the port's own defect as if it were the
+  reference. In graph space, keying Bip01 moves EVERYTHING - which is
+  exactly why rule 56's accum extraction exists, and the extraction is
+  now measurable at the pixels: the mwinspect pin that asserted "the
+  geometry is identical either way" asserts the x=+1 drift instead.
+
+  RULE 20's FORMULA IS INCOMPLETE as recorded: after the skin
+  transform, the render chain still applies the SHAPE'S OWN transform
+  - the rebound fallback stops its cancellation at the trishape's
+  parent, and the same-file path cancels only through the named skin
+  root. "NetImmerse ignores a skinned shape's own transform", which
+  the flattener stated as law, is folk wisdom the reference's own code
+  contradicts. The transform now rides the skin payload
+  (shapeTransform) and composes outermost. Identity on every shape
+  anyone has measured, which is why nothing saw that either.
+
+AND THE NECK'S FRAME IS THE OBJECT ROOT'S, root rotation included:
+RotateController is constructed over mObjectRoot
+(npcanimation.cpp:941) and conjugates by the orientation relative to
+it (rotatecontroller.cpp:41-47) - which sits ABOVE the file root. On
+a rig whose root rotates Rz90, the pitch becomes a rotation about the
+graph's Y, and the pin drives it THROUGH poseAssembly because a
+direct call with the right argument let the call-site mutant survive.
+
+TOOLING NOTE: pyffi 2.2.3 (the pip release) models NiGeometryData's
+"Num UV Sets" as a lone UByte, one byte short of the uint16 OpenMW
+reads at <= 4.2.2.0 (data.cpp:140-153) and every committed fixture
+carries. generate.py corrects the attribute before writing, gated by
+regenerating armhand.nif BYTE-IDENTICAL to the committed file.
+
+6 mutants, 6 dead. The two doors it left open - the viewer NPC path's
+first-bone-only paired limbs and its authored-positions preview -
+closed at MW-D21, below.
+
+MW-D21: THE NPC RIDES THE ONE DOOR, against the rest of Mac's second
+screenshot. The viewer's loadNpc was a hand-rolled per-part loop:
+paired limbs attached at their FIRST bone only (the recorded stub -
+the missing right arm and right leg), no rule 15 filter, no rule 13
+mirror, no rule 14 offset, and skinned parts previewed at their
+AUTHORED positions - which for a retail part, authored part-local, is
+a torso on the ground. It rides bindPartsInto + poseAssembly now, the
+same door the game's arm uses: every attach bone both sides, filtered,
+mirrored, offset, in MW-D20's one graph space, with the rest pose
+computed at t=0 through the real skinning equation and the clip posed
+through the same assembly every frame. The chest fixture's shape is
+renamed "Tri Chest" on the way - the retail shape rule 15's filter
+exists for; "PartSkin" predated the filter and could never have
+survived it, which is its own small lesson about fixtures that only
+ever agree with the code.
+
+AND THE STAFF ROW IS PINNED. "The staff registers as a sword" - the
+row was never wrong (Staff -> BluntTwoWide, Morrowind's own staff
+class) and pickWeaponRecord never substitutes a type, so a blade in a
+staff hand is impossible from the mapping side; what Mac saw was the
+pre-MW-D19 snapshot arm holding whatever it was built with. The row,
+the resolver, and the staff-or-nothing pick are pinned end to end so
+the sentence stays true, and the card names the picked record beside
+the bone it hangs on.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
