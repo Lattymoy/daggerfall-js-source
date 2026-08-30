@@ -143,6 +143,23 @@ order. 5 pins; 5 mutants, 5 killed - one of them survived a `deepEqual`
 over structurally identical fixtures until the pin was rewritten on
 identity, which is worth remembering.
 
+### W2c CLOSED: the exit-door wagon prompt (PlayerActivate.cs:649-664)
+
+A dungeon exit with a Small_cart in the pack and
+`DungeonExitWagonPrompt` (ships True) raises TEXT.RSC 38 as a YesNo box
+and RETURNS: No leaves the dungeon, Yes calls
+`AllowDungeonWagonAccess()` and opens the inventory - whose
+`CheckWagonAccess` FIRST arm selects Remove and shows the wagon
+wherever the player stands - and Escape closes the box with nothing
+done (`allowCancel`). The port had the second half waiting:
+`inventorySession`'s NT3 note recorded "a producer the port does not
+have yet; when it lands it must pass a flag that forces Remove". It
+landed: `deps.dungeon.wagonPrompt` is that flag, `tryExitDungeon` asks
+first, `exitDungeonNow` is the exit split out so No can take it, and
+`ServiceFlowWindow` grew an `onEscape` a box may name. The `isBash`
+gate (:651) has no counterpart here - the exit door is not a bash
+target in this host. 3 pins; 4 mutants, 4 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
