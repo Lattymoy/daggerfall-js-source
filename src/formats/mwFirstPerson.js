@@ -835,12 +835,28 @@ export function armorRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'ARMO') continue;
-    const e = { id: '', model: '', name: '', enchanted: false };
+    const e = { id: '', model: '', name: '', enchanted: false, parts: [] };
     for (const sub of subrecords(bytes, rec)) {
       if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
       else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
       else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
       else if (sub.name === 'ENAM') e.enchanted = true;
+      // MW-D29: THE WORN HALF. An ARMO's MODL is the GROUND mesh - the
+      // thing a dropped cuirass looks like - and the worn shape is a
+      // list of PART REFERENCES: INDX (one byte, the sided
+      // PartReferenceType enum) opens a reference, then BNAM names the
+      // male BODY record and CNAM the female one, either optional
+      // (loadarmo.hpp's PartReferenceList; same layout on CLOT).
+      // Reading MODL as the worn mesh would dress the player in
+      // ground clutter, which is this format's byte-eight trap.
+      else if (sub.name === 'INDX') {
+        if (sub.len !== 1) throw new Error(`ARMO ${e.id}: INDX is ${sub.len} bytes`);
+        e.parts.push({ part: bytes[sub.start], male: null, female: null });
+      } else if (sub.name === 'BNAM' && e.parts.length) {
+        e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
+      } else if (sub.name === 'CNAM' && e.parts.length) {
+        e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
+      }
     }
     if (e.id && e.model) out.push(e);
   }

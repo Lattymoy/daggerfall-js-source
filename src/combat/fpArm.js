@@ -56,12 +56,13 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag, armorRecords,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES } from '../formats/mwNpc.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
+import { composeWornArmor, shadowSkinRows } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
@@ -536,7 +537,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, faceIndex, weapon, hasAmmo, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, archives, parts, allWeapons, find,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -547,14 +548,28 @@ async function buildTpBody({
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
     const rows = playerBodyRows(parts, race, female, { beast, faceIndex });
-    const partBytes = [];
     const missing = [];
+    // MW-D29: WORN ARMOR composes onto the skin. The composer answers
+    // adds (part meshes on their sided bones), shadows (the skin the
+    // armor hides - whole slots or single sides), and notes for every
+    // piece that keeps its sprite instead; shadowSkinRows applies the
+    // shadows to the skin rows' bone lists so a right gauntlet hides
+    // the right hand and leaves the left on the body. Never-traps:
+    // every miss is a note and the skin stands.
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], bodyPool: parts, female });
+    missing.push(...worn.notes);
+    const skinRows = shadowSkinRows(
+      rows.filter((r) => r.record).map((r) => ({ slot: r.slot, bones: PART_BONES[r.slot] ?? [], model: r.record.model })),
+      worn.shadows);
     for (const row of rows) {
-      if (!row.record) { missing.push(`${row.slot}: no third-person record for this actor`); continue; }
-      const path = `meshes/${row.record.model}`;
+      if (!row.record) missing.push(`${row.slot}: no third-person record for this actor`);
+    }
+    const partBytes = [];
+    for (const row of [...skinRows, ...worn.adds]) {
+      const path = `meshes/${row.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${row.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: row.slot, bones: PART_BONES[row.slot] ?? [], bytes: arc.get(path).slice() });
+      partBytes.push({ slot: row.slot, bones: row.bones, bytes: arc.get(path).slice() });
     }
     if (!partBytes.length) {
       return { ok: false, stage: 'parts', error: `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
@@ -633,7 +648,7 @@ async function buildTpBody({
 }
 
 export async function buildFpArm({
-  race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, deps = null,
+  race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -688,6 +703,9 @@ export async function buildFpArm({
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
     const parts = esmBytes.flatMap((e) => bodyParts(e.bytes));
+    // MW-D29: the ARMO records ride the same esm walk, load order and
+    // all - the composer resolves DF pieces against them by token.
+    const armors = esmBytes.flatMap((e) => armorRecords(e.bytes));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -752,7 +770,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, archives, parts, allWeapons, find })
       : null;
     archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {

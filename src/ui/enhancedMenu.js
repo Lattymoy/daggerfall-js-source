@@ -88,7 +88,9 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { mwRaceId } from '../formats/mwNpc.js';
-import { EQUIP_SLOTS } from '../systems/equip.js';
+import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
+import { dfWornArmor } from '../formats/mwItemMap.js';
+import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
@@ -928,6 +930,11 @@ function paneEnhanced(body) {
           // head and hair by modulo over the race's sorted playable
           // pools - playerBodyRows' law. No new stage, no new field.
           faceIndex: playerEntity.faceIndex | 0,
+          // MW-D29: the worn armor, read from the classic equip table
+          // - shields included, weapons excluded (the weapon door owns
+          // the hands). The composer downstream never traps: a piece
+          // with no MW analog keeps its sprite and says so.
+          armor: dfWornArmor(equipTableOf(playerEntity), EQUIP_SLOTS, ARMOR_ENUM),
           // MW-D9: whatever is in the right hand right now. The mapping
           // from Daggerfall's weapon templates onto Morrowind's types is
           // a DECLARED DIVERGENCE (DF_TO_MW_WEAPON), not a translation.

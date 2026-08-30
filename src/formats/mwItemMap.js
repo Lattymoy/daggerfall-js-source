@@ -183,3 +183,122 @@ export function mwItemReport(armorRecords) {
   }
   return rows;
 }
+
+// ═══ MW-D29: WORN ARMOR - the consumer ══════════════════════════════
+
+/** The ARMO/CLOT INDX enum - 27 SIDED entries (loadarmo.hpp's
+ *  PartReferenceType), and NOT the 15-entry unsided BYDT enum the
+ *  BODY records use. Confusing the two is this slice's byte-eight
+ *  trap, so the table is written out whole: base slot, side, and the
+ *  skeleton bone the reference hangs on (npcanimation's part list;
+ *  PART_BONES already carries these exact spellings for the unsided
+ *  pairs). `shadows` names the SKIN slot the piece hides - a pauldron
+ *  and a skirt shadow nothing; they layer over clavicle and groin
+ *  skin the way the reference layers them. Weapon (25) is not a row:
+ *  the weapon door (MW-D9/D19) owns that bone.
+ */
+export const ARMO_PART = Object.freeze([
+  { name: 'head', bones: ['head'], shadows: 'head' },
+  { name: 'hair', bones: ['head'], shadows: 'hair' },
+  { name: 'neck', bones: ['neck'], shadows: 'neck' },
+  { name: 'cuirass', bones: ['chest'], shadows: 'chest' },
+  { name: 'groin', bones: ['groin'], shadows: 'groin' },
+  { name: 'skirt', bones: ['groin'], shadows: null },
+  { name: 'right hand', bones: ['right hand'], shadows: 'hand:right' },
+  { name: 'left hand', bones: ['left hand'], shadows: 'hand:left' },
+  { name: 'right wrist', bones: ['right wrist'], shadows: 'wrist:right' },
+  { name: 'left wrist', bones: ['left wrist'], shadows: 'wrist:left' },
+  { name: 'shield', bones: ['shield bone'], shadows: null },
+  { name: 'right forearm', bones: ['right forearm'], shadows: 'forearm:right' },
+  { name: 'left forearm', bones: ['left forearm'], shadows: 'forearm:left' },
+  { name: 'right upper arm', bones: ['right upper arm'], shadows: 'upperarm:right' },
+  { name: 'left upper arm', bones: ['left upper arm'], shadows: 'upperarm:left' },
+  { name: 'right foot', bones: ['right foot'], shadows: 'foot:right' },
+  { name: 'left foot', bones: ['left foot'], shadows: 'foot:left' },
+  { name: 'right ankle', bones: ['right ankle'], shadows: 'ankle:right' },
+  { name: 'left ankle', bones: ['left ankle'], shadows: 'ankle:left' },
+  { name: 'right knee', bones: ['right knee'], shadows: 'knee:right' },
+  { name: 'left knee', bones: ['left knee'], shadows: 'knee:left' },
+  { name: 'right upper leg', bones: ['right upper leg'], shadows: 'upperleg:right' },
+  { name: 'left upper leg', bones: ['left upper leg'], shadows: 'upperleg:left' },
+  { name: 'right pauldron', bones: ['right clavicle'], shadows: null },
+  { name: 'left pauldron', bones: ['left clavicle'], shadows: null },
+  { name: 'weapon', bones: [], shadows: null },
+  { name: 'tail', bones: ['tail'], shadows: 'tail' },
+]);
+
+/** DF's own worn-armor readout: which equip slots carry pieces this
+ *  door can dress. Hands are checked for SHIELDS only - a weapon in a
+ *  hand is the weapon door's business. */
+export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
+  const worn = [];
+  const take = (item) => {
+    if (item && typeof item.templateIndex === 'number' && item.templateIndex in DF_ARMOR_ROWS) {
+      worn.push({ templateIndex: item.templateIndex, material: item.material ?? 0 });
+    }
+  };
+  const S = EQUIP_SLOTS;
+  for (const k of ['Head', 'RightArm', 'LeftArm', 'ChestArmor', 'Gloves', 'LegsArmor', 'Feet']) take(slots[S[k]]);
+  for (const k of ['RightHand', 'LeftHand']) {
+    const it = slots[S[k]];
+    if (it && it.templateIndex >= ARMOR_ENUM.Buckler && it.templateIndex <= ARMOR_ENUM.Tower_Shield) take(it);
+  }
+  return worn;
+}
+
+/**
+ * COMPOSE the worn armor onto the body's part rows. Pure: takes the
+ * player's pieces, the parsed ARMO records, the BODY pool, and the
+ * sex; answers what to ADD (part meshes on their sided bones), what
+ * to SHADOW (skin slots or single sides the armor hides), and NOTES
+ * for everything that keeps its sprite instead. Never throws: a
+ * missing record, an unknown INDX, a ref with no id for this sex -
+ * each is a note, the skin stands, the law is never-traps.
+ */
+export function composeWornArmor({ pieces, armors, bodyPool, female = false }) {
+  const adds = [];
+  const shadows = new Set();
+  const notes = [];
+  const bodyById = new Map((bodyPool ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
+  for (const piece of pieces ?? []) {
+    const res = mwArmorRecords(armors, piece.templateIndex, piece.material);
+    if (!res.records.length) { notes.push(`armor ${piece.templateIndex}: ${res.note}`); continue; }
+    for (const armo of res.records) {
+      if (!armo.parts?.length) { notes.push(`${armo.id}: no worn part references - the ground mesh is not a body`); continue; }
+      for (const ref of armo.parts) {
+        const row = ARMO_PART[ref.part];
+        if (!row) { notes.push(`${armo.id}: INDX ${ref.part} is outside the enum`); continue; }
+        if (row.name === 'weapon') continue;
+        const id = (female && ref.female) || ref.male || ref.female;
+        if (!id) { notes.push(`${armo.id}: ${row.name} names no body part`); continue; }
+        const body = bodyById.get(id);
+        if (!body) { notes.push(`${armo.id}: ${row.name} wants "${id}" and no BODY record carries it`); continue; }
+        adds.push({ slot: `${row.name} (${armo.id})`, bones: row.bones, model: body.model, recordId: id });
+        if (row.shadows) shadows.add(row.shadows);
+      }
+    }
+  }
+  return { adds, shadows: [...shadows], notes };
+}
+
+/** Apply the shadows to the skin rows' bone lists: 'chest' hides the
+ *  whole slot; 'hand:right' trims one side's bone and keeps the
+ *  other. Returns the surviving rows - the input is not mutated. */
+export function shadowSkinRows(rows, shadows) {
+  const whole = new Set();
+  const sided = new Map();
+  for (const s of shadows ?? []) {
+    const [slot, side] = String(s).split(':');
+    if (side) { if (!sided.has(slot)) sided.set(slot, new Set()); sided.get(slot).add(side); }
+    else whole.add(slot);
+  }
+  const out = [];
+  for (const row of rows ?? []) {
+    if (whole.has(row.slot)) continue;
+    const sides = sided.get(row.slot);
+    if (!sides) { out.push(row); continue; }
+    const bones = (row.bones ?? []).filter((b) => ![...sides].some((sd) => b.startsWith(`${sd} `)));
+    if (bones.length) out.push({ ...row, bones });
+  }
+  return out;
+}

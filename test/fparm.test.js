@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { parseNif } from '../src/formats/mwNifFile.js';
 import { extractTracks, sampleTrack } from '../src/formats/mwAnim.js';
 import { accumRootRef } from '../src/formats/mwSkin.js';
+import { PART_BONES } from '../src/formats/mwNpc.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
   packFpArm, fpSkeletonPath, buildFpArm, createFpArm,
@@ -1420,6 +1421,7 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
 import {
   DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
   mwArmorRecords, itemMapCoverage, mwItemReport,
+  ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor,
 } from '../src/formats/mwItemMap.js';
 import { armorRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
@@ -1566,4 +1568,112 @@ test('AUDIT 29 F3: the weapon pick is id-sorted - the archive\u2019s listing ord
   assert.equal(pickWeaponRecord(recs, 0).id, 'chitin_dagger', 'the fallback follows the listing, not the id');
   assert.equal(pickWeaponRecord(recs, 0, 'Daedric').id, 'daedric_dagger', 'the material hit still wins');
   assert.equal(pickWeaponRecord(recs.slice().reverse(), 0).id, 'chitin_dagger', 'two listings, one sword');
+});
+
+// ═══ MW-D29: WORN ARMOR ═════════════════════════════════════════════
+test('MW-D29: the ARMO part references read - INDX opens, BNAM/CNAM name, MODL stays ground', () => {
+  const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+  const sub = (name, payload) => [...enc(name), payload.length & 255, (payload.length >> 8) & 255, 0, 0, ...payload];
+  const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), body.length & 255, (body.length >> 8) & 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+  const z = (s2) => [...enc(s2), 0];
+  const bytes = new Uint8Array([
+    ...rec('ARMO', [
+      sub('NAME', z('iron_gauntlet_right')), sub('MODL', [...enc('a'), 0x5c, ...z('ground.nif')]),
+      sub('INDX', [6]), sub('BNAM', z('B_Iron_GR')), sub('CNAM', z('b_iron_gr_f')),
+      sub('INDX', [8]), sub('BNAM', z('b_iron_wr')),
+    ]),
+  ]);
+  const [a] = armorRecords(bytes);
+  assert.equal(a.model, 'a/ground.nif', 'MODL is still the ground mesh');
+  assert.deepEqual(a.parts, [
+    { part: 6, male: 'b_iron_gr', female: 'b_iron_gr_f' },
+    { part: 8, male: 'b_iron_wr', female: null },
+  ], 'the reference list did not read (ids lowercased, CNAM optional)');
+});
+
+test('MW-D29: the INDX enum is the SIDED 27, not the unsided 15 - spot rows pinned', () => {
+  // Confusing the two enums is this slice\u2019s byte-eight trap.
+  assert.equal(ARMO_PART.length, 27);
+  assert.deepEqual(ARMO_PART[3], { name: 'cuirass', bones: ['chest'], shadows: 'chest' });
+  assert.deepEqual(ARMO_PART[6], { name: 'right hand', bones: ['right hand'], shadows: 'hand:right' });
+  assert.deepEqual(ARMO_PART[23], { name: 'right pauldron', bones: ['right clavicle'], shadows: null });
+  assert.deepEqual(ARMO_PART[10], { name: 'shield', bones: ['shield bone'], shadows: null });
+  assert.equal(ARMO_PART[26].name, 'tail');
+  assert.deepEqual(ARMO_PART[25], { name: 'weapon', bones: [], shadows: null }, 'the weapon row belongs to the weapon door');
+  // every bone this table names for a sided slot is one PART_BONES
+  // already carries - one spelling, or the attach silently misses.
+  for (const row of ARMO_PART) {
+    for (const b of row.bones) {
+      if (b === 'shield bone') continue;
+      assert.ok(Object.values(PART_BONES).some((pair) => pair.includes(b)), `${row.name}: bone "${b}" is not a PART_BONES spelling`);
+    }
+  }
+});
+
+test('MW-D29: the composer dresses, shadows, sexes, and never traps', () => {
+  const armors = [{
+    id: 'iron_gauntlet_right', model: 'g.nif', name: '', enchanted: false,
+    parts: [{ part: 6, male: 'b_gr', female: 'b_gr_f' }, { part: 8, male: 'b_wr', female: null }],
+  }, {
+    id: 'iron_cuirass', model: 'c.nif', name: '', enchanted: false,
+    parts: [{ part: 3, male: 'b_cu', female: null }, { part: 99, male: 'b_zz', female: null }, { part: 13, male: 'b_missing', female: null }],
+  }];
+  const bodyPool = [
+    { id: 'b_gr', model: 'm/gr.nif' }, { id: 'b_gr_f', model: 'm/gr_f.nif' },
+    { id: 'b_wr', model: 'm/wr.nif' }, { id: 'b_cu', model: 'm/cu.nif' },
+  ];
+  const pieces = [{ templateIndex: ARMOR_ENUM.Gauntlets, material: ARMOR_MATERIAL.Iron },
+    { templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron }];
+  const male = composeWornArmor({ pieces, armors, bodyPool, female: false });
+  // the right gauntlet's ref is sided; the WRIST ref rides the same
+  // record; the cuirass adds and shadows the chest whole.
+  assert.deepEqual(male.adds.map((a) => a.recordId), ['b_gr', 'b_wr', 'b_cu']);
+  assert.deepEqual(male.adds[0].bones, ['right hand']);
+  assert.deepEqual([...male.shadows].sort(), ['chest', 'hand:right', 'wrist:right']);
+  // never-traps, said in words: the out-of-enum INDX and the missing
+  // BODY id are notes, not throws, and the skin stands for them.
+  assert.ok(male.notes.some((n) => /INDX 99/.test(n)));
+  assert.ok(male.notes.some((n) => /b_missing/.test(n)));
+  // the female pick takes CNAM when it exists, BNAM when it does not.
+  const fem = composeWornArmor({ pieces, armors, bodyPool, female: true });
+  assert.deepEqual(fem.adds.map((a) => a.recordId), ['b_gr_f', 'b_wr', 'b_cu']);
+  // a piece with no MW record at all is one note, no adds.
+  const none = composeWornArmor({ pieces: [{ templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Chain }], armors, bodyPool, female: false });
+  assert.equal(none.adds.length, 0);
+  assert.match(none.notes[0], /classic sprite stands/);
+});
+
+test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the other bone', () => {
+  const rows = [
+    { slot: 'chest', bones: ['chest'], model: 'chest.nif' },
+    { slot: 'hand', bones: ['left hand', 'right hand'], model: 'hand.nif' },
+    { slot: 'foot', bones: ['left foot', 'right foot'], model: 'foot.nif' },
+  ];
+  const out = shadowSkinRows(rows, ['chest', 'hand:right']);
+  assert.deepEqual(out.map((r) => r.slot), ['hand', 'foot'], 'the cuirass did not hide the chest skin');
+  assert.deepEqual(out[0].bones, ['left hand'], 'the right gauntlet did not trim the right skin hand');
+  assert.deepEqual(out[1].bones, ['left foot', 'right foot'], 'an unshadowed slot changed');
+  // both sides shadowed = the row is gone entirely.
+  assert.deepEqual(shadowSkinRows(rows, ['hand:right', 'hand:left']).map((r) => r.slot), ['chest', 'foot']);
+  // and the input was not mutated.
+  assert.deepEqual(rows[1].bones, ['left hand', 'right hand']);
+});
+
+test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], bodyPool: parts, female \}\)/);
+  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => armorRecords\(e\.bytes\)\);/);
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors,/);
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /armor: dfWornArmor\(equipTableOf\(playerEntity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
+  // and the readout itself: armor slots in, shields from hands, a
+  // sword in a hand refused.
+  const slots = []; slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 2 };
+  slots[19] = { templateIndex: 115, material: 3 };
+  slots[21] = { templateIndex: ARMOR_ENUM.Kite_Shield, material: 4 };
+  const worn = dfWornArmor(slots, { Head: 12, RightArm: 13, LeftArm: 15, ChestArmor: 18, Gloves: 20, LegsArmor: 23, Feet: 26, RightHand: 19, LeftHand: 21 }, ARMOR_ENUM);
+  assert.deepEqual(worn, [
+    { templateIndex: ARMOR_ENUM.Helm, material: 2 },
+    { templateIndex: ARMOR_ENUM.Kite_Shield, material: 4 },
+  ]);
 });
