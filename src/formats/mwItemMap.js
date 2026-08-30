@@ -46,10 +46,79 @@
 import { WEAPONS, WEAPON_MATERIALS } from '../characters/weapons.js';
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import templates from '../characters/itemTemplates.json' with { type: 'json' };
 
 /** ARMOR_ENUM.Helm, held as its own name because the composer's
  *  helmet-hides-hair rule (AUDIT 30 F1) keys on it. */
 const HELM_TEMPLATE = ARMOR_ENUM.Helm;
+
+/** MW's CLOT types (loadclot.hpp). Gloves and jewellery exist in the
+ *  enum and have no Daggerfall garment, so no row maps to them. */
+export const MW_CLOTHING_TYPE = Object.freeze({
+  Pants: 0, Shoes: 1, Shirt: 2, Belt: 3, Robe: 4,
+  RGlove: 5, LGlove: 6, Skirt: 7, Ring: 8, Amulet: 9,
+});
+
+/** Template index -> garment NAME for the wearable range (equipRules'
+ *  MensClothing/WomensClothing, 141-216). The DB names garments and
+ *  the rows below key on those names - two sexes, one law. */
+export const CLOTHING_NAME = Object.freeze(Object.fromEntries(
+  templates.filter((t) => t.index >= 141 && t.index <= 216).map((t) => [t.index, t.name])));
+
+/** DF garment name -> the MW CLOT type it resolves against, plus the
+ *  reference slot behaviour it triggers. JUDGEMENT ROWS, recorded:
+ *  - CLOAKS wear MW ROBES. Morrowind has no cloak; a robe is the one
+ *    garment that drapes, and a cloak kept as a sprite would leave
+ *    the most visible garment in the game undressed.
+ *  - GOWNS, DRESSES, SURCOATS, TOGA, KIMONO wear robes for the same
+ *    reason - MW's wardrobe has no separates that drape.
+ *  - KHAJIIT SUIT wears a shirt: one garment cannot become two CLOT
+ *    records, and the top half is the visible one under pants.
+ *  - SASH wears a belt, and retail belts carry no worn part
+ *    references - the composer will say so and the sprite stands,
+ *    which is the honest outcome for a garment MW does not draw.
+ *  `reserve` marks the reference's slot law: robes reserve eleven
+ *  part slots, skirts three (npcanimation.cpp:635-650). */
+export const DF_CLOTHING_ROWS = Object.freeze({
+  'Straps': { type: MW_CLOTHING_TYPE.Shirt }, 'Challenger Straps': { type: MW_CLOTHING_TYPE.Shirt },
+  'Champion Straps': { type: MW_CLOTHING_TYPE.Shirt }, 'Armbands': { type: MW_CLOTHING_TYPE.Shirt },
+  'Fancy Armbands': { type: MW_CLOTHING_TYPE.Shirt }, 'Eodoric': { type: MW_CLOTHING_TYPE.Shirt },
+  'Formal Eodoric': { type: MW_CLOTHING_TYPE.Shirt }, 'Short Tunic': { type: MW_CLOTHING_TYPE.Shirt },
+  'Formal Tunic': { type: MW_CLOTHING_TYPE.Shirt }, 'Reversible Tunic': { type: MW_CLOTHING_TYPE.Shirt },
+  'Open Tunic': { type: MW_CLOTHING_TYPE.Shirt }, 'Short Shirt': { type: MW_CLOTHING_TYPE.Shirt },
+  'Long Shirt': { type: MW_CLOTHING_TYPE.Shirt }, 'Vest': { type: MW_CLOTHING_TYPE.Shirt },
+  'Brassiere': { type: MW_CLOTHING_TYPE.Shirt }, 'Formal Brassiere': { type: MW_CLOTHING_TYPE.Shirt },
+  'Peasant Blouse': { type: MW_CLOTHING_TYPE.Shirt }, 'Khajiit Suit': { type: MW_CLOTHING_TYPE.Shirt },
+  'Casual Pants': { type: MW_CLOTHING_TYPE.Pants }, 'Breeches': { type: MW_CLOTHING_TYPE.Pants },
+  'Loincloth': { type: MW_CLOTHING_TYPE.Pants }, 'Tights': { type: MW_CLOTHING_TYPE.Pants },
+  'Shoes': { type: MW_CLOTHING_TYPE.Shoes }, 'Sandals': { type: MW_CLOTHING_TYPE.Shoes },
+  'Boots': { type: MW_CLOTHING_TYPE.Shoes }, 'Tall Boots': { type: MW_CLOTHING_TYPE.Shoes },
+  'Short Skirt': { type: MW_CLOTHING_TYPE.Skirt, reserve: 'skirt' },
+  'Long Skirt': { type: MW_CLOTHING_TYPE.Skirt, reserve: 'skirt' },
+  'Wrap': { type: MW_CLOTHING_TYPE.Skirt, reserve: 'skirt' },
+  'Sash': { type: MW_CLOTHING_TYPE.Belt },
+  'Kimono': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Toga': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Plain Robes': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Priest Robes': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Priestess Robes': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Casual Cloak': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Formal Cloak': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Dwynnen Surcoat': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Anticlere Surcoat': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Casual Dress': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Strapless Dress': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Evening Gown': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+  'Day Gown': { type: MW_CLOTHING_TYPE.Robe, reserve: 'robe' },
+});
+
+/** The reference's reserve lists (npcanimation.cpp:635-650), by PRT
+ *  index: a robe occupies eleven slots, a skirt three - hiding the
+ *  skin AND any lower-priority garment there, refs or no refs. */
+export const RESERVES = Object.freeze({
+  robe: [4, 5, 21, 22, 13, 14, 19, 20, 11, 12, 3],
+  skirt: [4, 21, 22],
+});
 import { DF_TO_MW_WEAPON } from './mwFirstPerson.js';
 
 /** DF armor material -> the token MW armor record ids carry. */
@@ -88,6 +157,19 @@ export const DECLARED_SPRITE_WEAPONS = Object.freeze({
 });
 
 const matName = (table, v) => Object.entries(table).find(([, x]) => x === v)?.[0] ?? null;
+
+/** Resolve one DF garment against the CLOT records: BY TYPE, id-sorted,
+ *  enchanted excluded - and on retail the id sort puts common_ ahead of
+ *  expensive_ and its betters, so the street clothes win, which is the
+ *  right wardrobe for a derived outfit. Null-honest. */
+export function mwClothingRecord(clothes, name) {
+  const row = DF_CLOTHING_ROWS[name];
+  if (!row) return { record: null, row: null, note: `"${name}" is not a garment row` };
+  const pool = (clothes ?? []).filter((c) => c.type === row.type && !c.enchanted)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  if (!pool.length) return { record: null, row, note: `no MW clothing of type ${row.type} in these archives - the classic sprite stands` };
+  return { record: pool[0], row, note: 'resolved' };
+}
 
 /**
  * Resolve one DF armor piece against the player's parsed ARMO records.
@@ -162,6 +244,15 @@ export function itemMapCoverage() {
       else out.push({ kind: 'UNMAPPED', item: aName, material: mName });
     }
   }
+  // MW-D30: every WEARABLE GARMENT index answers - the DB names it and
+  // a row maps the name, or the space itself says which garment fell
+  // through. Dyes are one declared judgement, not seventy rows: MW's
+  // wardrobe has no dye channel, so every colour of a Short Shirt
+  // wears the one shirt the type resolves to.
+  for (const [idx, name] of Object.entries(CLOTHING_NAME)) {
+    if (name in DF_CLOTHING_ROWS) out.push({ kind: 'mapped', item: `${name} (${idx})`, material: 'any dye', via: 'clothing' });
+    else out.push({ kind: 'UNMAPPED', item: `${name} (${idx})`, material: 'any dye' });
+  }
   return out;
 }
 
@@ -231,6 +322,22 @@ export const ARMO_PART = Object.freeze([
   { name: 'tail', bones: ['tail'], shadows: 'tail' },
 ]);
 
+/** DF's whole worn readout: armor from its seven slots plus shields
+ *  from the hands (a weapon there is the weapon door's business), and
+ *  GARMENTS from the clothing slots - chest, legs, feet, and the two
+ *  cloak slots the robes-and-cloaks judgement dresses as robes. */
+export function dfWornEquipment(slots, EQUIP_SLOTS, ARMOR_ENUM_) {
+  const worn = dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM_).map((p) => ({ ...p, kind: 'armor' }));
+  const S = EQUIP_SLOTS;
+  for (const k of ['ChestClothes', 'LegsClothes', 'Feet', 'Cloak1', 'Cloak2']) {
+    const it = slots[S[k]];
+    if (it && typeof it.templateIndex === 'number' && it.templateIndex in CLOTHING_NAME) {
+      worn.push({ kind: 'clothing', templateIndex: it.templateIndex, name: CLOTHING_NAME[it.templateIndex] });
+    }
+  }
+  return worn;
+}
+
 /** DF's own worn-armor readout: which equip slots carry pieces this
  *  door can dress. Hands are checked for SHIELDS only - a weapon in a
  *  hand is the weapon door's business. */
@@ -259,37 +366,99 @@ export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
  * missing record, an unknown INDX, a ref with no id for this sex -
  * each is a note, the skin stands, the law is never-traps.
  */
-export function composeWornArmor({ pieces, armors, bodyPool, female = false }) {
-  const adds = [];
-  const shadows = new Set();
+export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false }) {
   const notes = [];
   const bodyById = new Map((bodyPool ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
-  for (const piece of pieces ?? []) {
+  // ── THE PRIORITY LAW (Audit 30's recording, now consumed) ────────
+  // Every PRT slot is an arbitration: the skin holds it at priority 1,
+  // a garment claims it at ((base+1)<<1) + (armor ? 1 : 0) - so armor
+  // beats clothing at the same base, a robe's base of 11 beats a
+  // cuirass's 0, and a skirt's 3 beats pants. The gate is STRICTLY
+  // GREATER (addOrReplaceIndividualPart, npcanimation.cpp:771;
+  // reserveIndividualPart, :746) - a tie keeps the FIRST claimant,
+  // which is why the robe's own refs survive the robe's reserve of
+  // the same slots at the same priority, and why the pieces walk in
+  // the reference's slotlist order (:590-604, robe first). A robe or
+  // a skirt RESERVES its slot list at its priority - occupation
+  // without a mesh - hiding the skin and any lesser garment there,
+  // refs or no refs.
+  const slots = Array.from({ length: ARMO_PART.length }, () => ({ prio: 1, add: null, shadow: false }));
+  const claim = (part, prio, add) => {
+    const slot = slots[part];
+    if (!slot || prio <= slot.prio) return;
+    slot.prio = prio; slot.add = add; slot.shadow = true;
+  };
+  const ordered = [...(pieces ?? [])].sort((a, b) => wornOrder(a) - wornOrder(b));
+  let hairHidden = 0;
+  for (const piece of ordered) {
+    if (piece.kind === 'clothing') {
+      const name = piece.name ?? CLOTHING_NAME[piece.templateIndex];
+      const res = mwClothingRecord(clothes, name);
+      if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
+      const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
+      const prio = ((base + 1) << 1) + 0;
+      composeRefs(res.record, prio, female, bodyById, claim, notes);
+      for (const part of RESERVES[res.row.reserve] ?? []) claim(part, prio, null);
+      continue;
+    }
     const res = mwArmorRecords(armors, piece.templateIndex, piece.material);
     if (!res.records.length) { notes.push(`armor ${piece.templateIndex}: ${res.note}`); continue; }
+    const prio = ((0 + 1) << 1) + 1;
     // AUDIT 30 F1: A HELMET HIDES THE HAIR - an engine rule, not a
-    // part reference. The reference removes PRT_Hair the moment the
-    // helmet SLOT equips (npcanimation.cpp:615), before the armor's
-    // own refs say anything, which is why a helm whose refs cover only
-    // the head still never shows hair through the shell. D29 shipped
-    // without it and the hair floated through every closed helm.
-    if (piece.templateIndex === HELM_TEMPLATE) shadows.add('hair');
+    // part reference (npcanimation.cpp:615), prior to the refs.
+    if (piece.templateIndex === HELM_TEMPLATE) hairHidden = Math.max(hairHidden, prio);
     for (const armo of res.records) {
       if (!armo.parts?.length) { notes.push(`${armo.id}: no worn part references - the ground mesh is not a body`); continue; }
-      for (const ref of armo.parts) {
-        const row = ARMO_PART[ref.part];
-        if (!row) { notes.push(`${armo.id}: INDX ${ref.part} is outside the enum`); continue; }
-        if (row.name === 'weapon') continue;
-        const id = (female && ref.female) || ref.male || ref.female;
-        if (!id) { notes.push(`${armo.id}: ${row.name} names no body part`); continue; }
-        const body = bodyById.get(id);
-        if (!body) { notes.push(`${armo.id}: ${row.name} wants "${id}" and no BODY record carries it`); continue; }
-        adds.push({ slot: `${row.name} (${armo.id})`, bones: row.bones, model: body.model, recordId: id });
-        if (row.shadows) shadows.add(row.shadows);
-      }
+      composeRefs(armo, prio, female, bodyById, claim, notes);
     }
   }
+  if (hairHidden) claim(1, hairHidden, null);
+  const adds = [];
+  const shadows = new Set();
+  for (let i2 = 0; i2 < slots.length; i2++) {
+    if (!slots[i2].shadow) continue;
+    if (slots[i2].add) adds.push(slots[i2].add);
+    const key = ARMO_PART[i2].shadows;
+    if (key) shadows.add(key);
+  }
   return { adds, shadows: [...shadows], notes };
+}
+
+/** One record's part references, claimed at one priority. */
+function composeRefs(rec, prio, female, bodyById, claim, notes) {
+  for (const ref of rec.parts ?? []) {
+    const row = ARMO_PART[ref.part];
+    if (!row) { notes.push(`${rec.id}: INDX ${ref.part} is outside the enum`); continue; }
+    if (row.name === 'weapon') continue;
+    const id = (female && ref.female) || ref.male || ref.female;
+    if (!id) { notes.push(`${rec.id}: ${row.name} names no body part`); continue; }
+    const body = bodyById.get(id);
+    if (!body) { notes.push(`${rec.id}: ${row.name} wants "${id}" and no BODY record carries it`); continue; }
+    claim(ref.part, prio, { slot: `${row.name} (${rec.id})`, bones: row.bones, model: body.model, recordId: id });
+  }
+}
+
+/** The reference's slotlist order (npcanimation.cpp:590-604), as a
+ *  rank: robe, skirt, helm, cuirass, greaves, pauldrons, boots,
+ *  gauntlets, shirt, pants, carried. Ties in priority go to the LATER
+ *  rank, which this sort makes true by walking earlier ranks first. */
+function wornOrder(piece) {
+  if (piece.kind === 'clothing') {
+    const row = DF_CLOTHING_ROWS[piece.name ?? CLOTHING_NAME[piece.templateIndex]];
+    if (row?.reserve === 'robe') return 0;
+    if (row?.reserve === 'skirt') return 1;
+    if (row?.type === MW_CLOTHING_TYPE.Shirt) return 10;
+    return 11;                                   // pants, shoes, belts
+  }
+  const t = piece.templateIndex;
+  if (t === ARMOR_ENUM.Helm) return 2;
+  if (t === ARMOR_ENUM.Cuirass) return 3;
+  if (t === ARMOR_ENUM.Greaves) return 4;
+  if (t === ARMOR_ENUM.Left_Pauldron) return 5;
+  if (t === ARMOR_ENUM.Right_Pauldron) return 6;
+  if (t === ARMOR_ENUM.Boots) return 7;
+  if (t === ARMOR_ENUM.Gauntlets) return 8;
+  return 12;                                     // shields, the carried pair
 }
 
 /** Apply the shadows to the skin rows' bone lists: 'chest' hides the

@@ -56,7 +56,7 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag, armorRecords,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag, armorRecords, clothingRecords,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES } from '../formats/mwNpc.js';
@@ -537,7 +537,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, clothes, archives, parts, allWeapons, find,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -556,7 +556,7 @@ async function buildTpBody({
     // shadows to the skin rows' bone lists so a right gauntlet hides
     // the right hand and leaves the left on the body. Never-traps:
     // every miss is a note and the skin stands.
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], bodyPool: parts, female });
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
     missing.push(...worn.notes);
     const skinRows = shadowSkinRows(
       rows.filter((r) => r.record).map((r) => ({ slot: r.slot, bones: PART_BONES[r.slot] ?? [], model: r.record.model })),
@@ -706,6 +706,7 @@ export async function buildFpArm({
     // MW-D29: the ARMO records ride the same esm walk, load order and
     // all - the composer resolves DF pieces against them by token.
     const armors = esmBytes.flatMap((e) => armorRecords(e.bytes));
+    const clothes = esmBytes.flatMap((e) => clothingRecords(e.bytes));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -770,7 +771,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors, clothes, archives, parts, allWeapons, find })
       : null;
     archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {

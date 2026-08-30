@@ -795,6 +795,41 @@ export function weaponRecords(bytes) {
   return out;
 }
 
+/** MW-D30: the CLOT records - the ARMO reader's twin, plus CTDT's
+ *  TYPE, which the composer needs twice over: DF garments resolve to
+ *  MW clothing BY TYPE (a shirt is any CLOT of type 2, id-sorted),
+ *  and the robe/skirt types trigger the reference's slot RESERVES.
+ *  CTDT is 12 bytes - u32 type, f32 weight, u16 value, u16 enchant
+ *  points (loadclot.hpp) - refused at any other size. The part
+ *  references are the same INDX/BNAM/CNAM list armor carries, and
+ *  MODL is the ground mesh here too. */
+export function clothingRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'CLOT') continue;
+    const e = { id: '', model: '', name: '', type: -1, enchanted: false, parts: [] };
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+      else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+      else if (sub.name === 'ENAM') e.enchanted = true;
+      else if (sub.name === 'CTDT') {
+        if (sub.len !== 12) throw new Error(`CLOT ${e.id}: CTDT is ${sub.len} bytes`);
+        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getUint32(0, true);
+      } else if (sub.name === 'INDX') {
+        if (sub.len !== 1) throw new Error(`CLOT ${e.id}: INDX is ${sub.len} bytes`);
+        e.parts.push({ part: bytes[sub.start], male: null, female: null });
+      } else if (sub.name === 'BNAM' && e.parts.length) {
+        e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
+      } else if (sub.name === 'CNAM' && e.parts.length) {
+        e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
+      }
+    }
+    if (e.id && e.model) out.push(e);
+  }
+  return out;
+}
+
 /** AUDIT MW-A F1: IS THIS RACE A BEAST? Read from the RACE record's
  *  own RADT flags (bit 2), the WEAP way - a targeted walk, lenient of
  *  fixtures, because the one consumer is a boolean and parseEsm's

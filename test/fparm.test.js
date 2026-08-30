@@ -1421,9 +1421,10 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
 import {
   DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
   mwArmorRecords, itemMapCoverage, mwItemReport,
-  ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor,
+  ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor, dfWornEquipment,
+  MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord,
 } from '../src/formats/mwItemMap.js';
-import { armorRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
+import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1436,8 +1437,9 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   const holes = cover.filter((c) => c.kind === 'UNMAPPED');
   assert.deepEqual(holes, [], `unmapped item/material combinations:\n${holes.map((h) => `${h.material} ${h.item}`).join('\n')}`);
   // The space is the REAL space: 19 weapons x 10 materials + 11 armors
-  // x 13 materials, so removing an enum entry cannot shrink the claim.
-  assert.equal(cover.length, 19 * 10 + 11 * 13);
+  // x 13 materials + 76 wearable garment indices (MW-D30), so removing
+  // an enum entry cannot shrink the claim.
+  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76);
   // Declared sprites are present, named, and reasoned.
   const sprites = cover.filter((c) => c.kind === 'sprite');
   assert.ok(sprites.length >= 10, 'the Arrow rows are not declared');
@@ -1627,8 +1629,11 @@ test('MW-D29: the composer dresses, shadows, sexes, and never traps', () => {
   const male = composeWornArmor({ pieces, armors, bodyPool, female: false });
   // the right gauntlet's ref is sided; the WRIST ref rides the same
   // record; the cuirass adds and shadows the chest whole.
-  assert.deepEqual(male.adds.map((a) => a.recordId), ['b_gr', 'b_wr', 'b_cu']);
-  assert.deepEqual(male.adds[0].bones, ['right hand']);
+  // adds emerge in PRT-slot order since the composer became an
+  // arbitration (MW-D30); the LAW is which parts win, not the array's
+  // order, so the pin compares sorted.
+  assert.deepEqual(male.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_gr', 'b_wr']);
+  assert.deepEqual(male.adds.find((a) => a.recordId === 'b_gr').bones, ['right hand']);
   assert.deepEqual([...male.shadows].sort(), ['chest', 'hand:right', 'wrist:right']);
   // never-traps, said in words: the out-of-enum INDX and the missing
   // BODY id are notes, not throws, and the skin stands for them.
@@ -1636,7 +1641,7 @@ test('MW-D29: the composer dresses, shadows, sexes, and never traps', () => {
   assert.ok(male.notes.some((n) => /b_missing/.test(n)));
   // the female pick takes CNAM when it exists, BNAM when it does not.
   const fem = composeWornArmor({ pieces, armors, bodyPool, female: true });
-  assert.deepEqual(fem.adds.map((a) => a.recordId), ['b_gr_f', 'b_wr', 'b_cu']);
+  assert.deepEqual(fem.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_gr_f', 'b_wr']);
   // a piece with no MW record at all is one note, no adds.
   const none = composeWornArmor({ pieces: [{ templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Chain }], armors, bodyPool, female: false });
   assert.equal(none.adds.length, 0);
@@ -1661,11 +1666,11 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], bodyPool: parts, female \}\)/);
+  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female \}\)/);
   assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => armorRecords\(e\.bytes\)\);/);
   assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, weapon, hasAmmo, armor, armors,/);
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /armor: dfWornArmor\(equipTableOf\(playerEntity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
+  assert.match(menu, /armor: dfWornEquipment\(equipTableOf\(playerEntity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
   // and the readout itself: armor slots in, shields from hands, a
   // sword in a hand refused.
   const slots = []; slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 2 };
@@ -1702,4 +1707,106 @@ test('AUDIT 30 F1: a helmet hides the hair - the engine rule, not a part referen
     bodyPool, female: false,
   });
   assert.ok(!cuir.shadows.includes('hair'));
+});
+
+// ═══ MW-D30: CLOTHING ═══════════════════════════════════════════════
+test('MW-D30: the CLOT reader - type from CTDT, refs like armor, ground mesh stays ground', () => {
+  const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+  const sub = (name, payload) => [...enc(name), payload.length & 255, (payload.length >> 8) & 255, 0, 0, ...payload];
+  const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), body.length & 255, (body.length >> 8) & 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+  const z = (s2) => [...enc(s2), 0];
+  const ctdt = (t) => { const b = new Array(12).fill(0); b[0] = t; return b; };
+  const bytes = new Uint8Array([
+    // type 7 and type 0 on purpose: a reader that hardcodes the common
+    // case (shirt, 2) instead of reading CTDT dies here.
+    ...rec('CLOT', [sub('NAME', z('common_skirt_01')), sub('MODL', [...enc('c'), 0x5c, ...z('skirt.nif')]),
+      sub('CTDT', ctdt(7)), sub('INDX', [5]), sub('BNAM', z('c_m_skirt'))]),
+    ...rec('CLOT', [sub('NAME', z('common_pants_01')), sub('MODL', [...enc('c'), 0x5c, ...z('pants.nif')]),
+      sub('CTDT', ctdt(0)), sub('INDX', [21]), sub('BNAM', z('c_m_pants_ul'))]),
+  ]);
+  const [c, c2] = clothingRecords(bytes);
+  assert.equal(c.type, 7, 'CTDT type did not read');
+  assert.equal(c2.type, 0);
+  assert.equal(c.model, 'c/skirt.nif');
+  assert.deepEqual(c.parts.map((p) => p.part), [5]);
+});
+
+test('MW-D30: garments resolve BY TYPE, id-sorted - the commons dress the street', () => {
+  const C = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false, parts: [{ part: 3, male: 'x', female: null }] });
+  const clothes = [C('expensive_shirt_02', 2), C('common_shirt_02', 2), C('common_pants_01', 0), C('exquisite_shirt_01', 2)];
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt').record.id, 'common_shirt_02', 'the id sort did not put common first');
+  assert.equal(mwClothingRecord(clothes, 'Casual Pants').record.id, 'common_pants_01');
+  assert.match(mwClothingRecord([], 'Vest').note, /classic sprite stands/);
+  assert.equal(mwClothingRecord(clothes, 'Plate Mail').record, null, 'a non-garment resolved');
+  // every wearable index the DB mints has a row - the coverage pin
+  // holds the totality; this holds the judgement calls by name.
+  assert.equal(DF_CLOTHING_ROWS['Casual Cloak'].type, MW_CLOTHING_TYPE.Robe, 'cloaks wear robes - the recorded judgement');
+  assert.equal(DF_CLOTHING_ROWS['Sash'].type, MW_CLOTHING_TYPE.Belt);
+});
+
+test('MW-D30: the priority law - armor beats clothing, the robe beats the cuirass, ties go later', () => {
+  const bodyPool = [
+    { id: 'b_shirt', model: 'm/s.nif' }, { id: 'b_cu', model: 'm/c.nif' },
+    { id: 'b_robe', model: 'm/r.nif' }, { id: 'b_glove', model: 'm/g.nif' },
+  ];
+  const clothes = [
+    { id: 'common_shirt_01', model: 's.nif', name: '', type: 2, enchanted: false, parts: [{ part: 3, male: 'b_shirt', female: null }] },
+    { id: 'common_robe_01', model: 'r.nif', name: '', type: 4, enchanted: false, parts: [{ part: 3, male: 'b_robe', female: null }] },
+  ];
+  const armors = [
+    { id: 'iron_cuirass', model: 'c.nif', name: '', enchanted: false, parts: [{ part: 3, male: 'b_cu', female: null }] },
+  ];
+  const shirt = { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' };
+  const cuirass = { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron };
+  const robe = { kind: 'clothing', templateIndex: 163, name: 'Plain Robes' };
+  // armor beats clothing on the same slot: prio 3 over 2.
+  const a = composeWornArmor({ pieces: [shirt, cuirass], armors, clothes, bodyPool, female: false });
+  assert.deepEqual(a.adds.map((x) => x.recordId), ['b_cu'], 'the cuirass did not beat the shirt');
+  // the robe's base 11 beats the cuirass's 0: prio 24 over 3 - and its
+  // RESERVES hide the legs and arms skin with no refs at all.
+  const b = composeWornArmor({ pieces: [robe, cuirass], armors, clothes, bodyPool, female: false });
+  assert.deepEqual(b.adds.map((x) => x.recordId), ['b_robe'], 'the robe did not beat the cuirass');
+  assert.ok(b.shadows.includes('upperleg:right') && b.shadows.includes('forearm:left'),
+    'the robe reserve did not hide the limbs');
+  // ties go to the LATER piece in the reference order: two garments of
+  // one type cannot happen from DF slots, so prove it with the pieces
+  // that CAN tie - nothing does at different bases - by symmetry:
+  // shirt alone still dresses.
+  const c = composeWornArmor({ pieces: [shirt], armors, clothes, bodyPool, female: false });
+  assert.deepEqual(c.adds.map((x) => x.recordId), ['b_shirt']);
+  // THE +1 ITSELF, swept at the source: in the reference's own walk
+  // order armor always precedes the generic garments, so with a
+  // first-claimant tie rule the armor bit never flips an outcome this
+  // fixture can stage - an equivalent mutant. It stays because it is
+  // the reference's formula (npcanimation.cpp:625-630), and the sweep
+  // keeps a refactor from quietly flattening it into "equivalent
+  // today, wrong the day a garment walks first".
+  const src = readFileSync('src/formats/mwItemMap.js', 'utf8');
+  assert.match(src, /\(\(0 \+ 1\) << 1\) \+ 1;/, 'armor lost its +1');
+  assert.match(src, /\(\(base \+ 1\) << 1\) \+ 0;/, 'clothing lost its +0 formula');
+});
+
+test('MW-D30: the skirt reserve and the readout - garments ride the equip table', () => {
+  const bodyPool = [{ id: 'b_skirt', model: 'm/sk.nif' }, { id: 'b_pants', model: 'm/p.nif' }];
+  const clothes = [
+    { id: 'common_skirt_01', model: 'k.nif', name: '', type: 7, enchanted: false, parts: [{ part: 5, male: 'b_skirt', female: null }] },
+    { id: 'common_pants_01', model: 'p.nif', name: '', type: 0, enchanted: false, parts: [{ part: 21, male: 'b_pants', female: null }] },
+  ];
+  const skirt = { kind: 'clothing', templateIndex: 153, name: 'Short Skirt' };
+  const pants = { kind: 'clothing', templateIndex: 151, name: 'Casual Pants' };
+  // the skirt's base 3 (prio 8) beats pants' 0 (prio 2) on the leg it
+  // reserves: the pants' upper-leg ref loses, the skirt's own part
+  // dresses, and the groin+legs skin hides.
+  const w = composeWornArmor({ pieces: [pants, skirt], armors: [], clothes, bodyPool, female: false });
+  assert.deepEqual(w.adds.map((x) => x.recordId), ['b_skirt'], 'the skirt reserve did not beat the pants');
+  assert.ok(w.shadows.includes('groin') && w.shadows.includes('upperleg:left'));
+  // the readout: clothing slots in, with names; armor unchanged.
+  const slots = []; slots[17] = { templateIndex: 165 }; slots[14] = { templateIndex: 154 };
+  slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 1 };
+  const worn = dfWornEquipment(slots, { Head: 12, RightArm: 13, LeftArm: 15, ChestArmor: 18, Gloves: 20, LegsArmor: 23, Feet: 26, RightHand: 19, LeftHand: 21, ChestClothes: 17, LegsClothes: 24, Cloak1: 14, Cloak2: 16 }, ARMOR_ENUM);
+  assert.deepEqual(worn, [
+    { templateIndex: ARMOR_ENUM.Helm, material: 1, kind: 'armor' },
+    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
+    { kind: 'clothing', templateIndex: 154, name: 'Casual Cloak' },
+  ]);
 });
