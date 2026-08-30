@@ -160,6 +160,7 @@ import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES } from '
 import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
+import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at
 // U39: the tavern - the window, the knightly free-room perk and the
 // two guild readers that recover the player's own order.
 import {
@@ -3374,7 +3375,11 @@ export function createWorldModes(host) {
    *  TransitionDungeonInterior - and that member takes the START
    *  marker. startInDungeon passes true for StartDungeonInterior. */
   async function tryEnterDungeon(hit, entries, { preferEnterMarker = false } = {}) {
-    const dfLocation = hit.dfLocation;
+    // AUDIT 28 W4: SMALLER DUNGEONS - the location that gets BUILT is
+    // sized by MapsFile's law (setting, main-story gate, and a live
+    // quest's frozen state through its SiteLink), on a clone; the
+    // cached location the exterior shares is never touched.
+    const dfLocation = dungeonLocationFor(hit.dfLocation, { questMachine: questBridge?.machine });
     if (!dfLocation || !dfLocation.hasDungeon) return false;
     transitioning = true;
     try {

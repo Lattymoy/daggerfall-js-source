@@ -14,7 +14,8 @@ import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound }
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
-import { applyTextureTable } from '../world/dungeonTextures.js';
+import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-time SmallerDungeons stamp
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
@@ -3486,6 +3487,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // weaponDrawn lands here whichever host mounted it.
         pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed },
         locationKey: _locationKey,
+        // AUDIT 28 W4: SerializablePlayer.cs:224 - the RAW setting as of
+        // the save, so a load under the OTHER setting can warp to the
+        // start marker (:462-472) instead of standing in blocks that no
+        // longer exist.
+        smallerDungeonsState: getBool('Experimental', 'SmallerDungeons') ? 1 : 2,
         world: collectWorld(),
       });
       const r = saveSlot(playerEntity.name, saveName, snap);
@@ -3519,6 +3525,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
+      // AUDIT 28 W4 (SerializablePlayer.cs:462-472): saved under the
+      // OTHER SmallerDungeons setting, the position may sit in blocks
+      // this build does not have - warp to the start marker and say so.
+      // Story dungeons never use the setting, so they never warp
+      // (:466-468), and an old envelope (no field) never warps either.
+      const savedSmaller = extras.smallerDungeonsState === 1;
+      if (extras.smallerDungeonsState && extras.locationKey === _locationKey && setPlayerPos
+        && savedSmaller !== getBool('Experimental', 'SmallerDungeons')
+        && !isMainStoryDungeon(dfLocation?.mapTableData?.mapId)) {
+        const sm = dungeon.startMarker;
+        if (sm) {
+          setPlayerPos([sm.x, sm.y, sm.z]);
+          hudText.add('Dungeon size setting changed - moved to dungeon start.');
+        }
+      }
       // F222/F101: Sheathed = !weaponDrawn (:420-421); the host takes
       // the yaw/pitch/crouch half through its own seam.
       if (extras.pose) {

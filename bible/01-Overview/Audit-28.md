@@ -253,6 +253,27 @@ commit:
 4 self-audit mutants (exit inside the dispatch, flag never taken, the
 scaled gap back, raw dt while paused), 4 killed.
 
+## W4 CLOSED: SmallerDungeons (MapsFile.cs:766-797, :1366-1444)
+
+`Experimental/SmallerDungeons` ships False and the port carried only the
+quest save field, at NotSet. `world/smallerDungeons.js` is the law
+whole: over five blocks, the dungeon regenerates as a plus of five - a
+random interior block centred and starting, four random border blocks
+(`^B`, case-insensitive) around it - from its OWN list, DFRandom seeded
+on the raw MapId, so the small dungeon is the same one every visit.
+Main-story dungeons never shrink, and both of DFU's throws are
+verbatim. `UseSmallerDungeon` consults a live quest's FROZEN state
+through its first Dungeon SiteLink before the setting - `Quest.Start`
+stamps it (Quest.cs:284), the quest save carries it, an old envelope
+restores NotSet. The entry seam sizes the location BEFORE the context
+is built, on a CLONE - the one deliberate shape departure, recorded in
+the module header: DFU regenerates a struct copy inside GetLocation,
+and the port's locations are cached objects the exterior shares.
+The dungeon save stamps the raw setting (SerializablePlayer :224) and a
+load under the other setting warps to the start marker with a HUD line;
+story dungeons and old envelopes never (:462-472). 7 pins; 9 mutants,
+9 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

@@ -119,6 +119,9 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W3c: UseLocationDungeonTextureTable's fork (DaggerfallDungeon
   // :174-196): classic / by-climate / randomized, with the main-story gate.
   'Video/RandomDungeonTextures': 'src/world/dungeonTextures.js',
+  // AUDIT 28 W4: MapsFile.UseSmallerDungeon (:776-797) + Quest.Start's
+  // frozen stamp (Quest.cs:284) - the five-block plus for big dungeons.
+  'Experimental/SmallerDungeons': 'src/world/smallerDungeons.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

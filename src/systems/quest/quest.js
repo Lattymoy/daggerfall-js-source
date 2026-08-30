@@ -25,6 +25,7 @@
 import { travelTimeSeconds } from './clock.js';
 import { Message, Formatting } from './message.js';
 import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
+import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // AUDIT 28 W4: Quest.cs:284's stamp
 
 /** ShowMessagePopup's chunker (Quest.cs:777, 793-819): a message
  *  longer than 22 LINES becomes several click-through boxes. A line
@@ -130,6 +131,7 @@ export class Quest {
     this.questTombstoned = false;
     this.questTombstoneTime = 0;
     this.questStartTime = 0;
+    this.smallerDungeonsState = 0;   // AUDIT 28 W4: QuestSmallerDungeonsState.NotSet until Start() stamps it (Quest.cs:64)
     this.ticksToEnd = 0;
     this.activeLogMessages = new Map();      // stepID -> { stepID, messageID, time }
     this.oneTimeDisplayedMessages = new Set();
@@ -192,6 +194,11 @@ export class Quest {
 
   start() {
     this.questStartTime = this.nowSeconds?.() ?? 0;
+    // AUDIT 28 W4 (Quest.cs:284): the SmallerDungeons setting AS OF the
+    // quest's start, frozen in - marker assignments are not relocated
+    // when the setting flips, so the dungeon a quest points at keeps
+    // the size the quest compiled with.
+    this.smallerDungeonsState = smallerDungeonsStateNow();
   }
 
   update() {
@@ -417,7 +424,7 @@ export class Quest {
       questStartTime: this.questStartTime,
       questTombstoned: this.questTombstoned,
       questTombstoneTime: this.questTombstoneTime,
-      smallerDungeonsState: 0,
+      smallerDungeonsState: this.smallerDungeonsState ?? 0,   // AUDIT 28 W4: the frozen state, saved (Quest.cs:912)
       compiledByVersion: '',
       activeLogMessages: [...this.activeLogMessages.values()].map((e) => ({ ...e })),
       messages: [...this.messages.values()].map((m) => m.getSaveData()),
@@ -447,6 +454,7 @@ export class Quest {
     this.questStartTime = data.questStartTime;
     this.questTombstoned = data.questTombstoned;
     this.questTombstoneTime = data.questTombstoneTime;
+    this.smallerDungeonsState = data.smallerDungeonsState ?? 0;   // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)
     this.activeLogMessages.clear();
     for (const logEntry of data.activeLogMessages) {
       this.activeLogMessages.set(logEntry.stepID, { ...logEntry });
