@@ -173,17 +173,22 @@ export const UPPER_BODY_NAME = Object.freeze(
  *  test is the same shape with one fewer state above the line. */
 export const accurateAiming = (upper) => upper > UPPER_BODY.WeaponEquipped;
 
-/** AnimState::getCompletion - the fraction of [startTime, stopTime] the
- *  playhead has covered. refreshIdleAnims feeds it straight back in as
- *  the next play's startPoint (:822-825), so a finished idle restarts AT
- *  ITS OWN END and the loop window immediately wraps it. That is not a
- *  bug being reproduced; it is why a re-armed idle does not visibly
- *  stutter back to the beginning. */
+/** AnimState::getCompletion (animation.cpp:2160-2166) - the fraction of
+ *  [startTime, stopTime] the playhead has covered. refreshIdleAnims
+ *  feeds it straight back in as the next play's startPoint (:822-825),
+ *  so a finished idle restarts AT ITS OWN END and the loop window
+ *  immediately wraps it. That is not a bug being reproduced; it is why
+ *  a re-armed idle does not visibly stutter back to the beginning.
+ *
+ *  MW-D33: the reference does NOT clamp the ratio, and a zero-length
+ *  clip answers by whether it is still playing - `mPlaying ? 0.0f :
+ *  1.0f` - a FINISHED zero-length clip is complete, not at its start.
+ *  The port had clamped and answered 0 for both. */
 export function clipCompletion(state) {
   if (!state) return 0;
   const span = state.stopTime - state.startTime;
-  if (!(span > 0)) return 0;
-  return Math.min(1, Math.max(0, (state.time - state.startTime) / span));
+  if (span > 0) return (state.time - state.startTime) / span;
+  return state.playing ? 0 : 1;
 }
 
 /**

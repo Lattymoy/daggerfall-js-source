@@ -144,8 +144,8 @@ export function buildSkeleton(nif) {
  * (case-insensitively). MW-D14 corrected it, and the difference is not
  * academic: a first-person weapon .kf keys nothing on bip01, so "topmost
  * tracked bone" answered an UPPER ARM - and any translation channel on
- * that bone would then have had its X and Y pinned to rest, silently
- * deforming the arm rather than moving the actor.
+ * that bone would then have had its X and Y zeroed, silently deforming
+ * the arm rather than moving the actor.
  *
  * With neither name driven the answer is NULL, which is the correct
  * answer and not a failure: an animation with no accum root simply
@@ -173,8 +173,16 @@ export function accumRootRef(skeleton, tracks) {
 /**
  * Pose the skeleton from tracks at a time: local transforms per node,
  * rest values where a channel has no keys. Pass `accumRoot` (from
- * accumRootRef) to extract root motion: that bone's X,Y pin to rest
- * and only Z stays animated, the reference's (1,1,0) accumulation.
+ * accumRootRef) to extract root motion.
+ *
+ * MW-D33: the accumulated axes are ZEROED, not pinned to rest -
+ * ResetAccumRootCallback multiplies the node's translation by
+ * (0,0,1) component-wise ("anything that accumulates (1.f) should be
+ * reset in the callback to (0.f)", animation.cpp:515-539), and it does
+ * so on WHATEVER the transform holds, keyed or rest alike. Only Z
+ * stays, the reference's (1,1,0) accumulation. The port had substituted
+ * the bone's rest X,Y, which is only the same thing when the rest
+ * translation happens to be zero.
  * @returns {Map<number, {rotation:Float32Array, translation:number[],
  *   scale:number}>}
  */
@@ -188,8 +196,8 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
     }
     const s = sampleTrack(track, time);
     let translation = s.translation ?? node.rest.translation;
-    if (ref === opts.accumRoot && s.translation) {
-      translation = [node.rest.translation[0], node.rest.translation[1], s.translation[2]];
+    if (ref === opts.accumRoot) {
+      translation = [0, 0, translation[2]];   // componentMultiply((0,0,1), trans)
     }
     pose.set(ref, {
       rotation: s.rotation ? quatToMat33(s.rotation) : node.rest.rotation,

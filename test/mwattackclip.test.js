@@ -484,8 +484,13 @@ test('MW-D12: clipCompletion is the window fraction the idle restart feeds back'
   assert.equal(clipCompletion({ startTime: 0.6, stopTime: 1.6, time: 0.6 }), 0);
   assert.equal(clipCompletion({ startTime: 0.6, stopTime: 1.6, time: 1.6 }), 1);
   assert.ok(Math.abs(clipCompletion({ startTime: 0.6, stopTime: 1.6, time: 1.1 }) - 0.5) < 1e-9);
-  assert.equal(clipCompletion({ startTime: 1, stopTime: 1, time: 1 }), 0, 'a zero-width window is 0, not NaN');
-  assert.equal(clipCompletion({ startTime: 0.6, stopTime: 1.6, time: 9 }), 1, 'clamped');
+  // MW-D33: a zero-width window answers by mPlaying - `mPlaying ? 0.0f
+  // : 1.0f` (getCompletion, animation.cpp:2160-2166) - a FINISHED
+  // zero-length clip is complete, and the ratio is NOT clamped.
+  assert.equal(clipCompletion({ startTime: 1, stopTime: 1, time: 1, playing: true }), 0);
+  assert.equal(clipCompletion({ startTime: 1, stopTime: 1, time: 1, playing: false }), 1);
+  assert.ok(Math.abs(clipCompletion({ startTime: 0.6, stopTime: 1.6, time: 9 }) - 8.4) < 1e-9,
+    'unclamped, exactly the reference ratio');
 });
 
 test('MW-D12 rule 10: equip and unequip key names are the group\'s own, and are stated once', () => {
