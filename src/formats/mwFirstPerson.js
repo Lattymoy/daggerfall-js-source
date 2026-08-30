@@ -744,6 +744,11 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         // documents at mwViewer.js:430-436.
         pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
           batch, source: null, attachRef: null,
+          // MW-D11: the UVs and the material ride WITH the piece. They
+          // were reachable through `batch` for a skinned piece and lost
+          // entirely for a rigid one (which keeps only its positions), so
+          // the texture a Morrowind mesh names never reached the draw.
+          uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
           positions: new Float32Array(batch.positions.length), indices: batch.indices });
         if (nameless) namelessHere = true;
       }
@@ -760,6 +765,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
             batch: null, source: batch.positions, attachRef: bound.attachRef,
+            uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
       }

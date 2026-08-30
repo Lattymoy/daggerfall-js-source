@@ -106,15 +106,21 @@ const CHAR_VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aColor;
 layout(location=2) in vec3 aNormal;
+// MW-D11: the OPTIONAL fourth channel. A VAO that never enables it reads
+// the constant attribute, so every voxel caller draws exactly what it
+// drew before - the layout is additive, not a variant.
+layout(location=3) in vec2 aUV;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
 out vec3 vColor;
 out vec3 vNormal;
 out vec3 vWorldPos;
+out vec2 vUV;
 void main() {
   vColor = aColor;
   vNormal = mat3(uModel) * aNormal;
+  vUV = aUV;
   vec4 world = uModel * vec4(aPos, 1.0);
   vWorldPos = world.xyz;
   gl_Position = uProj * uView * world;
@@ -128,6 +134,10 @@ precision highp float;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vWorldPos;
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform float uUseTex;      // MW-D11: 0 for the voxel rigs, 1 for a textured mesh
+uniform float uAlphaCut;    // 0 = opaque; above it, discard below this alpha
 uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
@@ -153,8 +163,14 @@ float fogFactorAt(vec3 worldPos) {
 }
 void main() {
   vec3 n = normalize(vNormal);
+  // MW-D11: the texture MULTIPLIES the vertex colour, which is how a
+  // Morrowind body part gets its skin - the pack writes white there for
+  // a textured piece, so the product is the texel.
+  vec4 texel = uUseTex > 0.5 ? texture(uTex, vUV) : vec4(1.0);
+  if (uAlphaCut > 0.0 && texel.a < uAlphaCut) discard;
+  vec3 albedo = vColor * texel.rgb;
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff));
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff));
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -163,12 +179,12 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += vColor * pointAcc;
+  lit += albedo * pointAcc;
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  lit += vColor * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
@@ -511,6 +527,9 @@ export class Renderer {
       pointColors: gl.getUniformLocation(cp, 'uPointColors'),
       indirect: gl.getUniformLocation(cp, 'uIndirect'),
       indirectColor: gl.getUniformLocation(cp, 'uIndirectColor'),
+      tex: gl.getUniformLocation(cp, 'uTex'),
+      useTex: gl.getUniformLocation(cp, 'uUseTex'),
+      alphaCut: gl.getUniformLocation(cp, 'uAlphaCut'),
     };
     this._charFog = fogLocs(cp);
     // Defaults reproduce the pre-R5 fixed lighting (0.45 + 0.55 * diff).
@@ -644,23 +663,63 @@ export class Renderer {
     return prog;
   }
 
-  /** VAO from packCharacterFaces output (interleaved 9 floats/vertex). */
-  createCharacterMesh(packed) {
+  /**
+   * VAO from packCharacterFaces output (interleaved 9 floats/vertex).
+   *
+   * MW-D11: `opts.uv` takes an 11-float stream instead - the same nine
+   * floats with a UV pair after them - and enables attribute 3. The
+   * voxel rigs pass neither and get exactly the VAO they always got;
+   * this is one extra channel, not a second path, because a second path
+   * is how the two ports of one rule in MW7 drifted apart.
+   */
+  createCharacterMesh(packed, opts = {}) {
     const gl = this.gl;
+    const uv = !!opts.uv;
+    const floats = uv ? 11 : 9;
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferData(gl.ARRAY_BUFFER, packed, gl.STATIC_DRAW);
-    const stride = 9 * 4;
+    const stride = floats * 4;
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);
+    if (uv) {
+      gl.enableVertexAttribArray(3);
+      gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);
+    }
     gl.bindVertexArray(null);
-    return { vao, count: packed.length / 9, buffers: [vbo], vbo };
+    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats };
+  }
+
+  /**
+   * MW-D11: upload one decoded texture for the character path.
+   * `mips` is decodeDds's output shape ({width, height, rgba}[]), and
+   * the wrap mode is the NIF's own clamp mode, mapped by the caller.
+   */
+  createCharacterTexture(mips, { wrapS = 0x812f, wrapT = 0x812f } = {}) {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    for (let i = 0; i < mips.length; i++) {
+      const m = mips[i];
+      gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, m.width, m.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, m.rgba);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, mips.length - 1);
+    // NEAREST magnification: Morrowind's textures are small and the port
+    // draws the world with the same nearest-neighbour look everywhere
+    // else - a smoothed arm against a pixelated world reads as a bug.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+      mips.length > 1 ? gl.NEAREST_MIPMAP_LINEAR : gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return tex;
   }
 
   /** Re-upload a character mesh's vertex stream in place (per-frame
@@ -699,7 +758,33 @@ export class Renderer {
     this._uploadFog(this._charFog);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(mesh.vao);
-    gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    // MW-D11: a textured mesh carries RANGES - one per piece, each with
+    // its own texture - because a Morrowind arm is several meshes with
+    // several textures and this path issues drawArrays. Without ranges
+    // it is the one untextured draw the voxel rigs have always made.
+    // A SAMPLER IS "USED" WHETHER OR NOT THE BRANCH RUNS, so unit 0 must
+    // always hold a complete texture: with nothing bound, the driver drops
+    // the whole draw. Measured the moment this landed - the arm's
+    // offscreen target went from 203 lit texels to 0 with no error, no
+    // warning and a program that links clean.
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(c.tex, 0);
+    if (mesh.ranges && mesh.ranges.length) {
+      for (const r of mesh.ranges) {
+        gl.uniform1f(c.useTex, r.tex ? 1 : 0);
+        gl.uniform1f(c.alphaCut, r.alphaCut || 0);
+        gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
+        gl.drawArrays(gl.TRIANGLES, r.first, r.count);
+      }
+    } else {
+      gl.uniform1f(c.useTex, 0);
+      gl.uniform1f(c.alphaCut, 0);
+      gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
+      gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    }
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.uniform1f(c.useTex, 0);
+    gl.uniform1f(c.alphaCut, 0);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
   }

@@ -7,7 +7,8 @@ import { accumRootRef } from '../src/formats/mwSkin.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
   packFpArm, fpSkeletonPath, buildFpArm, createFpArm,
-  FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye,
+  FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
+  collectArmTextures,
 } from '../src/combat/fpArm.js';
 import { firstPersonCameraRef, FP_NECK_ROTATE_FACTOR } from '../src/formats/mwFirstPerson.js';
 
@@ -31,6 +32,9 @@ async function fpFixtureBuild() {
     [FP_CLIP_PATH, f('armfpidle.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
     ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    // The meshes name "tx_fixture.TGA"; the archive has only the .dds,
+    // which is the retail arrangement rule 36 exists for.
+    ['textures/tx_fixture.dds', f('fixture.dds')],
   ]);
   return buildFpArm({
     race: 'fprace',
@@ -72,18 +76,30 @@ test('MW-D8 rule 6: the skeleton is chosen by SEX and BEAST, and the reverted na
 test('MW-D8: packFpArm expands indexed triangles into the character vertex stream', async () => {
   const arm = await fixtureArm();
   const tris = arm.pieces.reduce((n, p) => n + p.indices.length / 3, 0);
-  const packed = packFpArm(arm.pieces);
+  const { packed, ranges } = packFpArm(arm.pieces);
   // drawCharacter issues drawArrays, not drawElements (renderer.js), so
-  // the stream is NON-INDEXED: three vertices per triangle, 9 floats each.
-  assert.equal(packed.length, tris * 3 * 9);
-  for (let i = 0; i < packed.length; i += 9) {
+  // the stream is NON-INDEXED: three vertices per triangle, ELEVEN floats
+  // each since MW-D11 put the UV pair on the end.
+  assert.equal(packed.length, tris * 3 * FP_FLOATS);
+  for (let i = 0; i < packed.length; i += FP_FLOATS) {
     const n = Math.hypot(packed[i + 6], packed[i + 7], packed[i + 8]);
     assert.ok(Math.abs(n - 1) < 1e-3, 'every face normal is unit length');
   }
+  // ONE RANGE PER PIECE, covering the stream exactly - a Morrowind arm is
+  // several meshes with several textures and this path issues drawArrays,
+  // so the ranges ARE the piece list.
+  assert.equal(ranges.length, arm.pieces.filter((p) => p.positions && p.indices).length);
+  let at = 0;
+  for (const r of ranges) {
+    assert.equal(r.first, at, 'the ranges are contiguous and in piece order');
+    at += r.count;
+  }
+  assert.equal(at, packed.length / FP_FLOATS, 'and together they cover every vertex');
+
   // The buffer is REUSED when it already fits - the frame path must not
   // allocate a megabyte per frame.
-  const again = packFpArm(arm.pieces, packed);
-  assert.equal(again, packed, 'a correctly-sized buffer is written in place, not replaced');
+  const again = packFpArm(arm.pieces, { packed, ranges });
+  assert.equal(again.packed, packed, 'a correctly-sized buffer is written in place, not replaced');
 });
 
 test('MW-D8 rule 13: a mirrored piece has its face normals negated, or it lights inside-out', async () => {
@@ -94,7 +110,7 @@ test('MW-D8 rule 13: a mirrored piece has its face normals negated, or it lights
   assert.equal(R.mirrored, false);
   // `+ 0` normalises IEEE negative zero, which deepEqual treats as
   // distinct from zero and which a rounded normal component hits often.
-  const n0 = (piece) => [...packFpArm([piece]).slice(6, 9)].map((x) => Math.round(x) + 0);
+  const n0 = (piece) => [...packFpArm([piece]).packed.slice(6, 9)].map((x) => Math.round(x) + 0);
   // Rule 13 negates X, which REVERSES the triangle winding, which flips
   // the computed face normal inward. Negating it back is what makes the
   // two sides agree - and agreeing is the correct answer: both arms are
@@ -505,6 +521,7 @@ test('MW-D9f: a built arm reaches the screen - the update gate is not the draw g
     updateCharacterMesh: () => {},
     renderCharacterSprite: () => { sprites++; return { tex: {} }; },
     drawScreenOverlayQuad: () => { composites++; },
+    createCharacterTexture: (mips) => ({ mips }),
   };
   const arm = createFpArm();
   arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: 0 }));
@@ -534,6 +551,7 @@ test('MW-D9f: a built arm reaches the screen - the update gate is not the draw g
     'and draw() no longer refuses');
   assert.equal(sprites, 1, 'the offscreen first-person pass ran');
   assert.equal(composites, 1, 'and it was composited over the scene');
+  assert.ok(arm.status().pieces > 0);
 });
 
 test('MW-D9f: the rig gates the step on ready() and the draw on active()', () => {
@@ -549,4 +567,155 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
   const src = rd('src/combat/fpArm.js');
   assert.match(src, /const ready = \(\) => !!\(built && built\.ok && state && renderer\);/,
     'ready() is update()\'s own requirements - no mesh term, no camera term');
+});
+
+test('MW-D11 rule 36: the texture path is FOUR PROBES over a re-rooted, extension-swapped name', async () => {
+  const { correctTexturePath, normalizeVfsPath, findDirectory, changeExtension } =
+    await import('../src/formats/mwTexture.js');
+
+  // THE REASON THE LAW EXISTS, in one line: Bethesda converted the BSA
+  // textures from TGA to DDS and left every reference saying .tga
+  // (resourcehelpers.cpp:133-135). A mesh asks for a file the archive
+  // does not have under that name.
+  const archive = new Set(['textures/tx_hand.dds']);
+  const has = (p) => archive.has(p);
+  assert.equal(correctTexturePath('tx_hand.tga', has), 'textures/tx_hand.dds');
+  assert.equal(correctTexturePath('TX_Hand.TGA', has), 'textures/tx_hand.dds', 'and it lowercases');
+  assert.equal(correctTexturePath('textures\\tx_hand.tga', has), 'textures/tx_hand.dds',
+    'backslashes are separators');
+
+  // RE-ROOTING: everything before the matched component is DISCARDED,
+  // which is how an absolute authoring path resolves. The SUBDIRECTORY
+  // has to survive the re-root, or the basename fallback silently
+  // rescues the easy case and hides a prefix-test that never re-roots at
+  // all - which is exactly what a mutant proved.
+  assert.equal(correctTexturePath('D:\\Bethesda\\Data Files\\Textures\\tx_hand.tga', has),
+    'textures/tx_hand.dds');
+  const deep = (p) => p === 'textures/deep/tx_sub.dds';
+  assert.equal(correctTexturePath('D:\\Morrowind\\Data Files\\Textures\\deep\\tx_sub.tga', deep),
+    'textures/deep/tx_sub.dds', 'the path BELOW the matched component is kept');
+  // ...but only on a WHOLE component that is not the LAST one.
+  assert.equal(findDirectory('mytextures/x.tga', 'textures'), -1, 'not a partial component');
+  assert.equal(findDirectory('foo/textures', 'textures'), -1, 'and not the final component');
+  assert.equal(findDirectory('x/textures/y/z.tga', 'textures'), 2, 'the inner component matches');
+  assert.equal(correctTexturePath('foo/textures', has), 'textures/foo/textures',
+    'so a trailing "textures" gets the prefix instead of being re-rooted');
+
+  // THE FOUR PROBES, each one reachable.
+  assert.equal(correctTexturePath('tx_a.tga', (p) => p === 'textures/tx_a.dds'),
+    'textures/tx_a.dds', '1: the swapped path');
+  assert.equal(correctTexturePath('tx_b.tga', (p) => p === 'textures/tx_b.tga'),
+    'textures/tx_b.tga', '2: the original extension');
+  assert.equal(correctTexturePath('deep/dir/tx_c.tga', (p) => p === 'textures/tx_c.dds'),
+    'textures/tx_c.dds', '3: the basename under the FRONT directory, swapped');
+  assert.equal(correctTexturePath('deep/dir/tx_d.tga', (p) => p === 'textures/tx_d.tga'),
+    'textures/tx_d.tga', '4: the basename under the front directory, original extension');
+  // ALL FOUR MISS -> the .dds candidate, NOT the authored name. The
+  // caller then fails to open it and gets the warning image, which is
+  // what makes a missing texture visible.
+  // ...and the candidate KEEPS the re-rooted directory; only the two
+  // basename fallbacks flatten it.
+  assert.equal(correctTexturePath('nope/tx_e.tga', () => false), 'textures/nope/tx_e.dds');
+
+  // bookart is the second top-level directory, and its MISSES fall back
+  // under textures/ - the fallbacks use the FRONT of the list, never the
+  // directory that matched.
+  assert.equal(correctTexturePath('bookart/cover.tga', (p) => p === 'bookart/cover.dds'),
+    'bookart/cover.dds');
+  assert.equal(correctTexturePath('bookart/cover.tga', (p) => p === 'textures/cover.dds'),
+    'textures/cover.dds');
+
+  // changeExtension refuses when there is no '.' after the last '/', and
+  // that refusal DISABLES probes 2 and 4 - so an extensionless name is
+  // two probes, not four.
+  assert.deepEqual(changeExtension('textures/tx_hand', 'dds'), { path: 'textures/tx_hand', changed: false });
+  assert.deepEqual(changeExtension('a.b/c.tga', 'dds'), { path: 'a.b/c.dds', changed: true });
+  const probed = [];
+  correctTexturePath('tx_noext', (p) => { probed.push(p); return false; });
+  assert.deepEqual(probed, ['textures/tx_noext', 'textures/tx_noext'],
+    'two probes, because there is no extension to swap back to');
+
+  // Normalization: duplicate separators collapse and ONE leading
+  // separator is stripped, because the archive index is built that way.
+  assert.equal(normalizeVfsPath('\\\\Textures\\\\\\\\tx.TGA'), 'textures/tx.tga');
+});
+
+test('MW-D11: the clamp bits are the other way round, and a miss is magenta', async () => {
+  const { wrapModes, warningImage, GL_REPEAT, GL_CLAMP_TO_EDGE } =
+    await import('../src/formats/mwTexture.js');
+  // property.hpp:70-71 - wrapT is bit 0 and wrapS is bit 1, which is the
+  // reverse of what the names suggest.
+  // The GL enums by VALUE, not by symbol: asserting wrapModes against
+  // the module's own constants passes even when the constant is wrong.
+  assert.equal(GL_REPEAT, 0x2901);
+  assert.equal(GL_CLAMP_TO_EDGE, 0x812f);
+  assert.deepEqual(wrapModes(3), { wrapS: 0x2901, wrapT: 0x2901 }, 'the common value repeats both');
+  assert.deepEqual(wrapModes(0), { wrapS: 0x812f, wrapT: 0x812f },
+    'and a clear bit is CLAMP_TO_EDGE, not GL_CLAMP and not REPEAT');
+  assert.deepEqual(wrapModes(1), { wrapS: 0x812f, wrapT: 0x2901 }, 'bit 0 is T');
+  assert.deepEqual(wrapModes(2), { wrapS: 0x2901, wrapT: 0x812f }, 'bit 1 is S');
+
+  // imagemanager.cpp:28-43. A MISSING TEXTURE IS NOT A REFUSAL - it is
+  // an 8x8 solid magenta that says so on the model.
+  const w = warningImage();
+  assert.equal(w.width, 8);
+  assert.equal(w.height, 8);
+  assert.deepEqual([...w.mips[0].rgba.slice(0, 4)], [255, 0, 255, 255]);
+  assert.equal(w.mips[0].rgba.length, 8 * 8 * 4);
+});
+
+test('MW-D11: the arm resolves, decodes and de-duplicates the textures its meshes name', async () => {
+  const built = await fpFixtureBuild();
+  assert.equal(built.ok, true, built.error);
+
+  // The fixture meshes name "tx_fixture.TGA" and the archive carries it
+  // as textures/tx_fixture.dds - the swap, end to end, on real bytes.
+  assert.equal(built.textures.size, 1, 'four pieces, two meshes, ONE decode');
+  const entry = built.textures.get('tx_fixture.tga');
+  assert.ok(entry, 'keyed by the name the mesh authored');
+  assert.equal(entry.ok, true, entry.error);
+  assert.equal(entry.path, 'textures/tx_fixture.dds');
+  assert.equal(entry.image.width, 8);
+  assert.equal(entry.image.height, 8);
+
+  // Every piece carries its material through to the pack, INCLUDING the
+  // rigid one - which used to keep only its positions, so its texture
+  // never reached the draw at all.
+  const rigid = built.arm.pieces.filter((p) => p.kind === 'rigid');
+  assert.ok(rigid.length > 0, 'the fixture has a rigid piece');
+  for (const p of built.arm.pieces) {
+    assert.equal(p.material.textureFile, 'tx_fixture.tga', `${p.kind} piece kept its material`);
+    assert.ok(p.uvs && p.uvs.length, `${p.kind} piece kept its UVs`);
+  }
+
+  // And the pack hands the draw one range per piece, each naming its own
+  // texture, with WHITE in the colour channel - the reference's material
+  // default, so texel * colour is the texel.
+  const { packed, ranges } = packFpArm(built.arm.pieces);
+  assert.ok(ranges.every((r) => r.textureFile === 'tx_fixture.tga'));
+  assert.deepEqual([...packed.slice(3, 6)], [1, 1, 1], 'no invented skin tone survives');
+  // The UV pair is the last two floats of each vertex.
+  const uvsSeen = new Set();
+  for (let i = 0; i < packed.length; i += FP_FLOATS) {
+    uvsSeen.add(`${packed[i + 9]},${packed[i + 10]}`);
+  }
+  assert.ok(uvsSeen.size > 1, 'the UVs vary across the mesh - they are not all zero');
+});
+
+test('MW-D11: a texture the archives do not carry becomes the warning image, not a refusal', async () => {
+  const { warningImage } = await import('../src/formats/mwTexture.js');
+  const pieces = [{ material: { textureFile: 'tx_absent.tga' } }];
+  const empty = collectArmTextures(pieces, [{ has: () => false, get: () => null }]);
+  const entry = empty.get('tx_absent.tga');
+  assert.equal(entry.ok, false);
+  assert.equal(entry.path, 'textures/tx_absent.dds', 'the .dds candidate is what it tried to open');
+  assert.deepEqual(entry.image.mips[0].rgba.slice(0, 4), warningImage().mips[0].rgba.slice(0, 4));
+
+  // A DECODE failure is the same answer - the arm still builds.
+  const junk = collectArmTextures(pieces, [{
+    has: (p) => p === 'textures/tx_absent.dds',
+    get: () => new Uint8Array(200),
+  }]);
+  assert.equal(junk.get('tx_absent.tga').ok, false);
+  assert.match(junk.get('tx_absent.tga').error, /DDS/);
 });

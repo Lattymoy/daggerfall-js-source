@@ -54,6 +54,7 @@ const BSA = buildBsa([
   { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
   { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ]);
 const ESM = Uint8Array.from([
   ...body('b_fp_hand_1st', 'fprace', 'hand', 'b/H1.nif'),
@@ -136,17 +137,27 @@ const out = await page.evaluate(async ({ bsa, esm }) => {
   const diff = (a, b) => {
     let n = 0; let sx = 0; let sy = 0;
     let minY = 1e9; let maxY = -1e9;
+    // MW-D11: the fixture texture is four solid quadrants - RED, GREEN,
+    // BLUE and white - so a TEXTURED arm puts strongly-hued pixels on the
+    // screen and an untextured one (white lit by a white sun) cannot.
+    // "Is there ink" passed a flat arm for three slices; this asks what
+    // COLOUR the ink is.
+    let hued = 0;
     for (let i = 0, p = 0; i < a.px.length; i += 4, p++) {
       if (Math.abs(a.px[i] - b.px[i]) > 6 || Math.abs(a.px[i + 1] - b.px[i + 1]) > 6
         || Math.abs(a.px[i + 2] - b.px[i + 2]) > 6) {
         const x = p % a.w; const y = (p / a.w) | 0;
         n++; sx += x; sy += y;
+        const r = a.px[i]; const g = a.px[i + 1]; const bl = a.px[i + 2];
+        const mx = Math.max(r, g, bl); const mn = Math.min(r, g, bl);
+        if (mx > 40 && mx - mn > 60) hued++;
         if (y < minY) minY = y; if (y > maxY) maxY = y;
       }
     }
     // readPixels puts y = 0 at the BOTTOM, so a small y is low on screen.
     return n ? {
       n,
+      hued,
       cx: sx / n / a.w,
       cy: sy / n / a.h,
       lowest: minY / a.h,
@@ -251,6 +262,9 @@ ok(out.changed.cy < 0.5, 'THE ARMS HANG IN THE LOWER FRAME, where hands are',
   `centroid y=${out.changed.cy && out.changed.cy.toFixed(3)} (0 = bottom)`);
 ok(out.changed.n / out.total > 0.02, 'and they are ARM-SIZED, not a distant speck',
   `coverage=${(out.changed.n / out.total * 100).toFixed(1)}%`);
+ok(out.changed.hued > out.changed.n * 0.3,
+  'AND THE ARM IS TEXTURED - the fixture texture\'s red/green/blue quadrants reach the screen',
+  `hued=${out.changed.hued} of ${out.changed.n}`);
 ok(out.pitched.n > 500 && out.pitched.cy < out.changed.cy,
   'looking UP slides them DOWN the frame - they ride the rig, not the lens',
   `cy ${out.changed.cy && out.changed.cy.toFixed(3)} -> ${out.pitched.cy && out.pitched.cy.toFixed(3)}`);

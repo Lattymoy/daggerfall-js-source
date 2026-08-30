@@ -33,6 +33,32 @@ each stage is provable on the player's own data before the next begins:
         registers have no nif.xml layout at all) and the reader's header
         names them, so a refusal is now a real gap rather than a queue.
 
+MW-D11 PUT THE TEXTURES ON (rules 36/61). The arm was flat skin tone
+because the port had no texture path at all; it has the reference's now,
+whole. Rule 36 is not "prepend textures/": Bethesda converted the BSA
+textures from TGA to DDS and left every NIF reference saying .tga, so
+correctResourcePath re-roots at the first WHOLE `textures`/`bookart`
+component that is not the last one - discarding everything before it,
+which is how `D:\Bethesda\Data Files\Textures\tx_hand.tga` resolves -
+swaps the extension, and probes four candidates. When all four miss it
+returns the .DDS candidate rather than the authored name, so the open
+fails and the caller gets ImageManager's 8x8 MAGENTA warning image. That
+is the rule: a missing texture is neither a refusal nor a silent skip, it
+is a texture that says it is missing. The port's own skin-tone fallback
+is retired with it - the reference's fragment starts at opaque white with
+no diffuse map and overrides the NIF material defaults to white.
+
+ONE HOME: the mesh viewer carried its own two-line version of the path
+(a prefix and an extension swap) which got three of the rules wrong; it
+imports formats/mwTexture.js now.
+
+AND THE RENDERER LEARNED A TRAP. A sampler is "used" whether or not the
+branch that reads it runs, so texture unit 0 must always hold a complete
+texture: with nothing bound, the driver drops the whole draw. Measured
+the moment the UV channel landed - the arm's offscreen target went from
+203 lit texels to 0, with no error, no warning, and a program that links
+clean.
+
 AND THE ARMS WERE IN THE WRONG PLACE EVEN ONCE THEY DREW (MW-D10). The
 port mapper is retired for rule 54 and the Z-up rig now turns into the
 renderer's Y-up basis - see below. The measurement that could have

@@ -62,6 +62,7 @@ const BSA = buildBsa([
   { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
   { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ]);
 // The FOREIGN-clip archive for L6: same arm, but the .kf keys "Bone1",
 // a bone this skeleton does not have. poseSkeleton then answers every
@@ -71,6 +72,7 @@ const BSA_BLIND = buildBsa([
   { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
   { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('xfixture.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ]);
 // MW-D9: a SECOND skeleton, the one that HAS the weapon bones. armskel
 // deliberately lacks them (MW-D4 asserts a skeleton that lacks a bone
@@ -80,6 +82,7 @@ const BSA_WEAPON = buildBsa([
   { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
   { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
   { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
 ]);
 // The mesh IS here and the BONE is not - armskel omits Weapon Bone by
@@ -91,6 +94,7 @@ const BSA_NO_WEAPON_BONE = buildBsa([
   { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
   { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
   { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
 ]);
 const wpdt = (type) => { const b = new Uint8Array(32); new DataView(b.buffer).setInt16(10, type, true); return [...b]; };
@@ -269,6 +273,7 @@ const bootNoCam = await boot(b64(buildBsa([
   { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
   { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
 ])));
 ok(bootNoCam.built.ok === false && bootNoCam.built.stage === 'camera',
   `and a rig with neither Camera nor Head REFUSES by stage (${bootNoCam.built.stage}: ${bootNoCam.built.error})`);

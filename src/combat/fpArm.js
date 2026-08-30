@@ -47,6 +47,8 @@ import {
   firstPersonCameraRef,
 } from '../formats/mwFirstPerson.js';
 import { WEAPONS } from '../characters/weapons.js';
+import { correctTexturePath, wrapModes, warningImage } from '../formats/mwTexture.js';
+import { decodeDds } from '../formats/mwDdsFile.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
  *  scope (it ships with Bloodmoon and Part VI records it ABSENT from a
@@ -106,6 +108,11 @@ export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
 
+/** MW-D11: nine floats became eleven - [pos.xyz, colour.rgb, normal.xyz,
+ *  uv.xy]. Stated once, here, because the pack and the VAO have to agree
+ *  and a second copy of the number is how they stop agreeing. */
+export const FP_FLOATS = 11;
+
 /** Rule 54's placement, in the pass's axes: the camera node's rig-space
  *  translation, with the Z-up basis turned into the renderer's Y-up. */
 export function firstPersonEye(mats, cameraRef) {
@@ -154,13 +161,27 @@ export function armReach(eye, unionBounds) {
 export function packFpArm(pieces, out = null) {
   let tris = 0;
   for (const p of pieces) tris += (p.indices ? p.indices.length : 0) / 3;
-  const buf = out && out.length === tris * 3 * 9 ? out : new Float32Array(tris * 3 * 9);
+  const buf = out && out.packed && out.packed.length === tris * 3 * FP_FLOATS
+    ? out.packed : new Float32Array(tris * 3 * FP_FLOATS);
+  const ranges = [];
   let o = 0;
+  let first = 0;
   for (const p of pieces) {
     const pos = p.positions;
     const idx = p.indices;
     if (!pos || !idx) continue;
+    const uvs = p.uvs || null;
+    const cols = p.colors || null;
     const flip = p.mirrored ? -1 : 1;
+    const textured = !!(uvs && p.material && p.material.textureFile);
+    // THE INVENTED SKIN TONE IS GONE. The reference's fragment starts at
+    // opaque WHITE with no diffuse map (objects.frag:152-154) and the
+    // NIF material defaults are overridden to white too
+    // (nifloader.cpp:2740-2742), so an untextured surface is white lit by
+    // the scene - not a flat colour somebody chose. The vertex colour,
+    // when the mesh HAS one, substitutes for the material's diffuse and
+    // ambient terms, which in this pass's single-product lighting is the
+    // same arithmetic: texel * colour * (ambient + sun * diff).
     for (let i = 0; i + 2 < idx.length; i += 3) {
       const a = idx[i] * 3; const b = idx[i + 1] * 3; const c = idx[i + 2] * 3;
       const ux = pos[b] - pos[a]; const uy = pos[b + 1] - pos[a + 1]; const uz = pos[b + 2] - pos[a + 2];
@@ -170,14 +191,28 @@ export function packFpArm(pieces, out = null) {
       let nz = (ux * vy - uy * vx) * flip;
       const len = Math.hypot(nx, ny, nz);
       if (len > 1e-8) { nx /= len; ny /= len; nz /= len; } else { nx = 0; ny = 1; nz = 0; }
-      for (const v of [a, b, c]) {
+      for (let k = 0; k < 3; k++) {
+        const v = [a, b, c][k];
+        const vi = idx[i + k] * 2;
+        const ci = idx[i + k] * 4;
         buf[o++] = pos[v]; buf[o++] = pos[v + 1]; buf[o++] = pos[v + 2];
-        buf[o++] = 0.78; buf[o++] = 0.66; buf[o++] = 0.55;   // untextured skin tone; rules 36/61 deferred
+        buf[o++] = cols ? cols[ci] : 1;
+        buf[o++] = cols ? cols[ci + 1] : 1;
+        buf[o++] = cols ? cols[ci + 2] : 1;
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
+        buf[o++] = uvs ? uvs[vi] : 0;
+        buf[o++] = uvs ? uvs[vi + 1] : 0;
       }
     }
+    const count = (idx.length / 3) * 3;
+    // ONE RANGE PER PIECE, because a Morrowind arm is several meshes with
+    // several textures and the character path issues drawArrays. The
+    // range carries the piece's own texture name; the caller resolves it
+    // once and hangs the GL texture here.
+    ranges.push({ first, count, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null });
+    first += count;
   }
-  return buf;
+  return { packed: buf, ranges };
 }
 
 /**
@@ -283,7 +318,6 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
 
     const clipArc = find(FP_CLIP_PATH);
     const kfBytes = clipArc ? clipArc.get(FP_CLIP_PATH).slice() : null;
-    archives.length = 0;   // release the mapped archives before any parsing
 
     if (!partBytes.length) {
       // "no record for this actor" is a dead end for whoever reads it.
@@ -300,6 +334,13 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       };
     }
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
+    // MW-D11: the textures the assembled pieces NAME, resolved through
+    // rule 36's path law and decoded now - while the archives are still
+    // open. The release moved below this for that reason: which textures
+    // a mesh wants is not knowable until the mesh is parsed, and parsing
+    // twice to keep the release where it was would cost seconds.
+    const textures = arm.ok ? collectArmTextures(arm.pieces, archives) : new Map();
+    archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows: wanted };
     }
@@ -344,6 +385,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       accumRoot,
       keys: clip.keys,
       clip: c,
+      textures,
       cameraRef,
       reach,
       skeletonPath,
@@ -366,6 +408,38 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
   } catch (err) {
     return { ok: false, stage: 'build', error: err && err.message ? err.message : String(err) };
   }
+}
+
+/**
+ * MW-D11: RESOLVE AND DECODE EVERY TEXTURE THE ARM NAMES.
+ *
+ * One entry per distinct textureFile, because a Morrowind arm's four
+ * pieces routinely share two textures and decoding a DDS twice is pure
+ * waste. The path goes through correctTexturePath - the reference's four
+ * probes over a re-rooted, .tga->.dds-swapped name - and a MISS is not a
+ * refusal: it becomes the 8x8 magenta warning image, exactly as
+ * ImageManager does, so a texture the archives do not carry SAYS SO on
+ * the arm instead of quietly leaving it flat.
+ */
+export function collectArmTextures(pieces, archives) {
+  const out = new Map();
+  const exists = (p) => archives.some((a) => a.has(p));
+  for (const piece of pieces ?? []) {
+    const file = piece.material && piece.material.textureFile;
+    if (!file || out.has(file)) continue;
+    const path = correctTexturePath(file, exists);
+    const arc = archives.find((a) => a.has(path));
+    if (!arc) {
+      out.set(file, { ok: false, path, error: 'not in your archives', image: warningImage() });
+      continue;
+    }
+    try {
+      out.set(file, { ok: true, path, image: decodeDds(arc.get(path).slice()) });
+    } catch (err) {
+      out.set(file, { ok: false, path, error: err.message, image: warningImage() });
+    }
+  }
+  return out;
 }
 
 /** What the .esm layer actually saw, so a refusal names its own cause.
@@ -432,6 +506,10 @@ export function createFpArm() {
       const gl = renderer.gl;
       gl.deleteVertexArray(mesh.vao);
       for (const b of mesh.buffers || []) gl.deleteBuffer(b);
+      // MW-D11: the textures go with the mesh that owns them. An arm
+      // rebuilt on every attach would otherwise leak one upload per
+      // piece per build, which is the shape of NT1's teardown leaks.
+      for (const r of mesh.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
     }
     mesh = null;
   }
@@ -489,8 +567,25 @@ export function createFpArm() {
         neckPitch: cam ? -(cam.pitch || 0) : 0,
       });
       packed = packFpArm(built.arm.pieces, packed);
-      if (!mesh) mesh = renderer.createCharacterMesh(packed);
-      else renderer.updateCharacterMesh(mesh, packed);
+      if (!mesh) {
+        mesh = renderer.createCharacterMesh(packed.packed, { uv: true });
+        // MW-D11: the ranges are the piece list, and the textures are
+        // resolved ONCE and hung on them - the per-frame path re-uploads
+        // vertices and touches nothing else.
+        mesh.ranges = packed.ranges;
+        for (const r of mesh.ranges) {
+          if (!r.textureFile) continue;
+          const entry = built.textures.get(r.textureFile);
+          if (!entry) continue;
+          const clamp = r.piece.material ? r.piece.material.clampMode : 3;
+          r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clamp));
+          // NiAlphaProperty's own threshold, 0-255 in the file.
+          r.alphaCut = r.piece.material && r.piece.material.alphaTest
+            ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+        }
+      } else {
+        renderer.updateCharacterMesh(mesh, packed.packed);
+      }
       frames++;
     },
 

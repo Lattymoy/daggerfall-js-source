@@ -1028,6 +1028,36 @@ def _fp_world():
 ARM_FP_WORLD = _fp_world()
 
 
+def _texture_shape(tri, uvs, file_name="tx_fixture.tga", clamp=3):
+    # MW-D11: name a texture the way a retail mesh does - a .TGA
+    # reference that only exists in the archive as .DDS, which is the
+    # whole reason rule 36's path law has an extension swap in it.
+    d = tri.data
+    d.num_uv_sets = 1
+    d.has_uv = True
+    d.uv_sets.update_size()
+    for uv, (u, v) in zip(d.uv_sets[0], uvs):
+        uv.u, uv.v = u, v
+    src = NifFormat.NiSourceTexture()
+    src.use_external = 1
+    src.file_name = file_name.encode()
+    src.pixel_layout = 5
+    src.use_mipmaps = 2
+    src.alpha_format = 3
+    src.is_static = 1
+    texp = NifFormat.NiTexturingProperty()
+    texp.apply_mode = 2
+    texp.texture_count = 7
+    texp.has_base_texture = True
+    texp.base_texture.source = src
+    texp.base_texture.clamp_mode = clamp
+    texp.base_texture.filter_mode = 2
+    texp.base_texture.uv_set = 0
+    tri.num_properties = 1
+    tri.properties.update_size()
+    tri.properties[0] = texp
+
+
 def make_armfp():
     root = NifFormat.NiNode()
     root.name = b"Bip01"
@@ -1093,6 +1123,10 @@ def make_armfp_hand():
             (rest[0] - 0.08 * sx, rest[1] + 0.12, rest[2] + 0.02),
         ]
         tri = _tri(root, f"Tri {side} Hand", verts, tris=((0, 1, 2), (0, 2, 3)))
+        # The quad spans the whole texture, so all four of fixture.dds's
+        # solid quadrants (red, green, blue, white) reach the screen -
+        # colours a flat skin tone can never produce.
+        _texture_shape(tri, [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
         _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
                              [(0, 1.0), (1, 1.0), (2, 1.0), (3, 1.0)])])
     write_nif(HERE / "armfphand.nif", [root])
@@ -1108,11 +1142,14 @@ def make_armfp_arm():
     root.name = b"FpSleeveRoot"
     ident(root.rotation)
     root.scale = 1.0
-    _tri(root, "Sleeve", [
+    sleeve = _tri(root, "Sleeve", [
         (0.02, -0.28, -0.04),
         (0.16, -0.24, -0.02),
         (0.09, 0.26, 0.03),
     ])
+    # The RIGID path carries a texture too - the piece that keeps only its
+    # positions is exactly the one whose material used to be dropped.
+    _texture_shape(sleeve, [(0.0, 0.0), (1.0, 0.0), (0.5, 1.0)])
     write_nif(HERE / "armfparm.nif", [root])
 
 
