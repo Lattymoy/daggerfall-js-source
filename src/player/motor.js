@@ -259,6 +259,7 @@ export class PlayerMotor {
     this.moveStrafe = 0;
     this.moveSpeed = 0;
     this.isSneaking = false;
+    this.bobOffset = [0, 0, 0];   // AUDIT 28 W10: HeadBobber's eye offset, world space
     // AUDIT 28 W5 (PlayerSpeedChanger.CaptureInputSpeedAdjustment
     // :75-78): with Controls/ToggleSneak the sneak MODE is
     // `sneakingMode ^= ActionStarted(Sneak)` - a press flips it - and
@@ -279,7 +280,12 @@ export class PlayerMotor {
   }
 
   get eye() {
-    return [this.pos[0], this.pos[1] + this._eyeLevel(), this.pos[2]];
+    // AUDIT 28 W10: HeadBobber's camera LOCAL offset rides the eye - every
+    // camera and every ray in the port reads player.eye, as every DFU
+    // ray reads the (bobbed) camera transform. The host's bobber writes
+    // bobOffset in WORLD space each frame; [0,0,0] when it is off.
+    const b = this.bobOffset;
+    return [this.pos[0] + b[0], this.pos[1] + this._eyeLevel() + b[1], this.pos[2] + b[2]];
   }
 
   /** The presentation eye across the height actions (P18): DoCrouch

@@ -136,6 +136,8 @@ export const LIVE = Object.freeze({
   'Controls/MovementAcceleration': 'src/player/moveAxes.js',
   // AUDIT 28 W9: CameraRecoiler (whole) - the reel on a hit; GetInt 0..4.
   'Controls/CameraRecoilStrength': 'src/player/cameraRecoiler.js',
+  // AUDIT 28 W10: HeadBobber (whole) - the walk bob, the nod, the landing dip.
+  'Controls/HeadBobbing': 'src/player/headBobber.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
