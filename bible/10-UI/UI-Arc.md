@@ -8308,3 +8308,230 @@ C#'s strict-greater boundary: exactly 0.3s still refuses.
 
 Pins: 2 appended to `test/pointerlock.test.js`. Campaign: 4 mutants,
 4 killed.
+
+
+## U65 THE INTRO (2026-08-30, Mac's call)
+
+Mac: "We're going to be creating a high quality intro... 3 splash
+screens as the camera streams and pans over the continent of daggerfall,
+timing perfectly with the music, fading into the MENU."
+
+THE SLICE WAS ALREADY NAMED. `main.js`'s own header lists the three
+things the enhanced front door deliberately does not run, and closes:
+"the TITLE and the SPLASH. Both read ARENA2, and the whole point of
+this door is that it opens before the folder pick... giving the
+enhanced door its own title moment is its own slice." That sentence is
+the commission AND the constraint - the door opens BEFORE the ARENA2
+pick, so the intro can use no game data at all. Same law the enhanced
+sky and `ui/pixelGround.js` already live under.
+
+### The grid is measured, not felt
+
+"Timing perfectly with the music" is not a matter of taste, so it was
+not treated as one. Spectral-flux onset detection over the shipped
+recording (1024-pt FFT, 128-sample hop at 12 kHz, half-wave rectified,
+local-mean normalised), then a two-parameter fit of tempo and phase
+against the detected onsets weighted by strength:
+
+    BPM 127.26    phase 0.255 s    beat 0.4715 s    bar 1.8859 s
+
+Twelve onsets are kept in `MEASURED_ONSETS` and the fit is pinned
+against THEM rather than against the arithmetic restated - worst error
+13 ms, a third of a frame. Every one is the detector's PEAK time, not
+the grid time it sits near, and that distinction is the table's whole
+value: when the later bars were added, three of the four were
+transcribed from the grid column of the analysis printout instead of
+the onset column, which would have made the file assert itself and
+pass forever. Re-measured, and a pin now fails if the onsets ever stop
+jittering.
+
+### The song is the clock
+
+Every visual is a function of the audio element's own `currentTime`.
+Not a convenience - it IS the sync. A wall-clock animation started
+beside a `.play()` drifts the moment either stalls, and on a cold load
+the streaming audio is exactly what stalls. Driving off the song means
+a buffer underrun HOLDS the picture, which is right, instead of sliding
+it permanently out of step, which is what "timed to the music" usually
+means in practice. A browser that refuses to autoplay gets the same
+sheet on a wall clock, silent, exactly as U22's splash does.
+
+### Three beats, three events
+
+A smooth ease into the sky puts the camera up there without ever
+ARRIVING - no onset, so nothing for the music to land on, and the whole
+climb reads as drift however well the splash is timed. Mac reported
+exactly that ("the camera to move into the sky on the beat. It doesnt
+line up"). A move starts on a beat only if the camera is AT REST when
+the beat arrives: the keys are smoothstepped, which has zero velocity
+at both ends, so a key sitting exactly on the beat with the previous
+key nearly equal to it parks the camera there and the acceleration that
+follows is unmistakably the beat's.
+
+    bar 29   53.07 s   0.50    THE LAUNCH        0.9 -> 41.8 /bar
+    bar 31   56.83 s   0.49    THE SECOND KICK  25.8 -> 85.7 /bar
+    bar 34   62.49 s   0.70    BURST + TITLE   224.5 ->  3.6 /bar
+
+Bar 34 carries the strongest onset in the opening by a wide margin -
+nearly three times bar 11's - which is why the reveal and the title are
+both there. The third row is the climb SETTLING on the reveal rather
+than sailing through it.
+
+### Two projections, and the clouds are the cut
+
+`ui/introFlyover.js` is a voxel-space ray walk - the Comanche technique
+- chosen because it needs no renderer (the enhanced door is DOM and
+mounts before anything WebGL exists), costs nothing at boot, is chunky
+by construction, and is what flying over terrain looked like in 1996.
+Its pitch is a HORIZON SHIFT, so the nearest ground it can show is
+
+    z_near = eye * scaleH / (H - horizonY)
+
+which is a couple of hundred units whatever the altitude or angle -
+climbing pushes the foreground off the bottom as fast as it pulls the
+distance down from the top, and widening spreads the frame sideways.
+The picture is always a WEDGE to a vanishing point. The first attempt
+at "the entire map" came back as a valley corridor with two ridges
+converging, and no camera path fixes that.
+
+So `ui/introSkyMap.js` draws the province from directly above -
+orthographic, because the travel map it quotes has no vanishing point -
+at one sample per pixel, which is CHEAPER than the flyover. The two
+cannot be cross-faded; they disagree about where everything is. They
+can be CUT between, and a cut is invisible inside a white-out, which is
+why the camera climbs through a cloud deck. The deck is not a curtain
+over a technical seam: it is what makes the altitude legible, it is
+what the brief asked for, and both facts are recorded so nobody later
+removes the clouds as decoration. `MAP_BAR` is pinned to sit where
+`inCloud()` is total, and the view is pinned to change exactly once.
+
+### Six defects the eye found and the tests did not
+
+Each was rooted, not patched, and each is a shape that will recur.
+
+THE PICKET FENCE - distant ridges grew spikes. A far step strides
+several map cells and takes whichever peak it lands on: aliasing, not a
+drawing bug. Cured by an AVERAGED mip pyramid; a max pyramid GROWS
+distant ridges, which is the same bug wearing another face.
+
+THE WALL - a curtain of mountain down one side. `groundAt` WRAPPED, so
+a sample one step west of the west edge read the EAST edge, inland
+mountain, one step from the eye. A torus is the wrong topology for a
+coastline, and clamping is also just true: west of the province is open
+ocean.
+
+TWO DIFFERENT SUNS - the disc was placed with `tan(yaw - SUN_BEARING)`
+while the ray walk's forward vector is `(-sin, -cos)`. Tens of degrees
+apart, and every glitter-path symptom chased before that was found was
+a symptom of it. `basis()` is derived from the walk and both uses read
+it.
+
+THE PLAID - the sea was `sin(x)*cos(y)`, a SEPARABLE product, which is
+not a wave but a CHECKERBOARD. It came back a tablecloth twice before
+that was read rather than re-tuned. `WAVE_SPECTRUM` is diagonal
+travelling waves, every component pinned non-axis-aligned.
+
+THE WASH - fog keyed to absolute distance puts the entire picture past
+saturation the moment the camera climbs, because from altitude
+everything visible is far away. Haze is optical depth through the lower
+air; it scales with height now, with a floor and a ceiling because the
+multiple alone was wrong at both ends.
+
+THE RIM SMEARS - one law, two scales. The flyover meets the map's edge
+at 400 units through haze where 260 cells of fade is a dissolve;
+looking straight down that is most of the visible margin and the
+clamped edge row is still seven tenths present when it leaves frame.
+`edgeFade` takes its taper as an argument and each view passes its own.
+
+### The reveal and the beat were two events
+
+Mac's second report. The deck used to thin from bar 33.2 onward, so the
+province was fully readable EIGHTEEN FRAMES before the title arrived.
+Measured, not eyeballed: whiteout cleared at 61.9 s, title landed at
+62.5 s. The camera now holds inside the deck to bar 33.85, 95% white a
+tenth of a bar out, and crosses `CLOUD_TOP` at bar 34 - the burst and
+the title are 2 frames apart and both sit on the 62.485 s onset.
+
+### Corrections made in flight
+
+Recorded because the record is supposed to show the self-corrections,
+not just the outcome.
+
+A patch claiming to fix the two-suns bug was a scripted `.replace` that
+matched NOTHING and no-op'd silently - the exact failure Process names
+in its first paragraph - and the bug was still in the tree when the
+tests were written. Every patch since asserts its anchor.
+
+HEAD was reported red with five pre-existing failures. It was green at
+4688/0. The baseline was measured with `git stash`, which does not
+stash UNTRACKED files, so the new modules were still on disk during the
+"clean" run. All five failures were the slice's own, two of them the
+repo's `ONE HOME` gate correctly catching `fbm` against
+`render/enhancedSky.js` and `MAP_W`/`MAP_H` against `ui/provinceMap.js`
+- renamed rather than allow-listed, because the sky's `fbm` mirrors its
+own shader and sharing it would tie the coastline to the cloud code.
+
+A mutation run reported 30/30 against a baseline that already had one
+failing pin - this repo's baseline trap for the fourth time. The runner
+verifies green before it starts now.
+
+Frame cost was reported at 30 ms and optimisation begun on that number;
+steady state was 5-8 ms and the reading was an unwarmed first call. The
+same mistake was made a second time at 90 ms. MEASURE, THEN MEASURE THE
+INSTRUMENT.
+
+### What the campaign found that the pins did not
+
+Nine mutants survived their first pass, and every survivor was a pin
+that did not pin. The Eltheric pin tested a point the mouth capsule
+already floods. The mip pyramid pin asked about the PEAK, which
+max-pooling preserves exactly - the MEAN is what separates averaging
+from maxing. The sky's warm-band bound was loose enough that a linear
+ramp passed it, and its second draft measured from `skyColour(0.5)`,
+which is on the ramp's OTHER segment, and failed correct code for being
+right. The stale-frame pin looked for its poison in RED, which the
+posteriser rewrites, when ALPHA is the only channel that survives. The
+cloud-drift pin accepted "something moved" while a mutant removed one
+axis. And the missing-water-branch pin took three attempts: a
+blue-pixel count does not catch it (sea through the land path is still
+blue) and brightness barely does - the predicted "a third darker" was
+6%, because water is FLAT and a flat surface takes the lambert's
+MAXIMUM. What distinguishes them is the RIPPLE, pinned with the cloud
+field stubbed through `drawSkyMap`'s injection seam.
+
+One mutant was itself flaky - `Date.now() & 7` is zero one time in
+eight - and meant nothing until it was made deterministic. One
+survived because it mutates an UNOBSERVABLE: past the reveal the ground
+camera's altitude is read only by `inCloud`, so anything above the deck
+is equivalent. That is a dead parameter, not a missing test; it is
+noted in `introCue.js` rather than given a pin for an effect that does
+not exist.
+
+### Shape
+
+    ui/introMap.js       the province, generated - NO GAME DATA
+    ui/introFlyover.js   the voxel ray walk over it
+    ui/introSkyMap.js    the province from above, and the cloud deck
+    ui/introCue.js       the grid, the paths, the splashes - all timing
+    systems/introTheme.js  the track, and THE CLOCK
+    ui/introScreen.js    the DOM host, and the only part a node test
+                         cannot reach - thin on purpose
+
+`onReveal` is a handoff, not a nicety: `ui/enhancedMenu.js` binds
+keydown on `globalThis` with capture, which fires before anything this
+host could register, whatever order they mount in - so a keypress meant
+to skip the intro would activate a menu row the player cannot see. The
+reveal fires once on every path out, including a skip; before it the
+intro is alone and skippable, after it the intro is a picture fading
+off the top. There is no frame in which both are live.
+
+NEVER TRAPS throughout: no theme means a silent intro on a wall clock,
+a missing logo means that splash does not draw, and a throw anywhere in
+the loop resolves and opens the menu. `?nointro` skips it entirely.
+
+Pins: 57 in `test/intro.test.js`. Campaign: 53 mutants, 53 killed,
+against a baseline verified green first.
+
+FLAGGED, not done: `tools/introProbe.mjs` is written and has NOT been
+run - nothing here is proven in a real browser, and the DOM host is
+precisely the part the node tests cannot reach.

@@ -31,6 +31,32 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
  *  that keeps the original silhouette answers yes. */
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
+  // ── THE INTRO (U65) ────────────────────────────────────────────
+  // The doctrine's question is "did these pixels come from ARENA2?",
+  // and for all four the answer is no - none of them was read out of a
+  // .BSA, rendered from one, or traced off one. The flyover the intro
+  // plays them over is GENERATED (ui/introMap.js), which is the whole
+  // reason it can run before the folder pick.
+  //
+  // A SECOND QUESTION APPLIES TO TWO OF THEM AND THIS LIST DOES NOT
+  // ANSWER IT. The Workshop and Nexus marks are third-party
+  // TRADEMARKS. Port-Doctrine requires that anything public-facing
+  // credit Daggerfall Unity, so Interkarma's mark is attribution the
+  // doctrine actively asks for; the Nexus mark is a distribution mark
+  // and its owners may have a view. That is a licensing decision, it
+  // is Mac's, it was made deliberately when he supplied the files, and
+  // it is recorded here rather than buried so the next person reading
+  // this list knows it was asked.
+  ['public/intro/interkarma.webp', "OURS TO SHIP - Interkarma's Daggerfall Workshop mark, credit for the project this port follows. Not ARENA2 data; a third-party trademark used as attribution"],
+  ['public/intro/nexus.webp', 'OURS TO SHIP - the Nexus Mods mark, where the port is distributed. Not ARENA2 data; a third-party trademark, supplied by Mac'],
+  ['public/intro/title.webp', 'OURS - the Daggerfall JavaScript wordmark, the project logo, same standing as public/logo.png'],
+  // THE ONE PIECE OF MUSIC THIS PORT SHIPS, and a real departure:
+  // every other note is synthesised from the player's own MIDI.BSA
+  // (systems/songPlayer.js, the A5 arc) precisely so nothing has to
+  // ship. This is an original recording of the main theme, Mac's, and
+  // it can ship for the same reason it can play before the ARENA2
+  // pick - it is not game data. Ledger A.
+  ['public/intro/theme.mp3', "OURS - an original recording of the main theme; the intro's clock, and the only audio the port ships"],
   // THE SITE'S PICTURES (U60c). Screens of the ENHANCED skin - type and
   // layout - taken by tools/siteShots.mjs with NO ARENA2 anywhere: the
   // tool boots its own vite with no data folder, proves the game's own
