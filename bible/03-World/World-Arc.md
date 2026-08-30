@@ -1615,11 +1615,9 @@ an ordinary model does not:
 
 **So the mill still cannot be entered, and now for an honest reason
 rather than a missing building.** Making it enterable needs his added
-subrecord's INTERIOR, which is 44 Daggerfall interior models and their
-placements - block data, and the doctrine keeps that out of the repo.
-That is a call for Mac, not a slice: it is the same question the
-Morrowind arc and the quest pack each had to answer about where vendored
-data stops.
+subrecord's INTERIOR. This slice put that to Mac as a doctrine question,
+on the reading that an interior is block data - see WM2g and the
+correction under it, because that reading was wrong.
 
 ### WM2g: the mill has an inside (2026-08-29)
 
@@ -1673,14 +1671,40 @@ satisfies a shape check and then throws on the path that consumes it is
 worth nothing, and that path is GL-free, so there is no excuse not to
 run it.
 
-### The doctrine note, because this one is a departure
+### The correction: it is HIS room, not block data
 
-Everything else vendored from this mod is Kamer's own geometry or his
-own choice of where to stand it. **This is block data** - 16 interior
-models, 11 flats, 51 markers and a person, in Daggerfall's own record
-shapes. It is on the Ledger as an approved departure with Mac's words
-attached, rather than slipped in quietly, and the vendor README says so
-at the top of the file.
+WM2g shipped calling `interior.json` "block data" rather than the
+author's work, put it on the Ledger as an approved departure, and warned
+about it at the top of the vendor README. Mac: *"why not his own work?
+that was the whole point."*
+
+**He is right, and the reasoning was wrong.** The evidence, all of it
+checkable and none of it needing ARENA2:
+
+- **The subrecord does not exist in the block Daggerfall ships.** He
+  ADDED it - the same three header-versus-data mismatches that hid it
+  from WM2d are the proof: `FARMAA01` declares one subrecord and carries
+  two, `FARMAA00` declares seven and puts the mill in the eighth.
+- **Its interior matches no other subrecord's in the same block**, so it
+  is not the farmhouse's interior copied across.
+- **The room is about 12.4 x 12.2 world units** and his mill body is
+  16 x 27 x 18. It was built to fit the mill.
+- **Its centrepiece is model 41601** - the machinery he modelled AND
+  animated himself, the roller `SpinTime_Roller.cs` turns. A room built
+  around his own moving part was not copied from somewhere else.
+
+So it is the same kind of artifact as `placements.json`, which this arc
+already accepted as his: a list of model ids and coordinates the author
+chose. The ids are Daggerfall's, exactly as they are in every placement
+list the port already ships - **naming a model is not shipping one**,
+and no Daggerfall art or bytes are in the file.
+
+The Ledger row, the vendor README and `interior.json`'s own header are
+corrected. That is the fourth record in this arc to outlive its truth,
+after the vendoring rule at WM2a, the "nothing of the mod is vendored"
+claim, and WM2d's reading of the placement data. The pattern is
+consistent enough to name: **this arc's mistakes are all the same
+mistake - deciding what the data means before finishing reading it.**
 
 ## RX: THE ROAD SYSTEM, REMOVED WHOLE (2026-08-29)
 
