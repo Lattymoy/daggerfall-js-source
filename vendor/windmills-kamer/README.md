@@ -11,17 +11,31 @@ route - the Ledger's "instead of taking their mod, I want us to develop
 our own and better" was about not lifting someone's work uninvited, and
 an invitation settles it.
 
-## A note on `interior.json`, which is different from the rest
+## A note on `interior.json`
 
-Everything else in this folder is **Kamer's own work** - his geometry,
-his choice of where to stand it, his climate skins. `interior.json` is
-not: it is **Daggerfall block data**, 16 interior models with their
-flats, markers and a person, in the game's own record shapes.
+An earlier version of this README called `interior.json` "Daggerfall
+block data" rather than the author's work, and filed it as a doctrine
+departure. **That was wrong, and Mac said so: "why not his own work?
+that was the whole point."**
 
-It is here on **Mac's explicit call, 2026-08-29** - asked twice and
-answered "Put it in" - and it is on the Port-Ledger as an approved
-departure. It is called out here so that nobody reading this folder
-later mistakes it for more of the author's work.
+It is his room, and the evidence is checkable:
+
+- **The subrecord does not exist in the block Daggerfall ships.** He
+  added it - `FARMAA01`'s file declares one subrecord and carries two,
+  `FARMAA00`'s declares seven and puts the mill in the eighth.
+- **It matches no other subrecord's interior in the same block**, so it
+  is not a copy of the farmhouse standing beside it.
+- **The room is about 12.4 x 12.2 world units**, which fits inside his
+  own mill body (16 x 27 x 18). It was built to the mill.
+- **Its centrepiece is model 41601** - the machinery he modelled AND
+  animated himself (`41601.dae`, with the roller `SpinTime_Roller.cs`
+  turns). A room built around his own moving part is not a room copied
+  from somewhere else.
+
+So it is the same kind of thing as `placements.json`: a list of model
+ids and coordinates the author chose. The ids are Daggerfall's, exactly
+as they are in every placement list this port already ships - naming a
+model is not shipping one, and no Daggerfall art or bytes are here.
 
 ## What is here, and what deliberately is NOT
 

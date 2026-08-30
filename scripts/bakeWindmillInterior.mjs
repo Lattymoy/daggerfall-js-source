@@ -1,6 +1,7 @@
 // Bake vendor/windmills-kamer/interior.json (the interior of the
 // subrecord Kamer ADDS to each farm block, vendored with the author's
-// permission and on Mac's explicit call - see the vendor README) into
+// permission - his room, built to his mill and centred on machinery he
+// animated himself; see the vendor README) into
 // src/world/windmillInterior.js, in blocksFile's own parsed shape.
 //
 //   node scripts/bakeWindmillInterior.mjs
