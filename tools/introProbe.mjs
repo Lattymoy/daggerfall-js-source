@@ -95,7 +95,7 @@ async function run() {
       errors.push(m.text());
     });
 
-    await page.goto(`${base}?introat=2.6`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${base}?introat=2.5`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#intro canvas', { timeout: 20000 });
     check('the intro mounts in front of the enhanced door', true);
 
@@ -120,9 +120,9 @@ async function run() {
     // correct picture for being the intended picture. Measured at
     // 3.6/3.9/4.2 (climbing, sun over the ranges) the premise holds
     // with margin, so the check reads its own frame there.
-    await atBar(3.9);
+    await atBar(4.4);
     const sc = await canvasStats(page);
-    check('sky above, world below (bar 3.9, on the climb)',
+    check('sky above, world below (bar 4.4, in the narrows)',
       !!sc && sc.top > sc.bottom, sc ? `top ${(sc.top / 1000) | 0}k vs bottom ${(sc.bottom / 1000) | 0}k` : '');
 
     // ── 3. THE LOGO'S THREE BEATS, read off the real element ───────
@@ -145,17 +145,17 @@ async function run() {
       };
     });
     // The deck, mid-climb: white wall, no logo yet.
-    await atBar(4.85);
+    await atBar(6.93);
     const s48 = await canvasStats(page);
-    check('bar 4.85: inside the deck - the picture is white',
+    check('bar 6.93: inside the deck - the picture is white',
       !!s48 && s48.mean > 200, `mean ${s48?.mean?.toFixed(0)}`);
 
     // THE BURST: one bar-fraction past the hit, the province is there.
-    await atBar(5.2);
+    await atBar(7.3);
     const s52 = await canvasStats(page);
-    check('bar 5.2: burst - the map is on screen, the white is gone',
+    check('bar 7.3: burst - the map is on screen, the white is gone',
       !!s52 && s52.mean < 200 && s52.tones > 12, `mean ${s52?.mean?.toFixed(0)}, ${s52?.tones}+ tones`);
-    writeFileSync(`${OUT}/bar-5.2-burst.png`, await page.screenshot());
+    writeFileSync(`${OUT}/bar-7.3-burst.png`, await page.screenshot());
 
     // THE DROP, over the finished map.
     await atBar(11.75);
@@ -178,7 +178,7 @@ async function run() {
     check('bar 13.6: landed and holding', !!lg && lg.opacity === 1 && Math.abs(lg.yPx) < 8, JSON.stringify(lg));
 
     // ── 4. The credits at their bars ───────────────────────────────
-    for (const [bar, key] of [[2.9, 'interkarma'], [7.0, 'nexus']]) {
+    for (const [bar, key] of [[2.8, 'interkarma'], [5.0, 'nexus']]) {
       await atBar(bar);
       const op = await splashOpacities(page);
       check(`bar ${bar} shows ${key} alone`,
