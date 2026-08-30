@@ -56,7 +56,7 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES } from '../formats/mwNpc.js';
@@ -633,19 +633,14 @@ async function buildTpBody({
 }
 
 export async function buildFpArm({
-  race, female = false, beast = false, faceIndex = 0, weapon = null, hasAmmo = false, deps = null,
+  race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, deps = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
-  const settingsSkeleton = fpSkeletonPath({ female, beast });
-  let skeletonPath = settingsSkeleton;
+  let settingsSkeleton = null;
+  let skeletonPath = null;
   try {
     const archives = await d.loadMorrowindArchives();
     if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
-    // MW-D14 / RULE 18: the settings name is not the final name. The
-    // x-form is used only when its .kf is in the archive, which for a
-    // male is never (the entry is already x-form, so the insert yields
-    // "xx") and for a female or a beast is the whole question.
-    skeletonPath = correctActorModelPath(settingsSkeleton, (p) => archives.some((a) => a.has(p)));
 
     // EVERY .esm, not the first one.
     //
@@ -667,6 +662,27 @@ export async function buildFpArm({
     }
     const esmBytes = [];
     for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
+    // AUDIT MW-A F1: BEAST COMES FROM THE DATA. The skeleton switch
+    // and the tail row both read this flag, and no production caller
+    // ever set it - an Argonian player built on the human skeleton
+    // with the tail silently skipped. The RACE record's own RADT bit
+    // decides now, last esm wins (load order); an explicit option
+    // still overrides, which is what the fixtures use.
+    if (beast === null) {
+      beast = false;
+      for (const e of esmBytes) {
+        const b = raceBeastFlag(e.bytes, race);
+        if (b !== null) beast = b;
+      }
+    }
+    // MW-D14 / RULE 18: the settings name is not the final name. The
+    // x-form is used only when its .kf is in the archive, which for a
+    // male is never (the entry is already x-form, so the insert yields
+    // "xx") and for a female or a beast is the whole question - and
+    // the beast answer now exists, which is why the skeleton resolves
+    // HERE and not before the data (AUDIT MW-A F1).
+    settingsSkeleton = fpSkeletonPath({ female, beast });
+    skeletonPath = correctActorModelPath(settingsSkeleton, (p) => archives.some((a) => a.has(p)));
     // bodyParts(), not loadMorrowindEsm(). The store's parseEsm door
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
     // there is no adapter and writing one by guess inside this slice is

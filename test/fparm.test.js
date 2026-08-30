@@ -1018,10 +1018,14 @@ test('MW-D27: the face is DERIVED - classic faceIndex picks the head and hair, a
     const m = new Map(rows.map((r) => [r.slot, r.record?.id]));
     return { head: m.get('head'), hair: m.get('hair'), chest: m.get('chest') };
   };
-  // The walk, sorted: heads 01,02,03 then wraps; hairs 01,02 then wraps.
-  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_01' });
-  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_01' });
-  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_01' });
+  // The walk, sorted: heads 01,02,03 then wraps; hairs 01,02 then
+  // wraps. The CHEST stays 02 - the fixture lists it first, and
+  // first-in-file-order is the recorded law for every slot that is
+  // not the face (AUDIT MW-A F2: D27's first cut sorted them all, and
+  // this very line asserted the over-reach back at it).
+  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_02' });
+  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_02' });
+  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_02' });
   assert.equal(at(3).head, 'b_head_01', 'the index wraps by modulo');
   assert.equal(at(9).hair, 'b_hair_02', 'classic\u2019s full 0..9 range resolves');
   // Sex pools stay separate: a female walks HER two heads, never his three.
@@ -1417,7 +1421,7 @@ import {
   DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
   mwArmorRecords, itemMapCoverage, mwItemReport,
 } from '../src/formats/mwItemMap.js';
-import { armorRecords } from '../src/formats/mwFirstPerson.js';
+import { armorRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1514,4 +1518,52 @@ test('MW-D28: the ARMO reader reads the WEAP way, and the report prints every ro
   assert.ok(report.every((r) => r.note && r.note.length > 5));
   const hit = report.find((r) => r.item === 'Iron Cuirass');
   assert.deepEqual(hit.found, ['iron_cuirass']);
+});
+
+// ═══ AUDIT MW-A (Audit 29): the findings, pinned ════════════════════
+test('AUDIT 29 F1: raceBeastFlag reads the RACE record\u2019s own RADT bit, last esm wins', () => {
+  const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+  const sub = (name, payload) => [...enc(name), payload.length & 255, (payload.length >> 8) & 255, 0, 0, ...payload];
+  const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), body.length & 255, (body.length >> 8) & 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+  const z = (s2) => [...enc(s2), 0];
+  const radt = (flags) => { const b = new Array(140).fill(0); b[136] = flags & 255; return b; };
+  const bytes = new Uint8Array([
+    ...rec('RACE', [sub('NAME', z('Argonian')), sub('RADT', radt(3))]),   // playable + BEAST
+    ...rec('RACE', [sub('NAME', z('nord')), sub('RADT', radt(1))]),       // playable, not beast
+  ]);
+  assert.equal(raceBeastFlag(bytes, 'argonian'), true, 'the beast bit did not read');
+  assert.equal(raceBeastFlag(bytes, 'ARGONIAN'), true, 'the id compare is not case-blind');
+  assert.equal(raceBeastFlag(bytes, 'nord'), false);
+  assert.equal(raceBeastFlag(bytes, 'fprace'), null, 'an unknown race must answer null, not false');
+  // last esm wins: a later RACE with the same id overrides.
+  const override = new Uint8Array([...bytes, ...rec('RACE', [sub('NAME', z('nord')), sub('RADT', radt(3))])]);
+  assert.equal(raceBeastFlag(override, 'nord'), true, 'the load order does not override');
+  // a RADT of the wrong size is refused, not read past (the byte-eight law).
+  const bad = new Uint8Array([...rec('RACE', [sub('NAME', z('x')), sub('RADT', new Array(20).fill(255))])]);
+  assert.equal(raceBeastFlag(bad, 'x'), null);
+});
+
+test('AUDIT 29 F1: the derivation is WIRED - beast defaults to the data, the option still overrides', () => {
+  // The defect: fpSkeletonPath/tpSkeletonPath switch on beast, the
+  // tail row hides on !beast, and no production caller ever set it -
+  // an Argonian player built on base_anim with the tail skipped.
+  // Swept at the source like the faceIndex thread, because a live
+  // proof needs a RACE-bearing fixture esm the harness does not own.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /beast = null, faceIndex/, 'the option no longer defaults to unresolved');
+  assert.match(arm, /if \(beast === null\) \{/, 'the derivation gate is gone');
+  assert.match(arm, /raceBeastFlag\(e\.bytes, race\)/, 'the RACE records are not consulted');
+  // and the skeleton must resolve AFTER the answer exists.
+  const gate = arm.indexOf('if (beast === null) {');
+  const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast })');
+  assert.ok(gate > 0 && skel > gate, 'the skeleton is chosen before the data can say beast');
+});
+
+test('AUDIT 29 F3: the weapon pick is id-sorted - the archive\u2019s listing order cannot choose the sword', () => {
+  const R = (id, type) => ({ id, model: `w/${id}.nif`, name: id, type, enchanted: false });
+  // DELIBERATELY listed backwards; sorted, chitin comes first.
+  const recs = [R('iron_dagger', 0), R('daedric_dagger', 0), R('chitin_dagger', 0)];
+  assert.equal(pickWeaponRecord(recs, 0).id, 'chitin_dagger', 'the fallback follows the listing, not the id');
+  assert.equal(pickWeaponRecord(recs, 0, 'Daedric').id, 'daedric_dagger', 'the material hit still wins');
+  assert.equal(pickWeaponRecord(recs.slice().reverse(), 0).id, 'chitin_dagger', 'two listings, one sword');
 });

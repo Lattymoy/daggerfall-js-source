@@ -795,6 +795,37 @@ export function weaponRecords(bytes) {
   return out;
 }
 
+/** AUDIT MW-A F1: IS THIS RACE A BEAST? Read from the RACE record's
+ *  own RADT flags (bit 2), the WEAP way - a targeted walk, lenient of
+ *  fixtures, because the one consumer is a boolean and parseEsm's
+ *  full door throws on headerless test bytes. Later masters override
+ *  earlier ones, so the caller feeds esms IN ORDER and the last RACE
+ *  with this id wins - the load order, not a preference.
+ *
+ *  THE DEFECT THIS CLOSES: fpSkeletonPath/tpSkeletonPath switch on
+ *  `beast`, playerBodyRows hides the tail row on `!beast` - and no
+ *  production caller ever SET it. An Argonian or Khajiit player built
+ *  on the human skeleton (base_anim, not base_animkna) with the tail
+ *  slot silently skipped, and nothing on screen said so. The flag was
+ *  in the player's own data the whole time. */
+export function raceBeastFlag(bytes, raceId) {
+  const want = String(raceId || '').toLowerCase();
+  let beast = null;
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'RACE') continue;
+    let id = '';
+    let flags = null;
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') id = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'RADT' && sub.len === 140) {
+        flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 136, 4).getUint32(0, true);
+      }
+    }
+    if (id === want && flags !== null) beast = (flags & 2) !== 0;
+  }
+  return beast;   // null = this esm does not know this race
+}
+
 /** MW-D28: the ARMO records, read the WEAP way - id, model, display
  *  name, enchantment flag. AODT is not decoded: nothing this port
  *  draws needs Morrowind's armor class, and a struct nobody consumes
@@ -958,7 +989,14 @@ export function dfWeaponToMw(item, weaponsTable) {
 }
 
 export function pickWeaponRecord(records, type, material = null) {
-  const ofType = (records ?? []).filter((r) => r.type === type && !r.enchanted);
+  // AUDIT MW-A F3: id-sorted, for the face's own reason (D27) - file
+  // order is a property of the LOAD, and `ofType[0]` handed a player
+  // whichever record their archive arrangement listed first. Sorted,
+  // the same character draws the same sword on every machine, and on
+  // retail the alphabetical first is the iron/chitin commons the old
+  // pick usually landed on anyway.
+  const ofType = (records ?? []).filter((r) => r.type === type && !r.enchanted)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!ofType.length) return null;
   const want = material ? DF_TO_MW_MATERIAL[material] : null;
   return (want && ofType.find((r) => r.id.includes(want))) || ofType[0];
@@ -1025,11 +1063,23 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
     // pool retail relies on - never a mix, or the index would walk
     // across sexes.
     const sexed = forSlot.filter((p) => p.female === !!female);
-    const pool = (sexed.length ? sexed : forSlot.filter((p) => !p.female))
-      .slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const pool = sexed.length ? sexed : forSlot.filter((p) => !p.female);
+    // AUDIT MW-A F2: the sort and the index are the FACE'S law and no
+    // one else's. D27's first cut sorted EVERY slot, silently
+    // rewriting the recorded first-in-file-order pick (assembleNpc's
+    // law) for chest, hands, feet - retail carries one skin record
+    // there so nothing showed, which is exactly how a divergence
+    // hides. Head and hair sort by id so a save's face survives any
+    // archive arrangement; everything else keeps the reference's own
+    // order untouched.
     const wants = slot === 'head' || slot === 'hair';
-    const idx = wants && pool.length ? ((faceIndex % pool.length) + pool.length) % pool.length : 0;
-    const chosen = pool[idx] || null;
+    let chosen;
+    if (wants && pool.length) {
+      const sorted = pool.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      chosen = sorted[((faceIndex % sorted.length) + sorted.length) % sorted.length];
+    } else {
+      chosen = pool[0] || null;
+    }
     if (!chosen && slot === 'tail' && !beast) continue;
     rows.push({
       slot,
