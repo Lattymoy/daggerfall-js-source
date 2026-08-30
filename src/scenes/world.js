@@ -109,7 +109,7 @@ import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
-import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
+import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
@@ -4441,7 +4441,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
+      exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).
