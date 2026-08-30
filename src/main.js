@@ -103,33 +103,12 @@ async function boot() {
   //     title moment is its own slice.
   if (isEnhanced()) {
     const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
-    // U65: THE INTRO. The gap this comment block names above - the
-    // enhanced door having no title moment because the classic title
-    // and splash both read ARENA2 - is closed, and closed WITHOUT game
-    // data: a generated Iliac Bay flown over in a voxel-space
-    // renderer, three splashes cut to the theme's own measured beat
-    // grid, fading into this menu. ?nointro skips it.
-    //
-    // THE MENU IS MOUNTED FROM INSIDE THE INTRO'S onReveal, not before
-    // it and not after. Before it, the menu's globalThis keydown
-    // capture would eat the keypress meant to skip the intro; after
-    // it, there would be nothing underneath to fade INTO and the hand
-    // off would be a cut. The reveal fires once, on every path out -
-    // including a skip - so `menu` is always assigned by the time it
-    // is awaited.
-    let menu = null;
-    const openMenu = () => { status('main menu'); menu ??= runEnhancedMenu(); };
-    if (!params.has('nointro')) {
-      try {
-        const { runIntro } = await import('./ui/introScreen.js');
-        status('intro');
-        await runIntro({ onReveal: openMenu });
-      } catch (e) {
-        console.warn('[boot] intro unavailable - opening the menu:', e?.message ?? e);
-      }
-    }
-    openMenu();                      // no-op when the reveal already did it
-    const choice = await menu;
+    // The enhanced door opens ON the menu. An intro cinematic lived
+    // here (U65-U65e) and was RIPPED OUT at Mac's direction on
+    // 2026-08-30 after five versions failed his eye; the history
+    // carries all of it if it is ever wanted back.
+    status('main menu');
+    const choice = await runEnhancedMenu();
     await ensureData();
     // AUDIT 19 F12's law, and it matters more here: SET on load,
     // DELETE on anything else. A URL that already carries ?load would
