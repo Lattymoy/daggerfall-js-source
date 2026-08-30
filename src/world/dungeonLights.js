@@ -8,6 +8,7 @@
 // (worldClock.LightFlicker). Dungeon ambient is PlayerAmbientLight's
 // verbatim DungeonAmbientLight (0.12, 0.12, 0.12); there is no sun.
 
+import { getFloat } from '../systems/settings.js';   // AUDIT 28 W1: DungeonAmbientLightScale
 import { GLOBAL_SCALE } from './meshReader.js';
 import { RDB_RESOURCE_TYPES } from '../formats/blocksFile.js';
 
@@ -35,7 +36,11 @@ export const SPECIAL_AREA_BLOCK = 'S0000161.RDB';
 export function dungeonAmbientFor({ inCastle = false, inSpecialArea = false } = {}) {
   if (inCastle) return CASTLE_AMBIENT;
   if (inSpecialArea) return SPECIAL_AREA_AMBIENT;
-  return DUNGEON_AMBIENT;
+  // AUDIT 28 W1: the multiply the comment above quotes. GetFloat 0..1
+  // (SettingsManager :574); the castle and special-area arms are NOT
+  // scaled, exactly as :82-90 has them.
+  const scale = getFloat('Enhancements', 'DungeonAmbientLightScale', 0, 1);
+  return scale === 1 ? DUNGEON_AMBIENT : DUNGEON_AMBIENT.map((v) => v * scale);
 }
 export const DUNGEON_LIGHT_INTENSITY = 0.8;
 export const DUNGEON_LIGHT_COLOR = Object.freeze([

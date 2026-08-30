@@ -9,6 +9,40 @@ policies one by one.
 
 
 
+
+## U65d THE INTRO v4 - from the top, the first big beat (2026-08-30)
+
+Mac, after v3: the music starts wrong and the whole clip is unused;
+the logo lands when the FULL MAP is in view, on the FIRST BIG BEAT.
+Stop guessing. No exceptions.
+
+THE TRACK PLAYS FROM 0.000 and "first big beat" is a row in a table
+now: tools/themeOnsets.py is committed (U65 ran the analysis ad hoc
+and shipped only its conclusions, which is how a beat becomes an
+argument from memory). The opening's 18 seconds are ambient; 7.915 s
+is THE HIT, the one percussive strike in them, off-grid at bar 5.06;
+bar 11 is the rhythm's entrance at 0.47; bar 12 at 21.013 s is the
+first STRONG on-grid onset, 0.69. That is the slam.
+
+THE FILM: three bars low off the sea with credit 1, straight up
+through the deck, the burst crossing CLOUD_TOP exactly ON the hit,
+credit 2 over the opening map, FULL SPAN by bar 10.3 - a bar and a
+quarter before the logo enters, pinned against SKY_PATH - then the
+drop, the slam at 12, the hold, and the menu ON bar 14's onset.
+24.8 seconds, the whole clip's opening used.
+
+THE WEATHER, and the lesson: the slam frame came back gauzed while
+every metric said otherwise - raw coverage called the shipping phase
+clearest, a paint-diff called the fix heavier - because one measured
+what the cloud buffer smears and the other weighed a crisp shadow
+against a wide veil. The call was made by rendering phases and
+LOOKING. CLOUD_T0=41.5 folds v3's reveal weather - the one
+configuration an eye had already passed - into the field itself, and
+its pin pins the EFFECT from rebuilt primitives, because the draft
+that read back through the suspected code let the strip-the-phase
+mutant walk.
+
+
 ## U65c THE INTRO RECUT - the logo drops, and shoots (2026-08-30)
 
 Mac: over a minute is way too long, and the Daggerfall JavaScript logo
@@ -8605,3 +8639,96 @@ the roads were removed whole for lacking it. The renderer knows the
 SHAPE and no work by name. 3 pins; 5 mutants, 5 killed. Eyeballed on
 desktop and a Pixel 5 through the intro's skip: two cards, three works,
 the modder's name beside his mill.
+
+## FROM PLAY (2026-08-29): TOO MUCH RECURSION - the slot that lied about being open
+
+Mac's crash overlay, off the live site:
+
+```
+CRASH (100)
+InternalError: too much recursion
+closeOverlay -> onClose -> _close -> dispose -> closeOverlay
+```
+
+...fifty frames of it, trimmed. **Every close path of the rest window
+reached it in the two exterior hosts** - the ended page on a key and on
+a click, the refusal page, backing out of the selection page, and a host
+closing the slot itself. Not an edge: resting outdoors and closing the
+window crashed the game.
+
+### One loop, two halves, and both were load-bearing
+
+`townTalk`'s overlay slot dropped its occupant like this:
+
+```js
+overlay.dispose?.();
+overlay = null;
+```
+
+which reads fine until you notice that **`dispose()` runs host code, and
+S40 made that reachable on purpose.** DFU's `RestFinishedPopup_OnClose`
+is `PopToHUD(); RaiseSkills();` in that order, and the order is
+load-bearing: the level-up screen `RaiseSkills` can raise needs the
+host's overlay slot, and every host guards its `onLevelUp` with "only if
+the slot is free". So the rest window asks the host to vacate the slot
+from inside its own close, through
+`onClose: () => { if (townTalk.overlay?.isRestWindow) townTalk.closeOverlay?.(); }`.
+
+That door is right. What was wrong is that the host answered it **while
+`overlay` still pointed at the window it was disposing** - so the guard
+read a live slot, and disposed it again, and again.
+
+The window had the matching half. `RestWindow._close` is deliberately
+unguarded on `done`, and the comment defending that is correct as far as
+it goes: clearing a boolean twice is clearing it once, so a guard there
+would be a branch no test could kill. But `_close` also fires `onClose`,
+and firing THAT twice is a second PopToHUD.
+
+### Why only two of the four hosts crashed
+
+`worldModes.js:4640` and `dungeonContext.js:1223` answer the same
+`onClose` by nulling their slot and never disposing - nothing to
+re-enter. Only the two hosts that come through `townTalk.closeOverlay`
+dispose. **The four-hosts rule caught this one by accident**: the two
+safe hosts are safe because they are less careful about GL, not because
+anyone reasoned about re-entry.
+
+### The fix, at both layers
+
+- **The host**: one drain, `townTalk.dropOverlay`, and the law is the
+  ORDER - null the slot, THEN tell the window. A re-entrant close finds
+  an empty slot and returns false, which is *the truth*: the slot really
+  is free by the time the window hears about it, which is the whole
+  point of the door S40 opened. The four clear-points and `closeOverlay`
+  all route through it, `showOverlay` puts the successor in the slot
+  before disposing the outgoing window for the same reason, and a pin
+  forbids any other `dispose` on the slot.
+- **The window**: `_close` keeps its unguarded flag clearing and
+  dispatches `onClose` ONCE, so a window is safe to close from either
+  side and no future host has to know the rule.
+
+Both, because either alone stops this crash and leaves the next window
+to find the other. The pins say so explicitly: the window is tested
+against a host that still disposes before clearing, and the host against
+a window with no dispatch guard at all - which is every other window in
+the tree.
+
+### One pin had to change to stay honest
+
+`closeOverlay` guarded `!overlay` itself, which made the drain's own
+empty-slot guard unreachable - a mutant that deleted it survived. **A
+guard no mutation can kill is a guard no reader can trust**, so the door
+keeps the identity check and the drain owns the empty-slot one.
+
+Four existing pins were re-aimed rather than deleted, and three came out
+stronger for it: the A2 leak pin listed the four clear-points as four
+literals and would have passed a fifth drop added tomorrow - it reads
+the seam and sweeps for strays now; U41 and the two S40 pins asserted
+source shapes that moved, and now assert the behaviour they were always
+about, against the real host.
+
+Pins: 7 in `test/overlayreentry.test.js`, behaviour not sweeps - the
+slot is closure state and the window is a plain class, so the whole loop
+reproduces in Node with no GL and no ARENA2, and `createTownTalk` builds
+without either. Campaign: 8 mutants, 8 killed.
+

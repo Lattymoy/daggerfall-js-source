@@ -84,6 +84,22 @@ export const LIVE = Object.freeze({
   // exterior door arm in worldModes. The HOUSE greeting is not behind
   // it, which is DFU's own split.
   'GUI/ShopQualityPresentation': 'src/systems/buildingGreeting.js',
+  // AUDIT 28 W1: four keys whose DFU consumer the port had ported
+  // WITH THE SETTING NAMED IN ITS OWN COMMENT and the read left out -
+  // each answered the default and the slider did nothing. The read
+  // lives where DFU's does: TalkManager.WeightedRandomRumor :1452,
+  // EnemyDeath :82, PlayerAmbientLight :89 (plain-dungeon arm only)
+  // and :123 (CalcDaytimeAmbientLight's night colour).
+  'GUI/QuestRumorWeight': 'src/systems/rumorMill.js',
+  'GUI/DisableEnemyDeathAlert': 'src/scenes/corpseMarker.js',
+  'Enhancements/DungeonAmbientLightScale': 'src/world/dungeonLights.js',
+  'Enhancements/NightAmbientLightScale': 'src/scenes/world.js',
+  // AUDIT 28 W2a: the arrow counter (DaggerfallHUD :270-292) - a
+  // default-ON feature the port never drew. The setting is the FIRST
+  // of its three gates; BowLeftHandWithSwitching picks the hand the
+  // bow is looked for in (:275). Both read in hud.arrowCountLabel.
+  'GUI/EnableArrowCounter': 'src/ui/hud.js',
+  'Enhancements/BowLeftHandWithSwitching': 'src/ui/hud.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

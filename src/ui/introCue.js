@@ -37,36 +37,37 @@
 // a real loss rather than hidden: it plays silent, exactly as U22's
 // splash does before a gesture.
 //
-// ── THE SHAPE (v3 - Mac: over a minute is way too long) ──────────
+// ── THE SHAPE (v4 - Mac: the music starts wrong, use the clip; the
+// logo lands on the FULL MAP, on the FIRST BIG BEAT. No exceptions.) ─
 //
-// The first cut ended at bar 17 and was too snappy; the second ran to
-// bar 39 and was 74 seconds, which is an overture, not an intro. The
-// third keeps the second's best three seconds and cuts everything that
-// was leading up to them: THE TRACK NOW STARTS AT BAR 24.5, mid-song,
-// a cold open on the flight already in progress. Every cue below is
-// still a bar OF THE RECORDING, still sitting on a measured onset -
-// the sheet was cropped, not squeezed, so nothing lands differently,
-// there is just less of it. 23.6 seconds, door to menu.
+// v3 cold-opened at bar 24.5, which threw the whole opening of the
+// recording away and started the film mid-phrase. Wrong. v4 plays the
+// track FROM 0.000 and builds the film on what the opening actually
+// contains - measured, not remembered, by tools/themeOnsets.py, which
+// is committed now precisely so "the first big beat" is a row in a
+// table and not an argument:
 //
-//   bar 24.5  black; the bay fades up mid-flight (44.57 s of track)
-//   bar 25    CREDIT 1 - Interkarma's Daggerfall Workshop, on the
-//             0.41 onset
-//   bar 27.4  CREDIT 2 - Nexus Mods
-//   bar 29    THE SLAM, 53.07 s, onset 0.50: the Daggerfall JavaScript
-//             logo DROPS from the top of frame and lands dead centre
-//             ON the beat. The camera is at rest when it hits.
-//   bar 31    THE LAUNCH, 56.83 s, onset 0.49: the logo SHOOTS upward
-//             off the top and the camera goes after it, straight into
-//             the cloud deck. Logo first, camera chasing - the logo is
-//             the subject now, not a caption.
-//   bar 34    THE BURST, 62.49 s, onset 0.70 - the strongest in the
-//             song: out through the top of the deck, the province
-//             whole beneath, and the logo CUTS back in at centre,
-//             arrived in the sky it shot into.
-//   bar 37    the fade to the menu completes ON the 68.15 s onset; the
-//             music keeps playing, because the menu inherits the
-//             element.
-// ═══════════════════════════════════════════════════════════════════
+//   the first 18 seconds are AMBIENT - swells, no rhythm. Their
+//   biggest attacks (0.57 s, 1.40 s) are off-grid crescendos.
+//   7.915 s   THE HIT - the one percussive strike in the ambience,
+//             strength 0.61. Off the grid (bar 5.06), and real.
+//   19.115 s  bar 11: the rhythm ENTERS. An entrance, not a hit: 0.47.
+//   21.013 s  bar 12: THE FIRST BIG BEAT. 0.69 - the strongest
+//             on-grid onset in the whole opening. This is the slam.
+//
+//   bar  1     black; the first note (0.57 s) sounds under it
+//   bar  2     CREDIT 1 over the low flight in off the sea
+//   bar  3.2   the climb begins; the deck closes over the picture
+//   7.915 s    THE BURST - the camera punches out of the cloud top ON
+//              the hit, and the province appears below
+//   bars 5-10  the pull-out: the map opens to the WHOLE province,
+//              CREDIT 2 over it, full span by bar 10.3
+//   bar 12     THE SLAM at 21.013 s: the logo drops onto the full map
+//              and lands dead centre on the first big beat. That is
+//              the film's one sentence, and everything before it is
+//              the walk-up.
+//   bar 14     the fade to the menu completes ON the 24.78 s onset.
+// // ═══════════════════════════════════════════════════════════════════
 
 /** The measured grid. Seconds. */
 export const BPM = 127.26;
@@ -105,15 +106,23 @@ export function barTime(n) {
   return PHASE + (n - 1) * BAR;
 }
 
-/** THE COLD OPEN. The intro no longer plays the track from the top -
- *  it seeks here and fades up on a flight already in progress. Bars
- *  stay bars of the RECORDING (bar 29 is still 53.07 s), so every cue
- *  in this file still sits on the onset it was measured against; the
- *  sheet is cropped, not squeezed. systems/introTheme.js seeks the
- *  element; the wall-clock fallback starts its count here too, or the
- *  silent intro would replay the cut half. */
-export const START_BAR = 24.5;
-export const START_TIME = barTime(START_BAR);   // 44.57 s of track
+/** FROM THE TOP. v3's cold open threw the recording's whole opening
+ *  away; Mac's report. The track plays from 0.000 and the film is
+ *  built on what that opening measurably contains. START_TIME stays
+ *  exported because introScreen's wall-clock fallback and the theme's
+ *  seek are both written against it - at 0 the seek is a no-op and
+ *  the wall clock counts from the first sample, which is the point. */
+export const START_BAR = 1;
+export const START_TIME = 0;
+
+/** THE HIT: the one percussive strike in the ambient opening, at
+ *  7.915 s - measured by tools/themeOnsets.py (0.61, the strongest
+ *  thing before the rhythm enters), OFF the grid at bar 5.06, and
+ *  used as what it is: the camera bursts out of the cloud top ON it.
+ *  An off-grid onset is still an onset; the grid is scaffolding and
+ *  the recording is the law. */
+export const HIT_TIME = 7.915;
+export const HIT_BAR = (HIT_TIME - PHASE) / BAR + 1;
 
 /** The intro ends here: the crossfade to the menu completes at bar 37.
  *
@@ -126,10 +135,11 @@ export const START_TIME = barTime(START_BAR);   // 44.57 s of track
  *  strongest in the opening by a wide margin and nearly three times
  *  bar 11's. That is where a reveal belongs, and everything below is
  *  built to arrive there. */
-/** IT WAS 39, AND 74 SECONDS IS AN OVERTURE. Mac's report. Bar 37
- *  carries a 0.49 onset, so the menu's arrival is itself ON the grid -
- *  the last thing the intro does is still a beat. */
-export const END_BAR = 37;
+/** Bar 14 carries a 0.71 onset at 24.78 s, so the menu's arrival is
+ *  itself ON a beat - the last thing the intro does still lands. 24.8
+ *  seconds door to menu, and the recording is used from its first
+ *  sample. */
+export const END_BAR = 14;
 export const DURATION = barTime(END_BAR);
 
 // ── THE SPLASHES ───────────────────────────────────────────────────
@@ -142,46 +152,30 @@ export const DURATION = barTime(END_BAR);
  *  one that ARRIVES and then sits still for two bars reads as a credit,
  *  which is what these are. */
 export const SPLASHES = Object.freeze([
-  { key: 'interkarma', in: 24.8, up: 25.4, out: 26.8, gone: 27.3 },
-  { key: 'nexus', in: 27.3, up: 27.9, out: 28.4, gone: 28.8 },
-  // THE TITLE IS NOT A SPLASH ANY MORE. It does not fade in a caption;
-  // it DROPS, sits, and SHOOTS - see LOGO below. Credit 2 is gone a
-  // fifth of a bar before the slam so the drop owns an empty frame.
+  // Credit 1 rides the low flight in off the sea, and is gone before
+  // the climb whites the picture out - a credit over a cloud is a
+  // credit over nothing.
+  { key: 'interkarma', in: 1.9, up: 2.45, out: 3.6, gone: 4.15 },
+  // Credit 2 rides the opening MAP, after the burst, and is gone two
+  // and a half bars before the slam - the province gets time to be
+  // the whole picture before the logo owns it.
+  { key: 'nexus', in: 5.8, up: 6.4, out: 8.9, gone: 9.5 },
 ]);
 
 // ── THE LOGO ───────────────────────────────────────────────────────
 //
-// Mac's brief, v3: the Daggerfall JavaScript logo drops ON the beat
-// and shoots into the sky through the clouds ON the beat. So the logo
-// is a rigid body with three events, each on a measured onset, and the
-// camera is its chase plane:
-//
-//   SLAM    bar 29, 53.07 s, 0.50 - falls in from above frame under
-//           gravity (ease-in square: a dropped thing accelerates) and
-//           is AT y=0, dead centre, on the downbeat exactly. The
-//           impact rings for a third of a bar - a shake the host draws
-//           - and the camera, level and at rest, dips a breath.
-//   LAUNCH  bar 31, 56.83 s, 0.49 - straight up and gone in a bar,
-//           ease-in cubic, shrinking as it goes: the thing is leaving,
-//           not scrolling. The camera goes AFTER it into the deck, so
-//           for two bars the logo is the subject and the world is what
-//           falls away behind it.
-//   BURST   bar 34, 62.49 s, 0.70 - the camera breaks out the top of
-//           the deck and the logo CUTS back in at centre, arrived in
-//           the sky it shot into, settling from 1.06 to rest exactly
-//           as the old title did. The strongest onset in the song
-//           carries the reunion of the two.
-//
-// `impact` is exported to the host as a number rather than baked into
-// y, because a shake is the HOST's business (it jitters the element in
-// CSS pixels) and the sheet's business is when and how much.
+// One event now, and it is the film's whole sentence: the logo DROPS
+// onto the finished map and lands dead centre ON THE FIRST BIG BEAT -
+// bar 12, 21.013 s, strength 0.69, the strongest on-grid onset in the
+// opening (tools/themeOnsets.py). It enters when the map is already at
+// FULL SPAN (pinned against SKY_PATH, not assumed), falls under
+// gravity, rings for a third of a bar, and then it HOLDS - it landed
+// on the province and it stays landed, through to the fade. v3's
+// launch and re-entry are gone with the cold open they belonged to.
 export const LOGO = Object.freeze({
-  enter: 28.55,   // leaves the top of frame here...
-  slam: 29.0,     // ...and lands HERE, on the onset
-  launch: 31.0,   // straight up, on the onset
-  gone: 32.0,     // fully out the top / into the glare
-  burst: 34.0,    // the cut back in, on the strongest onset
-  settled: 34.6,  // the 1.06 -> 1 settle is done
+  enter: 11.55,   // leaves the top of frame here, over the full map...
+  slam: 12.0,     // ...and lands HERE, on the first big beat
+  settled: 12.6,  // the impact ring is done
 });
 
 /**
@@ -192,36 +186,15 @@ export const LOGO = Object.freeze({
 export function logoAt(bar) {
   const L = LOGO;
   if (bar < L.enter || bar >= END_BAR) return { y: 0, scale: 1, opacity: 0, impact: 0 };
-  // the ring-down after the slam, wherever we are past it
-  const impact = bar >= L.slam ? Math.max(0, 1 - (bar - L.slam) / 0.35) : 0;
   if (bar < L.slam) {
     // THE DROP. Ease-in SQUARE: constant acceleration is what falling
     // is, and an eased-out drop reads as lowered on a string.
     const k = (bar - L.enter) / (L.slam - L.enter);
     return { y: -0.85 * (1 - k * k), scale: 1.05 - 0.05 * k * k, opacity: 1, impact: 0 };
   }
-  if (bar < L.launch) return { y: 0, scale: 1, opacity: 1, impact };
-  if (bar < L.gone) {
-    // THE SHOOT. Ease-in CUBE - it leaves harder than it fell - and it
-    // fades only across the last quarter, into the deck's glare the
-    // camera is about to enter.
-    const k = (bar - L.launch) / (L.gone - L.launch);
-    const rise = k * k * k;
-    return {
-      // `|| 0` folds the -0 that -1.1 * 0 produces on the launch frame
-      // itself - strictEqual(-0, 0) fails, and so would any consumer
-      // that formats the number. The logo is AT rest on the beat; it
-      // should say 0 like it means it.
-      y: -1.1 * rise || 0,
-      scale: 1 - 0.25 * rise,
-      opacity: k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1,
-      impact: 0,
-    };
-  }
-  if (bar < L.burst) return { y: 0, scale: 1, opacity: 0, impact: 0 };
-  // THE ARRIVAL: the old title cut, kept move for move.
-  const settle = 1 + 0.06 * Math.max(0, 1 - (bar - L.burst) / (L.settled - L.burst));
-  return { y: 0, scale: settle, opacity: 1, impact: 0 };
+  // Landed. The ring decays over a third of a bar; the logo stays.
+  const impact = Math.max(0, 1 - (bar - L.slam) / 0.35);
+  return { y: 0, scale: 1, opacity: 1, impact };
 }
 
 // ── THE CLIMB, THE CLOUD, AND THE CHANGE OF PROJECTION ─────────────
@@ -241,19 +214,22 @@ export function logoAt(bar) {
 /** The bar the projection changes on. It must sit where the white-out
  *  is TOTAL, which introSkyMap's inCloud() decides from altitude alone -
  *  so this is a claim about the flight path and it is pinned as one. */
-export const MAP_BAR = 33.2;
+export const MAP_BAR = 4.75;
 
 /** The map view's camera: centre in cells, and how many cells the
  *  frame's width spans. It opens from a tight frame to the whole
  *  province as the white-out clears. */
 export const SKY_PATH = Object.freeze([
-  { bar: MAP_BAR, x: 500, y: 318, span: 560 },
-  { bar: 34.0, x: 508, y: 320, span: 950 },
-  // The pull to the whole province finishes as the menu fade STARTS,
-  // not as it ends - the widest shot gets a full bar in the clear
-  // before anything is drawn over it.
-  { bar: 35.8, x: 512, y: 320, span: MAX_SPAN * 0.98 },
-  { bar: END_BAR, x: 514, y: 320, span: MAX_SPAN },
+  // Tight over the burst point, ON the hit...
+  { bar: HIT_BAR, x: 500, y: 318, span: 560 },
+  { bar: 6.5, x: 506, y: 319, span: 900 },
+  { bar: 8.5, x: 511, y: 320, span: MAX_SPAN * 0.96 },
+  // ...and the WHOLE PROVINCE by bar 10.3 - a bar and a quarter
+  // before the logo even enters, because Mac's brief is exact: the
+  // logo lands when the FULL MAP is in view. Pinned as
+  // full-span-before-enter, not as a number that merely looks early.
+  { bar: 10.3, x: 512, y: 320, span: MAX_SPAN },
+  { bar: END_BAR, x: 512, y: 320, span: MAX_SPAN },
 ]);
 
 /** The map camera at bar `bar`, clamped at both ends like cameraAt. */
@@ -271,8 +247,8 @@ export function skyCameraAt(bar) {
 
 /** The black the intro opens on, and the fade to the menu at the end.
  *  In bars, like everything else. */
-export const OPEN_FADE = Object.freeze({ from: START_BAR, to: START_BAR + 0.7 });
-export const CLOSE_FADE = Object.freeze({ from: 35.8, to: END_BAR });
+export const OPEN_FADE = Object.freeze({ from: 1.0, to: 1.85 });
+export const CLOSE_FADE = Object.freeze({ from: 12.8, to: END_BAR });
 
 import { inCloud, MAX_SPAN } from './introSkyMap.js';
 
@@ -310,14 +286,11 @@ export function splashOpacity(s, bar) {
 // height units, `yaw` is radians and `horizon` is the fraction of the
 // buffer the horizon sits at.
 //
-// The route, read as geography: the cold open finds the camera already
-// over the inner bay, past Balfiera, cruising east into the dawn. It
-// holds that line for the credits and the slam, then climbs after the
-// logo through the deck. Every key is a bar number from the sheet
-// above, so a re-time of the music moves the flight with it. The
-// western approach - eleven bars of sea that v2 opened with - is what
-// the cut removed; the map still has that coast, the film just no
-// longer starts there.
+// The route, read as geography: in off the Eltheric at first light,
+// three bars low over the mouth of the bay, then straight up through
+// the weather - and from the burst on, the picture belongs to the map
+// and the pull-out. Every key is a bar number from the sheet above,
+// so a re-time of the music moves the flight with it.
 
 // YAW'S CONVENTION IS THE RAY WALK'S: forward is (-sin, -cos), so
 // yaw 0 looks NORTH (up the map), -PI/2 looks EAST (up the bay, into
@@ -327,37 +300,27 @@ export function splashOpacity(s, bar) {
 export const EAST = -Math.PI / 2;
 
 export const PATH = Object.freeze([
-  // ── THE CRUISE (bars 24-29): level up the bay, at rest ──────────
-  // The cold open fades up on this. Nearly still on purpose: the slam
-  // needs a camera with nothing else happening, or the logo's impact
-  // is one of two motions instead of the only one.
-  { bar: 24.0, x: 462, y: 302, z: 150, yaw: EAST, horizon: 0.330, fov: 0.72 },
-  { bar: 27.0, x: 470, y: 302, z: 156, yaw: EAST, horizon: 0.325, fov: 0.73 },
-  { bar: 29.0, x: 476, y: 303, z: 160, yaw: EAST, horizon: 0.320, fov: 0.74 },
-  // THE SLAM'S DIP. The logo hits on 29 and the camera gives a breath
-  // - four units down, recovered in half a bar. The world flinches;
-  // the logo does not.
-  { bar: 29.15, x: 477, y: 303, z: 156, yaw: EAST, horizon: 0.328, fov: 0.74 },
-  { bar: 29.6, x: 478, y: 303, z: 160, yaw: EAST, horizon: 0.320, fov: 0.74 },
-  // Level again, and AT REST for the launch - the same near-equal-key
-  // law as before: a move starts on a beat only if the camera is
-  // parked when the beat lands.
-  { bar: 31.0, x: 482, y: 304, z: 161, yaw: EAST, horizon: 0.318, fov: 0.75 },
-  // ── THE CHASE (bars 31-34): after the logo, through the deck ────
-  // One climb now, not two. The logo launched on this beat; the camera
-  // goes after it, CLOUD_BASE is 300, and the deck closes over the
-  // picture across the second key.
-  { bar: 31.8, x: 485, y: 304, z: 268, yaw: EAST, horizon: 0.180, fov: 0.78 },
-  { bar: 33.4, x: 488, y: 305, z: 385, yaw: EAST, horizon: 0.050, fov: 0.80 },
-  // THE LAST BREATH OF CLOUD - still 95% white a tenth of a bar out,
-  // so the reveal and the beat stay one event (the 18-frames lesson).
-  { bar: 33.85, x: 489, y: 305, z: 396, yaw: EAST, horizon: 0.030, fov: 0.81 },
-  // BAR 34: out the top. CLOUD_TOP is 460; white-out to nothing in
-  // eight frames, on the downbeat, with the logo's cut.
-  { bar: 34.0, x: 489, y: 305, z: 470, yaw: EAST, horizon: 0.000, fov: 0.82 },
-  // Bounds the interpolation; only inCloud(z) reads it past 34, so the
-  // one requirement is that it stays above CLOUD_TOP.
-  { bar: END_BAR, x: 490, y: 306, z: 560, yaw: EAST, horizon: 0.000, fov: 0.82 },
+  // ── THE APPROACH (bars 1-3.2): v1's opening, at v4's pace ───────
+  // In off the Eltheric, low over the water, the dawn dead ahead -
+  // the shot U65 opened with, compressed. The first note sounds under
+  // the fade; credit 1 rides this.
+  { bar: 1.0, x: 40, y: 322, z: 40, yaw: EAST - 0.02, horizon: 0.50, fov: 0.62 },
+  { bar: 2.2, x: 96, y: 320, z: 39, yaw: EAST, horizon: 0.50, fov: 0.62 },
+  { bar: 3.2, x: 150, y: 318, z: 42, yaw: EAST + 0.02, horizon: 0.49, fov: 0.63 },
+  // ── THE CLIMB (bars 3.2-5.06): up and through the deck ──────────
+  // This is the camera doing the shooting-into-the-sky: nose up out
+  // of the bay, CLOUD_BASE 300 closes over the picture by ~4.5, and
+  // the top of the deck arrives exactly ON the hit.
+  { bar: 4.1, x: 196, y: 315, z: 200, yaw: EAST + 0.02, horizon: 0.30, fov: 0.72 },
+  { bar: 4.55, x: 214, y: 314, z: 330, yaw: EAST + 0.01, horizon: 0.14, fov: 0.77 },
+  // THE LAST BREATH: still deep in the white a tenth of a bar out,
+  // so the burst and the hit are ONE event (the 18-frames lesson).
+  { bar: 4.95, x: 226, y: 313, z: 400, yaw: EAST, horizon: 0.04, fov: 0.80 },
+  // 7.915 s, THE HIT: out the top. CLOUD_TOP is 460.
+  { bar: HIT_BAR, x: 230, y: 313, z: 470, yaw: EAST, horizon: 0.00, fov: 0.82 },
+  // Bounds the interpolation; only inCloud(z) reads it past the
+  // burst, so the one requirement is that it stays above CLOUD_TOP.
+  { bar: END_BAR, x: 236, y: 313, z: 560, yaw: EAST, horizon: 0.00, fov: 0.82 },
 ]);
 
 /** The camera at bar `bar`. Clamps at both ends of the path, so a

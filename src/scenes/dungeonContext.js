@@ -3082,7 +3082,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt,
       { font: hudFont, cursorActive: !!activeOverlay,
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
-        largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U38 + X4 + U43
+        largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
+        weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the

@@ -3987,7 +3987,13 @@ export function createWorldModes(host) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
-          largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U45
+          largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
+          // AUDIT 28 W2: the interior frame never handed drawHud a font,
+          // so nothing text-shaped on the classic HUD (the mode word,
+          // now the arrow count) could draw indoors while DFU draws
+          // the one HUD everywhere. townTalk owns the host's FONT0003.
+          font: townTalk?.font ?? null,
+          weaponSheathed: !!interiorWeapon.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U45
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
     // guild fallthroughs at :362/:368/:416 all speak through

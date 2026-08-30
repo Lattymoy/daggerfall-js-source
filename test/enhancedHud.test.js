@@ -121,7 +121,9 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   assert.match(css, /\.hud-hand\.on \{ display: flex; \}/);
   // The host hands them over through drawHud's own options bag, so a
   // host that knows neither passes neither.
-  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null \} = \{\}\)/);
+  // AUDIT 28 W2a re-aimed from the literal bag-tail: the bag grew
+  // weaponSheathed after these two, and the law is that both are there.
+  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null(, [^}]*)? \} = \{\}\)/);
   assert.match(read('src/ui/hud.js'), /readied: readied \?\? null,\s*\n\s*weapon: weapon \?\? null,/);
   // ...and both are still GUARDED writes, like everything else here.
   assert.match(src, /if \(last\.readied !== readyName\) \{/);

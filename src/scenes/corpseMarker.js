@@ -33,6 +33,7 @@
 // ("You see a dead %s") needs an activation mode the hosts do not
 // carry yet.
 
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { addItem } from '../systems/inventory.js';
@@ -94,6 +95,9 @@ export async function mintCorpseMarker({
  * nothing rather than "undefined just died."
  */
 export function sayEnemyDied(say, mobileType) {
+  // AUDIT 28 W1: the gate the comment above quotes was never read - the
+  // setting sat `stored` while every kill spoke. GetBool, as :82.
+  if (getBool('GUI', 'DisableEnemyDeathAlert')) return null;
   const name = enemyDisplayName(mobileType);
   if (!name) return null;
   const line = `${name} just died.`;   // thingJustDied, %s

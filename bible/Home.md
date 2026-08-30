@@ -82,6 +82,27 @@ property no producer writes - so the enchanted paths were dead in
 the shipping game and green in CI. Build fixtures from the real
 producer, or assert the producer's own output.
 
+THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD (from play,
+2026-08-29). A host slot that holds ONE thing - an overlay, a
+context, a live window - must be nulled BEFORE the thing in it is
+disposed, closed or notified, because a teardown runs the
+occupant's code and the occupant may ask the host to clear the
+slot. townTalk disposed first and cleared after, S40 had opened a
+door for exactly that callback (DFU's PopToHUD before
+RaiseSkills), and the re-entrant close read a slot still pointing
+at the window being disposed: fifty frames of
+closeOverlay -> onClose -> _close -> dispose -> closeOverlay, on
+EVERY close path of the rest window, off the live site. Clearing
+first makes the re-entrant call answer with the truth - the slot
+IS free - and it is the same law for a REPLACEMENT: put the
+successor in the slot before telling the outgoing occupant, so
+its identity guard sees the new one and leaves it alone. The
+occupant owes the other half: a close that dispatches a callback
+dispatches it ONCE, however many doors call it, so a window is
+safe to close from either side and no future host has to know the
+rule. Pin both halves against the other being broken, or the next
+window finds the half nobody fixed.
+
 ASYNC NEVER DROPS (17e). DFU is synchronous; where the port awaits,
 a request arriving mid-flight must be COALESCED, never discarded.
 refreshPaperDoll's boolean re-entrancy guard silently threw away
@@ -175,6 +196,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
 - `01-Overview/Audit-UI.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE AUDIT. Twelve sweeps over the PX arc's 54 slices, nine modules and 7,130 lines - and LIVE, not static, because a sheet this size answers grep questions with grep answers. Two findings, both fixed: the 44px touch rule hung off a SCREEN WIDTH and failed on the device the proxy stands in for (measured on an iPad in landscape: skin switch 28px, steppers 34px, value buttons 38px), and the reason the fix at first did not take - three controls sized INLINE in JavaScript, which no media query can reach. Eight sweeps came back clean, including the class-collision shape that has bitten this file four times.
 - `01-Overview/Audit-UI-2.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE, SECOND PASS. 38 PX slices on from the first, and shaped by what actually went wrong since - six faults, every one of which passed its own pins, because they verified the thing built and not the PATH a player takes to it. Six sweeps: every surface at desktop/tablet/phone (12 combinations, clean), and the two recurring faults turned into PINS - no part styled for one shell and left bare in another (four occurrences), and every enhanced window reachable from a host following DYNAMIC imports (PX24's unhung door). Both mutation-tested against the real historical faults.
+- `01-Overview/Audit-28.md` - IN PROGRESS 2026-08-30: THE POST-26 SWEEP. One reader against the DFU checkout over the 240 modules changed since AUDIT 26. W1 - the settings sweep: every `stored` key has a DFU consumer, so the stored list IS a list of unported laws; four were ported WITH THE SETTING NAMED IN THEIR OWN COMMENT and never read (QuestRumorWeight, DisableEnemyDeathAlert, DungeonAmbientLightScale, NightAmbientLightScale) - closed, 6 pins, 5 mutants killed; 35 gameplay keys classified, the default-ON absentees queued for W2: W2a THE ARROW COUNTER shipped (DaggerfallHUD :270-292, never drawn; found on the way that the interior frame handed the classic HUD no font), then melee friendly protection, the dungeon-exit wagon prompt, the near-death flicker. Refutations recorded.
 - `01-Overview/Audit-27.md` - CLOSED 2026-08-27: THE STATE-OF-THE-TREE AUDIT. Not a parity sweep (AUDIT 26 was the day before): ten mechanical sweeps over the tree and the bible for the things a parity read does not look at - dead exports, four-hosts seams, citation integrity, allow-list drift, URL flags, Ledger and Testing.md consistency - plus a doctrine read of the day's own work. 6 findings, 3 fixed on the spot.
 - `07-Rendering/Rendering-Arc.md` - ACTIVE. The R-slices, and since 2026-08-27 the ENHANCED SKY (ES1-ES1f): a procedural dome behind the skin toggle, drawn with no game data at all - sun and moons on the port's own clock and DFU's phase law, weather from the sim eased over 14 s, two sun-lit cloud decks, a star field that wheels, the cloud in front of the sun dimming the world's key light, and a RETRO pass on the painted sky's own angular pixel (256 cells a face, 512 across 180 degrees) posterised with a Bayer dither. 13 pins, probe 10/10.
 - `01-Overview/Audit-25.md` - CLOSED 2026-08-23: THE COMPLETENESS AUDIT. The first audit whose denominator is the DFU tree rather than `src/`: 27 subsystem groups over a real 849-file checkout, a surveyor and an adversarial refuter each, four reconciliation passes. 767 surviving gaps, ~63,400 JS lines. Six systems at or near zero (enchanting, both automaps, the magic crafting windows, banking, the classic `.SAV` reader, the pause menu + keybinding registry) and seven P0 host seams, all of them wire for laws already ported. The gap register and the slice order live in the page; the ledger rows it found are folded into `01-Overview/Port-Ledger.md` section C.
@@ -252,13 +274,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1354` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
 - `src/scenes/dungeonContext.js:1389` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/dungeonContext.js:1425` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3270` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3378` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:618` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:624` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:863` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1101` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1444` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/dungeonContext.js:3271` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3379` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/exterior.js:619` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:625` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:864` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1102` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1445` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:311` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -284,9 +306,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2885` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2897` - FLAGGED, and narrowed to what is actually missing: the two BASH
 - `src/scenes/worldModes.js:2959` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4125` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4224` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4562` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4131` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4230` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4568` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
@@ -371,8 +393,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 - `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
-- `src/ui/restWindow.js:127` - FLAGGED, all three from OnPop/Update and all three belonging to
-- `src/ui/restWindow.js:401` - where classic counts DOWN. The backgrounds are still FLAGGED
+- `src/ui/restWindow.js:140` - FLAGGED, all three from OnPop/Update and all three belonging to
+- `src/ui/restWindow.js:414` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:104` - FLAGGED, idling loudly: the effect popup's body
 - `src/ui/spellbookWindow.js:931` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:

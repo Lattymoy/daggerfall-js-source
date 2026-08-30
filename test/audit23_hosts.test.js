@@ -159,7 +159,10 @@ test('AUDIT 23 wts-1/2: the sky season arm and the weather-scaled ambient', () =
   assert.ok(noonStorm[0] < noonClear[0], 'a storming noon is darker than a clear one');
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
     assert.ok(text.includes('seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes))'), `${name}: the sky reads the calendar`);
-    assert.ok(text.includes('exteriorAmbient(minute, 1, weatherSun)'), `${name}: ambient rides the weather scale`);
+    // AUDIT 28 W1 re-aimed this from the literal line: the night arm
+    // reads NightAmbientLightScale now, so the pin holds the LAW - the
+    // weather scale is the third argument - not the hard-coded 1.
+    assert.match(text, /exteriorAmbient\(minute, .+?, weatherSun\)/, `${name}: ambient rides the weather scale`);
   }
 });
 

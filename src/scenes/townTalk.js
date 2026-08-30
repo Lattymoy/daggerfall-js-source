@@ -289,16 +289,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // own input - RestWindow calls closeOverlay() so the slot is
       // free before RaiseSkills can want it for a level-up screen -
       // and the unguarded re-read threw on the key that closes it.
-      if (overlay?.done) {
-        // AUDIT 2026-08-17c: clear the close-callback BEFORE firing -
-        // a stale G2 callback (e.g. the court verdict) must never
-        // re-fire when a LATER unrelated window closes.
-        const cb = _onOverlayClosed;
-        _onOverlayClosed = null;
-        overlay.dispose?.();   // A2: a window holding GL resources frees them (idempotent)
-        overlay = null;
-        cb?.();
-      }
+      if (overlay?.done) dropOverlay();
       return true;
     }
     return false;
@@ -307,15 +298,65 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // G2: the arrest/court flows push their own windows through the
   // same overlay slot (one motor-holding seam).
   let _onOverlayClosed = null;
+
+  /** THE SLOT IS EMPTIED BEFORE THE WINDOW IS TOLD (crash report,
+   *  2026-08-29: "InternalError: too much recursion", fifty frames of
+   *  closeOverlay -> onClose -> _close -> dispose -> closeOverlay).
+   *
+   *  Every drain here used to dispose the occupant and clear the slot
+   *  AFTER, which reads fine until you notice that `dispose()` can run
+   *  arbitrary host code. S40 made that reachable on purpose: a window
+   *  may vacate this slot from inside its own close, because DFU's
+   *  PopToHUD runs before RaiseSkills and the level-up screen needs the
+   *  slot free. RestWindow takes that door - its `onClose` is the two
+   *  exterior hosts' `if (townTalk.overlay?.isRestWindow)
+   *  townTalk.closeOverlay()`. So closing a rest window re-entered
+   *  closeOverlay while `overlay` STILL POINTED AT THE WINDOW BEING
+   *  DISPOSED, the guard read a live slot, and it disposed it again,
+   *  for ever. Every close path did it: the ended page on a key or a
+   *  click, the refusal page, backing out of the selection page, and a
+   *  host closing the slot itself.
+   *
+   *  The law is one line and it is the ORDER: null the slot, THEN tell
+   *  the window. A re-entrant close then finds an empty slot and
+   *  returns false, which is the truth - the slot really is free by
+   *  the time the window hears about it, which is the whole point of
+   *  the door S40 opened.
+   *
+   *  Why the other two hosts never crashed: worldModes (:4640) and
+   *  dungeonContext (:1223) answer the same onClose by nulling their
+   *  slot and never disposing, so there was nothing to re-enter. Only
+   *  the two hosts that come through here dispose.
+   *
+   *  @param fireCallback - false for the font-less bail below, which
+   *  drops the window to keep the motor running and was never a close. */
+  function dropOverlay(fireCallback = true) {
+    const win = overlay;
+    if (!win) return false;
+    // AUDIT 2026-08-17c: clear the close-callback BEFORE firing - a
+    // stale G2 callback (e.g. the court verdict) must never re-fire
+    // when a LATER unrelated window closes.
+    const cb = _onOverlayClosed;
+    overlay = null;
+    _onOverlayClosed = null;
+    win.dispose?.();   // A2: a window holding GL resources frees them (idempotent)
+    if (fireCallback) cb?.();
+    return true;
+  }
   // A2 (the A1 death-presenter lesson, applied to THIS slot): every
   // point that drops the occupant must free its GL resources - the
   // automap windows own uploaded textures and billboard batches, and
   // uploadTexture memoizes forever, so a silent replace both leaks
   // and leaves a live cache key behind.
   function showOverlay(win, onClosed = null) {
-    if (overlay && overlay !== win) overlay.dispose?.();
+    // Same order as dropOverlay, for the same reason: the slot holds
+    // the SUCCESSOR before the outgoing window is disposed, so an
+    // outgoing window that closes this slot from inside its dispose
+    // finds the new occupant and its identity guard leaves it alone.
+    const outgoing = (overlay && overlay !== win) ? overlay : null;
     overlay = win;
     _onOverlayClosed = onClosed;
+    outgoing?.dispose?.();
   }
 
   /** NextInteractionMode (the touch cycle button); returns the new mode. */
@@ -716,17 +757,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // this seam had no done check, so such a window stayed painted
     // over the world until the next keypress. The dungeon host's
     // tickOverlay (dungeonContext:2692-2696) has always had one.
-    if (overlay?.done) {
-      const cb = _onOverlayClosed;
-      _onOverlayClosed = null;
-      overlay.dispose?.();
-      overlay = null;
-      cb?.();
-    }
+    if (overlay?.done) dropOverlay();
     const s = hudScale(canvas.width, canvas.height);
     if (font) hud.draw(renderer, canvas, font, s);
     if (overlay && font) overlay.draw(renderer, canvas, font, s);
-    else if (overlay && !font) { overlay.dispose?.(); overlay = null; }   // font-less: never trap the motor
+    else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
   }
 
   // U8b: pointer routing for native windows (phone taps + mouse) -
@@ -754,9 +789,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // from inside it (S40's does, through the PopToHUD door), so the
     // `.done` read below is optional too.
     if (v) overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
-    if (overlay?.done) {
-      const cb = _onOverlayClosed; _onOverlayClosed = null; overlay.dispose?.(); overlay = null; cb?.();
-    }
+    if (overlay?.done) dropOverlay();
     return true;   // an open native window owns the pointer either way
   }
 
@@ -855,13 +888,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  closing, and a slot already holding something else is left
      *  alone. Runs the same drain `frame` does, callback included. */
     closeOverlay(win = null) {
-      if (!overlay || (win && overlay !== win)) return false;
-      const cb = _onOverlayClosed;
-      _onOverlayClosed = null;
-      overlay.dispose?.();
-      overlay = null;
-      cb?.();
-      return true;
+      // The IDENTITY guard is this door's; the EMPTY-SLOT guard is
+      // dropOverlay's, and asking twice would leave that one
+      // unreachable - a guard no mutation can kill is a guard no
+      // reader can trust (A PIN MUST FAIL, applied to the code).
+      if (win && overlay !== win) return false;
+      return dropOverlay();
     },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
