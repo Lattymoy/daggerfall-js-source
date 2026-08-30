@@ -207,6 +207,51 @@ function readNode(s, rec) {
   rec.effects = s.refList();
 }
 
+/**
+ * RULE 34's SET: every record type that runs NiNode::read, which is what
+ * the rule is attached to. The five aliases OpenMW registers as plain
+ * NiNode (AvoidNode, NiBSAnimationNode, NiBSParticleNode,
+ * RootCollisionNode) or as NiNode subclasses (NiBillboardNode,
+ * NiSwitchNode, NiLODNode, NiSortAdjustNode) all reach it;
+ * NiTriShape and everything else do not, and the rule's own comment says
+ * so: "Only for NiNode-s for now".
+ */
+const NI_NODE_TYPES = new Set([
+  'NiNode', 'RootCollisionNode', 'NiBSAnimationNode', 'NiBSParticleNode',
+  'AvoidNode', 'NiBillboardNode', 'NiSwitchNode', 'NiLODNode', 'NiSortAdjustNode',
+]);
+
+/**
+ * RULE 34, and the doc marks it CRITICAL:
+ *
+ *   // Discard transformations for the root node, otherwise some meshes
+ *   // occasionally get wrong orientation. Only for NiNode-s for now...
+ *   if (mRecordIndex == 0 && !Misc::StringUtils::ciEqual(mName, "bip01"))
+ *       mTransform = Nif::NiTransform::getIdentity();
+ *                                              (nif/node.cpp:170-192)
+ *
+ * It happens IN THE PARSER, so every consumer - render loader, collision
+ * loader, animation - sees identity and none of them can opt out. Two
+ * halves, and a port that takes only one breaks the opposite half of the
+ * data: applying the stored transform mis-orients every mesh whose
+ * author left one on the root, and zeroing it UNCONDITIONALLY breaks
+ * every skeleton whose root is named Bip01 - which is also why a Bip01
+ * root survives as a real transform node and can be found by name later
+ * (rule 56's accum root).
+ *
+ * RECORD INDEX 0, not "a root": the rule is indexed on the record's
+ * position in the file, and the reference's own FIXME says so ("if node
+ * 0 is *not* the only root node, this must not happen").
+ */
+function discardRootTransform(records) {
+  const rec = records[0];
+  if (!rec || !NI_NODE_TYPES.has(rec.type)) return;
+  if (String(rec.name || '').toLowerCase() === 'bip01') return;
+  rec.translation = [0, 0, 0];
+  rec.rotation = Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  rec.scale = 1;
+}
+
 /** Shared vertex payload of NiTriShapeData (4.0.0.2 flavor). */
 function readGeometryData(s, rec) {
   rec.numVertices = s.u16();
@@ -1055,6 +1100,7 @@ export function parseNif(bytes) {
     }
     records[i] = rec;
   }
+  discardRootTransform(records);
   const roots = [];
   const rootCount = s.u32();
   for (let i = 0; i < rootCount; i++) roots.push(s.ref());

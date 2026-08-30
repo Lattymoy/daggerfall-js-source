@@ -2302,6 +2302,39 @@ def make_markers():
     write_nif(HERE / "boxroot.nif", [root])
 
 
+def make_roottransform():
+    # MW-D15 / RULE 34: the record at INDEX 0 has its whole NiTransform
+    # replaced with identity unless it is a NiNode named "bip01" - in the
+    # PARSER, so no consumer can opt out. Three files, because the rule
+    # has three answers and a port can get any one of them right alone:
+    #
+    #   rootxform.nif    root NiNode "NotBip01" + a big translation
+    #                    -> DISCARDED, the shape sits where it was authored
+    #   rootbip.nif      the same root named "Bip01"
+    #                    -> KEPT, and a port that zeroes unconditionally
+    #                       breaks every Morrowind skeleton here
+    #   rootshape.nif    a NiTriShape at index 0 with a translation
+    #                    -> KEPT: "Only for NiNode-s for now"
+    def tree(name):
+        root = NifFormat.NiNode()
+        root.name = name.encode()
+        ident(root.rotation)
+        root.scale = 2.0
+        root.translation.x, root.translation.y, root.translation.z = 100.0, 200.0, 300.0
+        kid = _quad("RootKid", colors=False)
+        root.num_children = 1
+        root.children.update_size()
+        root.children[0] = kid
+        return root
+
+    write_nif(HERE / "rootxform.nif", [tree("NotBip01")])
+    write_nif(HERE / "rootbip.nif", [tree("Bip01")])
+
+    lone = _quad("LoneShape", colors=False)
+    lone.translation.x, lone.translation.y, lone.translation.z = 100.0, 200.0, 300.0
+    write_nif(HERE / "rootshape.nif", [lone])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -2328,6 +2361,7 @@ if __name__ == "__main__":
     make_matprops()
     make_boneoffset()
     make_markers()
+    make_roottransform()
     make_armfp_esm()
     make_weaponmesh()
     make_armparts_esm()

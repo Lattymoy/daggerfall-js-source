@@ -627,6 +627,60 @@ export function weaponRecords(bytes) {
 }
 
 /**
+ * MW-D15 / RULE 32(a): the GMST the SNEAK SINK is measured in.
+ *
+ * `MWWorld::Player::update` reads `i1stPersonSneakDelta` ONCE, statically,
+ * and Camera::setSneakOffset pushes `osg::Vec3f(0, 0, -offset)` into the
+ * neck controller while the player has the Sneak stance and is neither
+ * swimming nor flying. It is a STEP change with no smoothing.
+ *
+ * Read from the player's own .esm rather than hardcoded, because it is a
+ * GMST and a mod may move it - and because a constant here would be the
+ * fourth time this arc invented a number the data already carries.
+ * GMST layout: NAME is the id, and the value rides INTV / FLTV / STRV by
+ * the id's first letter (i / f / s), which is Morrowind's own convention
+ * and the reason the type does not need to be stored.
+ *
+ * @returns the number, or null when the .esm does not carry it - the
+ *   caller decides, and a missing GMST is not a reason to refuse an arm.
+ */
+export function gmstValue(bytes, id) {
+  const want = String(id).toLowerCase();
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'GMST') continue;
+    let name = '';
+    let value = null;
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') name = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'INTV' && sub.len >= 4) {
+        value = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true);
+      } else if (sub.name === 'FLTV' && sub.len >= 4) {
+        value = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getFloat32(0, true);
+      } else if (sub.name === 'STRV') value = zstr(bytes, sub.start, sub.len);
+    }
+    if (name === want) return value;
+  }
+  return null;
+}
+
+/** The GMST id, spelled once. */
+export const GMST_SNEAK_DELTA = 'i1stpersonsneakdelta';
+
+/**
+ * RULE 32(a)'s vector, in the OBJECT ROOT's space: `Vec3f(0, 0, -offset)`
+ * while sneaking and the zero vector otherwise. The whole first-person
+ * body sinks by that much in -Z, through the NECK - so the Camera bone
+ * goes with it and the eye drops too, which is the point.
+ *
+ * "neither swimming nor flying" has no Daggerfall counterpart worth
+ * porting here: the port's sneak input is already refused in those
+ * states by the host, so the guard would be a branch no frame can take.
+ */
+export function sneakOffset(sneaking, delta) {
+  return sneaking && delta ? [0, 0, -delta] : [0, 0, 0];
+}
+
+/**
  * THE DIVERGENCE, DECLARED. Daggerfall's weapon taxonomy is NOT
  * Morrowind's, and this document's own warning is that any mapping
  * between them is a PORT DECISION which "belongs in the recorded
@@ -1245,6 +1299,28 @@ const mul33 = (p, l) => {
   return a;
 };
 const transpose33 = (m) => Float32Array.from([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
+
+/**
+ * `matrix.getRotate()` - the ROTATION, with the scale divided out.
+ *
+ * MW-D15: the skeleton-space 3x3 this module works in is rotation TIMES
+ * SCALE (rule 55 folds a NIF's uniform scale into the matrix), and
+ * RotateController takes `worldMat.getRotate()`, which is the rotation
+ * alone. Conjugating with the scaled matrix gives `s^2 * (R rot R^T)`
+ * and translating with its transpose gives `s * offset` - both silently
+ * correct at s = 1, which every fixture and most retail rigs are, and
+ * both wrong the moment a rig scales its neck chain.
+ *
+ * NIF scale is a single float, so the columns share one length and one
+ * division does it.
+ */
+const rotationOf = (m) => {
+  const s = Math.hypot(m[0], m[3], m[6]);
+  if (!(s > 1e-8) || Math.abs(s - 1) < 1e-6) return m;
+  const out = new Float32Array(9);
+  for (let i = 0; i < 9; i++) out[i] = m[i] / s;
+  return out;
+};
 /** Rotation about -X by `rad`, which is the axis the neck controller
  *  takes: `osg::Quat(pitch * rotateFactor, osg::Vec3f(-1, 0, 0))`. */
 const rotNegX = (rad) => {
@@ -1264,27 +1340,46 @@ const rotNegX = (rad) => {
  * already put there. Doing it in the node's local frame instead would
  * pitch the head sideways as soon as the neck is not axis-aligned.
  */
-export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, aim = 0) {
+export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, aim = 0, offset = null) {
   const ref = skeleton && skeleton.byName ? skeleton.byName.get(FP_NECK_BONE) : undefined;
-  if (ref === undefined || !pitch) return false;
+  const sinking = !!(offset && (offset[0] || offset[1] || offset[2]));
+  if (ref === undefined || (!pitch && !sinking)) return false;
   const world = skelMats(skeleton, pose, rootRef).get(ref);
   if (!world) return false;
   const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
-  const w = world.a;
+  const w = rotationOf(world.a);
   const rotate = rotNegX(pitch * neckRotateFactor(aim));
   const rotation = mul33(mul33(mul33(w, rotate), transpose33(w)), local.rotation);
-  pose.set(ref, { rotation, translation: local.translation, scale: local.scale });
+  // RULE 32(a), and it rides the SAME controller as the pitch because it
+  // is the same line of the same function:
+  //   matrix.setTrans(matrix.getTrans() + worldOrientInverse * mOffset);
+  //                                     (rotatecontroller.cpp:52)
+  // worldOrientInverse turns a vector given in the OBJECT ROOT's space
+  // into the neck's own, which is the transpose of the same world 3x3 the
+  // rotation is conjugated by. Applying the offset in the neck's local
+  // frame instead would sink the body along whatever way the neck
+  // happens to be pointing.
+  let translation = local.translation;
+  if (sinking) {
+    const inv = transpose33(w);
+    translation = [
+      local.translation[0] + inv[0] * offset[0] + inv[1] * offset[1] + inv[2] * offset[2],
+      local.translation[1] + inv[3] * offset[0] + inv[4] * offset[1] + inv[5] * offset[2],
+      local.translation[2] + inv[6] * offset[0] + inv[7] * offset[1] + inv[8] * offset[2],
+    ];
+  }
+  pose.set(ref, { rotation, translation, scale: local.scale });
   return true;
 }
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
-  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0 } = {}) {
+  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null } = {}) {
   const { fns, skeleton, rootRef, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   const pose = fns.poseSkeleton(skeleton, tracks, sampleTrack, time, { accumRoot });
   // Rule 54's other half: the neck takes 0.75 of the look BEFORE any
   // matrix is composed, because the camera node hangs off it.
-  if (neckPitch) applyFirstPersonNeck(skeleton, pose, rootRef, fns.skelMats, neckPitch, neckAim);
+  applyFirstPersonNeck(skeleton, pose, rootRef, fns.skelMats, neckPitch, neckAim, neckOffset);
   const byRoot = new Map([[rootRef, fns.skelMats(skeleton, pose, rootRef)]]);
   const matsFor = (root) => {
     if (!byRoot.has(root)) byRoot.set(root, fns.skelMats(skeleton, pose, root));

@@ -52,6 +52,7 @@ import {
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
+  gmstValue, GMST_SNEAK_DELTA, sneakOffset,
 } from '../formats/mwFirstPerson.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
@@ -393,6 +394,14 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
     const parts = esmBytes.flatMap((e) => bodyParts(e.bytes));
+    // RULE 32(a)'s GMST, read from the player's own data. Later masters
+    // override earlier ones, so the LAST .esm that carries it wins -
+    // which is the load order, not a preference.
+    let sneakDelta = null;
+    for (const e of esmBytes) {
+      const v = gmstValue(e.bytes, GMST_SNEAK_DELTA);
+      if (typeof v === 'number') sneakDelta = v;
+    }
 
     const find = (p) => archives.find((a) => a.has(p));
     const skelArc = find(skeletonPath);
@@ -594,6 +603,7 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       reach,
       skeletonPath,
       settingsSkeleton,
+      sneakDelta,
       // MW-D4's PATTERN, applied forward: report the bone the NEXT slice
       // needs rather than guessing it. Rule 54 says the first-person
       // camera tracks a node named "Camera", falling back to "Head". This
@@ -711,6 +721,13 @@ export function createFpArm() {
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
   let aimFactor = 0;
+  // Rule 32(a): the Sneak STANCE, read off the camera dep beside the
+  // pitch. It is DFU's Sneak binding and not its Crouch one - Morrowind
+  // has one sneak stance, and Daggerfall's crouch is a height change the
+  // collider owns rather than an animation state. A step change with no
+  // smoothing, because the reference has none and adding one would be a
+  // port decision wearing a rule's clothes.
+  let sneaking = false;
   // The source each slot won, kept beside the clip because a clip and
   // the tracks that pose it come from the SAME file.
   let idleSource = null;
@@ -943,7 +960,7 @@ export function createFpArm() {
         packed = null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
-        weaponShown = false; notes.length = 0; aimFactor = 0;
+        weaponShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
         idleSource = null; actionSource = null; poseSource = null;
         // A REBUILT ARM STARTS SHEATHED, whatever the last one was doing.
         // The build is triggered by a button, and the player is not
@@ -968,7 +985,7 @@ export function createFpArm() {
       releaseMesh(); built = null; packed = null;
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false; weaponShown = false;
-      notes.length = 0; aimFactor = 0;
+      notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
       reason = 'unloaded';
     },
@@ -1111,6 +1128,7 @@ export function createFpArm() {
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
       const cam = camera && camera();
+      sneaking = !!(cam && cam.sneaking);
       poseAssembly(built.arm, {
         tracks: poseSource ? poseSource.trackMap : built.tracks,
         sampleTrack,
@@ -1132,6 +1150,11 @@ export function createFpArm() {
         // not the constant 0.75 this passed before. Stepped HERE, once
         // per frame, because mAimingFactor is a decaying state.
         neckAim: aimFactor,
+        // Rule 32(a): the whole body sinks by i1stPersonSneakDelta in -Z
+        // while sneaking, through the neck - so the Camera bone goes with
+        // it and the eye drops too, which is the point of doing it here
+        // rather than at the lens.
+        neckOffset: sneakOffset(sneaking, built.sneakDelta),
       });
       packed = packFpArm(built.arm.pieces, packed);
       if (!mesh) {
@@ -1243,6 +1266,8 @@ export function createFpArm() {
         aimFactor,
         attackType,
         sheathed,
+        sneaking,
+        sneakDelta: built && built.ok ? built.sneakDelta : null,
         weaponShown,
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,

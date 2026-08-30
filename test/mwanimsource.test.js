@@ -307,3 +307,186 @@ test('MW-D14: an ATTACK poses from ITS source, which is not the idle\'s', async 
   assert.notDeepEqual(withBase, withOwn, 'the two files really do pose it differently here');
   assert.deepEqual(posed, withBase, 'and the swing is posed by the file the swing came from');
 });
+
+// --- rule 32(a): the sneak sink -------------------------------------------
+
+test('MW-D15 rule 32(a): the GMST is READ, and a missing one is null not zero', async () => {
+  const { gmstValue, GMST_SNEAK_DELTA, sneakOffset } = await import('../src/formats/mwFirstPerson.js');
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const rec = (subs) => [...A('GMST'), ...U(subs.length), ...U(0), ...U(0), ...subs];
+  const gmst = (id, intv) => rec([...sub('NAME', Z(id)), ...sub('INTV', U(intv))]);
+  const esm = Uint8Array.from([
+    ...gmst('iOther', 3),
+    ...gmst('i1stPersonSneakDelta', 10),
+  ]);
+  assert.equal(gmstValue(esm, GMST_SNEAK_DELTA), 10, 'and the lookup is case-insensitive');
+  assert.equal(gmstValue(esm, 'iother'), 3);
+  // A GMST the file does not carry is NULL, not 0: zero is a legal sneak
+  // delta and "absent" has to be distinguishable from "flat".
+  assert.equal(gmstValue(esm, 'inosuchthing'), null);
+  assert.equal(GMST_SNEAK_DELTA, 'i1stpersonsneakdelta');
+
+  // Vec3f(0, 0, -offset) while sneaking, the zero vector otherwise.
+  assert.deepEqual(sneakOffset(true, 10), [0, 0, -10]);
+  assert.deepEqual(sneakOffset(false, 10), [0, 0, 0]);
+  assert.deepEqual(sneakOffset(true, null), [0, 0, 0], 'no GMST, no sink');
+  assert.deepEqual(sneakOffset(true, 0), [0, 0, 0]);
+});
+
+test('MW-D15 rule 32(a): the sink moves the arm, through the NECK', async () => {
+  const { assembleFirstPersonArm, applyFirstPersonNeck } = await import('../src/formats/mwFirstPerson.js');
+  const { parseNif } = await import('../src/formats/mwNifFile.js');
+  const { poseSkeleton, skeletonSpaceMatrices } = await import('../src/formats/mwSkin.js');
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: f('armfp.nif'),
+    parts: [{ slot: 'hand', bytes: f('armfphand.nif') }],
+  });
+  assert.ok(arm.ok, arm.error);
+  const skelMats = (sk, pose, root) => skeletonSpaceMatrices(sk, pose, root);
+  const neckAt = (offset, pitch) => {
+    const pose = poseSkeleton(arm.skeleton, null, null, 0, {});
+    applyFirstPersonNeck(arm.skeleton, pose, arm.rootRef, skelMats, pitch, 0, offset);
+    return pose.get(arm.skeleton.byName.get('bip01 neck')).translation;
+  };
+  const rest = neckAt(null, 0);
+  const sunk = neckAt([0, 0, -10], 0);
+  assert.notDeepEqual([...sunk], [...rest], 'the sink moves the neck with NO pitch at all');
+  // Vec3f(0,0,-10) in the object root's space, and this rig's neck is
+  // axis-aligned to it, so the whole of it lands on z.
+  assert.ok(Math.abs((sunk[2] - rest[2]) + 10) < 1e-4, `moved ${sunk[2] - rest[2]} in z`);
+  assert.ok(Math.abs(sunk[0] - rest[0]) < 1e-4, 'and nothing in x');
+
+  // The two channels are independent: a pitch with no offset still only
+  // rotates, and an offset with a pitch does both.
+  assert.deepEqual([...neckAt(null, 0.4)], [...rest], 'pitch alone leaves the translation alone');
+  const both = neckAt([0, 0, -10], 0.4);
+  assert.ok(Math.abs((both[2] - rest[2]) + 10) < 1e-4);
+});
+
+test('MW-D15 rule 32(a): the arm reads the stance off the camera dep, in all four hosts', () => {
+  const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  // THE FOUR HOSTS RULE, again. The pitch proved the camera dep is the
+  // seam every host has; the stance is the same question about the same
+  // body and rides the same dep rather than a fifth channel.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    assert.match(rd(host), /camera: \(\) => \(\{[^}]*sneaking: !!player\.isSneaking \}\)/,
+      `${host} passes the live sneak stance`);
+  }
+  // The dungeon context latches it with the eye and the pitch, one frame
+  // at a time, for the reason the pitch is latched there.
+  assert.match(rd('src/scenes/dungeonContext.js'), /_fpSneaking = !!playerSneaking;/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /sneaking: _fpSneaking \}/);
+  for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
+    assert.match(rd(host), /drawFoes\([^;]*!!player\.isSneaking\)/, `${host} hands it to the context`);
+  }
+  // And the arm takes it from there and nowhere else - no second source
+  // of truth for a stance.
+  const src = rd('src/combat/fpArm.js');
+  assert.match(src, /sneaking = !!\(cam && cam\.sneaking\);/);
+  assert.ok(!/entity\.sneaking/.test(rd('src/combat/weaponRig.js')));
+});
+
+test('MW-D15 rule 32(a): the LIVE arm sinks when the camera dep says sneak', async () => {
+  // The field alone is not the pin: a sneakDelta read from the .esm and
+  // never applied draws exactly what MW-D14 drew.
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const body = [...sub('NAME', Z('i1stPersonSneakDelta')), ...sub('INTV', U(10))];
+  const gmstEsm = Uint8Array.from([...A('GMST'), ...U(body.length), ...U(0), ...U(0), ...body]);
+
+  const files = new Map([
+    ['meshes/xbase_anim.1st.nif', f('armfp.nif')],
+    ['meshes/xbase_anim.1st.kf', f('armfpweapon.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  let sneaking = false;
+  const arm = createFpArm();
+  arm.attach({
+    gl: null,
+    createCharacterMesh: () => ({ vao: 1, buffers: [], ranges: [] }),
+    updateCharacterMesh: () => {},
+    createCharacterTexture: () => 1,
+  }, () => ({ pitch: 0, sneaking }));
+  const res = await arm.build({
+    race: 'fprace',
+    deps: {
+      loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+      storedMorrowindNames: async () => ['armfp.esm', 'gmst.esm'],
+      loadMorrowindFile: async (n) => (n === 'gmst.esm' ? gmstEsm : f('armfp.esm')),
+    },
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.equal(res.sneakDelta, 10, 'the GMST reached the build');
+
+  arm.update(0.05);
+  const standing = arm.rows().map((r) => +r.bounds.minZ.toFixed(4));
+  assert.equal(arm.status().sneaking, false);
+  sneaking = true;
+  arm.update(0.05);
+  assert.equal(arm.status().sneaking, true);
+  const sunk = arm.rows().map((r) => +r.bounds.minZ.toFixed(4));
+  assert.ok(standing.some((v, i) => Math.abs(v - sunk[i]) > 1) , 'the whole body moved');
+  // It is a SINK, and by the GMST's own amount - a step change with no
+  // smoothing, so one frame is the whole of it.
+  for (let i = 0; i < standing.length; i++) {
+    // 1e-2, because the whole chain is float32 through a pyffi-authored
+    // rest pose: the residue is the fixture's, not the arithmetic's.
+    assert.ok(Math.abs((sunk[i] - standing[i]) + 10) < 1e-2,
+      `piece ${i} moved ${sunk[i] - standing[i]}, not -10`);
+  }
+  // And it comes straight back - measured as the sink UNDONE rather than
+  // as a return to the first reading, because the idle clock has moved
+  // on between the two and the arm is not meant to be frozen.
+  sneaking = false;
+  arm.update(0.05);
+  const back = arm.rows().map((r) => +r.bounds.minZ.toFixed(4));
+  for (let i = 0; i < back.length; i++) {
+    assert.ok(Math.abs((back[i] - sunk[i]) - 10) < 1e-2,
+      `piece ${i} rose ${back[i] - sunk[i]}, not 10`);
+  }
+});
+
+test('MW-D15: the neck controller uses the ROTATION, with the scale divided out', async () => {
+  const { applyFirstPersonNeck, FP_NECK_BONE } = await import('../src/formats/mwFirstPerson.js');
+  // RotateController takes `worldMat.getRotate()`, not the matrix. The
+  // skeleton-space 3x3 this module works in is rotation TIMES SCALE
+  // (rule 55 folds a NIF's uniform scale in), so conjugating with it
+  // gives s^2 * (R rot R^T) and translating with its transpose gives
+  // s * offset. Both are silently right at s = 1 - which every fixture
+  // is, and which is why this needs a rig built by hand.
+  const REF = 1;
+  const ident = () => Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  const rig = (s) => ({
+    skeleton: {
+      byName: new Map([[FP_NECK_BONE, REF]]),
+      nodes: new Map([[REF, { rest: { rotation: ident(), translation: [0, 0, 0], scale: 1 } }]]),
+    },
+    // The neck's world 3x3, scaled - what skeletonSpaceMatrices really
+    // hands back for a rig with a scaled chain.
+    mats: new Map([[REF, { a: Float32Array.from(ident()).map((v) => v * s), t: [0, 0, 0] }]]),
+  });
+  const run = (s, pitch, offset) => {
+    const { skeleton, mats } = rig(s);
+    const pose = new Map();
+    applyFirstPersonNeck(skeleton, pose, 0, () => mats, pitch, 0, offset);
+    return pose.get(REF);
+  };
+  const one = run(1, 0.5, [0, 0, -10]);
+  const four = run(4, 0.5, [0, 0, -10]);
+  // The offset must land the same however the chain is scaled: it is a
+  // vector in the OBJECT ROOT's space either way.
+  assert.ok(Math.abs(four.translation[2] - one.translation[2]) < 1e-5,
+    `scaled rig translated ${four.translation[2]}, unscaled ${one.translation[2]}`);
+  // And so must the rotation - s^2 would put 16x the pitch on it.
+  for (let i = 0; i < 9; i++) {
+    assert.ok(Math.abs(four.rotation[i] - one.rotation[i]) < 1e-5,
+      `rotation element ${i}: ${four.rotation[i]} vs ${one.rotation[i]}`);
+  }
+});

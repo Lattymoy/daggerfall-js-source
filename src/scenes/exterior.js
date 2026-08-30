@@ -836,7 +836,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // MW-D8: the Morrowind arm rides the player's eye. Required, not
     // optional - a host that forgets it gets the classic sprite and a
     // named reason rather than an arm at the world origin.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch }),   // MW-D10: rule 54's neck pitch
+    // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking }),
     spellArmed: () => magic.spellArmed(),   // M2: HasReadySpell hides the weapon
   });
   // M2 (the AUDIT 23 hosts-2 priority row): SPELLCASTING ABOVE GROUND.

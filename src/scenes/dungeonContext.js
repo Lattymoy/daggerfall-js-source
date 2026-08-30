@@ -1717,9 +1717,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _fpEye = null;
   let _fpYaw = 0;
   let _fpPitch = 0;
+  let _fpSneaking = false;
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
-    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch } : null),   // MW-D10: rule 54's neck pitch
+    // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
+    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, sneaking: _fpSneaking } : null),
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(),
@@ -2581,7 +2583,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     // MW-D8: latch the eye and heading THIS frame, before anything draws.
     // Set after weaponRig.draw() instead, the arm would render a frame
@@ -2592,6 +2594,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // The view matrix's third row is the camera's BACKWARD axis, so the
     // look direction is its negation and the pitch is that vector's y.
     _fpPitch = Math.asin(Math.max(-1, Math.min(1, -view[6])));
+    // MW-D15 / rule 32(a): the same latch, for the same reason - the arm
+    // must see the stance the player is in THIS frame.
+    _fpSneaking = !!playerSneaking;
     // THE FOUR HOSTS RULE (2026-08-27, Mac: "blood texture stays static
     // in the air when attacking them in dungeons"). The splash pool's
     // clock was the HOST'S to run - dungeon.js ran it, worldModes never

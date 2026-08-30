@@ -82,7 +82,9 @@ test('audit24 player: every water line in the hosts measures the same live centr
     assert.match(rd(f), /player\.pos\[1\] \+ player\.height \/ 2 \+ 50 \* 0\.025 - 0\.95 < surf/,
       `${f}: the swim toggle rides the live capsule`);
     const call = rd(f).slice(rd(f).indexOf('drawFoes(dt, canvas, proj, view, cam.pos, player.pos,'));
-    assert.ok(call.slice(0, call.indexOf(';')).endsWith(', player.height)'),
+    // MW-D15 added a trailing sneak argument, so the test is that the
+    // height is THERE and live, not that it is last.
+    assert.ok(call.slice(0, call.indexOf(';')).includes(', player.height'),
       `${f}: and hands that height to the breath/ambience pass`);
   }
   const dc = rd('src/scenes/dungeonContext.js');

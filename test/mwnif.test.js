@@ -154,3 +154,47 @@ test('mwnif: retail mesh sweep - no layout faults', { skip: skipReal }, () => {
   // MEASURED floor: slice-1 record set. Raise with each coverage slice.
   assert.ok(clean / meshes.length > 0.3, `clean ratio ${(clean / meshes.length).toFixed(2)}`);
 });
+
+const f = (n) => new Uint8Array(readFileSync(new URL(`./fixtures/mw/${n}`, import.meta.url)));
+
+test('MW-D15 rule 34: record 0\'s transform is DISCARDED unless it is a NiNode named "bip01"', async () => {
+  //   if (mRecordIndex == 0 && !ciEqual(mName, "bip01"))
+  //       mTransform = NiTransform::getIdentity();      nif/node.cpp:188-191
+  //
+  // It happens IN THE PARSER, so no consumer can opt out, and the doc
+  // marks it CRITICAL. Three fixtures, because the rule has three
+  // answers and a port can get any one of them right on its own.
+  const { flattenNif } = await import('../src/formats/mwNifMesh.js');
+  const at = (name) => [...flattenNif(parseNif(f(name)))[0].positions.slice(0, 3)];
+
+  // (1) A root NiNode NOT named bip01: the whole transform goes, scale
+  // included, and the shape sits where it was authored.
+  const wiped = parseNif(f('rootxform.nif'));
+  assert.equal(wiped.records[0].type, 'NiNode');
+  assert.equal(wiped.records[0].name, 'NotBip01');
+  assert.deepEqual([...wiped.records[0].translation], [0, 0, 0]);
+  assert.equal(wiped.records[0].scale, 1, 'the SCALE is part of the transform too');
+  assert.deepEqual([...wiped.records[0].rotation], [1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  assert.deepEqual(at('rootxform.nif'), [0, 0, 0]);
+
+  // (2) THE OTHER HALF, which a port that zeroes unconditionally breaks:
+  // a root named Bip01 KEEPS its transform. Every Morrowind skeleton has
+  // one, and it is also why rule 56 can find "bip01" as a real transform
+  // node later.
+  const kept = parseNif(f('rootbip.nif'));
+  assert.deepEqual([...kept.records[0].translation], [100, 200, 300]);
+  assert.equal(kept.records[0].scale, 2);
+  assert.deepEqual(at('rootbip.nif'), [100, 200, 300]);
+
+  // (3) "Only for NiNode-s for now": a NiTriShape at index 0 keeps its
+  // transform, whatever it is called.
+  const shape = parseNif(f('rootshape.nif'));
+  assert.equal(shape.records[0].type, 'NiTriShape');
+  assert.deepEqual([...shape.records[0].translation], [100, 200, 300]);
+  assert.deepEqual(at('rootshape.nif'), [100, 200, 300]);
+
+  // The name test is case-INSENSITIVE, and it is on record 0 rather than
+  // on "a root" - the reference's own FIXME says so.
+  const arm = parseNif(f('armfp.nif'));
+  assert.equal(arm.records[0].name, 'Bip01');
+});

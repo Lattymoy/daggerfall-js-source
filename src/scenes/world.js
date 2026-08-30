@@ -1221,7 +1221,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MW-D10: pitch too - rule 54 pitches the rig's NECK by 0.75 of it
     // and the lens by all of it, so the arms lag the look the way they
     // do in Morrowind. A host that omits it gets arms that never move.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch }),
+    // MW-D15 / rule 32(a): sneaking rides the camera dep beside the
+    // pitch, because it is the same question - what the player's BODY is
+    // doing - and the pitch already proved that is the seam every host
+    // has. Morrowind's Sneak STANCE, which is DFU's Sneak binding; its
+    // Crouch is a collider height, not an animation state.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking }),
     spellArmed: () => magic.spellArmed(),   // M2
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.

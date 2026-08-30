@@ -193,6 +193,58 @@ also STICKY - `if (!mAccumRoot)` - so the FIRST source to resolve one
 wins for the life of the rig, and later sources neither re-pick it nor
 clear it. The old pin asserted the defect in as many words.
 
+MW-D15 CLOSED TWO MORE AND FOUND A THIRD ON THE WAY.
+
+RULE 34 (marked CRITICAL, and the port did not have it). The record at
+INDEX 0 has its whole NiTransform replaced with identity unless it is a
+NiNode named "bip01" - IN THE PARSER, so no consumer can opt out. Both
+halves matter: applying the stored transform mis-orients every mesh whose
+author left one on the root, and zeroing it unconditionally breaks every
+skeleton whose root is Bip01 - which is also why a Bip01 root survives as
+a real transform node for rule 56 to find. "Only for NiNode-s for now":
+a NiTriShape at index 0 keeps its transform.
+
+RULE 32(a), THE SNEAK SINK. While the player has the Sneak stance the
+whole first-person body drops by the GMST i1stPersonSneakDelta in -Z, and
+it goes through the NECK - so the Camera bone and therefore the eye go
+with it. A step change, no smoothing. It rides the same RotateController
+line as the pitch (`matrix.setTrans(matrix.getTrans() + worldOrientInverse
+* mOffset)`), and the GMST is read from the player's own .esm rather than
+hardcoded. Daggerfall's SNEAK binding is the analogue; its CROUCH is a
+collider height, not an animation state. Rule 32(b), the Lua camera
+offset, is not ported and is not a gap: it is settable only from Lua,
+which this port has no counterpart for.
+
+AND A LATENT SCALE BUG the sink's arithmetic surfaced. RotateController
+takes `worldMat.getRotate()`; the port was conjugating with the
+skeleton-space 3x3, which is rotation TIMES SCALE (rule 55 folds a NIF's
+uniform scale into it). That gives s^2 * (R rot R^T) for the rotation and
+s * offset for the translation - both exactly right at s = 1, which every
+fixture and most retail rigs are, and both wrong the moment a rig scales
+its neck chain. MW-D10 shipped it; nothing could see it until there was a
+translation to get wrong as well.
+
+STILL NOT PORTED, with reasons rather than silence:
+  RULE 57's second half - a hidden node whose own controller chain has a
+    NiVisController keeps its meshes, because the controller may make
+    them visible later. The port skips a hidden subtree's drawables
+    entirely, which is right for everything else rule 57 says and wrong
+    only for that case. Closing it needs a per-node visibility channel
+    the flattener does not have and nothing would read; the arm's parts
+    are never hidden, so it is deferred rather than faked.
+  RULES 25 + 26 - BlendMask and the priority vector. In first person both
+    animations are played on BlendMask_All, so the resolution is not a
+    blend at all and the two-slot winner in fpArm is exactly equivalent.
+    A third animation (hit recoil, sneak) would need the real thing, and
+    the code says so where the slots are declared.
+  RULE 65's DRAW MODE is READ and not ACTED ON: the first-person pass
+    disables backface culling for every draw, because rule 13's mirror
+    flips the winding. Any DrawMode can only agree with what is already
+    happening there.
+  RULE 60's billboard runtime, and rule 43's cull-traversal double
+    buffer - a viewer concern and a performance structure respectively,
+    neither reachable from the arm.
+
 THE DIVERGENCE, RESTATED WHERE THE CODE IS. Daggerfall picks its attack
 by GESTURE and Morrowind by MOVEMENT or by the weapon record's damage
 spread; the port maps the six strikes onto the three types BY THE SHAPE
