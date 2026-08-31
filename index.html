@@ -62,6 +62,9 @@
       text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
     }
     .plaque:hover, .plaque:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+    /* The door's pair: Play into the browser, Install onto the desk -
+       same plaque, side by side, wrapping to a stack on a phone. */
+    .doorplaques { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
     /* THE DOOR: the home face's own stage - centered, boxless, the
        wordmark over a rule, one thing to press. */
@@ -194,7 +197,10 @@
     <div class="rule"><i class="gem"></i></div>
     <p class="dek">The 1996 game with its rules intact, on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
     <p class="gate">It runs on <b>your own copy</b> of Daggerfall. The game is free, but its files aren't ours to hand out, so the first thing you'll be asked for is the ARENA2 folder. Pick it once; it stays in your browser and never leaves your device.</p>
-    <a class="plaque" href="./play/">Play</a>
+    <div class="doorplaques">
+      <a class="plaque" href="./play/">Play</a>
+      <a class="plaque" href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Install</a>
+    </div>
     <nav class="doorlinks caps" aria-label="Sections">
       <a href="#what">What it is</a>
       <a href="#look">What it looks like</a>
