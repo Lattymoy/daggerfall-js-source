@@ -2550,10 +2550,20 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   assert.equal(inst.setFollowCamera(false), false);
   assert.equal(inst.followCamera(), false);
   inst.setFollowCamera(true);
-  // ...and the card offers it, labelled by CURRENT mode.
+  // IG6b: THE KEY IS BUMPED and the BUTTON NAMES THE ACTION. The v1
+  // key could hold an accidental off - the first label named the mode
+  // you were IN ("Arms: follow the camera"), which reads as "click to
+  // enable", and one natural click switched the owner to look-lag and
+  // PERSISTED it, overriding every later default. The bump abandons
+  // the stored value; the state moved to the stats block; the button
+  // says what clicking DOES.
+  assert.match(arm, /const FOLLOW_CAMERA_KEY = 'dagger\.mwArmsFollowCamera2';/,
+    'the storage key is the v2 - the v1 value is abandoned, not trusted');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Arms: fixed to the screen', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Arms: Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
-    'the pause card names the mode you are IN and one click flips it');
+  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Switch arms to Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Switch arms to fixed \(classic\)', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
+    'the button names the ACTION, never the current mode');
+  assert.match(menu, /\['Arms mode', fpArm\.followCamera\(\)\s*\n?\s*\? 'fixed to the screen \(classic-style\)'\s*\n?\s*: 'Morrowind look-lag'\]/,
+    'and the CURRENT mode is a stats row, where a state belongs');
   // The probe measures BOTH modes: the law layers with the flag off,
   // the shipped fix with it on (cy invariant under every look, the
   // clamp-hard ones included, and under the bob).

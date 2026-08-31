@@ -6083,3 +6083,12 @@ where the reference would be, and the probe measures BOTH modes - the
 law layers with the flag off (L5c/L5d: the quarter lag at 0.26, the
 offset slide), L5e with it on (INVARIANCE: cy 0.354-0.356 across
 level, +/-0.5, and clamp-hard +/-1.4 rad looks, and under the bob).
+
+IG6b - THE POISONED TOGGLE. The field report "still not screen
+fixed" against a build the probe measured invariant traced to the
+SHELF: the toggle's first label named the mode you were IN, which
+reads as "click to enable", and one natural click had switched the
+owner to look-lag and persisted it - overriding every later default
+and making three rounds of fixes look unshipped. The storage key is
+bumped (dagger.mwArmsFollowCamera2 - the v1 value is abandoned), the
+button names the ACTION, and the current mode sits on the stats block.

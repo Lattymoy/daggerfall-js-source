@@ -927,6 +927,11 @@ function paneEnhanced(body) {
       : armState.active ? 'none - empty hands' : '-'],
     // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
     // game to see it, and when the wheel refuses, this line is why.
+    // IG6b: the CURRENT arms mode, stated where a state belongs - on
+    // the stats block, not on the button that changes it.
+    ['Arms mode', fpArm.followCamera()
+      ? 'fixed to the screen (classic-style)'
+      : 'Morrowind look-lag'],
     ['Body', armState.third
       ? (armState.third.ok
         ? `${armState.third.pieces} pieces from ${armState.third.skeletonPath} - scroll out for third person (view: ${armState.viewMode})`
@@ -962,13 +967,16 @@ function paneEnhanced(body) {
         render();
       } });
   }
-  // IG4/IG5: the one Morrowind-feel knob the owner asked for. The label
-  // names the CURRENT mode; a click flips it, live, no rebuild - the
-  // rig reads the flag per frame.
+  // IG6b: the one Morrowind-feel knob the owner asked for. The label
+  // names the ACTION - the first cut named the mode you were IN, which
+  // reads as "click to enable", and one natural click switched the
+  // owner to look-lag and persisted it; the current mode now sits on
+  // the stats block instead. A click flips live, no rebuild - the rig
+  // reads the flag per frame.
   if (count) {
     armActions.push(fpArm.followCamera()
-      ? { label: 'Arms: fixed to the screen', onClick: () => { fpArm.setFollowCamera(false); render(); } }
-      : { label: 'Arms: Morrowind look-lag', onClick: () => { fpArm.setFollowCamera(true); render(); } });
+      ? { label: 'Switch arms to Morrowind look-lag', onClick: () => { fpArm.setFollowCamera(false); render(); } }
+      : { label: 'Switch arms to fixed (classic)', onClick: () => { fpArm.setFollowCamera(true); render(); } });
   }
   armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });
   // MW-D: the page that answers what is actually IN the archives - which

@@ -1355,7 +1355,16 @@ export function esmDiagnosis(names, parts, race) {
  * toggle away (the pause card), and the probe's law layers measure it
  * with the flag OFF.
  */
-const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera';
+// KEY BUMPED (IG6b): the v1 key ('dagger.mwArmsFollowCamera') can hold
+// an ACCIDENTAL off - the toggle's first label named the mode you were
+// IN ("Arms: follow the camera"), which reads as "click to enable", and
+// one natural click switched the clicker to Morrowind look-lag and
+// PERSISTED it. That stored off then overrode every later default and
+// made the fixes look unshipped on the owner's own machine. The bump
+// abandons the old value so every player lands back on the fixed
+// default; the action-named button re-persists a deliberate choice
+// under the new key.
+const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
 // DA1: through the storage seam, not localStorage directly - the pin
 // in test/filestorage.test.js caught this landing bare on the merge,
 // which would have split the toggle out of the desktop app's file
