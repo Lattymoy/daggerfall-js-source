@@ -1374,7 +1374,18 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
 
     this._bindVao(null);
-    return { vao, subMeshes: model.subMeshes, buffers };
+    // HOTFIX 2026-08-31 (field crash, Firefox): the sub-meshes are
+    // COPIED, never shared with the model. drawMesh's EV2 texture
+    // cache stamps `_evTex`/`_evGen`/... onto each sub-mesh, and the
+    // windmill bake ships its sub-meshes as FROZEN module constants
+    // (windmillMesh.js) - `sm._evTex = tex` on a frozen object is a
+    // strict-mode TypeError, so the first mill drawn took the whole
+    // frame loop down ("can't define property _evTex: Object is not
+    // extensible"). The renderer may only stamp renderer-private
+    // fields on objects it OWNS; a shallow copy at upload time makes
+    // that true for every mesh, present and future, at build cost
+    // only.
+    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers };
   }
 
   beginFrame(proj, view, lightDir) {

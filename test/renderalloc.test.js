@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import { multiply, trs, identity, UP_Y } from '../src/world/mat4.js';
 import { nearestLights } from '../src/world/cityLights.js';
 import { Renderer } from '../src/render/renderer.js';
+import { BODY } from '../src/world/windmillMesh.js';   // the frozen bake the field crash drew
 import { StreamingWorldState } from '../src/world/streamingWorld.js';
 
 test('EV2: multiply - same product, provided out returned, aliasing safe, no allocation in the body', () => {
@@ -123,6 +124,38 @@ test('EV2: drawMesh resolves each sub-mesh texture ONCE per generation, not per 
   const remap = new Map([['7_3', '7_3']]);
   r.drawMesh(mesh, m, remap);
   assert.equal(lookups, 3, 'a new remap object cannot ride the old cache');
+});
+
+test('EV2 HOTFIX: a FROZEN model draws and caches - createMesh copies the sub-meshes it stamps', () => {
+  // Field crash (2026-08-31, Firefox): "can't define property _evTex:
+  // Object is not extensible". The windmill bake ships its sub-meshes
+  // as FROZEN module constants, createMesh reused them by reference,
+  // and EV2's cache write threw on the first mill drawn, taking the
+  // frame loop down. The law: the renderer stamps renderer-private
+  // fields only on objects it OWNS - createMesh copies. Driven here
+  // with the REAL frozen bake, not a fixture.
+  const stub = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+      if (k === 'createTexture' || k === 'createBuffer' || k === 'createVertexArray' || k === 'createProgram' || k === 'createShader' || k === 'createFramebuffer') return () => ({});
+      if (typeof k === 'string' && k.toUpperCase() === k) return 1;
+      return () => {};
+    },
+  });
+  const canvas = { getContext: () => stub, clientWidth: 320, clientHeight: 200, width: 320, height: 200 };
+  const r = new Renderer(canvas);
+  assert.ok(Object.isFrozen(BODY.subMeshes[0]), 'the bake really is frozen - the case from the field');
+  const mesh = r.createMesh(BODY);
+  assert.notEqual(mesh.subMeshes[0], BODY.subMeshes[0], 'the gpu mesh owns copies, not the bake\'s constants');
+  let lookups = 0;
+  const realGet = Map.prototype.get.bind(r.textures);
+  for (const sm of BODY.subMeshes) r.textures.set(`${sm.textureArchive}_${sm.textureRecord}`, { fake: true });
+  r.textures.get = (k) => { lookups++; return realGet(k); };
+  r.drawMesh(mesh, identity());
+  r.drawMesh(mesh, identity());
+  assert.equal(lookups, BODY.subMeshes.length, 'resolved once, cached on the copies - no throw, no re-lookup');
+  assert.ok(!('_evTex' in BODY.subMeshes[0]), 'and the frozen bake itself is untouched');
 });
 
 test('EV2: the shared up axis is one array, and the draw loops use it', () => {
