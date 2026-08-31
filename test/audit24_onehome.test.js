@@ -35,6 +35,12 @@ function walk(dir, out = []) {
 // that quietly becomes one thing (or disappears) shows up as churn
 // here rather than as silence.
 const HOMONYMS = new Map([
+  // Mac 2026-08-31: armour is its own page in the ENHANCED pack. The
+  // classic window keeps DFU's four, because that is the law
+  // DaggerfallInventoryWindow has to hold - so these two are
+  // deliberately different rules, not a copy of one.
+  ['TABS', "the classic window's four DFU pages vs the enhanced pack's five (armour split out)"],
+  ['filterByTab', 'the same split: only the weapons/armour arm differs, and the pack calls the classic one for every other page'],
   ['ROW_SPACING', 'a list picker row and a talk-window row are different heights'],
   ['SELECTED_TEXT_COLOR', 'the picker highlight and the talk highlight are different colours'],
   ['LABELS', 'settings labels vs special-advantage labels'],
@@ -166,8 +172,11 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 27,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 27):\n  `
+  // 27 -> 29 (Mac 2026-08-31): TABS and filterByTab, the armour split.
+  // Both have their reason in HOMONYMS above; the ratchet is a RAW
+  // total, so a deliberate homonym still has to be paid for here.
+  assert.ok(dupes.length <= 29,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 29):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 

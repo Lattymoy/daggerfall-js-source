@@ -8568,6 +8568,40 @@ good ones.
 - `?packgrid=0` was the right instinct and the wrong scope: a switch
   that leaves the default broken still ships a broken default.
 
+## THE ARMOUR SPLIT, shipped alone (2026-08-31)
+
+Mac, after the revert: "Armor split yes." So it went in BY ITSELF -
+a data change with no visual risk, which is the order the post-mortem
+above says to use. The pack has its own `TABS`/`filterByTab`; only the
+weapons/armour arm is new; the classic window is untouched.
+
+## THE GRID: WHY THE FIRST ATTEMPT OVERLAPPED, and what is actually there
+
+Diagnosed rather than guessed, and it changes the job:
+
+**THE PACK IS ALREADY A TILE GRID.** `.pack-shell .pack-dock .packcol`
+(:2044) is `display: flex; flex-wrap: wrap; gap: 6px;
+align-content: flex-start`, and `.pack-shell .itemrow` (:2050) is a
+**56x56 square** with the name visually hidden (`clip-path: inset(50%)`,
+kept for the probes), the weight hidden, and the count in brass at the
+bottom-right corner. The stylesheet says so in its own words: "the
+dock's rows are the reference's TILE GRID: square panels, the monogram
+carrying the item, the count in the corner". `.pack-shell .packlists`
+(:2035) is the scroll viewport, `min-height: 0` so overflow clips.
+
+**So the overlap was a specificity loss, not a layout problem.** The
+added rule was `.packcol.packgrid` - specificity (0,2,0) - against
+`.pack-shell .pack-dock .packcol` at (0,3,0). The grid NEVER APPLIED
+inside the shell: the cells fell back to the existing flex-wrap with
+`aspect-ratio: 1` and no width, so they sized to their content and the
+absolutely-positioned name strip spilled. Then it was "fixed" twice by
+making things smaller - treating a cascade bug as a sizing problem,
+which is why neither pass helped.
+
+**Before any second attempt, the question to settle is what is wrong
+with the grid that exists** - it is 56px squares, wrapping, counts in
+the corner. Not whether to build one.
+
 **The findings worth keeping** (they cost nothing to re-derive but are
 easy to miss): a shield IS group Armor in Daggerfall - Buckler 109,
 Round 110, Kite 111, Tower 112 - so armour-plus-shields is ONE

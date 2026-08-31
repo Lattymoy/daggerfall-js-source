@@ -37,7 +37,8 @@
 // forbidden-material and broken-item refusals, the swap delay billed
 // per transition, the armour-value table and the enchantment hooks.
 // Taking something off is `unequipSlot`. The four tab pages are
-// nativeInventory.js's own `TABS` and `filterByTab`. Weight,
+// nativeInventory.js's `filterByTab` for the pages it still owns -
+// this file has its OWN TABS since the armour split. Weight,
 // condition, material and damage strings are systems/itemInfo.js's,
 // every one of them cited to DFU. This module positions nodes and
 // prints rows.
@@ -56,7 +57,7 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
+import { filterByTab as classicFilterByTab, isIngredientTemplate, USE_PENDING } from './nativeInventory.js';
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
@@ -362,6 +363,36 @@ let deps = {};
 let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
+// ── THE PACK'S OWN TABS (Mac, 2026-08-31: "armor its own tab") ────
+//
+// The classic window's TABS is DFU's four, and `weapons` there is
+// Weapons OR Armor (nativeInventory.filterByTab). That is the law
+// DaggerfallInventoryWindow has to keep, so the enhanced pack takes its
+// OWN set rather than changing it: five pages, armour split out.
+//
+// SHIELDS come with the armour. A shield IS group Armor in Daggerfall
+// (Buckler 109, Round 110, Kite 111, Tower 112), so "armour plus
+// shields" is one predicate, not two.
+//
+// ONLY the weapons/armour arm is this file's. Magic, ingredients and
+// misc still call the classic filterByTab, so there is ONE rule for
+// them rather than a copy that drifts - and the order is DFU's:
+// worn items leave first, then an ENCHANTED item is Magic whatever it
+// is made of.
+export const TABS = ['weapons', 'armor', 'magic', 'clothing', 'ingredients'];
+
+export function filterByTab(items, tab) {
+  if (tab === 'weapons' || tab === 'armor') {
+    return items.filter((it) => {
+      if (it.equipSlot != null) return false;   // FilterLocalItems: worn items leave
+      if (isEnchanted(it)) return false;        // an enchanted blade is Magic
+      if (isIngredientTemplate(it.templateIndex)) return false;
+      return tab === 'armor' ? it.group === 'Armor' : it.group === 'Weapons';
+    });
+  }
+  return classicFilterByTab(items, tab);
+}
+
 let tab = TABS[0];
 const _scrollMemo = new Map();   // PX22: scrollTop per tab across repaints
 let _renderedTab = null;          // PX22: the tab the current DOM shows

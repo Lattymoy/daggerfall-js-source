@@ -14,14 +14,14 @@ import { readFileSync } from 'node:fs';
 
 import {
   packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
-  equippedModel,
+  equippedModel, TABS, filterByTab,
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
   createInventoryWindow, inventoryDoorReady,
 } from '../src/ui/inventoryDoor.js';
-import { TABS, filterByTab } from '../src/ui/nativeInventory.js';
+import { TABS as CLASSIC_TABS } from '../src/ui/nativeInventory.js';
 import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/paperdoll.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
@@ -65,10 +65,16 @@ const model = (e) => packModel({ entity: e, items: () => e.items });
 
 // ── THE MODEL ────────────────────────────────────────────────────
 
-test('U53: the pack reads the four DFU tab pages, and nothing else', () => {
+test('U53 + the armour split: the pack reads its OWN five tab pages', () => {
   const e = hero();
   const m = model(e);
+  // Mac 2026-08-31: armour is its own page. The pack has its OWN TABS -
+  // five - and the CLASSIC window keeps DFU's four, which is the law
+  // DaggerfallInventoryWindow has to hold.
   assert.deepEqual(m.tabs.map((t) => t.tab), [...TABS]);
+  assert.deepEqual([...TABS], ['weapons', 'armor', 'magic', 'clothing', 'ingredients']);
+  assert.deepEqual([...CLASSIC_TABS], ['weapons', 'magic', 'clothing', 'ingredients'],
+    'the classic window is untouched');
   for (const { tab, items } of m.tabs) {
     assert.deepEqual(items, filterByTab(e.items, tab),
       `${tab} must be filterByTab's own answer, not a second filter`);
@@ -1265,4 +1271,37 @@ test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - t
   // the classic journal is untouched: it strips nothing, ever
   const classic = readFileSync('src/ui/questJournal.js', 'utf8');
   assert.ok(!/questTitleOf|QUEST_KIND_LABEL/.test(classic), 'the classic journal must not strip');
+});
+
+test('the ARMOUR split: shields come with it, an enchanted piece is still Magic, worn items still leave', () => {
+  // Mac 2026-08-31: "armor its own tab", "armor plus shields". A shield
+  // IS group Armor in Daggerfall (Buckler 109, Round 110, Kite 111,
+  // Tower 112), so armour-plus-shields is ONE predicate - checked in
+  // the templates rather than assumed.
+  const it = (name, group, x = {}) => ({ name, group, templateIndex: x.t ?? 100, ...x });
+  const bag = [
+    it('Longsword', 'Weapons', { t: 120 }),
+    it('Steel Cuirass', 'Armor', { t: 102 }),
+    it('Buckler', 'Armor', { t: 109 }),
+    it('Kite Shield', 'Armor', { t: 111 }),
+    it('Tower Shield', 'Armor', { t: 112 }),
+    it('Silver Blade', 'Weapons', { t: 121, enchantments: [{ type: 0, param: 0 }] }),
+    it('Dwarven Gauntlets', 'Armor', { t: 104, enchantments: [{ type: 0, param: 0 }] }),
+    it('Robe', 'Clothing', { t: 210 }),
+    it('Ivy', 'PlantIngredients1', { t: 30 }),
+    it('Worn Helm', 'Armor', { t: 107, equipSlot: 1 }),
+  ];
+  const names = (tab) => filterByTab(bag, tab).map((i) => i.name);
+  assert.deepEqual(names('weapons'), ['Longsword'], 'armour has left the weapons page');
+  assert.deepEqual(names('armor'), ['Steel Cuirass', 'Buckler', 'Kite Shield', 'Tower Shield'],
+    'all four shields sit with the armour');
+  // The classic rules the split does NOT change, in DFU's own order.
+  assert.deepEqual(names('magic'), ['Silver Blade', 'Dwarven Gauntlets'],
+    'an ENCHANTED weapon or piece of armour is Magic, whatever it is made of');
+  assert.deepEqual(names('clothing'), ['Robe']);
+  assert.deepEqual(names('ingredients'), ['Ivy']);
+  assert.ok(!names('armor').includes('Worn Helm'), 'FilterLocalItems: worn items leave the list');
+  const seen = TABS.flatMap((t) => filterByTab(bag, t));
+  assert.equal(seen.length, new Set(seen).size, 'no item on two pages');
+  assert.equal(seen.length, bag.length - 1, 'every unworn item has a page');
 });
