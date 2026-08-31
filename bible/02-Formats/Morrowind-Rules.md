@@ -6135,3 +6135,26 @@ arms pass at all (neckPitch 0, lens pitch 0), and a picture whose
 inputs do not include the look cannot move with it, on any data, by
 construction. The reference's law path is untouched and still measured
 by the probe's law layers.
+
+## DECLARED DIVERGENCE (PX29, 2026-08-31): the movement rate's divisor
+
+The reference divides the movement playback rate by
+`getVelocity(mCurrentMovement)`, a multi-source walk
+(animation.cpp:1267-1338) that takes the newest source carrying the
+group and falls back through the older ones until one answers > 1.
+MW-D29 replicated that walk.
+
+THE PORT DIVIDES BY THE PICKED SOURCE'S OWN VELOCITY INSTEAD, at
+Mac's direction. In first person the divergence cannot show - the
+.1st clips carry no accumulation-root movement, so every source
+answers 0 and the fallback constants decide - but in third person the
+body's clips carry real movement, and the walk can answer with a
+different source's number than the clip actually playing. Mac watched
+the third-person sprint change speed under a sprint that had not
+changed, and asked for it back.
+
+`sourcesVelocity` stays exported for any consumer that wants the
+reference's walk; nothing in the movement lane does. The divergence
+is pinned in fparm.test.js, both on the divisor and on this note's
+own presence, so a 1:1 sweep cannot undo it silently: it must come
+with Mac's eye on the sprint, not a line number.
