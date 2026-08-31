@@ -20,6 +20,7 @@
 'use strict';
 
 const { contextBridge, ipcRenderer } = require('electron');
+const path = require('node:path');
 const { createFileStorage } = require('./lib/fileStorage.cjs');
 
 const root = ipcRenderer.sendSync('dagger:user-data-path');
@@ -29,7 +30,7 @@ contextBridge.exposeInMainWorld('daggerShell', {
   // Enough identity for an about-line; never load-bearing.
   platform: process.platform,
   versions: { app: process.env.npm_package_version ?? '', electron: process.versions.electron },
-  savesPath: store.root,
+  savesPath: path.join(store.root, 'Saves'),   // where the saves actually are, not the root above them
   storage: {
     length: () => store.length(),
     key: (i) => store.key(i),

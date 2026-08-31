@@ -9,7 +9,11 @@
 //   3. a save written FROM THE PAGE lands on disk in DFU's layout
 //      (Saves/SAVE9/SaveData.txt + SaveInfo.txt + Screenshot.jpg,
 //      with the screenshot a real JPEG), reads back byte-identical,
-//      and enumerates through the DA1 seam's localStorage shape.
+//      and enumerates. (This drives the BRIDGE; the DA1 seam's wrap
+//      of it is pinned node-side in test/filestorage.test.js - the
+//      built bundle's own use of the seam is not separately proved
+//      here, said out loud so nobody reads this probe as covering
+//      it.)
 //
 // Needs a display (xvfb-run -a on a headless box) and the shell's
 // deps (`cd app && npm install`). No ARENA2 required: the probe never
@@ -35,17 +39,17 @@ const check = (ok, label) => {
   if (!ok) failures++;
 };
 
-const app = await _electron.launch({
-  executablePath: electronPath,
-  args: ['--no-sandbox', path.join(root, 'app')],
-  env: {
-    ...process.env,
-    DAGGER_USER_DATA: userData,
-    DAGGER_SKIP_ARENA2_PROMPT: '1',
-  },
-});
-
+let app = null;
 try {
+  app = await _electron.launch({
+    executablePath: electronPath,
+    args: ['--no-sandbox', path.join(root, 'app')],
+    env: {
+      ...process.env,
+      DAGGER_USER_DATA: userData,
+      DAGGER_SKIP_ARENA2_PROMPT: '1',
+    },
+  });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
 
@@ -59,7 +63,20 @@ try {
   }));
   check(bridge.has, 'daggerShell bridge exposed');
   check(bridge.words.join(',') === 'getItem,key,length,removeItem,setItem', `the five words (got ${bridge.words})`);
-  check(bridge.savesPath === userData, 'savesPath is the shell user-data dir');
+  check(bridge.savesPath === path.join(userData, 'Saves'), 'savesPath points at the Saves folder itself');
+
+  // The protocol's web-host manners: a directory serves its
+  // index.html (the landing page links Play as ./play/), and
+  // malformed percent-encoding answers as a failed REQUEST, never a
+  // dead renderer.
+  const manners = await page.evaluate(async () => {
+    const dir = await fetch('dagger://game/play/');
+    let badOk = false;
+    try { const r = await fetch('dagger://game/play/%E0'); badOk = !r.ok; } catch { badOk = true; }
+    return { dirOk: dir.ok, badOk, alive: true };
+  });
+  check(manners.dirOk, 'a directory request serves its index.html');
+  check(manners.badOk && manners.alive, 'malformed percent-encoding refuses without killing the page');
 
   // A save from the page, DFU-shaped on disk. A tiny real JPEG (SOI +
   // EOI) rides as the screenshot.
@@ -97,7 +114,9 @@ try {
   check(seam === null, 'removeItem answers null afterwards, localStorage-style');
   check(!fs.existsSync(slotDir), 'the emptied SAVE9 folder went with its last file');
 } finally {
-  await app.close();
+  // app may never have launched - the temp userData must not outlive
+  // the probe either way.
+  try { await app?.close(); } catch { /* already down */ }
   fs.rmSync(userData, { recursive: true, force: true });
 }
 

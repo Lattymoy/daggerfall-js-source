@@ -42,6 +42,19 @@ const { pathToFileURL } = require('node:url');
 // back), and a portable install's (point it beside the executable).
 if (process.env.DAGGER_USER_DATA) app.setPath('userData', process.env.DAGGER_USER_DATA);
 
+// ONE instance per userData. Two shells over the same Saves folder
+// hold two independent storage indexes that go mutually stale (the
+// tmp names are pid-scoped so nothing corrupts, but each window shows
+// the other's saves late at best). The lock is per-userData, so a
+// probe running against its own temp dir never collides with the
+// player's real app. A second launch focuses the first instead.
+const isSingleInstance = app.requestSingleInstanceLock();
+if (!isSingleInstance) app.quit();
+app.on('second-instance', () => {
+  const w = BrowserWindow.getAllWindows()[0];
+  if (w) { if (w.isMinimized()) w.restore(); w.focus(); }
+});
+
 const DIST = app.isPackaged
   ? path.join(process.resourcesPath, 'dist')
   : path.join(__dirname, '..', 'dist');
@@ -85,12 +98,24 @@ function setArena2(dir) {
   arena2Dir = dir;
   arena2Names = null;
 }
+/** Drop the name cache; the next request re-reads the folder. Hung
+ *  off every page load (did-start-loading below) so View > Reload
+ *  picks up files added to the folder - and off nothing hotter,
+ *  because one readdir per page load is free and one per request is
+ *  not. */
+function invalidateArena2Names() { arena2Names = null; }
 function arena2File(name) {
   if (!arena2Dir) return null;
   if (!arena2Names) {
-    arena2Names = new Map();
-    try { for (const f of fs.readdirSync(arena2Dir)) arena2Names.set(f.toUpperCase(), f); }
-    catch { /* folder unplugged - every lookup misses, the page reports */ }
+    // Built into a LOCAL map and assigned only on success: a
+    // transient readdir failure (network drive asleep, USB pulled)
+    // used to cache an EMPTY map, and mixed-case installs - the
+    // normal kind - then 404'd forever after the drive came back.
+    try {
+      const m = new Map();
+      for (const f of fs.readdirSync(arena2Dir)) m.set(f.toUpperCase(), f);
+      arena2Names = m;
+    } catch { return null; /* unreadable right now; retry next request */ }
   }
   const onDisk = arena2Names.get(name.toUpperCase());
   let p = onDisk ? path.join(arena2Dir, onDisk) : path.join(arena2Dir, name);
@@ -99,7 +124,10 @@ function arena2File(name) {
     const books = findCaseInsensitive(arena2Dir, 'BOOKS');
     if (books) p = findCaseInsensitive(books, name) ?? path.join(books, name);
   }
-  return fs.existsSync(p) ? p : null;
+  // isFile, not exists: a SUBDIRECTORY whose name is asked for (the
+  // BOOKS folder itself, say) must 404 - net.fetch of a file://
+  // directory rejects the whole response instead.
+  try { return fs.statSync(p).isFile() ? p : null; } catch { return null; }
 }
 
 async function pickArena2(win) {
@@ -139,27 +167,89 @@ const fileResponse = (p, mime) => net.fetch(pathToFileURL(p).toString(), { bypas
   .then((res) => new Response(res.body, { headers: { 'Content-Type': mime ?? MIME[path.extname(p).toLowerCase()] ?? 'application/octet-stream' } }));
 
 function handleDagger(req) {
-  const { pathname } = new URL(req.url);
-  const parts = pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  let parts;
+  try {
+    parts = new URL(req.url).pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  } catch {
+    // Malformed percent-encoding: decodeURIComponent throws, and an
+    // uncaught throw here dies as a net error in the page instead of
+    // a status a caller can reason about.
+    return new Response('bad request', { status: 400 });
+  }
   // /arena2/NAME and /play/arena2/NAME - the game fetches relative to
-  // its document, the probes fetch absolute; both doors, like dev.
-  const a2 = parts.indexOf('arena2');
-  if (a2 !== -1 && a2 === parts.length - 2) {
-    const name = parts[a2 + 1];
-    if (!/^[A-Za-z0-9._-]+$/.test(name)) return new Response('bad name', { status: 400 });
-    const p = arena2File(name);
+  // its document, the probes fetch absolute. EXACTLY the two doors
+  // the dev middleware mounts, and no more: a looser "any path ending
+  // arena2/NAME" match would silently hijack a future dist/ directory
+  // that happens to carry the name.
+  const a2Name = (parts.length === 2 && parts[0] === 'arena2') ? parts[1]
+    : (parts.length === 3 && parts[0] === 'play' && parts[1] === 'arena2') ? parts[2]
+    : null;
+  if (a2Name !== null) {
+    if (!/^[A-Za-z0-9._-]+$/.test(a2Name)) return new Response('bad name', { status: 400 });
+    const p = arena2File(a2Name);
     return p ? fileResponse(p, 'application/octet-stream') : new Response('not found', { status: 404 });
   }
   // Everything else is the built site, traversal-proofed into dist/.
   const rel = parts.length ? parts.join('/') : 'play/index.html';
-  const p = path.normalize(path.join(DIST, rel));
+  let p = path.normalize(path.join(DIST, rel));
   if (!p.startsWith(DIST + path.sep)) return new Response('forbidden', { status: 403 });
-  if (fs.existsSync(p) && fs.statSync(p).isFile()) return fileResponse(p);
+  try {
+    // A directory serves its index.html, the way every web host the
+    // site deploys to does - the landing page links Play as ./play/.
+    if (fs.statSync(p).isDirectory()) p = path.join(p, 'index.html');
+    if (fs.statSync(p).isFile()) return fileResponse(p);
+  } catch { /* absent - fall through to 404 */ }
   return new Response('not found', { status: 404 });
 }
 
 // ---- the window ---------------------------------------------------
-function buildMenu(win) {
+
+/** Wipe the page's STORED ARENA2 ingest so a re-pointed folder
+ *  actually answers. Without this, a player who ever ran the in-page
+ *  picker (cancelled the first-run dialog once, say) had a complete
+ *  IndexedDB manifest - and getBytes asks memory -> IndexedDB ->
+ *  network, so "Locate ARENA2 Folder" changed the path and NOTHING
+ *  VISIBLE: every dieted file kept coming from the stale ingest.
+ *
+ *  This mirrors dataSource.clearStoredData's law exactly - the
+ *  ARENA2 store and the DERIVED artifacts, never the player's own
+ *  packs (music, textures, Morrowind survive a re-point). The three
+ *  names are pinned against dataSource.js by the parity test so
+ *  they cannot drift apart silently. */
+function clearStoredArena2(wc) {
+  return wc.executeJavaScript(`(async () => {
+    await new Promise((res) => {
+      const req = indexedDB.open('project-dagger');
+      req.onsuccess = () => {
+        const db = req.result;
+        const names = ['arena2', 'derived'].filter((n) => db.objectStoreNames.contains(n));
+        if (!names.length) { db.close(); res(); return; }
+        const tx = db.transaction(names, 'readwrite');
+        for (const n of names) tx.objectStore(n).clear();
+        const done = () => { db.close(); res(); };
+        tx.oncomplete = done; tx.onerror = done; tx.onabort = done;
+      };
+      req.onerror = () => res();
+      req.onblocked = () => res();
+    });
+  })()`, true).catch(() => { /* page gone mid-clear; the reload's boot re-checks */ });
+}
+
+// A re-point made with NO window open (macOS keeps the menu alive
+// after the last window closes) still needs the ingest wipe - it is
+// deferred to the next window's boot.
+let pendingIngestClear = false;
+
+/** The menu resolves its window AT CLICK TIME. It used to close over
+ *  the window it was built with - and on macOS the app menu outlives
+ *  every window, so File > Locate ARENA2 after Cmd-W called dialog
+ *  and reload on a DESTROYED BrowserWindow and threw instead of
+ *  working. */
+function buildMenu() {
+  const liveWindow = () => {
+    const w = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null;
+    return w && !w.isDestroyed() ? w : null;
+  };
   const template = [
     {
       label: 'File',
@@ -175,11 +265,17 @@ function buildMenu(win) {
         {
           label: 'Locate ARENA2 Folder...',
           click: async () => {
-            const dir = await pickArena2(win);
+            const target = liveWindow();
+            const dir = await pickArena2(target);
             if (!dir) return;
             setArena2(dir);
             saveConfig({ ...loadConfig(), arena2Path: dir });
-            win.reload();
+            if (target) {
+              await clearStoredArena2(target.webContents);
+              if (!target.isDestroyed()) target.reload();
+            } else {
+              pendingIngestClear = true;   // macOS zero-window state: the next window clears at boot
+            }
           },
         },
         { type: 'separator' },
@@ -202,10 +298,14 @@ async function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,   // the preload reads/writes the Saves files directly
+      // sandbox off is the recorded tradeoff for the preload doing
+      // its own synchronous file IO; the navigation fences below are
+      // what keep the bridge from ever facing remote content.
+      sandbox: false,
     },
   });
-  buildMenu(win);
+  buildMenu();
+  win.webContents.on('did-start-loading', invalidateArena2Names);
 
   const devUrl = process.env.DAGGER_DEV_URL;
   if (devUrl) { await win.loadURL(devUrl); return win; }
@@ -217,14 +317,43 @@ async function createWindow() {
     return win;
   }
   await win.loadURL('dagger://game/play/index.html');
+  if (pendingIngestClear && !win.isDestroyed()) {
+    pendingIngestClear = false;
+    await clearStoredArena2(win.webContents);
+    if (!win.isDestroyed()) win.reload();
+  }
   return win;
 }
+
+// THE NAVIGATION FENCES. The window carries a preload whose bridge
+// reads and writes the player's save files, so the one rule is: that
+// bridge never faces content we did not ship. Window-opens to
+// dagger:// are the game's own tool pages (mw-viewer, mw-inspect;
+// children do not inherit the preload); anything http(s) - the
+// credits' GitHub links - belongs in the system browser; everything
+// else is refused. Same law for in-place navigation, with the dev
+// server's own origin allowed when DAGGER_DEV_URL is driving.
+app.on('web-contents-created', (_e, contents) => {
+  contents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('dagger://')) return { action: 'allow' };
+    if (/^https?:/i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  contents.on('will-navigate', (e, url) => {
+    if (url.startsWith('dagger://')) return;
+    const devUrl = process.env.DAGGER_DEV_URL;
+    try { if (devUrl && new URL(url).origin === new URL(devUrl).origin) return; } catch { /* not a parseable target */ }
+    e.preventDefault();
+    if (/^https?:/i.test(url)) shell.openExternal(url);
+  });
+});
 
 // The preload asks for its storage root synchronously at page boot -
 // storage must exist before the first module reads a setting.
 ipcMain.on('dagger:user-data-path', (e) => { e.returnValue = app.getPath('userData'); });
 
 app.whenReady().then(async () => {
+  if (!isSingleInstance) return;   // quitting; do not raise a window on the way out
   protocol.handle('dagger', handleDagger);
 
   const cfg = loadConfig();

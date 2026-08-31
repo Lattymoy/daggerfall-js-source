@@ -281,9 +281,15 @@ export function loadOrCreateBindings() {
   return store;
 }
 
-/** SaveKeyBinds' write (:926-929). */
+/** SaveKeyBinds' write (:926-929). AUDIT DA: this was the ONE
+ *  storage writer without the try/catch shield - setItem THROWS on a
+ *  full or broken store (quota in a browser, disk through the shell's
+ *  bridge), and an unshielded throw here propagated out of the
+ *  rebind flow and out of first-boot loadOrCreateBindings. Losing
+ *  the write costs a rebind, not a session. */
 export function saveKeyBinds(store) {
-  storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store)));
+  try { storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store))); }
+  catch (err) { console.warn('[inputActions] keybind write failed:', err?.name ?? err); }
 }
 
 // ── the frame model ─────────────────────────────────────────────────

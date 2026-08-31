@@ -34,12 +34,17 @@ player's folder.
   migration's write-then-VERIFY law rides on that); the screenshot is
   the one translation - the game hands a data URL, the disk gets a
   real JPEG, getItem re-wraps it, and nothing compares shot strings.
-  Writes are temp-then-rename; a slot key must be a CANONICAL
+  Writes are temp-then-rename with an fsync (the `~tmp` marker is a
+  spelling no key can mint); a slot key must be a CANONICAL
   non-negative integer or it lives in Prefs (so 'dagger.save.03'
   cannot collide with slot 3); an emptied SAVE folder goes with its
-  last file. Plain Node, no Electron imports - `node --test` runs it
-  in the main suite (`test/filestorage.test.js`, which also drives
-  the REAL saveSlots laws over a temp directory).
+  last file; the enumeration index re-reads the disk on a 2s TTL, so
+  a save COPIED INTO the open folder appears on the next load-screen
+  sweep without a relaunch. Plain Node, no Electron imports -
+  `node --test` runs it in the main suite
+  (`test/filestorage.test.js`, which also drives the REAL saveSlots
+  laws over a temp directory and carries the audit's drift pins).
+  Audited whole before hardening: `Audit-DA.md`.
 
 - **DA3 - the shell** (`app/main.cjs`). A `dagger://` protocol serves
   `dist/`, and answers the game's `./arena2/*` fetches from a folder
@@ -54,7 +59,15 @@ player's folder.
   and the in-page picker takes over, so the browser path remains the
   fallback, never a dead end. The File menu carries the two doors the
   files make possible: **Open Saves Folder** and **Locate ARENA2
-  Folder...**.
+  Folder...** - and Locate also WIPES any stored in-page ingest
+  (the `arena2` + `derived` stores only; packs survive), because
+  `getBytes` asks IndexedDB before the network and a stale ingest
+  would otherwise shadow the re-pointed folder silently (Audit DA
+  F-DA2). One instance runs per userData; a second launch focuses
+  the first. Every webContents is fenced: window-opens and
+  navigations to dagger:// are allowed, http(s) goes to the system
+  browser, everything else is refused - the storage bridge never
+  faces content we did not ship.
 
 - **DA4 - the bridge** (`app/preload.cjs`). contextBridge exposes
   `daggerShell` (platform, versions, savesPath, storage). Calls are
