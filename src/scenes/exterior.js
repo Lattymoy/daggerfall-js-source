@@ -38,6 +38,7 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
@@ -268,6 +269,21 @@ export async function bootExterior(canvas, renderer, params, status) {
   };
   const drawList = [];
   const windmills = [];   // WM2b: placed mills whose rotor turns each frame
+  // EV3: THE FRUSTUM. This host builds in plain world space, so every
+  // drawList row carries a world-space box (one local scan per model
+  // ARCHETYPE, eight corner transforms per placement, all at build).
+  // ?cull=off is the escape hatch, read once here like the world host's.
+  const cullOn = !cullDisabled();
+  const _planes = new Float32Array(24);
+  const _pv = new Float32Array(16);
+  const archAabbs = new Map();
+  const archAabb = (id, positions) => {
+    let b = archAabbs.get(id);
+    if (!b) archAabbs.set(id, b = localAabb(positions));
+    return b;
+  };
+  const MILL_SAIL_PAD = 30;   // the sails sweep past the tower's own box
+  const _visBatches = [];     // refilled per frame, never reallocated (the EV2 lesson)
   // WM2d: the mill's two parts, uploaded once for the location and only
   // when a block here actually stands one - a town with no farm pays
   // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
@@ -296,8 +312,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
-      drawList.push({ mesh, matrix });
       const cpu = cpuModels.get(placed.modelIdNum);
+      drawList.push({ mesh, matrix, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) });   // EV3
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
       // Building models expose their static doors for E-transitions
@@ -324,10 +340,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (millParts) {
       for (const w of b.layout.windmills) {
         const matrix = multiply(originMatrix, w.matrix);
-        drawList.push({ mesh: millParts.body, matrix });
+        // EV3: tower box padded for the sails' sweep - the same box
+        // gates the tower row and the rotor draw below.
+        const box = transformedAabb(archAabb('millBody', BODY.positions), matrix);
+        for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
+        drawList.push({ mesh: millParts.body, matrix, box });
         collider.addMesh('world', BODY.positions, BODY.indices, matrix);
         windmills.push({
-          matrix,
+          matrix, box,
           // Deterministic in the mill's own world position, so a farm's
           // mills are not a chorus line and the same mill is at the same
           // phase every time the player walks up to it.
@@ -450,6 +470,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
     const batch = renderer.createBillboardBatch(archive, record, size, centers);
+    batch._box = flatBatchAabb(centers, size);   // EV3: world-space here - this host has no floating origin
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     flatCount += centers.length;
@@ -1756,6 +1777,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       Math.max(2000, extentX * 4)
     ));
     const view = lookAt(eye, target, [0, 1, 0]);
+    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3: the same matrices the draws ride
 
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
@@ -1839,7 +1861,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
-    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    for (const d of drawList) {
+      if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
+      renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    }
     // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
     // deck overhead is drawn with (shared.js's sky.wind()), so a storm
     // picks the mills up on the same fourteen-second curve it picks the
@@ -1849,7 +1874,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       const wind = sky.wind();
       if (wind) {
         for (const w of windmills) {
+          // EV3: the ANGLE always advances (an off-screen mill keeps
+          // turning); only the draw itself is gated.
           advanceRotor(w.state, dt, wind);
+          if (cullOn && aabbOutside(_planes, w.box)) continue;
           renderer.drawMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
         }
       }
@@ -1923,7 +1951,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     arrows.update(dt);
     arrows.draw(renderer, texRemap);
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
-    renderer.drawBillboards(billboardBatches, camRight, UP_Y);
+    // EV3: per-batch skip off the build-time boxes; the clocks above
+    // ticked already, so an off-screen fire keeps its frame.
+    _visBatches.length = 0;
+    for (const b of billboardBatches) {
+      if (cullOn && aabbOutside(_planes, b._box)) continue;
+      _visBatches.push(b);
+    }
+    renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),

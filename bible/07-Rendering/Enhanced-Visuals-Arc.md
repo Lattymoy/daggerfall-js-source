@@ -192,3 +192,30 @@ measurement the arc's later slices land against: renderer.stats
 window.__renderer on the world and exterior hosts (the dungeon's U38
 precedent). renderalloc.test.js pins each behavior identical AND each
 allocation gone, through the audit26 Proxy-GL counting precedent.
+
+EV3 (2026-08-31): THE FRUSTUM. src/render/frustum.js is the pure
+half - Gribb/Hartmann planes off the combined proj*view (unnormalized;
+the outside test only reads the sign, and the handedness mirror is
+inside the matrix so it is inside the planes), the p-vertex outside
+test with the conservative direction as law (straddling/surrounding
+always draws - the worst failure mode is drawing the invisible), an
+OFFSET form so the streamed world tests pixel-local boxes with three
+additions instead of materializing world boxes per frame, and the
+build-time constructors (localAabb once per model ARCHETYPE,
+transformedAabb's eight corners per placement, flatBatchAabb off
+createBillboardBatch's base-anchor law with w/2 on both horizontal
+axes because the quad yaws). The hosts: world.js seeds each pixel's
+bounds from the terrain grid's own vertices and grows them by every
+model box and flat batch, then gates per frame at THREE grains -
+pixel (terrain + everything), per-model, per-batch; exterior.js
+carries a world-space box per drawList row and per billboard batch
+(refilled into one persistent visible list - the EV2 lesson).
+SIMULATION NEVER GATES: advanceRotor, the mill's hum, flatAnims.tick,
+the population, magic missiles and live persons all run/draw
+untouched; the windmill boxes pad 30 units for the sails' sweep.
+?cull=off is the escape hatch, read once at build. frustum.test.js
+pins the math on the real matrix pipeline and pins the WIRING SHAPE
+itself (the hum outside the pixelVisible gate). The culled fraction
+in a live city is owed to a data-bearing session through
+renderer.stats/__renderer (EV2's counter exists for exactly this);
+the plane math is not.

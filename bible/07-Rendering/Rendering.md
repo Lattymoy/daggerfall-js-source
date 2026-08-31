@@ -34,6 +34,14 @@ directory by `test/audit18_bible_docs.test.js`:
   after it) on a FIXED 1/fps step, the three speeds (general 5, ANIMALS 5,
   LIGHTS 12), and the one arming seam all four static-flat batch sites call so
   the four hosts cannot drift.
+- `frustum.js` - EV3 FRUSTUM CULLING, the pure half: Gribb/Hartmann
+  planes off the combined proj*view (the handedness mirror rides inside),
+  the conservative p-vertex outside test with an offset form for the
+  streamed world's pixel-local boxes, and the build-time AABB
+  constructors (localAabb, transformedAabb, flatBatchAabb). Hosts:
+  world.js (pixel/model/batch grains) and exterior.js (per-drawList-row,
+  per-batch); `?cull=off` is the escape hatch. Simulation never gates -
+  see `07-Rendering/Enhanced-Visuals-Arc.md`.
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
 deleted that module, and the bullet tagged it "(ledgered departure)" when
