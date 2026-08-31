@@ -5304,10 +5304,21 @@ transcription of each DFU function was right, and the seams between
 them were where the faults lived - three of these four are a law that
 was correct before TR1 and that TR1 silently invalidated.
 
+### TR5 CLOSED: the tail, and two dangling doors of this arc's own
+
+TR1 ported `dismountOnTransition` and nothing called it: you could ride
+into a shop and stay mounted. TR3 exported `CANNOT_CHANGE_INDOORS` and
+nothing said it: the T key indoors did nothing at all. Both are the
+shape this session found three times in older code - a live seam that
+claims a feature - and then left twice in its own. Fixed: the two DFU
+transitions dismount through one helper, both interior hosts refuse
+with the line, and the mode change is ONE place (U53) that the T-key
+pick and the interior dismount both take, so the mount's art is dropped
+on every change rather than only on the pick.
+
 ### What is left of the arc
 
-TR4, the ship, and the two INTERIOR hosts. `worldModes` and
-`dungeonContext` need the indoors refusal (`CANNOT_CHANGE_INDOORS`,
-already exported) rather than a window, and the dismount-on-transition
-law TR1 ported has no caller until a host runs it on the way in. Both
-are small and neither is a system: they are the arc's tail.
+TR4 alone: the ship. `DaggerfallBankManager`'s ownership and coords,
+the board/disembark reposition with its scene cache, and the travel
+map's ship arm - a bank-arc dependency as much as a transport one, and
+the only reason `shipAvailable` is a hard `false` in TR3's picker.

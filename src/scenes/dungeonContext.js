@@ -16,6 +16,7 @@ import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevea
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
+import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-time SmallerDungeons stamp
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
@@ -3820,6 +3821,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const w = makeSpellbookWindow();
       if (w) activeOverlay = w;
     },
+    /** TR5: dfuiOpenTransportWindow's INDOORS arm (:691-694) - a
+     *  dungeon is inside, so the key refuses with a HUD line. */
+    openTransport() { hudText.add(CANNOT_CHANGE_INDOORS); },
     /** UI1: the U key in a dungeon. Nothing usable, no window
      *  (DaggerfallUI :581-583); the use runs the host's seam. */
     openUseMagicItem() {

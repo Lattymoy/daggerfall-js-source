@@ -708,6 +708,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   const ridingAnimator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
+  /** U53's one-builder law: ONE place changes the mode, and both the
+   *  T-key pick and the interior hosts' dismount take it. TR5. */
+  const setTransportModeHere = (mode) => {
+    player.setTransportMode(mode);   // F-E3: the height action rides with the mode
+    ridingAnimator.mount(mode);
+    ridingArt = null;
+  };
   let ridingArt = null;   // TR2: the four CFA frames of the mount under you
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
@@ -2688,9 +2695,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         hasCart: hasCart(playerEntity.items ?? []),
         shipAvailable: false,   // TR4 owns the ship
         onMode: (mode) => {
-          player.setTransportMode(mode);   // F-E3: the height action rides with the mode
-          ridingAnimator.mount(mode);
-          ridingArt = null;
+          setTransportModeHere(mode);
           if (isRiding(mode)) {
             loadRidingArt(fetchBytes, palette, renderer, mode)
               .then((art) => { if (isRiding(player.transportMode)) ridingArt = art; })
@@ -4031,6 +4036,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
     makeJournal: (mode) => makeJournalWindow(mode),
     useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
+    // TR5: the interior hosts dismount through the world host, which
+    // owns the motor, the animator and the mount's art together.
+    setTransportMode: (mode) => setTransportModeHere(mode),
     // PX17c: the pause window's journal seams ride into the interior
     // arm - the SAME expressions the world's own pause hands over
     // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,

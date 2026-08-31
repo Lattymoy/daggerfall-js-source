@@ -162,6 +162,8 @@ import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at
+import { dismountOnTransition } from '../systems/transport.js';   // TR5: the interior dismount
+import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 // U39: the tavern - the window, the knightly free-room perk and the
@@ -3082,7 +3084,19 @@ export function createWorldModes(host) {
    *  shop entered while open an open shop) - and the saved position,
    *  which lands RAW after the layout (RestorePosition's interior arm,
    *  transform.position = the saved value). */
+  /** TransportManager.HandleTransition (:196-202): the two interior
+   *  transitions dismount, and nothing else does - DFU has no arm for
+   *  LEAVING one, so you walk out on foot. TR5. */
+  function dismountPlayer(transition) {
+    const next = dismountOnTransition(player.transportMode, transition);
+    if (next !== player.transportMode) host.setTransportMode?.(next);
+  }
+
   async function enterInteriorCore(hit, entries, restore = null) {
+    // TR5: TransportManager.HandleTransition (:196-202) - a BUILDING
+    // interior puts you back on foot. The law shipped in TR1 with no
+    // caller; this is it.
+    dismountPlayer('ToBuildingInterior');
     transitioning = true;
     try {
       // E2/P1: the building's identity, resolved BEFORE the interior
@@ -3410,6 +3424,7 @@ export function createWorldModes(host) {
     // cached location the exterior shares is never touched.
     const dfLocation = dungeonLocationFor(hit.dfLocation, { questMachine: questBridge?.machine });
     if (!dfLocation || !dfLocation.hasDungeon) return false;
+    dismountPlayer('ToDungeonInterior');   // TR5: the other half of :196-202
     transitioning = true;
     try {
       const ctx = await buildDungeonContext(
@@ -4819,6 +4834,10 @@ export function createWorldModes(host) {
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
+    /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
+     *  :691-694) - inside, the key refuses with a HUD line instead of
+     *  opening the picker. Both interior modes are inside. */
+    openTransport() { townTalk?.say?.(CANNOT_CHANGE_INDOORS); },
     // UI1: the U key indoors. Nothing usable, no window (DaggerfallUI
     // :581-583); the use itself is the host's own inventory use path.
     openUseMagicItem() {

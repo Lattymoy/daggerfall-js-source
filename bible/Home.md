@@ -276,13 +276,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/arrestFlow.js:199` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:267` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/dungeonContext.js:251` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:782` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1357` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1392` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1428` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3279` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3387` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:252` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:783` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:1358` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1393` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1429` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3280` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3388` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:625` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:631` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:874` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -292,30 +292,30 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:907` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:913` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:3092` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3887` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4871` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1192` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1207` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1416` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1421` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1629` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:1869` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1901` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2122` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2244` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2519` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2564` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2583` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2688` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2913` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2925` - FLAGGED, and narrowed to what is actually missing: the two BASH
-- `src/scenes/worldModes.js:2987` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4204` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4303` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4641` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/world.js:914` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:920` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:3097` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3892` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4879` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/worldModes.js:1194` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1209` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1418` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1423` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1631` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:1871` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1903` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2124` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2246` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2521` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2566` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2585` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2690` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2915` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2927` - FLAGGED, and narrowed to what is actually missing: the two BASH
+- `src/scenes/worldModes.js:2989` - the FLAGGED note above), so it starts false.
+- `src/scenes/worldModes.js:4219` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4318` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4656` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
