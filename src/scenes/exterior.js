@@ -116,6 +116,7 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
@@ -1050,6 +1051,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   const keys = new Set();
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
@@ -1525,6 +1527,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: townTalk.overlayActive || (modes?.overlayHeld ?? false) });
+    // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
+    // dip; the position rides player.eye as a world offset, the nod is a
+    // per-frame offset on the look (removed and re-applied each frame).
+    {
+      const bob = headBobber.update(dt, cam, {
+        health: playerEntity.health, paused: townTalk.overlayActive || (modes?.overlayHeld ?? false), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: false, levitating: !!player.levitating,
+        velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+      });
+      const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+      player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
+    }
     last = now;
     lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
 

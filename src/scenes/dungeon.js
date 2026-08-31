@@ -43,6 +43,7 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
@@ -130,6 +131,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
@@ -403,6 +405,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: ctx.uiOverlayActive });
+    // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
+    // dip; the position rides player.eye as a world offset, the nod is a
+    // per-frame offset on the look (removed and re-applied each frame).
+    {
+      const bob = headBobber.update(dt, cam, {
+        health: playerEntity.health, paused: ctx.uiOverlayActive, climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: false, levitating: !!player.levitating,
+        velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+      });
+      const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+      player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
+    }
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right

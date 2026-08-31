@@ -402,6 +402,22 @@ look on the same paused gate; interior.js is a fly camera with no
 entity and has nothing to reel from. Unity's `insideUnitCircle` is
 `rolls` (Ledger A). 5 pins; 5 mutants, 5 killed.
 
+## W10 CLOSED: HeadBobbing (HeadBobber.cs, whole)
+
+The third default-feel one: the setting ships True, so DFU's camera bobs
+and nods with every step, dips on a landing, and the port's never did.
+`player/headBobber.js` is the class whole - the style table, the timer
+at velocity * bobSpeed, the cos/|sin| path with its begin blend, the
+0.5 s release lerp, the landing bounce with its water speeds. Two
+port-shape decisions, both recorded in the module: the POSITION rides
+`player.eye` as a world-space offset the motor adds (every camera and
+every ray in the port reads player.eye, exactly as every DFU ray reads
+the bobbed camera transform), and the NOD is a per-frame offset on the
+look, removed before re-applied, because PlayerMouseLook writes absolute
+angles each Update and the bobber's Rotate sits on top. One DFU quirk
+kept verbatim: Update returns while airborne, so the landing bounce only
+ever arms through the swimming arm. 7 pins; 6 mutants, 6 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
