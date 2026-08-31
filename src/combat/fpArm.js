@@ -1341,6 +1341,32 @@ export function createFpArm() {
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
   function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; }
+  /** Pack the posed third-person pieces and put them on the GPU - the
+   *  ONE upload both the wheel (update) and the inventory figure use.
+   *  AUDIT 33 F1: the figure used to gate on thirdActive(), which
+   *  demands viewMode === 'third' and a mesh the wheel had uploaded -
+   *  so in first person, the default, the inventory showed the classic
+   *  doll and the model never appeared. The body's pieces are posed at
+   *  build regardless of view; only the upload was view-gated. */
+  function uploadThirdMesh(t) {
+    thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
+    if (!thirdMesh) {
+      thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
+      thirdMesh.ranges = thirdPacked.ranges;
+      for (const r of thirdMesh.ranges) {
+        if (!r.textureFile) continue;
+        const entry = t.textures.get(r.textureFile);
+        if (!entry) continue;
+        const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+        r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+        r.alphaCut = r.piece.material && r.piece.material.alphaTest
+          ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+      }
+    } else {
+      renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
+    }
+    return thirdMesh;
+  }
 
   // hasAnimation: ANY source names the group (animation.cpp). WHICH
   // source plays it is a separate question, answered in reverse below.
@@ -2066,22 +2092,7 @@ export function createFpArm() {
           time: state.time,
           accumRoot: t.accumRoot,
         });
-        thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
-        if (!thirdMesh) {
-          thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
-          thirdMesh.ranges = thirdPacked.ranges;
-          for (const r of thirdMesh.ranges) {
-            if (!r.textureFile) continue;
-            const entry = t.textures.get(r.textureFile);
-            if (!entry) continue;
-            const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
-            r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
-            r.alphaCut = r.piece.material && r.piece.material.alphaTest
-              ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-          }
-        } else {
-          renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
-        }
+        uploadThirdMesh(t);
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
@@ -2334,8 +2345,17 @@ export function createFpArm() {
      *  the panel then keeps the classic doll (never traps). Display
      *  only by Mac's decision: unequip stays with the item list. */
     figure({ yaw = 0, height = 384 } = {}) {
-      if (!thirdActive()) return null;
+      // AUDIT 33 F1: a built body, not an ACTIVE wheel - the inventory
+      // is opened from first person, where the wheel is off.
+      if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
       const t = thirdBuilt;
+      uploadThirdMesh(t);
+      // the figure shows what the body wears, sheathed or drawn, exactly
+      // as the wheel's rule 57 does
+      for (const r of thirdMesh.ranges) {
+        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        else if (r.slot === 'arrow') r.hidden = !arrowShown;
+      }
       const u = 1 / MW_UNITS_PER_METER;
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
       let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;

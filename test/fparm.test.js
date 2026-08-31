@@ -2398,3 +2398,20 @@ test('MW-D36: the pack takes the model only when it stands, and never lets the m
   assert.match(rend, /renderCharacterSpriteImage\(mesh, modelMatrix, proj, view, pw, ph\)/);
   assert.match(rend, /out\.set\(raw\.subarray\(y \* pw \* 4, \(y \+ 1\) \* pw \* 4\), \(ph - 1 - y\) \* pw \* 4\);/, 'GL rows must flip on the way out');
 });
+
+test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quantised yaw', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1400);
+  // F1: the inventory opens from first person; the figure must not
+  // demand the wheel's view mode or a mesh only the wheel uploads.
+  assert.ok(!/thirdActive\(\)/.test(fig), 'the figure gates on the wheel being active');
+  assert.match(fig, /if \(!\(built && built\.ok && thirdBuilt && thirdBuilt\.ok && renderer\)\) return null;/);
+  assert.match(fig, /uploadThirdMesh\(t\);/, 'the figure does not upload through the one helper');
+  // one upload for both consumers: the wheel's update path uses the same helper.
+  assert.equal((arm.match(/uploadThirdMesh\(t\);/g) || []).length, 2, 'the upload has two callers and one body');
+  assert.equal((arm.match(/renderer\.createCharacterMesh\(thirdPacked\.packed/g) || []).length, 1, 'a second third-mesh upload is growing');
+  // F2: the pack quantises the yaw before it asks.
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const yaw = Math\.round\(_figureYaw \/ 0\.1\) \* 0\.1;/);
+  assert.match(pack, /armMod\.figure\(\{ yaw, height: 384 \}\)/);
+});

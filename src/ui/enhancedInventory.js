@@ -645,10 +645,15 @@ function modelFigureUrl() {
   const armMod = deps.fpArm;
   if (!armMod || typeof armMod.figure !== 'function') return null;
   const st = armMod.status?.();
-  const key = `${st?.pieces ?? 0}:${st?.skeletonPath ?? ''}:${_figureYaw.toFixed(2)}:${(st?.worn ?? []).length}`;
+  // AUDIT 33 F2: the yaw is QUANTISED to a tenth of a radian, so a drag
+  // re-renders and re-encodes the figure about sixty times per turn
+  // instead of once per pixel, and dragging back lands on cached
+  // frames. The build's settlement clears this cache (subscribe).
+  const yaw = Math.round(_figureYaw / 0.1) * 0.1;
+  const key = `${st?.pieces ?? 0}:${st?.skeletonPath ?? ''}:${yaw.toFixed(1)}`;
   if (_figureCache.key === key) return _figureCache.url;
   let img = null;
-  try { img = armMod.figure({ yaw: _figureYaw, height: 384 }); } catch { img = null; }
+  try { img = armMod.figure({ yaw, height: 384 }); } catch { img = null; }
   let url = null;
   if (img && img.width && img.height) {
     const cv = document.createElement('canvas');
