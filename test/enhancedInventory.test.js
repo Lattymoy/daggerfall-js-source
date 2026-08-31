@@ -1117,7 +1117,11 @@ test('PX28: looting just TAKES - no second popup over the frame you are reading'
   // it landed in - so the selection is the PACK's behaviour, not the
   // take's. In the loot-only flow it is a card nobody asked for.
   const src = read('src/ui/enhancedInventory.js');
-  assert.match(src, /picked = packOpen \? taken : null;/);
+  // AUDIT 35: the take clears the pick on BOTH sides now - the pack-open
+  // flow used to keep the taken item selected, which raised the tooltip
+  // after every take (PX24's quirk on the loot side).
+  assert.match(src, /picked = null;\n  if \(packOpen\) \{/, 'the take must clear the pick before the pack-open arm');
+  assert.ok(!/picked = packOpen \? taken : null;/.test(src), 'the taken item must not stay selected');
   assert.match(src, /if \(packOpen\) \{\n\s*side = 'local';/, 'and the side follows the pack, not the take');
   assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
     'the tab-follows-the-item law is unchanged - it just belongs to the pack');
@@ -1169,4 +1173,23 @@ test('PX22: the list\u2019s scroll position survives a repaint, keyed by the tab
     'the memory must be filed under the RENDERED tab - a click changes `tab` before it repaints');
   assert.match(src, /if \(list && _scrollMemo\.has\(tab\)\) list\.scrollTop = _scrollMemo\.get\(tab\);/);
   assert.match(src, /_renderedTab = tab;/, 'the rendered tab must be recorded after the paint');
+});
+
+// ═══ PX24: an action taken closes the tooltip ═══════════════════════
+test('PX24: wear, take off, use and stow all clear the pick on success; refusals keep the tip', () => {
+  const src = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  const fn = (name, next) => src.slice(src.indexOf(`function ${name}(`), src.indexOf(`function ${next}(`));
+  const wear = fn('wear', 'use');
+  // success path clears; the three refusals return before it
+  assert.match(wear, /refreshFigure\(\);[^\n]*\n  picked = null;[^\n]*\n  return render\(\);/, 'wear must clear the pick after equipping');
+  // the refusals return before the clear (broken, forbidden, cannot be worn)
+  assert.equal((wear.match(/return render\(\);/g) || []).length, 4, 'wear\u2019s three refusals plus its success must all render');
+  assert.ok(wear.indexOf('picked = null') > wear.lastIndexOf('cannot be worn'), 'the clear must sit after the last refusal');
+  const off = fn('takeOff', 'chooseDialog');
+  assert.match(off, /picked = null;/, 'takeOff must clear the pick');
+  const use = fn('use', 'takeOff');
+  assert.match(use, /if \(act\.closesWindow\) \{ onExit\(\); return; \}\n  picked = null;/, 'use must clear the pick before its final render');
+  const stow = fn('stow', 'take');
+  assert.match(stow, /applyTransfer\(item, plan, deps\.items\?\.\(\) \?\? \[\], to\);\n  picked = null;/, 'stow must clear the pick after the transfer');
+  assert.ok(!/picked = applyTransfer/.test(stow), 'the arriving item must no longer stay picked');
 });

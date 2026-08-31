@@ -449,6 +449,7 @@ function wear(item) {
   if (equipItem(deps.entity, item) === null) { notice = `${item.name} cannot be worn.`; return render(); }
   refresh();
   refreshFigure();   // U59: the avatar is wearing it now
+  picked = null;     // PX24 (Mac): an action taken CLOSES the tooltip; a refusal above keeps it
   return render();
 }
 
@@ -500,6 +501,7 @@ function use(item, collection = deps.items?.() ?? []) {
   }
   refresh();
   if (act.closesWindow) { onExit(); return; }
+  picked = null;     // PX24: a use, however it reported, closes the tooltip
   render();
 }
 
@@ -508,6 +510,7 @@ function takeOff(slot) {
   unequipSlot(deps.entity, slot);
   refresh();
   refreshFigure();
+  picked = null;     // PX24: the action closes the tooltip
   render();
 }
 
@@ -549,10 +552,13 @@ function stow(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
-  // The item that ARRIVES stays picked - a split leaves the remainder
-  // behind and mints a new record, and following the one that moved is
-  // what lets the player put it straight back.
-  picked = applyTransfer(item, plan, deps.items?.() ?? [], to);
+  // PX24 (Mac: an action taken closes the tooltip): the transfer
+  // happens and the tip goes. The earlier law kept the ARRIVING item
+  // picked so it could be put straight back; the player can pick it
+  // again on the other side, and a tip that stays open after every
+  // press is the quirk being fixed.
+  applyTransfer(item, plan, deps.items?.() ?? [], to);
+  picked = null;
   side = 'remote';
   refresh();
   render();
@@ -581,13 +587,14 @@ function take(item) {
     return;
   }
   // PX28 (Mac: "when looting, there's a 2nd popup when you take
-  // something, there shouldn't be"): SELECTING THE TAKEN ITEM RAISES
-  // THE TOOLTIP, and in the loot-only flow that is a card nobody asked
-  // for, popping over the frame you are reading. With the pack OPEN it
-  // is useful - the thing you just took is selected in your bag, on
-  // the tab it landed in - so the selection is the PACK's behaviour,
-  // not the take's. Looting just takes.
-  picked = packOpen ? taken : null;
+  // something, there shouldn't be"): looting just takes - no card
+  // pops over the frame you are reading. PX24/AUDIT 35 (Mac: the same
+  // when looting containers, bodies, etc.): the pack-open flow used to
+  // keep the TAKEN item selected in the bag, which raised the tooltip
+  // on the other side after every take - the very quirk PX24 closed
+  // for wear, use and stow. An action taken closes the tooltip, on
+  // both sides of the window; the tab still follows the arrival.
+  picked = null;
   if (packOpen) {
     side = 'local';
     // The pack's TAB follows what just arrived, or the player takes a
