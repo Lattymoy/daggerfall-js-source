@@ -60,6 +60,7 @@
     <option>rain</option><option>thunder</option><option>snow</option>
   </select></label>
   <label><input id="pixel" type="checkbox" checked> pixel-art blades</label>
+  <label><input id="retro" type="checkbox"> retro sky (the game's ?sky= pass)</label>
   <label>surface <select id="surf">
     <option>grass</option><option>dirt</option><option>stone</option><option>sand</option><option>snow</option>
   </select></label>
@@ -76,7 +77,7 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', pixel: true, grass: true, newGround: true };
+const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', pixel: true, retro: false, grass: true, newGround: true };
 for (const k of ['density', 'height', 'wind', 'range', 'tile', 'sun']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
@@ -697,6 +698,7 @@ ready = true;
 build();
 R('surf').addEventListener('change', (e) => setSurface(e.target.value));
 R('pixel').addEventListener('change', (e) => { state.pixel = e.target.checked; });
+R('retro').addEventListener('change', (e) => { state.retro = e.target.checked; });
 R('wx').addEventListener('change', (e) => {
   state.weather = e.target.value;
   // snow lies on the ground, so the surface follows the sky
@@ -759,65 +761,275 @@ function paletteAt(elevDeg) {
   }
   return row(K[K.length - 1]);
 }
-const skyProg = prog(HEAD + `
-layout(location=0) in vec2 aP;
-out vec3 vDir;
-uniform mat4 uInvVP;
-void main(){
-  vec4 f = uInvVP * vec4(aP, 1.0, 1.0);
-  vDir = normalize(f.xyz / f.w);
-  gl_Position = vec4(aP, 1.0, 1.0);
-}`, HEAD + `
-in vec3 vDir;
-uniform vec3 uZenith, uHorizon, uGlow, uSun, uLit, uShade;
-uniform float uGlowAmt, uStars, uCover, uSoft, uGrey, uTime;
+// PROTO-8 (Mac: ensure the procedural sky is 1:1 - I'm noticing bugs).
+// IT WAS NOT 1:1, and the bugs were mine. The lab had my own dome: a
+// different exponent, Mie forward scatter where the game has an
+// azimuth glow that hugs the horizon, ONE cloud sheet where the game
+// has two lit decks, no below-horizon fall-off, no moons, no star
+// pole, no cube snap, and an fbm missing the game's own per-octave
+// offsets. Every one of those is a visible difference.
+//
+// So the lab now runs THE GAME'S FRAGMENT SHADER, verbatim - the same
+// text enhancedSky.js hands its renderer, lifted whole. The only
+// adaptation is the ray, which the game builds from yaw/pitch/fov and
+// which this page has directly. If it looks wrong here now, it looks
+// wrong in the game, which is the entire point of a lab.
+const SKY_FS = `#version 300 es
+precision highp float;
+in vec2 vNdc;
+uniform float uYaw, uPitch, uTanHalfFov, uAspect;
+uniform vec3 uZenith, uHorizon, uSunColor, uGlowColor, uCloudLit, uCloudShade, uFogColor;
+uniform vec3 uSunDir;
+uniform float uSunRadius, uSunVis, uGlowAmount, uStars;
+uniform vec4 uMoonA, uMoonB;          // xyz direction, w radius
+uniform vec3 uMoonAColor, uMoonBColor;
+uniform float uMoonAVis, uMoonBVis;
+uniform float uCloudCover, uCloudSoft, uTime;
 uniform vec2 uWind;
-out vec4 o;
-float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
-float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
-  return mix(mix(h21(i),h21(i+vec2(1,0)),f.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x), f.y); }
-float fbm2(vec2 p){ float a=0.5,s=0.0; for(int i=0;i<5;i++){ s+=a*vn(p); p*=2.03; a*=0.5; } return s; }
-void main(){
-  vec3 d = normalize(vDir);
-  float up = clamp(d.y, -1.0, 1.0);
-  // the DOME: the ramp runs on the view's own elevation, so the
-  // horizon bends with the camera instead of sitting at a screen row
-  float t = pow(clamp(up, 0.0, 1.0), 0.42);
-  vec3 c = mix(uHorizon, uZenith, t);
-  // the horizon HAZE: a band that thickens with the weather's grey
-  c = mix(c, mix(uHorizon, vec3(0.72), uGrey*0.5), (1.0-smoothstep(0.0,0.34,up)) * (0.35 + uGrey*0.5));
-  // MIE forward scatter - a low sun bleeds across the sky, which one
-  // halo around a disc can never do
-  float cs = max(dot(d, normalize(uSun)), 0.0);
-  float mie = pow(cs, 7.0)*0.55 + pow(cs, 40.0)*0.45;
-  c += uGlow * (uGlowAmt * (0.30*mie + 0.20*pow(cs, 2.2)));
-  // stars, before the clouds so cloud hides them
-  if (uStars > 0.01 && up > -0.02) {
-    vec2 sp = d.xz / max(0.15, d.y + 0.4) * 9.0;
-    float st = h21(floor(sp*40.0));
-    float tw = 0.6 + 0.4*sin(uTime*2.1 + st*40.0);
-    c += vec3(0.85,0.88,1.0) * step(0.9965, st) * uStars * tw * 1.5;
+uniform float uFogMix;
+uniform vec3 uStarPole;
+uniform float uStarAngle;
+uniform float uRetroStep;   // 0 = the smooth pass; else the angular pixel (radians)
+uniform float uRetroLevels; // 0 = no posterise
+
+// ES1f: A CELL ON THE CUBE, NOT ON A LAT-LONG GRID.
+// Snapping azimuth and elevation put the grid's POLE at the zenith:
+// the elevation rings became concentric circles and the azimuth cells
+// converged to nothing, so looking straight up was a bullseye with
+// everything woven into it. A cube has no pole. The direction is
+// projected onto whichever of the six faces it points at, snapped on
+// that face's square grid, and rebuilt - cells stay near-square
+// everywhere, the zenith is an ordinary patch of an ordinary face, and
+// the only cost is the cube's own mild corner distortion, which has no
+// centre for the eye to find.
+// The n argument is cells per face; the cell id (with the face folded in) comes
+// back in cellOut for the dither and the star field.
+vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
+  vec3 a = abs(dir);
+  float m = max(a.x, max(a.y, a.z));
+  vec2 raw; float face;
+  if (a.x >= m) { raw = dir.zy / a.x; face = dir.x > 0.0 ? 0.0 : 1.0; }
+  else if (a.y >= m) { raw = dir.xz / a.y; face = dir.y > 0.0 ? 2.0 : 3.0; }
+  else { raw = dir.xy / a.z; face = dir.z > 0.0 ? 4.0 : 5.0; }
+  // EQUI-ANGULAR faces (ES1f, second pass). A plain cube face is a
+  // TANGENT plane, so its cells cover 2.6x less sky at the corners than
+  // at the centre - and a cell size that varies across the frame beats
+  // against the screen's own grid and draws curved moire rings, which
+  // is the pole artifact's ghost rather than its cure. Warping the face
+  // by atan (the equi-angular cubemap of 360 video) makes every cell
+  // the SAME ANGLE everywhere, so the grid reads as an even bitmap in
+  // every direction. A face spans 90 degrees, so n = (PI/2)/step gives
+  // the painted sky's pixel: 256 a face, 512 across 180 degrees, which
+  // is SKY??.DAT's own width.
+  vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
+  vec2 cell = floor(uv * n);
+  vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
+  cellOut = cell + face * 977.0;                    // a face's cells are its own
+  if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
+  if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
+  return normalize(vec3(t.x, t.y, sign(dir.z)));
+}
+
+// Bayer 4x4, the ordered dither a 256-colour gradient used.
+float bayer4(vec2 p) {
+  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
+  int i = y * 4 + x;
+  float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+  return m[i] / 16.0;
+}
+out vec4 outColor;
+
+float hash21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  float a = hash21(i), b = hash21(i + vec2(1, 0)), c = hash21(i + vec2(0, 1)), d = hash21(i + vec2(1, 1));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++) { v += a * vnoise(p); p = p * 2.03 + vec2(17.1, 9.7); a *= 0.5; }
+  return v;
+}
+
+// ES1c: ONE CLOUD DECK. The far deck is given a smaller, slower,
+// thinner treatment; sunAz is how much this ray points at the sun,
+// which is what lights the deck. Returns cover (x) and the noise the
+// colour is chosen by (y).
+vec2 deck(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias) {
+  vec2 p = dir.xz / (dir.y + 0.18) * scale + wind * uTime;
+  float n = fbm(p) + bias;
+  float cov = smoothstep(1.0 - cover, 1.0 - cover + soft, n);
+  return vec2(cov, n);
+}
+
+vec3 moon(vec3 dir, vec4 m, vec3 col, float vis) {
+  if (vis <= 0.0) return vec3(0.0);
+  vec3 md = m.xyz; float r = m.w;
+  float cosA = dot(dir, md);
+  if (cosA < cos(r * 1.6)) return vec3(0.0);
+  vec3 up = abs(md.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+  vec3 ex = normalize(cross(up, md)); vec3 ey = cross(md, ex);
+  vec2 uv = vec2(dot(dir, ex), dot(dir, ey)) / r;
+  float rr = dot(uv, uv);
+  float disc = 1.0 - smoothstep(0.88, 1.06, rr);
+  // The sphere's normal at this point of the disc, facing the viewer.
+  vec3 n = normalize(ex * uv.x + ey * uv.y - md * sqrt(max(0.0, 1.0 - min(rr, 1.0))));
+  float lit = smoothstep(-0.06, 0.16, dot(n, uSunDir));
+  float limb = 0.85 + 0.15 * (1.0 - rr);
+  return col * (0.05 + 0.95 * lit) * limb * disc * vis;
+}
+
+float stars(vec3 dir, float amount) {
+  if (amount <= 0.0 || dir.y < 0.0) return 0.0;
+  float s = 0.0;
+  // ES1c: THE FIELD WHEELS. The stars were fixed in world space, so
+  // midnight's sky was dusk's sky exactly - the one thing about a night
+  // sky everybody has seen is that it turns. It turns about a POLE
+  // (uStarPole: north, tilted off the zenith), by uStarAngle, which the
+  // clock advances a full turn a day, so the field rises in the east
+  // and sets in the west like everything else.
+  vec3 axis = normalize(uStarPole);
+  float ca = cos(uStarAngle), sa = sin(uStarAngle);
+  vec3 d = dir * ca + cross(axis, dir) * sa + axis * dot(axis, dir) * (1.0 - ca);   // Rodrigues
+  // ES1f: the field is cast on the CUBE too. On a lat-long grid the
+  // cells converged at the pole - a pinwheel of stars - and the density
+  // piled up there, which is exactly wrong: a star field is even.
+  for (int layer = 0; layer < 2; layer++) {
+    // The cube covers the sphere with 6n^2 cells where the lat-long grid
+    // used ~2*pi^2*scale^2, so the same star density wants a bigger n:
+    // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
+    float scale = layer == 0 ? 127.0 : 236.0;
+
+    vec2 sc2;
+    cubeSnap(d, scale, sc2);
+    vec2 g = sc2 + float(layer) * 31.7;
+    vec2 cell = floor(g), f = fract(g);
+    float h = hash21(cell + 7.3 * float(layer));
+    float thresh = layer == 0 ? 0.955 : 0.985;
+    if (h > thresh) {
+      vec2 star = vec2(hash21(cell + 1.1), hash21(cell + 2.2)) * 0.7 + 0.15;
+      float d = length(f - star);
+      float b = 0.35 + 0.65 * (h - thresh) / (1.0 - thresh);
+      s += b * (layer == 0 ? 1.4 : 0.8) * exp(-d * d * 60.0);
+    }
   }
-  // the sun itself, with a soft limb
-  float sd = acos(clamp(cs, -1.0, 1.0));
-  c = mix(c, vec3(1.0,0.96,0.88), (1.0 - smoothstep(0.028, 0.040, sd)) * step(0.0, uSun.y));
-  // CLOUDS: two warped layers on the weather's own wind, lit from the
-  // sun's side. Projected onto a plane above, so they converge at the
-  // horizon the way real cloud decks do.
-  if (up > 0.005) {
-    vec2 cp = d.xz / d.y * 0.42 + uWind * uTime * 4.0;
-    float w = fbm2(cp*0.7 + vec2(fbm2(cp*0.35), fbm2(cp*0.35+7.0))*1.1);
-    float w2 = fbm2(cp*1.9 - 3.0);
-    float dens = smoothstep(1.0-uCover-uSoft, 1.0-uCover+uSoft, w*0.72 + w2*0.28);
-    // the lit side: the gradient toward the sun, cheaply
-    float lit = clamp((w - fbm2(cp*0.7 + normalize(uSun.xz)*0.28))*6.0 + 0.5, 0.0, 1.0);
-    vec3 cc = mix(uShade, uLit, lit);
-    c = mix(c, cc, dens * smoothstep(0.005, 0.10, up));
+  return s * amount * smoothstep(0.0, 0.08, dir.y);   // the fade is on the REAL elevation: a star sets where the horizon is
+}
+
+void main() {
+  vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
+  float cp = cos(uPitch), sp = sin(uPitch);
+  vec3 r1 = vec3(ray.x, ray.y * cp + ray.z * sp, -ray.y * sp + ray.z * cp);
+  float cy = cos(uYaw), sy = sin(uYaw);
+  vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
+
+  // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
+  // (SKY_ANGLE_PER_PIXEL) - and ES1f: on a CUBE, so it has no pole. The
+  // direction is snapped BEFORE anything is computed, so every feature
+  // below is drawn on the grid and the pixels are fixed to the world
+  // rather than to the screen. The faces are equi-angular, so a face's
+  // 90 degrees over n cells makes every cell exactly one step wide:
+  // n = (PI/2)/step is 256 a face, 512 across 180 degrees - SKY??.DAT.
+  vec2 cell = vec2(0.0);
+  if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
+
+  // The dome: horizon to zenith.
+  float e = clamp(dir.y, 0.0, 1.0);
+  vec3 color = mix(uHorizon, uZenith, pow(e, 0.55));
+  // BELOW THE HORIZON the terrain is what a player sees, but the sky is
+  // drawn first and shows wherever the ground does not reach - and a
+  // flat slab of the horizon colour with the full dawn glow on it read
+  // as a bright BAND with a hard seam at the horizon (the first
+  // render's one fault). So the dome keeps going down: the horizon
+  // colour darkens toward the nadir, and the glow falls off below the
+  // horizon as fast as it does above it, so the horizon is a line
+  // rather than an edge.
+  float below = clamp(-dir.y, 0.0, 1.0);
+  color = mix(color, uHorizon * 0.55, pow(below, 0.7));
+
+  // The glow on the sun's side of the horizon (dawn, dusk).
+  vec2 dh = normalize(dir.xz + vec2(1e-5, 0.0));
+  vec2 sh = normalize(uSunDir.xz + vec2(1e-5, 0.0));
+  float az = max(dot(dh, sh), 0.0);
+  color += uGlowColor * pow(az, 2.5) * exp(-abs(dir.y) * 9.0) * uGlowAmount;
+
+  // Stars, then the moons, under the clouds.
+  color += vec3(0.95, 0.97, 1.0) * stars(dir, uStars);
+  color += moon(dir, uMoonA, uMoonAColor, uMoonAVis);
+  color += moon(dir, uMoonB, uMoonBColor, uMoonBVis);
+
+  // The sun: a disc and a halo.
+  float cosSun = dot(dir, uSunDir);
+  float disc = smoothstep(cos(uSunRadius), cos(uSunRadius * 0.6), cosSun) * uSunVis;
+  float halo = (pow(max(cosSun, 0.0), 40.0) * 0.55 + pow(max(cosSun, 0.0), 8.0) * 0.10) * uSunVis;
+
+  // ES1c: TWO DECKS, LIT BY THE SUN. One fbm sheet coloured by its own
+  // noise was a smear: it had no depth (nothing moved against anything)
+  // and no idea where the sun was, so a bank never had a bright rim and
+  // never had a dark belly. Now a HIGH deck - small, slow, thin - sits
+  // behind a LOW one - large, faster, thicker - and both are lit by
+  // sunAz, how far this ray is from the sun: toward the sun a bank is
+  // rimmed (the light coming through its edge), away from it the thick
+  // parts go to the shade colour. The lighting fades out at night with
+  // the palette's own sun colour, which is black below the horizon.
+  float cloud = 0.0;
+  if (dir.y > 0.0) {
+    float near = smoothstep(0.28, 0.0, dir.y);
+    vec2 hi = deck(dir, 0.95, uWind * 0.55, uCloudCover * 0.75, uCloudSoft * 1.5, 0.0);
+    vec2 lo = deck(dir, 1.9, uWind, uCloudCover, uCloudSoft, 0.0);
+    // The low deck covers the high one where it is; what is left of the
+    // high deck shows through the gaps.
+    float covHi = hi.x * (1.0 - lo.x) * 0.7;
+    float cov = lo.x + covHi;
+    cloud = mix(cov, cov * uCloudCover, near);
+    float n = mix(hi.y, lo.y, lo.x);                       // the deck in front decides the colour
+    float sunAz = max(dot(dir, uSunDir), 0.0);
+    // The rim: strongest at the thin edges of a bank, and only near the sun.
+    float edge = 1.0 - abs(n - (1.0 - uCloudCover)) * 3.0;
+    float rim = clamp(edge, 0.0, 1.0) * pow(sunAz, 3.0);
+    float thick = smoothstep(0.45, 0.95, n);
+    vec3 cc = mix(uCloudShade, uCloudLit, thick * 0.75 + 0.25 * pow(sunAz, 1.5));
+    cc += uSunColor * rim * 0.55 * uSunVis;                 // lit through the edge
+    cc = mix(cc, cc * 0.86, (1.0 - pow(sunAz, 0.7)) * thick);   // the belly away from the sun
+    cc = mix(cc, mix(uHorizon, cc, 0.55), near);            // into the haze at the horizon
+    color = mix(color, cc, cloud);
   }
-  // the weather's grey hand on the whole dome
-  c = mix(c, mix(vec3(0.60,0.63,0.67), vec3(0.40,0.44,0.49), t), uGrey*0.55);
-  o = vec4(c, 1.0);
-}`);
+  color += uSunColor * disc * (1.0 - cloud) + uSunColor * halo * (1.0 - 0.7 * cloud);
+
+  // ES1c: DITHER. A dome is one big smooth gradient and eight bits is
+  // not enough for one: 46% of the rows in a noon frame came out
+  // byte-identical to the row above, which is a visible stair. A
+  // sub-bit of hash noise before the write breaks the stair and costs
+  // two instructions; it is about one quantisation step, so it is never
+  // itself visible. TRIANGULAR, not flat: two hashes summed give the
+  // error a triangular distribution, which is the shape that fully
+  // decorrelates it from the signal - a flat one left a third of the
+  // rows still identical to the row above.
+  vec3 out3 = mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix);
+  if (uRetroLevels > 0.0) {
+    // ES1e: posterise with an ORDERED dither, indexed by the ANGULAR
+    // cell - one Bayer cell per sky pixel, or it is a fine weave under a
+    // coarse one, which is two eras at once, and it would crawl when the
+    // camera turned.
+    float b = bayer4(uRetroStep > 0.0 ? cell : gl_FragCoord.xy) - 0.5;
+    out3 = floor(out3 * uRetroLevels + 0.5 + b) / uRetroLevels;
+  } else {
+    // The SMOOTH pass's dither. Interleaved gradient noise, not a hash:
+    // the hash of ES1c measured well (46% of identical rows to 25%) but
+    // it is STRUCTURED at integer coordinates - a visible weave under
+    // magnification, which is the one thing a dither must not be. IGN is
+    // the standard for exactly this and is three constants.
+    float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
+    out3 += (ign - 0.5) / 255.0;
+  }
+  outColor = vec4(out3, 1.0);
+}`;
+const skyProg = prog(`#version 300 es
+precision highp float;
+layout(location=0) in vec2 aP;
+out vec2 vNdc;
+void main(){ vNdc = aP; gl_Position = vec4(aP, 1.0, 1.0); }`, SKY_FS);
+
 const skyVao = gl.createVertexArray();
 gl.bindVertexArray(skyVao);
 {
@@ -949,7 +1161,7 @@ addEventListener('pointerup', () => { drag = null; });
 addEventListener('pointermove', (e) => {
   if (!drag) return;
   cam.yaw = drag.yaw + (e.clientX - drag.x) * 0.005;
-  cam.pitch = Math.max(-1.2, Math.min(0.6, drag.pitch + (e.clientY - drag.y) * 0.004));
+  cam.pitch = Math.max(-1.35, Math.min(1.35, drag.pitch + (e.clientY - drag.y) * 0.004));   // PROTO-8: a SKY lab has to be able to look up
 });
 const keys = new Set();
 addEventListener('keydown', (e) => keys.add(e.key.toLowerCase()));
@@ -999,6 +1211,20 @@ function frame(now) {
   // the SUN's own light colour, warm at the horizon and white at noon
   const sunCol = [pal.glow[0] / 255, pal.glow[1] / 255, pal.glow[2] / 255];
   const sunUp = Math.max(0, Math.sin(elev * Math.PI / 180));
+  // sunOcclusion + CLOUD_SHADOW, the game's own pair
+  const occ = (() => {
+    const d = [Math.cos(elev * Math.PI / 180) * 0.92, Math.sin(elev * Math.PI / 180), 0.30];
+    if (d[1] <= 0) return 0;
+    const t = performance.now() / 1000;
+    const deckC = (scale, wind, cover, soft) => {
+      const k = 1 / (d[1] + 0.18);
+      const n = fbm(d[0] * k * scale + wind[0] * t, d[2] * k * scale + wind[1] * t, 1e9, 5);
+      return cl((n - (1 - cover)) / Math.max(1e-5, soft), 0, 1);
+    };
+    const hi = deckC(0.95, [wsky.wind[0] * 0.55, wsky.wind[1] * 0.55], wsky.cover * 0.75, wsky.soft * 1.5);
+    const lo = deckC(1.9, wsky.wind, wsky.cover, wsky.soft);
+    return cl(lo + hi * (1 - lo) * 0.7, 0, 1);
+  })();
   // thunder flashes: a rare, brief, near-white sky, and the ground
   // takes it too - a flash that only lights the sky is a wallpaper
   const flash = state.weather === 'thunder'
@@ -1017,19 +1243,40 @@ function frame(now) {
   // stands in front of.
   gl.useProgram(skyProg);
   gl.depthMask(false);
-  gl.uniformMatrix4fv(gl.getUniformLocation(skyProg, 'uInvVP'), false, inv4(vp));
-  const u3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
-  u3('uZenith', pal.zenith.map((v) => v / 255));
-  u3('uHorizon', pal.horizon.map((v) => v / 255));
-  u3('uGlow', pal.glow.map((v) => v / 255));
-  u3('uSun', sun);
-  u3('uLit', wsky.lit.map((v) => v / 255));
-  u3('uShade', wsky.shade.map((v) => v / 255));
-  const u1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), v);
-  u1('uGlowAmt', pal.glowAmount); u1('uStars', pal.stars);
-  u1('uCover', wsky.cover); u1('uSoft', wsky.soft); u1('uGrey', wsky.grey + flash * 0.4);
-  u1('uTime', now / 1000);
+  const S1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), v);
+  const S3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
+  const S4 = (n, v) => gl.uniform4fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
+  // the game builds its ray from yaw/pitch/fov; this page has them
+  S1('uYaw', cam.yaw); S1('uPitch', cam.pitch);
+  S1('uTanHalfFov', Math.tan(1.05 / 2)); S1('uAspect', w / h);
+  S3('uZenith', pal.zenith.map((v) => v / 255));
+  S3('uHorizon', pal.horizon.map((v) => v / 255));
+  S3('uGlowColor', pal.glow.map((v) => v / 255));
+  S3('uSunColor', sunCol);
+  S3('uCloudLit', wsky.lit.map((v) => v / 255));
+  S3('uCloudShade', wsky.shade.map((v) => v / 255));
+  S3('uFogColor', sky);
+  S3('uSunDir', sun);
+  S1('uSunRadius', 0.032); S1('uSunVis', sun[1] > -0.05 ? 1 : 0);
+  S1('uGlowAmount', pal.glowAmount); S1('uStars', pal.stars);
+  // the two moons, on their own slow arcs - Masser big and red,
+  // Secunda small, pale and higher (MOONS, verbatim)
+  const mt = now / 1000 * 0.02;
+  const md = (ph, tilt) => { const a = mt + ph; return [Math.cos(a) * 0.9, Math.sin(a), tilt]; };
+  const ma = md(1.1, 0.0), mb = md(2.3, 0.22);
+  S4('uMoonA', [...ma, 0.040]); S4('uMoonB', [...mb, 0.021]);
+  S3('uMoonAColor', [0xd3 / 255, 0x9a / 255, 0x86 / 255]);
+  S3('uMoonBColor', [0xe9 / 255, 0xe6 / 255, 0xdc / 255]);
+  S1('uMoonAVis', ma[1] > -0.02 ? 1 : 0); S1('uMoonBVis', mb[1] > -0.02 ? 1 : 0);
+  S1('uCloudCover', wsky.cover); S1('uCloudSoft', wsky.soft);
+  S1('uTime', now / 1000);
   gl.uniform2fv(gl.getUniformLocation(skyProg, 'uWind'), new Float32Array(wsky.wind));
+  S1('uFogMix', wx.fog * 0.55);
+  S3('uStarPole', [0, 0.622244, 0.782823]);          // STAR_POLE, verbatim
+  S1('uStarAngle', now / 1000 * 0.02);
+  // the RETRO pass, the game's own: PI/512 the angular pixel, 26 levels
+  S1('uRetroStep', state.retro ? Math.PI / 512 : 0);
+  S1('uRetroLevels', state.retro ? 26 : 0);
   gl.bindVertexArray(skyVao);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.depthMask(true);
@@ -1040,7 +1287,9 @@ function frame(now) {
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uNew'), state.newGround ? 1 : 0);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uEye'), eye);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSun'), sun);
-  gl.uniform1f(gl.getUniformLocation(groundProg, 'uDim'), wx.dim + flash * 0.5);
+  // the game's own sunOcclusion: when a bank crosses the sun the disc
+  // goes AND the ground goes with it, from one field at one direction
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uDim'), (wx.dim + flash * 0.5) * (1 - occ * 0.55));
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uFog'), wx.fog);
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uWet'), wx.wet);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), new Float32Array(sky));
