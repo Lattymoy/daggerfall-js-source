@@ -390,3 +390,32 @@ kernel carries the build-time one). terrainworker.test.js pins all
 of it through a hand-rolled fake worker; the FELT result - a
 map-pixel crossing that no longer stutters while up to 13 pixels
 stream in - is owed to a data-bearing session.
+
+EV8 (2026-08-31): THE FAR PROVINCE RING. src/render/farRing.js -
+real mountains on the horizon, from the same WOODS.WLD plane the
+travel map renders, at the streamed terrain's OWN un-exaggerated
+height law (max(byte*8, ocean)*1.5 world units - generateSamples'
+macro-shape; the travel map's x24 relief stays display skin). One
+vertex per map pixel, RING_RADIUS 48 (~39 km), overworldTint colours
+(the ocean-swamp trap already handled at its one home), real
+central-difference normals so the ring takes the live sun and
+ambient. Placement is pixel-corner units relative to a BASE pixel +
+one pixelTranslation(base) per draw - recenters cost nothing, the law
+every hand-offset consumer in world.js exists for having broken. The
+HOLE: the index buffer skips exactly the streamed rect's cells,
+re-punched per crossing (indices only; the vertex grid re-centres
+when the player drifts past RING_REBUILD_DRIFT=12 pixels - painter's
+order hides every overlap, the hole exists for the coarse-peak-above-
+the-silhouette case it cannot). The FADE is the pass's own: the world
+fog's ramp capped at RING_HAZE_HOLD 0.85 through the middle distance
+(silhouettes read through haze - the point) and closed to 1 at the
+rim, into the same live fog colour the sky fades to; drawn through
+renderer.setFog it would have been an invisible wash past 2400. Drawn
+between sky.draw and the EV6 seam mark (depth untouched, own
+projection - the world's 6000-unit far plane is 7.3 pixels; no
+save/restore, the shared mark resets the shadows), skipped under exp
+fog (weather owns the air), dark at night by construction (it takes
+the frame's own light state). Enhanced-only beside lodOn; ?ring=off.
+farring.test.js pins the laws, the hole, the Proxy-GL pass lifecycle
+and the wiring; the horizon itself is owed to a data-bearing session
+(the Wrothgarians from Daggerfall's walls, ?tod= at dusk).
