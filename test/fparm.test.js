@@ -2560,3 +2560,55 @@ test('MW-D37: the dye picks the nearest-coloured garment, and falls back to the 
   assert.equal(red.dfColour, '#832c10');
   assert.equal(red.mwColour, '#8c2814');
 });
+
+// ═══ MW-D38: the item icons are the Morrowind ground meshes ═════════
+test('MW-D38: the weapon\u2019s material is READ - a daedric sword is not the type\u2019s first record', async () => {
+  const { fpWeaponKey } = await import('../src/combat/fpArm.js');
+  // the field no item ever carried is gone; itemInfo's materialName is the door
+  const iron = { group: 'Weapons', templateIndex: 115, material: 0 };
+  const daedric = { group: 'Weapons', templateIndex: 115, material: 9 };
+  assert.notEqual(fpWeaponKey(iron, false), fpWeaponKey(daedric, false), 'two materials of one type must be two keys');
+  assert.match(fpWeaponKey(daedric, false), /:Daedric:/);
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /pickWeaponRecord\(allWeapons, mwType, weapon \? materialName\(weapon\) : null\)/,
+    'the hand\u2019s weapon is not resolved by its material');
+  const code = arm.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.ok(!/weapon\.materialName|item\.materialName/.test(code), 'the phantom field is still read somewhere');
+});
+
+test('MW-D38: iconFrame fits every corner of the bounds under a three-quarter ortho', async () => {
+  const { iconFrame } = await import('../src/combat/fpArm.js');
+  const b = { minX: -1, minY: -0.1, minZ: -0.3, maxX: 1, maxY: 0.1, maxZ: 0.3 };   // a sword lying flat
+  const f = iconFrame(b);
+  assert.ok(f.view && f.proj && f.eye, 'a frame has a view, a projection and an eye');
+  // every corner projects inside the clip box
+  const { multiply, transformPoint } = await import('../src/world/mat4.js');
+  const pv = multiply(f.proj, f.view);
+  for (const x of [b.minX, b.maxX]) for (const y of [b.minY, b.maxY]) for (const z of [b.minZ, b.maxZ]) {
+    const p = transformPoint(pv, x, y, z);
+    assert.ok(Math.abs(p[0]) <= 1 && Math.abs(p[1]) <= 1, `corner ${x},${y},${z} projects outside the icon (${p[0].toFixed(2)}, ${p[1].toFixed(2)})`);
+  }
+  // and not wastefully small: the longest extent nearly fills one axis
+  let maxAbs = 0;
+  for (const x of [b.minX, b.maxX]) for (const y of [b.minY, b.maxY]) for (const z of [b.minZ, b.maxZ]) {
+    const p = transformPoint(pv, x, y, z);
+    maxAbs = Math.max(maxAbs, Math.abs(p[0]), Math.abs(p[1]));
+  }
+  assert.ok(maxAbs > 0.8, `the icon leaves too much air (${maxAbs.toFixed(2)})`);
+  // the eye looks from above and in front: positive y and z components.
+  assert.ok(f.eye[1] > 0 && f.eye[2] > 0);
+});
+
+test('MW-D38: itemIcon is null without a build; the pack takes the model icon first and the classic second', () => {
+  const arm = createFpArm();
+  assert.equal(arm.itemIcon({ group: 'Weapons', templateIndex: 115, material: 0 }), null);
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| \(line\.image/, 'the tile does not try the model icon first');
+  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| \(line\.image/, 'the detail does not try the model icon first');
+  assert.match(pack, /item,   \/\/ MW-D38/, 'the line no longer carries its item');
+  const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
+  assert.ok(!/itemIcon|modelIconUrl/.test(classic), 'the classic inventory must not know the model icons exist');
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /const catalog = \{ archives, parts, armors, clothes, weapons: allWeapons, gen \};/, 'the build keeps no catalog for the icons');
+  assert.match(src, /finally \{ releaseGpu\(mesh\); \}/, 'the icon mesh must leave the GPU');
+});
