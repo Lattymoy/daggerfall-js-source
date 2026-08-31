@@ -463,7 +463,8 @@ async function measurePart(record, archives, kind) {
   const tarc = archives.find((a) => a.has(tpath));
   if (!tarc) return null;
   let img;
-  try { img = decodeDds(tarc.get(tpath).slice()); } catch { return null; }
+  // MW-D34: by extension - the ladder legitimately answers .tga/.bmp.
+  try { img = decodeTextureImage(tpath, tarc.get(tpath).slice()); } catch { return null; }
   const m0 = img.mips[0];
   if (kind === 'head') return headFeatures(m0.rgba, m0.width, m0.height);
   const shapes = batches.filter((b) => b.positions && b.positions.length);
