@@ -441,6 +441,8 @@ function skeletonHasBone(skeletonBytes, name) {
 /** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
  *  esm files a data set carries, times three record kinds. */
 const ESM_WALK_CACHE = new Map();
+/** AUDIT 32 F2: the face match per identity per data generation. */
+const FACE_MATCH_CACHE = new Map();
 
 /** MW-D35: MEASURE ONE MORROWIND BODY PART - its base texture's level-0
  *  RGBA and its mesh height - from the archives. Null-honest at every
@@ -466,7 +468,11 @@ async function measurePart(record, archives, kind) {
   // MW-D34: by extension - the ladder legitimately answers .tga/.bmp.
   try { img = decodeTextureImage(tpath, tarc.get(tpath).slice()); } catch { return null; }
   const m0 = img.mips[0];
-  if (kind === 'head') return headFeatures(m0.rgba, m0.width, m0.height);
+  if (kind === 'head') {
+    // AUDIT 32 F1: sampled through the mesh's own UVs, so the texture's
+    // layout is never assumed.
+    return headFeatures(m0.rgba, m0.width, m0.height, batches.map((b) => ({ positions: b.positions, uvs: b.uvs })));
+  }
   const shapes = batches.filter((b) => b.positions && b.positions.length);
   const bounds = shapes.length ? meshBounds(shapes) : null;
   return hairFeatures(m0.rgba, m0.width, m0.height, bounds ? bounds.maxZ - bounds.minZ : 0);
@@ -866,9 +872,26 @@ export async function buildFpArm({
     const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
-    const faceMatch = d.fetchArena2Bytes
-      ? await matchFaceFor({ race, female, faceIndex, parts, archives, deps: d })
-      : { head: null, hair: null, reasons: ['no Daggerfall data door - the walk stands'] };
+    // AUDIT 32 F2: memoised per identity per data generation - a
+    // rebuild happens on every equip change now (D32), and the face
+    // does not change when a gauntlet does; without this, every worn
+    // swap re-parsed a dozen meshes and decoded a dozen textures.
+    let faceMatch;
+    if (!d.fetchArena2Bytes) {
+      faceMatch = { head: null, hair: null, reasons: ['no Daggerfall data door - the walk stands'] };
+    } else {
+      const fkey = `${gen}:${race}:${female ? 'f' : 'm'}:${faceIndex | 0}`;
+      faceMatch = FACE_MATCH_CACHE.get(fkey);
+      if (!faceMatch) {
+        faceMatch = await matchFaceFor({ race, female, faceIndex, parts, archives, deps: d });
+        // AUDIT 32 F3: a MISS is not memoised. The enhanced door opens
+        // before ARENA2 is picked, so the first build of a session can
+        // find no portrait archive at all; caching that verdict would
+        // have pinned "the walk stands" onto every rebuild of the
+        // session even after the data arrived.
+        if (faceMatch.head || faceMatch.hair) FACE_MATCH_CACHE.set(fkey, faceMatch);
+      }
+    }
 
     const rows = armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
