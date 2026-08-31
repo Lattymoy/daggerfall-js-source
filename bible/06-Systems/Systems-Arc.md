@@ -5341,6 +5341,32 @@ The terrain-sampler check (:373-379) has no counterpart - the port has
 one sampler and no version, so the fallback it guards can never fire.
 Recorded, not invented.
 
+### THE SECOND PARITY AUDIT (2026-08-31)
+
+TR2 and TR4 re-read against TransportManager's audio and ship arms.
+Two findings and one REFUTATION:
+
+- **F-F1** `shipTransition` answers a `reposition` and the host inferred
+  the landing from `restore` instead of reading it - two encodings of
+  one decision, free to drift. The host reads it now. Recorded with it:
+  StreamingWorld's RandomStartMarker is `PositionPlayerToLocation`,
+  which falls back to the TERRAIN ORIGIN when the pixel carries no
+  location (:1437-1447) - the ship coords are open sea, so the fallback
+  is the arm that runs and the port's default landing stands in for it.
+  FLAGGED for the first session with ARENA2: confirm (2,2) and (5,5)
+  carry no location.
+- **F-F3** DFU's `ridingAudioSource` is `loop = false` (:190) and Update
+  only calls `Play()` when it is not already playing (:273-276) - so
+  assigning `.clip` mid-clop takes effect when the CURRENT one ENDS.
+  TR2 used a true-loop source and restarted it on the swap, chopping
+  the hoofbeat in half. `audio.setLoop` is DFU's shape now: one
+  non-looping source re-armed on `ended`, reading `want` each time.
+- **REFUTED: `Settings.SoundVolume`.** DFU multiplies by it at every
+  riding call site (:197, :271, :282) and the port passes 1 - which is
+  CORRECT here: the SETT-slice applies SoundVolume once on the master
+  bus every source connects through, so multiplying again would
+  double-scale it. Not a finding.
+
 **THE TRANSPORT ARC IS CLOSED.** TR1 mode, TR2 sprite and audio, TR3
 window, TR4 ship, TR5 tail - and with TR3, all sixty of DFU's real
 windows are ported.

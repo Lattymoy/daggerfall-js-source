@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { CfaFile, CFA_HEADER_SIZE } from '../src/formats/cfaFile.js';
 import {
@@ -14,6 +17,8 @@ import { SOUND } from '../src/systems/soundClips.js';
 // (:210-280) and OnGUI (:285-318) halves, plus CfaFile.cs - the fifth
 // classic image format the port reads.
 
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const read = (p) => readFileSync(join(root, p), 'utf8');
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
 
 /** A CFA by hand: 2x2, three frames, RLE-packed. */
@@ -195,4 +200,21 @@ test('TR2: on foot the animator answers nothing - no frame, no loop', () => {
   a.update(1 / 60, { mode: TRANSPORT_MODES.Horse, movingLessThanHalfSpeed: false });
   const r = a.update(1 / 60, { mode: TRANSPORT_MODES.Foot });
   assert.equal(r.playing, false); assert.equal(r.frame, 0); assert.equal(r.neigh, false);
+});
+
+test('TR-AUDIT F-F3: the riding channel SWAPS its clip rather than restarting - DFU\'s source is loop=false, re-armed', () => {
+  // TransportManager sets ridingAudioSource.loop = false (:190) and
+  // Update only Play()s when it is not already playing (:273-276), so
+  // assigning `.clip` mid-clop takes effect when the current one ENDS.
+  // The port's channel is that shape: one non-looping source re-armed
+  // on `ended`, reading `want` each time.
+  const audioSrc = read('src/systems/audio.js');
+  assert.match(audioSrc, /_makeRetriggerLoop\(index, volume, pitch\) \{/);
+  assert.match(audioSrc, /src\.onended = \(\) => \{ if \(ch\.playing === src\) \{ ch\.playing = null; arm\(\); \} \};/);
+  assert.match(audioSrc, /const buf = this\._buffer\(ch\.want\);/, 'the NEXT arm reads the wanted clip, so a swap lands at the seam');
+  assert.doesNotMatch(audioSrc, /src\.loop = true;\s*\n\s*src\.playbackRate/, 'no true-loop source on this channel');
+  // The swap path must not stop the running source.
+  const swap = audioSrc.slice(audioSrc.indexOf('    if (ch) {\n      // TR-AUDIT F-F3'), audioSrc.indexOf('    const made = this._makeRetriggerLoop'));
+  assert.match(swap, /ch\.want = clip;/);
+  assert.doesNotMatch(swap, /ch\.stop\(\)/, 'a swap never stops the current clop');
 });

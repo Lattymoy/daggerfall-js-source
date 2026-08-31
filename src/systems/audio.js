@@ -210,40 +210,58 @@ export class AudioEngine {
    */
   setLoop(name, clip, { volume = 1, pitch = 1 } = {}) {
     this._loops ??= new Map();
-    const cur = this._loops.get(name);
+    const ch = this._loops.get(name);
     if (clip == null) {
-      if (cur) { cur.handle.stop(); this._loops.delete(name); }
+      if (ch) { ch.stop(); this._loops.delete(name); }
       return null;
     }
-    if (cur && cur.clip === clip) {
-      cur.setVolume(volume);
-      cur.setPitch(pitch);
-      return cur.handle;
+    if (ch) {
+      // TR-AUDIT F-F3: the clip is SWAPPED, not restarted. DFU's
+      // ridingAudioSource has `loop = false` (:190) and Update only
+      // calls Play() when it is not already playing (:273-276), so
+      // assigning `.clip` mid-clop takes effect when the CURRENT one
+      // ends. Restarting on the swap chops the hoofbeat in half.
+      ch.want = clip;
+      ch.setVolume(volume);
+      ch.setPitch(pitch);
+      return ch;
     }
-    if (cur) cur.handle.stop();
-    const made = this._makeLoop(clip, volume, pitch);
-    if (!made) { this._loops.delete(name); return null; }
-    this._loops.set(name, { clip, ...made });
-    return made.handle;
+    const made = this._makeRetriggerLoop(clip, volume, pitch);
+    if (!made) return null;
+    this._loops.set(name, made);
+    return made;
   }
 
-  _makeLoop(index, volume, pitch) {
+  /** DFU's shape: a NON-looping source re-armed when it ends, which is
+   *  what `if (!isPlaying) Play()` on a `loop = false` source does. */
+  _makeRetriggerLoop(index, volume, pitch) {
     if (!this._ready()) return null;
-    const buf = this._buffer(index);
-    if (!buf) return null;
-    const src = this.ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(this._out());
-    src.start();
-    return {
-      handle: { stop() { try { src.stop(); } catch { /* already stopped */ } src.disconnect(); } },
+    gain.connect(this._out());
+    const ch = { want: index, playing: null, rate: pitch, stopped: false,
       setVolume: (v) => { gain.gain.value = v; },
-      setPitch: (p) => { src.playbackRate.value = p; },
+      setPitch: (p) => { ch.rate = p; if (ch.playing) ch.playing.playbackRate.value = p; },
+      stop() {
+        ch.stopped = true;
+        if (ch.playing) { try { ch.playing.stop(); } catch { /* already stopped */ } ch.playing = null; }
+        gain.disconnect();
+      } };
+    const arm = () => {
+      if (ch.stopped) return;
+      const buf = this._buffer(ch.want);
+      if (!buf) { ch.playing = null; return; }
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.playbackRate.value = ch.rate;
+      src.connect(gain);
+      src.onended = () => { if (ch.playing === src) { ch.playing = null; arm(); } };
+      src.start();
+      ch.playing = src;
     };
+    arm();
+    if (!ch.playing) { gain.disconnect(); return null; }
+    return ch;
   }
 
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
