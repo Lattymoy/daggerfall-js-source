@@ -150,6 +150,10 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W13: FPSWeapon.FlipHorizontal (StartGameBehaviour :269) -
   // left-hand rendering; GetInt 0..3, only 1 does anything in DFU.
   'Controls/Handedness': 'src/combat/fpsWeapon.js',
+  // UI3: PaperDoll.GetPaperDollBackground (:207-230) - the region's own
+  // backdrop instead of the race's. Ships False, and the port had been
+  // behaving as if it were True.
+  'GUI/EnableGeographicBackgrounds': 'src/ui/paperDoll.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

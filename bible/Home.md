@@ -296,10 +296,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:999` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:1005` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2204` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:3220` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:4015` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:5057` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:2218` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:3234` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:4029` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:5071` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1194` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1209` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1418` - is the quest machine's, FLAGGED with it.
@@ -397,7 +397,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeTalk.js:273` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:298` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
-- `src/ui/paperDoll.js:64` - table, the loud INTERIM the U8f/U8g records flagged.
+- `src/ui/paperDoll.js:65` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/pixelDial.js:36` - FLAGGED (THE FOUR HOSTS RULE): no host is wired yet — world.js,
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
