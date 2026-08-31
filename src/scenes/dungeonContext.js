@@ -1383,7 +1383,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // handed down by world.js/worldModes; the standalone ?dungeon
     // probe has none and the chain no-ops).
     onNewReadySpell: (sp) => opts.questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => opts.questBridge?.machine?.notifyCastReadySpell?.(sp),
+    onCastReadySpell: (sp) => {
+      opts.questBridge?.machine?.notifyCastReadySpell?.(sp);
+      // MW-D39: THE SPELL GOES, AND SO DOES THE ARM. The reference's
+      // own cast moment - RaiseOnCastReadySpell, the frame the spell
+      // leaves the hand - runs the spellcast group's release. An
+      // animation, never a gate: a missing clip is a note on the card
+      // and the spell still flies.
+      weaponRig.castSpellAnim(sp?.rangeType);
+    },
     // hudText.add, not `say?.()`. There is no `say` in this scope — the
     // optional-call syntax made an undefined identifier look like a
     // guarded one, so it read as safe and was a ReferenceError waiting

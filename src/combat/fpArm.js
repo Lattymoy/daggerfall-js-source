@@ -147,16 +147,26 @@ export const FP_IDLE_LOOPS = () => 1 + Math.floor(Math.random() * 4);
  * "idlehh" with fists up, which is Morrowind's ready stance played while
  * Daggerfall says the weapon is away.
  */
-export function animWeaponType(mwType, sheathed) {
+export function animWeaponType(mwType, sheathed, spellReady = false) {
+  // MW-D39 (Mac: Morrowind's spellcasting animations): A READIED SPELL IS
+  // A STANCE. In the reference the spell is a WEAPON TYPE - Spell(-1),
+  // whose short group is "spell" and long group "spellcast" - and
+  // getWeaponType returns it whenever a spell is readied, before any
+  // equipped weapon is consulted (weapontype.cpp / character.cpp's
+  // getActiveWeapon). Daggerfall readies a spell the same way, so the
+  // port asks the same question in the same order. The SHEATHED test
+  // still comes first: a readied spell with the weapon put away is the
+  // caster's own empty hands, which is exactly what the spellcast
+  // animation wants, so the spell stance survives it.
+  if (spellReady) return MW_WEAPON_TYPE.Spell;
   if (sheathed) return MW_WEAPON_TYPE.None;
   return mwType === MW_WEAPON_TYPE.None ? MW_WEAPON_TYPE.HandToHand : mwType;
 }
 
 /** CharacterController::UpperBodyState (character.hpp:107-117), in its own
- *  order. Casting is out of scope for this slice - Daggerfall's spell
- *  hand is the port's own viewmodel - and is absent rather than aliased,
- *  because an enum with a member the code never reaches is a lie the next
- *  reader has to disprove. */
+ *  order. MW-D39 adds Casting, which the reference carries as
+ *  UpperCharState_CastingSpell: the slice that reaches it is here now,
+ *  so the member is no longer a lie the next reader has to disprove. */
 export const UPPER_BODY = Object.freeze({
   None: 0,
   Equipping: 1,
@@ -165,6 +175,7 @@ export const UPPER_BODY = Object.freeze({
   AttackWindUp: 4,
   AttackRelease: 5,
   AttackEnd: 6,
+  Casting: 7,
 });
 
 /** MW-D13: THE ORDER IS LOAD-BEARING, so these are numbers.
@@ -179,6 +190,17 @@ export const UPPER_BODY_NAME = Object.freeze(
 /** setAccurateAiming's argument, verbatim. Casting sits above
  *  AttackEnd in the reference's enum and is out of scope here, so the
  *  test is the same shape with one fewer state above the line. */
+/** MW-D39: the spell's ATTACK TYPE, which names its key pair
+ *  (character.cpp:1618-1636). Morrowind has three ranges; Daggerfall
+ *  has five, and the two area forms cast like the point form they
+ *  surround - an area at range is aimed, an area around the caster is
+ *  not. */
+export function spellAttackType(rangeType) {
+  if (rangeType === 1) return 'touch';
+  if (rangeType === 0 || rangeType === 3) return 'self';
+  return 'target';
+}
+
 export const accurateAiming = (upper) => upper > UPPER_BODY.WeaponEquipped;
 
 /** AnimState::getCompletion (animation.cpp:2160-2166) - the fraction of
@@ -1459,6 +1481,7 @@ export function createFpArm() {
   let turnHold = 0;
   let turnDir = 0;
   let upper = UPPER_BODY.None;
+  let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let attackType = null;
   let attackStrength = 1;
   let sheathed = true;
@@ -1665,7 +1688,7 @@ export function createFpArm() {
    */
   function refreshIdle(force = false) {
     if (!built || !built.ok) return;
-    const type = animWeaponType(built.mwType, sheathed);
+    const type = animWeaponType(built.mwType, sheathed, spellReady);
     if (!force && idleState && idleState.playing) {
       // Only the GROUP can have gone stale; a playing idle of the right
       // group is left exactly where it is.
@@ -1774,7 +1797,7 @@ export function createFpArm() {
       priorInAir: jumpKind === 'inair',
       jumpPlaying: !!(jumpState && jumpState.playing),
     });
-    const stance = animWeaponType(built.mwType, sheathed);
+    const stance = animWeaponType(built.mwType, sheathed, spellReady);
     const force = !!jumpState && jumpStance !== stance;
     if (!force && derived.jump === jumpKind) return derived.inJump;   // :496
     if (!derived.jump) {
@@ -1854,7 +1877,7 @@ export function createFpArm() {
     // sword mid-walk re-composes walkforward -> walkforward1h THAT
     // frame - the port's old gate keyed on the movestate name alone and
     // kept the bare-handed walk playing with the sword out.
-    const stance = animWeaponType(built.mwType, sheathed);
+    const stance = animWeaponType(built.mwType, sheathed, spellReady);
     const fresh = !(movementState && movementState.playing
       && movementBase === base && movementStance === stance);
     if (fresh) {
@@ -1907,7 +1930,7 @@ export function createFpArm() {
    *  and attack sections all live in it. */
   function refreshWeaponGroup() {
     if (!built || !built.ok) { weaponGroup = null; return; }
-    const type = animWeaponType(built.mwType, sheathed);
+    const type = animWeaponType(built.mwType, sheathed, spellReady);
     weaponGroup = composeWeaponGroup(type, hasGroup).group;
   }
 
@@ -2018,6 +2041,15 @@ export function createFpArm() {
         break;
       case UPPER_BODY.AttackEnd:
         endAttack();
+        break;
+      case UPPER_BODY.Casting:
+        // MW-D39: the cast's section finished - back to the stance, and
+        // the idle replays from its start (the reference's own
+        // resetCurrentIdleState on leaving an upper-body action).
+        actionState = null;
+        actionSource = null;
+        upper = UPPER_BODY.WeaponEquipped;
+        if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         break;
       default:
         if (actionState) actionState = null;
@@ -2369,6 +2401,55 @@ export function createFpArm() {
         return null;
       }
       return type;
+    },
+
+    /** MW-D39: A SPELL IS READIED. The stance changes and the idle,
+     *  the movement and the weapon group all re-compose to the
+     *  spellcast family on the next frame - the same path a drawn
+     *  sword takes. Idempotent; false when nothing changed, so a host
+     *  may call it every frame. */
+    readySpell(ready) {
+      const want = !!ready;
+      if (!built || !built.ok || spellReady === want) return false;
+      spellReady = want;
+      // A cast in flight is abandoned by an un-ready (the spell was
+      // aborted): the arm returns to its stance rather than finishing
+      // an animation for a spell that is not going out.
+      if (!want && upper === UPPER_BODY.Casting) { actionState = null; actionSource = null; upper = UPPER_BODY.WeaponEquipped; }
+      refreshWeaponGroup();
+      resetIdle();
+      resetMovement();
+      return true;
+    },
+
+    /** MW-D39: THE SPELL GOES. The key pair is THE SPELL'S RANGE, not a
+     *  single "cast": character.cpp:1618-1636 sets mAttackType from the
+     *  first effect's range - self / touch / target - and plays
+     *  "<type> start" ... "<type> stop" in the spellcast group. A first
+     *  draft here guessed "cast start", which no Morrowind animation
+     *  carries, and every cast would have been a silent note. The
+     *  Daggerfall range byte maps onto the reference's three
+     *  (spellcast.js TARGET_TYPES): CasterOnly and AreaAroundCaster are
+     *  SELF, ByTouch is TOUCH, SingleTargetAtRange and AreaAtRange are
+     *  TARGET. Lands back in the stance through the upper-body machine.
+     *  Never a gate: a missing clip is a note on the card and the spell
+     *  still flies. */
+    castSpell(rangeType = 2) {
+      if (!built || !built.ok || !spellReady) return false;
+      if (upper !== UPPER_BODY.WeaponEquipped && upper !== UPPER_BODY.Casting) return false;
+      const type = spellAttackType(rangeType);
+      attackType = type;
+      attackStrength = 1;
+      resetIdleOnAttackEnd = true;
+      upper = UPPER_BODY.Casting;
+      if (!playAction(`${type} start`, `${type} stop`, 0)) {
+        // no keys for this range in this group: the stance stands, and
+        // the note on the card says which group could not answer.
+        upper = UPPER_BODY.WeaponEquipped;
+        attackType = null;
+        return false;
+      }
+      return true;
     },
 
     /** The held bow comes up. Everything else releases itself. */
@@ -2845,6 +2926,8 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        spellReady,                       // MW-D39
+        casting: upper === UPPER_BODY.Casting,
         raceScale: built && built.ok ? built.raceScale : null,
         worn: built && built.ok ? built.worn : null,
         face: built && built.ok ? built.face : null,

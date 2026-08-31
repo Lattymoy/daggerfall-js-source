@@ -1341,7 +1341,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // contract since the Q arc; nothing raised them until now, so the
     // three corpus quests' `cast X spell do` triggers never fired).
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
+    onCastReadySpell: (sp) => {
+      questBridge?.machine?.notifyCastReadySpell?.(sp);
+      // MW-D39: the spell goes, and so does the arm - the same cast
+      // moment the dungeon host uses, through the rig's one door. An
+      // animation, never a gate.
+      weaponRig?.castSpellAnim?.(sp?.rangeType);
+    },
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks,

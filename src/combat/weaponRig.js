@@ -196,6 +196,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   }
 
   return {
+    /** MW-D39: the host's cast moment runs the arm's spellcast release.
+     *  One door, like setWeapon - the host never reaches into fpArm. */
+    castSpellAnim: (rangeType) => fpArm.castSpell(rangeType),
     playerWeapon,
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
@@ -282,6 +285,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
         fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        // MW-D39: THE SPELL IS A STANCE. spellArmed() is already the
+        // rig's own per-frame read (WeaponManager's HasReadySpell leg
+        // above); the Morrowind arm rides the same one, and its fast
+        // path is a boolean compare, so the stance re-composes only
+        // when a spell is actually readied or let go.
+        fpArm.readySpell(spellArmed());
         // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
         // read that swaps the weapon now hands the rig its worn list;
         // setWorn's fast path is one key compare, and a change - a

@@ -8,7 +8,7 @@ import { PART_BONES } from '../src/formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../src/formats/mwFaceMatch.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, wornEquipKeyOf,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, animWeaponType, UPPER_BODY, wornEquipKeyOf,
   FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
   collectArmTextures,
 } from '../src/combat/fpArm.js';
@@ -2862,5 +2862,76 @@ test('MW-D39: THE FOUR HOSTS feed the jump-state inputs, named and swept', () =>
   const literal = 'grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating';
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
     assert.ok(readFileSync(host, 'utf8').includes(literal), `${host} feeds the jump-state inputs`);
+  }
+});
+
+// ═══ MW-D39: the spellcast stance and the cast ══════════════════════
+test('MW-D39: a readied spell IS the stance, and outranks the sheath', async () => {
+  const { MW_WEAPON_TYPE, weaponShortGroup, weaponLongGroup, composeWeaponGroup } = await import('../src/formats/mwFirstPerson.js');
+  // the reference asks for the spell's weapon type before it asks what
+  // is in the hand; sheathed hands with a spell readied are the
+  // caster's own, which is what the spellcast animation wants.
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, false, true), MW_WEAPON_TYPE.Spell);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, true, true), MW_WEAPON_TYPE.Spell);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.None, true, true), MW_WEAPON_TYPE.Spell);
+  // and without one, nothing moved
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, false, false), MW_WEAPON_TYPE.LongBladeOneHand);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, true), MW_WEAPON_TYPE.None);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.None, false), MW_WEAPON_TYPE.HandToHand);
+  // the spell's groups are the reference's own names
+  assert.equal(weaponShortGroup(MW_WEAPON_TYPE.Spell), 'spell');
+  assert.equal(weaponLongGroup(MW_WEAPON_TYPE.Spell), 'spellcast');
+  // the group composes when the data has it, and answers nothing when
+  // it does not - a spell is not a "real weapon", so it takes no melee
+  // fallback ladder and the arm keeps its stance rather than swinging.
+  assert.equal(composeWeaponGroup(MW_WEAPON_TYPE.Spell, (g) => g === 'spellcast').group, 'spellcast');
+  assert.equal(composeWeaponGroup(MW_WEAPON_TYPE.Spell, () => false).group, null);
+});
+
+test('MW-D39: readySpell and castSpell are the two doors, and neither gates the magic', async () => {
+  const arm = createFpArm();
+  // no build: both doors answer false and nothing throws - a host may
+  // call them before the archives exist.
+  assert.equal(arm.readySpell(true), false);
+  assert.equal(arm.castSpell(), false);
+  assert.equal(arm.status().spellReady ?? false, false);
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  // the stance re-composes on ready, and the three group readers take the flag
+  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 4,
+    'idle, movement (x2) and the weapon group must all read the spell stance');
+  assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
+  // a cast in flight is abandoned by an un-ready (an aborted spell)
+  assert.match(src, /if \(!want && upper === UPPER_BODY\.Casting\)/);
+  // the cast plays the group's own section and lands back in the stance
+  assert.match(src, /if \(!playAction\(`\$\{type\} start`, `\$\{type\} stop`, 0\)\)/);
+  assert.match(src, /case UPPER_BODY\.Casting:\n\s+\/\/ MW-D39[\s\S]*?upper = UPPER_BODY\.WeaponEquipped;/);
+  assert.equal(UPPER_BODY.Casting, 7);
+  // the key pair is the SPELL'S RANGE (character.cpp:1618-1636), not a
+  // single "cast" - a first draft guessed 'cast start', which no
+  // Morrowind animation carries, and every cast would have been a
+  // silent note. Daggerfall's five ranges fold onto the reference's
+  // three: the areas cast like the point form they surround.
+  const { spellAttackType } = await import('../src/combat/fpArm.js');
+  assert.equal(spellAttackType(0), 'self');          // CasterOnly
+  assert.equal(spellAttackType(3), 'self');          // AreaAroundCaster
+  assert.equal(spellAttackType(1), 'touch');         // ByTouch
+  assert.equal(spellAttackType(2), 'target');        // SingleTargetAtRange
+  assert.equal(spellAttackType(4), 'target');        // AreaAtRange
+  assert.equal(spellAttackType(undefined), 'target', 'a host that names no range aims');
+});
+
+test('MW-D39: the hosts wire it through the rig\u2019s one door, on the reference\u2019s own moments', () => {
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  // the ready rides the per-frame read the rig already makes
+  assert.match(rig, /fpArm\.readySpell\(spellArmed\(\)\);/, 'the arm must follow the rig\u2019s own HasReadySpell read');
+  assert.match(rig, /castSpellAnim: \(rangeType\) => fpArm\.castSpell\(rangeType\),/, 'the cast must have one door, and it carries the range');
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
+    const h = readFileSync(host, 'utf8');
+    assert.match(h, /castSpellAnim/, `${host} does not run the cast animation`);
+    // it hangs off the CAST moment, not the ready one
+    const cast = h.slice(h.indexOf('onCastReadySpell'), h.indexOf('onCastReadySpell') + 500);
+    assert.match(cast, /castSpellAnim\??\.?\(sp\?\.rangeType\)/, `${host} does not hand the cast its range`);
+    assert.ok(!/castSpellAnim/.test(h.slice(h.indexOf('onNewReadySpell'), h.indexOf('onCastReadySpell'))),
+      `${host} casts on the READY moment - the spell has not gone yet`);
   }
 });

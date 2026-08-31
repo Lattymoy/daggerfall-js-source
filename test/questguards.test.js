@@ -353,7 +353,9 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
     'every release path raises CAST - self, touch, area, missile - before the ready clears');
   const world = readSrc('src/scenes/world.js');
   assert.match(world, /onNewReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/);
-  assert.match(world, /onCastReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyCastReadySpell\?\.\(sp\)/);
+  // MW-D39: the cast moment now also runs the arm's spellcast release;
+  // the quest notify is still the FIRST thing it does.
+  assert.match(world, /onCastReadySpell: \(sp\) => \{\n\s+questBridge\?\.machine\?\.notifyCastReadySpell\?\.\(sp\);/);
   const dc = readSrc('src/scenes/dungeonContext.js');
   assert.match(dc, /onNewReadySpell: \(sp\) => opts\.questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/,
     'the dungeon host\'s own engine raises into the same machine');
