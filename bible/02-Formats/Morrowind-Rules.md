@@ -664,6 +664,37 @@ where they were (:711-713). Both rigs ride it: the group resolves per
 active rig, so a first-person .kf with no walkforward simply leaves
 the arm to its idle - the reference's own outcome.
 
+MW-D39: JUMP - THE FOURTH SLOT. The three-slot winner grows the jump
+at the reference's own rank: Priority_Jump sits BELOW Priority_Movement
+(character.hpp:34-35), so the ladder reads action > movement > jump >
+idle - and the jump still shows in the air because the movestate
+ladder only runs inside `if (!mInJump)` (character.cpp:2296): airborne,
+the movement slot EMPTIES and the jump is the highest thing playing.
+The state is update()'s own derivation (:2195-2296, the animation half;
+the same block's fall damage, Acrobatics and knockdown are DFU's laws
+in this port, and its DefaultLand sound is NoPlayerLocal - the
+first-person player never hears their own): in the air and neither
+swimming nor levitating, InAir; a jump STARTING while grounded gates
+movement one frame early without playing anything (:2224-2227, crossed
+to the motor's own jump latch, with the reference's mJumpState guard
+keeping the landing frame from reading as a fresh takeoff); grounded
+with the jump clip still playing, Landing (:2292-2293). The refresh is
+refreshJumpAnims verbatim (:494-532): the group is "jump" + the weapon
+short suffix through the ONE ladder (composeStanceGroup IS
+fallbackShortWeaponGroup, :508-513); a name nothing serves resets the
+slot AND the idle, exactly as None does (:499-520); a forced same-state
+re-pick (a sword drawn mid-air) starts at "loop start" (:522, with
+Animation::reset's own ": start" fallback, :986-991); InAir plays
+start -> stop, unbounded loops, NO loopfallback (:528-529 - real loop
+keys loop forever, keyless data plays once and HOLDS its falling
+pose); Landing plays ONCE from "loop stop" (:531), and data with no
+loop-stop key fails the pick as Animation::reset:992 fails the play -
+no landing animation is the correct outcome for data that carries
+none. The jump advances at speedmult 1.0, unscaled. All FOUR hosts
+feed the state (exterior, world, worldModes, and dungeon through
+dungeonContext's playerMove latch): grounded, the jump latch,
+swimming, levitation - one spelling, swept by the fparm suite.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 26's PRIORITY VECTOR, per bone group: MW-D26's three slots
     resolve whole-body, so a swing while walking shows the swing on
@@ -671,10 +702,11 @@ STILL NOT PORTED, with reasons rather than silence:
     ladder is the reference's PRIORITY ORDER exactly; what is missing
     is the per-group half, and it is missing by name here rather than
     approximated silently.
-  SWIM AND JUMP FAMILIES: the movestate ladder's swim column
-    (character.cpp:2300-2317) and the jump states (:2198-2293) wait on
-    the port's own swim/jump animation hosts; the selection nest is
-    structured so the columns drop in without re-deriving the rest.
+  THE SWIM FAMILY: the movestate ladder's swim column
+    (character.cpp:2300-2317) waits on the port's own swim animation
+    host; the selection nest is structured so the column drops in
+    without re-deriving the rest. (The JUMP half of this entry shipped
+    as MW-D39 above - swimjump/swim groups are what remain.)
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
     them visible later. The port skips a hidden subtree's drawables

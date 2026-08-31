@@ -679,6 +679,52 @@ export function composeMovementGroup(base, type, hasGroup) {
   return { group: name, walked: false };
 }
 
+/**
+ * MW-D39: THE JUMP STATE - update()'s in-air derivation
+ * (character.cpp:2195-2296), the ANIMATION half only. The same block's
+ * fall damage, Acrobatics progression, knockdown and landing sounds
+ * are DFU's own laws in this port (fallwater/footsteps own them; the
+ * reference's DefaultLand is NoPlayerLocal anyway - the first-person
+ * player never hears their own), so what this derives is exactly what
+ * refreshJumpAnims consumes: which of the two jump plays is owed, and
+ * whether movement selection is suppressed this frame.
+ *
+ * The reference's shape, kept:
+ *   - mInJump is re-derived EVERY frame from the world, not latched
+ *     (:2195-2196 - wasInJump is remembered, mInJump starts false);
+ *   - in the air and not swimming, not levitating: InAir, and inJump
+ *     (:2206-2212 - the reference's !inwater && !flying && solid gate;
+ *     this port has no noclip, so solid is construction);
+ *   - THE TAKEOFF FRAME (:2224-2227): a jump STARTING while still
+ *     grounded sets mInJump - movement gates off one frame before the
+ *     feet leave - but plays nothing yet; the `priorInAir` guard is
+ *     the reference's own `mJumpState != JumpState_InAir`, which is
+ *     what keeps the LANDING frame (motor's jump latch not yet
+ *     cleared) from reading as a fresh takeoff;
+ *   - not in a jump, and the jump clip is still playing: Landing
+ *     (:2292-2293) - the state that plays the clip's tail once and
+ *     clears itself when the clip stops.
+ *
+ * `jumpQueued` is the port's crossing for `vec.z() > 0`: the motor's
+ * own jump latch (AcrobatMotor.Jumping - set at the jump, cleared on
+ * the next grounded frame), true on exactly the takeoff frame while
+ * grounded. Swim-family jump groups are out with the swim movement
+ * family (MW-D26's recorded deferral, one line over).
+ *
+ * @returns {{ jump: 'inair'|'landing'|null, inJump: boolean }}
+ */
+export function jumpAnimState({ grounded = true, swimming = false, levitating = false,
+  jumpQueued = false, priorInAir = false, jumpPlaying = false } = {}) {
+  let inJump = false;
+  let jump = null;
+  if (!swimming && !levitating) {
+    if (!grounded) { inJump = true; jump = 'inair'; }
+    else if (!priorInAir && jumpQueued) inJump = true;   // :2224-2227, the takeoff frame
+  }
+  if (!inJump && jumpPlaying) jump = 'landing';   // :2292-2293
+  return { jump, inJump };
+}
+
 /** character.cpp:750-752 - the animation speeds assumed when a clip
  *  carries no accum-root velocity ("the first person anims don't have
  *  any velocity to calculate a speed multiplier from"), in MW units
