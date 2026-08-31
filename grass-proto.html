@@ -54,7 +54,7 @@
   <label>wind <input id="wind" type="range" min="0" max="200" step="1" value="70"><span class="v" id="vwind"></span></label>
   <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
   <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
-  <label>sun <input id="sun" type="range" min="5" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
+  <label>sun&deg; <input id="sun" type="range" min="-20" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
   <label>weather <select id="wx">
     <option>sunny</option><option>cloudy</option><option>overcast</option><option>fog</option>
     <option>rain</option><option>thunder</option><option>snow</option>
@@ -481,7 +481,7 @@ void main(){
 }`, HEAD + `
 in vec2 vUV; in vec3 vPos;
 uniform sampler2D uTex, uNrm, uLow;
-uniform float uNew, uDim, uFog, uWet; uniform vec3 uEye, uSun, uSky;
+uniform float uNew, uDim, uFog, uWet; uniform vec3 uEye, uSun, uSky, uAmb, uSunCol;
 out vec4 o;
 void main(){
   float d = length(vPos - uEye);
@@ -509,8 +509,10 @@ void main(){
   vec3 n = texture(uNrm, vUV).xyz * 2.0 - 1.0;
   vec3 N = normalize(vec3(n.x, n.z, n.y));           // tangent -> world (flat ground)
   float lam = max(dot(N, normalize(uSun)), 0.0);
-  float sky = 0.34 + 0.66 * clamp(N.y, 0.0, 1.0);    // ambient from above
-  c *= (0.46 * sky + 0.78 * lam);
+  // the AMBIENT is the sky's own colour, so dusk warms the ground and
+  // fog flattens it without a second set of numbers
+  float sky = 0.34 + 0.66 * clamp(N.y, 0.0, 1.0);
+  c *= (uAmb * 1.15 * sky + uSunCol * 1.05 * lam);
   // a low specular sheen along the blades, which wet grass has
   vec3 V = normalize(uEye - vPos);
   vec3 H = normalize(normalize(uSun) + V);
@@ -524,7 +526,7 @@ void main(){
 
   // 4. the far field settles into colour instead of boiling: blend to
   // the sheet's own average as the mips take over
-  vec3 far = textureLod(uTex, vUV, 7.0).rgb * (0.46*sky + 0.78*0.62) * uDim * mix(1.0,0.66,uWet);
+  vec3 far = textureLod(uTex, vUV, 7.0).rgb * (uAmb*1.15*sky + uSunCol*1.05*0.62) * uDim * mix(1.0,0.66,uWet);
   c = mix(c, far, smoothstep(28.0, 130.0, d));
   c *= 0.74 + 0.26*smoothstep(0.0, 40.0, 40.0-d*0.35);
   // fog closes the distance: the far plane of the fade comes IN as the
@@ -537,8 +539,8 @@ const grassProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
-uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye;
-out float vT; out float vTint; out float vFade;
+uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
+out float vT; out float vTint; out float vFade; out float vLam;
 void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
@@ -555,9 +557,16 @@ void main(){
   p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
   p.y = terrain(root) + vT * h;
   vTint = aInst2.z;
+  // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
+  // roughly its own lean crossed with up, so a leaning blade catches
+  // a low sun on one side and goes dark on the other - which is what
+  // makes a dawn field glow along one edge.
+  vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
+  vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
-in float vT; in float vTint; in float vFade;
+in float vT; in float vTint; in float vFade; in float vLam;
+uniform vec3 uAmb, uSunCol; uniform float uDim;
 out vec4 o;
 void main(){
   // PROTO-2: the blade is LIT along its length - dark at the root
@@ -570,7 +579,12 @@ void main(){
   vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
   c = mix(c, tip, smoothstep(0.5,1.0,vT));
   c *= 0.80 + vTint*0.42;
-  c += vec3(0.10,0.12,0.05) * smoothstep(0.82,1.0,vT);   // the rim
+  // lit by the same sky and sun the ground is, so a blade at dusk is
+  // the colour of dusk and not a green cut-out on an orange field
+  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol * 1.15 * vLam);
+  c *= uDim;
+  // the rim is the SUN's colour, and only where the sun can reach
+  c += uSunCol * 0.30 * smoothstep(0.82,1.0,vT) * vLam;
   o = vec4(c, vFade);
 }`);
 
@@ -642,6 +656,146 @@ R('wx').addEventListener('change', (e) => {
   // snow lies on the ground, so the surface follows the sky
   if (state.weather === 'snow' && state.surface === 'grass') setSurface('snow');
 });
+
+// ── THE SKY (Mac: implement what is in-game and enhance it) ────────
+// The port's enhancedSky already carries the model: a nine-key
+// elevation ramp from midnight to noon (zenith, horizon, sun, glow,
+// glow amount, star amount), a weather hand on cover/grey/wind, two
+// moons, and a sun. Those numbers are lifted VERBATIM here so the lab
+// tunes the same thing the game draws - not a lookalike.
+//
+// What the lab ADDS, and why each:
+//   - a real DOME rather than a screen gradient, so the horizon bends
+//     with the view and the sun sits IN the sky instead of on it;
+//   - MIE FORWARD SCATTER around the sun, which is what makes a low
+//     sun bleed light across half the sky instead of being a disc
+//     with a halo;
+//   - a horizon HAZE band that thickens with the weather's grey;
+//   - CLOUDS as a two-layer warped fbm that drifts on the weather's
+//     own wind, lit from the sun's side and shaded away from it;
+//   - and the whole thing feeding the GROUND: the sky's own colour is
+//     what the ambient term uses, so dusk turns the grass warm and
+//     the fog turns it flat, without a second set of numbers.
+const SKY_KEYS = [
+  { elev: -90, zenith: [0x04,0x06,0x0d], horizon: [0x09,0x0c,0x16], glow: [0,0,0], glowAmount: 0.0, stars: 1.0 },
+  { elev: -18, zenith: [0x06,0x09,0x14], horizon: [0x0f,0x13,0x1f], glow: [0x1a,0x14,0x20], glowAmount: 0.0, stars: 1.0 },
+  { elev: -9,  zenith: [0x0c,0x13,0x30], horizon: [0x2b,0x22,0x38], glow: [0x6a,0x3a,0x3a], glowAmount: 0.30, stars: 0.85 },
+  { elev: -4,  zenith: [0x1a,0x2a,0x5a], horizon: [0x4e,0x42,0x58], glow: [0xd6,0x69,0x3a], glowAmount: 0.75, stars: 0.45 },
+  { elev: 0,   zenith: [0x2c,0x4d,0x8e], horizon: [0xc4,0xa4,0x9a], glow: [0xff,0x9a,0x4c], glowAmount: 1.00, stars: 0.10 },
+  { elev: 4,   zenith: [0x3a,0x68,0xb4], horizon: [0xd9,0xc6,0xb4], glow: [0xff,0xbd,0x7a], glowAmount: 0.60, stars: 0.0 },
+  { elev: 12,  zenith: [0x3f,0x77,0xcc], horizon: [0xc9,0xdc,0xf0], glow: [0xff,0xe1,0xb8], glowAmount: 0.28, stars: 0.0 },
+  { elev: 30,  zenith: [0x33,0x6b,0xc6], horizon: [0xb6,0xd0,0xec], glow: [0xff,0xf0,0xd8], glowAmount: 0.14, stars: 0.0 },
+  { elev: 90,  zenith: [0x2a,0x5a,0xb8], horizon: [0xa8,0xc8,0xea], glow: [0xff,0xff,0xff], glowAmount: 0.08, stars: 0.0 },
+];
+const WEATHER_SKY = {
+  sunny:    { cover: 0.32, soft: 0.34, grey: 0.00, lit: [0xf4,0xf6,0xfa], shade: [0x98,0xa4,0xb2], wind: [0.010, 0.004] },
+  cloudy:   { cover: 0.55, soft: 0.28, grey: 0.25, lit: [0xee,0xf1,0xf5], shade: [0x8a,0x95,0xa2], wind: [0.016, 0.006] },
+  overcast: { cover: 0.94, soft: 0.22, grey: 0.75, lit: [0xa5,0xad,0xb6], shade: [0x5f,0x68,0x73], wind: [0.014, 0.004] },
+  fog:      { cover: 0.98, soft: 0.30, grey: 0.85, lit: [0xae,0xb4,0xba], shade: [0x7c,0x83,0x8a], wind: [0.006, 0.002] },
+  rain:     { cover: 0.97, soft: 0.20, grey: 0.85, lit: [0x7f,0x88,0x90], shade: [0x44,0x4b,0x53], wind: [0.030, 0.010] },
+  snow:     { cover: 0.95, soft: 0.26, grey: 0.80, lit: [0xc3,0xc8,0xce], shade: [0x7f,0x87,0x8f], wind: [0.012, 0.004] },
+  thunder:  { cover: 1.00, soft: 0.18, grey: 0.95, lit: [0x5b,0x62,0x6b], shade: [0x26,0x2b,0x31], wind: [0.045, 0.016] },
+};
+const GREY_ZENITH = [0x66,0x70,0x7c], GREY_HORIZON = [0x9a,0xa3,0xac];
+/** paletteAt, verbatim from the game: linear between the two keys the
+ *  sun's elevation falls between. */
+function paletteAt(elevDeg) {
+  const K = SKY_KEYS;
+  const row = (k) => ({ zenith: k.zenith, horizon: k.horizon, glow: k.glow, glowAmount: k.glowAmount, stars: k.stars });
+  if (elevDeg <= K[0].elev) return row(K[0]);
+  for (let i = 1; i < K.length; i++) {
+    if (elevDeg <= K[i].elev) {
+      const a = K[i-1], b = K[i], t = (elevDeg - a.elev) / (b.elev - a.elev);
+      const m3 = (p, q) => p.map((v, j) => v + (q[j] - v) * t);
+      return { zenith: m3(a.zenith, b.zenith), horizon: m3(a.horizon, b.horizon), glow: m3(a.glow, b.glow),
+        glowAmount: a.glowAmount + (b.glowAmount - a.glowAmount) * t, stars: a.stars + (b.stars - a.stars) * t };
+    }
+  }
+  return row(K[K.length - 1]);
+}
+const skyProg = prog(HEAD + `
+layout(location=0) in vec2 aP;
+out vec3 vDir;
+uniform mat4 uInvVP;
+void main(){
+  vec4 f = uInvVP * vec4(aP, 1.0, 1.0);
+  vDir = normalize(f.xyz / f.w);
+  gl_Position = vec4(aP, 1.0, 1.0);
+}`, HEAD + `
+in vec3 vDir;
+uniform vec3 uZenith, uHorizon, uGlow, uSun, uLit, uShade;
+uniform float uGlowAmt, uStars, uCover, uSoft, uGrey, uTime;
+uniform vec2 uWind;
+out vec4 o;
+float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(h21(i),h21(i+vec2(1,0)),f.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x), f.y); }
+float fbm2(vec2 p){ float a=0.5,s=0.0; for(int i=0;i<5;i++){ s+=a*vn(p); p*=2.03; a*=0.5; } return s; }
+void main(){
+  vec3 d = normalize(vDir);
+  float up = clamp(d.y, -1.0, 1.0);
+  // the DOME: the ramp runs on the view's own elevation, so the
+  // horizon bends with the camera instead of sitting at a screen row
+  float t = pow(clamp(up, 0.0, 1.0), 0.42);
+  vec3 c = mix(uHorizon, uZenith, t);
+  // the horizon HAZE: a band that thickens with the weather's grey
+  c = mix(c, mix(uHorizon, vec3(0.72), uGrey*0.5), (1.0-smoothstep(0.0,0.34,up)) * (0.35 + uGrey*0.5));
+  // MIE forward scatter - a low sun bleeds across the sky, which one
+  // halo around a disc can never do
+  float cs = max(dot(d, normalize(uSun)), 0.0);
+  float mie = pow(cs, 7.0)*0.55 + pow(cs, 40.0)*0.45;
+  c += uGlow * (uGlowAmt * (0.30*mie + 0.20*pow(cs, 2.2)));
+  // stars, before the clouds so cloud hides them
+  if (uStars > 0.01 && up > -0.02) {
+    vec2 sp = d.xz / max(0.15, d.y + 0.4) * 9.0;
+    float st = h21(floor(sp*40.0));
+    float tw = 0.6 + 0.4*sin(uTime*2.1 + st*40.0);
+    c += vec3(0.85,0.88,1.0) * step(0.9965, st) * uStars * tw * 1.5;
+  }
+  // the sun itself, with a soft limb
+  float sd = acos(clamp(cs, -1.0, 1.0));
+  c = mix(c, vec3(1.0,0.96,0.88), (1.0 - smoothstep(0.028, 0.040, sd)) * step(0.0, uSun.y));
+  // CLOUDS: two warped layers on the weather's own wind, lit from the
+  // sun's side. Projected onto a plane above, so they converge at the
+  // horizon the way real cloud decks do.
+  if (up > 0.005) {
+    vec2 cp = d.xz / d.y * 0.42 + uWind * uTime * 4.0;
+    float w = fbm2(cp*0.7 + vec2(fbm2(cp*0.35), fbm2(cp*0.35+7.0))*1.1);
+    float w2 = fbm2(cp*1.9 - 3.0);
+    float dens = smoothstep(1.0-uCover-uSoft, 1.0-uCover+uSoft, w*0.72 + w2*0.28);
+    // the lit side: the gradient toward the sun, cheaply
+    float lit = clamp((w - fbm2(cp*0.7 + normalize(uSun.xz)*0.28))*6.0 + 0.5, 0.0, 1.0);
+    vec3 cc = mix(uShade, uLit, lit);
+    c = mix(c, cc, dens * smoothstep(0.005, 0.10, up));
+  }
+  // the weather's grey hand on the whole dome
+  c = mix(c, mix(vec3(0.60,0.63,0.67), vec3(0.40,0.44,0.49), t), uGrey*0.55);
+  o = vec4(c, 1.0);
+}`);
+const skyVao = gl.createVertexArray();
+gl.bindVertexArray(skyVao);
+{
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+}
+const inv4 = (m) => {
+  const a = m, o2 = new Float32Array(16);
+  const s0=a[0]*a[5]-a[1]*a[4], s1=a[0]*a[6]-a[2]*a[4], s2=a[0]*a[7]-a[3]*a[4],
+        s3=a[1]*a[6]-a[2]*a[5], s4=a[1]*a[7]-a[3]*a[5], s5=a[2]*a[7]-a[3]*a[6],
+        c5=a[10]*a[15]-a[11]*a[14], c4=a[9]*a[15]-a[11]*a[13], c3=a[9]*a[14]-a[10]*a[13],
+        c2=a[8]*a[15]-a[11]*a[12], c1=a[8]*a[14]-a[10]*a[12], c0=a[8]*a[13]-a[9]*a[12];
+  const det = s0*c5-s1*c4+s2*c3+s3*c2-s4*c1+s5*c0, id = 1/det;
+  o2[0]=(a[5]*c5-a[6]*c4+a[7]*c3)*id;  o2[1]=(-a[1]*c5+a[2]*c4-a[3]*c3)*id;
+  o2[2]=(a[13]*s5-a[14]*s4+a[15]*s3)*id; o2[3]=(-a[9]*s5+a[10]*s4-a[11]*s3)*id;
+  o2[4]=(-a[4]*c5+a[6]*c2-a[7]*c1)*id; o2[5]=(a[0]*c5-a[2]*c2+a[3]*c1)*id;
+  o2[6]=(-a[12]*s5+a[14]*s2-a[15]*s1)*id; o2[7]=(a[8]*s5-a[10]*s2+a[11]*s1)*id;
+  o2[8]=(a[4]*c4-a[5]*c2+a[7]*c0)*id;  o2[9]=(-a[0]*c4+a[1]*c2-a[3]*c0)*id;
+  o2[10]=(a[12]*s4-a[13]*s2+a[15]*s0)*id; o2[11]=(-a[8]*s4+a[9]*s2-a[11]*s0)*id;
+  o2[12]=(-a[4]*c3+a[5]*c1-a[6]*c0)*id; o2[13]=(a[0]*c3-a[1]*c1+a[2]*c0)*id;
+  o2[14]=(-a[12]*s3+a[13]*s1-a[14]*s0)*id; o2[15]=(a[8]*s3-a[9]*s1+a[10]*s0)*id;
+  return o2;
+};
 
 // ── WEATHER (Mac: overhauled weather effects, in the same lab) ─────
 // The port's sim already carries Daggerfall's seven states - sunny,
@@ -786,6 +940,19 @@ function frame(now) {
   const h = cv.height = cv.clientHeight * devicePixelRatio | 0;
   gl.viewport(0, 0, w, h);
   const wx = WX[state.weather] || WX.sunny;
+  const wsky = WEATHER_SKY[state.weather] || WEATHER_SKY.sunny;
+  // the sun's ELEVATION is the time of day, and it drives everything:
+  // the sky ramp, the ground's light, and the blades' own colour
+  const elev = state.sun;
+  const pal = paletteAt(elev);
+  const skyAmb = [
+    (pal.zenith[0] * 0.55 + pal.horizon[0] * 0.45) / 255,
+    (pal.zenith[1] * 0.55 + pal.horizon[1] * 0.45) / 255,
+    (pal.zenith[2] * 0.55 + pal.horizon[2] * 0.45) / 255,
+  ].map((v) => v * (1 - wsky.grey * 0.35) + wsky.grey * 0.30);
+  // the SUN's own light colour, warm at the horizon and white at noon
+  const sunCol = [pal.glow[0] / 255, pal.glow[1] / 255, pal.glow[2] / 255];
+  const sunUp = Math.max(0, Math.sin(elev * Math.PI / 180));
   // thunder flashes: a rare, brief, near-white sky, and the ground
   // takes it too - a flash that only lights the sky is a wallpaper
   const flash = state.weather === 'thunder'
@@ -795,10 +962,31 @@ function frame(now) {
   gl.enable(gl.DEPTH_TEST);
 
   const sa = state.sun * Math.PI / 180;
-  const sun = [Math.cos(sa) * 0.75, Math.max(0.12, Math.sin(sa)), 0.35];
+  const sun = [Math.cos(sa) * 0.92, Math.sin(sa), 0.30];
   const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
   const dir = [-Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), -Math.cos(cam.yaw) * Math.cos(cam.pitch)];
   const vp = mul(persp(1.05, w / h, 0.1, 600), look(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]], [0, 1, 0]));
+
+  // THE SKY, first and depth-less: it is the backdrop everything else
+  // stands in front of.
+  gl.useProgram(skyProg);
+  gl.depthMask(false);
+  gl.uniformMatrix4fv(gl.getUniformLocation(skyProg, 'uInvVP'), false, inv4(vp));
+  const u3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
+  u3('uZenith', pal.zenith.map((v) => v / 255));
+  u3('uHorizon', pal.horizon.map((v) => v / 255));
+  u3('uGlow', pal.glow.map((v) => v / 255));
+  u3('uSun', sun);
+  u3('uLit', wsky.lit.map((v) => v / 255));
+  u3('uShade', wsky.shade.map((v) => v / 255));
+  const u1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), v);
+  u1('uGlowAmt', pal.glowAmount); u1('uStars', pal.stars);
+  u1('uCover', wsky.cover); u1('uSoft', wsky.soft); u1('uGrey', wsky.grey + flash * 0.4);
+  u1('uTime', now / 1000);
+  gl.uniform2fv(gl.getUniformLocation(skyProg, 'uWind'), new Float32Array(wsky.wind));
+  gl.bindVertexArray(skyVao);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.depthMask(true);
 
   gl.useProgram(groundProg);
   gl.uniformMatrix4fv(gl.getUniformLocation(groundProg, 'uVP'), false, vp);
@@ -810,6 +998,8 @@ function frame(now) {
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uFog'), wx.fog);
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uWet'), wx.wet);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), new Float32Array(sky));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uAmb'), new Float32Array(skyAmb));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSunCol'), new Float32Array(sunCol));
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, groundTex);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uTex'), 0);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, groundNrm);
@@ -828,6 +1018,10 @@ function frame(now) {
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uWind'), state.wind);
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uRange'), state.range);
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uEye'), eye);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunDir'), sun);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), new Float32Array(skyAmb));
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), new Float32Array(sunCol));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uDim'), wx.dim + flash * 0.5);
     gl.bindVertexArray(gr.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
     gl.disable(gl.BLEND);
