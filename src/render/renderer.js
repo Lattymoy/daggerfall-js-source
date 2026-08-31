@@ -668,14 +668,14 @@ export class Renderer {
     {
       // Shared unit XZ quad for water planes.
       this.waterVao = gl.createVertexArray();
-      gl.bindVertexArray(this.waterVao);
+      this._bindVao(this.waterVao);
       const vb = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vb);
       gl.bufferData(gl.ARRAY_BUFFER,
         new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);
       gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
     }
     this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
     this.bbUView = gl.getUniformLocation(this.bbProgram, 'uView');
@@ -707,6 +707,47 @@ export class Renderer {
     // hard way (the sky-blue-screen regression; tools/cullProbe.mjs).
     gl.frontFace(gl.CW);
     gl.clearColor(0.53, 0.7, 0.92, 1.0); // pale Iliac Bay sky
+    // EV6: the JS shadow of that clear colour - the sprite pass used
+    // to gl.getParameter(COLOR_CLEAR_VALUE) it back, a synchronous
+    // driver query per sprite frame (the class EV2 killed in
+    // precipitation). Every borrower restores what it took, so the
+    // shadow stays true.
+    this._clearColor = new Float32Array([0.53, 0.7, 0.92, 1.0]);
+    // EV6: GL STATE SHADOWS. Every program bind and VAO bind in this
+    // file funnels through _use/_bindVao, which skip the call when the
+    // shadow says it is already bound - a city frame ran ~1045
+    // useProgram calls for a handful of distinct programs. The shadows
+    // reset at beginFrame and at markForeignPass (the three passes
+    // that change programs behind the renderer's back: both skies and
+    // precipitation - the R9 law's other half: an entry point may only
+    // trust a binding it can account for).
+    this._lastProgram = null;
+    this._lastVao = null;
+  }
+
+  /** EV6: bind `program` unless the shadow says it already is. */
+  _use(program) {
+    if (this._lastProgram === program) return;
+    this.gl.useProgram(program);
+    this._lastProgram = program;
+    this.stats.programBinds++;
+  }
+
+  /** EV6: bind `vao` (or null) unless the shadow says it already is. */
+  _bindVao(vao) {
+    if (this._lastVao === vao) return;
+    this.gl.bindVertexArray(vao);
+    this._lastVao = vao;
+    if (vao) this.stats.vaoBinds++;
+  }
+
+  /** EV6: a pass outside this renderer (the skies, precipitation) has
+   *  changed program/VAO state behind the shadows' back - forget them
+   *  and unbind the VAO for real, so the next entry point rebinds. */
+  markForeignPass() {
+    this.gl.bindVertexArray(null);
+    this._lastProgram = null;
+    this._lastVao = null;
   }
 
   _buildProgram(vsSrc, fsSrc) {
@@ -744,7 +785,7 @@ export class Renderer {
     const uv = !!opts.uv;
     const floats = uv ? 11 : 9;
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
     const vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferData(gl.ARRAY_BUFFER, packed, gl.STATIC_DRAW);
@@ -759,7 +800,7 @@ export class Renderer {
       gl.enableVertexAttribArray(3);
       gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);
     }
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats };
   }
 
@@ -808,7 +849,7 @@ export class Renderer {
   drawCharacter(mesh, modelMatrix) {
     const gl = this.gl;
     const c = this._char;
-    gl.useProgram(this.charProgram);
+    this._use(this.charProgram);
     gl.uniformMatrix4fv(c.proj, false, this._proj);
     gl.uniformMatrix4fv(c.view, false, this._view);
     gl.uniformMatrix4fv(c.model, false, modelMatrix);
@@ -827,7 +868,7 @@ export class Renderer {
     gl.uniform3fv(c.indirectColor, this._indirectColor);
     this._uploadFog(this._charFog);
     gl.disable(gl.CULL_FACE);
-    gl.bindVertexArray(mesh.vao);
+    this._bindVao(mesh.vao);
     // MW-D11: a textured mesh carries RANGES - one per piece, each with
     // its own texture - because a Morrowind arm is several meshes with
     // several textures and this path issues drawArrays. Without ranges
@@ -860,7 +901,7 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.enable(gl.CULL_FACE);
   }
 
@@ -917,11 +958,18 @@ export class Renderer {
     // GL state, and beginFrame (:1104) clears without setting one - so
     // leaving this transparent black behind repainted EVERY later
     // frame's uncovered pixels, visible before the sky panorama loads
-    // and in skyless scenes. Same save/restore the automap preview
-    // has used since its own pass (worldModes.js:1463/:1476).
-    const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);
+    // and in skyless scenes.
+    // EV6: the restore now reads the JS shadow (_clearColor, kept true
+    // by the constructor and every borrower) instead of a synchronous
+    // gl.getParameter round-trip per sprite frame; and the clear is
+    // SCISSORED to the sprite's own pw x ph corner instead of wiping
+    // the full 512x512 target - the quad only ever samples that
+    // corner.
     gl.clearColor(0, 0, 0, 0);
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(0, 0, pw, ph);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.disable(gl.SCISSOR_TEST);
     gl.viewport(0, 0, pw, ph);
     const sp = this._proj, sv = this._view;
     this._proj = proj; this._view = view;
@@ -929,7 +977,8 @@ export class Renderer {
     this._proj = sp; this._view = sv;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);
+    const cc = this._clearColor;
+    gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
     return cs.tex;
   }
 
@@ -1026,7 +1075,7 @@ void main() {
         camPos: gl.getUniformLocation(P, 'uCamPos'),
       };
       const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
+      this._bindVao(vao);
       const vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 5 * 4, gl.DYNAMIC_DRAW);
@@ -1034,7 +1083,7 @@ void main() {
       gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
       gl.enableVertexAttribArray(1);
       gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
       this._charQuadVAO = vao; this._charQuadVBO = vbo;
     }
     const [cx, cy, cz] = center, [rx, , rz] = right;
@@ -1044,7 +1093,7 @@ void main() {
       cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
       cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
     ]);
-    gl.useProgram(this.charQuadProgram);
+    this._use(this.charQuadProgram);
     const c = this._charQuad;
     gl.uniformMatrix4fv(c.proj, false, this._proj);
     gl.uniformMatrix4fv(c.view, false, this._view);
@@ -1052,13 +1101,13 @@ void main() {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(c.tex, 0);
     this._uploadFog(this._charQuad);
-    gl.bindVertexArray(this._charQuadVAO);
+    this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
     gl.disable(gl.CULL_FACE);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     gl.enable(gl.CULL_FACE);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
   }
 
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
@@ -1142,7 +1191,7 @@ void main() {
         color: gl.getUniformLocation(this.screenQuadProgram, 'uColor'),
       };
       const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
+      this._bindVao(vao);
       const vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
@@ -1151,11 +1200,11 @@ void main() {
       const ibo = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
       this._screenQuadVao = vao;
     }
-    gl.useProgram(this.screenQuadProgram);
-    gl.bindVertexArray(this._screenQuadVao);
+    this._use(this.screenQuadProgram);
+    this._bindVao(this._screenQuadVao);
     gl.disable(gl.DEPTH_TEST);
     // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
     // blit has no facing, but with CULL_FACE left ON the global
@@ -1187,7 +1236,7 @@ void main() {
     if (blend) gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
   }
 
     drawScreenOverlayQuad(tex, u1, v1) {
@@ -1210,25 +1259,25 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         uv1: gl.getUniformLocation(this.overlayProgram, 'uUV1'),
       };
       const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
+      this._bindVao(vao);
       const vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);
       gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
       this._overlayVAO = vao;
     }
-    gl.useProgram(this.overlayProgram);
+    this._use(this.overlayProgram);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(this._overlay.tex, 0);
     gl.uniform2f(this._overlay.uv1, u1, v1);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
-    gl.bindVertexArray(this._overlayVAO);
+    this._bindVao(this._overlayVAO);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
   }
@@ -1303,7 +1352,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   createMesh(model) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
 
     const buffers = [];
     const buf = (target, data) => {
@@ -1324,13 +1373,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
     buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
 
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     return { vao, subMeshes: model.subMeshes, buffers };
   }
 
   beginFrame(proj, view, lightDir) {
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
+    // EV6: the shadows reset with the counters - whatever ran between
+    // frames (UI passes, another context's work) is not trusted.
+    this._lastProgram = null;
+    this._lastVao = null;
     const gl = this.gl;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
@@ -1340,7 +1393,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(this.program);
+    this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uLightDir, lightDir);
@@ -1427,7 +1480,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._clipY = y ?? 1e9;
     if (this._solidFog?.clipY) {
       const gl = this.gl;
-      gl.useProgram(this.program);
+      this._use(this.program);
       gl.uniform1f(this._solidFog.clipY, this._clipY);
     }
   }
@@ -1441,7 +1494,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._automapMode = m ?? 0;
     if (this._solidFog?.amMode) {
       const gl = this.gl;
-      gl.useProgram(this.program);
+      this._use(this.program);
       gl.uniform1f(this._solidFog.amMode, this._automapMode);
     }
   }
@@ -1537,7 +1590,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
 
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
     const vb = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vb);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
@@ -1548,7 +1601,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const ib = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
 
     // FA1: `frame` is null for a still flat and a frame INDEX for an
     // animated one, which the draw folds into the texture key. Still
@@ -1587,6 +1640,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     let entry = this._terrainIndexSets.get(indices);
     if (entry) return entry;
     const gl = this.gl;
+    // EV6: this element bind happens OUTSIDE any VAO of its own, and a
+    // drawn VAO may still be bound (drawMesh no longer unbinds) - an
+    // unguarded bind here would capture this buffer into that VAO.
+    this._bindVao(null);
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
@@ -1601,7 +1658,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     const indexSet = this._terrainIndices(indices);
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
     const buffers = [];
     const buf = (data, loc) => {
       const b = gl.createBuffer();
@@ -1615,7 +1672,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     buf(positions, 0);
     buf(normals, 1);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexSet.buffer);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     return { vao, buffers, indexCount: indexSet.count };
   }
 
@@ -1659,7 +1716,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Draw one terrain surface with its tilemap + tile array. */
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
-    gl.useProgram(this.terrainProgram);
+    this._use(this.terrainProgram);
     gl.uniformMatrix4fv(this.tUProj, false, this._proj);
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
@@ -1685,9 +1742,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(this.tUTilemap, 2);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindVertexArray(surface.vao);
+    this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
   }
 
   /**
@@ -1699,7 +1756,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawWater(quads, color, waterTex, scrollTiles = 0) {
     if (!quads.length) return;
     const gl = this.gl;
-    gl.useProgram(this.waterProgram);
+    this._use(this.waterProgram);
     gl.uniformMatrix4fv(this.waterUProj, false, this._proj);
     gl.uniformMatrix4fv(this.waterUView, false, this._view);
     gl.uniform4fv(this.waterUColor, color);
@@ -1712,12 +1769,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
-    gl.bindVertexArray(this.waterVao);
+    this._bindVao(this.waterVao);
     for (const q of quads) {
       gl.uniform4f(this.waterURect, q.x, q.z, q.size, q.y);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
@@ -1726,7 +1783,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
     const gl = this.gl;
-    gl.useProgram(this.bbProgram);
+    this._use(this.bbProgram);
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
     gl.uniformMatrix4fv(this.bbUView, false, this._view);
     gl.uniform3fv(this.bbURight, camRight);
@@ -1775,7 +1832,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
       const o = b.origin || ZERO_ORIGIN;
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
-      gl.bindVertexArray(b.vao);
+      this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
     };
     gl.uniform1i(this.bbUSpectral, 0);
@@ -1792,9 +1849,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.disable(gl.BLEND);
     }
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.enable(gl.CULL_FACE);
-    gl.useProgram(this.program);
+    this._use(this.program);
   }
 
   /** Draw one placed mesh: bind per-submesh texture, indexed draw per range. */
@@ -1842,11 +1899,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // drawBillboards / drawWater already do) - R9 interleaved terrain
     // draws before the model loop, which silently ran meshes on the
     // terrain program and vanished every building (caught by Mac).
-    gl.useProgram(this.program);
-    this.stats.programBinds++;
+    // EV6: ownership now flows through the _use shadow - the bind is
+    // still this call's to account for, it just costs nothing when the
+    // program is already bound.
+    this._use(this.program);
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
-    gl.bindVertexArray(mesh.vao);
-    this.stats.vaoBinds++;
+    this._bindVao(mesh.vao);
     for (const sm of mesh.subMeshes) {
       // EV2: the resolved textures cache on the sub-mesh, stamped with
       // the texture generation and the remap's identity. The old body
@@ -1878,6 +1936,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
       this.stats.draws++;
     }
-    gl.bindVertexArray(null);
+    // EV6: no trailing unbind - the sorted drawLists mean the next
+    // drawMesh is very often the SAME mesh, and the shadow then skips
+    // the whole bind. Everything that binds a VAO or an element buffer
+    // in this file goes through _bindVao (or binds its own fresh VAO
+    // first), so nothing can capture state into the one left bound.
   }
 }

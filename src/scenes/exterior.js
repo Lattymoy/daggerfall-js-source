@@ -314,7 +314,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
       const cpu = cpuModels.get(placed.modelIdNum);
-      drawList.push({ mesh, matrix, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) });   // EV3
+      drawList.push({ mesh, matrix, order: placed.modelIdNum, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) });   // EV3; EV6: sort key
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
       // Building models expose their static doors for E-transitions
@@ -345,7 +345,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // gates the tower row and the rotor draw below.
         const box = transformedAabb(archAabb('millBody', BODY.positions), matrix);
         for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
-        drawList.push({ mesh: millParts.body, matrix, box });
+        drawList.push({ mesh: millParts.body, matrix, order: -1, box });   // EV6: the mills group together
         collider.addMesh('world', BODY.positions, BODY.indices, matrix);
         windmills.push({
           matrix, box,
@@ -406,6 +406,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
     }
   }
+  // EV6: the draw list sorts by MESH at build, so the frame's draws of
+  // one archetype run back to back and the renderer's VAO shadow skips
+  // the rebind. Opaque geometry under a depth test - order costs
+  // nothing visually.
+  drawList.sort((a, b) => a.order - b.order);
 
   // R9 ground GL: cached tile array per archive, the location tilemap,
   // and a flat 2x2 surface at GroundOffset spanning the exact extent
@@ -1863,6 +1868,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const horiz = Math.hypot(dx, dz) || 1e-6;
       sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(),
         canvas.clientWidth / canvas.clientHeight);
+      renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
@@ -2014,6 +2020,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
+      renderer.markForeignPass();   // EV6: so did the rain
     }
     // C9: the exterior FP weapon (first-person walk only - the V
     // third-person view has no FP overlay). Same residuals as the

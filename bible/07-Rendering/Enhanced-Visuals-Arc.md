@@ -284,3 +284,32 @@ switch. moonlight.test.js pins the fraction table, the formula
 against the state's own numbers, the day/new-moon/cloud gates, the
 in-place fold, and the wiring shape; the moonlit picture is owed to
 a data-bearing session (?tod= at night, phases from the calendar).
+
+EV6 (2026-08-31): GL STATE SHADOWING + THE SPRITE RT. The frame ran
+~1045 useProgram calls and as many VAO binds for a handful of
+distinct programs. Now every program/VAO bind in renderer.js funnels
+through _use/_bindVao, which skip the call when the shadow says it is
+already bound; drawMesh no longer unbinds its VAO, and both exterior
+hosts SORT their draw lists by mesh at build (exterior's drawList by
+modelIdNum, the streamed pixels' models likewise), so one archetype's
+placements draw back to back and the shadow makes the repeats free.
+The shadows reset at beginFrame and at markForeignPass - the R9 law's
+other half: an entry point may only trust a binding it can account
+for, and three passes change programs behind the renderer's back.
+Those three (both skies and precipitation) now all follow the same
+law: the skies' getParameter(CURRENT_PROGRAM) save/restore is RETIRED
+(two synchronous driver queries per frame gone - the class EV2 killed
+in precipitation) and the hosts mark the seam after each. The one
+element-buffer upload that owns no VAO (_terrainIndices) unbinds
+first, or it would capture its buffer into whatever drawMesh left
+bound. THE SPRITE RT: the borrow-and-return of the clear colour (the
+F034 law) now restores from a JS shadow (_clearColor) instead of a
+getParameter(COLOR_CLEAR_VALUE) round-trip per sprite frame, and the
+clear is SCISSORED to the sprite's own pw x ph corner instead of
+wiping the full 512x512 target; the F034 pin moved with the
+mechanism, the law intact. glstate.test.js pins the collapse against
+a COUNTING Proxy-GL stub (three same-mesh draws = zero useProgram,
+one VAO bind, stats agreeing) and the funnel/seam/sort shapes as
+source pins. The arc's recorded slices are now ALL SHIPPED; the
+measured frame numbers in a live city (stats before/after) are owed
+to a data-bearing session, as is every moving picture above.
