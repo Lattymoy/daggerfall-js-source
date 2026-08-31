@@ -299,8 +299,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1047` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:2260` - landing stands in for it - FLAGGED for the first session with
 - `src/scenes/world.js:3276` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:4071` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:5145` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:4079` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:5153` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1198` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1213` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1422` - is the quest machine's, FLAGGED with it.

@@ -172,7 +172,7 @@ import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/t
 import { NPCSession } from '../systems/npcSession.js';
 import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
-import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
+import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
 import { OATH_RACE_INDEX } from '../systems/talkSession.js';
 import { bumpSeed } from '../formats/dfRandom.js';
@@ -3766,6 +3766,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     isPlayerInsideDungeon: () => (modes?.mode ?? 'exterior') === 'dungeon',
     currentLocationName: () => _questLoc()?.name ?? '',
     currentRegionName: () => questWorld.currentRegionName(),
+    // AUDIT-UI: GetAnswerWhereAmI's DUNGEON arm (TalkManager :1537-1541)
+    // asks the dungeon for its special name and its region. Neither
+    // hook was ever supplied, so "Where am I?" underground formatted
+    // with two empty strings. Both are the CURRENT location's, which
+    // is what Dungeon.Summary carries.
+    specialDungeonName: () => specialDungeonName(
+      questWorld.currentRegionName(), _questLoc()?.name ?? '', (id) => townTalk.lines(id)?.[0] ?? null),
+    dungeonRegionName: () => questWorld.currentRegionName(),
     currentRegion: () => null,          // the region walk rides the automap slice
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
