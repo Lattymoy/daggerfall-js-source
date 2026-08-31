@@ -1305,3 +1305,30 @@ test('the ARMOUR split: shields come with it, an enchanted piece is still Magic,
   assert.equal(seen.length, new Set(seen).size, 'no item on two pages');
   assert.equal(seen.length, bag.length - 1, 'every unworn item has a page');
 });
+
+test('the dock tiles on GRID TRACKS, at a specificity that actually applies', () => {
+  const css = readFileSync(new URL('../src/ui/enhancedStyle.js', import.meta.url), 'utf8');
+  // The rule that lays the tiles out, and the one it has to beat.
+  assert.match(css, /\.pack-shell \.pack-dock \.packcol \{ padding: 8px 10px; display: flex; flex-wrap: wrap;/,
+    'the flex-wrap rule this has to out-specify');
+  assert.match(css, /\.pack-shell \.pack-dock \.packcol\.packgrid \{ display: grid; align-content: start;/);
+  assert.match(css, /grid-template-columns: repeat\(auto-fill, minmax\(56px, 1fr\)\);/,
+    'the tile keeps its own 56px as the MINIMUM, and the leftover width goes to the tracks');
+  // THE FIRST ATTEMPT FAILED ON SPECIFICITY, so pin it: the grid
+  // selector must carry .pack-shell AND .pack-dock, or it loses to the
+  // flex rule and the tiles fall back to content-sized flex items and
+  // spill - which is what "overlapped" meant.
+  const grid = css.slice(css.indexOf('.packcol.packgrid { display: grid'));
+  assert.ok(css.includes('.pack-shell .pack-dock .packcol.packgrid'),
+    'the grid rule must out-specify .pack-shell .pack-dock .packcol');
+  assert.doesNotMatch(css, /\n\.packcol\.packgrid \{/, 'a bare .packcol.packgrid would never apply in the shell');
+  // A tile fills its track and stays square, so it cannot exceed the
+  // column it was given.
+  assert.match(css, /\.pack-shell \.pack-dock \.packcol\.packgrid \.itemrow \{ width: auto; height: auto;\s*\n\s*aspect-ratio: 1; min-width: 0; \}/);
+  assert.ok(grid.length > 0);
+  // And the switch, so the previous layout is one reload away.
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8');
+  assert.match(src, /export function packGrid\(\)/);
+  assert.match(src, /if \(q === '0' \|\| q === 'false'\) return false;/);
+  assert.match(src, /el\('section', `packcol\$\{packGrid\(\) \? ' packgrid' : ''\}`\)/);
+});

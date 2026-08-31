@@ -8598,9 +8598,17 @@ absolutely-positioned name strip spilled. Then it was "fixed" twice by
 making things smaller - treating a cascade bug as a sizing problem,
 which is why neither pass helped.
 
-**Before any second attempt, the question to settle is what is wrong
-with the grid that exists** - it is 56px squares, wrapping, counts in
-the corner. Not whether to build one.
+**THE SECOND ATTEMPT, and it is small.** The tiles already existed; what
+they lacked was TRACKS. Flex-wrap packs them left and leaves whatever
+does not divide evenly as a ragged gutter on the right; CSS Grid with
+auto-fill + minmax(56px, 1fr) keeps the tile's own 56px as the minimum
+and spends the remainder on the columns, so rows and columns line up and
+the last column reaches the edge. A tile fills its track with
+aspect-ratio 1, so it cannot exceed the column it was given.
+
+The whole fix is two rules and one class, at a selector that carries
+.pack-shell AND .pack-dock - because the first attempt's failure was
+never layout, it was the cascade. `?packgrid=0` returns the flex-wrap.
 
 **The findings worth keeping** (they cost nothing to re-derive but are
 easy to miss): a shield IS group Armor in Daggerfall - Buckler 109,

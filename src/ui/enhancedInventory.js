@@ -1206,8 +1206,21 @@ function catsCol() {
   return col;
 }
 
+/** The dock's tile layout. Grid by default; `?packgrid=0` returns the
+ *  flex-wrap it replaced. */
+export function packGrid() {
+  try {
+    const q = new URLSearchParams(location.search).get('packgrid');
+    if (q === '0' || q === 'false') return false;
+  } catch { /* no location (tests, workers) - fall through */ }
+  return true;
+}
+
 function listCol() {
-  const col = el('section', 'packcol');
+  // The dock's tiles on real grid tracks (see enhancedStyle's
+  // .packcol.packgrid). `?packgrid=0` puts the flex-wrap back without
+  // a rebuild, so the previous layout is one reload away.
+  const col = el('section', `packcol${packGrid() ? ' packgrid' : ''}`);
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
     col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
