@@ -6092,3 +6092,14 @@ owner to look-lag and persisted it - overriding every later default
 and making three rounds of fixes look unshipped. The storage key is
 bumped (dagger.mwArmsFollowCamera2 - the v1 value is abandoned), the
 button names the ACTION, and the current mode sits on the stats block.
+
+IG6c - ZERO IN, ZERO OUT. The field still held "not screen fixed"
+past the key bump, and the remaining suspect class is one this bench
+cannot clear: the glue relied on the neck rotation and the lens
+rotation CANCELLING, and the neck half runs on the retail skeleton's
+own bones - fixtures prove the arithmetic, not the retail graph. So
+fixed mode no longer cancels anything: the look is NOT AN INPUT to the
+arms pass at all (neckPitch 0, lens pitch 0), and a picture whose
+inputs do not include the look cannot move with it, on any data, by
+construction. The reference's law path is untouched and still measured
+by the probe's law layers.

@@ -222,8 +222,10 @@ test('MW-D10: the neck takes 0.75 of the look, and the port pitches the OTHER WA
   // DOUBLES the loss - measured, a 0.25 look-up put every vertex out of
   // frame instead of sliding them a tenth of the way down it.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /neckPitch: cam \? -\(cam\.pitch \|\| 0\) : 0,/,
-    'the port\'s upward pitch is negated into Morrowind\'s downward one');
+  // IG6c narrowed the sign law to the LAW path: fixed mode feeds the
+  // neck ZERO because the look is not an input to that pass at all.
+  assert.match(src, /neckPitch: \(followCam \|\| !cam\) \? 0 : -\(cam\.pitch \|\| 0\),/,
+    'the port\'s upward pitch is negated into Morrowind\'s downward one - law mode only');
 });
 
 test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no invented scale', () => {
@@ -2538,11 +2540,15 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
     'fixed arms hold aim 1 in the POSE; the law path still passes the decaying state');
   assert.match(arm, /if \(followCam\) \{ fpOffset\[0\] = 0; fpOffset\[1\] = 0; fpOffset\[2\] = 0; return null; \}/,
     'and the offset zeroes at its ONE source, upstream of both applications');
-  // The lens half: the WHOLE look, one line, no mode branch - the glue
-  // is the invariance of neck-at-1 under a fully rotating lens. The
-  // IG5 tilt machinery must stay gone (its direction inverted on the
-  // played screen); a re-appearing lens factor is a regression.
-  assert.match(arm, /const pitch = cam\.pitch \|\| 0;/, 'the lens takes the whole look in both modes');
+  // IG6c: THE LOOK IS NOT AN INPUT to the fixed pass - not at the neck
+  // (the ternary above) and not at the lens. The rotate-and-cancel glue
+  // this replaces was exact on the fixtures and STILL moved on retail
+  // data: a cancellation is only as good as both halves, and the retail
+  // skeleton's half is one this bench cannot verify. Zero in, zero out
+  // cannot move, by construction, on any data. The IG5 tilt machinery
+  // must also stay gone.
+  assert.match(arm, /const pitch = followCam \? 0 : \(cam\.pitch \|\| 0\);/,
+    'the lens pitches only on the law path');
   assert.ok(!/FOLLOW_LENS_FACTOR|FOLLOW_TILT_MAX/.test(arm), 'the tilt constants are gone');
   // The toggle is live and persistent - the pause card flips it.
   const inst = createFpArm();
