@@ -54,6 +54,10 @@ test('AUDIT 28 W9: a hit starts the sway on a unit axis; the timer falls at 2*PI
   const scalar = recoilRotationScalar(3, 10, r.timer, r.timerStart);
   const xAngle = Math.sin(r.timer) * scalar;
   assert.ok(near(cam.pitch, 0.2 - xAngle * DEG), 'Rotate(+x) pitches DOWN: the port subtracts from +pitch-is-up');
+  // And it is an offset: the NEXT frame's rotation replaces it rather than stacking on it.
+  r.update(dt, cam, { healthLost: 0, setting: 3 });
+  const s2 = recoilRotationScalar(3, 0, r.timer, r.timerStart);
+  assert.ok(near(cam.pitch, 0.2 - Math.sin(r.timer) * s2 * DEG), 'this frame\'s offset alone');
   assert.ok(near(cam.yaw, 1), 'axis (1,0) leaves yaw alone');
   // The following frames: healthLost 0 -> the factor is its floor, and the scalar decays with the timer.
   let n = 0;
@@ -61,8 +65,12 @@ test('AUDIT 28 W9: a hit starts the sway on a unit axis; the timer falls at 2*PI
   assert.equal(r.swaying, false);
   assert.ok(r.timer <= 0);
   assert.ok(n >= 148 && n <= 152, `5*PI at 2*PI/s is 2.5 s = 150 frames, took ${n}`);
-  // The camera does NOT return exactly to rest: Rotate accumulates.
-  assert.notEqual(cam.pitch, 0.2);
+  // F-D1 (self-audit 4): PlayerMouseLook overwrites the camera's local
+  // euler angles every Update (:257), so Rotate is a per-frame OFFSET -
+  // when the sway ends the view is EXACTLY the mouselook's again. The
+  // first cut accumulated it and its pin said so.
+  r.update(dt, cam, { setting: 3 });
+  assert.ok(near(cam.pitch, 0.2) && near(cam.yaw, 1), 'back to the mouselook heading');
   // rolls 0.25 -> axis (0, 1): pure yaw, turning right for a positive sin.
   const q = new CameraRecoiler(); const c2 = { yaw: 0, pitch: 0 };
   q.update(dt, c2, { healthLost: 10, healthLostPercent: 0.1, setting: 3, rolls: () => 0.25 });

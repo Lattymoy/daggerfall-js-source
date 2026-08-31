@@ -396,8 +396,9 @@ camera reels on every hit above 2% of max health, and the port's never
 did. `player/cameraRecoiler.js` is the class whole - the timer of
 (5 + floor(pct*5))*PI falling at 2*PI/s, the rotation scalar dying with
 it, the random unit axis, the ADDITIVE rotate on the camera (x pitches
-down in Unity's frame, y turns right) - driven by the same per-frame
-HealthLost the near-death flicker reads. Three hosts run it after the
+down in Unity's frame, y turns right) - a PER-FRAME OFFSET on the look (self-audit 4 corrected the first cut,
+which accumulated) - driven by the same per-frame HealthLost the
+near-death flicker reads. Three hosts run it after the
 look on the same paused gate; interior.js is a fly camera with no
 entity and has nothing to reel from. Unity's `insideUnitCircle` is
 `rolls` (Ledger A). 5 pins; 5 mutants, 5 killed.
@@ -434,6 +435,33 @@ tracked, bows exempt. Both keys LIVE with screen rows.
 `Controls/WeaponSensitivity` is REFUTED as a consumer: SettingsManager
 :535 and WeaponManager :196 both have it commented out - DFU reads it
 nowhere. It stays stored, and this is why.
+
+## SELF-AUDIT 4 (2026-08-30, Mac: "a comprehensive audit on everything so far", the fourth)
+
+W8-W11 re-read against the C#; the LIVE (72 keys) and dead-export
+sweeps clean. One finding, fixed here, and a correction to the record:
+
+- **F-D1** the camera recoil ACCUMULATED. `CameraRecoiler` calls
+  `Transform.Rotate` on the camera, and I wrote it as an additive step
+  on cam.pitch/cam.yaw, with a pin asserting the view "does not return
+  exactly to rest, as DFU's doesn't". PlayerMouseLook.cs:257-263 says
+  otherwise: it OVERWRITES the camera's localEulerAngles every Update,
+  so the reel is a per-frame offset on the look - the same shape the
+  head bobber's nod was given a wave later, and the same reasoning
+  should have been applied to the recoiler. The view returns exactly to
+  the mouselook heading when the sway ends. Fixed and re-pinned; the W9
+  record below is corrected.
+- **Verified sound** with the frame-order caveat recorded: the bobber
+  and recoiler read the motor's previous-frame moveSpeed/HealthLost
+  (the camera block runs at the top of the frame, the motor later);
+  DFU's own Update/FixedUpdate ordering between those MonoBehaviours is
+  no tighter. The axes keep accumulating under paralysis while the motor
+  ignores them, as InputManager does under FrictionMotor's cancel.
+- **Also verified:** the swing-mode fork's click edge, hold re-attack
+  and six-direction range against :316-350; the `gesture` signature's
+  fifth-arg callers; the trail pins' explicit field constant.
+
+1 mutant (accumulation), killed.
 
 ### Refuted on the way
 

@@ -11,9 +11,14 @@
 // (it dies out), times clamp(healthLost * 0.015, 0.015, 1) - read off
 // the detector's HealthLost THIS frame, which is 0 on every frame but
 // the hit's, so after the first frame the factor is its floor 0.015.
-// Transform.Rotate is additive on the camera, so the port adds to
-// cam.pitch/cam.yaw the same way - x is pitch DOWN in Unity's frame, y
-// is yaw right, both converted from degrees.
+// Transform.Rotate is applied to the camera transform whose local
+// euler angles PlayerMouseLook OVERWRITES every Update
+// (PlayerMouseLook.cs:257-263: localEulerAngles = (Pitch, 0, 0)), so the
+// reel is a PER-FRAME OFFSET on the look, never an accumulation - the
+// view returns exactly to the mouselook's heading when the sway ends.
+// The port removes last frame's applied rotation before applying this
+// frame's (F-D1, self-audit 4: the first cut accumulated it). x is
+// pitch DOWN in Unity's frame, y is yaw right, both degrees.
 //
 // Random.insideUnitCircle.normalized is Unity's stream; `rolls` stands
 // in (Ledger A). VitalsChangeDetector's HealthLost/HealthLostPercent
@@ -51,9 +56,12 @@ export class CameraRecoiler {
     this.swayAxis = [0, 0];
     this.timerStart = 0;
     this.timer = 0;
+    /** Last frame's applied rotation [xDeg, yDeg], taken back first. */
+    this.applied = [0, 0];
   }
 
-  /** ResetRecoil (:135-138): a world init, a load, the court screen. */
+  /** ResetRecoil (:135-138): a world init, a load, the court screen.
+   *  The offset still on the look comes off on the next update. */
   reset() { this.swaying = false; }
 
   /**
@@ -62,6 +70,11 @@ export class CameraRecoiler {
    */
   update(dt, cam, { healthLost = 0, healthLostPercent = 0, paused = false,
     setting = getInt('Controls', 'CameraRecoilStrength', 0, 4), rolls = Math.random } = {}) {
+    // Take last frame's offset back off the look (the mouselook's
+    // absolute write, PlayerMouseLook.cs:257).
+    cam.pitch += this.applied[0] * DEG;
+    cam.yaw -= this.applied[1] * DEG;
+    this.applied = [0, 0];
     if (setting === 0 || paused) return false;
     if (healthLost > 0 && healthLostPercent > MIN_PERCENT_THRESHOLD) {
       this.swaying = true;
@@ -77,6 +90,7 @@ export class CameraRecoiler {
     const yAngle = Math.sin(this.timer) * scalar * this.swayAxis[1];
     cam.pitch -= xAngle * DEG;   // Rotate(+x) pitches DOWN in Unity's frame; the port's +pitch looks up
     cam.yaw += yAngle * DEG;     // Rotate(+y) turns right, as the port's +yaw does
+    this.applied = [xAngle, yAngle];
     this.swaying = this.timer > 0;
     return true;
   }
