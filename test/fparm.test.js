@@ -222,8 +222,10 @@ test('MW-D10: the neck takes 0.75 of the look, and the port pitches the OTHER WA
   // DOUBLES the loss - measured, a 0.25 look-up put every vertex out of
   // frame instead of sliding them a tenth of the way down it.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /neckPitch: cam \? -\(cam\.pitch \|\| 0\) : 0,/,
-    'the port\'s upward pitch is negated into Morrowind\'s downward one');
+  // IG6c narrowed the sign law to the LAW path: fixed mode feeds the
+  // neck ZERO because the look is not an input to that pass at all.
+  assert.match(src, /neckPitch: \(followCam \|\| !cam\) \? 0 : -\(cam\.pitch \|\| 0\),/,
+    'the port\'s upward pitch is negated into Morrowind\'s downward one - law mode only');
 });
 
 test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no invented scale', () => {
@@ -2538,11 +2540,15 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
     'fixed arms hold aim 1 in the POSE; the law path still passes the decaying state');
   assert.match(arm, /if \(followCam\) \{ fpOffset\[0\] = 0; fpOffset\[1\] = 0; fpOffset\[2\] = 0; return null; \}/,
     'and the offset zeroes at its ONE source, upstream of both applications');
-  // The lens half: the WHOLE look, one line, no mode branch - the glue
-  // is the invariance of neck-at-1 under a fully rotating lens. The
-  // IG5 tilt machinery must stay gone (its direction inverted on the
-  // played screen); a re-appearing lens factor is a regression.
-  assert.match(arm, /const pitch = cam\.pitch \|\| 0;/, 'the lens takes the whole look in both modes');
+  // IG6c: THE LOOK IS NOT AN INPUT to the fixed pass - not at the neck
+  // (the ternary above) and not at the lens. The rotate-and-cancel glue
+  // this replaces was exact on the fixtures and STILL moved on retail
+  // data: a cancellation is only as good as both halves, and the retail
+  // skeleton's half is one this bench cannot verify. Zero in, zero out
+  // cannot move, by construction, on any data. The IG5 tilt machinery
+  // must also stay gone.
+  assert.match(arm, /const pitch = followCam \? 0 : \(cam\.pitch \|\| 0\);/,
+    'the lens pitches only on the law path');
   assert.ok(!/FOLLOW_LENS_FACTOR|FOLLOW_TILT_MAX/.test(arm), 'the tilt constants are gone');
   // The toggle is live and persistent - the pause card flips it.
   const inst = createFpArm();
@@ -2550,10 +2556,20 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   assert.equal(inst.setFollowCamera(false), false);
   assert.equal(inst.followCamera(), false);
   inst.setFollowCamera(true);
-  // ...and the card offers it, labelled by CURRENT mode.
+  // IG6b: THE KEY IS BUMPED and the BUTTON NAMES THE ACTION. The v1
+  // key could hold an accidental off - the first label named the mode
+  // you were IN ("Arms: follow the camera"), which reads as "click to
+  // enable", and one natural click switched the owner to look-lag and
+  // PERSISTED it, overriding every later default. The bump abandons
+  // the stored value; the state moved to the stats block; the button
+  // says what clicking DOES.
+  assert.match(arm, /const FOLLOW_CAMERA_KEY = 'dagger\.mwArmsFollowCamera2';/,
+    'the storage key is the v2 - the v1 value is abandoned, not trusted');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Arms: fixed to the screen', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Arms: Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
-    'the pause card names the mode you are IN and one click flips it');
+  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Switch arms to Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Switch arms to fixed \(classic\)', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
+    'the button names the ACTION, never the current mode');
+  assert.match(menu, /\['Arms mode', fpArm\.followCamera\(\)\s*\n?\s*\? 'fixed to the screen \(classic-style\)'\s*\n?\s*: 'Morrowind look-lag'\]/,
+    'and the CURRENT mode is a stats row, where a state belongs');
   // The probe measures BOTH modes: the law layers with the flag off,
   // the shipped fix with it on (cy invariant under every look, the
   // clamp-hard ones included, and under the bob).
@@ -2702,4 +2718,47 @@ test('PX23: studioLight puts the key light at the eye and nothing from the world
   const body = src.slice(src.indexOf('renderCharacterSpriteImage('), src.indexOf('renderCharacterSpriteImage(') + 2200);
   assert.match(body, /const st = studioLight\(view\);/);
   assert.match(body, /finally \{\n      if \(saved\) \{\n        this\._lightDir = saved\.lightDir;/, 'the frame light must be returned in a finally');
+});
+
+// ═══ PX25: the pack tells the rig; a change mid-build waits its turn ═
+test('PX25: a worn change during a rebuild is applied when the build settles, not dropped', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
+  };
+  const arm = createFpArm();
+  let settled = 0;
+  arm.subscribe(() => { settled++; });
+  const first = await arm.build({ race: 'fprace', deps });
+  assert.equal(first.ok, true, `the fixture build must stand (${first.stage}: ${first.error})`);
+  assert.equal(settled, 1);
+  // a change starts a rebuild; a SECOND change lands while it is busy
+  const p1 = arm.setWorn([{ kind: 'armor', templateIndex: 102, material: 2 }]);
+  assert.ok(p1 && typeof p1.then === 'function', 'the first change must start a rebuild');
+  const second = arm.setWorn([{ kind: 'armor', templateIndex: 102, material: 5 }]);
+  assert.equal(second, false, 'the second change cannot build while busy');
+  await p1;
+  // ...and is applied when the first settles: one more settlement follows.
+  await new Promise((r) => setTimeout(r, 0));
+  for (let i = 0; i < 50 && settled < 3; i++) await new Promise((r) => setTimeout(r, 10));
+  assert.equal(settled, 3, `the pending table was not applied after the build settled (${settled} settlements)`);
+  assert.equal(arm.status().reason, 'built');
+});
+
+test('PX25: the pack hands the rig the worn table on every refresh', () => {
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  const refresh = pack.slice(pack.indexOf('const refresh = () => {'), pack.indexOf('const refresh = () => {') + 1400);
+  assert.match(refresh, /arm\.setWorn\(dfWornEquipment\(equipTableOf\(deps\.entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+    'refresh must tell the rig what is worn');
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);
+  assert.match(src, /if \(pendingWorn\) \{ const p = pendingWorn; pendingWorn = null; this\.setWorn\(p\); \}/);
 });

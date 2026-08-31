@@ -1355,7 +1355,16 @@ export function esmDiagnosis(names, parts, race) {
  * toggle away (the pause card), and the probe's law layers measure it
  * with the flag OFF.
  */
-const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera';
+// KEY BUMPED (IG6b): the v1 key ('dagger.mwArmsFollowCamera') can hold
+// an ACCIDENTAL off - the toggle's first label named the mode you were
+// IN ("Arms: follow the camera"), which reads as "click to enable", and
+// one natural click switched the clicker to Morrowind look-lag and
+// PERSISTED it. That stored off then overrode every later default and
+// made the fixes look unshipped on the owner's own machine. The bump
+// abandons the old value so every player lands back on the fixed
+// default; the action-named button re-persists a deliberate choice
+// under the new key.
+const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
 // DA1: through the storage seam, not localStorage directly - the pin
 // in test/filestorage.test.js caught this landing bare on the merge,
 // which would have split the toggle out of the desktop app's file
@@ -1382,6 +1391,7 @@ export function createFpArm() {
   let camera = null;
   let built = null;
   const listeners = new Set();   // MW-D36
+  let pendingWorn = null;        // PX25: the worn table that arrived mid-build
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1964,6 +1974,8 @@ export function createFpArm() {
         // change, asynchronously, and a panel drawn before the rebuild
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
+        // PX25: the table that arrived mid-build goes now.
+        if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
       }
     },
 
@@ -2081,9 +2093,16 @@ export function createFpArm() {
      *  skin is gone now". The rebuild runs while the inventory is open
      *  and the game paused, which is when equipment changes. */
     setWorn(pieces) {
-      if (!built || !built.ok || busy || !lastBuildOpts) return false;
+      if (!built || !built.ok || !lastBuildOpts) return false;
       const key = wornEquipKeyOf(pieces);
       if (key === wornEquipKey) return false;
+      // PX25: A CHANGE DURING A REBUILD IS NOT DROPPED. The pack hands
+      // over the table on every action now, and two quick equips land
+      // the second while the first is still building; returning false
+      // here left the key unmoved and the body one change behind until
+      // something else asked. The latest table waits and is applied the
+      // moment the in-flight build settles.
+      if (busy) { pendingWorn = pieces; return false; }
       wornEquipKey = key;
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
@@ -2347,7 +2366,15 @@ export function createFpArm() {
         // rotates the arms the wrong way and DOUBLES the loss: measured,
         // a 0.25 look-up put every vertex out of frame instead of
         // sliding them a tenth of the way down it.
-        neckPitch: cam ? -(cam.pitch || 0) : 0,
+        // IG6c: in FIXED mode the look does not enter the arms pass AT
+        // ALL - not here, not at the lens. The earlier glue relied on
+        // the neck rotation and the lens rotation cancelling, which is
+        // exact on the fixtures and was STILL moving on Mac's retail
+        // data - a cancellation can only be as good as both of its
+        // halves, and a half this bench cannot verify (the retail
+        // skeleton's own bones) must not be load-bearing. Zero in, zero
+        // out cannot move, on any data, by construction.
+        neckPitch: (followCam || !cam) ? 0 : -(cam.pitch || 0),
         // MW-D13: and the factor that pitch is multiplied by, which is
         // not the constant 0.75 this passed before. Stepped HERE, once
         // per frame, because mAimingFactor is a decaying state.
@@ -2442,14 +2469,13 @@ export function createFpArm() {
       // The neck has already taken 0.75 of the pitch (poseAssembly), so
       // the eye has MOVED with the look; the lens takes all of it, which
       // is the lag you feel when you glance down at your hands.
-      // IG6: in fixed mode the neck took ALL of it (neckAim 1) and the
-      // lens takes all of it too - a rigid ensemble seen by a lens that
-      // rotates with it, so the picture NEVER moves: arms fixed to the
-      // screen, exactly the classic sprite's behaviour, Mac's final
-      // call. (The IG5 tilt - an under-rotated lens - is gone: its
-      // direction inverted on the played screen and the owner closed
-      // the question rather than chase the sign.)
-      const pitch = cam.pitch || 0;
+      // IG6c: in FIXED mode the lens never pitches, matching the pose
+      // that never pitched - the look is simply not an input to this
+      // pass, so the picture cannot depend on it, on any skeleton. The
+      // rotate-and-cancel glue this replaces was exact on the fixtures
+      // and still moved on Mac's retail data; classic-sprite semantics
+      // ("the weapon ignores the look") are now taken literally.
+      const pitch = followCam ? 0 : (cam.pitch || 0);
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
       const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
 

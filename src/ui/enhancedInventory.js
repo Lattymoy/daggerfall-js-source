@@ -59,6 +59,8 @@
 import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
+import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
+import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
@@ -417,6 +419,19 @@ const refresh = () => {
   model = packModel(deps);
   remote = remoteModel(deps, sessionState());
   worn = equippedModel(deps.entity);
+  // PX25 (Mac: equipping and unequipping does not update the sprite
+  // until the inventory is closed and reopened): THE PACK TELLS THE
+  // RIG. D32 reads the equip table from the weapon rig's frame tick,
+  // and the host's frame does not reach that tick while a window is
+  // up - so the rebuild waited for the close. The pack is the one
+  // place that knows the table just changed while it is open, so it
+  // hands the worn list through the same door, setWorn, whose key
+  // compare makes a no-change a no-op; the build settles, the
+  // subscription (D36) repaints, the figure follows the action.
+  const arm = deps.fpArm;
+  if (arm && typeof arm.setWorn === 'function' && deps.entity) {
+    try { arm.setWorn(dfWornEquipment(equipTableOf(deps.entity), EQUIP_SLOTS, ARMOR_ENUM)); } catch { /* the rig's own card carries its reasons */ }
+  }
 };
 
 /** U59: recompose the avatar and repaint when it lands. The
@@ -587,13 +602,14 @@ function take(item) {
     return;
   }
   // PX28 (Mac: "when looting, there's a 2nd popup when you take
-  // something, there shouldn't be"): SELECTING THE TAKEN ITEM RAISES
-  // THE TOOLTIP, and in the loot-only flow that is a card nobody asked
-  // for, popping over the frame you are reading. With the pack OPEN it
-  // is useful - the thing you just took is selected in your bag, on
-  // the tab it landed in - so the selection is the PACK's behaviour,
-  // not the take's. Looting just takes.
-  picked = packOpen ? taken : null;
+  // something, there shouldn't be"): looting just takes - no card
+  // pops over the frame you are reading. PX24/AUDIT 35 (Mac: the same
+  // when looting containers, bodies, etc.): the pack-open flow used to
+  // keep the TAKEN item selected in the bag, which raised the tooltip
+  // on the other side after every take - the very quirk PX24 closed
+  // for wear, use and stow. An action taken closes the tooltip, on
+  // both sides of the window; the tab still follows the arrival.
+  picked = null;
   if (packOpen) {
     side = 'local';
     // The pack's TAB follows what just arrived, or the player takes a

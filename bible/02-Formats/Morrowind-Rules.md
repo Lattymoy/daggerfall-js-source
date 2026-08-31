@@ -6083,3 +6083,23 @@ where the reference would be, and the probe measures BOTH modes - the
 law layers with the flag off (L5c/L5d: the quarter lag at 0.26, the
 offset slide), L5e with it on (INVARIANCE: cy 0.354-0.356 across
 level, +/-0.5, and clamp-hard +/-1.4 rad looks, and under the bob).
+
+IG6b - THE POISONED TOGGLE. The field report "still not screen
+fixed" against a build the probe measured invariant traced to the
+SHELF: the toggle's first label named the mode you were IN, which
+reads as "click to enable", and one natural click had switched the
+owner to look-lag and persisted it - overriding every later default
+and making three rounds of fixes look unshipped. The storage key is
+bumped (dagger.mwArmsFollowCamera2 - the v1 value is abandoned), the
+button names the ACTION, and the current mode sits on the stats block.
+
+IG6c - ZERO IN, ZERO OUT. The field still held "not screen fixed"
+past the key bump, and the remaining suspect class is one this bench
+cannot clear: the glue relied on the neck rotation and the lens
+rotation CANCELLING, and the neck half runs on the retail skeleton's
+own bones - fixtures prove the arithmetic, not the retail graph. So
+fixed mode no longer cancels anything: the look is NOT AN INPUT to the
+arms pass at all (neckPitch 0, lens pitch 0), and a picture whose
+inputs do not include the look cannot move with it, on any data, by
+construction. The reference's law path is untouched and still measured
+by the probe's law layers.
