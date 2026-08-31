@@ -2318,3 +2318,46 @@ test('MW-D34: textures decode BY EXTENSION - a TGA is not a failed DDS', async (
     'a .dds path takes the DDS decoder, which refuses these bytes as its own error');
   assert.throws(() => decodeTextureImage('textures/a.gif', tgaTop), /no decoder/);
 });
+
+// ═══ AUDIT 32: the deep audit's findings, pinned ════════════════════
+test('AUDIT 32 F1: the head is sampled through its own mesh - the texture layout is never assumed', () => {
+  // A texture whose CENTRE band is dark (hair, say) and whose skin
+  // lives in the top-left quarter - a layout the band read gets wrong.
+  const w = 32; const h = 32; const rgba = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const o = (y * w + x) * 4;
+    const skin = x < 8 && y < 8;                // a corner the band never reads
+    const c = skin ? [210, 160, 130] : [30, 20, 15];
+    rgba[o] = c[0]; rgba[o + 1] = c[1]; rgba[o + 2] = c[2]; rgba[o + 3] = 255;
+  }
+  // A head mesh: front vertices (high y) at cheek height point their UVs
+  // into the skin quarter; back vertices point into the dark region.
+  const pos = []; const uvs = [];
+  const put = (x, y, z, u, v) => { pos.push(x, y, z); uvs.push(u, v); };
+  for (let i = 0; i < 20; i++) {
+    put(0, 10, 5 + (i % 5), 0.1, 0.1);        // front cheeks -> skin texels
+    put(0, -10, 5 + (i % 5), 0.75, 0.75);     // back of the skull -> dark texels
+  }
+  put(0, 10, 0, 0.75, 0.75); put(0, 10, 0.5, 0.75, 0.75);   // chin, front, dark -> bearded
+  const geom = [{ positions: Float32Array.from(pos), uvs: Float32Array.from(uvs) }];
+  const f = headFeatures(rgba, w, h, geom);
+  assert.equal(f.via, 'mesh');
+  assert.deepEqual(f.skin.map((v) => Math.round(v * 255)), [210, 160, 130], 'the face was not sampled through the front UVs');
+  assert.ok(f.beard > 0.6, `a dark chin must read as a beard (${f.beard})`);
+  // the band read would have called the skin dark - and it is what
+  // stands when a mesh carries no UVs, named as such.
+  const b = headFeatures(rgba, w, h, [{ positions: Float32Array.from(pos), uvs: null }]);
+  assert.equal(b.via, 'band');
+  assert.ok(b.skin[0] < 0.3, 'the band read on this layout must be wrong - that is the point');
+});
+
+test('AUDIT 32 F2/F3: the match is memoised per identity and generation, and a miss is not', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /const fkey = `\$\{gen\}:\$\{race\}:\$\{female \? 'f' : 'm'\}:\$\{faceIndex \| 0\}`;/,
+    'the face cache key lost the identity or the generation');
+  assert.match(arm, /faceMatch = FACE_MATCH_CACHE\.get\(fkey\);/);
+  assert.match(arm, /if \(faceMatch\.head \|\| faceMatch\.hair\) FACE_MATCH_CACHE\.set\(fkey, faceMatch\);/,
+    'a missed portrait must not be memoised for the session');
+  assert.match(arm, /headFeatures\(m0\.rgba, m0\.width, m0\.height, batches\.map/,
+    'the head is not measured through its mesh');
+});

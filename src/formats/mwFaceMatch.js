@@ -86,9 +86,57 @@ export function portraitFeatures(bitmap, palette) {
   return { skin, hair, bald, length, beard };
 }
 
-/** A Morrowind head texture's features from its RGBA level 0. */
-export function headFeatures(rgba, w, h) {
+/**
+ * A Morrowind head's features - SAMPLED THROUGH THE MESH, not read off
+ * the texture in place. AUDIT 32 F1: the first cut took the texture's
+ * middle band for the cheeks and its lower band for the chin, which
+ * assumes the face sits centred in UV space. Nothing in this repo has
+ * seen a retail head texture's layout, so that was a guess wearing a
+ * band - and a face unwrapped to one side would have measured the
+ * back of the skull as skin. The mesh knows where the face is: the
+ * head points +Y (Morrowind's forward), so the FRONT vertices are the
+ * face, the lower front vertices the chin, and each vertex's UV says
+ * exactly which texel is its skin. Layout-agnostic by construction.
+ * `geometry` is [{positions, uvs}] from flattenNif; with no UVs the
+ * old band read stands, named as such by the caller.
+ */
+export function headFeatures(rgba, w, h, geometry = null) {
   if (!rgba || !w || !h) return null;
+  const texel = (u, v) => {
+    const x = Math.min(w - 1, Math.max(0, Math.floor((u - Math.floor(u)) * w)));
+    const y = Math.min(h - 1, Math.max(0, Math.floor((v - Math.floor(v)) * h)));
+    const o = (y * w + x) * 4;
+    return [rgba[o] / 255, rgba[o + 1] / 255, rgba[o + 2] / 255];
+  };
+  const shapes = (geometry ?? []).filter((g) => g && g.positions && g.uvs && g.uvs.length === (g.positions.length / 3) * 2);
+  if (shapes.length) {
+    let minY = Infinity; let maxY = -Infinity; let minZ = Infinity; let maxZ = -Infinity;
+    for (const g of shapes) {
+      for (let i = 0; i < g.positions.length; i += 3) {
+        const y = g.positions[i + 1]; const z = g.positions[i + 2];
+        if (y < minY) minY = y; if (y > maxY) maxY = y; if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+      }
+    }
+    const spanY = maxY - minY || 1; const spanZ = maxZ - minZ || 1;
+    const cheeks = []; const chin = [];
+    for (const g of shapes) {
+      for (let i = 0, k = 0; i < g.positions.length; i += 3, k += 2) {
+        const fy = (g.positions[i + 1] - minY) / spanY;   // 1 = the front of the face
+        const fz = (g.positions[i + 2] - minZ) / spanZ;   // 1 = the crown
+        if (fy < 0.62) continue;                          // the back and the sides are not the face
+        const c = texel(g.uvs[k], g.uvs[k + 1]);
+        if (fz > 0.42 && fz < 0.72) cheeks.push(c);
+        else if (fz < 0.30) chin.push(c);
+      }
+    }
+    const skin = meanOf(cheeks);
+    const chinMean = meanOf(chin);
+    if (skin) {
+      const beard = chinMean ? Math.max(0, Math.min(1, (lum(skin) - lum(chinMean)) / 0.25)) : 0;
+      return { skin, beard, via: 'mesh' };
+    }
+  }
+  // no usable UVs: the band read, which assumes a centred face
   const px = (x, y) => { const o = (y * w + x) * 4; return [rgba[o] / 255, rgba[o + 1] / 255, rgba[o + 2] / 255]; };
   const band = (y0, y1, x0, x1) => {
     const out = [];
@@ -98,11 +146,10 @@ export function headFeatures(rgba, w, h) {
     return out;
   };
   const cheeks = meanOf(band(0.30, 0.55, 0.20, 0.80));
-  const chin = meanOf(band(0.66, 0.90, 0.30, 0.70));
-  if (!cheeks || !chin) return null;
-  // a beard is a chin band a good step darker than the cheeks
-  const beard = Math.max(0, Math.min(1, (lum(cheeks) - lum(chin)) / 0.25));
-  return { skin: cheeks, beard };
+  const chinB = meanOf(band(0.66, 0.90, 0.30, 0.70));
+  if (!cheeks || !chinB) return null;
+  const beard = Math.max(0, Math.min(1, (lum(cheeks) - lum(chinB)) / 0.25));
+  return { skin: cheeks, beard, via: 'band' };
 }
 
 /** A Morrowind hair's features: colour from its texture, length from
