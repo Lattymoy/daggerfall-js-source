@@ -1946,12 +1946,18 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 #enhanced-hitnums { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
 .hitnum { position: absolute; left: 50%; top: 42%;
   transform: translate(calc(-50% + var(--dx, 0px)), 0);
-  font-family: var(--display, 'Cinzel', serif); font-size: calc(26px * var(--hud-scale, 1)); font-weight: 700;
+  /* HN1b (Mac, from a three-face comparison: "the middle") - the numbers
+     are set in the enhanced skin's own face, Pixelify Sans, unsmoothed
+     like every other pixel glyph on the HUD. Cormorant was the serif
+     odd one out; Jacquard 12 crits were unmistakable and unreadable in
+     the half second a number lives. */
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-size: calc(26px * var(--hud-scale, 1)); font-weight: 600;
   letter-spacing: 0.04em; color: #e6dcb8; text-shadow: 2px 2px 0 rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
   animation: hitnum-rise var(--rise, 950ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; will-change: transform, opacity; }
-.hitnum-crit { font-size: calc(36px * var(--hud-scale, 1)); color: #f1c04f; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 10px rgba(241,192,79,0.45);
+.hitnum-crit { font-size: calc(36px * var(--hud-scale, 1)); font-weight: 700; color: #f1c04f; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 10px rgba(241,192,79,0.45);
   animation-name: hitnum-crit; }
-.hitnum-miss, .hitnum-ineffective, .hitnum-absorbed { font-size: calc(20px * var(--hud-scale, 1)); font-weight: 400; color: rgba(168,159,136,0.85); }
+.hitnum-miss, .hitnum-ineffective, .hitnum-absorbed { font-size: calc(20px * var(--hud-scale, 1)); font-weight: 500; color: rgba(168,159,136,0.85); }
 .hitnum-tag { display: block; font-size: calc(12px * var(--hud-scale, 1)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
   text-align: center; color: #f1c04f; margin-top: -2px; }
 @keyframes hitnum-rise {

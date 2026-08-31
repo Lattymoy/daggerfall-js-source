@@ -81,7 +81,11 @@ test('HN1: the overlay is enhanced-only, one node per number, removed when done'
   assert.ok(!/hitNumbers|mountHitNumbers/.test(classic), 'the classic HUD path must not register the numbers');
   const css = readFileSync('src/ui/enhancedStyle.js', 'utf8');
   assert.match(css, /#enhanced-hitnums \{ position: fixed; inset: 0; pointer-events: none;/);
-  assert.match(css, /\.hitnum-crit \{ font-size: calc\(36px \* var\(--hud-scale, 1\)\); color: #f1c04f;/, 'the crit must be brass and larger');
+  assert.match(css, /\.hitnum-crit \{ font-size: calc\(36px \* var\(--hud-scale, 1\)\); font-weight: 700; color: #f1c04f;/, 'the crit must be brass and larger');
+  // HN1b: the skin's own face, unsmoothed
+  const num = css.slice(css.indexOf('.hitnum { position: absolute;'), css.indexOf('.hitnum-crit {')).replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(num, /font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;/, 'the numbers must wear the enhanced face');
+  assert.ok(!/Cormorant|Cinzel|var\(--display/.test(num), 'the serif face is the odd one out');
   assert.match(css, /\.hitnum-miss, \.hitnum-ineffective, \.hitnum-absorbed \{ font-size: calc\(20px \* var\(--hud-scale, 1\)\);/);
   assert.match(hud, /getElementById\('enhanced-hitnums'\)\?\.style\.setProperty\('--hud-scale'/, 'the numbers must follow the HUD scale');
   // without a document nothing is created and nothing throws
