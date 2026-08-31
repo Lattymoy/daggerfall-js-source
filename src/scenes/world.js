@@ -22,6 +22,7 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
@@ -367,6 +368,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
   const tileSide = TERRAIN_SIZE / 128;
   const built = new Map(); // key -> pixel entry
+  // EV3: one local AABB per model ARCHETYPE, scanned once ever - the
+  // per-placement box is then eight corner transforms at build time.
+  const archAabbs = new Map();
+  const archAabb = (id, positions) => {
+    let b = archAabbs.get(id);
+    if (!b) archAabbs.set(id, b = localAabb(positions));
+    return b;
+  };
+  // The sails sweep well past the tower's own box; the pad keeps a
+  // mill's rotor from vanishing while its tower still shows.
+  const MILL_SAIL_PAD = 30;
   // Player collision (P1): per-pixel triangle buckets in PIXEL-LOCAL
   // space, resolved through the live floating-origin translation; the
   // floor is the terrain heightmap, bilinear over the stored samples.
@@ -444,6 +456,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const grid = buildTerrainGrid(samples);
     const terrain = renderer.createTerrainSurface(grid.positions, grid.normals, TERRAIN_INDICES);
+    // EV3: the pixel's presentation bounds, pixel-local - seeded by the
+    // terrain's own vertices, grown by every model and flat batch below.
+    const bounds = localAabb(grid.positions);
+    const unionBox = (b) => {
+      for (let i = 0; i < 3; i++) {
+        if (b[i] < bounds[i]) bounds[i] = b[i];
+        if (b[3 + i] > bounds[3 + i]) bounds[3 + i] = b[3 + i];
+      }
+    };
     const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(tilemap), TERRAIN_TILE_DIM);
 
     // Flat groups: pixel-local base positions.
@@ -498,7 +519,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           for (const w of b.layout.windmills) {
             const local = multiply(originMatrix, w.matrix);
-            models.push({ gpu: parts.body, local });
+            const box = transformedAabb(archAabb('millBody', BODY.positions), local);
+            for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
+            unionBox(box);
+            models.push({ gpu: parts.body, local, _box: box });
             collider.addMesh(key, BODY.positions, BODY.indices, local,
               () => state.pixelTranslation(px, py));
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
@@ -512,8 +536,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (!gpu) continue;
           await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
           const local = multiply(originMatrix, placed.matrix);
-          models.push({ gpu, local });
           const cpu = cpuModels.get(placed.modelIdNum);
+          const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
+          unionBox(box);
+          models.push({ gpu, local, _box: box });
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
           // Building models expose their static doors for E-transitions.
@@ -631,6 +657,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      batch._box = flatBatchAabb(centers, size);   // EV3
+      unionBox(batch._box);
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
     }
@@ -655,6 +683,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       locBlocks,   // T3d: the Where-is directory's block scan
@@ -4313,6 +4342,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
+  // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
+  // ?sky=classic shape - a wrong bound in the field is a URL away from
+  // proof); the planes refill per frame from the SAME proj*view the
+  // draws ride, so the handedness mirror is inside the planes too.
+  const cullOn = !cullDisabled();
+  const _planes = new Float32Array(24);
+  const _pv = new Float32Array(16);
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -4748,6 +4784,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
+    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
     const allBatches = [];
     for (const p of built.values()) {
       // EV2: the pixel's frame matrix caches on the built entry and
@@ -4763,14 +4800,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         pixelMatrix[12] = t[0]; pixelMatrix[13] = t[1]; pixelMatrix[14] = t[2];
         p._worldGen = (p._worldGen | 0) + 1;   // every cached model matrix refreshes
       }
-      renderer.drawTerrain(p.terrain, pixelMatrix,
-        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
-      for (const m of p.models) {
-        if (m._worldGen !== p._worldGen || !m._world) {
-          m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
-          m._worldGen = p._worldGen | 0;
+      // EV3: the pixel gate - one p-vertex test against the build-time
+      // bounds skips the terrain draw, every model and every flat batch
+      // of a pixel wholly off-screen; a visible pixel then tests each
+      // model and batch against its own build-time box. SIMULATION never
+      // gates: the rotor's angle, the mill's hum and the flats' clocks
+      // all run for a pixel behind the camera.
+      const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
+      if (pixelVisible) {
+        renderer.drawTerrain(p.terrain, pixelMatrix,
+          renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        for (const m of p.models) {
+          if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
+          if (m._worldGen !== p._worldGen || !m._world) {
+            m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
+            m._worldGen = p._worldGen | 0;
+          }
+          renderer.drawMesh(m.gpu, m._world, p.texRemap);
         }
-        renderer.drawMesh(m.gpu, m._world, p.texRemap);
       }
       // WM2b: THE SAILS, on the same eased wind vector the cloud deck
       // overhead is drawn with - so a storm picks the mills up on the
@@ -4780,7 +4827,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (millParts && windNow) {
         for (const w of p.windmills) {
           advanceRotor(w.state, dt, windNow);
-          renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
+          if (pixelVisible) renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
         }
       }
       // WM4c: THE HUM - see exterior.js. Here the source MOVES every
@@ -4800,6 +4847,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // so the tick rides the same walk that collects the batches.
       p.flatAnims.tick(dt);
       for (const b of p.batches) {
+        if (!pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]))) continue;   // EV3
         b.origin = t;
         allBatches.push(b);
       }
