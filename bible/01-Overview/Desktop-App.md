@@ -106,10 +106,15 @@ does.
 `.github/workflows/release-desktop.yml` cuts a release through any
 of three doors: pushing a tag shaped `app-v*`, a workflow_dispatch
 with `release_tag`, or - the door an ordinary merged PR can open -
-a main push touching `app/RELEASE`, whose first line names the tag
-(this is how releases are cut from hosts whose git relay pushes
-branches only, and it leaves the release history readable in git:
-bump `app/package.json`'s version and `app/RELEASE` together).
+a main push touching `.github/DESKTOP_RELEASE`, whose first line
+names the tag (this is how releases are cut from hosts whose git
+relay pushes branches only, and it leaves the release history
+readable in git: bump `app/package.json`'s version and the marker
+together). The marker's first home was `app/RELEASE`, which
+collided with electron-builder's `app/release` OUTPUT directory on
+case-insensitive filesystems - the windows and macos legs of the
+first release died on mkdir EEXIST while ubuntu sailed; the same
+finding class Audit DA recorded for pref keys, biting the infra.
 Whichever door, the ubuntu job carries the whole `npm run check`
 gate, all three OS runners package installers (AppImage, NSIS +
 portable exe, dmg - unsigned; macOS players right-click-Open the
