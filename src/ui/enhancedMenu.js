@@ -1418,6 +1418,31 @@ function statsStanding(detail) {
  *  log is a side quest. */
 const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
+/** PX28 (Mac: remove the titles - Main Quest, Side Quest - from the
+ *  quest NAMES in the enhanced journal; they already have sections).
+ *
+ *  THE RAIL ALREADY SAYS WHICH KIND A QUEST IS, by the section it sits
+ *  in, so a name that repeats it says the same fact twice - the cut
+ *  PX22 already made to the detail pane's kind tag, finished here on
+ *  the names themselves. A quest pack is free to title its quests
+ *  however it likes and the port does not edit its data: this strips
+ *  the label at the DISPLAY seam only, and only when it is a real
+ *  label - a kind phrase at the FRONT, followed by a separator.
+ *
+ *  What is deliberately NOT stripped:
+ *   - "Clavicus Vile's Quest", "Main Quest Backbone" - the word sits
+ *     at the end, or the phrase runs on into the title with no
+ *     separator, so it IS the name.
+ *   - anything that would leave nothing behind: a quest actually
+ *     called "Main Quest" keeps its name rather than becoming blank.
+ */
+const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)\s+(?:quest|quests|questline|storyline|story)\s*[:\u2013\u2014|\-\u2022]\s*/i;
+export function questTitleOf(name) {
+  const raw = String(name ?? '').trim();
+  const cut = raw.replace(QUEST_KIND_LABEL, '').trim();
+  return cut || raw;
+}
+
 /** PX5: remaining game seconds as words - days+hours above a day,
  *  hours+minutes below it, minutes alone under an hour. */
 function remainWords(s) {
@@ -1495,7 +1520,7 @@ function pauseQuests(body) {
   const railList = (items, cls) => {
     for (const q of items) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
-      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(q.name));
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));   // PX28
       if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
       b.onclick = () => { questSel = q.key; render(); };
       rail.append(b);
@@ -1532,7 +1557,7 @@ function pauseQuests(body) {
   const detail = el('div', 'px-qdetail');
   if (sel) {
     const head2 = el('div', 'px-qname');
-    head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));   // PX28
     detail.append(head2);
     if (sel.entries) {
       // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside
