@@ -449,6 +449,7 @@ function wear(item) {
   if (equipItem(deps.entity, item) === null) { notice = `${item.name} cannot be worn.`; return render(); }
   refresh();
   refreshFigure();   // U59: the avatar is wearing it now
+  picked = null;     // PX24 (Mac): an action taken CLOSES the tooltip; a refusal above keeps it
   return render();
 }
 
@@ -500,6 +501,7 @@ function use(item, collection = deps.items?.() ?? []) {
   }
   refresh();
   if (act.closesWindow) { onExit(); return; }
+  picked = null;     // PX24: a use, however it reported, closes the tooltip
   render();
 }
 
@@ -508,6 +510,7 @@ function takeOff(slot) {
   unequipSlot(deps.entity, slot);
   refresh();
   refreshFigure();
+  picked = null;     // PX24: the action closes the tooltip
   render();
 }
 
@@ -549,10 +552,13 @@ function stow(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
-  // The item that ARRIVES stays picked - a split leaves the remainder
-  // behind and mints a new record, and following the one that moved is
-  // what lets the player put it straight back.
-  picked = applyTransfer(item, plan, deps.items?.() ?? [], to);
+  // PX24 (Mac: an action taken closes the tooltip): the transfer
+  // happens and the tip goes. The earlier law kept the ARRIVING item
+  // picked so it could be put straight back; the player can pick it
+  // again on the other side, and a tip that stays open after every
+  // press is the quirk being fixed.
+  applyTransfer(item, plan, deps.items?.() ?? [], to);
+  picked = null;
   side = 'remote';
   refresh();
   render();
