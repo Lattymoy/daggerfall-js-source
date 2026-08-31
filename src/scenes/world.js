@@ -185,6 +185,10 @@ import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWe
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
+import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
@@ -690,6 +694,10 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   // Camera: at the start location's origin, or the pixel centre.
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
+  const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
   // C9 fix: shotMode must be declared BEFORE walkMode reads it - the
@@ -2803,8 +2811,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return;
     }
-    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
   // (dungeon.js:184, "a right-click on a window is the window's...
@@ -2812,12 +2823,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
   // world behind the map.
-  addEventListener('mousedown', (e) => { if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2
@@ -4159,6 +4169,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+      if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
+    // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
+    // detector's loss from the vitals rig, same paused gate (:50-51).
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: townTalk.overlayActive || (modes?.overlayHeld ?? false) });
     last = now;
     lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -4264,9 +4287,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         // false outdoors (no blockWaterLevel - PlayerEnterExit).
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
+        // AUDIT 28 W8: the axes advance only on frames the motor runs (a
+        // held overlay is DFU's timeScale 0 - no climb, no friction).
+        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
         if (!_overlayHeld) player.update(dt, {
-          forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
-          strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+          forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+          strafe: axes.strafe,
           run: held(keys, 'Run'),
           sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
           jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)

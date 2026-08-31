@@ -625,6 +625,11 @@ export async function pickTextureFolder() {
   });
 }
 
+/** MW-D35: the same seam under the name the Morrowind lane's deps
+ *  object carries - buildFpArm reads the classic portrait archive
+ *  through `deps.fetchArena2Bytes`, and a test hands it a fixture. */
+export const fetchArena2Bytes = (name) => getBytes(name);
+
 /** The single data seam every reader goes through (via fetchBytes). */
 export async function getBytes(name) {
   const key = normalizeName(name);

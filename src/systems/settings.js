@@ -128,6 +128,14 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W6: AddHUDText's duration for the shop-quality lines
   // (PlayerActivate :1382), GetInt 1..10.
   'GUI/ShopQualityHUDDelay': 'src/scenes/worldModes.js',
+  // AUDIT 28 W7: PlayerMouseLook.ApplySmoothing (:154-166) - the look
+  // filter every host drives; GetFloat 0..0.9 (SettingsManager :523).
+  'Controls/MouseLookSmoothingFactor': 'src/player/lookFilter.js',
+  // AUDIT 28 W8: InputManager's ApplyHorizontalForce/ApplyVerticalForce/
+  // ApplyFriction (:1445-1497) - the axes climb and decay at 9.8/s.
+  'Controls/MovementAcceleration': 'src/player/moveAxes.js',
+  // AUDIT 28 W9: CameraRecoiler (whole) - the reel on a hit; GetInt 0..4.
+  'Controls/CameraRecoilStrength': 'src/player/cameraRecoiler.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

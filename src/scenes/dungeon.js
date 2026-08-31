@@ -40,6 +40,10 @@ import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
+import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -123,6 +127,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // other member and takes the start marker.
   const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
+  const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);
@@ -222,7 +230,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
   bindCursorToggle(canvas, () => ctx.uiOverlayActive, actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('mousedown', (e) => { if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
@@ -238,11 +246,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // character and left them standing wherever they were.
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
   });
-  addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
-      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
     attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
     attackTap: () => ctx.playerClickAttack(),
@@ -262,8 +269,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
-    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
 
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);
@@ -380,6 +390,19 @@ export async function bootDungeon(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(ctx.uiOverlayActive)) {
+      if (rightHeld && walkMode && !ctx.weaponIsBow) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
+    // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
+    // detector's loss from the vitals rig, same paused gate (:50-51).
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: ctx.uiOverlayActive });
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
@@ -421,12 +444,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const paralyzed = ctx.playerParalyzed?.() ?? false;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
+      const axes = moveAxes.update(dt, mv);   // AUDIT 28 W8: one Update of the axes per frame the motor runs
       const moving = !paralyzed && anyMove(mv);
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement/jump only (DecideHeightAction has no check).
       player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
-        forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
-        strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+        forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+        strafe: axes.strafe,
         run: held(keys, 'Run'),
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)

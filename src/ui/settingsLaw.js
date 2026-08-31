@@ -43,7 +43,7 @@ export const NUMBER_LAW = Object.freeze({
   'Controls/SoundVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU DisplayUnits 100 (:268-271)' },
   'Controls/MusicVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:272-274)' },
   'Controls/MouseLookSensitivity': { min: 0.1, max: 4.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'the port clamps at 4.0 (lookSettings.js)' },
-  'Controls/MouseLookSmoothingFactor': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'ours: the natural range of a stored 0..1 factor' },
+  'Controls/MouseLookSmoothingFactor': { min: 0, max: 0.9, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU GetFloat(0,0.9) + SmoothingMax 0.9 (SettingsManager:523, PlayerMouseLook:45)' },   // AUDIT 28 W7: the range is DFU's now, not ours
   'Enhancements/LoiterLimitInHours': { min: 3, max: 12, step: 1, coarse: 3, format: 'hours', source: 'DFU (:342-354)' },
   'Video/FieldOfView': { min: 60, max: 120, step: 5, coarse: 20, format: 'deg', source: 'DFU GetInt(60,120) (SettingsManager:418)' },
   'GUI/ToolTipDelayInSeconds': { min: 0, max: 10, step: 0.5, coarse: 2, format: 'sec', source: 'DFU (:291-297)' },

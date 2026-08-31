@@ -674,6 +674,12 @@ export class PlayerMotor {
       this.isRunning = !!input.run;
       this.isSneaking = !this.isRunning && this._sneakMode;
     }
+    // F-C3 (self-audit 3, ApplyInputSpeedAdjustment :121-125): running
+    // CLEARS sneakingMode - "switch sneaking off if was previously
+    // sneaking" - so under ToggleSneak a run ENDS the toggled sneak; it
+    // does not come back when the run stops. Held mode re-latches from
+    // the key next frame regardless, as DFU's does.
+    if (this.isRunning) this._sneakMode = false;
     // GetBaseSpeed + ApplyInputSpeedAdjustment (audit F1): walking
     // crouched = the crouch base; RUNNING crouched = GetRunSpeed's
     // crouch branch (crouch base x the run multiplier - DFU lets you

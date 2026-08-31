@@ -19,7 +19,9 @@
 
 import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
-import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
+import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
+import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
+import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 // MW-D8: the classic sprite is still the DEFAULT and still the fallback,
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
@@ -245,6 +247,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
         fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
+        // read that swaps the weapon now hands the rig its worn list;
+        // setWorn's fast path is one key compare, and a change - a
+        // cloak equipped, a gauntlet dropped - rebuilds the body in
+        // those clothes. D29-D31 dressed the BUILD; this dresses the
+        // GAME.
+        if (entity) fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.

@@ -57,10 +57,15 @@ import {
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
+  facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
-import { PART_BONES } from '../formats/mwNpc.js';
+import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
+import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
+import { CifRciFile } from '../formats/cifRciFile.js';
+import { DFPalette } from '../formats/dfPalette.js';
+import { raceArt } from '../systems/races.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds } from '../formats/mwItemMap.js';
@@ -431,6 +436,93 @@ function skeletonHasBone(skeletonBytes, name) {
  * an arrow rides along. Two unknown items both fold to None and compare
  * equal, which is right: both draw nothing.
  */
+/** MW-D32: the worn list as one comparable key - kind, template,
+ *  material, in the readout's own order. */
+/** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
+ *  esm files a data set carries, times three record kinds. */
+const ESM_WALK_CACHE = new Map();
+
+/** MW-D35: MEASURE ONE MORROWIND BODY PART - its base texture's level-0
+ *  RGBA and its mesh height - from the archives. Null-honest at every
+ *  step; the matcher names the ones that could not be measured. */
+async function measurePart(record, archives, kind) {
+  const exists = (p) => archives.some((a) => a.has(p));
+  const path = `meshes/${record.model}`;
+  const arc = archives.find((a) => a.has(path));
+  if (!arc) return null;
+  let parseNif; let flattenNif;
+  try {
+    ({ parseNif } = await import('../formats/mwNifFile.js'));
+    ({ flattenNif } = await import('../formats/mwNifMesh.js'));
+  } catch { return null; }
+  let batches;
+  try { batches = flattenNif(parseNif(arc.get(path).slice())); } catch { return null; }
+  const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+  if (!file) return null;
+  const tpath = correctTexturePath(file, exists);
+  const tarc = archives.find((a) => a.has(tpath));
+  if (!tarc) return null;
+  let img;
+  try { img = decodeDds(tarc.get(tpath).slice()); } catch { return null; }
+  const m0 = img.mips[0];
+  if (kind === 'head') return headFeatures(m0.rgba, m0.width, m0.height);
+  const shapes = batches.filter((b) => b.positions && b.positions.length);
+  const bounds = shapes.length ? meshBounds(shapes) : null;
+  return hairFeatures(m0.rgba, m0.width, m0.height, bounds ? bounds.maxZ - bounds.minZ : 0);
+}
+
+/** MW-D35: THE FACE, MATCHED. The classic portrait the player picked,
+ *  measured; every playable head and hair of the race and sex,
+ *  measured; the nearest of each chosen - all on the player's own data,
+ *  at build time. Returns { head, hair, reasons } with nulls where a
+ *  half could not be measured (the walk then stands for that half). */
+export async function matchFaceFor({ race, female, faceIndex, parts, archives, deps }) {
+  const reasons = [];
+  let portrait = null;
+  try {
+    const art = raceArt(dfRaceKeyOf(race), female ? 'female' : 'male');
+    const cif = new CifRciFile();
+    const bytes = await deps.fetchArena2Bytes(art.heads);
+    const pal = new DFPalette();
+    pal.load(await deps.fetchArena2Bytes(cif.paletteName || 'ART_PAL.COL'), cif.paletteName || 'ART_PAL.COL');
+    cif.load(bytes, art.heads, pal);
+    portrait = portraitFeatures(cif.getDFBitmap(faceIndex | 0, 0), pal);
+  } catch (err) {
+    reasons.push(`portrait unreadable: ${err.message}`);
+  }
+  if (!portrait) return { head: null, hair: null, reasons: [...reasons, 'the walk stands'] };
+  const pools = facePools(parts, race, female);
+  const heads = [];
+  for (const rec of pools.heads) heads.push({ id: rec.id, f: await measurePart(rec, archives, 'head') });
+  const hairs = [];
+  for (const rec of pools.hairs) hairs.push({ id: rec.id, f: await measurePart(rec, archives, 'hair') });
+  const m = matchFace(portrait, heads, hairs, { female });
+  const hex = (c) => `#${c.map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
+  reasons.push(`portrait ${faceIndex | 0}: skin ${hex(portrait.skin)}, hair ${portrait.bald ? 'none' : hex(portrait.hair)}, `
+    + `length ${portrait.length.toFixed(2)}, beard ${portrait.beard.toFixed(2)}`);
+  return { head: m.head, hair: m.hair, reasons: [...reasons, ...m.reasons] };
+}
+
+/** MW-D33: one line per worn piece for the card - what it resolved to
+ *  and what it dressed, or why it kept its sprite. Pure over the
+ *  composer's own output; the adds name their record in `slot`. */
+export function wornVerdicts(pieces, worn) {
+  const rows = [];
+  for (const p of pieces ?? []) {
+    const label = p.kind === 'clothing'
+      ? (p.name ?? `garment ${p.templateIndex}`)
+      : `armor ${p.templateIndex} (material ${p.material ?? 0})`;
+    const dressed = (worn?.adds ?? []).filter((a) => a.piece === p).map((a) => a.slot);
+    const reason = (worn?.notes ?? []).find((n) => n.startsWith(label.split(' (')[0]) || (p.kind !== 'clothing' && n.startsWith(`armor ${p.templateIndex}:`)));
+    rows.push({ label, dressed, reason: dressed.length ? null : (reason ?? 'no part reached the rig') });
+  }
+  return rows;
+}
+
+export function wornEquipKeyOf(pieces) {
+  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}`).join('|');
+}
+
 export function fpWeaponKey(item, hasAmmo) {
   return `${dfWeaponToMw(item, WEAPONS)}:${(item && item.materialName) || ''}:${hasAmmo ? 1 : 0}`;
 }
@@ -556,7 +648,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, faceIndex, weapon, hasAmmo, worn, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -566,7 +658,7 @@ async function buildTpBody({
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
-    const rows = playerBodyRows(parts, race, female, { beast, faceIndex });
+    const rows = playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });
     const missing = [];
     // MW-D29/D31: the worn verdicts arrive COMPOSED - one arbitration
     // in buildFpArm serves both rigs. shadowSkinRows applies the
@@ -736,11 +828,23 @@ export async function buildFpArm({
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
-    const parts = esmBytes.flatMap((e) => bodyParts(e.bytes));
+    // MW-D32: the ESM walks are MEMOISED per file per data generation.
+    // A rebuild now happens whenever the equip table changes, and the
+    // records do not change between two rebuilds of the same data -
+    // only the pieces do. Keyed on the store's generation stamp, so a
+    // re-attached archive is a fresh walk and never a stale one.
+    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : 0;
+    const walk = (e, kind, fn) => {
+      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
+      let hit = ESM_WALK_CACHE.get(key);
+      if (!hit) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
+      return hit;
+    };
+    const parts = esmBytes.flatMap((e) => walk(e, 'parts', bodyParts));
     // MW-D29: the ARMO records ride the same esm walk, load order and
     // all - the composer resolves DF pieces against them by token.
-    const armors = esmBytes.flatMap((e) => armorRecords(e.bytes));
-    const clothes = esmBytes.flatMap((e) => clothingRecords(e.bytes));
+    const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
+    const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -759,6 +863,11 @@ export async function buildFpArm({
     // here, once, and the third person receives the verdicts instead
     // of re-arguing them - one seam, one law, two views.
     const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
+    // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
+    // Null halves fall back to the walk inside playerBodyRows.
+    const faceMatch = d.fetchArena2Bytes
+      ? await matchFaceFor({ race, female, faceIndex, parts, archives, deps: d })
+      : { head: null, hair: null, reasons: ['no Daggerfall data door - the walk stands'] };
 
     const rows = armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
@@ -840,7 +949,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, worn, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find })
       : null;
     archives.length = 0;   // release the mapped archives; the bytes we need are copied
     if (!arm.ok) {
@@ -942,6 +1051,14 @@ export async function buildFpArm({
       tracks,
       accumRoot,
       keys: idlePick.source.keys,
+      // MW-D33: THE WORN VERDICTS, ON THE CARD. Mac's report - clothing
+      // and armor not showing - arrived with nothing on screen saying
+      // WHY, which is the reverted rig's defining failure wearing new
+      // clothes. Every piece the equip table handed over, and what
+      // became of it: the record it resolved to and the parts it
+      // dressed, or the reason it kept its sprite.
+      worn: wornVerdicts(armor ?? [], worn),
+      face: faceMatch,
       // MW-D14: every source, in PUSH order, each with its own keys AND
       // its own tracks - because the source that wins a group is the one
       // whose tracks must pose it.
@@ -1073,6 +1190,13 @@ export function createFpArm() {
   // seam it was built through - the swap resolves through the same one.
   let wornKey = null;
   let buildDeps = null;
+  // MW-D32: what the body last dressed in, and the opts to dress it
+  // again. The equip table is read every frame by weaponRig; when the
+  // worn list changes the rig rebuilds through the same door the card
+  // pressed, with the new pieces - the body FOLLOWS THE EQUIP TABLE,
+  // not the last time someone pressed Build.
+  let wornEquipKey = null;
+  let lastBuildOpts = null;
 
   // MW-D12: TWO CLIP SLOTS, because Morrowind's first-person arm plays
   // TWO animations and the port had one.
@@ -1528,6 +1652,8 @@ export function createFpArm() {
         thirdBuilt = res && res.ok ? (res.third || null) : null;
         viewMode = 'first';
         wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
+        wornEquipKey = wornEquipKeyOf(opts && opts.armor);
+        lastBuildOpts = opts ? { ...opts } : null;
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -1655,6 +1781,20 @@ export function createFpArm() {
      * weapon and arrow pieces on the live assembly, and re-equips if
      * the old weapon was drawn.
      */
+    /** MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. One key compare per
+     *  frame, exactly setWeapon's shape; a change rebuilds the whole
+     *  rig through build() with the new worn list, because worn
+     *  verdicts reshape the SKIN rows (shadows) and not just an
+     *  attachment - an in-place rebind cannot express "the right hand
+     *  skin is gone now". The rebuild runs while the inventory is open
+     *  and the game paused, which is when equipment changes. */
+    setWorn(pieces) {
+      if (!built || !built.ok || busy || !lastBuildOpts) return false;
+      const key = wornEquipKeyOf(pieces);
+      if (key === wornEquipKey) return false;
+      wornEquipKey = key;
+      return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
+    },
     setWeapon(item, { hasAmmo = false } = {}) {
       if (!built || !built.ok || busy) return false;
       const key = fpWeaponKey(item, hasAmmo);
@@ -2160,6 +2300,8 @@ export function createFpArm() {
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
         raceScale: built && built.ok ? built.raceScale : null,
+        worn: built && built.ok ? built.worn : null,
+        face: built && built.ok ? built.face : null,
         esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         reach: built && built.ok ? built.reach : null,

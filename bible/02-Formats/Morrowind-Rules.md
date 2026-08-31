@@ -6029,11 +6029,16 @@ fixtures, and a mutation round, every mutant dead:
   the final code.
 
 NUMBERING RECONCILIATION. A parallel session landed the AUDIT MW-A arc
-(chargen faceIndex, the item map, worn armor/clothing) on main during
-this arc and used the labels MW-D27 through MW-D31 for its own slices
-(chargen face, item map, worn armor, clothing, fp-worn). This arc's
-MW-D28..MW-D35 are DIFFERENT slices that merged around them; Testing.md
-rows carry both families' narratives side by side, dated, and the
-labels above are this arc's. Where both arcs touched one file (fpArm's
-build, playerBodyRows, the face law) the merge kept both laws and the
-pins of each.
+on main during this arc and used the labels MW-D27 through MW-D35 for
+its own slices (chargen face, item map, worn armor, clothing, fp-worn,
+the equip-table body, the curation table, the face sheet, the measured
+portrait match) plus AUDIT 28's input/look work. This arc's
+MW-D28..MW-D35 above are DIFFERENT slices that merged around them;
+Testing.md rows carry both families' narratives side by side, dated,
+and the labels in this Part are this arc's. Where both arcs touched one
+law the merge KEPT BOTH and reconciled: playerBodyRows runs this arc's
+reference resolver for the sweep slots with the other arc's
+curated/matched/derived face ladder for head and hair; the other arc's
+look filter took over the hosts' pitch clamp and now imports THIS arc's
+reference PITCH_LIMIT (+/-(PI/2 - 1e-6)) from mwCamera instead of the
+1.5 literal it had re-minted.

@@ -328,6 +328,80 @@ passes the setting (GetInt 1..10) through `townTalk.say`'s new delay
 argument to `hudText.add`'s `delayInSeconds` - AddHUDText's own second
 argument. Key LIVE, with its NUMBER_LAW row on the screen.
 
+## W7 CLOSED: MouseLookSmoothingFactor (PlayerMouseLook.cs:154-166)
+
+The first of the camera-feel controls, and the one that changes the
+DEFAULT feel: the setting ships 0.5, so DFU's look is smoothed out of
+the box, and the port applied raw deltas straight to the camera on the
+event at all eight sites (mouse + touch, four hosts). `player/
+lookFilter.js` keeps the residual owed to the camera and pays DFU's
+frame-rate-scaled fraction of it each frame - the same arithmetic as
+lookCurrent/lookTarget, proven frame for frame, with the property the
+hosts need: an external write to the camera (a door's facing, a load, a
+teleport) needs no resync because the residual is a delta. The pitch
+clamp lands on the target as :142 has it. The settings screen's range
+was "ours: 0..1"; it is DFU's clamp (0..0.9) now. The controller minimum
+(:159-160) has no controller to read and is not ported. 6 pins; 5
+mutants, 5 killed.
+
+## SELF-AUDIT 3 (2026-08-30, Mac: "a comprehensive audit on everything so far", the third)
+
+W5, W6 and W7 re-read against the C#; the LIVE and dead-export sweeps
+re-run clean. Three findings, all fixed here - two against W7's own
+framing, one against a W5 pin that had asserted the opposite of the
+law:
+
+- **F-C1** PlayerMouseLook.Update returns before ApplyLook while the
+  game is paused (`enableMouseLook = !IsGamePaused`, :241-244): the
+  owed look WAITS under a window. The port's filter ticked every frame.
+  All four hosts gate the tick on the same expression their lookGate
+  reads.
+- **F-C2** while the swing action is held (WeaponSwingMode 0, not a
+  bow, :248-253) DFU takes the ELSE arm - `SetFacing(lookCurrent)`,
+  whose Init sets target = current - so the look a swing interrupted is
+  DROPPED, never paid out afterwards. `LookFilter.settle()` is that;
+  the three swinging hosts track the raw right button (HasAction, on
+  the window, ungated) and settle while it is held with a non-bow in
+  hand; the dungeon ctx exposes `weaponIsBow` for its standalone host.
+- **F-C3** ApplyInputSpeedAdjustment CLEARS `sneakingMode` while
+  running (:121-125, "switch sneaking off if was previously sneaking"):
+  under ToggleSneak a run ENDS the toggled sneak. The W5 pin had
+  asserted "the toggled mode survives the run and comes back" - an
+  assumption written as a law. Motor and pin corrected; the held mode
+  is unchanged because it re-latches from the key next frame, as DFU's
+  does.
+
+4 mutants (settle always, pays while paused, run keeps the toggle,
+settle keeps the pitch), 4 killed.
+
+## W8 CLOSED: MovementAcceleration (InputManager.cs:1445-1497)
+
+The second camera-feel control, default OFF. The hosts produced the
+movement axes as the bare held-key difference; `player/moveAxes.js` is
+one InputManager Update - a force per held action climbing the axis at
+9.8/s toward +/-1 (or the axis IS the key without acceleration), then
+friction decaying an axis whose impulse was not raised at 9.8/s to 0.
+All four producers hand the motor the axes and advance them only on
+frames the motor runs (a held overlay is timeScale 0). Two things worth
+knowing: under acceleration a reversal moves two steps a frame while the
+axis is still on the old side (force AND friction - DFU's own
+arithmetic), and in classic mode DFU's answer to two opposing keys
+depends on keybind dictionary order, so the port keeps its neutral
+difference there. 5 pins; 5 mutants, 4 killed + 1 proven equivalent.
+
+## W9 CLOSED: CameraRecoilStrength (CameraRecoiler.cs, whole)
+
+The second default-feel one: the setting ships 3 (High), so DFU's
+camera reels on every hit above 2% of max health, and the port's never
+did. `player/cameraRecoiler.js` is the class whole - the timer of
+(5 + floor(pct*5))*PI falling at 2*PI/s, the rotation scalar dying with
+it, the random unit axis, the ADDITIVE rotate on the camera (x pitches
+down in Unity's frame, y turns right) - driven by the same per-frame
+HealthLost the near-death flicker reads. Three hosts run it after the
+look on the same paused gate; interior.js is a fly camera with no
+entity and has nothing to reel from. Unity's `insideUnitCircle` is
+`rolls` (Ledger A). 5 pins; 5 mutants, 5 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

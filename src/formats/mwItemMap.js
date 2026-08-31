@@ -397,7 +397,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
       if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
       const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
       const prio = ((base + 1) << 1) + 0;
-      composeRefs(res.record, prio, female, bodyById, claim, notes);
+      composeRefs(res.record, prio, female, bodyById, claim, notes, piece);
       for (const part of RESERVES[res.row.reserve] ?? []) claim(part, prio, null);
       continue;
     }
@@ -409,7 +409,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     if (piece.templateIndex === HELM_TEMPLATE) hairHidden = Math.max(hairHidden, prio);
     for (const armo of res.records) {
       if (!armo.parts?.length) { notes.push(`${armo.id}: no worn part references - the ground mesh is not a body`); continue; }
-      composeRefs(armo, prio, female, bodyById, claim, notes);
+      composeRefs(armo, prio, female, bodyById, claim, notes, piece);
     }
   }
   if (hairHidden) claim(1, hairHidden, null);
@@ -425,7 +425,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
 }
 
 /** One record's part references, claimed at one priority. */
-function composeRefs(rec, prio, female, bodyById, claim, notes) {
+function composeRefs(rec, prio, female, bodyById, claim, notes, piece = null) {
   for (const ref of rec.parts ?? []) {
     const row = ARMO_PART[ref.part];
     if (!row) { notes.push(`${rec.id}: INDX ${ref.part} is outside the enum`); continue; }
@@ -434,7 +434,7 @@ function composeRefs(rec, prio, female, bodyById, claim, notes) {
     if (!id) { notes.push(`${rec.id}: ${row.name} names no body part`); continue; }
     const body = bodyById.get(id);
     if (!body) { notes.push(`${rec.id}: ${row.name} wants "${id}" and no BODY record carries it`); continue; }
-    claim(ref.part, prio, { slot: `${row.name} (${rec.id})`, bones: row.bones, model: body.model, recordId: id });
+    claim(ref.part, prio, { slot: `${row.name} (${rec.id})`, bones: row.bones, model: body.model, recordId: id, piece });
   }
 }
 

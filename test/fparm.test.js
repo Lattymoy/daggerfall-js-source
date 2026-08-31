@@ -5,9 +5,10 @@ import { parseNif } from '../src/formats/mwNifFile.js';
 import { extractTracks, sampleTrack } from '../src/formats/mwAnim.js';
 import { accumRootRef } from '../src/formats/mwSkin.js';
 import { PART_BONES } from '../src/formats/mwNpc.js';
+import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../src/formats/mwFaceMatch.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, fpSkeletonPath, buildFpArm, createFpArm,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, wornEquipKeyOf,
   FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
   collectArmTextures,
 } from '../src/combat/fpArm.js';
@@ -1416,9 +1417,9 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
   // at the source, all three links, so a refactor cannot quietly strand
   // the classic face at the door.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex,/,
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch,/,
     'buildFpArm no longer hands the face to the body build');
-  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex \}\)/,
+  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex, faceMatch \}\)/,
     'the body build no longer hands the face to the picker');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
   assert.match(menu, /faceIndex: playerEntity\.faceIndex \| 0/,
@@ -1432,7 +1433,7 @@ import {
   ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor, dfWornEquipment,
   MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord, fpWornAdds,
 } from '../src/formats/mwItemMap.js';
-import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
+import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools } from '../src/formats/mwFirstPerson.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1675,11 +1676,12 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female \}\)/);
-  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => armorRecords\(e\.bytes\)\);/);
+  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
+  assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,
   // the third person receives verdicts, the fp build filters and
   // shadows from the same result.
-  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, weapon, hasAmmo, worn,/);
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn,/);
   assert.match(arm, /for \(const add of fpWornAdds\(worn\.adds\)\)/, 'the fp build does not wear the filtered adds');
   assert.match(arm, /shadowSkinRows\(\n      wanted\.filter/, 'the fp skin does not take the shadows');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
@@ -1836,6 +1838,186 @@ test('MW-D31: the first person wears gauntlets, sleeves and the shield - never a
   assert.deepEqual(fpWornAdds(adds).map((a) => a.recordId), ['b_gr', 'b_ua', 'b_sh'],
     'the fp filter is not the reference\u2019s visible set');
   assert.deepEqual(fpWornAdds([]), []);
+});
+
+// ═══ MW-D32: THE BODY FOLLOWS THE EQUIP TABLE ═══════════════════════
+test('MW-D32: setWorn is one key compare per frame, and a change rebuilds through the same door', async () => {
+  // Mac's report: clothing does not show on the character. It did not
+  // - D29-D31 dressed the BUILD, and the build ran once, when the card
+  // was pressed. Equipping a cloak afterwards changed nothing on the
+  // rig. The body follows the equip table now, exactly as the weapon
+  // does (MW-D19): weaponRig hands the rig its worn list every frame,
+  // setWorn compares one key, and a change rebuilds with the pieces.
+  assert.equal(wornEquipKeyOf([]), '');
+  assert.equal(wornEquipKeyOf([{ kind: 'armor', templateIndex: 102, material: 3 }, { kind: 'clothing', templateIndex: 154 }]),
+    'armor:102:3|clothing:154:');
+  assert.notEqual(wornEquipKeyOf([{ templateIndex: 102, material: 3 }]), wornEquipKeyOf([{ templateIndex: 102, material: 4 }]),
+    'a material change must be a key change');
+  // The instance: before a build, setWorn is a no-op that returns
+  // false (nothing to re-dress); after a build, the same list is a
+  // no-op and a NEW list re-enters build() with the pieces.
+  const inst = createFpArm();
+  assert.equal(inst.setWorn([{ kind: 'armor', templateIndex: 102, material: 1 }]), false, 'dressed a rig that was never built');
+  const calls = [];
+  const deps = {
+    loadMorrowindArchives: async () => [],   // refuses at 'data' - the cheapest real build
+    storedMorrowindNames: async () => [],
+    loadMorrowindFile: async () => new Uint8Array(0),
+  };
+  await inst.build({ race: 'nord', armor: [], deps });
+  // a refused build (no archives) is not `built.ok`, so setWorn stays
+  // a no-op - the rig has nothing on it to re-dress. That is the
+  // never-traps shape: no rebuild storm against missing data.
+  assert.equal(inst.setWorn([{ kind: 'armor', templateIndex: 102, material: 1 }]), false);
+  void calls;
+});
+
+test('MW-D32: the per-frame read in weaponRig hands the rig its worn list', () => {
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+    'the game no longer dresses the rig from the equip table');
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /return this\.build\(\{ \.\.\.lastBuildOpts, armor: pieces, weapon: lastBuildOpts\.weapon \}\);/,
+    'setWorn no longer rebuilds through build()');
+  assert.match(arm, /if \(key === wornEquipKey\) return false;/, 'the fast path is gone - every frame would rebuild');
+});
+
+// ═══ MW-D33: the verdicts on the card, the curation table ═══════════
+test('MW-D33: a curated face wins, a missing curated id falls back, and the verdict says which', () => {
+  const P = (id, slot, { female = false } = {}) => ({
+    id, slot, race: 'fprace', female, skin: true, playable: true, firstPerson: false, model: `f/${id}.nif`,
+  });
+  const parts = [P('b_head_01', 'head'), P('b_head_02', 'head'), P('b_head_03', 'head'), P('b_hair_01', 'hair'), P('b_hair_02', 'hair')];
+  const table = { fprace: { male: { 0: { head: 'b_head_03', hair: 'b_hair_02' }, 1: { head: 'b_head_99', hair: 'b_hair_01' } } } };
+  const at = (i, t = table) => {
+    const rows = playerBodyRows(parts, 'fprace', false, { faceIndex: i, faceTable: t });
+    const m = new Map(rows.map((r) => [r.slot, r]));
+    return { head: m.get('head').record.id, hair: m.get('hair').record.id, hv: m.get('head').verdict };
+  };
+  // curated wins over the walk (the walk would give 01/01 at index 0).
+  assert.deepEqual([at(0).head, at(0).hair], ['b_head_03', 'b_hair_02'], 'the curated pair did not win');
+  assert.match(at(0).hv, /curated/);
+  // an id the archives lack falls back to the walk, and SAYS so.
+  assert.equal(at(1).head, 'b_head_02', 'a missing curated id did not fall back to the walk');
+  assert.match(at(1).hv, /derived \(curated "b_head_99" is not in these archives\)/);
+  assert.equal(at(1).hair, 'b_hair_01', 'the valid half of a pair must still apply');
+  // no table entry: the walk, labelled derived.
+  assert.equal(at(2).head, 'b_head_03');
+  assert.match(at(2).hv, /derived$/);
+  // the shipped table is valid JSON and an object (empty until curated).
+  assert.equal(typeof at(0, undefined).head, 'string');
+});
+
+test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or reasoned', () => {
+  const pieces = [
+    { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
+    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
+  ];
+  const worn = {
+    adds: [{ slot: 'cuirass (iron_cuirass)', bones: ['chest'], model: 'c.nif', recordId: 'b_cu', piece: pieces[0] }],
+    shadows: ['chest'],
+    notes: ['Short Shirt: no MW clothing of type 2 in these archives - the classic sprite stands'],
+  };
+  const v = wornVerdicts(pieces, worn);
+  assert.equal(v.length, 2);
+  assert.deepEqual(v[0].dressed, ['cuirass (iron_cuirass)']);
+  assert.equal(v[0].reason, null);
+  assert.deepEqual(v[1].dressed, []);
+  assert.match(v[1].reason, /classic sprite stands/);
+  // and the wiring: the build carries them, status exposes them, the
+  // card prints them.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /worn: wornVerdicts\(armor \?\? \[\], worn\),/);
+  assert.match(arm, /worn: built && built\.ok \? built\.worn : null,/);
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /armState\.worn/);
+});
+
+// ═══ MW-D35: the face is MATCHED, not walked ════════════════════════
+test('MW-D35: portraitFeatures reads skin, hair, length, beard and baldness off an indexed bitmap', () => {
+  // a synthetic 20x30 portrait: index 0 background, 1 = skin, 2 = hair.
+  // Hair fills the top band and the right side down to the chin; the
+  // chin centre is skin -> long hair, no beard.
+  const W = 20; const H = 30;
+  const data = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (x < 3 || x > 16 || y > 27) continue;               // background frame
+    const hairTop = y < 6; const hairSide = (x < 6 || x > 13) && y < 26;   // both sides, to the jaw
+    data[y * W + x] = (hairTop || hairSide) ? 2 : 1;
+  }
+  const pal = { get: (i) => [{ r: 0, g: 0, b: 0 }, { r: 200, g: 150, b: 120 }, { r: 40, g: 20, b: 10 }][i] };
+  const f = portraitFeatures({ width: W, height: H, data }, pal);
+  assert.deepEqual(f.skin.map((v) => Math.round(v * 255)), [200, 150, 120], 'skin is the face centre');
+  // the top band is a MEAN over hair and forehead - what the matcher
+  // needs is that it lands nearer the hair than the skin.
+  const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  assert.ok(d(f.hair, [40 / 255, 20 / 255, 10 / 255]) < d(f.hair, f.skin), 'the top band did not read as hair');
+  assert.equal(f.bald, false);
+  assert.ok(f.length > 0.3, `long side hair must register as length (${f.length})`);
+  assert.ok(f.beard < 0.15, `a skin chin must not read as a beard (${f.beard})`);
+  // bald: the top band is skin-coloured -> bald, length 0, no beard.
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[y * W + x] === 2) data[y * W + x] = 1;
+  const b = portraitFeatures({ width: W, height: H, data }, pal);
+  assert.equal(b.bald, true);
+  assert.equal(b.length, 0);
+});
+
+test('MW-D35: head and hair features, and the match picks by measured likeness', () => {
+  const tex = (w, h, rgb, opts = {}) => {
+    const rgba = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4;
+      let c = rgb;
+      if (opts.chinDark && y >= h * 0.66 && y < h * 0.9 && x >= w * 0.3 && x < w * 0.7) c = [rgb[0] * 0.3, rgb[1] * 0.3, rgb[2] * 0.3];
+      rgba[o] = c[0]; rgba[o + 1] = c[1]; rgba[o + 2] = c[2]; rgba[o + 3] = opts.alpha ?? 255;
+    }
+    return rgba;
+  };
+  const pale = headFeatures(tex(32, 32, [220, 180, 160]), 32, 32);
+  const dark = headFeatures(tex(32, 32, [90, 60, 40]), 32, 32);
+  const bearded = headFeatures(tex(32, 32, [220, 180, 160], { chinDark: true }), 32, 32);
+  assert.ok(pale.beard < 0.05 && bearded.beard > 0.6, `beard reads off the chin band (${pale.beard} / ${bearded.beard})`);
+  const blondLong = hairFeatures(tex(16, 16, [210, 180, 90]), 16, 16, 30);
+  const blackShort = hairFeatures(tex(16, 16, [20, 20, 25]), 16, 16, 12);
+  const redMid = hairFeatures(tex(16, 16, [120, 40, 20]), 16, 16, 20);
+  assert.deepEqual(blondLong.colour.map((v) => Math.round(v * 255)), [210, 180, 90]);
+  // a dark, bearded, long-black-haired portrait picks the dark bearded head and the black hair.
+  const portrait = { skin: [90 / 255, 60 / 255, 40 / 255], hair: [20 / 255, 20 / 255, 25 / 255], bald: false, length: 0.0, beard: 0.9 };
+  const heads = [{ id: 'pale', f: pale }, { id: 'dark', f: dark }, { id: 'bearded_pale', f: bearded }, { id: 'unmeasured', f: null }];
+  const hairs = [{ id: 'blond_long', f: blondLong }, { id: 'black_short', f: blackShort }, { id: 'red_mid', f: redMid }];
+  const m = matchFace(portrait, heads, hairs, { female: false });
+  assert.equal(m.head, 'dark', 'skin tone must dominate the head pick');
+  assert.equal(m.hair, 'black_short', 'colour and shortness must pick the black short hair');
+  assert.ok(m.reasons.some((r) => /unmeasured: no texture/.test(r)), 'an unmeasured candidate is named');
+  // the female flag drops the beard term: a beardless portrait no longer prefers the beardless pale head over its own tone.
+  const fem = matchFace({ ...portrait, beard: 0 }, heads, hairs, { female: true });
+  assert.equal(fem.head, 'dark');
+  // a bald portrait takes the shortest hair regardless of colour.
+  const bald = matchFace({ ...portrait, bald: true, length: 0 }, heads, hairs);
+  assert.equal(bald.hair, 'black_short');
+  // nothing measurable -> nulls, and the walk stands.
+  assert.deepEqual(matchFace(null, heads, hairs).head, null);
+});
+
+test('MW-D35: precedence - curated over matched over the walk, and the wiring', () => {
+  const P = (id, slot) => ({ id, slot, race: 'fprace', female: false, skin: true, playable: true, firstPerson: false, model: `f/${id}.nif` });
+  const parts = [P('b_head_01', 'head'), P('b_head_02', 'head'), P('b_head_03', 'head'), P('b_hair_01', 'hair'), P('b_hair_02', 'hair')];
+  const rows = (o) => new Map(playerBodyRows(parts, 'fprace', false, { faceIndex: 0, faceTable: {}, ...o }).map((r) => [r.slot, r]));
+  const m = rows({ faceMatch: { head: 'b_head_02', hair: 'b_hair_02' } });
+  assert.equal(m.get('head').record.id, 'b_head_02', 'the match did not beat the walk');
+  assert.match(m.get('head').verdict, /matched to the portrait/);
+  const c = rows({ faceMatch: { head: 'b_head_02', hair: 'b_hair_02' }, faceTable: { fprace: { male: { 0: { head: 'b_head_03' } } } } });
+  assert.equal(c.get('head').record.id, 'b_head_03', 'curation did not beat the match');
+  assert.equal(c.get('hair').record.id, 'b_hair_02', 'the unmatched-by-table half still takes the match');
+  const half = rows({ faceMatch: { head: null, hair: 'b_hair_99' } });
+  assert.equal(half.get('head').record.id, 'b_head_01', 'a null half must walk');
+  assert.equal(half.get('hair').record.id, 'b_hair_01', 'a matched id the archives lack must walk');
+  // facePools is the same law the walk uses.
+  assert.deepEqual(facePools(parts, 'fprace', false).heads.map((p) => p.id), ['b_head_01', 'b_head_02', 'b_head_03']);
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /await matchFaceFor\(\{ race, female, faceIndex, parts, archives, deps: d \}\)/);
+  assert.match(arm, /face: faceMatch,/);
+  assert.match(readFileSync('src/scenes/dataSource.js', 'utf8'), /export const fetchArena2Bytes/);
 });
 
 // ── MW-D31: SKINNING BROUGHT TO 1:1 ─────────────────────────────────

@@ -23,6 +23,7 @@ import { audio } from '../systems/audio.js';   // WM4c
 import { buildInteriorContext } from './interiorContext.js';
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // AUDIT: the FOURTH host the SETT slice missed
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 
@@ -91,6 +92,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     yaw: Math.atan2(centerX - spawn[0], centerZ - spawn[2]),
     pitch: 0,
   };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const keys = new Set();
   addEventListener('keydown', (e) => {
     keys.add(e.code);
@@ -101,13 +103,15 @@ export async function bootInterior(canvas, renderer, params, status) {
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
-    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch - dy * lookScale() * lookInvert()));
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
   });
 
@@ -123,6 +127,16 @@ export async function bootInterior(canvas, renderer, params, status) {
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(false)) {
+      if (false) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
