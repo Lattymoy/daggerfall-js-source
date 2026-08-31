@@ -116,7 +116,8 @@ test('TR3: the host door - grounded and outdoors only, and the mount is loaded a
   // dfuiOpenTransportWindow (:690-700): airborne is SILENTLY ignored.
   assert.match(world, /openTransport: \(\) => \{\s*\n\s*if \(!player\.grounded \|\| !transportArtLoaded\(\)\) return;/);
   assert.match(world, /hasHorse: hasHorse\(playerEntity\.items \?\? \[\]\),/);
-  assert.match(world, /shipAvailable: false,   \/\/ TR4 owns the ship/);
+  // TR4 made the row live for an owner; tr4_ship.test.js holds that.
+  assert.match(world, /shipAvailable: ownsShip\(playerEntity\),/);
   // The mount's art is loaded on the pick and dropped when you dismount.
   assert.match(world, /ridingAnimator\.mount\(mode\);/);
   assert.match(world, /if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)/);

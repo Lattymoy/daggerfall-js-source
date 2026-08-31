@@ -5191,7 +5191,7 @@ DFU's arc, and how it splits:
 | **TR1** | TransportManager's MODE half + every law that reads it | **CLOSED** |
 | **TR2** | the riding sprite and its audio | **CLOSED** |
 | **TR3** | the transport window, and the ride made real in the world host | **CLOSED** |
-| TR4 | the SHIP: DaggerfallBankManager's ship ownership and coords, the board/disembark reposition, the travel map's ship arm | open, and it is a BANK-arc dependency as much as a transport one |
+| **TR4** | the ship: board and disembark | **CLOSED** |
 
 ### TR1 CLOSED: the mode
 
@@ -5316,9 +5316,31 @@ with the line, and the mode change is ONE place (U53) that the T-key
 pick and the interior dismount both take, so the mount's art is dropped
 on every change rather than only on the pick.
 
-### What is left of the arc
+### TR4 CLOSED: the ship, and THE ARC WITH IT
 
-TR4 alone: the ship. `DaggerfallBankManager`'s ownership and coords,
-the board/disembark reposition with its scene cache, and the travel
-map's ship arm - a bank-arc dependency as much as a transport one, and
-the only reason `shipAvailable` is a hard `false` in TR3's picker.
+It was smaller than scoped: the OWNERSHIP half needed nothing, because
+the bank arc has carried ShipType, the prices, the two map-pixel coords
+and `ownedShip` since H3 - TR4 is simply its first reader. What was
+missing is that "Ship" is not a mode you travel IN (DFU's own comment
+on the enum): it is a TELEPORT that lands back on Foot, with
+`boardShipPosition` as the whole of its state. Boarding remembers where
+you were and lands at a RandomStartMarker; disembarking returns to the
+remembered spot with NO reposition and forgets it; and IsOnShip is a
+remembered boarding AND standing on the ship's own pixel, so a player
+who boards, saves and loads elsewhere is not aboard - DFU's behaviour,
+kept.
+
+FOUND WHILE LANDING IT: SerializablePlayer (:180, :425) persists the
+boarding memory and the port did not. A save taken at sea loaded with
+IsOnShip false, so the next disembark would BOARD again and overwrite
+where the player actually was. `save.js` carries it now; an older
+envelope restores null, which is the never-boarded state rather than a
+broken one.
+
+The terrain-sampler check (:373-379) has no counterpart - the port has
+one sampler and no version, so the fallback it guards can never fire.
+Recorded, not invented.
+
+**THE TRANSPORT ARC IS CLOSED.** TR1 mode, TR2 sprite and audio, TR3
+window, TR4 ship, TR5 tail - and with TR3, all sixty of DFU's real
+windows are ported.

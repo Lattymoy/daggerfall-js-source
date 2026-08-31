@@ -102,7 +102,8 @@ import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the na
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/transportWindow.js';   // TR3: the picker
-import { hasHorse, hasCart } from '../systems/transport.js';   // TR3: what the rows offer
+import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
+import { shipTransition } from '../systems/ship.js';   // TR4: board and disembark
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
@@ -2111,6 +2112,23 @@ export async function bootWorld(canvas, renderer, params, status) {
    * run is tickWeather, because no time passed to tick.
    */
   let _teleporting = false;
+  /** TR4: TransportManager's ship arm (:360-402). The decision is
+   *  systems/ship.js; this is the host half - the teleport, the
+   *  remembered position, and the fade DFU smashes to black. */
+  async function boardOrDisembark() {
+    const here = playerTravelPixel();
+    const t = shipTransition(playerEntity, {
+      boardShipPosition: playerEntity.boardShipPosition ?? null,
+      mapPixel: here,
+      position: { mapPixel: here, pos: [...player.pos], yaw: cam.yaw },
+    });
+    if (!t) return;
+    await _teleportToPixel(t.go.x, t.go.y, t.restore ? t.restore.pos : null);
+    if (t.restore) cam.yaw = t.restore.yaw;
+    playerEntity.boardShipPosition = t.boardShipPosition;
+    setTransportModeHere(t.mode);
+  }
+
   async function teleportTo(pick) {
     if (_teleporting) return;
     _teleporting = true;
@@ -2711,8 +2729,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.showOverlay(new TransportWindow({
         hasHorse: hasHorse(playerEntity.items ?? []),
         hasCart: hasCart(playerEntity.items ?? []),
-        shipAvailable: false,   // TR4 owns the ship
+        // TR4: the row is live when a ship is owned - the bank arc has
+        // carried that fact since H3, and this is its first reader.
+        shipAvailable: ownsShip(playerEntity),
         onMode: (mode) => {
+          // TR4: "Ship" is not a mode you travel IN (DFU's own comment
+          // on the enum) - it is a teleport that lands back on Foot.
+          if (mode === TRANSPORT_MODES.Ship) { boardOrDisembark(); return; }
           setTransportModeHere(mode);
           if (isRiding(mode)) {
             loadRidingArt(fetchBytes, palette, renderer, mode)
