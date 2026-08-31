@@ -61,10 +61,11 @@
     <option>rain</option><option>thunder</option><option>snow</option>
   </select></label>
   <label><input id="retro" type="checkbox"> retro sky (the game's ?sky= pass)</label>
+  <label>warmth <input id="warmth" type="range" min="0" max="100" step="1" value="35"><span class="v" id="vwarmth"></span></label>
   <label>surface <select id="surf">
     <option>grass</option><option>dirt</option><option>stone</option><option>sand</option><option>snow</option>
   </select></label>
-  <p class="note">drag to look &middot; W/S to move &middot; G toggles grass &middot; T toggles the new ground</p>
+  <p class="note">drag to look &middot; W/S to move &middot; G grass &middot; T ground &middot; walk on snow to leave prints</p>
   <p class="note" id="fps"></p>
 </div>
 <script type="module">
@@ -77,8 +78,8 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, windDir: 20, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
-for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun']) {
+const state = { density: 160000, height: 34, wind: 70, windDir: 20, warmth: 35, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
+for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun', 'warmth']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
   el.addEventListener('input', sync); sync();
@@ -478,14 +479,24 @@ float terrain(vec2 p){
 const groundProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aXZ;
 uniform mat4 uVP; uniform float uTilePx;
-out vec2 vUV; out vec3 vPos;
+uniform sampler2D uField; uniform vec2 uFieldOrigin; uniform float uFieldM;
+out vec2 vUV; out vec3 vPos; out vec2 vFieldUV; out vec4 vField;
 void main(){
   vec3 p = vec3(aXZ.x, terrain(aXZ), aXZ.y);
+  vFieldUV = (aXZ - uFieldOrigin) / uFieldM;
+  vField = texture(uField, vFieldUV);
+  // LAW 3: SNOW IS A HEIGHT. The land rises as it falls, and a packed
+  // print is a real dent in that height - not a dark decal on a flat
+  // plane. Packed snow sits lower than fresh, which is what makes a
+  // trail read as a trail from any angle.
+  float snow = vField.g * (1.0 - vField.b * 0.55);
+  p.y += snow * 0.45;
   vPos = p; vUV = aXZ / uTilePx;
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
-in vec2 vUV; in vec3 vPos;
-uniform sampler2D uTex, uNrm, uLow;
+in vec2 vUV; in vec3 vPos; in vec2 vFieldUV; in vec4 vField;
+uniform sampler2D uTex, uNrm, uLow, uField2;
+uniform float uFieldM2;
 uniform float uNew, uDim, uFog, uWet; uniform vec3 uEye, uSun, uSky, uAmb, uSunCol;
 out vec4 o;
 void main(){
@@ -520,6 +531,18 @@ void main(){
   // that stops a ground texture looking painted.
   vec3 n = texture(uNrm, vUV).xyz * 2.0 - 1.0;
   vec3 N = normalize(vec3(n.x, n.z, n.y));           // tangent -> world (flat ground)
+  // the SNOW's own surface normal, from the field's slope: a drift has
+  // shape, and a footprint's rim catches the light. Read at the field's
+  // own resolution, so a print has crisp walls.
+  float e = 1.0 / 256.0;
+  float sL = texture(uField2, vFieldUV - vec2(e,0.0)).g * (1.0 - texture(uField2, vFieldUV - vec2(e,0.0)).b*0.55);
+  float sR = texture(uField2, vFieldUV + vec2(e,0.0)).g * (1.0 - texture(uField2, vFieldUV + vec2(e,0.0)).b*0.55);
+  float sD = texture(uField2, vFieldUV - vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV - vec2(0.0,e)).b*0.55);
+  float sU = texture(uField2, vFieldUV + vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV + vec2(0.0,e)).b*0.55);
+  float snowD = vField.g * (1.0 - vField.b * 0.55);
+  vec3 snowN = normalize(vec3((sL - sR) * 22.0, 1.0, (sD - sU) * 22.0));
+  float snowCov = smoothstep(0.02, 0.16, snowD);
+  N = normalize(mix(N, snowN, snowCov));
   float lam = max(dot(N, normalize(uSun)), 0.0);
   // the AMBIENT is the sky's own colour, so dusk warms the ground and
   // fog flattens it without a second set of numbers
@@ -531,9 +554,38 @@ void main(){
   // 4. THE WORLD ANSWERS. Wet ground is DARKER and SHINIER - water
   // fills the pores, so it absorbs more and reflects sharper. That
   // pair together is what reads as rain-soaked; either alone does not.
+  // ── the FIELD's own contribution ────────────────────────────────
+  // SNOW: fresh snow is near-white and takes the sky's colour; PACKED
+  // snow is duller, greyer and a shade blue, because compressed snow
+  // is denser ice and scatters less. That difference is what makes a
+  // trail visible on a white field at all.
+  vec3 fresh = vec3(0.90, 0.93, 0.98);
+  vec3 packed2 = vec3(0.70, 0.74, 0.82);
+  vec3 snowC = mix(fresh, packed2, vField.b);
+  c = mix(c, snowC, snowCov);
+  // WEAR: the memory of a path, after the print itself has healed
+  c = mix(c, c * vec3(0.92,0.94,0.98), vField.a * snowCov * 0.6);
+
+  // WATER: a puddle is DARK, SMOOTH and REFLECTIVE. Dark because the
+  // water fills the pores; smooth because the surface is water, not
+  // ground, so the normal goes flat; reflective because it is a
+  // mirror at grazing angles - which is the Fresnel term, and the
+  // reason a puddle looks like a puddle from across a field and like
+  // wet dirt underfoot.
+  float pud = smoothstep(0.05, 0.28, vField.r) * (1.0 - snowCov);
+  vec3 V2 = normalize(uEye - vPos);
+  float fres = pow(1.0 - max(dot(V2, vec3(0,1,0)), 0.0), 4.0);
+  if (pud > 0.001) {
+    N = normalize(mix(N, vec3(0,1,0), pud * 0.92));
+    c *= mix(1.0, 0.42, pud);
+    // the sky in the water, stronger at a grazing angle
+    c = mix(c, uSky * 1.05, pud * (0.10 + fres * 0.72));
+  }
   c *= mix(1.0, 0.66, uWet);
-  float sheen = pow(max(dot(N,H),0.0), mix(26.0, 90.0, uWet)) * (0.35 + low.r*0.65 + uWet*1.3);
+  float sheen = pow(max(dot(N,H),0.0), mix(26.0, 90.0, uWet + pud * 0.9)) * (0.35 + low.r*0.65 + uWet*1.3 + pud*2.2);
   c += vec3(0.16,0.18,0.12) * sheen;
+  // snow SPARKLES: sharp specular on its own normal, only where fresh
+  c += vec3(0.9,0.94,1.0) * pow(max(dot(N,H),0.0), 220.0) * snowCov * (1.0 - vField.b) * 0.55;
   c *= uDim;
 
   // 4. the far field settles into colour instead of boiling: blend to
@@ -1221,6 +1273,161 @@ function buildWeather(n) {
 }
 buildWeather(42000);
 
+// ══ THE SURFACE STATE FIELD ═════════════════════════════════════════
+// PROTO-10 (Mac: puddles that build and shrink, real snow accumulation
+// you can walk through and deform, and seasonal melt that turns snow
+// back into puddles and then into ground). Three effects, ONE field,
+// because they are three readings of the same thing: how much water is
+// on this patch of ground and what state it is in.
+//
+// A texture over the world around the player, one texel to ~25cm:
+//   R  WATER   depth of standing water (puddles)
+//   G  SNOW    depth of lying snow
+//   B  PACK    how trampled the snow is - a footprint is written here
+//   A  WEAR    the slow memory that keeps a trail after the print fades
+//
+// THE LAWS, and the reason each one is not optional:
+//
+//  1. WATER POOLS IN HOLLOWS. Rain falls evenly; puddles are not even.
+//     Accumulation is weighted by a POOLING term read off the terrain
+//     itself - the local concavity, low ground minus its neighbours -
+//     so water gathers in the dips and runs off the rises. Without
+//     this, "puddles" are random blobs and the eye refuses them.
+//  2. SNOW LIES ON THE FLAT. A slope sheds it; accumulation scales
+//     with how upward the ground faces. This is why real snow draws
+//     the shape of the land instead of coating it.
+//  3. SNOW IS A HEIGHT, NOT A COLOUR. It DISPLACES the ground, so the
+//     land visibly rises as it falls and a footprint is a real dent
+//     in that height rather than a dark decal.
+//  4. WALKING DEFORMS IT. A step packs the snow down, throws a little
+//     to the sides, and leaves wear that outlasts the print. Puddles
+//     get the same stamp as a splash ring.
+//  5. MELT IS A CONVERSION, NOT A DELETION. Warmth turns snow into
+//     WATER - the puddle is the snow that was there - and then the sun
+//     dries the water. That chain is the whole seasonal effect Mac
+//     asked for, and it falls straight out of holding both in one
+//     field.
+const FIELD_N = 256;                 // texels a side
+const FIELD_M = 64;                  // metres a side  (~25cm a texel)
+const field = new Float32Array(FIELD_N * FIELD_N * 4);
+const fieldPx = new Uint8Array(FIELD_N * FIELD_N * 4);
+const fieldTex = gl.createTexture();
+let fieldOrigin = [0, 0];            // world position of texel (0,0)
+gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FIELD_N, FIELD_N, 0, gl.RGBA, gl.UNSIGNED_BYTE, fieldPx);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+/** POOLING: how much this patch collects, from the terrain's own
+ *  concavity. Low relative to its neighbours = a dip = it holds water.
+ *  Cached per texel because the terrain does not move. */
+const poolCache = new Float32Array(FIELD_N * FIELD_N);
+let poolValid = false;
+function rebuildPooling() {
+  const step = FIELD_M / FIELD_N;
+  for (let j = 0; j < FIELD_N; j++) {
+    for (let i = 0; i < FIELD_N; i++) {
+      const x = fieldOrigin[0] + i * step, z = fieldOrigin[1] + j * step;
+      const h = terrainAt(x, z);
+      const r = 1.4;
+      const around = (terrainAt(x + r, z) + terrainAt(x - r, z) + terrainAt(x, z + r) + terrainAt(x, z - r)) * 0.25;
+      // concave (h below its ring) pools; convex sheds
+      const conc = cl((around - h) * 1.7 + 0.35, 0, 1);
+      // and the FLATNESS, which is what snow needs
+      const slope = Math.hypot(terrainAt(x + r, z) - terrainAt(x - r, z), terrainAt(x, z + r) - terrainAt(x, z - r)) / (2 * r);
+      const flat = cl(1 - slope * 2.6, 0, 1);
+      poolCache[j * FIELD_N + i] = conc * 0.75 + flat * 0.25;
+      // the flatness rides in the same cache's fractional part is a
+      // trick too clever to debug: keep them apart
+      poolFlat[j * FIELD_N + i] = flat;
+    }
+  }
+  poolValid = true;
+}
+const poolFlat = new Float32Array(FIELD_N * FIELD_N);
+
+/** A stamp: the player's foot, or a drip. Writes in world space. */
+function stampField(x, z, radius, fn) {
+  const step = FIELD_M / FIELD_N;
+  const i0 = Math.max(0, Math.floor((x - radius - fieldOrigin[0]) / step));
+  const i1 = Math.min(FIELD_N - 1, Math.ceil((x + radius - fieldOrigin[0]) / step));
+  const j0 = Math.max(0, Math.floor((z - radius - fieldOrigin[1]) / step));
+  const j1 = Math.min(FIELD_N - 1, Math.ceil((z + radius - fieldOrigin[1]) / step));
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) {
+      const wx = fieldOrigin[0] + i * step, wz = fieldOrigin[1] + j * step;
+      const d = Math.hypot(wx - x, wz - z);
+      if (d > radius) continue;
+      fn(j * FIELD_N + i, 1 - d / radius);
+    }
+  }
+}
+
+let lastStep = [0, 0], stepPhase = 0;
+function tickField(dt, eye, rainRate, snowRate, warmth) {
+  if (!poolValid) rebuildPooling();
+  const n = FIELD_N * FIELD_N;
+  for (let k = 0; k < n; k++) {
+    const o = k * 4;
+    let water = field[o], snow = field[o + 1], pack = field[o + 2], wear = field[o + 3];
+    const pool = poolCache[k], flat = poolFlat[k];
+    // 1. rain fills, weighted by where water actually goes
+    if (rainRate > 0) water += rainRate * dt * (0.15 + pool * 1.5);
+    // 2. snow lies on the flat, and packed snow takes less
+    if (snowRate > 0) snow += snowRate * dt * (0.25 + flat * 1.4) * (1 - pack * 0.45);
+    // 5. MELT IS A CONVERSION: the snow becomes the water
+    if (warmth > 0 && snow > 0) {
+      const melted = Math.min(snow, warmth * dt * 0.5 * (0.4 + (1 - flat) * 0.8));
+      snow -= melted;
+      water += melted * 0.35;          // snow is mostly air
+      pack = Math.max(0, pack - warmth * dt * 0.3);
+    }
+    // the sun dries what is left, slower in a hollow
+    const dry = warmth * dt * 0.16 * (1.1 - pool * 0.6);
+    water = Math.max(0, water - dry);
+    // wind and fresh fall heal a print; wear outlasts it
+    pack = Math.max(0, pack - dt * (0.015 + snowRate * 0.9));
+    wear = Math.max(0, wear - dt * 0.004);
+    field[o] = Math.min(1, water); field[o + 1] = Math.min(1, snow);
+    field[o + 2] = Math.min(1, pack); field[o + 3] = Math.min(1, wear);
+  }
+  // 4. WALKING DEFORMS IT - a step every ~0.75m of travel
+  const moved = Math.hypot(eye[0] - lastStep[0], eye[2] - lastStep[1]);
+  if (moved > 0.75) {
+    stepPhase += 1;
+    lastStep = [eye[0], eye[2]];
+    // the foot lands a little to one side, alternating
+    const side = (stepPhase % 2 ? 1 : -1) * 0.22;
+    const fx = eye[0] + Math.cos(cam.yaw) * side, fz = eye[2] - Math.sin(cam.yaw) * side;
+    stampField(fx, fz, 0.34, (k, w) => {
+      const o = k * 4;
+      // snow COMPRESSES: it does not vanish, it packs down and a
+      // little is thrown to the rim
+      const bite = w * 0.55;
+      const taken = field[o + 1] * bite;
+      field[o + 1] -= taken;
+      field[o + 2] = Math.min(1, field[o + 2] + w * 0.8);
+      field[o + 3] = Math.min(1, field[o + 3] + w * 0.5);
+      // a puddle SPLASHES: the water is pushed out of the print
+      field[o] = Math.max(0, field[o] - w * 0.35);
+    });
+    stampField(fx, fz, 0.52, (k, w) => {
+      const o = k * 4;
+      if (w < 0.35) field[o + 1] = Math.min(1, field[o + 1] + (1 - w) * 0.05);   // the rim
+    });
+  }
+  // upload
+  for (let k = 0; k < n; k++) {
+    const o = k * 4;
+    fieldPx[o] = field[o] * 255; fieldPx[o + 1] = field[o + 1] * 255;
+    fieldPx[o + 2] = field[o + 2] * 255; fieldPx[o + 3] = field[o + 3] * 255;
+  }
+  gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, FIELD_N, FIELD_N, gl.RGBA, gl.UNSIGNED_BYTE, fieldPx);
+}
+
 // ── camera ─────────────────────────────────────────────────────────
 const cam = { x: 0, z: 0, yaw: 0.6, pitch: -0.22, h: 1.7 };
 let drag = null;
@@ -1400,6 +1607,18 @@ function frame(now) {
   const sa = state.sun * Math.PI / 180;
   const sun = [Math.cos(sa) * 0.92, Math.sin(sa), 0.30];
   const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
+  // the field follows the player in whole texels, so its contents do
+  // not smear when it re-centres
+  const fstep = FIELD_M / FIELD_N;
+  const wantO = [Math.round((cam.x - FIELD_M / 2) / fstep) * fstep, Math.round((cam.z - FIELD_M / 2) / fstep) * fstep];
+  if (wantO[0] !== fieldOrigin[0] || wantO[1] !== fieldOrigin[1]) { fieldOrigin = wantO; poolValid = false; }
+  // the RATES come from the weather that is actually falling, and the
+  // warmth from the season slider - which is the melt, and therefore
+  // the whole seasonal chain
+  const rainRate = state.weather === 'rain' || state.weather === 'thunder' ? wsky.fall * (state.weather === 'thunder' ? 1.1 : 0.7) : 0;   // lab rate
+  const snowRate = state.weather === 'snow' ? wsky.fall * 0.85 : 0;   // lab rate: a field whitens in ~20s, not an hour
+  const warmth = cl(state.warmth / 100, 0, 1) * (0.35 + 0.65 * Math.max(0, Math.sin(elev * Math.PI / 180)));
+  tickField(Math.min(dt, 0.05), eye, rainRate, snowRate, warmth);
   const dir = [-Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), -Math.cos(cam.yaw) * Math.cos(cam.pitch)];
   const vp = mul(persp(1.05, w / h, 0.1, 600), look(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]], [0, 1, 0]));
 
@@ -1466,6 +1685,12 @@ function frame(now) {
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), new Float32Array(sky));
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uAmb'), new Float32Array(skyAmb));
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSunCol'), new Float32Array(sunCol));
+  gl.uniform2fv(gl.getUniformLocation(groundProg, 'uFieldOrigin'), new Float32Array(fieldOrigin));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uFieldM'), FIELD_M);
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uField'), 3);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uField2'), 3);
+  gl.activeTexture(gl.TEXTURE0);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, groundTex);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uTex'), 0);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, groundNrm);
