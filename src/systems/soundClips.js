@@ -31,11 +31,14 @@ export const SOUND = {
   DungeonDoorOpen: 25,
   NormalDoorClose: 93,
   NormalDoorOpen: 94,
+  HorseClop: 97,          // TR2: the riding loop below half speed
   AnimalHorse: 99,
   AnimalDog: 100,
   AnimalCat: 101,
   AnimalPig: 102,
   AnimalCow: 103,
+  HorseAndCart: 104,      // TR2: the cart's own loop
+  HorseClop2: 298,        // TR2: the riding loop at speed
   SwingLowPitch: 105,
   SwingHighPitch: 106,
   EnemyWerewolfMove: 142,    // LM1: the transformed MOVE sound (SoundClips.cs:213, :233)

@@ -5189,7 +5189,7 @@ DFU's arc, and how it splits:
 | Slice | What | State |
 |---|---|---|
 | **TR1** | TransportManager's MODE half + every law that reads it | **CLOSED** |
-| TR2 | the riding sprite and its audio: MRED00I0/MRED01I0.CFA, 4 frames at 0.125s, bottom-centre at ScaleFactorX 0.8, the clop/cart loops with their half-speed volume and running pitch, the neigh on Random.Range(2,40) | open |
+| **TR2** | the riding sprite and its audio | **CLOSED** |
 | TR3 | DaggerfallTransportWindow: the foot/horse/cart/ship picker with its disabled rows, and the `dfuiOpenTransportWindow` gate - indoors refuses with a HUD line, airborne is silently ignored | open |
 | TR4 | the SHIP: DaggerfallBankManager's ship ownership and coords, the board/disembark reposition, the travel map's ship arm | open, and it is a BANK-arc dependency as much as a transport one |
 
@@ -5220,3 +5220,31 @@ neighbour) but the order is the law and the port keeps it.
 
 **Nothing mounts yet** - TR3 owns the door. TR1 is the system under it,
 and every one of its laws is live the moment a mode is set.
+
+### TR2 CLOSED: the sprite and the audio
+
+`formats/cfaFile.js` is CfaFile whole - the FIFTH classic image format
+the port reads, after IMG, CIF/RCI, TEXTURE and GFX. One record, N
+frames of one size, RLE end-to-end behind a 14-byte header. One
+arithmetic quirk is kept verbatim and pinned as such: the run length is
+measured in COMPRESSED widths while the buffer is UNCOMPRESSED-sized,
+so where the two differ DFU stops short and the tail stays zero. The
+shipped files agree, and a "fix" would be a guess about art nobody in
+this container can open.
+
+`systems/riding.js` is the Update and OnGUI halves, pure: the 0.125s
+frame clock wrapping 3 to 0 and RESETTING (not pausing) while you
+stand, the loop that stops 0.2s after you do so a step-pause-step does
+not chop the clop, the clop that swaps on the half-speed EDGE rather
+than the state, the volume halved below half speed, the 1.2 running
+pitch (which TR1 makes unreachable while mounted - DFU has the same
+dead branch), the neigh at 1..4s on mounting and 2..39s after, firing
+for a CART too and at a standstill because its block sits outside both
+forks. The draw rect is bottom-centre at ScaleFactorX 0.8 on the
+200-line scale.
+
+Three sound ids joined the roster at DFU's numbers: HorseClop 97,
+HorseAndCart 104, HorseClop2 298.
+
+**Still nothing mounts** - and now the sprite, the loop and the neigh
+are all waiting on the same door.

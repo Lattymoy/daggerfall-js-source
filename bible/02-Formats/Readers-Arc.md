@@ -26,6 +26,7 @@ the eight it was scoped to; a slice that needs a new format adds it here):
 | 10 | GFX | the chargen scroll frames | **complete** (`src/formats/gfxFile.js`, U18) |
 | 11 | FLIC | .CEL/.FLC animations - Daggerfall's flats are Autodesk FLICs, a different format from the .VID movies | **complete** (`src/formats/flcFile.js`, F1) |
 | 12 | FLATS.CFG | per-billboard caption + TFAC00I0.RCI face index | **complete** (`src/formats/flatsFile.js`, NPC1) |
+| 13 | CFA | the mount sprites the player rides - MRED00I0 (horse) and MRED01I0 (cart), four frames each | **complete** (`src/formats/cfaFile.js`, TR2) |
 
 ## Validation gate (every reader)
 
@@ -92,3 +93,18 @@ the reader ships on synthetic byte-exact fixtures, and the corpus gate
 is armed for the first machine that has real saves. The IMPORT half
 (DaggerfallLoadClassicGameWindow, feeding game state) is not this
 reader and stays on Port-Ledger section C's row.
+
+- CFA (TR2): 1:1 CfaFile.cs. One record, N frames of one size, a
+  14-byte header and a single RLE run behind it, decoded through
+  BaseImageFile's existing `readRleData` - the same decoder CIF and
+  TEXTURE use. NO CORPUS GATE: this container has no ARENA2, and the
+  only CFAs the port wants are the two mount sprites, so the pins are
+  hand-built files exercising the header, the per-frame slice and the
+  out-of-range guards. One arithmetic quirk is carried verbatim and
+  pinned as such: ReadImageData measures the run length in COMPRESSED
+  widths (`widthCompressed * height * frameCount`) while the buffer is
+  UNCOMPRESSED-sized and GetDFBitmap reads uncompressed-wide rows, so
+  where the two widths differ DFU stops short and the tail stays zero.
+  The shipped files agree; "fixing" it would be a guess about art that
+  cannot be opened here. FLAGGED for the first session with ARENA2:
+  decode MRED00I0/MRED01I0 and confirm the two widths match.
