@@ -106,7 +106,12 @@ const mem = new Map(); // NAME -> Uint8Array
 // splash under the rule the moment it was written. Proven by mutation -
 // drop the name below and F2 fails with "desktop diet drops
 // ANIM0001.VID". Wire a video, and the pin makes you feed it.
-const LEAN = typeof window !== 'undefined' &&
+// AUDIT DA: the desktop shell is NEVER lean, whatever it sniffs - a
+// touch-screen Windows laptop is not a phone, and a player there who
+// fell back to the in-page picker used to ingest the sky-less lean
+// set with no way out of it from the app. The shell's presence
+// (daggerShell, the preload bridge) outranks the touch sniff.
+const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three

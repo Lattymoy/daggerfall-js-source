@@ -27,6 +27,7 @@ import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -551,14 +552,16 @@ export function restoreSessionState(extras, { questBridge = null, talk = null } 
   return !!extras?.quest;
 }
 
-/** localStorage backend (absent in headless - callers gate).
+/** Storage backend (absent in headless - callers gate): the DA1 seam,
+ *  so the desktop shell's file store answers where a browser answers
+ *  localStorage.
  *  setItem THROWS on real browsers - QuotaExceededError when storage
  *  is full, or a SecurityError under private-browsing modes that
  *  disable storage. An unguarded throw here propagates through the F9
  *  handler and kills the frame (the same unguarded-browser-API class
  *  as the bare requestPointerLock crash). Return false on failure so
  *  the caller reports "save failed" instead of crashing. */
-export function writeQuicksave(snap, storage = globalThis.localStorage) {
+export function writeQuicksave(snap, storage = appStorage()) {
   if (!storage) return false;
   try {
     storage.setItem(QUICKSAVE_KEY, JSON.stringify(snap));
@@ -584,12 +587,12 @@ export function writeQuicksave(snap, storage = globalThis.localStorage) {
  * front doors call it. A predicate that lives anywhere else is a
  * predicate that drifts from the thing it predicts.
  */
-export function restorableQuicksave(storage = globalThis.localStorage) {
+export function restorableQuicksave(storage = appStorage()) {
   const snap = readQuicksave(storage);
   return snap && snap.v === SAVE_VERSION ? snap : null;
 }
 
-export function readQuicksave(storage = globalThis.localStorage) {
+export function readQuicksave(storage = appStorage()) {
   if (!storage) return null;
   const raw = storage.getItem(QUICKSAVE_KEY);
   if (!raw) return null;
