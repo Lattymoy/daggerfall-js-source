@@ -8541,9 +8541,25 @@ own design surface and DFU parity does not bind it.
 
 `pack-proto.html` at the root (registered in `vite.config.js`, or it
 404s on gh-pages) is the SPEC: fixtures only, nothing imported from
-`src/`, so iterating on it cannot break the live pack. Three knobs -
-height, cell size, gap - are on the page so the numbers get argued
-about by looking rather than describing.
+`src/`, so iterating on it cannot break the live pack.
+
+**SECOND CUT, and the note that produced it.** The first prototype
+designed a NEW window - its own palette, its own type, its own
+furniture - and Mac's reply was that it veered too far from what is in
+the game. He was right, and the failure is worth naming: asked to
+change three things about an existing screen, the first answer changed
+everything and put the three somewhere inside it. A prototype for an
+EXISTING surface has to start as that surface.
+
+The second cut is the live pack: `ENHANCED_TOKENS` verbatim, and the
+classes and rules copied out of `enhancedStyle.js` rather than
+invented - `.packtabs`/`.packtab` (:606-612), `.packcol` (:532),
+`.itemrow`'s hover and selection (:615-620), `.tile`'s "no border once
+a real sprite is in it" (:621-628), `.packbar` (:2283-2290), the
+`.pack-shell` frame (:2012-2020). Exactly three things differ, and the
+page says so at the top: the shell's height, the grid in place of the
+row list, and the Armour tab. Anywhere else it does not look like the
+pack is a bug in the prototype rather than a proposal.
 
 **The tab set is the real decision.** The live pack imports `TABS` and
 `filterByTab` from `nativeInventory.js`, which is DFU's FOUR-tab rule
