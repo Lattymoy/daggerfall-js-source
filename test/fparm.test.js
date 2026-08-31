@@ -293,7 +293,7 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // MW-D26 widened the clip term: SOME slot playing - action, movement
   // or idle - is the same guarantee (a rig with none is the frozen bind
   // pose, and the sprite is the correct picture).
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| idleState\)\s*&& viewMode === 'first'\);/,
+  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| jumpState \|\| idleState\)\s*&& viewMode === 'first'\);/,   // MW-D39 widened the clip term again: the jump slot counts
     'built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all seven');
 });
 
@@ -610,7 +610,7 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
 
   // ready() must not require the mesh, or the deadlock comes straight back.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| idleState\) && renderer\);/,
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| jumpState \|\| idleState\) && renderer\);/,   // MW-D39: the jump slot counts here too
     'ready() is update()\'s own requirements - no mesh term, no camera term (MW-D26 widened the clip term)');
 });
 
@@ -2761,4 +2761,106 @@ test('PX25: the pack hands the rig the worn table on every refresh', () => {
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);
   assert.match(src, /if \(pendingWorn\) \{ const p = pendingWorn; pendingWorn = null; this\.setWorn\(p\); \}/);
+});
+
+// ── MW-D39: JUMP - THE FOURTH SLOT ──────────────────────────────────
+
+import { jumpAnimState } from '../src/formats/mwFirstPerson.js';
+import { resetClip, advanceClip } from '../src/formats/mwAnim.js';
+
+test('MW-D39: the jump state is update()\'s own derivation (character.cpp:2195-2296)', () => {
+  // In the air, not swimming, not levitating: InAir, movement gated.
+  assert.deepEqual(jumpAnimState({ grounded: false }), { jump: 'inair', inJump: true });
+  // THE TAKEOFF FRAME (:2224-2227): the jump latch fires while still
+  // grounded - movement gates off, but nothing plays yet.
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpQueued: true }), { jump: null, inJump: true });
+  // THE LANDING FRAME: the motor's latch is not yet cleared, but the
+  // prior state was InAir - the reference's mJumpState guard keeps it
+  // from reading as a fresh takeoff, and the still-playing clip makes
+  // it Landing (:2292-2293).
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpQueued: true, priorInAir: true, jumpPlaying: true }),
+    { jump: 'landing', inJump: false });
+  // A ledge walked off and landed - no jump latch ever - still lands.
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpPlaying: true }), { jump: 'landing', inJump: false });
+  // The landing clip finished: nothing plays, nothing gates.
+  assert.deepEqual(jumpAnimState({ grounded: true }), { jump: null, inJump: false });
+  // Swimming and levitation refuse the whole family (:2206 - the
+  // reference's !inwater && !flying gate), airborne or not.
+  assert.deepEqual(jumpAnimState({ grounded: false, swimming: true }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: false, levitating: true }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpQueued: true, levitating: true }), { jump: null, inJump: false });
+});
+
+test('MW-D39: the two jump plays over real keys - InAir loops on its loop window, Landing plays the tail once', () => {
+  const keys = [
+    { time: 0.0, text: 'jump: start' },
+    { time: 0.2, text: 'jump: loop start' },
+    { time: 0.8, text: 'jump: loop stop' },
+    { time: 1.0, text: 'jump: stop' },
+  ];
+  // InAir (character.cpp:528-529): start -> stop, unbounded loops, NO
+  // loopfallback - the loop window is the group's own keys.
+  const air = resetClip(keys, 'jump', { start: 'start', stop: 'stop', loopCount: Infinity });
+  assert.ok(air.ok);
+  advanceClip(air, keys, 2.5, null);
+  assert.ok(air.playing, 'a long fall keeps playing');
+  assert.ok(air.time >= 0.2 && air.time <= 0.8, `the playhead lives in the loop window (${air.time})`);
+  // A mid-air stance change re-picks from "loop start" (:522's
+  // startAtLoop), never replaying the takeoff.
+  const rePick = resetClip(keys, 'jump', { start: 'loop start', stop: 'stop', loopCount: Infinity });
+  assert.equal(rePick.time, 0.2);
+  // Landing (:531): ONCE, from "loop stop" to "stop".
+  const land = resetClip(keys, 'jump', { start: 'loop stop', stop: 'stop', loopCount: 0 });
+  assert.ok(land.ok);
+  assert.equal(land.time, 0.8);
+  advanceClip(land, keys, 5, null);
+  assert.ok(!land.playing, 'the landing tail ends');
+  assert.equal(land.time, 1.0);
+  // Data with no loop keys: InAir plays once and HOLDS (the
+  // reference's autodisable=false falling pose)...
+  const bare = [{ time: 0, text: 'jump: start' }, { time: 1, text: 'jump: stop' }];
+  const held = resetClip(bare, 'jump', { start: 'start', stop: 'stop', loopCount: Infinity });
+  advanceClip(held, bare, 3, null);
+  assert.ok(!held.playing && held.time === 1, 'held at its last pose');
+  // ...and Landing FAILS the pick outright - Animation::reset:992
+  // returns false and the reference's play silently does nothing.
+  assert.ok(!resetClip(bare, 'jump', { start: 'loop stop', stop: 'stop', loopCount: 0 }).ok);
+});
+
+test('MW-D39: refreshJumpAnims\' wiring, source-pinned (character.cpp:494-532, :841-844)', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  // The refresh order is the reference's: jump before movement, and
+  // its inJump is the movestate ladder's gate (:2296).
+  assert.match(arm, /const inJump = refreshJump\(\(cam && cam\.move\) \|\| null\);\s*\n\s*refreshMovement\(cam, dt, inJump\);/,
+    'jump refreshes first and gates movement');
+  assert.match(arm, /const base = inJump \? null : movementAnimState\(\{/,
+    'airborne, the movestate ladder does not run');
+  // The four-slot winner, in the priority enum's order
+  // (character.hpp:30-43: Weapon > Movement > Jump > idle-tier).
+  assert.match(arm, /actionState \|\| movementState \|\| jumpState \|\| idleState/);
+  // The group is the one-home ladder, from the jump base.
+  assert.match(arm, /composeStanceGroup\('jump', stance, hasGroup\)/);
+  // InAir: unbounded loops, startAtLoop on a forced same-state re-pick,
+  // and NO loopFallback in the options.
+  assert.match(arm, /\{ start: startAtLoop \? 'loop start' : 'start', stop: 'stop', loopCount: Infinity \}/);
+  // Landing: the tail, once.
+  assert.match(arm, /\{ start: 'loop stop', stop: 'stop', loopCount: 0 \}/);
+  // The jump advances at speedmult 1.0 - no rate scaling (:528-531).
+  assert.match(arm, /advanceClip\(jumpState, \(jumpSource \|\| rig\(\)\)\.keys, dt, null\)/);
+  // A jump ending resets the idle with it (:499-505), and the slot dies
+  // with a rebuild, an unload and a view switch like the others.
+  assert.match(arm, /function resetJump\(\)/);
+  assert.equal((arm.match(/jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null;/g) ?? []).length, 3,
+    'resetJump, the rebuild wipe and the unload wipe all clear the slot');
+});
+
+test('MW-D39: THE FOUR HOSTS feed the jump-state inputs, named and swept', () => {
+  // exterior.js, world.js, worldModes.js drive the camera dep; the
+  // dungeon host routes through dungeonContext.drawFoes' playerMove
+  // latch. All four carry the same spelling, so none can quietly hand
+  // the arm a rig that never jumps.
+  const literal = 'grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating';
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
+    assert.ok(readFileSync(host, 'utf8').includes(literal), `${host} feeds the jump-state inputs`);
+  }
 });

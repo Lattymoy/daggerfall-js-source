@@ -1282,7 +1282,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // reference's head_bobbing.lua drives setFirstPersonOffset's z
       // only); bobOffset[1] is the raw vertical, un-rotated.
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
-      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0 } }),   // MW-D26: the movement-settings vector, the reference's own selection source
+      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
+        grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
     spellArmed: () => magic.spellArmed(),   // M2
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.

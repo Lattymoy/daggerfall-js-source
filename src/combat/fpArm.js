@@ -60,6 +60,7 @@ import {
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
+  jumpAnimState,
   sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
@@ -1439,6 +1440,19 @@ export function createFpArm() {
   let movementBase = null;
   let movementStance = null;
   let movementRate = 1;
+  // MW-D39: THE FOURTH SLOT - JUMP. Priority_Jump sits BELOW
+  // Priority_Movement in the reference's enum (character.hpp:34-35),
+  // so the winner ladder reads action > movement > JUMP > idle - and
+  // the jump still SHOWS in the air because the movestate ladder only
+  // runs inside `if (!mInJump)` (character.cpp:2296): airborne, the
+  // movement slot empties and the jump is the highest thing playing.
+  // On the landing frame movement selects again, so a player who lands
+  // holding W walks over the landing tail - the reference's own look.
+  let jumpState = null;
+  let jumpGroup = null;
+  let jumpSource = null;
+  let jumpStance = null;
+  let jumpKind = null;          // mJumpState: null | 'inair' | 'landing'
   // character.cpp:2355-2366 - the turn animation HOLDS 0.05s past the
   // last actual rotation, so mouse jitter does not flicker it.
   let lastYaw = null;
@@ -1503,10 +1517,10 @@ export function createFpArm() {
   let thirdPacked = null;
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
 
-  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || idleState)
+  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
     && viewMode === 'first');
   const thirdActive = () => !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
-    && renderer && (actionState || movementState || idleState) && viewMode === 'third');
+    && renderer && (actionState || movementState || jumpState || idleState) && viewMode === 'third');
 
   /**
    * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.
@@ -1526,7 +1540,7 @@ export function createFpArm() {
    * These are exactly update()'s own requirements: a camera is a DRAW
    * term, and posing without one is harmless work, not a wrong picture.
    */
-  const ready = () => !!(built && built.ok && (actionState || movementState || idleState) && renderer);
+  const ready = () => !!(built && built.ok && (actionState || movementState || jumpState || idleState) && renderer);
 
   function releaseGpu(m) {
     if (m && renderer && renderer.gl) {
@@ -1688,6 +1702,12 @@ export function createFpArm() {
     movementStance = null;
   }
 
+  /** resetCurrentJumpState (character.cpp:350-354). */
+  function resetJump() {
+    jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null;
+    jumpKind = null;
+  }
+
   /** The velocity the clip itself travels at, so the played speed can
    *  scale to the actor's real speed (character.cpp:743-752): the
    *  accum root's horizontal displacement over the clip, falling back
@@ -1711,7 +1731,87 @@ export function createFpArm() {
    * port's yaw is mouse-driven per frame, so the hold IS the port of
    * the threshold, stated rather than smuggled.
    */
-  function refreshMovement(cam, dt) {
+  /**
+   * MW-D39: REFRESHJUMPANIMS (character.cpp:494-532), fed by the
+   * frame's derived JumpState (jumpAnimState above the fold in
+   * mwFirstPerson.js - update()'s :2195-2296, animation half).
+   *
+   * The reference's laws, kept in its own order:
+   *   - the early-out is `jump == mJumpState` unless forced (:496);
+   *     the force here is the weapon-stance transition, MW-D29's law
+   *     carried over from movement - a sword drawn mid-air recomposes
+   *     jump -> jump1h THAT frame;
+   *   - None resets the jump slot AND the idle (:499-505 - the idle
+   *     replays from its start when a jump ends over it);
+   *   - the group is "jump" + the weapon short suffix through
+   *     fallbackShortWeaponGroup's ladder (:508-513), which
+   *     composeStanceGroup already IS (MW-D26's one-home law); a name
+   *     nothing serves resets both, exactly as None does (:515-520);
+   *   - startAtLoop (:522): a forced re-pick in the SAME state starts
+   *     at "loop start" (resetClip carries Animation::reset's own
+   *     ": start" fallback for it, :986-991), so a mid-air stance
+   *     change does not replay the takeoff;
+   *   - InAir plays start -> stop with unbounded loops and NO
+   *     loopfallback (:528-529 - a group with real loop keys loops
+   *     forever, one without plays once and HOLDS its last pose, which
+   *     is the reference's autodisable=false falling pose);
+   *   - Landing plays ONCE from "loop stop" to "stop" (:531). A group
+   *     with no "jump: loop stop" key fails the pick - which is
+   *     Animation::reset:992 returning false and the reference's play
+   *     silently doing nothing: no landing animation is the correct
+   *     outcome for data that carries none.
+   *
+   * Returns the frame's inJump, which gates the movestate ladder
+   * (character.cpp:2296 - it runs only inside `if (!mInJump)`).
+   */
+  function refreshJump(mv) {
+    if (!built || !built.ok) return false;
+    const derived = jumpAnimState({
+      grounded: mv ? mv.grounded !== false : true,
+      swimming: !!(mv && mv.swimming),
+      levitating: !!(mv && mv.levitating),
+      jumpQueued: !!(mv && mv.jumping),
+      priorInAir: jumpKind === 'inair',
+      jumpPlaying: !!(jumpState && jumpState.playing),
+    });
+    const stance = animWeaponType(built.mwType, sheathed);
+    const force = !!jumpState && jumpStance !== stance;
+    if (!force && derived.jump === jumpKind) return derived.inJump;   // :496
+    if (!derived.jump) {
+      if (jumpState) { resetJump(); resetIdle(); }   // :499-505
+      else resetJump();
+      return derived.inJump;
+    }
+    const composed = composeStanceGroup('jump', stance, hasGroup);   // :508-513
+    if (!composed.group) {
+      if (jumpState) { resetJump(); resetIdle(); }   // :515-520
+      else resetJump();
+      return derived.inJump;
+    }
+    const startAtLoop = derived.jump === jumpKind;   // :522
+    const pick = derived.jump === 'inair'
+      ? pickAnimSource(rig().sources, composed.group, resetClip,
+        { start: startAtLoop ? 'loop start' : 'start', stop: 'stop', loopCount: Infinity })
+      : pickAnimSource(rig().sources, composed.group, resetClip,
+        { start: 'loop stop', stop: 'stop', loopCount: 0 });
+    if (!pick) {
+      // The Landing arm lands here on loop-key-less data; the InAir arm
+      // on a group hasGroup approved whose keys resetClip refuses.
+      // Either way the reference's outcome is a jump slot with nothing
+      // playing (:515-520 / Animation::reset:992).
+      if (jumpState) { resetJump(); resetIdle(); }
+      else resetJump();
+      return derived.inJump;
+    }
+    jumpState = pick.state;
+    jumpSource = pick.source;
+    jumpGroup = composed.group;
+    jumpStance = stance;
+    jumpKind = derived.jump;
+    return derived.inJump;
+  }
+
+  function refreshMovement(cam, dt, inJump = false) {
     if (!built || !built.ok) return;
     const yaw = cam ? (cam.yaw || 0) : 0;
     let yawRate = 0;
@@ -1725,7 +1825,12 @@ export function createFpArm() {
     }
     lastYaw = yaw;
     const mv = (cam && cam.move) || null;
-    const base = movementAnimState({
+    // MW-D39: the movestate ladder runs only inside `if (!mInJump)`
+    // (character.cpp:2296) - airborne, the movement slot EMPTIES and
+    // the jump slot beneath it is what shows. The null flows into the
+    // existing empty-movement branch, which already carries the
+    // reset-both law (:646-651).
+    const base = inJump ? null : movementAnimState({
       forward: mv ? mv.forward : 0,
       strafe: mv ? mv.strafe : 0,
       running: !!(mv && mv.running),
@@ -1947,6 +2052,7 @@ export function createFpArm() {
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+        jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
         lastYaw = null; turnDir = 0; turnHold = 0;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
         weaponShown = false; arrowShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
@@ -1987,6 +2093,7 @@ export function createFpArm() {
       releaseMesh(); built = null; packed = null;
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+      jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
       lastYaw = null; turnDir = 0; turnHold = 0;
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
@@ -2303,24 +2410,35 @@ export function createFpArm() {
         advanceClip(actionState, (actionSource || rig()).keys, dt * weapSpeed, onActionKey);
         stepUpper();
       }
-      refreshMovement(cam, dt);
+      // MW-D39: jump refreshes BEFORE movement, the reference's own
+      // order (refreshCurrentAnims, character.cpp:841-844: hit recoil,
+      // jump, movement, idle last), and its inJump is what gates the
+      // movestate ladder this frame.
+      const inJump = refreshJump((cam && cam.move) || null);
+      refreshMovement(cam, dt, inJump);
       if (movementState) advanceClip(movementState, (movementSource || rig()).keys, dt * movementRate, null);
+      // The jump plays at speedmult 1.0 (character.cpp:528-531 pass
+      // 1.0f) - no rate scaling, unlike movement.
+      if (jumpState) advanceClip(jumpState, (jumpSource || rig()).keys, dt, null);
       if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
-      if (!actionState && !movementState && !idleState) return;
+      if (!actionState && !movementState && !jumpState && !idleState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
       // person both animations are played on BlendMask_All, so the higher
       // priority takes every bone for as long as it is playing.
-      // THE THREE-SLOT WINNER (MW-D26): weapon action, then movement,
-      // then idle - the reference's priority order with BlendMask_All
-      // everywhere. The per-bone-group vector is the recorded gap.
-      const state = actionState || movementState || idleState;
+      // THE FOUR-SLOT WINNER (MW-D26, MW-D39): weapon action, then
+      // movement, then jump, then idle - the reference's priority order
+      // (character.hpp:30-43: Jump below Movement below Weapon) with
+      // BlendMask_All everywhere. The jump wins the air because the
+      // movement slot empties there, not by outranking it. The
+      // per-bone-group vector is the recorded gap.
+      const state = actionState || movementState || jumpState || idleState;
       // MW-D14: and the TRACKS come from the same file as the clip. A
       // female actor can win her idle from xbase_anim_female.1st.kf and
       // her swing from the base xbase_anim.1st.kf, and posing one with
       // the other's tracks is a bind pose with no error.
-      poseSource = actionState ? actionSource : (movementState ? movementSource : idleSource);
+      poseSource = actionState ? actionSource : (movementState ? movementSource : (jumpState ? jumpSource : idleSource));
       // Rule 54's neck: the camera node hangs off "bip01 neck", so the
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
@@ -2532,6 +2650,7 @@ export function createFpArm() {
       viewMode = want;
       actionState = null; actionSource = null; attackType = null; holdWindUp = false;
       resetMovement();
+      resetJump();   // MW-D39: the clip state came from the OTHER rig's sources; the next frame re-derives
       if (upper !== UPPER_BODY.None && upper !== UPPER_BODY.WeaponEquipped) {
         upper = weaponShown ? UPPER_BODY.WeaponEquipped : UPPER_BODY.None;
       }
@@ -2757,6 +2876,10 @@ export function createFpArm() {
         movementGroup,
         movementRate: movementState ? +movementRate.toFixed(3) : null,
         movementSource: movementSource && movementSource.name,
+        // MW-D39: the jump slot, on the card like the others.
+        jumpGroup,
+        jumpKind,
+        jumpSource: jumpSource && jumpSource.name,
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
         frames,
