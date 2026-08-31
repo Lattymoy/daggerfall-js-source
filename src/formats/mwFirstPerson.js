@@ -195,6 +195,7 @@ export function bodyParts(bytes) {
         e.female = (flags & 1) !== 0;            // BPF_Female = 1
         e.playable = (flags & 2) === 0;          // BPF_NotPlayable = 2
         e.skin = bytes[sub.start + 3] === 0;     // MT_Skin = 0
+        e.bodyKind = bytes[sub.start + 3];       // IG3: the raw MeshType - getShieldMesh gates on MT_Armor (2)
       }
     }
     e.slot = MW_BODY_PARTS[e.part] ?? `#${e.part}`;
