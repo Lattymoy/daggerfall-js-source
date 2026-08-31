@@ -5269,6 +5269,41 @@ a named loop with live volume and pitch, which is what Unity's
 optional-chained into a method that did not exist, and that is the same
 lie UI1 had just been written to fix.
 
+### THE PARITY AUDIT (2026-08-31, Mac: "a deep comprehensive parity audit on all of this")
+
+TR1-TR3 re-read against TransportManager, PlayerSpeedChanger,
+PlayerMotor and PlayerHeightChanger. Four findings, ALL FOUR against
+this arc's own work, all fixed here:
+
+- **F-E1** OnGUI (:293) refuses to draw at all while the game is
+  paused - `!GameManager.IsGamePaused` sits in the same condition as
+  the Repaint test. An open window HIDES the mount; the first cut
+  froze the frame and kept drawing it.
+- **F-E2** `IsMovingLessThanHalfSpeed`'s else arm compares
+  `GetBaseSpeed()/2`, and TR1 made GetBaseSpeed return the RIDE base.
+  The port's line said "both DFU branches collapse to walk/2 here",
+  which was TRUE UNTIL TR1 SHIPPED AND FALSE AFTER. The case that
+  separates them is a SNEAKING rider: he lands between the two lines,
+  and under the old one he lost the half-speed stealth benefit DFU
+  gives him. TR2's clop swap and volume halving key off the same flag.
+- **F-E3** PlayerHeightChanger has DoMount/DoDismount actions of its
+  own (:159-170, :287-320): `controllerRideHeight` is 2.6 - "a horse
+  plus seated rider (1.6m + 1m)" - against 1.8 standing, so a rider's
+  eye sits at 2.51 and his CAPSULE is the horse's, which is what he
+  clears and bumps. Mounting rises over timerMedium, dismounting falls
+  over timerFast, and mounting CLEARS the crouch (:306) - the very law
+  that makes GetBaseSpeed's crouch-before-riding order unreachable,
+  which TR1 had already recorded and then not implemented.
+- **F-E4** ApplyInputSpeedAdjustment's SNEAK arm subtracts from
+  whatever GetBaseSpeed returned, ride base included. TR1's first cut
+  put the ride arm BESIDE the sneak instead of under it, so a sneaking
+  rider trotted.
+
+The shape is the one every self-audit in AUDIT 28 found: the
+transcription of each DFU function was right, and the seams between
+them were where the faults lived - three of these four are a law that
+was correct before TR1 and that TR1 silently invalidated.
+
 ### What is left of the arc
 
 TR4, the ship, and the two INTERIOR hosts. `worldModes` and

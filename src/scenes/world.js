@@ -2688,7 +2688,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         hasCart: hasCart(playerEntity.items ?? []),
         shipAvailable: false,   // TR4 owns the ship
         onMode: (mode) => {
-          player.transportMode = mode;
+          player.setTransportMode(mode);   // F-E3: the height action rides with the mode
           ridingAnimator.mount(mode);
           ridingArt = null;
           if (isRiding(mode)) {
@@ -4954,18 +4954,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       // OnGUI draws at depth 2, under the HUD's own elements, so it
       // goes in before drawHud.
       {
+        const ridePaused = townTalk.overlayActive || (modes?.overlayHeld ?? false);
         const r = ridingAnimator.update(dt, {
           mode: player.transportMode,
           standingStill: player.standing,
           grounded: player.grounded,
-          paused: townTalk.overlayActive || (modes?.overlayHeld ?? false),
+          paused: ridePaused,
           movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
           running: player.isRunning,
           soundVolume: 1,
         });
         if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
         audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
-        if (ridingArt && isRiding(player.transportMode)) {
+        // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
+        // game is paused - `!GameManager.IsGamePaused` sits in the same
+        // condition as the Repaint test. Under an open window DFU shows
+        // no mount; the first cut froze the frame and kept drawing it.
+        if (ridingArt && isRiding(player.transportMode) && !ridePaused) {
           const rect = ridingRect(canvas, ridingArt);
           renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
         }

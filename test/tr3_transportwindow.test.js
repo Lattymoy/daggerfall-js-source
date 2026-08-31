@@ -121,6 +121,9 @@ test('TR3: the host door - grounded and outdoors only, and the mount is loaded a
   assert.match(world, /ridingAnimator\.mount\(mode\);/);
   assert.match(world, /if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)/);
   // The sprite goes in BEFORE the HUD (OnGUI depth 2).
+  // F-E1 (the parity audit): OnGUI :293 refuses to draw while paused -
+  // an open window hides the mount, it does not freeze it.
+  assert.match(world, /if \(ridingArt && isRiding\(player\.transportMode\) && !ridePaused\) \{/);
   const spriteAt = world.indexOf('renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);');
   const hudAt = world.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,');
   assert.ok(spriteAt > 0 && hudAt > spriteAt, 'the mount draws under the HUD');

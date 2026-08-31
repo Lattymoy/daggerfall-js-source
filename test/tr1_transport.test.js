@@ -10,7 +10,10 @@ import {
   canRunUnlessRiding, dismountOnTransition,
 } from '../src/systems/transport.js';
 import { SMALL_CART_TEMPLATE, TRANSPORT_HORSE_TEMPLATE } from '../src/systems/inventorySession.js';
-import { PlayerMotor, rideSpeed, runSpeed, walkSpeed, crouchSpeed, DF_WALK_BASE } from '../src/player/motor.js';
+import {
+  PlayerMotor, rideSpeed, runSpeed, walkSpeed, crouchSpeed, DF_WALK_BASE,
+  EYE_HEIGHT, RIDE_EYE_HEIGHT, RIDE_HEIGHT, CAPSULE_HEIGHT, HEIGHT_TIMER_FAST, HEIGHT_TIMER_MEDIUM,
+} from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
 
 // TR1 - THE TRANSPORT MODE: TransportManager's mode half, plus the laws
@@ -141,4 +144,59 @@ test('TR1: the wiring - the climb gate, the Horse bob style, and no Running tall
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(read(host), /running: player\.isRunning && !player\.standing,/, `${host}: the motor's own flag, already gated`);
   }
+});
+
+test('TR-AUDIT F-E2/F-E3: the half-speed line follows GetBaseSpeed, and a rider sits a horse tall', () => {
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const col = new Collider(() => 0);
+  col.addMesh('floor', new Float32Array([-10, 0, -10, 10, 0, -10, 10, 0, 10, -10, 0, 10]), new Uint32Array([0, 1, 2, 0, 2, 3]), I);
+  const m = new PlayerMotor(col, { speed: 50, running: 40, agility: 50, strength: 50, endurance: 50, willpower: 50, swimming: 0, climbing: 0 });
+  m.spawn(0, 0.1, 0);
+  const still = { forward: 0, strafe: 0, run: false, sneak: false, jump: false, up: false, down: false };
+  for (let f = 0; f < 5; f++) m.update(1 / 60, still, 0);
+  // F-E3: DoMount raises the eye over timerMedium and clears the crouch.
+  const footEye = m.eye[1] - m.pos[1];
+  assert.ok(near(footEye, EYE_HEIGHT));
+  assert.equal(m.height, CAPSULE_HEIGHT);
+  m.crouching = true;
+  m.setTransportMode(TRANSPORT_MODES.Horse);
+  assert.equal(m.crouching, false, 'PlayerHeightChanger :306 - no crouching on a horse');
+  assert.equal(m.heightAction, 'mount');
+  assert.ok(near(m.heightTimerMax, HEIGHT_TIMER_MEDIUM), 'timerMedium up');
+  m.heightTimer = HEIGHT_TIMER_MEDIUM;
+  assert.ok(near(m.eye[1] - m.pos[1], RIDE_EYE_HEIGHT), `a rider's eye: ${m.eye[1] - m.pos[1]}`);
+  assert.equal(m.height, RIDE_HEIGHT, 'and his capsule is the horse\'s');
+  assert.equal(RIDE_HEIGHT, 2.6);
+  // Dismounting falls, and faster.
+  m.setTransportMode(TRANSPORT_MODES.Foot);
+  assert.equal(m.heightAction, 'dismount');
+  assert.ok(near(m.heightTimerMax, HEIGHT_TIMER_FAST), 'timerFast down');
+  m.heightTimer = HEIGHT_TIMER_FAST;
+  assert.ok(near(m.eye[1] - m.pos[1], EYE_HEIGHT));
+  // Setting the SAME mode is not a transition.
+  m.heightAction = null;
+  m.setTransportMode(TRANSPORT_MODES.Foot);
+  assert.equal(m.heightAction, null);
+  // F-E2: the half-speed line is half the RIDE speed on a mount, which
+  // is what TR2's clop swap and volume halving key off. Before TR1 both
+  // GetBaseSpeed branches collapsed to walk/2 and the port said so.
+  m.setTransportMode(TRANSPORT_MODES.Horse);
+  m.heightTimer = 1;
+  const rideHalf = rideSpeed(50, DF_RIDE_BASE) / 2;
+  assert.ok(rideHalf > walkSpeed(50) / 2, 'the line moved');
+  m.update(1 / 60, { ...still, forward: 1 }, 0);
+  assert.equal(m.movingLessThanHalfSpeed, false, 'a horse at speed is over its own half line');
+  // THE CASE THAT SEPARATES THE TWO LINES, and the reason the law
+  // matters: a SNEAKING rider. sneakSpeed is base/2 - one classic unit,
+  // which lands just UNDER half the RIDE speed and well OVER half the
+  // walk speed - so under the old walk line a sneaking rider lost the
+  // half-speed benefit that DFU gives him.
+  m.update(1 / 60, { ...still, forward: 1, sneak: true }, 0);
+  assert.equal(m.isSneaking, true, 'a mount can still sneak - only running is barred');
+  assert.ok(m.speed < rideHalf && m.speed > walkSpeed(50) / 2, `between the lines: ${m.speed}`);
+  assert.equal(m.movingLessThanHalfSpeed, true, 'and he IS moving less than half - his own half');
+  // A crouched rider (DFU order) still compares the WALK line.
+  m.crouching = true;
+  m.update(1 / 60, { ...still, forward: 1 }, 0);
+  assert.equal(m.movingLessThanHalfSpeed, walkSpeed(50) / 2 >= m.speed);
 });

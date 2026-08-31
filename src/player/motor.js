@@ -101,6 +101,13 @@ export const EYE_HEIGHT = 1.7;
 // crouched eye keeps that same law: 0.9 - 0.1 = 0.8 above the feet.
 export const CROUCH_HEIGHT = 0.9;
 export const CROUCH_EYE_HEIGHT = 0.8;
+/** PlayerHeightChanger.cs:56 - "Height of a horse plus seated rider.
+ *  (1.6m + 1m)". The camera sits height/2 - eyeHeight above the
+ *  controller's centre (:110-112), so the port's eye level for a rider
+ *  is that same 0.09 below the top: 2.6 - 0.09 = 2.51 above the feet,
+ *  against 1.8 - 0.1 = 1.7 standing. TR-AUDIT F-E3. */
+export const RIDE_HEIGHT = 2.6;
+export const RIDE_EYE_HEIGHT = 2.51;
 // PlayerHeightChanger.timerFast - the crouch/stand action's camTimer
 // budget. AUDIT 18: a BLOCKED stand-up is not dropped on the spot.
 // PlayerHeightChanger.Update's chain is `else if (heightAction ==
@@ -320,13 +327,34 @@ export class PlayerMotor {
    *  prev/target fields there, which is the same scaffolding. */
   _eyeLevel() {
     const t = Math.min(this.heightTimer / (this.heightTimerMax ?? HEIGHT_TIMER_FAST), 1);
+    // F-E3: DoMount/DoDismount are height actions of their own.
+    if (this.heightAction === 'mount') return EYE_HEIGHT + (RIDE_EYE_HEIGHT - EYE_HEIGHT) * t;
+    if (this.heightAction === 'dismount') return RIDE_EYE_HEIGHT + (EYE_HEIGHT - RIDE_EYE_HEIGHT) * t;
+    if (this.riding) return RIDE_EYE_HEIGHT;
     if (this.heightAction === 'crouch') return EYE_HEIGHT + (CROUCH_EYE_HEIGHT - EYE_HEIGHT) * t;
     if (this.heightAction === 'stand' && !this.crouching) return CROUCH_EYE_HEIGHT + (EYE_HEIGHT - CROUCH_EYE_HEIGHT) * t;
     return this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
   }
 
   get height() {
+    // controllerRideHeight (:56) - a rider's capsule is a horse tall,
+    // so what he clears and bumps is the horse's, not his own.
+    if (this.riding) return RIDE_HEIGHT;
     return this.crouching ? CROUCH_HEIGHT : CAPSULE_HEIGHT;
+  }
+
+  /** TransportManager's UpdateMode tells the motor; the height changer
+   *  answers with DoMount/DoDismount (:159-170, :287-320): mounting
+   *  rises over timerMedium and CLEARS the crouch (:306), dismounting
+   *  falls over timerFast. TR-AUDIT F-E3. */
+  setTransportMode(mode) {
+    const was = this.riding;
+    this.transportMode = mode;
+    if (this.riding === was) return;
+    this.heightAction = this.riding ? 'mount' : 'dismount';
+    this.heightTimerMax = this.riding ? HEIGHT_TIMER_MEDIUM : HEIGHT_TIMER_FAST;
+    this.heightTimer = 0;
+    if (this.riding) this.crouching = false;
   }
 
   spawn(x, y, z) {
@@ -376,9 +404,16 @@ export class PlayerMotor {
     this.standing = standing;   // the hosts' IsRunning && !IsStandingStill read
     if (standing) { this.movingLessThanHalfSpeed = true; return; }
     // Crouched compares GetWalkSpeed/2; the else compares
-    // GetBaseSpeed/2, and GetBaseSpeed NOT crouched is the same
-    // dragged walk - both DFU branches collapse to walk/2 here.
-    this.movingLessThanHalfSpeed = walkSpeed(this.stats.speed) / 2 >= appliedSpeed;
+    // GetBaseSpeed/2. Before TR1 both branches collapsed to walk/2,
+    // and this line said so. They no longer do: GetBaseSpeed's RIDING
+    // arm returns the ride base, so a mount's half-speed line is half
+    // the RIDE speed - which is what TR2's clop swap and its volume
+    // halving key off. (TR-AUDIT F-E2: TR1 made the old comment false
+    // and the old arithmetic with it.)
+    const half = (!this.crouching && isRiding(this.transportMode))
+      ? rideSpeed(this.stats.speed, rideBaseFor(this.transportMode))
+      : walkSpeed(this.stats.speed);
+    this.movingLessThanHalfSpeed = half / 2 >= appliedSpeed;
   }
 
   /** PlayerHeightChanger.DecideHeightAction + PlayerHeightChanger
@@ -718,10 +753,14 @@ export class PlayerMotor {
     const rideBase = (!this.crouching && isRiding(this.transportMode)) ? rideBaseFor(this.transportMode) : null;
     if (this.isRunning) {
       speed = runSpeed(this.stats.speed, this.stats.running, this.crouching, rideBase);
-    } else if (rideBase != null) {
-      speed = rideSpeed(this.stats.speed, rideBase);
     } else {
-      speed = this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed);
+      // ApplyInputSpeedAdjustment (:127-133): the SNEAK arm subtracts
+      // from whatever GetBaseSpeed returned - including the RIDE base.
+      // TR-AUDIT F-E4: TR1's first cut put the ride arm beside the
+      // sneak instead of under it, so a sneaking rider trotted.
+      speed = rideBase != null
+        ? rideSpeed(this.stats.speed, rideBase)
+        : (this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed));
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
