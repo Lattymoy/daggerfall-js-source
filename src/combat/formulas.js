@@ -260,10 +260,14 @@ export const statsToHit = (a, t) =>
   Math.trunc((liveStat(a, 'luck') - liveStat(t, 'luck')) / 10) + Math.trunc((liveStat(a, 'agility') - liveStat(t, 'agility')) / 10);
 
 // ---- CalculateSkillsToHit (classic's /4 dodging; crit roll adds crit/10) ----
-export function skillsToHit(a, t, roll01 = Math.random()) {
+export function skillsToHit(a, t, roll01 = Math.random(), notes = null) {
   let mod = -Math.floor(skillValue(t, SKILLS.Dodging) / 4);            // classic's /4 bug preserved
   const crit = skillValue(a, SKILLS.CriticalStrike);
-  if (dice100(crit, roll01)) mod += Math.floor(crit / 10);
+  // HN1: the CRITICAL STRIKE roll is Daggerfall's own "critical hit" -
+  // it lands on the chance to hit, not the damage (classic parity) -
+  // and the enhanced HUD's numbers name it when it succeeds. The notes
+  // channel is read-only reporting: no roll and no value changes.
+  if (dice100(crit, roll01)) { mod += Math.floor(crit / 10); if (notes) notes.critical = true; }
   return mod;
 }
 
@@ -330,7 +334,7 @@ export function adrenalineRushToHit(attacker, target) {
 }
 
 // ---- CalculateSuccessfulHit (clamp 3..97) ----
-export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls = Math.random) {
+export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls = Math.random, notes = null) {
   let chance = chanceToHitMod;
   // CalculateArmorToHit (FormulaHelper.cs:1149-1161): the per-part
   // table, always. Increased/DecreasedArmorValueModifier channels pend
@@ -354,7 +358,7 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
   // audit-F4 zero. BadReactionsFrom is its one core writer.
   chance += enchantChanceToHitMod(attacker);
   chance += statsToHit(attacker, target);
-  chance += skillsToHit(attacker, target, rolls());
+  chance += skillsToHit(attacker, target, rolls(), notes);
   chance += adjustmentsToHit(target);   // the +40 monster mod and flat -50 (F1)
   chance = Math.max(3, Math.min(97, chance));
   return dice100(chance, rolls());
@@ -464,13 +468,28 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
 
 export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null } = {}) {
   if (!attacker || !target) return 0;
+  // HN1: THE RESOLUTION IS REPORTED, once per attack, through one seam
+  // (setPlayerAttackHook - the enhanced HUD's damage numbers). Every
+  // path out of this function tells the hook what happened: a miss, an
+  // ineffective material, a hit and its damage, whether the critical
+  // strike roll succeeded, whether it was a backstab. Nothing here
+  // changes a roll or a value; the notes object is written by the hit
+  // roll and read at the tail.
+  const notes = { critical: false, backstab: false, hit: false, ineffective: false };
+  const report = (damage) => {
+    if (_playerAttackHook && attacker.isPlayer) {
+      try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
+    }
+    return damage;
+  };
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
     // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
     // too-low weapon material returns 0, and when the attacker is
     // the PLAYER the HUD says so (key "materialIneffective";
     // Unity-side localization, prose ours). Enemies fail silently.
     if (attacker.isPlayer) say?.(MATERIAL_INEFFECTIVE_TEXT);
-    return 0;
+    notes.ineffective = true;
+    return report(0);
   }
   // source: chanceToHitMod = skill, then player swing/proficiency/
   // racial toHit mods add on; damageModifiers ride INTO the damage
@@ -520,22 +539,29 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       for (const [min, max] of spans) {
         let hitDamage = 0;
         if (dfRand() % 100 < reflexesChance && min > 0 &&
-            calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
+            calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
+          notes.hit = true;
           hitDamage = min + Math.floor(rolls() * (max + 1 - min));   // Range(min, max+1)
           if (hitDamage > 0 && onMonsterHit) onMonsterHit(attacker, target, hitDamage);
           damage += hitDamage;
         }
         if (hitDamage > 0) damage += bonusOrPenaltyByEnemyType(attacker, target);
       }
-    } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
+    } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
+      notes.hit = true;
       damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);
       // INSIDE the hit, exactly as :627 - see the note below
+      const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);
+      if (before > 0 && damage === before * 3) notes.backstab = true;
     }
   } else {
-    if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
+    if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
+      notes.hit = true;
       damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls);
+      const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);   // :688
+      if (before > 0 && damage === before * 3) notes.backstab = true;
     }
   }
   // THE BACKSTAB IS INSIDE THE HIT. Both C# call sites (:627 for hand
@@ -624,12 +650,18 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   if (target?.isPlayer && !attacker.isPlayer && damage > 0) {
     _playerStruckHook?.(attacker, target, damage);
   }
-  return damage;
+  return report(damage);
 }
 
 let _racialHitHook = null;
 /** worldTick's registration seam for the racial-override hit hook. */
 export function setRacialHitHook(fn) { _racialHitHook = fn ?? null; }
+let _playerAttackHook = null;
+/** HN1: the enhanced HUD's registration seam for the PLAYER'S attack
+ *  resolutions (miss / ineffective / hit with damage, critical strike,
+ *  backstab). Reporting only - registered by the enhanced HUD, never by
+ *  the classic skin, and no formula reads it. */
+export function setPlayerAttackHook(fn) { _playerAttackHook = fn ?? null; }
 let _playerStruckHook = null;
 /** worldTick's registration seam for the enemy-damages-player tail
  *  (V3: the Ring of Namira's reflection). */

@@ -12,6 +12,25 @@ policies one by one.
 
 
 
+
+## HN1 DAMAGE NUMBERS (2026-08-31)
+
+Mac: a new feature that folds into the enhanced UI - damage numbers on
+attacking, colour-coded non-crit vs crit, missed text.
+
+THE NUMBERS ARE A READOUT OF THE FORMULA, NOT A SECOND OPINION.
+CalculateAttackDamage reports once per player attack through one
+seam, and the HUD draws exactly what it was told: the damage in the
+HUD's bone; the same damage in brass and larger when Daggerfall's own
+critical strike roll succeeded (classic parity - it lands on the
+chance to hit, never on the damage, and the numbers do not pretend
+otherwise); the tripled backstab, tagged; Miss, Ineffective and a
+0 the armour took, dim. Rising from just above the reticle - the
+point the player is looking at is the point they struck - with a
+little scatter so a flurry fans out. Enhanced only: the enhanced HUD
+registers the hook; the classic path never has one.
+
+
 ## U65 THE INTRO (2026-08-30) - RIPPED OUT
 
 Built through five versions in one day (U65, c, d, e: generated Iliac

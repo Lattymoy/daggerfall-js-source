@@ -1937,6 +1937,40 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .pack-shell { transition: none; opacity: 1; backdrop-filter: blur(6px) saturate(85%);
     -webkit-backdrop-filter: blur(6px) saturate(85%); } }
 .pack-shell button { transition: none; border-radius: 0; }
+/* ── HN1: DAMAGE NUMBERS ──────────────────────────────────────────
+   Rising from just above the reticle, in the HUD's own bone, with the
+   critical strike and the backstab in brass and larger, the miss and
+   the ineffective material dim. The layer takes no pointer events and
+   sits under the windows (z 1), so a number never blocks a click or
+   floats over the pack. */
+#enhanced-hitnums { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.hitnum { position: absolute; left: 50%; top: 42%;
+  transform: translate(calc(-50% + var(--dx, 0px)), 0);
+  font-family: var(--display, 'Cinzel', serif); font-size: calc(26px * var(--hud-scale, 1)); font-weight: 700;
+  letter-spacing: 0.04em; color: #e6dcb8; text-shadow: 2px 2px 0 rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
+  animation: hitnum-rise var(--rise, 950ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; will-change: transform, opacity; }
+.hitnum-crit { font-size: calc(36px * var(--hud-scale, 1)); color: #f1c04f; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 10px rgba(241,192,79,0.45);
+  animation-name: hitnum-crit; }
+.hitnum-miss, .hitnum-ineffective, .hitnum-absorbed { font-size: calc(20px * var(--hud-scale, 1)); font-weight: 400; color: rgba(168,159,136,0.85); }
+.hitnum-tag { display: block; font-size: calc(12px * var(--hud-scale, 1)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+  text-align: center; color: #f1c04f; margin-top: -2px; }
+@keyframes hitnum-rise {
+  0%   { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), 10px) scale(0.9); }
+  12%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), 0) scale(1); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -64px) scale(1); }
+}
+@keyframes hitnum-crit {
+  0%   { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), 10px) scale(0.6); }
+  14%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), -4px) scale(1.18); }
+  30%  { transform: translate(calc(-50% + var(--dx, 0px)), -8px) scale(1); }
+  72%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -80px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hitnum, .hitnum-crit { animation-name: hitnum-still; }
+  @keyframes hitnum-still { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+}
 .pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 94dvh);   /* PX22: a short viewport keeps its rows before its margins */
   display: flex; flex-direction: column;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460;
