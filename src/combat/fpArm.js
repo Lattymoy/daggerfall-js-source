@@ -464,6 +464,30 @@ const TEXTURE_CACHE = new Map();
 /** AUDIT 32 F2: the face match per identity per data generation. */
 const FACE_MATCH_CACHE = new Map();
 
+/** MW-D37: the mean colour of a CLOT record's worn texture (its first
+ *  part reference's BODY mesh, male side) - what the dye-aware garment
+ *  pick compares against Daggerfall's dye band. Memoised per data
+ *  generation; null when nothing measures. */
+const CLOT_COLOUR_CACHE = new Map();
+async function clothingColourSampler(clothes, parts, archives, gen) {
+  const bodyById = new Map((parts ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
+  const colours = new Map();
+  for (const c of clothes ?? []) {
+    const key = `${gen}:${c.id}`;
+    if (CLOT_COLOUR_CACHE.has(key)) { colours.set(c.id, CLOT_COLOUR_CACHE.get(key)); continue; }
+    const ref = (c.parts ?? []).find((r) => r.male || r.female);
+    const body = ref ? bodyById.get(ref.male || ref.female) : null;
+    let rgb = null;
+    if (body) {
+      const f = await measurePart(body, archives, 'hair');   // alpha-weighted texture mean
+      if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
+    }
+    CLOT_COLOUR_CACHE.set(key, rgb);
+    colours.set(c.id, rgb);
+  }
+  return (rec) => colours.get(rec.id) ?? null;
+}
+
 /** MW-D35: MEASURE ONE MORROWIND BODY PART - its base texture's level-0
  *  RGBA and its mesh height - from the archives. Null-honest at every
  *  step; the matcher names the ones that could not be measured. */
@@ -547,7 +571,9 @@ export function wornVerdicts(pieces, worn) {
 }
 
 export function wornEquipKeyOf(pieces) {
-  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}`).join('|');
+  // MW-D37: the dye is part of a garment's identity now - a re-dyed
+  // shirt resolves to a different MW shirt, so it is a change.
+  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}:${p.dye ?? ''}`).join('|');
 }
 
 export function fpWeaponKey(item, hasAmmo) {
@@ -902,7 +928,10 @@ export async function buildFpArm({
     // MW-D31: ONE COMPOSITION for both rigs. The worn arbitration runs
     // here, once, and the third person receives the verdicts instead
     // of re-arguing them - one seam, one law, two views.
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
+    // MW-D37: the garments' measured colours, so the dye can choose.
+    const colourOf = (armor ?? []).some((p) => p.kind === 'clothing')
+      ? await clothingColourSampler(clothes, parts, archives, gen) : null;
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
     // AUDIT 32 F2: memoised per identity per data generation - a

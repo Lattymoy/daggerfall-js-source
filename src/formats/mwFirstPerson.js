@@ -1031,10 +1031,26 @@ export const DF_TO_MW_WEAPON = Object.freeze({
  *  the rest fall through to whatever the type offers, and the caller
  *  reports which record it took so a wrong pick is visible rather than
  *  merely odd. */
+// MW-D37: THE MATERIAL ROWS ARE COLOUR TRUTH, NOT LORE GUESSES. Every
+// Daggerfall material is a 16-index band of ART_PAL (dyes.js
+// METAL_TABLES); the band's mean is what the sprite art actually looks
+// like, measured (mwItemMap.DF_MATERIAL_RGB). The rows below follow it:
+//   Elven is SILVER-WHITE in Daggerfall (#a6a6a7, the same band family
+//     as Silver) - D9 had sent it to green glass, which no Daggerfall
+//     player would recognise as elven. Silver weapons exist in MW.
+//   Mithril is a dark blue-steel (#2a3849), Adamantium near-black
+//     (#2e2e30), Ebony black (#3a3a3a): Daggerfall's own art barely
+//     tells the three apart, and the darkest MW metal is ebony - so all
+//     three read as ebony, with Adamantium trying Tribunal's own
+//     'adamantium' first when that master is loaded.
+//   Orcish is dark GREEN (#314026). MW has no orcish weapon; glass is
+//     the green metal, ebony the dark one - green is the identity a
+//     player reads, so glass, recorded as the judgement it is.
+// Each value is a CHAIN tried in order; the first token present wins.
 export const DF_TO_MW_MATERIAL = Object.freeze({
-  Iron: 'iron', Steel: 'steel', Silver: 'silver', Elven: 'glass',
-  Dwarven: 'dwarven', Mithril: 'glass', Adamantium: 'ebony',
-  Ebony: 'ebony', Orcish: 'ebony', Daedric: 'daedric',
+  Iron: ['iron'], Steel: ['steel'], Silver: ['silver'], Elven: ['silver', 'steel'],
+  Dwarven: ['dwarven'], Mithril: ['ebony'], Adamantium: ['adamantium', 'ebony'],
+  Ebony: ['ebony'], Orcish: ['glass', 'ebony'], Daedric: ['daedric'],
 });
 
 /**
@@ -1077,8 +1093,12 @@ export function pickWeaponRecord(records, type, material = null) {
   const ofType = (records ?? []).filter((r) => r.type === type && !r.enchanted)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!ofType.length) return null;
-  const want = material ? DF_TO_MW_MATERIAL[material] : null;
-  return (want && ofType.find((r) => r.id.includes(want))) || ofType[0];
+  const chain = material ? DF_TO_MW_MATERIAL[material] : null;
+  for (const want of (Array.isArray(chain) ? chain : chain ? [chain] : [])) {
+    const hit = ofType.find((r) => r.id.includes(want));
+    if (hit) return hit;
+  }
+  return ofType[0];
 }
 
 /** The report the reverted arc never printed: for one race, which
