@@ -26,6 +26,7 @@ export const ENUM_LAW = Object.freeze({
   'Video/RandomDungeonTextures': { values: ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'], encode: 'index', cite: 'AdvancedSettings:244-252' },
   'Controls/CameraRecoilStrength': { values: ['Off', 'Low', 'Medium', 'High', 'Very High'], encode: 'index', cite: 'AdvancedSettings:244-252' },
   'Controls/WeaponSwingMode': { values: ['Gesture', 'Click', 'Click or Hold'], encode: 'index', cite: 'WeaponManager:306-323' },   // AUDIT 28 W11
+  'Controls/Handedness': { values: ['Right Hand', 'Left Hand'], encode: 'index', cite: 'SetupGameWizard:461-470 (a checkbox: 1 = left; 2 and 3 are in GetInt\'s range and do nothing)' },   // AUDIT 28 W13
   'MeleeAttacks/MeleeAttackDetection': { values: ['Performance', 'Quality'], encode: 'index', cite: 'AdvancedSettings:277-282' },
   'Video/QualityLevel': { values: ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'Video/MainFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
