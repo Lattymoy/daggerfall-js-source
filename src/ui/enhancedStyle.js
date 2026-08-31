@@ -530,26 +530,6 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   background: var(--iron);
 }
 .packcol { background: var(--slate); overflow: auto; padding: 18px 20px 26px; min-height: 0; }
-/* THE GRID (Mac 2026-08-31: "a proper grid based inventory"). The same
-   .packcol, laid out as squares instead of rows - fixed cell with
-   wrapping, so the column count follows the window's width rather than
-   being a number someone picked. .gcell keeps .itemrow's hover and
-   selection and .tile's "no border once a real sprite is in it". */
-.packcol.packgrid { display: grid; align-content: start; gap: 8px;
-  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); padding: 12px 14px 16px; }
-.gcell { position: relative; aspect-ratio: 1; display: grid; place-items: center;
-  padding: 4px; background: transparent; border: 1px solid var(--iron);
-  color: inherit; font: inherit; cursor: pointer; }
-.gcell:hover { background: #12161b; }
-.gcell.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
-.gcell.has-icon { border-color: transparent; }
-.gcell .tile { border-color: transparent; width: auto; height: auto; }
-.gcell .tile img { max-width: 100%; max-height: 100%; }
-.gcell .gqty { position: absolute; right: 4px; bottom: 3px; font-size: 11px;
-  color: var(--bone); font-variant-numeric: tabular-nums; }
-.gcell .gnm { position: absolute; left: 2px; right: 2px; bottom: 2px; font-size: 10px;
-  text-align: center; color: var(--dim); background: rgba(23,27,33,0.8);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── THE CHARACTER COLUMN ───────────────────────────────────
    U59. The avatar and the worn list, stacked - one picture of the
@@ -1997,7 +1977,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .hitnum, .hitnum-crit { animation-name: hitnum-still; }
   @keyframes hitnum-still { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 }
-.pack-win { position: relative; width: min(1040px, 95vw); height: min(700px, 88dvh);   /* PX22: a short viewport keeps its rows before its margins. Mac 2026-08-31: 660 -> 820 was TOO LARGE on the screen; 700 with a 88dvh cap is the grid's extra row without the window swallowing the game */
+.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 94dvh);   /* PX22: a short viewport keeps its rows before its margins */
   display: flex; flex-direction: column;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460;
   transform: translateY(8px); transition: transform 0.22s steps(5, end); }

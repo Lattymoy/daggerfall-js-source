@@ -8530,49 +8530,47 @@ is trivial, `TransportManager` is not - `motor.js:517` reads
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
 
-## THE ENHANCED PACK: grid, armour tab, height (2026-08-31)
+## THE ENHANCED PACK: grid, armour tab, height (2026-08-31) - REVERTED
 
-Mac: "more height, a proper grid based inventory, armor its own tab" -
-about `ui/enhancedInventory.js`, the port's OWN pack. Two wrong turns
-before the right one, both worth keeping on the page:
+Mac asked for three things on `ui/enhancedInventory.js`: more height, a
+grid, armour its own tab. What shipped BROKE THE PACK and was reverted
+whole (78324c99 + 2fb32c9a). Nothing of it is in the tree; this section
+is what it cost and what to do differently, because the asks are still
+good ones.
+
+**Four wrong turns, in order:**
 
 1. **Read as a parity question.** The first answer argued against
-   departing from DFU. The enhanced UI is the project's own design
-   surface and parity does not bind it.
-2. **Answered with a new window, twice.** A standalone
-   `pack-proto.html` - first with its own palette and type ("veered too
-   far from what's currently ingame"), then rebuilt by hand-copying
-   `enhancedStyle.js` into a fixture page. That second one was still a
-   PARALLEL COPY of the pack: it would drift, it was a second thing to
-   maintain, and anything liked in it had to be rebuilt in the real
-   module anyway.
+   departing from DFU. The enhanced UI is the project's OWN design
+   surface; parity does not bind it. Wasted a turn.
+2. **Answered with a new window.** A standalone `pack-proto.html` with
+   its own palette and type - "veered away too far from what's
+   currently ingame".
+3. **Answered with a copy of the window.** The second prototype
+   hand-copied `enhancedStyle.js` into a fixture page. Still a parallel
+   copy: it would drift, and anything liked in it had to be rebuilt in
+   the real module anyway. "Why are you so hell bent on redesigning
+   what's already there?"
+4. **Then changed the real files and broke them.** Height 660 -> 820
+   swallowed the game behind the window; a second pass to 700/62 did
+   not save it. The grid, the split and the height went in TOGETHER, so
+   when it was wrong there was nothing to bisect - the revert had to
+   take all three.
 
-**The rule this produced: to change three things about a screen that
-exists, change them in that screen.** The prototype was deleted and the
-work went into the real files, behind a switch so the old pack is one
-reload away.
+**What to do instead, when this is picked up again:**
 
-- **The tab set** is the pack's OWN now (`TABS`, `filterByTab` in
-  `enhancedInventory.js`): five pages, armour split out of weapons. The
-  classic window keeps DFU's four, because that is the law
-  DaggerfallInventoryWindow has to hold. Only the weapons/armour arm is
-  new - magic, ingredients and misc still call
-  `nativeInventory.filterByTab`, so there is ONE rule for them rather
-  than a copy that can drift. SHIELDS come with the armour: a shield IS
-  group Armor in Daggerfall (Buckler 109, Round 110, Kite 111, Tower
-  112), so it is one predicate.
-- **The grid** is `.packcol.packgrid` beside the row list, and
-  `itemCell` is built from `itemRow`'s own parts - same `itemLine`,
-  same `itemTile`, same click (lifted into `itemRowClick` so both run
-  exactly it). Fixed cell with wrapping, so the column count follows
-  the window's width. `?packgrid=0` puts the row list back.
-- **The height** is `.pack-win`. 660 -> 820 was TOO LARGE in play
-  ("the inventory UI is way too large now") - the window swallowed the
-  game behind it. 700px with an 88dvh cap: the grid's extra row without
-  the screen becoming the window. The cell came down with it, 74 -> 62,
-  since 74 was a number picked against a fixture page rather than
-  against real icons.
+- ONE change at a time, each shippable and reversible on its own. The
+  armour split is a data change with no visual risk and should go first
+  and alone; the grid is a layout change and should follow only once
+  the split is confirmed good.
+- Numbers come from the REAL screen. 74px and 820px were both picked
+  against a fixture page and both were wrong in play.
+- `?packgrid=0` was the right instinct and the wrong scope: a switch
+  that leaves the default broken still ships a broken default.
 
-Still open: whether names belong on cells at all, and whether the
-character region wants a different shape beside a grid than it had
-beside a list.
+**The findings worth keeping** (they cost nothing to re-derive but are
+easy to miss): a shield IS group Armor in Daggerfall - Buckler 109,
+Round 110, Kite 111, Tower 112 - so armour-plus-shields is ONE
+predicate; the classic window's `TABS`/`filterByTab` must keep DFU's
+four whatever the pack does; and `itemRow`'s click has to be shared
+rather than copied if a cell ever runs it.
