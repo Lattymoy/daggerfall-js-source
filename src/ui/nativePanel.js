@@ -87,11 +87,14 @@ export function drawRect(renderer, m, x, y, w, h, color) {
  *  chargen rollouts use DaggerfallAlternateShadowColor1, and the
  *  colour belongs in the ONE label helper, not a copy per window.
  *  Returns the text's virtual width. */
-export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0, shadow = DEFAULT_SHADOW_COLOR } = {}) {
-  const tw = measureText(font.fnt, text);
+export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0, shadow = DEFAULT_SHADOW_COLOR, scale = 1 } = {}) {
+  // UI6: TextLabel.TextScale - the glyphs shrink and the SHADOW OFFSET
+  // stays one native pixel, as DFU's shadow is a position in the
+  // label's own space rather than a scaled one.
+  const tw = measureText(font.fnt, text) * scale;
   const ax = align === 'center' ? x + (w - tw) / 2 : x;
-  drawText(renderer, font, text, m.ox + (ax + 1) * m.s, m.oy + (y + 1) * m.s, m.s, shadow);
-  drawText(renderer, font, text, m.ox + ax * m.s, m.oy + y * m.s, m.s, color);
+  drawText(renderer, font, text, m.ox + (ax + 1) * m.s, m.oy + (y + 1) * m.s, m.s * scale, shadow);
+  drawText(renderer, font, text, m.ox + ax * m.s, m.oy + y * m.s, m.s * scale, color);
   return tw;
 }
 
