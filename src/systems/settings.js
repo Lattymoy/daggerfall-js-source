@@ -146,6 +146,9 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W12: the bow's draw-and-hold (WeaponManager :341, :353-360)
   // - press draws, release looses, activate un-draws, 10 s times out.
   'Controls/BowDrawback': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W13: FPSWeapon.FlipHorizontal (StartGameBehaviour :269) -
+  // left-hand rendering; GetInt 0..3, only 1 does anything in DFU.
+  'Controls/Handedness': 'src/combat/fpsWeapon.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

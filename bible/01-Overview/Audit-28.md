@@ -476,6 +476,16 @@ key reaches every rig through a new `activateHeld` dep - the dungeon ctx
 threads its host's - which is the one seam the old comment did not
 foresee. 5 pins; 3 mutants, 3 killed.
 
+## W13 CLOSED: Handedness (FPSWeapon.FlipHorizontal)
+
+`fpsWeapon.js`'s header had recorded the left-hand flip as unimplemented
+"until a settings surface exists" - the surface has existed since U29.
+Setting 1 (DFU's one checkbox; 2 and 3 sit in GetInt's range and do
+nothing, `== 1`) mirrors the art and swaps AlignRight for AlignLeft on
+Idle, StrikeDown and StrikeUp only; a side strike keeps its side and
+AlignLeft is never swapped. The camera-feel and weapon-input set is
+CLOSED with this. 3 pins; 3 mutants, 3 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
