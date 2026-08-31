@@ -39,7 +39,7 @@
 // looks level because ITS pitch is an animation channel, where this one
 // takes the player's pitch through the neck the reference rotates.
 
-import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
+import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
@@ -1205,6 +1205,7 @@ export function createFpArm() {
   let renderer = null;
   let camera = null;
   let built = null;
+  const listeners = new Set();   // MW-D36
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1701,8 +1702,19 @@ export function createFpArm() {
         }
         reason = 'built';
         return res;
-      } finally { busy = false; }
+      } finally {
+        busy = false;
+        // MW-D36: whoever shows the body (the pack's figure) repaints
+        // when a build settles, ok or not - D32 rebuilds on every equip
+        // change, asynchronously, and a panel drawn before the rebuild
+        // lands would show the old clothes on the new equip table.
+        for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
+      }
     },
+
+    /** MW-D36: subscribe to build/unload settlements; returns the
+     *  unsubscribe. */
+    subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     unload() {
       releaseMesh(); built = null; packed = null;
@@ -1715,6 +1727,7 @@ export function createFpArm() {
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
       reason = 'unloaded';
+      for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
     },
 
     /**
@@ -2311,6 +2324,41 @@ export function createFpArm() {
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
       return true;
+    },
+
+    /** MW-D36: THE FIGURE - the third-person body as an image for the
+     *  enhanced inventory's panel. Same pieces, same textures, same
+     *  race scale as drawThird, framed full-height under a front ortho
+     *  camera at the yaw asked for (0 = facing the viewer). Returns
+     *  {width, height, data} or null when no third-person body stands -
+     *  the panel then keeps the classic doll (never traps). Display
+     *  only by Mac's decision: unequip stays with the item list. */
+    figure({ yaw = 0, height = 384 } = {}) {
+      if (!thirdActive()) return null;
+      const t = thirdBuilt;
+      const u = 1 / MW_UNITS_PER_METER;
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      for (const r of armPieceRows(t.arm.pieces)) {
+        const b = r.bounds;
+        if (!b) continue;
+        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+      }
+      if (!(maxX > minX)) return null;
+      // feet at the origin, facing the viewer: drawThird's +180 makes yaw
+      // 0 face -Z in pass space, and the eye below sits on +Z.
+      const yawDeg = (yaw * 180 / Math.PI) + 180;
+      const model = multiply(trs(0, 0, 0, 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight), NIF_TO_PASS);
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2 * 1.06;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2 * 1.06;
+      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(height)));
+      const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
+      const eye = [center[0], center[1], center[2] + 4];
+      const view = lookAt(eye, center, [0, 1, 0]);
+      return renderer.renderCharacterSpriteImage(thirdMesh, model, ortho(halfW, halfH, 0.1, 8), view, pw, ph);
     },
 
     status() {

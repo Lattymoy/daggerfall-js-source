@@ -847,7 +847,9 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   // still sees their kit; the DOLL rides behind them only when its
   // art can draw. The pin follows the shape.
   const fp = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
-  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
+  // MW-D36: the model figure stands FIRST when a Morrowind body is
+  // built; the compositor's doll is the fallback behind it, still at 4x.
+  assert.match(fp, /const dollUrl = figureUrl \|\| paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
   assert.match(fp, /if \(dollUrl\)/, 'the doll must be OPTIONAL - tiles alone are the no-data answer');
   assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or

@@ -863,6 +863,23 @@ export class Renderer {
     return cs.tex;
   }
 
+  /** MW-D36: the same sprite render, READ BACK as pixels - the enhanced
+   *  inventory's figure panel is DOM, not a world quad, so the body has
+   *  to leave the GPU as an image. Y is flipped on the way out (GL rows
+   *  run bottom-up); the RT is borrowed and returned exactly as above. */
+  renderCharacterSpriteImage(mesh, modelMatrix, proj, view, pw, ph) {
+    const gl = this.gl;
+    this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
+    const cs = this._charSpriteRT();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+    const raw = new Uint8Array(pw * ph * 4);
+    gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, raw);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    const out = new Uint8ClampedArray(pw * ph * 4);
+    for (let y = 0; y < ph; y++) out.set(raw.subarray(y * pw * 4, (y + 1) * pw * 4), (ph - 1 - y) * pw * 4);
+    return { width: pw, height: ph, data: out };
+  }
+
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
   drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {

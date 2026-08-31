@@ -634,6 +634,47 @@ function dropGold(text) {
 // ARENA2, so a player with no game data still sees their slots), and
 // the paperdoll stands behind them whenever its art can draw.
 
+// ── MW-D36: the model figure ─────────────────────────────────────────
+let _figureYaw = 0;
+let _figureCache = { key: null, url: null };
+let _unsubscribeFigure = null;
+/** The built third-person body as a data URL at the current yaw, or
+ *  null when no body stands. Cached per (yaw, build) so a re-render of
+ *  the window does not re-read the GPU. */
+function modelFigureUrl() {
+  const armMod = deps.fpArm;
+  if (!armMod || typeof armMod.figure !== 'function') return null;
+  const st = armMod.status?.();
+  const key = `${st?.pieces ?? 0}:${st?.skeletonPath ?? ''}:${_figureYaw.toFixed(2)}:${(st?.worn ?? []).length}`;
+  if (_figureCache.key === key) return _figureCache.url;
+  let img = null;
+  try { img = armMod.figure({ yaw: _figureYaw, height: 384 }); } catch { img = null; }
+  let url = null;
+  if (img && img.width && img.height) {
+    const cv = document.createElement('canvas');
+    cv.width = img.width; cv.height = img.height;
+    cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
+    url = cv.toDataURL('image/png');
+  }
+  _figureCache = { key, url };
+  return url;
+}
+/** Drag left/right to turn the figure; a tap does nothing (display only). */
+function attachFigureTurn(img) {
+  let down = null;
+  img.style.touchAction = 'pan-y';
+  img.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; img.setPointerCapture?.(e.pointerId); });
+  img.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    _figureYaw = down.yaw + (e.clientX - down.x) * 0.02;
+    const url = modelFigureUrl();
+    if (url) img.src = url;
+  });
+  const up = () => { down = null; };
+  img.addEventListener('pointerup', up);
+  img.addEventListener('pointercancel', up);
+}
+
 /** The avatar, at whatever scale the column gives it. */
 function dollPanel(url) {
   const wrap = el('div', 'figure-doll');
@@ -742,15 +783,23 @@ function equippedList() {
   // PX20a: 4x, not 3x - the cell is half again as tall as it was, and
   // a 3x sprite scaled up by object-fit is a blur where every other
   // pixel on this window is exact.
-  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 4 });
+  // MW-D36: THE MODEL STANDS WHERE THE DOLL STOOD. When the Morrowind
+  // third-person body is built - dressed by this very equip table,
+  // wearing the matched face - the panel shows THAT, rendered off the
+  // GPU as an image, turnable by drag. Display only, by Mac's call:
+  // unequip stays with the list. No body built = the classic doll,
+  // exactly as before; the classic skin never sees any of this.
+  const figureUrl = modelFigureUrl();
+  const dollUrl = figureUrl || paperDollDataUrl(paperDollPixels(), { scale: 4 });
   // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
   // with art the figure stands on the window's own glass.
-  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}`);
+  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}${figureUrl ? ' model' : ''}`);
   dollFrame.style.gridArea = DOLL_AREA;
   if (dollUrl) {
     const img = document.createElement('img');
     img.src = dollUrl;
-    img.alt = 'Your character';
+    img.alt = figureUrl ? 'Your character, as the Morrowind body wears it' : 'Your character';
+    if (figureUrl) attachFigureTurn(img);
     dollFrame.append(img);
   } else {
     dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
@@ -1362,6 +1411,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   injectEnhancedFonts();
   host = hostEl;
   deps = d;
+  // MW-D36: repaint when the body's build settles, so an equip change
+  // that rebuilt the model asynchronously shows on the panel.
+  if (d.fpArm && typeof d.fpArm.subscribe === 'function') {
+    _unsubscribeFigure?.();
+    _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, url: null }; if (host) render(); });
+  }
   onExit = d.onExit ?? (() => {});
   tab = TABS[0];
   picked = null;
@@ -1424,6 +1479,8 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       keyHandler = null;
       lockHandler = null;
+      // MW-D36: the figure's subscription has an owner too.
+      _unsubscribeFigure?.(); _unsubscribeFigure = null;
       hostEl.innerHTML = '';
       host = null;
       deps = {};
