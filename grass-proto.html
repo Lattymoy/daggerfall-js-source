@@ -123,21 +123,112 @@ function worley(x, y, period, seed) {
 const cl = (v, a, b) => Math.min(b, Math.max(a, v));
 const mixc = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 const sh = (c, k) => c.map((v) => cl(v * k, 0, 255));
+// PROTO-2 (Mac: go deeper on the detail). The first cut painted grass
+// as a TINTED FIELD - noise for colour, Worley for clumps - and it
+// read as a net, because real turf is not a field. It is thousands of
+// DRAWN BLADES lying over soil, each with a length, a direction and a
+// shadow. So the texture is drawn the way it is made:
+//
+//   1. SOIL first, its own surface with grain and pebbles, because
+//      every gap between blades shows it.
+//   2. LITTER: a few thousand individual blades PLACED on a hashed
+//      jittered lattice, each a short capsule with its own angle,
+//      length, width and hue, drawn back-to-front so the near ones
+//      overlap. Every blade darkens the soil just off its own axis -
+//      a contact shadow, which is what makes a lawn read as depth
+//      rather than pattern.
+//   3. TUFTS: a low Worley field lifts whole clumps a shade brighter
+//      and drops the hollows between them, so the sward has terrain.
+//   4. DRY STRAW and BARE PATCHES, sparse, so it is not one colour.
+//
+// The lattice wraps, so the texture still tiles seamlessly.
+/** The blade lattice. Cells wrap, so the sheet still tiles; each cell
+ *  holds a few blades with hashed angle, length, width and hue, and a
+ *  point is tested against the capsules of its own cell and its
+ *  neighbours. Returns the nearest blade covering the point (or null)
+ *  and, separately, how much shadow the point sits in. */
+function makeBlades({ cells = 30, perCell = 6, len = [0.028, 0.075], wid = [0.0026, 0.0050] }) {
+  const h2 = (i, j, k) => {
+    let h = ((i * 374761393) ^ (j * 668265263) ^ (k * 2246822519)) >>> 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+    return [(h & 1023) / 1024, ((h >>> 10) & 1023) / 1024, ((h >>> 20) & 1023) / 1024];
+  };
+  const capsule = (px, py, ax, ay, bx, by) => {
+    const dx = bx - ax, dy = by - ay;
+    const t = cl(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1e-9), 0, 1);
+    return { d: Math.hypot(px - (ax + dx * t), py - (ay + dy * t)), t };
+  };
+  const visit = (u, v, fn) => {
+    const ci = Math.floor(u * cells), cj = Math.floor(v * cells);
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+      const gi = ci + di, gj = cj + dj;
+      const wi = ((gi % cells) + cells) % cells, wj = ((gj % cells) + cells) % cells;
+      for (let k = 0; k < perCell; k++) {
+        const [a, b, c2] = h2(wi, wj, k);
+        const [d, e, f] = h2(wi + 977, wj + 331, k);
+        // the blade's root, in this cell, offset into unwrapped space
+        const rx = (gi + a) / cells, ry = (gj + b) / cells;
+        const ang = c2 * 6.2832;
+        const L = len[0] + d * (len[1] - len[0]);
+        fn({ rx, ry, tx: rx + Math.cos(ang) * L, ty: ry + Math.sin(ang) * L,
+          w: wid[0] + e * (wid[1] - wid[0]), hue: f, L });
+      }
+    }
+  };
+  return {
+    /** the blade covering this point, if any - nearest wins */
+    at(u, v, tuft, bare) {
+      let best = null;
+      visit(u, v, (bl) => {
+        // thin the lattice where the sward thins
+        if (bl.hue > 0.62 + tuft * 0.38 - bare * 0.80) return;
+        const { d, t } = capsule(u, v, bl.rx, bl.ry, bl.tx, bl.ty);
+        const w = bl.w * (1 - t * 0.7);          // blades taper
+        if (d < w && (!best || t > best.t)) best = { t, shade: bl.hue };
+      });
+      return best;
+    },
+    /** how much this point sits in a blade's shadow: the same capsules,
+     *  tested a hair off-axis, which is what gives a lawn its depth */
+    shadow(u, v) {
+      let s2 = 0;
+      visit(u + 0.004, v + 0.006, (bl) => {
+        const { d } = capsule(u + 0.004, v + 0.006, bl.rx, bl.ry, bl.tx, bl.ty);
+        if (d < bl.w * 2.2) s2 = Math.max(s2, 1 - d / (bl.w * 2.2));
+      });
+      return s2;
+    },
+  };
+}
+const BLADES = makeBlades({});
+
 function grassPixel(u, v) {
   const P = 8, x = u * P, y = v * P;
-  const patch = fbm(x * 0.6, y * 0.6, P * 0.6, 4);
-  const dry = cl((fbm(x * 0.35 + 11, y * 0.35 - 7, P * 0.35, 3) - 0.45) * 3.2, 0, 1);
-  let c = mixc([58, 84, 40], [86, 112, 52], cl((patch - 0.35) * 2.2, 0, 1));
-  c = mixc(c, [124, 122, 68], dry * 0.55);
-  const b1 = fbm(x * 52 + 3, y * 13 - 5, P * 52, 2), b2 = fbm(x * 15 + 61, y * 44 + 8, P * 44, 2);
-  c = sh(c, 0.72 + (b1 * 0.6 + b2 * 0.4) * 0.62);
-  const { f1, f2 } = worley(x * 5, y * 5, P * 5, 91);
-  const tuft = cl((f2 - f1) * 2.2, 0, 1);
-  c = sh(c, 0.84 + tuft * 0.34);
-  c = mixc(c, [40, 58, 30], cl(1 - tuft * 2.4, 0, 1) * 0.35);
-  const bare = cl((0.30 - patch) * 4, 0, 1) * cl(1 - tuft, 0, 1);
-  return mixc(c, [96, 76, 52], bare * 0.5);
+  // the soil, seen in every gap
+  const grain = fbm(x * 30 + 21, y * 30 + 9, P * 30, 3);
+  const tone = fbm(x * 1.4 - 4, y * 1.4 + 2, P * 1.4, 4);
+  let c = mixc([74, 58, 40], [104, 82, 56], cl((tone - 0.35) * 2.0, 0, 1));
+  c = sh(c, 0.86 + grain * 0.3);
+  const peb = worley(x * 11 + 0.5, y * 11 + 0.5, P * 11, 17);
+  const stone = cl((0.13 - peb.f1) * 11, 0, 1);
+  if (stone > 0.01) c = mixc(c, [130, 122, 110], stone * 0.7);
+  // the sward's terrain
+  const t = worley(x * 3.1, y * 3.1, P * 3.1, 91);
+  const tuft = cl((t.f2 - t.f1) * 2.6, 0, 1);
+  const dry = cl((fbm(x * 0.5 + 11, y * 0.5 - 7, P * 0.5, 3) - 0.5) * 3.4, 0, 1);
+  const bare = cl((0.34 - fbm(x * 0.7, y * 0.7, P * 0.7, 4)) * 4.5, 0, 1);
+  const lit = BLADES.at(u, v, tuft, bare);
+  if (lit) {
+    const base = mixc([48, 76, 32], [118, 152, 66], cl(lit.t * 1.15, 0, 1));
+    let bc = mixc(base, [152, 146, 84], dry * 0.5);
+    bc = sh(bc, 0.78 + tuft * 0.30 + lit.shade * 0.40);
+    return sh(bc, 0.94 + fbm(x * 70, y * 70, P * 70, 2) * 0.14);
+  }
+  c = sh(c, 0.62 + (1 - BLADES.shadow(u, v)) * 0.50);
+  c = mixc(c, [58, 80, 40], cl(0.35 + tuft * 0.65, 0, 1) * (1 - bare) * 0.62);
+  return c;
 }
+
 const SIZE = 512;
 const groundTex = gl.createTexture();
 {
@@ -236,9 +327,17 @@ void main(){
 in float vT; in float vTint; in float vFade;
 out vec4 o;
 void main(){
-  vec3 root = vec3(0.16,0.22,0.09);
-  vec3 tip  = vec3(0.42,0.55,0.20);
-  vec3 c = mix(root, tip, vT*vT*0.9 + 0.1) * (0.78 + vTint*0.44);
+  // PROTO-2: the blade is LIT along its length - dark at the root
+  // where the sward shades it, bright at the tip where the sky does -
+  // and the very tip catches a rim, which is what makes a field of
+  // blades read as depth instead of a green haze.
+  vec3 root = vec3(0.13,0.19,0.07);
+  vec3 mid  = vec3(0.30,0.44,0.15);
+  vec3 tip  = vec3(0.58,0.72,0.30);
+  vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
+  c = mix(c, tip, smoothstep(0.5,1.0,vT));
+  c *= 0.80 + vTint*0.42;
+  c += vec3(0.10,0.12,0.05) * smoothstep(0.82,1.0,vT);   // the rim
   o = vec4(c, vFade);
 }`);
 
@@ -274,19 +373,19 @@ function build() {
     const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
     const x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
     inst[i * 4] = x; inst[i * 4 + 1] = z;
-    inst[i * 4 + 2] = (0.16 + rnd() * 0.30) * (state.height / 34);
+    inst[i * 4 + 2] = (0.22 + rnd() * 0.42) * (state.height / 34);
     inst[i * 4 + 3] = rnd() * 6.283;
     inst2[i * 4] = (rnd() - 0.5) * 0.5;
     inst2[i * 4 + 1] = (rnd() - 0.5) * 0.5;
     inst2[i * 4 + 2] = rnd();
-    inst2[i * 4 + 3] = 0.030 + rnd() * 0.035;
+    inst2[i * 4 + 3] = 0.052 + rnd() * 0.055;
   }
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   // three quads per blade, stacked, so it can bend instead of shearing
   const corners = [];
-  for (let seg = 0; seg < 3; seg++) {
-    const a = seg / 3, b = (seg + 1) / 3;
+  for (let seg = 0; seg < 5; seg++) {
+    const a = seg / 5, b = (seg + 1) / 5;
     corners.push(0, a, 1, a, 1, b, 0, a, 1, b, 0, b);
   }
   const cbuf = gl.createBuffer();
