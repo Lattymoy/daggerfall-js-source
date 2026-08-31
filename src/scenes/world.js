@@ -546,7 +546,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             const box = transformedAabb(archAabb('millBody', BODY.positions), local);
             for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
             unionBox(box);
-            models.push({ gpu: parts.body, local, _box: box });
+            models.push({ gpu: parts.body, local, _box: box, _order: -1 });   // EV6: the mills group together
             collider.addMesh(key, BODY.positions, BODY.indices, local,
               () => state.pixelTranslation(px, py));
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
@@ -563,7 +563,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
           unionBox(box);
-          models.push({ gpu, local, _box: box });
+          models.push({ gpu, local, _box: box, _order: placed.modelIdNum });   // EV6: sort key
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
           // Building models expose their static doors for E-transitions.
@@ -704,6 +704,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
       pixelNpcs.push({ ...pn, width: size.w, height: size.h });
     }
+
+    // EV6: the pixel's models sort by MESH at build - one archetype's
+    // placements draw back to back and the VAO shadow skips the rebind.
+    models.sort((a, b) => a._order - b._order);
 
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
@@ -4837,6 +4841,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
+    renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
 
@@ -5003,6 +5008,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
+      renderer.markForeignPass();   // EV6: so did the rain
     }
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn

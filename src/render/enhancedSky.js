@@ -696,7 +696,8 @@ export class EnhancedSkyRenderer {
     const s = this.state;
     if (!s) return;
     const gl = this.gl, u = this.u;
-    const previousProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+    // EV6: no program save/restore and no getParameter round-trip -
+    // the R9 law, as the classic pass; the hosts mark the seam.
     gl.useProgram(this.program);
     gl.depthMask(false);
     gl.disable(gl.DEPTH_TEST);
@@ -729,6 +730,5 @@ export class EnhancedSkyRenderer {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
-    gl.useProgram(previousProgram);
   }
 }

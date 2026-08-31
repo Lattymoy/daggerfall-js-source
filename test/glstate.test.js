@@ -1,0 +1,110 @@
+// EV6 - GL STATE SHADOWING, pinned against a COUNTING stub (the
+// audit26/renderalloc Proxy-GL precedent, grown eyes): the program and
+// VAO shadows skip redundant binds, the sorted draw lists are what
+// make consecutive same-mesh draws free, the shadows reset at
+// beginFrame and at markForeignPass (the three passes that change
+// programs behind the renderer's back: both skies and precipitation,
+// which no longer save/restore or query CURRENT_PROGRAM at all), and
+// every bind in renderer.js funnels through the shadow helpers so
+// nothing can desynchronize them.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { identity } from '../src/world/mat4.js';
+import { Renderer } from '../src/render/renderer.js';
+
+function countingRenderer(counts) {
+  const stub = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+      if (k === 'createTexture' || k === 'createBuffer' || k === 'createVertexArray'
+        || k === 'createProgram' || k === 'createShader' || k === 'createFramebuffer') return () => ({});
+      if (k === 'useProgram' || k === 'bindVertexArray') {
+        return () => { counts[k] = (counts[k] || 0) + 1; };
+      }
+      if (typeof k === 'string' && k.toUpperCase() === k) return 1;   // GL enums
+      return () => {};
+    },
+  });
+  const canvas = { getContext: () => stub, clientWidth: 320, clientHeight: 200, width: 320, height: 200 };
+  return new Renderer(canvas);
+}
+
+const fakeMesh = () => ({
+  vao: {},
+  subMeshes: [{ textureArchive: 7, textureRecord: 3, primitiveCount: 2, startIndex: 0 }],
+});
+
+test('EV6: the shadows skip redundant binds; a foreign pass and beginFrame reset them', () => {
+  const counts = {};
+  const r = countingRenderer(counts);
+  r.textures.set('7_3', { fake: true });
+  const a = fakeMesh(), b = fakeMesh();
+  const m = identity();
+  r.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
+
+  // three draws of the SAME mesh: beginFrame already bound the solid
+  // program, so drawMesh's _use never touches GL again, and the VAO
+  // binds once - this is the collapse the sorted draw lists buy.
+  counts.useProgram = 0; counts.bindVertexArray = 0;
+  const vb0 = r.stats.vaoBinds, pb0 = r.stats.programBinds;
+  r.drawMesh(a, m); r.drawMesh(a, m); r.drawMesh(a, m);
+  assert.equal(counts.useProgram, 0, 'the program shadow held through all three');
+  assert.equal(counts.bindVertexArray, 1, 'one VAO bind for three same-mesh draws');
+  assert.equal(r.stats.vaoBinds - vb0, 1, 'and the counter agrees');
+  assert.equal(r.stats.programBinds - pb0, 0);
+  assert.equal(r.stats.draws, 3, 'all three drew');
+
+  // a different mesh rebinds; coming back rebinds again (why the
+  // hosts SORT: interleaving pays per switch)
+  r.drawMesh(b, m);
+  r.drawMesh(a, m);
+  assert.equal(counts.bindVertexArray, 3);
+
+  // the foreign seam: the skies and precipitation change programs
+  // behind the renderer's back and no longer restore - markForeignPass
+  // forgets the shadows and unbinds the VAO for real
+  counts.useProgram = 0;
+  r.markForeignPass();
+  r.drawMesh(a, m);
+  assert.equal(counts.useProgram, 1, 'the program rebinds after a foreign pass');
+
+  // beginFrame starts every frame untrusting
+  counts.useProgram = 0;
+  r.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
+  assert.equal(counts.useProgram, 1, 'the frame opens with a real bind');
+});
+
+test('EV6: every program and VAO bind in renderer.js funnels through the shadows', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  // exactly ONE raw useProgram (inside _use) and TWO raw
+  // bindVertexArray (inside _bindVao and markForeignPass) survive -
+  // a third of either is a bind the shadows cannot see
+  assert.equal((r.match(/gl\.useProgram\(/g) || []).length, 1, 'only _use touches useProgram');
+  assert.equal((r.match(/gl\.bindVertexArray\(/g) || []).length, 2, 'only _bindVao and markForeignPass touch bindVertexArray');
+  // the element-buffer upload that owns no VAO unbinds first, or it
+  // would capture its buffer into whatever drawMesh left bound
+  const ti = r.slice(r.indexOf('_terrainIndices(indices) {'), r.indexOf('_terrainIndices(indices) {') + 900);
+  assert.ok(ti.indexOf('this._bindVao(null);') > 0 && ti.indexOf('this._bindVao(null);') < ti.indexOf('ELEMENT_ARRAY_BUFFER'),
+    '_terrainIndices unbinds before touching the element buffer');
+});
+
+test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark the seams', () => {
+  for (const f of ['src/render/skyRenderer.js', 'src/render/enhancedSky.js', 'src/render/precipitation.js']) {
+    const s = readFileSync(f, 'utf8');
+    assert.ok(!s.includes('CURRENT_PROGRAM'), `${f}: the per-frame driver query is gone`);
+    assert.ok(!s.includes('previousProgram'), `${f}: and the restore with it`);
+  }
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const s = readFileSync(host, 'utf8');
+    assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, 2,
+      `${host} marks both foreign seams (the sky and the rain)`);
+  }
+});
+
+test('EV6: both exterior hosts sort their draw lists by mesh at build', () => {
+  assert.ok(readFileSync('src/scenes/exterior.js', 'utf8').includes('drawList.sort((a, b) => a.order - b.order)'));
+  assert.ok(readFileSync('src/scenes/world.js', 'utf8').includes('models.sort((a, b) => a._order - b._order)'));
+});
