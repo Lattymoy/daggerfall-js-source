@@ -592,8 +592,30 @@ The six the settings sweep handed to the UI arc, taken one at a time:
   the cutout and the label both inside the gate. The TRADE window's own
   panel (:217-223) does not exist in the port yet and its pin fails the
   day it appears.
-- Remaining: `EnableEnhancedItemLists` (ItemListScroller's row count),
-  `EnableModernConversationStyleInTalkWindow`.
+- **UI5 SCOPED, NOT STARTED: `GUI/EnableEnhancedItemLists`**
+  (ItemListScroller :195-210). Read from source so the next session
+  does not have to: enhanced replaces the FOUR 50x38 cells with SIXTEEN
+  25x19 ones - `listDisplayUnits` 8, `listWidth` 2,
+  `itemButtonRects16`, `itemButtonMargin` 1 (from 2), `textScale` 0.75
+  (from 1). Its blast radius is bigger than the geometry:
+  - the port's `itemScroller.js` publishes the classic numbers as
+    MODULE CONSTANTS (`LIST_SLOTS`, `CELL_X`, `CELL_W`, `SLOT_H`,
+    `CELL_MARGIN`), and three windows import them - `nativeInventory`,
+    `nativeTrade`, `itemMakerWindow` - for slicing, drawing AND hit
+    testing. Enhanced needs a per-scroller layout object, not a
+    constant, so this is a small refactor before it is a feature.
+  - only some scrollers take it. DFU builds enhanced scrollers in the
+    INVENTORY window (both lists) and the ITEM MAKER; the POTION MAKER
+    uses the explicit-geometry constructor (4x3 and 4x2) and is never
+    enhanced, and the TRADE window has no ItemListScroller at all.
+  - the ITEM MAKER additionally covers two background seams with
+    panels when enhanced (:385-387), because the 16-cell list exposes
+    parts of the base art the 4-cell one hid.
+  It is a proper slice, not a gate. NOT STARTED rather than
+  half-started: a scroller wired for 16 cells in one window and 4 in
+  another is the dangling shape this session has spent its time
+  removing.
+- Remaining after it: `EnableModernConversationStyleInTalkWindow`.
 
 ### Refuted on the way
 
