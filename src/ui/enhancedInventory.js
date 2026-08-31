@@ -1034,6 +1034,17 @@ function itemRow(item, from = 'local') {
     if (from === 'remote' && item.questItem) {
       deps.getQuest?.(item.questUID)?.getItem?.(item.questSymbol)?.setPlayerClicked();
     }
+    // IG7 (Mac: "opening a container or body and clicking to loot an
+    // item - the item isn't picked up properly and the tooltip
+    // remains"): a LOOT-SIDE click TAKES, immediately. DFU's remote
+    // list transfers on the click itself
+    // (DaggerfallInventoryWindow.RemoteItemListScroller_OnItemClick's
+    // remove arm); this skin's pick-then-Take card made the first
+    // click look like a broken take with a tooltip stuck open. The
+    // REWARD tray alone keeps the two-step - a single click must not
+    // claim a one-shot choice (G6: taking closes the window and
+    // spends the claim).
+    if (from === 'remote' && remote.kind !== 'reward') { take(item); return; }
     // PX19i: the tooltip's toggle - a second click on the picked item
     // puts it away (the quest-click above already fired either way,
     // exactly as DFU counts a look).
