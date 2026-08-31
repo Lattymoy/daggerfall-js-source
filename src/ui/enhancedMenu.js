@@ -1436,7 +1436,14 @@ const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName =
  *   - anything that would leave nothing behind: a quest actually
  *     called "Main Quest" keeps its name rather than becoming blank.
  */
-const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)\s+(?:quest|quests|questline|storyline|story)\s*[:\u2013\u2014|\-\u2022]\s*/i;
+// AUDIT 38 F1: the SEPARATOR between the kind word and the noun is
+// optional too. A pack is as free to write "Sidequest:" or
+// "Main-Quest -" as "Side Quest:", and the first cut required a
+// space, so the joined spellings sailed through with the label still
+// on. The kind and the noun may be joined, spaced or hyphenated; the
+// LABEL still needs its own trailing separator, which is what keeps
+// "Main Quest Backbone" a name.
+const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)[\s\-\u2013]*(?:quest|quests|questline|storyline|story)\s*[:\u2013\u2014|\-\u2022]\s*/i;
 export function questTitleOf(name) {
   const raw = String(name ?? '').trim();
   const cut = raw.replace(QUEST_KIND_LABEL, '').trim();
