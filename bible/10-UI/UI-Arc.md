@@ -8529,3 +8529,39 @@ is trivial, `TransportManager` is not - `motor.js:517` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
+
+## THE ENHANCED PACK: grid, armour tab, height (2026-08-31, prototype)
+
+Mac: "more height, a proper grid based inventory, armor its own tab" -
+about `ui/enhancedInventory.js`, the port's OWN pack, not the classic
+window. Worth writing down because the first answer to it was wrong:
+the request was read as a DFU-parity question and answered with a
+lecture about departing from classic. The enhanced UI is the project's
+own design surface and DFU parity does not bind it.
+
+`pack-proto.html` at the root (registered in `vite.config.js`, or it
+404s on gh-pages) is the SPEC: fixtures only, nothing imported from
+`src/`, so iterating on it cannot break the live pack. Three knobs -
+height, cell size, gap - are on the page so the numbers get argued
+about by looking rather than describing.
+
+**The tab set is the real decision.** The live pack imports `TABS` and
+`filterByTab` from `nativeInventory.js`, which is DFU's FOUR-tab rule
+(`weapons` = Weapons **or Armor**, unenchanted). Splitting armour out
+means the enhanced pack needs its OWN set and filter, so the classic
+window's law stays exactly as DFU wrote it. The prototype's five:
+weapons, armour, magic, clothing, ingredients - with `magic` still
+winning over everything on `isEnchanted`, as DFU has it.
+
+**Shields:** in Daggerfall a shield IS group Armor (Buckler 109, Round
+110, Kite 111, Tower 112), so "armour plus shields" is one predicate
+rather than two. Checked rather than assumed.
+
+**The grid** is fixed-cell with wrapping (`repeat(auto-fill,
+minmax(--cell, 1fr))`), so the column count follows the window's width
+instead of being a number someone has to pick. **The height** is free
+here - it is a DOM window, not the classic 320x200 native panel.
+
+Open until Mac has looked at it: the cell size, whether names belong on
+the cells at all, and whether the character column stays a slot list or
+becomes something else beside a grid.

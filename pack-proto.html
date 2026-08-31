@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pack prototype - grid, armour tab, height</title>
+<!--
+  THE ENHANCED PACK PROTOTYPE (Mac, 2026-08-31): "more height, a proper
+  grid based inventory, and armor its own tab."
+
+  This is the SPEC, not a sketch: whatever lands here is what the
+  shipped surface has to match - same tab set, same filter rule, same
+  cell sizes, same grid behaviour. It runs on FIXTURES so it needs no
+  ARENA2 and no game state, and it deliberately reuses nothing from
+  src/ so that iterating here cannot break the live pack.
+
+  Three knobs are exposed at the top so we can argue about the numbers
+  by looking at them rather than by describing them.
+-->
+<style>
+  :root {
+    --bg: #14110d; --panel: #1e1a14; --edge: #3a3229; --ink: #e8dfc8;
+    --dim: #9a8f78; --gold: #f3ef2c; --blood: #8d2b20; --lit: #2b2419;
+    /* THE THREE KNOBS */
+    --pack-h: 78vh;        /* was: content-height, roughly 60vh */
+    --cell: 76px;          /* grid cell edge */
+    --cell-gap: 6px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 13px/1.4 ui-monospace, "SF Mono", Menlo, monospace; }
+  .wrap { max-width: 1080px; margin: 18px auto; padding: 0 14px; }
+  h1 { font-size: 15px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--dim); margin: 0 0 12px; }
+  .knobs { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px;
+    padding: 10px 12px; border: 1px solid var(--edge); background: var(--panel); }
+  .knobs label { display: flex; gap: 8px; align-items: center; color: var(--dim); }
+  .knobs input { width: 120px; }
+  .knobs output { color: var(--gold); min-width: 52px; }
+
+  /* ── the window ─────────────────────────────────────────────── */
+  .pack { border: 1px solid var(--edge); background: var(--panel);
+    height: var(--pack-h); display: grid; grid-template-rows: auto 1fr auto;
+    min-height: 420px; }
+  .packhead { display: flex; align-items: baseline; gap: 14px;
+    padding: 10px 14px; border-bottom: 1px solid var(--edge); }
+  .packhead .who { font-weight: 600; letter-spacing: .06em; }
+  .packhead .sub { color: var(--dim); font-size: 12px; }
+
+  .packbody { display: grid; grid-template-columns: 232px 1fr; min-height: 0; }
+  .charcol { border-right: 1px solid var(--edge); padding: 12px;
+    display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+  .slot { display: flex; justify-content: space-between; gap: 10px;
+    padding: 4px 6px; border: 1px solid transparent; }
+  .slot.on { background: var(--lit); border-color: var(--edge); }
+  .slot .k { color: var(--dim); }
+  .slot .v { color: var(--ink); text-align: right; }
+  .slot.off .v { color: #5d5646; }
+
+  /* ── the tab rail + the grid ─────────────────────────────────── */
+  .listcol { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+  .packtabs { display: flex; gap: 0; border-bottom: 1px solid var(--edge); }
+  .packtabs button { flex: 1 1 0; appearance: none; background: none; cursor: pointer;
+    border: 0; border-right: 1px solid var(--edge); color: var(--dim);
+    font: inherit; letter-spacing: .06em; text-transform: uppercase;
+    padding: 9px 4px; font-size: 11px; }
+  .packtabs button:last-child { border-right: 0; }
+  .packtabs button.sel { color: var(--gold); background: var(--lit); }
+  .packtabs button .n { color: #6f6858; margin-left: 6px; }
+  .packtabs button.sel .n { color: var(--dim); }
+
+  /* THE GRID. Fixed cell size, wrapping - so the column count follows
+     the window's width instead of being a number we have to pick. */
+  .packgrid { overflow: auto; padding: 10px;
+    display: grid; gap: var(--cell-gap);
+    grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+    align-content: start; }
+  .cell { position: relative; aspect-ratio: 1; border: 1px solid var(--edge);
+    background: #191510; display: grid; place-items: center; cursor: pointer; }
+  .cell:hover { border-color: var(--gold); }
+  .cell .icon { font-size: 26px; opacity: .92; }
+  .cell .qty { position: absolute; right: 3px; bottom: 2px; font-size: 11px; color: var(--ink); }
+  .cell .ench { position: absolute; left: 3px; top: 2px; font-size: 10px; color: #7fb2ff; }
+  .cell .nm { position: absolute; left: 0; right: 0; bottom: -1px; font-size: 9px;
+    text-align: center; color: var(--dim); background: #14110dcc; padding: 1px 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty { color: var(--dim); padding: 20px; grid-column: 1 / -1; }
+
+  .packbar { display: flex; justify-content: space-between; gap: 16px;
+    padding: 9px 14px; border-top: 1px solid var(--edge); }
+  .meter { width: 220px; height: 8px; background: #241f18; border: 1px solid var(--edge); }
+  .fill { height: 100%; background: #6d7a3a; }
+  .fill.heavy { background: var(--blood); }
+  .k { color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pack prototype — grid · armour tab · height</h1>
+
+  <div class="knobs">
+    <label>Height <input id="kh" type="range" min="50" max="94" value="78"><output id="oh">78vh</output></label>
+    <label>Cell <input id="kc" type="range" min="52" max="120" value="76"><output id="oc">76px</output></label>
+    <label>Gap <input id="kg" type="range" min="0" max="14" value="6"><output id="og">6px</output></label>
+  </div>
+
+  <div class="pack">
+    <header class="packhead">
+      <span class="who">Bereditte Jastal</span>
+      <span class="sub">Breton · Knight · Level 6</span>
+    </header>
+    <div class="packbody">
+      <aside class="charcol" id="chars"></aside>
+      <section class="listcol">
+        <nav class="packtabs" id="tabs"></nav>
+        <div class="packgrid" id="grid"></div>
+      </section>
+    </div>
+    <footer class="packbar">
+      <span><span class="k">Carry Weight</span> <span id="carry">148 / 220</span></span>
+      <span class="meter"><span class="fill" id="fill" style="width:67%"></span></span>
+      <span><span class="k">Gold</span> 1,204</span>
+    </footer>
+  </div>
+</div>
+
+<script type="module">
+// ── THE TAB SET ──────────────────────────────────────────────────
+// The live pack imports TABS and filterByTab from nativeInventory.js,
+// which is DFU's FOUR-tab rule (weapons = Weapons OR Armor). Splitting
+// armour out means the enhanced pack needs its OWN set, so the classic
+// window's law stays exactly as DFU wrote it.
+//
+// SHIELDS: in Daggerfall a shield IS group Armor (Buckler 109, Round
+// 110, Kite 111, Tower 112), so "armour plus shields" is one predicate,
+// not two. Called out because it was worth checking rather than
+// assuming.
+const TABS = [
+  { id: 'weapons',     label: 'Weapons' },
+  { id: 'armor',       label: 'Armour' },
+  { id: 'magic',       label: 'Magic' },
+  { id: 'clothing',    label: 'Clothing' },
+  { id: 'ingredients', label: 'Ingredients' },
+];
+const SHIELDS = new Set([109, 110, 111, 112]);
+const isEnchanted = (it) => !!it.ench;
+const isIngredient = (it) => it.group === 'UselessItems2' || it.group === 'CreatureIngredients1'
+  || it.group === 'PlantIngredients1' || it.group === 'MetalIngredients';
+
+function filterByTab(items, tab) {
+  return items.filter((it) => {
+    if (it.worn) return false;                       // worn items leave the list
+    const ench = isEnchanted(it);
+    if (tab === 'magic') return ench;                // enchanted wins, whatever it is
+    if (tab === 'weapons') return it.group === 'Weapons' && !ench;
+    if (tab === 'armor') return it.group === 'Armor' && !ench;   // shields included
+    if (tab === 'ingredients') return isIngredient(it) && !ench;
+    return it.group !== 'Weapons' && it.group !== 'Armor' && !isIngredient(it) && !ench;
+  });
+}
+
+// ── FIXTURES ─────────────────────────────────────────────────────
+const glyph = { Weapons: '🗡', Armor: '🛡', Clothing: '🧥', Ingredient: '🌿', Misc: '📦', Magic: '✦' };
+const ITEMS = [
+  { name: 'Steel Longsword', group: 'Weapons', t: 120, icon: glyph.Weapons },
+  { name: 'Elven Dagger', group: 'Weapons', t: 113, icon: glyph.Weapons },
+  { name: 'War Axe', group: 'Weapons', t: 126, icon: glyph.Weapons },
+  { name: 'Short Bow', group: 'Weapons', t: 129, icon: glyph.Weapons },
+  { name: 'Arrow', group: 'Weapons', t: 131, icon: '➹', qty: 42 },
+  { name: 'Silver Broadsword', group: 'Weapons', t: 121, icon: glyph.Weapons, ench: true },
+  { name: 'Steel Cuirass', group: 'Armor', t: 102, icon: glyph.Armor },
+  { name: 'Steel Greaves', group: 'Armor', t: 103, icon: glyph.Armor },
+  { name: 'Iron Helm', group: 'Armor', t: 107, icon: '⛑' },
+  { name: 'Leather Boots', group: 'Armor', t: 108, icon: '🥾' },
+  { name: 'Steel Buckler', group: 'Armor', t: 109, icon: glyph.Armor },
+  { name: 'Kite Shield', group: 'Armor', t: 111, icon: glyph.Armor },
+  { name: 'Tower Shield', group: 'Armor', t: 112, icon: glyph.Armor },
+  { name: 'Left Pauldron', group: 'Armor', t: 105, icon: glyph.Armor },
+  { name: 'Dwarven Gauntlets', group: 'Armor', t: 104, icon: '🧤', ench: true },
+  { name: 'Ring of Feather', group: 'Jewellery', t: 133, icon: '💍', ench: true },
+  { name: 'Amulet of Warding', group: 'Jewellery', t: 134, icon: '📿', ench: true },
+  { name: 'Wizard Robe', group: 'Clothing', t: 210, icon: glyph.Clothing },
+  { name: 'Casual Cloak', group: 'Clothing', t: 220, icon: glyph.Clothing },
+  { name: 'Boots', group: 'Clothing', t: 230, icon: '🥾' },
+  { name: 'Sandals', group: 'Clothing', t: 231, icon: '🩴' },
+  { name: 'Ivy Leaves', group: 'PlantIngredients1', t: 300, icon: glyph.Ingredient, qty: 6 },
+  { name: 'Giant Blood', group: 'CreatureIngredients1', t: 310, icon: '🩸', qty: 3 },
+  { name: 'Iron Ore', group: 'MetalIngredients', t: 320, icon: '⛏', qty: 2 },
+  { name: 'Lodestone', group: 'MetalIngredients', t: 321, icon: '🧲' },
+  { name: 'Torch', group: 'UselessItems2', t: 132, icon: '🔥', qty: 4 },
+  { name: 'Bandage', group: 'UselessItems2', t: 135, icon: '🩹', qty: 7 },
+  { name: 'Book: Lycanthropy', group: 'Books', t: 500, icon: '📕' },
+  { name: 'Potion of Healing', group: 'UselessItems1', t: 140, icon: '🧪', qty: 3 },
+  { name: 'Steel Chainmail', group: 'Armor', t: 101, icon: glyph.Armor, worn: true },
+];
+const WORN = [
+  ['Head', 'Iron Helm'], ['Chest (armour)', 'Steel Chainmail'], ['Chest (clothes)', 'Wizard Robe'],
+  ['Right hand', 'Steel Longsword'], ['Left hand', 'Kite Shield'], ['Legs (armour)', 'Steel Greaves'],
+  ['Legs (clothes)', '—'], ['Feet', 'Leather Boots'], ['Gloves', '—'],
+  ['Amulet 0', 'Amulet of Warding'], ['Amulet 1', '—'], ['Bracelet 0', '—'], ['Bracelet 1', '—'],
+  ['Ring 0', 'Ring of Feather'], ['Ring 1', '—'], ['Mark 0', '—'], ['Crystal 0', '—'],
+];
+
+// ── RENDER ───────────────────────────────────────────────────────
+let tab = 'weapons';
+const $ = (id) => document.getElementById(id);
+
+function paintTabs() {
+  const nav = $('tabs'); nav.textContent = '';
+  for (const t of TABS) {
+    const n = filterByTab(ITEMS, t.id).length;
+    const b = document.createElement('button');
+    b.className = t.id === tab ? 'sel' : '';
+    b.innerHTML = `${t.label}<span class="n">${n}</span>`;
+    b.onclick = () => { tab = t.id; paintTabs(); paintGrid(); };
+    nav.append(b);
+  }
+}
+function paintGrid() {
+  const g = $('grid'); g.textContent = '';
+  const rows = filterByTab(ITEMS, tab);
+  if (!rows.length) { g.innerHTML = '<div class="empty">Nothing here.</div>'; return; }
+  for (const it of rows) {
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.title = it.name;
+    c.innerHTML = `<span class="icon">${it.icon}</span>`
+      + (it.ench ? '<span class="ench">✦</span>' : '')
+      + (it.qty > 1 ? `<span class="qty">${it.qty}</span>` : '')
+      + `<span class="nm">${it.name}</span>`;
+    g.append(c);
+  }
+}
+function paintChar() {
+  const col = $('chars'); col.textContent = '';
+  for (const [k, v] of WORN) {
+    const d = document.createElement('div');
+    d.className = `slot ${v === '—' ? 'off' : 'on'}`;
+    d.innerHTML = `<span class="k">${k}</span><span class="v">${v}</span>`;
+    col.append(d);
+  }
+}
+const knob = (input, out, unit, prop) => {
+  const apply = () => {
+    out.value = input.value + unit;
+    document.documentElement.style.setProperty(prop, input.value + unit);
+  };
+  input.oninput = apply; apply();
+};
+knob($('kh'), $('oh'), 'vh', '--pack-h');
+knob($('kc'), $('oc'), 'px', '--cell');
+knob($('kg'), $('og'), 'px', '--cell-gap');
+paintTabs(); paintGrid(); paintChar();
+</script>
+</body>
+</html>

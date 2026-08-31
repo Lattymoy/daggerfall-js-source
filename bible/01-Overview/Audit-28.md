@@ -611,10 +611,31 @@ The six the settings sweep handed to the UI arc, taken one at a time:
   - the ITEM MAKER additionally covers two background seams with
     panels when enhanced (:385-387), because the 16-cell list exposes
     parts of the base art the 4-cell one hid.
-  It is a proper slice, not a gate. NOT STARTED rather than
-  half-started: a scroller wired for 16 cells in one window and 4 in
-  another is the dangling shape this session has spent its time
-  removing.
+  It is a proper slice, not a gate.
+
+  **STARTED AND PARKED (2026-08-31), with three findings worth more
+  than the code was:**
+  1. **It ships TRUE.** `EnableEnhancedItemLists` is `"True"` in the
+     shipped ini, so the 16-cell grid is DFU's DEFAULT and the port has
+     been showing the classic 4-cell list all along. UI5 is a PARITY
+     FIX, not an optional extra.
+  2. **The scrollbar counts ROWS, not items.** `TotalUnits =
+     (items.Count + listWidth - 1) / listWidth` (:412) and the index is
+     converted with `scrollIndex *= listWidth` (:416) just before the
+     cells fill. An item-indexed scroll is right at one column and
+     wrong at two.
+  3. **`itemCutoutRects16` is a whole feature, not a detail** (:73-83,
+     :516-523). In enhanced mode every cell gets a BACKGROUND cut from
+     **INVE00I0.IMG** - not the window's own ITEM00I0 - because the base
+     art has no 16-cell grid drawn on it. Sixteen entries, not a grid
+     walk, and the last four repeat earlier rects.
+
+  The first cut of this slice was built from the CONSTRUCTOR's five
+  assignments without reading the class body: it derived cell rects
+  arithmetically instead of using `itemButtonRects16`, used an
+  item-indexed scroll, and missed the cell backgrounds entirely. Mac
+  caught it. The code was reverted rather than committed half-built;
+  these three findings are the part worth keeping.
 - **UI6 CLOSED: `GUI/EnableModernConversationStyleInTalkWindow`**
   (DaggerfallTalkWindow :53-60 and the three label arms). Smaller text
   (0.8), a narrower wrap (0.75 of the panel) and a per-speaker
