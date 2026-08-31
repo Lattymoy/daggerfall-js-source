@@ -52,6 +52,7 @@ try {
       ...process.env,
       DAGGER_USER_DATA: userData,
       DAGGER_SKIP_ARENA2_PROMPT: '1',
+      DAGGER_NO_UPDATE_CHECK: '1',   // the probe proves the shell, not GitHub's uptime
     },
   });
   const page = await app.firstWindow();

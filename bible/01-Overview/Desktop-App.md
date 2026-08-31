@@ -122,6 +122,29 @@ without cutting a release. Artifact names are
 `DaggerfallJS-<version>-<os>-<arch>.<ext>`; bump `app/package.json`'s
 version with the tag.
 
+## Updating (DA6)
+
+No auto-updater, on purpose: unsigned builds cannot auto-update on
+macOS at all, and nothing here should apply code silently. Instead
+the app carries a NOTICE - on launch (and from File > Check for
+Updates...) it makes its one network call of its own, a read-only
+GET to the repo's releases API, runs the pure compare in
+`app/lib/updateCheck.cjs`, and if a newer `app-v*` release exists
+offers a dialog whose Download button opens the release page in the
+player's browser. Launch checks fail SILENTLY (a notice that nags
+about the network is worse than none); the menu check reports
+up-to-date and unreachable out loud, because the player asked. The
+File menu checkbox ("Check for Updates on Launch", default on,
+persisted as `updateCheck` in config.json) turns it off in one
+click, and `DAGGER_NO_UPDATE_CHECK` turns it off for the probes.
+Updating is an install-over: saves, prefs and the ARENA2 path live
+in userData, outside the install, and survive untouched.
+`test/updatecheck.test.js` pins the compare's ordering laws and the
+wiring (one endpoint, both gates, browser-only Download). If signed
+builds ever exist, electron-updater can replace the notice on
+Windows/Linux; the notice composes with that rather than fighting
+it.
+
 ## What deliberately did NOT move
 
 Music packs, texture packs and Morrowind data still live in IndexedDB
