@@ -209,6 +209,7 @@ export class AutomapWindow {
     renderer.setClipY(sliceMaxed ? null : slicingPositionY(p?.eye?.[1] ?? this.refY, 0, this.biasY));
     renderer.setFog('off');                                      // NoFogCamera (:2017)
     renderer.setLighting(new Float32Array([0.9, 0.9, 0.9]), 0);  // key/fill/back 0.9/0.7/0.5 collapsed to ambient (:2073-2075, recorded)
+    renderer.setMoonlight(null);   // AUDIT EV F-R1: a map pass takes no stale exterior moon (the beacons are _clockLit billboards)
     try {
       const yaw = this.yawDeg * DEG;
       const upv = [Math.sin(yaw), 0, Math.cos(yaw)];

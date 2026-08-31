@@ -30,7 +30,11 @@ export const WORLD_MAP_TERRAIN_DIM = 32768; // MapsFile.WorldMapTerrainDim
 export const TERRAIN_SIZE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE; // 819.2
 const MAX_MAP_PIXEL_Y = 500; // MapsFile.MaxMapPixelY
 
-const BASE_HEIGHT_SCALE = 8;
+// AUDIT EV F-DOC7: exported - the overworld relief and the far ring
+// build their macro heights on this exact term, and each carrying a
+// private copy of the 8 is how the ring would silently diverge from
+// the streamed law it claims to share.
+export const BASE_HEIGHT_SCALE = 8;
 const NOISE_MAP_SCALE = 4;
 const EXTRA_NOISE_SCALE = 10;
 export const SCALED_OCEAN_ELEVATION = 3.4 * BASE_HEIGHT_SCALE;

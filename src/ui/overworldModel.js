@@ -37,14 +37,14 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CLIMATES, getPixelFromPixelID } from '../formats/mapsFile.js';
-import { SCALED_OCEAN_ELEVATION } from '../world/terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE } from '../world/terrainSampler.js';   // AUDIT EV F-DOC7: one home for the byte*8 base term
 import { getPixelColorIndex, checkLocationDiscovered } from './travelMapWindow.js';
 
 // One map pixel = one scene unit; the streamed world's sign convention
 // (scene z = -py, so north is +z) kept so a mind that knows one map
 // knows both.
 export const OVERWORLD_RELIEF = 24;   // vertical exaggeration - skin, documented above
-export const BASE_HEIGHT_SCALE = 8;   // terrainSampler's own base term, byte * 8
+export { BASE_HEIGHT_SCALE };   // AUDIT EV F-DOC7: re-exported from terrainSampler - was a private copy of the 8 here, one silent-divergence hazard
 /** World units per map pixel in the STREAMED world - the divisor that
  *  brings the height law into map-pixel units. */
 const UNITS_PER_PIXEL = 819.2;

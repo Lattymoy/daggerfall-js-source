@@ -57,8 +57,9 @@ export class TerrainGenClient {
       ?? ((terrainThreadDisabled() || typeof Worker === 'undefined' || !woodsBytes)
         ? null : defaultWorkerFactory);
     if (!factory) return;
+    let w = null;
     try {
-      const w = factory();
+      w = factory();
       w.onerror = (e) => this._down(e?.message ?? 'terrain worker failed');
       w.onmessage = (ev) => this._answer(ev.data ?? {});
       // a COPY - transferring the reader's own bytes would detach the
@@ -68,6 +69,9 @@ export class TerrainGenClient {
       this._worker = w;
     } catch (e) {
       console.warn('[terrain] worker unavailable; generating on the main thread', e);
+      // AUDIT EV F-SIM4: a factory that SPAWNED but whose init post
+      // threw would otherwise strand a live idle worker for the page
+      try { w?.terminate?.(); } catch { /* never spawned or already gone */ }
       this._worker = null;
     }
   }

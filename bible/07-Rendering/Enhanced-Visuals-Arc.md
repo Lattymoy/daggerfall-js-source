@@ -106,7 +106,9 @@ tint term without a vertex-format change across ~20 call sites.
   top-16 selection; the thirteen `[0,1,0]` literals hoist;
   precipitation stops querying CURRENT_PROGRAM (the R9 law says the
   next pass owns its binding anyway); heightAt computes its pixel
-  directly instead of scanning 49. And renderer.stats (draws, program
+  directly instead of scanning 49. (AUDIT EV: the sweep found
+  twenty-two up-axis literals, not the thirteen this plan line first
+  guessed - the RECORD below and the test carry the real count.) And renderer.stats (draws, program
   binds, texture binds, VAO binds - reset per beginFrame) plus
   __renderer on every host, so every later slice lands against
   numbers.
@@ -419,3 +421,25 @@ the frame's own light state). Enhanced-only beside lodOn; ?ring=off.
 farring.test.js pins the laws, the hole, the Proxy-GL pass lifecycle
 and the wiring; the horizon itself is owed to a data-bearing session
 (the Wrothgarians from Daggerfall's walls, ?tod= at dusk).
+
+AUDIT EV (2026-08-31): the whole arc audited by three adversarial
+lanes - simulation/async, rendering, test/pin/doc integrity - and
+every confirmed finding fixed in the same change. The full record is
+`01-Overview/Audit-EV.md`; the headline pair: MOONLIGHT LEAKED
+INDOORS (one shared renderer, the modal frames never cleared it - the
+AUDIT 26 F001 windowEmission class exactly; both modal arms and the
+automap now go dark explicitly, the stale R12 indirect with them) and
+A TELEPORT OVERLAPPING AN IN-FLIGHT BUILD DOUBLE-BUILT THE PIXEL
+(EV7 stretched the window from a microtask to a worker round trip;
+buildPixel is now a cache-then-in-flight-map front, one build per
+pixel ever in flight). Also fixed: the far ring's half-pixel hole
+asymmetry (a sky-gap strip on two rims), its rim fade that never
+closed at edge midpoints, its missing moon term, the stranded-worker
+init edge, the never-executed worker shell (the job now crosses as a
+spread + the real shell's error arms run in node), the tautological
+kernel-equivalence test (an independent sampler-loop re-statement is
+the oracle now), the two-home byte*8 constant, and a handful of doc
+drifts. Watched, not fixed: SNAP_SPAN vs terminal fall speed, and the
+hole's symmetric half-pixel spike exposure. The escape hatches, in
+one line: ?cull=off, ?terrainthread=off, ?ring=off - each read once
+at scene build, each falling back to the pre-slice path.

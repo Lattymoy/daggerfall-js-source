@@ -113,11 +113,23 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
 }
 
 /**
- * The ring's triangles, with the HOLE punched: every cell whose
- * lower-corner pixel sits inside the streamed rect [cx-d, cx+d] x
- * [cy-d, cy+d] is skipped (cells that merely straddle the rect's rim
- * stay - painter's order lets the streamed grid overdraw them, and
- * dropping them would open a half-pixel sky gap instead).
+ * The ring's triangles, with the HOLE punched. AUDIT EV F-R2 made the
+ * rule exact: vertices sit at pixel CENTRES, so cell (px, py) spans
+ * corner-units [px+0.5, px+1.5] while the streamed footprint spans
+ * [cx-d, cx+d+1] - the two lattices are offset by half a pixel and no
+ * hole can match the footprint exactly. The rule skips every cell
+ * that lies FULLY inside the footprint (px in [cx-d, cx+d-1], same in
+ * y), which leaves one straddling cell on EVERY side, each
+ * overlapping the streamed rim by half a pixel. That direction is the
+ * law: an overlap costs nothing (the streamed grid draws after the
+ * ring with the full depth story and paints over it), while the first
+ * cut of this rule skipped the east/south straddlers too and opened a
+ * 409.6-unit strip along those rims that NEITHER surface covered - a
+ * sky gap under grazing sightlines. The residual exposure - a coarse
+ * straddle vertex half a pixel inside the rect spiking above the
+ * streamed silhouette where the sampler's noise runs low - is half a
+ * pixel deep on all four sides, symmetric, and sits past the fog end
+ * under the haze hold. Recorded, watched.
  */
 export function buildFarRingIndices({ baseX, baseY, radius = RING_RADIUS, holeX, holeY, holeRadius }) {
   const side = radius * 2 + 1;
@@ -127,7 +139,8 @@ export function buildFarRingIndices({ baseX, baseY, radius = RING_RADIUS, holeX,
     const py = baseY - radius + j;
     for (let i = 0; i < side - 1; i++) {
       const px = baseX - radius + i;
-      if (Math.abs(px - holeX) <= holeRadius && Math.abs(py - holeY) <= holeRadius) continue;
+      if (px >= holeX - holeRadius && px <= holeX + holeRadius - 1
+        && py >= holeY - holeRadius && py <= holeY + holeRadius - 1) continue;
       const i0 = j * side + i;
       const i1 = i0 + 1;
       const i2 = i0 + side;
@@ -167,6 +180,9 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // AUDIT EV F-R4: the moonlit night reaches the horizon too
+uniform float uMoonScale;
+uniform vec3 uMoonColor;
 uniform vec3 uFogColor;
 uniform float uFogEnd;   // the WORLD fog's end - the ramp the seam must match
 uniform float uRimStart; // where the hold starts closing into the sky
@@ -176,13 +192,17 @@ out vec4 outColor;
 void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff));
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // the world fog's own ramp, capped at the hold - silhouettes read
   // through the haze - then closed to 1 at the rim
   float base = uHazeHold * clamp(vDist / max(uFogEnd, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
   outColor = vec4(mix(lit, uFogColor, min(base + rim, 1.0)), 1.0);
 }`;
+
+const FLAT_UP = new Float32Array([0, 1, 0]);
+const FLAT_WHITE = new Float32Array([1, 1, 1]);
 
 /** ?ring=off - the escape hatch, read once at scene build. */
 export function ringDisabled(search = globalThis.location?.search) {
@@ -212,6 +232,7 @@ export class FarRingRenderer {
     this.program = p;
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
+      'uMoonDir', 'uMoonScale', 'uMoonColor',
       'uFogColor', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold']) {
       this.u[name] = gl.getUniformLocation(p, name);
     }
@@ -282,7 +303,7 @@ export class FarRingRenderer {
    * the streamed world paints over it); its OWN projection, because
    * the world's 6000-unit far plane is 7.3 map pixels.
    */
-  draw(view, { origin, lightDir, ambient, sunScale, sunColor, fogColor, fogEnd, fovY, aspect }) {
+  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogEnd, fovY, aspect }) {
     if (!this._built || !this.indexCount) return;
     const gl = this.gl;
     const far = (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
@@ -299,10 +320,21 @@ export class FarRingRenderer {
     gl.uniform3fv(this.u.uAmbient, ambient);
     gl.uniform1f(this.u.uSunScale, sunScale);
     gl.uniform3fv(this.u.uSunColor, sunColor);
+    gl.uniform3fv(this.u.uMoonDir, moonDir ?? FLAT_UP);
+    gl.uniform1f(this.u.uMoonScale, moonScale);
+    gl.uniform3fv(this.u.uMoonColor, moonColor ?? FLAT_WHITE);
     gl.uniform3fv(this.u.uFogColor, fogColor);
     gl.uniform1f(this.u.uFogEnd, fogEnd);
-    gl.uniform1f(this.u.uRimStart, far * 0.55);
-    gl.uniform1f(this.u.uRimEnd, far * 0.9);
+    // AUDIT EV F-R3: the rim close must key on the NEAREST rim the
+    // square mesh can present - an edge midpoint with the base drifted
+    // RING_REBUILD_DRIFT toward it - not on the far plane that covers
+    // the corners. Keyed on the far plane, the mix at edge midpoints
+    // topped out at ~0.885 and tall ring terrain terminated against
+    // the sky as a faint unblended straight edge at the four cardinal
+    // directions; only the corners actually dissolved.
+    const rimEnd = (RING_RADIUS - RING_REBUILD_DRIFT) * TERRAIN_SIZE * 0.95;
+    gl.uniform1f(this.u.uRimStart, rimEnd * 0.6);
+    gl.uniform1f(this.u.uRimEnd, rimEnd);
     gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
     // depth off whole: like the sky it extends, and the streamed world
     // repaints everything nearer; culling off under the mirrored

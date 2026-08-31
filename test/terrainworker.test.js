@@ -148,17 +148,25 @@ test('EV7: the worker protocol - copied init bytes, cloned job tilemap, FIFO ans
   assert.equal(posted[1].transfer, undefined, 'the job crosses by clone, not transfer');
   assert.equal(t1.byteLength, 128 * 128, 'the caller\'s tilemap is intact');
 
-  // answers resolve in arrival order
+  // answers resolve in arrival order - and EVERY reply field survives
+  // the client's mapping (AUDIT EV F-DOC1's sub-gap: avg drives
+  // building heights and nature the flats; a dropped field here
+  // passed the old suite green)
   const reply = (px) => ({
     t: 'done', px,
     samples: new Float32Array([px]), tilemap: new Uint8Array(1),
     positions: new Float32Array(0), normals: new Float32Array(0),
-    tilemapBytes: new Uint8Array(0), avg: 0, nature: [],
+    tilemapBytes: new Uint8Array(0), avg: px + 0.5,
+    nature: [{ record: px, x: 1, y: 2, z: 3 }],
   });
   onmessage({ data: reply(1) });
   onmessage({ data: reply(3) });
-  assert.equal((await p1).samples[0], 1);
-  assert.equal((await p2).samples[0], 3);
+  const r1 = await p1, r2 = await p2;
+  assert.equal(r1.samples[0], 1);
+  assert.equal(r2.samples[0], 3);
+  assert.equal(r1.avg, 1.5, 'avg rides the reply - a location\'s buildings stand on it');
+  assert.deepEqual(r1.nature, [{ record: 1, x: 1, y: 2, z: 3 }], 'and the nature layout with it');
+  assert.equal(r1.tilemapBytes.length, 0, 'tilemapBytes mapped');
 
   // a failed job resolves through the same-thread kernel over the
   // inputs this side still holds
@@ -193,6 +201,36 @@ test('EV7: ?terrainthread=off is the escape hatch, in the ?cull=off shape', () =
   assert.equal(terrainThreadDisabled(undefined), false, 'no location (node) reads as enabled');
 });
 
+test('EV7 AUDIT F-DOC1: the REAL shell executes - both error arms answer through real postMessage', async () => {
+  // The first cut covered the shell with source pins only; nothing
+  // ever ran its onmessage. This drives the actual handler in node:
+  // the module IS `globalThis.onmessage = ...`, so importing it and
+  // capturing globalThis.postMessage exercises the real wire code
+  // (the happy path's field forwarding is made rot-proof structurally
+  // - the job crosses as a spread - and pinned below).
+  const posted = [];
+  const prevPost = globalThis.postMessage;
+  const prevOn = globalThis.onmessage;
+  globalThis.postMessage = (msg) => posted.push(msg);
+  try {
+    await import('../src/world/terrainGenWorker.js');
+    assert.equal(typeof globalThis.onmessage, 'function', 'the module is the message loop');
+    globalThis.onmessage({ data: { t: 'job', px: 1, py: 2 } });
+    assert.equal(posted.at(-1).t, 'error');
+    assert.match(posted.at(-1).message, /before init/, 'a job before init says so');
+    globalThis.onmessage({ data: { t: 'init', woodsBytes: new Uint8Array(8) } });
+    assert.equal(posted.at(-1).t, 'error');
+    assert.match(posted.at(-1).message, /WOODS\.WLD failed to load/, 'garbage bytes fail loudly');
+    const n = posted.length;
+    globalThis.onmessage({ data: { t: 'nonsense' } });
+    globalThis.onmessage({ data: null });
+    assert.equal(posted.length, n, 'unknown shapes are ignored silently');
+  } finally {
+    globalThis.postMessage = prevPost;
+    globalThis.onmessage = prevOn;
+  }
+});
+
 test('EV7: the worker shell imports only pure modules and spells the Worker URL the Vite way', () => {
   const shell = readFileSync('src/world/terrainGenWorker.js', 'utf8');
   const imports = [...shell.matchAll(/from '([^']+)'/g)].map((m) => m[1]).sort();
@@ -201,6 +239,10 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   const code = shell.replace(/\/\/[^\n]*/g, '').replace(/\/\*[^]*?\*\//g, '');
   assert.ok(!/\bdocument\b/.test(code) && !/new Worker/.test(code), 'no DOM, no nested workers');
   assert.ok(shell.includes('globalThis.onmessage = (ev) =>'), 'the message loop is the module');
+  // AUDIT EV F-DOC1: the job crosses as a SPREAD - a hand-copied field
+  // list was the one place a new kernel input could be dropped with
+  // every test green
+  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods })'), 'the job forwards whole');
   // the client spells the constructor the way Vite's static analysis
   // bundles (eslint.config.js's RA1 note: never globalThis.Worker)
   const client = readFileSync('src/world/terrainGenClient.js', 'utf8');
@@ -215,8 +257,23 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   assert.ok(world.includes('setLocationTiles(dfLocation, maps, blocks, seedTilemap)'),
     'the file-object half stays on this thread and rides the job as data');
   // the publish stays atomic and main-side: built.set is still the
-  // last act of buildPixel, after the GL uploads and the collider
+  // last act of the build, after the GL uploads and the collider
   const bp = world.slice(world.indexOf('async function buildPixel'), world.indexOf('function restrideTerrain'));
   assert.ok(bp.lastIndexOf('built.set(key,') > bp.lastIndexOf('collider.addMesh'), 'publish follows the collider');
   assert.ok(bp.includes('renderer.createTerrainSurface(positions, normals'), 'GL consumes the reply on this thread');
+  // AUDIT EV F-SIM1: one build per pixel, ever in flight - the cache
+  // answers a finished pixel, the in-flight map answers a flying one
+  // with the SAME promise, so a teleport overlapping a pump build (or
+  // a leave-and-return crossing) can never double-build and overwrite
+  // a published entry's GL objects
+  assert.ok(world.includes('const inFlight = new Map();'), 'the in-flight map exists');
+  assert.ok(bp.includes('if (built.has(key)) return built.get(key);'), 'a finished pixel answers from the cache');
+  assert.ok(bp.includes('.finally(() => inFlight.delete(key))'), 'and a settled build leaves the map');
+  // AUDIT EV F-SIM2: the ring class re-checks at publish - the
+  // pixelChanged restride sweep cannot see an unpublished pixel
+  assert.ok(bp.includes('if (wantStride !== entry._stride) restrideTerrain(entry, wantStride);'),
+    'a crossing during the round trip cannot leave a wrong-class chunk');
+  // AUDIT EV F-SIM6: the probe's idle truth covers teleport builds too
+  assert.ok(world.includes('queue.length === 0 && !building && inFlight.size === 0'),
+    '__streamIdle counts every in-flight build');
 });

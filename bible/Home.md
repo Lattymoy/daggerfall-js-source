@@ -295,31 +295,31 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:336` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:503` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1008` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1014` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2227` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:3243` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:4038` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:5104` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1194` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1209` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1418` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1423` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1631` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:1871` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1903` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2124` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2246` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2521` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2566` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2585` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2690` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2915` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2927` - FLAGGED, and narrowed to what is actually missing: the two BASH
-- `src/scenes/worldModes.js:2989` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4219` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4318` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4656` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/world.js:1041` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1047` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2260` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:3276` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:4071` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:5145` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/worldModes.js:1198` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1213` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1422` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1427` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1635` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:1875` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1907` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2128` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2250` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2525` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2570` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2589` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2694` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2919` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2931` - FLAGGED, and narrowed to what is actually missing: the two BASH
+- `src/scenes/worldModes.js:2993` - the FLAGGED note above), so it starts false.
+- `src/scenes/worldModes.js:4238` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4337` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4675` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:

@@ -89,6 +89,18 @@ test('EV6: every program and VAO bind in renderer.js funnels through the shadows
   const ti = r.slice(r.indexOf('_terrainIndices(indices) {'), r.indexOf('_terrainIndices(indices) {') + 900);
   assert.ok(ti.indexOf('this._bindVao(null);') > 0 && ti.indexOf('this._bindVao(null);') < ti.indexOf('ELEMENT_ARRAY_BUFFER'),
     '_terrainIndices unbinds before touching the element buffer');
+  // AUDIT EV F-DOC5: beginFrame's internal ORDER - shadow reset, then
+  // the real bind, then the uniform uploads. Uniforms uploaded before
+  // _use would land in whatever foreign program the sky or the ring
+  // left bound, and the counting stub's uniform no-ops would never see
+  // it.
+  const bfStart = r.indexOf('beginFrame(proj, view, lightDir) {');
+  const bf = r.slice(bfStart, bfStart + 2600);
+  const reset = bf.indexOf('this._lastProgram = null;');
+  const use = bf.indexOf('this._use(this.program);');
+  const firstUniform = bf.indexOf('gl.uniformMatrix4fv(this.uProj');
+  assert.ok(reset > 0 && use > reset && firstUniform > use,
+    'beginFrame: forget the shadows, bind for real, THEN upload');
 });
 
 test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark the seams', () => {

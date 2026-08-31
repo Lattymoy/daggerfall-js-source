@@ -101,8 +101,22 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
     assert.ok(src.includes('renderer.setMoonlight(moonNow)'), `${host} sets the key`);
     assert.ok(src.includes('withMoonAmbient(exteriorAmbient('), `${host} folds secunda into the ambient`);
   }
-  for (const host of ['src/scenes/interior.js', 'src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
+  for (const host of ['src/scenes/interior.js', 'src/scenes/dungeon.js']) {
     assert.ok(!readFileSync(host, 'utf8').includes('setMoonlight'),
-      `${host} never calls setMoonlight - underground and indoors have no sky`);
+      `${host} never calls setMoonlight - a fresh renderer's scale is already 0`);
   }
+  // AUDIT EV F-R1: on the ONE shared renderer, "never calls" was the
+  // leak - the exterior's per-frame moon froze at whatever the last
+  // outdoor frame set, and a tavern entered on a full-Masser night
+  // stayed moonlit for the visit (the F001 windowEmission bug class,
+  // one field over). The modal frames now go dark EXPLICITLY: the
+  // only setMoonlight calls in worldModes and the automap are the
+  // null form, one per modal arm.
+  const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
+  assert.equal((wm.match(/renderer\.setMoonlight\(/g) || []).length, 2, 'both modal arms clear the moon');
+  assert.equal((wm.match(/renderer\.setMoonlight\(null\);/g) || []).length, 2, 'and only ever to null');
+  assert.equal((wm.match(/renderer\.setIndirectLight\(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR\);/g) || []).length, 2,
+    'the stale exterior indirect goes dark with it (the same leak family)');
+  const am = readFileSync('src/ui/automapWindow.js', 'utf8');
+  assert.equal((am.match(/renderer\.setMoonlight\(null\);/g) || []).length, 1, 'the map pass clears it too');
 });
