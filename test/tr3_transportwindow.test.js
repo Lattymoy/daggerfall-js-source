@@ -129,7 +129,12 @@ test('TR3: the host door - grounded and outdoors only, and the mount is loaded a
   const hudAt = world.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,');
   assert.ok(spriteAt > 0 && hudAt > spriteAt, 'the mount draws under the HUD');
   // The loop is a REAL channel, not an optional-chained no-op.
-  assert.match(world, /audio\.setLoop\('riding', r\.playing \? SOUND\[r\.clip\] : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
+  // MW-D42 moved this pin deliberately: with the enhanced 3D horse
+  // standing, the mod's own hoof clips ride the channel through the
+  // MW-D40 string-key door - and the CLASSIC clip stays the literal
+  // fallback in the same expression, so the 1:1 lane is untouched.
+  assert.match(world, /audio\.setLoop\('riding', r\.playing \? rideClip : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
+  assert.match(world, /const rideClip = pegasUp && pegasSounds\.has\(pegasClipKey\) \? pegasClipKey : SOUND\[r\.clip\];/);
   assert.match(read('src/systems/audio.js'), /setLoop\(name, clip, \{ volume = 1, pitch = 1 \} = \{\}\) \{/);
   assert.equal(typeof CANNOT_CHANGE_INDOORS, 'string');
 });

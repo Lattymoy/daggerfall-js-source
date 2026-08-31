@@ -40,7 +40,12 @@ test('TR5: the T key indoors REFUSES with the HUD line, in both interior hosts',
 test('TR5: ONE place changes the mode, and both the pick and the dismount take it (U53)', () => {
   const world = read('src/scenes/world.js');
   assert.match(world, /const setTransportModeHere = \(mode\) => \{\s*\n\s*player\.setTransportMode\(mode\);/);
-  assert.match(world, /ridingAnimator\.mount\(mode\);\s*\n\s*ridingArt = null;\s*\n\s*\};/, 'the art is dropped on every change');
+  assert.match(world, /ridingAnimator\.mount\(mode\);\s*\n\s*ridingArt = null;/, 'the art is dropped on every change');
+  // MW-D42 grew the one door a tail: mounting a horse in the enhanced
+  // skin fires the (once-per-session, never-throwing) Pegas load. The
+  // door is still the ONE place - the count pin below holds that.
+  assert.match(world, /if \(mode === TRANSPORT_MODES\.Horse\) tryLoadPegas\(\);\s*\n\s*\};/,
+    'the enhanced saddle hangs off the same door');
   // TR4 put the Ship arm in front of the mode set - it is a teleport,
   // not a mode - so the pick reaches setTransportModeHere past it.
   assert.match(world, /if \(mode === TRANSPORT_MODES\.Ship\) \{ boardOrDisembark\(\); return; \}\s*\n\s*setTransportModeHere\(mode\);/, 'the T-key pick');
