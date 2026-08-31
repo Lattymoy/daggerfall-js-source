@@ -5190,7 +5190,7 @@ DFU's arc, and how it splits:
 |---|---|---|
 | **TR1** | TransportManager's MODE half + every law that reads it | **CLOSED** |
 | **TR2** | the riding sprite and its audio | **CLOSED** |
-| TR3 | DaggerfallTransportWindow: the foot/horse/cart/ship picker with its disabled rows, and the `dfuiOpenTransportWindow` gate - indoors refuses with a HUD line, airborne is silently ignored | open |
+| **TR3** | the transport window, and the ride made real in the world host | **CLOSED** |
 | TR4 | the SHIP: DaggerfallBankManager's ship ownership and coords, the board/disembark reposition, the travel map's ship arm | open, and it is a BANK-arc dependency as much as a transport one |
 
 ### TR1 CLOSED: the mode
@@ -5246,5 +5246,33 @@ forks. The draw rect is bottom-centre at ScaleFactorX 0.8 on the
 Three sound ids joined the roster at DFU's numbers: HorseClop 97,
 HorseAndCart 104, HorseClop2 298.
 
-**Still nothing mounts** - and now the sprite, the loop and the neigh
-are all waiting on the same door.
+### TR3 CLOSED: the window, and the ride
+
+`ui/transportWindow.js` is DaggerfallTransportWindow whole - the last
+of DFU's 60 real windows the port did not have. Four rows and an exit
+on MOVE00I0; the three disabled rows are SUB-RECTS of a second image,
+MOVE01I0, whose sheet is declared 122x36, which is why the disabled
+rects sit at (-4,-4) from the button rects: they are sheet coordinates,
+not panel ones. Ownership is read once at Setup; foot is always
+enabled; a disabled row is a dead button that eats its click.
+
+The door is `dfuiOpenTransportWindow` (:690-700) on the T key, which
+`input.js` had routed to `ctx.openTransport` with no host implementing
+it - the same dangling door UI1 found. Grounded only, and AIRBORNE IS
+SILENTLY IGNORED: no message, no window.
+
+**You can ride now.** The world host picks a mode, loads the mount's
+CFA, ticks TR2's animator on the frame and draws the sprite under the
+HUD. The riding loop needed a real audio channel - `audio.setLoop`,
+a named loop with live volume and pitch, which is what Unity's
+`ridingAudioSource` field is; the first cut of this slice
+optional-chained into a method that did not exist, and that is the same
+lie UI1 had just been written to fix.
+
+### What is left of the arc
+
+TR4, the ship, and the two INTERIOR hosts. `worldModes` and
+`dungeonContext` need the indoors refusal (`CANNOT_CHANGE_INDOORS`,
+already exported) rather than a window, and the dismount-on-transition
+law TR1 ported has no caller until a host runs it on the way in. Both
+are small and neither is a system: they are the arc's tail.

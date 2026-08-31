@@ -101,6 +101,10 @@ import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
+import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/transportWindow.js';   // TR3: the picker
+import { hasHorse, hasCart } from '../systems/transport.js';   // TR3: what the rows offer
+import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
+import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
@@ -703,6 +707,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
+  const ridingAnimator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
+  let ridingArt = null;   // TR2: the four CFA frames of the mount under you
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
@@ -868,6 +874,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
+  preloadTransportArt({ renderer, fetchBytes, palette });   // TR3: MOVE00I0 + MOVE01I0
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -2669,6 +2676,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     // list. The pick runs the inventory's OWN use path
     // (nativeInventory._use's deps), so a potion is drunk and an
     // enchanted item fires its Used payload through the one seam.
+    // TR3: dfuiOpenTransportWindow (DaggerfallUI.cs:690-700) - indoors
+    // refuses with a HUD line, and AIRBORNE is silently ignored
+    // (`if (isGrounded)` with no else). Outdoors and grounded, the
+    // picker opens.
+    openTransport: () => {
+      if (!player.grounded || !transportArtLoaded()) return;
+      townTalk.showOverlay(new TransportWindow({
+        hasHorse: hasHorse(playerEntity.items ?? []),
+        hasCart: hasCart(playerEntity.items ?? []),
+        shipAvailable: false,   // TR4 owns the ship
+        onMode: (mode) => {
+          player.transportMode = mode;
+          ridingAnimator.mount(mode);
+          ridingArt = null;
+          if (isRiding(mode)) {
+            loadRidingArt(fetchBytes, palette, renderer, mode)
+              .then((art) => { if (isRiding(player.transportMode)) ridingArt = art; })
+              .catch((e) => console.warn('[transport] mount art unavailable:', e?.message ?? e));
+          }
+        },
+      }));
+    },
     openUseMagicItem: () => {
       const win = createUseMagicItemWindow({
         items: playerEntity.items ?? [],
@@ -4920,6 +4949,26 @@ export async function bootWorld(canvas, renderer, params, status) {
       // piles and corpse containers too: Detect Treasure marks your
       // own dropped pile out here, as DFU's ungated loot walk does.
       const _detected = detectFeed.tick(dt);
+      // TR2/TR3: the mount's own frame and audio, then its sprite -
+      // OnGUI draws at depth 2, under the HUD's own elements, so it
+      // goes in before drawHud.
+      {
+        const r = ridingAnimator.update(dt, {
+          mode: player.transportMode,
+          standingStill: player.standing,
+          grounded: player.grounded,
+          paused: townTalk.overlayActive || (modes?.overlayHeld ?? false),
+          movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
+          running: player.isRunning,
+          soundVolume: 1,
+        });
+        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
+        audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
+        if (ridingArt && isRiding(player.transportMode)) {
+          const rect = ridingRect(canvas, ridingArt);
+          renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
+        }
+      }
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),

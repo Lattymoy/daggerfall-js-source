@@ -26,6 +26,7 @@
 // are 2..39 and 1..4 whole seconds; `rolls` stands in (Ledger A).
 
 import { CfaFile } from '../formats/cfaFile.js';
+import { frameToColor32 } from '../combat/fpsWeapon.js';   // TR2: the same index-to-RGBA the weapon art uses
 import { TRANSPORT_MODES, isRiding } from './transport.js';
 
 /** :148-155. */
@@ -56,14 +57,18 @@ export const ridingLoopClip = (mode) => (mode === TRANSPORT_MODES.Cart ? RIDING_
 export const nextNeighDelay = (rolls = Math.random) => 2 + Math.floor(rolls() * 38);
 export const mountNeighDelay = (rolls = Math.random) => 1 + Math.floor(rolls() * 4);
 
-/** Loads the four frames of one mount's CFA as RGBA records. */
-export async function loadRidingArt(getBytes, palette, mode) {
+/** Loads one mount's CFA and uploads its frames, the same way the
+ *  first-person weapon loads its CIF (fpsWeapon.loadFpsWeaponArt). */
+export async function loadRidingArt(getBytes, palette, renderer, mode) {
   const fileName = ridingTextureName(mode);
   const cfa = new CfaFile();
   cfa.load(await getBytes(fileName), fileName, palette);
   const { width, height } = cfa.getSize(0);
   const frames = [];
-  for (let f = 0; f < cfa.getFrameCount(0); f++) frames.push(cfa.getDFBitmap(0, f));
+  for (let f = 0; f < cfa.getFrameCount(0); f++) {
+    const c32 = frameToColor32(cfa.getDFBitmap(0, f), palette, null);
+    frames.push(renderer.uploadTexture('img', `ride:${fileName}:${f}`, c32));
+  }
   return { fileName, width, height, frames };
 }
 
