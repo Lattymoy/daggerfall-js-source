@@ -138,6 +138,58 @@ thing DFU's Jobs system has that this port lacks - all four kernels
 are pure functions over typed arrays and transfer cleanly); a far
 province relief ring beyond the streamed grid built from the travel
 map's grid; per-glyph HUD text batching (a UI-arc slice).
+2026-08-31: the first two graduate to slices EV7/EV8 below; the HUD
+batching stays a UI-arc item.
+
+## The second wave (EV7-EV8), planned off two fresh lanes
+
+- EV7 THE WORKER: a pixel build runs ~84,000 perlinNoise calls
+  (33k in generateSamples, up to 50k in generateTileData - the tile
+  classifier out-costs the heightmap itself) plus ~166k cubic
+  interpolations and 16k atans in layoutNature, all inside ONE task:
+  every await in buildPixel is a cache-warm microtask, so the whole
+  body lands on the frame the pixel was enqueued - the crossing
+  hitch. The cut: a pure generatePixelTerrain kernel (samples ->
+  location blend -> tileData/assignTiles -> grid+ghost -> nature -
+  the exact inline sequence, oracle-testable), a worker shell that
+  owns its OWN WoodsFile from a COPIED byte buffer (the RA1 road-bake
+  law, recovered from 55e4382^: transferring the reader's plane would
+  detach the buffer the session still reads), and a client with an
+  injectable factory, a FIFO (teleport can overlap pump's build), the
+  same-thread kernel as the fallback-not-failure, and
+  ?terrainthread=off in the cullDisabled shape. setLocationTiles
+  (BlocksFile/MapsFile) stays main-side and its tilemap+rect ride
+  INTO the job; GL uploads, location layout, collider and the single
+  atomic built.set publish stay main-side after the reply. Pins that
+  hold: pump's `await buildPixel(next.px, next.py)` text (audit24),
+  the teleport's first-900-chars needles (travelmap), streaming's
+  constructor literal; the distantland ghostSampler needle moves
+  deliberately (restride keeps the main-thread call).
+- EV8 THE PROVINCE RING: real mountains on the horizon. A pure
+  builder over woods.heightMapBuffer at one vertex per map pixel -
+  UN-exaggerated heights (max(byte*8, 27.2) * 1.5 - the streamed
+  law itself, not the travel map's x24 skin), real central-difference
+  normals, overworldTint(climate, byte) vertex colours (the port's
+  one documented map-pixel-to-ground-colour law, ocean-swamp trap and
+  all), pixel-corner coordinates relative to a base pixel so ONE
+  pixelTranslation(base) placement survives every recenter for free.
+  Drawn by a self-contained pass (src/render/farRing.js, the
+  overworldRenderer/skyRenderer shape: own ~40-line program,
+  proj/view as arguments, the U61 save/restore contract) with its OWN
+  projection (the world's far plane is 6000 = 7.3 pixels) and its own
+  distance fade toward the live fog colour capped short of 1 (the
+  world's linear fog ends at 2400/3200 - drawing the ring through it
+  would be an invisible wash; distant peaks reading through haze is
+  the point). Slot: between sky.draw and the existing
+  markForeignPass, where the depth buffer is still empty - painter's
+  order lets the streamed grid overdraw the ring wherever they
+  overlap, and the HOLE (the streamed rect, re-punched in the index
+  buffer per crossing - vertices rebuilt only when the player drifts
+  far from the ring base) exists for the one case painter's order
+  cannot fix: a coarse ring peak spiking above the streamed
+  silhouette from inside it. Skipped under exp fog (weather owns the
+  air) and at night it simply goes dark (it takes the live ambient
+  and sun). Enhanced-only beside lodOn; ?ring=off is the hatch.
 
 ## Verification doctrine for this arc
 
@@ -313,3 +365,28 @@ one VAO bind, stats agreeing) and the funnel/seam/sort shapes as
 source pins. The arc's recorded slices are now ALL SHIPPED; the
 measured frame numbers in a live city (stats before/after) are owed
 to a data-bearing session, as is every moving picture above.
+
+EV7 (2026-08-31): THE TERRAIN WORKER. buildPixel's CPU prologue -
+samples, location blend, tileData/assignTiles, the ghost-row grid,
+nature - moved WHOLE into terrainGen.js's generatePixelTerrain, one
+pure function in the exact inline order (the oracle test proves it
+bit for bit, location blend included). terrainGenClient.js runs it on
+a module Worker (terrainGenWorker.js owns its OWN WoodsFile from a
+COPIED byte buffer - transferring the reader's plane would detach
+what heightAt, the restride's ghosts and the travel map keep reading;
+the recovered RA1 road-bake law, 55e4382^) with an injectable
+factory, a FIFO (the teleport core can overlap pump's build), job
+tilemaps crossing by CLONE so a dying worker falls back over intact
+inputs, and THE FALLBACK IS THE OLD PATH: no Worker, a throwing
+factory, a dead worker, a failed job and ?terrainthread=off all run
+the same kernel on this thread. What stays main-side: setLocationTiles
+(BlocksFile/MapsFile do not cross postMessage - its tilemap + rect
+ride INTO the job), every GL upload, the location layout, the
+collider, and the single atomic built.set publish. The pinned build
+contracts stand untouched (pump's await text, the teleport needles,
+the streaming constructor literal); the distantland ghost needle
+moved deliberately (the restride keeps its main-thread call, the
+kernel carries the build-time one). terrainworker.test.js pins all
+of it through a hand-rolled fake worker; the FELT result - a
+map-pixel crossing that no longer stutters while up to 13 pixels
+stream in - is owed to a data-bearing session.

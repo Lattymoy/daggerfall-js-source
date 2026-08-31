@@ -14,7 +14,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, convertTilemap, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
+import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -123,9 +123,9 @@ import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { layoutNature } from '../world/terrainNature.js';
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples, ghostSampler } from '../world/terrainSampler.js';   // EV4: ghost rows for chunk-edge normals
-import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, ghostSampler } from '../world/terrainSampler.js';   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
+import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
@@ -250,6 +250,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   maps.load(mapsBytes, climateBytes, politicBytes);
   const woods = new WoodsFile();
   if (!woods.load(woodsBytes)) throw new Error('WOODS.WLD failed to load');
+  // EV7: the pixel kernel's off-thread home - a COPY of the WOODS
+  // bytes crosses once; this thread's `woods` stays the fallback law.
+  const terrainGen = new TerrainGenClient({ woods, woodsBytes });
 
   // One location per map pixel game-wide (pinned corpus invariant).
   status('indexing locations');
@@ -441,19 +444,27 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
-    const samples = generateSamples(woods, px, py);
-    const tilemap = new Uint8Array(128 * 128);
     const dfLocation = locationIndex.get(key) || null;
+    // EV7: the LOCATION half stays here - setLocationTiles reads
+    // BlocksFile + MapsFile, file objects that do not cross a
+    // postMessage boundary - and its tilemap + rect ride into the job
+    // as plain data. The ~84k-perlin kernel itself (samples, blend,
+    // tiles, grid, nature - terrainGen.js, buildPixel's old prologue
+    // verbatim) runs on the terrain worker when one is up and on this
+    // thread when one is not; either way the reply is the same shape
+    // and everything below it - GL uploads, the location layout, the
+    // collider, the single atomic built.set - stays on this thread.
+    const seedTilemap = new Uint8Array(128 * 128);
     let locationRect = null;
-    let avg = 0;
-    if (dfLocation) {
-      [avg] = calcAvgMaxHeight(samples);
-      locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
-      blendLocationTerrain(samples, avg, locationRect);
-    }
-    assignTiles(generateTileData(samples, px, py), tilemap, true);
+    if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
+    // EV4: the far ring builds strided with its skirt; the kernel's
+    // ghost rows keep edge normals central differences either way.
+    const stride = strideFor(px, py);
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature } = await terrainGen.generate({
+      px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
+    });
     // WM3: this pixel's climate law, bound once - the one argument the
     // shared remap seam takes that differs between the climate hosts
     // and the dungeon.
@@ -471,17 +482,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       renderer.uploadTileArray(groundArchive, layers);
     }
-    // EV4: ghost rows make edge normals central differences (the seam
-    // lattice dies); the far ring builds strided with its skirt.
-    const stride = strideFor(px, py);
-    const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
-    const terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
+    const terrain = renderer.createTerrainSurface(positions, normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.
     // EV4: dropped by the skirt depth so a future restride to the far
     // ring never hangs geometry below the culling box.
-    const bounds = localAabb(grid.positions);
+    const bounds = localAabb(positions);
     bounds[1] -= TERRAIN_SKIRT_DEPTH;
     const unionBox = (b) => {
       for (let i = 0; i < 3; i++) {
@@ -489,7 +496,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (b[3 + i] > bounds[3 + i]) bounds[3 + i] = b[3 + i];
       }
     };
-    const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(tilemap), TERRAIN_TILE_DIM);
+    const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -663,13 +670,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     }
 
-    const nature = layoutNature(samples, tilemap, {
-      mapPixelX: px,
-      mapPixelY: py,
-      rawWorldHeight: woods.getHeightMapValue(px, py),
-      climateType: climate.climateType,
-      locationRect,
-    });
+    // EV7: the nature layout arrived with the kernel's reply - laid
+    // out over the same blended samples and finished tilemap, consumed
+    // at the same point in the sequence it was always computed at.
     for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
 
     const flatAnims = new FlatAnimator();   // FA1
