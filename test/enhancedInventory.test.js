@@ -1193,3 +1193,26 @@ test('PX24: wear, take off, use and stow all clear the pick on success; refusals
   assert.match(stow, /applyTransfer\(item, plan, deps\.items\?\.\(\) \?\? \[\], to\);\n  picked = null;/, 'stow must clear the pick after the transfer');
   assert.ok(!/picked = applyTransfer/.test(stow), 'the arriving item must no longer stay picked');
 });
+
+test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was the "broken take"', () => {
+  // Mac: "When opening a container or body and clicking to loot an
+  // item. The item isn't picked up properly and the tooltip remains."
+  // The first click only SELECTED and raised the tooltip card; taking
+  // needed a second click on its button. DFU's remote list transfers
+  // on the click itself (RemoteItemListScroller_OnItemClick's remove
+  // arm), so the click now calls take() for every loot-like kind. The
+  // REWARD tray alone keeps the two-step: a single click must not
+  // claim G6's one-shot choice.
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward'\) \{ take\(item\); return; \}/,
+    'the remote click takes for container, ground and wagon');
+  // ...and it happens AFTER the quest look is counted (AUDIT 26's law:
+  // looking at a quest item in a pile counts, taking it doubly so) and
+  // BEFORE the pick that would raise the card.
+  const click = src.slice(src.indexOf('function itemRow('), src.indexOf('function remoteCol('));
+  const iQuest = click.indexOf('setPlayerClicked');
+  const iTake = click.indexOf("remote.kind !== 'reward'");
+  const iPick = click.indexOf('picked = wasPicked');
+  assert.ok(iQuest > -1 && iQuest < iTake && iTake < iPick,
+    'quest look, then the take, then (reward only) the pick');
+});
