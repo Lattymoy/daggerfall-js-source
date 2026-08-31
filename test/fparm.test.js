@@ -2935,3 +2935,33 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
       `${host} casts on the READY moment - the spell has not gone yet`);
   }
 });
+
+// ═══ AUDIT 36: the spellcast lane, read against the hosts ═══════════
+test('AUDIT 36 F1: ALL THREE hosts run the cast animation, on the cast moment, with the range', () => {
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = readFileSync(host, 'utf8');
+    const at = h.indexOf('onCastReadySpell');
+    assert.ok(at > 0, `${host} raises no cast moment`);
+    assert.match(h.slice(at, at + 700), /castSpellAnim\??\.?\(sp\?\.rangeType\)/, `${host} does not run the cast animation with its range`);
+  }
+});
+
+test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stance', async () => {
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  const fn = src.slice(src.indexOf('    castSpell(rangeType = 2) {'), src.indexOf('    /** The held bow comes up.'));
+  // the old gate refused a cast that arrived before any frame read the
+  // ready - which is EVERY CasterOnly spell, readied and cast in one
+  // synchronous call (hostMagic readySpell -> castInput for range 0).
+  assert.ok(!/!spellReady\) return false/.test(fn), 'the cast must not refuse before the ready has been read');
+  assert.match(fn, /if \(!spellReady\) \{ spellReady = true; refreshWeaponGroup\(\); resetIdle\(\); resetMovement\(\); \}/,
+    'the cast must latch the stance, or it plays its keys in the WEAPON\u2019s group');
+  // the group is composed from the stance, which is why the latch is
+  // not merely a gate: without it the keys land in the sword's group.
+  assert.match(src, /weaponGroup = composeWeaponGroup\(type, hasGroup\)\.group;/);
+  // and the instant path exists in the engine exactly as described
+  const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{ castInput\(null, null\); return; \}/,
+    'the CasterOnly instant cast is the case F2 exists for');
+  assert.match(hm, /onCastReadySpell\?\.\(sp\);\s+\/\/ QG1: RaiseOnCastReadySpell, before the ready clears/,
+    'the cast callback must fire while the spell is still readied');
+});

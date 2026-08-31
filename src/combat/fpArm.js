@@ -2435,8 +2435,20 @@ export function createFpArm() {
      *  Never a gate: a missing clip is a note on the card and the spell
      *  still flies. */
     castSpell(rangeType = 2) {
-      if (!built || !built.ok || !spellReady) return false;
+      if (!built || !built.ok) return false;
       if (upper !== UPPER_BODY.WeaponEquipped && upper !== UPPER_BODY.Casting) return false;
+      // AUDIT 36 F2 (severe): THE CAST LATCHES ITS OWN STANCE. A
+      // CasterOnly spell is readied and cast in ONE synchronous call -
+      // hostMagic's readySpell runs castInput immediately for
+      // rangeType 0 - so no frame ticked between them, the rig had
+      // never read spellArmed() as true, and spellReady was still
+      // false here. The old gate refused outright; worse, had it not,
+      // playAction would have played "self start" in the SWORD's group,
+      // because weaponGroup is composed from the stance. Every instant
+      // self-cast - the healing and buff spells a player casts most -
+      // was silent. The cast is proof enough that a spell is going, so
+      // it latches the stance and composes the group before it plays.
+      if (!spellReady) { spellReady = true; refreshWeaponGroup(); resetIdle(); resetMovement(); }
       const type = spellAttackType(rangeType);
       attackType = type;
       attackStrength = 1;

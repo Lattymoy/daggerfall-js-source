@@ -915,6 +915,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
+    // AUDIT 36 F1: THE THIRD HOST CASTS TOO. MW-D39 wired the arm's
+    // spellcast release into the dungeon and world hosts and MISSED
+    // this one - the standalone exterior page, which has its own magic
+    // engine and its own rig - so a spell cast above ground played the
+    // stance and never the cast. The same moment, the same one door.
+    onCastReadySpell: (sp) => { weaponRig?.castSpellAnim?.(sp?.rangeType); },
   });
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch (this host mints no encounter foes).
   // OnNewMagicRound is global and every EntityEffectManager handles it, so
