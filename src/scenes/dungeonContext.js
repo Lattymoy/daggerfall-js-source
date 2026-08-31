@@ -133,7 +133,7 @@ import {
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
 import { floorLanding, closestDoorTo } from '../player/enterExit.js';   // DE1: TransitionDungeonInterior orients away from the door it came through
-import { trs, multiply } from '../world/mat4.js';
+import { trs, multiply, UP_Y } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
@@ -3082,7 +3082,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _spellBatches = magic.batches();   // M3: player spell missiles
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
-        new Float32Array([-view[0], -view[4], -view[8]]), new Float32Array([0, 1, 0]));
+        new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }
     // LAST before the HUD: the classic weapon overlay composites over
     // the whole frame (DaggerfallUI draws it under the HUD). The rig

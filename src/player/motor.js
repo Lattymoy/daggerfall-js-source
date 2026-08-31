@@ -221,6 +221,11 @@ export function startRestGroundedCheck(grounded, feet, collider) {
  * and integrates AcrobatMotor-style vertical motion.
  */
 export class PlayerMotor {
+  /** EV1: the longest span one 1/60 step can honestly cover, with
+   *  headroom (sprint tops out well under 1 unit/step; 2 units in a
+   *  step is a teleport). See eyeAt's snap guard. */
+  static SNAP_SPAN = 2;
+
   constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, climbing = null, carriedWeight = null } = {}) {
     this.collider = collider;
     this.stats = stats;
@@ -243,6 +248,12 @@ export class PlayerMotor {
     }) : null;
     this._climbWallDir = null;   // myLedgeDirection (latched while a wall is in reach)
     this.pos = new Float32Array(3); // FEET position
+    // EV1: the previous PHYSICS STEP's feet, for render-time
+    // interpolation. Captured immediately before each _step (not per
+    // update - a frame that runs zero steps must keep the last real
+    // span so the eye can continue across it), read only by eyeAt.
+    this._prevPos = new Float32Array(3);
+    this._alpha = 1;               // _acc / FIXED_DT after the last update
     this.velY = 0;
     this.grounded = false;
     this.groundedTime = 0;         // PlayerMotor.GroundedTime (the 0.1 s jump gate reads it)
@@ -312,6 +323,51 @@ export class PlayerMotor {
     // bobOffset in WORLD space each frame; [0,0,0] when it is off.
     const b = this.bobOffset;
     return [this.pos[0] + b[0], this.pos[1] + this._eyeLevel() + b[1], this.pos[2] + b[2]];
+  }
+
+  /** EV1: the RENDER eye - eye's own math over a position lerped
+   *  between the last two physics steps. The motor steps at a fixed
+   *  1/60 (the mobile-hotfix accumulator above) while the look
+   *  filter, the head bob and the nod all advance at render rate, so
+   *  a camera reading the raw stepped `eye` translates in quanta
+   *  under a perfectly smooth rotation - the outdoor judder, worst on
+   *  high-refresh displays where most frames step zero times. DFU has
+   *  the same fixed step and no judder because Unity interpolates
+   *  rendered transforms; this is that missing half, read-side only -
+   *  no step, no flag, no law above changes, which is what keeps the
+   *  fixed-step pins (audit18_player, motorStairs, enemymotor) green.
+   *
+   *  Rays, activation, audio and every gameplay reader stay on `eye`:
+   *  the simulation's own truth. Only cameras read eyeAt.
+   *
+   *  THE SNAP GUARD: a span longer than SNAP_SPAN means the position
+   *  was PLACED, not stepped - a load, a door, a start marker (the
+   *  fastest legal step is a fraction of a unit). Lerping across a
+   *  teleport would sweep the camera through the world for one frame;
+   *  snapping is the honest picture. Recenters never reach this guard
+   *  because offsetOrigin shifts both ends of the span. */
+  eyeAt(alpha = this._alpha) {
+    const p = this.pos, q = this._prevPos;
+    const dx = p[0] - q[0], dy = p[1] - q[1], dz = p[2] - q[2];
+    if (dx * dx + dy * dy + dz * dz > PlayerMotor.SNAP_SPAN * PlayerMotor.SNAP_SPAN) return this.eye;
+    const a = Math.max(0, Math.min(1, alpha));
+    const b = this.bobOffset;
+    return [
+      q[0] + dx * a + b[0],
+      q[1] + dy * a + this._eyeLevel() + b[1],
+      q[2] + dz * a + b[2],
+    ];
+  }
+
+  /** EV1: a floating-origin shift moves BOTH ends of the
+   *  interpolation span - the world moved, the player did not - so
+   *  the camera never lerps across the 819.2-unit recenter. The
+   *  streaming host calls this instead of adding into pos directly. */
+  offsetOrigin(offset) {
+    for (let i = 0; i < 3; i++) {
+      this.pos[i] += offset[i];
+      this._prevPos[i] += offset[i];
+    }
   }
 
   /** The presentation eye across the height actions (P18): DoCrouch
@@ -515,8 +571,14 @@ export class PlayerMotor {
     this._acc = (this._acc ?? 0) + frameDt;
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
+      // EV1: latch the span's START. Per step, so a multi-step frame
+      // interpolates across the LAST step only (the standard
+      // fix-your-timestep shape) and a zero-step frame keeps the
+      // previous span and just advances alpha.
+      this._prevPos[0] = this.pos[0]; this._prevPos[1] = this.pos[1]; this._prevPos[2] = this.pos[2];
       this._step(FIXED_DT, input, yaw, pitch);
     }
+    this._alpha = Math.min(1, this._acc / FIXED_DT);
   }
 
   /** M3: the wall probe - CollisionFlags.Sides + GetClimbedWallInfo's

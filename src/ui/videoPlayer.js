@@ -44,6 +44,7 @@
 //     are inert until a file has opened.
 
 import { getFloat } from '../systems/settings.js';   // SETT: DaggerfallVideo reads SoundVolume per clip
+import { UP_Y } from '../world/mat4.js';   // EV2: the shared billboard up axis
 import { VidFile, VID_BLOCK_TYPES } from '../formats/vidFile.js';
 import { NATIVE_W, NATIVE_H, drawImg, nativeMetrics } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -257,7 +258,7 @@ export class VideoPlayer {
 }
 
 const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-const LIGHT = new Float32Array([0, 1, 0]);
+const LIGHT = UP_Y;
 
 /** Any-key watch for playVideo. Returns its own detach. */
 function defaultListen(onAnyKey) {

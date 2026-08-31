@@ -37,7 +37,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
@@ -846,7 +846,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // optional - a host that forgets it gets the classic sprite and a
     // named reason rather than an arm at the world origin.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
       move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
         grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
@@ -1378,6 +1378,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it
+    window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
     window.__pose = (x, y, z, yaw, pitch) => {
       cam.yaw = yaw; cam.pitch = pitch;
       // walk mode: the camera FOLLOWS the motor - move the player
@@ -1681,7 +1682,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       // DC1: PlayerDeath.Update's camera sink (per-frame off the fresh eye array).
       if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
       const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
@@ -1922,8 +1923,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     arrows.update(dt);
     arrows.draw(renderer, texRemap);
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
-    renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
-    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles in flight
+    renderer.drawBillboards(billboardBatches, camRight, UP_Y);
+    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
     // daytime only; live persons render as C11-style mobile batches
@@ -1969,7 +1970,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 24 (wave 39): blood splashes ride the person axis too.
       hitEffects.tick(dt);
       personBatches.push(...hitEffects.batches());
-      if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
+      if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);

@@ -157,7 +157,7 @@ test('DC1: the three direct hosts pass the LIVE eye and capsule and sink cam.pos
     // ORDER: the sink must follow the frame's eye write, or the eye
     // write undoes it. Find the sink, then the nearest eye write above.
     const at = src.indexOf(sink);
-    const eyeWrite = src.lastIndexOf('cam.pos = player.eye;', at);
+    const eyeWrite = src.lastIndexOf('cam.pos = player.eyeAt();', at);   // EV1: the camera reads the interpolated eye now
     assert.ok(eyeWrite !== -1 && at - eyeWrite < 500, `${h}: the sink rides immediately after the per-frame eye write`);
   }
 });
@@ -168,7 +168,7 @@ test('DC1: the standalone dungeon sinks OUTSIDE the overlay-held walk branch, th
   // during the one state it exists for. The sink is its own absolute
   // write off the motionless eye, after the branch closes.
   const scene = code('scenes/dungeon.js');
-  assert.match(scene, /if \(walkMode && \(ctx\.deathDrop \?\? 0\) > 0\) \{\n\s+const _eye = player\.eye;\n\s+cam\.pos = \[_eye\[0\], _eye\[1\] - ctx\.deathDrop, _eye\[2\]\];\n\s+\}/,
+  assert.match(scene, /if \(walkMode && \(ctx\.deathDrop \?\? 0\) > 0\) \{\n\s+const _eye = player\.eyeAt\(\);[^\n]*\n\s+cam\.pos = \[_eye\[0\], _eye\[1\] - ctx\.deathDrop, _eye\[2\]\];\n\s+\}/,
     'the absolute sink write exists');
   const sinkAt = scene.indexOf('ctx.deathDrop ?? 0) > 0');
   const flyBranch = scene.indexOf("} else if (!overlayHeld) {");

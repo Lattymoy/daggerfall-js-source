@@ -264,7 +264,9 @@ test('audit18 hosts: the streaming recenter carries fallStart AND the arrows', (
   const block = s.slice(s.indexOf('if (r.offset) {'), s.indexOf('if (r.pixelChanged)'));
   assert.match(block, /adjustFallStart\(player, r\.offset\[1\]\)/,
     'the recenter shifts the player but not fallStart');
-  assert.ok(block.indexOf('adjustFallStart') < block.indexOf('player.pos[0] +='),
+  // EV1 moved the shift into player.offsetOrigin (both ends of the
+  // interpolation span move together); the ORDER law is unchanged.
+  assert.ok(block.indexOf('adjustFallStart') < block.indexOf('player.offsetOrigin('),
     'AdjustFallStart runs BEFORE the position shift (FloatingOrigin.cs:176-181)');
   assert.match(block, /offsetArrows\(arrows, r\.offset\)/);
   assert.doesNotMatch(s, /arrows\.offsetAll\?\./,

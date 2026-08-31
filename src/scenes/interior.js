@@ -16,7 +16,7 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { fetchBytes, parseSeason, ensureAudio } from './shared.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { audio } from '../systems/audio.js';   // WM4c
@@ -170,7 +170,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
-    renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

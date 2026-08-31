@@ -23,7 +23,7 @@ import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
@@ -491,7 +491,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
           dungeonShallow: _footsteps.waterStep(player.pos[1] + 0.9, surf, player.swimming) }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       ctx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
@@ -520,7 +520,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // eye each frame (never cumulative), the way DFU keeps moving the
     // camera while InputManager.IsPaused holds the player.
     if (walkMode && (ctx.deathDrop ?? 0) > 0) {
-      const _eye = player.eye;
+      const _eye = player.eyeAt();   // EV1: a camera path, so the interpolated eye
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
 
@@ -552,7 +552,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
     // hosts call it, so neither can forget it; 2026-08-27)
-    renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED
     // BEFORE THE MODAL RETURN (AUDIT 21 F1's law, which this host

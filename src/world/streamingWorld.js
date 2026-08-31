@@ -131,13 +131,15 @@ export class StreamingWorldState {
     };
   }
 
-  /** Translation for a pixel's local frame under current compensation. */
-  pixelTranslation(px, py) {
-    return [
-      (px - this.mapOrigin.x) * TERRAIN_SIZE + this.compensation[0],
-      this.compensation[1],
-      -(py - this.mapOrigin.y) * TERRAIN_SIZE + this.compensation[2],
-    ];
+  /** Translation for a pixel's local frame under current compensation.
+   *  EV2: `out` reuses a caller's array - the streaming draw loop and
+   *  the collision floor ask this per pixel per frame, and the fresh
+   *  three-array per call was measurable GC. Semantics unchanged. */
+  pixelTranslation(px, py, out = [0, 0, 0]) {
+    out[0] = (px - this.mapOrigin.x) * TERRAIN_SIZE + this.compensation[0];
+    out[1] = this.compensation[1];
+    out[2] = -(py - this.mapOrigin.y) * TERRAIN_SIZE + this.compensation[2];
+    return out;
   }
 
   inRange(px, py) {

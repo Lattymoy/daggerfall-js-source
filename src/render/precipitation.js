@@ -147,20 +147,23 @@ export class PrecipitationRenderer {
   draw(mode, proj, view, camPos, camRight, timeSeconds) {
     const cfg = mode === 'snow' ? SNOW : RAIN;
     const gl = this.gl;
-    const previousProgram = gl.getParameter(gl.CURRENT_PROGRAM);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uCamPos, camPos);
     gl.uniform3fv(this.uCamRight, camRight);
     gl.uniform1f(this.uTime, timeSeconds);
-    gl.uniform3fv(this.uBox, new Float32Array(cfg.box));
+    // EV2: the config vectors upload from arrays built ONCE - four
+    // fresh Float32Arrays per frame sat in a pass whose header claims
+    // zero per-frame CPU, and now it is true again.
+    if (!cfg._gpu) cfg._gpu = { box: new Float32Array(cfg.box), slant: new Float32Array(cfg.slant), size: new Float32Array(cfg.size), color: new Float32Array(cfg.color) };
+    gl.uniform3fv(this.uBox, cfg._gpu.box);
     gl.uniform1f(this.uFall, cfg.fall);
     gl.uniform1f(this.uDrift, cfg.drift);
-    gl.uniform2fv(this.uSlant, new Float32Array(cfg.slant));
-    gl.uniform2fv(this.uSize, new Float32Array(cfg.size));
+    gl.uniform2fv(this.uSlant, cfg._gpu.slant);
+    gl.uniform2fv(this.uSize, cfg._gpu.size);
     gl.uniform1i(this.uSnow, mode === 'snow' ? 1 : 0);
-    gl.uniform4fv(this.uColor, new Float32Array(cfg.color));
+    gl.uniform4fv(this.uColor, cfg._gpu.color);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -171,6 +174,10 @@ export class PrecipitationRenderer {
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
-    gl.useProgram(previousProgram);
+    // EV2: no program restore, and no gl.getParameter round-trip to
+    // learn what to restore - the R9 law (renderer.js drawMesh) is
+    // that EVERY draw entry point owns its program binding, so the
+    // next pass binds its own and a restore here was paying a
+    // synchronous driver query per frame for nothing.
   }
 }
