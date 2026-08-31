@@ -2999,3 +2999,32 @@ test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-buil
   assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo \}; return false; \}/);
   assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; this\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
 });
+
+test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', async () => {
+  const { clipSweepTimes } = await import('../src/formats/mwFirstPerson.js');
+  // Mac's note 1: the full arms do not show on a swing or a bow. `reach`
+  // sets the fp camera's near and far planes (reach/200, reach*4) and
+  // was measured over the IDLE clip only - the shortest pose the arm
+  // ever holds. An attack extends it forward and a bow draw pulls it
+  // back, and either can leave a box measured on a resting hand; the
+  // far plane then cuts the swing off mid-arm.
+  const keys = new Map([
+    ['idle1h: start', 0], ['idle1h: stop', 2],
+    ['weapononehand: chop start', 5], ['weapononehand: chop stop', 6.5],
+    ['bowandarrow: shoot start', 10], ['bowandarrow: shoot stop', 12],
+  ]);
+  const t = clipSweepTimes([{ keys }], { startTime: 0, stopTime: 2 });
+  assert.ok(t.some((x) => x >= 5 && x <= 6.5), 'the swing is never sampled');
+  assert.ok(t.some((x) => x >= 10 && x <= 12), 'the bow draw is never sampled');
+  assert.ok(t.some((x) => x >= 0 && x <= 2), 'the idle is still sampled');
+  // a stop before its start is not a span; a stop with no start is not a span
+  const bad = clipSweepTimes([{ keys: new Map([['g: chop stop', 1], ['g: slash start', 9], ['g: slash stop', 3]]) }], { startTime: 0, stopTime: 1 });
+  assert.equal(bad.length, 25, 'an unreadable source falls back to the idle span, no worse than before');
+  // no sources at all: the idle span, exactly as it was
+  assert.equal(clipSweepTimes([], { startTime: 0, stopTime: 2 }).length, 25);
+  assert.equal(clipSweepTimes(null, null).length, 25);
+  // and the build uses it
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /const sweep = clipSweepTimes\(sources, idleCheck\);\n    const union = clipUnionBounds\(arm, poseAt, sweep\);/,
+    'the build must measure the reach over the sweep');
+});

@@ -49,7 +49,7 @@ import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import {
-  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
+  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, clipSweepTimes, bindPartsInto,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
@@ -1200,9 +1200,19 @@ export async function buildFpArm({
     const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
     for (const so of sources) so.accumRoot = accumRoot;
     const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
+    // PX27 (Mac: the full arms do not show on a swing or a bow): THE
+    // REACH IS SWEPT OVER EVERY CLIP THE ARM WILL EVER PLAY, not the
+    // idle alone. `reach` sets the fp camera's near and far planes
+    // (reach/200 and reach*4), and the idle is the SHORTEST pose the
+    // arm ever holds - an attack extends it forward, a bow draw pulls
+    // it back past the camera, and either can leave a box measured on
+    // a resting hand. The far plane then cut the swing off mid-arm:
+    // "your full arms don't show", exactly. Sweeping every source's
+    // every clip costs one build-time pass over poses already
+    // computable, and cannot under-measure a pose the rig can reach.
+    const sweep = clipSweepTimes(sources, idleCheck);
+    const union = clipUnionBounds(arm, poseAt, sweep);
     const c = idleCheck;
-    const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-    const union = clipUnionBounds(arm, poseAt, times);
     poseAt(c.startTime);
 
     // RULE 54. No third fallback, and no invented camera: a rig with
@@ -2299,7 +2309,7 @@ export function createFpArm() {
           });
           const c = token.clip;
           const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));
+          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));   // PX27: `times` here is the swap's own sweep
           poseAt(c.startTime);
           if (token.weapon) token.weapon.side = weaponRestSide(arm, token.weapon.bone);
           if (token.arrow) token.arrow.side = weaponRestSide(arm, token.arrow.bone);
