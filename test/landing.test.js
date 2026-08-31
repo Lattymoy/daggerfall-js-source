@@ -361,14 +361,23 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
   assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
-  // TWO boxes, and both are plaques: Play at the centre and the Ko-fi
-  // mark at the top right - the same shape the About plaque has on the
-  // home face, which is what makes a box read as a plaque here. Nothing
-  // else on the page is boxed.
+  // TWO box SHAPES, and both are plaques: the .plaque rule (worn by
+  // the door's Play/Install pair - DA shipped the downloadable app
+  // and its Install stands beside Play, same shape) and the Ko-fi
+  // mark at the top right - the same shape the About plaque has on
+  // the home face, which is what makes a box read as a plaque here.
+  // Nothing else on the page declares a box.
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
-  assert.equal(boxes, 2, 'Play and Ko-fi, both plaques');
+  assert.equal(boxes, 2, 'the plaque shape and the Ko-fi mark - no third box rule');
   assert.match(css, /\.plaque \{/);
   assert.match(css, /\.kofi \{/);
+  // The door's pair, exactly: Play into the browser, Install onto the
+  // desk, in that order, both wearing the one plaque shape.
+  const doorPlaques = [...landing.matchAll(/<a class="plaque" href="([^"]+)">([^<]+)<\/a>/g)].map((m) => [m[2], m[1]]);
+  assert.deepEqual(doorPlaques, [
+    ['Play', './play/'],
+    ['Install', 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest'],
+  ], 'the door carries Play and Install, and nothing else wears the plaque');
   assert.match(skin, /\.px-about \{[\s\S]{0,400}border: 2px solid #7d7460/, '...which is the About plaque\'s own shape');
   // The foot is the home face's three zones.
   assert.match(css, /grid-template-columns: 1fr auto 1fr/, 'build left, a figure centre, Source right');
