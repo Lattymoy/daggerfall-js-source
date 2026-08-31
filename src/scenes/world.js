@@ -104,7 +104,7 @@ import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.j
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/transportWindow.js';   // TR3: the picker
 import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
-import { shipTransition } from '../systems/ship.js';   // TR4: board and disembark
+import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
@@ -2190,7 +2190,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       position: { mapPixel: here, pos: [...player.pos], yaw: cam.yaw },
     });
     if (!t) return;
-    await _teleportToPixel(t.go.x, t.go.y, t.restore ? t.restore.pos : null);
+    // TR-AUDIT F-F1: READ the reposition rather than infer it from
+    // `restore`. StreamingWorld's RandomStartMarker is
+    // PositionPlayerToLocation, which puts you at a random SIDE of the
+    // location at that pixel and FALLS BACK TO THE TERRAIN ORIGIN when
+    // the pixel has none (:1437-1447). The ship coords are open sea, so
+    // the fallback is the arm that runs and the port's own default
+    // landing stands in for it - FLAGGED for the first session with
+    // ARENA2: confirm map pixels (2,2) and (5,5) carry no location.
+    const localPos = t.reposition === REPOSITION.None ? t.restore.pos : null;
+    await _teleportToPixel(t.go.x, t.go.y, localPos);
     if (t.restore) cam.yaw = t.restore.yaw;
     playerEntity.boardShipPosition = t.boardShipPosition;
     setTransportModeHere(t.mode);

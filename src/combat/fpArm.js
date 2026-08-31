@@ -1213,6 +1213,7 @@ export async function buildFpArm({
     const sweep = clipSweepTimes(sources, idleCheck);
     const union = clipUnionBounds(arm, poseAt, sweep);
     const c = idleCheck;
+    const idleTimes = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
     poseAt(c.startTime);
 
     // RULE 54. No third fallback, and no invented camera: a rig with
@@ -1229,7 +1230,19 @@ export async function buildFpArm({
         rows: wanted,
       };
     }
-    const reach = armReach(firstPersonEye(arm.mats, cameraRef), union);
+    // AUDIT 37 F1: TWO REACHES, because the two planes want opposite
+    // answers. PX27 swept every clip so the FAR plane could not cut a
+    // swing short - and both planes hang off the same number, so the
+    // same change pushed the NEAR plane out with it (near = reach/200).
+    // A rig whose widest pose is four times its idle would have started
+    // clipping the knuckles off the camera to fix the elbow. The far
+    // plane takes the SWEEP; the near plane keeps the IDLE's reach,
+    // which is the pose it was tuned against and the one the arm holds
+    // closest to the eye.
+    const eye = firstPersonEye(arm.mats, cameraRef);
+    const reach = armReach(eye, union);
+    const idleReach = armReach(eye, clipUnionBounds(arm, poseAt, idleTimes));
+    poseAt(c.startTime);
     if (weaponInfo) weaponInfo.side = weaponRestSide(arm, weaponInfo.bone);
     if (arrowInfo) arrowInfo.side = weaponRestSide(arm, arrowInfo.bone);
 
@@ -1267,6 +1280,7 @@ export async function buildFpArm({
       textures,
       cameraRef,
       reach,
+      idleReach,
       skeletonPath,
       settingsSkeleton,
       sneakDelta,
@@ -2736,7 +2750,10 @@ export function createFpArm() {
       // The planes are in RIG UNITS and come off the arm's own reach, so
       // a file authored at any scale is framed by its own geometry
       // rather than by a constant that assumes metres.
-      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, Math.max(built.reach / 200, 1e-4), built.reach * 4);
+      // AUDIT 37 F1: the near plane off the IDLE reach, the far off the
+      // swept one - see the build's note.
+      const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
+      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
       const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph);
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;

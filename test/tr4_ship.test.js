@@ -81,7 +81,10 @@ test('TR4: the picker\'s row is live for an owner, and Ship routes to the telepo
   // The host half: the decision comes from ship.js, the teleport and
   // the remembered yaw are the host's.
   assert.match(world, /const t = shipTransition\(playerEntity, \{/);
-  assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, t\.restore \? t\.restore\.pos : null\);/);
+  // F-F1 (the parity audit): the host READS the reposition rather than
+  // inferring it from `restore`, so the two encodings cannot drift.
+  assert.match(world, /const localPos = t\.reposition === REPOSITION\.None \? t\.restore\.pos : null;/);
+  assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos\);/);
   assert.match(world, /playerEntity\.boardShipPosition = t\.boardShipPosition;/);
   assert.match(world, /setTransportModeHere\(t\.mode\);/, 'and it lands on Foot through the one seam');
 });
