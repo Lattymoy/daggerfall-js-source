@@ -55,6 +55,9 @@
   <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
   <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
   <label>sun <input id="sun" type="range" min="5" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
+  <label>surface <select id="surf">
+    <option>grass</option><option>dirt</option><option>stone</option><option>sand</option><option>snow</option>
+  </select></label>
   <p class="note">drag to look &middot; W/S to move &middot; G toggles grass &middot; T toggles the new ground</p>
   <p class="note" id="fps"></p>
 </div>
@@ -68,11 +71,24 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, grass: true, newGround: true };
+const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', grass: true, newGround: true };
 for (const k of ['density', 'height', 'wind', 'range', 'tile', 'sun']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
   el.addEventListener('input', sync); sync();
+}
+// the surface picker repaints both sheets and re-uploads them; the
+// grass blades follow, because blades of grass on snow is a lie
+function setSurface(name) {
+  state.surface = name;
+  paintSheet(name); paintNormals();
+  gl.bindTexture(gl.TEXTURE_2D, groundTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.bindTexture(gl.TEXTURE_2D, groundNrm);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, nrm);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  state.grass = name === 'grass';
 }
 addEventListener('keydown', (e) => {
   if (e.key === 'g' || e.key === 'G') state.grass = !state.grass;
@@ -248,21 +264,132 @@ function grassPixel(u, v) {
 //      finds the repeat that a single tile always shows on open land.
 //   4. DISTANCE BLEND to a filtered average, so the far field settles
 //      into colour instead of boiling.
+// PROTO-4 (Mac: the other textures while we are at it). The same law
+// the grass proved: a surface is DRAWN and it RECORDS ITS HEIGHT, so
+// the normal map lights the thing itself. Each returns { rgb, h }.
+
+/** DIRT: soil, and the things lying on it. The height is what sells
+ *  it - pebbles stand, ruts sink, and the sun finds both. */
+function dirtPixel(u, v) {
+  const P = 6, x = u * P, y = v * P;
+  const tone = fbm(x * 1.2 - 4, y * 1.2 + 2, P * 1.2, 4);
+  const grain = fbm(x * 40 + 21, y * 40 + 9, P * 40, 3);
+  let c = mixc([104, 78, 52], [148, 116, 78], cl((tone - 0.35) * 2.0, 0, 1));
+  c = sh(c, 0.84 + grain * 0.34);
+  let h = 0.35 + grain * 0.14 + tone * 0.10;
+  // ruts and cracks: long low channels the light pools in
+  const rut = cl(1 - Math.abs(fbm(x * 1.9 + 40, y * 0.7, P * 1.9, 4) - 0.5) * 11, 0, 1);
+  c = sh(c, 1 - rut * 0.24); h -= rut * 0.22;
+  // pebbles: PLACED, with a catch-light and a dropped shadow
+  for (const [freq, seed, size, tint] of [[7.5, 17, 0.20, [156, 146, 132]], [15, 71, 0.13, [128, 118, 104]]]) {
+    const w = worley(x * freq + 0.5, y * freq + 0.5, P * freq, seed);
+    const st = cl((size - w.f1) * (1 / size) * 1.6, 0, 1);
+    if (st > 0.01) {
+      c = mixc(c, tint, st * 0.78);
+      c = sh(c, 1 + st * 0.16);
+      h += st * 0.40;
+    }
+    const sha = cl((size * 1.7 - w.f1) * (1 / size), 0, 1) - st;
+    if (sha > 0.01) c = sh(c, 1 - sha * 0.20);
+  }
+  // dry straw and root litter, sparse
+  const straw = cl((fbm(x * 26 + 61, y * 9 - 3, P * 26, 2) - 0.74) * 7, 0, 1);
+  c = mixc(c, [150, 132, 84], straw * 0.6); h += straw * 0.10;
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+/** STONE: plates, not cobbles. The first cut read as a cartoon
+ *  pavement because every cell was one flat tone with a black moat.
+ *  A plate is DOMED off sqrt(f2)-sqrt(f1) - zero at the seam, highest
+ *  mid-plate - and the seam is a CRACK, narrow. */
+function stonePixel(u, v) {
+  const P = 5, x = u * P, y = v * P;
+  const wx = (fbm(x * 0.9, y * 0.9, P * 0.9, 3) - 0.5) * 1.1;
+  const wy = (fbm(x * 0.9 + 31, y * 0.9 - 17, P * 0.9, 3) - 0.5) * 1.1;
+  const w = worley(x * 2.6 + wx, y * 2.6 + wy, P * 2.6, 53);
+  const dome = cl((Math.sqrt(w.f2) - Math.sqrt(w.f1)) * 3.0, 0, 1);
+  const mott = fbm(x * 2.4 + 7, y * 2.4 - 3, P * 2.4, 5);
+  const grit = fbm(x * 44, y * 44, P * 44, 3);
+  // each plate takes its own tone, so a wall is not one grey
+  const plateTint = fbm(Math.floor(x * 2.6 + wx) * 3.7, Math.floor(y * 2.6 + wy) * 3.7, P * 9, 2);
+  let c = mixc([88, 86, 82], [142, 139, 130], dome * 0.55 + mott * 0.3 + plateTint * 0.15);
+  c = sh(c, 0.86 + grit * 0.30);
+  let h = 0.25 + dome * 0.62 + grit * 0.08;
+  const seam = cl(1 - dome * 8, 0, 1);
+  c = mixc(c, [58, 57, 56], seam * 0.6); h -= seam * 0.42;
+  // fine fracture lines ACROSS the plates, which real stone has
+  const frac = cl(1 - Math.abs(fbm(x * 6 + 90, y * 6, P * 6, 3) - 0.5) * 16, 0, 1) * dome;
+  c = sh(c, 1 - frac * 0.22); h -= frac * 0.12;
+  // lichen only on the crowns, and it lifts the surface a hair
+  const lich = cl((fbm(x * 3.6 + 60, y * 3.6 + 12, P * 3.6, 4) - 0.60) * 4.5, 0, 1) * dome;
+  c = mixc(c, [104, 116, 68], lich * 0.42); h += lich * 0.05;
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+/** SAND: the desert climate's ground. Ripples are a HEIGHT field
+ *  before they are a colour - a dune's light comes entirely from its
+ *  own slope, so the normal map does nearly all the work here. */
+function sandPixel(u, v) {
+  const P = 6, x = u * P, y = v * P;
+  const drift = fbm(x * 0.7 + 3, y * 0.7 - 2, P * 0.7, 4);
+  // wind ripples: a warped periodic train, crests perpendicular to it
+  const wx2 = x + (fbm(x * 1.1, y * 1.1, P * 1.1, 3) - 0.5) * 1.6;
+  const wy2 = y + (fbm(x * 1.1 + 19, y * 1.1 + 7, P * 1.1, 3) - 0.5) * 1.6;
+  const ripple = Math.sin((wx2 * 3.0 + wy2 * 1.1) * Math.PI * 2 / P * 3) * 0.5 + 0.5;
+  const fine = fbm(x * 55, y * 55, P * 55, 2);
+  let c = mixc([196, 168, 118], [226, 202, 152], cl(drift * 0.7 + ripple * 0.3, 0, 1));
+  c = sh(c, 0.94 + fine * 0.12);
+  let h = 0.30 + ripple * 0.46 + drift * 0.18 + fine * 0.06;
+  // the odd stone and a scatter of darker grains
+  const st = worley(x * 8 + 0.5, y * 8 + 0.5, P * 8, 29);
+  const stone = cl((0.09 - st.f1) * 14, 0, 1);
+  if (stone > 0.01) { c = mixc(c, [148, 132, 108], stone * 0.7); h += stone * 0.30; }
+  const dark = cl((fbm(x * 70 + 40, y * 70 + 12, P * 70, 2) - 0.72) * 6, 0, 1);
+  c = sh(c, 1 - dark * 0.14);
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+/** SNOW: the winter archives. Wind-packed drifts with a sparkle -
+ *  the sparkle is a SPECULAR cue, so it rides the height, not the
+ *  albedo, and appears only when the sun is low enough to catch it. */
+function snowPixel(u, v) {
+  const P = 6, x = u * P, y = v * P;
+  const drift = fbm(x * 0.8, y * 0.8, P * 0.8, 5);
+  const sastrugi = Math.sin((x * 2.2 + fbm(x * 1.4, y * 1.4, P * 1.4, 3) * 4) * Math.PI * 2 / P * 2) * 0.5 + 0.5;
+  const grain = fbm(x * 60, y * 60, P * 60, 2);
+  let c = mixc([206, 214, 226], [244, 248, 255], cl(drift * 0.6 + sastrugi * 0.4, 0, 1));
+  c = sh(c, 0.96 + grain * 0.08);
+  let h = 0.34 + drift * 0.40 + sastrugi * 0.22 + grain * 0.06;
+  // the blue of a hollow: snow's shadows are not grey
+  const holl = cl((0.42 - drift) * 3.2, 0, 1);
+  c = mixc(c, [166, 186, 214], holl * 0.5); h -= holl * 0.18;
+  // crystals, sparse and sharp
+  const sp = cl((fbm(x * 120 + 7, y * 120 + 31, P * 120, 1) - 0.84) * 9, 0, 1);
+  c = mixc(c, [255, 255, 255], sp * 0.9); h += sp * 0.10;
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+const SURFACES = { grass: grassPixel, dirt: dirtPixel, stone: stonePixel, sand: sandPixel, snow: snowPixel };
+const SURFACE_KEYS = Object.keys(SURFACES);
+
 const SIZE = 1024;
 const px = new Uint8Array(SIZE * SIZE * 4);
 const hgt = new Float32Array(SIZE * SIZE);
-for (let y = 0; y < SIZE; y++) {
-  for (let x = 0; x < SIZE; x++) {
-    const u = x / SIZE, v = y / SIZE;
-    const r = grassPixel(u, v);
-    const o = (y * SIZE + x) * 4;
-    px[o] = r.rgb[0]; px[o + 1] = r.rgb[1]; px[o + 2] = r.rgb[2]; px[o + 3] = 255;
-    hgt[y * SIZE + x] = r.h;
+function paintSheet(name) {
+  const fn = SURFACES[name] || grassPixel;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const r = fn(x / SIZE, y / SIZE);
+      const o = (y * SIZE + x) * 4;
+      px[o] = r.rgb[0]; px[o + 1] = r.rgb[1]; px[o + 2] = r.rgb[2]; px[o + 3] = 255;
+      hgt[y * SIZE + x] = r.h;
+    }
   }
 }
+paintSheet('grass');
 // the normal map, Sobel over the height the sheet just recorded
 const nrm = new Uint8Array(SIZE * SIZE * 4);
-{
+function paintNormals() {
   const at = (x, y) => hgt[(((y % SIZE) + SIZE) % SIZE) * SIZE + (((x % SIZE) + SIZE) % SIZE)];
   const S = 3.2;   // how tall a blade stands relative to a texel
   for (let y = 0; y < SIZE; y++) {
@@ -279,6 +406,7 @@ const nrm = new Uint8Array(SIZE * SIZE * 4);
     }
   }
 }
+paintNormals();
 // the LOW-frequency modulation sheet: broad damp/dry/worn variation
 const LOW = 256;
 const lowPx = new Uint8Array(LOW * LOW * 4);
@@ -495,6 +623,7 @@ function build() {
 }
 ready = true;
 build();
+R('surf').addEventListener('change', (e) => setSurface(e.target.value));
 
 // ── camera ─────────────────────────────────────────────────────────
 const cam = { x: 0, z: 0, yaw: 0.6, pitch: -0.22, h: 1.7 };
