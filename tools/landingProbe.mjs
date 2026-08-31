@@ -79,15 +79,16 @@ async function landing(label, ctxOpts) {
     await page.evaluate(() => document.fonts.check("300 40px 'Grenze Gotisch'")));
   check(`${label}: no script, no canvas on the landing`,
     (await page.locator('script:not([src^="/@vite/"]), canvas, video').count()) === 0);   // vite's own HMR client is the dev server's, not the page's
-  // U60c: the three pictures resolve and paint at their declared size.
-  await page.locator('#look').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(900);   // the pictures are lazy; they are below the door
-  const pics = await page.locator('#look figure img').evaluateAll((els) => els.map((i) => [i.getAttribute('src'), i.complete && i.naturalWidth > 0, i.naturalWidth === Number(i.getAttribute('width'))]));
-  check(`${label}: the three pictures load at their declared size`, pics.length === 3 && pics.every(([, ok, sized]) => ok && sized), JSON.stringify(pics));
+  // The DA site cleanup retired the pictures: the page draws in CSS
+  // alone, and a returning <img> is a regression, not a decoration.
+  check(`${label}: the page carries no pictures at all`, (await page.locator('img').count()) === 0);
   const strip = await page.locator('.foot .stat').evaluateAll((els) => els.map((e) => e.textContent));
   check(`${label}: the foot carries two figures`, strip.length === 2 && strip.every((t) => /^[\d,]{4,}$/.test(t)), strip.join(' / '));
-  const play = await page.locator('a.plaque').getAttribute('href');
-  check(`${label}: Play points one directory down`, play === './play/', play);
+  // The door's pair: Play into the browser, Install onto the desk.
+  const plaques = await page.locator('a.plaque').evaluateAll((els) => els.map((e) => [e.textContent, e.getAttribute('href')]));
+  check(`${label}: Play and Install stand together on the door`,
+    plaques.length === 2 && plaques[0][0] === 'Play' && plaques[0][1] === './play/'
+    && plaques[1][0] === 'Install' && /releases\/latest$/.test(plaques[1][1]), JSON.stringify(plaques));
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: `${shots}/landing-${label}.png`, fullPage: true });
   console.log(`  ${shots}/landing-${label}.png`);
@@ -99,13 +100,19 @@ check('desktop: the foot carries build, tests, lines and Source',
   await desk.page.locator('.foot').isVisible()
   && (await desk.page.locator('.foot .stat').count()) === 2);
 
-// The door behind the door: press Play, land on the PIXEL HOME with no
-// data, no picker.
-await desk.page.locator('a.plaque').click();
+// The door behind the door: press Play (the door's FIRST plaque - the
+// second is Install, which leaves the site), land on the PIXEL HOME
+// with no data, no picker.
+await desk.page.locator('a.plaque', { hasText: 'Play' }).click();
 await desk.page.waitForSelector('.px-menu button', { timeout: 15000 });
 check('desktop: Play opens /play/', new URL(desk.page.url()).pathname.endsWith('/play/'), desk.page.url());
+// The CORE entries, not an exact count - the menu gains and loses
+// rows as arcs land (a hardcoded 5 rotted the moment Test Room and
+// Enhanced joined) and this probe's law is "the home DRAWS with no
+// data", not "the menu is frozen".
+const menuLabels = await desk.page.locator('.px-menu button').evaluateAll((els) => els.map((e) => e.textContent));
 check('desktop: the pixel home draws with no ARENA2',
-  (await desk.page.locator('.px-menu button').count()) === 5);
+  ['New Game', 'Load Game', 'Settings'].every((core) => menuLabels.some((l) => l.includes(core))), JSON.stringify(menuLabels));
 check('desktop: the folder pick has NOT been asked for',
   (await desk.page.locator('#pick').count()) === 0);
 await desk.page.screenshot({ path: `${shots}/landing-desktop-play.png` });
@@ -116,8 +123,13 @@ const phone = await landing('phone', { ...devices['Pixel 5'] });
 check('phone: the foot stacks and still carries its figures',
   await phone.page.locator('.foot').isVisible()
   && (await phone.page.locator('.foot .stat').count()) === 2);
-const plaque = await phone.page.locator('a.plaque').boundingBox();
-check('phone: Play is a 44px target', !!plaque && plaque.height >= 44, `${plaque?.height}px`);
+// Both door plaques are thumb targets now, not just Play.
+const plaqueBoxes = await Promise.all([
+  phone.page.locator('a.plaque', { hasText: 'Play' }).boundingBox(),
+  phone.page.locator('a.plaque', { hasText: 'Install' }).boundingBox(),
+]);
+check('phone: Play and Install are 44px targets',
+  plaqueBoxes.every((b) => !!b && b.height >= 44), plaqueBoxes.map((b) => `${b?.height}px`).join(' / '));
 await phone.ctx.close();
 
 await browser.close();

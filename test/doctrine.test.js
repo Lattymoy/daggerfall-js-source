@@ -53,14 +53,12 @@ const PUBLIC_ALLOWLIST = new Map([
   // ship. This is an original recording of the main theme, Mac's, and
   // it can ship for the same reason it can play before the ARENA2
   // pick - it is not game data. Ledger A.
-  // THE SITE'S PICTURES (U60c). Screens of the ENHANCED skin - type and
-  // layout - taken by tools/siteShots.mjs with NO ARENA2 anywhere: the
-  // tool boots its own vite with no data folder, proves the game's own
-  // data fetch 404s, and aborts if the folder pick appears. Not one
-  // pixel on them came from the game.
-  ['public/site/menu-settings.png', 'OURS - the enhanced settings shell, no game data loaded (tools/siteShots.mjs)'],
-  ['public/site/menu-phone.png', 'OURS - the enhanced menu on a phone, no game data loaded (tools/siteShots.mjs)'],
-  ['public/site/menu-home.png', 'OURS - the enhanced pixel home, no game data loaded (tools/siteShots.mjs)'],
+  // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
+  // (Mac, 2026-08-31): the landing page carries no raster at all now -
+  // landing.test.js pins <img> absent - so the three menu screens,
+  // their OURS rows and tools/siteShots.mjs went together. The both-
+  // ways check below is why removing them is safe: a row cannot
+  // outlive its file, and a returning picture must re-earn its row.
   // THE BAKED SKIN (tools/skin/). These pixels never touched ARENA2: the
   // source is our own generated eight-direction turnaround, projected onto
   // buildNeutralBody, which is a from-scratch DESIGNED figure and not a trace

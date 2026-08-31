@@ -26,7 +26,6 @@ with `ARENA2_PATH`.
 - `npm run check` - test + build (pre-push gate)
 - `npm run shot [out.png]` - headless render proof (needs ARENA2_PATH + provisioned Chromium)
 - `node tools/landingProbe.mjs` - the landing page and `/play/` in a real browser, no ARENA2 needed
-- `node tools/siteShots.mjs` - retakes the site's three pictures (public/site/); refuses to run with game data present
 - `node tools/verify-deploy.mjs` - after a push: proves the live `/play/` serves your commit
 
 ## Desktop app
