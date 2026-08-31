@@ -219,3 +219,38 @@ itself (the hum outside the pixelVisible gate). The culled fraction
 in a live city is owed to a data-bearing session through
 renderer.stats/__renderer (EV2's counter exists for exactly this);
 the plane math is not.
+
+EV4 (2026-08-31): DISTANT LAND. Three moves. THE FOG: the linear
+0..2400 haze is tuned for TerrainDistance 3, so a raised Land View
+Distance streamed land it then painted fully fogged; weather.js's
+scaleFogForDistance stretches the LINEAR rows by distance/3 at the
+world host's two fogForWeather reads (identity - the same frozen
+object - at 3 and below; exp rows are WEATHER and never stretch; the
+table itself byte-identical). THE SEAM LATTICE: terrainSampler grew
+sampleKernel (generateSamples' loop body factored verbatim - the
+numeric pins hold bit-for-bit through fround) and ghostSampler, which
+answers out-of-range sample coordinates from the correct neighbor's
+kernel via the sampler's own edge-continuity law (the large
+heightmap's y DESCENDS in the file - the fake woods in the tests had
+to share the reader's orientation before the law would hold); with
+ghosts, buildTerrainGrid's edge normals are true central differences
+and the permanent lighting lattice at every 819.2-unit seam dies. RAW
+ghosts: a neighbor's location BLENDING is not reflected, so a blended
+pixel's rim can still shade a hair off its neighbor - strictly better
+than the halved one-sided slope it replaces, recorded here. THE FAR
+RING: buildTerrainGrid/buildTerrainIndices take a stride (4 = 33x33,
+a 16x triangle cut) plus a perimeter SKIRT dropped TERRAIN_SKIRT_DEPTH
+(40) and stitched both windings - the T-junction crack cover where the
+ring abuts the full-res core; world.js builds chebyshev-distance >= 3
+pixels strided (ENHANCED ONLY - the 1:1 lane keeps DFU's full
+resolution at every distance), restrideTerrain swaps a surviving
+pixel's surface in place when the walk reclassifies it (models,
+flats, collider, population all stay; the grid rebuilds from the
+pixel's own cached BLENDED samples), and the EV3 culling box drops by
+the skirt depth at build so either class fits it. The renderer's
+terrain index buffer, silently first-set-wins since R9, now keys per
+index SET. Simulation untouched: the collider and heightAt read
+SAMPLES, never the render grid, so the far ring is presentation all
+the way down. distantland.test.js pins all of it; the moving picture
+(the far haze at distance 4, the vanished seam lattice at grazing
+sun) is owed to a data-bearing session.

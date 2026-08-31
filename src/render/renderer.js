@@ -602,8 +602,13 @@ export class Renderer {
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
-    this._terrainIndexBuffer = null;
-    this._terrainIndexCount = 0;
+    // EV4: one shared index buffer PER INDEX SET, keyed by the array's
+    // identity - the world host shares one full-grid array across every
+    // pixel and one strided far-ring array across the LOD ring. The old
+    // single-buffer cache silently drew every later surface with the
+    // FIRST set ever uploaded, which was invisibly correct only while
+    // exactly one set existed.
+    this._terrainIndexSets = new Map(); // indices array -> { buffer, count }
 
     this.waterProgram = this._buildProgram(WATER_VS, WATER_FS);
     this._bbFog = {
@@ -1533,19 +1538,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Lazily create the shared 129x129 terrain index buffer. */
   _terrainIndices(indices) {
-    if (this._terrainIndexBuffer) return;
+    let entry = this._terrainIndexSets.get(indices);
+    if (entry) return entry;
     const gl = this.gl;
-    this._terrainIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._terrainIndexBuffer);
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    this._terrainIndexCount = indices.length;
+    entry = { buffer, count: indices.length };
+    this._terrainIndexSets.set(indices, entry);
+    return entry;
   }
 
   /** Create one pixel's terrain surface (positions + normals grid). */
   createTerrainSurface(positions, normals, indices) {
     const gl = this.gl;
-    this._terrainIndices(indices);
+    const indexSet = this._terrainIndices(indices);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const buffers = [];
@@ -1560,9 +1568,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     };
     buf(positions, 0);
     buf(normals, 1);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._terrainIndexBuffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexSet.buffer);
     gl.bindVertexArray(null);
-    return { vao, buffers, indexCount: this._terrainIndexCount };
+    return { vao, buffers, indexCount: indexSet.count };
   }
 
   /** Upload a 128x128 tilemap byte texture (R8UI, NEAREST). */

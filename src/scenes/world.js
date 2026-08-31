@@ -14,7 +14,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, convertTilemap, isOutdoorWaterTile, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
+import { buildTerrainGrid, buildTerrainIndices, convertTilemap, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -123,7 +123,7 @@ import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.j
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples, ghostSampler } from '../world/terrainSampler.js';   // EV4: ghost rows for chunk-edge normals
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
@@ -183,7 +183,7 @@ import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
-  WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
+  WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
@@ -301,7 +301,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (weatherOverride) setWeather(weatherOverride);
   const weatherSeed = weatherRng(Number(params.get('wseed')) || 1);
   let weather = weatherOverride ?? currentWeather();
-  let weatherFog = fogForWeather(weather);
+  // EV4: the distance haze follows the live Land View Distance (the
+  // scale is 1 at DFU's default 3, so the classic path is untouched);
+  // the exp weather rows pass through scaleFogForDistance unchanged.
+  const fogDistance = getInt('Experimental', 'TerrainDistance', 1, 4);
+  let weatherFog = scaleFogForDistance(fogForWeather(weather), fogDistance);
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
@@ -310,7 +314,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   function applyWeather(w) {
     weather = w;
-    weatherFog = fogForWeather(w);
+    weatherFog = scaleFogForDistance(fogForWeather(w), fogDistance);   // EV4
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
@@ -421,6 +425,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // needs (its block + building record + sibling exterior doors).
   const buildingDoors = []; // {door, pixelKey, dfBlock, recordIndex, climateBase, season}
   const TERRAIN_INDICES = buildTerrainIndices();
+  // EV4: the far ring's strided twin - 33x33 plus its crack skirt, a
+  // 16x triangle cut per pixel. Enhanced only: the 1:1 lane keeps full
+  // resolution at every distance, exactly as DFU draws it. The ring
+  // test reads the LIVE player pixel, so a pixel's class follows the
+  // walk (restrideTerrain below swaps a built pixel's surface).
+  const LOD_STRIDE = 4;
+  const LOD_NEAR = 3;   // chebyshev distance where the far ring starts
+  const lodOn = isEnhanced();
+  const TERRAIN_INDICES_LOD = buildTerrainIndices(LOD_STRIDE);
+  const strideFor = (px, py) => ((lodOn
+    && Math.max(Math.abs(px - state.current.x), Math.abs(py - state.current.y)) >= LOD_NEAR)
+    ? LOD_STRIDE : 1);
 
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
@@ -454,11 +470,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       renderer.uploadTileArray(groundArchive, layers);
     }
-    const grid = buildTerrainGrid(samples);
-    const terrain = renderer.createTerrainSurface(grid.positions, grid.normals, TERRAIN_INDICES);
+    // EV4: ghost rows make edge normals central differences (the seam
+    // lattice dies); the far ring builds strided with its skirt.
+    const stride = strideFor(px, py);
+    const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
+    const terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
+      stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.
+    // EV4: dropped by the skirt depth so a future restride to the far
+    // ring never hangs geometry below the culling box.
     const bounds = localAabb(grid.positions);
+    bounds[1] -= TERRAIN_SKIRT_DEPTH;
     const unionBox = (b) => {
       for (let i = 0; i < 3; i++) {
         if (b[i] < bounds[i]) bounds[i] = b[i];
@@ -684,6 +707,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
+      _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       locBlocks,   // T3d: the Where-is directory's block scan
@@ -693,6 +717,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       avgY: dfLocation ? avg * worldHeight : 0,
     });
     return built.get(key);
+  }
+
+  // EV4: a built pixel crosses between the full-res core and the far
+  // ring without rebuilding anything but its terrain SURFACE - the
+  // models, flats, collider, doors and population all stay. The grid
+  // re-builds from the pixel's own cached samples (blended, so a
+  // location's flattening survives the round trip); the culling box is
+  // already deep enough for either class (the skirt drop at build).
+  function restrideTerrain(p, stride) {
+    const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
+    renderer.destroyMesh(p.terrain);
+    p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
+      stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
+    p._stride = stride;
   }
 
   function destroyPixel(px, py) {
@@ -4690,6 +4728,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
+      }
+      // EV4: surviving pixels whose ring class changed with the walk
+      // swap their terrain surface (full-res core <-> strided far ring).
+      for (const p of built.values()) {
+        const want = strideFor(p.px, p.py);
+        if (want !== p._stride) restrideTerrain(p, want);
       }
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
     }
