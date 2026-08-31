@@ -122,12 +122,34 @@ export const RESERVES = Object.freeze({
 import { DF_TO_MW_WEAPON } from './mwFirstPerson.js';
 
 /** DF armor material -> the token MW armor record ids carry. */
+// MW-D37: colour truth (see DF_MATERIAL_RGB): Elven is silver-white in
+// Daggerfall and MW has no silver armor, so it wears steel beside
+// Silver; Mithril is dark blue-steel and Adamantium near-black, both
+// ebony to the eye (Adamantium tries Tribunal's own first). Each value
+// is a CHAIN tried in order.
 export const DF_TO_MW_ARMOR_MATERIAL = Object.freeze({
-  Leather: 'netch', Chain: 'chain', Chain2: 'chain',
-  Iron: 'iron', Steel: 'steel', Silver: 'steel', Elven: 'glass',
-  Dwarven: 'dwemer', Mithril: 'glass', Adamantium: 'ebony',
-  Ebony: 'ebony', Orcish: 'orcish', Daedric: 'daedric',
+  Leather: ['netch'], Chain: ['chain'], Chain2: ['chain'],
+  Iron: ['iron'], Steel: ['steel'], Silver: ['steel'], Elven: ['steel'],
+  Dwarven: ['dwemer'], Mithril: ['ebony'], Adamantium: ['adamantium', 'ebony'],
+  Ebony: ['ebony'], Orcish: ['orcish'], Daedric: ['daedric'],
 });
+
+/** Daggerfall's own colour per material and per clothing dye: the mean
+ *  of the dye's 16-index ART_PAL band (dyes.js METAL_TABLES and the
+ *  clothing starts), measured 2026-08-31 from the retail palette. The
+ *  report puts these beside the Morrowind texture's measured mean so a
+ *  mapping's accuracy is a thing the eye checks in one row; the
+ *  garment resolver picks the nearest-coloured CLOT by them. */
+export const DF_MATERIAL_RGB = Object.freeze({
+  Iron: [0x4e, 0x4e, 0x53], Steel: [0x79, 0x79, 0x79], Silver: [0xa3, 0xa3, 0xa7], Elven: [0xa6, 0xa6, 0xa7],
+  Dwarven: [0x97, 0x8a, 0x10], Mithril: [0x2a, 0x38, 0x49], Adamantium: [0x2e, 0x2e, 0x30], Ebony: [0x3a, 0x3a, 0x3a],
+  Orcish: [0x31, 0x40, 0x26], Daedric: [0x83, 0x2c, 0x10],
+  Leather: [0x8e, 0x63, 0x47], Chain: [0x6b, 0x6b, 0x75], Chain2: [0x6b, 0x6b, 0x75],
+});
+export const DF_CLOTHING_DYE_RGB = Object.freeze([
+  [0x4d, 0x6f, 0x9b], [0x6b, 0x6b, 0x75], [0x83, 0x2c, 0x10], [0x8e, 0x63, 0x47], [0x80, 0x59, 0x6f],
+  [0x8e, 0x72, 0x4e], [0x79, 0x79, 0x79], [0x4e, 0x7a, 0x7b], [0x97, 0x8a, 0x10], [0x56, 0x70, 0x53],
+]);
 
 /** DF armor template -> how to find its MW records.
  *  `tokens` are tried IN ORDER (netch's hands are bracers);
@@ -162,12 +184,30 @@ const matName = (table, v) => Object.entries(table).find(([, x]) => x === v)?.[0
  *  enchanted excluded - and on retail the id sort puts common_ ahead of
  *  expensive_ and its betters, so the street clothes win, which is the
  *  right wardrobe for a derived outfit. Null-honest. */
-export function mwClothingRecord(clothes, name) {
+export function mwClothingRecord(clothes, name, { dye = null, colourOf = null } = {}) {
   const row = DF_CLOTHING_ROWS[name];
   if (!row) return { record: null, row: null, note: `"${name}" is not a garment row` };
   const pool = (clothes ?? []).filter((c) => c.type === row.type && !c.enchanted)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!pool.length) return { record: null, row, note: `no MW clothing of type ${row.type} in these archives - the classic sprite stands` };
+  // MW-D37: THE DYE PICKS THE GARMENT. Daggerfall dyes a shirt one of
+  // ten colours; Morrowind ships several shirts of one type in
+  // different colours. When a colour sampler is on hand (the build's,
+  // over the player's own textures), the candidate whose measured
+  // colour is nearest the dye's ART_PAL band wins - so a red Daggerfall
+  // shirt is a red Morrowind shirt, by measurement. No sampler, or
+  // nothing measurable: the id-sorted first, as before.
+  const want = dye != null ? DF_CLOTHING_DYE_RGB[dye | 0] : null;
+  if (want && typeof colourOf === 'function') {
+    let best = null; let bestD = Infinity;
+    for (const c of pool) {
+      const rgb = colourOf(c);
+      if (!rgb) continue;
+      const d = Math.hypot(rgb[0] - want[0], rgb[1] - want[1], rgb[2] - want[2]);
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    if (best) return { record: best, row, note: `resolved by dye (distance ${Math.round(bestD)})` };
+  }
   return { record: pool[0], row, note: 'resolved' };
 }
 
@@ -180,22 +220,26 @@ export function mwArmorRecords(armorRecords, templateIndex, material) {
   const row = DF_ARMOR_ROWS[templateIndex];
   if (!row) return { records: [], row: null, note: `template ${templateIndex} is not an armor row` };
   const mName = matName(ARMOR_MATERIAL, material);
-  const token = DF_TO_MW_ARMOR_MATERIAL[mName] ?? null;
-  if (!token) return { records: [], row, note: `no MW material for ${mName ?? material}` };
-  const all = (armorRecords ?? []).filter((r) => {
+  const chain = DF_TO_MW_ARMOR_MATERIAL[mName] ?? null;
+  if (!chain) return { records: [], row, note: `no MW material for ${mName ?? material}` };
+  // the chain in order: the first material token any candidate carries
+  const byToken = (tok) => (armorRecords ?? []).filter((r) => {
     const id = String(r.id || '').toLowerCase();
-    if (!id.includes(token)) return false;
+    if (!id.includes(tok)) return false;
     if ((row.not ?? []).some((n) => id.includes(n))) return false;
     return true;
   });
-  const byToken = (list) => {
+  let token = null; let all = [];
+  for (const tok of chain) { const hit = byToken(tok); if (hit.length) { token = tok; all = hit; break; } }
+  if (!token) token = chain[chain.length - 1];
+  const byPiece = (list) => {
     for (const t of row.tokens) {
       const hit = list.filter((r) => String(r.id || '').toLowerCase().includes(t));
       if (hit.length) return hit;
     }
     return [];
   };
-  const pool = byToken(all).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const pool = byPiece(all).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!pool.length) {
     return { records: [], row, material: token, note: `no ${token} ${row.tokens[0]} in these archives - the classic sprite stands` };
   }
@@ -263,17 +307,57 @@ export function itemMapCoverage() {
  * the reason - before ever equipping one. Weapons ride the existing
  * pickWeaponRecord; this covers the half that is new.
  */
-export function mwItemReport(armorRecords) {
+export function mwItemReport(armorRecords, { weapons = null, clothes = null, colourOf = null, pickWeapon = null } = {}) {
   const rows = [];
+  const hex = (c) => (c ? `#${c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}` : null);
+  // MW-D37: every row carries Daggerfall's colour for the material or
+  // dye (DF_MATERIAL_RGB / DF_CLOTHING_DYE_RGB) and, when the page can
+  // sample textures, the Morrowind record's measured colour - so the
+  // accuracy of a mapping is two swatches in one row, not an argument.
   for (const [aName, tmpl] of Object.entries(ARMOR_ENUM)) {
     for (const mName of Object.keys(DF_TO_MW_ARMOR_MATERIAL)) {
       if (mName === 'Chain2') continue;   // one report line for chain
       const res = mwArmorRecords(armorRecords, tmpl, ARMOR_MATERIAL[mName]);
       rows.push({
+        family: 'armor',
         item: `${mName} ${aName.replaceAll('_', ' ')}`,
         found: res.records.map((r) => r.id),
         note: res.note,
+        dfColour: hex(DF_MATERIAL_RGB[mName]),
+        mwColour: colourOf && res.records[0] ? hex(colourOf(res.records[0])) : null,
       });
+    }
+  }
+  if (weapons && pickWeapon) {
+    for (const [wName, wType] of Object.entries(DF_TO_MW_WEAPON)) {
+      for (const mName of Object.keys(DF_MATERIAL_RGB)) {
+        if (mName === 'Leather' || mName === 'Chain' || mName === 'Chain2') continue;
+        const rec = pickWeapon(weapons, wType, mName);
+        rows.push({
+          family: 'weapon',
+          item: `${mName} ${wName.replaceAll('_', ' ')}`,
+          found: rec ? [rec.id] : [],
+          note: rec ? (rec.id.includes(String(DF_TO_MW_ARMOR_MATERIAL[mName]?.[0] ?? '')) || rec.id.includes(mName.toLowerCase()) ? 'resolved' : `resolved to the type's first - no ${mName.toLowerCase()} of this type`) : 'no record of this type - the classic sprite stands',
+          dfColour: hex(DF_MATERIAL_RGB[mName]),
+          mwColour: colourOf && rec ? hex(colourOf(rec)) : null,
+        });
+      }
+    }
+  }
+  if (clothes) {
+    for (const [name, row] of Object.entries(DF_CLOTHING_ROWS)) {
+      for (let dye = 0; dye < DF_CLOTHING_DYE_RGB.length; dye++) {
+        const res = mwClothingRecord(clothes, name, { dye, colourOf });
+        rows.push({
+          family: 'clothing',
+          item: `${['Blue', 'Grey', 'Red', 'Dark Brown', 'Purple', 'Light Brown', 'White', 'Aquamarine', 'Yellow', 'Green'][dye]} ${name}`,
+          found: res.record ? [res.record.id] : [],
+          note: res.note,
+          dfColour: hex(DF_CLOTHING_DYE_RGB[dye]),
+          mwColour: colourOf && res.record ? hex(colourOf(res.record)) : null,
+          reserve: row.reserve ?? null,
+        });
+      }
     }
   }
   return rows;
@@ -332,7 +416,7 @@ export function dfWornEquipment(slots, EQUIP_SLOTS, ARMOR_ENUM_) {
   for (const k of ['ChestClothes', 'LegsClothes', 'Feet', 'Cloak1', 'Cloak2']) {
     const it = slots[S[k]];
     if (it && typeof it.templateIndex === 'number' && it.templateIndex in CLOTHING_NAME) {
-      worn.push({ kind: 'clothing', templateIndex: it.templateIndex, name: CLOTHING_NAME[it.templateIndex] });
+      worn.push({ kind: 'clothing', templateIndex: it.templateIndex, name: CLOTHING_NAME[it.templateIndex], dye: it.dye ?? 0 });
     }
   }
   return worn;
@@ -366,7 +450,7 @@ export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
  * missing record, an unknown INDX, a ref with no id for this sex -
  * each is a note, the skin stands, the law is never-traps.
  */
-export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false }) {
+export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, colourOf = null }) {
   const notes = [];
   const bodyById = new Map((bodyPool ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
   // ── THE PRIORITY LAW (Audit 30's recording, now consumed) ────────
@@ -393,7 +477,7 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
   for (const piece of ordered) {
     if (piece.kind === 'clothing') {
       const name = piece.name ?? CLOTHING_NAME[piece.templateIndex];
-      const res = mwClothingRecord(clothes, name);
+      const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf });
       if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
       const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
       const prio = ((base + 1) << 1) + 0;

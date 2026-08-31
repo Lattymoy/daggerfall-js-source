@@ -1687,7 +1687,7 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female \}\)/);
+  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf \}\)/);
   assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
   assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,
@@ -1835,8 +1835,8 @@ test('MW-D30: the skirt reserve and the readout - garments ride the equip table'
   const worn = dfWornEquipment(slots, { Head: 12, RightArm: 13, LeftArm: 15, ChestArmor: 18, Gloves: 20, LegsArmor: 23, Feet: 26, RightHand: 19, LeftHand: 21, ChestClothes: 17, LegsClothes: 24, Cloak1: 14, Cloak2: 16 }, ARMOR_ENUM);
   assert.deepEqual(worn, [
     { templateIndex: ARMOR_ENUM.Helm, material: 1, kind: 'armor' },
-    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
-    { kind: 'clothing', templateIndex: 154, name: 'Casual Cloak' },
+    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt', dye: 0 },
+    { kind: 'clothing', templateIndex: 154, name: 'Casual Cloak', dye: 0 },
   ]);
 });
 
@@ -1864,7 +1864,12 @@ test('MW-D32: setWorn is one key compare per frame, and a change rebuilds throug
   // setWorn compares one key, and a change rebuilds with the pieces.
   assert.equal(wornEquipKeyOf([]), '');
   assert.equal(wornEquipKeyOf([{ kind: 'armor', templateIndex: 102, material: 3 }, { kind: 'clothing', templateIndex: 154 }]),
-    'armor:102:3|clothing:154:');
+    'armor:102:3:|clothing:154::');
+  // MW-D37: a re-dyed garment is a different Morrowind garment, so it is a change.
+  assert.notEqual(
+    wornEquipKeyOf([{ kind: 'clothing', templateIndex: 165, dye: 2 }]),
+    wornEquipKeyOf([{ kind: 'clothing', templateIndex: 165, dye: 9 }]),
+    'a re-dye must rebuild');
   assert.notEqual(wornEquipKeyOf([{ templateIndex: 102, material: 3 }]), wornEquipKeyOf([{ templateIndex: 102, material: 4 }]),
     'a material change must be a key change');
   // The instance: before a build, setWorn is a no-op that returns
@@ -2542,4 +2547,102 @@ test('IG4: follow-camera is the shipped default, riding the reference\'s own glu
   const probe = readFileSync('tools/mwArmProbe.mjs', 'utf8');
   assert.match(probe, /window\.__arm\.setFollowCamera\(false\);/, 'L5c/L5d measure the LAW with the flag off');
   assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped glue');
+});
+
+// ═══ MW-D37: the materials are colour truth; the dye picks the garment ═
+test('MW-D37: the material chains follow Daggerfall\u2019s own palette, and walk in order', async () => {
+  const { DF_TO_MW_MATERIAL, pickWeaponRecord: pick } = await import('../src/formats/mwFirstPerson.js');
+  const { DF_TO_MW_ARMOR_MATERIAL, DF_MATERIAL_RGB, mwArmorRecords } = await import('../src/formats/mwItemMap.js');
+  // colour truth: Elven is silver-white in ART_PAL, so it wears silver
+  // (weapons) / steel (armor) - never green glass.
+  assert.deepEqual(DF_TO_MW_MATERIAL.Elven, ['silver', 'steel']);
+  assert.deepEqual(DF_TO_MW_ARMOR_MATERIAL.Elven, ['steel']);
+  assert.ok(!Object.values(DF_TO_MW_MATERIAL).flat().includes('glass') || DF_TO_MW_MATERIAL.Orcish[0] === 'glass',
+    'glass is orcish\u2019s green and nobody else\u2019s');
+  // every DF material has its measured swatch
+  for (const m of Object.keys(DF_TO_MW_MATERIAL)) assert.ok(DF_MATERIAL_RGB[m], `${m} has no measured colour`);
+  // Adamantium walks the chain: Tribunal's own first, ebony when absent.
+  const W = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false });
+  assert.equal(pick([W('ebony_dagger', 0), W('adamantium_dagger', 0)], 0, 'Adamantium').id, 'adamantium_dagger');
+  assert.equal(pick([W('ebony_dagger', 0), W('iron_dagger', 0)], 0, 'Adamantium').id, 'ebony_dagger');
+  const R = (id) => ({ id, model: 'm.nif', name: '', enchanted: false, parts: [] });
+  assert.equal(mwArmorRecords([R('ebony_cuirass'), R('adamantium_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Adamantium).records[0].id, 'adamantium_cuirass');
+  assert.equal(mwArmorRecords([R('ebony_cuirass'), R('steel_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Adamantium).records[0].id, 'ebony_cuirass');
+  assert.equal(mwArmorRecords([R('steel_cuirass'), R('glass_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Elven).records[0].id, 'steel_cuirass', 'elven armor is steel, not glass');
+});
+
+test('MW-D37: the dye picks the nearest-coloured garment, and falls back to the id sort', () => {
+  const C = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false, parts: [] });
+  const clothes = [C('common_shirt_01', 2), C('common_shirt_02', 2), C('common_shirt_03', 2)];
+  const colours = { common_shirt_01: [120, 120, 130], common_shirt_02: [140, 40, 20], common_shirt_03: [70, 110, 160] };
+  const colourOf = (c) => colours[c.id] ?? null;
+  // Red (dye 2, #832c10) -> the red shirt; Blue (dye 0, #4d6f9b) -> the blue one.
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 2, colourOf }).record.id, 'common_shirt_02');
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 0, colourOf }).record.id, 'common_shirt_03');
+  assert.match(mwClothingRecord(clothes, 'Short Shirt', { dye: 2, colourOf }).note, /resolved by dye/);
+  // no sampler: the id sort, as before; a sampler that measures nothing: the same.
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 2 }).record.id, 'common_shirt_01');
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 2, colourOf: () => null }).record.id, 'common_shirt_01');
+  // the composer hands the piece's dye through.
+  const bodyPool = [{ id: 'b_s2', model: 'm2.nif' }];
+  const withParts = clothes.map((c) => ({ ...c, parts: [{ part: 3, male: c.id === 'common_shirt_02' ? 'b_s2' : 'b_none', female: null }] }));
+  const w = composeWornArmor({ pieces: [{ kind: 'clothing', templateIndex: 165, name: 'Short Shirt', dye: 2 }], armors: [], clothes: withParts, bodyPool, female: false, colourOf });
+  assert.deepEqual(w.adds.map((a) => a.recordId), ['b_s2'], 'the red shirt\u2019s own part must dress');
+  // the report carries both swatches per row
+  const rep = mwItemReport([], { clothes: withParts, colourOf, weapons: [], pickWeapon: () => null });
+  const red = rep.find((r) => r.item === 'Red Short Shirt');
+  assert.equal(red.dfColour, '#832c10');
+  assert.equal(red.mwColour, '#8c2814');
+});
+
+// ═══ MW-D38: the item icons are the Morrowind ground meshes ═════════
+test('MW-D38: the weapon\u2019s material is READ - a daedric sword is not the type\u2019s first record', async () => {
+  const { fpWeaponKey } = await import('../src/combat/fpArm.js');
+  // the field no item ever carried is gone; itemInfo's materialName is the door
+  const iron = { group: 'Weapons', templateIndex: 115, material: 0 };
+  const daedric = { group: 'Weapons', templateIndex: 115, material: 9 };
+  assert.notEqual(fpWeaponKey(iron, false), fpWeaponKey(daedric, false), 'two materials of one type must be two keys');
+  assert.match(fpWeaponKey(daedric, false), /:Daedric:/);
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /pickWeaponRecord\(allWeapons, mwType, weapon \? materialName\(weapon\) : null\)/,
+    'the hand\u2019s weapon is not resolved by its material');
+  const code = arm.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.ok(!/weapon\.materialName|item\.materialName/.test(code), 'the phantom field is still read somewhere');
+});
+
+test('MW-D38: iconFrame fits every corner of the bounds under a three-quarter ortho', async () => {
+  const { iconFrame } = await import('../src/combat/fpArm.js');
+  const b = { minX: -1, minY: -0.1, minZ: -0.3, maxX: 1, maxY: 0.1, maxZ: 0.3 };   // a sword lying flat
+  const f = iconFrame(b);
+  assert.ok(f.view && f.proj && f.eye, 'a frame has a view, a projection and an eye');
+  // every corner projects inside the clip box
+  const { multiply, transformPoint } = await import('../src/world/mat4.js');
+  const pv = multiply(f.proj, f.view);
+  for (const x of [b.minX, b.maxX]) for (const y of [b.minY, b.maxY]) for (const z of [b.minZ, b.maxZ]) {
+    const p = transformPoint(pv, x, y, z);
+    assert.ok(Math.abs(p[0]) <= 1 && Math.abs(p[1]) <= 1, `corner ${x},${y},${z} projects outside the icon (${p[0].toFixed(2)}, ${p[1].toFixed(2)})`);
+  }
+  // and not wastefully small: the longest extent nearly fills one axis
+  let maxAbs = 0;
+  for (const x of [b.minX, b.maxX]) for (const y of [b.minY, b.maxY]) for (const z of [b.minZ, b.maxZ]) {
+    const p = transformPoint(pv, x, y, z);
+    maxAbs = Math.max(maxAbs, Math.abs(p[0]), Math.abs(p[1]));
+  }
+  assert.ok(maxAbs > 0.8, `the icon leaves too much air (${maxAbs.toFixed(2)})`);
+  // the eye looks from above and in front: positive y and z components.
+  assert.ok(f.eye[1] > 0 && f.eye[2] > 0);
+});
+
+test('MW-D38: itemIcon is null without a build; the pack takes the model icon first and the classic second', () => {
+  const arm = createFpArm();
+  assert.equal(arm.itemIcon({ group: 'Weapons', templateIndex: 115, material: 0 }), null);
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| \(line\.image/, 'the tile does not try the model icon first');
+  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| \(line\.image/, 'the detail does not try the model icon first');
+  assert.match(pack, /item,   \/\/ MW-D38/, 'the line no longer carries its item');
+  const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
+  assert.ok(!/itemIcon|modelIconUrl/.test(classic), 'the classic inventory must not know the model icons exist');
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /const catalog = \{ archives, parts, armors, clothes, weapons: allWeapons, gen \};/, 'the build keeps no catalog for the icons');
+  assert.match(src, /finally \{ releaseGpu\(mesh\); \}/, 'the icon mesh must leave the GPU');
 });

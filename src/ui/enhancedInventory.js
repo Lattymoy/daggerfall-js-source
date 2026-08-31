@@ -272,6 +272,7 @@ export function itemLine(item, identity = undefined) {
   // it replaced went away with it.
   const t = templateByIndex(item.templateIndex);
   return {
+    item,   // MW-D38: the icon door resolves the item itself
     name: item.name ?? t?.name ?? 'Unknown',
     weight: itemWeight(item),
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
@@ -664,6 +665,24 @@ function modelFigureUrl() {
   _figureCache = { key, url };
   return url;
 }
+/** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
+ *  The rig caches the pixels per record; this caches the encoding. */
+const _iconUrls = new Map();
+function modelIconUrl(item, size) {
+  const armMod = deps.fpArm;
+  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
+  let img = null;
+  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
+  if (!img || !img.width) return null;
+  if (_iconUrls.has(img)) return _iconUrls.get(img);
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
+  const url = cv.toDataURL('image/png');
+  _iconUrls.set(img, url);
+  return url;
+}
+
 /** Drag left/right to turn the figure; a tap does nothing (display only). */
 function attachFigureTurn(img) {
   let down = null;
@@ -941,9 +960,13 @@ function characterCol() {
  * record lands the whole screen repaints and the letters give way.
  */
 function itemTile(line) {
-  const src = line.image
-    ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
-    : null;
+  // MW-D38: the Morrowind ground mesh stands in for the sprite when a
+  // body is built and the item resolves through the one map; the
+  // classic icon stands otherwise. Enhanced only, like everything here.
+  const src = modelIconUrl(line.item, 96)
+    || (line.image
+      ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
+      : null);
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');
@@ -1145,9 +1168,10 @@ function detailCol() {
   const c = el('div', 'card');
   // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
-  const big = line.image
-    ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
-    : null;
+  const big = modelIconUrl(line.item, 192)
+    || (line.image
+      ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
+      : null);
   if (big) {
     const fig = el('div', 'bigicon');
     const img = el('img');

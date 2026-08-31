@@ -47,6 +47,7 @@ import {
 import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
+import { flattenNif } from '../formats/mwNifMesh.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
   armReport, armMeshPaths, bodyParts,
@@ -68,7 +69,8 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { raceArt } from '../systems/races.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
-import { composeWornArmor, shadowSkinRows, fpWornAdds } from '../formats/mwItemMap.js';
+import { materialName } from '../systems/itemInfo.js';
+import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
@@ -464,6 +466,56 @@ const TEXTURE_CACHE = new Map();
 /** AUDIT 32 F2: the face match per identity per data generation. */
 const FACE_MATCH_CACHE = new Map();
 
+/** MW-D37: the mean colour of a CLOT record's worn texture (its first
+ *  part reference's BODY mesh, male side) - what the dye-aware garment
+ *  pick compares against Daggerfall's dye band. Memoised per data
+ *  generation; null when nothing measures. */
+const CLOT_COLOUR_CACHE = new Map();
+async function clothingColourSampler(clothes, parts, archives, gen) {
+  const bodyById = new Map((parts ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
+  const colours = new Map();
+  for (const c of clothes ?? []) {
+    const key = `${gen}:${c.id}`;
+    if (CLOT_COLOUR_CACHE.has(key)) { colours.set(c.id, CLOT_COLOUR_CACHE.get(key)); continue; }
+    const ref = (c.parts ?? []).find((r) => r.male || r.female);
+    const body = ref ? bodyById.get(ref.male || ref.female) : null;
+    let rgb = null;
+    if (body) {
+      const f = await measurePart(body, archives, 'hair');   // alpha-weighted texture mean
+      if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
+    }
+    CLOT_COLOUR_CACHE.set(key, rgb);
+    colours.set(c.id, rgb);
+  }
+  return (rec) => colours.get(rec.id) ?? null;
+}
+
+/** MW-D38: the icon cache, per data generation / record / size / dye. */
+const ITEM_ICON_CACHE = new Map();
+
+/** MW-D38: frame a mesh's bounds for the icon camera: a three-quarter
+ *  view from above-front-right, the ortho fitted to the projected
+ *  corners with a little air. Pure; pinned. */
+export function iconFrame(bounds, { air = 1.12 } = {}) {
+  const cx = (bounds.minX + bounds.maxX) / 2; const cy = (bounds.minY + bounds.maxY) / 2; const cz = (bounds.minZ + bounds.maxZ) / 2;
+  const dir = [0.55, 0.65, 0.85];
+  const dl = Math.hypot(...dir);
+  const d = dir.map((v) => v / dl);
+  const span = Math.hypot(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, bounds.maxZ - bounds.minZ) || 1;
+  const eye = [cx + d[0] * span * 2, cy + d[1] * span * 2, cz + d[2] * span * 2];
+  const view = lookAt(eye, [cx, cy, cz], [0, 1, 0]);
+  // project the eight corners into view space; the ortho half-extents
+  // are the largest |x| and |y| seen, with air.
+  let hw = 0; let hh = 0;
+  for (const x of [bounds.minX, bounds.maxX]) for (const y of [bounds.minY, bounds.maxY]) for (const z of [bounds.minZ, bounds.maxZ]) {
+    const p = transformPoint(view, x, y, z);
+    hw = Math.max(hw, Math.abs(p[0])); hh = Math.max(hh, Math.abs(p[1]));
+  }
+  const half = Math.max(hw, hh) * air || 1;
+  return { view, proj: ortho(half, half, 0.1, span * 8), eye };
+}
+
+
 /** MW-D35: MEASURE ONE MORROWIND BODY PART - its base texture's level-0
  *  RGBA and its mesh height - from the archives. Null-honest at every
  *  step; the matcher names the ones that could not be measured. */
@@ -547,11 +599,20 @@ export function wornVerdicts(pieces, worn) {
 }
 
 export function wornEquipKeyOf(pieces) {
-  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}`).join('|');
+  // MW-D37: the dye is part of a garment's identity now - a re-dyed
+  // shirt resolves to a different MW shirt, so it is a change.
+  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}:${p.dye ?? ''}`).join('|');
 }
 
 export function fpWeaponKey(item, hasAmmo) {
-  return `${dfWeaponToMw(item, WEAPONS)}:${(item && item.materialName) || ''}:${hasAmmo ? 1 : 0}`;
+  // MW-D38: the MATERIAL IS READ, at last. `item.materialName` was a
+  // field no item ever carried - the name lives behind itemInfo's
+  // materialName(item) - so every weapon of a type keyed the same and
+  // resolved to the type's first record: a daedric longsword drew as
+  // the id-sorted first longsword, and swapping it for an iron one was
+  // not a change. Found by MW-D37's question - "do the textures map to
+  // the materials" - because no weapon's ever had.
+  return `${dfWeaponToMw(item, WEAPONS)}:${item ? materialName(item) : ''}:${hasAmmo ? 1 : 0}`;
 }
 
 /**
@@ -585,7 +646,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType !== MW_WEAPON_TYPE.None) {
-    const rec = pickWeaponRecord(allWeapons, mwType, weapon && weapon.materialName);
+    const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);   // MW-D38
     if (!rec) {
       notes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
     } else {
@@ -902,7 +963,10 @@ export async function buildFpArm({
     // MW-D31: ONE COMPOSITION for both rigs. The worn arbitration runs
     // here, once, and the third person receives the verdicts instead
     // of re-arguing them - one seam, one law, two views.
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female });
+    // MW-D37: the garments' measured colours, so the dye can choose.
+    const colourOf = (armor ?? []).some((p) => p.kind === 'clothing')
+      ? await clothingColourSampler(clothes, parts, archives, gen) : null;
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
     // AUDIT 32 F2: memoised per identity per data generation - a
@@ -1003,6 +1067,10 @@ export async function buildFpArm({
     // a mesh wants is not knowable until the mesh is parsed, and parsing
     // twice to keep the release where it was would cost seconds.
     const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
+    // MW-D38: THE CATALOG the item icons resolve against - the same
+    // archives and records this build used, kept on the result so an
+    // icon never re-walks an esm.
+    const catalog = { archives, parts, armors, clothes, weapons: allWeapons, gen };
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
@@ -1120,6 +1188,7 @@ export async function buildFpArm({
       // dressed, or the reason it kept its sprite.
       worn: wornVerdicts(armor ?? [], worn),
       face: faceMatch,
+      catalog,
       // MW-D14: every source, in PUSH order, each with its own keys AND
       // its own tracks - because the source that wins a group is the one
       // whose tracks must pose it.
@@ -1429,6 +1498,45 @@ export function createFpArm() {
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
+
+  /** MW-D38: one ground mesh, textured, rendered to an icon-sized image. */
+  function renderGroundMesh(nifBytes, archives, gen, size) {
+    let batches;
+    try { batches = flattenNif(parseNif(nifBytes)); } catch { return null; }
+    const pieces = batches.filter((b) => b.positions && b.indices).map((b) => ({ ...b, slot: 'item', mirrored: false }));
+    if (!pieces.length) return null;
+    // the pass frame: NIF Z-up tipped to Y-up, in metres
+    const u = 1 / MW_UNITS_PER_METER;
+    const model = multiply(trs(0, 0, 0, 0, 0, 0, u, u, u), NIF_TO_PASS);
+    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (const p of pieces) {
+      for (let i = 0; i < p.positions.length; i += 3) {
+        const q = transformPoint(model, p.positions[i], p.positions[i + 1], p.positions[i + 2]);
+        if (q[0] < minX) minX = q[0]; if (q[0] > maxX) maxX = q[0];
+        if (q[1] < minY) minY = q[1]; if (q[1] > maxY) maxY = q[1];
+        if (q[2] < minZ) minZ = q[2]; if (q[2] > maxZ) maxZ = q[2];
+      }
+    }
+    if (!(maxX > minX)) return null;
+    const packed = packFpArm(pieces);
+    const mesh = renderer.createCharacterMesh(packed.packed, { uv: true });
+    mesh.ranges = packed.ranges;
+    const textures = collectArmTextures(pieces, archives, gen);
+    for (const r of mesh.ranges) {
+      if (!r.textureFile) continue;
+      const entry = textures.get(r.textureFile);
+      if (!entry) continue;
+      const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+      r.alphaCut = r.piece.material && r.piece.material.alphaTest ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+    }
+    const { view, proj } = iconFrame({ minX, minY, minZ, maxX, maxY, maxZ });
+    const px = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(8, size | 0));
+    let img = null;
+    try { img = renderer.renderCharacterSpriteImage(mesh, model, proj, view, px, px); }
+    finally { releaseGpu(mesh); }
+    return img;
+  }
   function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; }
   /** Pack the posed third-person pieces and put them on the GPU - the
    *  ONE upload both the wheel (update) and the inventory figure use.
@@ -2455,6 +2563,47 @@ export function createFpArm() {
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
       return true;
+    },
+
+    /** MW-D38: THE ITEM ICON - a Daggerfall item's Morrowind GROUND
+     *  mesh, the thing Morrowind itself draws for an icon and a dropped
+     *  item, rendered under a three-quarter ortho camera as an image.
+     *  Resolves through the ONE item map (weapon type + material, armor
+     *  template + material, garment name + dye), so an icon and the
+     *  worn piece are the same record. Synchronous: the catalog is the
+     *  build's, the parse and the decode are in-memory, the render is
+     *  one sprite pass - and the pack can ask per tile without an
+     *  onReady dance. Null when no build stands or nothing resolves:
+     *  the classic icon stands (never traps). Cached per record, size
+     *  and dye per data generation. */
+    itemIcon(item, { size = 96 } = {}) {
+      if (!(built && built.ok && built.catalog && renderer) || !item) return null;
+      const cat = built.catalog;
+      let rec = null; let dye = '';
+      try {
+        if (item.group === 'Weapons') {
+          const mwType = dfWeaponToMw(item, WEAPONS);
+          if (mwType !== MW_WEAPON_TYPE.None) rec = pickWeaponRecord(cat.weapons, mwType, materialName(item));
+        } else if (item.group === 'Armor') {
+          rec = mwArmorRecords(cat.armors, item.templateIndex, item.material ?? 0).records[0] ?? null;
+        } else if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+          dye = String(item.dye ?? 0);
+          const key = (c) => `${cat.gen}:${c.id}`;
+          const colourOf = (c) => CLOT_COLOUR_CACHE.get(key(c)) ?? null;
+          rec = mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf }).record;
+        }
+      } catch { rec = null; }
+      if (!rec || !rec.model) return null;
+      const ckey = `${cat.gen}:${rec.id}:${size}:${dye}`;
+      if (ITEM_ICON_CACHE.has(ckey)) return ITEM_ICON_CACHE.get(ckey);
+      let img = null;
+      try {
+        const path = `meshes/${rec.model}`;
+        const arc = cat.archives.find((a) => a.has(path));
+        if (arc) img = renderGroundMesh(arc.get(path).slice(), cat.archives, cat.gen, size);
+      } catch { img = null; }
+      ITEM_ICON_CACHE.set(ckey, img);
+      return img;
     },
 
     /** MW-D36: THE FIGURE - the third-person body as an image for the
