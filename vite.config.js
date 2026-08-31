@@ -131,8 +131,11 @@ export default defineConfig({
         // pass before it goes anywhere near the game.
         mwViewer: 'mw-viewer.html',
         // The ground + 3D grass prototype (Mac asked to play with it).
-        // A prototype page must register here or it 404s on gh-pages,
-        // and its textures ride public/ for the same reason.
+        // A prototype page must register here or it 404s on gh-pages.
+        // Its textures are NOT shipped: they are derived from
+        // Daggerfall's own tiles, and doctrine forbids a raster of game
+        // data in the repo - correctly. The page generates its ground
+        // procedurally instead, which is ours.
         grassProto: 'grass-proto.html',
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
