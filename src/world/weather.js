@@ -40,6 +40,22 @@ export const FOG_SETTINGS = Object.freeze({
   dungeon: { mode: 'exp', density: 0.005, start: 0, end: 0, excludeSky: false },
 });
 
+/** EV4: the DISTANCE HAZE follows the streamed horizon. DFU's linear
+ *  0..2400 fog is tuned for TerrainDistance 3; a raised Land View
+ *  Distance streamed more land and then painted every extra unit of it
+ *  fully fogged, so the setting bought nothing to look at. The scale is
+ *  end * (terrainDistance / 3) - 2400 stays the TD-3 base VERBATIM, a
+ *  lower distance never tightens below DFU's own number (DFU doesn't),
+ *  and only the LINEAR rows move: the exp rows are weather (rain, snow,
+ *  heavy fog), and weather is atmosphere, not draw distance. The table
+ *  above stays byte-identical; this returns the SAME frozen object
+ *  whenever the scale is 1, so the default path is untouched down to
+ *  identity. */
+export function scaleFogForDistance(fog, terrainDistance) {
+  if (fog.mode !== 'linear' || !(terrainDistance > 3)) return fog;
+  return { ...fog, end: fog.end * (terrainDistance / 3) };
+}
+
 const SNOW_FREE_CLIMATES = new Set([224, 225, 227, 229]);
 
 export function isSnowFreeClimate(climateIndex) {
