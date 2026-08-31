@@ -615,7 +615,18 @@ The six the settings sweep handed to the UI arc, taken one at a time:
   half-started: a scroller wired for 16 cells in one window and 4 in
   another is the dangling shape this session has spent its time
   removing.
-- Remaining after it: `EnableModernConversationStyleInTalkWindow`.
+- **UI6 CLOSED: `GUI/EnableModernConversationStyleInTalkWindow`**
+  (DaggerfallTalkWindow :53-60 and the three label arms). Smaller text
+  (0.8), a narrower wrap (0.75 of the panel) and a per-speaker
+  background block behind each line. Found while building it:
+  `shadowText` had no `scale` option, so the first cut passed one that
+  would have been silently ignored - it takes a real one now, with the
+  shadow offset staying one native pixel because DFU's ShadowPosition
+  is in the label's own space.
+
+With UI6 the six UI-only keys are DONE: UI3 and UI4 closed, UI6 closed,
+DimAlphaStrength refuted, HideLoginName not applicable, and UI5
+(`EnableEnhancedItemLists`) scoped above as the one real slice left.
 
 ### Refuted on the way
 

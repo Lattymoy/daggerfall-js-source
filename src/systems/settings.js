@@ -157,6 +157,9 @@ export const LIVE = Object.freeze({
   // UI4: the item info panel is only ADDED when this is on
   // (DaggerfallInventoryWindow :303-307).
   'GUI/EnableInventoryInfoPanel': 'src/ui/nativeInventory.js',
+  // UI6: DaggerfallTalkWindow's modern conversation style - the
+  // greeting, questions and answers smaller, narrower and blocked.
+  'GUI/EnableModernConversationStyleInTalkWindow': 'src/ui/nativeTalk.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

@@ -395,8 +395,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
 - `src/ui/nativeInventory.js:303` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeTalk.js:273` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:298` - B5-6: the four pages that were INTERIM no-ops. Each falls back
+- `src/ui/nativeTalk.js:285` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:310` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:65` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings

@@ -128,7 +128,7 @@ test('audit26 F164: the stat colours are DFU\'s three, drained below and increas
 // ---------------------------------------------------------------
 test('audit26 F165: the question hugs the right margin, the answer the left', () => {
   const s = src('src/ui/nativeTalk.js');
-  assert.match(s, /const x = e\.kind === 'question'\s*\n\s*\? R\.conversation\[0\] \+ R\.conversation\[2\] - measureText\(font\.fnt, text\)\s*\n\s*: R\.conversation\[0\];/);
+  assert.match(s, /const x = e\.kind === 'question'\s*\n\s*\? R\.conversation\[0\] \+ R\.conversation\[2\] - tw\s*\n\s*: R\.conversation\[0\];/);
   // each ROW is offset by its own width, not the entry's widest - DFU
   // sets HorizontalTextAlignment Left on both labels, so only the
   // label's placement differs.
