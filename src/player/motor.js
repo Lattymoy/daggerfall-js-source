@@ -119,6 +119,7 @@ export const HEIGHT_TIMER_MEDIUM = 0.25;   // AUDIT 23 (motor-2): the forced swi
 // resolve.
 import { ClimbingState, climbingSpeed } from './climbing.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
+import { TRANSPORT_MODES, isRiding, rideBaseFor, canRunUnlessRiding } from '../systems/transport.js';   // TR1: the mount's speed, run and climb laws
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -134,9 +135,22 @@ export function walkSpeed(liveSpeed) {
  *  - x (1.35 + Running / 200). Decoupled from walkSpeed in the F1
  *  audit fix (the old walk-x-mult shape only matched DFU because
  *  walk lacked its drag). */
-export function runSpeed(liveSpeed, runningSkill, crouching = false) {
-  const base = (liveSpeed + (crouching ? DF_CROUCH_BASE : DF_WALK_BASE)) / CLASSIC_TO_UNITY_RATIO;
+export function runSpeed(liveSpeed, runningSkill, crouching = false, rideBase = null) {
+  // TR1 (GetRunSpeed :402-408): RIDING HAS NO RUN BASE OF ITS OWN -
+  // `baseRunSpeed = baseSpeed`, the ride speed, and the crouch arm is
+  // an `else if` below it. The multiplier still applies, so a canter
+  // is the ride speed times (1.35 + Running/200).
+  const base = rideBase != null
+    ? (liveSpeed + rideBase) / CLASSIC_TO_UNITY_RATIO
+    : (liveSpeed + (crouching ? DF_CROUCH_BASE : DF_WALK_BASE)) / CLASSIC_TO_UNITY_RATIO;
   return base * (1.35 + runningSkill / 200);
+}
+
+/** GetBaseSpeed's riding arm (:156-160): the ride base UNDRAGGED -
+ *  the walk drag is walkSpeed's own term and this arm does not take
+ *  it, exactly as the crouch arm above it does not. */
+export function rideSpeed(liveSpeed, rideBase) {
+  return (liveSpeed + rideBase) / CLASSIC_TO_UNITY_RATIO;
 }
 
 export function crouchSpeed(liveSpeed) {
@@ -260,6 +274,7 @@ export class PlayerMotor {
     this.moveSpeed = 0;
     this.isSneaking = false;
     this.bobOffset = [0, 0, 0];   // AUDIT 28 W10: HeadBobber's eye offset, world space
+    this.transportMode = TRANSPORT_MODES.Foot;   // TR1: TransportManager.TransportMode - the host owns it
     // AUDIT 28 W5 (PlayerSpeedChanger.CaptureInputSpeedAdjustment
     // :75-78): with Controls/ToggleSneak the sneak MODE is
     // `sneakingMode ^= ActionStarted(Sneak)` - a press flips it - and
@@ -278,6 +293,10 @@ export class PlayerMotor {
     // stale value, verbatim.
     this.speed = walkSpeed(this.stats.speed);
   }
+
+  /** PlayerMotor.IsRiding (:138) - the one question every consumer
+   *  asks of the transport mode. */
+  get riding() { return isRiding(this.transportMode); }
 
   get eye() {
     // AUDIT 28 W10: HeadBobber's camera LOCAL offset rides the eye - every
@@ -514,7 +533,7 @@ export class PlayerMotor {
       falling: this.falling,
       grounded: this.grounded,
       levitating: this.levitating,
-      riding: false,   // TransportManager.IsOnFoot - the transport arc pends
+      riding: isRiding(this.transportMode),   // TR1: ClimbingMotor :398 - no climbing from a saddle
       touchingSides: probe.touching,
       horizontalPos: [this.pos[0], this.pos[2]],
       // ":318-320: ground directly below too close for climbing" -
@@ -677,7 +696,8 @@ export class PlayerMotor {
     // only while GROUNDED - "you can't switch running on/off while in
     // mid air" - and running beats sneaking.
     if (this.grounded) {
-      this.isRunning = !!input.run;
+      // TR1: CanRunUnlessRiding (:137-140) - a mount does not sprint.
+      this.isRunning = !!input.run && canRunUnlessRiding(this.transportMode);
       this.isSneaking = !this.isRunning && this._sneakMode;
     }
     // F-C3 (self-audit 3, ApplyInputSpeedAdjustment :121-125): running
@@ -693,8 +713,13 @@ export class PlayerMotor {
     // subtracts one classic speed unit (P15); none apply while
     // swimming (above).
     let speed;
+    // TR1: the mode's base, when there is one. GetBaseSpeed tests
+    // CROUCH first and riding second, so the order here is DFU's.
+    const rideBase = (!this.crouching && isRiding(this.transportMode)) ? rideBaseFor(this.transportMode) : null;
     if (this.isRunning) {
-      speed = runSpeed(this.stats.speed, this.stats.running, this.crouching);
+      speed = runSpeed(this.stats.speed, this.stats.running, this.crouching, rideBase);
+    } else if (rideBase != null) {
+      speed = rideSpeed(this.stats.speed, rideBase);
     } else {
       speed = this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed);
       if (this.isSneaking) speed = sneakSpeed(speed);

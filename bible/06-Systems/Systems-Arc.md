@@ -5173,3 +5173,50 @@ should be re-read when its dependencies land; BG1 adds that a flag
 covering more than one claim should be *split* when it is written, or
 the first reader to check the hardest claim will file the whole thing as
 blocked.
+
+## TR - THE TRANSPORT ARC (2026-08-31, open)
+
+Mac: "let's work on the horses and carts". The port has carried the CART
+as an inventory fact since the W-slice - the wagon's 750kg, the
+dungeon-exit prompt, the transfer guards - and the HORSE as an item
+nobody could sit on. `motor.js:517` passed `riding: false` into the
+climbing gate with the note "the transport arc pends", and
+`DaggerfallTransportWindow` is the last of DFU's 60 real windows the
+port does not have (UI-Arc.md's table).
+
+DFU's arc, and how it splits:
+
+| Slice | What | State |
+|---|---|---|
+| **TR1** | TransportManager's MODE half + every law that reads it | **CLOSED** |
+| TR2 | the riding sprite and its audio: MRED00I0/MRED01I0.CFA, 4 frames at 0.125s, bottom-centre at ScaleFactorX 0.8, the clop/cart loops with their half-speed volume and running pitch, the neigh on Random.Range(2,40) | open |
+| TR3 | DaggerfallTransportWindow: the foot/horse/cart/ship picker with its disabled rows, and the `dfuiOpenTransportWindow` gate - indoors refuses with a HUD line, airborne is silently ignored | open |
+| TR4 | the SHIP: DaggerfallBankManager's ship ownership and coords, the board/disembark reposition, the travel map's ship arm | open, and it is a BANK-arc dependency as much as a transport one |
+
+### TR1 CLOSED: the mode
+
+`systems/transport.js` is TransportManager's mode half - the four modes,
+`horseItemIndexes` seeded with Transportation.Horse, HasHorse/HasCart,
+ToggleMount (mounted dismounts; on foot the HORSE is preferred and the
+cart is the fallback; with neither the mode is UNCHANGED, because there
+is no else arm) and the transition dismount (building and dungeon
+interiors only - DFU has no arm for LEAVING one, so you walk out on
+foot).
+
+Everything that reads the mode was already waiting for it:
+`PlayerSpeedChanger`'s two ride bases (dfRideBase walk+225, dfCartBase
+walk+100, neither taking walkSpeed's drag term), GetRunSpeed's riding
+arm - **a canter has no run base of its own**, it is the ride speed
+times the Running multiplier - CanRunUnlessRiding, PlayerEntity's
+"no Running tally from a saddle", ClimbingMotor's "no climbing from a
+saddle", and HeadBobber's Horse style, which AUDIT 28 W10 ported and
+then passed `riding: false` into. The motor carries `transportMode` and
+answers `riding`; the hosts pass it on.
+
+One DFU order kept rather than tidied: GetBaseSpeed tests CROUCH before
+riding, so a crouched rider takes the crouch base. It cannot happen in
+DFU (PlayerHeightChanger refuses to crouch while mounted, which is TR2's
+neighbour) but the order is the law and the port keeps it.
+
+**Nothing mounts yet** - TR3 owns the door. TR1 is the system under it,
+and every one of its laws is live the moment a mode is set.
