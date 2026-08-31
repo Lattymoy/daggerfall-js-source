@@ -2363,6 +2363,44 @@ export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', cli
  *  time the arm moves, which cancels out exactly the motion this stage
  *  exists to show - the arm would appear to hold still while its numbers
  *  changed underneath. Sample, union, fix the mapper once. */
+/** PX27: the sample times to measure an arm's REACH over - every clip
+ *  every source carries, not the idle alone. A clip is a start/stop
+ *  pair in a source's text keys; each is sampled at a fixed count, so
+ *  the cost is bounded by the data's own clip count and a rig with one
+ *  animation costs exactly what it did before. Falls back to the idle's
+ *  own span when a source carries no readable pairs, so a rig this
+ *  cannot read is measured no worse than it was. */
+export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
+  const spans = [];
+  for (const so of sources ?? []) {
+    const keys = so?.keys;
+    if (!keys || typeof keys.forEach !== 'function') continue;
+    const starts = new Map();
+    keys.forEach((time, name) => {
+      const n = String(name).toLowerCase();
+      const i = n.lastIndexOf(': ');
+      if (i < 0) return;
+      const group = n.slice(0, i);
+      const word = n.slice(i + 2);
+      if (word.endsWith('start')) starts.set(`${group}|${word.slice(0, -5)}`, time);
+      else if (word.endsWith('stop')) {
+        const from = starts.get(`${group}|${word.slice(0, -4)}`);
+        if (from != null && time > from) spans.push([from, time]);
+      }
+    });
+  }
+  if (!spans.length) {
+    const a = idleState?.startTime ?? 0;
+    const b = idleState?.stopTime ?? a;
+    return Array.from({ length: 25 }, (_, i) => a + ((b - a) * i) / 24);
+  }
+  const out = [];
+  for (const [a, b] of spans) {
+    for (let i = 0; i < perClip; i++) out.push(a + ((b - a) * i) / (perClip - 1));
+  }
+  return out;
+}
+
 export function clipUnionBounds(assembly, poseAt, times) {
   let acc = null;
   for (const t of times ?? []) {

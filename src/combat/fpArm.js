@@ -49,7 +49,7 @@ import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import {
-  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
+  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, clipSweepTimes, bindPartsInto,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
@@ -1200,9 +1200,19 @@ export async function buildFpArm({
     const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
     for (const so of sources) so.accumRoot = accumRoot;
     const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
+    // PX27 (Mac: the full arms do not show on a swing or a bow): THE
+    // REACH IS SWEPT OVER EVERY CLIP THE ARM WILL EVER PLAY, not the
+    // idle alone. `reach` sets the fp camera's near and far planes
+    // (reach/200 and reach*4), and the idle is the SHORTEST pose the
+    // arm ever holds - an attack extends it forward, a bow draw pulls
+    // it back past the camera, and either can leave a box measured on
+    // a resting hand. The far plane then cut the swing off mid-arm:
+    // "your full arms don't show", exactly. Sweeping every source's
+    // every clip costs one build-time pass over poses already
+    // computable, and cannot under-measure a pose the rig can reach.
+    const sweep = clipSweepTimes(sources, idleCheck);
+    const union = clipUnionBounds(arm, poseAt, sweep);
     const c = idleCheck;
-    const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-    const union = clipUnionBounds(arm, poseAt, times);
     poseAt(c.startTime);
 
     // RULE 54. No third fallback, and no invented camera: a rig with
@@ -1415,6 +1425,7 @@ export function createFpArm() {
   let built = null;
   const listeners = new Set();   // MW-D36
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
+  let pendingWeapon = null;      // PX26: the hand that arrived mid-build
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -2112,8 +2123,9 @@ export function createFpArm() {
         // change, asynchronously, and a panel drawn before the rebuild
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
-        // PX25: the table that arrived mid-build goes now.
+        // PX25/PX26: the table and the hand that arrived mid-build go now.
         if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
+        if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; this.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
       }
     },
 
@@ -2246,9 +2258,17 @@ export function createFpArm() {
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
     setWeapon(item, { hasAmmo = false } = {}) {
-      if (!built || !built.ok || busy) return false;
+      if (!built || !built.ok) return false;
       const key = fpWeaponKey(item, hasAmmo);
       if (key === wornKey) return false;
+      // PX26 F3: A SWAP DURING A BUILD IS NOT DROPPED, the same law
+      // PX25 gave the worn table. The pack now hands the hand over on
+      // every action, and a sword swapped while the body is rebuilding
+      // for the cloak before it would have been lost with the key
+      // unmoved - the wheel would show the old blade until something
+      // else changed. The latest hand waits and goes when the build
+      // settles.
+      if (busy) { pendingWeapon = { item, hasAmmo }; return false; }
       busy = true;
       const token = built;
       return (async () => {
@@ -2289,7 +2309,7 @@ export function createFpArm() {
           });
           const c = token.clip;
           const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));
+          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));   // PX27: `times` here is the swap's own sweep
           poseAt(c.startTime);
           if (token.weapon) token.weapon.side = weaponRestSide(arm, token.weapon.bone);
           if (token.arrow) token.arrow.side = weaponRestSide(arm, token.arrow.bone);
@@ -2897,10 +2917,16 @@ export function createFpArm() {
       if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
       const t = thirdBuilt;
       uploadThirdMesh(t);
-      // the figure shows what the body wears, sheathed or drawn, exactly
-      // as the wheel's rule 57 does
+      // PX26 F1 (Mac: weapons and shields are not on the menu sprite):
+      // THE FIGURE IS A PORTRAIT, NOT THE WORLD. The wheel hides the
+      // weapon when it is sheathed - rule 57, right for a body standing
+      // in the world - and the inventory panel inherited that, so the
+      // sword you just equipped was invisible because you had not drawn
+      // it. A paperdoll shows what you carry. The arrow still follows
+      // its own shoot keys: a nocked arrow on a portrait is a pose, not
+      // an inventory.
       for (const r of thirdMesh.ranges) {
-        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
       }
       const u = 1 / MW_UNITS_PER_METER;

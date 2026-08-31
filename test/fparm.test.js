@@ -2965,3 +2965,66 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   assert.match(hm, /onCastReadySpell\?\.\(sp\);\s+\/\/ QG1: RaiseOnCastReadySpell, before the ready clears/,
     'the cast callback must fire while the spell is still readied');
 });
+
+// ═══ PX26: Mac's four notes ═════════════════════════════════════════
+test('PX26 F4: the interior lane sends the jump-state inputs - without them the jump can never play', async () => {
+  const { jumpAnimState } = await import('../src/formats/mwFirstPerson.js');
+  // the defect, stated as data: a move vector with no grounded/jumping
+  // fields derives "on the ground, no jump" for EVERY frame of a jump,
+  // so refreshJumpAnims is never owed a play and the arm never leaves
+  // the ground. `grounded` defaults TRUE, which is right for a caller
+  // that cannot know - and wrong for a lane that simply forgot to say.
+  assert.deepEqual(jumpAnimState({ priorInAir: false, jumpPlaying: false }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: false, jumping: true, priorInAir: false, jumpPlaying: false }),
+    { jump: 'inair', inJump: true });
+  // every host that drives the rig sends them
+  for (const [host, sites] of [['src/scenes/dungeon.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1]]) {
+    const h = readFileSync(host, 'utf8');
+    const n = (h.match(/grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating/g) || []).length;
+    assert.equal(n, sites, `${host} sends the jump inputs at ${n} of ${sites} sites`);
+  }
+});
+
+test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-build swap is not dropped', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  // F1: the portrait shows the weapon whether or not it is drawn
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1800);
+  assert.match(fig, /if \(r\.slot === 'weapon'\) r\.hidden = false;/, 'a paperdoll shows what you carry, drawn or not');
+  assert.match(fig, /else if \(r\.slot === 'arrow'\) r\.hidden = !arrowShown;/, 'the arrow still follows its shoot keys');
+  // F2: the pack hands the rig the hand as well as the worn table
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /arm\.setWeapon\?\.\(slots\?\.\[EQUIP_SLOTS\.RightHand\] \?\? null,/, 'the pack must hand over the hand while a window is up');
+  assert.match(pack, /hasAmmo: hasDaggerfallArrows\(deps\.entity\.items\)/, 'and the port\u2019s own arrow test, not a second one');
+  // F3: a swap during a build waits, exactly as the worn table does
+  assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo \}; return false; \}/);
+  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; this\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
+});
+
+test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', async () => {
+  const { clipSweepTimes } = await import('../src/formats/mwFirstPerson.js');
+  // Mac's note 1: the full arms do not show on a swing or a bow. `reach`
+  // sets the fp camera's near and far planes (reach/200, reach*4) and
+  // was measured over the IDLE clip only - the shortest pose the arm
+  // ever holds. An attack extends it forward and a bow draw pulls it
+  // back, and either can leave a box measured on a resting hand; the
+  // far plane then cuts the swing off mid-arm.
+  const keys = new Map([
+    ['idle1h: start', 0], ['idle1h: stop', 2],
+    ['weapononehand: chop start', 5], ['weapononehand: chop stop', 6.5],
+    ['bowandarrow: shoot start', 10], ['bowandarrow: shoot stop', 12],
+  ]);
+  const t = clipSweepTimes([{ keys }], { startTime: 0, stopTime: 2 });
+  assert.ok(t.some((x) => x >= 5 && x <= 6.5), 'the swing is never sampled');
+  assert.ok(t.some((x) => x >= 10 && x <= 12), 'the bow draw is never sampled');
+  assert.ok(t.some((x) => x >= 0 && x <= 2), 'the idle is still sampled');
+  // a stop before its start is not a span; a stop with no start is not a span
+  const bad = clipSweepTimes([{ keys: new Map([['g: chop stop', 1], ['g: slash start', 9], ['g: slash stop', 3]]) }], { startTime: 0, stopTime: 1 });
+  assert.equal(bad.length, 25, 'an unreadable source falls back to the idle span, no worse than before');
+  // no sources at all: the idle span, exactly as it was
+  assert.equal(clipSweepTimes([], { startTime: 0, stopTime: 2 }).length, 25);
+  assert.equal(clipSweepTimes(null, null).length, 25);
+  // and the build uses it
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /const sweep = clipSweepTimes\(sources, idleCheck\);\n    const union = clipUnionBounds\(arm, poseAt, sweep\);/,
+    'the build must measure the reach over the sweep');
+});
