@@ -108,6 +108,23 @@ records it; the pins named moved with the fixes.
   eslint (16 stale imports across the two exterior hosts predate EV);
   renderalloc's multiply-allocation pin matches only the old spelling.
 
+## From the field, after the audit
+
+- **F-FIELD1 (crash): the first windmill drawn took the frame loop
+  down** - `TypeError: can't define property "_evTex": Object is not
+  extensible` (Firefox, live site, reported by Mac mid-play). The
+  windmill bake ships its sub-meshes as FROZEN module constants
+  (windmillMesh.js), createMesh reused them by reference, and EV2's
+  sub-mesh texture cache stamps `_evTex`/`_evGen`/... - a strict-mode
+  throw on a frozen object. Neither the audit nor the suite saw it
+  because every drawMesh fixture was a hand-built plain object. FIX:
+  createMesh COPIES the sub-meshes - the renderer stamps
+  renderer-private fields only on objects it OWNS - and the
+  regression test drives the REAL frozen BODY bake through the
+  Proxy-GL stub. The lesson joins the audit's F-DOC lessons: a cache
+  that writes into caller-supplied objects is a latent crash against
+  every producer the tests didn't imagine.
+
 ## What held
 
 The lanes' clean lists are long and worth reading in the arc record's
