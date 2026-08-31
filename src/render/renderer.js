@@ -418,6 +418,27 @@ export const CHAR_PIXEL = 9;
 
 /** The shared character-sprite render target's fixed edge (the pass
  *  clamps pw/ph to this; sprites render into a viewport sub-rect). */
+/** PX23: THE STUDIO. The light state a UI read-back of a character or
+ *  an item is drawn under - a bright even ambient and a key light that
+ *  sits AT the eye (the shader takes uLightDir as the direction TOWARD
+ *  the light; a view matrix's third row is the camera's back vector in
+ *  world space, i.e. toward the eye). No point lights, no indirect:
+ *  nothing from the world the panel happens to be open in. Tunable by
+ *  eye - AMBIENT and KEY are the two dials. */
+export const STUDIO_AMBIENT = 0.6;
+export const STUDIO_KEY = 0.7;
+export function studioLight(view) {
+  const back = [view[2], view[6], view[10]];
+  const bl = Math.hypot(back[0], back[1], back[2]) || 1;
+  return {
+    lightDir: new Float32Array([back[0] / bl, back[1] / bl, back[2] / bl]),
+    ambient: new Float32Array([STUDIO_AMBIENT, STUDIO_AMBIENT, STUDIO_AMBIENT]),
+    sunScale: STUDIO_KEY,
+    sunColor: new Float32Array([1, 1, 1]),
+    pointLights: new Float32Array(0),
+    indirect: new Float32Array([0, 0, 0, 0]),
+  };
+}
 export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (E3d): screenW/CHAR_PIXEL at 1440p ~ 366
 
 /**
@@ -867,9 +888,35 @@ export class Renderer {
    *  inventory's figure panel is DOM, not a world quad, so the body has
    *  to leave the GPU as an image. Y is flipped on the way out (GL rows
    *  run bottom-up); the RT is borrowed and returned exactly as above. */
-  renderCharacterSpriteImage(mesh, modelMatrix, proj, view, pw, ph) {
+  renderCharacterSpriteImage(mesh, modelMatrix, proj, view, pw, ph, { studio = true } = {}) {
     const gl = this.gl;
-    this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
+    // PX23 (Mac: the new sprites and the character display are quite
+    // dark in the inventory): THE IMAGE IS LIT BY A STUDIO, NOT BY THE
+    // WORLD. The sprite pass reads the frame's lighting - a dungeon's
+    // ambient, a night's sun - which is right for a body standing in
+    // that world and wrong for a picture on a UI panel. So the UI
+    // read-back borrows the frame's light state, sets a neutral studio
+    // (a bright even ambient, a full key light from the camera's own
+    // direction, no point lights, no indirect) and returns every value
+    // afterward, the same borrow-and-return the sprite RT already does
+    // for the clear colour.
+    const saved = studio ? {
+      lightDir: this._lightDir, ambient: this._ambient, sunScale: this._sunScale,
+      sunColor: this._sunColor, pointLights: this._pointLights, indirect: this._indirect,
+    } : null;
+    if (studio) {
+      const st = studioLight(view);
+      this._lightDir = st.lightDir; this._ambient = st.ambient; this._sunScale = st.sunScale;
+      this._sunColor = st.sunColor; this._pointLights = st.pointLights; this._indirect = st.indirect;
+    }
+    try {
+      this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
+    } finally {
+      if (saved) {
+        this._lightDir = saved.lightDir; this._ambient = saved.ambient; this._sunScale = saved.sunScale;
+        this._sunColor = saved.sunColor; this._pointLights = saved.pointLights; this._indirect = saved.indirect;
+      }
+    }
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
     const raw = new Uint8Array(pw * ph * 4);
