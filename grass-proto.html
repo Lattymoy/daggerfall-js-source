@@ -53,7 +53,8 @@
   <label>height <input id="height" type="range" min="10" max="80" step="1" value="34"><span class="v" id="vheight"></span></label>
   <label>wind <input id="wind" type="range" min="0" max="200" step="1" value="70"><span class="v" id="vwind"></span></label>
   <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
-  <label>tile px <input id="tile" type="range" min="1" max="8" step="1" value="3"><span class="v" id="vtile"></span></label>
+  <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
+  <label>sun <input id="sun" type="range" min="5" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
   <p class="note">drag to look &middot; W/S to move &middot; G toggles grass &middot; T toggles the new ground</p>
   <p class="note" id="fps"></p>
 </div>
@@ -67,8 +68,8 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, range: 55, tile: 3, grass: true, newGround: true };
-for (const k of ['density', 'height', 'wind', 'range', 'tile']) {
+const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, grass: true, newGround: true };
+for (const k of ['density', 'height', 'wind', 'range', 'tile', 'sun']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
   el.addEventListener('input', sync); sync();
@@ -222,31 +223,93 @@ function grassPixel(u, v) {
     const base = mixc([48, 76, 32], [118, 152, 66], cl(lit.t * 1.15, 0, 1));
     let bc = mixc(base, [152, 146, 84], dry * 0.5);
     bc = sh(bc, 0.78 + tuft * 0.30 + lit.shade * 0.40);
-    return sh(bc, 0.94 + fbm(x * 70, y * 70, P * 70, 2) * 0.14);
+    bc = sh(bc, 0.94 + fbm(x * 70, y * 70, P * 70, 2) * 0.14);
+    // the HEIGHT the normal map is built from: a blade stands, and
+    // stands taller toward its tip
+    return { rgb: bc, h: 0.45 + lit.t * 0.55 + tuft * 0.18 };
   }
-  c = sh(c, 0.62 + (1 - BLADES.shadow(u, v)) * 0.50);
+  const sha = BLADES.shadow(u, v);
+  c = sh(c, 0.62 + (1 - sha) * 0.50);
   c = mixc(c, [58, 80, 40], cl(0.35 + tuft * 0.65, 0, 1) * (1 - bare) * 0.62);
-  return c;
+  return { rgb: c, h: 0.06 + stone * 0.30 + grain * 0.10 + tuft * 0.10 };
 }
 
-const SIZE = 512;
-const groundTex = gl.createTexture();
-{
-  const px = new Uint8Array(SIZE * SIZE * 4);
-  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
-    const c = grassPixel(x / SIZE, y / SIZE), o = (y * SIZE + x) * 4;
-    px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+// PROTO-3 (Mac: push the land texture to extreme fidelity). Four
+// things separate "a nice tile" from ground you believe:
+//
+//   1. RESOLUTION. 1024px, and the blade lattice scaled with it, so
+//      the detail is real detail and not the same blades enlarged.
+//   2. A NORMAL MAP, derived from the same blade field's own height -
+//      every blade and every pebble gets a lit side and a shaded one
+//      that MOVE with the sun. A flat albedo is the single biggest
+//      reason a ground texture looks painted.
+//   3. TWO SCALES. One sheet at ~2m tiles the near ground; a second,
+//      LOW-frequency sheet at ~19m modulates it, so the eye never
+//      finds the repeat that a single tile always shows on open land.
+//   4. DISTANCE BLEND to a filtered average, so the far field settles
+//      into colour instead of boiling.
+const SIZE = 1024;
+const px = new Uint8Array(SIZE * SIZE * 4);
+const hgt = new Float32Array(SIZE * SIZE);
+for (let y = 0; y < SIZE; y++) {
+  for (let x = 0; x < SIZE; x++) {
+    const u = x / SIZE, v = y / SIZE;
+    const r = grassPixel(u, v);
+    const o = (y * SIZE + x) * 4;
+    px[o] = r.rgb[0]; px[o + 1] = r.rgb[1]; px[o + 2] = r.rgb[2]; px[o + 3] = 255;
+    hgt[y * SIZE + x] = r.h;
   }
-  gl.bindTexture(gl.TEXTURE_2D, groundTex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
-  gl.generateMipmap(gl.TEXTURE_2D);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+}
+// the normal map, Sobel over the height the sheet just recorded
+const nrm = new Uint8Array(SIZE * SIZE * 4);
+{
+  const at = (x, y) => hgt[(((y % SIZE) + SIZE) % SIZE) * SIZE + (((x % SIZE) + SIZE) % SIZE)];
+  const S = 3.2;   // how tall a blade stands relative to a texel
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const dx = (at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1))
+        - (at(x - 1, y - 1) + 2 * at(x - 1, y) + at(x - 1, y + 1));
+      const dy = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1))
+        - (at(x - 1, y - 1) + 2 * at(x, y - 1) + at(x + 1, y - 1));
+      let nx = -dx * S, ny = -dy * S, nz = 1;
+      const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
+      const o = (y * SIZE + x) * 4;
+      nrm[o] = (nx * 0.5 + 0.5) * 255; nrm[o + 1] = (ny * 0.5 + 0.5) * 255;
+      nrm[o + 2] = (nz * 0.5 + 0.5) * 255; nrm[o + 3] = 255;
+    }
+  }
+}
+// the LOW-frequency modulation sheet: broad damp/dry/worn variation
+const LOW = 256;
+const lowPx = new Uint8Array(LOW * LOW * 4);
+for (let y = 0; y < LOW; y++) {
+  for (let x = 0; x < LOW; x++) {
+    const u = x / LOW * 4, v = y / LOW * 4;
+    const damp = fbm(u * 0.9, v * 0.9, 3.6, 5);
+    const worn = cl((fbm(u * 2.1 + 31, v * 2.1 - 12, 8.4, 4) - 0.52) * 3.4, 0, 1);
+    const o = (y * LOW + x) * 4;
+    lowPx[o] = cl(damp * 255, 0, 255);          // R: damp -> greener, darker
+    lowPx[o + 1] = cl(worn * 255, 0, 255);      // G: worn -> soil shows
+    lowPx[o + 2] = cl(fbm(u * 0.45 + 7, v * 0.45 + 3, 1.8, 4) * 255, 0, 255);  // B: hue drift
+    lowPx[o + 3] = 255;
+  }
+}
+const mkTex = (data, size, mip = true) => {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  if (mip) { gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); }
+  else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
   const ext = gl.getExtension('EXT_texture_filter_anisotropic');
-  if (ext) gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
-}
+  if (ext && mip) gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(16, gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  return t;
+};
+const groundTex = mkTex(px, SIZE);
+const groundNrm = mkTex(nrm, SIZE);
+const groundLow = mkTex(lowPx, LOW);
 
 const prog = (vs, fs) => {
   const p = gl.createProgram();
@@ -285,18 +348,47 @@ void main(){
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
 in vec2 vUV; in vec3 vPos;
-uniform sampler2D uTex; uniform float uNew; uniform vec3 uEye;
+uniform sampler2D uTex, uNrm, uLow;
+uniform float uNew; uniform vec3 uEye, uSun;
 out vec4 o;
 void main(){
-  vec3 c = texture(uTex, vUV).rgb;
-  if (uNew < 0.5) {
-    // the CLASSIC look for comparison: quantise to a 64px grid and
-    // posterise, which is what a 64x64 NEAREST tile gives you
-    vec3 q = texture(uTex, floor(vUV*64.0)/64.0).rgb;
-    c = floor(q*14.0)/14.0;
-  }
   float d = length(vPos - uEye);
-  c *= 0.72 + 0.28*smoothstep(0.0, 40.0, 40.0-d*0.35);
+  if (uNew < 0.5) {
+    // the CLASSIC look for comparison: a 64px NEAREST tile, posterised
+    vec3 q = texture(uTex, floor(vUV*64.0)/64.0).rgb;
+    vec3 cc = floor(q*14.0)/14.0;
+    cc *= 0.72 + 0.28*smoothstep(0.0, 40.0, 40.0-d*0.35);
+    o = vec4(mix(cc, vec3(0.55,0.62,0.70), clamp(d/260.0,0.0,0.75)), 1.0);
+    return;
+  }
+  // PROTO-3: DETAIL TILING. The albedo repeats every ~2m; a second
+  // read at a tenth the frequency modulates it, so the eye never
+  // finds the tile's own period on open ground. The low sheet
+  // carries damp (R), worn (G) and a hue drift (B).
+  vec3 alb = texture(uTex, vUV).rgb;
+  vec3 low = texture(uLow, vUV * 0.105).rgb;
+  vec3 damp = mix(alb, alb * vec3(0.72,0.86,0.66), low.r * 0.55);   // wetter = deeper green
+  vec3 worn = mix(damp, damp * vec3(1.22,1.06,0.86) + vec3(0.06,0.04,0.02), low.g * 0.6);
+  vec3 c = mix(worn, worn * vec3(1.06,1.02,0.92), low.b * 0.35);
+
+  // 2. THE NORMAL MAP - every blade and pebble gets a lit side and a
+  // shaded one, and they move with the sun. This is the single term
+  // that stops a ground texture looking painted.
+  vec3 n = texture(uNrm, vUV).xyz * 2.0 - 1.0;
+  vec3 N = normalize(vec3(n.x, n.z, n.y));           // tangent -> world (flat ground)
+  float lam = max(dot(N, normalize(uSun)), 0.0);
+  float sky = 0.34 + 0.66 * clamp(N.y, 0.0, 1.0);    // ambient from above
+  c *= (0.46 * sky + 0.78 * lam);
+  // a low specular sheen along the blades, which wet grass has
+  vec3 V = normalize(uEye - vPos);
+  vec3 H = normalize(normalize(uSun) + V);
+  c += vec3(0.16,0.18,0.12) * pow(max(dot(N,H),0.0), 26.0) * (0.35 + low.r*0.65);
+
+  // 4. the far field settles into colour instead of boiling: blend to
+  // the sheet's own average as the mips take over
+  vec3 far = textureLod(uTex, vUV, 7.0).rgb * (0.46*sky + 0.78*0.62);
+  c = mix(c, far, smoothstep(28.0, 130.0, d));
+  c *= 0.74 + 0.26*smoothstep(0.0, 40.0, 40.0-d*0.35);
   o = vec4(mix(c, vec3(0.55,0.62,0.70), clamp(d/260.0,0.0,0.75)), 1.0);
 }`);
 
@@ -451,6 +543,8 @@ function frame(now) {
   gl.clearColor(0.40, 0.48, 0.58, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.DEPTH_TEST);
 
+  const sa = state.sun * Math.PI / 180;
+  const sun = [Math.cos(sa) * 0.75, Math.max(0.12, Math.sin(sa)), 0.35];
   const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
   const dir = [-Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), -Math.cos(cam.yaw) * Math.cos(cam.pitch)];
   const vp = mul(persp(1.05, w / h, 0.1, 600), look(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]], [0, 1, 0]));
@@ -460,8 +554,14 @@ function frame(now) {
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uTilePx'), state.tile);
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uNew'), state.newGround ? 1 : 0);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uEye'), eye);
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSun'), sun);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, groundTex);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uTex'), 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, groundNrm);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uNrm'), 1);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, groundLow);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uLow'), 2);
+  gl.activeTexture(gl.TEXTURE0);
   gl.bindVertexArray(gvao);
   gl.drawArrays(gl.TRIANGLES, 0, gverts.length / 2);
 
