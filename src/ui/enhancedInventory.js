@@ -37,7 +37,8 @@
 // forbidden-material and broken-item refusals, the swap delay billed
 // per transition, the armour-value table and the enchantment hooks.
 // Taking something off is `unequipSlot`. The four tab pages are
-// nativeInventory.js's own `TABS` and `filterByTab`. Weight,
+// nativeInventory.js's `filterByTab` for the pages it still owns -
+// this file has its OWN TABS since the armour split. Weight,
 // condition, material and damage strings are systems/itemInfo.js's,
 // every one of them cited to DFU. This module positions nodes and
 // prints rows.
@@ -56,7 +57,8 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
+import { filterByTab as classicFilterByTab, isIngredientTemplate, USE_PENDING } from './nativeInventory.js';
+
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
@@ -362,6 +364,40 @@ let deps = {};
 let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
+// ── THE PACK'S OWN TABS (Mac, 2026-08-31: "armor its own tab") ────
+//
+// The classic window's TABS is DFU's four, and `weapons` there is
+// Weapons OR Armor (nativeInventory.filterByTab). That is the law
+// DaggerfallInventoryWindow has to keep, so the enhanced pack takes
+// its OWN set rather than changing it: five pages, with armour split
+// out of weapons.
+//
+// SHIELDS come with the armour. A shield IS group Armor in Daggerfall
+// (Buckler 109, Round 110, Kite 111, Tower 112), so "armour plus
+// shields" is one predicate, not two - checked in the templates rather
+// than assumed.
+//
+// Everything else is the classic rule, unchanged and in the same
+// order: worn items leave the list, an ENCHANTED item is Magic
+// whatever it is made of, ingredients are their own page, and the rest
+// falls through to Clothing & Misc.
+export const TABS = ['weapons', 'armor', 'magic', 'clothing', 'ingredients'];
+
+export function filterByTab(items, tab) {
+  // The classic four still answer for the pages they own, so there is
+  // ONE rule for magic, ingredients and misc rather than a copy that
+  // can drift; only the weapons/armour split is this file's.
+  if (tab === 'weapons' || tab === 'armor') {
+    return items.filter((it) => {
+      if (it.equipSlot != null) return false;   // FilterLocalItems: worn items leave
+      if (isEnchanted(it)) return false;        // an enchanted blade is Magic, as DFU has it
+      if (isIngredientTemplate(it.templateIndex)) return false;
+      return tab === 'armor' ? it.group === 'Armor' : it.group === 'Weapons';
+    });
+  }
+  return classicFilterByTab(items, tab);
+}
+
 let tab = TABS[0];
 const _scrollMemo = new Map();   // PX22: scrollTop per tab across repaints
 let _renderedTab = null;          // PX22: the tab the current DOM shows
@@ -1033,7 +1069,14 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
-  row.onclick = () => {
+  row.onclick = itemRowClick(item, from, wasPicked);
+  return row;
+}
+
+/** itemRow's own click, lifted so the GRID cell runs exactly it -
+ *  quest click first, then take-from-a-pile, then the pick toggle. */
+function itemRowClick(item, from, wasPicked) {
+  return () => {
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the
     // action-mode branch, so LOOKING at a quest item in a pile counts
@@ -1063,7 +1106,6 @@ function itemRow(item, from = 'local') {
     pickedAt = from === 'remote' ? 'loot' : 'dock';
     side = from; notice = null; render();
   };
-  return row;
 }
 
 // ── THE REMOTE SIDE ──────────────────────────────────────────────
@@ -1175,13 +1217,44 @@ function catsCol() {
   return col;
 }
 
+/** THE GRID (Mac, 2026-08-31: "a proper grid based inventory"). Behind
+ *  a switch while it is being looked at: `?packgrid=1` turns it on and
+ *  `?packgrid=0` off, so the row list is always one reload away and
+ *  nothing is lost if it turns out to be worse. */
+export function packGrid() {
+  try {
+    const q = new URLSearchParams(location.search).get('packgrid');
+    if (q === '1' || q === 'true') return true;
+    if (q === '0' || q === 'false') return false;
+  } catch { /* no location (tests, workers) - fall through */ }
+  return PACK_GRID_DEFAULT;
+}
+export const PACK_GRID_DEFAULT = true;
+
+/** THE GRID CELL (Mac, 2026-08-31: "a proper grid based inventory").
+ *  Same parts as itemRow - itemLine, itemTile, the same click - laid
+ *  out as a square instead of a line, so a cell and a row cannot drift
+ *  apart in what they show or what they do. */
+function itemCell(item, from = 'local') {
+  const line = itemLine(item, deps.entity);
+  const cell = el('button', `gcell${picked === item && side === from ? ' on' : ''}`);
+  cell.title = line.name + (line.stack ? ` x${line.stack}` : '');
+  const tile = itemTile(line);
+  if (tile.classList.contains('has-icon')) cell.classList.add('has-icon');
+  cell.append(tile);
+  if (line.stack) cell.append(el('span', 'gqty', String(line.stack)));
+  cell.append(el('span', 'gnm', line.name));
+  cell.onclick = itemRowClick(item, from, picked === item && side === from);
+  return cell;
+}
+
 function listCol() {
-  const col = el('section', 'packcol');
+  const col = el('section', `packcol${packGrid() ? ' packgrid' : ''}`);
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
     col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
   }
-  for (const it of rows) col.append(itemRow(it));
+  for (const it of rows) col.append(packGrid() ? itemCell(it) : itemRow(it));
   return col;
 }
 

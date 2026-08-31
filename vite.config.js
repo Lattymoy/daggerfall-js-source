@@ -113,11 +113,6 @@ export default defineConfig({
         main: 'play/index.html',
         viewer: 'viewer.html',
         sky: 'sky.html',   // ES1: the enhanced sky lab
-        // The enhanced PACK prototype (2026-08-31): the grid, the
-        // armour tab and the height, on fixtures, so the numbers can be
-        // argued about by looking at them. Registered here because a
-        // prototype at the root 404s on gh-pages otherwise.
-        packProto: 'pack-proto.html',
         // MW-D: the Morrowind data inspector. Reads a player's own
         // archives and reports what is IN them; it draws nothing, stores
         // nothing and is wired to nothing the game runs. It exists

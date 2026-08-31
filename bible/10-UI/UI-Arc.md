@@ -8530,54 +8530,44 @@ is trivial, `TransportManager` is not - `motor.js:517` reads
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
 
-## THE ENHANCED PACK: grid, armour tab, height (2026-08-31, prototype)
+## THE ENHANCED PACK: grid, armour tab, height (2026-08-31)
 
 Mac: "more height, a proper grid based inventory, armor its own tab" -
-about `ui/enhancedInventory.js`, the port's OWN pack, not the classic
-window. Worth writing down because the first answer to it was wrong:
-the request was read as a DFU-parity question and answered with a
-lecture about departing from classic. The enhanced UI is the project's
-own design surface and DFU parity does not bind it.
+about `ui/enhancedInventory.js`, the port's OWN pack. Two wrong turns
+before the right one, both worth keeping on the page:
 
-`pack-proto.html` at the root (registered in `vite.config.js`, or it
-404s on gh-pages) is the SPEC: fixtures only, nothing imported from
-`src/`, so iterating on it cannot break the live pack.
+1. **Read as a parity question.** The first answer argued against
+   departing from DFU. The enhanced UI is the project's own design
+   surface and parity does not bind it.
+2. **Answered with a new window, twice.** A standalone
+   `pack-proto.html` - first with its own palette and type ("veered too
+   far from what's currently ingame"), then rebuilt by hand-copying
+   `enhancedStyle.js` into a fixture page. That second one was still a
+   PARALLEL COPY of the pack: it would drift, it was a second thing to
+   maintain, and anything liked in it had to be rebuilt in the real
+   module anyway.
 
-**SECOND CUT, and the note that produced it.** The first prototype
-designed a NEW window - its own palette, its own type, its own
-furniture - and Mac's reply was that it veered too far from what is in
-the game. He was right, and the failure is worth naming: asked to
-change three things about an existing screen, the first answer changed
-everything and put the three somewhere inside it. A prototype for an
-EXISTING surface has to start as that surface.
+**The rule this produced: to change three things about a screen that
+exists, change them in that screen.** The prototype was deleted and the
+work went into the real files, behind a switch so the old pack is one
+reload away.
 
-The second cut is the live pack: `ENHANCED_TOKENS` verbatim, and the
-classes and rules copied out of `enhancedStyle.js` rather than
-invented - `.packtabs`/`.packtab` (:606-612), `.packcol` (:532),
-`.itemrow`'s hover and selection (:615-620), `.tile`'s "no border once
-a real sprite is in it" (:621-628), `.packbar` (:2283-2290), the
-`.pack-shell` frame (:2012-2020). Exactly three things differ, and the
-page says so at the top: the shell's height, the grid in place of the
-row list, and the Armour tab. Anywhere else it does not look like the
-pack is a bug in the prototype rather than a proposal.
+- **The tab set** is the pack's OWN now (`TABS`, `filterByTab` in
+  `enhancedInventory.js`): five pages, armour split out of weapons. The
+  classic window keeps DFU's four, because that is the law
+  DaggerfallInventoryWindow has to hold. Only the weapons/armour arm is
+  new - magic, ingredients and misc still call
+  `nativeInventory.filterByTab`, so there is ONE rule for them rather
+  than a copy that can drift. SHIELDS come with the armour: a shield IS
+  group Armor in Daggerfall (Buckler 109, Round 110, Kite 111, Tower
+  112), so it is one predicate.
+- **The grid** is `.packcol.packgrid` beside the row list, and
+  `itemCell` is built from `itemRow`'s own parts - same `itemLine`,
+  same `itemTile`, same click (lifted into `itemRowClick` so both run
+  exactly it). Fixed cell with wrapping, so the column count follows
+  the window's width. `?packgrid=0` puts the row list back.
+- **The height** is `.pack-win`, 660px to 820px.
 
-**The tab set is the real decision.** The live pack imports `TABS` and
-`filterByTab` from `nativeInventory.js`, which is DFU's FOUR-tab rule
-(`weapons` = Weapons **or Armor**, unenchanted). Splitting armour out
-means the enhanced pack needs its OWN set and filter, so the classic
-window's law stays exactly as DFU wrote it. The prototype's five:
-weapons, armour, magic, clothing, ingredients - with `magic` still
-winning over everything on `isEnchanted`, as DFU has it.
-
-**Shields:** in Daggerfall a shield IS group Armor (Buckler 109, Round
-110, Kite 111, Tower 112), so "armour plus shields" is one predicate
-rather than two. Checked rather than assumed.
-
-**The grid** is fixed-cell with wrapping (`repeat(auto-fill,
-minmax(--cell, 1fr))`), so the column count follows the window's width
-instead of being a number someone has to pick. **The height** is free
-here - it is a DOM window, not the classic 320x200 native panel.
-
-Open until Mac has looked at it: the cell size, whether names belong on
-the cells at all, and whether the character column stays a slot list or
-becomes something else beside a grid.
+Open until Mac has looked: the 74px cell, whether names belong on cells
+at all, and whether the character region wants a different shape beside
+a grid than it had beside a list.
