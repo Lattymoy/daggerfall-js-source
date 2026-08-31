@@ -1216,3 +1216,53 @@ test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was 
   assert.ok(iQuest > -1 && iQuest < iTake && iTake < iPick,
     'quest look, then the take, then (reward only) the pick');
 });
+
+// ═══ PX28: the kind label comes off the quest NAME ══════════════════
+test('PX28: a kind label at the front of a quest name is stripped; a name is never emptied', async () => {
+  const { questTitleOf } = await import('../src/ui/enhancedMenu.js');
+  // Mac: the rail already has sections, so a name that repeats the kind
+  // says the same fact twice.
+  assert.equal(questTitleOf("Main Quest: Lysandus' Revenge"), "Lysandus' Revenge");
+  assert.equal(questTitleOf('Side Quest - The Riddle'), 'The Riddle');
+  assert.equal(questTitleOf('Main Quest \u2014 Missing Prince'), 'Missing Prince');
+  assert.equal(questTitleOf('Daedric Quest: Sheogorath'), 'Sheogorath');
+  assert.equal(questTitleOf('Guild Quests | The Heretic'), 'The Heretic');
+  assert.equal(questTitleOf('  Side Quest:   Killing a Giant  '), 'Killing a Giant');
+  // NOT stripped: the word is the name, not a label on it
+  assert.equal(questTitleOf('Main Quest Backbone'), 'Main Quest Backbone', 'no separator - the phrase runs into the title');
+  assert.equal(questTitleOf("Clavicus Vile's Quest"), "Clavicus Vile's Quest", 'the word is at the END');
+  assert.equal(questTitleOf('The Postman'), 'The Postman');
+  // never emptied: a quest actually called "Main Quest" keeps its name
+  assert.equal(questTitleOf('Main Quest'), 'Main Quest');
+  assert.equal(questTitleOf('Side Quest:'), 'Side Quest:');
+  assert.equal(questTitleOf(null), '');
+  // and both places that show a name use it
+  const src = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(src, /document\.createTextNode\(questTitleOf\(q\.name\)\)/, 'the rail row must strip');
+  assert.match(src, /el\('h3', null, questTitleOf\(sel\.name\)\)/, 'the detail head must strip');
+  // the DATA is untouched - the strip is a display seam
+  assert.ok(!/questTitleOf/.test(readFileSync('src/systems/quest/parser.js', 'utf8')), 'the quest parser must not be edited');
+});
+
+test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - the LABEL still needs its separator', async () => {
+  const { questTitleOf } = await import('../src/ui/enhancedMenu.js');
+  // a pack writes the label however it likes; PX28's first cut required
+  // a space between the kind and the noun, so the joined spellings
+  // sailed through with the label still on - which is the whole thing
+  // Mac asked to remove.
+  assert.equal(questTitleOf('Sidequest: one word'), 'one word');
+  assert.equal(questTitleOf('MainQuest: joined'), 'joined');
+  assert.equal(questTitleOf('Side-Quest: hyphen'), 'hyphen');
+  assert.equal(questTitleOf('Main\u2013Quest: en dash'), 'en dash');
+  // and the keepers still keep: the trailing separator is what makes a
+  // label a label.
+  assert.equal(questTitleOf('Main Quest Backbone'), 'Main Quest Backbone');
+  assert.equal(questTitleOf('Mainquest Backbone'), 'Mainquest Backbone');
+  assert.equal(questTitleOf("Clavicus Vile's Quest"), "Clavicus Vile's Quest");
+  assert.equal(questTitleOf('Main Quest'), 'Main Quest');
+  // a bare "Quest:" is not a KIND label and stays - it names no kind
+  assert.equal(questTitleOf('Quest: The Postman'), 'Quest: The Postman');
+  // the classic journal is untouched: it strips nothing, ever
+  const classic = readFileSync('src/ui/questJournal.js', 'utf8');
+  assert.ok(!/questTitleOf|QUEST_KIND_LABEL/.test(classic), 'the classic journal must not strip');
+});

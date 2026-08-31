@@ -998,7 +998,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     .catch((e) => console.warn('[travelmap] classic travel map art unavailable:', e?.message ?? e));
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
     .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
-  preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
+  preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { where: paperDollWhere() });   // U8f/U8g + UI3: SCBG/BODY/FACE + the item-record pipeline ( Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
   // S3d: the INTERIM dagger seed is the FALLBACK only - a character
   // who runs chargen gets AssignStartingGear's real kit instead, so
   // seeding here would leave a stray dagger in the bag.
@@ -2105,10 +2105,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** ItemCollection.Contains(ItemGroups.Transportation, template) -
    *  the same one-line test ui/nativeInventory.js's wagon gate uses. */
   const hasTransport = (template) => (playerEntity.items ?? []).some((it) => it.templateIndex === template);
-  const playerTravelPixel = () => {
+  /** UI3: what GetPaperDollBackground asks of the world - the REGION
+   *  at the player's map pixel, DFU's `GetPoliticIndex(x, y) - 128`
+   *  (:214), and the reader's own count for the guard.
+   *  A DECLARATION, not a const: the boot-time preload at the top of
+   *  this function calls it, and a `const` there is the same temporal
+   *  dead zone that took the site down on 2026-08-31. */
+  function paperDollWhere() {
+    const px = playerTravelPixel();
+    return { region: maps.getPoliticIndex(px.x, px.y) - 128, regionCount: maps.regionCount };
+  }
+
+  /** A DECLARATION, not a const: paperDollWhere() reaches it from the
+   *  boot-time preload above, and a `const` here is the temporal dead
+   *  zone that took the site down on 2026-08-31. */
+  function playerTravelPixel() {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
-  };
+  }
   /** FS1 (2026-08-28) - THE TILE UNDER THE PLAYER, which this host has
    *  wanted since the FS-slice: the footstep block's own comment says
    *  "the path/water tile arms ride the tile-under-player flag", and

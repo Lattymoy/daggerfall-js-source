@@ -46,6 +46,7 @@
 // trimmed the stale list).
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
@@ -773,7 +774,11 @@ export class NativeInventoryWindow {
     // DFU does: `hover(vx, vy)` above reads the slot, the doll layer
     // or the gold button under the cursor, and the panel is STICKY
     // between them.
-    if (_art.info) {
+    // UI4: Setup only ADDS the panel when the setting is on (:303-307),
+    // so with it off there is no cutout and no text - the plain
+    // background shows through. It ships True, which is why the port
+    // drawing it unconditionally has looked right all along.
+    if (_art.info && getBool('GUI', 'EnableInventoryInfoPanel')) {
       drawImgCrop(renderer, _art.info, m, INV_RECTS.infoCutout, INV_RECTS.itemInfoPanel);
       // U47: the GOLD button's own two lines, which are generated and
       // need no TEXT.RSC - so they draw even in a host with none.

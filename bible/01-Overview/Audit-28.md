@@ -568,6 +568,33 @@ with this note: three spot-reads (EnemyBlood, the wagon capacity law,
 RoundToInt's tie) came back equal, and the productive vein was the
 checkable list. The next audit should find its list first.
 
+## THE UI-ONLY KEYS (2026-08-31, open)
+
+The six the settings sweep handed to the UI arc, taken one at a time:
+
+- **UI3 CLOSED: `GUI/EnableGeographicBackgrounds`** (PaperDoll
+  :203-230). It ships FALSE, so DFU's default backdrop is the RACE's -
+  and the port has passed `context = 'town'` since U8f, the geographic
+  answer, so every player has seen the town backdrop. The law is the
+  setting's now, with DFU's 62-char region table and its
+  guard-before-the-arms order. The world host supplies
+  `GetPoliticIndex - 128`.
+- **REFUTED: `GUI/DimAlphaStrength`.** DaggerfallPopupWindow's own line
+  is `this.screenDimColor.a = 0; //DaggerfallUnity.Settings
+  .DimAlphaStrength;` (:58) - commented out. DFU reads it NOWHERE, the
+  same shape as WeaponSensitivity. It stays stored, and this is why.
+- **NOT APPLICABLE: `GUI/HideLoginName`.** Its only consumer is
+  DaggerfallUnitySetupGameWizard, DFU's first-run setup wizard, which
+  the port does not have and is not porting (Ledger A).
+- **UI4 CLOSED: `GUI/EnableInventoryInfoPanel`** (DaggerfallInventory
+  Window :303-307). Setup only ADDS the panel when it is on; the port
+  drew it unconditionally, which ships-True made invisible. Gated, with
+  the cutout and the label both inside the gate. The TRADE window's own
+  panel (:217-223) does not exist in the port yet and its pin fails the
+  day it appears.
+- Remaining: `EnableEnhancedItemLists` (ItemListScroller's row count),
+  `EnableModernConversationStyleInTalkWindow`.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`
