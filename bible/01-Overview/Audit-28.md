@@ -1,4 +1,4 @@
-# AUDIT 28 - THE POST-26 SWEEP (2026-08-30, in progress)
+# AUDIT 28 - THE POST-26 SWEEP (2026-08-30 to 2026-08-31; the SETTINGS LENS CLOSED, lens 3 open)
 
 Mac's call after WM4 and CR1 closed: keep pushing the 1:1. The ledger's
 own restock (LR1, 2026-08-29) names a fresh systematic audit as the one
@@ -516,6 +516,57 @@ at the start, 68 renderer/post-fx with no law to answer, 35 gameplay -
 UI-only handed to the UI arc, 2 recorded above, and 4 (EnableQuestDebugger,
 LypyL_GameConsole, AssetCacheThreshold, TerrainHeightmapPixelError)
 that are tooling or Unity-internal.
+
+## SELF-AUDIT 5 AND THE CLOSE (2026-08-31, Mac: "a comprehensive audit and bible update")
+
+W12 and W13 re-read against the C# (the frame-3 gate, the activate
+un-draw, the `== 1` handedness and its two flip sites) - sound. The LIVE
+sweep: 74 keys, every one named in its module. Two of the "next
+checkable list" candidates were run as part of the audit:
+
+- **DFU constants vs the port's same-named constants.** Every
+  `const int/float NAME = value` in the checkout against every
+  `export const SCREAMING_NAME = value` in `src/`: 184 shared names, 8
+  mismatches, ALL EIGHT name collisions across different DFU classes
+  (EnemyBasics' MoveAnimSpeed 6 vs MobilePersonBillboard's 4;
+  PlayerNotebook's MaxMessageCount 50 vs UserInterfaceManager's 10;
+  MapsFile's MaxMapPixelX 1000 vs TerrainHelper's 998; and so on) -
+  each port constant matches its OWN cited source. Zero real
+  mismatches. A useful list to keep in `tools/` for the next audit.
+- **Dead exports over every module AUDIT 28 touched:** 17, none of them
+  AUDIT 28's own (GENERAL_ANIMS, STAFF_ANIMS, wrapRows,
+  COMPASS_BOX_OUTLINE, activeSpellIconsPlaced, _resetActiveSpellHud,
+  swapHealthAndFatigueColors, DUNGEON_LIGHT_INTENSITY, TABLE_LENGTH,
+  TONE_NAMES, PERSON_HIT_RADIUS, PERSON_HIT_HEIGHT, loadSettings,
+  MATERIAL_NAMES, getPaintFile, QUEST_SUCCESS_REP, QUEST_FAILURE_REP).
+  Candidates for AUDIT 27's F301 treatment, not approvals; some are
+  documentary constants a reader wants exported. Recorded, not touched.
+
+### The close, in numbers
+
+103 `stored` keys at the start. 68 renderer/post-fx with no law to
+answer. 35 gameplay: **22 closed as waves** (W1 four named-and-never-read
+reads; W2a arrow counter, W2b melee friendly protection, W2c the exit-door
+wagon prompt, W2d the near-death flicker; W3a HelmAndShieldMaterialDisplay,
+W3b the alternate random-enemy arm, W3c RandomDungeonTextures whole; W4
+SmallerDungeons whole; W5 ToggleSneak; W6 ShopQualityHUDDelay; W7 mouse
+look smoothing; W8 movement acceleration; W9 camera recoil; W10 head
+bobbing; W11 the swing threshold - ten times too strict since the gesture
+shipped - and the swing modes; W12 bow drawback; W13 handedness), **1
+refuted** (WeaponSensitivity, read nowhere), 6 UI-only handed to the UI
+arc, 2 recorded (MeleeAttackDetection Quality queued; SoundFont has no
+file), 4 tooling. Five self-audits, thirteen corrections - every one in a
+seam around a correct transcription, three of them (F-A5, F-B2, F-C3)
+serious. Three DFU default-feel behaviours restored: the smoothed look,
+the recoil on a hit, the walk bob.
+
+**The rule the audit produced:** a `Transform.Rotate` on a transform
+PlayerMouseLook rewrites is a per-frame offset, never an accumulation.
+
+**Lens 3 stays open** - the module reads over the post-26 surfaces -
+with this note: three spot-reads (EnemyBlood, the wagon capacity law,
+RoundToInt's tie) came back equal, and the productive vein was the
+checkable list. The next audit should find its list first.
 
 ### Refuted on the way
 
