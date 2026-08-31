@@ -187,6 +187,25 @@ export function checkLocationKeyForRegionalBuilding(key, index, faction) {
  *  localization layer of its own still answers in English rather than
  *  in empty strings. A localized build overrides them through the
  *  `localizedText` seam, which is what C#'s TextManager is. */
+/**
+ * GetSpecialDungeonName (DaggerfallDungeon.cs:255-266): the three
+ * CAPITAL castles answer with a TEXT.RSC line of their own (475
+ * Daggerfall, 476 Wayrest, 477 Sentinel); every other dungeon answers
+ * with its location's name. AUDIT-UI: the port's "Where am I?" inside
+ * a dungeon formatted with TWO EMPTY STRINGS, because no host ever
+ * supplied `specialDungeonName` or `dungeonRegionName` - a blank
+ * answer rather than a loud one.
+ */
+export const SPECIAL_DUNGEON_TEXT_ID = Object.freeze({
+  Daggerfall: 475, Wayrest: 476, Sentinel: 477,
+});
+export function specialDungeonName(regionName, locationName, textLine = () => null) {
+  if (regionName === locationName && SPECIAL_DUNGEON_TEXT_ID[regionName] != null) {
+    return textLine(SPECIAL_DUNGEON_TEXT_ID[regionName]) ?? locationName;
+  }
+  return locationName ?? '';
+}
+
 export const TALK_STRINGS = Object.freeze({
   WhereAmI: 'Where am I?',                                    // id 393
   AnswerTextWhereAmI: 'You are in {0} in {1}.',               // id 394

@@ -3040,3 +3040,25 @@ test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', 
   assert.match(arm, /const idleReach = armReach\(eye, clipUnionBounds\(arm, poseAt, idleTimes\)\);/);
   assert.match(arm, /const idleTimes = Array\.from\(\{ length: 25 \}/, 'the idle span is still swept at 25');
 });
+
+test('PX29: the movement rate divides by the PLAYING clip\u2019s own velocity (Mac\u2019s revert)', async () => {
+  const { sourceVelocityOf, sourcesVelocity } = await import('../src/formats/mwFirstPerson.js');
+  // MW-D29 moved the divisor from the picked source's velocity to
+  // getVelocity's multi-source walk. In first person that is invisible
+  // (the .1st clips carry no accumulation-root movement, so every
+  // source answers 0 and the fallback constants decide); in THIRD
+  // person the body's clips DO carry movement, so the walk can answer
+  // with a different source's number than the clip on screen, and the
+  // sprint's rate changed under Mac without the sprint changing.
+  // Reverted at his direction; the multi-source walk stays exported.
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /const vel = movementSource \? sourceVelocityOf\(movementSource, movementGroup\) : 0;/,
+    'the rate must divide by the clip that is playing');
+  assert.ok(!/sourcesVelocity\(rig\(\)\.sources, movementGroup\)/.test(src), 'the multi-source walk must not decide the movement rate');
+  assert.match(src, /PX29 - REVERTED AT MAC'S DIRECTION/, 'a declared divergence must say so where it lives');
+  // the helper reads ONE source and answers 0 for a source with no
+  // accumulation root - which is every first-person clip.
+  assert.equal(sourceVelocityOf(null, 'runforward'), 0);
+  assert.equal(sourceVelocityOf({ keys: new Map(), trackMap: new Map() }, 'runforward'), 0);
+  assert.equal(typeof sourcesVelocity, 'function', 'the reference walk stays available');
+});

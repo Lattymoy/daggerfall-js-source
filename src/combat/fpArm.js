@@ -61,7 +61,7 @@ import {
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   jumpAnimState,
-  sourcesKeyTime, sourcesVelocity,
+  sourcesKeyTime, sourcesVelocity, sourceVelocityOf,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
@@ -1931,10 +1931,25 @@ export function createFpArm() {
       // refreshMovementAnims runs (character.cpp:743-752), and the
       // fallback constant reads the FRESH state's run/sneak, which is
       // exactly the run->walk-swap case where the clip stays put and
-      // the state does not. The velocity itself is getVelocity's
-      // multi-source walk (animation.cpp:1267-1338), not the one picked
-      // source's answer.
-      const vel = sourcesVelocity(rig().sources, movementGroup);
+      // the state does not. That half stands.
+      //
+      // PX29 - REVERTED AT MAC'S DIRECTION, and recorded as the
+      // DECLARED DIVERGENCE it is. MW-D29 also changed WHICH source
+      // answers for the velocity: from the one source that won the
+      // group pick to getVelocity's multi-source walk
+      // (animation.cpp:1267-1338). In first person that is invisible -
+      // the .1st clips carry no accumulation-root movement, every
+      // source answers 0, and the fallback constants decide. In THIRD
+      // person the body's clips carry real movement, so the walk can
+      // answer with a DIFFERENT source's velocity than the clip
+      // actually playing, and the divisor changes under a sprint that
+      // did not change: Mac watched the third-person sprint alter and
+      // asked for it back. The picked source's own velocity is the
+      // number that matches the clip on screen, which is the property
+      // that matters more here than the citation. If a future 1:1
+      // sweep wants the multi-source walk again it must come with
+      // Mac's eye on the sprint, not a line number.
+      const vel = movementSource ? sourceVelocityOf(movementSource, movementGroup) : 0;
       movementAnimSpeed = vel > 1 ? vel
         : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
           : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;

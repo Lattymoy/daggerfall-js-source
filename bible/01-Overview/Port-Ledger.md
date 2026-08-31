@@ -1,5 +1,38 @@
 # Port-Ledger
 
+## THE COMPREHENSIVE AUDIT, 2026-08-31: two sweeps for the session's own bug class
+
+Six times in one session a call reached a seam that was not there - a
+method that did not exist, a field nobody read, an option the callee
+never destructured (`openUseMagicItem`, `openTransport`,
+`audio.setLoop`, `dismountOnTransition`, `t.reposition`,
+`shadowText({scale})`). Three were inherited and three were written the
+same day. So the audit stopped reading features and swept for the
+SHAPE:
+
+1. **Options a callee does not accept.** Every exported function with a
+   destructured options bag, against every call site passing an object
+   literal. 49 suspects, all inspected: false positives - the pattern
+   catches nested literals in later arguments (`loftPiece({ y })`,
+   `drawHudLarge`'s `vitalsBars: { rig }`). No finding, and the sweep is
+   too noisy to keep as a test.
+2. **Optional-chained calls with no implementation anywhere.** Every
+   `x?.()` whose method name is defined in no module. 19 hits. Eighteen
+   are optional BY DESIGN - a per-candidate override with a documented
+   fallback (`stealthOf`), a browser API (`webkitGetAsEntry`,
+   `setPointerCapture`), a Worker's `terminate`, or an arm that defers
+   LOUDLY (the quest clock's `travelSeconds` stores
+   `travelTimePending = true` and zero seconds rather than a wrong
+   number - the anti-lie law working).
+   **One was real:** no host supplied `specialDungeonName` or
+   `dungeonRegionName`, so "Where am I?" asked underground formatted
+   with two empty strings. Fixed, with GetSpecialDungeonName ported.
+
+The lesson for the next reader: sweep 2 is worth re-running after any
+slice that adds a deps bag, and its signal is high because the
+false-positive classes are small and nameable. Sweep 1 is not worth
+keeping - a real signature check needs a parser, not a regex.
+
 ## BOOT FAILURE, 2026-08-31: `const X = { ...X }` (UI1)
 
 The live site failed to boot with "can't access lexical declaration

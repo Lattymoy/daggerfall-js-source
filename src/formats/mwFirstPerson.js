@@ -2266,6 +2266,17 @@ export function sourcesKeyTime(sources, textKey) {
  * remaining earlier sources until one yields more. The port had stopped
  * at the single source the clip was picked from.
  */
+/** PX29: ONE source's own velocity for a group - the number that
+ *  matches the clip actually playing, which is what the movement rate
+ *  divides by after Mac's revert. sourcesVelocity (below) is the
+ *  reference's multi-source walk and stays for any consumer that
+ *  wants it; nothing in the movement lane does. */
+export function sourceVelocityOf(source, group) {
+  if (!source) return 0;
+  const acc = ACCUM_ROOT_NAMES.find((n) => source.trackMap && source.trackMap.has && source.trackMap.has(n));
+  return acc ? animVelocity(source.keys, source.trackMap.get(acc), group) : 0;
+}
+
 export function sourcesVelocity(sources, group) {
   const list = sources || [];
   const velOf = (so) => {
