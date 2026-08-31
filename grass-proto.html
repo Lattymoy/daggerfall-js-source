@@ -59,6 +59,7 @@
     <option>sunny</option><option>cloudy</option><option>overcast</option><option>fog</option>
     <option>rain</option><option>thunder</option><option>snow</option>
   </select></label>
+  <label><input id="pixel" type="checkbox" checked> pixel-art blades</label>
   <label>surface <select id="surf">
     <option>grass</option><option>dirt</option><option>stone</option><option>sand</option><option>snow</option>
   </select></label>
@@ -75,7 +76,7 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', grass: true, newGround: true };
+const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', pixel: true, grass: true, newGround: true };
 for (const k of ['density', 'height', 'wind', 'range', 'tile', 'sun']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
@@ -383,8 +384,7 @@ function paintSheet(name) {
   const fn = SURFACES[name] || grassPixel;
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
-      const r = fn(x / SIZE, y / SIZE);
-      const o = (y * SIZE + x) * 4;
+      const r = fn(x / SIZE, y / SIZE), o = (y * SIZE + x) * 4;
       px[o] = r.rgb[0]; px[o + 1] = r.rgb[1]; px[o + 2] = r.rgb[2]; px[o + 3] = 255;
       hgt[y * SIZE + x] = r.h;
     }
@@ -497,6 +497,13 @@ void main(){
   // read at a tenth the frequency modulates it, so the eye never
   // finds the tile's own period on open ground. The low sheet
   // carries damp (R), worn (G) and a hue drift (B).
+  // PROTO-7: the LOD is the HARDWARE'S, always. A first cut forced
+  // LOD 0 within 14m to keep the art pixels square, and the near
+  // ground boiled - a ground plane seen at a grazing angle minifies
+  // hard, and refusing the mip is refusing the filter that exists to
+  // stop exactly that. Pixel art on a floor stays crisp by being
+  // BIGGER in world space (an 8x art pixel over a 2m tile), not by
+  // fighting the sampler.
   vec3 alb = texture(uTex, vUV).rgb;
   vec3 low = texture(uLow, vUV * 0.105).rgb;
   vec3 damp = mix(alb, alb * vec3(0.72,0.86,0.66), low.r * 0.55);   // wetter = deeper green
@@ -540,7 +547,8 @@ layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
-out float vT; out float vTint; out float vFade; out float vLam;
+out float vT; out float vTint; out float vFade; out float vLam; out float vSeedOut;
+uniform float uPixel, uPixW, uPixH;
 void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
@@ -557,25 +565,48 @@ void main(){
   p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
   p.y = terrain(root) + vT * h;
   vTint = aInst2.z;
+  vSeedOut = aInst.w;
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
   // a low sun on one side and goes dark on the other - which is what
   // makes a dawn field glow along one edge.
   vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
   vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
-  gl_Position = uVP * vec4(p,1.0);
+  vec4 cp = uVP * vec4(p,1.0);
+  // PROTO-7 (Mac: make the BLADES pixel-artish). A 3D blade reads as
+  // pixel art when its SILHOUETTE lands on a coarse raster, so the
+  // clip position is snapped to a virtual low-res grid. Edges then
+  // stair-step the way a drawn sprite's do instead of being smooth
+  // sub-pixel geometry - and because the snap is in clip space, a
+  // blade stays snapped as it moves rather than shimmering between
+  // grids.
+  if (uPixel > 0.5 && cp.w > 0.0) {
+    vec2 ndc = cp.xy / cp.w;
+    vec2 grid = vec2(uPixW, uPixH);
+    cp.xy = (floor((ndc * 0.5 + 0.5) * grid) + 0.5) / grid * 2.0 - 1.0;
+    cp.xy *= cp.w;
+  }
+  gl_Position = cp;
 }`, HEAD + `
-in float vT; in float vTint; in float vFade; in float vLam;
-uniform vec3 uAmb, uSunCol; uniform float uDim;
+in float vT; in float vTint; in float vFade; in float vLam; in float vSeedOut;
+uniform vec3 uAmb, uSunCol; uniform float uDim, uPixel, uPixW, uPixH;
 out vec4 o;
+// the 4x4 ordered matrix, the same one a pixel artist stipples with
+float bayer(vec2 p){
+  int i = int(mod(p.x,4.0)), j = int(mod(p.y,4.0));
+  int m[16] = int[16](0,8,2,10, 12,4,14,6, 3,11,1,9, 15,7,13,5);
+  return float(m[j*4+i]) / 16.0;
+}
 void main(){
   // PROTO-2: the blade is LIT along its length - dark at the root
   // where the sward shades it, bright at the tip where the sky does -
   // and the very tip catches a rim, which is what makes a field of
   // blades read as depth instead of a green haze.
-  vec3 root = vec3(0.13,0.19,0.07);
-  vec3 mid  = vec3(0.30,0.44,0.15);
-  vec3 tip  = vec3(0.58,0.72,0.30);
+  // PROTO-7 (Mac: reduce the bright colour): the sward is olive, not
+  // emerald - a Daggerfall field, not a golf course.
+  vec3 root = vec3(0.10,0.14,0.06);
+  vec3 mid  = vec3(0.21,0.29,0.11);
+  vec3 tip  = vec3(0.36,0.44,0.19);
   vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
   c = mix(c, tip, smoothstep(0.5,1.0,vT));
   c *= 0.80 + vTint*0.42;
@@ -584,7 +615,21 @@ void main(){
   c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol * 1.15 * vLam);
   c *= uDim;
   // the rim is the SUN's colour, and only where the sun can reach
-  c += uSunCol * 0.30 * smoothstep(0.82,1.0,vT) * vLam;
+  c += uSunCol * 0.20 * smoothstep(0.86,1.0,vT) * vLam;
+  if (uPixel > 0.5) {
+    // 1. a LOCKED RAMP: five rungs, so the blade is drawn in a handful
+    //    of colours the way a sprite is, not a continuous gradient.
+    float lv = 5.0;
+    vec2 gp = floor(gl_FragCoord.xy / max(1.0, 1280.0/uPixW));
+    float dth = (bayer(gp) - 0.5) * (1.0/lv) * 0.9;
+    c = floor((c + dth) * lv) / lv;
+    // 2. a HARD EDGE: pixel art has no alpha ramp, so the distance
+    //    fade becomes a dithered CUTOUT - the blade is there or it is
+    //    not, and the stipple carries the falloff.
+    if (vFade < bayer(gp + vec2(vSeedOut*7.0))) discard;
+    o = vec4(c, 1.0);
+    return;
+  }
   o = vec4(c, vFade);
 }`);
 
@@ -651,6 +696,7 @@ function build() {
 ready = true;
 build();
 R('surf').addEventListener('change', (e) => setSurface(e.target.value));
+R('pixel').addEventListener('change', (e) => { state.pixel = e.target.checked; });
 R('wx').addEventListener('change', (e) => {
   state.weather = e.target.value;
   // snow lies on the ground, so the surface follows the sky
@@ -1022,6 +1068,9 @@ function frame(now) {
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), new Float32Array(skyAmb));
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), new Float32Array(sunCol));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uDim'), wx.dim + flash * 0.5);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uPixel'), state.pixel ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uPixW'), 320);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uPixH'), 200);
     gl.bindVertexArray(gr.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
     gl.disable(gl.BLEND);
