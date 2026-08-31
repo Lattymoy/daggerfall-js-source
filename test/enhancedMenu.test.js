@@ -128,8 +128,11 @@ test('the two rails differ only where the question does', () => {
   // the road bake) cannot take effect without a reload anyway. A row
   // on the pause rail that quietly needed a restart would be the dead
   // affordance this project keeps finding.
+  // TR3: Test Room joins the boot-only set - like Continue and New
+  // Game it answers "which game", settled once one is running.
   assert.deepEqual(boot.filter((x) => !shared.includes(x)),
-    ['Continue', 'New Game', 'Enhanced']);
+    ['Continue', 'New Game', 'Test Room', 'Enhanced']);
+  assert.ok(!pause.includes('Test Room'), 'the room is a front door, not a pause row');
   assert.ok(!pause.includes('Enhanced'), 'and it must NOT reach the pause door');
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
@@ -214,7 +217,11 @@ test('R7: the pane does not claim a feature the tree does not have', () => {
       'the pane names the arms, so the engine must exist');
     assert.match(read('src/combat/weaponRig.js'), /import \{ fpArm(?:, [\w$, ]+)? \} from '\.\/fpArm\.js';/,
       'and the weapon rig must actually import it - a card is not a feature');
-    assert.match(pane, /fpArm\.build\(/, 'and the button must call the real build');
+    // TR2: the button rides the ONE HOME for the build opts
+    // (weaponRig.buildArmsFor) - the inline fpArm.build copy it
+    // replaces carried the `!!gender` bug that built the female
+    // skeleton for everyone.
+    assert.match(pane, /buildArmsFor\(playerEntity\)/, 'and the button must call the real build through the one home');
   }
   // The stale denial, retired the way RA1 retired the sky's: the card
   // said the layer "is NOT built - it was removed", and that sentence

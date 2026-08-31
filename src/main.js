@@ -116,6 +116,13 @@ async function boot() {
     // whole point is not to.
     if (choice === 'continue' || choice === 'load') params.set('load', '1');
     else params.delete('load');
+    // TR3: the Test Room door - the pane answers 'test:<preset>' and
+    // the world host seeds the character and the armory off the same
+    // testRoom home the pane showed. The param family follows F12's
+    // law above: set on this choice, DELETED on every other, or a URL
+    // that once entered the room would re-enter it on New Game.
+    if (typeof choice === 'string' && choice.startsWith('test:')) params.set('test', choice.slice(5));
+    else params.delete('test');
     params.set('classic', '1');
     return bootWorld(canvas, renderer, params, status);
   }

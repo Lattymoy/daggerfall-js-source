@@ -1421,9 +1421,18 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
     'buildFpArm no longer hands the face to the body build');
   assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex, faceMatch \}\)/,
     'the body build no longer hands the face to the picker');
+  // TR2: the menu's inline opts moved into weaponRig's ONE HOME - the
+  // sweep follows the thread there (menu -> buildArmsFor ->
+  // armBuildOptsOf -> fpArm.build), because a sweep of a door that no
+  // longer carries the wire proves nothing.
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /faceIndex: playerEntity\.faceIndex \| 0/,
+  assert.match(menu, /buildArmsFor\(playerEntity\)/,
+    'the card no longer routes the live player through the one home');
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /faceIndex: entity\.faceIndex \| 0/,
     'the live player\u2019s classic face no longer reaches the build');
+  assert.match(rig, /return fpArm\.build\(armBuildOptsOf\(entity\)\)/,
+    'buildArmsFor no longer feeds the opts home to the build');
 });
 
 // ═══ MW-D28: THE ITEM MAP ═══════════════════════════════════════════
@@ -1684,8 +1693,10 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
   assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn,/);
   assert.match(arm, /for \(const add of fpWornAdds\(worn\.adds\)\)/, 'the fp build does not wear the filtered adds');
   assert.match(arm, /shadowSkinRows\(\n      wanted\.filter/, 'the fp skin does not take the shadows');
-  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /armor: dfWornEquipment\(equipTableOf\(playerEntity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
+  // TR2: the worn read lives in weaponRig's opts home now; the menu
+  // reaches it through buildArmsFor (swept in the MW-D27 pin above).
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /armor: dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
   // and the readout itself: armor slots in, shields from hands, a
   // sword in a hand refused.
   const slots = []; slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 2 };
