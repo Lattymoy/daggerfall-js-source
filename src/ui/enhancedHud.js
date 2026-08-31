@@ -23,6 +23,7 @@
 // frame writes only what CHANGED - a width, a number, a name - so a
 // still frame costs four string compares.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { mountHitNumbers } from './hitNumbers.js';   // HN1
 import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
@@ -137,6 +138,10 @@ const width = (node, key, pct) => {
 function build(doc) {
   injectEnhancedStyle();
   injectEnhancedFonts();
+  // HN1: the damage numbers register with the formula seam the moment
+  // the enhanced HUD exists - and only then, so the classic skin never
+  // has a hook installed.
+  mountHitNumbers();
   const root = doc.createElement('div');
   root.className = 'hud';
   root.setAttribute('aria-hidden', 'true');   // a HUD is not a reading order
@@ -243,6 +248,8 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   if (last.scale !== scale) {
     last.scale = scale;
     host.style.setProperty('--hud-scale', String(scale));
+    // HN1: the damage numbers read the same scale, on their own layer.
+    document.getElementById('enhanced-hitnums')?.style.setProperty('--hud-scale', String(scale));
   }
 
   // THE COMPASS. Each point is placed by the same shortest-way-round
