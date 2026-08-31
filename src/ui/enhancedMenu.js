@@ -967,7 +967,7 @@ function paneEnhanced(body) {
   // rig reads the flag per frame.
   if (count) {
     armActions.push(fpArm.followCamera()
-      ? { label: 'Arms: tilt with the look', onClick: () => { fpArm.setFollowCamera(false); render(); } }
+      ? { label: 'Arms: fixed to the screen', onClick: () => { fpArm.setFollowCamera(false); render(); } }
       : { label: 'Arms: Morrowind look-lag', onClick: () => { fpArm.setFollowCamera(true); render(); } });
   }
   armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });
