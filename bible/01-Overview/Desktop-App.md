@@ -103,12 +103,18 @@ does.
 
 ## The release channel
 
-Pushing a tag shaped `app-v*` runs
-`.github/workflows/release-desktop.yml`: the ubuntu job carries the
-whole `npm run check` gate, all three OS runners package installers
-(AppImage, NSIS + portable exe, dmg - unsigned; macOS players
-right-click-Open the first time), and the artifacts attach to a
-GitHub Release at that tag. The landing page's "On your desktop"
+`.github/workflows/release-desktop.yml` cuts a release through any
+of three doors: pushing a tag shaped `app-v*`, a workflow_dispatch
+with `release_tag`, or - the door an ordinary merged PR can open -
+a main push touching `app/RELEASE`, whose first line names the tag
+(this is how releases are cut from hosts whose git relay pushes
+branches only, and it leaves the release history readable in git:
+bump `app/package.json`'s version and `app/RELEASE` together).
+Whichever door, the ubuntu job carries the whole `npm run check`
+gate, all three OS runners package installers (AppImage, NSIS +
+portable exe, dmg - unsigned; macOS players right-click-Open the
+first time), and the artifacts attach to a GitHub Release at that
+tag. The landing page's "On your desktop"
 section points at `releases/latest`, so cutting a release IS
 updating the site's download - no site change needed per release.
 `workflow_dispatch` builds the same installers as run artifacts

@@ -16,15 +16,21 @@
 # folder on first run, exactly as the website does.
 name: release-desktop
 
+# THREE DOORS to a release, because a door is only a door for who can
+# open it: a pushed app-v* tag (anyone with tag push), a dispatch with
+# release_tag (anyone with workflow rights), and THE MARKER FILE - a
+# main push that touches app/RELEASE cuts a release at whatever tag
+# the file names. The marker is the door a branch-only git relay can
+# open through an ordinary merged PR, which is how the first release
+# was cut; it also leaves the release history readable in git.
 on:
   push:
     tags:
       - 'app-v*'
-  # A dispatch can CUT a release too: give release_tag a tag name
-  # (app-v0.1.0) and the release step creates the tag at the
-  # dispatched commit and attaches the installers - the door for a
-  # host whose git relay only pushes branches, where a tag push never
-  # arrives. Left empty, a dispatch builds run artifacts only.
+    branches:
+      - main
+    paths:
+      - 'app/RELEASE'
   workflow_dispatch:
     inputs:
       release_tag:
@@ -48,6 +54,20 @@ jobs:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
       - uses: actions/checkout@v4
+
+      # One answer to "which tag, if any": the dispatch input, the
+      # pushed tag itself, or the marker file's first line. Empty
+      # means artifacts-only.
+      - name: Resolve release tag
+        id: reltag
+        shell: bash
+        run: |
+          TAG='${{ inputs.release_tag }}'
+          if [ -z "$TAG" ] && [[ '${{ github.ref }}' == refs/tags/app-v* ]]; then TAG='${{ github.ref_name }}'; fi
+          if [ -z "$TAG" ] && [ -f app/RELEASE ]; then TAG=$(head -1 app/RELEASE | tr -d '[:space:]'); fi
+          case "$TAG" in app-v*) ;; *) TAG='' ;; esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "release tag: '${TAG:-<none - artifacts only>}'"
 
       - uses: actions/setup-node@v4
         with:
@@ -73,10 +93,10 @@ jobs:
         working-directory: app
 
       - name: Attach installers to the release
-        if: startsWith(github.ref, 'refs/tags/app-v') || startsWith(inputs.release_tag, 'app-v')
+        if: steps.reltag.outputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          tag_name: ${{ steps.reltag.outputs.tag }}
           files: |
             app/release/*.AppImage
             app/release/*.exe
@@ -84,7 +104,7 @@ jobs:
           generate_release_notes: true
 
       - name: Keep installers as run artifacts (manual runs)
-        if: "!startsWith(github.ref, 'refs/tags/app-v') && !startsWith(inputs.release_tag, 'app-v')"
+        if: steps.reltag.outputs.tag == ''
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.os }}
