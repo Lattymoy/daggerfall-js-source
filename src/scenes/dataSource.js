@@ -292,16 +292,21 @@ export async function clearStoredData() {
 /** Put the accepted files from a pick into `store`. `accept(name)`
  *  answers whether a file belongs to this domain, so a pack folder
  *  with its readme and cover art in it just works. Returns the count. */
-async function storeAssets(store, files, accept) {
+async function storeAssets(store, files, accept, keyOf = null) {
   const d = await getDb();
   let kept = 0;
   for (const f of files) {
     const base = f.name.slice(f.name.lastIndexOf('/') + 1);
     if (!accept(base)) continue;
+    // MW-D40: a store may key by more than the basename - loose
+    // Morrowind files are only addressable by their RELATIVE path
+    // (meshes/maxhorse/xhorse1.nif), which the directory picker
+    // carries on webkitRelativePath. Default stays the basename law.
+    const key = keyOf ? keyOf(f, base) : base;
     const buf = await f.arrayBuffer();
     await new Promise((res, rej) => {
       const tx = d.transaction(store, 'readwrite');
-      tx.objectStore(store).put(buf, base);
+      tx.objectStore(store).put(buf, key);
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
@@ -381,10 +386,47 @@ export async function storeDerived(key, bytes) {
 export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
 export const clearDerived = () => clearAssets(DERIVED_STORE);
 
+/** MW-D40: the canonical relative path of a LOOSE Morrowind file. The
+ *  directory picker hands paths like "Pegas Horse Ranch/morrowind/Data
+ *  Files/Meshes/maxhorse/Xhorse1.nif"; every engine lookup asks in the
+ *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
+ *  from the FIRST known asset root, lowercased, slashes normalized. A
+ *  path with no known root keys by its basename (a file picked alone). */
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/'];
+export function mwLoosePath(name) {
+  const p = String(name).replace(/\\/g, '/').toLowerCase();
+  for (const root of MW_LOOSE_ROOTS) {
+    const at = p.indexOf(root);
+    if (at !== -1) return p.slice(at);
+  }
+  return p.slice(p.lastIndexOf('/') + 1);
+}
+const MW_LOOSE_EXT = /\.(nif|kf|dds|tga|wav)$/i;
+
+/** MW-D40: the {has, get} duck the whole MW stack already speaks
+ *  (fpArm resolves everything via `archives.find((a) => a.has(path))`),
+ *  over a Map of canonical loose paths. Pure and node-testable. */
+export function makeLooseArchive(files) {
+  const norm = (p) => String(p).replace(/\\/g, '/').toLowerCase();
+  return {
+    loose: true,
+    names: [...files.keys()],
+    has: (p) => files.has(norm(p)),
+    get: (p) => files.get(norm(p)) ?? null,
+  };
+}
+
 export async function storeMorrowindFiles(files) {
-  // .bsa archives + .esm records; MwBsaFile magic-checks at read, so a
-  // wrong archive fails loudly there, not silently here.
-  return storeAssets(MW_STORE, files, (n) => /\.(bsa|esm)$/i.test(n));
+  // .bsa archives + .esm/.esp records; MwBsaFile magic-checks at read,
+  // so a wrong archive fails loudly there, not silently here.
+  // MW-D40: LOOSE files join - a mod like Pegas Horse Ranch ships
+  // meshes/textures/sounds outside any .bsa, and the engine's own law
+  // is that loose data files override archived ones. Archives and
+  // plugins keep their basename keys (stable for existing attaches);
+  // loose files key by canonical relative path.
+  return storeAssets(MW_STORE, files,
+    (n) => /\.(bsa|esm|esp)$/i.test(n) || MW_LOOSE_EXT.test(n),
+    (f, base) => (MW_LOOSE_EXT.test(base) ? mwLoosePath(f.webkitRelativePath || f.name) : base));
 }
 export const storedMorrowindNames = () => assetNames(MW_STORE);
 // IG2: THE SWAP-SPEED CACHES (Mac: "load times when swapping weapons,
@@ -426,6 +468,22 @@ export async function loadMorrowindArchives() {
   };
   names.sort((a, b) => rank(a) - rank(b));
   const archives = [];
+  // MW-D40: LOOSE FILES FIRST - the engine's own data-files-over-BSA
+  // law. Every stored non-archive asset joins one {has, get} duck
+  // ranked ahead of every .bsa, so a mod's meshes/textures/sounds
+  // (Pegas Horse Ranch's whole maxhorse tree) resolve through the
+  // exact seam fpArm already speaks, and can also OVERRIDE an
+  // archived file of the same path. Resident like the archives are -
+  // the IG2 cost statement above covers both.
+  const looseNames = (await storedMorrowindNames()).filter((n) => MW_LOOSE_EXT.test(n));
+  if (looseNames.length) {
+    const loose = new Map();
+    for (const n of looseNames) {
+      const bytes = await assetBytes(MW_STORE, n);
+      if (bytes) loose.set(n, bytes);
+    }
+    archives.push(makeLooseArchive(loose));
+  }
   for (const n of names) {
     try {
       archives.push(new MwBsaFile(await loadMorrowindFile(n)));
@@ -515,7 +573,9 @@ export async function pickMorrowindFiles() {
       browser, exactly like the ARENA2 pick.</p>
       <p style="color:#999">Powers the opt-in 3D asset layer. You need
       to own Morrowind; Tribunal.bsa and Bloodmoon.bsa join in if
-      they're in the folder.</p>`,
+      they're in the folder. Loose mod files (meshes, textures,
+      sounds - a mod folder like Pegas Horse Ranch's) join too and
+      override the archives, engine-style.</p>`,
     store: storeMorrowindFiles,
     register: registerMorrowindData,
   });

@@ -295,12 +295,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:336` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:503` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1041` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1047` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2260` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:3276` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:4079` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:5153` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1071` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1077` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2290` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:3306` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:4109` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:5199` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1198` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1213` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1422` - is the quest machine's, FLAGGED with it.

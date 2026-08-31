@@ -146,9 +146,13 @@ export class AudioEngine {
   }
 
   _buffer(index) {
-    if (!this.snd) return null;
     let b = this.buffers.get(index);
     if (b !== undefined) return b;
+    // MW-D40: a REGISTERED buffer (a mod's own WAV, decoded through
+    // registerSound below) answers by string key; only the classic
+    // integer indexes fall through to DAGGERFALL.SND. An unregistered
+    // string is null - the callers' own missing-clip shape.
+    if (typeof index === 'string' || !this.snd) return null;
     const rec = this.snd.getSound(index);
     if (!rec || !rec.waveData?.length) { this.buffers.set(index, null); return null; }
     const samples = pcm8ToFloat32(rec.waveData);
@@ -156,6 +160,25 @@ export class AudioEngine {
     b.getChannelData(0).set(samples);
     this.buffers.set(index, b);
     return b;
+  }
+
+  /** MW-D40: the external-sound door. Decodes a user-supplied clip
+   *  (a mod's WAV - the music module has decoded attached files this
+   *  way since MU1) and registers it under a string key that every
+   *  existing entry point (playOneShot, setLoop, loop3d...) then takes
+   *  in place of a DAGGERFALL.SND index - setLoop's swap semantics
+   *  included. Answers false and registers nothing on a clip the
+   *  decoder rejects: the caller keeps its classic fallback. */
+  async registerSound(key, bytes) {
+    try {
+      this._ensureCtx();
+      if (!this.ctx || this.buffers.has(key)) return this.buffers.get(key) != null;
+      const buf = await this.ctx.decodeAudioData(bytes.buffer ? bytes.buffer.slice(0) : bytes);
+      this.buffers.set(key, buf);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   _ready() {

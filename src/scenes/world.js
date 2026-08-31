@@ -25,6 +25,8 @@ import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y }
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
+import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
+import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
@@ -841,8 +843,36 @@ export async function bootWorld(canvas, renderer, params, status) {
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     ridingAnimator.mount(mode);
     ridingArt = null;
+    // MW-D42: mounting a HORSE in the enhanced skin saddles the
+    // player's own Pegas horse, once per session, if their attached
+    // Morrowind data carries the mod (MW-D40's loose door). Absent
+    // data, a failed parse, or the classic skin all leave `pegas`
+    // null and the CFA sprite rides exactly as before - the mod's
+    // assets are the PLAYER'S, read at runtime like ARENA2, never
+    // bundled (the license is the architecture; see pegasHorse.js).
+    if (mode === TRANSPORT_MODES.Horse) tryLoadPegas();
   };
   let ridingArt = null;   // TR2: the four CFA frames of the mount under you
+  let pegas = null;          // MW-D42: the loaded 3D mount, or null (the sprite lane)
+  let pegasSounds = new Set();
+  let pegasWanted = false;
+  async function tryLoadPegas() {
+    if (pegasWanted || !isEnhanced()) return;
+    pegasWanted = true;
+    try {
+      const archives = await loadMorrowindArchives();
+      const horse = loadPegasHorse({ renderer, archives });
+      if (!horse.ok) {
+        if (horse.stage !== 'data') console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
+        return;
+      }
+      pegasSounds = await registerHorseSounds(audio, archives);
+      pegas = horse;
+      console.log(`[pegas] the horse is saddled (variant ${horse.variant}, ${pegasSounds.size} mod sounds)${horse.notes.length ? ' - ' + horse.notes.join('; ') : ''}`);
+    } catch (err) {
+      console.warn('[pegas] load failed; the sprite rides:', err?.message);
+    }
+  }
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
@@ -4940,6 +4970,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
+    // MW-D42: THE HORSE UNDER YOU, world-space with the character
+    // pass's full lighting - the CFA sprite's 1:1 lane yields only
+    // while this actually stands (the draw below checks pegas again).
+    // Gait rides the same motor flags the sprite's animator reads;
+    // airborne holds the stride (horseGaitClip answers null). Paused
+    // HIDES, the sprite's own F-E1 law - no advance, no draw.
+    if (pegas && player.transportMode === TRANSPORT_MODES.Horse
+      && !(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+      const clip = horseGaitClip({
+        standingStill: player.standing, grounded: player.grounded,
+        movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
+      });
+      if (clip && !pegas.setClip(clip)) pegas.setClip(HORSE_CLIPS.still);   // fall back a gait, never a dead horse
+      pegas.advance(clip ? dt : 0);
+      renderer.drawCharacter(pegas.mesh, horseModelMatrix(player.pos, cam.yaw));
+    }
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
@@ -5246,15 +5292,30 @@ export async function bootWorld(canvas, renderer, params, status) {
           running: player.isRunning,
           soundVolume: 1,
         });
-        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
-        audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
+        // MW-D42: with the 3D horse standing, the mod's own hooves and
+        // voice replace the classic clips - key by key, only where a
+        // registered buffer actually landed (a partial attach degrades
+        // sound by sound). The setLoop SWAP semantics (F-F3) carry
+        // string keys unchanged through the MW-D40 door.
+        const pegasUp = pegas && player.transportMode === TRANSPORT_MODES.Horse;
+        if (r.neigh) {
+          audio.playOneShot(pegasUp && pegasSounds.has('pegas:roar') ? 'pegas:roar' : SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
+        }
+        const pegasClipKey = r.clip === 'HorseClop2' ? 'pegas:gallop' : 'pegas:trot';
+        const rideClip = pegasUp && pegasSounds.has(pegasClipKey) ? pegasClipKey : SOUND[r.clip];
+        audio.setLoop('riding', r.playing ? rideClip : null, { volume: r.volume, pitch: r.pitch });
         // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
         // game is paused - `!GameManager.IsGamePaused` sits in the same
         // condition as the Repaint test. Under an open window DFU shows
         // no mount; the first cut froze the frame and kept drawing it.
         if (ridingArt && isRiding(player.transportMode) && !ridePaused) {
-          const rect = ridingRect(canvas, ridingArt);
-          renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
+          // MW-D42: the CFA sprite is the 1:1 lane - it yields only
+          // while the 3D horse actually stands under you (the cart,
+          // the classic skin, and every failed load keep it).
+          if (!pegasUp) {
+            const rect = ridingRect(canvas, ridingArt);
+            renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
+          }
         }
       }
       drawHud(renderer, canvas, hudArt, playerEntity,

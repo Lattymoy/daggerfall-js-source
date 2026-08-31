@@ -5370,3 +5370,11 @@ Two findings and one REFUTATION:
 **THE TRANSPORT ARC IS CLOSED.** TR1 mode, TR2 sprite and audio, TR3
 window, TR4 ship, TR5 tail - and with TR3, all sixty of DFU's real
 windows are ported.
+
+(2026-08-31, after closing: MW-D42 hangs an ENHANCED-SKIN 3D horse
+beside the sprite - the player's own Pegas Horse Ranch data, read at
+runtime through the MW lane, never bundled. The arc stays closed: the
+sprite is still the 1:1 lane and every classic path is byte-identical;
+two pins moved by exactly the lines the swap needed (tr3's ride-loop
+clip, tr5's mode-door tail), both recorded in their tests. The whole
+story lives in Morrowind-Rules MW-D40..42.)

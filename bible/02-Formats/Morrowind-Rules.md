@@ -6158,3 +6158,65 @@ reference's walk; nothing in the movement lane does. The divergence
 is pinned in fparm.test.js, both on the divisor and on this note's
 own presence, so a 1:1 sweep cannot undo it silently: it must come
 with Mac's eye on the sprint, not a line number.
+
+MW-D40: LOOSE FILES AND THE EXTERNAL-SOUND DOOR (2026-08-31, Mac:
+"implement this mod 1 to 1 to replace the current horses for the
+enhanced version" - the Pegas Horse Ranch mod). Two doors the mod
+walked in through, both general. The MW store accepts loose
+.nif/.kf/.dds/.tga/.wav beside the archives, keyed by CANONICAL
+relative path (mwLoosePath: lowercase, slashes normalized, sliced
+from the first known asset root - the picker hands whatever wrapper
+folders the player extracted into), and loadMorrowindArchives ranks
+one {has, get} duck of them AHEAD of every .bsa - the engine's own
+data-files-over-archive law, through the exact seam fpArm has always
+resolved paths by, so loose files can also OVERRIDE archived ones.
+The audio engine's _buffer takes a registered STRING key anywhere it
+took a DAGGERFALL.SND index (registerSound decodes a user WAV the way
+the music module has since MU1; setLoop's F-F3 swap semantics carry
+keys unchanged); a rejected clip registers nothing and the classic
+fallback stands. mwd40_loosefiles.test.js.
+
+MW-D41: THE PEGAS HORSE ASSEMBLY (systems/pegasHorse.js). THE LICENSE
+IS THE ARCHITECTURE: the mod's readme (MADMAX, 2004) forbids
+modifying its files or building them into another mod - so NOTHING is
+baked or bundled; the module reads the PLAYER'S OWN copy at runtime
+through the archives seam, exactly as the port reads their ARENA2,
+and the repo carries only interoperability code. What the mod's data
+is (measured on the real files, per the staging law): one skinned
+NiTriShape "Tri cavallo" (~1k verts, coat Cait_horse<N>x.dds, twenty
+variants) - its 43 "Tri Bone##" siblings are HIDDEN per-bone hit
+boxes the flattener rightly skips - over a 40+-bone skeleton, and a
+.kf whose text keys carry the full creature vocabulary (Idle 1-7 with
+SoundGen keys, Walkforward/Runforward with loop markers, turns, hits,
+attacks, death). The assembly is the arm's own proven sequence:
+parse -> flatten -> buildSkeleton -> text keys/tracks -> resetClip,
+and per frame advanceClip -> poseSkeleton -> skeletonSpaceMatrices ->
+skinBatch -> packFpArm (whose repack re-derives flat normals from the
+deformed triangles) -> updateCharacterMesh. Never throws: {ok:false,
+stage} at every gap, a missing coat degrades to lit white with a
+note. Proven end to end on the real mod files in the dev container
+(17 clip groups indexed, coat hung, all three gaits deform);
+committed tests ride the crafted fixtures. mwd41_pegashorse.test.js.
+
+MW-D42: THE RIDE. The classic mount stays EXACTLY the 1:1 CFA sprite
+the TR arc closed on (Systems-Arc; its pins moved two lines, both
+recorded in tr3/tr5); the enhanced skin, when the player's attached
+data carries the mod, draws the real horse WORLD-SPACE through the
+character pass - full scene lighting, moonlight included - at the
+fpArm drawThird placement law (feet, yaw+180, the metre scale with
+the handedness mirror, Z-up tipped). Gait rides the SAME motor flags
+the sprite's animator reads: still=Idle, under half speed=
+Walkforward, above=Runforward, airborne=HOLD (the sprite resets its
+frame; a 3D stride freezing mid-jump reads right where a reset would
+pop). Pause HIDES (the sprite's own F-E1 law). The mod's lifesize
+build (~1.7m withers, measured) sits under the motor's F-E3 ride
+capsule (eye 2.51) at unit scale - PEGAS_SCALE is the dial. Sounds
+swap key by key through the MW-D40 door (trot/gallop on the
+half-speed edge, the roar for the neigh window) and any unregistered
+key keeps its classic clip - a partial attach degrades sound by
+sound. The saddle hangs off the ONE transport-mode door (U53), fires
+once per session, never throws, and every failure leaves the sprite
+riding. The cart keeps the sprite always - the mod carries no cart.
+mwd42_ride.test.js. RECORDED, NOT BUILT: the other nineteen coats
+(a variant picker), the idle SoundGen moans, turn-in-place clips,
+and the unicorn/wings - all present in the data, all waiting.
