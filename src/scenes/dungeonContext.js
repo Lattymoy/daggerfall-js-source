@@ -15,6 +15,7 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
+import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-time SmallerDungeons stamp
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
@@ -3818,6 +3819,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay) return;
       const w = makeSpellbookWindow();
       if (w) activeOverlay = w;
+    },
+    /** UI1: the U key in a dungeon. Nothing usable, no window
+     *  (DaggerfallUI :581-583); the use runs the host's seam. */
+    openUseMagicItem() {
+      if (activeOverlay) return;
+      const win = createUseMagicItemWindow({
+        items: playerEntity.items ?? [],
+        onUse: (item) => opts.useMagicItem?.(item),
+      });
+      if (win) activeOverlay = win;
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // U26: activating one now OPENS THE INVENTORY with the pile as the

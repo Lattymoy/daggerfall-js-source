@@ -100,6 +100,9 @@ import { getInteractionMode } from '../player/interactionMode.js';   // U45: the
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
+import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
+import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
+import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -1727,6 +1730,30 @@ export async function bootWorld(canvas, renderer, params, status) {
   // later service needs). One builder per host, still - the
   // service asks the host for its own window rather than
   // assembling a second one from a different dependency list.
+  /** U53's ONE-BUILDER LAW, held: the three host-owned use hooks live
+   *  HERE, once, and both readers take them - the inventory builder
+   *  below and UI1's use-magic-item pick. UI1's first cut copied the
+   *  bag and test/potions.test.js caught it (two drink hooks where the
+   *  law says one). */
+  const useHooks = {
+    ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
+  };
+
+  /** UI1: MagicItemPicker_OnItemPicked's two arms (:91-97) through the
+   *  port's ONE use seam - systems/useItem.js, the same call the
+   *  inventory's use mode makes, on the same hooks. */
+  const useMagicItem = (item) => {
+    const r = useItem(item, playerEntity.items ?? [], {
+      ...useHooks,
+      entity: playerEntity,
+      localItems: playerEntity.items ?? [],
+      spellCount: () => playerEntity.spells?.length ?? 0,
+      isEnchanted,
+      nowMinute: Math.floor(playerTicker.classicMinutes ?? 0),
+    });
+    if (r?.text) townTalk.say(r.text);
+  };
+
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
@@ -2636,6 +2663,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleSpellbook: () => toggleSpellbook(),
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
+    // UI1: DaggerfallUI :581-583 - the U key's window opens only when
+    // something in the pack is usable by magic; nothing usable, no
+    // window, which is why this returns rather than showing an empty
+    // list. The pick runs the inventory's OWN use path
+    // (nativeInventory._use's deps), so a potion is drunk and an
+    // enchanted item fires its Used payload through the one seam.
+    openUseMagicItem: () => {
+      const win = createUseMagicItemWindow({
+        items: playerEntity.items ?? [],
+        onUse: (item) => useMagicItem(item),
+      });
+      if (win) townTalk.showOverlay(win);
+    },
     // PX15: THE DIAL - Tab (routeKey's arm) raises the compass rose
     // over the live world, each arm one of THIS host's own doors: the
     // dial routes, the windows keep every law they have. The four are
@@ -3960,6 +4000,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // its dependency list; worldModes only chooses the slot.
     makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
     makeJournal: (mode) => makeJournalWindow(mode),
+    useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
     // PX17c: the pause window's journal seams ride into the interior
     // arm - the SAME expressions the world's own pause hands over
     // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,

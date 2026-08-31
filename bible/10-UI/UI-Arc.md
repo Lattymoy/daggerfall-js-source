@@ -8448,3 +8448,45 @@ slot is closure state and the window is a plain class, so the whole loop
 reproduces in Node with no GL and no ARENA2, and `createTownTalk` builds
 without either. Campaign: 8 mutants, 8 killed.
 
+
+## UI1 - THE CLASSIC-UI CLOSE (2026-08-31, open)
+
+Mac: "finishing all the classic UI - I know there's still some that
+remain unported 1:1". The checkable list is DFU's own window folder:
+85 `UserInterfaceWindows/*.cs`, of which 25 are Unity renderer config
+pages, the setup wizards, the FLC player, joystick config or base
+classes with no screen of their own. Of the 60 real windows, 56 are
+cited and ported somewhere in `src/`. FOUR were not:
+
+| Window | Lines | State |
+|---|---|---|
+| DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
+| DaggerfallMerchantServicePopupWindow | 175 | OPEN - the GNRC01I0 Talk/Sell popup for general merchants and banks; the guild-service sibling is ported, this one is not |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:517` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
+
+### UI1 CLOSED: the use-magic-item window
+
+The port had the DOOR and not the room. `input.js:192` routed
+`Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
+gave the large HUD's button its rect, `inputActions.js` bound KeyU -
+and no host implemented the method, so a live binding silently did
+nothing. That is the anti-lie law's other half: a deferred feature
+shows as deferred; a bound key that no-ops claims a feature the port
+does not have.
+
+`ui/useMagicItemWindow.js` is the window whole - it IS a
+DaggerfallListPickerWindow, so the port's ListPickerWindow is the body
+of it. UpdateUsableMagicItems verbatim (pack order; the first
+CastWhenUsed enchantment joins the item, `break`; a potion joins on the
+ELSE arm, so an enchanted item without CastWhenUsed is not listed at
+all); the window opens only when something is usable; AllowCancel
+false; the pick closes first and uses second. The use is the port's one
+seam, `systems/useItem.js` - the inventory's own path, both arms - owned
+by the world host and lent to worldModes and on to the dungeon ctx.
+
+### The next two
+
+The merchant popup is the same size as UI1 and needs only its two
+buttons plus routing from an already-ported activation path. Transport
+wants its own arc: the window is trivial, `TransportManager` is not.
