@@ -23,6 +23,7 @@ import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../wor
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
+import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
@@ -4771,8 +4772,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     ambience.update(dt, { playerPos: cam.pos });
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
+    // EV5: the moons light the night - the masser as a second key, the
+    // secunda folded into the ambient. null by day and under classic.
+    const moonNow = sky.moonlight();
+    renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
+      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), moonNow), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).

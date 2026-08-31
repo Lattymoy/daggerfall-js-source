@@ -39,6 +39,7 @@ import { applyClimate, getGroundArchive, getNatureArchive } from '../world/clima
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
+import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
@@ -1801,8 +1802,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // Storm lightning: verbatim frame-strobe multiplier on the sun (2x
     // during a flash frame); ?flashtest pins it on for shots.
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
+    // EV5: the moons light the night - the masser as a second key, the
+    // secunda folded into the ambient. null by day and under classic.
+    const moonNow = sky.moonlight();
+    renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
+      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), moonNow), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect point light (SunlightRig) -
     // intensity x the daylight curve, weather-dimmed with the rig,

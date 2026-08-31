@@ -7,7 +7,13 @@ Current (`src/render/`) - one bullet per module, pinned against the real
 directory by `test/audit18_bible_docs.test.js`:
 - `renderer.js` - WebGL2, two programs: lit solid geometry (MVP, directional
   light 0.45 + 0.55*diffuse, alpha < 0.5 discard) and Y-locked billboards
-  expanded in the vertex shader. Textures per (archive, record), REPEAT +
+  expanded in the vertex shader. EV5 added a SECOND directional term to
+  the three normal-bearing programs (mesh, character, terrain):
+  uMoonColor * uMoonScale * N.L, scale 0 by default so classic scenes,
+  interiors and dungeons are untouched; the flats take its
+  Lambert-average half on the tint, inside the `_clockLit` latch; the
+  studio borrow zeroes it. Driven only by the exterior hosts through
+  `setMoonlight` (see `07-Rendering/Enhanced-Visuals-Arc.md`). Textures per (archive, record), REPEAT +
   NEAREST, uploaded bottom-up exactly as getColor32 emits (matches GL texel
   order; DFU's negative-V UVs rely on REPEAT). ALL ground - exterior blocks
   and terrain alike - runs through this file's `drawTerrain` tilemap pass.
