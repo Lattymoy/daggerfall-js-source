@@ -2515,6 +2515,40 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
     'and only the real store\'s stamp turns them on');
 });
 
+test('IG4: follow-camera is the shipped default, riding the reference\'s own glue knob', () => {
+  // Mac, second ask: "the weapons, arms stay in there position on
+  // camera movement when I wanted them to follow the camera". The
+  // reference's quarter-lag and offset slide are REAL and MEASURED
+  // (probe L5c read 0.26 against the law's 0.25) - this is a DECLARED
+  // owner's divergence, not a misread law: rotateFactor 1.0 is what the
+  // reference itself does while aiming (npcanimation.cpp:714-718), here
+  // held always, with the offset channel zeroed at BOTH applications.
+  // The moving picture is probe L5e; these sweep the wiring.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /\(globalThis\.localStorage\?\.getItem\(FOLLOW_CAMERA_KEY\) \?\? 'true'\) !== 'false'/,
+    'an untouched store answers TRUE - glue is the default, the law is the toggle');
+  assert.match(arm, /let followCam = readFollowCamera\(\);/, 'the live arm reads it at construction');
+  assert.match(arm, /neckAim: followCam \? 1 : aimFactor,/,
+    'glued arms hold aim 1 (rotateFactor 1.0); the law path still passes the decaying state');
+  assert.match(arm, /if \(followCam\) \{ fpOffset\[0\] = 0; fpOffset\[1\] = 0; fpOffset\[2\] = 0; return null; \}/,
+    'and the offset zeroes at its ONE source, upstream of both applications');
+  // The toggle is live and persistent - the pause card flips it.
+  const inst = createFpArm();
+  assert.equal(inst.followCamera(), true, 'a bare Node context (no storage) still defaults ON');
+  assert.equal(inst.setFollowCamera(false), false);
+  assert.equal(inst.followCamera(), false);
+  inst.setFollowCamera(true);
+  // ...and the card offers it, labelled by CURRENT mode.
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Arms: follow the camera', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Arms: Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
+    'the pause card names the mode you are IN and one click flips it');
+  // The probe measures BOTH modes: the law layers with the flag off,
+  // the shipped glue with it on.
+  const probe = readFileSync('tools/mwArmProbe.mjs', 'utf8');
+  assert.match(probe, /window\.__arm\.setFollowCamera\(false\);/, 'L5c/L5d measure the LAW with the flag off');
+  assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped glue');
+});
+
 // ═══ MW-D37: the materials are colour truth; the dye picks the garment ═
 test('MW-D37: the material chains follow Daggerfall\u2019s own palette, and walk in order', async () => {
   const { DF_TO_MW_MATERIAL, pickWeaponRecord: pick } = await import('../src/formats/mwFirstPerson.js');

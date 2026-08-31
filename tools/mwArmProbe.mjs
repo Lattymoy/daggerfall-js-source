@@ -618,6 +618,15 @@ await boot(FIX.bsa);   // back to the armed-with-nothing baseline for L6/L7
 // and the ink's centroid must move WITH the look direction on screen
 // (look up, arms sit lower in frame; look down, higher - the quarter
 // they lag by).
+// IG4: THE LAG IS NOW A MODE, and the law layers measure the LAW - so
+// the flag goes OFF here (L5c/L5d read the reference's quarter-lag and
+// offset slide) and L5e below reads the shipped default's glue.
+const followDefault = await page.evaluate(() => {
+  const def = window.__arm.followCamera();
+  window.__arm.setFollowCamera(false);
+  return def;
+});
+ok(followDefault === true, 'follow-camera is the SHIPPED default (Mac\'s ask; the law path is the toggle)');
 const pitchShot = async (pitch) => page.evaluate((p) => {
   const arm = window.__arm;
   window.__pitch = p;
@@ -686,6 +695,28 @@ await page.evaluate(() => { window.__bob = [0, 0]; });
 ok(bobRest.n > 20 && bobUp.n > 20, `the arms draw through the bob (${bobRest.n} / ${bobUp.n} texels)`);
 ok(bobUp.cy < bobRest.cy - 0.005,
   `a bob UP shows the arms LOWER - the offset hits the lens twice and the neck once (cy ${bobRest.cy.toFixed(3)} -> ${bobUp.cy.toFixed(3)})`);
+
+// ── L5e: FOLLOW-CAMERA GLUES - THE SHIPPED DEFAULT, MEASURED ────────
+// IG4 (Mac, second ask: "the weapons, arms stay in there position on
+// camera movement when I wanted them to follow the camera"). With the
+// flag back ON, the neck takes the WHOLE look (the reference's own
+// aiming glue, rotateFactor 1.0) and the offset channel is zero at both
+// applications - so the ink's centroid must NOT move, under the same
+// hard looks and the same bob the law layers just measured sliding.
+await page.evaluate(() => { window.__arm.setFollowCamera(true); });
+const glueLevel = await pitchShot(0);
+const glueUp = await pitchShot(0.5);
+const glueDown = await pitchShot(-0.5);
+await page.evaluate(() => { window.__pitch = 0; });
+ok(glueLevel.n > 20 && glueUp.n > 20 && glueDown.n > 20,
+  `glued arms draw at every look (${glueLevel.n} / ${glueUp.n} / ${glueDown.n} texels)`);
+ok(Math.abs(glueUp.cy - glueLevel.cy) < 0.02 && Math.abs(glueDown.cy - glueLevel.cy) < 0.02,
+  `glued arms hold their place through a 0.5 rad look both ways (cy up ${glueUp.cy.toFixed(3)} / level ${glueLevel.cy.toFixed(3)} / down ${glueDown.cy.toFixed(3)})`);
+const glueBobRest = await bobShot(0);
+const glueBobUp = await bobShot(0.0012);
+await page.evaluate(() => { window.__bob = [0, 0]; });
+ok(Math.abs(glueBobUp.cy - glueBobRest.cy) < 0.005,
+  `and the bob no longer slides them against the view (cy ${glueBobRest.cy.toFixed(3)} -> ${glueBobUp.cy.toFixed(3)})`);
 
 
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
