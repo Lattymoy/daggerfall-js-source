@@ -2366,7 +2366,15 @@ export function createFpArm() {
         // rotates the arms the wrong way and DOUBLES the loss: measured,
         // a 0.25 look-up put every vertex out of frame instead of
         // sliding them a tenth of the way down it.
-        neckPitch: cam ? -(cam.pitch || 0) : 0,
+        // IG6c: in FIXED mode the look does not enter the arms pass AT
+        // ALL - not here, not at the lens. The earlier glue relied on
+        // the neck rotation and the lens rotation cancelling, which is
+        // exact on the fixtures and was STILL moving on Mac's retail
+        // data - a cancellation can only be as good as both of its
+        // halves, and a half this bench cannot verify (the retail
+        // skeleton's own bones) must not be load-bearing. Zero in, zero
+        // out cannot move, on any data, by construction.
+        neckPitch: (followCam || !cam) ? 0 : -(cam.pitch || 0),
         // MW-D13: and the factor that pitch is multiplied by, which is
         // not the constant 0.75 this passed before. Stepped HERE, once
         // per frame, because mAimingFactor is a decaying state.
@@ -2461,14 +2469,13 @@ export function createFpArm() {
       // The neck has already taken 0.75 of the pitch (poseAssembly), so
       // the eye has MOVED with the look; the lens takes all of it, which
       // is the lag you feel when you glance down at your hands.
-      // IG6: in fixed mode the neck took ALL of it (neckAim 1) and the
-      // lens takes all of it too - a rigid ensemble seen by a lens that
-      // rotates with it, so the picture NEVER moves: arms fixed to the
-      // screen, exactly the classic sprite's behaviour, Mac's final
-      // call. (The IG5 tilt - an under-rotated lens - is gone: its
-      // direction inverted on the played screen and the owner closed
-      // the question rather than chase the sign.)
-      const pitch = cam.pitch || 0;
+      // IG6c: in FIXED mode the lens never pitches, matching the pose
+      // that never pitched - the look is simply not an input to this
+      // pass, so the picture cannot depend on it, on any skeleton. The
+      // rotate-and-cancel glue this replaces was exact on the fixtures
+      // and still moved on Mac's retail data; classic-sprite semantics
+      // ("the weapon ignores the look") are now taken literally.
+      const pitch = followCam ? 0 : (cam.pitch || 0);
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
       const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
 
