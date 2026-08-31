@@ -586,9 +586,14 @@ The six the settings sweep handed to the UI arc, taken one at a time:
 - **NOT APPLICABLE: `GUI/HideLoginName`.** Its only consumer is
   DaggerfallUnitySetupGameWizard, DFU's first-run setup wizard, which
   the port does not have and is not porting (Ledger A).
-- Remaining: `EnableInventoryInfoPanel` (the inventory and trade
-  windows' info panel), `EnableEnhancedItemLists` (ItemListScroller's
-  row count), `EnableModernConversationStyleInTalkWindow`.
+- **UI4 CLOSED: `GUI/EnableInventoryInfoPanel`** (DaggerfallInventory
+  Window :303-307). Setup only ADDS the panel when it is on; the port
+  drew it unconditionally, which ships-True made invisible. Gated, with
+  the cutout and the label both inside the gate. The TRADE window's own
+  panel (:217-223) does not exist in the port yet and its pin fails the
+  day it appears.
+- Remaining: `EnableEnhancedItemLists` (ItemListScroller's row count),
+  `EnableModernConversationStyleInTalkWindow`.
 
 ### Refuted on the way
 

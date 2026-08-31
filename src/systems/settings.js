@@ -154,6 +154,9 @@ export const LIVE = Object.freeze({
   // backdrop instead of the race's. Ships False, and the port had been
   // behaving as if it were True.
   'GUI/EnableGeographicBackgrounds': 'src/ui/paperDoll.js',
+  // UI4: the item info panel is only ADDED when this is on
+  // (DaggerfallInventoryWindow :303-307).
+  'GUI/EnableInventoryInfoPanel': 'src/ui/nativeInventory.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
