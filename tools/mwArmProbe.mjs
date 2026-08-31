@@ -696,27 +696,31 @@ ok(bobRest.n > 20 && bobUp.n > 20, `the arms draw through the bob (${bobRest.n} 
 ok(bobUp.cy < bobRest.cy - 0.005,
   `a bob UP shows the arms LOWER - the offset hits the lens twice and the neck once (cy ${bobRest.cy.toFixed(3)} -> ${bobUp.cy.toFixed(3)})`);
 
-// ── L5e: FOLLOW-CAMERA GLUES - THE SHIPPED DEFAULT, MEASURED ────────
-// IG4 (Mac, second ask: "the weapons, arms stay in there position on
-// camera movement when I wanted them to follow the camera"). With the
-// flag back ON, the neck takes the WHOLE look (the reference's own
-// aiming glue, rotateFactor 1.0) and the offset channel is zero at both
-// applications - so the ink's centroid must NOT move, under the same
-// hard looks and the same bob the law layers just measured sliding.
+// ── L5e: THE ARMS TILT WITH THE LOOK - THE SHIPPED DEFAULT, MEASURED ─
+// IG5 (Mac's picked behavior: looking down visibly tips the weapon/arms
+// downward, looking up raises them - a reactive picture, not a rigid
+// one). With the flag back ON, the neck takes the WHOLE look (neckAim
+// 1) and the DRAW lens only FOLLOW_LENS_FACTOR of it, so the picture
+// rotates WITH the look about the eye - the REVERSE ordering of the law
+// layer above (whose arms move against the look), and a bigger swing.
 await page.evaluate(() => { window.__arm.setFollowCamera(true); });
-const glueLevel = await pitchShot(0);
-const glueUp = await pitchShot(0.5);
-const glueDown = await pitchShot(-0.5);
+const tiltLevel = await pitchShot(0);
+const tiltUp = await pitchShot(0.5);
+const tiltDown = await pitchShot(-0.5);
+const tiltHardUp = await pitchShot(1.4);
+const tiltHardDown = await pitchShot(-1.4);
 await page.evaluate(() => { window.__pitch = 0; });
-ok(glueLevel.n > 20 && glueUp.n > 20 && glueDown.n > 20,
-  `glued arms draw at every look (${glueLevel.n} / ${glueUp.n} / ${glueDown.n} texels)`);
-ok(Math.abs(glueUp.cy - glueLevel.cy) < 0.02 && Math.abs(glueDown.cy - glueLevel.cy) < 0.02,
-  `glued arms hold their place through a 0.5 rad look both ways (cy up ${glueUp.cy.toFixed(3)} / level ${glueLevel.cy.toFixed(3)} / down ${glueDown.cy.toFixed(3)})`);
-const glueBobRest = await bobShot(0);
-const glueBobUp = await bobShot(0.0012);
+ok(tiltLevel.n > 20 && tiltUp.n > 20 && tiltDown.n > 20,
+  `tilting arms draw at every ordinary look (${tiltLevel.n} / ${tiltUp.n} / ${tiltDown.n} texels)`);
+ok(tiltUp.cy > tiltLevel.cy + 0.03 && tiltDown.cy < tiltLevel.cy - 0.03,
+  `the arms tilt WITH the look - up raises them, down dips them (cy up ${tiltUp.cy.toFixed(3)} / level ${tiltLevel.cy.toFixed(3)} / down ${tiltDown.cy.toFixed(3)})`);
+ok(tiltHardUp.n > 10 && tiltHardDown.n > 10,
+  `and a HARD look near the pitch clamp keeps ink in frame (${tiltHardUp.n} up / ${tiltHardDown.n} down texels at 1.4 rad)`);
+const tiltBobRest = await bobShot(0);
+const tiltBobUp = await bobShot(0.0012);
 await page.evaluate(() => { window.__bob = [0, 0]; });
-ok(Math.abs(glueBobUp.cy - glueBobRest.cy) < 0.005,
-  `and the bob no longer slides them against the view (cy ${glueBobRest.cy.toFixed(3)} -> ${glueBobUp.cy.toFixed(3)})`);
+ok(Math.abs(tiltBobUp.cy - tiltBobRest.cy) < 0.005,
+  `and the bob no longer slides them against the view (cy ${tiltBobRest.cy.toFixed(3)} -> ${tiltBobUp.cy.toFixed(3)})`);
 
 
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
