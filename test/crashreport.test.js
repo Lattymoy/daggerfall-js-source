@@ -118,6 +118,7 @@ test('drawMesh: a GOOD mesh still draws - the guard is not a mute button', () =>
   const self = Object.assign(Object.create(Renderer.prototype), {
     gl, program: 'P', uModel: 'M', _blackTex: 'black',
     textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+    _texGen: 1, stats: { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 },   // EV2: the cache stamp + the counters the draw path keeps
   });
   const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };
   Renderer.prototype.drawMesh.call(self, mesh, new Float32Array(16), null);
@@ -169,6 +170,7 @@ test('drawMesh: a null MATRIX is skipped too - the argument that actually threw'
   const self = Object.assign(Object.create(Renderer.prototype), {
     gl, program: 'P', uModel: 'M', _blackTex: 'black',
     textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+    _texGen: 1, stats: { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 },   // EV2: the cache stamp + the counters the draw path keeps
   });
   const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };
   const realWarn = console.warn; console.warn = () => {};

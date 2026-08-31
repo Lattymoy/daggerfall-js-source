@@ -21,7 +21,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
@@ -370,12 +370,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   // space, resolved through the live floating-origin translation; the
   // floor is the terrain heightmap, bilinear over the stored samples.
   const heightCell = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
+  // EV2: the containing pixel is COMPUTABLE - pixelTranslation is an
+  // affine map, so its inverse names the one pixel that can hold
+  // (x, z) and the 49-entry scan (with a fresh translation array per
+  // entry, inside the collider's substeps) collapses to one Map.get.
+  // The invariant it leans on - the current pixel's frame sits at the
+  // origin under compensation - is the one streaming.test.js:139 fuzz
+  // pins over 2000 crossings.
+  const _htT = [0, 0, 0];
   const heightAt = (x, z) => {
-    for (const p of built.values()) {
-      const t = state.pixelTranslation(p.px, p.py);
+    const c = state.compensation;
+    const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
+    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
+    const p = built.get(`${px},${py}`);
+    if (p) {
+      const t = state.pixelTranslation(p.px, p.py, _htT);
       const lx = x - t[0];
       const lz = z - t[2];
-      if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+      if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
       const fx = lx / heightCell;
       const fz = lz / heightCell;
       const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx));
@@ -1291,7 +1303,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // doing - and the pitch already proved that is the seam every host
     // has. Morrowind's Sneak STANCE, which is DFU's Sneak binding; its
     // Crouch is a collider height, not an animation state.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
       // IG1: the head bob's VERTICAL feeds the first-person offset (the
       // reference's head_bobbing.lua drives setFirstPersonOffset's z
       // only); bobOffset[1] is the raw vertical, un-rotated.
@@ -2999,6 +3011,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { pos: wc.map((v) => +v.toFixed(2)), n: [+(wn[0] / l).toFixed(3), 0, +(wn[2] / l).toFixed(3)] };
     }));
     window.__frame = 0;
+    window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
   }
 
   // T2: the townsfolk probe surface - aggregated over built pixels,
@@ -4276,6 +4289,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
+  const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -4484,7 +4498,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           }));
           if (_step) audio.playOneShot(_step.clip, _step.volume);
         }
-        cam.pos = player.eye;
+        cam.pos = player.eyeAt();   // EV1: the interpolated render eye - rays and audio stay on player.eye
         // DC1: PlayerDeath.Update's camera sink - while the death
         // overlay runs, the eye rides down the sequence's drop (the
         // fresh array from player.eye makes this per-frame, never
@@ -4564,7 +4578,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // a killing fall as nothing when it crosses downward.
       adjustFallStart(player, r.offset[1]);
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
-      player.pos[0] += r.offset[0]; player.pos[1] += r.offset[1]; player.pos[2] += r.offset[2];
+      player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
@@ -4580,6 +4594,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // three lines up says "everything else holding a WORLD position
       // must follow the origin too" and then listed four of five.
       magic.offsetAll(r.offset);
+      // EV1: the two recenter misses the jitter lane found - the
+      // stride anchor (a spurious footstep per crossing) and the
+      // stillness gate's last-position (one false "moving" frame).
+      footsteps.rebase();
+      if (_lastPlayerPos) { _lastPlayerPos[0] += r.offset[0]; _lastPlayerPos[1] += r.offset[1]; _lastPlayerPos[2] += r.offset[2]; }
     }
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
@@ -4708,11 +4727,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     const windNow = sky.wind();
     const allBatches = [];
     for (const p of built.values()) {
-      const t = state.pixelTranslation(p.px, p.py);
-      const pixelMatrix = trs(t[0], t[1], t[2], 0, 0, 0);
+      // EV2: the pixel's frame matrix caches on the built entry and
+      // refreshes only when its translation actually changes (a
+      // recenter - not per frame), and each model's world matrix
+      // caches beside it: `trs` + `multiply` here minted two fresh
+      // Float32Array(16)s PER MODEL PER FRAME, the render loop's
+      // second-largest GC source after drawMesh's string keys.
+      const t = state.pixelTranslation(p.px, p.py, p._t || (p._t = [0, 0, 0]));
+      let pixelMatrix = p._pixelMatrix;
+      if (!pixelMatrix) pixelMatrix = p._pixelMatrix = identity();
+      if (pixelMatrix[12] !== t[0] || pixelMatrix[13] !== t[1] || pixelMatrix[14] !== t[2]) {
+        pixelMatrix[12] = t[0]; pixelMatrix[13] = t[1]; pixelMatrix[14] = t[2];
+        p._worldGen = (p._worldGen | 0) + 1;   // every cached model matrix refreshes
+      }
       renderer.drawTerrain(p.terrain, pixelMatrix,
         renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
-      for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
+      for (const m of p.models) {
+        if (m._worldGen !== p._worldGen || !m._world) {
+          m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
+          m._worldGen = p._worldGen | 0;
+        }
+        renderer.drawMesh(m.gpu, m._world, p.texRemap);
+      }
       // WM2b: THE SAILS, on the same eased wind vector the cloud deck
       // overhead is drawn with - so a storm picks the mills up on the
       // same fourteen-second curve it picks the sky up on. A null row is
@@ -4745,9 +4781,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         allBatches.push(b);
       }
     }
-    const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
-    renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
-    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles
+    _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
+    const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
+    renderer.drawBillboards(allBatches, camRight, UP_Y);
+    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
     // T2 towns: every built populated pixel runs its own pool
     // (PopulationManager is per-location); the pool sees the player in
     // the pixel's LOCATION frame, and live persons draw through the
@@ -4834,7 +4871,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // finished splash frees its batch inside tick().
     hitEffects.tick(dt);
     livePersonBatches.push(...hitEffects.batches());
-    if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
+    if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
     }

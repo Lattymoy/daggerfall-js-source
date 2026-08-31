@@ -90,6 +90,12 @@ export class FootstepMachine {
    *            onFoot = true, onExteriorWater = false, halfSpeed }
    *  @param set [clip1, clip2] from pickFootstepSet
    *  @returns { clip, volume } | null */
+  /** EV1: the floating origin moved the WORLD, not the feet - drop
+   *  the stride anchor so the next update re-seeds instead of
+   *  accumulating the 819.2-unit shift as walked distance (which
+   *  fired a spurious footstep at every map-pixel crossing). */
+  rebase() { this.last = null; }
+
   update(pos, m, set) {
     const here = [pos[0], pos[2]];
     if (this.last === null) this.last = here;

@@ -49,7 +49,7 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';   // U40: the lett
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
+import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
@@ -465,7 +465,7 @@ export function createWorldModes(host) {
     // MW-D8: see world.js's twin note - the arm rides the eye, and the
     // dep is required so a missing one is a reason, never a wrong place.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
       move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
         grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
@@ -3281,7 +3281,7 @@ export function createWorldModes(host) {
         // Teleport just ABOVE the marker and let gravity floor it -
         // FixStanding's re-floor, without tunneling thin boards.
         player.spawn(to[0], to[1] + 0.1, to[2]);
-        cam.pos = player.eye;
+        cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       }
       return true;
     }
@@ -3503,7 +3503,7 @@ export function createWorldModes(host) {
       // happened" - the player stays outside, standing at the door.
       if (!spawn) { console.error('[dungeon] no start marker; transition aborted'); return false; }
       player.spawn(spawn[0], spawn[1], spawn[2]);
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       // ...and the orientation half of the same two members: away from
       // the door you came through, or north for a start with no door.
       const _yaw = ctx.entryFacingYaw(spawn, { preferEnterMarker });
@@ -3648,7 +3648,7 @@ export function createWorldModes(host) {
       // put you outside still looking at them.
       cam.pitch = 0;
     }
-    cam.pos = player.eye;
+    cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     console.log('exterior: returned at dungeon entrance');
     return true;
   }
@@ -3841,7 +3841,7 @@ export function createWorldModes(host) {
         }));
       }
     }
-    cam.pos = player.eye;
+    cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     // DC1: PlayerDeath.Update's camera sink. Both modal modes route
     // death to interiorOverlay (the AUDIT 23 hosts-1 presenter), so
     // this ONE per-frame write covers a building and a ?world dungeon
@@ -3907,7 +3907,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       dungeonCtx.flatAnims.tick(dt);   // FA1
-      renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+      renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, UP_Y);
       // AUDIT 17e F1: this MUST return true like every other exit of
       // the dungeon branch. Returning undefined let the host fall
       // through and run its whole exterior frame on top - the town
@@ -3969,33 +3969,33 @@ export function createWorldModes(host) {
     interiorArrows.update(dt);
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
-    renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawBillboards(interiorCtx.billboardBatches, camRight, UP_Y);
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.
     interiorHitEffects.tick(dt);
     {
       const _blood = interiorHitEffects.batches();
-      if (_blood.length) renderer.drawBillboards(_blood, camRight, new Float32Array([0, 1, 0]));
+      if (_blood.length) renderer.drawBillboards(_blood, camRight, UP_Y);
     }
     // ID1: the player's own piles, on the same axis and the same call
     // the dungeon host makes for its droppedLoot.
     interiorDropped.tickFlats(dt);
     {
       const _dropBatches = interiorDropped.batches();
-      if (_dropBatches.length) renderer.drawBillboards(_dropBatches, camRight, new Float32Array([0, 1, 0]));
+      if (_dropBatches.length) renderer.drawBillboards(_dropBatches, camRight, UP_Y);
     }
     // IF: the pool's own billboards ride the same axis, the same call
     // the exterior host makes for its foes.
     if (interiorFoes) {
       const _foeBatches = interiorFoes.batches();
-      if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, new Float32Array([0, 1, 0]));
+      if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, UP_Y);
     }
     if (magic) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
       magic.firePending([...cam.pos], eyeDir());
       magic.update(dt, player.pos, eyeDir(), player.height);   // X11: the candle hangs off the look direction
-      if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));
+      if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -5226,7 +5226,7 @@ export function createWorldModes(host) {
       } else {
         player.spawn(p.x, p.y, p.z);
       }
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     },
     /** TP-slice: the Teleport effect leaves ANY mode - the exit
      *  cores of the door flows minus the landing (the caller owns

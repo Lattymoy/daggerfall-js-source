@@ -502,6 +502,20 @@ export class Renderer {
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
     this.emissionTextures = new Map(); // "archive_record" -> window mask
+    // EV2: the sub-mesh texture cache's generation. drawMesh used to
+    // mint a `${archive}_${record}` string per sub-mesh per frame -
+    // thousands of short-lived strings a frame, the render loop's
+    // single largest GC source. Sub-meshes now cache their resolved
+    // textures, stamped with this generation AND the texRemap object
+    // identity; any texture or emission upload bumps it, so a texture
+    // that streams in later is re-looked-up rather than staying a
+    // cached miss.
+    this._texGen = 1;
+    // EV2: per-frame draw statistics, reset in beginFrame. Integer
+    // increments only - cheap enough to keep on always, so probes and
+    // the __renderer surface can measure a real frame (the EV arc's
+    // "land wins against numbers" doctrine).
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._pointColor = new Float32Array([1, 1, 1]);
@@ -1221,6 +1235,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
+    this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
 
@@ -1276,6 +1291,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   beginFrame(proj, view, lightDir) {
+    const s = this.stats;
+    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
     const gl = this.gl;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
@@ -1428,6 +1445,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
+    this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
 
@@ -1766,18 +1784,40 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // draws before the model loop, which silently ran meshes on the
     // terrain program and vanished every building (caught by Mac).
     gl.useProgram(this.program);
+    this.stats.programBinds++;
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
     gl.bindVertexArray(mesh.vao);
+    this.stats.vaoBinds++;
     for (const sm of mesh.subMeshes) {
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
-      const tex = this.textures.get(resolved);
+      // EV2: the resolved textures cache on the sub-mesh, stamped with
+      // the texture generation and the remap's identity. The old body
+      // built the `${archive}_${record}` key fresh here - per sub-mesh,
+      // per placement, per frame - and hashed it twice; a city frame
+      // minted thousands of strings for the GC. A MISS is deliberately
+      // not stamped: the texture may still be streaming in, and caching
+      // the miss would blank the model until the next upload bump.
+      let tex;
+      if (sm._evGen === this._texGen && sm._evRemap === texRemap) {
+        tex = sm._evTex;
+      } else {
+        const key = `${sm.textureArchive}_${sm.textureRecord}`;
+        const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
+        tex = this.textures.get(resolved);
+        if (tex) {
+          sm._evTex = tex;
+          sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;
+          sm._evGen = this._texGen;
+          sm._evRemap = texRemap;
+        }
+      }
       if (!tex) continue;
       gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(resolved) || this._blackTex);
+      gl.bindTexture(gl.TEXTURE_2D, sm._evEmis);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
+      this.stats.texBinds += 2;
       gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
+      this.stats.draws++;
     }
     gl.bindVertexArray(null);
   }
