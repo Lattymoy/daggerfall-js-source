@@ -42,6 +42,7 @@
 
 import { SAVE_VERSION, QUICKSAVE_KEY } from './save.js';
 import { BUILD_TAG } from '../buildTag.js';
+import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 
 // SaveLoadManager's names (:42-44), as storage-key prefixes.
 export const SAVE_DATA_PREFIX = 'dagger.save.';
@@ -50,7 +51,7 @@ export const SAVE_SHOT_PREFIX = 'dagger.saveshot.';
 export const QUICK_SAVE_NAME = 'QuickSave';
 export const AUTO_SAVE_NAME = 'AutoSave';
 
-const store = () => globalThis.localStorage ?? null;
+const store = () => appStorage();
 
 const parse = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
 

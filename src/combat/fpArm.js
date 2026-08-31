@@ -67,6 +67,7 @@ import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../form
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { raceArt } from '../systems/races.js';
+import { appStorage } from '../systems/appStorage.js';   // DA1: the storage seam
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
@@ -1353,8 +1354,13 @@ export function esmDiagnosis(names, parts, race) {
  * probe's law layers measure it with the flag OFF.
  */
 const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera';
+// DA1: through the storage seam, not localStorage directly - the pin
+// in test/filestorage.test.js caught this landing bare on the merge,
+// which would have split the toggle out of the desktop app's file
+// store (the seam's whole reason). First firing of that pin, one
+// merge after it was written.
 function readFollowCamera() {
-  try { return (globalThis.localStorage?.getItem(FOLLOW_CAMERA_KEY) ?? 'true') !== 'false'; }
+  try { return (appStorage()?.getItem(FOLLOW_CAMERA_KEY) ?? 'true') !== 'false'; }
   catch { return true; }
 }
 
@@ -2512,7 +2518,7 @@ export function createFpArm() {
     followCamera: () => followCam,
     setFollowCamera(v) {
       followCam = !!v;
-      try { globalThis.localStorage?.setItem(FOLLOW_CAMERA_KEY, followCam ? 'true' : 'false'); } catch { /* a full store still keeps the in-session choice */ }
+      try { appStorage()?.setItem(FOLLOW_CAMERA_KEY, followCam ? 'true' : 'false'); } catch { /* a full store still keeps the in-session choice */ }
       return followCam;
     },
     thirdActive,

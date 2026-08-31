@@ -2527,7 +2527,12 @@ test('IG4/IG5: the arms TILT WITH the look by default - the owner\'s picked beha
   // uncapped, 1.4 rad down left ZERO texels). The moving picture is
   // probe L5e; these sweep the wiring.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /\(globalThis\.localStorage\?\.getItem\(FOLLOW_CAMERA_KEY\) \?\? 'true'\) !== 'false'/,
+  // DA1 (the merge after the seam landed): the read goes through
+  // appStorage() - localStorage in a browser, the desktop shell's file
+  // store in the app, null in bare Node, and the ?? 'true' default
+  // holds in all three. The seam's own pin (filestorage.test.js)
+  // forbids a bare globalThis.localStorage here.
+  assert.match(arm, /\(appStorage\(\)\?\.getItem\(FOLLOW_CAMERA_KEY\) \?\? 'true'\) !== 'false'/,
     'an untouched store answers TRUE - tilt is the default, the law is the toggle');
   assert.match(arm, /let followCam = readFollowCamera\(\);/, 'the live arm reads it at construction');
   assert.match(arm, /neckAim: followCam \? 1 : aimFactor,/,

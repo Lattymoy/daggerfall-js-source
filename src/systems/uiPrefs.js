@@ -10,6 +10,8 @@
 // whole point is that it is DFU's. Separate shelf, separate key.
 const STORAGE_KEY = 'dagger.ui.v1';
 
+import { appStorage } from './appStorage.js';   // DA1: the storage seam
+
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
   // settings, and two pins said so before I listened: the settings
@@ -39,7 +41,7 @@ export const PREF_DEFAULTS = Object.freeze({
 });
 
 let _prefs = null;
-const storage = () => { try { return globalThis.localStorage ?? null; } catch { return null; } };
+const storage = () => appStorage();   // DA1: localStorage in a browser, the shell's file store in the app
 
 export function loadPrefs() {
   _prefs = { ...PREF_DEFAULTS, open: {} };

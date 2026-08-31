@@ -44,6 +44,7 @@
 // the live set from the code and fails if a tier lies.
 
 import { SETTINGS_DEFAULTS } from './settingsDefaults.js';
+import { appStorage } from './appStorage.js';   // DA1: the storage seam
 
 const STORAGE_KEY = 'dagger.settings.v1';
 
@@ -281,9 +282,9 @@ export function tierOf(key) {
 // ---- the store ----
 let _values = null;   // Section -> key -> raw string (overrides only)
 
-const storage = () => {
-  try { return globalThis.localStorage ?? null; } catch { return null; }
-};
+// DA1: the storage seam - localStorage in a browser, the desktop
+// shell's file store (a real settings file under Prefs/) in the app.
+const storage = () => appStorage();
 
 /** Load overrides from storage. A missing, unreadable or corrupt blob
  *  is NOT an error - it means "defaults", which is exactly what DFU

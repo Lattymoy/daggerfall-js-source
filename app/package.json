@@ -1,0 +1,60 @@
+{
+  "name": "daggerfall-js-app",
+  "productName": "Daggerfall JavaScript",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Daggerfall JavaScript - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "author": "Lattymoy",
+  "homepage": "https://daggerfalljs.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lattymoy/daggerfall-js-source.git"
+  },
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "predist": "cd .. && npm run build",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.daggerfalljs.app",
+    "productName": "Daggerfall JavaScript",
+    "artifactName": "DaggerfallJS-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "lib/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "dist"
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Game"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.games"
+    }
+  }
+}

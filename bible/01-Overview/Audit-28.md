@@ -486,6 +486,37 @@ Idle, StrikeDown and StrikeUp only; a side strike keeps its side and
 AlignLeft is never swapped. The camera-feel and weapon-input set is
 CLOSED with this. 3 pins; 3 mutants, 3 killed.
 
+## THE CLOSING SWEEP (2026-08-31): every module that names a Settings key
+
+W1's shape - a law ported with its setting named in a comment and never
+read - run over the WHOLE tree, not just the stored list: for every one
+of DFU's keys (8+ characters, to skip the noise), every module that
+mentions it without a matching `getX('Section', 'Key')` read. Result:
+every hit is a comment pointing at the module that DOES read the key
+(the hosts naming the camera-feel keys the player/ modules read; the
+equip rules naming BowLeftHandWithSwitching, read in hud.js), except
+two stored keys, both recorded here as the last of the classification:
+
+- `MeleeAttacks/MeleeAttackDetection` (ships 0, "Basic"). Setting 1
+  ("Quality", WeaponManager.cs:958-972 and :997-1030) adds four extra
+  sample points to the box pass's in-view test - centre plus or minus a
+  quarter of the controller's height along camera-up, plus or minus half
+  its radius along camera-right - and, when the centre ray is
+  obstructed, casts to the head and feet points as well. The port's
+  `canSee` is host-built on the centre alone, so the Quality arm needs
+  the three pool hosts' canSee to take the extra points. A real slice,
+  default off, queued, not started.
+- `Audio/SoundFont` (ships empty). DaggerfallSongPlayer.cs:237 loads a
+  named .sf2 from StreamingAssets/SoundFonts; the port's synth is its
+  own (hmiFile.js) and has no file to load. Stays stored; this is why.
+
+With these two named, the settings sweep is COMPLETE: 103 stored keys
+at the start, 68 renderer/post-fx with no law to answer, 35 gameplay -
+22 closed as waves, 1 refuted (WeaponSensitivity, read nowhere), 6
+UI-only handed to the UI arc, 2 recorded above, and 4 (EnableQuestDebugger,
+LypyL_GameConsole, AssetCacheThreshold, TerrainHeightmapPixelError)
+that are tooling or Unity-internal.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

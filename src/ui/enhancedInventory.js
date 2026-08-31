@@ -360,6 +360,8 @@ let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
 let tab = TABS[0];
+const _scrollMemo = new Map();   // PX22: scrollTop per tab across repaints
+let _renderedTab = null;          // PX22: the tab the current DOM shows
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
 let notice = null;
@@ -1258,6 +1260,16 @@ function detailCol() {
 function render() {
   repaints++;
   repaintKeepingScroll(host, () => {
+    // PX22: the list's scroll position survives a repaint, per tab - an
+    // equip, a drop or a tab's own re-render rebuilds the DOM, and a
+    // list that jumped to the top on every action was the second half
+    // of the scrunch complaint.
+    // Keyed by the tab that was RENDERED, not the one about to be: a tab
+    // click changes `tab` before it repaints, and the first draft filed
+    // the old list's scroll under the new tab's name (197 -> 0 on a
+    // round trip, measured).
+    const prevList = host.querySelector('.packlists');
+    if (prevList && _renderedTab) _scrollMemo.set(_renderedTab, prevList.scrollTop);
     host.innerHTML = '';
     // PX16b (Mac: "really study the reference"): the reference's
     // ground is THE GAME - two translucent columns on the left third,
@@ -1412,6 +1424,9 @@ function render() {
     if (packOpen) shell.append(win);
     if (loot) shell.append(loot);
     host.append(shell);
+    const list = host.querySelector('.packlists');
+    if (list && _scrollMemo.has(tab)) list.scrollTop = _scrollMemo.get(tab);
+    _renderedTab = tab;
   });
 }
 

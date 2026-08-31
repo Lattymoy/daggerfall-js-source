@@ -10,6 +10,8 @@
 // serializes KeyCode NAMES into KeyBindings.txt, so the port's stored
 // shape is the same idea one alphabet over.
 
+import { appStorage } from './appStorage.js';   // DA1: the storage seam
+
 /** InputManager.Actions (:324-384), names and ORDER verbatim.
  *  'Unknown' (:383) is the parse sentinel, not a bindable action -
  *  parseActionName answers it, the list does not carry it. */
@@ -254,8 +256,11 @@ export function loadKeyBinds(store, data) {
 // as systems/settings.js:150.
 const STORAGE_KEY = 'dagger.keybinds';
 
+// DA1: the storage seam - localStorage in a browser, the desktop
+// shell's file store (KeyBindings beside the settings, as DFU keeps
+// KeyBindings.txt beside settings.ini) in the app.
 function storage() {
-  try { return globalThis.localStorage ?? null; } catch { return null; }
+  return appStorage();
 }
 
 /** The startup path (:441-452): load the file if it exists then
@@ -276,9 +281,15 @@ export function loadOrCreateBindings() {
   return store;
 }
 
-/** SaveKeyBinds' write (:926-929). */
+/** SaveKeyBinds' write (:926-929). AUDIT DA: this was the ONE
+ *  storage writer without the try/catch shield - setItem THROWS on a
+ *  full or broken store (quota in a browser, disk through the shell's
+ *  bridge), and an unshielded throw here propagated out of the
+ *  rebind flow and out of first-boot loadOrCreateBindings. Losing
+ *  the write costs a rebind, not a session. */
 export function saveKeyBinds(store) {
-  storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store)));
+  try { storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store))); }
+  catch (err) { console.warn('[inputActions] keybind write failed:', err?.name ?? err); }
 }
 
 // ── the frame model ─────────────────────────────────────────────────
