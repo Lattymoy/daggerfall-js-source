@@ -1391,6 +1391,7 @@ export function createFpArm() {
   let camera = null;
   let built = null;
   const listeners = new Set();   // MW-D36
+  let pendingWorn = null;        // PX25: the worn table that arrived mid-build
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1973,6 +1974,8 @@ export function createFpArm() {
         // change, asynchronously, and a panel drawn before the rebuild
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
+        // PX25: the table that arrived mid-build goes now.
+        if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
       }
     },
 
@@ -2090,9 +2093,16 @@ export function createFpArm() {
      *  skin is gone now". The rebuild runs while the inventory is open
      *  and the game paused, which is when equipment changes. */
     setWorn(pieces) {
-      if (!built || !built.ok || busy || !lastBuildOpts) return false;
+      if (!built || !built.ok || !lastBuildOpts) return false;
       const key = wornEquipKeyOf(pieces);
       if (key === wornEquipKey) return false;
+      // PX25: A CHANGE DURING A REBUILD IS NOT DROPPED. The pack hands
+      // over the table on every action now, and two quick equips land
+      // the second while the first is still building; returning false
+      // here left the key unmoved and the body one change behind until
+      // something else asked. The latest table waits and is applied the
+      // moment the in-flight build settles.
+      if (busy) { pendingWorn = pieces; return false; }
       wornEquipKey = key;
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
