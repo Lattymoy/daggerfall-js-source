@@ -1144,3 +1144,29 @@ test('PX29b: the doll is DFU\'s whole composite - the figure mask is REVERTED', 
   // Both windows draw the same composite again.
   assert.match(read('src/ui/enhancedInventory.js'), /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);
 });
+
+// ═══ PX22: Layer 1 - every region has its share, the list scrolls inside ═
+test('PX22: the character region is its content\u2019s height, the dock scrolls, nothing overlaps', () => {
+  const css = readFileSync('src/ui/enhancedStyle.js', 'utf8');
+  // the dock takes the remainder and is a clipped viewport
+  assert.match(css, /\.pack-shell \.pack-dock \{ flex: 1 1 auto; min-height: 100px;/, 'the dock must take the remainder, never size to its content');
+  assert.doesNotMatch(css, /\.pack-shell \.pack-dock \{[^}]*max-height: 38%/, 'the 38% content-sized dock is the scrunch');
+  assert.match(css, /\.pack-shell \.packlists \{[^}]*overflow-y: auto;\n  flex: 1 1 auto; min-height: 0;/, 'the list must be the scroll viewport (min-height 0)');
+  // the character region is content-sized; the map is a flex item, not 100% of a shared column
+  assert.match(css, /\.pack-shell \.pack-main \{ flex: 0 0 auto;/);
+  assert.match(css, /\.pack-shell \.charcol \.wornmap \{ height: auto; flex: 0 0 auto;/, 'the map must not claim the whole column under the transport strip');
+  // compact rows and a thin tab strip - the 660px window's two rows of tiles
+  assert.match(css, /\.pack-shell \.charcol \.equipped \.wornrow \{ min-height: 40px; padding: 4px 12px;/);
+  assert.match(css, /\.pack-shell \.pack-dock \.packcol\.packcats \{ padding: 0 8px; \}/);
+  assert.match(css, /\.pack-shell \.pack-dock \.packtab \{ min-height: 36px;/);
+  // the window keeps its rows before its margins on a short viewport
+  assert.match(css, /\.pack-win \{[^}]*height: min\(660px, 94dvh\)/);
+});
+
+test('PX22: the list\u2019s scroll position survives a repaint, keyed by the tab that was rendered', () => {
+  const src = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(src, /if \(prevList && _renderedTab\) _scrollMemo\.set\(_renderedTab, prevList\.scrollTop\);/,
+    'the memory must be filed under the RENDERED tab - a click changes `tab` before it repaints');
+  assert.match(src, /if \(list && _scrollMemo\.has\(tab\)\) list\.scrollTop = _scrollMemo\.get\(tab\);/);
+  assert.match(src, /_renderedTab = tab;/, 'the rendered tab must be recorded after the paint');
+});

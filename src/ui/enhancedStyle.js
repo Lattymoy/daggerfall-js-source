@@ -1937,7 +1937,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .pack-shell { transition: none; opacity: 1; backdrop-filter: blur(6px) saturate(85%);
     -webkit-backdrop-filter: blur(6px) saturate(85%); } }
 .pack-shell button { transition: none; border-radius: 0; }
-.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 86dvh);
+.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 94dvh);   /* PX22: a short viewport keeps its rows before its margins */
   display: flex; flex-direction: column;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460;
   transform: translateY(8px); transition: transform 0.22s steps(5, end); }
@@ -1959,11 +1959,26 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    details share the top; the inventory is a BOTTOM DOCK. */
 .pack-shell .pack { flex: 1; min-height: 0; display: flex; flex-direction: column;
   background: transparent; }
-.pack-shell .pack-main { flex: 1; min-height: 0; display: grid;
+/* PX22 (Mac: the more items, the more the main inventory scrunches -
+   Layer 1): THE CHARACTER REGION IS ITS OWN CONTENT'S HEIGHT, and the
+   dock takes whatever remains and SCROLLS INSIDE. Item count now moves
+   nothing but the scrollbar. What stood here let the dock size to its
+   content up to 38% and take that from the character region, and never
+   made the list a clipped viewport - the third row of tiles ran under
+   the footer, the flex min-height trap. The first cut of this fix gave
+   the region a fixed 48% share and the render showed the worn map's
+   last rows cut off under it: the map is taller than a share, so the
+   share is the map's. */
+.pack-shell .pack-main { flex: 0 0 auto; display: grid;
   grid-template-columns: 1fr; }   /* PX19i: the details ride a tooltip; the character takes the width */
-.pack-shell .pack-dock { flex: 0 0 auto; max-height: 38%; display: flex;
+.pack-shell .pack-dock { flex: 1 1 auto; min-height: 100px; display: flex;
   flex-direction: column; border-top: 2px solid rgba(125,116,96,0.35);
-  background: rgba(0,0,0,0.25); }
+  background: rgba(0,0,0,0.25); }   /* PX22: never less than the tabs and one row */
+.pack-shell .packcats { flex: 0 0 auto; }
+/* PX22: a 40px tab strip, not 64 - the 24px it gives back is the
+   difference between one row of tiles and two at the 660px window. */
+.pack-shell .pack-dock .packtab { min-height: 36px; padding: 2px 14px; }
+
 .pack-shell .packcats { background: transparent; border-right: 0;
   border-bottom: 2px solid rgba(125,116,96,0.3); overflow-x: auto; padding: 0 8px; }
 .pack-shell .packtabs { display: flex; flex-direction: row; gap: 2px; margin: 0; }
@@ -1977,7 +1992,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .packtab.on { color: rgb(243,239,44);
   box-shadow: inset 0 -2px 0 var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .pack-shell .packtab.on::after { content: '\\25c6'; font-size: 10px; margin-left: 8px; }
-.pack-shell .packlists { display: block; background: transparent; overflow-y: auto; }   /* the base sheet's two-column grid, off - the loot has its own window */
+.pack-shell .packlists { display: block; background: transparent; overflow-y: auto;
+  flex: 1 1 auto; min-height: 0; }   /* PX22: the dock's scroll viewport - min-height 0 is what makes overflow clip */
 /* The dock's rows are the reference's TILE GRID: square panels, the
    monogram carrying the item, the count in the corner, the name in
    the title and the plaque. The tiles live directly in .packcol -
@@ -1987,6 +2003,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the rest a tagged-template call - the octal lesson's sibling). */
 .pack-shell .pack-dock .packcol { padding: 8px 10px; display: flex; flex-wrap: wrap;
   gap: 6px; align-content: flex-start; }
+/* PX22: the tab strip is ALSO a .packcol and inherited that 8px; it
+   carries its tabs and nothing else, so 0 vertical padding - the 16px
+   is the difference between one row of tiles and two at 660px. */
+.pack-shell .pack-dock .packcol.packcats { padding: 0 8px; }
 .pack-shell .itemrow { position: relative; display: flex; align-items: center;
   justify-content: center; width: 56px; height: 56px; padding: 0; cursor: pointer;
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
@@ -2024,7 +2044,23 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    its anchor inside the frame, in the plaque's own dress; the phone
    keeps the .packdetail bottom sheet's physics untouched. */
 .pack-shell .charcol { overflow: hidden; padding: 12px 22px 16px; display: flex;
-  flex-direction: column; justify-content: stretch; }
+  flex-direction: column; justify-content: stretch; min-height: 0; }
+/* PX22: the map is a flex ITEM under the transport strip, at its own
+   compact height - not 100% of a column it shares. The strip drew
+   OVER the map's last two rows in every screenshot before this
+   (Mac's included): the map claimed the whole column and the strip
+   landed on top of it. Rows at 40px keep the figure standing and give
+   the dock a third row of tiles at a 660px window. */
+.pack-shell .charcol .wornmap { height: auto; flex: 0 0 auto;
+  grid-template-rows: repeat(6, minmax(40px, auto)); gap: 8px; }
+/* PX22: COMPACT WORN ROWS - a 34px tile and 4px of padding make a
+   42px row that still carries the family word and the piece's name;
+   the 60px row that stood here was the whole reason the map could not
+   fit above two rows of tiles. The transport plaques match. */
+.pack-shell .charcol .equipped .wornrow { min-height: 40px; padding: 4px 12px; gap: 12px; }
+.pack-shell .charcol .wornrow .tile { width: 34px; height: 34px; }
+.pack-shell .charcol .transport .tplaque { min-height: 44px; padding: 6px 12px; }
+.pack-shell .charcol .transport { margin-top: 10px; }
 /* .packtip.packdetail outranks the base .packdetail column rules
    (same-specificity, later-in-sheet was the trap: the tip computed
    RELATIVE, joined the flex column and folded the whole window -
