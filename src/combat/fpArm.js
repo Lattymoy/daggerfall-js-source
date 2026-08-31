@@ -1241,6 +1241,31 @@ export function esmDiagnosis(names, parts, race) {
 }
 
 /**
+ * IG4 (2026-08-31, Mac: "the weapons, arms stay in there position on
+ * camera movement when I wanted them to follow the camera" - his second
+ * ask after IG1). A DECLARED DIVERGENCE, and it is the OWNER'S: the
+ * reference DESIGNS the arms to trail the look - rotateFactor is 0.75
+ * at rest (npcanimation.cpp:719), so a quarter of every glance is lag,
+ * and the first-person offset hits the lens twice against the neck's
+ * once (camera.cpp:149-157), so the sneak sink and the head bob slide
+ * the arms AGAINST the view. This port measured itself AT that law (the
+ * probe read the lag at 0.26 of the look against the reference's 0.25)
+ * and Mac played exactly it and asked for glue, twice. So follow-camera
+ * is the shipped DEFAULT, built from the reference's own glue knob:
+ * rotateFactor 1.0 is what the reference itself does while aiming
+ * (mAccurateAiming, npcanimation.cpp:714-718), here applied always,
+ * with the offset channel zeroed at BOTH of its applications so nothing
+ * moves the lens against the arms. The Morrowind feel stays one toggle
+ * away (the pause card), and the probe's law layers measure it with the
+ * flag OFF.
+ */
+const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera';
+function readFollowCamera() {
+  try { return (globalThis.localStorage?.getItem(FOLLOW_CAMERA_KEY) ?? 'true') !== 'false'; }
+  catch { return true; }
+}
+
+/**
  * THE LIVE ARM. One per game, module-level, because there is one player.
  *
  * active() is the whole safety story and every term earns its place: an
@@ -1324,6 +1349,9 @@ export function createFpArm() {
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
   let aimFactor = 0;
+  // IG4: follow-camera mode, the shipped default - see the module head
+  // above createFpArm. Persisted so Mac's choice survives a reload.
+  let followCam = readFollowCamera();
   // IG1: THE FIRST-PERSON OFFSET - the reference's ONE channel for
   // everything that moves the FP view against the arms. The sneak sink
   // feeds it (Camera::setSneakOffset -> (0,0,-delta), camera.cpp:312)
@@ -2183,13 +2211,21 @@ export function createFpArm() {
         // MW-D13: and the factor that pitch is multiplied by, which is
         // not the constant 0.75 this passed before. Stepped HERE, once
         // per frame, because mAimingFactor is a decaying state.
-        neckAim: aimFactor,
+        // IG4: glued arms hold the reference's own aiming glue (aim 1 is
+        // rotateFactor 1.0) on EVERY frame; the law path still steps
+        // aimFactor above so flipping the toggle lands mid-decay exactly
+        // where the reference would be.
+        neckAim: followCam ? 1 : aimFactor,
         // Rule 32(a): the whole body sinks by i1stPersonSneakDelta in -Z
         // while sneaking, through the neck - and IG1 adds the head bob
         // to the SAME vector, the reference's own channel (the module
         // head on fpOffset carries the citations). The lens adds this
         // offset a second time in draw(), per calculateFirstPersonPosition.
         neckOffset: (() => {
+          // IG4: glued arms take NO offset at EITHER of its two
+          // applications - zeroing one side alone would smuggle the
+          // slide back in through the other.
+          if (followCam) { fpOffset[0] = 0; fpOffset[1] = 0; fpOffset[2] = 0; return null; }
           const sneak = sneakOffset(sneaking, built.sneakDelta);
           const bobZ = cam && cam.bob ? (cam.bob[1] || 0) * MW_UNITS_PER_METER : 0;
           fpOffset = [sneak[0], sneak[1], sneak[2] + bobZ];
@@ -2331,6 +2367,14 @@ export function createFpArm() {
       return true;
     },
     viewMode: () => viewMode,
+    /** IG4: follow-camera mode - the shipped default. See the module
+     *  head above createFpArm; the pause card's toggle flips it live. */
+    followCamera: () => followCam,
+    setFollowCamera(v) {
+      followCam = !!v;
+      try { globalThis.localStorage?.setItem(FOLLOW_CAMERA_KEY, followCam ? 'true' : 'false'); } catch { /* a full store still keeps the in-session choice */ }
+      return followCam;
+    },
     thirdActive,
     /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
      *  what the camera's queued-mode gate consults (camera.cpp:135):

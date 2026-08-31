@@ -412,6 +412,9 @@ test('MW-D15 rule 32(a): the LIVE arm sinks when the camera dep says sneak', asy
   ]);
   let sneaking = false;
   const arm = createFpArm();
+  // IG4: the sink is the REFERENCE's feel, and the shipped default is
+  // Mac's glue - so this law test runs with the toggle in law mode.
+  arm.setFollowCamera(false);
   arm.attach({
     gl: null,
     createCharacterMesh: () => ({ vao: 1, buffers: [], ranges: [] }),
