@@ -962,12 +962,12 @@ function paneEnhanced(body) {
         render();
       } });
   }
-  // IG4: the one Morrowind-feel knob the owner asked for. The label
+  // IG4/IG5: the one Morrowind-feel knob the owner asked for. The label
   // names the CURRENT mode; a click flips it, live, no rebuild - the
   // rig reads the flag per frame.
   if (count) {
     armActions.push(fpArm.followCamera()
-      ? { label: 'Arms: follow the camera', onClick: () => { fpArm.setFollowCamera(false); render(); } }
+      ? { label: 'Arms: tilt with the look', onClick: () => { fpArm.setFollowCamera(false); render(); } }
       : { label: 'Arms: Morrowind look-lag', onClick: () => { fpArm.setFollowCamera(true); render(); } });
   }
   armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });

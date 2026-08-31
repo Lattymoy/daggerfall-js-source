@@ -6043,33 +6043,47 @@ look filter took over the hosts' pitch clamp and now imports THIS arc's
 reference PITCH_LIMIT (+/-(PI/2 - 1e-6)) from mwCamera instead of the
 1.5 literal it had re-minted.
 
-IG4 - FOLLOW-CAMERA, THE OWNER'S DECLARED DIVERGENCE (2026-08-31).
+IG4/IG5 - THE TILT, THE OWNER'S DECLARED DIVERGENCE (2026-08-31).
 Mac, after playing the IG1-IG3 build: "the weapons, arms stay in there
-position on camera movement when I wanted them to follow the camera" -
-his second ask for glue. The diagnosis re-verified the whole chain
-before touching anything: every host's camera dep is live (pitch in
-radians, upward-positive, matching mwCamera's own forward math), the
-dungeon latch derives the true pitch off the view matrix, the sign
-convention holds against the reference (camera.cpp:408 setPitch(-rot[0])
-- rot[0] is downward-positive, the port negates), the offset really is
-applied twice by the reference (the neck controller once,
+position on camera movement when I wanted them to follow the camera."
+The diagnosis re-verified the whole chain before touching anything:
+every host's camera dep is live (pitch in radians, upward-positive,
+matching mwCamera's own forward math), the dungeon latch derives the
+true pitch off the view matrix, the sign convention holds against the
+reference (camera.cpp:408 setPitch(-rot[0]) - rot[0] is
+downward-positive, the port negates), the offset really is applied
+twice by the reference (the neck controller once,
 rotatecontroller.cpp:52, and calculateFirstPersonPosition again on the
 neck-hung Camera node, camera.cpp:149-157), and the probe measured the
 port's lag at 0.26 of the look against the reference's own 0.25
 (rotateFactor 0.75, npcanimation.cpp:719). The port WAS Morrowind;
-Morrowind's design is what Mac is declining. So follow-camera is the
-shipped DEFAULT, built from the reference's own glue knob - rotateFactor
-1.0 is exactly what the reference does while aiming (mAccurateAiming,
-npcanimation.cpp:714-718), here held on every frame, with the offset
-channel zeroed at its one source so neither of its two applications
-moves the lens against the arms (glue for the look, the head bob, and
-the sneak sink alike; the world view still bobs and crouches through
-the classic DFU channels, and the glued overlay rides it). The
-reference's feel is NOT deleted: the pause card's "Arms" row flips
-live between "follow the camera" and "Morrowind look-lag", the choice
+Morrowind's design is what Mac was declining.
+
+Round one shipped rigid glue (rotateFactor 1.0 - the reference's own
+aiming value, npcanimation.cpp:714-718 - held always, offset zeroed at
+both applications). Mac rejected that too: the arms "stay in position"
+- a rigid picture. Asked directly, he picked TILT: looking down
+visibly dips the weapon/arms, looking up raises them - a reactive
+picture, the reverse direction of the reference's lag.
+
+The build: the POSE keeps the aim-glue (neckAim 1, offset zeroed at
+its one source), and the DRAW lens gives back a saturated half of the
+look - tilt = clamp(look * (1 - FOLLOW_LENS_FACTOR), +/-FOLLOW_TILT_MAX),
+lens pitch = look - tilt. Changing only the lens orientation rotates
+the picture about the camera centre, so the tilt is pure - no
+positional drift. The cap is measured, not chosen: uncapped, a 1.4 rad
+look down left ZERO ink in frame; capped at 0.45 it still did (the
+arms start low in frame); at 0.25 the whole reaction lives inside the
+ordinary +/-0.5 rad band, and because with the neck at aim 1 the image
+depends ONLY on the tilt, past the cap a harder look changes nothing -
+the +/-0.5 frame is the worst case.
+
+The reference's feel is NOT deleted: the pause card's Arms row flips
+live between "tilt with the look" and "Morrowind look-lag", the choice
 persists (dagger.mwArmsFollowCamera), the aiming factor still steps
-underneath so a mid-decay flip lands where the reference would be, and
+underneath so a flip lands mid-decay where the reference would be, and
 the probe measures BOTH modes - the law layers with the flag off
-(L5c/L5d: the quarter lag, the offset slide), L5e with it on (cy held
-0.354-0.355 across a full radian of look where the law slid
-0.235-0.463).
+(L5c/L5d: the quarter lag at 0.26, the offset slide), L5e with it on
+(cy up 0.572 / level 0.354 / down 0.117 - the REVERSE ordering of the
+law layer - plus the hard-look frame-survival gate at 1.4 rad and the
+bob invariance).

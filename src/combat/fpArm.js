@@ -259,6 +259,30 @@ export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
 
+/**
+ * IG5 (Mac's picked behavior, 2026-08-31): in tilt mode the DRAW lens
+ * takes only this fraction of the look, while the neck takes all of it
+ * - so the whole arms picture rotates by (1 - factor) of the pitch
+ * ABOUT THE EYE, in the SAME direction as the look: glance down and the
+ * weapon visibly dips, glance up and it rises. Changing only the lens
+ * orientation is a pure rotation of the image about the camera centre,
+ * so there is no positional drift to go with it - the failure of every
+ * earlier reading (the rigid glue Mac rejected as "stay in position",
+ * the reference's quarter-LAG he rejected before that, which moves the
+ * arms AGAINST the look).
+ */
+export const FOLLOW_LENS_FACTOR = 0.5;
+
+/** IG5: the tilt SATURATES here (radians of on-screen rotation), so a
+ *  hard look at the pitch clamp cannot sweep the arms out of frame -
+ *  measured twice: uncapped, a 1.4 rad look down left ZERO ink; capped
+ *  at 0.45 it STILL did, because the arms start low in frame and run
+ *  out of bottom early. At 0.25 the whole reaction lives inside the
+ *  ordinary +/-0.5 rad band and the picture holds beyond it (with the
+ *  neck at aim 1 the image depends ONLY on the tilt, so past the cap a
+ *  harder look changes nothing - the +/-0.5 frame is the worst case). */
+export const FOLLOW_TILT_MAX = 0.25;
+
 /** MW-D11: nine floats became eleven - [pos.xyz, colour.rgb, normal.xyz,
  *  uv.xy]. Stated once, here, because the pack and the VAO have to agree
  *  and a second copy of the number is how they stop agreeing. */
@@ -1310,23 +1334,23 @@ export function esmDiagnosis(names, parts, race) {
 }
 
 /**
- * IG4 (2026-08-31, Mac: "the weapons, arms stay in there position on
- * camera movement when I wanted them to follow the camera" - his second
- * ask after IG1). A DECLARED DIVERGENCE, and it is the OWNER'S: the
- * reference DESIGNS the arms to trail the look - rotateFactor is 0.75
- * at rest (npcanimation.cpp:719), so a quarter of every glance is lag,
- * and the first-person offset hits the lens twice against the neck's
- * once (camera.cpp:149-157), so the sneak sink and the head bob slide
- * the arms AGAINST the view. This port measured itself AT that law (the
- * probe read the lag at 0.26 of the look against the reference's 0.25)
- * and Mac played exactly it and asked for glue, twice. So follow-camera
- * is the shipped DEFAULT, built from the reference's own glue knob:
- * rotateFactor 1.0 is what the reference itself does while aiming
- * (mAccurateAiming, npcanimation.cpp:714-718), here applied always,
- * with the offset channel zeroed at BOTH of its applications so nothing
- * moves the lens against the arms. The Morrowind feel stays one toggle
- * away (the pause card), and the probe's law layers measure it with the
- * flag OFF.
+ * IG4/IG5 (2026-08-31, Mac). A DECLARED DIVERGENCE, and it is the
+ * OWNER'S. The reference DESIGNS the arms to trail the look -
+ * rotateFactor is 0.75 at rest (npcanimation.cpp:719), so a quarter of
+ * every glance moves the arms AGAINST it, and the first-person offset
+ * hits the lens twice against the neck's once (camera.cpp:149-157), so
+ * the sneak sink and the head bob slide them against the view too. The
+ * port measured itself AT that law (the probe read the lag at 0.26 of
+ * the look against the reference's 0.25) and Mac rejected the design
+ * itself; the rigid glue tried next (rotateFactor 1.0, the reference's
+ * own aiming value) he rejected as "stay in position". What he PICKED
+ * (IG5): the arms TILT WITH the look - glance down and the weapon
+ * visibly dips, glance up and it rises. Built as aim-glue in the pose
+ * (neckAim 1, offset zeroed at both applications) plus an
+ * under-rotated draw lens (FOLLOW_LENS_FACTOR) so the picture rotates
+ * with the look about the eye, a pure tilt with no drift. The
+ * Morrowind feel stays one toggle away (the pause card), and the
+ * probe's law layers measure it with the flag OFF.
  */
 const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera';
 function readFollowCamera() {
@@ -2410,7 +2434,15 @@ export function createFpArm() {
       // The neck has already taken 0.75 of the pitch (poseAssembly), so
       // the eye has MOVED with the look; the lens takes all of it, which
       // is the lag you feel when you glance down at your hands.
-      const pitch = cam.pitch || 0;
+      // IG5: in tilt mode the neck took ALL of it (neckAim 1) and the
+      // lens gives back a SATURATED half - the picture rotates WITH the
+      // look about the eye, the dip Mac asked for, and the cap keeps a
+      // clamp-hard look from sweeping the arms off the frame.
+      const look = cam.pitch || 0;
+      const tilt = followCam
+        ? Math.max(-FOLLOW_TILT_MAX, Math.min(FOLLOW_TILT_MAX, look * (1 - FOLLOW_LENS_FACTOR)))
+        : 0;
+      const pitch = look - tilt;
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
       const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
 
