@@ -123,10 +123,15 @@ function enhancedInventoryOverlay(deps) {
     dispose() { close(); },
   };
 
-  import('./enhancedInventory.js').then(({ mountEnhancedInventory }) => {
-    if (fired) { host.remove(); return; }   // disposed before the module landed
-    view = mountEnhancedInventory(host, { ...deps, onExit: close });
-  }).catch((e) => {
+  // MW-D36: the pack takes the Morrowind arm module by dynamic import
+  // beside its own - the model figure reads fpArm.figure() when a body
+  // stands and never touches it otherwise. Enhanced only: this door is
+  // the enhanced skin's.
+  Promise.all([import('./enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)])
+    .then(([{ mountEnhancedInventory }, armMod]) => {
+      if (fired) { host.remove(); return; }   // disposed before the module landed
+      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
+    }).catch((e) => {
     console.warn('[inventory] the enhanced pack would not mount', e);
     host.remove();
     fired = true;

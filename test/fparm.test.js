@@ -2365,6 +2365,60 @@ test('AUDIT 32 F2/F3: the match is memoised per identity and generation, and a m
     'the head is not measured through its mesh');
 });
 
+// ═══ MW-D36: the model stands where the doll stood (enhanced only) ══
+test('MW-D36: figure() is null without a body, subscribe() fires on settlement and unsubscribes', async () => {
+  const arm = createFpArm();
+  assert.equal(arm.figure(), null, 'no body, no figure - the classic doll stands');
+  let fired = 0;
+  const off = arm.subscribe(() => { fired++; });
+  // a refused build settles too: the deps door answers no archives.
+  await arm.build({ race: 'nord', deps: { loadMorrowindArchives: async () => [] } });
+  assert.equal(fired, 1, 'a settled build must notify the panel');
+  arm.unload();
+  assert.equal(fired, 2, 'an unload must notify the panel');
+  off();
+  arm.unload();
+  assert.equal(fired, 2, 'unsubscribed listeners must not fire');
+});
+
+test('MW-D36: the pack takes the model only when it stands, and never lets the model unequip', () => {
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const figureUrl = modelFigureUrl\(\);/);
+  assert.match(pack, /const dollUrl = figureUrl \|\| paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/,
+    'the classic doll must remain the fallback');
+  assert.match(pack, /if \(figureUrl\) attachFigureTurn\(img\);/, 'the model must turn by drag');
+  // display only: the model's image gets NO click-to-unequip handler.
+  const turn = pack.slice(pack.indexOf('function attachFigureTurn'), pack.indexOf('function attachFigureTurn') + 900);
+  assert.ok(!/takeOff|slotAtPaperDoll|onclick/.test(turn), 'the model must not unequip on click (Mac: unequip stays with the list)');
+  assert.match(pack, /_unsubscribeFigure = d\.fpArm\.subscribe\(/, 'the pack must repaint when a build settles');
+  assert.match(pack, /_unsubscribeFigure\?\.\(\); _unsubscribeFigure = null;/, 'the subscription must have an owner');
+  // enhanced only: the door that hands over the arm module is the enhanced door.
+  const door = readFileSync('src/ui/inventoryDoor.js', 'utf8');
+  assert.match(door, /fpArm: armMod\?\.fpArm \?\? null/);
+  const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
+  assert.ok(!/fpArm|figure\(/.test(classic), 'the classic inventory must not know the model exists');
+  const rend = readFileSync('src/render/renderer.js', 'utf8');
+  assert.match(rend, /renderCharacterSpriteImage\(mesh, modelMatrix, proj, view, pw, ph\)/);
+  assert.match(rend, /out\.set\(raw\.subarray\(y \* pw \* 4, \(y \+ 1\) \* pw \* 4\), \(ph - 1 - y\) \* pw \* 4\);/, 'GL rows must flip on the way out');
+});
+
+test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quantised yaw', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1400);
+  // F1: the inventory opens from first person; the figure must not
+  // demand the wheel's view mode or a mesh only the wheel uploads.
+  assert.ok(!/thirdActive\(\)/.test(fig), 'the figure gates on the wheel being active');
+  assert.match(fig, /if \(!\(built && built\.ok && thirdBuilt && thirdBuilt\.ok && renderer\)\) return null;/);
+  assert.match(fig, /uploadThirdMesh\(t\);/, 'the figure does not upload through the one helper');
+  // one upload for both consumers: the wheel's update path uses the same helper.
+  assert.equal((arm.match(/uploadThirdMesh\(t\);/g) || []).length, 2, 'the upload has two callers and one body');
+  assert.equal((arm.match(/renderer\.createCharacterMesh\(thirdPacked\.packed/g) || []).length, 1, 'a second third-mesh upload is growing');
+  // F2: the pack quantises the yaw before it asks.
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const yaw = Math\.round\(_figureYaw \/ 0\.1\) \* 0\.1;/);
+  assert.match(pack, /armMod\.figure\(\{ yaw, height: 384 \}\)/);
+});
+
 // ═══ IG1-IG3: MAC'S IN-GAME NOTES (2026-08-31) ══════════════════════
 
 test('IG3: the SHIELD wears getShieldMesh\'s whole ladder - body part, hard refusal, ground fallback', () => {

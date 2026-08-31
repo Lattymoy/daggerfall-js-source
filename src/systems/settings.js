@@ -143,6 +143,9 @@ export const LIVE = Object.freeze({
   // WeaponSwingMode (:306-350): 0 gesture, 1 click, 2 click or hold.
   'Controls/WeaponAttackThreshold': 'src/combat/playerWeapon.js',
   'Controls/WeaponSwingMode': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W12: the bow's draw-and-hold (WeaponManager :341, :353-360)
+  // - press draws, release looses, activate un-draws, 10 s times out.
+  'Controls/BowDrawback': 'src/combat/playerWeapon.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
