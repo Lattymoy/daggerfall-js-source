@@ -1723,6 +1723,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _fpMove = null;   // MW-D26: the frame's movement report
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
+    activateHeld: () => !!opts.activateHeld?.(),   // AUDIT 28 W12: the host's ActivateCenterObject, for the drawn bow's un-draw
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
     camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, sneaking: _fpSneaking, move: _fpMove } : null),   // MW-D26
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon

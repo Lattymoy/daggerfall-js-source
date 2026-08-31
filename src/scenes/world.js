@@ -1260,6 +1260,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // full refill, neither of which is a calendar.
   const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: startLoc.regionIndex });
   const weaponRig = createWeaponRig({
+    activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
     // MW-D8: the Morrowind arm rides the player's eye. Required, not

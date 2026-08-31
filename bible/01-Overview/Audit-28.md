@@ -463,6 +463,19 @@ sweeps clean. One finding, fixed here, and a correction to the record:
 
 1 mutant (accumulation), killed.
 
+## W12 CLOSED: BowDrawback (WeaponManager.cs:341, :353-360)
+
+The machine had carried the draw-and-hold half since FX1 - StrikeUp to
+the hold frame, the 10 s undraw, the StrikeUp -> StrikeDown release -
+with a comment saying it becomes live "the moment the drawback path
+does, with nothing here to change". That was exactly true. The gesture's
+bow arm reads the setting now: a press draws, letting go at the hold
+frame looses, ActivateCenterObject held un-draws (the full cooldown
+charged, as a cancelled draw costs what an arrow costs). The activate
+key reaches every rig through a new `activateHeld` dep - the dungeon ctx
+threads its host's - which is the one seam the old comment did not
+foresee. 5 pins; 3 mutants, 3 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

@@ -455,6 +455,7 @@ export function createWorldModes(host) {
   // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
   // own audited copy; the host rule wants the weapon in every mode).
   const interiorWeapon = createWeaponRig({
+    activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     // MW-D8: see world.js's twin note - the arm rides the eye, and the
@@ -3391,7 +3392,7 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, {
+        dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject'),
           foes: host.foes, playerClass: host.playerClass,
           playerSpell: host.playerSpell, playerWeapon: host.playerWeapon,
           // AUDIT 24 (the seven-slice sweep): THE OUTER HOST OWNS

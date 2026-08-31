@@ -21,7 +21,7 @@
 
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
-  MAX_GESTURE_SECONDS,
+  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw,
 } from '../characters/weaponStates.js';
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
@@ -125,6 +125,8 @@ export class PlayerWeapon {
   gesture(dx, dy, held, dt, longestDim, {
     attackThreshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0),
     swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2),
+    bowDrawback = getBool('Controls', 'BowDrawback'),
+    cancelHeld = false,
     rolls = Math.random,
   } = {}) {
     // AUDIT 23 (combat-2) - WeaponManager.cs:355-358: a bow never
@@ -136,7 +138,22 @@ export class PlayerWeapon {
     if (this.machine.isBow) {
       const rise = held && !this._bowHeld;
       this._bowHeld = held;
-      if (rise && machineAttack(this.machine, 'StrikeDown')) return 'StrikeDown';
+      const m = this.machine;
+      if (bowDrawback) {
+        // AUDIT 28 W12 (WeaponManager.cs:341, :353-360): the press DRAWS
+        // (StrikeUp - the machine steps to the hold frame and waits);
+        // drawn and holding, ActivateCenterObject held UN-draws without
+        // an arrow (the >10 s timeout is the machine's own 'undraw'),
+        // and letting the button go RELEASES (StrikeDown).
+        if (m.state === 'StrikeUp' && m.frame === BOW_DRAWN_HOLD_FRAME) {
+          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); return null; }
+          if (!held && machineAttack(m, 'StrikeDown')) return 'StrikeDown';
+          return null;
+        }
+        if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) return 'StrikeUp';
+        return null;
+      }
+      if (rise && machineAttack(m, 'StrikeDown')) return 'StrikeDown';
       return null;
     }
     this._bowHeld = false;

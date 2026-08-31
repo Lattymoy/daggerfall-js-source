@@ -81,7 +81,7 @@ export function buildArmsFor(entity) {
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false }) {   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw
   const playerWeapon = new PlayerWeapon({});
   // MW-D8. `camera` is REQUIRED for the Morrowind arm and there is no
   // fallback: a host that does not pass one gets the classic sprite and
@@ -245,7 +245,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       const strike = !paralyzed && c
-        ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight))
+        ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
       if (strike) fpAttack(strike);
       _dx = 0; _dy = 0;
