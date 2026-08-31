@@ -443,12 +443,37 @@ export async function bootWorld(canvas, renderer, params, status) {
   const LOD_STRIDE = 4;
   const LOD_NEAR = 3;   // chebyshev distance where the far ring starts
   const lodOn = isEnhanced();
-  const TERRAIN_INDICES_LOD = buildTerrainIndices(LOD_STRIDE);
+  const TERRAIN_INDICES_LOD = lodOn ? buildTerrainIndices(LOD_STRIDE) : null;   // AUDIT EV: the 1:1 lane never pays for the strided twin
   const strideFor = (px, py) => ((lodOn
     && Math.max(Math.abs(px - state.current.x), Math.abs(py - state.current.y)) >= LOD_NEAR)
     ? LOD_STRIDE : 1);
 
+  // AUDIT EV F-SIM1 (2026-08-31): ONE build per pixel, ever in
+  // flight. EV7 stretched a build across a worker round trip, which
+  // opened an old microtask-thin window wide: a teleport (or a
+  // leave-and-return crossing) re-enqueues a pixel whose build is
+  // already flying - state.init marks the whole destination grid
+  // loaded at enqueue time, so the in-flight publish survives the
+  // audit-24 recheck AND the queue entry builds it again. The second
+  // built.set overwrote the first entry: its terrain VAO, tilemap
+  // texture and billboard batches leaked on the GPU for the session,
+  // the collider bucket and door registry doubled, and a mill's hum
+  // could orphan into an unstoppable loop. The cache answers a
+  // finished pixel; the in-flight map answers a flying one with the
+  // SAME promise, so every caller - pump, boot, teleport - shares one
+  // build.
+  const inFlight = new Map();
   async function buildPixel(px, py) {
+    const key = `${px},${py}`;
+    if (built.has(key)) return built.get(key);
+    let flying = inFlight.get(key);
+    if (flying) return flying;
+    flying = buildPixelNow(px, py).finally(() => inFlight.delete(key));
+    inFlight.set(key, flying);
+    return flying;
+  }
+
+  async function buildPixelNow(px, py) {
     const key = `${px},${py}`;
     const dfLocation = locationIndex.get(key) || null;
     // EV7: the LOCATION half stays here - setLocationTiles reads
@@ -730,7 +755,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
-    return built.get(key);
+    const entry = built.get(key);
+    // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
+    // the player may have crossed during the worker round trip - and
+    // the pixelChanged restride sweep cannot see an unpublished pixel.
+    // Re-check at publish, or a wrong-class chunk stands until the
+    // NEXT crossing (which a player who stops walking never makes).
+    const wantStride = strideFor(px, py);
+    if (wantStride !== entry._stride) restrideTerrain(entry, wantStride);
+    return entry;
   }
 
   // EV4: a built pixel crosses between the full-res core and the far
@@ -3111,7 +3144,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (walkMode) { player.spawn(x, y, z); playerSpawned = true; } else cam.pos = [x, y, z];
       cam.yaw = yaw; cam.pitch = pitch;
     };
-    window.__streamIdle = () => queue.length === 0 && !building;
+    window.__streamIdle = () => queue.length === 0 && !building && inFlight.size === 0;   // AUDIT EV: teleport builds count too - the probe told the truth only for pump's
     window.__builtCount = () => built.size;
     window.__currentPixel = () => `${state.current.x},${state.current.y}`;
     window.__cam = () => cam.pos.slice();
@@ -4632,7 +4665,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           }));
           if (_step) audio.playOneShot(_step.clip, _step.volume);
         }
-        cam.pos = player.eyeAt();   // EV1: the interpolated render eye - rays and audio stay on player.eye
+        // EV1: the interpolated render eye. AUDIT EV F-SIM5: rays and
+        // the audio listener read cam.pos too - DELIBERATE (a pick
+        // hits what is on screen; divergence from player.eye is under
+        // one physics step). `eye` stays the simulation's truth.
+        cam.pos = player.eyeAt();
         // DC1: PlayerDeath.Update's camera sink - while the death
         // overlay runs, the eye rides down the sequence's drop (the
         // fresh array from player.eye makes this per-frame, never
@@ -4884,6 +4921,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         origin: state.pixelTranslation(farRing.baseX, farRing.baseY, _ringOrigin),
         lightDir: renderer._lightDir, ambient: renderer._ambient,
         sunScale: renderer._sunScale, sunColor: renderer._sunColor,
+        // AUDIT EV F-R4: the same moon the streamed terrain takes -
+        // without it a full-Masser night stepped in brightness at the
+        // exact boundary the hole machinery works to hide
+        moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
         fogColor, fogEnd: weatherFog.end,
         fovY: fieldOfView(), aspect: canvas.clientWidth / canvas.clientHeight,
       });

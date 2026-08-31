@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE,
+  SCALED_OCEAN_ELEVATION, cubicInterpolator, getNoise,
   generateSamples, sampleKernel, ghostSampler,
 } from '../src/world/terrainSampler.js';
 import {
@@ -49,12 +50,55 @@ const fakeWoods = {
   },
 };
 
-test('EV4: sampleKernel IS generateSamples - the factoring moved no arithmetic', () => {
-  const s = generateSamples(fakeWoods, 207, 213);
+test('EV4: the kernel against an INDEPENDENT re-statement of the sampler loop', () => {
+  // AUDIT EV F-DOC2: the first cut of this test compared
+  // generateSamples to sampleKernel - but generateSamples CALLS
+  // sampleKernel now, so it compared f(x) to f(x) and could never
+  // catch moved arithmetic, while the genuinely independent numeric
+  // pins (test/terrain.test.js, 1e-6) are data-gated and skip in
+  // exactly the container the arc says tests must carry the load in.
+  // This oracle re-states the whole sampler loop from the DFU spec -
+  // windows, inverted small-map column order, per-cell fractions,
+  // scales, ocean clamp - over the module's own cubicInterpolator /
+  // getNoise primitives (perlin itself is the port's one documented
+  // departure and separately pinned). Move any composition arithmetic
+  // in sampleKernel and this diverges.
+  const oracle = (woods, mx, my, x, y) => {
+    const div = (hDim - 1) / 3;
+    const shm = woods.getHeightMapValuesRange1Dim(mx - 2, my - 2, 4);
+    const lhm = woods.getLargeHeightMapValuesRange(mx - 1, my, 3);
+    const shmAt = (r, c) => shm[r + c * 4];
+    const lhmAt = (r, c) => lhm[r + c * 9];
+    const rx = x / div, ry = y / div;
+    const ix = Math.floor(rx), iy = Math.floor(ry);
+    const sfracx = x / (hDim - 1), sfracy = y / (hDim - 1);
+    const fracx = (x - ix * div) / div, fracy = (y - iy * div) / div;
+    let h = 0;
+    const cub = cubicInterpolator;
+    h += cub(
+      cub(shmAt(0, 3), shmAt(1, 3), shmAt(2, 3), shmAt(3, 3), sfracx),
+      cub(shmAt(0, 2), shmAt(1, 2), shmAt(2, 2), shmAt(3, 2), sfracx),
+      cub(shmAt(0, 1), shmAt(1, 1), shmAt(2, 1), shmAt(3, 1), sfracx),
+      cub(shmAt(0, 0), shmAt(1, 0), shmAt(2, 0), shmAt(3, 0), sfracx),
+      sfracy) * 8;
+    h += cub(
+      cub(lhmAt(ix, iy + 0), lhmAt(ix + 1, iy + 0), lhmAt(ix + 2, iy + 0), lhmAt(ix + 3, iy + 0), fracx),
+      cub(lhmAt(ix, iy + 1), lhmAt(ix + 1, iy + 1), lhmAt(ix + 2, iy + 1), lhmAt(ix + 3, iy + 1), fracx),
+      cub(lhmAt(ix, iy + 2), lhmAt(ix + 1, iy + 2), lhmAt(ix + 2, iy + 2), lhmAt(ix + 3, iy + 2), fracx),
+      cub(lhmAt(ix, iy + 3), lhmAt(ix + 1, iy + 3), lhmAt(ix + 2, iy + 3), lhmAt(ix + 3, iy + 3), fracx),
+      fracy) * 4;
+    const nx = mx * (hDim - 1) + x;
+    const ny = (500 - my) * (hDim - 1) + y;
+    h += getNoise(nx, ny, 0.3, 0.5, 0.5, 1) * getNoise(nx, ny, 0.9, 0.5, 0.5, 1) * 10;
+    if (h < SCALED_OCEAN_ELEVATION) h = SCALED_OCEAN_ELEVATION;
+    return Math.min(1, Math.max(0, h / MAX_TERRAIN_HEIGHT));
+  };
   const k = sampleKernel(fakeWoods, 207, 213);
-  for (const [x, y] of [[0, 0], [64, 64], [128, 128], [1, 127], [37, 90]]) {
-    // the grid stores f32; the kernel answers f64 - fround is the store
-    assert.equal(Math.fround(k(x, y)), s[x * hDim + y], `kernel(${x},${y}) bit-equal to the generated grid`);
+  const s = generateSamples(fakeWoods, 207, 213);
+  for (const [x, y] of [[0, 0], [64, 64], [128, 128], [1, 127], [37, 90], [100, 3]]) {
+    const want = oracle(fakeWoods, 207, 213, x, y);
+    assert.ok(Math.abs(k(x, y) - want) < 1e-12, `kernel(${x},${y}) matches the spec re-statement`);
+    assert.equal(Math.fround(want), s[x * hDim + y], 'and the grid stores its fround');
   }
 });
 

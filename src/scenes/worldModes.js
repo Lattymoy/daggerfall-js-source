@@ -212,6 +212,10 @@ let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
 // Dungeon water surface (R11 values, mirroring the dungeon scene).
+// AUDIT EV F-R1: the modal frames' explicit "no exterior light in
+// here" - hoisted, not minted per frame (the EV2 law).
+const NO_INDIRECT_POS = [0, 0, 0];
+const NO_INDIRECT_COLOR = new Float32Array(3);
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
@@ -3888,6 +3892,17 @@ export function createWorldModes(host) {
       // wings rendered about five times darker than DFU. The predicate
       // was already live here, driving music and water sounds.
       renderer.setLighting(new Float32Array(dungeonCtx.ambient), 0);
+      // AUDIT EV F-R1 (the F001 shape, one field over): the MOON and
+      // the player-following INDIRECT light are renderer globals the
+      // exterior hosts set per frame and nothing here ever cleared -
+      // a dungeon entered on a clear full-Masser night kept a warm
+      // ~0.22 directional term at the moon's exterior bearing (about
+      // 2x this ambient on moonward faces) for the whole visit, and
+      // the R12 indirect sat at stale exterior coordinates. Underground
+      // has no sky: both go dark explicitly, exactly as the emission
+      // line below already learned to.
+      renderer.setMoonlight(null);
+      renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
       // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
       // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
       // window style - so a dungeon's window records keep the colour a
@@ -3930,6 +3945,10 @@ export function createWorldModes(host) {
     // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
     // night interior takes the darker purple-tinted ambient.
     renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
+    // AUDIT EV F-R1: no moonlight and no stale exterior indirect
+    // through the walls - see the dungeon arm's note above.
+    renderer.setMoonlight(null);
+    renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
     // AUDIT 26 F001: DaggerfallInterior lays out EVERY interior mesh
     // with WindowStyle.Disabled - individual models (:473), the

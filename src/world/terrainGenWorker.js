@@ -29,12 +29,11 @@ globalThis.onmessage = (ev) => {
     }
     if (m.t !== 'job') return;
     if (!woods) throw new Error('terrain worker got a job before init');
-    const out = generatePixelTerrain({
-      woods,
-      px: m.px, py: m.py, stride: m.stride,
-      tilemap: m.tilemap, locationRect: m.locationRect,
-      hasLocation: m.hasLocation, climateType: m.climateType,
-    });
+    // AUDIT EV F-DOC1: the job crosses WHOLE - a spread, not a
+    // hand-copied field list, so a new kernel input can never be
+    // silently dropped at the wire (the audit found the explicit list
+    // was the one place a field could rot with every test green).
+    const out = generatePixelTerrain({ ...m, woods });
     globalThis.postMessage(
       { t: 'done', ...out },
       [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer]

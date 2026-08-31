@@ -68,24 +68,39 @@ test('EV8: tints are the overworld law verbatim; slopes bend the normal the terr
   }
 });
 
-test('EV8: the hole skips exactly the streamed rect\'s cells and every index stays in range', () => {
+test('EV8: the hole is fully-inside cells only - straddlers stay on all four sides, no sky gap', () => {
+  // AUDIT EV F-R2: vertices sit at pixel CENTRES, so cell (px,py)
+  // spans corner-units [px+0.5, px+1.5] while the streamed footprint
+  // spans [cx-d, cx+d+1]. The hole skips exactly the cells that lie
+  // FULLY inside the footprint - px in [cx-d, cx+d-1] - so one
+  // straddling cell survives on EVERY side (painter's order eats the
+  // half-pixel overlap) and no strip is left that neither surface
+  // covers. The first cut skipped the east/south straddlers too and
+  // opened a 409.6-unit sky gap along those rims.
   const radius = 6, baseX = 50, baseY = 50, d = 2;
   const idx = buildFarRingIndices({ baseX, baseY, radius, holeX: 50, holeY: 50, holeRadius: d });
   const side = radius * 2 + 1;
   const totalCells = (side - 1) * (side - 1);
-  const holeCells = (2 * d + 1) * (2 * d + 1);
-  assert.equal(idx.length, (totalCells - holeCells) * 6, 'the hole is the streamed square, no more');
+  const holeCells = (2 * d) * (2 * d);
+  assert.equal(idx.length, (totalCells - holeCells) * 6, 'the hole is the fully-covered square, symmetric');
   const vertCount = side * side;
-  const holeVerts = new Set();
-  // reconstruct: no triangle's CELL may sit inside the hole - check by
-  // re-deriving each triangle's cell from its first index
+  // every kept cell's SPAN must reach outside the streamed footprint
+  // (a fully-inside kept cell would be the spike case the hole exists
+  // for); every skipped cell must have been fully inside
+  const kept = new Set();
   for (let t = 0; t < idx.length; t += 3) {
     assert.ok(idx[t] >= 0 && idx[t] < vertCount, 'index in range');
     const i0 = idx[t];
     const i = i0 % side, j = (i0 - i) / side;
-    const px = baseX - radius + i, py = baseY - radius + j;
-    assert.ok(!(Math.abs(px - 50) <= d && Math.abs(py - 50) <= d), `cell (${px},${py}) is inside the hole`);
-    holeVerts.add(i0);
+    kept.add(`${baseX - radius + i},${baseY - radius + j}`);
+  }
+  for (let py = baseY - radius; py < baseY + radius; py++) {
+    for (let px = baseX - radius; px < baseX + radius; px++) {
+      const fullyInside = px + 0.5 >= 50 - d && px + 1.5 <= 50 + d + 1
+        && py + 0.5 >= 50 - d && py + 1.5 <= 50 + d + 1;
+      assert.equal(!kept.has(`${px},${py}`), fullyInside,
+        `cell (${px},${py}) ${fullyInside ? 'must be holed' : 'must survive'}`);
+    }
   }
   // an off-centre hole (the player walked; only the indices re-punch)
   const idx2 = buildFarRingIndices({ baseX, baseY, radius, holeX: 53, holeY: 48, holeRadius: d });
@@ -108,11 +123,12 @@ test('EV8: ?ring=off is the escape hatch, in the ?cull=off shape', () => {
 });
 
 test('EV8: the pass stands up, builds, re-punches and draws under the Proxy-GL stub', () => {
-  const counts = { drawElements: 0, bufferData: 0 };
+  const counts = { drawElements: 0, bufferData: 0, u1f: {} };
   const stub = new Proxy({}, {
     get: (o, k) => {
       if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
-      if (k === 'getUniformLocation') return () => ({});
+      if (k === 'getUniformLocation') return (p, name) => ({ name });
+      if (k === 'uniform1f') return (loc, v) => { counts.u1f[loc?.name] = v; };
       if (k === 'createBuffer' || k === 'createVertexArray' || k === 'createProgram' || k === 'createShader') return () => ({});
       if (k === 'drawElements' || k === 'bufferData') return () => { counts[k]++; };
       if (typeof k === 'string' && k.toUpperCase() === k) return 1;
@@ -133,9 +149,19 @@ test('EV8: the pass stands up, builds, re-punches and draws under the Proxy-GL s
   r.draw(new Float32Array(16), {
     origin: [0, 0, 0], lightDir: new Float32Array([0, 1, 0]),
     ambient: new Float32Array([0.4, 0.4, 0.4]), sunScale: 0.5, sunColor: new Float32Array([1, 1, 1]),
+    moonScale: 0.11,
     fogColor: new Float32Array([0.6, 0.7, 0.8]), fogEnd: 2400, fovY: 1, aspect: 1.6,
   });
   assert.equal(counts.drawElements, 1, 'one draw for the whole horizon');
+  // AUDIT EV F-R3: the rim close keys on the NEAREST rim a drifted
+  // base can present - not the corner-covering far plane, which left
+  // an ~11%-unblended straight edge on the sky at the four cardinal
+  // directions
+  const rimEnd = (RING_RADIUS - RING_REBUILD_DRIFT) * TERRAIN_SIZE * 0.95;
+  assert.ok(Math.abs(counts.u1f.uRimEnd - rimEnd) < 1e-6, 'uRimEnd is the worst-case nearest rim');
+  assert.ok(Math.abs(counts.u1f.uRimStart - rimEnd * 0.6) < 1e-6);
+  // AUDIT EV F-R4: the moon reaches the horizon - the scale forwards
+  assert.equal(counts.u1f.uMoonScale, 0.11, 'the streamed terrain\'s moon lights the ring too');
   r.dispose();
   assert.equal(r.vao, null);
 });
