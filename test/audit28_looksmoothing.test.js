@@ -62,11 +62,15 @@ test('AUDIT 28 W7: the pitch clamp is on the TARGET (:142) - the camera never ov
   f.tick(1 / 60, cam, { smoothing: 0 });
   assert.ok(near(cam.pitch, PITCH_LIMIT));
   assert.ok(near(f.residualPitch, 0), 'the excess above the clamp is not owed later');
-  // And with smoothing on, the residual is measured to the clamped target.
+  // And with smoothing on, the residual is measured to the clamped
+  // target. MW-D30's merge made the limit the REFERENCE's
+  // +/-(PI/2 - 1e-6) (one home in mwCamera), so the arithmetic here is
+  // limit-relative rather than a re-minted 1.5.
   const h = new LookFilter(); const c = { yaw: 0, pitch: 1.4 };
+  const owed = PITCH_LIMIT - 1.4;
   h.add(0, 0.5); h.tick(1 / 60, c, { smoothing: 0.5 });
-  assert.ok(near(c.pitch, 1.4 + 0.1 * 0.5));
-  assert.ok(near(h.residualPitch, 0.05));
+  assert.ok(near(c.pitch, 1.4 + owed * 0.5));
+  assert.ok(near(h.residualPitch, owed * 0.5));
 });
 
 test('AUDIT 28 W7: an external camera write rides along - the residual is a delta, no resync', () => {

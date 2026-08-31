@@ -22,11 +22,15 @@
 // to the TARGET as :142 does, so the camera never overshoots the range.
 
 import { getFloat } from '../systems/settings.js';
+import { PITCH_LIMIT } from './mwCamera.js';
 
 /** PlayerMouseLook.SmoothingMax (:45): the setter clamps to it. */
 export const SMOOTHING_MAX = 0.9;
-/** The hosts' pitch range (radians), the port's pitchMin/pitchMax. */
-export const PITCH_LIMIT = 1.5;
+// MW-D30's clamp survives the filter takeover: the pitch range is the
+// REFERENCE's +/-(PI/2 - 1e-6) (camera.cpp:323-331), one home in
+// mwCamera - the 1.5 literal this filter briefly re-minted was the
+// exact divergence MW-D30 removed from the four hosts.
+export { PITCH_LIMIT };
 
 /** GetFrameRateScaledFractionOfProgression (:100-105), verbatim. */
 export function frameRateScaledFraction(fractionAt60FPS, dt) {

@@ -477,7 +477,12 @@ test('MW-D23: the actor\'s RIGHT lands SCREEN-RIGHT through the pass\'s OWN comp
   // is how MW-D9's fix became MW-D23's bug.
   assert.match(src, /const proj = perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
     'the arm\'s projection is the bare 60-degree lens');
-  assert.ok(!/mirrorProjectionX/.test(src), 'and mirrorProjectionX appears nowhere in the arm');
+  // MW-D34 loosened this from "the word appears nowhere" to "is never
+  // imported or called": drawThird's comment now NAMES the world's
+  // mirror to explain the -u chirality flip, and a comment is not a
+  // lens. The FP pass still must not USE it.
+  assert.ok(!/import[^;]*mirrorProjectionX/.test(src) && !/mirrorProjectionX\(/.test(src),
+    'and mirrorProjectionX is never imported or called in the arm');
 });
 
 test('MW-D9c: EVERY .esm is read, not the first - an expansion first must not empty the arms', async () => {
@@ -1021,13 +1026,16 @@ test('MW-D27: the face is DERIVED - classic faceIndex picks the head and hair, a
     return { head: m.get('head'), hair: m.get('hair'), chest: m.get('chest') };
   };
   // The walk, sorted: heads 01,02,03 then wraps; hairs 01,02 then
-  // wraps. The CHEST stays 02 - the fixture lists it first, and
-  // first-in-file-order is the recorded law for every slot that is
-  // not the face (AUDIT MW-A F2: D27's first cut sorted them all, and
-  // this very line asserted the over-reach back at it).
-  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_02' });
-  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_02' });
-  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_02' });
+  // wraps. The CHEST stays 01 - the fixture lists it LAST, and the
+  // reference's sweep OVERWRITES on every proper match, so the last
+  // record in load order wins (getBodyParts, npcanimation.cpp:1286-1293
+  // - how an expansion overrides a base-game body). The parity audit
+  // caught this pin asserting first-wins; the face law (MW-A F2's
+  // id-sort + index) is untouched, because head and hair are not in
+  // the sweep at all.
+  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_01' });
+  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_01' });
+  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_01' });
   assert.equal(at(3).head, 'b_head_01', 'the index wraps by modulo');
   assert.equal(at(9).hair, 'b_hair_02', 'classic\u2019s full 0..9 range resolves');
   // Sex pools stay separate: a female walks HER two heads, never his three.
@@ -2010,4 +2018,292 @@ test('MW-D35: precedence - curated over matched over the walk, and the wiring', 
   assert.match(arm, /await matchFaceFor\(\{ race, female, faceIndex, parts, archives, deps: d \}\)/);
   assert.match(arm, /face: faceMatch,/);
   assert.match(readFileSync('src/scenes/dataSource.js', 'utf8'), /export const fetchArena2Bytes/);
+});
+
+// ── MW-D31: SKINNING BROUGHT TO 1:1 ─────────────────────────────────
+
+import { skinBatch, buildSkeleton as bSkel } from '../src/formats/mwSkin.js';
+
+test('MW-D31: the skin transform applies ONCE, after the blend - unnormalised weights prove it', () => {
+  // riggeometry.cpp:172-204: resultMat sums ONLY invBind*boneInSkel
+  // (W column pinned), then `resultMat *= transform` once. Folding the
+  // transform into each bone term multiplies its translation by the
+  // WEIGHT SUM - and rule 39 forbids renormalising, so a half-weighted
+  // vertex slid halfway to the origin.
+  const batch = {
+    positions: new Float32Array([0, 0, 0]),
+    normals: null,
+    skin: {
+      transform: { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], translation: [2, 0, 0], scale: 1 },
+      shapeTransform: null,
+      skeletonRoot: -1,
+      rootBone: -1,
+      bones: [{ ref: 7, indices: new Uint16Array([0]), weights: new Float32Array([0.5]),
+        invBind: { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] } }],
+    },
+  };
+  const skelMats = { get: () => ({ a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] }) };
+  const out = new Float32Array(3);
+  skinBatch(batch, null, null, skelMats, out, null);
+  // reference: v' = transform.a * (0.5*I * v) + transform.t = (2,0,0).
+  // the folded-per-bone wrong answer is 0.5*(2,0,0) = (1,0,0).
+  assert.ok(Math.abs(out[0] - 2) < 1e-6, `translation applied once, not weight-scaled (${out[0]})`);
+});
+
+test('MW-D31: the hair slot filters geometry on "hair", not on its attach bone', async () => {
+  // npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ? "hair" :
+  // bonename`. Byte-patch armhand's "Tri Left Hand" to the same-length
+  // "Tri Hairstyle": the hair slot must take it AT a bone whose name
+  // matches nothing in the file.
+  const bytes = f('armhand.nif');
+  const from = [...'Tri Left Hand'].map((c) => c.charCodeAt(0));
+  const to = [...'Tri Hairstyle'].map((c) => c.charCodeAt(0));
+  const patched = bytes.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hair', bones: ['left hand'], bytes: patched }],
+  });
+  const hair = asm.pieces.filter((p) => p.slot === 'hair');
+  assert.equal(hair.length, 1, `the "hair"-named shape bound at the head-stand-in bone (${hair.length})`);
+  // and the same file under a NON-hair slot at the same bone binds
+  // NOTHING - the bone-name filter matches neither remaining shape.
+  const asm2 = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'chest', bones: ['left hand'], bytes: patched }],
+  });
+  assert.equal(asm2.pieces.filter((p) => p.slot === 'chest' && p.kind === 'skinned').length, 0,
+    'every other slot still filters on its bone name');
+});
+
+test('MW-D31: one skinned shape makes the FILE a rig - its unskinned shapes never take the rigid path', async () => {
+  // node.cpp:275-276 (one skin sets mUseSkinning for the file) and
+  // attach.cpp:42-46 (CopyRigVisitor seeds ONLY RigGeometry - `if
+  // (!isRig) return;`). armmixed.nif is the mixed file: a skinned hand
+  // plus an unskinned "Trim".
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hand', bones: ['right hand'], bytes: f('armmixed.nif') }],
+  });
+  assert.equal(asm.pieces.filter((p) => p.kind === 'rigid').length, 0,
+    'no rigid piece out of a RIG file');
+  assert.ok(asm.notes.some((n) => /RIG file are not/.test(n)),
+    `the drop is a NOTE, not a silence (${asm.notes.join(' | ')})`);
+  assert.equal(asm.pieces.filter((p) => p.kind === 'skinned').length, 1, 'the skinned hand still binds');
+});
+
+test('MW-D31 rule 13: the mirror reads the RESOLVED node\'s own name, case-sensitively', async () => {
+  // attach.cpp:166 - `attachNode->getName().find("Left") != npos` on the
+  // node the skeleton actually carries, not the requested lowercase
+  // table entry. Byte-patch armskel's "Left Hand" to "LEFT HAND": the
+  // reference does NOT mirror there.
+  const skel = f('armskel.nif');
+  const from = [...'Left Hand'].map((c) => c.charCodeAt(0));
+  const to = [...'LEFT HAND'].map((c) => c.charCodeAt(0));
+  const patched = skel.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: patched,
+    parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
+  });
+  const rigid = asm.pieces.find((p) => p.kind === 'rigid');
+  assert.ok(rigid, 'the rigid cuff bound at the all-caps bone');
+  assert.equal(rigid.mirrored, false,
+    '"LEFT HAND" does not contain "Left" - the reference\'s test is case-sensitive on the node name');
+  // and the unpatched skeleton still mirrors
+  const asm2 = await assembleFirstPersonArm({
+    skeletonBytes: skel,
+    parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
+  });
+  assert.equal(asm2.pieces.find((p) => p.kind === 'rigid').mirrored, true, 'the real "Left Hand" node mirrors');
+});
+
+// ── MW-D32: BODY-PART RESOLUTION BROUGHT TO GETBODYPARTS-WHOLE ──────
+
+import { resolveBodyParts, raceRecords } from '../src/formats/mwFirstPerson.js';
+import { indexSkins, assembleNpc } from '../src/formats/mwNpc.js';
+import { resolveWeaponParts } from '../src/combat/fpArm.js';
+
+test('MW-D32: the sweep is getBodyParts whole - last wins, filters exact, FP hand ladder', () => {
+  const P = (id, slot, o = {}) => ({ id, slot, race: 'fprace', female: false, skin: true,
+    playable: true, firstPerson: /1st$/.test(id), model: `f/${id}.nif`, ...o });
+  const parts = [
+    P('b_chest_base', 'chest'),
+    P('b_chest_expansion', 'chest'),          // LAST in load order WINS (:1286-1293)
+    P('b_chest_np', 'chest', { playable: false }),   // BPF_NotPlayable skipped (:1208)
+    P('b_chest_cloth', 'chest', { skin: false }),    // MT_Skin only (:1210)
+    P('b_neck_m', 'neck'),
+    P('b_clav', 'clavicle'),                   // sBodyPartMap never maps it
+    P('b_hand_m3p', 'hand'),
+    P('b_hand_f3p', 'hand', { female: true }),
+  ];
+  const tp = resolveBodyParts(parts, 'fprace', false, { firstPerson: false });
+  assert.equal(tp.get('chest').id, 'b_chest_expansion', 'the LAST proper record wins - expansions override');
+  assert.equal(tp.get('clavicle'), undefined, 'clavicle never resolves');
+  // female: her record wins where it exists, male fills where not (:1261-1280)
+  const tpF = resolveBodyParts(parts, 'fprace', true, { firstPerson: false });
+  assert.equal(tpF.get('hand').id, 'b_hand_f3p');
+  assert.equal(tpF.get('neck').id, 'b_neck_m', 'male fallback fills an empty female slot');
+  // FIRST PERSON: a hand slot without a .1st record falls back to the
+  // 3P skin (:1232-1254); a NON-hand slot does not (:1258).
+  const fp = resolveBodyParts(parts, 'fprace', false, { firstPerson: true });
+  assert.equal(fp.get('hand').id, 'b_hand_m3p', 'the arm slots fall back to third-person skins');
+  assert.equal(fp.get('chest'), undefined, 'a non-hand slot takes its own view only');
+});
+
+test('MW-D32: indexSkins filters playable, NOT vampire - the reference sweep never had a vampire test', () => {
+  // getBodyParts (npcanimation.cpp:1206-1214) filters BPF_NotPlayable
+  // and MT_Skin; there is no vampire condition in the sweep.
+  const B = (id, part, o = {}) => [id, { id, kind: 0, vampire: 0, part, female: false, playable: true, race: 'r', model: `${id}.nif`, ...o }];
+  const bodies = new Map([
+    B('chest_vamp', 3, { vampire: 1 }),
+    B('chest_np', 3, { playable: false }),
+  ]);
+  const idx = indexSkins(bodies);
+  const slots = idx.get('r');
+  assert.ok(slots && slots.get(3), 'the vampire-flagged skin IS swept');
+  assert.equal(slots.get(3).male.id, 'chest_vamp');
+  // and the not-playable one is not
+  assert.ok(!Object.values(slots.get(3)).some((b) => b && b.id === 'chest_np'), 'NotPlayable is filtered');
+});
+
+test('MW-D32: assembleNpc picks the FEMALE skeleton column', () => {
+  // getActorSkeleton (actorutil.cpp): beast > female > male, and the
+  // female column was silently missing.
+  const esm = {
+    npcs: new Map([['f', { id: 'f', name: 'F', race: 'r', female: true, head: null, hair: null, model: null }],
+      ['m', { id: 'm', name: 'M', race: 'r', female: false, head: null, hair: null, model: null }]]),
+    races: new Map([['r', { name: 'R', beast: false }]]),
+    bodies: new Map(),
+  };
+  assert.equal(assembleNpc(esm, 'f').animFile, 'meshes\\base_anim_female.nif');
+  assert.equal(assembleNpc(esm, 'm').animFile, 'meshes\\base_anim.nif');
+});
+
+test('MW-D32: the typed weapon bone is used only when the rig CARRIES it', async () => {
+  // npcanimation.cpp:787-795 - bonename starts as sPartList's "Weapon
+  // Bone" and becomes mAttachBone only `if (found != nodeMap.end())`.
+  const skel = f('armfp.nif');
+  const from = [...'Weapon Bone Left'].map((c) => c.charCodeAt(0));
+  const to = [...'Weapon Bone XLft'].map((c) => c.charCodeAt(0));
+  const patched = skel.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const blade = f('weapon.nif');
+  const find = () => ({ get: () => blade });
+  const bowRec = { id: 'bow', name: 'Bow', model: 'w/b.nif', type: 9, enchanted: false, speed: 1 };
+  // MarksmanBow (9) types to "Weapon Bone Left"; the patched rig lacks
+  // it, so the resolve lands on the generic bone instead of dropping.
+  const r = resolveWeaponParts({ weapon: { templateIndex: 130 }, allWeapons: [bowRec], find, skeletonBytes: patched });
+  assert.ok(r.weaponInfo, 'the bow still resolves');
+  assert.equal(r.weaponInfo.bone, 'Weapon Bone', 'fallback to the generic bone the rig has');
+  // and the unpatched rig keeps the typed bone
+  const r2 = resolveWeaponParts({ weapon: { templateIndex: 130 }, allWeapons: [bowRec], find, skeletonBytes: skel });
+  assert.equal(r2.weaponInfo.bone, 'Weapon Bone Left');
+});
+
+test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flags at 136', () => {
+  // loadrace.hpp:50-70. Values planted distinct so an off-by-four
+  // reader answers the wrong field and dies.
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const radt = new Uint8Array(140);
+  const dv = new DataView(radt.buffer);
+  dv.setFloat32(120, 1.05, true);   // male height
+  dv.setFloat32(124, 0.95, true);   // female height
+  dv.setFloat32(128, 1.1, true);    // male weight
+  dv.setFloat32(132, 0.9, true);    // female weight
+  dv.setInt32(136, 3, true);        // playable | beast
+  const d = [...sub('NAME', Z('argonian')), ...sub('RADT', [...radt])];
+  const rec = Uint8Array.from([...A('RACE'), ...U(d.length), ...U(0), ...U(0), ...d]);
+  const races = raceRecords(rec);
+  const r = races.get('argonian');
+  assert.ok(r && r.beast && r.playable);
+  assert.ok(Math.abs(r.height[0] - 1.05) < 1e-6 && Math.abs(r.height[1] - 0.95) < 1e-6);
+  assert.ok(Math.abs(r.weight[0] - 1.1) < 1e-6 && Math.abs(r.weight[1] - 0.9) < 1e-6);
+});
+
+// --- MW-D34: render and scale ----------------------------------------------
+
+test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
+  // MEASURED through the real composite (mwArmProbe L5b): the 3P body
+  // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
+  // the port's world convention is left-handed (motor.js:573 - the
+  // player's right is +X at yaw 0), so a right-handed NIF actor placed
+  // with a pure rotation reads MIRRORED on screen. The -u on the local
+  // side axis is the same basis adaptation the mirror gives every
+  // Daggerfall asset; rs is adjustScale (npc.cpp:1124-1135) - x,y take
+  // WEIGHT, z HEIGHT, and in this frame local y is the MW vertical.
+  const src = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
+  assert.match(src, /trs\(feet\[0\], feet\[1\], feet\[2\], 0, yawDeg, 0, -u \* rs\.weight, u \* rs\.height, u \* rs\.weight\)/,
+    'the flip and the scale live in the model matrix');
+  assert.match(src, /halfH = \(\(maxZ - minZ\) \* u \* rs\.height\) \/ 2/,
+    'the sprite box grows with the height');
+  assert.match(src, /halfW = \(Math\.hypot\(maxX - minX, maxY - minY\) \* u \* rs\.weight\) \/ 2/,
+    'and with the weight');
+});
+
+test('MW-D34: textures decode BY EXTENSION - a TGA is not a failed DDS', async () => {
+  const { decodeTga, decodeBmp, decodeTextureImage } = await import('../src/formats/mwTexture.js');
+  // The ladder legitimately answers the AUTHORED .tga/.bmp when the
+  // .dds probe misses (resourcehelpers.cpp:112-114), and the reference
+  // decodes that path by its extension with the non-standard "targa"
+  // aliased to "tga" (imagemanager.cpp:104-110).
+  //
+  // A 2x1 uncompressed 24-bit TGA, TOP-origin (descriptor bit 5):
+  // red then blue, stored BGR.
+  const tgaTop = Uint8Array.from([
+    0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20,
+    0, 0, 255, /* red */ 255, 0, 0, /* blue */
+  ]);
+  const top = decodeTga(tgaTop);
+  assert.deepEqual([top.width, top.height], [2, 1]);
+  assert.deepEqual([...top.mips[0].rgba], [255, 0, 0, 255, 0, 0, 255, 255], 'BGR swizzled, top row first');
+  // The SAME pixels 1x2 BOTTOM-origin (descriptor 0): the file's first
+  // row is the image's BOTTOM row, so red ends up at y=1.
+  const tgaBottom = Uint8Array.from([
+    0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 24, 0x00,
+    0, 0, 255, 255, 0, 0,
+  ]);
+  const bot = decodeTga(tgaBottom);
+  assert.deepEqual([...bot.mips[0].rgba], [0, 0, 255, 255, 255, 0, 0, 255],
+    'bottom-up storage flips: file-first red lands on the BOTTOM row, so blue reads back first');
+  // RLE (type 10): one run packet covers both pixels.
+  const tgaRle = Uint8Array.from([
+    0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20,
+    0x81, 0, 255, 0, /* run of 2, green */
+  ]);
+  assert.deepEqual([...decodeTga(tgaRle).mips[0].rgba], [0, 255, 0, 255, 0, 255, 0, 255]);
+  // BMP: 1x2 24-bit, positive height = bottom-up, rows padded to 4
+  // bytes (3 -> 4). File rows: green (bottom), then red (top).
+  const bmp = Uint8Array.from([
+    0x42, 0x4d, ...[62, 0, 0, 0], 0, 0, 0, 0, ...[54, 0, 0, 0],
+    ...[40, 0, 0, 0], ...[1, 0, 0, 0], ...[2, 0, 0, 0], 1, 0, 24, 0,
+    ...[0, 0, 0, 0], ...new Array(20).fill(0),
+    0, 255, 0, 0, /* green + pad */ 0, 0, 255, 0, /* red + pad */
+  ]);
+  const b = decodeBmp(bmp);
+  assert.deepEqual([b.width, b.height], [1, 2]);
+  assert.deepEqual([...b.mips[0].rgba], [255, 0, 0, 255, 0, 255, 0, 255],
+    'bottom-up: the file\'s SECOND row (red) is the image\'s top');
+  // The router: extension picks the decoder, "targa" aliases, unknown
+  // extensions refuse (the caller turns that into the warning image).
+  assert.deepEqual(decodeTextureImage('textures/a.TGA', tgaTop).mips[0].rgba.length, 8);
+  assert.deepEqual(decodeTextureImage('textures/a.targa', tgaTop).mips[0].rgba.length, 8);
+  assert.throws(() => decodeTextureImage('textures/a.dds', tgaTop), /decodeDds/,
+    'a .dds path takes the DDS decoder, which refuses these bytes as its own error');
+  assert.throws(() => decodeTextureImage('textures/a.gif', tgaTop), /no decoder/);
 });

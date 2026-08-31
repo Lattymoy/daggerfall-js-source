@@ -97,6 +97,22 @@ const BSA_NO_WEAPON_BONE = buildBsa([
   { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
   { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
 ]);
+// MW-D34: the THIRD-PERSON archive - the same skeleton/parts/clip
+// fixtures published under the third-person names (base_anim.nif walks
+// rule 18: xbase_anim.kf exists, so the x-form skeleton must too), plus
+// the sword whose Weapon Bone seat (+X, the actor's right) is the one
+// asymmetric witness a chirality question can lean on.
+const BSA_THIRD = buildBsa([
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armfphand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armfparm.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armfpidle.kf') },
+  { name: 'textures\\tx_fixture.dds', data: loose('fixture.dds') },
+  { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
+  { name: 'meshes\\Base_Anim.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\xBase_Anim.nif', data: loose('armfp.nif') },
+  { name: 'meshes\\xBase_Anim.kf', data: loose('armfpidle.kf') },
+]);
 const wpdt = (type) => { const b = new Uint8Array(32); new DataView(b.buffer).setInt16(8, type, true); return [...b]; };   // MW-D22: mType at byte 8 (loadweap.hpp)
 const weap = (id, model, type, name) => {
   const d = [...sub('NAME', zt(id)), ...sub('MODL', zt(model)), ...sub('FNAM', zt(name)), ...sub('WPDT', wpdt(type))];
@@ -110,6 +126,12 @@ const ESM_WEAPON = Uint8Array.from([
   // Left. Same bytes, two bones - which is the whole of rule 8's column.
   ...weap('iron longsword', 'w/blade.nif', 1, 'Iron Longsword'),
   ...weap('long bow', 'w/blade.nif', 9, 'Long Bow'),
+]);
+// MW-D34: the third-person ESM adds the non-.1st records the body sweep
+// resolves (the .1st rows serve only the first-person arm).
+const ESM_THIRD = Uint8Array.from([
+  ...ESM_WEAPON,
+  ...body('b_n_nord_m_hand', 'nord', 'hand', { model: 'b/H1.nif' }),
 ]);
 
 const ESM = Uint8Array.from([
@@ -133,6 +155,7 @@ const b64 = (u8) => Buffer.from(u8).toString('base64');
 const FIX = {
   bsa: b64(BSA), blind: b64(BSA_BLIND), esm: b64(ESM),
   weaponBsa: b64(BSA_WEAPON), weaponEsm: b64(ESM_WEAPON), noBoneBsa: b64(BSA_NO_WEAPON_BONE),
+  thirdBsa: b64(BSA_THIRD), thirdEsm: b64(ESM_THIRD),
 };
 // The port's own template indices, so the probe drives the SAME mapping
 // the game does rather than a second copy of it.
@@ -495,6 +518,89 @@ const noBone = await boot(FIX.noBoneBsa, { esm: FIX.weaponEsm, weapon: { templat
 ok(noBone.built.ok === true, 'a skeleton without Weapon Bone still builds the arms');
 ok((noBone.status.notes || []).some((n) => /no bone "Weapon Bone"/.test(n)),
   `and NAMES the missing bone (${(noBone.status.notes || []).find((n) => /no bone/.test(n)) || 'no note'})`);
+
+// ── L5b: THIRD-PERSON CHIRALITY, THROUGH THE WORLD'S OWN LENS ───────
+// MW-D34, and MW-D23's law obeyed this time: the question is MEASURED
+// through the REAL composite - drawThird -> drawRigSpriteBox -> the
+// mini ortho pass -> the world quad under the HOST's mirrorProjectionX
+// (dungeon.js:488's exact lens) - never deduced from one matrix alone.
+// The ground truth is the port's own motor law (motor.js:573: the
+// player's RIGHT at yaw 0 is +X), anchored per-shot by projecting a
+// +X point through this very lens and requiring it screen-RIGHT. The
+// witness is the sword: the fixture arms are x-symmetric (ink alone is
+// mirror-blind - MW-D9's lesson), so the ink DIFFERENCE between an
+// armed and an unarmed boot is the sword, and it must land on the same
+// screen side as the motor's right hand.
+const thirdShot = async (weapon) => {
+  await boot(FIX.thirdBsa, { esm: FIX.thirdEsm, weapon });
+  return page.evaluate(async () => {
+    const { perspective, lookAt, mirrorProjectionX } = await import('/src/world/mat4.js');
+    const arm = window.__arm, r = window.__r, cv = window.__cv;
+    const gl = r.gl;
+    // Draw the weapon (a fixed pump so armed and unarmed boots share
+    // the exact same clip time), then cross into third person.
+    arm.setSheathed(false);
+    for (let i = 0; i < 120; i++) { window.__frame(); arm.update(0.05); }
+    const crossed = arm.setViewMode('third');
+    // Fit the camera to the FIXTURE's own measured box (the rig is
+    // doll-sized - at retail distances it rasterizes sub-pixel). The
+    // lens's SHAPE is the host's law verbatim - mirrorProjectionX over
+    // a standard perspective (dungeon.js:488) - only near/far/distance
+    // are fitted, and a mirror does not care about metres.
+    const { MW_UNITS_PER_METER } = await import('/src/formats/mwFirstPerson.js');
+    const u = 1 / MW_UNITS_PER_METER;
+    let mnZ = Infinity, mxZ = -Infinity, mnX = Infinity, mxX = -Infinity, mnY = Infinity, mxY = -Infinity;
+    for (const row of arm.rows()) {
+      const b = row.bounds; if (!b) continue;
+      mnZ = Math.min(mnZ, b.minZ); mxZ = Math.max(mxZ, b.maxZ);
+      mnX = Math.min(mnX, b.minX); mxX = Math.max(mxX, b.maxX);
+      mnY = Math.min(mnY, b.minY); mxY = Math.max(mxY, b.maxY);
+    }
+    const midH = ((mnZ + mxZ) / 2) * u;                       // MW z is world up
+    const size = Math.max(mxZ - mnZ, mxX - mnX, mxY - mnY) * u;
+    const dist = Math.max(size * 3, 0.02);
+    const proj = mirrorProjectionX(perspective(Math.PI / 3, cv.clientWidth / cv.clientHeight, dist / 50, 800));
+    const feet = [0, 0, 0]; const yaw = 0;
+    const eye = [0, midH, -dist];
+    const view = lookAt(eye, [0, midH, 0], [0, 1, 0]);
+    // The anchor: one unit toward the MOTOR'S RIGHT (+X at yaw 0).
+    const mul = (m, v) => [
+      m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3],
+      m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3],
+      m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3],
+      m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3],
+    ];
+    const clip = mul(proj, mul(view, [dist, midH, 0, 1]));
+    const anchorNdcX = clip[0] / clip[3];
+    gl.clearColor(1, 0, 1, 1);   // a magenta sentinel ground: any DRAWN pixel differs, however dark the lighting
+    r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
+    arm.update(0.016);
+    const drew = arm.drawThird(cv, { proj, view, eye, feet, yaw });
+    const w = cv.width, h = cv.height;
+    const px = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    let left = 0, right = 0;
+    for (let i = 0; i < w * h; i++) {
+      const o = i * 4;
+      const drawn2 = Math.abs(px[o] - 255) + px[o + 1] + Math.abs(px[o + 2] - 255) > 24;
+      if (drawn2) { if ((i % w) < w / 2) left++; else right++; }
+    }
+    return { crossed, drew, left, right, anchorNdcX, shown: arm.status().weaponShown, viewMode: arm.viewMode() };
+  });
+};
+const bare3p = await thirdShot(null);
+ok(bare3p.crossed === true && bare3p.viewMode === 'third',
+  `the third-person body builds from the same archives and the view crosses (${bare3p.viewMode})`);
+ok(bare3p.drew === true && bare3p.left + bare3p.right > 50,
+  `and it COMPOSITES into the world frame (${bare3p.left + bare3p.right} lit px)`);
+const sword3p = await thirdShot({ templateIndex: T.Longsword });
+ok(sword3p.shown === true && sword3p.drew === true, 'the armed boot shows the sword in third person');
+ok(sword3p.anchorNdcX > 0,
+  `the lens really is the world's: the motor's RIGHT (+X) projects screen-RIGHT (ndc ${sword3p.anchorNdcX.toFixed(3)})`);
+const dLeft = sword3p.left - bare3p.left;
+const dRight = sword3p.right - bare3p.right;
+ok(dRight > dLeft,
+  `THE CHIRAL WITNESS: the sword's ink lands SCREEN-RIGHT - the actor's right hand on the motor's right (Δright ${dRight}, Δleft ${dLeft}) - a mirrored composite dies here`);
 
 await boot(FIX.bsa);   // back to the armed-with-nothing baseline for L6/L7
 

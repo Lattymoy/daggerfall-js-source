@@ -68,12 +68,22 @@ export const CAMERA_OBSTACLE_LIMIT = 5;
  *  collision area". */
 export const FOCAL_OBSTACLE_LIMIT = 10;
 
+/** MW-D30 / camera.cpp:323-331 - setPitch clamps to +/-(PI/2 - epsilon)
+ *  with epsilon 0.000001f. The hosts had a hand-rolled +/-1.5, which
+ *  stops the look ~4 degrees short of straight up and down. */
+export const PITCH_LIMIT = Math.PI / 2 - 0.000001;
+
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 /**
  * One per game, like the arm - there is one player. The machine holds
- * MODE and BASE DISTANCE (the two things the reference persists,
- * camera.lua:347-352); everything else is recomputed per frame.
+ * MODE and BASE DISTANCE - the two things the reference persists,
+ * each in its own home: the distance through the camera script's
+ * onSave (camera.lua:350-352, `distance = third_person.baseDistance`
+ * and nothing else), the mode through the save's own REC_CAM_ record
+ * (worldimp.cpp:425-427 writes FIRS; statemanagerimp.cpp:617-618
+ * force-applies it on load). Everything else is recomputed per
+ * frame.
  *
  * Hosts feed it three seams:
  *   wheel(clicks)  - wheel notches, +1 per click toward the actor
@@ -155,7 +165,7 @@ export function createMwCamera() {
       if (queuedFirstPerson !== null && ready) setFirstPerson(queuedFirstPerson, true);
     },
 
-    /** Restore/persist seam (camera.lua:347-352 saves the distance). */
+    /** Restore/persist seam (camera.lua:350-352 saves the distance). */
     state() { return { firstPerson, baseDistance }; },
     restore(s) {
       if (!s) return;

@@ -402,7 +402,7 @@ camera. Three spaces. The reference has ONE: the full graph below the
 SceneUtil::Skeleton group - the file's root node is a CHILD of that
 group (nifloader.cpp:450-480), so the root's own transform, which rule
 34 KEEPS when the root is a NiNode named bip01, is inside every bone
-matrix (Bone::update's parentless case, skeleton.cpp:169). And the
+matrix (Bone::update's parentless case, skeleton.cpp:171). And the
 declared skin-root name is looked up on the copied rig's own RENDER
 path (updateSkinToSkelMatrix, riggeometry.cpp:288-324), where a base
 skeleton bone can never appear - so for a rebound part the lookup
@@ -578,7 +578,7 @@ resolution (groups, sources, keys) reads rig() - the active one - and
 xbase_anim.kf in third, with no second state machine to drift (MW7's
 death). The body builds INSIDE the arm's build while the archives are
 open: rule 6's other skeleton column (getActorSkeleton !firstPerson,
-actorutil.cpp:504-513 - and rule 18's x-swap RESOLVES it to
+actorutil.cpp:8-19 - and rule 18's x-swap RESOLVES it to
 xbase_anim.nif on retail, because the x-kf exists), rules 1-3's
 third-person BODY records through playerBodyRows (sex fallback, no
 "1st" ids, tails only report on beasts; the player wears the race's
@@ -588,7 +588,7 @@ index has no Morrowind analog), the one assembly door
 offset, one graph space), rule 8's weapon column against THIS
 skeleton's own bones, and the 3P anim sources (base xbase_anim.kf
 first, then the skeleton's own kf when it exists -
-npcanimation.cpp:534-538; the kf name is an extension swap ONLY, no x
+npcanimation.cpp:529-533; the kf name is an extension swap ONLY, no x
 inserted - animation.cpp:651-654). The body takes NO neck pitch and no
 sneak delta: rule 54's pitch controller runs only in VM_FirstPerson
 (npcanimation.cpp:719) and rule 32(a)'s GMST is "1stPerson" by name.
@@ -656,7 +656,7 @@ wrong clip (:701-707). The played speed is the reference's own
 arithmetic: clip velocity = calcAnimVelocity whole (animation.cpp:
 180-224 - LAST start/loop-start and LAST loop-stop in reverse scan,
 the AshVampire quirk replicated by its own comment's order, the
-(1,1,0) accumulate mask), the >1 test (:1292), the fallback constants
+(1,1,0) accumulate mask), the >1 test (:1301/:1307), the fallback constants
 (character.cpp:750-752), rate = actor speed / clip speed capped at 10
 (:2403) with the port's meters crossing at the one unit bridge, and
 turns at min(1.5, |rot|/dt/pi) (:2396). Same-group refreshes resume
@@ -1022,7 +1022,7 @@ in this port special-cases it, and the probe pins it: the bow is the
 sword's own mesh with X negated, exactly, to within 1e-3.
 
 WPDT IS CITED, NOT GUESSED - AND THE ARITHMETIC ON THE CITATION WAS
-WRONG ANYWAY (corrected at MW-D22). components/esm3/loadweap.hpp:71 -
+WRONG ANYWAY (corrected at MW-D22). components/esm3/loadweap.hpp:64-74 -
 float mWeight; int32 mValue; int16 mType; uint16 mHealth; float mSpeed,
 mReach; uint16 mEnchant; uchar mChop[2], mSlash[2], mThrust[2]; int32
 mFlags. mType is therefore at byte EIGHT (4 + 4); this paragraph
@@ -1206,7 +1206,7 @@ rule and never rendered anything else.
 { MP_Wrist, PRT_RWrist }, { MP_Wrist, PRT_LWrist },
 ...
 ```
-- `npcanimation.cpp:1197-1207` (a multimap: one mesh part, two slots)
+- `npcanimation.cpp:1187-1198` (a multimap: one mesh part, two slots; the hand/wrist rows quoted sit at :1189-1190)
 
 Each side is its own part reference at its own bone.
 
@@ -1435,7 +1435,7 @@ mObjectParts[type] = insertBoundedPart(mesh, bonename, bonefilter, ...);
 ```
 - `npcanimation.cpp:799-802` (hair is the documented sole exception)
 
-and the filter test, `attach.cpp:159-166` of CopyRigVisitor:
+and the filter test, `attach.cpp:68-76` of CopyRigVisitor::filterMatches:
 
 ```cpp
 if (ciStartsWith(name, mFilter)) return true;
@@ -4703,7 +4703,7 @@ weapSpeed is a function-local float in CharacterController::updateWeaponState, r
   && mWeapon.getType() == ESM::Weapon::sRecordId
 and then `weapSpeed = mWeapon.get<ESM::Weapon>()->mBase->mData.mSpeed;`.
 
-That field is `float mSpeed` inside ESM::Weapon::WPDTstruct (components/esm3/loadweap.hpp:71 — `float mSpeed, mReach;`, a 32-byte struct laid out as float mWeight; int32_t mValue; int16_t mType; uint16_t mHealth; float mSpeed, mReach; uint16_t mEnchant; unsigned char mChop[2], mSlash[2], mThrust[2]; int32_t mFlags). It is a raw multiplier, NOT clamped or normalised anywhere on this path.
+That field is `float mSpeed` inside ESM::Weapon::WPDTstruct (components/esm3/loadweap.hpp:70 — `float mSpeed, mReach;`, a 32-byte struct laid out as float mWeight; int32_t mValue; int16_t mType; uint16_t mHealth; float mSpeed, mReach; uint16_t mEnchant; unsigned char mChop[2], mSlash[2], mThrust[2]; int32_t mFlags). It is a raw multiplier, NOT clamped or normalised anywhere on this path.
 
 weapSpeed therefore stays 1.0 for: hand-to-hand, spell casting, lockpicks and probes (Lockpick/Probe records, not WEAP), creatures with no inventory store, and any actor whose draw state is not Weapon.
 
@@ -5981,3 +5981,64 @@ unmeasured. The inspector reports whatever it is given, so widening this
 table costs nothing but attaching more archives and changing the dropdown -
 and until that is done, "three of four slots fall back" is a fact about
 nord/male and not yet a fact about Morrowind.
+
+# Part VII - THE PARITY AUDIT AND ITS FIX ARC (2026-08-30)
+
+Mac asked for a comprehensive 1:1 parity audit of the whole Morrowind
+lane, then: "Tackle everything and ensure 1:1." The audit (an Opus
+workflow over this ledger, the port, and the OpenMW reference read
+whole) produced 54 claims: 22 confirmed by adversarial verifiers, 2
+refuted, 32 unverified when Mac called the bypass. The fix arc took
+every claim, RE-VERIFIED it against the reference inline before
+touching anything (all fix-targeted claims proved TRUE; the audit's own
+2 refutations stand), and landed eight slices - each with pins,
+fixtures, and a mutation round, every mutant dead:
+
+- MW-D28/D29 - the weapon and movement machines: WPDT mSpeed scales
+  exactly the three attack plays; isStillWeapon skips the sheathe+draw
+  on weapon-to-weapon swap; sheathing blocked past AttackWindUp; the
+  crossbow reloads at Equipping's end too; multi-source key lookup and
+  velocity ride ALL sources (reverse, keep-looking >1); each clip
+  advances against its OWN source's keys; stance changes force a
+  movement recompose; stopping resets the idle. 10 mutants.
+- MW-D30 - the camera: mode and distance PERSIST (REC_CAM_ FIRS +
+  camera.lua's distance), wheel clicks accumulate per frame, the pitch
+  clamp is +/-(PI/2 - 1e-6) in all four hosts. 4 mutants.
+- MW-D31 - skinning: the skin/shape transform multiplies in ONCE after
+  the blend; hair filters on "hair"; skinned-vs-rigid is a per-FILE
+  choice; the mirror reads the RESOLVED node name case-sensitively.
+  9 mutants (with MW-D32).
+- MW-D32 - body parts: getBodyParts whole (LAST proper match wins,
+  male-for-female fill, the FP hand ladder, no vampire filter), the
+  female animation column, the typed weapon bone only when the rig
+  carries it, RADT read whole (beast, heights, weights).
+- MW-D33 - the clip law: quadratic in/out tangents un-swapped
+  (stream order nifkey.hpp:141-143, Hermite controller.hpp:158),
+  constant keys answer by WHICH HALF (quaternions too), TCB interior
+  tangents weight by time span (generateTCBTangents), reset's third
+  stage stops at the start key, the accum root's axes ZERO, and
+  getCompletion's zero-width answer is mPlaying ? 0 : 1. 8 mutants.
+- MW-D34 - render and scale: the third-person chirality MEASURED
+  through the real composite (mwArmProbe L5b - the unfixed pass leaned
+  the sword's ink screen-LEFT, Δ1701:-127) and fixed with the -u side
+  axis; Npc::adjustScale wired (weight on x,y, height on z, per
+  gender, focal height included); textures decode BY EXTENSION
+  (decodeTga/decodeBmp behind the ladder); ammunition instanced BARE
+  (no BoneOffset of its own). 8 mutants.
+- MW-D35 - the citation sweep, run LAST so every corrected line names
+  the final code.
+
+NUMBERING RECONCILIATION. A parallel session landed the AUDIT MW-A arc
+on main during this arc and used the labels MW-D27 through MW-D35 for
+its own slices (chargen face, item map, worn armor, clothing, fp-worn,
+the equip-table body, the curation table, the face sheet, the measured
+portrait match) plus AUDIT 28's input/look work. This arc's
+MW-D28..MW-D35 above are DIFFERENT slices that merged around them;
+Testing.md rows carry both families' narratives side by side, dated,
+and the labels in this Part are this arc's. Where both arcs touched one
+law the merge KEPT BOTH and reconciled: playerBodyRows runs this arc's
+reference resolver for the sweep slots with the other arc's
+curated/matched/derived face ladder for head and hair; the other arc's
+look filter took over the hosts' pitch clamp and now imports THIS arc's
+reference PITCH_LIMIT (+/-(PI/2 - 1e-6)) from mwCamera instead of the
+1.5 literal it had re-minted.

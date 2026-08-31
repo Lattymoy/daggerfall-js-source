@@ -166,7 +166,8 @@ const zstr = (bytes, s, n) => {
 export { MW_BODY_PARTS } from './mwEsmFile.js';
 import { MW_BODY_PARTS } from './mwEsmFile.js';
 import FACE_TABLE from './mwFaceTable.json' with { type: 'json' };
-import { GRAPH_ROOT } from './mwSkin.js';
+import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
+import { getTextKeyTime, animVelocity } from './mwAnim.js';
 
 /** The four parts allowed to fall back to a third-person mesh when the
  *  first-person record is missing (rule 3 / npcanimation.cpp:1217-1253).
@@ -199,6 +200,34 @@ export function bodyParts(bytes) {
     e.slot = MW_BODY_PARTS[e.part] ?? `#${e.part}`;
     e.firstPerson = isFirstPersonId(e.id);
     out.push(e);
+  }
+  return out;
+}
+
+/** MW-D32: the RACE records the build needs - the beast flag decides
+ *  the skeleton column (getActorSkeleton) and the height/weight pairs
+ *  scale the rig (npc.cpp's race scaling). RADT is 140 bytes
+ *  (loadrace.hpp:50-70): 7 skill pairs (56) + 8x2 attributes (64), then
+ *  maleHeight/femaleHeight/maleWeight/femaleWeight floats at 120..135
+ *  and the flags int32 at 136 (Playable 0x1, Beast 0x2). */
+export function raceRecords(bytes) {
+  const out = new Map();
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'RACE') continue;
+    const e = { id: '', beast: false, playable: false, height: [1, 1], weight: [1, 1], radt: false };
+    for (const sub of subrecords(bytes, rec)) {
+      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+      else if (sub.name === 'RADT' && sub.len >= 140) {
+        e.radt = true;
+        const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 140);
+        e.height = [dv.getFloat32(120, true), dv.getFloat32(124, true)];
+        e.weight = [dv.getFloat32(128, true), dv.getFloat32(132, true)];
+        const flags = dv.getInt32(136, true);
+        e.playable = (flags & 1) !== 0;
+        e.beast = (flags & 2) !== 0;
+      }
+    }
+    if (e.id) out.set(e.id, e);
   }
   return out;
 }
@@ -758,10 +787,10 @@ export const weaponAttachBone = (type) => WEAPON_ATTACH_BONE[type] ?? DEFAULT_WE
  * The WEAP records in a player's .esm.
  *
  * WPDT is a 32-byte struct and its layout is CITED, not guessed
- * (components/esm3/loadweap.hpp:71): float mWeight; int32 mValue; int16
+ * (components/esm3/loadweap.hpp:64-74): float mWeight; int32 mValue; int16
  * mType; uint16 mHealth; float mSpeed, mReach; uint16 mEnchant; uchar
  * mChop[2], mSlash[2], mThrust[2]; int32 mFlags. Only the offset of
- * mType matters here - byte 10 - and a short record is REFUSED rather
+ * mType matters here - byte EIGHT (MW-D22) - and a short record is REFUSED rather
  * than read past, because a wrong offset silently yields a plausible
  * weapon type and this arc has already died of plausible.
  */
@@ -769,7 +798,7 @@ export function weaponRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'WEAP') continue;
-    const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false };
+    const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false, speed: 1 };
     for (const sub of subrecords(bytes, rec)) {
       if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
       else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
@@ -788,7 +817,15 @@ export function weaponRecords(bytes) {
         // health is 5. Mac's play was the first retail check this
         // number ever got, which is the whole TEST-THE-SHAPE lesson
         // wearing bytes.
-        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 8, 2).getInt16(0, true);
+        const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 32);
+        e.type = dv.getInt16(8, true);
+        // MW-D28: mSpeed at byte 12 (loadweap.hpp:70, after mHealth's
+        // uint16 at 10-11). It is the ONLY record field that changes an
+        // attack's played speed: character.cpp:1326 reads it for the
+        // drawn weapon and :1718/:1786/:1811 pass it as the speedmult of
+        // exactly the three attack sections - equip and unequip play at
+        // 1.0f (:1408, :1465).
+        e.speed = dv.getFloat32(12, true);
       }
     }
     if (e.id && e.model) out.push(e);
@@ -845,21 +882,10 @@ export function clothingRecords(bytes) {
  *  slot silently skipped, and nothing on screen said so. The flag was
  *  in the player's own data the whole time. */
 export function raceBeastFlag(bytes, raceId) {
-  const want = String(raceId || '').toLowerCase();
-  let beast = null;
-  for (const rec of walkEsm(bytes)) {
-    if (rec.type !== 'RACE') continue;
-    let id = '';
-    let flags = null;
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') id = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'RADT' && sub.len === 140) {
-        flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start + 136, 4).getUint32(0, true);
-      }
-    }
-    if (id === want && flags !== null) beast = (flags & 2) !== 0;
-  }
-  return beast;   // null = this esm does not know this race
+  // ONE HOME: the full RACE reader below answers; this stays as the
+  // narrow question its callers ask. null = this esm does not know.
+  const rec = raceRecords(bytes).get(String(raceId || '').toLowerCase());
+  return rec && rec.radt ? rec.beast : null;
 }
 
 /** MW-D28: the ARMO records, read the WEAP way - id, model, display
@@ -1057,16 +1083,82 @@ export function pickWeaponRecord(records, type, material = null) {
 /** The report the reverted arc never printed: for one race, which
  *  first-person arm records actually exist, and what each one would fall
  *  back to. Answers are about the PLAYER'S data, never about ours. */
+/** MW-D32: sBodyPartMap's slot list (npcanimation.cpp:1187-1197) - the
+ *  mesh parts the skin sweep maps to visible slots. NO head, NO hair
+ *  (those come off the actor's own record - the chargen face law), NO
+ *  clavicle (deliberately never mapped to any PRT slot). */
+export const SKIN_SWEEP_SLOTS = Object.freeze([
+  'neck', 'chest', 'groin', 'hand', 'wrist', 'forearm', 'upperarm',
+  'foot', 'ankle', 'knee', 'upperleg', 'tail',
+]);
+
+const ARM_SLOT_SET = new Set(['hand', 'wrist', 'forearm', 'upperarm']);
+
+/**
+ * MW-D32: GETBODYPARTS, WHOLE (npcanimation.cpp:1167-1297). One record
+ * sweep in LOAD ORDER over the sBodyPartMap slots, with the reference's
+ * exact ladder:
+ *  - BPF_NotPlayable skipped, MT_Skin only, race matched - and NO
+ *    vampire filter: the sweep never had one (vampire heads live on the
+ *    actor's own record path, and head/hair are not in the map at all)
+ *  - a first-person HAND slot missing its .1st record falls back to
+ *    third-person skins (:1232-1254): same gender fills, same gender
+ *    upgrades an other-gender fallback, male fills for a female
+ *  - every other slot takes parts of ITS view only (:1258)
+ *  - male parts fall back for females: fill when empty, and a male
+ *    .1st upgrades a 3P hand fallback (:1261-1280)
+ *  - a PROPER match (right view, right gender) OVERWRITES - the LAST
+ *    record in load order wins (:1286-1293), which is how an expansion
+ *    overrides a base-game body
+ * @returns {Map} slot -> chosen record (absent: no record for the slot)
+ */
+export function resolveBodyParts(parts, race, female, { firstPerson = false } = {}) {
+  const want = String(race || '').toLowerCase();
+  const isF = !!female;
+  const out = new Map();
+  for (const p of parts ?? []) {
+    if (!p.playable || !p.skin) continue;
+    if (p.race !== want) continue;
+    const slot = p.slot;
+    if (!SKIN_SWEEP_SLOTS.includes(slot)) continue;
+    const isHand = ARM_SLOT_SET.has(slot);
+    const sameGender = !!p.female === isF;
+    if (firstPerson && isHand && !p.firstPerson) {
+      const cur = out.get(slot);
+      if (!cur && sameGender) out.set(slot, p);
+      else if (cur && sameGender && !!cur.female !== isF) out.set(slot, p);
+      else if (!cur && isF) out.set(slot, p);
+      continue;
+    }
+    if (!!p.firstPerson !== !!firstPerson) continue;
+    if (isF && !p.female) {
+      const cur = out.get(slot);
+      if (!cur) out.set(slot, p);
+      else if (isHand && !cur.firstPerson && p.firstPerson) out.set(slot, p);
+      continue;
+    }
+    if (isF !== !!p.female) continue;
+    out.set(slot, p);   // proper match: LAST in load order wins
+  }
+  return out;
+}
+
 export function armReport(parts, race, female) {
   const want = String(race || '').toLowerCase();
+  // MW-D32: the PICKS come from the one reference-whole resolver
+  // (getBodyParts, npcanimation.cpp:1167-1297) - the report keeps its
+  // verdict shape for the card, but no longer carries a second, subtly
+  // different copy of the ladder.
+  const fpResolved = resolveBodyParts(parts, race, female, { firstPerson: true });
+  const tpResolved = resolveBodyParts(parts, race, female, { firstPerson: false });
   const rows = [];
   for (const slot of ARM_PARTS) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot && p.skin && p.playable);
     const fp = forSlot.filter((p) => p.firstPerson);
     const tp = forSlot.filter((p) => !p.firstPerson);
-    const pick = (list) => list.find((p) => p.female === !!female) || list.find((p) => !p.female) || null;
-    const chosenFp = pick(fp);
-    const chosenTp = pick(tp);
+    const resolved = fpResolved.get(slot) ?? null;
+    const chosenFp = resolved && resolved.firstPerson ? resolved : null;
+    const chosenTp = resolved && !resolved.firstPerson ? resolved : (tpResolved.get(slot) ?? null);
     rows.push({
       slot,
       firstPerson: chosenFp,
@@ -1122,18 +1214,38 @@ export function facePools(parts, race, female) {
 
 export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null } = {}) {
   const want = String(race || '').toLowerCase();
+  // MW-D32: the sweep slots resolve through getBodyParts-whole
+  // (npcanimation.cpp:1167-1297 - LAST proper match wins, male-for-
+  // female fallback fills, no vampire filter, playable filtered), and
+  // clavicle is OUT: sBodyPartMap never maps it to a slot.
+  const resolved = resolveBodyParts(parts, race, female, { firstPerson: false });
   const rows = [];
-  // MW-D33: THE CURATION TABLE. Mac's report: the derived head and hair
-  // do not match the portrait - the modulo walk is deterministic but
-  // it is not a LIKENESS, and a likeness is a judgement no arithmetic
-  // makes. mwFaceTable.json holds the judgements: race -> sex ->
-  // faceIndex -> { head, hair } record ids, authored by eye. A curated
-  // id wins when the pool carries it; an id the archives do not carry
-  // falls back to the walk (never traps), and the row's verdict says
-  // which happened. The data inspector prints every pool with its
-  // walk indices so the table can be written by id.
+  for (const slot of SKIN_SWEEP_SLOTS) {
+    const forSlot = parts.filter((p) => p.race === want && p.slot === slot
+      && p.skin && p.playable && !p.firstPerson);
+    const chosen = resolved.get(slot) ?? null;
+    if (!chosen && slot === 'tail' && !beast) continue;
+    rows.push({
+      slot,
+      record: chosen,
+      verdict: chosen ? 'third-person record found' : 'NOTHING for this slot',
+      counts: { all: forSlot.length },
+    });
+  }
+  // Head and hair are NOT in the skin sweep (sBodyPartMap has no
+  // MP_Head/MP_Hair rows): the actor's own record names them, and the
+  // player's stand-in is the chargen face law below.
+  //
+  // MW-D33 (parallel arc): THE CURATION TABLE. Mac's report: the
+  // derived head and hair do not match the portrait - the modulo walk
+  // is deterministic but it is not a LIKENESS, and a likeness is a
+  // judgement no arithmetic makes. mwFaceTable.json holds the
+  // judgements: race -> sex -> faceIndex -> { head, hair } record ids,
+  // authored by eye. A curated id wins when the pool carries it; an id
+  // the archives do not carry falls back to the walk (never traps),
+  // and the row's verdict says which happened.
   const curated = faceTable?.[want]?.[female ? 'female' : 'male']?.[String(faceIndex | 0)] ?? null;
-  for (const slot of MW_BODY_PARTS) {
+  for (const slot of ['head', 'hair']) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot
       && p.skin && p.playable && !p.firstPerson);
     // The sex law, list-shaped: the matching sex's pool, else the male
@@ -1142,24 +1254,19 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
     const sexed = forSlot.filter((p) => p.female === !!female);
     const pool = sexed.length ? sexed : forSlot.filter((p) => !p.female);
     // AUDIT MW-A F2: the sort and the index are the FACE'S law and no
-    // one else's. D27's first cut sorted EVERY slot, silently
-    // rewriting the recorded first-in-file-order pick (assembleNpc's
-    // law) for chest, hands, feet - retail carries one skin record
-    // there so nothing showed, which is exactly how a divergence
-    // hides. Head and hair sort by id so a save's face survives any
-    // archive arrangement; everything else keeps the reference's own
-    // order untouched.
-    const wants = slot === 'head' || slot === 'hair';
-    let chosen;
+    // one else's. Head and hair sort by id so a save's face survives
+    // any archive arrangement; the sweep slots above ride
+    // resolveBodyParts, the reference's own LAST-wins walk, untouched.
+    let chosen = null;
     let how = null;
-    if (wants && pool.length) {
+    if (pool.length) {
       const sorted = pool.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
       const wantId = curated ? String(curated[slot] || '').toLowerCase() : '';
       chosen = wantId ? sorted.find((p) => p.id === wantId) ?? null : null;
       how = chosen ? 'curated' : null;
-      // MW-D35: the MEASURED match sits between the hand-curated table
-      // and the walk - a likeness computed from the player's own data,
-      // named as such on the row.
+      // MW-D35 (parallel arc): the MEASURED match sits between the
+      // hand-curated table and the walk - a likeness computed from the
+      // player's own data, named as such on the row.
       if (!chosen && faceMatch?.[slot]) {
         const mid = String(faceMatch[slot]).toLowerCase();
         chosen = sorted.find((p) => p.id === mid) ?? null;
@@ -1169,10 +1276,7 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
         chosen = sorted[((faceIndex % sorted.length) + sorted.length) % sorted.length];
         how = wantId ? `derived (curated "${wantId}" is not in these archives)` : 'derived';
       }
-    } else {
-      chosen = pool[0] || null;
     }
-    if (!chosen && slot === 'tail' && !beast) continue;
     rows.push({
       slot,
       record: chosen,
@@ -1559,11 +1663,16 @@ export function bindPartsInto(assembly, parts) {
       // ciStartsWith("", filter) is false and the engine drops it), so a
       // nameless one-shape part would bind at every side and stack
       // duplicates in the same place. That one binds once.
+      // MW-D31 / rule 15's HAIR EXCEPTION: the hair part attaches at the
+      // Head bone but its geometry filter is the word "hair"
+      // (npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ?
+      // "hair" : bonename`). Every other slot filters on its bone name.
+      const geomFilter = part.slot === 'hair' ? 'hair' : bone;
       let namelessHere = false;
       for (const batch of bound.skinned) {
         const nameless = !String(batch.name || '').trim();
         if (nameless && tookNameless) continue;
-        if (bone && !shapeMatchesBone(batch.name, bone)) continue;
+        if (geomFilter && !shapeMatchesBone(batch.name, geomFilter)) continue;
         // MW-D7: the piece KEEPS its batch, and `positions` is its own
         // buffer - never an alias of batch.positions, which poseAssembly
         // reads every frame. Aliasing them is the runaway the viewer
@@ -1582,12 +1691,36 @@ export function bindPartsInto(assembly, parts) {
 
       // RULE 12 + 13: a rigid part is PLACED at the bone, once per side,
       // with x negated on the left.
-      if (bound.attached.length) {
+      //
+      // MW-D31: the skinned-vs-rigid branch is decided per FILE, not per
+      // shape. One skinned geometry makes the whole file a rig
+      // (node.cpp:275-276 sets mUseSkinning; nifloader wraps the roots
+      // in a Skeleton) and attach() then takes the CopyRigVisitor
+      // branch, which seeds ONLY RigGeometry drawables
+      // (attach.cpp:42-46 `if (!isRig) return;`) - an unskinned shape
+      // in that file never takes the rigid path's mirror/offset, it is
+      // drawn only as part of a copied rig ancestor's subtree, which
+      // this flattened graph cannot express. So a rig file's rigid
+      // batches are NOTED and dropped rather than mirrored into places
+      // the reference never draws them.
+      if (bound.attached.length && bound.skinned.length) {
+        const say = `${part.slot}: ${bound.attached.length} unskinned shape(s) in a RIG file are not `
+          + 'attached (attach.cpp:42-46 seeds only skinned geometry)';
+        if (!notes.includes(say)) notes.push(say);
+      } else if (bound.attached.length) {
         // The mirror is fixed HERE, at bind time, because it is a fact
         // about the bone's NAME, not about the pose. Re-deriving it per
         // frame invites a pose-dependent mirror, which is a left hand
         // that flips sides mid-clip.
-        const mirror = !!(bone && /left/i.test(bone));
+        //
+        // MW-D31 / rule 13: the reference tests the RESOLVED node's own
+        // name, case-SENSITIVELY (attach.cpp:166 - `attachNode->getName()
+        // .find("Left") != npos`). The requested name in the part table
+        // is lowercase; the node the skeleton actually carries is what
+        // decides.
+        const nodeRef = bone ? skeleton.byName.get(bone.toLowerCase()) : null;
+        const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
+        const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
             // MW-D16: a part instanced under a node INSIDE another part's
@@ -1598,7 +1731,16 @@ export function bindPartsInto(assembly, parts) {
             batch: null, source: applyPre(batch.positions, part.preTransform), attachRef: bound.attachRef,
             // Rule 14: the part's own BoneOffset node, resolved once at
             // bind time because it is a fact about the FILE.
-            boneOffset: bound.boneOffset || null,
+            //
+            // MW-D34: AMMUNITION is the one part that never takes it.
+            // attachArrow does not go through SceneUtil::attach - it is
+            // a bare `getInstance(model, parent)` under getArrowBone()
+            // (weaponanimation.cpp:87-93) - so the arrow mesh's own
+            // "BoneOffset" node is never searched for and never applied.
+            // What the arrow DOES inherit is its parent chain: the
+            // weapon's node (preTransform above) when it rides the
+            // weapon's ArrowBone, mirror and all.
+            boneOffset: part.ammo ? null : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
@@ -2006,8 +2148,8 @@ export const MW_UNITS_PER_METER = 69.99125109;
 export const TP_BASE_MODEL = 'meshes/xbase_anim.nif';
 
 /** The third-person source list, same push order and existence filter as
- *  the first-person one: base first (npcanimation.cpp:534-535), then the
- *  actor's own skeleton when it differs (npcanimation.cpp:537-538). The
+ *  the first-person one: base first (npcanimation.cpp:529-530), then the
+ *  actor's own skeleton when it differs (npcanimation.cpp:532-533). The
  *  kf name is the model with its extension swapped and NOTHING else -
  *  no "x" is inserted (animation.cpp:651-654). */
 export function tpAnimSources(skeletonPath, exists) {
@@ -2033,6 +2175,47 @@ function animSourcesFor(baseModel, skeletonPath, exists) {
  * @param sources ordered as pushed; index 0 is the base
  * @returns {{index:number, source:object, state:object}|null}
  */
+/**
+ * MW-D29: ANIMATION::GETTEXTKEYTIME across EVERY source
+ * (animation.cpp:840-854): the sources are walked in REVERSE - the
+ * last-pushed wins - and the first key that starts with the asked text
+ * answers. The port had asked ONE source (the idle pick's), so an
+ * equip-attach key living only in the base .kf while a female skeleton's
+ * own .kf won the idle went unseen.
+ */
+export function sourcesKeyTime(sources, textKey) {
+  for (let i = (sources ? sources.length : 0) - 1; i >= 0; i--) {
+    const t = getTextKeyTime(sources[i].keys, textKey);
+    if (t >= 0) return t;
+  }
+  return -1;
+}
+
+/**
+ * MW-D29: ANIMATION::GETVELOCITY's two searches (animation.cpp:1267-1338):
+ * first the sources in REVERSE for one that carries the group's start
+ * key; that source's accum-root velocity answers - and "if there's no
+ * velocity" (the > 1 test, :1301/:1307) the walk CONTINUES through the
+ * remaining earlier sources until one yields more. The port had stopped
+ * at the single source the clip was picked from.
+ */
+export function sourcesVelocity(sources, group) {
+  const list = sources || [];
+  const velOf = (so) => {
+    const acc = ACCUM_ROOT_NAMES.find((n) => so.trackMap && so.trackMap.has && so.trackMap.has(n));
+    return acc ? animVelocity(so.keys, so.trackMap.get(acc), group) : 0;
+  };
+  let i = list.length - 1;
+  for (; i >= 0; i--) {
+    if (getTextKeyTime(list[i].keys, `${group}: start`) >= 0
+      || getTextKeyTime(list[i].keys, `${group}: loop start`) >= 0) break;
+  }
+  if (i < 0) return 0;
+  let velocity = velOf(list[i]);
+  for (let j = i - 1; !(velocity > 1) && j >= 0; j--) velocity = velOf(list[j]);
+  return velocity;
+}
+
 export function pickAnimSource(sources, group, resetClip, opts = {}) {
   for (let i = (sources?.length ?? 0) - 1; i >= 0; i--) {
     const state = resetClip(sources[i].keys, group, opts);

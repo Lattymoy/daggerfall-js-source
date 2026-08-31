@@ -42,9 +42,9 @@
 import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
-  sampleTrack, resetClip, advanceClip, getTextKeyTime, animVelocity,
+  sampleTrack, resetClip, advanceClip, getTextKeyTime,
 } from '../formats/mwAnim.js';
-import { accumRootRef, buildSkeleton, ACCUM_ROOT_NAMES } from '../formats/mwSkin.js';
+import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import {
@@ -53,12 +53,13 @@ import {
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
-  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
+  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag, armorRecords, clothingRecords,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
+  sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
@@ -68,8 +69,7 @@ import { raceArt } from '../systems/races.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds } from '../formats/mwItemMap.js';
-import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
-import { decodeDds } from '../formats/mwDdsFile.js';
+import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
@@ -87,7 +87,7 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
 
 /** MW-D24: rule 6's OTHER column - the THIRD-PERSON skeleton the same
  *  actor walks on (getActorSkeleton's !firstPerson branch,
- *  actorutil.cpp:504-513, through settings-default.cfg [Models]
+ *  actorutil.cpp:8-19, through settings-default.cfg [Models]
  *  baseanim/baseanimfemale/baseanimkna). Werewolf out of scope for the
  *  same reason as above. */
 export function tpSkeletonPath({ female = false, beast = false } = {}) {
@@ -177,17 +177,22 @@ export const UPPER_BODY_NAME = Object.freeze(
  *  test is the same shape with one fewer state above the line. */
 export const accurateAiming = (upper) => upper > UPPER_BODY.WeaponEquipped;
 
-/** AnimState::getCompletion - the fraction of [startTime, stopTime] the
- *  playhead has covered. refreshIdleAnims feeds it straight back in as
- *  the next play's startPoint (:822-825), so a finished idle restarts AT
- *  ITS OWN END and the loop window immediately wraps it. That is not a
- *  bug being reproduced; it is why a re-armed idle does not visibly
- *  stutter back to the beginning. */
+/** AnimState::getCompletion (animation.cpp:2160-2166) - the fraction of
+ *  [startTime, stopTime] the playhead has covered. refreshIdleAnims
+ *  feeds it straight back in as the next play's startPoint (:822-825),
+ *  so a finished idle restarts AT ITS OWN END and the loop window
+ *  immediately wraps it. That is not a bug being reproduced; it is why
+ *  a re-armed idle does not visibly stutter back to the beginning.
+ *
+ *  MW-D33: the reference does NOT clamp the ratio, and a zero-length
+ *  clip answers by whether it is still playing - `mPlaying ? 0.0f :
+ *  1.0f` - a FINISHED zero-length clip is complete, not at its start.
+ *  The port had clamped and answered 0 for both. */
 export function clipCompletion(state) {
   if (!state) return 0;
   const span = state.stopTime - state.startTime;
-  if (!(span > 0)) return 0;
-  return Math.min(1, Math.max(0, (state.time - state.startTime) / span));
+  if (span > 0) return (state.time - state.startTime) / span;
+  return state.playing ? 0 : 1;
 }
 
 /**
@@ -561,10 +566,20 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       const arc = find(path);
       if (!arc) notes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
       else {
-        const bone = weaponAttachBone(mwType);
+        // MW-D32: the TYPED bone only when the rig CARRIES it - the
+        // reference starts from sPartList's "Weapon Bone" and switches
+        // to the type's own mAttachBone only `if (found != nodeMap
+        // .end())` (npcanimation.cpp:787-795). A rig without "Weapon
+        // Bone Left" hangs the bow on "Weapon Bone" rather than
+        // dropping it.
+        const typed = weaponAttachBone(mwType);
+        const bone = typed === 'Weapon Bone' || skeletonHasBone(skeletonBytes, typed)
+          ? typed : 'Weapon Bone';
         const weaponBytes = arc.get(path).slice();
         parts.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
-        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
+        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone,
+          // MW-D28: the record's own attack speed (character.cpp:1326).
+          speed: rec.speed || 1 };
 
         // MW-D16 / RULE 24's ARROW. A drawn bow with no round on it is
         // what the port has been drawing; the reference instances the
@@ -597,7 +612,11 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                   + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
               } else {
                 parts.push({
+                  // MW-D34: `ammo` marks the one part attachArrow
+                  // instances BARE - no BoneOffset of its own
+                  // (weaponanimation.cpp:87-93, getInstance direct).
                   slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                  ammo: true,
                 });
                 arrowInfo = {
                   id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
@@ -621,7 +640,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * third-person BODY records (playerBodyRows), the one assembly seam
  * (assembleFirstPersonArm -> bindPartsInto), rule 8's weapon column on
  * THIS skeleton's own bones, and the third-person animation sources
- * (xbase_anim.kf first, npcanimation.cpp:534-538). Runs INSIDE the
+ * (xbase_anim.kf first, npcanimation.cpp:529-533). Runs INSIDE the
  * arm's build while the archives are still open, because a second
  * multi-second walk for the same bytes is pure waste.
  *
@@ -779,6 +798,24 @@ export async function buildFpArm({
         if (b !== null) beast = b;
       }
     }
+    // MW-D34: Npc::adjustScale (npc.cpp:1102-1136) - the race record's
+    // RADT carries per-gender height and weight, and the rendered body
+    // scales x,y by WEIGHT and z by HEIGHT (:1124-1135). The player's
+    // own FIRST-person meshes take uniform HEIGHT only - "Race weight
+    // should not affect 1st-person meshes, otherwise it will change
+    // hand proportions and can break aiming" (:1112-1121); in this
+    // port's FP composition (rule 54: camera and rig share one space)
+    // a uniform scale of both cancels exactly, so the carve-out is the
+    // no-op the reference's comment wants. Collision never scales
+    // (:1104-1106) - the classic motor's collider is untouched. Last
+    // .esm wins, the load order as everywhere else.
+    let raceScale = { weight: 1, height: 1 };
+    for (const e of esmBytes) {
+      const rrec = raceRecords(e.bytes).get(String(race || '').toLowerCase());
+      if (rrec && rrec.radt) {
+        raceScale = { weight: rrec.weight[female ? 1 : 0], height: rrec.height[female ? 1 : 0] };
+      }
+    }
     // MW-D14 / RULE 18: the settings name is not the final name. The
     // x-form is used only when its .kf is in the archive, which for a
     // male is never (the entry is already x-form, so the insert yields
@@ -834,6 +871,18 @@ export async function buildFpArm({
 
     const rows = armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
+    // MW-D32: updateParts sweeps EVERY slot in first person too
+    // (npcanimation.cpp:682, PRT_Neck..PRT_Count with
+    // getBodyParts(firstPerson=true)) - non-hand slots take .1st
+    // records only (:1258), which retail does not carry, so on vanilla
+    // data this adds nothing; a mod's .1st neck now appears exactly as
+    // the reference shows it. A missing non-arm slot is NOT noted -
+    // the reference leaves those null silently.
+    const fpAll = resolveBodyParts(parts, race, female, { firstPerson: true });
+    for (const [slot, rec] of fpAll) {
+      if (ARM_PARTS.includes(slot)) continue;
+      if (rec && rec.model) wanted.push({ slot, record: rec.id, firstPerson: true, path: `meshes/${rec.model}` });
+    }
     const partBytes = [];
     const missing = [];
     // The fp skin wears the same shadows: a right gauntlet hides the
@@ -1054,6 +1103,9 @@ export async function buildFpArm({
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: idlePick.source.binding,
       pieces: armPieceRows(arm.pieces).length,
+      // MW-D34: adjustScale's factors for the drawn body and the
+      // camera's focal height.
+      raceScale,
       // MW-D24: the third-person body, or its named refusal.
       third,
     };
@@ -1086,7 +1138,12 @@ export function collectArmTextures(pieces, archives) {
       continue;
     }
     try {
-      out.set(file, { ok: true, path, image: decodeDds(arc.get(path).slice()) });
+      // MW-D34: decode BY EXTENSION (imagemanager.cpp:104-118) - the
+      // ladder legitimately answers the AUTHORED .tga/.bmp when the
+      // .dds probe misses (resourcehelpers.cpp:112-114), and feeding
+      // that to decodeDds turned a texture the archives DO carry into
+      // the magenta warning.
+      out.set(file, { ok: true, path, image: decodeTextureImage(path, arc.get(path).slice()) });
     } catch (err) {
       out.set(file, { ok: false, path, error: err.message, image: warningImage() });
     }
@@ -1169,6 +1226,7 @@ export function createFpArm() {
   let movementGroup = null;
   let movementSource = null;
   let movementBase = null;
+  let movementStance = null;
   let movementRate = 1;
   // character.cpp:2355-2366 - the turn animation HOLDS 0.05s past the
   // last actual rotation, so mouse jitter does not flicker it.
@@ -1270,8 +1328,10 @@ export function createFpArm() {
   /** The file's time for a key of the CURRENT weapon group, as
    *  getTextKeyTime is always called (character.cpp:1241): the group, a
    *  colon-space, and the action. -1 when the file has no such key. */
+  // MW-D29: getTextKeyTime asks EVERY source in reverse
+  // (animation.cpp:840-854), not the one the idle was picked from.
   const keyTime = (action) => (weaponGroup && rig()
-    ? getTextKeyTime(rig().keys, `${weaponGroup}: ${action}`) : -1);
+    ? sourcesKeyTime(rig().sources, `${weaponGroup}: ${action}`) : -1);
 
   /** Play a section of the weapon group. Returns FALSE and leaves the
    *  slot empty when the file has no such window - it never substitutes
@@ -1335,6 +1395,7 @@ export function createFpArm() {
 
   function resetMovement() {
     movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+    movementStance = null;
   }
 
   /** The velocity the clip itself travels at, so the played speed can
@@ -1382,14 +1443,30 @@ export function createFpArm() {
       turning: turnDir,
       thirdPerson: viewMode === 'third',
     });
-    if (!base) { if (movementState) resetMovement(); return; }
+    if (!base) {
+      // MW-D29: the frame the movement EMPTIES while one was playing,
+      // the idle resets with it (character.cpp:646-651) - so it replays
+      // from its start with freshly rolled loop dice (:824, :811)
+      // instead of resuming mid-clip on a stale counter.
+      if (movementState) { resetMovement(); resetIdle(); }
+      return;
+    }
     const isTurn = base.startsWith('turn');
-    const fresh = !(movementState && movementState.playing && movementBase === base);
+    // MW-D29: the STANCE is part of the early-out key. The reference
+    // forces refreshMovementAnims on every weapon-type transition
+    // (forcestateupdate at character.cpp:1361/:1372/:1431 flows into
+    // refreshCurrentAnims -> refreshMovementAnims(force)), so drawing a
+    // sword mid-walk re-composes walkforward -> walkforward1h THAT
+    // frame - the port's old gate keyed on the movestate name alone and
+    // kept the bare-handed walk playing with the sword out.
+    const stance = animWeaponType(built.mwType, sheathed);
+    const fresh = !(movementState && movementState.playing
+      && movementBase === base && movementStance === stance);
     if (fresh) {
-      const composed = composeMovementGroup(base, animWeaponType(built.mwType, sheathed), hasGroup);
+      const composed = composeMovementGroup(base, stance, hasGroup);
       if (!composed.group) {
-        if (movementState) resetMovement();
-        movementBase = base;
+        if (movementState) { resetMovement(); resetIdle(); }   // :701-707 resets BOTH
+        movementBase = base; movementStance = stance;
         return;
       }
       if (!(movementState && movementState.playing && movementGroup === composed.group)) {
@@ -1404,15 +1481,20 @@ export function createFpArm() {
         movementGroup = composed.group;
         movementState = pick.state;
         movementSource = pick.source;
-        const accName = ACCUM_ROOT_NAMES.find((n) => pick.source.trackMap.has && pick.source.trackMap.has(n));
-        const vel = accName ? animVelocity(pick.source.keys, pick.source.trackMap.get(accName), composed.group) : 0;
-        // "If there's no velocity" is the reference's own > 1 test
-        // (animation.cpp:1292), and the fallbacks are its own constants.
-        movementAnimSpeed = vel > 1 ? vel
-          : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
-            : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
       }
-      movementBase = base;
+      movementBase = base; movementStance = stance;
+      // MW-D29: the clip speed refreshes on EVERY state change, not only
+      // a re-pick - the reference assigns mMovementAnimSpeed whenever
+      // refreshMovementAnims runs (character.cpp:743-752), and the
+      // fallback constant reads the FRESH state's run/sneak, which is
+      // exactly the run->walk-swap case where the clip stays put and
+      // the state does not. The velocity itself is getVelocity's
+      // multi-source walk (animation.cpp:1267-1338), not the one picked
+      // source's answer.
+      const vel = sourcesVelocity(rig().sources, movementGroup);
+      movementAnimSpeed = vel > 1 ? vel
+        : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
+          : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
     }
     // The rate follows the LIVE speed every frame (character.cpp:2392-2408),
     // AFTER the pick so a fresh clip's own velocity is what divides: a
@@ -1440,8 +1522,10 @@ export function createFpArm() {
   function onActionKey(text, time, mine) {
     if (!mine || !weaponGroup) return;
     const action = text.slice(weaponGroup.length + 2);
-    // showWeapons(true/false) at the attach/detach keys
-    // (character.cpp:1468-1472, :1481-1483).
+    // showWeapons(true/false) at the attach/detach keys - the
+    // listener's own branches (CharacterController::handleTextKey,
+    // character.cpp:1074-1087), gated there on Equipping/Unequipping
+    // exactly as the machine is here.
     if (action === EQUIP_KEYS.attach) weaponShown = true;
     else if (action === UNEQUIP_KEYS.detach) weaponShown = false;
     // RULE 24's ranged actions (character.cpp:1153-1165). Two keys
@@ -1509,6 +1593,10 @@ export function createFpArm() {
     switch (upper) {
       case UPPER_BODY.Equipping:
         actionState = null; actionSource = null;
+        // MW-D28: attachArrow runs when Equipping OR AttackEnd finishes
+        // (character.cpp:1824-1828) - the crossbow comes up LOADED, not
+        // empty until the first shot's follow-through.
+        reloadCrossbow();
         upper = UPPER_BODY.WeaponEquipped;
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         break;
@@ -1636,6 +1724,13 @@ export function createFpArm() {
         // :1384 - the guard against restarting the unequip we are
         // already playing, which the per-frame sync makes load-bearing.
         if (upper === UPPER_BODY.Unequipping) return false;
+        // MW-D28: the OTHER half of :1383-1384's guard, which the port
+        // had dropped - `mUpperBodyState <= UpperBodyState::AttackWindUp`.
+        // The wind-up may be interrupted by a sheathe; the release and
+        // the follow-through may NOT: the attack runs out first and the
+        // per-frame sync starts the unequip on the next frame, exactly
+        // as the reference's per-frame updateWeaponState does.
+        if (upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd) return false;
         if (upper === UPPER_BODY.None || !weaponGroup) {
           sheathed = true; weaponShown = false; arrowShown = false;
           refreshWeaponGroup(); refreshIdle(true);
@@ -1643,7 +1738,7 @@ export function createFpArm() {
         }
         upper = UPPER_BODY.Unequipping;
         // If the file has no "unequip detach" key the weapon is hidden
-        // by hand, immediately (:1481-1483).
+        // by hand, immediately (:1412-1414).
         const detach = keyTime(UNEQUIP_KEYS.detach);
         if (!playAction(UNEQUIP_KEYS.start, UNEQUIP_KEYS.stop, 0)) {
           upper = UPPER_BODY.None; sheathed = true; weaponShown = false; arrowShown = false;
@@ -1728,6 +1823,7 @@ export function createFpArm() {
           for (const [file, tex] of collectArmTextures(fresh, archives)) {
             if (!token.textures.has(file)) token.textures.set(file, tex);
           }
+          const oldType = token.mwType;
           token.mwType = resolved.mwType;
           token.weapon = resolved.weaponInfo;
           token.arrow = resolved.arrowInfo;
@@ -1774,16 +1870,35 @@ export function createFpArm() {
           packed = null;
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
-          weaponShown = false; arrowShown = false;
           wornKey = key;
           const wasDrawn = !sheathed;
-          sheathed = true;
-          upper = UPPER_BODY.None;
-          refreshWeaponGroup();
-          refreshIdle(true);
-          // A drawn hand equips the NEW weapon - the same section the
-          // reference plays when the equip slot changes mid-draw.
-          if (wasDrawn) { busy = false; api.setSheathed(false); }
+          // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
+          // swapping one real weapon for another plays NO unequip and NO
+          // equip: "We should not play equipping animation and sound
+          // during weapon->weapon transition". The unequip block is
+          // gated `&& !isStillWeapon` (:1385) and the whole equip body
+          // is wrapped `if (!isStillWeapon)` (:1445); only the group
+          // and the stance re-resolve (:1443, :1495-1496), and a
+          // mid-attack swap is forced to WeaponEquipped with the weapon
+          // SHOWN first (:1370-1377). The mesh swaps in the hand.
+          const stillWeapon = wasDrawn && isRealWeapon(oldType) && isRealWeapon(resolved.mwType);
+          if (stillWeapon) {
+            weaponShown = true;    // :1377 showWeapons(true)
+            arrowShown = false;    // a fresh round attaches at its own shoot keys (MW-D16)
+            upper = UPPER_BODY.WeaponEquipped;
+            refreshWeaponGroup();
+            resetIdle();           // forcestateupdate (:1372) - the new stance's idle
+          } else {
+            weaponShown = false; arrowShown = false;
+            sheathed = true;
+            upper = UPPER_BODY.None;
+            refreshWeaponGroup();
+            refreshIdle(true);
+            // A drawn hand equips the NEW weapon - the same section the
+            // reference plays when the equip slot changes mid-draw
+            // (real-weapon-to-real-weapon never reaches here any more).
+            if (wasDrawn) { busy = false; api.setSheathed(false); }
+          }
           return true;
         } finally { busy = false; }
       })();
@@ -1859,13 +1974,27 @@ export function createFpArm() {
       // it - "idle handled last as it can depend on the other states"
       // (character.cpp:842) - and MW-D26's movement sits between them,
       // exactly where refreshMovementAnims runs (:842-845).
+      // MW-D29: EACH clip advances against ITS OWN source's text keys -
+      // a state minted from one .kf and stepped through another's key
+      // list crosses the wrong markers the moment two sources serve
+      // different groups (the base .kf plus a skeleton's own is the
+      // everyday retail case for a female or beast actor).
       if (actionState) {
-        advanceClip(actionState, rig().keys, dt, onActionKey);
+        // MW-D28: the weapon record's mSpeed scales EXACTLY the three
+        // attack sections - wind-up, release, follow - and nothing else
+        // (character.cpp:1718/:1786/:1811 pass weapSpeed as speedmult;
+        // the equip/unequip plays at :1408/:1465 pass 1.0f). A dagger
+        // swings fast and a warhammer slow, off the record, not a guess.
+        const attacking = upper === UPPER_BODY.AttackWindUp
+          || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
+        const weapSpeed = attacking && built.weapon && Number.isFinite(built.weapon.speed)
+          ? built.weapon.speed : 1;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * weapSpeed, onActionKey);
         stepUpper();
       }
       refreshMovement(cam, dt);
-      if (movementState) advanceClip(movementState, rig().keys, dt * movementRate, null);
-      if (idleState) advanceClip(idleState, rig().keys, dt, null);
+      if (movementState) advanceClip(movementState, (movementSource || rig()).keys, dt * movementRate, null);
+      if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !movementState && !idleState) return;
@@ -1972,11 +2101,13 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
-      // Animation::showWeapons, and it HIDES rather than removes - which
-      // is rule 57's own distinction and the reason it is a per-range
-      // flag and not a shorter vertex stream. Repacking without the
-      // weapon would change the buffer's length every time you drew or
-      // sheathed, orphaning the ranges the textures hang on.
+      // NpcAnimation::showWeapons - the reference REMOVES the part
+      // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
+      // re-adds it on show. This port keeps the vertices and flips a
+      // per-range flag instead - a DECLARED mechanism divergence with
+      // the same visible behaviour: repacking without the weapon would
+      // change the buffer's length every time you drew or sheathed,
+      // orphaning the ranges the textures hang on.
       for (const r of mesh.ranges) {
         if (r.slot === 'weapon') r.hidden = !weaponShown;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
@@ -1987,8 +2118,8 @@ export function createFpArm() {
     draw(canvas) {
       // MW-D24: in third person the first-person overlay does not exist
       // - the reference masks the whole FP root out of the scene
-      // (Mask_FirstPerson, npcanimation.cpp:931 setNodeMask on view
-      // change). active() is already false in that mode; the guard here
+      // (Mask_FirstPerson, npcanimation.cpp:542-546 - setViewMode's
+      // setNodeMask on the whole object root). active() is already false in that mode; the guard here
       // keeps the sentence readable at the call site.
       if (!active() || !canvas) return false;
       const cam = camera();
@@ -2077,13 +2208,21 @@ export function createFpArm() {
     },
     viewMode: () => viewMode,
     thirdActive,
-    /** upperBodyReady (character.cpp:135's gate): a stable stance, no
-     *  action section in flight, no build in flight. */
+    /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
+     *  what the camera's queued-mode gate consults (camera.cpp:135):
+     *  a stable stance, no action section in flight, no build in
+     *  flight. */
     upperBodyReady: () => !busy && !actionState
       && (upper === UPPER_BODY.None || upper === UPPER_BODY.WeaponEquipped),
     /** What the wheel may cross INTO: a body that refused keeps the
      *  player in first person with the reason on the card. */
     canThirdPerson: () => !!(thirdBuilt && thirdBuilt.ok),
+
+    /** MW-D34: the race's HEIGHT factor (adjustScale's z, npc.cpp:1127/
+     *  1134), which is what the camera's focal height rides - the
+     *  tracked node sits on the scaled actor. mwViewFrame passes it so
+     *  no host re-derives the seam (MW-D25's law). */
+    raceHeightScale: () => (built && built.ok && built.raceScale ? built.raceScale.height : 1),
 
     /**
      * MW-D24: THE THIRD-PERSON DRAW - the body composited into the world
@@ -2100,14 +2239,34 @@ export function createFpArm() {
      * -Z... so the rig needs an extra half-turn to face the player's
      * forward, folded into the yaw term below and pinned by the probe's
      * facing layer rather than trusted.
+     *
+     * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
+     * composite - MW-D23's law): this pass composites through the
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:488 et al.),
+     * and the port's world convention puts the player's RIGHT at +X at
+     * yaw 0 (motor.js:573) - a LEFT-handed convention the mirror turns
+     * into correct screen imagery. A right-handed NIF actor placed with
+     * a pure rotation therefore reads MIRRORED on screen (measured:
+     * sword ink Δleft 1701 vs Δright -127 with the motor's +X anchor
+     * projecting screen-right). The -u on the local x axis is the SAME
+     * basis adaptation every Daggerfall asset already carries via that
+     * mirror: it puts the actor's right hand at the motor's right
+     * (+X), and through the lens, on SCREEN-RIGHT - where the FP pass
+     * (chirality-true by MW-D23's measurement) already shows it.
+     * Winding is safe: drawCharacter disables CULL_FACE.
      */
     drawThird(canvas, { proj, view, eye, feet, yaw }) {
       if (!thirdActive() || !canvas || !feet) return false;
       const t = thirdBuilt;
       const u = 1 / MW_UNITS_PER_METER;
       const yawDeg = (yaw * 180 / Math.PI) + 180;
+      // MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135):
+      // x,y take the race's WEIGHT, z its HEIGHT. In this frame the
+      // local x/z pair is the MW horizontal (side/forward through
+      // Rx(-90)) and local y is the MW vertical.
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
       const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, u, u, u),
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
       // The box the sprite law needs, measured off the POSED pieces in
@@ -2123,8 +2282,8 @@ export function createFpArm() {
         if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
       }
       if (!(maxX > minX)) return false;
-      const halfH = ((maxZ - minZ) * u) / 2;
-      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u) / 2;
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
       return true;
@@ -2140,6 +2299,7 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        raceScale: built && built.ok ? built.raceScale : null,
         worn: built && built.ok ? built.worn : null,
         face: built && built.ok ? built.face : null,
         esm: built && built.esm ? built.esm : null,

@@ -146,8 +146,16 @@ function readTimeController(s, rec) {
 
 /**
  * KeyGroup<T> of `dim`-component float values: uint32 count, then (only
- * when count > 0) uint32 interpolation type and the keys. Quadratic keys
- * carry forward/backward tangents; TBC keys carry tension/continuity/bias.
+ * when count > 0) uint32 interpolation type and the keys.
+ *
+ * MW-D33: quadratic keys carry TWO tangents and the reference names the
+ * stream order - value, then mInTan, then mOutTan (readQuadratic,
+ * nifkey.hpp:141-143). The sampler's Hermite then uses key0's OUT
+ * tangent and key1's IN tangent (controller.hpp:158), i.e. the SECOND
+ * stream field of the left key and the FIRST of the right. The port had
+ * read them as forward/backward and sampled forward-of-left - the two
+ * fields swapped both ways. TCB keys carry tension/continuity/bias
+ * (readTCBKey, nifkey.hpp:159-163).
  */
 function readKeyGroupOf(s, val) {
   const count = s.u32();
@@ -157,8 +165,8 @@ function readKeyGroupOf(s, val) {
   for (let i = 0; i < count; i++) {
     const key = { time: s.f32(), value: val() };
     if (group.type === KEY_TYPE.quadratic) {
-      key.forward = val();
-      key.backward = val();
+      key.inTan = val();
+      key.outTan = val();
     } else if (group.type === KEY_TYPE.tbc) {
       key.tbc = [s.f32(), s.f32(), s.f32()];
     }
@@ -907,8 +915,8 @@ const READERS = {
       for (let k = 0; k < count; k++) {
         const key = { time: s.f32(), value: s.f32() };
         if (type === KEY_TYPE.quadratic) {
-          key.forward = s.f32();
-          key.backward = s.f32();
+          key.inTan = s.f32();   // stream order per readQuadratic (nifkey.hpp:141-143)
+          key.outTan = s.f32();
         } else if (type === KEY_TYPE.tbc) {
           key.tbc = [s.f32(), s.f32(), s.f32()];
         }

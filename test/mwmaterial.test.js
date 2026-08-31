@@ -12,6 +12,7 @@ import { buildSkeleton } from '../src/formats/mwSkin.js';
 import { placeAtBone, aimingFactor, neckRotateFactor, FP_NECK_ROTATE_FACTOR } from '../src/formats/mwFirstPerson.js';
 import {
   accurateAiming, UPPER_BODY, packFpArm, FP_FLOATS, createFpArm, fpSkeletonPath, FP_CLIP_PATH,
+  buildFpArm,
 } from '../src/combat/fpArm.js';
 import { assembleFirstPersonArm, poseAssembly, armPieceRows } from '../src/formats/mwFirstPerson.js';
 
@@ -434,4 +435,56 @@ test('MW-D13 rule 58: a NIF whose ROOT is "Bounding Box" is NOT skipped', () => 
   // first call. It reads like an oversight and it is load-bearing: such
   // a file would otherwise load as nothing at all.
   assert.deepEqual(names('boxroot.nif'), ['Tri EditorMarker01', 'Keep']);
+});
+
+// --- MW-D34: adjustScale's factors reach the build -------------------------
+
+test('MW-D34: RADT weight/height reach the build, per gender column, defaulting to 1', async () => {
+  // Npc::adjustScale (npc.cpp:1102-1136): the rendered body scales x,y
+  // by the race's WEIGHT and z by its HEIGHT, per gender - male reads
+  // mMaleWeight/mMaleHeight, female the female pair (:1124-1135). The
+  // RADT floats sit at 120/124 (heights) and 128/132 (weights), male
+  // first (loadrace.hpp) - the same layout MW-D32's raceRecords pinned.
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const radt = new Uint8Array(140);
+  const dv = new DataView(radt.buffer);
+  dv.setFloat32(120, 1.1, true);   // male height
+  dv.setFloat32(124, 1.3, true);   // female height
+  dv.setFloat32(128, 1.2, true);   // male weight
+  dv.setFloat32(132, 0.9, true);   // female weight
+  dv.setInt32(136, 1, true);       // playable
+  const raceRec = (() => {
+    const d = [...sub('NAME', Z('fprace')), ...sub('RADT', [...radt])];
+    return [...A('RACE'), ...U(d.length), ...U(0), ...U(0), ...d];
+  })();
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [fpSkeletonPath({ female: true }), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpweapon.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  const deps = (withRace) => ({
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => (withRace
+      ? Uint8Array.from([...f('armfp.esm'), ...raceRec]) : f('armfp.esm')),
+  });
+  const male = await buildFpArm({ race: 'fprace', deps: deps(true) });
+  assert.ok(male.ok, `${male.stage}: ${male.error}`);
+  assert.deepEqual(male.raceScale, { weight: 1.2000000476837158, height: 1.100000023841858 },
+    'male reads the male columns (float32 round-trips and all)');
+  const female = await buildFpArm({ race: 'fprace', female: true, deps: deps(true) });
+  assert.ok(female.ok, `${female.stage}: ${female.error}`);
+  assert.ok(Math.abs(female.raceScale.weight - 0.9) < 1e-6 && Math.abs(female.raceScale.height - 1.3) < 1e-6,
+    'female reads the FEMALE columns - the port that reads index 0 for everyone dies here');
+  // No RADT anywhere: the factors stay 1 - a scale of 0 would collapse
+  // the body, and "absent" is not "zero".
+  const plain = await buildFpArm({ race: 'fprace', deps: deps(false) });
+  assert.ok(plain.ok);
+  assert.deepEqual(plain.raceScale, { weight: 1, height: 1 });
 });

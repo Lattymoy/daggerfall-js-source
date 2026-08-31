@@ -98,6 +98,12 @@ test('mwanim: linear sampling - lerp midpoint, slerp half-angle', () => {
 });
 
 test('mwanim: quadratic keys run the stored Hermite tangents', () => {
+  // MW-D33: the stream stores value, then mInTan, then mOutTan
+  // (readQuadratic, nifkey.hpp:141-143), and the Hermite takes the LEFT
+  // key's OUT tangent and the RIGHT key's IN tangent - `a.mOutTan * b3
+  // + b.mInTan * b4` (controller.hpp:158). The decoy 100s sit in the
+  // two fields the segment must NOT read (k0.inTan, k1.outTan): a
+  // sampler with the swap the port used to have reads them and misses.
   const track = {
     rotationType: 0,
     rotationKeys: [],
@@ -106,13 +112,17 @@ test('mwanim: quadratic keys run the stored Hermite tangents', () => {
     scales: {
       type: KEY_TYPE.quadratic,
       keys: [
-        { time: 0, value: 0, forward: 3, backward: 0 },
-        { time: 1, value: 1, forward: 0, backward: 0 },
+        { time: 0, value: 0, inTan: 100, outTan: 3 },
+        { time: 1, value: 1, inTan: 0, outTan: 100 },
       ],
     },
   };
   // h(0.5): 0.5*v1 + 0.125*out0 = 0.5 + 0.375 = 0.875.
   assert.ok(near(sampleTrack(track, 0.5).scale, 0.875));
+  // And the right key's IN tangent weighs in with b4 = t^3 - t^2:
+  // in1 = 8 adds 8 * (-0.125) = -1 at the midpoint.
+  track.scales.keys[1].inTan = 8;
+  assert.ok(near(sampleTrack(track, 0.5).scale, 0.875 - 1));
 });
 
 test('mwanim: TBC keys generate Kochanek-Bartels tangents (t=c=b=0 is Catmull-Rom)', () => {
@@ -688,4 +698,144 @@ test('MW-D17: the viewer has ONE home for clip time - the law, not a modulo', ()
     'and loopFallback is rule 51\'s answer, not "always"');
   assert.equal((src.match(/accumRootRef\(/g) || []).length, 1,
     'rule 56\'s pick is made once per track set, not once per frame');
+});
+
+// ---------------------------------------------------------------------------
+// MW-D33: the clip law brought to 1:1 - interpolation, reset's third
+// stage, the accum axes, and the key reader's field order. Every law
+// cited from the reference read whole this slice.
+
+test('MW-D33: constant keys answer by WHICH HALF, scalars and quaternions alike', () => {
+  // interpolate() (nifosg/controller.hpp:140-141 and :169-170):
+  // `fraction > 0.5f ? b.mValue : a.mValue`. The port had answered the
+  // left key always, which turns a step channel into a lagging one.
+  const track = {
+    rotationType: KEY_TYPE.constant,
+    rotationKeys: [
+      { time: 0, value: [1, 0, 0, 0] },
+      { time: 1, value: [Math.SQRT1_2, 0, 0, Math.SQRT1_2] },
+    ],
+    xyzRotations: null,
+    translations: { type: 0, keys: [] },
+    scales: {
+      type: KEY_TYPE.constant,
+      keys: [{ time: 0, value: 1 }, { time: 1, value: 5 }],
+    },
+  };
+  assert.equal(sampleTrack(track, 0.4).scale, 1, 'first half: the left key');
+  assert.equal(sampleTrack(track, 0.6).scale, 5, 'second half: the RIGHT key');
+  // The quaternion path takes the SAME which-half - not a slerp blend
+  // (a slerp at u=0.6 would answer 27 degrees, not 45).
+  assert.ok(nearVec(sampleTrack(track, 0.6).rotation, [Math.SQRT1_2, 0, 0, Math.SQRT1_2], 1e-6));
+  assert.ok(nearVec(sampleTrack(track, 0.4).rotation, [1, 0, 0, 0], 1e-6));
+});
+
+test('MW-D33: TCB interior tangents weight by TIME SPAN, not a flat half', () => {
+  // generateTCBTangents (nifkey.hpp:184-196): with t=c=b=0 every
+  // coefficient is 1, and the interior key's tangents become
+  //   inTan  = (prevDelta + nextDelta) * ((cur - prev) / timeSpan)
+  //   outTan = (prevDelta + nextDelta) * ((next - cur) / timeSpan)
+  // Keys at 0, 1, 3 (UNEVEN): prevDelta = 2, nextDelta = 6, timeSpan = 3,
+  // so key1's inTan = 8 * (1/3) = 8/3. The first key's tangents stay the
+  // half-sum law (:178-182): out0 = 2 * ((C+D)*0.5) = 2. At u = 0.5 on
+  // the first segment:
+  //   h = 0.5*2 + 0.125*2 - 0.125*(8/3) = 11/12
+  // The flat-0.5 law the port carried gave in1 = 4 and h = 0.75.
+  const track = {
+    rotationType: 0,
+    rotationKeys: [],
+    xyzRotations: null,
+    translations: { type: 0, keys: [] },
+    scales: {
+      type: KEY_TYPE.tbc,
+      keys: [
+        { time: 0, value: 0, tbc: [0, 0, 0] },
+        { time: 1, value: 2, tbc: [0, 0, 0] },
+        { time: 3, value: 8, tbc: [0, 0, 0] },
+      ],
+    },
+  };
+  assert.ok(near(sampleTrack(track, 0.5).scale, 11 / 12));
+  // The ZERO-SPAN guard (`if (timeSpan == 0.f) continue;`, :189-190)
+  // leaves the struct's zero-initialised tangents (nifkey.hpp:38-40).
+  // No sorted key list can put that key at a sampled segment's edge, so
+  // the guard is pinned at the source.
+  const src = readFileSync(new URL('../src/formats/mwAnim.js', import.meta.url), 'utf8');
+  assert.ok(src.includes('if (timeSpan === 0) return [0, 0];'), 'zero span answers zero tangents');
+});
+
+test('MW-D33: the quadratic reader streams value, IN tangent, OUT tangent - in that order', () => {
+  // readQuadratic (nifkey.hpp:141-143): `readValue; key.mInTan = ...;
+  // key.mOutTan = ...`. The sampler then wants the LEFT key's OUT and
+  // the RIGHT key's IN (controller.hpp:158) - i.e. the SECOND stored
+  // field of one key and the FIRST of the next. Reader order is pinned
+  // at the source because no fixture carries quadratic keys; the
+  // sampler's side is pinned by value above ("stored Hermite tangents").
+  const src = readFileSync(new URL('../src/formats/mwNifFile.js', import.meta.url), 'utf8');
+  assert.ok(/key\.inTan = val\(\);\s*\n\s*key\.outTan = val\(\);/.test(src),
+    'keyframe groups: inTan read before outTan');
+  assert.ok(/key\.inTan = s\.f32\(\);.*\n\s*key\.outTan = s\.f32\(\);/.test(src),
+    'morph keys: the same order');
+  assert.ok(!/key\.forward|key\.backward/.test(src), 'the swapped-name fields are gone');
+});
+
+test('MW-D33: reset\'s third stage stops at the START key - a doubled block leaks nothing', () => {
+  // Animation::reset (animation.cpp:1028-1039): `for (; key != startkey
+  // && key != keys.rend(); ++key)` - the scan for loop keys behind the
+  // playhead runs from groupend DOWN TO the start key, exclusive.
+  // undeadwolf_2.nif carries two walkforward blocks; playing the second
+  // must not inherit the first block's loop window.
+  const keys = [
+    { time: 0.0, text: 'walkforward: start' },
+    { time: 0.2, text: 'walkforward: loop start' },
+    { time: 0.8, text: 'walkforward: loop stop' },
+    { time: 1.0, text: 'walkforward: stop' },
+    { time: 2.0, text: 'walkforward: start' },
+    { time: 3.0, text: 'walkforward: stop' },
+  ];
+  const clip = resetClip(keys, 'WalkForward', { startPoint: 0.5 });
+  assert.equal(clip.ok, true);
+  assert.equal(clip.startTime, 2.0, 'the LAST block wins (reverse groupend scan)');
+  assert.ok(near(clip.time, 2.5));
+  assert.equal(clip.loopStartTime, 2.0, 'not the first block\'s 0.2');
+  assert.equal(clip.loopStopTime, Infinity, 'not the first block\'s 0.8');
+  // Loop keys INSIDE the playing block, at or before the playhead,
+  // still narrow the window - that is the third stage's whole job.
+  const keys2 = keys.concat([{ time: 2.2, text: 'walkforward: loop start' }])
+    .sort((a, b) => a.time - b.time);
+  const clip2 = resetClip(keys2, 'walkforward', { startPoint: 0.5 });
+  assert.equal(clip2.loopStartTime, 2.2);
+});
+
+test('MW-D33: the accum root\'s accumulated axes are ZEROED, not pinned to rest', () => {
+  // ResetAccumRootCallback (animation.cpp:515-539): the node's
+  // translation is component-multiplied by (0,0,1) - "anything that
+  // accumulates (1.f) should be reset in the callback to (0.f)" - on
+  // WHATEVER the transform holds, keyed or rest alike.
+  const rest = {
+    rotation: new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]),
+    translation: [5, 6, 7],
+    scale: 1,
+  };
+  const skeleton = { nodes: new Map([[1, { name: 'Bip01', rest }]]) };
+  const keyed = new Map([['bip01', {
+    rotationType: 0, rotationKeys: [], xyzRotations: null,
+    translations: { type: KEY_TYPE.linear, keys: [{ time: 0, value: [10, 20, 30] }] },
+    scales: { type: 0, keys: [] },
+  }]]);
+  const pose = poseSkeleton(skeleton, keyed, sampleTrack, 0, { accumRoot: 1 });
+  assert.deepEqual(pose.get(1).translation, [0, 0, 30], 'keyed X,Y zeroed, Z animated');
+  // A track with NO translation channel still passes through the
+  // callback: the REST X,Y are zeroed too (the port had left them).
+  const rotOnly = new Map([['bip01', {
+    rotationType: KEY_TYPE.linear, xyzRotations: null,
+    rotationKeys: [{ time: 0, value: [1, 0, 0, 0] }],
+    translations: { type: 0, keys: [] },
+    scales: { type: 0, keys: [] },
+  }]]);
+  const pose2 = poseSkeleton(skeleton, rotOnly, sampleTrack, 0, { accumRoot: 1 });
+  assert.deepEqual(pose2.get(1).translation, [0, 0, 7], 'rest X,Y zeroed as well');
+  // Without an accum root nothing is touched.
+  const pose3 = poseSkeleton(skeleton, keyed, sampleTrack, 0, {});
+  assert.deepEqual(pose3.get(1).translation, [10, 20, 30]);
 });
