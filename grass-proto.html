@@ -52,6 +52,7 @@
   <label>blades <input id="density" type="range" min="20000" max="400000" step="10000" value="160000"><span class="v" id="vdensity"></span></label>
   <label>height <input id="height" type="range" min="10" max="80" step="1" value="34"><span class="v" id="vheight"></span></label>
   <label>wind <input id="wind" type="range" min="0" max="200" step="1" value="70"><span class="v" id="vwind"></span></label>
+  <label>wind dir <input id="windDir" type="range" min="0" max="359" step="1" value="20"><span class="v" id="vwindDir"></span></label>
   <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
   <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
   <label>sun&deg; <input id="sun" type="range" min="-20" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
@@ -59,7 +60,6 @@
     <option>sunny</option><option>cloudy</option><option>overcast</option><option>fog</option>
     <option>rain</option><option>thunder</option><option>snow</option>
   </select></label>
-  <label><input id="pixel" type="checkbox" checked> pixel-art blades</label>
   <label><input id="retro" type="checkbox"> retro sky (the game's ?sky= pass)</label>
   <label>surface <select id="surf">
     <option>grass</option><option>dirt</option><option>stone</option><option>sand</option><option>snow</option>
@@ -77,8 +77,8 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', pixel: true, retro: false, grass: true, newGround: true };
-for (const k of ['density', 'height', 'wind', 'range', 'tile', 'sun']) {
+const state = { density: 160000, height: 34, wind: 70, windDir: 20, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
+for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
   el.addEventListener('input', sync); sync();
@@ -548,8 +548,7 @@ layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
-out float vT; out float vTint; out float vFade; out float vLam; out float vSeedOut;
-uniform float uPixel, uPixW, uPixH;
+out float vT; out float vTint; out float vFade; out float vLam;
 void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
@@ -566,38 +565,17 @@ void main(){
   p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
   p.y = terrain(root) + vT * h;
   vTint = aInst2.z;
-  vSeedOut = aInst.w;
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
   // a low sun on one side and goes dark on the other - which is what
   // makes a dawn field glow along one edge.
   vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
   vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
-  vec4 cp = uVP * vec4(p,1.0);
-  // PROTO-7 (Mac: make the BLADES pixel-artish). A 3D blade reads as
-  // pixel art when its SILHOUETTE lands on a coarse raster, so the
-  // clip position is snapped to a virtual low-res grid. Edges then
-  // stair-step the way a drawn sprite's do instead of being smooth
-  // sub-pixel geometry - and because the snap is in clip space, a
-  // blade stays snapped as it moves rather than shimmering between
-  // grids.
-  if (uPixel > 0.5 && cp.w > 0.0) {
-    vec2 ndc = cp.xy / cp.w;
-    vec2 grid = vec2(uPixW, uPixH);
-    cp.xy = (floor((ndc * 0.5 + 0.5) * grid) + 0.5) / grid * 2.0 - 1.0;
-    cp.xy *= cp.w;
-  }
-  gl_Position = cp;
+  gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
-in float vT; in float vTint; in float vFade; in float vLam; in float vSeedOut;
-uniform vec3 uAmb, uSunCol; uniform float uDim, uPixel, uPixW, uPixH;
+in float vT; in float vTint; in float vFade; in float vLam;
+uniform vec3 uAmb, uSunCol; uniform float uDim;
 out vec4 o;
-// the 4x4 ordered matrix, the same one a pixel artist stipples with
-float bayer(vec2 p){
-  int i = int(mod(p.x,4.0)), j = int(mod(p.y,4.0));
-  int m[16] = int[16](0,8,2,10, 12,4,14,6, 3,11,1,9, 15,7,13,5);
-  return float(m[j*4+i]) / 16.0;
-}
 void main(){
   // PROTO-2: the blade is LIT along its length - dark at the root
   // where the sward shades it, bright at the tip where the sky does -
@@ -617,20 +595,6 @@ void main(){
   c *= uDim;
   // the rim is the SUN's colour, and only where the sun can reach
   c += uSunCol * 0.20 * smoothstep(0.86,1.0,vT) * vLam;
-  if (uPixel > 0.5) {
-    // 1. a LOCKED RAMP: five rungs, so the blade is drawn in a handful
-    //    of colours the way a sprite is, not a continuous gradient.
-    float lv = 5.0;
-    vec2 gp = floor(gl_FragCoord.xy / max(1.0, 1280.0/uPixW));
-    float dth = (bayer(gp) - 0.5) * (1.0/lv) * 0.9;
-    c = floor((c + dth) * lv) / lv;
-    // 2. a HARD EDGE: pixel art has no alpha ramp, so the distance
-    //    fade becomes a dithered CUTOUT - the blade is there or it is
-    //    not, and the stipple carries the falloff.
-    if (vFade < bayer(gp + vec2(vSeedOut*7.0))) discard;
-    o = vec4(c, 1.0);
-    return;
-  }
   o = vec4(c, vFade);
 }`);
 
@@ -697,10 +661,10 @@ function build() {
 ready = true;
 build();
 R('surf').addEventListener('change', (e) => setSurface(e.target.value));
-R('pixel').addEventListener('change', (e) => { state.pixel = e.target.checked; });
 R('retro').addEventListener('change', (e) => { state.retro = e.target.checked; });
 R('wx').addEventListener('change', (e) => {
   state.weather = e.target.value;
+  front.set(state.weather);
   // snow lies on the ground, so the surface follows the sky
   if (state.weather === 'snow' && state.surface === 'grass') setSurface('snow');
 });
@@ -728,13 +692,86 @@ const SKY_KEYS = [
   { elev: -90, zenith: [0x04,0x06,0x0d], horizon: [0x09,0x0c,0x16], glow: [0,0,0], glowAmount: 0.0, stars: 1.0 },
   { elev: -18, zenith: [0x06,0x09,0x14], horizon: [0x0f,0x13,0x1f], glow: [0x1a,0x14,0x20], glowAmount: 0.0, stars: 1.0 },
   { elev: -9,  zenith: [0x0c,0x13,0x30], horizon: [0x2b,0x22,0x38], glow: [0x6a,0x3a,0x3a], glowAmount: 0.30, stars: 0.85 },
+  { elev: -6,  zenith: [0x12,0x1e,0x48], horizon: [0x3c,0x33,0x4c], glow: [0xa8,0x4e,0x3c], glowAmount: 0.55, stars: 0.62 },
   { elev: -4,  zenith: [0x1a,0x2a,0x5a], horizon: [0x4e,0x42,0x58], glow: [0xd6,0x69,0x3a], glowAmount: 0.75, stars: 0.45 },
+  // PROTO-9: the SUNRISE/SUNSET band, finely stepped. The game's ramp
+  // jumps -4 -> 0 -> 4, and the whole of a sunset happens inside that
+  // eight degrees: the horizon goes ember, then peach, then the sky
+  // above it turns the violet that only exists for a few minutes.
+  // Four keys where there were two, and the glow colour swings warm
+  // and then cools, which is what a real one does as the sun clears
+  // the haze.
+  { elev: -2,  zenith: [0x23,0x36,0x74], horizon: [0x8e,0x60,0x62], glow: [0xf0,0x7c,0x3c], glowAmount: 0.92, stars: 0.24 },
   { elev: 0,   zenith: [0x2c,0x4d,0x8e], horizon: [0xc4,0xa4,0x9a], glow: [0xff,0x9a,0x4c], glowAmount: 1.00, stars: 0.10 },
+  { elev: 2,   zenith: [0x33,0x5c,0xa4], horizon: [0xe0,0xb4,0x9c], glow: [0xff,0xac,0x60], glowAmount: 0.84, stars: 0.03 },
   { elev: 4,   zenith: [0x3a,0x68,0xb4], horizon: [0xd9,0xc6,0xb4], glow: [0xff,0xbd,0x7a], glowAmount: 0.60, stars: 0.0 },
+  { elev: 7,   zenith: [0x3c,0x70,0xc0], horizon: [0xd2,0xcf,0xc8], glow: [0xff,0xcf,0x9c], glowAmount: 0.42, stars: 0.0 },
   { elev: 12,  zenith: [0x3f,0x77,0xcc], horizon: [0xc9,0xdc,0xf0], glow: [0xff,0xe1,0xb8], glowAmount: 0.28, stars: 0.0 },
   { elev: 30,  zenith: [0x33,0x6b,0xc6], horizon: [0xb6,0xd0,0xec], glow: [0xff,0xf0,0xd8], glowAmount: 0.14, stars: 0.0 },
   { elev: 90,  zenith: [0x2a,0x5a,0xb8], horizon: [0xa8,0xc8,0xea], glow: [0xff,0xff,0xff], glowAmount: 0.08, stars: 0.0 },
 ];
+// ── PROTO-9: THE FRONT (Mac: cloud cover should morph and build up,
+// and change colour when rain or snow is coming; same for snow) ─────
+//
+// Weather in the game is a STATE. Weather in the sky is a PROCESS: the
+// deck thickens for a quarter of an hour before the first drop, the
+// light goes flat and then bruised, the cloud bellies go from white to
+// slate to that green-grey a summer storm gets, and only THEN does it
+// rain. A dropdown that hard-cuts between seven skies can never look
+// like weather, however good each of the seven is.
+//
+// So every sky quantity - cover, softness, grey, the two cloud colours
+// and the wind - is EASED between the state you left and the state you
+// asked for, over a real span, and a FRONT term runs AHEAD of the
+// transition:
+//
+//   - cover builds first and fastest (a deck arrives before its rain);
+//   - the cloud colours turn toward the incoming weather's shade
+//     EARLY, and overshoot it a little, because the darkest a sky ever
+//     looks is just before it breaks;
+//   - the particles hold off until the front is mostly in - the rain
+//     starts when the sky already looks like rain, not with it;
+//   - and the wind picks up before the rain and drops after it, which
+//     is the part everyone has felt and nobody draws.
+const FRONT_SECONDS = 26;         // a full change, in the lab's own time
+const SNOW_TINT = [0.92, 0.95, 1.02];   // snow light is cold; rain light is not
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerp3 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const ease = (t) => t * t * (3 - 2 * t);
+const front = {
+  from: 'sunny', to: 'sunny', t: 1,
+  /** ask for a change; the sky takes its own time about it */
+  set(name) { if (name === this.to) return; this.from = this.sample().key; this.to = name; this.t = 0; },
+  tick(dt) { this.t = Math.min(1, this.t + dt / FRONT_SECONDS); },
+  /** the sky RIGHT NOW: the two states eased together, with the front
+   *  running ahead of the ease so the deck arrives before its weather */
+  sample() {
+    const a = WEATHER_SKY[this.from], b = WEATHER_SKY[this.to];
+    const t = ease(this.t);
+    // cover leads: it is most of the way in when the ease is a third
+    const tc = ease(Math.min(1, this.t * 2.2));
+    // the colours lead too, and OVERSHOOT toward the darker of the two
+    const tk = ease(Math.min(1, this.t * 1.7));
+    const darker = (b.shade[0] + b.shade[1] + b.shade[2]) < (a.shade[0] + a.shade[1] + a.shade[2]) ? b : a;
+    const over = Math.sin(Math.PI * Math.min(1, this.t * 1.4)) * 0.22;   // a bruise, then it settles
+    const cold = this.to === 'snow' || this.from === 'snow' ? SNOW_TINT : [1, 1, 1];
+    const mixTo = (p, q) => lerp3(p, q, tk).map((v, i) => cl(v * (1 - over) + darker[i] * over, 0, 255) * cold[i]);
+    return {
+      key: this.t >= 1 ? this.to : this.from,
+      cover: lerp(a.cover, b.cover, tc),
+      soft: lerp(a.soft, b.soft, t),
+      grey: lerp(a.grey, b.grey, tk),
+      lit: mixTo(a.lit, b.lit),
+      shade: mixTo(a.shade, b.shade),
+      // the wind gusts THROUGH the change: up before, easing after
+      wind: [lerp(a.wind[0], b.wind[0], t) * (1 + Math.sin(Math.PI * this.t) * 0.9),
+        lerp(a.wind[1], b.wind[1], t) * (1 + Math.sin(Math.PI * this.t) * 0.9)],
+      // the particles wait for the sky to look the part
+      fall: cl((this.t - 0.45) / 0.4, 0, 1),
+    };
+  },
+};
+
 const WEATHER_SKY = {
   sunny:    { cover: 0.32, soft: 0.34, grey: 0.00, lit: [0xf4,0xf6,0xfa], shade: [0x98,0xa4,0xb2], wind: [0.010, 0.004] },
   cloudy:   { cover: 0.55, soft: 0.28, grey: 0.25, lit: [0xee,0xf1,0xf5], shade: [0x8a,0x95,0xa2], wind: [0.016, 0.006] },
@@ -1089,7 +1126,8 @@ const wxProg = prog(HEAD + `
 layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
-uniform float uTime, uKind, uBox, uFall, uWind;
+uniform float uTime, uKind, uBox, uFall;
+uniform vec2 uWindV;
 out float vT; out float vSeed;
 void main(){
   vSeed = aSeed.w;
@@ -1097,22 +1135,37 @@ void main(){
   // any view, and turning never thins the fall
   vec3 p = aSeed.xyz;
   float fall = uFall * (0.72 + fract(vSeed*7.3)*0.6);
+  // PROTO-9 (Mac: the wind should have a HEAVY impact on direction).
+  // The drift was a tenth of the fall and the streaks stayed vertical.
+  // Now the horizontal speed is a real fraction OF the fall - a gale
+  // drives rain nearly sideways - and every drop takes a per-instance
+  // gust so the sheet is not one rigid direction. The streak is then
+  // stretched along the ACTUAL velocity, which is what makes a driven
+  // rain read as driven rather than as a leaning texture.
+  float gust = 0.75 + fract(vSeed*3.7)*0.5;
+  vec3 drift = vec3(uWindV.x, 0.0, uWindV.y) * gust;
+  p += drift * uTime;
   p.y -= uTime * fall;
-  p.x += uWind * uTime * 0.35;
   p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
-  vec3 vel = normalize(vec3(uWind*0.35, -fall, 0.0));
+  vec3 vel = normalize(vec3(drift.x, -fall, drift.z));
   float sz, len;
   if (uKind < 0.5) {
     // 2. a DROP is a streak along its own velocity, length = speed
     sz = 0.010 + fract(vSeed*13.1)*0.006;
     len = 0.06 + fall*0.030;
+    // the streak's LENGTH is the true speed, so a driven drop is a
+    // longer streak as well as a leaning one
+    len *= length(vec3(drift.x, fall, drift.z)) / max(1.0, fall);
     p += vel * (aCorner.y-0.5) * len;
-    p += normalize(cross(vel, vec3(0,0,1))) * (aCorner.x-0.5) * sz;
+    vec3 side = normalize(cross(vel, normalize(uEye - p + vec3(0.0,0.001,0.0))));
+    p += side * (aCorner.x-0.5) * sz;
   } else {
     // 3. a FLAKE tumbles on its own phase, and faces the camera
     sz = 0.035 + fract(vSeed*11.7)*0.045;
+    // a flake is LIGHT: the wind throws it much further than rain, and
+    // its tumble rides on top of that
     float w1 = sin(uTime*1.1 + vSeed*24.0), w2 = cos(uTime*0.7 + vSeed*11.0);
-    p += vec3(w1, 0.0, w2) * 0.55;
+    p += vec3(w1, 0.0, w2) * (0.55 + length(uWindV) * 0.35);
     p += (uRight*(aCorner.x-0.5) + uUp*(aCorner.y-0.5)) * sz;
   }
   vT = aCorner.y;
@@ -1197,8 +1250,19 @@ function frame(now) {
   const w = cv.width = cv.clientWidth * devicePixelRatio | 0;
   const h = cv.height = cv.clientHeight * devicePixelRatio | 0;
   gl.viewport(0, 0, w, h);
-  const wx = WX[state.weather] || WX.sunny;
-  const wsky = WEATHER_SKY[state.weather] || WEATHER_SKY.sunny;
+  const wxT = WX[state.weather] || WX.sunny;
+  const wxF = WX[front.from] || WX.sunny;
+  const ft = ease(front.t);
+  // the WORLD's own terms ease with the sky, and the particles wait
+  const wx = {
+    n: wxT.n, kind: wxT.kind ?? 0,
+    fog: lerp(wxF.fog, wxT.fog, ft),
+    dim: lerp(wxF.dim, wxT.dim, ft),
+    wet: lerp(wxF.wet, wxT.wet, ft),
+    sky: lerp3(wxF.sky, wxT.sky, ft),
+  };
+  front.tick(dt);
+  const wsky = front.sample();
   // the sun's ELEVATION is the time of day, and it drives everything:
   // the sky ramp, the ground's light, and the blades' own colour
   const elev = state.sun;
@@ -1317,15 +1381,12 @@ function frame(now) {
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), new Float32Array(skyAmb));
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), new Float32Array(sunCol));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uDim'), wx.dim + flash * 0.5);
-    gl.uniform1f(gl.getUniformLocation(grassProg, 'uPixel'), state.pixel ? 1 : 0);
-    gl.uniform1f(gl.getUniformLocation(grassProg, 'uPixW'), 320);
-    gl.uniform1f(gl.getUniformLocation(grassProg, 'uPixH'), 200);
     gl.bindVertexArray(gr.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
     gl.disable(gl.BLEND);
   }
 
-  if (wx.n > 0) {
+  if (wx.n > 0 && wsky.fall > 0.01) {
     gl.useProgram(wxProg);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -1339,9 +1400,15 @@ function frame(now) {
     gl.uniform1f(gl.getUniformLocation(wxProg, 'uKind'), wx.kind ?? 0);
     gl.uniform1f(gl.getUniformLocation(wxProg, 'uBox'), BOX);
     gl.uniform1f(gl.getUniformLocation(wxProg, 'uFall'), wx.kind === 1 ? 1.6 : 22.0);
-    gl.uniform1f(gl.getUniformLocation(wxProg, 'uWind'), state.wind * 0.02);
+    // the wind VECTOR: a direction and a real speed, so rain drives
+    // across the world rather than drifting in one axis
+    const wa = state.windDir * Math.PI / 180;
+    const wspeed = state.wind * 0.16;   // 8x what it was: 200 on the slider is a gale
+    gl.uniform2fv(gl.getUniformLocation(wxProg, 'uWindV'),
+      new Float32Array([Math.cos(wa) * wspeed, Math.sin(wa) * wspeed]));
     gl.bindVertexArray(wxVao);
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, wxVerts, Math.min(wxCount, wx.n));
+    // the rain starts when the sky already LOOKS like rain
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, wxVerts, Math.min(wxCount, Math.round(wx.n * wsky.fall)));
     gl.depthMask(true);
     gl.disable(gl.BLEND);
   }
