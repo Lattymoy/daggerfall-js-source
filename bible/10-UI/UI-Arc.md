@@ -8566,8 +8566,13 @@ reload away.
   same `itemTile`, same click (lifted into `itemRowClick` so both run
   exactly it). Fixed cell with wrapping, so the column count follows
   the window's width. `?packgrid=0` puts the row list back.
-- **The height** is `.pack-win`, 660px to 820px.
+- **The height** is `.pack-win`. 660 -> 820 was TOO LARGE in play
+  ("the inventory UI is way too large now") - the window swallowed the
+  game behind it. 700px with an 88dvh cap: the grid's extra row without
+  the screen becoming the window. The cell came down with it, 74 -> 62,
+  since 74 was a number picked against a fixture page rather than
+  against real icons.
 
-Open until Mac has looked: the 74px cell, whether names belong on cells
-at all, and whether the character region wants a different shape beside
-a grid than it had beside a list.
+Still open: whether names belong on cells at all, and whether the
+character region wants a different shape beside a grid than it had
+beside a list.

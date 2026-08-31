@@ -536,7 +536,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    being a number someone picked. .gcell keeps .itemrow's hover and
    selection and .tile's "no border once a real sprite is in it". */
 .packcol.packgrid { display: grid; align-content: start; gap: 8px;
-  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); padding: 14px 16px 20px; }
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); padding: 12px 14px 16px; }
 .gcell { position: relative; aspect-ratio: 1; display: grid; place-items: center;
   padding: 4px; background: transparent; border: 1px solid var(--iron);
   color: inherit; font: inherit; cursor: pointer; }
@@ -1997,7 +1997,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .hitnum, .hitnum-crit { animation-name: hitnum-still; }
   @keyframes hitnum-still { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 }
-.pack-win { position: relative; width: min(1040px, 95vw); height: min(820px, 94dvh);   /* PX22: a short viewport keeps its rows before its margins. Mac 2026-08-31: 660 -> 820, the height the grid wanted */
+.pack-win { position: relative; width: min(1040px, 95vw); height: min(700px, 88dvh);   /* PX22: a short viewport keeps its rows before its margins. Mac 2026-08-31: 660 -> 820 was TOO LARGE on the screen; 700 with a 88dvh cap is the grid's extra row without the window swallowing the game */
   display: flex; flex-direction: column;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460;
   transform: translateY(8px); transition: transform 0.22s steps(5, end); }

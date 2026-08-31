@@ -1172,7 +1172,7 @@ test('PX22: the character region is its content\u2019s height, the dock scrolls,
   assert.match(css, /\.pack-shell \.pack-dock \.packcol\.packcats \{ padding: 0 8px; \}/);
   assert.match(css, /\.pack-shell \.pack-dock \.packtab \{ min-height: 36px;/);
   // the window keeps its rows before its margins on a short viewport
-  assert.match(css, /\.pack-win \{[^}]*height: min\(820px, 94dvh\)/);
+  assert.match(css, /\.pack-win \{[^}]*height: min\(700px, 88dvh\)/);
 });
 
 test('PX22: the list\u2019s scroll position survives a repaint, keyed by the tab that was rendered', () => {
