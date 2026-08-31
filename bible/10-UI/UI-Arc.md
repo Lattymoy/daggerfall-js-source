@@ -8568,48 +8568,6 @@ good ones.
 - `?packgrid=0` was the right instinct and the wrong scope: a switch
   that leaves the default broken still ships a broken default.
 
-## THE ARMOUR SPLIT, shipped alone (2026-08-31)
-
-Mac, after the revert: "Armor split yes." So it went in BY ITSELF -
-a data change with no visual risk, which is the order the post-mortem
-above says to use. The pack has its own `TABS`/`filterByTab`; only the
-weapons/armour arm is new; the classic window is untouched.
-
-## THE GRID: WHY THE FIRST ATTEMPT OVERLAPPED, and what is actually there
-
-Diagnosed rather than guessed, and it changes the job:
-
-**THE PACK IS ALREADY A TILE GRID.** `.pack-shell .pack-dock .packcol`
-(:2044) is `display: flex; flex-wrap: wrap; gap: 6px;
-align-content: flex-start`, and `.pack-shell .itemrow` (:2050) is a
-**56x56 square** with the name visually hidden (`clip-path: inset(50%)`,
-kept for the probes), the weight hidden, and the count in brass at the
-bottom-right corner. The stylesheet says so in its own words: "the
-dock's rows are the reference's TILE GRID: square panels, the monogram
-carrying the item, the count in the corner". `.pack-shell .packlists`
-(:2035) is the scroll viewport, `min-height: 0` so overflow clips.
-
-**So the overlap was a specificity loss, not a layout problem.** The
-added rule was `.packcol.packgrid` - specificity (0,2,0) - against
-`.pack-shell .pack-dock .packcol` at (0,3,0). The grid NEVER APPLIED
-inside the shell: the cells fell back to the existing flex-wrap with
-`aspect-ratio: 1` and no width, so they sized to their content and the
-absolutely-positioned name strip spilled. Then it was "fixed" twice by
-making things smaller - treating a cascade bug as a sizing problem,
-which is why neither pass helped.
-
-**THE SECOND ATTEMPT, and it is small.** The tiles already existed; what
-they lacked was TRACKS. Flex-wrap packs them left and leaves whatever
-does not divide evenly as a ragged gutter on the right; CSS Grid with
-auto-fill + minmax(56px, 1fr) keeps the tile's own 56px as the minimum
-and spends the remainder on the columns, so rows and columns line up and
-the last column reaches the edge. A tile fills its track with
-aspect-ratio 1, so it cannot exceed the column it was given.
-
-The whole fix is two rules and one class, at a selector that carries
-.pack-shell AND .pack-dock - because the first attempt's failure was
-never layout, it was the cascade. `?packgrid=0` returns the flex-wrap.
-
 **The findings worth keeping** (they cost nothing to re-derive but are
 easy to miss): a shield IS group Armor in Daggerfall - Buckler 109,
 Round 110, Kite 111, Tower 112 - so armour-plus-shields is ONE

@@ -2047,26 +2047,6 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    carries its tabs and nothing else, so 0 vertical padding - the 16px
    is the difference between one row of tiles and two at 660px. */
 .pack-shell .pack-dock .packcol.packcats { padding: 0 8px; }
-/* THE GRID (Mac 2026-08-31). The dock's tiles were laid out by
-   FLEX-WRAP, which packs them left and leaves a ragged gutter on the
-   right; CSS Grid lays the same tiles on real tracks, so rows AND
-   columns line up and a tile can never sit outside a track.
-   auto-fill + minmax(56px, 1fr) keeps the tile's own 56px as the
-   MINIMUM and spends the leftover width on the tracks, so the last
-   column reaches the edge instead of trailing off.
-
-   THE SELECTOR IS (0,4,0) ON PURPOSE. The first attempt at this was
-   .packcol.packgrid at (0,2,0), which lost to
-   .pack-shell .pack-dock .packcol above and never applied - the
-   tiles fell back to flex with no width and spilled. Anything that
-   restyles a dock column has to out-specify that rule. */
-.pack-shell .pack-dock .packcol.packgrid { display: grid; align-content: start;
-  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
-/* the tile fills its track and stays square, so it cannot exceed the
-   column it was given - which is what "does not go off screen" means
-   here. */
-.pack-shell .pack-dock .packcol.packgrid .itemrow { width: auto; height: auto;
-  aspect-ratio: 1; min-width: 0; }
 .pack-shell .itemrow { position: relative; display: flex; align-items: center;
   justify-content: center; width: 56px; height: 56px; padding: 0; cursor: pointer;
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
