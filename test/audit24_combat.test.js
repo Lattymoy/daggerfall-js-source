@@ -17,11 +17,14 @@ test('audit24 combat: the swing gate is the TRAIL length, not the sum', () => {
   pw.sheathed = false;
   pw.update(0);
   const DIM = 1200;
+  // AUDIT 28 W11: 0.05 is WeaponManager's FIELD default (:54); the live
+  // gate is Settings.WeaponAttackThreshold (shipped 0.005), so these
+  // trail-vs-sum pins pass the field constant explicitly.
   assert.equal(ATTACK_THRESHOLD, 0.05);
   // 55 right then 50 left: the trail is 105 (0.0875 > 0.05) and the SUM
   // is +5 - DFU swings Right; the old |sum| gate saw 5 and refused.
-  assert.equal(pw.gesture(55, 0, true, 1 / 60, DIM), null, '55/1200 is under the threshold');
-  const strike = pw.gesture(-50, 0, true, 1 / 60, DIM);
+  assert.equal(pw.gesture(55, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD }), null, '55/1200 is under the threshold');
+  const strike = pw.gesture(-50, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD });
   assert.equal(strike, 'StrikeRight', 'the bent trail fires, with the direction from the SUM');
 });
 
@@ -40,13 +43,13 @@ test('audit24 combat: MaxGestureSeconds is a sliding window, not a hard reset', 
   pw.update(0);
   // second one: 0.9px a frame - 54px of trail, under the 60px gate
   let fired = null;
-  for (let i = 0; i < 60 && !fired; i++) fired = pw.gesture(0.9, 0, true, 1 / 60, DIM);
+  for (let i = 0; i < 60 && !fired; i++) fired = pw.gesture(0.9, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD });
   assert.equal(fired, null, '54/1200 never crossed 0.05 in the first second');
   // then it quickens to 1.5px a frame. DFU's window still holds the
   // tail of the slow drag, so 54 + 0.6 per frame crosses 60 ten frames
   // in - at t = 1.167s, well before a from-scratch 60px could.
   let frames = 0;
-  while (!fired && frames < 40) { fired = pw.gesture(1.5, 0, true, 1 / 60, DIM); frames++; }
+  while (!fired && frames < 40) { fired = pw.gesture(1.5, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD }); frames++; }
   assert.equal(fired, 'StrikeRight', 'the slow first second still counted');
   assert.ok(frames <= 12, `crossed on frame ${frames} - 54 + 0.6 a frame, not from zero`);
   // From nothing it would take 60/1.5 = 40 frames, which is what the
@@ -111,14 +114,14 @@ test('audit24 combat: the bow RISE edge, the tracking reset, and the angle sign'
   pw.sheathed = false;
   pw.update(0);
   // drag with the button UP: nothing accumulates, nothing fires
-  for (let i = 0; i < 30; i++) assert.equal(pw.gesture(20, 0, false, 1 / 60, DIM), null);
+  for (let i = 0; i < 30; i++) assert.equal(pw.gesture(20, 0, false, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD }), null);
   // now hold: the trail starts from zero on this frame, so one 20px
   // step is under the 60px gate
-  assert.equal(pw.gesture(20, 0, true, 1 / 60, DIM), null, 'the first held frame starts a FRESH trail');
+  assert.equal(pw.gesture(20, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD }), null, 'the first held frame starts a FRESH trail');
   // and three more cross it - which is only possible if the clear does
   // NOT run again on frames two and three
   let fired = null;
-  for (let i = 0; i < 3 && !fired; i++) fired = pw.gesture(20, 0, true, 1 / 60, DIM);
+  for (let i = 0; i < 3 && !fired; i++) fired = pw.gesture(20, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD });
   assert.equal(fired, 'StrikeRight', 'the trail accumulates once tracking has started');
 
   // THE ANGLE is degrees: `atan2 * 180 / PI`, screen-up positive. The
@@ -151,7 +154,7 @@ test('audit24 combat: the bow RISE edge, the tracking reset, and the angle sign'
   edge.sheathed = false;
   edge.update(0);
   let out = null;
-  for (let i = 0; i < 7 && !out; i++) out = edge.gesture(8.5, 0, true, 1 / 60, DIM);
+  for (let i = 0; i < 7 && !out; i++) out = edge.gesture(8.5, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD });
   assert.equal(out, null, '59.5px of trail is under the 60px gate - and 1 left over would not be');
-  assert.equal(edge.gesture(1, 0, true, 1 / 60, DIM), 'StrikeRight', 'and 60.5 crosses it');
+  assert.equal(edge.gesture(1, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD }), 'StrikeRight', 'and 60.5 crosses it');
 });

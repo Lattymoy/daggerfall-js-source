@@ -418,6 +418,23 @@ angles each Update and the bobber's Rotate sits on top. One DFU quirk
 kept verbatim: Update returns while airborne, so the landing bounce only
 ever arms through the swimming arm. 7 pins; 6 mutants, 6 killed.
 
+## W11 CLOSED: WeaponAttackThreshold + WeaponSwingMode (WeaponManager.cs:306-350, :808)
+
+The threshold is the FIND of the wave: StartGameBehaviour :263 writes
+`Settings.WeaponAttackThreshold` over WeaponManager's 0.05 field default,
+and DFU's shipped ini says 0.005 - so the port, gating on the field
+constant since the gesture first shipped, demanded ten times the mouse
+travel DFU does before a swing fires. If swings ever felt like they
+needed a shove, this is why. The gesture reads the setting at the point
+of use now; the field constant stays what it is; the AUDIT 24 trail
+pins pass it explicitly. WeaponSwingMode's other two arms are ported:
+1 click, 2 click-or-hold, a random direction of six, no gesture
+tracked, bows exempt. Both keys LIVE with screen rows.
+
+`Controls/WeaponSensitivity` is REFUTED as a consumer: SettingsManager
+:535 and WeaponManager :196 both have it commented out - DFU reads it
+nowhere. It stays stored, and this is why.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

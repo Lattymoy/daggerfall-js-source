@@ -25,8 +25,10 @@ test('playerWeapon: verbatim reach + hit rule + swing table', () => {
 test('playerWeapon: drag gesture starts the mapped strike on the shared machine', () => {
   const w = new PlayerWeapon({});
   // downward drag (screen +y) past threshold on a 1000px dim -> StrikeDown
-  assert.equal(w.gesture(0, 30, true, 0.016, 1000), null);      // 30/1000 < 0.05
-  const strike = w.gesture(0, 30, true, 0.016, 1000);           // cumulative 60 -> fires
+  // AUDIT 28 W11: the live gate is the SETTING (0.005 shipped); this pin
+  // holds the field-default arithmetic, so it passes 0.05 explicitly.
+  assert.equal(w.gesture(0, 30, true, 0.016, 1000, { attackThreshold: 0.05 }), null);      // 30/1000 < 0.05
+  const strike = w.gesture(0, 30, true, 0.016, 1000, { attackThreshold: 0.05 });           // cumulative 60 -> fires
   assert.equal(strike, 'StrikeDown');
   assert.equal(w.machine.state, 'StrikeDown');
   // release resets tracking

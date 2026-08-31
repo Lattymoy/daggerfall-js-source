@@ -138,6 +138,11 @@ export const LIVE = Object.freeze({
   'Controls/CameraRecoilStrength': 'src/player/cameraRecoiler.js',
   // AUDIT 28 W10: HeadBobber (whole) - the walk bob, the nod, the landing dip.
   'Controls/HeadBobbing': 'src/player/headBobber.js',
+  // AUDIT 28 W11: WeaponManager.TrackMouseAttack's gate (:808) is the
+  // SETTING (StartGameBehaviour :263), GetFloat 0.001..1 - shipped 0.005;
+  // WeaponSwingMode (:306-350): 0 gesture, 1 click, 2 click or hold.
+  'Controls/WeaponAttackThreshold': 'src/combat/playerWeapon.js',
+  'Controls/WeaponSwingMode': 'src/combat/playerWeapon.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

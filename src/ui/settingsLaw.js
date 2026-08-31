@@ -25,6 +25,7 @@ import { READOUT } from './settingsCopy.js';
 export const ENUM_LAW = Object.freeze({
   'Video/RandomDungeonTextures': { values: ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'], encode: 'index', cite: 'AdvancedSettings:244-252' },
   'Controls/CameraRecoilStrength': { values: ['Off', 'Low', 'Medium', 'High', 'Very High'], encode: 'index', cite: 'AdvancedSettings:244-252' },
+  'Controls/WeaponSwingMode': { values: ['Gesture', 'Click', 'Click or Hold'], encode: 'index', cite: 'WeaponManager:306-323' },   // AUDIT 28 W11
   'MeleeAttacks/MeleeAttackDetection': { values: ['Performance', 'Quality'], encode: 'index', cite: 'AdvancedSettings:277-282' },
   'Video/QualityLevel': { values: ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'Video/MainFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
@@ -40,6 +41,7 @@ export const NUMBER_LAW = Object.freeze({
   // text, and this one's range IS stated: GetInt(1, 100).
   'GUI/QuestRumorWeight': { min: 1, max: 100, step: 1, coarse: 10, source: 'DFU GetInt(1,100) (SettingsManager:512)' },
   'GUI/ShopQualityHUDDelay': { min: 1, max: 10, step: 1, coarse: 2, format: 'sec', source: 'DFU GetInt(1,10) (SettingsManager:494)' },
+  'Controls/WeaponAttackThreshold': { min: 0.001, max: 1, step: 0.001, coarse: 0.01, format: 'raw', source: 'DFU GetFloat(0.001,1) (SettingsManager:534)' },   // AUDIT 28 W11
   'Controls/SoundVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU DisplayUnits 100 (:268-271)' },
   'Controls/MusicVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:272-274)' },
   'Controls/MouseLookSensitivity': { min: 0.1, max: 4.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'the port clamps at 4.0 (lookSettings.js)' },
@@ -84,6 +86,7 @@ export function blockedReason(key) {
 }
 
 const fmtNumber = (n, law) => {
+  if (law.format === 'raw') return String(+n.toFixed(4));   // AUDIT 28 W11: a thousandths ratio (0.005) must not round to "0.01"
   if (law.format === 'pct') return `${Math.round(n * 100)}%`;
   if (law.format === 'mult') return `x${n.toFixed(1)}`;
   const unit = law.format;
