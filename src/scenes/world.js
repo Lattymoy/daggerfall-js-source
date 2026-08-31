@@ -1757,7 +1757,14 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  bag and test/potions.test.js caught it (two drink hooks where the
    *  law says one). */
   const useHooks = {
-    ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
+    // U44: RecordLocationFromMap's reveal. DFU's own note key for the
+    // map ITEM is `readMap`, the third caller of this one seam.
+    revealMap: () => revealLocation('readMap'),
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+    // QuestMachine.GetQuest - the window's quest reach: the use-click
+    // block (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
+    // quest-letter arm (ItemHelper.cs:338) both go through it.
+    getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
   };
 
   /** UI1: MagicItemPicker_OnItemPicked's two arms (:91-97) through the
@@ -1788,14 +1795,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
-    // U44: RecordLocationFromMap's reveal. DFU's own note key for the
-    // map ITEM is `readMap`, the third caller of this one seam.
-    revealMap: () => revealLocation('readMap'),
-    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
-    // QuestMachine.GetQuest - the window's quest reach: the use-click
-    // block (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
-    // quest-letter arm (ItemHelper.cs:338) both go through it.
-    getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
+    ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
     ...extra,

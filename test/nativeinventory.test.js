@@ -183,7 +183,15 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     const j = src.indexOf('createInventoryWindow({');
     const block = src.slice(j, src.indexOf('\n  });', j));
     for (const hook of REQUIRED) {
-      assert.ok(block.includes(hook), `${f}'s builder is missing ${hook}`);
+      // A hook may arrive through a SPREAD BAG the host shares with
+      // another reader (world.js's `useHooks`, which the use-magic-item
+      // pick also takes) - that IS the one-builder law rather than a
+      // breach of it, so resolve one level of `...bag` before failing.
+      const reachable = block.includes(hook) || [...block.matchAll(/\.\.\.(\w+),/g)].some(([, bag]) => {
+        const d = src.indexOf(`const ${bag} = {`);
+        return d >= 0 && src.slice(d, src.indexOf('\n  };', d)).includes(hook);
+      });
+      assert.ok(reachable, `${f}'s builder is missing ${hook}`);
     }
     // ...and the loot arm goes THROUGH it, carrying only what differs
     assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,

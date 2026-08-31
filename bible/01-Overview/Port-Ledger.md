@@ -1,5 +1,29 @@
 # Port-Ledger
 
+## BOOT FAILURE, 2026-08-31: `const X = { ...X }` (UI1)
+
+The live site failed to boot with "can't access lexical declaration
+'hi' before initialization". `hi` was the minified `useHooks`, and the
+source read `const useHooks = { ...useHooks };` - a scripted edit in
+UI1 had replaced the wrong occurrence of a block, so the declaration
+ate itself. Three things let it through and each is worth knowing:
+
+1. **eslint does not see it.** `no-use-before-define` does not look
+   inside an initialiser's own spread.
+2. **The build does not see it.** It minifies to `hi={...hi}` and
+   ships.
+3. **No test executes the module body.** `world.js`, `worldModes.js`
+   and the other big hosts cannot be imported under bare node - Vite's
+   `import.meta.glob` throws - so every pin on them is a TEXT pin, and
+   the two pins covering this line asserted that `...useHooks`
+   APPEARED. It did. Inside itself.
+
+`test/tdz_selfreference.test.js` is the guard, and the deeper lesson is
+about the pins: a text pin that asserts a fragment EXISTS cannot tell
+where it exists. Where a pin cannot execute the code, it should assert
+the SHAPE around the fragment (what precedes and follows it), not the
+fragment alone.
+
 Single source of truth for everything that is not a plain 1:1 line. Three
 categories. If a departure or gap is not on this page, it does not exist.
 Adding to category A requires Mac approval; B records data reality; C is the
