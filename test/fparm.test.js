@@ -244,7 +244,14 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   }
   // The planes come off the arm's own reach, in RIG units, because the
   // file need not be authored in metres.
-  assert.match(draw, /Math\.max\(built\.reach \/ 200, 1e-4\), built\.reach \* 4/);
+  // AUDIT 37 F1: TWO reaches - the near plane off the IDLE pose it was
+  // tuned against, the far off PX27's sweep of every clip, because one
+  // number could not answer both: growing it to stop the far plane
+  // cutting a swing short pushed the near plane out with it, and a rig
+  // whose widest pose is four times its idle would have clipped the
+  // knuckles off the camera to save the elbow.
+  assert.match(draw, /const near = Math\.max\(\(built\.idleReach \?\? built\.reach\) \/ 200, 1e-4\);/);
+  assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, built\.reach \* 4\)/);
 });
 
 test('MW-D8: a build that cannot reach its data REFUSES with a stage, and never throws', async () => {
@@ -3027,4 +3034,9 @@ test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', 
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /const sweep = clipSweepTimes\(sources, idleCheck\);\n    const union = clipUnionBounds\(arm, poseAt, sweep\);/,
     'the build must measure the reach over the sweep');
+  // AUDIT 37 F1: and the IDLE reach is measured SEPARATELY, over the
+  // idle's own times - not aliased to the swept one, which would put
+  // the near plane back on the widest pose.
+  assert.match(arm, /const idleReach = armReach\(eye, clipUnionBounds\(arm, poseAt, idleTimes\)\);/);
+  assert.match(arm, /const idleTimes = Array\.from\(\{ length: 25 \}/, 'the idle span is still swept at 25');
 });
