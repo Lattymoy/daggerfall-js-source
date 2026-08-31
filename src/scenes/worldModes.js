@@ -141,6 +141,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { MerchantServiceWindow, preloadMerchantServiceArt, merchantServiceArtLoaded } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
 import { CovenWindow, preloadCovenArt, covenArtLoaded } from '../ui/covenWindow.js';   // CW1: DaggerfallWitchesCovenPopupWindow
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -681,6 +682,7 @@ export function createWorldModes(host) {
   const ensureInteriorWindowArt = () => {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
+    preloadMerchantServiceArt({ renderer, fetchBytes, palette });   // UI2: GNRC01I0, beside its guild sibling
     preloadCovenArt({ renderer, fetchBytes, palette });   // CW1: DAED00I0 for the witches' panel
     preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
@@ -1520,8 +1522,25 @@ export function createWorldModes(host) {
       });
       return;
     }
+    // UI2: DaggerfallMerchantServicePopupWindow. DFU never opens the
+    // trade or bank window off a merchant click - it opens the two-row
+    // GNRC01I0 panel, and the SERVICE BUTTON opens the window
+    // (:104-108). The port jumped straight to the window, so the
+    // merchant's own panel, and its Talk row, never appeared.
+    if (!forceTalk && route.kind === 'merchant'
+      && (route.service === 'banking' || route.service === 'sell')
+      && merchantServiceArtLoaded() && _shopFont) {
+      const banking = route.service === 'banking';
+      mountInterior(new MerchantServiceWindow({
+        service: banking ? 'Banking' : 'Sell',
+        onTalk: () => openStaticNpc(pn, { forceTalk: true }),
+        onService: () => { if (banking) openBank(); else openMerchantSell(); },
+      }));
+      return;
+    }
     // B2: DaggerfallBankingWindow. The routing has answered 'banking'
     // since G8 into a dead arm - the bank teller fell through to talk.
+    // Reached only when the popup's art is missing (the never-traps law).
     if (!forceTalk && route.kind === 'merchant' && route.service === 'banking'
       && openBank()) return;
     // U40: the PLAIN MERCHANT's sell arm. staticNpcRoute has answered

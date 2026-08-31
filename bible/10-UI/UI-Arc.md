@@ -8461,7 +8461,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 | Window | Lines | State |
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
-| DaggerfallMerchantServicePopupWindow | 175 | OPEN - the GNRC01I0 Talk/Sell popup for general merchants and banks; the guild-service sibling is ported, this one is not |
+| DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
 | DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:517` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
@@ -8485,8 +8485,28 @@ false; the pick closes first and uses second. The use is the port's one
 seam, `systems/useItem.js` - the inventory's own path, both arms - owned
 by the world host and lent to worldModes and on to the dungeon ctx.
 
-### The next two
+### UI2 CLOSED: the merchant service popup
 
-The merchant popup is the same size as UI1 and needs only its two
-buttons plus routing from an already-ported activation path. Transport
-wants its own arc: the window is trivial, `TransportManager` is not.
+The port SKIPPED this one rather than deferring it: `staticNpcRoute`
+has answered 'sell' and 'banking' since G8 and `worldModes` jumped
+STRAIGHT to the trade or bank window, so the merchant's own GNRC01I0
+panel - and with it the TALK row - never appeared. DFU never opens
+either window without this in front of it.
+
+`ui/merchantServiceWindow.js` is the window whole, on its ported guild
+sibling's shape: the 130x42 panel that Center/Middle put at (95,79)
+over its own declared Position, the three child rects, the shadowless
+service label centred in its button, ButtonClick heading every handler
+and the CLOSE BEFORE THE ACT that lets the trade window be pushed over
+a closed popup. Hazelnut's custom-merchant-service registry (:75-77,
+:95-97) is a mod hook and is not ported - with an empty registry DFU's
+own answer is the switch. The old direct arms stay below the popup as
+the art-less fallback.
+
+### What is left
+
+`DaggerfallTransportWindow` alone, and it wants its own arc: the window
+is trivial, `TransportManager` is not - `motor.js:517` reads
+`riding: false` with "the transport arc pends". With UI1 and UI2
+closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
+system's last tenth.
