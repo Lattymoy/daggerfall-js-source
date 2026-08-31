@@ -200,6 +200,52 @@ export class AudioEngine {
     };
   }
 
+  /**
+   * TR2: a NAMED loop with live volume and pitch - Unity's
+   * `ridingAudioSource`, which TransportManager keeps as a field and
+   * re-points at a different clip mid-ride (the clop swap) while
+   * setting `.volume` and `.pitch` every frame. `clip` null stops it.
+   * Re-pointing at the same clip does NOT restart the source, which is
+   * what makes the half-speed swap audible rather than a stutter.
+   */
+  setLoop(name, clip, { volume = 1, pitch = 1 } = {}) {
+    this._loops ??= new Map();
+    const cur = this._loops.get(name);
+    if (clip == null) {
+      if (cur) { cur.handle.stop(); this._loops.delete(name); }
+      return null;
+    }
+    if (cur && cur.clip === clip) {
+      cur.setVolume(volume);
+      cur.setPitch(pitch);
+      return cur.handle;
+    }
+    if (cur) cur.handle.stop();
+    const made = this._makeLoop(clip, volume, pitch);
+    if (!made) { this._loops.delete(name); return null; }
+    this._loops.set(name, { clip, ...made });
+    return made.handle;
+  }
+
+  _makeLoop(index, volume, pitch) {
+    if (!this._ready()) return null;
+    const buf = this._buffer(index);
+    if (!buf) return null;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.playbackRate.value = pitch;
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain).connect(this._out());
+    src.start();
+    return {
+      handle: { stop() { try { src.stop(); } catch { /* already stopped */ } src.disconnect(); } },
+      setVolume: (v) => { gain.gain.value = v; },
+      setPitch: (p) => { src.playbackRate.value = p; },
+    };
+  }
+
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
    *  AudioSource. The default profile is the DaggerfallAudioSource
    *  shape (min 1 / max 500, logarithmic - WebAudio 'inverse' is the
