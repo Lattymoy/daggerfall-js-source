@@ -1282,7 +1282,40 @@ function frame(now) {
   // the sun's ELEVATION is the time of day, and it drives everything:
   // the sky ramp, the ground's light, and the blades' own colour
   const elev = state.sun;
-  const pal = paletteAt(elev);
+  const palRaw = paletteAt(elev);
+  // AUDIT 39 F3 (the big one): THE GAME PREPARES ITS SKY STATE BEFORE
+  // the shader ever runs, and the lab was handing the shader raw
+  // palette rows. Six laws lived in that preparation and every one is
+  // visible - three of them exactly in the sunset Mac asked about:
+  //
+  //   1. WEATHER GREYS THE DOME, by grey * (0.35 + 0.65*day): a storm
+  //      at noon is grey, a storm at midnight is still night.
+  //   2. THE CLOUDS GO TO NIGHT COLOURS through a twilight term. The
+  //      lab lit them with the day colours at every hour, so midnight
+  //      had bright white banks over a black sky.
+  //   3. THE LIT SIDE TAKES THE SUN'S OWN COLOUR near the horizon -
+  //      this is what makes sunset clouds burn orange, and it was
+  //      simply absent.
+  //   4. GREY EATS THE GLOW: glowAmount * (1 - grey*0.7), so an
+  //      overcast dawn does not blaze.
+  //   5. COVER EATS THE STARS: stars * (1 - cover*0.5).
+  //   6. THE MOONS ARE FAINT BY DAY and dimmed by cover.
+  const day = cl((Math.sin(elev * Math.PI / 180) + 0.1) * 2.2, 0, 1);   // daylightScale' shape
+  const twilight = cl((elev + 12) / 16, 0, 1);
+  const GREYZ = [0x66, 0x70, 0x7c], GREYH = [0x9a, 0xa3, 0xac];
+  const NIGHT_LIT = [0.16 * 255, 0.19 * 255, 0.25 * 255], NIGHT_SHADE = [0.07 * 255, 0.09 * 255, 0.13 * 255];
+  const greyAmt = wsky.grey * (0.35 + 0.65 * day);
+  const pal = {
+    zenith: lerp3(palRaw.zenith, GREYZ, greyAmt),
+    horizon: lerp3(palRaw.horizon, GREYH, greyAmt),
+    glow: palRaw.glow,
+    glowAmount: palRaw.glowAmount * (1 - wsky.grey * 0.7),
+    stars: palRaw.stars * (1 - wsky.cover * 0.5),
+  };
+  // the cloud colours the shader actually gets
+  const sunTint = palRaw.glow;
+  const cloudLit = lerp3(NIGHT_LIT, lerp3(wsky.lit, sunTint, 0.25 * (1 - cl(elev / 20, 0, 1))), twilight);
+  const cloudShade = lerp3(NIGHT_SHADE, wsky.shade, twilight);
   const skyAmb = [
     (pal.zenith[0] * 0.55 + pal.horizon[0] * 0.45) / 255,
     (pal.zenith[1] * 0.55 + pal.horizon[1] * 0.45) / 255,
@@ -1384,11 +1417,11 @@ function frame(now) {
   S3('uHorizon', pal.horizon.map((v) => v / 255));
   S3('uGlowColor', pal.glow.map((v) => v / 255));
   S3('uSunColor', sunCol);
-  S3('uCloudLit', wsky.lit.map((v) => v / 255));
-  S3('uCloudShade', wsky.shade.map((v) => v / 255));
+  S3('uCloudLit', cloudLit.map((v) => v / 255));
+  S3('uCloudShade', cloudShade.map((v) => v / 255));
   S3('uFogColor', sky);
   S3('uSunDir', sun);
-  S1('uSunRadius', 0.032); S1('uSunVis', sun[1] > -0.05 ? 1 : 0);
+  S1('uSunRadius', 0.032); S1('uSunVis', sun[1] > -0.02 ? 1 : 0);   // AUDIT 39: the game's own threshold
   S1('uGlowAmount', pal.glowAmount); S1('uStars', pal.stars);
   // the two moons, on their own slow arcs - Masser big and red,
   // Secunda small, pale and higher (MOONS, verbatim)
@@ -1398,7 +1431,9 @@ function frame(now) {
   S4('uMoonA', [...ma, 0.040]); S4('uMoonB', [...mb, 0.021]);
   S3('uMoonAColor', [0xd3 / 255, 0x9a / 255, 0x86 / 255]);
   S3('uMoonBColor', [0xe9 / 255, 0xe6 / 255, 0xdc / 255]);
-  S1('uMoonAVis', ma[1] > -0.02 ? 1 : 0); S1('uMoonBVis', mb[1] > -0.02 ? 1 : 0);
+  // AUDIT 39 F3.6: faint by day, and the cover hides them
+  const mvis = (d2) => (d2[1] > -0.05 ? cl(1 - 0.9 * day, 0, 1) * (1 - wsky.cover * 0.35) : 0);
+  S1('uMoonAVis', mvis(ma)); S1('uMoonBVis', mvis(mb));
   S1('uCloudCover', wsky.cover); S1('uCloudSoft', wsky.soft);
   S1('uTime', now / 1000);
   // the deck drifts DOWNWIND, at the front's own speed - the clouds
