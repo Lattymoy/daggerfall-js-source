@@ -55,6 +55,10 @@
   <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
   <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
   <label>sun <input id="sun" type="range" min="5" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
+  <label>weather <select id="wx">
+    <option>sunny</option><option>cloudy</option><option>overcast</option><option>fog</option>
+    <option>rain</option><option>thunder</option><option>snow</option>
+  </select></label>
   <label>surface <select id="surf">
     <option>grass</option><option>dirt</option><option>stone</option><option>sand</option><option>snow</option>
   </select></label>
@@ -71,7 +75,7 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', grass: true, newGround: true };
+const state = { density: 160000, height: 34, wind: 70, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', grass: true, newGround: true };
 for (const k of ['density', 'height', 'wind', 'range', 'tile', 'sun']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
@@ -477,7 +481,7 @@ void main(){
 }`, HEAD + `
 in vec2 vUV; in vec3 vPos;
 uniform sampler2D uTex, uNrm, uLow;
-uniform float uNew; uniform vec3 uEye, uSun;
+uniform float uNew, uDim, uFog, uWet; uniform vec3 uEye, uSun, uSky;
 out vec4 o;
 void main(){
   float d = length(vPos - uEye);
@@ -510,14 +514,23 @@ void main(){
   // a low specular sheen along the blades, which wet grass has
   vec3 V = normalize(uEye - vPos);
   vec3 H = normalize(normalize(uSun) + V);
-  c += vec3(0.16,0.18,0.12) * pow(max(dot(N,H),0.0), 26.0) * (0.35 + low.r*0.65);
+  // 4. THE WORLD ANSWERS. Wet ground is DARKER and SHINIER - water
+  // fills the pores, so it absorbs more and reflects sharper. That
+  // pair together is what reads as rain-soaked; either alone does not.
+  c *= mix(1.0, 0.66, uWet);
+  float sheen = pow(max(dot(N,H),0.0), mix(26.0, 90.0, uWet)) * (0.35 + low.r*0.65 + uWet*1.3);
+  c += vec3(0.16,0.18,0.12) * sheen;
+  c *= uDim;
 
   // 4. the far field settles into colour instead of boiling: blend to
   // the sheet's own average as the mips take over
-  vec3 far = textureLod(uTex, vUV, 7.0).rgb * (0.46*sky + 0.78*0.62);
+  vec3 far = textureLod(uTex, vUV, 7.0).rgb * (0.46*sky + 0.78*0.62) * uDim * mix(1.0,0.66,uWet);
   c = mix(c, far, smoothstep(28.0, 130.0, d));
   c *= 0.74 + 0.26*smoothstep(0.0, 40.0, 40.0-d*0.35);
-  o = vec4(mix(c, vec3(0.55,0.62,0.70), clamp(d/260.0,0.0,0.75)), 1.0);
+  // fog closes the distance: the far plane of the fade comes IN as the
+  // weather thickens, which is the whole reason fog feels enclosing
+  float fogFar = mix(260.0, 26.0, uFog);
+  o = vec4(mix(c, uSky, clamp(d/fogFar, 0.0, mix(0.75, 0.99, uFog))), 1.0);
 }`);
 
 const grassProg = prog(HEAD + FIELD + `
@@ -624,6 +637,109 @@ function build() {
 ready = true;
 build();
 R('surf').addEventListener('change', (e) => setSurface(e.target.value));
+R('wx').addEventListener('change', (e) => {
+  state.weather = e.target.value;
+  // snow lies on the ground, so the surface follows the sky
+  if (state.weather === 'snow' && state.surface === 'grass') setSurface('snow');
+});
+
+// ── WEATHER (Mac: overhauled weather effects, in the same lab) ─────
+// The port's sim already carries Daggerfall's seven states - sunny,
+// cloudy, overcast, fog, rain, thunder, snow - so what is missing is
+// not a model, it is a LOOK. Every wet state here is ONE INSTANCED
+// DRAW of the same quad, exactly the shape the grass proved, with a
+// per-instance seed deciding fall speed, size, drift and phase.
+//
+// The four things a replacement has to get right, and the reason each:
+//   1. IT FALLS THROUGH A VOLUME AROUND THE CAMERA, not across the
+//      screen. Particles live in a box that FOLLOWS the eye and wrap
+//      inside it, so a fixed count covers any view distance and the
+//      rain does not thin out when you turn.
+//   2. RAIN IS STRETCHED ALONG ITS OWN VELOCITY, not a round dot.
+//      A drop is a streak whose length is its speed; that single
+//      thing is the difference between rain and TV static.
+//   3. SNOW TUMBLES. A flake's drift is a slow sine on its own phase,
+//      so no two fall alike and the field never reads as a sheet.
+//   4. THE WORLD ANSWERS: the sun dims and cools, fog closes the
+//      distance, and the ground darkens and takes a wet sheen. A
+//      particle layer over an unchanged world is a screensaver.
+const WEATHER = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
+const WX = {
+  sunny:    { n: 0,     fog: 0.00, dim: 1.00, wet: 0.0, sky: [0.40, 0.48, 0.58] },
+  cloudy:   { n: 0,     fog: 0.10, dim: 0.90, wet: 0.0, sky: [0.46, 0.50, 0.56] },
+  overcast: { n: 0,     fog: 0.28, dim: 0.72, wet: 0.15, sky: [0.44, 0.46, 0.49] },
+  fog:      { n: 0,     fog: 0.86, dim: 0.66, wet: 0.25, sky: [0.60, 0.62, 0.64] },
+  rain:     { n: 26000, fog: 0.42, dim: 0.60, wet: 0.85, sky: [0.36, 0.39, 0.43], kind: 0 },
+  thunder:  { n: 42000, fog: 0.52, dim: 0.46, wet: 1.00, sky: [0.26, 0.28, 0.33], kind: 0 },
+  snow:     { n: 20000, fog: 0.45, dim: 0.80, wet: 0.10, sky: [0.62, 0.64, 0.68], kind: 1 },
+};
+const wxProg = prog(HEAD + `
+layout(location=0) in vec2 aCorner;
+layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
+uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
+uniform float uTime, uKind, uBox, uFall, uWind;
+out float vT; out float vSeed;
+void main(){
+  vSeed = aSeed.w;
+  // 1. a volume that FOLLOWS the eye, wrapped - a fixed count covers
+  // any view, and turning never thins the fall
+  vec3 p = aSeed.xyz;
+  float fall = uFall * (0.72 + fract(vSeed*7.3)*0.6);
+  p.y -= uTime * fall;
+  p.x += uWind * uTime * 0.35;
+  p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
+  vec3 vel = normalize(vec3(uWind*0.35, -fall, 0.0));
+  float sz, len;
+  if (uKind < 0.5) {
+    // 2. a DROP is a streak along its own velocity, length = speed
+    sz = 0.010 + fract(vSeed*13.1)*0.006;
+    len = 0.06 + fall*0.030;
+    p += vel * (aCorner.y-0.5) * len;
+    p += normalize(cross(vel, vec3(0,0,1))) * (aCorner.x-0.5) * sz;
+  } else {
+    // 3. a FLAKE tumbles on its own phase, and faces the camera
+    sz = 0.035 + fract(vSeed*11.7)*0.045;
+    float w1 = sin(uTime*1.1 + vSeed*24.0), w2 = cos(uTime*0.7 + vSeed*11.0);
+    p += vec3(w1, 0.0, w2) * 0.55;
+    p += (uRight*(aCorner.x-0.5) + uUp*(aCorner.y-0.5)) * sz;
+  }
+  vT = aCorner.y;
+  gl_Position = uVP * vec4(p, 1.0);
+}`, HEAD + `
+in float vT; in float vSeed;
+uniform float uKind;
+out vec4 o;
+void main(){
+  if (uKind < 0.5) {
+    // a drop is bright at its head and fades along the streak
+    float a = smoothstep(0.0,0.35,vT) * 0.42;
+    o = vec4(vec3(0.72,0.78,0.86), a);
+  } else {
+    o = vec4(vec3(0.94,0.96,1.0), 0.72);
+  }
+}`);
+const BOX = 42;
+let wxVao = null, wxCount = 0, wxVerts = 6;
+function buildWeather(n) {
+  const inst = new Float32Array(n * 4);
+  let s2 = 0x9e3779b9;
+  const rnd = () => { s2 ^= s2 << 13; s2 ^= s2 >>> 17; s2 ^= s2 << 5; s2 >>>= 0; return s2 / 4294967296; };
+  for (let i = 0; i < n; i++) {
+    inst[i*4] = rnd()*BOX; inst[i*4+1] = rnd()*BOX; inst[i*4+2] = rnd()*BOX; inst[i*4+3] = rnd();
+  }
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const q = new Float32Array([0,0, 1,0, 1,1, 0,0, 1,1, 0,1]);
+  const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+  gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+  gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribDivisor(1, 1);
+  wxVao = vao; wxCount = n;
+}
+buildWeather(42000);
 
 // ── camera ─────────────────────────────────────────────────────────
 const cam = { x: 0, z: 0, yaw: 0.6, pitch: -0.22, h: 1.7 };
@@ -669,7 +785,13 @@ function frame(now) {
   const w = cv.width = cv.clientWidth * devicePixelRatio | 0;
   const h = cv.height = cv.clientHeight * devicePixelRatio | 0;
   gl.viewport(0, 0, w, h);
-  gl.clearColor(0.40, 0.48, 0.58, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const wx = WX[state.weather] || WX.sunny;
+  // thunder flashes: a rare, brief, near-white sky, and the ground
+  // takes it too - a flash that only lights the sky is a wallpaper
+  const flash = state.weather === 'thunder'
+    ? Math.max(0, Math.sin(now / 1000 * 0.7) > 0.985 ? 1 : 0) * (0.5 + 0.5 * Math.sin(now / 40)) : 0;
+  const sky = wx.sky.map((v, i) => Math.min(1, v * (0.55 + 0.45 * Math.sin(state.sun * Math.PI / 180)) + flash * 0.55 + (i === 2 ? 0.02 : 0)));
+  gl.clearColor(sky[0], sky[1], sky[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.DEPTH_TEST);
 
   const sa = state.sun * Math.PI / 180;
@@ -684,6 +806,10 @@ function frame(now) {
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uNew'), state.newGround ? 1 : 0);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uEye'), eye);
   gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSun'), sun);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uDim'), wx.dim + flash * 0.5);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uFog'), wx.fog);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uWet'), wx.wet);
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), new Float32Array(sky));
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, groundTex);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uTex'), 0);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, groundNrm);
@@ -704,6 +830,27 @@ function frame(now) {
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uEye'), eye);
     gl.bindVertexArray(gr.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
+    gl.disable(gl.BLEND);
+  }
+
+  if (wx.n > 0) {
+    gl.useProgram(wxProg);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const up = [0, 1, 0];
+    gl.uniformMatrix4fv(gl.getUniformLocation(wxProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(wxProg, 'uEye'), eye);
+    gl.uniform3fv(gl.getUniformLocation(wxProg, 'uRight'), new Float32Array(right));
+    gl.uniform3fv(gl.getUniformLocation(wxProg, 'uUp'), new Float32Array(up));
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uTime'), now / 1000);
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uKind'), wx.kind ?? 0);
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uBox'), BOX);
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uFall'), wx.kind === 1 ? 1.6 : 22.0);
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uWind'), state.wind * 0.02);
+    gl.bindVertexArray(wxVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, wxVerts, Math.min(wxCount, wx.n));
+    gl.depthMask(true);
     gl.disable(gl.BLEND);
   }
   requestAnimationFrame(frame);
