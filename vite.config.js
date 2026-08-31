@@ -125,6 +125,10 @@ export default defineConfig({
         // and as the visual proving ground the first-person rig has to
         // pass before it goes anywhere near the game.
         mwViewer: 'mw-viewer.html',
+        // The ground + 3D grass prototype (Mac asked to play with it).
+        // A prototype page must register here or it 404s on gh-pages,
+        // and its textures ride public/ for the same reason.
+        grassProto: 'grass-proto.html',
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',
@@ -138,6 +142,14 @@ export default defineConfig({
         menuRedesign: 'menu-redesign.html',
         // The same direction cut in Daggerfall's own pixel idiom.
         menuPixel: 'menu-pixel.html',
+        // THE GROUND PROTOTYPE (Mac, 2026-08-31: prototype the new
+        // ground textures and the 3D grass before any code change).
+        // Deployed on purpose - a look has to be judged on a real
+        // screen, and this one runs on the phone too. It touches
+        // nothing the game runs: its own page, its own shaders, and
+        // the tileset tools/groundProto.mjs writes into
+        // public/prototype/ground/.
+        grassProto: 'grass-proto.html',
       },
     },
   },

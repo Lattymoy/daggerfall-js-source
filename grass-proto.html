@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daggerfall JS &mdash; ground + 3D grass prototype</title>
+<!--
+  GRASS PROTOTYPE (Mac: prototype the new ground textures AND the 3D
+  grass before any code change, so he can see them).
+
+  NOTHING HERE TOUCHES THE GAME. This is a standalone page over the
+  same ideas the engine would use, so the look can be judged and tuned
+  before a line of renderer changes:
+
+    - the GROUND is the prototype tileset from tools/groundProto.mjs,
+      sampled with mipmaps and anisotropy - the two things the live
+      terrain array does NOT do today, and the reason a high-res tile
+      would shimmer at distance if it were dropped in as-is.
+
+    - the GRASS is one instanced draw. Every blade is the same three
+      quads; a per-instance attribute carries its position, height,
+      lean, phase and tint. That is the shape the engine needs
+      (drawArraysInstanced, one call per terrain chunk) and the piece
+      the renderer does not have yet.
+
+    - placement is DETERMINISTIC on a hashed seed, the same rule the
+      nature pass already uses for billboards, so blades do not crawl
+      or repopulate as you move.
+
+    - WIND is a vertex-shader offset weighted by height along the
+      blade, so the tip travels and the root does not.
+
+    - the far fade drops blades by distance so the count stays bounded.
+-->
+<style>
+  html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
+    font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; }
+  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.72);
+    border:1px solid #55503f; padding:10px 12px; max-width:min(380px,46vw); }
+  .hud h1 { margin:0 0 6px; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:#e0d5ad; }
+  .hud label { display:flex; align-items:center; gap:8px; margin:3px 0; }
+  .hud input[type=range] { flex:1; }
+  .hud .v { width:52px; text-align:right; color:#9c9378; }
+  .hud p { margin:6px 0 0; color:#8d836c; }
+  .note { margin:6px 0 0; color:#8b836c; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <h1>Ground + 3D grass</h1>
+  <label>blades <input id="density" type="range" min="20000" max="400000" step="10000" value="160000"><span class="v" id="vdensity"></span></label>
+  <label>height <input id="height" type="range" min="10" max="80" step="1" value="34"><span class="v" id="vheight"></span></label>
+  <label>wind <input id="wind" type="range" min="0" max="200" step="1" value="70"><span class="v" id="vwind"></span></label>
+  <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
+  <label>tile px <input id="tile" type="range" min="1" max="8" step="1" value="3"><span class="v" id="vtile"></span></label>
+  <p class="note">drag to look &middot; W/S to move &middot; G toggles grass &middot; T toggles the new ground</p>
+  <p class="note" id="fps"></p>
+</div>
+<script type="module">
+const cv = document.getElementById('c');
+const gl = cv.getContext('webgl2', { antialias: true });
+if (!gl) document.body.innerHTML = '<p style="padding:20px">WebGL2 is needed for this prototype.</p>';
+
+const R = (id) => document.getElementById(id);
+// the grass buffers, declared BEFORE the sliders that build them - the
+// slider sync fires during setup and reached `gr` in its dead zone.
+let gr = { vao: null, count: 0, verts: 0 };
+let ready = false;   // the GL objects exist only after the programs link
+const state = { density: 160000, height: 34, wind: 70, range: 55, tile: 3, grass: true, newGround: true };
+for (const k of ['density', 'height', 'wind', 'range', 'tile']) {
+  const el = R(k); const out = R(`v${k}`);
+  const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
+  el.addEventListener('input', sync); sync();
+}
+addEventListener('keydown', (e) => {
+  if (e.key === 'g' || e.key === 'G') state.grass = !state.grass;
+  if (e.key === 't' || e.key === 'T') state.newGround = !state.newGround;
+});
+
+// ── the ground: the prototype tiles, mipmapped and anisotropic ─────
+const TILES = ['base-grass', 'base-dirt', 'base-stone'];
+const groundTex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, groundTex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([70, 96, 48, 255]));
+const img = new Image();
+img.onload = () => {
+  gl.bindTexture(gl.TEXTURE_2D, groundTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  const ext = gl.getExtension('EXT_texture_filter_anisotropic');
+  if (ext) gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT,
+    Math.min(8, gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+};
+img.src = './prototype/ground/base-grass.png';
+
+const prog = (vs, fs) => {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    gl.attachShader(p, sh);
+  }
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+};
+
+const HEAD = `#version 300 es
+precision highp float;
+`;
+// the same height field both passes read, so blades sit ON the ground
+const FIELD = `
+float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y);
+}
+float terrain(vec2 p){
+  return vnoise(p*0.020)*7.0 + vnoise(p*0.055)*2.4 + vnoise(p*0.15)*0.7;
+}`;
+
+const groundProg = prog(HEAD + FIELD + `
+layout(location=0) in vec2 aXZ;
+uniform mat4 uVP; uniform float uTilePx;
+out vec2 vUV; out vec3 vPos;
+void main(){
+  vec3 p = vec3(aXZ.x, terrain(aXZ), aXZ.y);
+  vPos = p; vUV = aXZ / uTilePx;
+  gl_Position = uVP * vec4(p,1.0);
+}`, HEAD + `
+in vec2 vUV; in vec3 vPos;
+uniform sampler2D uTex; uniform float uNew; uniform vec3 uEye;
+out vec4 o;
+void main(){
+  vec3 c = texture(uTex, vUV).rgb;
+  if (uNew < 0.5) {
+    // the CLASSIC look for comparison: quantise to a 64px grid and
+    // posterise, which is what a 64x64 NEAREST tile gives you
+    vec3 q = texture(uTex, floor(vUV*64.0)/64.0).rgb;
+    c = floor(q*14.0)/14.0;
+  }
+  float d = length(vPos - uEye);
+  c *= 0.72 + 0.28*smoothstep(0.0, 40.0, 40.0-d*0.35);
+  o = vec4(mix(c, vec3(0.55,0.62,0.70), clamp(d/260.0,0.0,0.75)), 1.0);
+}`);
+
+const grassProg = prog(HEAD + FIELD + `
+layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
+layout(location=1) in vec4 aInst;        // xz, height, phase
+layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
+uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye;
+out float vT; out float vTint; out float vFade;
+void main(){
+  vec2 root = aInst.xy;
+  float d = distance(root, uEye.xz);
+  vFade = 1.0 - smoothstep(uRange*0.55, uRange, d);
+  if (vFade <= 0.001) { gl_Position = vec4(2,2,2,1); return; }   // culled
+  float h = aInst.z * (0.55 + 0.45*vFade);
+  vT = aCorner.y;
+  // the tip travels, the root does not: the offset is weighted by
+  // height along the blade, squared, which is what a stalk does
+  float sway = sin(uTime*1.7 + aInst.w + root.x*0.08 + root.y*0.05);
+  vec2 lean = aInst2.xy + vec2(sway, sway*0.6) * uWind * 0.004;
+  vec3 p;
+  p.xz = root + lean * (vT*vT) * h;
+  p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
+  p.y = terrain(root) + vT * h;
+  vTint = aInst2.z;
+  gl_Position = uVP * vec4(p,1.0);
+}`, HEAD + `
+in float vT; in float vTint; in float vFade;
+out vec4 o;
+void main(){
+  vec3 root = vec3(0.16,0.22,0.09);
+  vec3 tip  = vec3(0.42,0.55,0.20);
+  vec3 c = mix(root, tip, vT*vT*0.9 + 0.1) * (0.78 + vTint*0.44);
+  o = vec4(c, vFade);
+}`);
+
+// ── geometry ───────────────────────────────────────────────────────
+const GROUND_N = 220, GROUND_SPAN = 300;
+const gverts = [];
+for (let j = 0; j < GROUND_N; j++) {
+  for (let i = 0; i < GROUND_N; i++) {
+    const x0 = (i / GROUND_N - 0.5) * GROUND_SPAN, x1 = ((i + 1) / GROUND_N - 0.5) * GROUND_SPAN;
+    const z0 = (j / GROUND_N - 0.5) * GROUND_SPAN, z1 = ((j + 1) / GROUND_N - 0.5) * GROUND_SPAN;
+    gverts.push(x0, z0, x1, z0, x1, z1, x0, z0, x1, z1, x0, z1);
+  }
+}
+const gvao = gl.createVertexArray();
+gl.bindVertexArray(gvao);
+const gbuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, gbuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gverts), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+function build() {
+  const N = state.density | 0;
+  const inst = new Float32Array(N * 4), inst2 = new Float32Array(N * 4);
+  // deterministic placement on a hashed seed - the rule the nature
+  // pass already uses, so a blade is where it was last frame
+  let s = 0x2f6e2b1;
+  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  const SPAN = 90;
+  for (let i = 0; i < N; i++) {
+    // clustered placement: a tuft centre plus a tight jitter, so the
+    // sward reads as clumps rather than an even scatter
+    const cx = (rnd() - 0.5) * SPAN * 2, cz = (rnd() - 0.5) * SPAN * 2;
+    const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
+    const x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
+    inst[i * 4] = x; inst[i * 4 + 1] = z;
+    inst[i * 4 + 2] = (0.16 + rnd() * 0.30) * (state.height / 34);
+    inst[i * 4 + 3] = rnd() * 6.283;
+    inst2[i * 4] = (rnd() - 0.5) * 0.5;
+    inst2[i * 4 + 1] = (rnd() - 0.5) * 0.5;
+    inst2[i * 4 + 2] = rnd();
+    inst2[i * 4 + 3] = 0.030 + rnd() * 0.035;
+  }
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  // three quads per blade, stacked, so it can bend instead of shearing
+  const corners = [];
+  for (let seg = 0; seg < 3; seg++) {
+    const a = seg / 3, b = (seg + 1) / 3;
+    corners.push(0, a, 1, a, 1, b, 0, a, 1, b, 0, b);
+  }
+  const cbuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(corners), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  for (const [loc, data] of [[1, inst], [2, inst2]]) {
+    const b = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(loc, 1);
+  }
+  gr = { vao, count: N, verts: corners.length / 2 };
+}
+ready = true;
+build();
+
+// ── camera ─────────────────────────────────────────────────────────
+const cam = { x: 0, z: 0, yaw: 0.6, pitch: -0.22, h: 1.7 };
+let drag = null;
+cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: cam.yaw, pitch: cam.pitch }; });
+addEventListener('pointerup', () => { drag = null; });
+addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  cam.yaw = drag.yaw + (e.clientX - drag.x) * 0.005;
+  cam.pitch = Math.max(-1.2, Math.min(0.6, drag.pitch + (e.clientY - drag.y) * 0.004));
+});
+const keys = new Set();
+addEventListener('keydown', (e) => keys.add(e.key.toLowerCase()));
+addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+
+const mul = (a, b) => { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s2 = 0; for (let k = 0; k < 4; k++) s2 += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s2; } return o; };
+const persp = (fov, asp, n, f) => { const t = 1 / Math.tan(fov / 2); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]); };
+const look = (e, c, u) => {
+  const f = [c[0] - e[0], c[1] - e[1], c[2] - e[2]]; const fl = Math.hypot(...f); f.forEach((v, i) => f[i] = v / fl);
+  const s2 = [f[1] * u[2] - f[2] * u[1], f[2] * u[0] - f[0] * u[2], f[0] * u[1] - f[1] * u[0]]; const sl = Math.hypot(...s2); s2.forEach((v, i) => s2[i] = v / sl);
+  const uu = [s2[1] * f[2] - s2[2] * f[1], s2[2] * f[0] - s2[0] * f[2], s2[0] * f[1] - s2[1] * f[0]];
+  return new Float32Array([s2[0], uu[0], -f[0], 0, s2[1], uu[1], -f[1], 0, s2[2], uu[2], -f[2], 0,
+    -(s2[0] * e[0] + s2[1] * e[1] + s2[2] * e[2]), -(uu[0] * e[0] + uu[1] * e[1] + uu[2] * e[2]), f[0] * e[0] + f[1] * e[1] + f[2] * e[2], 1]);
+};
+const hash = (p) => { let x = p[0] * 123.34, y = p[1] * 456.21; x -= Math.floor(x); y -= Math.floor(y); const d = x * x + y * y + 45.32; x += d; y += d; const r = x * y; return r - Math.floor(r); };
+const vnoise = (x, y) => {
+  const ix = Math.floor(x), iy = Math.floor(y); let fx = x - ix, fy = y - iy;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+  const h = (a, b) => hash([a, b]);
+  return (h(ix, iy) * (1 - fx) + h(ix + 1, iy) * fx) * (1 - fy) + (h(ix, iy + 1) * (1 - fx) + h(ix + 1, iy + 1) * fx) * fy;
+};
+const terrainAt = (x, z) => vnoise(x * 0.020, z * 0.020) * 7 + vnoise(x * 0.055, z * 0.055) * 2.4 + vnoise(x * 0.15, z * 0.15) * 0.7;
+
+let last = performance.now(), acc = 0, frames = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  acc += dt; frames++;
+  if (acc > 0.5) { R('fps').textContent = `${Math.round(frames / acc)} fps  ·  ${(gr.count / 1000).toFixed(0)}k blades`; acc = 0; frames = 0; }
+  const sp = (keys.has('shift') ? 26 : 9) * dt;
+  if (keys.has('w')) { cam.x -= Math.sin(cam.yaw) * sp; cam.z -= Math.cos(cam.yaw) * sp; }
+  if (keys.has('s')) { cam.x += Math.sin(cam.yaw) * sp; cam.z += Math.cos(cam.yaw) * sp; }
+
+  const w = cv.width = cv.clientWidth * devicePixelRatio | 0;
+  const h = cv.height = cv.clientHeight * devicePixelRatio | 0;
+  gl.viewport(0, 0, w, h);
+  gl.clearColor(0.40, 0.48, 0.58, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
+  const dir = [-Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), -Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+  const vp = mul(persp(1.05, w / h, 0.1, 600), look(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]], [0, 1, 0]));
+
+  gl.useProgram(groundProg);
+  gl.uniformMatrix4fv(gl.getUniformLocation(groundProg, 'uVP'), false, vp);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uTilePx'), state.tile);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uNew'), state.newGround ? 1 : 0);
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uEye'), eye);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, groundTex);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uTex'), 0);
+  gl.bindVertexArray(gvao);
+  gl.drawArrays(gl.TRIANGLES, 0, gverts.length / 2);
+
+  if (state.grass) {
+    gl.useProgram(grassProg);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniformMatrix4fv(gl.getUniformLocation(grassProg, 'uVP'), false, vp);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uTime'), now / 1000);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uWind'), state.wind);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uRange'), state.range);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uEye'), eye);
+    gl.bindVertexArray(gr.vao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
+    gl.disable(gl.BLEND);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
