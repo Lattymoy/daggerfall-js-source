@@ -40,6 +40,15 @@ directory by `test/audit18_bible_docs.test.js`:
   after it) on a FIXED 1/fps step, the three speeds (general 5, ANIMALS 5,
   LIGHTS 12), and the one arming seam all four static-flat batch sites call so
   the four hosts cannot drift.
+- `farRing.js` - EV8 THE FAR PROVINCE RING: the province's mountains
+  on the horizon, one vertex per map pixel over woods.heightMapBuffer
+  at the streamed terrain's own UN-exaggerated height law, tinted by
+  overworldTint, lit by the live sun, faded toward the fog colour with
+  a hold so peaks read through haze. Self-contained pass drawn inside
+  the world host's sky-to-markForeignPass span (depth untouched - the
+  streamed grid repaints everything nearer; the hole in the index
+  buffer covers the one case painter's order cannot). Enhanced only;
+  `?ring=off`. See `07-Rendering/Enhanced-Visuals-Arc.md`.
 - `frustum.js` - EV3 FRUSTUM CULLING, the pure half: Gribb/Hartmann
   planes off the combined proj*view (the handedness mirror rides inside),
   the conservative p-vertex outside test with an offset form for the

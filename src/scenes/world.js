@@ -13,7 +13,7 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
-import { WoodsFile } from '../formats/woodsFile.js';
+import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
@@ -24,6 +24,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
+import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
@@ -253,6 +254,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // EV7: the pixel kernel's off-thread home - a COPY of the WOODS
   // bytes crosses once; this thread's `woods` stays the fallback law.
   const terrainGen = new TerrainGenClient({ woods, woodsBytes });
+  // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
+  // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
+  // in the frame loop, where the live player pixel exists.
+  const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl) : null;
+  const _ringOrigin = [0, 0, 0];
 
   // One location per map pixel game-wide (pinned corpus invariant).
   status('indexing locations');
@@ -4858,7 +4864,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
-    renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
+    // EV8: the far province ring - the horizon's actual mountains,
+    // drawn while the depth buffer is still the sky's (the streamed
+    // world repaints everything nearer). Skipped when exp fog owns
+    // the air (rain, snow, heavy fog); its light state is the frame's
+    // own, already installed by setLighting/beginFrame above. It
+    // shares the EV6 seam mark below - one foreign span, two passes.
+    if (farRing && weatherFog.mode === 'linear') {
+      if (farRing.needsRebuild(state.current.x, state.current.y)) {
+        farRing.build({
+          heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
+          climateAt: (x, y) => maps.getClimateIndex(x, y),
+          baseX: state.current.x, baseY: state.current.y,
+        }, state.current.x, state.current.y, state.terrainDistance);
+      } else {
+        farRing.punchHole(state.current.x, state.current.y, state.terrainDistance);
+      }
+      farRing.draw(view, {
+        origin: state.pixelTranslation(farRing.baseX, farRing.baseY, _ringOrigin),
+        lightDir: renderer._lightDir, ambient: renderer._ambient,
+        sunScale: renderer._sunScale, sunColor: renderer._sunColor,
+        fogColor, fogEnd: weatherFog.end,
+        fovY: fieldOfView(), aspect: canvas.clientWidth / canvas.clientHeight,
+      });
+    }
+    renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
 
