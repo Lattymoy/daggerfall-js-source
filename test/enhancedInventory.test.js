@@ -1117,7 +1117,11 @@ test('PX28: looting just TAKES - no second popup over the frame you are reading'
   // it landed in - so the selection is the PACK's behaviour, not the
   // take's. In the loot-only flow it is a card nobody asked for.
   const src = read('src/ui/enhancedInventory.js');
-  assert.match(src, /picked = packOpen \? taken : null;/);
+  // AUDIT 35: the take clears the pick on BOTH sides now - the pack-open
+  // flow used to keep the taken item selected, which raised the tooltip
+  // after every take (PX24's quirk on the loot side).
+  assert.match(src, /picked = null;\n  if \(packOpen\) \{/, 'the take must clear the pick before the pack-open arm');
+  assert.ok(!/picked = packOpen \? taken : null;/.test(src), 'the taken item must not stay selected');
   assert.match(src, /if \(packOpen\) \{\n\s*side = 'local';/, 'and the side follows the pack, not the take');
   assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
     'the tab-follows-the-item law is unchanged - it just belongs to the pack');
