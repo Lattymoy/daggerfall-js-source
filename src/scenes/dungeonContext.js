@@ -14,7 +14,8 @@ import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound }
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
-import { applyTextureTable } from '../world/dungeonTextures.js';
+import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-time SmallerDungeons stamp
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
@@ -1718,12 +1719,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _fpEye = null;
   let _fpYaw = 0;
   let _fpPitch = 0;
+  let _fpBobY = 0;   // IG1: the head bob's vertical, latched with the rest
   let _fpSneaking = false;
   let _fpMove = null;   // MW-D26: the frame's movement report
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
+    activateHeld: () => !!opts.activateHeld?.(),   // AUDIT 28 W12: the host's ActivateCenterObject, for the drawn bow's un-draw
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
-    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, sneaking: _fpSneaking, move: _fpMove } : null),   // MW-D26
+    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw, pitch: _fpPitch, sneaking: _fpSneaking, move: _fpMove, bob: [0, _fpBobY] } : null),   // MW-D26; IG1: the bob rides too
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(),
@@ -2585,7 +2588,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     // MW-D8: latch the eye and heading THIS frame, before anything draws.
     // Set after weaponRig.draw() instead, the arm would render a frame
@@ -2600,6 +2603,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // must see the stance the player is in THIS frame.
     _fpSneaking = !!playerSneaking;
     _fpMove = playerMove;   // MW-D26: same latch, same reason
+    _fpBobY = playerBobY;   // IG1: same latch - the arm's bob channel
     // THE FOUR HOSTS RULE (2026-08-27, Mac: "blood texture stays static
     // in the air when attacking them in dungeons"). The splash pool's
     // clock was the HOST'S to run - dungeon.js ran it, worldModes never
@@ -3486,6 +3490,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // weaponDrawn lands here whichever host mounted it.
         pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed },
         locationKey: _locationKey,
+        // AUDIT 28 W4: SerializablePlayer.cs:224 - the RAW setting as of
+        // the save, so a load under the OTHER setting can warp to the
+        // start marker (:462-472) instead of standing in blocks that no
+        // longer exist.
+        smallerDungeonsState: getBool('Experimental', 'SmallerDungeons') ? 2 : 1,   // Enabled : Disabled, DFU's enum order (F-B3)
         world: collectWorld(),
       });
       const r = saveSlot(playerEntity.name, saveName, snap);
@@ -3519,6 +3528,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
+      // AUDIT 28 W4 (SerializablePlayer.cs:462-472): saved under the
+      // OTHER SmallerDungeons setting, the position may sit in blocks
+      // this build does not have - warp to the start marker and say so.
+      // Story dungeons never use the setting, so they never warp
+      // (:466-468), and an old envelope (no field) never warps either.
+      const savedSmaller = extras.smallerDungeonsState === 2;   // QuestSmallerDungeonsState.Enabled (F-B3: DFU's order)
+      if (extras.smallerDungeonsState && extras.locationKey === _locationKey && setPlayerPos
+        && savedSmaller !== getBool('Experimental', 'SmallerDungeons')
+        && !isMainStoryDungeon(dfLocation?.mapTableData?.mapId)) {
+        // F-B1 (self-audit 2): the first cut set the RAW marker position;
+        // every other spawn in this port goes through the entry law -
+        // floorLanding over m.y + 1.08 - and a raw marker y can stand
+        // the player in the floor. startSpawn({ preferEnterMarker:
+        // false }) IS the start marker under that law, which is also
+        // DFU's member here (:470 names StartMarker explicitly).
+        const p = this.startSpawn({ preferEnterMarker: false });
+        if (p) {
+          setPlayerPos(p);
+          hudText.add('Dungeon size setting changed - moved to dungeon start.');
+        }
+      }
       // F222/F101: Sheathed = !weaponDrawn (:420-421); the host takes
       // the yaw/pitch/crouch half through its own seam.
       if (extras.pose) {
@@ -3756,6 +3786,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay) return;
       activeOverlay = openInventory(null);
     },
+    /** AUDIT 28 F-C2: PlayerMouseLook's swing gate excludes a bow
+     *  (:248, WeaponType != Bow) - the standalone host asks here. */
+    get weaponIsBow() { return !!playerWeapon.machine?.isBow; },
     /** AUDIT 28 W2c: DungeonWagonAccess_OnButtonClick's Yes arm
      *  (PlayerActivate.cs:1139-1142) - AllowDungeonWagonAccess() then
      *  dfuiOpenInventoryWindow: the inventory opens showing the wagon

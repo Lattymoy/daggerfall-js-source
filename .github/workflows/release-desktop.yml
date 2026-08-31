@@ -1,0 +1,84 @@
+# The DOWNLOADABLE build (Desktop-App.md). Pushing a tag shaped
+# app-v* builds the desktop shell's installers on all three OSes and
+# attaches them to a GitHub Release at that tag - which is where the
+# landing page's "On your desktop" section points. workflow_dispatch
+# builds the same installers as run artifacts, for trying a build
+# without cutting a release.
+#
+# The house gate rides in front: the ubuntu job runs `npm run check`
+# whole (a red suite never ships an installer any more than it ships
+# the site); the windows/macos jobs build only - the suite's own
+# lawful home is ubuntu (deploy.yml), and what the other two runners
+# contribute is packaging, not verification.
+#
+# Doctrine unchanged: the installers carry the built site and the
+# shell, NO game data - the app asks for the player's own ARENA2
+# folder on first run, exactly as the website does.
+name: release-desktop
+
+on:
+  push:
+    tags:
+      - 'app-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      # No signing identities exist; without this electron-builder
+      # hunts for one on macOS and fails the build looking.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install site dependencies
+        run: npm ci
+
+      - name: Gate (ubuntu carries the suite)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run check
+
+      - name: Build the site
+        if: matrix.os != 'ubuntu-latest'
+        run: npm run build
+
+      - name: Install shell dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Build installers
+        run: npx electron-builder --publish never
+        working-directory: app
+
+      - name: Attach installers to the release
+        if: startsWith(github.ref, 'refs/tags/app-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/release/*.AppImage
+            app/release/*.exe
+            app/release/*.dmg
+          generate_release_notes: true
+
+      - name: Keep installers as run artifacts (manual runs)
+        if: "!startsWith(github.ref, 'refs/tags/app-v')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            app/release/*.AppImage
+            app/release/*.exe
+            app/release/*.dmg
+          if-no-files-found: error

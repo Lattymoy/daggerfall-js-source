@@ -120,6 +120,36 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W3c: UseLocationDungeonTextureTable's fork (DaggerfallDungeon
   // :174-196): classic / by-climate / randomized, with the main-story gate.
   'Video/RandomDungeonTextures': 'src/world/dungeonTextures.js',
+  // AUDIT 28 W4: MapsFile.UseSmallerDungeon (:776-797) + Quest.Start's
+  // frozen stamp (Quest.cs:284) - the five-block plus for big dungeons.
+  'Experimental/SmallerDungeons': 'src/world/smallerDungeons.js',
+  // AUDIT 28 W5: PlayerSpeedChanger.CaptureInputSpeedAdjustment
+  // (:75-78) - a press FLIPS the sneak mode instead of holding it.
+  'Controls/ToggleSneak': 'src/player/motor.js',
+  // AUDIT 28 W6: AddHUDText's duration for the shop-quality lines
+  // (PlayerActivate :1382), GetInt 1..10.
+  'GUI/ShopQualityHUDDelay': 'src/scenes/worldModes.js',
+  // AUDIT 28 W7: PlayerMouseLook.ApplySmoothing (:154-166) - the look
+  // filter every host drives; GetFloat 0..0.9 (SettingsManager :523).
+  'Controls/MouseLookSmoothingFactor': 'src/player/lookFilter.js',
+  // AUDIT 28 W8: InputManager's ApplyHorizontalForce/ApplyVerticalForce/
+  // ApplyFriction (:1445-1497) - the axes climb and decay at 9.8/s.
+  'Controls/MovementAcceleration': 'src/player/moveAxes.js',
+  // AUDIT 28 W9: CameraRecoiler (whole) - the reel on a hit; GetInt 0..4.
+  'Controls/CameraRecoilStrength': 'src/player/cameraRecoiler.js',
+  // AUDIT 28 W10: HeadBobber (whole) - the walk bob, the nod, the landing dip.
+  'Controls/HeadBobbing': 'src/player/headBobber.js',
+  // AUDIT 28 W11: WeaponManager.TrackMouseAttack's gate (:808) is the
+  // SETTING (StartGameBehaviour :263), GetFloat 0.001..1 - shipped 0.005;
+  // WeaponSwingMode (:306-350): 0 gesture, 1 click, 2 click or hold.
+  'Controls/WeaponAttackThreshold': 'src/combat/playerWeapon.js',
+  'Controls/WeaponSwingMode': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W12: the bow's draw-and-hold (WeaponManager :341, :353-360)
+  // - press draws, release looses, activate un-draws, 10 s times out.
+  'Controls/BowDrawback': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W13: FPSWeapon.FlipHorizontal (StartGameBehaviour :269) -
+  // left-hand rendering; GetInt 0..3, only 1 does anything in DFU.
+  'Controls/Handedness': 'src/combat/fpsWeapon.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

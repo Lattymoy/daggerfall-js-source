@@ -4,6 +4,12 @@
   "private": true,
   "version": "0.0.1",
   "description": "Daggerfall JavaScript - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "author": "Lattymoy",
+  "homepage": "https://daggerfalljs.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lattymoy/daggerfall-js-source.git"
+  },
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
@@ -17,6 +23,7 @@
   "build": {
     "appId": "dev.daggerfalljs.app",
     "productName": "Daggerfall JavaScript",
+    "artifactName": "DaggerfallJS-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },

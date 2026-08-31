@@ -824,6 +824,24 @@ def make_armnameless():
     write_nif(HERE / "armnameless.nif", [root])
 
 
+def make_armmixed():
+    # MW-D31: a MIXED file - one skinned shape and one unskinned one.
+    # One skin makes the whole file a rig (node.cpp:275-276), and
+    # attach() then seeds ONLY RigGeometry (attach.cpp:42-46), so the
+    # unskinned "Trim" must never take the rigid path's mirror/offset.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    rest = ARM_REST["Right Hand"]
+    node = _bone(root, "Right Hand", rest)
+    tri = _tri(root, "Tri Right Hand", [(0.8, 0.0, 0.6), (1.6, 0.0, 0.6), (1.2, 0.0, 1.4)])
+    _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
+                         [(0, 1.0), (1, 1.0), (2, 1.0)])])
+    _tri(root, "Trim", [(0.1, 0.0, -0.3), (0.9, 0.0, -0.3), (0.5, 0.0, 0.3)])
+    write_nif(HERE / "armmixed.nif", [root])
+
+
 def make_arm_idle_kf():
     # MW-D7: THE IDLE CLIP. The first fixture in this tree that a first-
     # person arm can actually be posed by, and every one of its eleven text
@@ -2087,6 +2105,12 @@ def make_armfpmove_kf():
         (3.0, b"TurnLeft: Stop"),
         (3.2, b"TurnRight: Start"),
         (3.6, b"TurnRight: Stop"),
+        # MW-D29: the SUFFIXED walk, so a stance change mid-walk has a
+        # different group to land on - the re-compose witness.
+        (4.0, b"WalkForward1h: Start"),
+        (4.2, b"WalkForward1h: Loop Start"),
+        (5.2, b"WalkForward1h: Loop Stop"),
+        (5.4, b"WalkForward1h: Stop"),
     ]
     tke = NifFormat.NiTextKeyExtraData()
     tke.num_text_keys = len(text_keys)
@@ -2105,6 +2129,7 @@ def make_armfpmove_kf():
             (0.0, rot_z(0.0)), (0.5, rot_z(0.0)),
             (1.2, rot_z(10.0)), (1.7, rot_z(30.0)), (2.2, rot_z(10.0)),
             (2.6, rot_z(-15.0)), (3.6, rot_z(15.0)),
+            (4.2, rot_z(40.0)), (4.7, rot_z(60.0)), (5.2, rot_z(40.0)),
         ])),
     ]
     helper = NifFormat.NiSequenceStreamHelper()
@@ -2118,7 +2143,7 @@ def make_armfpmove_kf():
         sed.bytes_remaining = 4 + len(name)
         prev_extra.next_extra_data = sed
         prev_extra = sed
-        kc = make_keyframe_controller(None, kd, 0.0, 3.6)
+        kc = make_keyframe_controller(None, kd, 0.0, 5.4)
         if prev_ctrl is None:
             helper.controller = kc
         else:

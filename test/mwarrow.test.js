@@ -30,7 +30,7 @@ const wpdt = (id, model, type) => {
 };
 
 const LONG_BOW = { templateIndex: 130 };
-function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null } = {}) {
+function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif' } = {}) {
   const files = new Map([
     [fpSkeletonPath({}), f(skeleton)],
     [FP_CLIP_PATH, f('armfpweapon.kf')],
@@ -39,7 +39,7 @@ function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null } = {}) {
     ['meshes/w/bowmesh.nif', f('bowmesh.nif')],
     ['textures/tx_fixture.dds', f('fixture.dds')],
   ]);
-  if (ammo) files.set('meshes/w/arrow.nif', f('arrow.nif'));
+  if (ammo) files.set('meshes/w/arrow.nif', f(ammoFixture));
   const weap = esm || Uint8Array.from([
     ...wpdt('long bow', 'w/bowmesh.nif', MW_WEAPON_TYPE.MarksmanBow),
     ...wpdt('iron arrow', 'w/arrow.nif', MW_WEAPON_TYPE.Arrow),
@@ -158,6 +158,35 @@ test('MW-D16: no ammunition means no arrow, and that is not a refusal', async ()
   assert.ok(sword.ok);
   assert.equal(sword.arrow, null);
   assert.ok(!sword.notes.some((n) => n.startsWith('arrow:')));
+});
+
+test('MW-D34: ammunition never takes its own BoneOffset - attachArrow is a bare getInstance', async () => {
+  // weaponanimation.cpp:87-93: the reference attaches the round with
+  // `getInstance(model, parent)` directly - it never goes through
+  // SceneUtil::attach, so the ammo mesh's own "BoneOffset" node is
+  // never searched for (attach.cpp:147-159 runs only for attach()) and
+  // never applied. The port's generic part path read it. Fixture: the
+  // arrow's bytes are boneoffset.nif, whose BoneOffset is (3,-4,5).
+  const res = await buildFpArm({
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ ammoFixture: 'boneoffset.nif' }),
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  const arrow = res.arm.pieces.find((p) => p.slot === 'arrow');
+  assert.ok(arrow, 'the arrow bound');
+  assert.equal(arrow.boneOffset, null, 'and its own BoneOffset is IGNORED');
+  // The control, same bytes through the GENERIC path: a sword whose
+  // model is that very mesh takes the offset (rule 14) - so this pin
+  // cannot pass by the fixture losing its node.
+  const sword = await buildFpArm({
+    race: 'fprace', weapon: { templateIndex: 120 }, hasAmmo: false,
+    deps: bowDeps({
+      ammoFixture: 'boneoffset.nif',
+      esm: Uint8Array.from([...wpdt('offset sword', 'w/arrow.nif', MW_WEAPON_TYPE.LongBladeOneHand)]),
+    }),
+  });
+  assert.ok(sword.ok, `${sword.stage}: ${sword.error}`);
+  const wp = sword.arm.pieces.find((p) => p.slot === 'weapon');
+  assert.deepEqual(wp.boneOffset, [3, -4, 5], 'the weapon still takes rule 14');
 });
 
 // --- rule 24's keys --------------------------------------------------------

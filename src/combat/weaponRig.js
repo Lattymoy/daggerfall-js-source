@@ -19,17 +19,54 @@
 
 import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
-import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
+import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
+import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
+import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 // MW-D8: the classic sprite is still the DEFAULT and still the fallback,
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
 import { fpArm, hasDaggerfallArrows } from './fpArm.js';
+import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
+
+/**
+ * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
+ * Room boot both translate the LIVE ENTITY into fpArm.build's
+ * options; two copies of that translation is how the card built one
+ * character while the frame followed another. It lives here because
+ * this module already owns the per-frame half of the same seam
+ * (setWeapon/setWorn below read the same table).
+ *
+ * AND THE GENDER FIX: `gender` is the STRING 'male'/'female'
+ * everywhere in this port (chargen.js applyCharacter,
+ * classicSave.js:624), so the card's old `female: !!playerEntity
+ * .gender` was TRUE FOR EVERYONE - every build asked for the female
+ * skeleton and the female body columns, and the male-record fallback
+ * fills made it look almost right. The test is the string compare,
+ * the same one every other consumer makes.
+ */
+export function armBuildOptsOf(entity) {
+  return {
+    race: mwRaceId(entity.race),
+    female: entity.gender === 'female',
+    faceIndex: entity.faceIndex | 0,
+    armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
+    weapon: entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
+    hasAmmo: hasDaggerfallArrows(entity.items),
+  };
+}
+
+/** The build itself, from the live entity - seconds long and
+ *  synchronous (the BSA index, the ESM walk, every mesh parse), so
+ *  callers run it at a pause or a boot, never per frame. */
+export function buildArmsFor(entity) {
+  return fpArm.build(armBuildOptsOf(entity));
+}
 
 /**
  * @param deps {
@@ -44,7 +81,7 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, bindWorn = true, activateHeld = () => false }) {   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw
   const playerWeapon = new PlayerWeapon({});
   // MW-D8. `camera` is REQUIRED for the Morrowind arm and there is no
   // fallback: a host that does not pass one gets the classic sprite and
@@ -208,7 +245,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       const strike = !paralyzed && c
-        ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight))
+        ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
       if (strike) fpAttack(strike);
       _dx = 0; _dy = 0;
@@ -245,6 +282,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
         fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
+        // read that swaps the weapon now hands the rig its worn list;
+        // setWorn's fast path is one key compare, and a change - a
+        // cloak equipped, a gauntlet dropped - rebuilds the body in
+        // those clothes. D29-D31 dressed the BUILD; this dresses the
+        // GAME.
+        if (entity) fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.

@@ -15,8 +15,12 @@
 // relative to the SKELETON ROOT node, the weighted sum blends the affine
 // matrices (translations included), SkinToSkel cancels the transforms
 // between the skeleton root and the skin's root bone, and DataTransform
-// is NiSkinData's root transform. Skinned geometry's own node transform
-// is NOT applied - NetImmerse ignores it for skinned shapes.
+// is NiSkinData's root transform. The skinned shape's own transform
+// IS in the chain when the skin-root lookup falls back to it - the
+// reference cancels "everything up till the trishape" and takes the
+// trishape's parent as the root (riggeometry.cpp:301-307) - which is
+// the law MW-D20 landed below; the old "NetImmerse ignores it" claim
+// was this header's own overstatement.
 
 import { deref } from './mwNifFile.js';
 
@@ -144,8 +148,8 @@ export function buildSkeleton(nif) {
  * (case-insensitively). MW-D14 corrected it, and the difference is not
  * academic: a first-person weapon .kf keys nothing on bip01, so "topmost
  * tracked bone" answered an UPPER ARM - and any translation channel on
- * that bone would then have had its X and Y pinned to rest, silently
- * deforming the arm rather than moving the actor.
+ * that bone would then have had its X and Y zeroed, silently deforming
+ * the arm rather than moving the actor.
  *
  * With neither name driven the answer is NULL, which is the correct
  * answer and not a failure: an animation with no accum root simply
@@ -173,8 +177,16 @@ export function accumRootRef(skeleton, tracks) {
 /**
  * Pose the skeleton from tracks at a time: local transforms per node,
  * rest values where a channel has no keys. Pass `accumRoot` (from
- * accumRootRef) to extract root motion: that bone's X,Y pin to rest
- * and only Z stays animated, the reference's (1,1,0) accumulation.
+ * accumRootRef) to extract root motion.
+ *
+ * MW-D33: the accumulated axes are ZEROED, not pinned to rest -
+ * ResetAccumRootCallback multiplies the node's translation by
+ * (0,0,1) component-wise ("anything that accumulates (1.f) should be
+ * reset in the callback to (0.f)", animation.cpp:515-539), and it does
+ * so on WHATEVER the transform holds, keyed or rest alike. Only Z
+ * stays, the reference's (1,1,0) accumulation. The port had substituted
+ * the bone's rest X,Y, which is only the same thing when the rest
+ * translation happens to be zero.
  * @returns {Map<number, {rotation:Float32Array, translation:number[],
  *   scale:number}>}
  */
@@ -188,8 +200,8 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
     }
     const s = sampleTrack(track, time);
     let translation = s.translation ?? node.rest.translation;
-    if (ref === opts.accumRoot && s.translation) {
-      translation = [node.rest.translation[0], node.rest.translation[1], s.translation[2]];
+    if (ref === opts.accumRoot) {
+      translation = [0, 0, translation[2]];   // componentMultiply((0,0,1), trans)
     }
     pose.set(ref, {
       rotation: s.rotation ? quatToMat33(s.rotation) : node.rest.rotation,
@@ -206,7 +218,7 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
  * node is a CHILD of that group, so the root's own transform (which
  * rule 34 KEEPS when the root is a NiNode named bip01) is INCLUDED in
  * every bone matrix (Bone::update with no parent answers the node's own
- * matrix, skeleton.cpp:169; the loader adopts the root nodes as
+ * matrix, skeleton.cpp:171; the loader adopts the root nodes as
  * children, nifloader.cpp:450-480). Pass this as `skeletonRoot` to get
  * that space: no real ref equals it, so no node is zeroed out.
  *
@@ -288,6 +300,16 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   }
   const n = batch.positions.length / 3;
   // Per-vertex blended affines, translations included - 12 floats each.
+  // MW-D31: the blend accumulates ONLY invBind * boneInSkelSpace - the
+  // reference's resultMat starts at zero with its W column pinned to
+  // (0,0,0,1) and sums exactly those per-bone products
+  // (riggeometry.cpp:172-202); `post` is applied ONCE to the blended
+  // result (`resultMat *= transform`, :204), never folded into each
+  // bone term. The difference is the translation column: folded per
+  // bone it comes out (sum w)*post.t, and rule 39 forbids
+  // renormalising, so any vertex whose weights do not sum to 1 - a
+  // missing-bone skip, or a file authored that way - slid toward the
+  // origin by the deficit.
   const acc = new Float32Array(n * 12);
   const wsum = new Float32Array(n);
   // RULE 40: an influence naming a MISSING bone (ref null, from
@@ -308,7 +330,7 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
       for (let k = 0; k < bone.indices.length; k++) touched[bone.indices[k]] = 1;
       continue;
     }
-    const m = affineMul(affineMul(post, skelMats.get(bone.ref)), bone.invBind);
+    const m = affineMul(skelMats.get(bone.ref), bone.invBind);
     for (let k = 0; k < bone.indices.length; k++) {
       const v = bone.indices[k];
       const w = bone.weights[k];
@@ -325,11 +347,31 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   collapse[9] = post.t[0];
   collapse[10] = post.t[1];
   collapse[11] = post.t[2];
+  // MW-D31: post composed onto the BLENDED affine, once per vertex -
+  // the row-vector `resultMat *= transform` in column terms. The
+  // collapse row is that same law on a zero accumulator: post.a*0 +
+  // post.t, which is why it stays post.t verbatim.
+  const composed = new Float32Array(12);
+  const pa = post.a;
+  const pt = post.t;
+  const composePost = (o) => {
+    for (let c = 0; c < 3; c++) {           // three columns of acc's 3x3
+      const x = acc[o + c]; const y = acc[o + 3 + c]; const z = acc[o + 6 + c];
+      composed[c] = pa[0] * x + pa[1] * y + pa[2] * z;
+      composed[3 + c] = pa[3] * x + pa[4] * y + pa[5] * z;
+      composed[6 + c] = pa[6] * x + pa[7] * y + pa[8] * z;
+    }
+    const tx = acc[o + 9]; const ty = acc[o + 10]; const tz = acc[o + 11];
+    composed[9] = pa[0] * tx + pa[1] * ty + pa[2] * tz + pt[0];
+    composed[10] = pa[3] * tx + pa[4] * ty + pa[5] * tz + pt[1];
+    composed[11] = pa[6] * tx + pa[7] * ty + pa[8] * tz + pt[2];
+    return composed;
+  };
   for (let v = 0; v < n; v++) {
     const o = v * 12;
     // An untouched vertex keeps its authored position; a touched one
     // with no surviving weight takes the zero-accumulator collapse.
-    const a = wsum[v] > 0 ? acc.subarray(o, o + 12) : touched[v] ? collapse : null;
+    const a = wsum[v] > 0 ? composePost(o) : touched[v] ? collapse : null;
     const x = batch.positions[v * 3];
     const y = batch.positions[v * 3 + 1];
     const z = batch.positions[v * 3 + 2];

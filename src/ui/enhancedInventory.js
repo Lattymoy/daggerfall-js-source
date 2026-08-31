@@ -272,6 +272,7 @@ export function itemLine(item, identity = undefined) {
   // it replaced went away with it.
   const t = templateByIndex(item.templateIndex);
   return {
+    item,   // MW-D38: the icon door resolves the item itself
     name: item.name ?? t?.name ?? 'Unknown',
     weight: itemWeight(item),
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
@@ -634,6 +635,70 @@ function dropGold(text) {
 // ARENA2, so a player with no game data still sees their slots), and
 // the paperdoll stands behind them whenever its art can draw.
 
+// ── MW-D36: the model figure ─────────────────────────────────────────
+let _figureYaw = 0;
+let _figureCache = { key: null, url: null };
+let _unsubscribeFigure = null;
+/** The built third-person body as a data URL at the current yaw, or
+ *  null when no body stands. Cached per (yaw, build) so a re-render of
+ *  the window does not re-read the GPU. */
+function modelFigureUrl() {
+  const armMod = deps.fpArm;
+  if (!armMod || typeof armMod.figure !== 'function') return null;
+  const st = armMod.status?.();
+  // AUDIT 33 F2: the yaw is QUANTISED to a tenth of a radian, so a drag
+  // re-renders and re-encodes the figure about sixty times per turn
+  // instead of once per pixel, and dragging back lands on cached
+  // frames. The build's settlement clears this cache (subscribe).
+  const yaw = Math.round(_figureYaw / 0.1) * 0.1;
+  const key = `${st?.pieces ?? 0}:${st?.skeletonPath ?? ''}:${yaw.toFixed(1)}`;
+  if (_figureCache.key === key) return _figureCache.url;
+  let img = null;
+  try { img = armMod.figure({ yaw, height: 384 }); } catch { img = null; }
+  let url = null;
+  if (img && img.width && img.height) {
+    const cv = document.createElement('canvas');
+    cv.width = img.width; cv.height = img.height;
+    cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
+    url = cv.toDataURL('image/png');
+  }
+  _figureCache = { key, url };
+  return url;
+}
+/** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
+ *  The rig caches the pixels per record; this caches the encoding. */
+const _iconUrls = new Map();
+function modelIconUrl(item, size) {
+  const armMod = deps.fpArm;
+  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
+  let img = null;
+  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
+  if (!img || !img.width) return null;
+  if (_iconUrls.has(img)) return _iconUrls.get(img);
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
+  const url = cv.toDataURL('image/png');
+  _iconUrls.set(img, url);
+  return url;
+}
+
+/** Drag left/right to turn the figure; a tap does nothing (display only). */
+function attachFigureTurn(img) {
+  let down = null;
+  img.style.touchAction = 'pan-y';
+  img.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; img.setPointerCapture?.(e.pointerId); });
+  img.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    _figureYaw = down.yaw + (e.clientX - down.x) * 0.02;
+    const url = modelFigureUrl();
+    if (url) img.src = url;
+  });
+  const up = () => { down = null; };
+  img.addEventListener('pointerup', up);
+  img.addEventListener('pointercancel', up);
+}
+
 /** The avatar, at whatever scale the column gives it. */
 function dollPanel(url) {
   const wrap = el('div', 'figure-doll');
@@ -742,15 +807,23 @@ function equippedList() {
   // PX20a: 4x, not 3x - the cell is half again as tall as it was, and
   // a 3x sprite scaled up by object-fit is a blur where every other
   // pixel on this window is exact.
-  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 4 });
+  // MW-D36: THE MODEL STANDS WHERE THE DOLL STOOD. When the Morrowind
+  // third-person body is built - dressed by this very equip table,
+  // wearing the matched face - the panel shows THAT, rendered off the
+  // GPU as an image, turnable by drag. Display only, by Mac's call:
+  // unequip stays with the list. No body built = the classic doll,
+  // exactly as before; the classic skin never sees any of this.
+  const figureUrl = modelFigureUrl();
+  const dollUrl = figureUrl || paperDollDataUrl(paperDollPixels(), { scale: 4 });
   // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
   // with art the figure stands on the window's own glass.
-  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}`);
+  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}${figureUrl ? ' model' : ''}`);
   dollFrame.style.gridArea = DOLL_AREA;
   if (dollUrl) {
     const img = document.createElement('img');
     img.src = dollUrl;
-    img.alt = 'Your character';
+    img.alt = figureUrl ? 'Your character, as the Morrowind body wears it' : 'Your character';
+    if (figureUrl) attachFigureTurn(img);
     dollFrame.append(img);
   } else {
     dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
@@ -887,9 +960,13 @@ function characterCol() {
  * record lands the whole screen repaints and the letters give way.
  */
 function itemTile(line) {
-  const src = line.image
-    ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
-    : null;
+  // MW-D38: the Morrowind ground mesh stands in for the sprite when a
+  // body is built and the item resolves through the one map; the
+  // classic icon stands otherwise. Enhanced only, like everything here.
+  const src = modelIconUrl(line.item, 96)
+    || (line.image
+      ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
+      : null);
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');
@@ -1091,9 +1168,10 @@ function detailCol() {
   const c = el('div', 'card');
   // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
-  const big = line.image
-    ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
-    : null;
+  const big = modelIconUrl(line.item, 192)
+    || (line.image
+      ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
+      : null);
   if (big) {
     const fig = el('div', 'bigicon');
     const img = el('img');
@@ -1362,6 +1440,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   injectEnhancedFonts();
   host = hostEl;
   deps = d;
+  // MW-D36: repaint when the body's build settles, so an equip change
+  // that rebuilt the model asynchronously shows on the panel.
+  if (d.fpArm && typeof d.fpArm.subscribe === 'function') {
+    _unsubscribeFigure?.();
+    _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, url: null }; if (host) render(); });
+  }
   onExit = d.onExit ?? (() => {});
   tab = TABS[0];
   picked = null;
@@ -1424,6 +1508,8 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       keyHandler = null;
       lockHandler = null;
+      // MW-D36: the figure's subscription has an owner too.
+      _unsubscribeFigure?.(); _unsubscribeFigure = null;
       hostEl.innerHTML = '';
       host = null;
       deps = {};

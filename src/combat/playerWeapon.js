@@ -21,7 +21,7 @@
 
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
-  ATTACK_THRESHOLD, MAX_GESTURE_SECONDS,
+  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw,
 } from '../characters/weaponStates.js';
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
@@ -29,7 +29,7 @@ import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
-import { getBool } from '../systems/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection
+import { getBool, getFloat, getInt } from '../systems/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
 
 export const DEFAULT_WEAPON_REACH = 2.25;   // WeaponManager.cs:35
 export const SPHERE_CAST_RADIUS = 0.25;     // WeaponManager.cs:51
@@ -65,6 +65,11 @@ export const INTERIM_WEAPON = Object.freeze({
  * The verbatim hit rule against one foe. `inView` and `losClear` are
  * provided by the caller (projection + collider live scene-side).
  */
+/** WeaponManager.cs:343 - Random.Range((int)UpRight, (int)DownRight + 1)
+ *  over MouseDirections {None, UpLeft, Up, UpRight, Left, Right,
+ *  DownLeft, Down, DownRight}: indices 3..8. */
+export const CLICK_ATTACK_DIRECTIONS = Object.freeze(['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight']);
+
 export function playerMeleeCanHit(dist, inView, losClear) {
   return dist <= WEAPON_REACH && inView && losClear;
 }
@@ -113,9 +118,17 @@ export class PlayerWeapon {
 
   /** Drag-to-swing (WeaponManager.TrackMouseAttack over the ported
    *  gesture rules): accumulate while the attack button is held;
-   *  fire when travel crosses ATTACK_THRESHOLD of the longest screen
-   *  dimension. Returns the strike state when an attack starts. */
-  gesture(dx, dy, held, dt, longestDim) {
+   *  fire when travel crosses Settings.WeaponAttackThreshold of the
+   *  longest screen dimension (AUDIT 28 W11 - the field default
+   *  weaponStates.ATTACK_THRESHOLD is what StartGameBehaviour overwrites).
+   *  Returns the strike state when an attack starts. */
+  gesture(dx, dy, held, dt, longestDim, {
+    attackThreshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0),
+    swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2),
+    bowDrawback = getBool('Controls', 'BowDrawback'),
+    cancelHeld = false,
+    rolls = Math.random,
+  } = {}) {
     // AUDIT 23 (combat-2) - WeaponManager.cs:355-358: a bow never
     // tracks a swing; the attack input itself fires, forced to
     // StrikeDown (the BowDrawback-off classic instant shot - the
@@ -125,10 +138,40 @@ export class PlayerWeapon {
     if (this.machine.isBow) {
       const rise = held && !this._bowHeld;
       this._bowHeld = held;
-      if (rise && machineAttack(this.machine, 'StrikeDown')) return 'StrikeDown';
+      const m = this.machine;
+      if (bowDrawback) {
+        // AUDIT 28 W12 (WeaponManager.cs:341, :353-360): the press DRAWS
+        // (StrikeUp - the machine steps to the hold frame and waits);
+        // drawn and holding, ActivateCenterObject held UN-draws without
+        // an arrow (the >10 s timeout is the machine's own 'undraw'),
+        // and letting the button go RELEASES (StrikeDown).
+        if (m.state === 'StrikeUp' && m.frame === BOW_DRAWN_HOLD_FRAME) {
+          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); return null; }
+          if (!held && machineAttack(m, 'StrikeDown')) return 'StrikeDown';
+          return null;
+        }
+        if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) return 'StrikeUp';
+        return null;
+      }
+      if (rise && machineAttack(m, 'StrikeDown')) return 'StrikeDown';
       return null;
     }
     this._bowHeld = false;
+    // AUDIT 28 W11 (WeaponManager.cs:316-350): WeaponSwingMode 1 is
+    // CLICK to attack, 2 is click OR hold - either way no swing is
+    // tracked; the direction is Random.Range(UpRight, DownRight + 1),
+    // six of MouseDirections' eight. Mode 0 (and every bow, above) is
+    // the tracked gesture.
+    if (swingMode !== 0) {
+      const rise = held && !this._clickHeld;
+      this._clickHeld = held;
+      if (!held) { this._gestureClear(); return null; }
+      if (!(rise || swingMode === 2)) { this._gestureClear(); return null; }
+      const dir = CLICK_ATTACK_DIRECTIONS[Math.floor(rolls() * CLICK_ATTACK_DIRECTIONS.length)];
+      const strike = DIRECTION_TO_STRIKE[dir];
+      return machineAttack(this.machine, strike) ? strike : null;
+    }
+    this._clickHeld = false;
     // Gesture.Clear (:149-154) on release, and on the frame tracking
     // starts (:312, :328 - "Reset tracking if user not holding down").
     if (!held) { this._tracking = false; this._gestureClear(); return null; }
@@ -142,7 +185,12 @@ export class PlayerWeapon {
     // into the one quantity DFU says is not the threshold: drag 60px
     // right then 50px left and DFU swings on a trail of 110 while the
     // port saw 10 and refused.
-    if (this._gtravel / longestDim < ATTACK_THRESHOLD) return null;
+    // AUDIT 28 W11: the gate is the SETTING - StartGameBehaviour :263
+    // writes Settings.WeaponAttackThreshold over WeaponManager's field
+    // default (0.05, weaponStates.ATTACK_THRESHOLD), and the shipped ini
+    // is 0.005. The port gated on the field default: ten times the
+    // travel DFU asks for before a swing fires.
+    if (this._gtravel / longestDim < attackThreshold) return null;
     const angle = Math.atan2(-sum[1], sum[0]) * 180 / Math.PI;   // screen-up positive
     const strike = DIRECTION_TO_STRIKE[gestureDirection(angle)];
     this._gestureClear();

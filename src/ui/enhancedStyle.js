@@ -2104,6 +2104,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; border: 0; background: none; outline: 0;
   overflow: visible; color: rgba(125,116,96,0.6); padding: 2px 0; }
+.pack-shell .wornmap-doll.model img { cursor: ew-resize; image-rendering: auto; object-fit: contain; max-height: 100%; }
 .pack-shell .wornmap-doll.noart { border: 2px solid rgba(125,116,96,0.45);
   background: rgba(0,0,0,0.35); outline: 2px solid rgba(125,116,96,0.25);
   outline-offset: 3px; overflow: hidden; }

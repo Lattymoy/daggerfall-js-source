@@ -6,13 +6,17 @@
 // NiSequenceStreamHelper pairing a NiStringExtraData bone-name chain
 // with a controller chain), and SAMPLE a track at a time.
 //
-// Interpolation, matching the OpenMW reference behavior:
-//   - linear/constant: lerp (slerp for quaternions)
-//   - quadratic: cubic Hermite on the stored forward/backward tangents
-//     (quaternion quadratic keys carry no tangents - slerp)
-//   - TBC: Kochanek-Bartels tangents GENERATED from tension/continuity/
-//     bias, then the same Hermite (quaternions: slerp, the reference's
-//     own approximation)
+// Interpolation, the reference's interpolate() verbatim
+// (nifosg/controller.hpp:135-179):
+//   - linear: lerp (the default case)
+//   - constant: WHICH HALF - `fraction > 0.5f ? b.mValue : a.mValue`,
+//     for quaternions too
+//   - quadratic: cubic Hermite on the stored in/out tangents -
+//     `a.mOutTan * b3 + b.mInTan * b4` (quaternion quadratic keys carry
+//     no tangents - slerp, the default)
+//   - TBC: tangents GENERATED from tension/continuity/bias exactly as
+//     generateTCBTangents (nifkey.hpp:172-204), then the same Hermite
+//     (quaternion TCB is unimplemented in the reference - slerp)
 //   - XYZ: three float tracks composed as rotations about X, Y, Z
 
 import { deref, KEY_TYPE } from './mwNifFile.js';
@@ -162,23 +166,53 @@ function hermite(v0, out0, v1, in1, t) {
 }
 
 /**
- * Kochanek-Bartels outgoing/incoming tangents for key i of a scalar
- * track. With t=c=b=0 this is Catmull-Rom; endpoints use the one-sided
- * difference.
+ * MW-D33: TCB tangents for key i, exactly generateTCBTangents
+ * (nifkey.hpp:172-204) on the per-key coefficients readTCBKey derives
+ * from tension/continuity/bias (nifkey.hpp:165-168):
+ *
+ *   A = (1-t)(1-c)(1+b)   B = (1-t)(1+c)(1-b)
+ *   C = (1-t)(1+c)(1+b)   D = (1-t)(1-c)(1-b)
+ *
+ * FIRST and LAST keys take the half-sum of the one neighbouring delta -
+ * inTan = delta*((A+B)*0.5), outTan = delta*((C+D)*0.5) (:178-182,
+ * :198-203). INTERIOR keys weight by TIME SPAN, not 0.5 - the port had
+ * flattened both sides to 0.5 and lost the asymmetry of unevenly spaced
+ * keys:
+ *
+ *   timeSpan = next.mTime - prev.mTime
+ *   inTan  = (prevDelta*A + nextDelta*B) * ((cur - prev) / timeSpan)
+ *   outTan = (prevDelta*C + nextDelta*D) * ((next - cur) / timeSpan)
+ *
+ * A ZERO span `continue`s (:189-190), leaving the struct's
+ * zero-initialised tangents (mInTan{}/mOutTan{}, nifkey.hpp:38-40) - so
+ * the answer there is 0, not a computed slope. A single-key list also
+ * keeps zero tangents (`keys.size() <= 1`, :174-175).
+ *
+ * @returns {[number, number]} [inTan, outTan]
  */
 function tcbTangents(keys, i, dim, axis) {
   const val = (k) => (dim === 1 ? k.value : k.value[axis]);
+  if (keys.length <= 1) return [0, 0];
+  const [t, c, b] = keys[i].tbc || [0, 0, 0];
+  const A = (1 - t) * (1 - c) * (1 + b);
+  const B = (1 - t) * (1 + c) * (1 - b);
+  const C = (1 - t) * (1 + c) * (1 + b);
+  const D = (1 - t) * (1 - c) * (1 - b);
+  if (i === 0 || i === keys.length - 1) {
+    const delta = i === 0 ? val(keys[1]) - val(keys[0]) : val(keys[i]) - val(keys[i - 1]);
+    return [delta * ((A + B) * 0.5), delta * ((C + D) * 0.5)];
+  }
   const prev = keys[i - 1];
   const cur = keys[i];
   const next = keys[i + 1];
-  const [t, c, b] = cur.tbc || [0, 0, 0];
-  const dPrev = prev ? val(cur) - val(prev) : next ? val(next) - val(cur) : 0;
-  const dNext = next ? val(next) - val(cur) : dPrev;
-  const out =
-    ((1 - t) * (1 + b) * (1 + c) * 0.5) * dPrev + ((1 - t) * (1 - b) * (1 - c) * 0.5) * dNext;
-  const inn =
-    ((1 - t) * (1 + b) * (1 - c) * 0.5) * dPrev + ((1 - t) * (1 - b) * (1 + c) * 0.5) * dNext;
-  return [out, inn];
+  const timeSpan = next.time - prev.time;
+  if (timeSpan === 0) return [0, 0];
+  const prevDelta = val(cur) - val(prev);
+  const nextDelta = val(next) - val(cur);
+  return [
+    (prevDelta * A + nextDelta * B) * ((cur.time - prev.time) / timeSpan),
+    (prevDelta * C + nextDelta * D) * ((next.time - cur.time) / timeSpan),
+  ];
 }
 
 /** Find the key segment bracketing time; returns [i0, i1, u]. */
@@ -201,15 +235,22 @@ function sampleGroup(group, dim, time) {
   const comp = (axis) => {
     const v0 = dim === 1 ? k0.value : k0.value[axis];
     const v1 = dim === 1 ? k1.value : k1.value[axis];
-    if (i0 === i1 || type === KEY_TYPE.constant) return v0;
+    if (i0 === i1) return v0;
+    // MW-D33: Constant answers by WHICH HALF of the segment the playhead
+    // is in - `fraction > 0.5f ? b.mValue : a.mValue` (controller.hpp:
+    // 140-141) - not "always the left key", which the port had.
+    if (type === KEY_TYPE.constant) return u > 0.5 ? v1 : v0;
     if (type === KEY_TYPE.quadratic) {
-      const out0 = dim === 1 ? k0.forward : k0.forward[axis];
-      const in1 = dim === 1 ? k1.backward : k1.backward[axis];
+      // f(t) = a.mValue*b1 + b.mValue*b2 + a.mOutTan*b3 + b.mInTan*b4
+      // (controller.hpp:150-158): the LEFT key's OUT tangent, the RIGHT
+      // key's IN tangent.
+      const out0 = dim === 1 ? k0.outTan : k0.outTan[axis];
+      const in1 = dim === 1 ? k1.inTan : k1.inTan[axis];
       return hermite(v0, out0, v1, in1, u);
     }
     if (type === KEY_TYPE.tbc) {
-      const [out0] = tcbTangents(keys, i0, dim, axis);
-      const [, in1] = tcbTangents(keys, i1, dim, axis);
+      const [, out0] = tcbTangents(keys, i0, dim, axis);
+      const [in1] = tcbTangents(keys, i1, dim, axis);
       return hermite(v0, out0, v1, in1, u);
     }
     return v0 + (v1 - v0) * u;
@@ -298,6 +339,12 @@ function sampleRotation(track, time) {
   if (!keys || !keys.length) return null;
   const [i0, i1, u] = segment(keys, time);
   if (i0 === i1) return keys[i0].value.slice();
+  // MW-D33: the quaternion interpolate (controller.hpp:164-179) knows
+  // exactly two moves - Constant's which-half, and slerp for EVERYTHING
+  // else (quadratic and TCB quats are unimplemented in the reference).
+  if (track.rotationType === KEY_TYPE.constant) {
+    return (u > 0.5 ? keys[i1] : keys[i0]).value.slice();
+  }
   return slerp(keys[i0].value, keys[i1].value, u);
 }
 
@@ -551,8 +598,10 @@ const equalsParts = (s, ...parts) => s === parts.join('');
  *    +Infinity. That default is why a clip with no "loop stop" key plays
  *    once and stops rather than looping: shouldLoop can never fire.
  *  - then the playhead moves to start + (stop - start) * startPoint, and
- *    reset RE-SCANS backwards applying any real "<group>: loop start" /
- *    "loop stop" key AT OR BEFORE it. This third stage is the half rule 49
+ *    reset RE-SCANS backwards from groupend DOWN TO THE START KEY
+ *    (exclusive - animation.cpp:1028-1039) applying any real "<group>:
+ *    loop start" / "loop stop" key AT OR BEFORE the playhead. This
+ *    third stage is the half rule 49
  *    states as unconditional and its own caveat corrects: a resumed clip
  *    can leave reset with a finite loopStopTime even with loopFallback
  *    false. Everything later is discovered by CROSSING, in advanceClip.
@@ -568,9 +617,14 @@ export function resetClip(keys, group, opts = {}) {
   const list = keys ?? [];
   if (!g) return { ok: false, reason: 'no group name given' };
 
+  // The reference's predicate is starts_with(groupname) plus ": " at
+  // exactly groupname.length (animation.cpp:977-981) - a PREFIX test,
+  // not "first colon names the group".
   let groupend = -1;
   for (let i = list.length - 1; i >= 0; i--) {
-    if (textKeyGroup(list[i].text) === g) { groupend = i; break; }
+    if (list[i].text.startsWith(g) && list[i].text.slice(g.length, g.length + 2) === ': ') {
+      groupend = i; break;
+    }
   }
   if (groupend < 0) return { ok: false, reason: `no key of group "${g}" - the file names no such animation` };
 
@@ -615,8 +669,13 @@ export function resetClip(keys, group, opts = {}) {
     nextKey: 0,
   };
 
-  // Reset's THIRD stage: loop keys already behind the playhead.
-  for (let i = groupend; i >= 0; i--) {
+  // Reset's THIRD stage: loop keys already behind the playhead. MW-D33:
+  // the reference walks from groupend and STOPS AT THE START KEY -
+  // `for (; key != startkey && key != keys.rend(); ++key)` (animation.
+  // cpp:1028-1039) - so an EARLIER block of the same group (undeadwolf_2.
+  // nif's doubled walkforward) never leaks its loop keys into this one.
+  // The port had scanned all the way to the front of the file.
+  for (let i = groupend; i > startAt; i--) {
     const k = list[i];
     if (k.time > state.time) continue;
     if (equalsParts(k.text, g, ': loop start')) state.loopStartTime = k.time;

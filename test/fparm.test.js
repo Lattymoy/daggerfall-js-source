@@ -4,9 +4,11 @@ import { readFileSync } from 'node:fs';
 import { parseNif } from '../src/formats/mwNifFile.js';
 import { extractTracks, sampleTrack } from '../src/formats/mwAnim.js';
 import { accumRootRef } from '../src/formats/mwSkin.js';
+import { PART_BONES } from '../src/formats/mwNpc.js';
+import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../src/formats/mwFaceMatch.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, fpSkeletonPath, buildFpArm, createFpArm,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, wornEquipKeyOf,
   FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
   collectArmTextures,
 } from '../src/combat/fpArm.js';
@@ -475,7 +477,12 @@ test('MW-D23: the actor\'s RIGHT lands SCREEN-RIGHT through the pass\'s OWN comp
   // is how MW-D9's fix became MW-D23's bug.
   assert.match(src, /const proj = perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
     'the arm\'s projection is the bare 60-degree lens');
-  assert.ok(!/mirrorProjectionX/.test(src), 'and mirrorProjectionX appears nowhere in the arm');
+  // MW-D34 loosened this from "the word appears nowhere" to "is never
+  // imported or called": drawThird's comment now NAMES the world's
+  // mirror to explain the -u chirality flip, and a comment is not a
+  // lens. The FP pass still must not USE it.
+  assert.ok(!/import[^;]*mirrorProjectionX/.test(src) && !/mirrorProjectionX\(/.test(src),
+    'and mirrorProjectionX is never imported or called in the arm');
 });
 
 test('MW-D9c: EVERY .esm is read, not the first - an expansion first must not empty the arms', async () => {
@@ -1019,13 +1026,16 @@ test('MW-D27: the face is DERIVED - classic faceIndex picks the head and hair, a
     return { head: m.get('head'), hair: m.get('hair'), chest: m.get('chest') };
   };
   // The walk, sorted: heads 01,02,03 then wraps; hairs 01,02 then
-  // wraps. The CHEST stays 02 - the fixture lists it first, and
-  // first-in-file-order is the recorded law for every slot that is
-  // not the face (AUDIT MW-A F2: D27's first cut sorted them all, and
-  // this very line asserted the over-reach back at it).
-  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_02' });
-  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_02' });
-  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_02' });
+  // wraps. The CHEST stays 01 - the fixture lists it LAST, and the
+  // reference's sweep OVERWRITES on every proper match, so the last
+  // record in load order wins (getBodyParts, npcanimation.cpp:1286-1293
+  // - how an expansion overrides a base-game body). The parity audit
+  // caught this pin asserting first-wins; the face law (MW-A F2's
+  // id-sort + index) is untouched, because head and hair are not in
+  // the sweep at all.
+  assert.deepEqual(at(0), { head: 'b_head_01', hair: 'b_hair_01', chest: 'b_chest_01' });
+  assert.deepEqual(at(1), { head: 'b_head_02', hair: 'b_hair_02', chest: 'b_chest_01' });
+  assert.deepEqual(at(2), { head: 'b_head_03', hair: 'b_hair_01', chest: 'b_chest_01' });
   assert.equal(at(3).head, 'b_head_01', 'the index wraps by modulo');
   assert.equal(at(9).hair, 'b_hair_02', 'classic\u2019s full 0..9 range resolves');
   // Sex pools stay separate: a female walks HER two heads, never his three.
@@ -1407,21 +1417,32 @@ test('MW-D27: the faceIndex THREAD is unbroken, swept at the source', () => {
   // at the source, all three links, so a refactor cannot quietly strand
   // the classic face at the door.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex,/,
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch,/,
     'buildFpArm no longer hands the face to the body build');
-  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex \}\)/,
+  assert.match(arm, /playerBodyRows\(parts, race, female, \{ beast, faceIndex, faceMatch \}\)/,
     'the body build no longer hands the face to the picker');
+  // TR2: the menu's inline opts moved into weaponRig's ONE HOME - the
+  // sweep follows the thread there (menu -> buildArmsFor ->
+  // armBuildOptsOf -> fpArm.build), because a sweep of a door that no
+  // longer carries the wire proves nothing.
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /faceIndex: playerEntity\.faceIndex \| 0/,
+  assert.match(menu, /buildArmsFor\(playerEntity\)/,
+    'the card no longer routes the live player through the one home');
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /faceIndex: entity\.faceIndex \| 0/,
     'the live player\u2019s classic face no longer reaches the build');
+  assert.match(rig, /return fpArm\.build\(armBuildOptsOf\(entity\)\)/,
+    'buildArmsFor no longer feeds the opts home to the build');
 });
 
 // ═══ MW-D28: THE ITEM MAP ═══════════════════════════════════════════
 import {
   DF_TO_MW_ARMOR_MATERIAL, DF_ARMOR_ROWS, DECLARED_SPRITE_WEAPONS,
   mwArmorRecords, itemMapCoverage, mwItemReport,
+  ARMO_PART, composeWornArmor, shadowSkinRows, dfWornArmor, dfWornEquipment,
+  MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord, fpWornAdds,
 } from '../src/formats/mwItemMap.js';
-import { armorRecords, raceBeastFlag, pickWeaponRecord } from '../src/formats/mwFirstPerson.js';
+import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools } from '../src/formats/mwFirstPerson.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1434,8 +1455,9 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   const holes = cover.filter((c) => c.kind === 'UNMAPPED');
   assert.deepEqual(holes, [], `unmapped item/material combinations:\n${holes.map((h) => `${h.material} ${h.item}`).join('\n')}`);
   // The space is the REAL space: 19 weapons x 10 materials + 11 armors
-  // x 13 materials, so removing an enum entry cannot shrink the claim.
-  assert.equal(cover.length, 19 * 10 + 11 * 13);
+  // x 13 materials + 76 wearable garment indices (MW-D30), so removing
+  // an enum entry cannot shrink the claim.
+  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76);
   // Declared sprites are present, named, and reasoned.
   const sprites = cover.filter((c) => c.kind === 'sprite');
   assert.ok(sprites.length >= 10, 'the Arrow rows are not declared');
@@ -1552,7 +1574,10 @@ test('AUDIT 29 F1: the derivation is WIRED - beast defaults to the data, the opt
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /beast = null, faceIndex/, 'the option no longer defaults to unresolved');
   assert.match(arm, /if \(beast === null\) \{/, 'the derivation gate is gone');
-  assert.match(arm, /raceBeastFlag\(e\.bytes, race\)/, 'the RACE records are not consulted');
+  // IG2 routed the race scan through the esm walk memo; the rule is
+  // raceBeastFlag's own, read off the memoised map.
+  assert.match(arm, /walk\(e, 'races', raceRecords\)\.get\(raceKey\)/, 'the RACE records are not consulted');
+  assert.match(arm, /if \(rrec && rrec\.radt\) beast = rrec\.beast;/, 'the RADT rule is gone');
   // and the skeleton must resolve AFTER the answer exists.
   const gate = arm.indexOf('if (beast === null) {');
   const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast })');
@@ -1566,4 +1591,1058 @@ test('AUDIT 29 F3: the weapon pick is id-sorted - the archive\u2019s listing ord
   assert.equal(pickWeaponRecord(recs, 0).id, 'chitin_dagger', 'the fallback follows the listing, not the id');
   assert.equal(pickWeaponRecord(recs, 0, 'Daedric').id, 'daedric_dagger', 'the material hit still wins');
   assert.equal(pickWeaponRecord(recs.slice().reverse(), 0).id, 'chitin_dagger', 'two listings, one sword');
+});
+
+// ═══ MW-D29: WORN ARMOR ═════════════════════════════════════════════
+test('MW-D29: the ARMO part references read - INDX opens, BNAM/CNAM name, MODL stays ground', () => {
+  const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+  const sub = (name, payload) => [...enc(name), payload.length & 255, (payload.length >> 8) & 255, 0, 0, ...payload];
+  const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), body.length & 255, (body.length >> 8) & 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+  const z = (s2) => [...enc(s2), 0];
+  const bytes = new Uint8Array([
+    ...rec('ARMO', [
+      sub('NAME', z('iron_gauntlet_right')), sub('MODL', [...enc('a'), 0x5c, ...z('ground.nif')]),
+      sub('INDX', [6]), sub('BNAM', z('B_Iron_GR')), sub('CNAM', z('b_iron_gr_f')),
+      sub('INDX', [8]), sub('BNAM', z('b_iron_wr')),
+    ]),
+  ]);
+  const [a] = armorRecords(bytes);
+  assert.equal(a.model, 'a/ground.nif', 'MODL is still the ground mesh');
+  assert.deepEqual(a.parts, [
+    { part: 6, male: 'b_iron_gr', female: 'b_iron_gr_f' },
+    { part: 8, male: 'b_iron_wr', female: null },
+  ], 'the reference list did not read (ids lowercased, CNAM optional)');
+});
+
+test('MW-D29: the INDX enum is the SIDED 27, not the unsided 15 - spot rows pinned', () => {
+  // Confusing the two enums is this slice\u2019s byte-eight trap.
+  assert.equal(ARMO_PART.length, 27);
+  assert.deepEqual(ARMO_PART[3], { name: 'cuirass', bones: ['chest'], shadows: 'chest' });
+  assert.deepEqual(ARMO_PART[6], { name: 'right hand', bones: ['right hand'], shadows: 'hand:right' });
+  assert.deepEqual(ARMO_PART[23], { name: 'right pauldron', bones: ['right clavicle'], shadows: null });
+  assert.deepEqual(ARMO_PART[10], { name: 'shield', bones: ['shield bone'], shadows: null });
+  assert.equal(ARMO_PART[26].name, 'tail');
+  assert.deepEqual(ARMO_PART[25], { name: 'weapon', bones: [], shadows: null }, 'the weapon row belongs to the weapon door');
+  // every bone this table names for a sided slot is one PART_BONES
+  // already carries - one spelling, or the attach silently misses.
+  for (const row of ARMO_PART) {
+    for (const b of row.bones) {
+      if (b === 'shield bone') continue;
+      assert.ok(Object.values(PART_BONES).some((pair) => pair.includes(b)), `${row.name}: bone "${b}" is not a PART_BONES spelling`);
+    }
+  }
+});
+
+test('MW-D29: the composer dresses, shadows, sexes, and never traps', () => {
+  const armors = [{
+    id: 'iron_gauntlet_right', model: 'g.nif', name: '', enchanted: false,
+    parts: [{ part: 6, male: 'b_gr', female: 'b_gr_f' }, { part: 8, male: 'b_wr', female: null }],
+  }, {
+    id: 'iron_cuirass', model: 'c.nif', name: '', enchanted: false,
+    parts: [{ part: 3, male: 'b_cu', female: null }, { part: 99, male: 'b_zz', female: null }, { part: 13, male: 'b_missing', female: null }],
+  }];
+  const bodyPool = [
+    { id: 'b_gr', model: 'm/gr.nif' }, { id: 'b_gr_f', model: 'm/gr_f.nif' },
+    { id: 'b_wr', model: 'm/wr.nif' }, { id: 'b_cu', model: 'm/cu.nif' },
+  ];
+  const pieces = [{ templateIndex: ARMOR_ENUM.Gauntlets, material: ARMOR_MATERIAL.Iron },
+    { templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron }];
+  const male = composeWornArmor({ pieces, armors, bodyPool, female: false });
+  // the right gauntlet's ref is sided; the WRIST ref rides the same
+  // record; the cuirass adds and shadows the chest whole.
+  // adds emerge in PRT-slot order since the composer became an
+  // arbitration (MW-D30); the LAW is which parts win, not the array's
+  // order, so the pin compares sorted.
+  assert.deepEqual(male.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_gr', 'b_wr']);
+  assert.deepEqual(male.adds.find((a) => a.recordId === 'b_gr').bones, ['right hand']);
+  assert.deepEqual([...male.shadows].sort(), ['chest', 'hand:right', 'wrist:right']);
+  // never-traps, said in words: the out-of-enum INDX and the missing
+  // BODY id are notes, not throws, and the skin stands for them.
+  assert.ok(male.notes.some((n) => /INDX 99/.test(n)));
+  assert.ok(male.notes.some((n) => /b_missing/.test(n)));
+  // the female pick takes CNAM when it exists, BNAM when it does not.
+  const fem = composeWornArmor({ pieces, armors, bodyPool, female: true });
+  assert.deepEqual(fem.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_gr_f', 'b_wr']);
+  // a piece with no MW record at all is one note, no adds.
+  const none = composeWornArmor({ pieces: [{ templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Chain }], armors, bodyPool, female: false });
+  assert.equal(none.adds.length, 0);
+  assert.match(none.notes[0], /classic sprite stands/);
+});
+
+test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the other bone', () => {
+  const rows = [
+    { slot: 'chest', bones: ['chest'], model: 'chest.nif' },
+    { slot: 'hand', bones: ['left hand', 'right hand'], model: 'hand.nif' },
+    { slot: 'foot', bones: ['left foot', 'right foot'], model: 'foot.nif' },
+  ];
+  const out = shadowSkinRows(rows, ['chest', 'hand:right']);
+  assert.deepEqual(out.map((r) => r.slot), ['hand', 'foot'], 'the cuirass did not hide the chest skin');
+  assert.deepEqual(out[0].bones, ['left hand'], 'the right gauntlet did not trim the right skin hand');
+  assert.deepEqual(out[1].bones, ['left foot', 'right foot'], 'an unshadowed slot changed');
+  // both sides shadowed = the row is gone entirely.
+  assert.deepEqual(shadowSkinRows(rows, ['hand:right', 'hand:left']).map((r) => r.slot), ['chest', 'foot']);
+  // and the input was not mutated.
+  assert.deepEqual(rows[1].bones, ['left hand', 'right hand']);
+});
+
+test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf \}\)/);
+  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
+  assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
+  // MW-D31: ONE composition serves both rigs - buildFpArm composes,
+  // the third person receives verdicts, the fp build filters and
+  // shadows from the same result.
+  assert.match(arm, /buildTpBody\(\{ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn,/);
+  assert.match(arm, /for \(const add of fpWornAdds\(worn\.adds\)\)/, 'the fp build does not wear the filtered adds');
+  assert.match(arm, /shadowSkinRows\(\n      wanted\.filter/, 'the fp skin does not take the shadows');
+  // TR2: the worn read lives in weaponRig's opts home now; the menu
+  // reaches it through buildArmsFor (swept in the MW-D27 pin above).
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /armor: dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
+  // and the readout itself: armor slots in, shields from hands, a
+  // sword in a hand refused.
+  const slots = []; slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 2 };
+  slots[19] = { templateIndex: 115, material: 3 };
+  slots[21] = { templateIndex: ARMOR_ENUM.Kite_Shield, material: 4 };
+  const worn = dfWornArmor(slots, { Head: 12, RightArm: 13, LeftArm: 15, ChestArmor: 18, Gloves: 20, LegsArmor: 23, Feet: 26, RightHand: 19, LeftHand: 21 }, ARMOR_ENUM);
+  assert.deepEqual(worn, [
+    { templateIndex: ARMOR_ENUM.Helm, material: 2 },
+    { templateIndex: ARMOR_ENUM.Kite_Shield, material: 4 },
+  ]);
+});
+
+test('AUDIT 30 F1: a helmet hides the hair - the engine rule, not a part reference', () => {
+  // npcanimation.cpp:615 removes PRT_Hair the moment the helmet SLOT
+  // equips, before the armor's refs say anything - so a helm whose
+  // refs cover only the head still never shows hair through the
+  // shell. MUTANT: key the rule off the refs and the head-only helm
+  // leaks hair.
+  const armors = [{
+    id: 'iron_helmet', model: 'g.nif', name: '', enchanted: false,
+    parts: [{ part: 0, male: 'b_helm', female: null }],   // HEAD only, no hair ref
+  }];
+  const bodyPool = [{ id: 'b_helm', model: 'm/helm.nif' }];
+  const worn = composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Iron }],
+    armors, bodyPool, female: false,
+  });
+  assert.ok(worn.shadows.includes('hair'), 'the hair floats through the helm');
+  assert.ok(worn.shadows.includes('head'), 'the head ref itself still shadows');
+  // and a cuirass does NOT invoke the helmet rule.
+  const cuir = composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron }],
+    armors: [{ id: 'iron_cuirass', model: 'g.nif', name: '', enchanted: false, parts: [{ part: 3, male: 'b_helm', female: null }] }],
+    bodyPool, female: false,
+  });
+  assert.ok(!cuir.shadows.includes('hair'));
+});
+
+// ═══ MW-D30: CLOTHING ═══════════════════════════════════════════════
+test('MW-D30: the CLOT reader - type from CTDT, refs like armor, ground mesh stays ground', () => {
+  const enc = (str) => Array.from(str, (c) => c.charCodeAt(0));
+  const sub = (name, payload) => [...enc(name), payload.length & 255, (payload.length >> 8) & 255, 0, 0, ...payload];
+  const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), body.length & 255, (body.length >> 8) & 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
+  const z = (s2) => [...enc(s2), 0];
+  const ctdt = (t) => { const b = new Array(12).fill(0); b[0] = t; return b; };
+  const bytes = new Uint8Array([
+    // type 7 and type 0 on purpose: a reader that hardcodes the common
+    // case (shirt, 2) instead of reading CTDT dies here.
+    ...rec('CLOT', [sub('NAME', z('common_skirt_01')), sub('MODL', [...enc('c'), 0x5c, ...z('skirt.nif')]),
+      sub('CTDT', ctdt(7)), sub('INDX', [5]), sub('BNAM', z('c_m_skirt'))]),
+    ...rec('CLOT', [sub('NAME', z('common_pants_01')), sub('MODL', [...enc('c'), 0x5c, ...z('pants.nif')]),
+      sub('CTDT', ctdt(0)), sub('INDX', [21]), sub('BNAM', z('c_m_pants_ul'))]),
+  ]);
+  const [c, c2] = clothingRecords(bytes);
+  assert.equal(c.type, 7, 'CTDT type did not read');
+  assert.equal(c2.type, 0);
+  assert.equal(c.model, 'c/skirt.nif');
+  assert.deepEqual(c.parts.map((p) => p.part), [5]);
+});
+
+test('MW-D30: garments resolve BY TYPE, id-sorted - the commons dress the street', () => {
+  const C = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false, parts: [{ part: 3, male: 'x', female: null }] });
+  const clothes = [C('expensive_shirt_02', 2), C('common_shirt_02', 2), C('common_pants_01', 0), C('exquisite_shirt_01', 2)];
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt').record.id, 'common_shirt_02', 'the id sort did not put common first');
+  assert.equal(mwClothingRecord(clothes, 'Casual Pants').record.id, 'common_pants_01');
+  assert.match(mwClothingRecord([], 'Vest').note, /classic sprite stands/);
+  assert.equal(mwClothingRecord(clothes, 'Plate Mail').record, null, 'a non-garment resolved');
+  // every wearable index the DB mints has a row - the coverage pin
+  // holds the totality; this holds the judgement calls by name.
+  assert.equal(DF_CLOTHING_ROWS['Casual Cloak'].type, MW_CLOTHING_TYPE.Robe, 'cloaks wear robes - the recorded judgement');
+  assert.equal(DF_CLOTHING_ROWS['Sash'].type, MW_CLOTHING_TYPE.Belt);
+});
+
+test('MW-D30: the priority law - armor beats clothing, the robe beats the cuirass, ties go later', () => {
+  const bodyPool = [
+    { id: 'b_shirt', model: 'm/s.nif' }, { id: 'b_cu', model: 'm/c.nif' },
+    { id: 'b_robe', model: 'm/r.nif' }, { id: 'b_glove', model: 'm/g.nif' },
+  ];
+  const clothes = [
+    { id: 'common_shirt_01', model: 's.nif', name: '', type: 2, enchanted: false, parts: [{ part: 3, male: 'b_shirt', female: null }] },
+    { id: 'common_robe_01', model: 'r.nif', name: '', type: 4, enchanted: false, parts: [{ part: 3, male: 'b_robe', female: null }] },
+  ];
+  const armors = [
+    { id: 'iron_cuirass', model: 'c.nif', name: '', enchanted: false, parts: [{ part: 3, male: 'b_cu', female: null }] },
+  ];
+  const shirt = { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' };
+  const cuirass = { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron };
+  const robe = { kind: 'clothing', templateIndex: 163, name: 'Plain Robes' };
+  // armor beats clothing on the same slot: prio 3 over 2.
+  const a = composeWornArmor({ pieces: [shirt, cuirass], armors, clothes, bodyPool, female: false });
+  assert.deepEqual(a.adds.map((x) => x.recordId), ['b_cu'], 'the cuirass did not beat the shirt');
+  // the robe's base 11 beats the cuirass's 0: prio 24 over 3 - and its
+  // RESERVES hide the legs and arms skin with no refs at all.
+  const b = composeWornArmor({ pieces: [robe, cuirass], armors, clothes, bodyPool, female: false });
+  assert.deepEqual(b.adds.map((x) => x.recordId), ['b_robe'], 'the robe did not beat the cuirass');
+  assert.ok(b.shadows.includes('upperleg:right') && b.shadows.includes('forearm:left'),
+    'the robe reserve did not hide the limbs');
+  // ties go to the LATER piece in the reference order: two garments of
+  // one type cannot happen from DF slots, so prove it with the pieces
+  // that CAN tie - nothing does at different bases - by symmetry:
+  // shirt alone still dresses.
+  const c = composeWornArmor({ pieces: [shirt], armors, clothes, bodyPool, female: false });
+  assert.deepEqual(c.adds.map((x) => x.recordId), ['b_shirt']);
+  // THE +1 ITSELF, swept at the source: in the reference's own walk
+  // order armor always precedes the generic garments, so with a
+  // first-claimant tie rule the armor bit never flips an outcome this
+  // fixture can stage - an equivalent mutant. It stays because it is
+  // the reference's formula (npcanimation.cpp:625-630), and the sweep
+  // keeps a refactor from quietly flattening it into "equivalent
+  // today, wrong the day a garment walks first".
+  const src = readFileSync('src/formats/mwItemMap.js', 'utf8');
+  assert.match(src, /\(\(0 \+ 1\) << 1\) \+ 1;/, 'armor lost its +1');
+  assert.match(src, /\(\(base \+ 1\) << 1\) \+ 0;/, 'clothing lost its +0 formula');
+});
+
+test('MW-D30: the skirt reserve and the readout - garments ride the equip table', () => {
+  const bodyPool = [{ id: 'b_skirt', model: 'm/sk.nif' }, { id: 'b_pants', model: 'm/p.nif' }];
+  const clothes = [
+    { id: 'common_skirt_01', model: 'k.nif', name: '', type: 7, enchanted: false, parts: [{ part: 5, male: 'b_skirt', female: null }] },
+    { id: 'common_pants_01', model: 'p.nif', name: '', type: 0, enchanted: false, parts: [{ part: 21, male: 'b_pants', female: null }] },
+  ];
+  const skirt = { kind: 'clothing', templateIndex: 153, name: 'Short Skirt' };
+  const pants = { kind: 'clothing', templateIndex: 151, name: 'Casual Pants' };
+  // the skirt's base 3 (prio 8) beats pants' 0 (prio 2) on the leg it
+  // reserves: the pants' upper-leg ref loses, the skirt's own part
+  // dresses, and the groin+legs skin hides.
+  const w = composeWornArmor({ pieces: [pants, skirt], armors: [], clothes, bodyPool, female: false });
+  assert.deepEqual(w.adds.map((x) => x.recordId), ['b_skirt'], 'the skirt reserve did not beat the pants');
+  assert.ok(w.shadows.includes('groin') && w.shadows.includes('upperleg:left'));
+  // the readout: clothing slots in, with names; armor unchanged.
+  const slots = []; slots[17] = { templateIndex: 165 }; slots[14] = { templateIndex: 154 };
+  slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 1 };
+  const worn = dfWornEquipment(slots, { Head: 12, RightArm: 13, LeftArm: 15, ChestArmor: 18, Gloves: 20, LegsArmor: 23, Feet: 26, RightHand: 19, LeftHand: 21, ChestClothes: 17, LegsClothes: 24, Cloak1: 14, Cloak2: 16 }, ARMOR_ENUM);
+  assert.deepEqual(worn, [
+    { templateIndex: ARMOR_ENUM.Helm, material: 1, kind: 'armor' },
+    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt', dye: 0 },
+    { kind: 'clothing', templateIndex: 154, name: 'Casual Cloak', dye: 0 },
+  ]);
+});
+
+test('MW-D31: the first person wears gauntlets, sleeves and the shield - never a helmet in your face', () => {
+  const adds = [
+    { slot: 'right hand (iron_gauntlet)', bones: ['right hand'], model: 'g.nif', recordId: 'b_gr' },
+    { slot: 'left upper arm (shirt)', bones: ['left upper arm'], model: 's.nif', recordId: 'b_ua' },
+    { slot: 'shield (iron_shield)', bones: ['shield bone'], model: 'sh.nif', recordId: 'b_sh' },
+    { slot: 'head (iron_helmet)', bones: ['head'], model: 'h.nif', recordId: 'b_h' },
+    { slot: 'cuirass (iron_cuirass)', bones: ['chest'], model: 'c.nif', recordId: 'b_c' },
+    { slot: 'left foot (boots)', bones: ['left foot'], model: 'b.nif', recordId: 'b_f' },
+  ];
+  assert.deepEqual(fpWornAdds(adds).map((a) => a.recordId), ['b_gr', 'b_ua', 'b_sh'],
+    'the fp filter is not the reference\u2019s visible set');
+  assert.deepEqual(fpWornAdds([]), []);
+});
+
+// ═══ MW-D32: THE BODY FOLLOWS THE EQUIP TABLE ═══════════════════════
+test('MW-D32: setWorn is one key compare per frame, and a change rebuilds through the same door', async () => {
+  // Mac's report: clothing does not show on the character. It did not
+  // - D29-D31 dressed the BUILD, and the build ran once, when the card
+  // was pressed. Equipping a cloak afterwards changed nothing on the
+  // rig. The body follows the equip table now, exactly as the weapon
+  // does (MW-D19): weaponRig hands the rig its worn list every frame,
+  // setWorn compares one key, and a change rebuilds with the pieces.
+  assert.equal(wornEquipKeyOf([]), '');
+  assert.equal(wornEquipKeyOf([{ kind: 'armor', templateIndex: 102, material: 3 }, { kind: 'clothing', templateIndex: 154 }]),
+    'armor:102:3:|clothing:154::');
+  // MW-D37: a re-dyed garment is a different Morrowind garment, so it is a change.
+  assert.notEqual(
+    wornEquipKeyOf([{ kind: 'clothing', templateIndex: 165, dye: 2 }]),
+    wornEquipKeyOf([{ kind: 'clothing', templateIndex: 165, dye: 9 }]),
+    'a re-dye must rebuild');
+  assert.notEqual(wornEquipKeyOf([{ templateIndex: 102, material: 3 }]), wornEquipKeyOf([{ templateIndex: 102, material: 4 }]),
+    'a material change must be a key change');
+  // The instance: before a build, setWorn is a no-op that returns
+  // false (nothing to re-dress); after a build, the same list is a
+  // no-op and a NEW list re-enters build() with the pieces.
+  const inst = createFpArm();
+  assert.equal(inst.setWorn([{ kind: 'armor', templateIndex: 102, material: 1 }]), false, 'dressed a rig that was never built');
+  const calls = [];
+  const deps = {
+    loadMorrowindArchives: async () => [],   // refuses at 'data' - the cheapest real build
+    storedMorrowindNames: async () => [],
+    loadMorrowindFile: async () => new Uint8Array(0),
+  };
+  await inst.build({ race: 'nord', armor: [], deps });
+  // a refused build (no archives) is not `built.ok`, so setWorn stays
+  // a no-op - the rig has nothing on it to re-dress. That is the
+  // never-traps shape: no rebuild storm against missing data.
+  assert.equal(inst.setWorn([{ kind: 'armor', templateIndex: 102, material: 1 }]), false);
+  void calls;
+});
+
+test('MW-D32: the per-frame read in weaponRig hands the rig its worn list', () => {
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+    'the game no longer dresses the rig from the equip table');
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /return this\.build\(\{ \.\.\.lastBuildOpts, armor: pieces, weapon: lastBuildOpts\.weapon \}\);/,
+    'setWorn no longer rebuilds through build()');
+  assert.match(arm, /if \(key === wornEquipKey\) return false;/, 'the fast path is gone - every frame would rebuild');
+});
+
+// ═══ MW-D33: the verdicts on the card, the curation table ═══════════
+test('MW-D33: a curated face wins, a missing curated id falls back, and the verdict says which', () => {
+  const P = (id, slot, { female = false } = {}) => ({
+    id, slot, race: 'fprace', female, skin: true, playable: true, firstPerson: false, model: `f/${id}.nif`,
+  });
+  const parts = [P('b_head_01', 'head'), P('b_head_02', 'head'), P('b_head_03', 'head'), P('b_hair_01', 'hair'), P('b_hair_02', 'hair')];
+  const table = { fprace: { male: { 0: { head: 'b_head_03', hair: 'b_hair_02' }, 1: { head: 'b_head_99', hair: 'b_hair_01' } } } };
+  const at = (i, t = table) => {
+    const rows = playerBodyRows(parts, 'fprace', false, { faceIndex: i, faceTable: t });
+    const m = new Map(rows.map((r) => [r.slot, r]));
+    return { head: m.get('head').record.id, hair: m.get('hair').record.id, hv: m.get('head').verdict };
+  };
+  // curated wins over the walk (the walk would give 01/01 at index 0).
+  assert.deepEqual([at(0).head, at(0).hair], ['b_head_03', 'b_hair_02'], 'the curated pair did not win');
+  assert.match(at(0).hv, /curated/);
+  // an id the archives lack falls back to the walk, and SAYS so.
+  assert.equal(at(1).head, 'b_head_02', 'a missing curated id did not fall back to the walk');
+  assert.match(at(1).hv, /derived \(curated "b_head_99" is not in these archives\)/);
+  assert.equal(at(1).hair, 'b_hair_01', 'the valid half of a pair must still apply');
+  // no table entry: the walk, labelled derived.
+  assert.equal(at(2).head, 'b_head_03');
+  assert.match(at(2).hv, /derived$/);
+  // the shipped table is valid JSON and an object (empty until curated).
+  assert.equal(typeof at(0, undefined).head, 'string');
+});
+
+test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or reasoned', () => {
+  const pieces = [
+    { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
+    { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
+  ];
+  const worn = {
+    adds: [{ slot: 'cuirass (iron_cuirass)', bones: ['chest'], model: 'c.nif', recordId: 'b_cu', piece: pieces[0] }],
+    shadows: ['chest'],
+    notes: ['Short Shirt: no MW clothing of type 2 in these archives - the classic sprite stands'],
+  };
+  const v = wornVerdicts(pieces, worn);
+  assert.equal(v.length, 2);
+  assert.deepEqual(v[0].dressed, ['cuirass (iron_cuirass)']);
+  assert.equal(v[0].reason, null);
+  assert.deepEqual(v[1].dressed, []);
+  assert.match(v[1].reason, /classic sprite stands/);
+  // and the wiring: the build carries them, status exposes them, the
+  // card prints them.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /worn: wornVerdicts\(armor \?\? \[\], worn\),/);
+  assert.match(arm, /worn: built && built\.ok \? built\.worn : null,/);
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /armState\.worn/);
+});
+
+// ═══ MW-D35: the face is MATCHED, not walked ════════════════════════
+test('MW-D35: portraitFeatures reads skin, hair, length, beard and baldness off an indexed bitmap', () => {
+  // a synthetic 20x30 portrait: index 0 background, 1 = skin, 2 = hair.
+  // Hair fills the top band and the right side down to the chin; the
+  // chin centre is skin -> long hair, no beard.
+  const W = 20; const H = 30;
+  const data = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (x < 3 || x > 16 || y > 27) continue;               // background frame
+    const hairTop = y < 6; const hairSide = (x < 6 || x > 13) && y < 26;   // both sides, to the jaw
+    data[y * W + x] = (hairTop || hairSide) ? 2 : 1;
+  }
+  const pal = { get: (i) => [{ r: 0, g: 0, b: 0 }, { r: 200, g: 150, b: 120 }, { r: 40, g: 20, b: 10 }][i] };
+  const f = portraitFeatures({ width: W, height: H, data }, pal);
+  assert.deepEqual(f.skin.map((v) => Math.round(v * 255)), [200, 150, 120], 'skin is the face centre');
+  // the top band is a MEAN over hair and forehead - what the matcher
+  // needs is that it lands nearer the hair than the skin.
+  const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  assert.ok(d(f.hair, [40 / 255, 20 / 255, 10 / 255]) < d(f.hair, f.skin), 'the top band did not read as hair');
+  assert.equal(f.bald, false);
+  assert.ok(f.length > 0.3, `long side hair must register as length (${f.length})`);
+  assert.ok(f.beard < 0.15, `a skin chin must not read as a beard (${f.beard})`);
+  // bald: the top band is skin-coloured -> bald, length 0, no beard.
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[y * W + x] === 2) data[y * W + x] = 1;
+  const b = portraitFeatures({ width: W, height: H, data }, pal);
+  assert.equal(b.bald, true);
+  assert.equal(b.length, 0);
+});
+
+test('MW-D35: head and hair features, and the match picks by measured likeness', () => {
+  const tex = (w, h, rgb, opts = {}) => {
+    const rgba = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4;
+      let c = rgb;
+      if (opts.chinDark && y >= h * 0.66 && y < h * 0.9 && x >= w * 0.3 && x < w * 0.7) c = [rgb[0] * 0.3, rgb[1] * 0.3, rgb[2] * 0.3];
+      rgba[o] = c[0]; rgba[o + 1] = c[1]; rgba[o + 2] = c[2]; rgba[o + 3] = opts.alpha ?? 255;
+    }
+    return rgba;
+  };
+  const pale = headFeatures(tex(32, 32, [220, 180, 160]), 32, 32);
+  const dark = headFeatures(tex(32, 32, [90, 60, 40]), 32, 32);
+  const bearded = headFeatures(tex(32, 32, [220, 180, 160], { chinDark: true }), 32, 32);
+  assert.ok(pale.beard < 0.05 && bearded.beard > 0.6, `beard reads off the chin band (${pale.beard} / ${bearded.beard})`);
+  const blondLong = hairFeatures(tex(16, 16, [210, 180, 90]), 16, 16, 30);
+  const blackShort = hairFeatures(tex(16, 16, [20, 20, 25]), 16, 16, 12);
+  const redMid = hairFeatures(tex(16, 16, [120, 40, 20]), 16, 16, 20);
+  assert.deepEqual(blondLong.colour.map((v) => Math.round(v * 255)), [210, 180, 90]);
+  // a dark, bearded, long-black-haired portrait picks the dark bearded head and the black hair.
+  const portrait = { skin: [90 / 255, 60 / 255, 40 / 255], hair: [20 / 255, 20 / 255, 25 / 255], bald: false, length: 0.0, beard: 0.9 };
+  const heads = [{ id: 'pale', f: pale }, { id: 'dark', f: dark }, { id: 'bearded_pale', f: bearded }, { id: 'unmeasured', f: null }];
+  const hairs = [{ id: 'blond_long', f: blondLong }, { id: 'black_short', f: blackShort }, { id: 'red_mid', f: redMid }];
+  const m = matchFace(portrait, heads, hairs, { female: false });
+  assert.equal(m.head, 'dark', 'skin tone must dominate the head pick');
+  assert.equal(m.hair, 'black_short', 'colour and shortness must pick the black short hair');
+  assert.ok(m.reasons.some((r) => /unmeasured: no texture/.test(r)), 'an unmeasured candidate is named');
+  // the female flag drops the beard term: a beardless portrait no longer prefers the beardless pale head over its own tone.
+  const fem = matchFace({ ...portrait, beard: 0 }, heads, hairs, { female: true });
+  assert.equal(fem.head, 'dark');
+  // a bald portrait takes the shortest hair regardless of colour.
+  const bald = matchFace({ ...portrait, bald: true, length: 0 }, heads, hairs);
+  assert.equal(bald.hair, 'black_short');
+  // nothing measurable -> nulls, and the walk stands.
+  assert.deepEqual(matchFace(null, heads, hairs).head, null);
+});
+
+test('MW-D35: precedence - curated over matched over the walk, and the wiring', () => {
+  const P = (id, slot) => ({ id, slot, race: 'fprace', female: false, skin: true, playable: true, firstPerson: false, model: `f/${id}.nif` });
+  const parts = [P('b_head_01', 'head'), P('b_head_02', 'head'), P('b_head_03', 'head'), P('b_hair_01', 'hair'), P('b_hair_02', 'hair')];
+  const rows = (o) => new Map(playerBodyRows(parts, 'fprace', false, { faceIndex: 0, faceTable: {}, ...o }).map((r) => [r.slot, r]));
+  const m = rows({ faceMatch: { head: 'b_head_02', hair: 'b_hair_02' } });
+  assert.equal(m.get('head').record.id, 'b_head_02', 'the match did not beat the walk');
+  assert.match(m.get('head').verdict, /matched to the portrait/);
+  const c = rows({ faceMatch: { head: 'b_head_02', hair: 'b_hair_02' }, faceTable: { fprace: { male: { 0: { head: 'b_head_03' } } } } });
+  assert.equal(c.get('head').record.id, 'b_head_03', 'curation did not beat the match');
+  assert.equal(c.get('hair').record.id, 'b_hair_02', 'the unmatched-by-table half still takes the match');
+  const half = rows({ faceMatch: { head: null, hair: 'b_hair_99' } });
+  assert.equal(half.get('head').record.id, 'b_head_01', 'a null half must walk');
+  assert.equal(half.get('hair').record.id, 'b_hair_01', 'a matched id the archives lack must walk');
+  // facePools is the same law the walk uses.
+  assert.deepEqual(facePools(parts, 'fprace', false).heads.map((p) => p.id), ['b_head_01', 'b_head_02', 'b_head_03']);
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /await matchFaceFor\(\{ race, female, faceIndex, parts, archives, deps: d \}\)/);
+  assert.match(arm, /face: faceMatch,/);
+  assert.match(readFileSync('src/scenes/dataSource.js', 'utf8'), /export const fetchArena2Bytes/);
+});
+
+// ── MW-D31: SKINNING BROUGHT TO 1:1 ─────────────────────────────────
+
+import { skinBatch, buildSkeleton as bSkel } from '../src/formats/mwSkin.js';
+
+test('MW-D31: the skin transform applies ONCE, after the blend - unnormalised weights prove it', () => {
+  // riggeometry.cpp:172-204: resultMat sums ONLY invBind*boneInSkel
+  // (W column pinned), then `resultMat *= transform` once. Folding the
+  // transform into each bone term multiplies its translation by the
+  // WEIGHT SUM - and rule 39 forbids renormalising, so a half-weighted
+  // vertex slid halfway to the origin.
+  const batch = {
+    positions: new Float32Array([0, 0, 0]),
+    normals: null,
+    skin: {
+      transform: { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], translation: [2, 0, 0], scale: 1 },
+      shapeTransform: null,
+      skeletonRoot: -1,
+      rootBone: -1,
+      bones: [{ ref: 7, indices: new Uint16Array([0]), weights: new Float32Array([0.5]),
+        invBind: { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] } }],
+    },
+  };
+  const skelMats = { get: () => ({ a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] }) };
+  const out = new Float32Array(3);
+  skinBatch(batch, null, null, skelMats, out, null);
+  // reference: v' = transform.a * (0.5*I * v) + transform.t = (2,0,0).
+  // the folded-per-bone wrong answer is 0.5*(2,0,0) = (1,0,0).
+  assert.ok(Math.abs(out[0] - 2) < 1e-6, `translation applied once, not weight-scaled (${out[0]})`);
+});
+
+test('MW-D31: the hair slot filters geometry on "hair", not on its attach bone', async () => {
+  // npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ? "hair" :
+  // bonename`. Byte-patch armhand's "Tri Left Hand" to the same-length
+  // "Tri Hairstyle": the hair slot must take it AT a bone whose name
+  // matches nothing in the file.
+  const bytes = f('armhand.nif');
+  const from = [...'Tri Left Hand'].map((c) => c.charCodeAt(0));
+  const to = [...'Tri Hairstyle'].map((c) => c.charCodeAt(0));
+  const patched = bytes.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hair', bones: ['left hand'], bytes: patched }],
+  });
+  const hair = asm.pieces.filter((p) => p.slot === 'hair');
+  assert.equal(hair.length, 1, `the "hair"-named shape bound at the head-stand-in bone (${hair.length})`);
+  // and the same file under a NON-hair slot at the same bone binds
+  // NOTHING - the bone-name filter matches neither remaining shape.
+  const asm2 = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'chest', bones: ['left hand'], bytes: patched }],
+  });
+  assert.equal(asm2.pieces.filter((p) => p.slot === 'chest' && p.kind === 'skinned').length, 0,
+    'every other slot still filters on its bone name');
+});
+
+test('MW-D31: one skinned shape makes the FILE a rig - its unskinned shapes never take the rigid path', async () => {
+  // node.cpp:275-276 (one skin sets mUseSkinning for the file) and
+  // attach.cpp:42-46 (CopyRigVisitor seeds ONLY RigGeometry - `if
+  // (!isRig) return;`). armmixed.nif is the mixed file: a skinned hand
+  // plus an unskinned "Trim".
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: f('armskel.nif'),
+    parts: [{ slot: 'hand', bones: ['right hand'], bytes: f('armmixed.nif') }],
+  });
+  assert.equal(asm.pieces.filter((p) => p.kind === 'rigid').length, 0,
+    'no rigid piece out of a RIG file');
+  assert.ok(asm.notes.some((n) => /RIG file are not/.test(n)),
+    `the drop is a NOTE, not a silence (${asm.notes.join(' | ')})`);
+  assert.equal(asm.pieces.filter((p) => p.kind === 'skinned').length, 1, 'the skinned hand still binds');
+});
+
+test('MW-D31 rule 13: the mirror reads the RESOLVED node\'s own name, case-sensitively', async () => {
+  // attach.cpp:166 - `attachNode->getName().find("Left") != npos` on the
+  // node the skeleton actually carries, not the requested lowercase
+  // table entry. Byte-patch armskel's "Left Hand" to "LEFT HAND": the
+  // reference does NOT mirror there.
+  const skel = f('armskel.nif');
+  const from = [...'Left Hand'].map((c) => c.charCodeAt(0));
+  const to = [...'LEFT HAND'].map((c) => c.charCodeAt(0));
+  const patched = skel.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const asm = await assembleFirstPersonArm({
+    skeletonBytes: patched,
+    parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
+  });
+  const rigid = asm.pieces.find((p) => p.kind === 'rigid');
+  assert.ok(rigid, 'the rigid cuff bound at the all-caps bone');
+  assert.equal(rigid.mirrored, false,
+    '"LEFT HAND" does not contain "Left" - the reference\'s test is case-sensitive on the node name');
+  // and the unpatched skeleton still mirrors
+  const asm2 = await assembleFirstPersonArm({
+    skeletonBytes: skel,
+    parts: [{ slot: 'upperarm', bones: ['left hand'], bytes: f('armcuff.nif') }],
+  });
+  assert.equal(asm2.pieces.find((p) => p.kind === 'rigid').mirrored, true, 'the real "Left Hand" node mirrors');
+});
+
+// ── MW-D32: BODY-PART RESOLUTION BROUGHT TO GETBODYPARTS-WHOLE ──────
+
+import { resolveBodyParts, raceRecords } from '../src/formats/mwFirstPerson.js';
+import { indexSkins, assembleNpc } from '../src/formats/mwNpc.js';
+import { resolveWeaponParts } from '../src/combat/fpArm.js';
+
+test('MW-D32: the sweep is getBodyParts whole - last wins, filters exact, FP hand ladder', () => {
+  const P = (id, slot, o = {}) => ({ id, slot, race: 'fprace', female: false, skin: true,
+    playable: true, firstPerson: /1st$/.test(id), model: `f/${id}.nif`, ...o });
+  const parts = [
+    P('b_chest_base', 'chest'),
+    P('b_chest_expansion', 'chest'),          // LAST in load order WINS (:1286-1293)
+    P('b_chest_np', 'chest', { playable: false }),   // BPF_NotPlayable skipped (:1208)
+    P('b_chest_cloth', 'chest', { skin: false }),    // MT_Skin only (:1210)
+    P('b_neck_m', 'neck'),
+    P('b_clav', 'clavicle'),                   // sBodyPartMap never maps it
+    P('b_hand_m3p', 'hand'),
+    P('b_hand_f3p', 'hand', { female: true }),
+  ];
+  const tp = resolveBodyParts(parts, 'fprace', false, { firstPerson: false });
+  assert.equal(tp.get('chest').id, 'b_chest_expansion', 'the LAST proper record wins - expansions override');
+  assert.equal(tp.get('clavicle'), undefined, 'clavicle never resolves');
+  // female: her record wins where it exists, male fills where not (:1261-1280)
+  const tpF = resolveBodyParts(parts, 'fprace', true, { firstPerson: false });
+  assert.equal(tpF.get('hand').id, 'b_hand_f3p');
+  assert.equal(tpF.get('neck').id, 'b_neck_m', 'male fallback fills an empty female slot');
+  // FIRST PERSON: a hand slot without a .1st record falls back to the
+  // 3P skin (:1232-1254); a NON-hand slot does not (:1258).
+  const fp = resolveBodyParts(parts, 'fprace', false, { firstPerson: true });
+  assert.equal(fp.get('hand').id, 'b_hand_m3p', 'the arm slots fall back to third-person skins');
+  assert.equal(fp.get('chest'), undefined, 'a non-hand slot takes its own view only');
+});
+
+test('MW-D32: indexSkins filters playable, NOT vampire - the reference sweep never had a vampire test', () => {
+  // getBodyParts (npcanimation.cpp:1206-1214) filters BPF_NotPlayable
+  // and MT_Skin; there is no vampire condition in the sweep.
+  const B = (id, part, o = {}) => [id, { id, kind: 0, vampire: 0, part, female: false, playable: true, race: 'r', model: `${id}.nif`, ...o }];
+  const bodies = new Map([
+    B('chest_vamp', 3, { vampire: 1 }),
+    B('chest_np', 3, { playable: false }),
+  ]);
+  const idx = indexSkins(bodies);
+  const slots = idx.get('r');
+  assert.ok(slots && slots.get(3), 'the vampire-flagged skin IS swept');
+  assert.equal(slots.get(3).male.id, 'chest_vamp');
+  // and the not-playable one is not
+  assert.ok(!Object.values(slots.get(3)).some((b) => b && b.id === 'chest_np'), 'NotPlayable is filtered');
+});
+
+test('MW-D32: assembleNpc picks the FEMALE skeleton column', () => {
+  // getActorSkeleton (actorutil.cpp): beast > female > male, and the
+  // female column was silently missing.
+  const esm = {
+    npcs: new Map([['f', { id: 'f', name: 'F', race: 'r', female: true, head: null, hair: null, model: null }],
+      ['m', { id: 'm', name: 'M', race: 'r', female: false, head: null, hair: null, model: null }]]),
+    races: new Map([['r', { name: 'R', beast: false }]]),
+    bodies: new Map(),
+  };
+  assert.equal(assembleNpc(esm, 'f').animFile, 'meshes\\base_anim_female.nif');
+  assert.equal(assembleNpc(esm, 'm').animFile, 'meshes\\base_anim.nif');
+});
+
+test('MW-D32: the typed weapon bone is used only when the rig CARRIES it', async () => {
+  // npcanimation.cpp:787-795 - bonename starts as sPartList's "Weapon
+  // Bone" and becomes mAttachBone only `if (found != nodeMap.end())`.
+  const skel = f('armfp.nif');
+  const from = [...'Weapon Bone Left'].map((c) => c.charCodeAt(0));
+  const to = [...'Weapon Bone XLft'].map((c) => c.charCodeAt(0));
+  const patched = skel.slice();
+  outer: for (let i = 0; i < patched.length - from.length; i++) {
+    for (let j = 0; j < from.length; j++) if (patched[i + j] !== from[j]) continue outer;
+    patched.set(to, i);
+    break;
+  }
+  const blade = f('weapon.nif');
+  const find = () => ({ get: () => blade });
+  const bowRec = { id: 'bow', name: 'Bow', model: 'w/b.nif', type: 9, enchanted: false, speed: 1 };
+  // MarksmanBow (9) types to "Weapon Bone Left"; the patched rig lacks
+  // it, so the resolve lands on the generic bone instead of dropping.
+  const r = resolveWeaponParts({ weapon: { templateIndex: 130 }, allWeapons: [bowRec], find, skeletonBytes: patched });
+  assert.ok(r.weaponInfo, 'the bow still resolves');
+  assert.equal(r.weaponInfo.bone, 'Weapon Bone', 'fallback to the generic bone the rig has');
+  // and the unpatched rig keeps the typed bone
+  const r2 = resolveWeaponParts({ weapon: { templateIndex: 130 }, allWeapons: [bowRec], find, skeletonBytes: skel });
+  assert.equal(r2.weaponInfo.bone, 'Weapon Bone Left');
+});
+
+test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flags at 136', () => {
+  // loadrace.hpp:50-70. Values planted distinct so an off-by-four
+  // reader answers the wrong field and dies.
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const radt = new Uint8Array(140);
+  const dv = new DataView(radt.buffer);
+  dv.setFloat32(120, 1.05, true);   // male height
+  dv.setFloat32(124, 0.95, true);   // female height
+  dv.setFloat32(128, 1.1, true);    // male weight
+  dv.setFloat32(132, 0.9, true);    // female weight
+  dv.setInt32(136, 3, true);        // playable | beast
+  const d = [...sub('NAME', Z('argonian')), ...sub('RADT', [...radt])];
+  const rec = Uint8Array.from([...A('RACE'), ...U(d.length), ...U(0), ...U(0), ...d]);
+  const races = raceRecords(rec);
+  const r = races.get('argonian');
+  assert.ok(r && r.beast && r.playable);
+  assert.ok(Math.abs(r.height[0] - 1.05) < 1e-6 && Math.abs(r.height[1] - 0.95) < 1e-6);
+  assert.ok(Math.abs(r.weight[0] - 1.1) < 1e-6 && Math.abs(r.weight[1] - 0.9) < 1e-6);
+});
+
+// --- MW-D34: render and scale ----------------------------------------------
+
+test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
+  // MEASURED through the real composite (mwArmProbe L5b): the 3P body
+  // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
+  // the port's world convention is left-handed (motor.js:573 - the
+  // player's right is +X at yaw 0), so a right-handed NIF actor placed
+  // with a pure rotation reads MIRRORED on screen. The -u on the local
+  // side axis is the same basis adaptation the mirror gives every
+  // Daggerfall asset; rs is adjustScale (npc.cpp:1124-1135) - x,y take
+  // WEIGHT, z HEIGHT, and in this frame local y is the MW vertical.
+  const src = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
+  assert.match(src, /trs\(feet\[0\], feet\[1\], feet\[2\], 0, yawDeg, 0, -u \* rs\.weight, u \* rs\.height, u \* rs\.weight\)/,
+    'the flip and the scale live in the model matrix');
+  assert.match(src, /halfH = \(\(maxZ - minZ\) \* u \* rs\.height\) \/ 2/,
+    'the sprite box grows with the height');
+  assert.match(src, /halfW = \(Math\.hypot\(maxX - minX, maxY - minY\) \* u \* rs\.weight\) \/ 2/,
+    'and with the weight');
+});
+
+test('MW-D34: textures decode BY EXTENSION - a TGA is not a failed DDS', async () => {
+  const { decodeTga, decodeBmp, decodeTextureImage } = await import('../src/formats/mwTexture.js');
+  // The ladder legitimately answers the AUTHORED .tga/.bmp when the
+  // .dds probe misses (resourcehelpers.cpp:112-114), and the reference
+  // decodes that path by its extension with the non-standard "targa"
+  // aliased to "tga" (imagemanager.cpp:104-110).
+  //
+  // A 2x1 uncompressed 24-bit TGA, TOP-origin (descriptor bit 5):
+  // red then blue, stored BGR.
+  const tgaTop = Uint8Array.from([
+    0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20,
+    0, 0, 255, /* red */ 255, 0, 0, /* blue */
+  ]);
+  const top = decodeTga(tgaTop);
+  assert.deepEqual([top.width, top.height], [2, 1]);
+  assert.deepEqual([...top.mips[0].rgba], [255, 0, 0, 255, 0, 0, 255, 255], 'BGR swizzled, top row first');
+  // The SAME pixels 1x2 BOTTOM-origin (descriptor 0): the file's first
+  // row is the image's BOTTOM row, so red ends up at y=1.
+  const tgaBottom = Uint8Array.from([
+    0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 24, 0x00,
+    0, 0, 255, 255, 0, 0,
+  ]);
+  const bot = decodeTga(tgaBottom);
+  assert.deepEqual([...bot.mips[0].rgba], [0, 0, 255, 255, 255, 0, 0, 255],
+    'bottom-up storage flips: file-first red lands on the BOTTOM row, so blue reads back first');
+  // RLE (type 10): one run packet covers both pixels.
+  const tgaRle = Uint8Array.from([
+    0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20,
+    0x81, 0, 255, 0, /* run of 2, green */
+  ]);
+  assert.deepEqual([...decodeTga(tgaRle).mips[0].rgba], [0, 255, 0, 255, 0, 255, 0, 255]);
+  // BMP: 1x2 24-bit, positive height = bottom-up, rows padded to 4
+  // bytes (3 -> 4). File rows: green (bottom), then red (top).
+  const bmp = Uint8Array.from([
+    0x42, 0x4d, ...[62, 0, 0, 0], 0, 0, 0, 0, ...[54, 0, 0, 0],
+    ...[40, 0, 0, 0], ...[1, 0, 0, 0], ...[2, 0, 0, 0], 1, 0, 24, 0,
+    ...[0, 0, 0, 0], ...new Array(20).fill(0),
+    0, 255, 0, 0, /* green + pad */ 0, 0, 255, 0, /* red + pad */
+  ]);
+  const b = decodeBmp(bmp);
+  assert.deepEqual([b.width, b.height], [1, 2]);
+  assert.deepEqual([...b.mips[0].rgba], [255, 0, 0, 255, 0, 255, 0, 255],
+    'bottom-up: the file\'s SECOND row (red) is the image\'s top');
+  // The router: extension picks the decoder, "targa" aliases, unknown
+  // extensions refuse (the caller turns that into the warning image).
+  assert.deepEqual(decodeTextureImage('textures/a.TGA', tgaTop).mips[0].rgba.length, 8);
+  assert.deepEqual(decodeTextureImage('textures/a.targa', tgaTop).mips[0].rgba.length, 8);
+  assert.throws(() => decodeTextureImage('textures/a.dds', tgaTop), /decodeDds/,
+    'a .dds path takes the DDS decoder, which refuses these bytes as its own error');
+  assert.throws(() => decodeTextureImage('textures/a.gif', tgaTop), /no decoder/);
+});
+
+// ═══ AUDIT 32: the deep audit's findings, pinned ════════════════════
+test('AUDIT 32 F1: the head is sampled through its own mesh - the texture layout is never assumed', () => {
+  // A texture whose CENTRE band is dark (hair, say) and whose skin
+  // lives in the top-left quarter - a layout the band read gets wrong.
+  const w = 32; const h = 32; const rgba = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const o = (y * w + x) * 4;
+    const skin = x < 8 && y < 8;                // a corner the band never reads
+    const c = skin ? [210, 160, 130] : [30, 20, 15];
+    rgba[o] = c[0]; rgba[o + 1] = c[1]; rgba[o + 2] = c[2]; rgba[o + 3] = 255;
+  }
+  // A head mesh: front vertices (high y) at cheek height point their UVs
+  // into the skin quarter; back vertices point into the dark region.
+  const pos = []; const uvs = [];
+  const put = (x, y, z, u, v) => { pos.push(x, y, z); uvs.push(u, v); };
+  for (let i = 0; i < 20; i++) {
+    put(0, 10, 5 + (i % 5), 0.1, 0.1);        // front cheeks -> skin texels
+    put(0, -10, 5 + (i % 5), 0.75, 0.75);     // back of the skull -> dark texels
+  }
+  put(0, 10, 0, 0.75, 0.75); put(0, 10, 0.5, 0.75, 0.75);   // chin, front, dark -> bearded
+  const geom = [{ positions: Float32Array.from(pos), uvs: Float32Array.from(uvs) }];
+  const f = headFeatures(rgba, w, h, geom);
+  assert.equal(f.via, 'mesh');
+  assert.deepEqual(f.skin.map((v) => Math.round(v * 255)), [210, 160, 130], 'the face was not sampled through the front UVs');
+  assert.ok(f.beard > 0.6, `a dark chin must read as a beard (${f.beard})`);
+  // the band read would have called the skin dark - and it is what
+  // stands when a mesh carries no UVs, named as such.
+  const b = headFeatures(rgba, w, h, [{ positions: Float32Array.from(pos), uvs: null }]);
+  assert.equal(b.via, 'band');
+  assert.ok(b.skin[0] < 0.3, 'the band read on this layout must be wrong - that is the point');
+});
+
+test('AUDIT 32 F2/F3: the match is memoised per identity and generation, and a miss is not', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /const fkey = `\$\{gen\}:\$\{race\}:\$\{female \? 'f' : 'm'\}:\$\{faceIndex \| 0\}`;/,
+    'the face cache key lost the identity or the generation');
+  assert.match(arm, /faceMatch = FACE_MATCH_CACHE\.get\(fkey\);/);
+  assert.match(arm, /if \(faceMatch\.head \|\| faceMatch\.hair\) FACE_MATCH_CACHE\.set\(fkey, faceMatch\);/,
+    'a missed portrait must not be memoised for the session');
+  assert.match(arm, /headFeatures\(m0\.rgba, m0\.width, m0\.height, batches\.map/,
+    'the head is not measured through its mesh');
+});
+
+// ═══ MW-D36: the model stands where the doll stood (enhanced only) ══
+test('MW-D36: figure() is null without a body, subscribe() fires on settlement and unsubscribes', async () => {
+  const arm = createFpArm();
+  assert.equal(arm.figure(), null, 'no body, no figure - the classic doll stands');
+  let fired = 0;
+  const off = arm.subscribe(() => { fired++; });
+  // a refused build settles too: the deps door answers no archives.
+  await arm.build({ race: 'nord', deps: { loadMorrowindArchives: async () => [] } });
+  assert.equal(fired, 1, 'a settled build must notify the panel');
+  arm.unload();
+  assert.equal(fired, 2, 'an unload must notify the panel');
+  off();
+  arm.unload();
+  assert.equal(fired, 2, 'unsubscribed listeners must not fire');
+});
+
+test('MW-D36: the pack takes the model only when it stands, and never lets the model unequip', () => {
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const figureUrl = modelFigureUrl\(\);/);
+  assert.match(pack, /const dollUrl = figureUrl \|\| paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/,
+    'the classic doll must remain the fallback');
+  assert.match(pack, /if \(figureUrl\) attachFigureTurn\(img\);/, 'the model must turn by drag');
+  // display only: the model's image gets NO click-to-unequip handler.
+  const turn = pack.slice(pack.indexOf('function attachFigureTurn'), pack.indexOf('function attachFigureTurn') + 900);
+  assert.ok(!/takeOff|slotAtPaperDoll|onclick/.test(turn), 'the model must not unequip on click (Mac: unequip stays with the list)');
+  assert.match(pack, /_unsubscribeFigure = d\.fpArm\.subscribe\(/, 'the pack must repaint when a build settles');
+  assert.match(pack, /_unsubscribeFigure\?\.\(\); _unsubscribeFigure = null;/, 'the subscription must have an owner');
+  // enhanced only: the door that hands over the arm module is the enhanced door.
+  const door = readFileSync('src/ui/inventoryDoor.js', 'utf8');
+  assert.match(door, /fpArm: armMod\?\.fpArm \?\? null/);
+  const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
+  assert.ok(!/fpArm|figure\(/.test(classic), 'the classic inventory must not know the model exists');
+  const rend = readFileSync('src/render/renderer.js', 'utf8');
+  assert.match(rend, /renderCharacterSpriteImage\(mesh, modelMatrix, proj, view, pw, ph\)/);
+  assert.match(rend, /out\.set\(raw\.subarray\(y \* pw \* 4, \(y \+ 1\) \* pw \* 4\), \(ph - 1 - y\) \* pw \* 4\);/, 'GL rows must flip on the way out');
+});
+
+test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quantised yaw', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1400);
+  // F1: the inventory opens from first person; the figure must not
+  // demand the wheel's view mode or a mesh only the wheel uploads.
+  assert.ok(!/thirdActive\(\)/.test(fig), 'the figure gates on the wheel being active');
+  assert.match(fig, /if \(!\(built && built\.ok && thirdBuilt && thirdBuilt\.ok && renderer\)\) return null;/);
+  assert.match(fig, /uploadThirdMesh\(t\);/, 'the figure does not upload through the one helper');
+  // one upload for both consumers: the wheel's update path uses the same helper.
+  assert.equal((arm.match(/uploadThirdMesh\(t\);/g) || []).length, 2, 'the upload has two callers and one body');
+  assert.equal((arm.match(/renderer\.createCharacterMesh\(thirdPacked\.packed/g) || []).length, 1, 'a second third-mesh upload is growing');
+  // F2: the pack quantises the yaw before it asks.
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const yaw = Math\.round\(_figureYaw \/ 0\.1\) \* 0\.1;/);
+  assert.match(pack, /armMod\.figure\(\{ yaw, height: 384 \}\)/);
+});
+
+// ═══ IG1-IG3: MAC'S IN-GAME NOTES (2026-08-31) ══════════════════════
+
+test('IG3: the SHIELD wears getShieldMesh\'s whole ladder - body part, hard refusal, ground fallback', () => {
+  // actoranimation.cpp:108-139. A shield is the ONE worn piece whose
+  // ladder may end at the item's own ground mesh; the composer's
+  // generic "the ground mesh is not a body" refusal is right for every
+  // other slot and was exactly why no equipped shield ever appeared.
+  const bodyPool = [
+    { id: 'b_shield_arm', model: 'a/sh.nif', bodyKind: 2 },
+    { id: 'b_shield_cloth', model: 'a/shc.nif', bodyKind: 1 },
+    { id: 'b_shield_f', model: 'a/shf.nif', bodyKind: 2 },
+  ];
+  const worn = (armo, female = false) => composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Kite_Shield, material: ARMOR_MATERIAL.Iron }],
+    armors: [armo], bodyPool, female,
+  });
+  // 1. A PRT_Shield ref naming an MT_Armor body: the body's model wins.
+  const viaBody = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: 'b_shield_arm', female: null }] });
+  assert.equal(viaBody.adds.length, 1);
+  assert.equal(viaBody.adds[0].model, 'a/sh.nif');
+  assert.deepEqual(viaBody.adds[0].bones, ['shield bone']);
+  // 2. NO shield ref at all: the GROUND MODEL - the reference's own
+  //    fallback (`return shield.getClass().getCorrectedModel(shield)`).
+  const viaGround = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false, parts: [] });
+  assert.equal(viaGround.adds.length, 1);
+  assert.equal(viaGround.adds[0].model, 'g/ground.nif');
+  assert.match(viaGround.adds[0].slot, /ground mesh/, 'and the row says so');
+  // 3. THE HARD GATE: a NAMED body that is missing, or not MT_Armor,
+  //    answers EMPTY - the slot reserves INVISIBLE by law, never the
+  //    ground mesh (getShieldMesh returns an empty path there).
+  const missing = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: 'b_gone', female: null }] });
+  assert.equal(missing.adds.length, 0, 'missing body: reserved empty, NOT the ground fallback');
+  assert.ok(missing.notes.some((n) => /reserves EMPTY/.test(n)));
+  const wrongKind = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: 'b_shield_cloth', female: null }] });
+  assert.equal(wrongKind.adds.length, 0, 'a non-armor body part is the same refusal');
+  // 4. THE SEXED PICK has NO male-to-female fallback (`female &&
+  //    !mFemale.empty() ? mFemale : mMale`): a male facing a female-only
+  //    ref has NO name, and an unnamed ref walks on to the ground.
+  const femOnly = { id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: null, female: 'b_shield_f' }] };
+  assert.equal(worn(femOnly, false).adds[0].model, 'g/ground.nif', 'a man ignores the female-only ref');
+  assert.equal(worn(femOnly, true).adds[0].model, 'a/shf.nif', 'a woman takes it');
+});
+
+test('IG1: the first-person offset hits the lens twice and the neck once, and the bob rides it', () => {
+  // calculateFirstPersonPosition adds the offset ON TOP of the tracked
+  // camera bone (camera.cpp:149-157), which already moved once with
+  // the neck (npcanimation.cpp:723) - that double-vs-single is why the
+  // arms visibly sink when you sneak and bob when you walk
+  // (head_bobbing.lua:57 drives the same setFirstPersonOffset channel).
+  // The moving picture is mwArmProbe L5c/L5d; these sweep the wiring.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /eye\[0\] \+= fpOffset\[0\];\s*\n\s*eye\[1\] \+= fpOffset\[2\];\s*\n\s*eye\[2\] -= fpOffset\[1\];/,
+    'the lens takes the offset again, MW z to pass up');
+  assert.match(arm, /const bobZ = cam && cam\.bob \? \(cam\.bob\[1\] \|\| 0\) \* MW_UNITS_PER_METER : 0;/,
+    'the bob\'s vertical joins the channel in MW units');
+  assert.match(arm, /fpOffset = \[sneak\[0\], sneak\[1\], sneak\[2\] \+ bobZ\];/,
+    'sneak and bob compose into the ONE vector the neck takes');
+  // ...and every bobbing host feeds the dep (the four-hosts law).
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    assert.match(readFileSync(host, 'utf8'), /bob: \[0, player\.bobOffset \? player\.bobOffset\[1\] : 0\]/,
+      `${host} hands the bob's vertical to the arm`);
+  }
+  assert.match(readFileSync('src/scenes/dungeonContext.js', 'utf8'), /bob: \[0, _fpBobY\]/,
+    'the dungeon context latches it with the eye and the pitch');
+});
+
+test('IG2: the swap caches - archives resident per generation, the memos gated on a REAL generation', () => {
+  // Every equip change rebuilds the arms; every rebuild used to re-read
+  // and re-index every .bsa out of IndexedDB - seconds per swap.
+  const ds = readFileSync('src/scenes/dataSource.js', 'utf8');
+  assert.match(ds, /if \(_mwArchiveCache && _mwArchiveCache\.gen === _mwGeneration\) return _mwArchiveCache\.archives;/,
+    'the mapped archives are the generation cache');
+  assert.match(ds, /_mwArchiveCache = \{ gen: _mwGeneration, archives \};/);
+  assert.match(ds, /_mwGeneration\+\+; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null;/,
+    'a new attach drops the old set');
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.ok(!/archives\.length = 0;/.test(arm),
+    'the build no longer guts the cached archive array - that truncation was the seconds');
+  // The memos stand DOWN without a real generation: a test\'s fixtures
+  // can share a name and a byte length while differing in content -
+  // the mSpeed pin proved it the day the weapon walk joined the memo.
+  assert.match(arm, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
+  assert.match(arm, /if \(gen === null \|\| gen === undefined\) return clipReport\(/, 'the kf parse memo is gated');
+  assert.match(arm, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
+    'and only the real store\'s stamp turns them on');
+});
+
+test('IG4: follow-camera is the shipped default, riding the reference\'s own glue knob', () => {
+  // Mac, second ask: "the weapons, arms stay in there position on
+  // camera movement when I wanted them to follow the camera". The
+  // reference's quarter-lag and offset slide are REAL and MEASURED
+  // (probe L5c read 0.26 against the law's 0.25) - this is a DECLARED
+  // owner's divergence, not a misread law: rotateFactor 1.0 is what the
+  // reference itself does while aiming (npcanimation.cpp:714-718), here
+  // held always, with the offset channel zeroed at BOTH applications.
+  // The moving picture is probe L5e; these sweep the wiring.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /\(globalThis\.localStorage\?\.getItem\(FOLLOW_CAMERA_KEY\) \?\? 'true'\) !== 'false'/,
+    'an untouched store answers TRUE - glue is the default, the law is the toggle');
+  assert.match(arm, /let followCam = readFollowCamera\(\);/, 'the live arm reads it at construction');
+  assert.match(arm, /neckAim: followCam \? 1 : aimFactor,/,
+    'glued arms hold aim 1 (rotateFactor 1.0); the law path still passes the decaying state');
+  assert.match(arm, /if \(followCam\) \{ fpOffset\[0\] = 0; fpOffset\[1\] = 0; fpOffset\[2\] = 0; return null; \}/,
+    'and the offset zeroes at its ONE source, upstream of both applications');
+  // The toggle is live and persistent - the pause card flips it.
+  const inst = createFpArm();
+  assert.equal(inst.followCamera(), true, 'a bare Node context (no storage) still defaults ON');
+  assert.equal(inst.setFollowCamera(false), false);
+  assert.equal(inst.followCamera(), false);
+  inst.setFollowCamera(true);
+  // ...and the card offers it, labelled by CURRENT mode.
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Arms: follow the camera', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Arms: Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
+    'the pause card names the mode you are IN and one click flips it');
+  // The probe measures BOTH modes: the law layers with the flag off,
+  // the shipped glue with it on.
+  const probe = readFileSync('tools/mwArmProbe.mjs', 'utf8');
+  assert.match(probe, /window\.__arm\.setFollowCamera\(false\);/, 'L5c/L5d measure the LAW with the flag off');
+  assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped glue');
+});
+
+// ═══ MW-D37: the materials are colour truth; the dye picks the garment ═
+test('MW-D37: the material chains follow Daggerfall\u2019s own palette, and walk in order', async () => {
+  const { DF_TO_MW_MATERIAL, pickWeaponRecord: pick } = await import('../src/formats/mwFirstPerson.js');
+  const { DF_TO_MW_ARMOR_MATERIAL, DF_MATERIAL_RGB, mwArmorRecords } = await import('../src/formats/mwItemMap.js');
+  // colour truth: Elven is silver-white in ART_PAL, so it wears silver
+  // (weapons) / steel (armor) - never green glass.
+  assert.deepEqual(DF_TO_MW_MATERIAL.Elven, ['silver', 'steel']);
+  assert.deepEqual(DF_TO_MW_ARMOR_MATERIAL.Elven, ['steel']);
+  assert.ok(!Object.values(DF_TO_MW_MATERIAL).flat().includes('glass') || DF_TO_MW_MATERIAL.Orcish[0] === 'glass',
+    'glass is orcish\u2019s green and nobody else\u2019s');
+  // every DF material has its measured swatch
+  for (const m of Object.keys(DF_TO_MW_MATERIAL)) assert.ok(DF_MATERIAL_RGB[m], `${m} has no measured colour`);
+  // Adamantium walks the chain: Tribunal's own first, ebony when absent.
+  const W = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false });
+  assert.equal(pick([W('ebony_dagger', 0), W('adamantium_dagger', 0)], 0, 'Adamantium').id, 'adamantium_dagger');
+  assert.equal(pick([W('ebony_dagger', 0), W('iron_dagger', 0)], 0, 'Adamantium').id, 'ebony_dagger');
+  const R = (id) => ({ id, model: 'm.nif', name: '', enchanted: false, parts: [] });
+  assert.equal(mwArmorRecords([R('ebony_cuirass'), R('adamantium_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Adamantium).records[0].id, 'adamantium_cuirass');
+  assert.equal(mwArmorRecords([R('ebony_cuirass'), R('steel_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Adamantium).records[0].id, 'ebony_cuirass');
+  assert.equal(mwArmorRecords([R('steel_cuirass'), R('glass_cuirass')], ARMOR_ENUM.Cuirass, ARMOR_MATERIAL.Elven).records[0].id, 'steel_cuirass', 'elven armor is steel, not glass');
+});
+
+test('MW-D37: the dye picks the nearest-coloured garment, and falls back to the id sort', () => {
+  const C = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false, parts: [] });
+  const clothes = [C('common_shirt_01', 2), C('common_shirt_02', 2), C('common_shirt_03', 2)];
+  const colours = { common_shirt_01: [120, 120, 130], common_shirt_02: [140, 40, 20], common_shirt_03: [70, 110, 160] };
+  const colourOf = (c) => colours[c.id] ?? null;
+  // Red (dye 2, #832c10) -> the red shirt; Blue (dye 0, #4d6f9b) -> the blue one.
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 2, colourOf }).record.id, 'common_shirt_02');
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 0, colourOf }).record.id, 'common_shirt_03');
+  assert.match(mwClothingRecord(clothes, 'Short Shirt', { dye: 2, colourOf }).note, /resolved by dye/);
+  // no sampler: the id sort, as before; a sampler that measures nothing: the same.
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 2 }).record.id, 'common_shirt_01');
+  assert.equal(mwClothingRecord(clothes, 'Short Shirt', { dye: 2, colourOf: () => null }).record.id, 'common_shirt_01');
+  // the composer hands the piece's dye through.
+  const bodyPool = [{ id: 'b_s2', model: 'm2.nif' }];
+  const withParts = clothes.map((c) => ({ ...c, parts: [{ part: 3, male: c.id === 'common_shirt_02' ? 'b_s2' : 'b_none', female: null }] }));
+  const w = composeWornArmor({ pieces: [{ kind: 'clothing', templateIndex: 165, name: 'Short Shirt', dye: 2 }], armors: [], clothes: withParts, bodyPool, female: false, colourOf });
+  assert.deepEqual(w.adds.map((a) => a.recordId), ['b_s2'], 'the red shirt\u2019s own part must dress');
+  // the report carries both swatches per row
+  const rep = mwItemReport([], { clothes: withParts, colourOf, weapons: [], pickWeapon: () => null });
+  const red = rep.find((r) => r.item === 'Red Short Shirt');
+  assert.equal(red.dfColour, '#832c10');
+  assert.equal(red.mwColour, '#8c2814');
+});
+
+// ═══ MW-D38: the item icons are the Morrowind ground meshes ═════════
+test('MW-D38: the weapon\u2019s material is READ - a daedric sword is not the type\u2019s first record', async () => {
+  const { fpWeaponKey } = await import('../src/combat/fpArm.js');
+  // the field no item ever carried is gone; itemInfo's materialName is the door
+  const iron = { group: 'Weapons', templateIndex: 115, material: 0 };
+  const daedric = { group: 'Weapons', templateIndex: 115, material: 9 };
+  assert.notEqual(fpWeaponKey(iron, false), fpWeaponKey(daedric, false), 'two materials of one type must be two keys');
+  assert.match(fpWeaponKey(daedric, false), /:Daedric:/);
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /pickWeaponRecord\(allWeapons, mwType, weapon \? materialName\(weapon\) : null\)/,
+    'the hand\u2019s weapon is not resolved by its material');
+  const code = arm.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.ok(!/weapon\.materialName|item\.materialName/.test(code), 'the phantom field is still read somewhere');
+});
+
+test('MW-D38: iconFrame fits every corner of the bounds under a three-quarter ortho', async () => {
+  const { iconFrame } = await import('../src/combat/fpArm.js');
+  const b = { minX: -1, minY: -0.1, minZ: -0.3, maxX: 1, maxY: 0.1, maxZ: 0.3 };   // a sword lying flat
+  const f = iconFrame(b);
+  assert.ok(f.view && f.proj && f.eye, 'a frame has a view, a projection and an eye');
+  // every corner projects inside the clip box
+  const { multiply, transformPoint } = await import('../src/world/mat4.js');
+  const pv = multiply(f.proj, f.view);
+  for (const x of [b.minX, b.maxX]) for (const y of [b.minY, b.maxY]) for (const z of [b.minZ, b.maxZ]) {
+    const p = transformPoint(pv, x, y, z);
+    assert.ok(Math.abs(p[0]) <= 1 && Math.abs(p[1]) <= 1, `corner ${x},${y},${z} projects outside the icon (${p[0].toFixed(2)}, ${p[1].toFixed(2)})`);
+  }
+  // and not wastefully small: the longest extent nearly fills one axis
+  let maxAbs = 0;
+  for (const x of [b.minX, b.maxX]) for (const y of [b.minY, b.maxY]) for (const z of [b.minZ, b.maxZ]) {
+    const p = transformPoint(pv, x, y, z);
+    maxAbs = Math.max(maxAbs, Math.abs(p[0]), Math.abs(p[1]));
+  }
+  assert.ok(maxAbs > 0.8, `the icon leaves too much air (${maxAbs.toFixed(2)})`);
+  // the eye looks from above and in front: positive y and z components.
+  assert.ok(f.eye[1] > 0 && f.eye[2] > 0);
+});
+
+test('MW-D38: itemIcon is null without a build; the pack takes the model icon first and the classic second', () => {
+  const arm = createFpArm();
+  assert.equal(arm.itemIcon({ group: 'Weapons', templateIndex: 115, material: 0 }), null);
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| \(line\.image/, 'the tile does not try the model icon first');
+  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| \(line\.image/, 'the detail does not try the model icon first');
+  assert.match(pack, /item,   \/\/ MW-D38/, 'the line no longer carries its item');
+  const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
+  assert.ok(!/itemIcon|modelIconUrl/.test(classic), 'the classic inventory must not know the model icons exist');
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /const catalog = \{ archives, parts, armors, clothes, weapons: allWeapons, gen \};/, 'the build keeps no catalog for the icons');
+  assert.match(src, /finally \{ releaseGpu\(mesh\); \}/, 'the icon mesh must leave the GPU');
 });

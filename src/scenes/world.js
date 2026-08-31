@@ -82,6 +82,7 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
@@ -103,6 +104,7 @@ import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
+import { testPresetById, applyTestCharacter } from '../systems/testRoom.js';   // TR3: the Test Room's one home
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key
@@ -116,6 +118,7 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -183,6 +186,11 @@ import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWe
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
+import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
+import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
@@ -688,6 +696,11 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   // Camera: at the start location's origin, or the pixel centre.
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
+  const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
+  let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
   // C9 fix: shotMode must be declared BEFORE walkMode reads it - the
@@ -922,7 +935,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     _questStarted = true;
     questBridge.initAtGameStart();
   };
-  if (!playerEntity.chargenDone && params.has('class')) {
+  // TR3: THE TEST ROOM's boot - the same headless seam as ?class=
+  // below, with the preset's identity seeded first (applyCharacter
+  // honors it) and the armory landing after the class kit. The preset
+  // resolves BEFORE the branch so an unknown id really does fall
+  // through to the wizard rather than stranding the interim entity:
+  // the never-traps law, at the front door.
+  const testPreset = !playerEntity.chargenDone && params.has('test') ? testPresetById(params.get('test')) : null;
+  if (!playerEntity.chargenDone && params.has('test') && !testPreset) {
+    console.warn(`[testroom] no preset "${params.get('test')}" - the wizard stands`);
+  }
+  if (testPreset) {
+    (async () => {
+      const preset = testPreset;
+      const sbi = await loadSpellIndex(fetchBytes);
+      spellsByIndex = sbi;
+      const { added } = await applyTestCharacter(playerEntity, preset, { fetchBytes, spellsByIndex: sbi });
+      preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
+        { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
+      surfacePlayer();
+      questInitAtGameStart();
+      console.log(`[testroom] ${preset.label}: ${added} armory items in the pack`);
+      // The Morrowind rigs, WITHOUT the trip to the pause card - the
+      // room exists to look at them. Only when the data is attached;
+      // without it the classic sprite stands exactly as everywhere
+      // else, and the pause card's button still names why.
+      const { morrowindDataCount } = await import('./dataSource.js');
+      if (morrowindDataCount() > 0) {
+        const { buildArmsFor } = await import('../combat/weaponRig.js');
+        const res = await buildArmsFor(playerEntity);
+        if (!res.ok) console.warn(`[testroom] arms refused - ${res.stage}: ${res.error}`);
+      }
+    })().catch((e) => console.warn('[testroom] boot failed; the wizard stands in', e));
+  } else if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
     // own chargen, so a town boot had no way past the overlay.
@@ -1215,6 +1260,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // full refill, neither of which is a calendar.
   const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: startLoc.regionIndex });
   const weaponRig = createWeaponRig({
+    activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
     // MW-D8: the Morrowind arm rides the player's eye. Required, not
@@ -1229,6 +1275,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // has. Morrowind's Sneak STANCE, which is DFU's Sneak binding; its
     // Crouch is a collider height, not an animation state.
     camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+      // IG1: the head bob's VERTICAL feeds the first-person offset (the
+      // reference's head_bobbing.lua drives setFirstPersonOffset's z
+      // only); bobOffset[1] is the raw vertical, un-rotated.
+      bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
       move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0 } }),   // MW-D26: the movement-settings vector, the reference's own selection source
     spellArmed: () => magic.spellArmed(),   // M2
   });
@@ -2182,7 +2232,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
       // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
       // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed },
+      // MW-D30: the camera's two persisted halves ride the pose - the
+      // reference saves the first/third flag in its own REC_CAM_ record
+      // (worldimp.cpp:425-427) and the zoom distance through the camera
+      // script's onSave (camera.lua:350-352).
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state() },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -2298,6 +2352,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
     if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+    // MW-D30: the saved camera is FORCED, exactly as the reference
+    // applies its REC_CAM_ flag on load (statemanagerimp.cpp:617-618
+    // togglePOV when the live view differs). A pose without one (an
+    // older save, the classic import - a Daggerfall .SAV carries no
+    // Morrowind camera) leaves the live camera standing.
+    mwCamera.restore(pose.camera);
   }
   /**
    * SAV3: the classic-save import arm - StartFromClassicSave's game
@@ -2791,8 +2851,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return;
     }
-    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
   // (dungeon.js:184, "a right-click on a window is the window's...
@@ -2800,12 +2863,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
   // world behind the map.
-  addEventListener('mousedown', (e) => { if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2
@@ -3002,7 +3064,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _liveQuestOverlay = (win) =>
     (modes?.questOverlay ?? null) === win || (townTalk?.overlay ?? null) === win;
   const questWorld = {
-    maps,
+    // AUDIT 28 W4 SELF-AUDIT (F-B2): DFU's smaller-dungeon law lives
+    // INSIDE MapsFile.GetLocation, so quest marker enumeration walks
+    // the FIVE-BLOCK dungeon when the law says so - the frozen quest
+    // state exists precisely so the same five blocks come back when
+    // the player arrives. The port sized only at the door: a quest
+    // set up under the setting picked markers from the FULL dungeon
+    // and could aim at a block the build does not have. The quest
+    // layer's maps therefore sizes getLocation/getLocationByName the
+    // way DFU's does, late-binding the machine (the bridge is created
+    // after this adapter, and DFU's GetLocation consults the global
+    // machine the same way - another quest's link on the same dungeon
+    // wins there too).
+    maps: Object.create(maps, {
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine }) },
+      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine }) },
+    }),
     getBlock: (name) => blocks.getBlockByName(name),
     // NPC1: the =symbol_ macro's flat caption. The quest machine has
     // declared this seam since Q2 and nothing production-side answered
@@ -4132,6 +4209,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+      if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
+    // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
+    // detector's loss from the vitals rig, same paused gate (:50-51).
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: townTalk.overlayActive || (modes?.overlayHeld ?? false) });
+    // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
+    // dip; the position rides player.eye as a world offset, the nod is a
+    // per-frame offset on the look (removed and re-applied each frame).
+    {
+      const bob = headBobber.update(dt, cam, {
+        health: playerEntity.health, paused: townTalk.overlayActive || (modes?.overlayHeld ?? false), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: false, levitating: !!player.levitating,
+        velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+      });
+      const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+      player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
+    }
     last = now;
     lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -4237,9 +4339,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         // false outdoors (no blockWaterLevel - PlayerEnterExit).
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
+        // AUDIT 28 W8: the axes advance only on frames the motor runs (a
+        // held overlay is DFU's timeScale 0 - no climb, no friction).
+        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
         if (!_overlayHeld) player.update(dt, {
-          forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
-          strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+          forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+          strafe: axes.strafe,
           run: held(keys, 'Run'),
           sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
           jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)

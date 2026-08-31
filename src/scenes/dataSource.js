@@ -387,8 +387,26 @@ export async function storeMorrowindFiles(files) {
   return storeAssets(MW_STORE, files, (n) => /\.(bsa|esm)$/i.test(n));
 }
 export const storedMorrowindNames = () => assetNames(MW_STORE);
-export const loadMorrowindFile = (fileName) => assetBytes(MW_STORE, fileName);
-export const clearStoredMorrowind = () => clearAssets(MW_STORE);
+// IG2: THE SWAP-SPEED CACHES (Mac: "load times when swapping weapons,
+// clothing, armor is really slow"). The body follows the equip table,
+// so every equip change rebuilds the arms - and every rebuild used to
+// re-read EVERY .bsa blob out of IndexedDB and re-index its directory,
+// plus every .esm, seconds per swap on retail data. The stored set
+// only changes on an ATTACH, and the attach generation below already
+// says so - so the mapped archives and the raw file bytes cache
+// against it. The cost is stated, not hidden: the archives stay
+// resident (about the size of the player's data set), which is exactly
+// what makes a swap near-instant; a new attach drops the old set.
+let _mwArchiveCache = null;   // { gen, archives }
+let _mwFileCache = null;      // { gen, files: Map<name, bytes> }
+export const loadMorrowindFile = async (fileName) => {
+  if (!_mwFileCache || _mwFileCache.gen !== _mwGeneration) _mwFileCache = { gen: _mwGeneration, files: new Map() };
+  if (_mwFileCache.files.has(fileName)) return _mwFileCache.files.get(fileName);
+  const bytes = await assetBytes(MW_STORE, fileName);
+  if (bytes) _mwFileCache.files.set(fileName, bytes);
+  return bytes;
+};
+export const clearStoredMorrowind = () => { _mwArchiveCache = null; _mwFileCache = null; return clearAssets(MW_STORE); };
 
 export const hasStoredMorrowind = async () =>
   (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
@@ -396,6 +414,7 @@ export const hasStoredMorrowind = async () =>
 /** Every stored .bsa opened, in override order: expansions and mods
  *  answer BEFORE Morrowind.bsa, the way the engine's load order does. */
 export async function loadMorrowindArchives() {
+  if (_mwArchiveCache && _mwArchiveCache.gen === _mwGeneration) return _mwArchiveCache.archives;
   const { MwBsaFile } = await import('../formats/mwBsaFile.js');
   const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
   const rank = (n) => {
@@ -414,6 +433,10 @@ export async function loadMorrowindArchives() {
       console.warn(`morrowind archive ${n}: ${err.message}`);
     }
   }
+  // The .bsa BYTES now live inside the mapped archives; drop the file
+  // cache's copies so one attach does not hold the set twice.
+  if (_mwFileCache) for (const n of names) _mwFileCache.files.delete(n);
+  _mwArchiveCache = { gen: _mwGeneration, archives };
   return archives;
 }
 
@@ -453,7 +476,7 @@ export async function registerMorrowindData() {
   //
   // The generation means THE STORED SET CHANGED. It cannot mean that
   // until there is a previous set to compare against.
-  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
+  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
   _mwCount = next;
   return _mwCount;
 }
@@ -629,6 +652,11 @@ export async function pickTextureFolder() {
     register: async () => setTextureReplacements(await storedTextureNames(), loadTextureFile),
   });
 }
+
+/** MW-D35: the same seam under the name the Morrowind lane's deps
+ *  object carries - buildFpArm reads the classic portrait archive
+ *  through `deps.fetchArena2Bytes`, and a test hands it a fixture. */
+export const fetchArena2Bytes = (name) => getBytes(name);
 
 /** The single data seam every reader goes through (via fetchBytes). */
 export async function getBytes(name) {

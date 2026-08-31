@@ -172,7 +172,9 @@ test('MW-D25: a view change while the upper body is busy QUEUES, and lands when 
 });
 
 test('MW-D25: state round-trips and restore clamps', () => {
-  // camera.lua:347-352 persists the distance; the mode is the session's.
+  // Both halves persist: the distance through camera.lua:347-352's
+  // onSave, the first/third flag in the REC_CAM_ savegame record
+  // (worldimp.cpp:425-427, force-applied at statemanagerimp.cpp:617-618).
   const cam = createMwCamera();
   cam.wheel(-1);
   cam.eye({ fpEye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0, pitch: 0 });
@@ -213,4 +215,66 @@ test('MW-D25: with no Morrowind body the wheel cannot leave first person, and th
   assert.equal(r.thirdPerson, false);
   assert.deepEqual(r.eye, fpEye);
   assert.equal(mwCamera.mode(), 'first', 'the live camera stayed in the view that exists');
+});
+
+// ── MW-D30: PERSISTENCE, THE FRAME-ACCUMULATED WHEEL, THE REAL CLAMP ─
+
+import { PITCH_LIMIT } from '../src/player/mwCamera.js';
+import { mwViewPendingClicks, mwViewFrame as mwvf } from '../src/player/mwView.js';
+
+test('MW-D30: the pitch clamp is the reference\'s own, and every host rides it', () => {
+  // camera.cpp:323-331 - +/-(PI/2 - 0.000001f). The hand-rolled +/-1.5
+  // stopped the look ~4 degrees short of vertical.
+  assert.equal(PITCH_LIMIT, Math.PI / 2 - 0.000001);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
+    const src = readFileSync(new URL(`../${host}`, import.meta.url), 'utf8');
+    assert.ok(!/Math\.max\(-1\.5, Math\.min\(1\.5,/.test(src), `${host} clamps at PITCH_LIMIT, not 1.5`);
+    assert.ok(/PITCH_LIMIT/.test(src), `${host} imports the one clamp`);
+  }
+});
+
+test('MW-D30: wheel clicks ACCUMULATE and flush once per frame', () => {
+  // actionbindings.lua:98-115 - every press sums into zoomInOut and
+  // zoom() runs ONCE per frame on the total; the port's DOM events do
+  // the same through the pending count.
+  assert.equal(mwViewPendingClicks(), 0);
+  assert.equal(mwViewWheel(-120), true, 'wheel-up queues even in first person');
+  mwViewWheel(-120); mwViewWheel(-120);
+  assert.equal(mwViewPendingClicks(), 3, 'three notches, one pending sum');
+  mwvf({ fpEye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0, pitch: 0 });
+  assert.equal(mwViewPendingClicks(), 0, 'the frame flushed them in one zoom() call');
+  assert.equal(mwCamera.mode(), 'first', 'zoom-in inside the head is the reference no-op');
+});
+
+test('MW-D30: the pose carries the camera and the load FORCES it', () => {
+  // worldimp.cpp:425-427 saves the flag; statemanagerimp.cpp:617-618
+  // togglePOVs the live camera to match on load; camera.lua:347-352
+  // rides the distance. The port's one pose-apply does both through
+  // mwCamera.restore, and a pose without a camera (older save, the
+  // classic import) leaves the live camera standing.
+  const src = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.ok(/camera: mwCamera\.state\(\) \}/.test(src), 'the saved pose carries mwCamera.state()');
+  assert.ok(/mwCamera\.restore\(pose\.camera\);/.test(src), 'and the one pose-apply restores it');
+  // restore(undefined) is the older-save no-op, behaviorally:
+  const cam = createMwCamera();
+  cam.wheel(-1);
+  cam.restore(undefined);
+  assert.equal(cam.mode(), 'third', 'a pose without a camera leaves the live camera standing');
+});
+
+test('MW-D34: the focal height rides the race HEIGHT through the one seam', () => {
+  // adjustScale's z (npc.cpp:1127/1134) scales the actor the camera
+  // tracks, so the third-person focal height scales with it. The
+  // answer comes from the rig itself, in mwViewFrame - the hosts stay
+  // out of the seam (MW-D25's law) and a caller may still pass an
+  // explicit value.
+  const view = readFileSync(new URL('../src/player/mwView.js', import.meta.url), 'utf8');
+  assert.match(view, /heightScale = null/, 'the default is "ask the rig", not 1');
+  assert.match(view, /if \(heightScale == null\) heightScale = fpArm\.raceHeightScale\(\);/);
+  const arm = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
+  assert.match(arm, /raceHeightScale: \(\) => \(built && built\.ok && built\.raceScale \? built\.raceScale\.height : 1\)/,
+    'and the rig answers its race height, 1 unbuilt');
+  // The camera really multiplies it into the focal (mwCamera.js).
+  const cam = readFileSync(new URL('../src/player/mwCamera.js', import.meta.url), 'utf8');
+  assert.match(cam, /FOCAL_HEIGHT \* heightScale \* u/);
 });

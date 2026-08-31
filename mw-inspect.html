@@ -54,13 +54,17 @@
 
 <script type="module">
 import {
-  parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS, armorRecords,
+  parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS, armorRecords, weaponRecords, clothingRecords, pickWeaponRecord,
   armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
   skeletonReport, checkRequiredBones,
   assembleFirstPersonArm, armPieceRows, poseAssembly, clipReport, clipUnionBounds,
 } from '/src/tools/mwInspect.js';
 import { sampleTrack, resetClip, advanceClip } from '/src/formats/mwAnim.js';
 import { mwItemReport } from '/src/formats/mwItemMap.js';
+import { parseNif } from '/src/formats/mwNifFile.js';
+import { flattenNif } from '/src/formats/mwNifMesh.js';
+import { correctTexturePath } from '/src/formats/mwTexture.js';
+import { decodeDds } from '/src/formats/mwDdsFile.js';
 
 const out = document.getElementById('out');
 const drop = document.getElementById('drop');
@@ -93,13 +97,52 @@ async function take(files) {
     const bytes = new Uint8Array(await f.arrayBuffer());
     try {
       if (/\.bsa$/i.test(f.name)) bsa = { name: f.name, bytes, index: parseBsaIndex(bytes) };
-      else if (/\.esm$/i.test(f.name)) esm = { name: f.name, bytes, parts: bodyParts(bytes), armors: armorRecords(bytes) };
+      else if (/\.esm$/i.test(f.name)) esm = { name: f.name, bytes, parts: bodyParts(bytes), armors: armorRecords(bytes), weapons: weaponRecords(bytes), clothes: clothingRecords(bytes) };
       else errors.push(`${f.name}: not a .bsa or .esm`);
     } catch (err) {
       errors.push(`${f.name}: ${err.message}`);
     }
   }
   render();
+}
+
+/** MW-D37: a record -> the mean RGB of its texture, off the attached
+ *  .bsa. ARMO/CLOT sample their first worn part's BODY mesh; WEAP its
+ *  own mesh. Memoised per record id. */
+function textureColourSampler(e) {
+  const files = new Map(bsa.index.files.map((f) => [f.name, f]));
+  const bytesOf = (path) => { const f = files.get(path); return f ? bsa.bytes.subarray(f.offset, f.offset + f.size) : null; };
+  const bodyById = new Map((e.parts || []).map((b) => [String(b.id || '').toLowerCase(), b]));
+  const memo = new Map();
+  return (rec) => {
+    if (memo.has(rec.id)) return memo.get(rec.id);
+    let rgb = null;
+    try {
+      let model = rec.model;
+      const ref = (rec.parts || []).find((r) => r.male || r.female);
+      if (ref) { const b = bodyById.get(ref.male || ref.female); if (b) model = b.model; }
+      const nb = bytesOf(`meshes/${model}`);
+      if (nb) {
+        const batches = flattenNif(parseNif(nb.slice()));
+        const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+        if (file) {
+          const tp = correctTexturePath(file, (p) => files.has(p));
+          const tb = bytesOf(tp);
+          if (tb && /\.dds$/i.test(tp)) {
+            const m0 = decodeDds(tb.slice()).mips[0];
+            let r = 0, g = 0, bl = 0, n = 0;
+            for (let i = 0; i < m0.width * m0.height; i++) {
+              if (m0.rgba[i * 4 + 3] < 128) continue;
+              r += m0.rgba[i * 4]; g += m0.rgba[i * 4 + 1]; bl += m0.rgba[i * 4 + 2]; n++;
+            }
+            if (n) rgb = [r / n, g / n, bl / n];
+          }
+        }
+      }
+    } catch { rgb = null; }
+    memo.set(rec.id, rgb);
+    return rgb;
+  };
 }
 
 function render() {
@@ -177,25 +220,63 @@ function render() {
         + 'engine lets fall back to a third-person mesh when the <code>1st</code> record is missing. That is a '
         + 'fallback rule, not the list of what gets drawn.</p>';
 
+      // MW-D33: THE FACE POOLS, so the curation table can be written by
+      // id. For the selected race and sex: every playable head and hair
+      // in id-sorted order, each with the portrait indices (0-9) that
+      // the modulo walk hands it, and the curated override if the table
+      // names one. Author mwFaceTable.json from this list, by eye.
+      {
+        const pool = (slot) => {
+          const forSlot = parts.filter((p) => p.race === sel && p.slot === slot && p.skin && p.playable && !p.firstPerson);
+          const sexed = forSlot.filter((p) => p.female === !!fem);
+          return (sexed.length ? sexed : forSlot.filter((p) => !p.female)).slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+        };
+        const heads = pool('head'); const hairs = pool('hair');
+        h += `<h2>The face pools &mdash; ${heads.length} heads, ${hairs.length} hairs for ${esc(sel)} ${fem ? 'female' : 'male'}</h2>`;
+        h += '<p class="note">Portrait index = the classic chargen face (0&ndash;9). Without a curated entry in '
+          + '<code>src/formats/mwFaceTable.json</code> the walk gives portrait i the i-th record, wrapping. '
+          + 'To match a portrait by eye: write <code>{"' + esc(sel) + '": {"' + (fem ? 'female' : 'male')
+          + '": {"3": {"head": "&lt;id&gt;", "hair": "&lt;id&gt;"}}}}</code> and rebuild.</p>';
+        for (const [name, list] of [['head', heads], ['hair', hairs]]) {
+          h += `<table><tr><th>${name} record</th><th>mesh</th><th>portrait indices (walk)</th></tr>`;
+          list.forEach((rec, i) => {
+            const idx = [];
+            for (let f = 0; f < 10; f++) if (list.length && (f % list.length) === i) idx.push(f);
+            h += `<tr><td>${esc(rec.id)}</td><td class="dim">${esc(rec.model)}</td><td>${idx.join(', ') || '&mdash;'}</td></tr>`;
+          });
+          h += '</table>';
+        }
+      }
+
       // MW-D28: THE ITEM MAP against THESE archives - which Daggerfall
       // armor will wear Morrowind, which keeps its sprite, and why.
       // Every row of the grid, no summaries: a player scans for red.
       if (esm.armors) {
-        const rep = mwItemReport(esm.armors);
+        // MW-D37: the record's worn texture, measured - the MW swatch
+        // beside Daggerfall's dye band, so "does the material map
+        // accurately" is answered by two colours in one row.
+        const colourOf = bsa ? textureColourSampler(esm) : null;
+        const rep = mwItemReport(esm.armors, { weapons: esm.weapons, clothes: esm.clothes, colourOf, pickWeapon: pickWeaponRecord });
         const missing = rep.filter((r) => !r.found.length);
-        h += `<h2>The item map &mdash; ${esm.armors.length.toLocaleString()} armor records, `
-          + `${(rep.length - missing.length)}/${rep.length} Daggerfall pieces resolve</h2>`;
-        h += '<table><tr><th>Daggerfall piece</th><th>Morrowind record(s)</th><th>note</th></tr>';
-        for (const r of rep) {
-          const cls = r.found.length ? (r.note === 'resolved' ? 'ok' : 'warn') : 'bad';
-          h += `<tr><td>${esc(r.item)}</td>`
-            + `<td class="dim">${esc(r.found.join(', ') || '\u2014')}</td>`
-            + `<td class="${cls}">${esc(r.note)}</td></tr>`;
+        h += `<h2>The item map &mdash; ${(rep.length - missing.length)}/${rep.length} Daggerfall items resolve `
+          + `(${esm.armors.length} ARMO, ${(esm.weapons || []).length} WEAP, ${(esm.clothes || []).length} CLOT records)</h2>`;
+        h += '<p class="note">DF = the colour of Daggerfall\u2019s own material or dye band (ART_PAL). MW = the mean colour of the '
+          + 'Morrowind record\u2019s texture' + (bsa ? '' : ' (attach the .bsa to measure it)') + '. Two swatches that disagree are a row to argue with.</p>';
+        for (const fam of ['weapon', 'armor', 'clothing']) {
+          const fr = rep.filter((r) => r.family === fam);
+          if (!fr.length) continue;
+          h += `<h3>${fam}</h3><table><tr><th>Daggerfall item</th><th>DF</th><th>MW</th><th>Morrowind record(s)</th><th>note</th></tr>`;
+          for (const r of fr) {
+            const cls = r.found.length ? (/^resolved/.test(r.note) ? 'ok' : 'warn') : 'bad';
+            const sw = (c) => (c ? `<span style="display:inline-block;width:1.4em;height:1em;background:${c};border:1px solid #555;vertical-align:middle" title="${c}"></span>` : '<span class="dim">\u2014</span>');
+            h += `<tr><td>${esc(r.item)}</td><td>${sw(r.dfColour)}</td><td>${sw(r.mwColour)}</td>`
+              + `<td class="dim">${esc(r.found.join(', ') || '\u2014')}</td>`
+              + `<td class="${cls}">${esc(r.note)}</td></tr>`;
+          }
+          h += '</table>';
         }
-        h += '</table>';
-        h += '<p class="note">A red row is not an error: that piece keeps its classic sprite, and this '
-          + 'table is where you find out BEFORE equipping it. Weapons resolve through their own table '
-          + 'above (MW-D9) and report at build time.</p>';
+        h += '<p class="note">A red row is not an error: that item keeps its classic sprite, and this '
+          + 'table is where you find out BEFORE equipping it.</p>';
       }
 
       // MW-D2: and now the question the whole rig design rests on.

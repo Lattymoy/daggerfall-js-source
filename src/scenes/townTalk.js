@@ -854,7 +854,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  token in the record, NOT a variant pick. %oth's seam. */
     randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',
     ensureFactions: () => ensureLoaded(),
-    say: (line) => hud.add(line),
+    say: (line, delayInSeconds = undefined) => hud.add(line, delayInSeconds),   // AUDIT 28 W6: AddHUDText's delay arg rides through (ShopQualityHUDDelay)
     /** AUDIT 24 (wave 22): PopupText.AddText files every line it queues
      *  in the notebook's message ring (:123). The notebook is built by
      *  the quest bridge, which is built after this host, so the host

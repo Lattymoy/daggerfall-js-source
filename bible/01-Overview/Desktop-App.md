@@ -96,7 +96,25 @@ npm run dist           # electron-builder installers into app/release/
 running vite dev server (file saves still live; arena2 comes from the
 dev middleware). `DAGGER_USER_DATA` relocates saves/config (the
 probe's door, and a portable install's). `DAGGER_SKIP_ARENA2_PROMPT`
-suppresses the first-run dialog (headless).
+suppresses the first-run dialog (headless). `DAGGER_SHELL_EXE` points
+the probe at a PACKAGED binary (release/linux-unpacked/...) so the
+installer's payload answers the same sixteen checks the dev shell
+does.
+
+## The release channel
+
+Pushing a tag shaped `app-v*` runs
+`.github/workflows/release-desktop.yml`: the ubuntu job carries the
+whole `npm run check` gate, all three OS runners package installers
+(AppImage, NSIS + portable exe, dmg - unsigned; macOS players
+right-click-Open the first time), and the artifacts attach to a
+GitHub Release at that tag. The landing page's "On your desktop"
+section points at `releases/latest`, so cutting a release IS
+updating the site's download - no site change needed per release.
+`workflow_dispatch` builds the same installers as run artifacts
+without cutting a release. Artifact names are
+`DaggerfallJS-<version>-<os>-<arch>.<ext>`; bump `app/package.json`'s
+version with the tag.
 
 ## What deliberately did NOT move
 

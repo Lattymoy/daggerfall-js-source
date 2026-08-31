@@ -42,7 +42,12 @@ export const MESH_ROOT = 'meshes\\';
 export function indexSkins(bodies) {
   const byRace = new Map();
   for (const body of bodies.values()) {
-    if (body.kind !== BODY_TYPE.skin || body.vampire || body.part < 0) continue;
+    // MW-D32: the reference's sweep filters NotPlayable and skin-type
+    // ONLY (getBodyParts, npcanimation.cpp:1208-1211) - there is NO
+    // vampire test there (vampire heads ride the actor's own record
+    // path), and the port had it backwards: vampire filtered, playable
+    // not.
+    if (body.kind !== BODY_TYPE.skin || !body.playable || body.part < 0) continue;
     let race = byRace.get(body.race);
     if (!race) byRace.set(body.race, (race = new Map()));
     let slot = race.get(body.part);
@@ -107,11 +112,17 @@ export function assembleNpc(esm, npcId, skinIndex = null) {
   }
 
   // Beast races walk on their own skeleton; an NPC_ MODL overrides all.
+  // MW-D32: the FEMALE column was missing - getActorSkeleton
+  // (actorutil.cpp, !firstPerson branch) picks base_anim_female.nif for
+  // a female non-beast, and beast wins over sex exactly as the
+  // reference's if-ladder orders it.
   const animFile = npc.model
     ? MESH_ROOT + npc.model
     : race.beast
       ? MESH_ROOT + 'base_animkna.nif'
-      : MESH_ROOT + 'base_anim.nif';
+      : npc.female
+        ? MESH_ROOT + 'base_anim_female.nif'
+        : MESH_ROOT + 'base_anim.nif';
 
   return { npc, race, animFile, parts, missing };
 }
@@ -157,4 +168,11 @@ export function assembleNpc(esm, npcId, skinIndex = null) {
 export function mwRaceId(dfRace) {
   if (!dfRace) return null;
   return String(dfRace).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+}
+
+/** The inverse spelling: 'dark elf' -> 'DarkElf', for the port's own
+ *  race tables (MW-D35 reads the classic portrait archive by race key). */
+export function dfRaceKeyOf(mwRace) {
+  if (!mwRace) return null;
+  return String(mwRace).split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
 }

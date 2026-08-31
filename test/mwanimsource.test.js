@@ -380,7 +380,9 @@ test('MW-D15 rule 32(a): the arm reads the stance off the camera dep, in all fou
   // The dungeon context latches it with the eye and the pitch, one frame
   // at a time, for the reason the pitch is latched there.
   assert.match(rd('src/scenes/dungeonContext.js'), /_fpSneaking = !!playerSneaking;/);
-  assert.match(rd('src/scenes/dungeonContext.js'), /sneaking: _fpSneaking, move: _fpMove \}/);
+  // IG1 widened the latch tuple with the bob channel; the stance and
+  // move still ride it.
+  assert.match(rd('src/scenes/dungeonContext.js'), /sneaking: _fpSneaking, move: _fpMove, bob: \[0, _fpBobY\] \}/);
   for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
     assert.match(rd(host), /drawFoes\([^;]*!!player\.isSneaking,/, `${host} hands it to the context`);
   }
@@ -410,6 +412,9 @@ test('MW-D15 rule 32(a): the LIVE arm sinks when the camera dep says sneak', asy
   ]);
   let sneaking = false;
   const arm = createFpArm();
+  // IG4: the sink is the REFERENCE's feel, and the shipped default is
+  // Mac's glue - so this law test runs with the toggle in law mode.
+  arm.setFollowCamera(false);
   arm.attach({
     gl: null,
     createCharacterMesh: () => ({ vao: 1, buffers: [], ranges: [] }),

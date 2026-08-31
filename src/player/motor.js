@@ -118,6 +118,7 @@ export const HEIGHT_TIMER_MEDIUM = 0.25;   // AUDIT 23 (motor-2): the forced swi
 // import - both are runtime-only references, which ESM live bindings
 // resolve.
 import { ClimbingState, climbingSpeed } from './climbing.js';
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -258,6 +259,15 @@ export class PlayerMotor {
     this.moveStrafe = 0;
     this.moveSpeed = 0;
     this.isSneaking = false;
+    this.bobOffset = [0, 0, 0];   // AUDIT 28 W10: HeadBobber's eye offset, world space
+    // AUDIT 28 W5 (PlayerSpeedChanger.CaptureInputSpeedAdjustment
+    // :75-78): with Controls/ToggleSneak the sneak MODE is
+    // `sneakingMode ^= ActionStarted(Sneak)` - a press flips it - and
+    // without it the mode is the held key, as ever. The mode is
+    // captured every frame; the grounded latch below still decides
+    // when it takes effect (P15).
+    this._sneakMode = false;
+    this._prevSneakHeld = false;
     // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
     // sneak condition, recomputed each update from the frame's input.
     this.movingLessThanHalfSpeed = true;
@@ -270,7 +280,12 @@ export class PlayerMotor {
   }
 
   get eye() {
-    return [this.pos[0], this.pos[1] + this._eyeLevel(), this.pos[2]];
+    // AUDIT 28 W10: HeadBobber's camera LOCAL offset rides the eye - every
+    // camera and every ray in the port reads player.eye, as every DFU
+    // ray reads the (bobbed) camera transform. The host's bobber writes
+    // bobOffset in WORLD space each frame; [0,0,0] when it is off.
+    const b = this.bobOffset;
+    return [this.pos[0] + b[0], this.pos[1] + this._eyeLevel() + b[1], this.pos[2] + b[2]];
   }
 
   /** The presentation eye across the height actions (P18): DoCrouch
@@ -648,13 +663,29 @@ export class PlayerMotor {
       if (!this.jumping) this.velY = 0;
     }
 
+    // CaptureInputSpeedAdjustment (AUDIT 28 W5): the sneak MODE -
+    // toggled on the press edge under ToggleSneak, the held key
+    // without it (:75-78).
+    const sneakStarted = !!input.sneak && !this._prevSneakHeld;
+    this._prevSneakHeld = !!input.sneak;
+    if (getBool('Controls', 'ToggleSneak')) {
+      if (sneakStarted) this._sneakMode = !this._sneakMode;
+    } else {
+      this._sneakMode = !!input.sneak;
+    }
     // ApplyInputSpeedAdjustment (P15): the run/sneak states re-latch
     // only while GROUNDED - "you can't switch running on/off while in
     // mid air" - and running beats sneaking.
     if (this.grounded) {
       this.isRunning = !!input.run;
-      this.isSneaking = !this.isRunning && !!input.sneak;
+      this.isSneaking = !this.isRunning && this._sneakMode;
     }
+    // F-C3 (self-audit 3, ApplyInputSpeedAdjustment :121-125): running
+    // CLEARS sneakingMode - "switch sneaking off if was previously
+    // sneaking" - so under ToggleSneak a run ENDS the toggled sneak; it
+    // does not come back when the run stops. Held mode re-latches from
+    // the key next frame regardless, as DFU's does.
+    if (this.isRunning) this._sneakMode = false;
     // GetBaseSpeed + ApplyInputSpeedAdjustment (audit F1): walking
     // crouched = the crouch base; RUNNING crouched = GetRunSpeed's
     // crouch branch (crouch base x the run multiplier - DFU lets you

@@ -16,6 +16,15 @@
 import { mwCamera } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
 
+// MW-D30: the reference accumulates the frame's zoom presses and calls
+// zoom() ONCE per frame with their sum (actionbindings.lua:98-115 -
+// `zoomInOut` collects every ZoomIn/ZoomOut, Zoom3rdPerson reads
+// `zoomInOut * 10` once, then zeroes it). The port had applied each DOM
+// wheel event separately against a stale pull-in distance, so a burst
+// of N notches subtracted the obstacle debt N times. The pending count
+// flushes in mwViewFrame, where the frame's camera state is fresh.
+let pendingClicks = 0;
+
 /**
  * Per-frame, before the host composes its view matrix. Resolves any
  * queued view change (camera.cpp:135), keeps the rig on the camera's
@@ -24,7 +33,16 @@ import { fpArm } from '../combat/fpArm.js';
  *
  * @returns {{eye:number[], thirdPerson:boolean, distance:number}}
  */
-export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = 1, raycast = null }) {
+export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null }) {
+  if (pendingClicks) {
+    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
+    pendingClicks = 0;
+  }
+  // MW-D34: the focal height rides the actor's race HEIGHT (adjustScale's
+  // z, npc.cpp:1127/1134 - the camera tracks a node on the SCALED body).
+  // Answered here, once, by the rig itself - the hosts stay out of it
+  // (MW-D25's law); a caller may still hand an explicit value.
+  if (heightScale == null) heightScale = fpArm.raceHeightScale();
   mwCamera.update({ ready: fpArm.upperBodyReady() });
   if (mwCamera.thirdPerson()) {
     if (!fpArm.setViewMode('third')) {
@@ -50,9 +68,13 @@ export function mwViewWheel(deltaY) {
   const clicks = deltaY < 0 ? 1 : deltaY > 0 ? -1 : 0;
   if (!clicks) return false;
   if (mwCamera.mode() === 'first' && clicks < 0 && !fpArm.canThirdPerson()) return false;
-  mwCamera.wheel(clicks, { ready: fpArm.upperBodyReady() });
+  pendingClicks += clicks;   // flushed once per frame (actionbindings.lua:113-114)
   return true;
 }
+
+/** The frame's pending, exposed for the pins - a probe with its own
+ *  counter measures the copy. */
+export function mwViewPendingClicks() { return pendingClicks; }
 
 /** The third-person body composite, after the host's world draw. A
  *  no-op in first person or when the body cannot draw. */

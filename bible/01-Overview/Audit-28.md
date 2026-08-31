@@ -253,6 +253,239 @@ commit:
 4 self-audit mutants (exit inside the dispatch, flag never taken, the
 scaled gap back, raw dt while paused), 4 killed.
 
+## W4 CLOSED: SmallerDungeons (MapsFile.cs:766-797, :1366-1444)
+
+`Experimental/SmallerDungeons` ships False and the port carried only the
+quest save field, at NotSet. `world/smallerDungeons.js` is the law
+whole: over five blocks, the dungeon regenerates as a plus of five - a
+random interior block centred and starting, four random border blocks
+(`^B`, case-insensitive) around it - from its OWN list, DFRandom seeded
+on the raw MapId, so the small dungeon is the same one every visit.
+Main-story dungeons never shrink, and both of DFU's throws are
+verbatim. `UseSmallerDungeon` consults a live quest's FROZEN state
+through its first Dungeon SiteLink before the setting - `Quest.Start`
+stamps it (Quest.cs:284), the quest save carries it, an old envelope
+restores NotSet. The entry seam sizes the location BEFORE the context
+is built, on a CLONE - the one deliberate shape departure, recorded in
+the module header: DFU regenerates a struct copy inside GetLocation,
+and the port's locations are cached objects the exterior shares.
+The dungeon save stamps the raw setting (SerializablePlayer :224) and a
+load under the other setting warps to the start marker with a HUD line;
+story dungeons and old envelopes never (:462-472). 7 pins; 9 mutants,
+9 killed.
+
+## SELF-AUDIT 2 (2026-08-30, Mac: "a comprehensive audit on everything so far", again)
+
+The W4 commit and the whole session re-read once more. Verified sound:
+the quest layer touches exactly six maps methods and the F-B2 wrap
+covers the two that answer locations; `setSeed` wraps a negative int32
+MapId through uint exactly as the C# cast; `randomRange(0, n)` IS
+DFU's one-arg `random_range(n)`; the GenerateRDBBlock spread keeps
+waterLevel and the rest as the C# struct copy does; `quest.start()` is
+called by the machine at :486; there is exactly ONE quest bridge and
+one questWorld, so the wrap covers every quest-layer fetch. Three
+findings, fixed here:
+
+- **F-B1** the load-time warp set the RAW start-marker position while
+  every other spawn goes through the entry law (`floorLanding` over
+  `m.y + 1.08`) - a raw marker y can stand the player in the floor.
+  The warp is `startSpawn({ preferEnterMarker: false })` now, which is
+  also DFU's member: :470 names StartMarker explicitly.
+- **F-B2** (the real one) quest dungeon marker enumeration walked the
+  UNSIZED location. DFU's law lives INSIDE MapsFile.GetLocation, so
+  quests pick markers from the five-block dungeon - the frozen state
+  exists precisely so those five blocks come back. A quest set up under
+  the setting could aim at a block the build does not have. The quest
+  world's `maps` now wraps `getLocation`/`getLocationByName` through
+  `dungeonLocationFor`, late-binding the bridge's machine - and DFU's
+  GetLocation consults the global machine the same way, so another
+  quest's link on the same dungeon winning is DFU behaviour too.
+- **F-B3** DFU's QuestSmallerDungeonsState is NotSet, DISABLED,
+  ENABLED (DaggerfallUnityEnums.cs:758-763); the port shipped
+  Enabled=1/Disabled=2 - internally consistent and numerically
+  backwards, and these values are the save format. Enum, save stamp
+  (`? 2 : 1`) and warp compare corrected; the enum is pinned by value.
+
+4 self-audit-2 mutants (enter marker preferred, quest sees the full
+dungeon, enum backwards, stamp backwards) + the three W4 warp mutants
+re-run; all killed.
+
+## W5 CLOSED: ToggleSneak (PlayerSpeedChanger.cs:75-78)
+
+The port's sneak was held-only at all four host input sites and the
+setting sat stored. The capture is the motor's now, every frame: under
+`Controls/ToggleSneak` the mode is `sneakingMode ^= ActionStarted(Sneak)`
+- a press flips it, release keeps it - and the held key otherwise. P15's
+grounded latch still decides when the mode takes effect; running still
+beats sneaking and the toggled mode survives the run. 3 pins; 4 mutants,
+4 killed.
+
+## W6 CLOSED: ShopQualityHUDDelay (PlayerActivate.cs:1382)
+
+The HUD presentation mode was live since BG1 and its DURATION was not:
+every shop-quality line popped on hudText's default clock. The HUD arm
+passes the setting (GetInt 1..10) through `townTalk.say`'s new delay
+argument to `hudText.add`'s `delayInSeconds` - AddHUDText's own second
+argument. Key LIVE, with its NUMBER_LAW row on the screen.
+
+## W7 CLOSED: MouseLookSmoothingFactor (PlayerMouseLook.cs:154-166)
+
+The first of the camera-feel controls, and the one that changes the
+DEFAULT feel: the setting ships 0.5, so DFU's look is smoothed out of
+the box, and the port applied raw deltas straight to the camera on the
+event at all eight sites (mouse + touch, four hosts). `player/
+lookFilter.js` keeps the residual owed to the camera and pays DFU's
+frame-rate-scaled fraction of it each frame - the same arithmetic as
+lookCurrent/lookTarget, proven frame for frame, with the property the
+hosts need: an external write to the camera (a door's facing, a load, a
+teleport) needs no resync because the residual is a delta. The pitch
+clamp lands on the target as :142 has it. The settings screen's range
+was "ours: 0..1"; it is DFU's clamp (0..0.9) now. The controller minimum
+(:159-160) has no controller to read and is not ported. 6 pins; 5
+mutants, 5 killed.
+
+## SELF-AUDIT 3 (2026-08-30, Mac: "a comprehensive audit on everything so far", the third)
+
+W5, W6 and W7 re-read against the C#; the LIVE and dead-export sweeps
+re-run clean. Three findings, all fixed here - two against W7's own
+framing, one against a W5 pin that had asserted the opposite of the
+law:
+
+- **F-C1** PlayerMouseLook.Update returns before ApplyLook while the
+  game is paused (`enableMouseLook = !IsGamePaused`, :241-244): the
+  owed look WAITS under a window. The port's filter ticked every frame.
+  All four hosts gate the tick on the same expression their lookGate
+  reads.
+- **F-C2** while the swing action is held (WeaponSwingMode 0, not a
+  bow, :248-253) DFU takes the ELSE arm - `SetFacing(lookCurrent)`,
+  whose Init sets target = current - so the look a swing interrupted is
+  DROPPED, never paid out afterwards. `LookFilter.settle()` is that;
+  the three swinging hosts track the raw right button (HasAction, on
+  the window, ungated) and settle while it is held with a non-bow in
+  hand; the dungeon ctx exposes `weaponIsBow` for its standalone host.
+- **F-C3** ApplyInputSpeedAdjustment CLEARS `sneakingMode` while
+  running (:121-125, "switch sneaking off if was previously sneaking"):
+  under ToggleSneak a run ENDS the toggled sneak. The W5 pin had
+  asserted "the toggled mode survives the run and comes back" - an
+  assumption written as a law. Motor and pin corrected; the held mode
+  is unchanged because it re-latches from the key next frame, as DFU's
+  does.
+
+4 mutants (settle always, pays while paused, run keeps the toggle,
+settle keeps the pitch), 4 killed.
+
+## W8 CLOSED: MovementAcceleration (InputManager.cs:1445-1497)
+
+The second camera-feel control, default OFF. The hosts produced the
+movement axes as the bare held-key difference; `player/moveAxes.js` is
+one InputManager Update - a force per held action climbing the axis at
+9.8/s toward +/-1 (or the axis IS the key without acceleration), then
+friction decaying an axis whose impulse was not raised at 9.8/s to 0.
+All four producers hand the motor the axes and advance them only on
+frames the motor runs (a held overlay is timeScale 0). Two things worth
+knowing: under acceleration a reversal moves two steps a frame while the
+axis is still on the old side (force AND friction - DFU's own
+arithmetic), and in classic mode DFU's answer to two opposing keys
+depends on keybind dictionary order, so the port keeps its neutral
+difference there. 5 pins; 5 mutants, 4 killed + 1 proven equivalent.
+
+## W9 CLOSED: CameraRecoilStrength (CameraRecoiler.cs, whole)
+
+The second default-feel one: the setting ships 3 (High), so DFU's
+camera reels on every hit above 2% of max health, and the port's never
+did. `player/cameraRecoiler.js` is the class whole - the timer of
+(5 + floor(pct*5))*PI falling at 2*PI/s, the rotation scalar dying with
+it, the random unit axis, the ADDITIVE rotate on the camera (x pitches
+down in Unity's frame, y turns right) - a PER-FRAME OFFSET on the look (self-audit 4 corrected the first cut,
+which accumulated) - driven by the same per-frame HealthLost the
+near-death flicker reads. Three hosts run it after the
+look on the same paused gate; interior.js is a fly camera with no
+entity and has nothing to reel from. Unity's `insideUnitCircle` is
+`rolls` (Ledger A). 5 pins; 5 mutants, 5 killed.
+
+## W10 CLOSED: HeadBobbing (HeadBobber.cs, whole)
+
+The third default-feel one: the setting ships True, so DFU's camera bobs
+and nods with every step, dips on a landing, and the port's never did.
+`player/headBobber.js` is the class whole - the style table, the timer
+at velocity * bobSpeed, the cos/|sin| path with its begin blend, the
+0.5 s release lerp, the landing bounce with its water speeds. Two
+port-shape decisions, both recorded in the module: the POSITION rides
+`player.eye` as a world-space offset the motor adds (every camera and
+every ray in the port reads player.eye, exactly as every DFU ray reads
+the bobbed camera transform), and the NOD is a per-frame offset on the
+look, removed before re-applied, because PlayerMouseLook writes absolute
+angles each Update and the bobber's Rotate sits on top. One DFU quirk
+kept verbatim: Update returns while airborne, so the landing bounce only
+ever arms through the swimming arm. 7 pins; 6 mutants, 6 killed.
+
+## W11 CLOSED: WeaponAttackThreshold + WeaponSwingMode (WeaponManager.cs:306-350, :808)
+
+The threshold is the FIND of the wave: StartGameBehaviour :263 writes
+`Settings.WeaponAttackThreshold` over WeaponManager's 0.05 field default,
+and DFU's shipped ini says 0.005 - so the port, gating on the field
+constant since the gesture first shipped, demanded ten times the mouse
+travel DFU does before a swing fires. If swings ever felt like they
+needed a shove, this is why. The gesture reads the setting at the point
+of use now; the field constant stays what it is; the AUDIT 24 trail
+pins pass it explicitly. WeaponSwingMode's other two arms are ported:
+1 click, 2 click-or-hold, a random direction of six, no gesture
+tracked, bows exempt. Both keys LIVE with screen rows.
+
+`Controls/WeaponSensitivity` is REFUTED as a consumer: SettingsManager
+:535 and WeaponManager :196 both have it commented out - DFU reads it
+nowhere. It stays stored, and this is why.
+
+## SELF-AUDIT 4 (2026-08-30, Mac: "a comprehensive audit on everything so far", the fourth)
+
+W8-W11 re-read against the C#; the LIVE (72 keys) and dead-export
+sweeps clean. One finding, fixed here, and a correction to the record:
+
+- **F-D1** the camera recoil ACCUMULATED. `CameraRecoiler` calls
+  `Transform.Rotate` on the camera, and I wrote it as an additive step
+  on cam.pitch/cam.yaw, with a pin asserting the view "does not return
+  exactly to rest, as DFU's doesn't". PlayerMouseLook.cs:257-263 says
+  otherwise: it OVERWRITES the camera's localEulerAngles every Update,
+  so the reel is a per-frame offset on the look - the same shape the
+  head bobber's nod was given a wave later, and the same reasoning
+  should have been applied to the recoiler. The view returns exactly to
+  the mouselook heading when the sway ends. Fixed and re-pinned; the W9
+  record below is corrected.
+- **Verified sound** with the frame-order caveat recorded: the bobber
+  and recoiler read the motor's previous-frame moveSpeed/HealthLost
+  (the camera block runs at the top of the frame, the motor later);
+  DFU's own Update/FixedUpdate ordering between those MonoBehaviours is
+  no tighter. The axes keep accumulating under paralysis while the motor
+  ignores them, as InputManager does under FrictionMotor's cancel.
+- **Also verified:** the swing-mode fork's click edge, hold re-attack
+  and six-direction range against :316-350; the `gesture` signature's
+  fifth-arg callers; the trail pins' explicit field constant.
+
+1 mutant (accumulation), killed.
+
+## W12 CLOSED: BowDrawback (WeaponManager.cs:341, :353-360)
+
+The machine had carried the draw-and-hold half since FX1 - StrikeUp to
+the hold frame, the 10 s undraw, the StrikeUp -> StrikeDown release -
+with a comment saying it becomes live "the moment the drawback path
+does, with nothing here to change". That was exactly true. The gesture's
+bow arm reads the setting now: a press draws, letting go at the hold
+frame looses, ActivateCenterObject held un-draws (the full cooldown
+charged, as a cancelled draw costs what an arrow costs). The activate
+key reaches every rig through a new `activateHeld` dep - the dungeon ctx
+threads its host's - which is the one seam the old comment did not
+foresee. 5 pins; 3 mutants, 3 killed.
+
+## W13 CLOSED: Handedness (FPSWeapon.FlipHorizontal)
+
+`fpsWeapon.js`'s header had recorded the left-hand flip as unimplemented
+"until a settings surface exists" - the surface has existed since U29.
+Setting 1 (DFU's one checkbox; 2 and 3 sit in GetInt's range and do
+nothing, `== 1`) mirrors the art and swaps AlignRight for AlignLeft on
+Idle, StrikeDown and StrikeUp only; a side strike keeps its side and
+AlignLeft is never swapped. The camera-feel and weapon-input set is
+CLOSED with this. 3 pins; 3 mutants, 3 killed.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

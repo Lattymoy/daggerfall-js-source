@@ -41,9 +41,13 @@ const check = (ok, label) => {
 
 let app = null;
 try {
+  // DAGGER_SHELL_EXE points the probe at a PACKAGED binary (the
+  // release/linux-unpacked build) instead of dev electron over app/ -
+  // same checks, so the installer's payload is held to the same laws.
+  const exe = process.env.DAGGER_SHELL_EXE;
   app = await _electron.launch({
-    executablePath: electronPath,
-    args: ['--no-sandbox', path.join(root, 'app')],
+    executablePath: exe ?? electronPath,
+    args: exe ? ['--no-sandbox'] : ['--no-sandbox', path.join(root, 'app')],
     env: {
       ...process.env,
       DAGGER_USER_DATA: userData,

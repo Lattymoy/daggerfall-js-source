@@ -39,31 +39,39 @@
 // looks level because ITS pitch is an animation channel, where this one
 // takes the player's pitch through the neck the reference rotates.
 
-import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
+import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
-  sampleTrack, resetClip, advanceClip, getTextKeyTime, animVelocity,
+  sampleTrack, resetClip, advanceClip, getTextKeyTime,
 } from '../formats/mwAnim.js';
-import { accumRootRef, buildSkeleton, ACCUM_ROOT_NAMES } from '../formats/mwSkin.js';
+import { accumRootRef, buildSkeleton } from '../formats/mwSkin.js';
 import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
+import { flattenNif } from '../formats/mwNifMesh.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
-  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS,
+  weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, raceBeastFlag,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
+  facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
+  sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
-import { PART_BONES } from '../formats/mwNpc.js';
+import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
+import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
+import { CifRciFile } from '../formats/cifRciFile.js';
+import { DFPalette } from '../formats/dfPalette.js';
+import { raceArt } from '../systems/races.js';
 import { drawRigSpriteBox } from '../render/characterSprite.js';
 import { WEAPONS } from '../characters/weapons.js';
-import { correctTexturePath, correctActorModelPath, wrapModes, warningImage } from '../formats/mwTexture.js';
-import { decodeDds } from '../formats/mwDdsFile.js';
+import { materialName } from '../systems/itemInfo.js';
+import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
+import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
@@ -81,7 +89,7 @@ export function fpSkeletonPath({ female = false, beast = false } = {}) {
 
 /** MW-D24: rule 6's OTHER column - the THIRD-PERSON skeleton the same
  *  actor walks on (getActorSkeleton's !firstPerson branch,
- *  actorutil.cpp:504-513, through settings-default.cfg [Models]
+ *  actorutil.cpp:8-19, through settings-default.cfg [Models]
  *  baseanim/baseanimfemale/baseanimkna). Werewolf out of scope for the
  *  same reason as above. */
 export function tpSkeletonPath({ female = false, beast = false } = {}) {
@@ -171,17 +179,22 @@ export const UPPER_BODY_NAME = Object.freeze(
  *  test is the same shape with one fewer state above the line. */
 export const accurateAiming = (upper) => upper > UPPER_BODY.WeaponEquipped;
 
-/** AnimState::getCompletion - the fraction of [startTime, stopTime] the
- *  playhead has covered. refreshIdleAnims feeds it straight back in as
- *  the next play's startPoint (:822-825), so a finished idle restarts AT
- *  ITS OWN END and the loop window immediately wraps it. That is not a
- *  bug being reproduced; it is why a re-armed idle does not visibly
- *  stutter back to the beginning. */
+/** AnimState::getCompletion (animation.cpp:2160-2166) - the fraction of
+ *  [startTime, stopTime] the playhead has covered. refreshIdleAnims
+ *  feeds it straight back in as the next play's startPoint (:822-825),
+ *  so a finished idle restarts AT ITS OWN END and the loop window
+ *  immediately wraps it. That is not a bug being reproduced; it is why
+ *  a re-armed idle does not visibly stutter back to the beginning.
+ *
+ *  MW-D33: the reference does NOT clamp the ratio, and a zero-length
+ *  clip answers by whether it is still playing - `mPlaying ? 0.0f :
+ *  1.0f` - a FINISHED zero-length clip is complete, not at its start.
+ *  The port had clamped and answered 0 for both. */
 export function clipCompletion(state) {
   if (!state) return 0;
   const span = state.stopTime - state.startTime;
-  if (!(span > 0)) return 0;
-  return Math.min(1, Math.max(0, (state.time - state.startTime) / span));
+  if (span > 0) return (state.time - state.startTime) / span;
+  return state.playing ? 0 : 1;
 }
 
 /**
@@ -425,8 +438,181 @@ function skeletonHasBone(skeletonBytes, name) {
  * an arrow rides along. Two unknown items both fold to None and compare
  * equal, which is right: both draw nothing.
  */
+/** MW-D32: the worn list as one comparable key - kind, template,
+ *  material, in the readout's own order. */
+/** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
+ *  esm files a data set carries, times three record kinds. */
+const ESM_WALK_CACHE = new Map();
+// IG2: the .kf ANIMATION-SOURCE parse memo. clipReport parses a whole
+// keyframe file and matches its tracks by NAME; for one skeleton path
+// in one data generation the answer cannot change, and with the body
+// following the equip table it was re-parsed on every swap, twice per
+// rig. The cached result is read-only downstream - every build wraps
+// it in its own source object and mints fresh clip states.
+const CLIP_REPORT_CACHE = new Map();
+async function cachedClipReport(gen, skeletonPath, name, bytesOf, skeleton) {
+  if (gen === null || gen === undefined) return clipReport({ kfBytes: bytesOf(), skeleton, group: FP_IDLE_BASE });
+  const key = `${gen}:${skeletonPath}:${name}`;
+  let hit = CLIP_REPORT_CACHE.get(key);
+  if (hit === undefined) {
+    hit = await clipReport({ kfBytes: bytesOf(), skeleton, group: FP_IDLE_BASE });
+    CLIP_REPORT_CACHE.set(key, hit);
+  }
+  return hit;
+}
+// IG2: decoded-texture memo, same generation key - a steel cuirass's
+// texture does not change because a gauntlet did.
+const TEXTURE_CACHE = new Map();
+/** AUDIT 32 F2: the face match per identity per data generation. */
+const FACE_MATCH_CACHE = new Map();
+
+/** MW-D37: the mean colour of a CLOT record's worn texture (its first
+ *  part reference's BODY mesh, male side) - what the dye-aware garment
+ *  pick compares against Daggerfall's dye band. Memoised per data
+ *  generation; null when nothing measures. */
+const CLOT_COLOUR_CACHE = new Map();
+async function clothingColourSampler(clothes, parts, archives, gen) {
+  const bodyById = new Map((parts ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
+  const colours = new Map();
+  for (const c of clothes ?? []) {
+    const key = `${gen}:${c.id}`;
+    if (CLOT_COLOUR_CACHE.has(key)) { colours.set(c.id, CLOT_COLOUR_CACHE.get(key)); continue; }
+    const ref = (c.parts ?? []).find((r) => r.male || r.female);
+    const body = ref ? bodyById.get(ref.male || ref.female) : null;
+    let rgb = null;
+    if (body) {
+      const f = await measurePart(body, archives, 'hair');   // alpha-weighted texture mean
+      if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
+    }
+    CLOT_COLOUR_CACHE.set(key, rgb);
+    colours.set(c.id, rgb);
+  }
+  return (rec) => colours.get(rec.id) ?? null;
+}
+
+/** MW-D38: the icon cache, per data generation / record / size / dye. */
+const ITEM_ICON_CACHE = new Map();
+
+/** MW-D38: frame a mesh's bounds for the icon camera: a three-quarter
+ *  view from above-front-right, the ortho fitted to the projected
+ *  corners with a little air. Pure; pinned. */
+export function iconFrame(bounds, { air = 1.12 } = {}) {
+  const cx = (bounds.minX + bounds.maxX) / 2; const cy = (bounds.minY + bounds.maxY) / 2; const cz = (bounds.minZ + bounds.maxZ) / 2;
+  const dir = [0.55, 0.65, 0.85];
+  const dl = Math.hypot(...dir);
+  const d = dir.map((v) => v / dl);
+  const span = Math.hypot(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, bounds.maxZ - bounds.minZ) || 1;
+  const eye = [cx + d[0] * span * 2, cy + d[1] * span * 2, cz + d[2] * span * 2];
+  const view = lookAt(eye, [cx, cy, cz], [0, 1, 0]);
+  // project the eight corners into view space; the ortho half-extents
+  // are the largest |x| and |y| seen, with air.
+  let hw = 0; let hh = 0;
+  for (const x of [bounds.minX, bounds.maxX]) for (const y of [bounds.minY, bounds.maxY]) for (const z of [bounds.minZ, bounds.maxZ]) {
+    const p = transformPoint(view, x, y, z);
+    hw = Math.max(hw, Math.abs(p[0])); hh = Math.max(hh, Math.abs(p[1]));
+  }
+  const half = Math.max(hw, hh) * air || 1;
+  return { view, proj: ortho(half, half, 0.1, span * 8), eye };
+}
+
+
+/** MW-D35: MEASURE ONE MORROWIND BODY PART - its base texture's level-0
+ *  RGBA and its mesh height - from the archives. Null-honest at every
+ *  step; the matcher names the ones that could not be measured. */
+async function measurePart(record, archives, kind) {
+  const exists = (p) => archives.some((a) => a.has(p));
+  const path = `meshes/${record.model}`;
+  const arc = archives.find((a) => a.has(path));
+  if (!arc) return null;
+  let parseNif; let flattenNif;
+  try {
+    ({ parseNif } = await import('../formats/mwNifFile.js'));
+    ({ flattenNif } = await import('../formats/mwNifMesh.js'));
+  } catch { return null; }
+  let batches;
+  try { batches = flattenNif(parseNif(arc.get(path).slice())); } catch { return null; }
+  const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+  if (!file) return null;
+  const tpath = correctTexturePath(file, exists);
+  const tarc = archives.find((a) => a.has(tpath));
+  if (!tarc) return null;
+  let img;
+  // MW-D34: by extension - the ladder legitimately answers .tga/.bmp.
+  try { img = decodeTextureImage(tpath, tarc.get(tpath).slice()); } catch { return null; }
+  const m0 = img.mips[0];
+  if (kind === 'head') {
+    // AUDIT 32 F1: sampled through the mesh's own UVs, so the texture's
+    // layout is never assumed.
+    return headFeatures(m0.rgba, m0.width, m0.height, batches.map((b) => ({ positions: b.positions, uvs: b.uvs })));
+  }
+  const shapes = batches.filter((b) => b.positions && b.positions.length);
+  const bounds = shapes.length ? meshBounds(shapes) : null;
+  return hairFeatures(m0.rgba, m0.width, m0.height, bounds ? bounds.maxZ - bounds.minZ : 0);
+}
+
+/** MW-D35: THE FACE, MATCHED. The classic portrait the player picked,
+ *  measured; every playable head and hair of the race and sex,
+ *  measured; the nearest of each chosen - all on the player's own data,
+ *  at build time. Returns { head, hair, reasons } with nulls where a
+ *  half could not be measured (the walk then stands for that half). */
+export async function matchFaceFor({ race, female, faceIndex, parts, archives, deps }) {
+  const reasons = [];
+  let portrait = null;
+  try {
+    const art = raceArt(dfRaceKeyOf(race), female ? 'female' : 'male');
+    const cif = new CifRciFile();
+    const bytes = await deps.fetchArena2Bytes(art.heads);
+    const pal = new DFPalette();
+    pal.load(await deps.fetchArena2Bytes(cif.paletteName || 'ART_PAL.COL'), cif.paletteName || 'ART_PAL.COL');
+    cif.load(bytes, art.heads, pal);
+    portrait = portraitFeatures(cif.getDFBitmap(faceIndex | 0, 0), pal);
+  } catch (err) {
+    reasons.push(`portrait unreadable: ${err.message}`);
+  }
+  if (!portrait) return { head: null, hair: null, reasons: [...reasons, 'the walk stands'] };
+  const pools = facePools(parts, race, female);
+  const heads = [];
+  for (const rec of pools.heads) heads.push({ id: rec.id, f: await measurePart(rec, archives, 'head') });
+  const hairs = [];
+  for (const rec of pools.hairs) hairs.push({ id: rec.id, f: await measurePart(rec, archives, 'hair') });
+  const m = matchFace(portrait, heads, hairs, { female });
+  const hex = (c) => `#${c.map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
+  reasons.push(`portrait ${faceIndex | 0}: skin ${hex(portrait.skin)}, hair ${portrait.bald ? 'none' : hex(portrait.hair)}, `
+    + `length ${portrait.length.toFixed(2)}, beard ${portrait.beard.toFixed(2)}`);
+  return { head: m.head, hair: m.hair, reasons: [...reasons, ...m.reasons] };
+}
+
+/** MW-D33: one line per worn piece for the card - what it resolved to
+ *  and what it dressed, or why it kept its sprite. Pure over the
+ *  composer's own output; the adds name their record in `slot`. */
+export function wornVerdicts(pieces, worn) {
+  const rows = [];
+  for (const p of pieces ?? []) {
+    const label = p.kind === 'clothing'
+      ? (p.name ?? `garment ${p.templateIndex}`)
+      : `armor ${p.templateIndex} (material ${p.material ?? 0})`;
+    const dressed = (worn?.adds ?? []).filter((a) => a.piece === p).map((a) => a.slot);
+    const reason = (worn?.notes ?? []).find((n) => n.startsWith(label.split(' (')[0]) || (p.kind !== 'clothing' && n.startsWith(`armor ${p.templateIndex}:`)));
+    rows.push({ label, dressed, reason: dressed.length ? null : (reason ?? 'no part reached the rig') });
+  }
+  return rows;
+}
+
+export function wornEquipKeyOf(pieces) {
+  // MW-D37: the dye is part of a garment's identity now - a re-dyed
+  // shirt resolves to a different MW shirt, so it is a change.
+  return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex}:${p.material ?? ''}:${p.dye ?? ''}`).join('|');
+}
+
 export function fpWeaponKey(item, hasAmmo) {
-  return `${dfWeaponToMw(item, WEAPONS)}:${(item && item.materialName) || ''}:${hasAmmo ? 1 : 0}`;
+  // MW-D38: the MATERIAL IS READ, at last. `item.materialName` was a
+  // field no item ever carried - the name lives behind itemInfo's
+  // materialName(item) - so every weapon of a type keyed the same and
+  // resolved to the type's first record: a daedric longsword drew as
+  // the id-sorted first longsword, and swapping it for an iron one was
+  // not a change. Found by MW-D37's question - "do the textures map to
+  // the materials" - because no weapon's ever had.
+  return `${dfWeaponToMw(item, WEAPONS)}:${item ? materialName(item) : ''}:${hasAmmo ? 1 : 0}`;
 }
 
 /**
@@ -460,7 +646,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType !== MW_WEAPON_TYPE.None) {
-    const rec = pickWeaponRecord(allWeapons, mwType, weapon && weapon.materialName);
+    const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);   // MW-D38
     if (!rec) {
       notes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
     } else {
@@ -468,10 +654,20 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       const arc = find(path);
       if (!arc) notes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
       else {
-        const bone = weaponAttachBone(mwType);
+        // MW-D32: the TYPED bone only when the rig CARRIES it - the
+        // reference starts from sPartList's "Weapon Bone" and switches
+        // to the type's own mAttachBone only `if (found != nodeMap
+        // .end())` (npcanimation.cpp:787-795). A rig without "Weapon
+        // Bone Left" hangs the bow on "Weapon Bone" rather than
+        // dropping it.
+        const typed = weaponAttachBone(mwType);
+        const bone = typed === 'Weapon Bone' || skeletonHasBone(skeletonBytes, typed)
+          ? typed : 'Weapon Bone';
         const weaponBytes = arc.get(path).slice();
         parts.push({ slot: 'weapon', bones: [bone], bytes: weaponBytes });
-        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
+        weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone,
+          // MW-D28: the record's own attack speed (character.cpp:1326).
+          speed: rec.speed || 1 };
 
         // MW-D16 / RULE 24's ARROW. A drawn bow with no round on it is
         // what the port has been drawing; the reference instances the
@@ -504,7 +700,11 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                   + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
               } else {
                 parts.push({
+                  // MW-D34: `ammo` marks the one part attachArrow
+                  // instances BARE - no BoneOffset of its own
+                  // (weaponanimation.cpp:87-93, getInstance direct).
                   slot: 'arrow', bones: [arrowBone], bytes: ammoArc.get(ammoPath).slice(), preTransform: pre,
+                  ammo: true,
                 });
                 arrowInfo = {
                   id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
@@ -528,7 +728,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * third-person BODY records (playerBodyRows), the one assembly seam
  * (assembleFirstPersonArm -> bindPartsInto), rule 8's weapon column on
  * THIS skeleton's own bones, and the third-person animation sources
- * (xbase_anim.kf first, npcanimation.cpp:534-538). Runs INSIDE the
+ * (xbase_anim.kf first, npcanimation.cpp:529-533). Runs INSIDE the
  * arm's build while the archives are still open, because a second
  * multi-second walk for the same bytes is pure waste.
  *
@@ -536,7 +736,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, faceIndex, weapon, hasAmmo, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -546,15 +746,26 @@ async function buildTpBody({
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
-    const rows = playerBodyRows(parts, race, female, { beast, faceIndex });
-    const partBytes = [];
+    const rows = playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch });
     const missing = [];
+    // MW-D29/D31: the worn verdicts arrive COMPOSED - one arbitration
+    // in buildFpArm serves both rigs. shadowSkinRows applies the
+    // shadows to the skin rows' bone lists so a right gauntlet hides
+    // the right hand and leaves the left on the body. Never-traps:
+    // every miss is a note and the skin stands.
+    missing.push(...worn.notes);
+    const skinRows = shadowSkinRows(
+      rows.filter((r) => r.record).map((r) => ({ slot: r.slot, bones: PART_BONES[r.slot] ?? [], model: r.record.model })),
+      worn.shadows);
     for (const row of rows) {
-      if (!row.record) { missing.push(`${row.slot}: no third-person record for this actor`); continue; }
-      const path = `meshes/${row.record.model}`;
+      if (!row.record) missing.push(`${row.slot}: no third-person record for this actor`);
+    }
+    const partBytes = [];
+    for (const row of [...skinRows, ...worn.adds]) {
+      const path = `meshes/${row.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${row.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: row.slot, bones: PART_BONES[row.slot] ?? [], bytes: arc.get(path).slice() });
+      partBytes.push({ slot: row.slot, bones: row.bones, bytes: arc.get(path).slice() });
     }
     if (!partBytes.length) {
       return { ok: false, stage: 'parts', error: `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
@@ -569,7 +780,7 @@ async function buildTpBody({
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
-    const textures = collectArmTextures(arm.pieces, archives);
+    const textures = collectArmTextures(arm.pieces, archives, gen);
 
     const sourcePaths = tpAnimSources(skeletonPath, exists);
     if (!sourcePaths.length) {
@@ -582,7 +793,7 @@ async function buildTpBody({
     }
     const sources = [];
     for (const p of sourcePaths) {
-      const one = await clipReport({ kfBytes: find(p).get(p).slice(), skeleton: arm.skeleton, group: FP_IDLE_BASE });
+      const one = await cachedClipReport(gen, skeletonPath, p, () => find(p).get(p).slice(), arm.skeleton);
       if (!one.ok) return { ok: false, stage: 'clip', error: `${p}: ${one.error}`, notes: missing, rows };
       sources.push({
         name: p, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups),
@@ -633,7 +844,7 @@ async function buildTpBody({
 }
 
 export async function buildFpArm({
-  race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, deps = null,
+  race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -662,6 +873,31 @@ export async function buildFpArm({
     }
     const esmBytes = [];
     for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
+    // MW-D32 / IG2: the ESM WALK MEMO, hoisted above every record scan
+    // so ALL of them ride it - the records do not change between two
+    // rebuilds of the same data, only the pieces do. Keyed on the
+    // store's generation stamp, so a re-attached archive is a fresh
+    // walk and never a stale one. IG2 routed the race, GMST and weapon
+    // scans through it too: with the body following the equip table,
+    // every swap re-walked tens of megabytes of .esm five ways.
+    // A test's deps carry no generation: gen stays NULL there and the
+    // clip/texture memos stand down (the walk memo below keys on the
+    // byte length too, so it is collision-safe either way). Only the
+    // real store's monotonic stamp turns the swap caches on.
+    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
+    const walk = (e, kind, fn) => {
+      // No generation (a test's deps) = no memo: two fixtures of the
+      // same name AND length but different bytes are an everyday test
+      // arrangement, and the byteLength fingerprint cannot tell them
+      // apart - the mSpeed pin proved it the day the weapon walk
+      // joined this memo.
+      if (gen === null) return fn(e.bytes);
+      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
+      let hit = ESM_WALK_CACHE.get(key);
+      if (hit === undefined) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
+      return hit;
+    };
+    const raceKey = String(race || '').toLowerCase();
     // AUDIT MW-A F1: BEAST COMES FROM THE DATA. The skeleton switch
     // and the tail row both read this flag, and no production caller
     // ever set it - an Argonian player built on the human skeleton
@@ -671,8 +907,26 @@ export async function buildFpArm({
     if (beast === null) {
       beast = false;
       for (const e of esmBytes) {
-        const b = raceBeastFlag(e.bytes, race);
-        if (b !== null) beast = b;
+        const rrec = walk(e, 'races', raceRecords).get(raceKey);
+        if (rrec && rrec.radt) beast = rrec.beast;   // raceBeastFlag's own rule, off the memo
+      }
+    }
+    // MW-D34: Npc::adjustScale (npc.cpp:1102-1136) - the race record's
+    // RADT carries per-gender height and weight, and the rendered body
+    // scales x,y by WEIGHT and z by HEIGHT (:1124-1135). The player's
+    // own FIRST-person meshes take uniform HEIGHT only - "Race weight
+    // should not affect 1st-person meshes, otherwise it will change
+    // hand proportions and can break aiming" (:1112-1121); in this
+    // port's FP composition (rule 54: camera and rig share one space)
+    // a uniform scale of both cancels exactly, so the carve-out is the
+    // no-op the reference's comment wants. Collision never scales
+    // (:1104-1106) - the classic motor's collider is untouched. Last
+    // .esm wins, the load order as everywhere else.
+    let raceScale = { weight: 1, height: 1 };
+    for (const e of esmBytes) {
+      const rrec = walk(e, 'races', raceRecords).get(raceKey);
+      if (rrec && rrec.radt) {
+        raceScale = { weight: rrec.weight[female ? 1 : 0], height: rrec.height[female ? 1 : 0] };
       }
     }
     // MW-D14 / RULE 18: the settings name is not the final name. The
@@ -687,14 +941,18 @@ export async function buildFpArm({
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
-    const parts = esmBytes.flatMap((e) => bodyParts(e.bytes));
+    const parts = esmBytes.flatMap((e) => walk(e, 'parts', bodyParts));
+    // MW-D29: the ARMO records ride the same esm walk, load order and
+    // all - the composer resolves DF pieces against them by token.
+    const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
+    const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
     let sneakDelta = null;
     for (const e of esmBytes) {
-      const v = gmstValue(e.bytes, GMST_SNEAK_DELTA);
-      if (typeof v === 'number') sneakDelta = v;
+      const g = walk(e, 'gmst-sneak', (b) => ({ v: gmstValue(b, GMST_SNEAK_DELTA) }));
+      if (typeof g.v === 'number') sneakDelta = g.v;
     }
 
     const find = (p) => archives.find((a) => a.has(p));
@@ -702,20 +960,80 @@ export async function buildFpArm({
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
 
+    // MW-D31: ONE COMPOSITION for both rigs. The worn arbitration runs
+    // here, once, and the third person receives the verdicts instead
+    // of re-arguing them - one seam, one law, two views.
+    // MW-D37: the garments' measured colours, so the dye can choose.
+    const colourOf = (armor ?? []).some((p) => p.kind === 'clothing')
+      ? await clothingColourSampler(clothes, parts, archives, gen) : null;
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
+    // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
+    // Null halves fall back to the walk inside playerBodyRows.
+    // AUDIT 32 F2: memoised per identity per data generation - a
+    // rebuild happens on every equip change now (D32), and the face
+    // does not change when a gauntlet does; without this, every worn
+    // swap re-parsed a dozen meshes and decoded a dozen textures.
+    let faceMatch;
+    if (!d.fetchArena2Bytes) {
+      faceMatch = { head: null, hair: null, reasons: ['no Daggerfall data door - the walk stands'] };
+    } else {
+      const fkey = `${gen}:${race}:${female ? 'f' : 'm'}:${faceIndex | 0}`;
+      faceMatch = FACE_MATCH_CACHE.get(fkey);
+      if (!faceMatch) {
+        faceMatch = await matchFaceFor({ race, female, faceIndex, parts, archives, deps: d });
+        // AUDIT 32 F3: a MISS is not memoised. The enhanced door opens
+        // before ARENA2 is picked, so the first build of a session can
+        // find no portrait archive at all; caching that verdict would
+        // have pinned "the walk stands" onto every rebuild of the
+        // session even after the data arrived.
+        if (faceMatch.head || faceMatch.hair) FACE_MATCH_CACHE.set(fkey, faceMatch);
+      }
+    }
+
     const rows = armReport(parts, race, female);
     const wanted = armMeshPaths(rows);
+    // MW-D32: updateParts sweeps EVERY slot in first person too
+    // (npcanimation.cpp:682, PRT_Neck..PRT_Count with
+    // getBodyParts(firstPerson=true)) - non-hand slots take .1st
+    // records only (:1258), which retail does not carry, so on vanilla
+    // data this adds nothing; a mod's .1st neck now appears exactly as
+    // the reference shows it. A missing non-arm slot is NOT noted -
+    // the reference leaves those null silently.
+    const fpAll = resolveBodyParts(parts, race, female, { firstPerson: true });
+    for (const [slot, rec] of fpAll) {
+      if (ARM_PARTS.includes(slot)) continue;
+      if (rec && rec.model) wanted.push({ slot, record: rec.id, firstPerson: true, path: `meshes/${rec.model}` });
+    }
     const partBytes = [];
     const missing = [];
+    // The fp skin wears the same shadows: a right gauntlet hides the
+    // right 1st-person hand exactly as it hides the right skin hand on
+    // the body.
+    const fpRows = shadowSkinRows(
+      wanted.filter((w) => w.path).map((w) => ({ slot: w.slot, bones: PART_BONES[w.slot] ?? [], path: w.path })),
+      worn.shadows);
     for (const w of wanted) {
       if (!w.path) { missing.push(`${w.slot}: no record for this actor`); continue; }
+    }
+    for (const w of fpRows) {
       const arc = find(w.path);
       if (!arc) { missing.push(`${w.slot}: ${w.path} is not in your archives`); continue; }
-      partBytes.push({ slot: w.slot, bytes: arc.get(w.path).slice() });
+      partBytes.push({ slot: w.slot, bones: w.bones, bytes: arc.get(w.path).slice() });
+    }
+    // And the fp camera sees what the reference shows it: gauntlets,
+    // sleeves, the shield - fpWornAdds' filter - never a helmet in
+    // your face.
+    missing.push(...worn.notes);
+    for (const add of fpWornAdds(worn.adds)) {
+      const path = `meshes/${add.model}`;
+      const arc = find(path);
+      if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
+      partBytes.push({ slot: add.slot, bones: add.bones, bytes: arc.get(path).slice() });
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
-    const allWeapons = esmBytes.flatMap((e) => weaponRecords(e.bytes));
+    const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
@@ -748,13 +1066,21 @@ export async function buildFpArm({
     // open. The release moved below this for that reason: which textures
     // a mesh wants is not knowable until the mesh is parsed, and parsing
     // twice to keep the release where it was would cost seconds.
-    const textures = arm.ok ? collectArmTextures(arm.pieces, archives) : new Map();
+    const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
+    // MW-D38: THE CATALOG the item icons resolve against - the same
+    // archives and records this build used, kept on the result so an
+    // icon never re-walks an esm.
+    const catalog = { archives, parts, armors, clothes, weapons: allWeapons, gen };
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, weapon, hasAmmo, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen })
       : null;
-    archives.length = 0;   // release the mapped archives; the bytes we need are copied
+    // IG2: the mapped archives are NO LONGER truncated here - they are
+    // dataSource's generation-keyed cache now (the same array every
+    // build gets), and emptying it made the NEXT swap re-read and
+    // re-index every .bsa blob, which is exactly the seconds Mac felt.
+    // Residency is the stated cost of instant swaps; an attach drops it.
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows: wanted };
     }
@@ -773,7 +1099,7 @@ export async function buildFpArm({
     }
     const sources = [];
     for (const sb of sourceBytes) {
-      const one = await clipReport({ kfBytes: sb.bytes, skeleton: arm.skeleton, group: FP_IDLE_BASE });
+      const one = await cachedClipReport(gen, skeletonPath, sb.name, () => sb.bytes, arm.skeleton);
       if (!one.ok) {
         return {
           ok: false, stage: 'clip', error: `${sb.name}: ${one.error}`,
@@ -854,6 +1180,15 @@ export async function buildFpArm({
       tracks,
       accumRoot,
       keys: idlePick.source.keys,
+      // MW-D33: THE WORN VERDICTS, ON THE CARD. Mac's report - clothing
+      // and armor not showing - arrived with nothing on screen saying
+      // WHY, which is the reverted rig's defining failure wearing new
+      // clothes. Every piece the equip table handed over, and what
+      // became of it: the record it resolved to and the parts it
+      // dressed, or the reason it kept its sprite.
+      worn: wornVerdicts(armor ?? [], worn),
+      face: faceMatch,
+      catalog,
       // MW-D14: every source, in PUSH order, each with its own keys AND
       // its own tracks - because the source that wins a group is the one
       // whose tracks must pose it.
@@ -898,6 +1233,9 @@ export async function buildFpArm({
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: idlePick.source.binding,
       pieces: armPieceRows(arm.pieces).length,
+      // MW-D34: adjustScale's factors for the drawn body and the
+      // camera's focal height.
+      raceScale,
       // MW-D24: the third-person body, or its named refusal.
       third,
     };
@@ -917,22 +1255,40 @@ export async function buildFpArm({
  * ImageManager does, so a texture the archives do not carry SAYS SO on
  * the arm instead of quietly leaving it flat.
  */
-export function collectArmTextures(pieces, archives) {
+export function collectArmTextures(pieces, archives, gen = null) {
   const out = new Map();
   const exists = (p) => archives.some((a) => a.has(p));
   for (const piece of pieces ?? []) {
     const file = piece.material && piece.material.textureFile;
     if (!file || out.has(file)) continue;
+    // IG2: one decode per texture per data generation - the entry is
+    // read-only downstream (mips feed createCharacterTexture), so the
+    // memo is safe to share across rebuilds.
+    if (gen !== null) {
+      const memo = TEXTURE_CACHE.get(`${gen}:${file}`);
+      if (memo) { out.set(file, memo); continue; }
+    }
     const path = correctTexturePath(file, exists);
     const arc = archives.find((a) => a.has(path));
     if (!arc) {
-      out.set(file, { ok: false, path, error: 'not in your archives', image: warningImage() });
+      const entry = { ok: false, path, error: 'not in your archives', image: warningImage() };
+      out.set(file, entry);
+      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
       continue;
     }
     try {
-      out.set(file, { ok: true, path, image: decodeDds(arc.get(path).slice()) });
+      // MW-D34: decode BY EXTENSION (imagemanager.cpp:104-118) - the
+      // ladder legitimately answers the AUTHORED .tga/.bmp when the
+      // .dds probe misses (resourcehelpers.cpp:112-114), and feeding
+      // that to decodeDds turned a texture the archives DO carry into
+      // the magenta warning.
+      const entry = { ok: true, path, image: decodeTextureImage(path, arc.get(path).slice()) };
+      out.set(file, entry);
+      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
     } catch (err) {
-      out.set(file, { ok: false, path, error: err.message, image: warningImage() });
+      const entry = { ok: false, path, error: err.message, image: warningImage() };
+      out.set(file, entry);
+      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
     }
   }
   return out;
@@ -954,6 +1310,31 @@ export function esmDiagnosis(names, parts, race) {
 }
 
 /**
+ * IG4 (2026-08-31, Mac: "the weapons, arms stay in there position on
+ * camera movement when I wanted them to follow the camera" - his second
+ * ask after IG1). A DECLARED DIVERGENCE, and it is the OWNER'S: the
+ * reference DESIGNS the arms to trail the look - rotateFactor is 0.75
+ * at rest (npcanimation.cpp:719), so a quarter of every glance is lag,
+ * and the first-person offset hits the lens twice against the neck's
+ * once (camera.cpp:149-157), so the sneak sink and the head bob slide
+ * the arms AGAINST the view. This port measured itself AT that law (the
+ * probe read the lag at 0.26 of the look against the reference's 0.25)
+ * and Mac played exactly it and asked for glue, twice. So follow-camera
+ * is the shipped DEFAULT, built from the reference's own glue knob:
+ * rotateFactor 1.0 is what the reference itself does while aiming
+ * (mAccurateAiming, npcanimation.cpp:714-718), here applied always,
+ * with the offset channel zeroed at BOTH of its applications so nothing
+ * moves the lens against the arms. The Morrowind feel stays one toggle
+ * away (the pause card), and the probe's law layers measure it with the
+ * flag OFF.
+ */
+const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera';
+function readFollowCamera() {
+  try { return (globalThis.localStorage?.getItem(FOLLOW_CAMERA_KEY) ?? 'true') !== 'false'; }
+  catch { return true; }
+}
+
+/**
  * THE LIVE ARM. One per game, module-level, because there is one player.
  *
  * active() is the whole safety story and every term earns its place: an
@@ -968,6 +1349,7 @@ export function createFpArm() {
   let renderer = null;
   let camera = null;
   let built = null;
+  const listeners = new Set();   // MW-D36
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -977,6 +1359,13 @@ export function createFpArm() {
   // seam it was built through - the swap resolves through the same one.
   let wornKey = null;
   let buildDeps = null;
+  // MW-D32: what the body last dressed in, and the opts to dress it
+  // again. The equip table is read every frame by weaponRig; when the
+  // worn list changes the rig rebuilds through the same door the card
+  // pressed, with the new pieces - the body FOLLOWS THE EQUIP TABLE,
+  // not the last time someone pressed Build.
+  let wornEquipKey = null;
+  let lastBuildOpts = null;
 
   // MW-D12: TWO CLIP SLOTS, because Morrowind's first-person arm plays
   // TWO animations and the port had one.
@@ -1006,6 +1395,7 @@ export function createFpArm() {
   let movementGroup = null;
   let movementSource = null;
   let movementBase = null;
+  let movementStance = null;
   let movementRate = 1;
   // character.cpp:2355-2366 - the turn animation HOLDS 0.05s past the
   // last actual rotation, so mouse jitter does not flicker it.
@@ -1028,6 +1418,20 @@ export function createFpArm() {
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
   let aimFactor = 0;
+  // IG4: follow-camera mode, the shipped default - see the module head
+  // above createFpArm. Persisted so Mac's choice survives a reload.
+  let followCam = readFollowCamera();
+  // IG1: THE FIRST-PERSON OFFSET - the reference's ONE channel for
+  // everything that moves the FP view against the arms. The sneak sink
+  // feeds it (Camera::setSneakOffset -> (0,0,-delta), camera.cpp:312)
+  // and so does the HEAD BOB (head_bobbing.lua:57 adds its zOffset to
+  // the same setFirstPersonOffset vector). The neck takes the offset
+  // ONCE (npcanimation.cpp:723) and the LENS adds it AGAIN on top of
+  // the tracked camera bone (calculateFirstPersonPosition,
+  // camera.cpp:149-157) - two applications against the arms' one,
+  // which is exactly why you SEE your arms sink when you sneak and bob
+  // when you walk. MW object-root space, MW units.
+  let fpOffset = [0, 0, 0];
   // Rule 32(a): the Sneak STANCE, read off the camera dep beside the
   // pitch. It is DFU's Sneak binding and not its Crouch one - Morrowind
   // has one sneak stance, and Daggerfall's crouch is a height change the
@@ -1094,7 +1498,72 @@ export function createFpArm() {
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
+
+  /** MW-D38: one ground mesh, textured, rendered to an icon-sized image. */
+  function renderGroundMesh(nifBytes, archives, gen, size) {
+    let batches;
+    try { batches = flattenNif(parseNif(nifBytes)); } catch { return null; }
+    const pieces = batches.filter((b) => b.positions && b.indices).map((b) => ({ ...b, slot: 'item', mirrored: false }));
+    if (!pieces.length) return null;
+    // the pass frame: NIF Z-up tipped to Y-up, in metres
+    const u = 1 / MW_UNITS_PER_METER;
+    const model = multiply(trs(0, 0, 0, 0, 0, 0, u, u, u), NIF_TO_PASS);
+    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (const p of pieces) {
+      for (let i = 0; i < p.positions.length; i += 3) {
+        const q = transformPoint(model, p.positions[i], p.positions[i + 1], p.positions[i + 2]);
+        if (q[0] < minX) minX = q[0]; if (q[0] > maxX) maxX = q[0];
+        if (q[1] < minY) minY = q[1]; if (q[1] > maxY) maxY = q[1];
+        if (q[2] < minZ) minZ = q[2]; if (q[2] > maxZ) maxZ = q[2];
+      }
+    }
+    if (!(maxX > minX)) return null;
+    const packed = packFpArm(pieces);
+    const mesh = renderer.createCharacterMesh(packed.packed, { uv: true });
+    mesh.ranges = packed.ranges;
+    const textures = collectArmTextures(pieces, archives, gen);
+    for (const r of mesh.ranges) {
+      if (!r.textureFile) continue;
+      const entry = textures.get(r.textureFile);
+      if (!entry) continue;
+      const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+      r.alphaCut = r.piece.material && r.piece.material.alphaTest ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+    }
+    const { view, proj } = iconFrame({ minX, minY, minZ, maxX, maxY, maxZ });
+    const px = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(8, size | 0));
+    let img = null;
+    try { img = renderer.renderCharacterSpriteImage(mesh, model, proj, view, px, px); }
+    finally { releaseGpu(mesh); }
+    return img;
+  }
   function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; }
+  /** Pack the posed third-person pieces and put them on the GPU - the
+   *  ONE upload both the wheel (update) and the inventory figure use.
+   *  AUDIT 33 F1: the figure used to gate on thirdActive(), which
+   *  demands viewMode === 'third' and a mesh the wheel had uploaded -
+   *  so in first person, the default, the inventory showed the classic
+   *  doll and the model never appeared. The body's pieces are posed at
+   *  build regardless of view; only the upload was view-gated. */
+  function uploadThirdMesh(t) {
+    thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
+    if (!thirdMesh) {
+      thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
+      thirdMesh.ranges = thirdPacked.ranges;
+      for (const r of thirdMesh.ranges) {
+        if (!r.textureFile) continue;
+        const entry = t.textures.get(r.textureFile);
+        if (!entry) continue;
+        const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+        r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+        r.alphaCut = r.piece.material && r.piece.material.alphaTest
+          ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+      }
+    } else {
+      renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
+    }
+    return thirdMesh;
+  }
 
   // hasAnimation: ANY source names the group (animation.cpp). WHICH
   // source plays it is a separate question, answered in reverse below.
@@ -1107,8 +1576,10 @@ export function createFpArm() {
   /** The file's time for a key of the CURRENT weapon group, as
    *  getTextKeyTime is always called (character.cpp:1241): the group, a
    *  colon-space, and the action. -1 when the file has no such key. */
+  // MW-D29: getTextKeyTime asks EVERY source in reverse
+  // (animation.cpp:840-854), not the one the idle was picked from.
   const keyTime = (action) => (weaponGroup && rig()
-    ? getTextKeyTime(rig().keys, `${weaponGroup}: ${action}`) : -1);
+    ? sourcesKeyTime(rig().sources, `${weaponGroup}: ${action}`) : -1);
 
   /** Play a section of the weapon group. Returns FALSE and leaves the
    *  slot empty when the file has no such window - it never substitutes
@@ -1172,6 +1643,7 @@ export function createFpArm() {
 
   function resetMovement() {
     movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+    movementStance = null;
   }
 
   /** The velocity the clip itself travels at, so the played speed can
@@ -1219,14 +1691,30 @@ export function createFpArm() {
       turning: turnDir,
       thirdPerson: viewMode === 'third',
     });
-    if (!base) { if (movementState) resetMovement(); return; }
+    if (!base) {
+      // MW-D29: the frame the movement EMPTIES while one was playing,
+      // the idle resets with it (character.cpp:646-651) - so it replays
+      // from its start with freshly rolled loop dice (:824, :811)
+      // instead of resuming mid-clip on a stale counter.
+      if (movementState) { resetMovement(); resetIdle(); }
+      return;
+    }
     const isTurn = base.startsWith('turn');
-    const fresh = !(movementState && movementState.playing && movementBase === base);
+    // MW-D29: the STANCE is part of the early-out key. The reference
+    // forces refreshMovementAnims on every weapon-type transition
+    // (forcestateupdate at character.cpp:1361/:1372/:1431 flows into
+    // refreshCurrentAnims -> refreshMovementAnims(force)), so drawing a
+    // sword mid-walk re-composes walkforward -> walkforward1h THAT
+    // frame - the port's old gate keyed on the movestate name alone and
+    // kept the bare-handed walk playing with the sword out.
+    const stance = animWeaponType(built.mwType, sheathed);
+    const fresh = !(movementState && movementState.playing
+      && movementBase === base && movementStance === stance);
     if (fresh) {
-      const composed = composeMovementGroup(base, animWeaponType(built.mwType, sheathed), hasGroup);
+      const composed = composeMovementGroup(base, stance, hasGroup);
       if (!composed.group) {
-        if (movementState) resetMovement();
-        movementBase = base;
+        if (movementState) { resetMovement(); resetIdle(); }   // :701-707 resets BOTH
+        movementBase = base; movementStance = stance;
         return;
       }
       if (!(movementState && movementState.playing && movementGroup === composed.group)) {
@@ -1241,15 +1729,20 @@ export function createFpArm() {
         movementGroup = composed.group;
         movementState = pick.state;
         movementSource = pick.source;
-        const accName = ACCUM_ROOT_NAMES.find((n) => pick.source.trackMap.has && pick.source.trackMap.has(n));
-        const vel = accName ? animVelocity(pick.source.keys, pick.source.trackMap.get(accName), composed.group) : 0;
-        // "If there's no velocity" is the reference's own > 1 test
-        // (animation.cpp:1292), and the fallbacks are its own constants.
-        movementAnimSpeed = vel > 1 ? vel
-          : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
-            : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
       }
-      movementBase = base;
+      movementBase = base; movementStance = stance;
+      // MW-D29: the clip speed refreshes on EVERY state change, not only
+      // a re-pick - the reference assigns mMovementAnimSpeed whenever
+      // refreshMovementAnims runs (character.cpp:743-752), and the
+      // fallback constant reads the FRESH state's run/sneak, which is
+      // exactly the run->walk-swap case where the clip stays put and
+      // the state does not. The velocity itself is getVelocity's
+      // multi-source walk (animation.cpp:1267-1338), not the one picked
+      // source's answer.
+      const vel = sourcesVelocity(rig().sources, movementGroup);
+      movementAnimSpeed = vel > 1 ? vel
+        : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
+          : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
     }
     // The rate follows the LIVE speed every frame (character.cpp:2392-2408),
     // AFTER the pick so a fresh clip's own velocity is what divides: a
@@ -1277,8 +1770,10 @@ export function createFpArm() {
   function onActionKey(text, time, mine) {
     if (!mine || !weaponGroup) return;
     const action = text.slice(weaponGroup.length + 2);
-    // showWeapons(true/false) at the attach/detach keys
-    // (character.cpp:1468-1472, :1481-1483).
+    // showWeapons(true/false) at the attach/detach keys - the
+    // listener's own branches (CharacterController::handleTextKey,
+    // character.cpp:1074-1087), gated there on Equipping/Unequipping
+    // exactly as the machine is here.
     if (action === EQUIP_KEYS.attach) weaponShown = true;
     else if (action === UNEQUIP_KEYS.detach) weaponShown = false;
     // RULE 24's ranged actions (character.cpp:1153-1165). Two keys
@@ -1346,6 +1841,10 @@ export function createFpArm() {
     switch (upper) {
       case UPPER_BODY.Equipping:
         actionState = null; actionSource = null;
+        // MW-D28: attachArrow runs when Equipping OR AttackEnd finishes
+        // (character.cpp:1824-1828) - the crossbow comes up LOADED, not
+        // empty until the first shot's follow-through.
+        reloadCrossbow();
         upper = UPPER_BODY.WeaponEquipped;
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         break;
@@ -1401,6 +1900,8 @@ export function createFpArm() {
         thirdBuilt = res && res.ok ? (res.third || null) : null;
         viewMode = 'first';
         wornKey = fpWeaponKey(opts && opts.weapon, !!(opts && opts.hasAmmo));
+        wornEquipKey = wornEquipKeyOf(opts && opts.armor);
+        lastBuildOpts = opts ? { ...opts } : null;
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -1424,8 +1925,19 @@ export function createFpArm() {
         }
         reason = 'built';
         return res;
-      } finally { busy = false; }
+      } finally {
+        busy = false;
+        // MW-D36: whoever shows the body (the pack's figure) repaints
+        // when a build settles, ok or not - D32 rebuilds on every equip
+        // change, asynchronously, and a panel drawn before the rebuild
+        // lands would show the old clothes on the new equip table.
+        for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
+      }
     },
+
+    /** MW-D36: subscribe to build/unload settlements; returns the
+     *  unsubscribe. */
+    subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     unload() {
       releaseMesh(); built = null; packed = null;
@@ -1438,6 +1950,7 @@ export function createFpArm() {
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
       reason = 'unloaded';
+      for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
     },
 
     /**
@@ -1471,6 +1984,13 @@ export function createFpArm() {
         // :1384 - the guard against restarting the unequip we are
         // already playing, which the per-frame sync makes load-bearing.
         if (upper === UPPER_BODY.Unequipping) return false;
+        // MW-D28: the OTHER half of :1383-1384's guard, which the port
+        // had dropped - `mUpperBodyState <= UpperBodyState::AttackWindUp`.
+        // The wind-up may be interrupted by a sheathe; the release and
+        // the follow-through may NOT: the attack runs out first and the
+        // per-frame sync starts the unequip on the next frame, exactly
+        // as the reference's per-frame updateWeaponState does.
+        if (upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd) return false;
         if (upper === UPPER_BODY.None || !weaponGroup) {
           sheathed = true; weaponShown = false; arrowShown = false;
           refreshWeaponGroup(); refreshIdle(true);
@@ -1478,7 +1998,7 @@ export function createFpArm() {
         }
         upper = UPPER_BODY.Unequipping;
         // If the file has no "unequip detach" key the weapon is hidden
-        // by hand, immediately (:1481-1483).
+        // by hand, immediately (:1412-1414).
         const detach = keyTime(UNEQUIP_KEYS.detach);
         if (!playAction(UNEQUIP_KEYS.start, UNEQUIP_KEYS.stop, 0)) {
           upper = UPPER_BODY.None; sheathed = true; weaponShown = false; arrowShown = false;
@@ -1521,6 +2041,20 @@ export function createFpArm() {
      * weapon and arrow pieces on the live assembly, and re-equips if
      * the old weapon was drawn.
      */
+    /** MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. One key compare per
+     *  frame, exactly setWeapon's shape; a change rebuilds the whole
+     *  rig through build() with the new worn list, because worn
+     *  verdicts reshape the SKIN rows (shadows) and not just an
+     *  attachment - an in-place rebind cannot express "the right hand
+     *  skin is gone now". The rebuild runs while the inventory is open
+     *  and the game paused, which is when equipment changes. */
+    setWorn(pieces) {
+      if (!built || !built.ok || busy || !lastBuildOpts) return false;
+      const key = wornEquipKeyOf(pieces);
+      if (key === wornEquipKey) return false;
+      wornEquipKey = key;
+      return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
+    },
     setWeapon(item, { hasAmmo = false } = {}) {
       if (!built || !built.ok || busy) return false;
       const key = fpWeaponKey(item, hasAmmo);
@@ -1549,6 +2083,7 @@ export function createFpArm() {
           for (const [file, tex] of collectArmTextures(fresh, archives)) {
             if (!token.textures.has(file)) token.textures.set(file, tex);
           }
+          const oldType = token.mwType;
           token.mwType = resolved.mwType;
           token.weapon = resolved.weaponInfo;
           token.arrow = resolved.arrowInfo;
@@ -1595,16 +2130,35 @@ export function createFpArm() {
           packed = null;
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
-          weaponShown = false; arrowShown = false;
           wornKey = key;
           const wasDrawn = !sheathed;
-          sheathed = true;
-          upper = UPPER_BODY.None;
-          refreshWeaponGroup();
-          refreshIdle(true);
-          // A drawn hand equips the NEW weapon - the same section the
-          // reference plays when the equip slot changes mid-draw.
-          if (wasDrawn) { busy = false; api.setSheathed(false); }
+          // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
+          // swapping one real weapon for another plays NO unequip and NO
+          // equip: "We should not play equipping animation and sound
+          // during weapon->weapon transition". The unequip block is
+          // gated `&& !isStillWeapon` (:1385) and the whole equip body
+          // is wrapped `if (!isStillWeapon)` (:1445); only the group
+          // and the stance re-resolve (:1443, :1495-1496), and a
+          // mid-attack swap is forced to WeaponEquipped with the weapon
+          // SHOWN first (:1370-1377). The mesh swaps in the hand.
+          const stillWeapon = wasDrawn && isRealWeapon(oldType) && isRealWeapon(resolved.mwType);
+          if (stillWeapon) {
+            weaponShown = true;    // :1377 showWeapons(true)
+            arrowShown = false;    // a fresh round attaches at its own shoot keys (MW-D16)
+            upper = UPPER_BODY.WeaponEquipped;
+            refreshWeaponGroup();
+            resetIdle();           // forcestateupdate (:1372) - the new stance's idle
+          } else {
+            weaponShown = false; arrowShown = false;
+            sheathed = true;
+            upper = UPPER_BODY.None;
+            refreshWeaponGroup();
+            refreshIdle(true);
+            // A drawn hand equips the NEW weapon - the same section the
+            // reference plays when the equip slot changes mid-draw
+            // (real-weapon-to-real-weapon never reaches here any more).
+            if (wasDrawn) { busy = false; api.setSheathed(false); }
+          }
           return true;
         } finally { busy = false; }
       })();
@@ -1680,13 +2234,27 @@ export function createFpArm() {
       // it - "idle handled last as it can depend on the other states"
       // (character.cpp:842) - and MW-D26's movement sits between them,
       // exactly where refreshMovementAnims runs (:842-845).
+      // MW-D29: EACH clip advances against ITS OWN source's text keys -
+      // a state minted from one .kf and stepped through another's key
+      // list crosses the wrong markers the moment two sources serve
+      // different groups (the base .kf plus a skeleton's own is the
+      // everyday retail case for a female or beast actor).
       if (actionState) {
-        advanceClip(actionState, rig().keys, dt, onActionKey);
+        // MW-D28: the weapon record's mSpeed scales EXACTLY the three
+        // attack sections - wind-up, release, follow - and nothing else
+        // (character.cpp:1718/:1786/:1811 pass weapSpeed as speedmult;
+        // the equip/unequip plays at :1408/:1465 pass 1.0f). A dagger
+        // swings fast and a warhammer slow, off the record, not a guess.
+        const attacking = upper === UPPER_BODY.AttackWindUp
+          || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
+        const weapSpeed = attacking && built.weapon && Number.isFinite(built.weapon.speed)
+          ? built.weapon.speed : 1;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * weapSpeed, onActionKey);
         stepUpper();
       }
       refreshMovement(cam, dt);
-      if (movementState) advanceClip(movementState, rig().keys, dt * movementRate, null);
-      if (idleState) advanceClip(idleState, rig().keys, dt, null);
+      if (movementState) advanceClip(movementState, (movementSource || rig()).keys, dt * movementRate, null);
+      if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !movementState && !idleState) return;
@@ -1721,22 +2289,7 @@ export function createFpArm() {
           time: state.time,
           accumRoot: t.accumRoot,
         });
-        thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
-        if (!thirdMesh) {
-          thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
-          thirdMesh.ranges = thirdPacked.ranges;
-          for (const r of thirdMesh.ranges) {
-            if (!r.textureFile) continue;
-            const entry = t.textures.get(r.textureFile);
-            if (!entry) continue;
-            const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
-            r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
-            r.alphaCut = r.piece.material && r.piece.material.alphaTest
-              ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-          }
-        } else {
-          renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
-        }
+        uploadThirdMesh(t);
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
@@ -1766,12 +2319,26 @@ export function createFpArm() {
         // MW-D13: and the factor that pitch is multiplied by, which is
         // not the constant 0.75 this passed before. Stepped HERE, once
         // per frame, because mAimingFactor is a decaying state.
-        neckAim: aimFactor,
+        // IG4: glued arms hold the reference's own aiming glue (aim 1 is
+        // rotateFactor 1.0) on EVERY frame; the law path still steps
+        // aimFactor above so flipping the toggle lands mid-decay exactly
+        // where the reference would be.
+        neckAim: followCam ? 1 : aimFactor,
         // Rule 32(a): the whole body sinks by i1stPersonSneakDelta in -Z
-        // while sneaking, through the neck - so the Camera bone goes with
-        // it and the eye drops too, which is the point of doing it here
-        // rather than at the lens.
-        neckOffset: sneakOffset(sneaking, built.sneakDelta),
+        // while sneaking, through the neck - and IG1 adds the head bob
+        // to the SAME vector, the reference's own channel (the module
+        // head on fpOffset carries the citations). The lens adds this
+        // offset a second time in draw(), per calculateFirstPersonPosition.
+        neckOffset: (() => {
+          // IG4: glued arms take NO offset at EITHER of its two
+          // applications - zeroing one side alone would smuggle the
+          // slide back in through the other.
+          if (followCam) { fpOffset[0] = 0; fpOffset[1] = 0; fpOffset[2] = 0; return null; }
+          const sneak = sneakOffset(sneaking, built.sneakDelta);
+          const bobZ = cam && cam.bob ? (cam.bob[1] || 0) * MW_UNITS_PER_METER : 0;
+          fpOffset = [sneak[0], sneak[1], sneak[2] + bobZ];
+          return fpOffset;
+        })(),
       });
       packed = packFpArm(built.arm.pieces, packed);
       if (!mesh) {
@@ -1793,11 +2360,13 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
-      // Animation::showWeapons, and it HIDES rather than removes - which
-      // is rule 57's own distinction and the reason it is a per-range
-      // flag and not a shorter vertex stream. Repacking without the
-      // weapon would change the buffer's length every time you drew or
-      // sheathed, orphaning the ranges the textures hang on.
+      // NpcAnimation::showWeapons - the reference REMOVES the part
+      // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
+      // re-adds it on show. This port keeps the vertices and flips a
+      // per-range flag instead - a DECLARED mechanism divergence with
+      // the same visible behaviour: repacking without the weapon would
+      // change the buffer's length every time you drew or sheathed,
+      // orphaning the ranges the textures hang on.
       for (const r of mesh.ranges) {
         if (r.slot === 'weapon') r.hidden = !weaponShown;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
@@ -1808,8 +2377,8 @@ export function createFpArm() {
     draw(canvas) {
       // MW-D24: in third person the first-person overlay does not exist
       // - the reference masks the whole FP root out of the scene
-      // (Mask_FirstPerson, npcanimation.cpp:931 setNodeMask on view
-      // change). active() is already false in that mode; the guard here
+      // (Mask_FirstPerson, npcanimation.cpp:542-546 - setViewMode's
+      // setNodeMask on the whole object root). active() is already false in that mode; the guard here
       // keeps the sentence readable at the call site.
       if (!active() || !canvas) return false;
       const cam = camera();
@@ -1829,6 +2398,15 @@ export function createFpArm() {
       // change from the file's Z-up axes into this renderer's Y-up.
       const eye = firstPersonEye(built.arm.mats, built.cameraRef);
       if (!eye) return false;
+      // IG1: calculateFirstPersonPosition adds the first-person offset
+      // ON TOP of the tracked bone (camera.cpp:149-157) - the bone
+      // already moved once with the neck, so the lens moves twice and
+      // the arms visibly shift against the view: the sink you see when
+      // you sneak, the bob you see when you walk. MW z is the pass's
+      // up, MW y its -Z forward.
+      eye[0] += fpOffset[0];
+      eye[1] += fpOffset[2];
+      eye[2] -= fpOffset[1];
       // The neck has already taken 0.75 of the pitch (poseAssembly), so
       // the eye has MOVED with the look; the lens takes all of it, which
       // is the lag you feel when you glance down at your hands.
@@ -1897,14 +2475,30 @@ export function createFpArm() {
       return true;
     },
     viewMode: () => viewMode,
+    /** IG4: follow-camera mode - the shipped default. See the module
+     *  head above createFpArm; the pause card's toggle flips it live. */
+    followCamera: () => followCam,
+    setFollowCamera(v) {
+      followCam = !!v;
+      try { globalThis.localStorage?.setItem(FOLLOW_CAMERA_KEY, followCam ? 'true' : 'false'); } catch { /* a full store still keeps the in-session choice */ }
+      return followCam;
+    },
     thirdActive,
-    /** upperBodyReady (character.cpp:135's gate): a stable stance, no
-     *  action section in flight, no build in flight. */
+    /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
+     *  what the camera's queued-mode gate consults (camera.cpp:135):
+     *  a stable stance, no action section in flight, no build in
+     *  flight. */
     upperBodyReady: () => !busy && !actionState
       && (upper === UPPER_BODY.None || upper === UPPER_BODY.WeaponEquipped),
     /** What the wheel may cross INTO: a body that refused keeps the
      *  player in first person with the reason on the card. */
     canThirdPerson: () => !!(thirdBuilt && thirdBuilt.ok),
+
+    /** MW-D34: the race's HEIGHT factor (adjustScale's z, npc.cpp:1127/
+     *  1134), which is what the camera's focal height rides - the
+     *  tracked node sits on the scaled actor. mwViewFrame passes it so
+     *  no host re-derives the seam (MW-D25's law). */
+    raceHeightScale: () => (built && built.ok && built.raceScale ? built.raceScale.height : 1),
 
     /**
      * MW-D24: THE THIRD-PERSON DRAW - the body composited into the world
@@ -1921,14 +2515,34 @@ export function createFpArm() {
      * -Z... so the rig needs an extra half-turn to face the player's
      * forward, folded into the yaw term below and pinned by the probe's
      * facing layer rather than trusted.
+     *
+     * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
+     * composite - MW-D23's law): this pass composites through the
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:488 et al.),
+     * and the port's world convention puts the player's RIGHT at +X at
+     * yaw 0 (motor.js:573) - a LEFT-handed convention the mirror turns
+     * into correct screen imagery. A right-handed NIF actor placed with
+     * a pure rotation therefore reads MIRRORED on screen (measured:
+     * sword ink Δleft 1701 vs Δright -127 with the motor's +X anchor
+     * projecting screen-right). The -u on the local x axis is the SAME
+     * basis adaptation every Daggerfall asset already carries via that
+     * mirror: it puts the actor's right hand at the motor's right
+     * (+X), and through the lens, on SCREEN-RIGHT - where the FP pass
+     * (chirality-true by MW-D23's measurement) already shows it.
+     * Winding is safe: drawCharacter disables CULL_FACE.
      */
     drawThird(canvas, { proj, view, eye, feet, yaw }) {
       if (!thirdActive() || !canvas || !feet) return false;
       const t = thirdBuilt;
       const u = 1 / MW_UNITS_PER_METER;
       const yawDeg = (yaw * 180 / Math.PI) + 180;
+      // MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135):
+      // x,y take the race's WEIGHT, z its HEIGHT. In this frame the
+      // local x/z pair is the MW horizontal (side/forward through
+      // Rx(-90)) and local y is the MW vertical.
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
       const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, u, u, u),
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
       // The box the sprite law needs, measured off the POSED pieces in
@@ -1944,11 +2558,96 @@ export function createFpArm() {
         if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
       }
       if (!(maxX > minX)) return false;
-      const halfH = ((maxZ - minZ) * u) / 2;
-      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u) / 2;
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
       return true;
+    },
+
+    /** MW-D38: THE ITEM ICON - a Daggerfall item's Morrowind GROUND
+     *  mesh, the thing Morrowind itself draws for an icon and a dropped
+     *  item, rendered under a three-quarter ortho camera as an image.
+     *  Resolves through the ONE item map (weapon type + material, armor
+     *  template + material, garment name + dye), so an icon and the
+     *  worn piece are the same record. Synchronous: the catalog is the
+     *  build's, the parse and the decode are in-memory, the render is
+     *  one sprite pass - and the pack can ask per tile without an
+     *  onReady dance. Null when no build stands or nothing resolves:
+     *  the classic icon stands (never traps). Cached per record, size
+     *  and dye per data generation. */
+    itemIcon(item, { size = 96 } = {}) {
+      if (!(built && built.ok && built.catalog && renderer) || !item) return null;
+      const cat = built.catalog;
+      let rec = null; let dye = '';
+      try {
+        if (item.group === 'Weapons') {
+          const mwType = dfWeaponToMw(item, WEAPONS);
+          if (mwType !== MW_WEAPON_TYPE.None) rec = pickWeaponRecord(cat.weapons, mwType, materialName(item));
+        } else if (item.group === 'Armor') {
+          rec = mwArmorRecords(cat.armors, item.templateIndex, item.material ?? 0).records[0] ?? null;
+        } else if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+          dye = String(item.dye ?? 0);
+          const key = (c) => `${cat.gen}:${c.id}`;
+          const colourOf = (c) => CLOT_COLOUR_CACHE.get(key(c)) ?? null;
+          rec = mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf }).record;
+        }
+      } catch { rec = null; }
+      if (!rec || !rec.model) return null;
+      const ckey = `${cat.gen}:${rec.id}:${size}:${dye}`;
+      if (ITEM_ICON_CACHE.has(ckey)) return ITEM_ICON_CACHE.get(ckey);
+      let img = null;
+      try {
+        const path = `meshes/${rec.model}`;
+        const arc = cat.archives.find((a) => a.has(path));
+        if (arc) img = renderGroundMesh(arc.get(path).slice(), cat.archives, cat.gen, size);
+      } catch { img = null; }
+      ITEM_ICON_CACHE.set(ckey, img);
+      return img;
+    },
+
+    /** MW-D36: THE FIGURE - the third-person body as an image for the
+     *  enhanced inventory's panel. Same pieces, same textures, same
+     *  race scale as drawThird, framed full-height under a front ortho
+     *  camera at the yaw asked for (0 = facing the viewer). Returns
+     *  {width, height, data} or null when no third-person body stands -
+     *  the panel then keeps the classic doll (never traps). Display
+     *  only by Mac's decision: unequip stays with the item list. */
+    figure({ yaw = 0, height = 384 } = {}) {
+      // AUDIT 33 F1: a built body, not an ACTIVE wheel - the inventory
+      // is opened from first person, where the wheel is off.
+      if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
+      const t = thirdBuilt;
+      uploadThirdMesh(t);
+      // the figure shows what the body wears, sheathed or drawn, exactly
+      // as the wheel's rule 57 does
+      for (const r of thirdMesh.ranges) {
+        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        else if (r.slot === 'arrow') r.hidden = !arrowShown;
+      }
+      const u = 1 / MW_UNITS_PER_METER;
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      for (const r of armPieceRows(t.arm.pieces)) {
+        const b = r.bounds;
+        if (!b) continue;
+        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+      }
+      if (!(maxX > minX)) return null;
+      // feet at the origin, facing the viewer: drawThird's +180 makes yaw
+      // 0 face -Z in pass space, and the eye below sits on +Z.
+      const yawDeg = (yaw * 180 / Math.PI) + 180;
+      const model = multiply(trs(0, 0, 0, 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight), NIF_TO_PASS);
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2 * 1.06;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2 * 1.06;
+      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(height)));
+      const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
+      const eye = [center[0], center[1], center[2] + 4];
+      const view = lookAt(eye, center, [0, 1, 0]);
+      return renderer.renderCharacterSpriteImage(thirdMesh, model, ortho(halfW, halfH, 0.1, 8), view, pw, ph);
     },
 
     status() {
@@ -1961,6 +2660,9 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        raceScale: built && built.ok ? built.raceScale : null,
+        worn: built && built.ok ? built.worn : null,
+        face: built && built.ok ? built.face : null,
         esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         reach: built && built.ok ? built.reach : null,
