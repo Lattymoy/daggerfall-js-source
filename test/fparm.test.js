@@ -2515,17 +2515,16 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
     'and only the real store\'s stamp turns them on');
 });
 
-test('IG4/IG5: the arms TILT WITH the look by default - the owner\'s picked behavior over the reference\'s lag', () => {
-  // Mac rejected the reference's quarter-lag (arms move AGAINST the
-  // look; measured at 0.26 vs the law's 0.25, so the port WAS the
-  // reference) and then rejected rigid glue as "stay in position"; what
-  // he picked: looking down visibly dips the weapon/arms, looking up
-  // raises them. Built as aim-glue in the pose (neckAim 1, offset
-  // zeroed) plus an under-rotated draw lens - the picture rotates WITH
-  // the look about the eye, pure tilt, no drift - saturating at
-  // FOLLOW_TILT_MAX so a clamp-hard look keeps ink in frame (measured:
-  // uncapped, 1.4 rad down left ZERO texels). The moving picture is
-  // probe L5e; these sweep the wiring.
+test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call, the classic sprite\'s behaviour', () => {
+  // The whole arc, so nobody re-litigates it: Mac rejected the
+  // reference's quarter-lag (measured at 0.26 vs the law's 0.25, so
+  // the port WAS the reference); the IG5 tilt (an under-rotated draw
+  // lens) inverted on the played screen; and he closed the question -
+  // "just make it where it follows the screen. Just like classic
+  // daggerfall." The shipped mode is the pure glue: aim 1 in the pose,
+  // offset zeroed, the lens taking the whole look - a rigid ensemble
+  // seen by a lens rotating with it, image invariant under pitch. The
+  // moving picture is probe L5e; these sweep the wiring.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   // DA1 (the merge after the seam landed): the read goes through
   // appStorage() - localStorage in a browser, the desktop shell's file
@@ -2536,15 +2535,15 @@ test('IG4/IG5: the arms TILT WITH the look by default - the owner\'s picked beha
     'an untouched store answers TRUE - tilt is the default, the law is the toggle');
   assert.match(arm, /let followCam = readFollowCamera\(\);/, 'the live arm reads it at construction');
   assert.match(arm, /neckAim: followCam \? 1 : aimFactor,/,
-    'tilting arms hold aim 1 in the POSE; the law path still passes the decaying state');
+    'fixed arms hold aim 1 in the POSE; the law path still passes the decaying state');
   assert.match(arm, /if \(followCam\) \{ fpOffset\[0\] = 0; fpOffset\[1\] = 0; fpOffset\[2\] = 0; return null; \}/,
     'and the offset zeroes at its ONE source, upstream of both applications');
-  // The lens half: a saturated half-tilt given back, law path untouched.
-  assert.match(arm, /export const FOLLOW_LENS_FACTOR = 0\.5;/);
-  assert.match(arm, /export const FOLLOW_TILT_MAX = 0\.25;/);
-  assert.match(arm, /Math\.max\(-FOLLOW_TILT_MAX, Math\.min\(FOLLOW_TILT_MAX, look \* \(1 - FOLLOW_LENS_FACTOR\)\)\)/,
-    'the tilt is half the look, saturated');
-  assert.match(arm, /const pitch = look - tilt;/, 'and the lens gives exactly the tilt back');
+  // The lens half: the WHOLE look, one line, no mode branch - the glue
+  // is the invariance of neck-at-1 under a fully rotating lens. The
+  // IG5 tilt machinery must stay gone (its direction inverted on the
+  // played screen); a re-appearing lens factor is a regression.
+  assert.match(arm, /const pitch = cam\.pitch \|\| 0;/, 'the lens takes the whole look in both modes');
+  assert.ok(!/FOLLOW_LENS_FACTOR|FOLLOW_TILT_MAX/.test(arm), 'the tilt constants are gone');
   // The toggle is live and persistent - the pause card flips it.
   const inst = createFpArm();
   assert.equal(inst.followCamera(), true, 'a bare Node context (no storage) still defaults ON');
@@ -2553,16 +2552,16 @@ test('IG4/IG5: the arms TILT WITH the look by default - the owner\'s picked beha
   inst.setFollowCamera(true);
   // ...and the card offers it, labelled by CURRENT mode.
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Arms: tilt with the look', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Arms: Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
+  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Arms: fixed to the screen', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Arms: Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
     'the pause card names the mode you are IN and one click flips it');
   // The probe measures BOTH modes: the law layers with the flag off,
-  // the shipped tilt with it on (REVERSED cy ordering plus the hard-look
-  // frame-survival gate).
+  // the shipped fix with it on (cy invariant under every look, the
+  // clamp-hard ones included, and under the bob).
   const probe = readFileSync('tools/mwArmProbe.mjs', 'utf8');
   assert.match(probe, /window\.__arm\.setFollowCamera\(false\);/, 'L5c/L5d measure the LAW with the flag off');
-  assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped tilt');
-  assert.match(probe, /tiltUp\.cy > tiltLevel\.cy \+ 0\.03 && tiltDown\.cy < tiltLevel\.cy - 0\.03/,
-    'and its ordering is WITH the look - the reverse of the law layer');
+  assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped fix');
+  assert.match(probe, /Math\.abs\(fixHardUp\.cy - fixLevel\.cy\) < 0\.02 && Math\.abs\(fixHardDown\.cy - fixLevel\.cy\) < 0\.02/,
+    'and its assertion is INVARIANCE, clamp-hard looks included');
 });
 
 // ═══ MW-D37: the materials are colour truth; the dye picks the garment ═

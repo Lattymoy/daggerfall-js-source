@@ -696,31 +696,31 @@ ok(bobRest.n > 20 && bobUp.n > 20, `the arms draw through the bob (${bobRest.n} 
 ok(bobUp.cy < bobRest.cy - 0.005,
   `a bob UP shows the arms LOWER - the offset hits the lens twice and the neck once (cy ${bobRest.cy.toFixed(3)} -> ${bobUp.cy.toFixed(3)})`);
 
-// ── L5e: THE ARMS TILT WITH THE LOOK - THE SHIPPED DEFAULT, MEASURED ─
-// IG5 (Mac's picked behavior: looking down visibly tips the weapon/arms
-// downward, looking up raises them - a reactive picture, not a rigid
-// one). With the flag back ON, the neck takes the WHOLE look (neckAim
-// 1) and the DRAW lens only FOLLOW_LENS_FACTOR of it, so the picture
-// rotates WITH the look about the eye - the REVERSE ordering of the law
-// layer above (whose arms move against the look), and a bigger swing.
+// ── L5e: FIXED TO THE SCREEN - THE SHIPPED DEFAULT, MEASURED ────────
+// IG6 (Mac's final call: "just make it where it follows the screen.
+// Just like classic daggerfall"). With the flag back ON, the neck
+// takes the WHOLE look (neckAim 1), the offset is zero at both
+// applications, and the lens takes the whole look too - a rigid
+// ensemble seen by a lens that rotates with it, so the picture must
+// NOT move: not under a hard look either way, not under the bob.
+// Exactly the classic sprite's screen-fixed behaviour.
 await page.evaluate(() => { window.__arm.setFollowCamera(true); });
-const tiltLevel = await pitchShot(0);
-const tiltUp = await pitchShot(0.5);
-const tiltDown = await pitchShot(-0.5);
-const tiltHardUp = await pitchShot(1.4);
-const tiltHardDown = await pitchShot(-1.4);
+const fixLevel = await pitchShot(0);
+const fixUp = await pitchShot(0.5);
+const fixDown = await pitchShot(-0.5);
+const fixHardUp = await pitchShot(1.4);
+const fixHardDown = await pitchShot(-1.4);
 await page.evaluate(() => { window.__pitch = 0; });
-ok(tiltLevel.n > 20 && tiltUp.n > 20 && tiltDown.n > 20,
-  `tilting arms draw at every ordinary look (${tiltLevel.n} / ${tiltUp.n} / ${tiltDown.n} texels)`);
-ok(tiltUp.cy > tiltLevel.cy + 0.03 && tiltDown.cy < tiltLevel.cy - 0.03,
-  `the arms tilt WITH the look - up raises them, down dips them (cy up ${tiltUp.cy.toFixed(3)} / level ${tiltLevel.cy.toFixed(3)} / down ${tiltDown.cy.toFixed(3)})`);
-ok(tiltHardUp.n > 10 && tiltHardDown.n > 10,
-  `and a HARD look near the pitch clamp keeps ink in frame (${tiltHardUp.n} up / ${tiltHardDown.n} down texels at 1.4 rad)`);
-const tiltBobRest = await bobShot(0);
-const tiltBobUp = await bobShot(0.0012);
+ok(fixLevel.n > 20 && fixUp.n > 20 && fixDown.n > 20 && fixHardUp.n > 20 && fixHardDown.n > 20,
+  `fixed arms draw at every look, clamp-hard included (${fixLevel.n} / ${fixUp.n} / ${fixDown.n} / ${fixHardUp.n} / ${fixHardDown.n} texels)`);
+ok(Math.abs(fixUp.cy - fixLevel.cy) < 0.02 && Math.abs(fixDown.cy - fixLevel.cy) < 0.02
+  && Math.abs(fixHardUp.cy - fixLevel.cy) < 0.02 && Math.abs(fixHardDown.cy - fixLevel.cy) < 0.02,
+  `and they hold their place through every look (cy ${fixHardDown.cy.toFixed(3)} / ${fixDown.cy.toFixed(3)} / ${fixLevel.cy.toFixed(3)} / ${fixUp.cy.toFixed(3)} / ${fixHardUp.cy.toFixed(3)})`);
+const fixBobRest = await bobShot(0);
+const fixBobUp = await bobShot(0.0012);
 await page.evaluate(() => { window.__bob = [0, 0]; });
-ok(Math.abs(tiltBobUp.cy - tiltBobRest.cy) < 0.005,
-  `and the bob no longer slides them against the view (cy ${tiltBobRest.cy.toFixed(3)} -> ${tiltBobUp.cy.toFixed(3)})`);
+ok(Math.abs(fixBobUp.cy - fixBobRest.cy) < 0.005,
+  `and the bob does not slide them against the view (cy ${fixBobRest.cy.toFixed(3)} -> ${fixBobUp.cy.toFixed(3)})`);
 
 
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
