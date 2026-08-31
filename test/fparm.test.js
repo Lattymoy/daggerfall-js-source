@@ -2965,3 +2965,37 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   assert.match(hm, /onCastReadySpell\?\.\(sp\);\s+\/\/ QG1: RaiseOnCastReadySpell, before the ready clears/,
     'the cast callback must fire while the spell is still readied');
 });
+
+// ═══ PX26: Mac's four notes ═════════════════════════════════════════
+test('PX26 F4: the interior lane sends the jump-state inputs - without them the jump can never play', async () => {
+  const { jumpAnimState } = await import('../src/formats/mwFirstPerson.js');
+  // the defect, stated as data: a move vector with no grounded/jumping
+  // fields derives "on the ground, no jump" for EVERY frame of a jump,
+  // so refreshJumpAnims is never owed a play and the arm never leaves
+  // the ground. `grounded` defaults TRUE, which is right for a caller
+  // that cannot know - and wrong for a lane that simply forgot to say.
+  assert.deepEqual(jumpAnimState({ priorInAir: false, jumpPlaying: false }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: false, jumping: true, priorInAir: false, jumpPlaying: false }),
+    { jump: 'inair', inJump: true });
+  // every host that drives the rig sends them
+  for (const [host, sites] of [['src/scenes/dungeon.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1]]) {
+    const h = readFileSync(host, 'utf8');
+    const n = (h.match(/grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating/g) || []).length;
+    assert.equal(n, sites, `${host} sends the jump inputs at ${n} of ${sites} sites`);
+  }
+});
+
+test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-build swap is not dropped', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  // F1: the portrait shows the weapon whether or not it is drawn
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1800);
+  assert.match(fig, /if \(r\.slot === 'weapon'\) r\.hidden = false;/, 'a paperdoll shows what you carry, drawn or not');
+  assert.match(fig, /else if \(r\.slot === 'arrow'\) r\.hidden = !arrowShown;/, 'the arrow still follows its shoot keys');
+  // F2: the pack hands the rig the hand as well as the worn table
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /arm\.setWeapon\?\.\(slots\?\.\[EQUIP_SLOTS\.RightHand\] \?\? null,/, 'the pack must hand over the hand while a window is up');
+  assert.match(pack, /hasAmmo: hasDaggerfallArrows\(deps\.entity\.items\)/, 'and the port\u2019s own arrow test, not a second one');
+  // F3: a swap during a build waits, exactly as the worn table does
+  assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo \}; return false; \}/);
+  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; this\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
+});

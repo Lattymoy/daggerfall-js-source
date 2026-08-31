@@ -1415,6 +1415,7 @@ export function createFpArm() {
   let built = null;
   const listeners = new Set();   // MW-D36
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
+  let pendingWeapon = null;      // PX26: the hand that arrived mid-build
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -2112,8 +2113,9 @@ export function createFpArm() {
         // change, asynchronously, and a panel drawn before the rebuild
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
-        // PX25: the table that arrived mid-build goes now.
+        // PX25/PX26: the table and the hand that arrived mid-build go now.
         if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
+        if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; this.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
       }
     },
 
@@ -2246,9 +2248,17 @@ export function createFpArm() {
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
     setWeapon(item, { hasAmmo = false } = {}) {
-      if (!built || !built.ok || busy) return false;
+      if (!built || !built.ok) return false;
       const key = fpWeaponKey(item, hasAmmo);
       if (key === wornKey) return false;
+      // PX26 F3: A SWAP DURING A BUILD IS NOT DROPPED, the same law
+      // PX25 gave the worn table. The pack now hands the hand over on
+      // every action, and a sword swapped while the body is rebuilding
+      // for the cloak before it would have been lost with the key
+      // unmoved - the wheel would show the old blade until something
+      // else changed. The latest hand waits and goes when the build
+      // settles.
+      if (busy) { pendingWeapon = { item, hasAmmo }; return false; }
       busy = true;
       const token = built;
       return (async () => {
@@ -2897,10 +2907,16 @@ export function createFpArm() {
       if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
       const t = thirdBuilt;
       uploadThirdMesh(t);
-      // the figure shows what the body wears, sheathed or drawn, exactly
-      // as the wheel's rule 57 does
+      // PX26 F1 (Mac: weapons and shields are not on the menu sprite):
+      // THE FIGURE IS A PORTRAIT, NOT THE WORLD. The wheel hides the
+      // weapon when it is sheathed - rule 57, right for a body standing
+      // in the world - and the inventory panel inherited that, so the
+      // sword you just equipped was invisible because you had not drawn
+      // it. A paperdoll shows what you carry. The arrow still follows
+      // its own shoot keys: a nocked arrow on a portrait is a pose, not
+      // an inventory.
       for (const r of thirdMesh.ranges) {
-        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
       }
       const u = 1 / MW_UNITS_PER_METER;

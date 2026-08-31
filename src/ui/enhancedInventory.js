@@ -60,6 +60,7 @@ import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
+import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
@@ -431,6 +432,16 @@ const refresh = () => {
   const arm = deps.fpArm;
   if (arm && typeof arm.setWorn === 'function' && deps.entity) {
     try { arm.setWorn(dfWornEquipment(equipTableOf(deps.entity), EQUIP_SLOTS, ARMOR_ENUM)); } catch { /* the rig's own card carries its reasons */ }
+    // PX26 F2: AND THE HAND. PX25 handed the rig the worn TABLE while a
+    // window is up, and stopped there - so a cloak equipped in the pack
+    // showed at once and a SWORD did not, because the weapon rides its
+    // own door (setWeapon) off the same frame tick the window blocks.
+    // Same read, same door, same key-compare fast path.
+    try {
+      const slots = equipTableOf(deps.entity);
+      arm.setWeapon?.(slots?.[EQUIP_SLOTS.RightHand] ?? null,
+        { hasAmmo: hasDaggerfallArrows(deps.entity.items) });
+    } catch { /* see above */ }
   }
 };
 
