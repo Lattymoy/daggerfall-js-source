@@ -2713,3 +2713,46 @@ test('PX23: studioLight puts the key light at the eye and nothing from the world
   assert.match(body, /const st = studioLight\(view\);/);
   assert.match(body, /finally \{\n      if \(saved\) \{\n        this\._lightDir = saved\.lightDir;/, 'the frame light must be returned in a finally');
 });
+
+// ═══ PX25: the pack tells the rig; a change mid-build waits its turn ═
+test('PX25: a worn change during a rebuild is applied when the build settles, not dropped', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
+  };
+  const arm = createFpArm();
+  let settled = 0;
+  arm.subscribe(() => { settled++; });
+  const first = await arm.build({ race: 'fprace', deps });
+  assert.equal(first.ok, true, `the fixture build must stand (${first.stage}: ${first.error})`);
+  assert.equal(settled, 1);
+  // a change starts a rebuild; a SECOND change lands while it is busy
+  const p1 = arm.setWorn([{ kind: 'armor', templateIndex: 102, material: 2 }]);
+  assert.ok(p1 && typeof p1.then === 'function', 'the first change must start a rebuild');
+  const second = arm.setWorn([{ kind: 'armor', templateIndex: 102, material: 5 }]);
+  assert.equal(second, false, 'the second change cannot build while busy');
+  await p1;
+  // ...and is applied when the first settles: one more settlement follows.
+  await new Promise((r) => setTimeout(r, 0));
+  for (let i = 0; i < 50 && settled < 3; i++) await new Promise((r) => setTimeout(r, 10));
+  assert.equal(settled, 3, `the pending table was not applied after the build settled (${settled} settlements)`);
+  assert.equal(arm.status().reason, 'built');
+});
+
+test('PX25: the pack hands the rig the worn table on every refresh', () => {
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  const refresh = pack.slice(pack.indexOf('const refresh = () => {'), pack.indexOf('const refresh = () => {') + 1400);
+  assert.match(refresh, /arm\.setWorn\(dfWornEquipment\(equipTableOf\(deps\.entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+    'refresh must tell the rig what is worn');
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);
+  assert.match(src, /if \(pendingWorn\) \{ const p = pendingWorn; pendingWorn = null; this\.setWorn\(p\); \}/);
+});
