@@ -94,7 +94,11 @@ function setSurface(name) {
   gl.bindTexture(gl.TEXTURE_2D, groundNrm);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, nrm);
   gl.generateMipmap(gl.TEXTURE_2D);
+  // AUDIT 39 F5: the picker turned the blades OFF for a non-grass
+  // surface and never turned them back on, so choosing dirt and then
+  // grass again left a bare field with no way back but a reload.
   state.grass = name === 'grass';
+  R('surf').value = name;
 }
 addEventListener('keydown', (e) => {
   if (e.key === 'g' || e.key === 'G') state.grass = !state.grass;
@@ -547,7 +551,7 @@ const grassProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
-uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
+uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam;
 void main(){
   vec2 root = aInst.xy;
@@ -558,8 +562,19 @@ void main(){
   vT = aCorner.y;
   // the tip travels, the root does not: the offset is weighted by
   // height along the blade, squared, which is what a stalk does
-  float sway = sin(uTime*1.7 + aInst.w + root.x*0.08 + root.y*0.05);
-  vec2 lean = aInst2.xy + vec2(sway, sway*0.6) * uWind * 0.004;
+  // AUDIT 39 F1: THE GRASS BENDS THE WAY THE WIND BLOWS. The sway was
+  // on a fixed axis with a fixed 0.6 cross-term, so the field always
+  // leaned the same way however the wind slider was set - and once the
+  // rain took a direction, the grass and the rain disagreed in plain
+  // sight. Now the lean is the wind VECTOR: a steady push plus a gust
+  // that travels ACROSS the field as a wave (the phase carries the
+  // blade's position along the wind), which is what makes a gust look
+  // like one thing moving rather than every blade wobbling alone.
+  vec2 wdir = length(uWindV) > 1e-4 ? normalize(uWindV) : vec2(1.0, 0.0);
+  float along = dot(root, wdir);
+  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;
+  float push = length(uWindV) * (0.55 + gust * 0.75);
+  vec2 lean = aInst2.xy + wdir * push * 0.055;
   vec3 p;
   p.xz = root + lean * (vT*vT) * h;
   p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
@@ -1239,6 +1254,7 @@ const vnoise = (x, y) => {
 const terrainAt = (x, z) => vnoise(x * 0.020, z * 0.020) * 7 + vnoise(x * 0.055, z * 0.055) * 2.4 + vnoise(x * 0.15, z * 0.15) * 0.7;
 
 let last = performance.now(), acc = 0, frames = 0;
+let lastStrike = -1e9, nextStrike = 3000;   // AUDIT 39 F3
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   acc += dt; frames++;
@@ -1275,28 +1291,79 @@ function frame(now) {
   // the SUN's own light colour, warm at the horizon and white at noon
   const sunCol = [pal.glow[0] / 255, pal.glow[1] / 255, pal.glow[2] / 255];
   const sunUp = Math.max(0, Math.sin(elev * Math.PI / 180));
-  // sunOcclusion + CLOUD_SHADOW, the game's own pair
+  // AUDIT 39 F1: sunOcclusion is the GAME'S, exactly. The first cut
+  // rebuilt it out of the lab's own PERIODIC noise and a LINEAR ramp
+  // where the game uses smoothstep - up to 0.10 of cover wrong in the
+  // middle of a transition, on the one term that dims the whole world
+  // when a bank crosses the sun. The sky was reading one field and the
+  // ground another, which is exactly what enhancedSky's own comment
+  // says must never happen ("it is one field evaluated at one
+  // direction"). It is the game's hash, the game's fbm with its
+  // per-octave offsets, and the game's smoothstep now.
+  const gHash = (x, y) => {
+    const fract = (v) => v - Math.floor(v);
+    let px = fract(x * 123.34), py = fract(y * 456.21);
+    const dd = px * (px + 45.32) + py * (py + 45.32);
+    px += dd; py += dd;
+    return fract(px * py);
+  };
+  const gVnoise = (x, y) => {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    let fx = x - ix, fy = y - iy;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const a = gHash(ix, iy), b2 = gHash(ix + 1, iy), c2 = gHash(ix, iy + 1), d2 = gHash(ix + 1, iy + 1);
+    const lo = a + (b2 - a) * fx, hi2 = c2 + (d2 - c2) * fx;
+    return lo + (hi2 - lo) * fy;
+  };
+  const gFbm = (x, y) => {
+    let v = 0, amp = 0.5, px = x, py = y;
+    for (let i = 0; i < 5; i++) { v += amp * gVnoise(px, py); const nx = px * 2.03 + 17.1; py = py * 2.03 + 9.7; px = nx; amp *= 0.5; }
+    return v;
+  };
+  const gStep = (e0, e1, x) => { const q = cl((x - e0) / (e1 - e0), 0, 1); return q * q * (3 - 2 * q); };
   const occ = (() => {
     const d = [Math.cos(elev * Math.PI / 180) * 0.92, Math.sin(elev * Math.PI / 180), 0.30];
     if (d[1] <= 0) return 0;
-    const t = performance.now() / 1000;
+    // AUDIT 39 F2: ONE CLOCK. The shader's cloud field runs on the
+    // frame's own `now`; this ran on performance.now() read a moment
+    // later, so the sky and the ground were sampling the same field at
+    // two different times - a drift that grows with frame cost and is
+    // worst exactly when the machine is busy.
+    const t = now / 1000;
     const deckC = (scale, wind, cover, soft) => {
       const k = 1 / (d[1] + 0.18);
-      const n = fbm(d[0] * k * scale + wind[0] * t, d[2] * k * scale + wind[1] * t, 1e9, 5);
-      return cl((n - (1 - cover)) / Math.max(1e-5, soft), 0, 1);
+      return gStep(1 - cover, 1 - cover + soft, gFbm(d[0] * k * scale + wind[0] * t, d[2] * k * scale + wind[1] * t));
     };
     const hi = deckC(0.95, [wsky.wind[0] * 0.55, wsky.wind[1] * 0.55], wsky.cover * 0.75, wsky.soft * 1.5);
     const lo = deckC(1.9, wsky.wind, wsky.cover, wsky.soft);
     return cl(lo + hi * (1 - lo) * 0.7, 0, 1);
-  })();
+  })();;
   // thunder flashes: a rare, brief, near-white sky, and the ground
   // takes it too - a flash that only lights the sky is a wallpaper
-  const flash = state.weather === 'thunder'
-    ? Math.max(0, Math.sin(now / 1000 * 0.7) > 0.985 ? 1 : 0) * (0.5 + 0.5 * Math.sin(now / 40)) : 0;
+  // AUDIT 39 F3: THE FLASH BELONGS TO THE SKY THAT IS ACTUALLY THERE.
+  // It keyed off the state you had ASKED for, so lightning struck out
+  // of a clear sky the instant the dropdown moved - before a single
+  // cloud had built. It rides the front's own progress now, and its
+  // shape is a real decay on a seeded strike rather than a sine of the
+  // wall clock, so it does not change with the frame rate.
+  const stormy = (state.weather === 'thunder' ? ease(front.t) : 0)
+    + (front.from === 'thunder' ? 1 - ease(front.t) : 0);
+  if (stormy > 0.35 && now - lastStrike > nextStrike) {
+    lastStrike = now; nextStrike = 2200 + Math.random() * 7000;
+  }
+  const since = (now - lastStrike) / 1000;
+  const flash = stormy > 0.35
+    ? Math.max(0, Math.exp(-since * 5.5) * (since < 0.06 ? 1 : 0.55) * (1 - since * 0.5)) * stormy : 0;
   const sky = wx.sky.map((v, i) => Math.min(1, v * (0.55 + 0.45 * Math.sin(state.sun * Math.PI / 180)) + flash * 0.55 + (i === 2 ? 0.02 : 0)));
   gl.clearColor(sky[0], sky[1], sky[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.DEPTH_TEST);
 
+  // AUDIT 39 F2: ONE WIND, read by everything. The rain built its own
+  // vector inside the weather block and the sky used the palette's,
+  // so three systems had three winds and could point three ways.
+  const wa = state.windDir * Math.PI / 180;
+  const wspeed = state.wind * 0.16;
+  const windV = [Math.cos(wa) * wspeed, Math.sin(wa) * wspeed];
   const sa = state.sun * Math.PI / 180;
   const sun = [Math.cos(sa) * 0.92, Math.sin(sa), 0.30];
   const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
@@ -1334,7 +1401,12 @@ function frame(now) {
   S1('uMoonAVis', ma[1] > -0.02 ? 1 : 0); S1('uMoonBVis', mb[1] > -0.02 ? 1 : 0);
   S1('uCloudCover', wsky.cover); S1('uCloudSoft', wsky.soft);
   S1('uTime', now / 1000);
-  gl.uniform2fv(gl.getUniformLocation(skyProg, 'uWind'), new Float32Array(wsky.wind));
+  // the deck drifts DOWNWIND, at the front's own speed - the clouds
+  // and the rain now agree, which they did not
+  const wlen = Math.hypot(wsky.wind[0], wsky.wind[1]);
+  const wdir = wspeed > 1e-4 ? [windV[0] / wspeed, windV[1] / wspeed] : [1, 0];
+  gl.uniform2fv(gl.getUniformLocation(skyProg, 'uWind'),
+    new Float32Array([wdir[0] * wlen, wdir[1] * wlen]));
   S1('uFogMix', wx.fog * 0.55);
   S3('uStarPole', [0, 0.622244, 0.782823]);          // STAR_POLE, verbatim
   S1('uStarAngle', now / 1000 * 0.02);
@@ -1375,6 +1447,7 @@ function frame(now) {
     gl.uniformMatrix4fv(gl.getUniformLocation(grassProg, 'uVP'), false, vp);
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uTime'), now / 1000);
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uWind'), state.wind);
+    gl.uniform2fv(gl.getUniformLocation(grassProg, 'uWindV'), new Float32Array(windV));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uRange'), state.range);
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uEye'), eye);
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunDir'), sun);
@@ -1397,15 +1470,16 @@ function frame(now) {
     gl.uniform3fv(gl.getUniformLocation(wxProg, 'uRight'), new Float32Array(right));
     gl.uniform3fv(gl.getUniformLocation(wxProg, 'uUp'), new Float32Array(up));
     gl.uniform1f(gl.getUniformLocation(wxProg, 'uTime'), now / 1000);
-    gl.uniform1f(gl.getUniformLocation(wxProg, 'uKind'), wx.kind ?? 0);
     gl.uniform1f(gl.getUniformLocation(wxProg, 'uBox'), BOX);
-    gl.uniform1f(gl.getUniformLocation(wxProg, 'uFall'), wx.kind === 1 ? 1.6 : 22.0);
+    // AUDIT 39 F4: the fall speed follows the front, not the dropdown.
+    // Reading the TARGET made the last rain of a rain->snow change
+    // crawl at flake speed the instant the menu moved.
+    const fallT = wxT.kind === 1 ? 1.6 : 22.0, fallF = (WX[front.from] || WX.sunny).kind === 1 ? 1.6 : 22.0;
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uFall'), lerp(fallF, fallT, ease(front.t)));
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uKind'), ease(front.t) > 0.5 ? (wxT.kind ?? 0) : ((WX[front.from] || WX.sunny).kind ?? 0));
     // the wind VECTOR: a direction and a real speed, so rain drives
     // across the world rather than drifting in one axis
-    const wa = state.windDir * Math.PI / 180;
-    const wspeed = state.wind * 0.16;   // 8x what it was: 200 on the slider is a gale
-    gl.uniform2fv(gl.getUniformLocation(wxProg, 'uWindV'),
-      new Float32Array([Math.cos(wa) * wspeed, Math.sin(wa) * wspeed]));
+    gl.uniform2fv(gl.getUniformLocation(wxProg, 'uWindV'), new Float32Array(windV));
     gl.bindVertexArray(wxVao);
     // the rain starts when the sky already LOOKS like rain
     gl.drawArraysInstanced(gl.TRIANGLES, 0, wxVerts, Math.min(wxCount, Math.round(wx.n * wsky.fall)));
