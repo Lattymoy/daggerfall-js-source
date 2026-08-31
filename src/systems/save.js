@@ -162,6 +162,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.bankAccounts = (entity.bankAccounts ?? []).map((a) => ({ ...a }));
   snap.houses = (entity.houses ?? []).map((h) => ({ ...h }));
   snap.ownedShip = entity.ownedShip ?? -1;
+  // TR4: SerializablePlayer.cs:180 - the BOARDING MEMORY is saved
+  // beside the deed. Without it a save taken at sea loads with no way
+  // back: IsOnShip needs the memory to answer true, so disembarking
+  // would board again and overwrite where you actually were.
+  snap.boardShipPosition = entity.boardShipPosition ?? null;
   // U39: PlayerEntity.RentedRooms (SerializablePlayer.cs:169, :336).
   // Each record is plain data - name, mapId, buildingKey, bed index,
   // expiry - so a shallow copy per room is the whole envelope.
@@ -328,6 +333,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
   entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
   entity.ownedShip = snap.ownedShip ?? -1;
+  entity.boardShipPosition = snap.boardShipPosition ?? null;   // TR4 (:425)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
   entity.racialOverridePending = snap.racialOverridePending ? { ...snap.racialOverridePending } : null;   // V1
   // AUDIT 17f: a Currency stack saved before gold gained its template

@@ -41,7 +41,9 @@ test('TR5: ONE place changes the mode, and both the pick and the dismount take i
   const world = read('src/scenes/world.js');
   assert.match(world, /const setTransportModeHere = \(mode\) => \{\s*\n\s*player\.setTransportMode\(mode\);/);
   assert.match(world, /ridingAnimator\.mount\(mode\);\s*\n\s*ridingArt = null;\s*\n\s*\};/, 'the art is dropped on every change');
-  assert.match(world, /onMode: \(mode\) => \{\s*\n\s*setTransportModeHere\(mode\);/, 'the T-key pick');
+  // TR4 put the Ship arm in front of the mode set - it is a teleport,
+  // not a mode - so the pick reaches setTransportModeHere past it.
+  assert.match(world, /if \(mode === TRANSPORT_MODES\.Ship\) \{ boardOrDisembark\(\); return; \}\s*\n\s*setTransportModeHere\(mode\);/, 'the T-key pick');
   assert.match(world, /setTransportMode: \(mode\) => setTransportModeHere\(mode\),/, 'and the interior hosts');
   assert.equal((world.match(/player\.setTransportMode\(/g) ?? []).length, 1, 'one motor call, not a copy per caller');
 });
