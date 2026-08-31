@@ -20,7 +20,17 @@ on:
   push:
     tags:
       - 'app-v*'
+  # A dispatch can CUT a release too: give release_tag a tag name
+  # (app-v0.1.0) and the release step creates the tag at the
+  # dispatched commit and attaches the installers - the door for a
+  # host whose git relay only pushes branches, where a tag push never
+  # arrives. Left empty, a dispatch builds run artifacts only.
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to create a Release at (app-v*); empty = run artifacts only'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -63,9 +73,10 @@ jobs:
         working-directory: app
 
       - name: Attach installers to the release
-        if: startsWith(github.ref, 'refs/tags/app-v')
+        if: startsWith(github.ref, 'refs/tags/app-v') || startsWith(inputs.release_tag, 'app-v')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
           files: |
             app/release/*.AppImage
             app/release/*.exe
@@ -73,7 +84,7 @@ jobs:
           generate_release_notes: true
 
       - name: Keep installers as run artifacts (manual runs)
-        if: "!startsWith(github.ref, 'refs/tags/app-v')"
+        if: "!startsWith(github.ref, 'refs/tags/app-v') && !startsWith(inputs.release_tag, 'app-v')"
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.os }}
