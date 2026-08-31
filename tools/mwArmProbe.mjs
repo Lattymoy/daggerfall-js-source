@@ -188,7 +188,9 @@ async function boot(bsaB64, { esm = FIX.esm, weapon = null } = {}) {
     // INVISIBLE there, since sin(0) is 0 and the whole term vanishes.
     // The mutation campaign found exactly that hole, so L3b sweeps.
     window.__yaw = 0;
-    arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: window.__yaw }));
+    window.__pitch = 0;   // IG1: the look, driven live like the yaw
+    window.__bob = [0, 0]; // IG1: the head bob pair the hosts feed
+    arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: window.__yaw, pitch: window.__pitch, bob: window.__bob }));
     const archive = new MwBsaFile(bytes(bsa));
     const deps = {
       loadMorrowindArchives: async () => [archive],
@@ -603,6 +605,88 @@ ok(dRight > dLeft,
   `THE CHIRAL WITNESS: the sword's ink lands SCREEN-RIGHT - the actor's right hand on the motor's right (Δright ${dRight}, Δleft ${dLeft}) - a mirrored composite dies here`);
 
 await boot(FIX.bsa);   // back to the armed-with-nothing baseline for L6/L7
+
+// (L5b leaves the rig in THIRD person, where draw() correctly no-ops -
+// the fresh boot below is the first-person baseline L5c measures.)
+// ── L5c: THE LOOK FOLLOWS - PITCH THROUGH THE REAL PASS ─────────────
+// IG1 (Mac: "the first person view should follow the camera when up or
+// down, which it currently doesn't"). Rule 54's composition: the neck
+// takes neckRotateFactor (0.75) of the look, the lens takes all of it,
+// so the arms SLIDE by only the remaining quarter and stay in frame.
+// Measured, not trusted: drive the camera dep's pitch and read the
+// sprite target's ink - the arms must survive a hard look both ways,
+// and the ink's centroid must move WITH the look direction on screen
+// (look up, arms sit lower in frame; look down, higher - the quarter
+// they lag by).
+const pitchShot = async (pitch) => page.evaluate((p) => {
+  const arm = window.__arm;
+  window.__pitch = p;
+  window.__frame();
+  arm.update(0.016);
+  const drew = arm.draw(window.__cv);
+  if (!drew) return { n: -1, cy: -1 };   // a stale RT must never pass as a measurement
+  const gl = window.__r.gl;
+  const cs = window.__r._charSpriteRT();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+  const { pw, ph } = window.__vp;
+  const px = new Uint8Array(pw * ph * 4);
+  gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  let n = 0, sy = 0;
+  for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) {
+    if (px[(y * pw + x) * 4 + 3] > 8) { n++; sy += y; }
+  }
+  return { n, cy: n ? sy / n / ph : -1 };   // cy in [0,1], 0 = GL bottom row
+}, pitch);
+await page.evaluate(() => { window.__arm.update(0.05); });
+const lookLevel = await pitchShot(0);
+const lookUp = await pitchShot(0.5);
+const lookDown = await pitchShot(-0.5);
+await page.evaluate(() => { window.__pitch = 0; });
+ok(lookLevel.n > 20, `level look draws the arms (${lookLevel.n} texels)`);
+ok(lookUp.n > 20, `a 0.5 rad look UP keeps the arms in frame (${lookUp.n} texels)`);
+ok(lookDown.n > 20, `a 0.5 rad look DOWN keeps the arms in frame (${lookDown.n} texels)`);
+// The direction: GL row 0 is the frame's BOTTOM. Looking up, the lens
+// out-pitches the 0.75 neck, so the arms sit LOWER on screen (smaller
+// cy); looking down, higher (larger cy).
+ok(lookUp.cy < lookLevel.cy && lookLevel.cy < lookDown.cy,
+  `the arms track the look, lagging the quarter the reference lags (cy up ${lookUp.cy.toFixed(3)} / level ${lookLevel.cy.toFixed(3)} / down ${lookDown.cy.toFixed(3)})`);
+
+// ── L5d: THE BOB MOVES THE VIEW AGAINST THE ARMS ────────────────────
+// IG1's other half (Mac: the FP view should follow the camera when up
+// or down). The reference's first-person offset is applied TWICE to
+// the lens (once through the neck the tracked bone hangs from, again
+// by calculateFirstPersonPosition, camera.cpp:149-157) and ONCE to the
+// arms (npcanimation.cpp:723) - so a bob UP shows the arms LOWER in
+// frame by exactly one offset. head_bobbing.lua:57 drives the same
+// channel. Measured with a doll-scale bob (the fixture rig is ~1 MW
+// unit tall; the offset converts at MW_UNITS_PER_METER).
+const bobShot = async (v) => page.evaluate(async (bv) => {
+  window.__bob = [0, bv];
+  window.__frame();
+  window.__arm.update(0.016);
+  const drew = window.__arm.draw(window.__cv);
+  if (!drew) return { n: -1, cy: -1 };
+  const gl = window.__r.gl;
+  const cs = window.__r._charSpriteRT();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+  const { pw, ph } = window.__vp;
+  const px = new Uint8Array(pw * ph * 4);
+  gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  let n = 0, sy = 0;
+  for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) {
+    if (px[(y * pw + x) * 4 + 3] > 8) { n++; sy += y; }
+  }
+  return { n, cy: n ? sy / n / ph : -1 };
+}, v);
+const bobRest = await bobShot(0);
+const bobUp = await bobShot(0.0012);   // ~0.084 rig units through the 70/m bridge
+await page.evaluate(() => { window.__bob = [0, 0]; });
+ok(bobRest.n > 20 && bobUp.n > 20, `the arms draw through the bob (${bobRest.n} / ${bobUp.n} texels)`);
+ok(bobUp.cy < bobRest.cy - 0.005,
+  `a bob UP shows the arms LOWER - the offset hits the lens twice and the neck once (cy ${bobRest.cy.toFixed(3)} -> ${bobUp.cy.toFixed(3)})`);
+
 
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
 // A .kf keyed to bones this skeleton lacks poses NOTHING: poseSkeleton

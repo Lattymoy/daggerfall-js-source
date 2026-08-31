@@ -441,6 +441,26 @@ function skeletonHasBone(skeletonBytes, name) {
 /** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
  *  esm files a data set carries, times three record kinds. */
 const ESM_WALK_CACHE = new Map();
+// IG2: the .kf ANIMATION-SOURCE parse memo. clipReport parses a whole
+// keyframe file and matches its tracks by NAME; for one skeleton path
+// in one data generation the answer cannot change, and with the body
+// following the equip table it was re-parsed on every swap, twice per
+// rig. The cached result is read-only downstream - every build wraps
+// it in its own source object and mints fresh clip states.
+const CLIP_REPORT_CACHE = new Map();
+async function cachedClipReport(gen, skeletonPath, name, bytesOf, skeleton) {
+  if (gen === null || gen === undefined) return clipReport({ kfBytes: bytesOf(), skeleton, group: FP_IDLE_BASE });
+  const key = `${gen}:${skeletonPath}:${name}`;
+  let hit = CLIP_REPORT_CACHE.get(key);
+  if (hit === undefined) {
+    hit = await clipReport({ kfBytes: bytesOf(), skeleton, group: FP_IDLE_BASE });
+    CLIP_REPORT_CACHE.set(key, hit);
+  }
+  return hit;
+}
+// IG2: decoded-texture memo, same generation key - a steel cuirass's
+// texture does not change because a gauntlet did.
+const TEXTURE_CACHE = new Map();
 /** AUDIT 32 F2: the face match per identity per data generation. */
 const FACE_MATCH_CACHE = new Map();
 
@@ -655,7 +675,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * person and the card names the reason the wheel cannot leave it.
  */
 async function buildTpBody({
-  race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find,
+  race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -699,7 +719,7 @@ async function buildTpBody({
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
-    const textures = collectArmTextures(arm.pieces, archives);
+    const textures = collectArmTextures(arm.pieces, archives, gen);
 
     const sourcePaths = tpAnimSources(skeletonPath, exists);
     if (!sourcePaths.length) {
@@ -712,7 +732,7 @@ async function buildTpBody({
     }
     const sources = [];
     for (const p of sourcePaths) {
-      const one = await clipReport({ kfBytes: find(p).get(p).slice(), skeleton: arm.skeleton, group: FP_IDLE_BASE });
+      const one = await cachedClipReport(gen, skeletonPath, p, () => find(p).get(p).slice(), arm.skeleton);
       if (!one.ok) return { ok: false, stage: 'clip', error: `${p}: ${one.error}`, notes: missing, rows };
       sources.push({
         name: p, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups),
@@ -792,6 +812,31 @@ export async function buildFpArm({
     }
     const esmBytes = [];
     for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
+    // MW-D32 / IG2: the ESM WALK MEMO, hoisted above every record scan
+    // so ALL of them ride it - the records do not change between two
+    // rebuilds of the same data, only the pieces do. Keyed on the
+    // store's generation stamp, so a re-attached archive is a fresh
+    // walk and never a stale one. IG2 routed the race, GMST and weapon
+    // scans through it too: with the body following the equip table,
+    // every swap re-walked tens of megabytes of .esm five ways.
+    // A test's deps carry no generation: gen stays NULL there and the
+    // clip/texture memos stand down (the walk memo below keys on the
+    // byte length too, so it is collision-safe either way). Only the
+    // real store's monotonic stamp turns the swap caches on.
+    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
+    const walk = (e, kind, fn) => {
+      // No generation (a test's deps) = no memo: two fixtures of the
+      // same name AND length but different bytes are an everyday test
+      // arrangement, and the byteLength fingerprint cannot tell them
+      // apart - the mSpeed pin proved it the day the weapon walk
+      // joined this memo.
+      if (gen === null) return fn(e.bytes);
+      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
+      let hit = ESM_WALK_CACHE.get(key);
+      if (hit === undefined) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
+      return hit;
+    };
+    const raceKey = String(race || '').toLowerCase();
     // AUDIT MW-A F1: BEAST COMES FROM THE DATA. The skeleton switch
     // and the tail row both read this flag, and no production caller
     // ever set it - an Argonian player built on the human skeleton
@@ -801,8 +846,8 @@ export async function buildFpArm({
     if (beast === null) {
       beast = false;
       for (const e of esmBytes) {
-        const b = raceBeastFlag(e.bytes, race);
-        if (b !== null) beast = b;
+        const rrec = walk(e, 'races', raceRecords).get(raceKey);
+        if (rrec && rrec.radt) beast = rrec.beast;   // raceBeastFlag's own rule, off the memo
       }
     }
     // MW-D34: Npc::adjustScale (npc.cpp:1102-1136) - the race record's
@@ -818,7 +863,7 @@ export async function buildFpArm({
     // .esm wins, the load order as everywhere else.
     let raceScale = { weight: 1, height: 1 };
     for (const e of esmBytes) {
-      const rrec = raceRecords(e.bytes).get(String(race || '').toLowerCase());
+      const rrec = walk(e, 'races', raceRecords).get(raceKey);
       if (rrec && rrec.radt) {
         raceScale = { weight: rrec.weight[female ? 1 : 0], height: rrec.height[female ? 1 : 0] };
       }
@@ -835,18 +880,6 @@ export async function buildFpArm({
     // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
     // there is no adapter and writing one by guess inside this slice is
     // exactly how MW7 died. Raw bytes through the pinned path instead.
-    // MW-D32: the ESM walks are MEMOISED per file per data generation.
-    // A rebuild now happens whenever the equip table changes, and the
-    // records do not change between two rebuilds of the same data -
-    // only the pieces do. Keyed on the store's generation stamp, so a
-    // re-attached archive is a fresh walk and never a stale one.
-    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : 0;
-    const walk = (e, kind, fn) => {
-      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
-      let hit = ESM_WALK_CACHE.get(key);
-      if (!hit) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
-      return hit;
-    };
     const parts = esmBytes.flatMap((e) => walk(e, 'parts', bodyParts));
     // MW-D29: the ARMO records ride the same esm walk, load order and
     // all - the composer resolves DF pieces against them by token.
@@ -857,8 +890,8 @@ export async function buildFpArm({
     // which is the load order, not a preference.
     let sneakDelta = null;
     for (const e of esmBytes) {
-      const v = gmstValue(e.bytes, GMST_SNEAK_DELTA);
-      if (typeof v === 'number') sneakDelta = v;
+      const g = walk(e, 'gmst-sneak', (b) => ({ v: gmstValue(b, GMST_SNEAK_DELTA) }));
+      if (typeof g.v === 'number') sneakDelta = g.v;
     }
 
     const find = (p) => archives.find((a) => a.has(p));
@@ -936,7 +969,7 @@ export async function buildFpArm({
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
-    const allWeapons = esmBytes.flatMap((e) => weaponRecords(e.bytes));
+    const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
@@ -969,13 +1002,17 @@ export async function buildFpArm({
     // open. The release moved below this for that reason: which textures
     // a mesh wants is not knowable until the mesh is parsed, and parsing
     // twice to keep the release where it was would cost seconds.
-    const textures = arm.ok ? collectArmTextures(arm.pieces, archives) : new Map();
+    const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find })
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen })
       : null;
-    archives.length = 0;   // release the mapped archives; the bytes we need are copied
+    // IG2: the mapped archives are NO LONGER truncated here - they are
+    // dataSource's generation-keyed cache now (the same array every
+    // build gets), and emptying it made the NEXT swap re-read and
+    // re-index every .bsa blob, which is exactly the seconds Mac felt.
+    // Residency is the stated cost of instant swaps; an attach drops it.
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows: wanted };
     }
@@ -994,7 +1031,7 @@ export async function buildFpArm({
     }
     const sources = [];
     for (const sb of sourceBytes) {
-      const one = await clipReport({ kfBytes: sb.bytes, skeleton: arm.skeleton, group: FP_IDLE_BASE });
+      const one = await cachedClipReport(gen, skeletonPath, sb.name, () => sb.bytes, arm.skeleton);
       if (!one.ok) {
         return {
           ok: false, stage: 'clip', error: `${sb.name}: ${one.error}`,
@@ -1149,16 +1186,25 @@ export async function buildFpArm({
  * ImageManager does, so a texture the archives do not carry SAYS SO on
  * the arm instead of quietly leaving it flat.
  */
-export function collectArmTextures(pieces, archives) {
+export function collectArmTextures(pieces, archives, gen = null) {
   const out = new Map();
   const exists = (p) => archives.some((a) => a.has(p));
   for (const piece of pieces ?? []) {
     const file = piece.material && piece.material.textureFile;
     if (!file || out.has(file)) continue;
+    // IG2: one decode per texture per data generation - the entry is
+    // read-only downstream (mips feed createCharacterTexture), so the
+    // memo is safe to share across rebuilds.
+    if (gen !== null) {
+      const memo = TEXTURE_CACHE.get(`${gen}:${file}`);
+      if (memo) { out.set(file, memo); continue; }
+    }
     const path = correctTexturePath(file, exists);
     const arc = archives.find((a) => a.has(path));
     if (!arc) {
-      out.set(file, { ok: false, path, error: 'not in your archives', image: warningImage() });
+      const entry = { ok: false, path, error: 'not in your archives', image: warningImage() };
+      out.set(file, entry);
+      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
       continue;
     }
     try {
@@ -1167,9 +1213,13 @@ export function collectArmTextures(pieces, archives) {
       // .dds probe misses (resourcehelpers.cpp:112-114), and feeding
       // that to decodeDds turned a texture the archives DO carry into
       // the magenta warning.
-      out.set(file, { ok: true, path, image: decodeTextureImage(path, arc.get(path).slice()) });
+      const entry = { ok: true, path, image: decodeTextureImage(path, arc.get(path).slice()) };
+      out.set(file, entry);
+      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
     } catch (err) {
-      out.set(file, { ok: false, path, error: err.message, image: warningImage() });
+      const entry = { ok: false, path, error: err.message, image: warningImage() };
+      out.set(file, entry);
+      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
     }
   }
   return out;
@@ -1274,6 +1324,17 @@ export function createFpArm() {
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
   let aimFactor = 0;
+  // IG1: THE FIRST-PERSON OFFSET - the reference's ONE channel for
+  // everything that moves the FP view against the arms. The sneak sink
+  // feeds it (Camera::setSneakOffset -> (0,0,-delta), camera.cpp:312)
+  // and so does the HEAD BOB (head_bobbing.lua:57 adds its zOffset to
+  // the same setFirstPersonOffset vector). The neck takes the offset
+  // ONCE (npcanimation.cpp:723) and the LENS adds it AGAIN on top of
+  // the tracked camera bone (calculateFirstPersonPosition,
+  // camera.cpp:149-157) - two applications against the arms' one,
+  // which is exactly why you SEE your arms sink when you sneak and bob
+  // when you walk. MW object-root space, MW units.
+  let fpOffset = [0, 0, 0];
   // Rule 32(a): the Sneak STANCE, read off the camera dep beside the
   // pitch. It is DFU's Sneak binding and not its Crouch one - Morrowind
   // has one sneak stance, and Daggerfall's crouch is a height change the
@@ -2124,10 +2185,16 @@ export function createFpArm() {
         // per frame, because mAimingFactor is a decaying state.
         neckAim: aimFactor,
         // Rule 32(a): the whole body sinks by i1stPersonSneakDelta in -Z
-        // while sneaking, through the neck - so the Camera bone goes with
-        // it and the eye drops too, which is the point of doing it here
-        // rather than at the lens.
-        neckOffset: sneakOffset(sneaking, built.sneakDelta),
+        // while sneaking, through the neck - and IG1 adds the head bob
+        // to the SAME vector, the reference's own channel (the module
+        // head on fpOffset carries the citations). The lens adds this
+        // offset a second time in draw(), per calculateFirstPersonPosition.
+        neckOffset: (() => {
+          const sneak = sneakOffset(sneaking, built.sneakDelta);
+          const bobZ = cam && cam.bob ? (cam.bob[1] || 0) * MW_UNITS_PER_METER : 0;
+          fpOffset = [sneak[0], sneak[1], sneak[2] + bobZ];
+          return fpOffset;
+        })(),
       });
       packed = packFpArm(built.arm.pieces, packed);
       if (!mesh) {
@@ -2187,6 +2254,15 @@ export function createFpArm() {
       // change from the file's Z-up axes into this renderer's Y-up.
       const eye = firstPersonEye(built.arm.mats, built.cameraRef);
       if (!eye) return false;
+      // IG1: calculateFirstPersonPosition adds the first-person offset
+      // ON TOP of the tracked bone (camera.cpp:149-157) - the bone
+      // already moved once with the neck, so the lens moves twice and
+      // the arms visibly shift against the view: the sink you see when
+      // you sneak, the bob you see when you walk. MW z is the pass's
+      // up, MW y its -Z forward.
+      eye[0] += fpOffset[0];
+      eye[1] += fpOffset[2];
+      eye[2] -= fpOffset[1];
       // The neck has already taken 0.75 of the pitch (poseAssembly), so
       // the eye has MOVED with the look; the lens takes all of it, which
       // is the lag you feel when you glance down at your hands.

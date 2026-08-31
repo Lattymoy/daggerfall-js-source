@@ -407,7 +407,28 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     // AUDIT 30 F1: A HELMET HIDES THE HAIR - an engine rule, not a
     // part reference (npcanimation.cpp:615), prior to the refs.
     if (piece.templateIndex === HELM_TEMPLATE) hairHidden = Math.max(hairHidden, prio);
+    // IG3 (Mac: "shields when equipped do not appear"): a SHIELD is the
+    // one worn piece whose ladder ends at the item's own GROUND MESH -
+    // getShieldMesh (actoranimation.cpp:108-139) tries the PRT_Shield
+    // body part first (the sexed pick with NO male-to-female fallback
+    // for men, and a HARD gate: a named body that is missing or not
+    // MT_Armor answers EMPTY and the slot is reserved INVISIBLE), and
+    // only a record with no usable shield ref falls back to
+    // `shield.getClass().getCorrectedModel(shield)` - the ARMO's MODL.
+    // The generic refusal below ("the ground mesh is not a body") is
+    // right for every other slot and was exactly why no shield ever
+    // landed.
+    const isShield = piece.templateIndex >= ARMOR_ENUM.Buckler && piece.templateIndex <= ARMOR_ENUM.Tower_Shield;
     for (const armo of res.records) {
+      if (isShield) {
+        const mesh = shieldMeshOf(armo, female, bodyById, notes);
+        if (mesh === null) { claim(PRT_SHIELD, prio, null); continue; }
+        claim(PRT_SHIELD, prio, {
+          slot: `shield (${armo.id})${mesh.ground ? ' - ground mesh, the reference\'s own fallback' : ''}`,
+          bones: ARMO_PART[PRT_SHIELD].bones, model: mesh.model, recordId: mesh.recordId, piece,
+        });
+        continue;
+      }
       if (!armo.parts?.length) { notes.push(`${armo.id}: no worn part references - the ground mesh is not a body`); continue; }
       composeRefs(armo, prio, female, bodyById, claim, notes, piece);
     }
@@ -422,6 +443,36 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     if (key) shadows.add(key);
   }
   return { adds, shadows: [...shadows], notes };
+}
+
+/** IG3: PRT_Shield's row index in ARMO_PART (the sided 27-enum). */
+const PRT_SHIELD = 10;
+
+/**
+ * IG3: getShieldMesh (actoranimation.cpp:108-139), verbatim shape:
+ * walk the ARMO's refs for PRT_Shield; the sexed name is
+ * `female && mFemale ? mFemale : mMale` (no male-to-female fallback);
+ * a NAMED body that is missing or not MT_Armor returns EMPTY - the
+ * caller reserves the slot and the shield is invisible BY LAW
+ * (showCarriedLeft, npcanimation.cpp:1016-1037); a named armor body
+ * with a model wins; and a record with no usable shield ref wears the
+ * item's own ground model. @returns {model, recordId, ground?} | null
+ * for the reserve case.
+ */
+function shieldMeshOf(armo, female, bodyById, notes) {
+  for (const ref of armo.parts ?? []) {
+    if (ref.part !== PRT_SHIELD) continue;
+    const id = female && ref.female ? ref.female : ref.male;
+    if (!id) continue;
+    const body = bodyById.get(id);
+    if (!body || body.bodyKind !== 2) {
+      notes.push(`${armo.id}: shield body "${id}" ${!body ? 'is in no BODY record' : 'is not armor-kind'} - `
+        + 'the slot reserves EMPTY (getShieldMesh\'s own refusal)');
+      return null;
+    }
+    if (body.model) return { model: body.model, recordId: id };
+  }
+  return { model: armo.model, recordId: null, ground: true };
 }
 
 /** One record's part references, claimed at one priority. */

@@ -1275,6 +1275,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // has. Morrowind's Sneak STANCE, which is DFU's Sneak binding; its
     // Crouch is a collider height, not an animation state.
     camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+      // IG1: the head bob's VERTICAL feeds the first-person offset (the
+      // reference's head_bobbing.lua drives setFirstPersonOffset's z
+      // only); bobOffset[1] is the raw vertical, un-rotated.
+      bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
       move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0 } }),   // MW-D26: the movement-settings vector, the reference's own selection source
     spellArmed: () => magic.spellArmed(),   // M2
   });

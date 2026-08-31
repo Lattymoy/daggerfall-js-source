@@ -1574,7 +1574,10 @@ test('AUDIT 29 F1: the derivation is WIRED - beast defaults to the data, the opt
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /beast = null, faceIndex/, 'the option no longer defaults to unresolved');
   assert.match(arm, /if \(beast === null\) \{/, 'the derivation gate is gone');
-  assert.match(arm, /raceBeastFlag\(e\.bytes, race\)/, 'the RACE records are not consulted');
+  // IG2 routed the race scan through the esm walk memo; the rule is
+  // raceBeastFlag's own, read off the memoised map.
+  assert.match(arm, /walk\(e, 'races', raceRecords\)\.get\(raceKey\)/, 'the RACE records are not consulted');
+  assert.match(arm, /if \(rrec && rrec\.radt\) beast = rrec\.beast;/, 'the RADT rule is gone');
   // and the skeleton must resolve AFTER the answer exists.
   const gate = arm.indexOf('if (beast === null) {');
   const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast })');
@@ -2414,4 +2417,95 @@ test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quan
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
   assert.match(pack, /const yaw = Math\.round\(_figureYaw \/ 0\.1\) \* 0\.1;/);
   assert.match(pack, /armMod\.figure\(\{ yaw, height: 384 \}\)/);
+});
+
+// ═══ IG1-IG3: MAC'S IN-GAME NOTES (2026-08-31) ══════════════════════
+
+test('IG3: the SHIELD wears getShieldMesh\'s whole ladder - body part, hard refusal, ground fallback', () => {
+  // actoranimation.cpp:108-139. A shield is the ONE worn piece whose
+  // ladder may end at the item's own ground mesh; the composer's
+  // generic "the ground mesh is not a body" refusal is right for every
+  // other slot and was exactly why no equipped shield ever appeared.
+  const bodyPool = [
+    { id: 'b_shield_arm', model: 'a/sh.nif', bodyKind: 2 },
+    { id: 'b_shield_cloth', model: 'a/shc.nif', bodyKind: 1 },
+    { id: 'b_shield_f', model: 'a/shf.nif', bodyKind: 2 },
+  ];
+  const worn = (armo, female = false) => composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Kite_Shield, material: ARMOR_MATERIAL.Iron }],
+    armors: [armo], bodyPool, female,
+  });
+  // 1. A PRT_Shield ref naming an MT_Armor body: the body's model wins.
+  const viaBody = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: 'b_shield_arm', female: null }] });
+  assert.equal(viaBody.adds.length, 1);
+  assert.equal(viaBody.adds[0].model, 'a/sh.nif');
+  assert.deepEqual(viaBody.adds[0].bones, ['shield bone']);
+  // 2. NO shield ref at all: the GROUND MODEL - the reference's own
+  //    fallback (`return shield.getClass().getCorrectedModel(shield)`).
+  const viaGround = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false, parts: [] });
+  assert.equal(viaGround.adds.length, 1);
+  assert.equal(viaGround.adds[0].model, 'g/ground.nif');
+  assert.match(viaGround.adds[0].slot, /ground mesh/, 'and the row says so');
+  // 3. THE HARD GATE: a NAMED body that is missing, or not MT_Armor,
+  //    answers EMPTY - the slot reserves INVISIBLE by law, never the
+  //    ground mesh (getShieldMesh returns an empty path there).
+  const missing = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: 'b_gone', female: null }] });
+  assert.equal(missing.adds.length, 0, 'missing body: reserved empty, NOT the ground fallback');
+  assert.ok(missing.notes.some((n) => /reserves EMPTY/.test(n)));
+  const wrongKind = worn({ id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: 'b_shield_cloth', female: null }] });
+  assert.equal(wrongKind.adds.length, 0, 'a non-armor body part is the same refusal');
+  // 4. THE SEXED PICK has NO male-to-female fallback (`female &&
+  //    !mFemale.empty() ? mFemale : mMale`): a male facing a female-only
+  //    ref has NO name, and an unnamed ref walks on to the ground.
+  const femOnly = { id: 'iron_shield', model: 'g/ground.nif', name: '', enchanted: false,
+    parts: [{ part: 10, male: null, female: 'b_shield_f' }] };
+  assert.equal(worn(femOnly, false).adds[0].model, 'g/ground.nif', 'a man ignores the female-only ref');
+  assert.equal(worn(femOnly, true).adds[0].model, 'a/shf.nif', 'a woman takes it');
+});
+
+test('IG1: the first-person offset hits the lens twice and the neck once, and the bob rides it', () => {
+  // calculateFirstPersonPosition adds the offset ON TOP of the tracked
+  // camera bone (camera.cpp:149-157), which already moved once with
+  // the neck (npcanimation.cpp:723) - that double-vs-single is why the
+  // arms visibly sink when you sneak and bob when you walk
+  // (head_bobbing.lua:57 drives the same setFirstPersonOffset channel).
+  // The moving picture is mwArmProbe L5c/L5d; these sweep the wiring.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /eye\[0\] \+= fpOffset\[0\];\s*\n\s*eye\[1\] \+= fpOffset\[2\];\s*\n\s*eye\[2\] -= fpOffset\[1\];/,
+    'the lens takes the offset again, MW z to pass up');
+  assert.match(arm, /const bobZ = cam && cam\.bob \? \(cam\.bob\[1\] \|\| 0\) \* MW_UNITS_PER_METER : 0;/,
+    'the bob\'s vertical joins the channel in MW units');
+  assert.match(arm, /fpOffset = \[sneak\[0\], sneak\[1\], sneak\[2\] \+ bobZ\];/,
+    'sneak and bob compose into the ONE vector the neck takes');
+  // ...and every bobbing host feeds the dep (the four-hosts law).
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    assert.match(readFileSync(host, 'utf8'), /bob: \[0, player\.bobOffset \? player\.bobOffset\[1\] : 0\]/,
+      `${host} hands the bob's vertical to the arm`);
+  }
+  assert.match(readFileSync('src/scenes/dungeonContext.js', 'utf8'), /bob: \[0, _fpBobY\]/,
+    'the dungeon context latches it with the eye and the pitch');
+});
+
+test('IG2: the swap caches - archives resident per generation, the memos gated on a REAL generation', () => {
+  // Every equip change rebuilds the arms; every rebuild used to re-read
+  // and re-index every .bsa out of IndexedDB - seconds per swap.
+  const ds = readFileSync('src/scenes/dataSource.js', 'utf8');
+  assert.match(ds, /if \(_mwArchiveCache && _mwArchiveCache\.gen === _mwGeneration\) return _mwArchiveCache\.archives;/,
+    'the mapped archives are the generation cache');
+  assert.match(ds, /_mwArchiveCache = \{ gen: _mwGeneration, archives \};/);
+  assert.match(ds, /_mwGeneration\+\+; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null;/,
+    'a new attach drops the old set');
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.ok(!/archives\.length = 0;/.test(arm),
+    'the build no longer guts the cached archive array - that truncation was the seconds');
+  // The memos stand DOWN without a real generation: a test\'s fixtures
+  // can share a name and a byte length while differing in content -
+  // the mSpeed pin proved it the day the weapon walk joined the memo.
+  assert.match(arm, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
+  assert.match(arm, /if \(gen === null \|\| gen === undefined\) return clipReport\(/, 'the kf parse memo is gated');
+  assert.match(arm, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
+    'and only the real store\'s stamp turns them on');
 });
