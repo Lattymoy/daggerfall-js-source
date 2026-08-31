@@ -212,8 +212,8 @@ screen is set in this face, so `font-variant-ligatures: none` went on
 the roots of BOTH pixel faces (`.shell` and `.px-home`) as well as the
 site. Verified by eye at 3x on both, before and after.
 
-THE PICTURES WERE RETAKEN, and one was retired. `tools/siteShots.mjs`
-now shoots the pixel home, the home on a phone, and the settings shell.
+THE PICTURES WERE RETAKEN, and one was retired. `tools/siteShots.mjs` (RETIRED whole 2026-08-31, see below)
+then shot the pixel home, the home on a phone, and the settings shell.
 The pack shot is gone: it was reachable only through a test seam (a
 hand-built entity with the doll forced to its no-art schematic), and
 with PX16's inventory it would need a new seam to pose a screen a
@@ -478,13 +478,16 @@ uses - `_setPaperDollPixelsForTests(null)` and a hand-built entity -
 so it is shown with a SAMPLE character, dressed through the pack's
 own controls, and the caption says so: "with a sample character. No
 game files means no doll and no item pictures." A labelled sample is
-not a silent mock. `tools/siteShots.mjs` is the only way the files are
-made: it boots its own vite with ARENA2_PATH unset, PROVES the game's
-data fetch 404s before it takes anything, and throws if the folder
-pick is on screen in a shot; the doctrine allow-list carries one OURS
-row per file naming the tool, and the landing suite pins that every
-<img> on the page is under ./site/, tracked, allow-listed, produced by
-the tool, sized and described. 54, 59 and 51 KB.
+not a silent mock. `tools/siteShots.mjs` (RETIRED) was the only way the files
+were made: it booted its own vite with ARENA2_PATH unset, PROVED the
+game's data fetch 404s before it took anything, and threw if the
+folder pick was on screen; the doctrine allow-list carried one OURS
+row per file naming the tool, and the landing suite pinned every
+<img> on the page tracked, allow-listed, produced, sized and
+described. RETIRED WHOLE with the DA site cleanup (Mac, 2026-08-31):
+the landing page carries no pictures at all now - the pin flipped to
+"no <img>, no raster" - so the three files, their rows and the tool
+went together, and the doctrine got simpler to hold.
 
 FOUND ON THE WAY, NOT FIXED: in the no-art pack the SCHEMATIC does not
 show. U59 says it is the fallback and the doll probe counts its 25
