@@ -104,6 +104,7 @@ import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
+import { testPresetById, applyTestCharacter } from '../systems/testRoom.js';   // TR3: the Test Room's one home
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key
@@ -934,7 +935,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     _questStarted = true;
     questBridge.initAtGameStart();
   };
-  if (!playerEntity.chargenDone && params.has('class')) {
+  // TR3: THE TEST ROOM's boot - the same headless seam as ?class=
+  // below, with the preset's identity seeded first (applyCharacter
+  // honors it) and the armory landing after the class kit. The preset
+  // resolves BEFORE the branch so an unknown id really does fall
+  // through to the wizard rather than stranding the interim entity:
+  // the never-traps law, at the front door.
+  const testPreset = !playerEntity.chargenDone && params.has('test') ? testPresetById(params.get('test')) : null;
+  if (!playerEntity.chargenDone && params.has('test') && !testPreset) {
+    console.warn(`[testroom] no preset "${params.get('test')}" - the wizard stands`);
+  }
+  if (testPreset) {
+    (async () => {
+      const preset = testPreset;
+      const sbi = await loadSpellIndex(fetchBytes);
+      spellsByIndex = sbi;
+      const { added } = await applyTestCharacter(playerEntity, preset, { fetchBytes, spellsByIndex: sbi });
+      preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
+        { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
+      surfacePlayer();
+      questInitAtGameStart();
+      console.log(`[testroom] ${preset.label}: ${added} armory items in the pack`);
+      // The Morrowind rigs, WITHOUT the trip to the pause card - the
+      // room exists to look at them. Only when the data is attached;
+      // without it the classic sprite stands exactly as everywhere
+      // else, and the pause card's button still names why.
+      const { morrowindDataCount } = await import('./dataSource.js');
+      if (morrowindDataCount() > 0) {
+        const { buildArmsFor } = await import('../combat/weaponRig.js');
+        const res = await buildArmsFor(playerEntity);
+        if (!res.ok) console.warn(`[testroom] arms refused - ${res.stage}: ${res.error}`);
+      }
+    })().catch((e) => console.warn('[testroom] boot failed; the wizard stands in', e));
+  } else if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
     // own chargen, so a town boot had no way past the overlay.

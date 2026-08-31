@@ -87,6 +87,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
+import { TEST_PRESETS } from '../systems/testRoom.js';   // TR3: the one home the pane shows
 import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
@@ -134,7 +135,11 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // answer "what kind of game am I about to play", which is settled by
 // the time a pause menu opens, and two of them cannot take effect
 // without a reload anyway.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Enhanced', 'Settings', 'Mods', 'About'];
+// TR3 (Mac): TEST ROOM on the boot rail - a prebuilt character and a
+// packed armory, for trying gear on the rigs without playing there.
+// Boot-only for the same reason Continue and New Game are: it answers
+// "which game", which is settled once one is running.
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Enhanced', 'Settings', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -329,6 +334,31 @@ function paneNew(body) {
     opts.append(settingRow(key, { compact: true }));
   }
   body.append(opts);
+}
+
+// ── TEST ROOM ────────────────────────────────────────────────────
+// TR3: pick a prebuilt character, walk into the ordinary world with
+// the whole armory in your pack. The presets live in systems/
+// testRoom.js - ONE home the route (main.js) and the boot (world.js)
+// also read; this pane only shows them. Each card is a door: pressing
+// it IS the boot, the same shape Continue's card takes.
+function paneTest(body) {
+  const intro = el('div', 'card');
+  intro.append(el('h3', null, 'The test room'));
+  intro.append(el('p', 'meta',
+    'A prebuilt character in the ordinary world, with one of every weapon, a full suit of '
+    + 'armor across materials, all four shields and a change of clothes already in the pack. '
+    + 'Equip through the inventory as usual; the paperdoll, the sprite weapons and - with '
+    + 'Morrowind data attached - the first- and third-person body all follow the equip table '
+    + 'live. Scroll to switch views. Nothing here is saved over your real game.'));
+  body.append(intro);
+  for (const p of TEST_PRESETS) {
+    const c = el('div', 'card');
+    c.append(el('h3', null, p.label));
+    c.append(el('p', 'meta', p.blurb));
+    c.append(acts([{ label: `Enter as the ${p.label}`, primary: true, onClick: () => onAction(`test:${p.id}`) }]));
+    body.append(c);
+  }
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
@@ -918,32 +948,17 @@ function paneEnhanced(body) {
         // walk and every mesh parse, on the main thread. It happens with
         // the game paused, once, and the card says so before you press
         // rather than after the tab stops responding.
-        // Rule 6 picks the skeleton by SEX; rules 1-3 pick the body
-        // records by RACE. Both come from the live player, not a default
-        // - a hardcoded 'nord' would draw a Breton's arms on a Redguard
-        // and nothing on screen would say so.
-        await fpArm.build({
-          race: mwRaceId(playerEntity.race),
-          female: !!playerEntity.gender,
-          // THE FACE IS DERIVED, NOT CHOSEN: the classic wizard's own
-          // faceIndex (0..9, the portrait strip) picks the Morrowind
-          // head and hair by modulo over the race's sorted playable
-          // pools - playerBodyRows' law. No new stage, no new field.
-          faceIndex: playerEntity.faceIndex | 0,
-          // MW-D29: the worn armor, read from the classic equip table
-          // - shields included, weapons excluded (the weapon door owns
-          // the hands). The composer downstream never traps: a piece
-          // with no MW analog keeps its sprite and says so.
-          armor: dfWornEquipment(equipTableOf(playerEntity), EQUIP_SLOTS, ARMOR_ENUM),
-          // MW-D9: whatever is in the right hand right now. The mapping
-          // from Daggerfall's weapon templates onto Morrowind's types is
-          // a DECLARED DIVERGENCE (DF_TO_MW_WEAPON), not a translation.
-          weapon: playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
-          // MW-D16 / rule 24: the bow's ARROW. attachArrow reads the
-          // AMMUNITION slot, so the arm needs to know whether the player
-          // has any - the rig's own out-of-arrows test, one home.
-          hasAmmo: hasDaggerfallArrows(playerEntity.items),
-        });
+        //
+        // TR2: THE OPTS COME FROM THE ONE HOME (weaponRig's
+        // armBuildOptsOf) - rule 6 picks the skeleton by SEX, rules
+        // 1-3 the body by RACE, the face by the wizard's own
+        // faceIndex, the worn set off the classic equip table, the
+        // weapon off the right hand, ammo off the quiver. The inline
+        // copy this replaces carried `female: !!playerEntity.gender`,
+        // which is TRUE for the string 'male' - every build asked for
+        // the female skeleton; the one home tests the string.
+        const { buildArmsFor } = await import('../combat/weaponRig.js');
+        await buildArmsFor(playerEntity);
         render();
       } });
   }
@@ -1629,6 +1644,7 @@ function renderInto() {
     else {
       ({
         continue: paneContinue, new: paneNew, load: paneLoad,
+        test: paneTest,
         save: paneSave, exit: paneExit,
         mods: paneMods, about: paneAbout, enhanced: paneEnhanced,
       })[section](body);
