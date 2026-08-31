@@ -2403,7 +2403,7 @@ test('MW-D36: the pack takes the model only when it stands, and never lets the m
   const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
   assert.ok(!/fpArm|figure\(/.test(classic), 'the classic inventory must not know the model exists');
   const rend = readFileSync('src/render/renderer.js', 'utf8');
-  assert.match(rend, /renderCharacterSpriteImage\(mesh, modelMatrix, proj, view, pw, ph\)/);
+  assert.match(rend, /renderCharacterSpriteImage\(mesh, modelMatrix, proj, view, pw, ph, \{ studio = true \} = \{\}\)/);
   assert.match(rend, /out\.set\(raw\.subarray\(y \* pw \* 4, \(y \+ 1\) \* pw \* 4\), \(ph - 1 - y\) \* pw \* 4\);/, 'GL rows must flip on the way out');
 });
 
@@ -2681,4 +2681,26 @@ test('AUDIT 34 F1/F2: garment colour is lazy and shared; the weapon note reads t
   assert.equal(elven.note, 'resolved', 'elven-on-silver must read as resolved (the armor table said steel)');
   const orcish = rep.find((r) => r.item === 'Orcish Dagger');
   assert.match(orcish.note, /no glass\/ebony of this type/, 'a real fallback names the chain it walked');
+});
+
+// ═══ PX23: the UI read-back is lit by a studio, not by the world ═════
+test('PX23: studioLight puts the key light at the eye and nothing from the world in the frame', async () => {
+  const { studioLight, STUDIO_AMBIENT, STUDIO_KEY } = await import('../src/render/renderer.js');
+  const { lookAt } = await import('../src/world/mat4.js');
+  // a camera on +Z looking at the origin: the light must point toward +Z
+  const st = studioLight(lookAt([0, 0, 4], [0, 0, 0], [0, 1, 0]));
+  assert.ok(st.lightDir[2] > 0.99, `the key light is not at the eye (${[...st.lightDir]})`);
+  // a camera on -X: the light points toward -X
+  assert.ok(studioLight(lookAt([-4, 0, 0], [0, 0, 0], [0, 1, 0])).lightDir[0] < -0.99);
+  assert.deepEqual([...st.ambient].map((v) => Math.round(v * 100) / 100), [STUDIO_AMBIENT, STUDIO_AMBIENT, STUDIO_AMBIENT]);
+  assert.equal(st.sunScale, STUDIO_KEY);
+  assert.equal(st.pointLights.length, 0, 'a dungeon torch must not light the panel');
+  assert.deepEqual([...st.indirect], [0, 0, 0, 0]);
+  // brighter than the world's own defaults, and not blown out
+  assert.ok(STUDIO_AMBIENT > 0.45 && STUDIO_AMBIENT + STUDIO_KEY <= 1.4);
+  // borrowed and RETURNED: the read-back restores the frame's light state
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  const body = src.slice(src.indexOf('renderCharacterSpriteImage('), src.indexOf('renderCharacterSpriteImage(') + 2200);
+  assert.match(body, /const st = studioLight\(view\);/);
+  assert.match(body, /finally \{\n      if \(saved\) \{\n        this\._lightDir = saved\.lightDir;/, 'the frame light must be returned in a finally');
 });
