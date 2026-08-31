@@ -106,10 +106,15 @@ does.
 `.github/workflows/release-desktop.yml` cuts a release through any
 of three doors: pushing a tag shaped `app-v*`, a workflow_dispatch
 with `release_tag`, or - the door an ordinary merged PR can open -
-a main push touching `app/RELEASE`, whose first line names the tag
-(this is how releases are cut from hosts whose git relay pushes
-branches only, and it leaves the release history readable in git:
-bump `app/package.json`'s version and `app/RELEASE` together).
+a main push touching `.github/DESKTOP_RELEASE`, whose first line
+names the tag (this is how releases are cut from hosts whose git
+relay pushes branches only, and it leaves the release history
+readable in git: bump `app/package.json`'s version and the marker
+together). The marker's first home was `app/RELEASE`, which
+collided with electron-builder's `app/release` OUTPUT directory on
+case-insensitive filesystems - the windows and macos legs of the
+first release died on mkdir EEXIST while ubuntu sailed; the same
+finding class Audit DA recorded for pref keys, biting the infra.
 Whichever door, the ubuntu job carries the whole `npm run check`
 gate, all three OS runners package installers (AppImage, NSIS +
 portable exe, dmg - unsigned; macOS players right-click-Open the
@@ -121,6 +126,29 @@ updating the site's download - no site change needed per release.
 without cutting a release. Artifact names are
 `DaggerfallJS-<version>-<os>-<arch>.<ext>`; bump `app/package.json`'s
 version with the tag.
+
+## Updating (DA6)
+
+No auto-updater, on purpose: unsigned builds cannot auto-update on
+macOS at all, and nothing here should apply code silently. Instead
+the app carries a NOTICE - on launch (and from File > Check for
+Updates...) it makes its one network call of its own, a read-only
+GET to the repo's releases API, runs the pure compare in
+`app/lib/updateCheck.cjs`, and if a newer `app-v*` release exists
+offers a dialog whose Download button opens the release page in the
+player's browser. Launch checks fail SILENTLY (a notice that nags
+about the network is worse than none); the menu check reports
+up-to-date and unreachable out loud, because the player asked. The
+File menu checkbox ("Check for Updates on Launch", default on,
+persisted as `updateCheck` in config.json) turns it off in one
+click, and `DAGGER_NO_UPDATE_CHECK` turns it off for the probes.
+Updating is an install-over: saves, prefs and the ARENA2 path live
+in userData, outside the install, and survive untouched.
+`test/updatecheck.test.js` pins the compare's ordering laws and the
+wiring (one endpoint, both gates, browser-only Download). If signed
+builds ever exist, electron-updater can replace the notice on
+Windows/Linux; the notice composes with that rather than fighting
+it.
 
 ## What deliberately did NOT move
 

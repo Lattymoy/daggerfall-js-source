@@ -19,10 +19,15 @@ name: release-desktop
 # THREE DOORS to a release, because a door is only a door for who can
 # open it: a pushed app-v* tag (anyone with tag push), a dispatch with
 # release_tag (anyone with workflow rights), and THE MARKER FILE - a
-# main push that touches app/RELEASE cuts a release at whatever tag
-# the file names. The marker is the door a branch-only git relay can
-# open through an ordinary merged PR, which is how the first release
-# was cut; it also leaves the release history readable in git.
+# main push that touches .github/DESKTOP_RELEASE cuts a release at
+# whatever tag the file names. The marker is the door a branch-only
+# git relay can open through an ordinary merged PR, which is how the
+# first release was cut; it also leaves the release history readable
+# in git. It lives HERE and not in app/ because its first home,
+# app/RELEASE, collided with electron-builder's app/release output
+# directory on case-INSENSITIVE filesystems - mkdir EEXIST, and the
+# windows and macos legs of the first release died on it while ubuntu
+# sailed. The audit's own finding class, biting the release infra.
 on:
   push:
     tags:
@@ -30,7 +35,7 @@ on:
     branches:
       - main
     paths:
-      - 'app/RELEASE'
+      - '.github/DESKTOP_RELEASE'
   workflow_dispatch:
     inputs:
       release_tag:
@@ -64,7 +69,7 @@ jobs:
         run: |
           TAG='${{ inputs.release_tag }}'
           if [ -z "$TAG" ] && [[ '${{ github.ref }}' == refs/tags/app-v* ]]; then TAG='${{ github.ref_name }}'; fi
-          if [ -z "$TAG" ] && [ -f app/RELEASE ]; then TAG=$(head -1 app/RELEASE | tr -d '[:space:]'); fi
+          if [ -z "$TAG" ] && [ -f .github/DESKTOP_RELEASE ]; then TAG=$(head -1 .github/DESKTOP_RELEASE | tr -d '[:space:]'); fi
           case "$TAG" in app-v*) ;; *) TAG='' ;; esac
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "release tag: '${TAG:-<none - artifacts only>}'"

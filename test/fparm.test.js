@@ -2661,3 +2661,23 @@ test('MW-D38: itemIcon is null without a build; the pack takes the model icon fi
   assert.match(src, /const catalog = \{ archives, parts, armors, clothes, weapons: allWeapons, gen \};/, 'the build keeps no catalog for the icons');
   assert.match(src, /finally \{ releaseGpu\(mesh\); \}/, 'the icon mesh must leave the GPU');
 });
+
+// ═══ AUDIT 34: PX22 and the item-sprite integration ═════════════════
+test('AUDIT 34 F1/F2: garment colour is lazy and shared; the weapon note reads the weapon chain', async () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  // F1: no pre-pass over every CLOT record; one door for the build and the icon
+  assert.ok(!/clothingColourSampler/.test(arm), 'the eager sampler is back');
+  assert.match(arm, /const colourOf = \(c\) => clothingColourOf\(c, parts, archives, gen\);/, 'the build does not measure lazily');
+  assert.match(arm, /const colourOf = \(c\) => clothingColourOf\(c, cat\.parts, cat\.archives, cat\.gen\);/, 'the icon measures through a different door than the build');
+  assert.equal((arm.match(/function clothingColourOf\(/g) || []).length, 1);
+  // F2: an elven weapon resolved to silver is 'resolved', not a fallback
+  const { mwItemReport } = await import('../src/formats/mwItemMap.js');
+  const { pickWeaponRecord: pick } = await import('../src/formats/mwFirstPerson.js');
+  const W = (id, type) => ({ id, model: `${id}.nif`, name: '', type, enchanted: false });
+  const rep = mwItemReport([], { weapons: [W('silver_dagger', 0), W('iron_dagger', 0)], clothes: [], pickWeapon: pick });
+  const elven = rep.find((r) => r.item === 'Elven Dagger');
+  assert.deepEqual(elven.found, ['silver_dagger']);
+  assert.equal(elven.note, 'resolved', 'elven-on-silver must read as resolved (the armor table said steel)');
+  const orcish = rep.find((r) => r.item === 'Orcish Dagger');
+  assert.match(orcish.note, /no glass\/ebony of this type/, 'a real fallback names the chain it walked');
+});

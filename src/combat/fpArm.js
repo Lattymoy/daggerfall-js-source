@@ -480,23 +480,40 @@ const FACE_MATCH_CACHE = new Map();
  *  pick compares against Daggerfall's dye band. Memoised per data
  *  generation; null when nothing measures. */
 const CLOT_COLOUR_CACHE = new Map();
-async function clothingColourSampler(clothes, parts, archives, gen) {
-  const bodyById = new Map((parts ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
-  const colours = new Map();
-  for (const c of clothes ?? []) {
-    const key = `${gen}:${c.id}`;
-    if (CLOT_COLOUR_CACHE.has(key)) { colours.set(c.id, CLOT_COLOUR_CACHE.get(key)); continue; }
-    const ref = (c.parts ?? []).find((r) => r.male || r.female);
-    const body = ref ? bodyById.get(ref.male || ref.female) : null;
-    let rgb = null;
-    if (body) {
-      const f = await measurePart(body, archives, 'hair');   // alpha-weighted texture mean
-      if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
+/** AUDIT 34 F1: LAZY AND SYNCHRONOUS. The first sampler pre-measured
+ *  EVERY CLOT record in the master the first time a garment was worn -
+ *  hundreds of texture decodes for a shirt - and the icon door could
+ *  not reach it at all, so an icon and the worn piece could disagree.
+ *  Now one record is measured when the resolver asks for it (the
+ *  resolver only asks about its own type's pool), memoised per data
+ *  generation, and the same function serves the build and the icon. */
+function clothingColourOf(rec, parts, archives, gen) {
+  const key = `${gen}:${rec.id}`;
+  if (CLOT_COLOUR_CACHE.has(key)) return CLOT_COLOUR_CACHE.get(key);
+  let rgb = null;
+  try {
+    const ref = (rec.parts ?? []).find((r) => r.male || r.female);
+    const body = ref ? (parts ?? []).find((b) => String(b.id || '').toLowerCase() === (ref.male || ref.female)) : null;
+    const model = body ? body.model : rec.model;
+    const path = `meshes/${model}`;
+    const arc = archives.find((a) => a.has(path));
+    if (arc) {
+      const batches = flattenNif(parseNif(arc.get(path).slice()));
+      const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+      if (file) {
+        const exists = (p) => archives.some((a) => a.has(p));
+        const tpath = correctTexturePath(file, exists);
+        const tarc = archives.find((a) => a.has(tpath));
+        if (tarc) {
+          const m0 = decodeTextureImage(tpath, tarc.get(tpath).slice()).mips[0];
+          const f = hairFeatures(m0.rgba, m0.width, m0.height, 0);   // alpha-weighted mean
+          if (f && f.colour) rgb = f.colour.map((v) => Math.round(v * 255));
+        }
+      }
     }
-    CLOT_COLOUR_CACHE.set(key, rgb);
-    colours.set(c.id, rgb);
-  }
-  return (rec) => colours.get(rec.id) ?? null;
+  } catch { rgb = null; }
+  CLOT_COLOUR_CACHE.set(key, rgb);
+  return rgb;
 }
 
 /** MW-D38: the icon cache, per data generation / record / size / dye. */
@@ -972,9 +989,9 @@ export async function buildFpArm({
     // MW-D31: ONE COMPOSITION for both rigs. The worn arbitration runs
     // here, once, and the third person receives the verdicts instead
     // of re-arguing them - one seam, one law, two views.
-    // MW-D37: the garments' measured colours, so the dye can choose.
-    const colourOf = (armor ?? []).some((p) => p.kind === 'clothing')
-      ? await clothingColourSampler(clothes, parts, archives, gen) : null;
+    // MW-D37: the garments' measured colours, so the dye can choose -
+    // lazily, one candidate at a time (AUDIT 34 F1).
+    const colourOf = (c) => clothingColourOf(c, parts, archives, gen);
     const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
@@ -2610,8 +2627,9 @@ export function createFpArm() {
           rec = mwArmorRecords(cat.armors, item.templateIndex, item.material ?? 0).records[0] ?? null;
         } else if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
           dye = String(item.dye ?? 0);
-          const key = (c) => `${cat.gen}:${c.id}`;
-          const colourOf = (c) => CLOT_COLOUR_CACHE.get(key(c)) ?? null;
+          // AUDIT 34 F1: the icon measures through the same door the
+          // build does, so the icon and the worn piece are ONE record.
+          const colourOf = (c) => clothingColourOf(c, cat.parts, cat.archives, cat.gen);
           rec = mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf }).record;
         }
       } catch { rec = null; }

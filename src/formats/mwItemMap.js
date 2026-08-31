@@ -119,7 +119,7 @@ export const RESERVES = Object.freeze({
   robe: [4, 5, 21, 22, 13, 14, 19, 20, 11, 12, 3],
   skirt: [4, 21, 22],
 });
-import { DF_TO_MW_WEAPON } from './mwFirstPerson.js';
+import { DF_TO_MW_WEAPON, DF_TO_MW_MATERIAL } from './mwFirstPerson.js';
 
 /** DF armor material -> the token MW armor record ids carry. */
 // MW-D37: colour truth (see DF_MATERIAL_RGB): Elven is silver-white in
@@ -337,7 +337,12 @@ export function mwItemReport(armorRecords, { weapons = null, clothes = null, col
           family: 'weapon',
           item: `${mName} ${wName.replaceAll('_', ' ')}`,
           found: rec ? [rec.id] : [],
-          note: rec ? (rec.id.includes(String(DF_TO_MW_ARMOR_MATERIAL[mName]?.[0] ?? '')) || rec.id.includes(mName.toLowerCase()) ? 'resolved' : `resolved to the type's first - no ${mName.toLowerCase()} of this type`) : 'no record of this type - the classic sprite stands',
+          // AUDIT 34 F2: judged against the WEAPON chain - the first draft
+          // read the armor table here and called every elven weapon a
+          // fallback (armor says steel, the weapon id says silver).
+          note: rec
+            ? ((DF_TO_MW_MATERIAL[mName] ?? []).some((tok) => rec.id.includes(tok)) ? 'resolved' : `resolved to the type's first - no ${(DF_TO_MW_MATERIAL[mName] ?? []).join('/')} of this type`)
+            : 'no record of this type - the classic sprite stands',
           dfColour: hex(DF_MATERIAL_RGB[mName]),
           mwColour: colourOf && rec ? hex(colourOf(rec)) : null,
         });
