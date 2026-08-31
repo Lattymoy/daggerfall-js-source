@@ -202,6 +202,67 @@ function handleDagger(req) {
   return new Response('not found', { status: 404 });
 }
 
+// ---- the update notice (DA6) --------------------------------------
+// No auto-updater, on purpose: unsigned builds cannot auto-update on
+// macOS at all, and nothing here should apply code silently. This is
+// a NOTICE - one read-only GET to the GitHub releases API, the pure
+// compare in lib/updateCheck.cjs, and a dialog whose Download button
+// opens the release page in the player's browser. It is the app's
+// ONE network call of its own, it is on by default and OFF in one
+// click (the File menu checkbox, persisted in config.json as
+// updateCheck), and every failure is silent on launch - a launch
+// check that nags about the network is worse than none. The manual
+// menu item is the loud path: it reports up-to-date and unreachable
+// alike, because the player asked.
+const RELEASES_LATEST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/latest';
+const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest';
+const { isNewerRelease } = require('./lib/updateCheck.cjs');
+
+/** { tag, url } of the latest release, or null on any failure. */
+async function fetchLatestRelease() {
+  try {
+    const res = await net.fetch(RELEASES_LATEST_API, {
+      headers: { 'User-Agent': 'daggerfall-js-app', Accept: 'application/vnd.github+json' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const tag = typeof json?.tag_name === 'string' ? json.tag_name : null;
+    const url = typeof json?.html_url === 'string' && /^https:\/\/github\.com\//.test(json.html_url)
+      ? json.html_url : RELEASES_PAGE;
+    return tag ? { tag, url } : null;
+  } catch { return null; }
+}
+
+async function checkForUpdates({ silent }) {
+  const latest = await fetchLatestRelease();
+  if (!latest) {
+    if (!silent) dialog.showMessageBox({
+      type: 'warning',
+      message: 'Could not check for updates',
+      detail: `GitHub was unreachable. The releases page is ${RELEASES_PAGE}.`,
+    });
+    return;
+  }
+  if (!isNewerRelease(app.getVersion(), latest.tag)) {
+    if (!silent) dialog.showMessageBox({
+      type: 'info',
+      message: `You're up to date`,
+      detail: `Daggerfall JavaScript v${app.getVersion()} is the latest release.`,
+    });
+    return;
+  }
+  const { response } = await dialog.showMessageBox({
+    type: 'info',
+    message: `${latest.tag.replace(/^app-v/, 'Version ')} is out`,
+    detail: `You have v${app.getVersion()}. Updating is a download and an install-over - your saves, settings and ARENA2 path all stay where they are.`,
+    buttons: ['Download', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (response === 0) shell.openExternal(latest.url);
+}
+
 // ---- the window ---------------------------------------------------
 
 /** Wipe the page's STORED ARENA2 ingest so a re-pointed folder
@@ -277,6 +338,17 @@ function buildMenu() {
               pendingIngestClear = true;   // macOS zero-window state: the next window clears at boot
             }
           },
+        },
+        { type: 'separator' },
+        {
+          label: 'Check for Updates...',
+          click: () => checkForUpdates({ silent: false }),
+        },
+        {
+          label: 'Check for Updates on Launch',
+          type: 'checkbox',
+          checked: loadConfig().updateCheck !== false,
+          click: (item) => saveConfig({ ...loadConfig(), updateCheck: item.checked }),
         },
         { type: 'separator' },
         { role: 'quit' },
@@ -370,6 +442,14 @@ app.whenReady().then(async () => {
 
   await createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+
+  // The launch check, AFTER the window is up so the game is never
+  // behind it. Off by the config checkbox, and off under
+  // DAGGER_NO_UPDATE_CHECK so the probes never touch the network -
+  // updatecheck.test.js pins both gates.
+  if (loadConfig().updateCheck !== false && !process.env.DAGGER_NO_UPDATE_CHECK) {
+    checkForUpdates({ silent: true });
+  }
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
