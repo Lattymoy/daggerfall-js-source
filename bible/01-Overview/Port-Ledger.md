@@ -24,6 +24,18 @@ where it exists. Where a pin cannot execute the code, it should assert
 the SHAPE around the fragment (what precedes and follows it), not the
 fragment alone.
 
+**The blind spot, measured** (`test/moduleload_smoke.test.js`, the same
+day): 461 of the port's 470 modules import cleanly under bare node, so
+"nothing executes the module bodies" was true of far less of the tree
+than it felt. The smoke now runs all 461 and asserts the remaining NINE
+exactly - three on Vite's `import.meta.glob` (`main.js`,
+`scenes/questData.js`, `scenes/world.js`) and six browser tools on
+`document`/`location`. The list is checked both ways, so an exclusion
+can never quietly cover a real break. Shrinking those three - lifting
+the glob call behind a seam - would put the port's most-edited file
+under a body-executing test, and is worth doing the next time
+`world.js` is opened for structural work.
+
 Single source of truth for everything that is not a plain 1:1 line. Three
 categories. If a departure or gap is not on this page, it does not exist.
 Adding to category A requires Mac approval; B records data reality; C is the
