@@ -285,21 +285,21 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1437` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3288` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/dungeonContext.js:3396` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:646` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:652` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:895` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1144` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1490` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/shared.js:311` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/exterior.js:647` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:653` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:896` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1145` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1491` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/shared.js:319` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:336` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:503` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:994` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1000` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2199` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:3215` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:4010` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:5046` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:995` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1001` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2200` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:3216` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:4011` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:5051` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1194` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1209` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1418` - is the quest machine's, FLAGGED with it.

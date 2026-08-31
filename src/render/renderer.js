@@ -35,6 +35,9 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
+uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
+uniform vec3 uMoonColor;
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -63,7 +66,8 @@ void main() {
   if (tex.a < 0.5) discard;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff));
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   vec3 pointAcc = vec3(0.0);
@@ -142,6 +146,9 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
+uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
+uniform vec3 uMoonColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -170,7 +177,8 @@ void main() {
   if (uAlphaCut > 0.0 && texel.a < uAlphaCut) discard;
   vec3 albedo = vColor * texel.rgb;
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff));
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -347,6 +355,9 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
+uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
+uniform vec3 uMoonColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -387,7 +398,8 @@ void main() {
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff));
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -491,6 +503,9 @@ export class Renderer {
     this.uAmbient = gl.getUniformLocation(this.program, 'uAmbient');
     this.uSunScale = gl.getUniformLocation(this.program, 'uSunScale');
     this.uSunColor = gl.getUniformLocation(this.program, 'uSunColor');
+    this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
+    this.uMoonScale = gl.getUniformLocation(this.program, 'uMoonScale');
+    this.uMoonColor = gl.getUniformLocation(this.program, 'uMoonColor');
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
     this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
@@ -557,6 +572,9 @@ export class Renderer {
       ambient: gl.getUniformLocation(cp, 'uAmbient'),
       sunScale: gl.getUniformLocation(cp, 'uSunScale'),
       sunColor: gl.getUniformLocation(cp, 'uSunColor'),
+      moonDir: gl.getUniformLocation(cp, 'uMoonDir'),
+      moonScale: gl.getUniformLocation(cp, 'uMoonScale'),
+      moonColor: gl.getUniformLocation(cp, 'uMoonColor'),
       pointCount: gl.getUniformLocation(cp, 'uPointCount'),
       pointLights: gl.getUniformLocation(cp, 'uPointLights'),
       pointColors: gl.getUniformLocation(cp, 'uPointColors'),
@@ -571,6 +589,12 @@ export class Renderer {
     this._ambient = new Float32Array([0.45, 0.45, 0.45]);
     this._sunScale = 0.55;
     this._sunColor = new Float32Array([1, 1, 1]);
+    // EV5: the moon term defaults OFF - scale 0 is a no-op in every
+    // shader, so classic scenes, interiors and dungeons (which never
+    // call setMoonlight) keep DFU's hard-off night to the byte.
+    this._moonDir = new Float32Array([0, 1, 0]);
+    this._moonScale = 0;
+    this._moonColor = new Float32Array([1, 1, 1]);
     // Billboards stay full-bright until a scene installs the clock via
     // setLighting - the solid defaults above reproduce the pre-R5 solid
     // shading, but 0.45 + 0.55 * 0.5 would silently dim flats to 72.5%
@@ -596,6 +620,9 @@ export class Renderer {
     this.tUAmbient = gl.getUniformLocation(this.terrainProgram, 'uAmbient');
     this.tUSunScale = gl.getUniformLocation(this.terrainProgram, 'uSunScale');
     this.tUSunColor = gl.getUniformLocation(this.terrainProgram, 'uSunColor');
+    this.tUMoonDir = gl.getUniformLocation(this.terrainProgram, 'uMoonDir');
+    this.tUMoonScale = gl.getUniformLocation(this.terrainProgram, 'uMoonScale');
+    this.tUMoonColor = gl.getUniformLocation(this.terrainProgram, 'uMoonColor');
     this.tUPointCount = gl.getUniformLocation(this.terrainProgram, 'uPointCount');
     this.tUPointLights = gl.getUniformLocation(this.terrainProgram, 'uPointLights');
     this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
@@ -789,6 +816,9 @@ export class Renderer {
     gl.uniform3fv(c.ambient, this._ambient);
     gl.uniform1f(c.sunScale, this._sunScale);
     gl.uniform3fv(c.sunColor, this._sunColor);
+    gl.uniform3fv(c.moonDir, this._moonDir);
+    gl.uniform1f(c.moonScale, this._moonScale);
+    gl.uniform3fv(c.moonColor, this._moonColor);
     const count = this._pointLights.length / 4;
     gl.uniform1i(c.pointCount, count);
     if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
@@ -922,11 +952,13 @@ export class Renderer {
     const saved = studio ? {
       lightDir: this._lightDir, ambient: this._ambient, sunScale: this._sunScale,
       sunColor: this._sunColor, pointLights: this._pointLights, indirect: this._indirect,
+      moonScale: this._moonScale,   // EV5: no moonlight on a UI panel
     } : null;
     if (studio) {
       const st = studioLight(view);
       this._lightDir = st.lightDir; this._ambient = st.ambient; this._sunScale = st.sunScale;
       this._sunColor = st.sunColor; this._pointLights = st.pointLights; this._indirect = st.indirect;
+      this._moonScale = 0;
     }
     try {
       this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
@@ -934,6 +966,7 @@ export class Renderer {
       if (saved) {
         this._lightDir = saved.lightDir; this._ambient = saved.ambient; this._sunScale = saved.sunScale;
         this._sunColor = saved.sunColor; this._pointLights = saved.pointLights; this._indirect = saved.indirect;
+        this._moonScale = saved.moonScale;
       }
     }
     const cs = this._charSpriteRT();
@@ -1315,6 +1348,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uAmbient, this._ambient);
     gl.uniform1f(this.uSunScale, this._sunScale);
     gl.uniform3fv(this.uSunColor, this._sunColor);
+    gl.uniform3fv(this.uMoonDir, this._moonDir);
+    gl.uniform1f(this.uMoonScale, this._moonScale);
+    gl.uniform3fv(this.uMoonColor, this._moonColor);
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
@@ -1338,6 +1374,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Active window style emission (windowEmissionRGB output). */
   setWindowEmission(rgb) {
     this._windowEmission = rgb;
+  }
+
+  /** EV5: the second directional term - the masser's key light. Takes
+   *  moonlightTerm's output or null; null (day, classic sky, indoors)
+   *  zeroes the scale and every shader's moon term is a no-op. */
+  setMoonlight(moon) {
+    if (!moon) { this._moonScale = 0; return; }
+    this._moonScale = moon.scale;
+    this._moonDir[0] = moon.dir[0]; this._moonDir[1] = moon.dir[1]; this._moonDir[2] = moon.dir[2];
+    this._moonColor[0] = moon.color[0]; this._moonColor[1] = moon.color[1]; this._moonColor[2] = moon.color[2];
   }
 
   /** Time-of-day lighting: ambient color, sun scale, sun color. */
@@ -1623,6 +1669,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.tUAmbient, this._ambient);
     gl.uniform1f(this.tUSunScale, this._sunScale);
     gl.uniform3fv(this.tUSunColor, this._sunColor);
+    gl.uniform3fv(this.tUMoonDir, this._moonDir);
+    gl.uniform1f(this.tUMoonScale, this._moonScale);
+    gl.uniform3fv(this.tUMoonColor, this._moonColor);
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.tUPointCount, count);
     if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
@@ -1688,11 +1737,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // billboards): ambient plus the Lambert-average half of the sun term.
     // Clockless scenes keep the pre-R5 full-bright flats.
     if (this._clockLit) {
+      // EV5: the flats have no normals, so the moon takes the same
+      // Lambert-average half the sun does - a scalar on the tint.
       gl.uniform3f(
         this.bbUTint,
-        this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5,
-        this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5,
-        this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5
+        this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5 + this._moonColor[0] * this._moonScale * 0.5,
+        this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5 + this._moonColor[1] * this._moonScale * 0.5,
+        this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5 + this._moonColor[2] * this._moonScale * 0.5
       );
     } else {
       gl.uniform3f(this.bbUTint, 1, 1, 1);

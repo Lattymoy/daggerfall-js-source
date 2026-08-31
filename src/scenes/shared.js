@@ -11,7 +11,7 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
@@ -222,6 +222,14 @@ export function createSkyController(gl, params) {
     sunFactor() {
       const occ = enhancedSky?.state?.sunOcclusion ?? 0;
       return 1 - CLOUD_SHADOW * occ;
+    },
+    /** EV5: the world light's MOON term, derived from the same state
+     *  the dome is drawn with (the masser's direction, phase and
+     *  cloud-dimmed visibility; secunda's ambient lift). null under
+     *  the classic sky - which has no moon state, so the 1:1 lane
+     *  keeps DFU's hard-off night - and null by day. */
+    moonlight() {
+      return enhancedSky?.state ? moonlightTerm(enhancedSky.state) : null;
     },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather

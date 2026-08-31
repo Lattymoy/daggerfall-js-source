@@ -253,6 +253,60 @@ export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
   return rotX(rotZ(sun, -angle), tilt);
 }
 
+/* ── EV5: MOONLIGHT (Mac: "I want sunlight and moonlight to matter") ──
+   The sky has computed both moons' directions, phases and
+   visibilities every frame since ES1 and the world's light consumed
+   none of it. The MASSER leads: it is the big moon, and its phase-lit
+   fraction times its visibility (already dimmed by daylight and by the
+   eased cloud cover - the same field the dome is drawn with) scales a
+   second directional N.L term in the lit shaders, coloured like the
+   disc. SECUNDA rides the AMBIENT: too small and too white for a
+   readable second shadow direction, it lifts the night floor a little
+   when it is up and lit. Both terms exist only while skyState answers
+   night - by day the sun owns the sky - and only under the ENHANCED
+   sky, because only it has this state at all: the classic lane keeps
+   DFU's hard-off night verbatim. The two scales are the dials, the
+   STUDIO_AMBIENT shape. */
+export const MOONLIGHT = Object.freeze({
+  masser: 0.25,    // full-Masser key scale (night ambient is 0.25 - a full moon roughly doubles a moonlit face)
+  secunda: 0.06,   // full-Secunda ambient lift
+});
+
+/** How much of a moon's disc is lit, 0..1: New (0) none, Full (4)
+ *  all, the halves half - the phase ring folded at Full. */
+export function phaseLitFraction(phase) {
+  const p = phase === LUNAR_PHASES.None ? 0 : phase;
+  return p <= 4 ? p / 4 : (8 - p) / 4;
+}
+
+/** The world light's moon term for one frame, from skyState's own
+ *  output: null when the sky is not night's, or when neither moon
+ *  contributes. `dir`/`scale`/`color` drive the second directional
+ *  term (the masser); `ambient` is secunda's additive floor lift. */
+export function moonlightTerm(state) {
+  if (!state.night) return null;
+  const key = MOONLIGHT.masser * phaseLitFraction(state.masser.phase) * state.masser.vis;
+  const lift = MOONLIGHT.secunda * phaseLitFraction(state.secunda.phase) * state.secunda.vis;
+  if (key <= 0 && lift <= 0) return null;
+  const sc = state.secunda.color;
+  return {
+    dir: state.masser.dir,
+    scale: key,
+    color: state.masser.color,
+    ambient: [sc[0] * lift, sc[1] * lift, sc[2] * lift],
+  };
+}
+
+/** Fold the secunda lift into a host's ambient, in place (the hosts
+ *  mint the ambient array fresh each frame - no second allocation). */
+export function withMoonAmbient(ambient, moon) {
+  if (!moon) return ambient;
+  ambient[0] += moon.ambient[0];
+  ambient[1] += moon.ambient[1];
+  ambient[2] += moon.ambient[2];
+  return ambient;
+}
+
 /** THE WEATHER'S HAND, EASED (ES1c). The sim flips its type on one
  *  frame - sunny to rain, between two ticks - and the sky was rebuilt
  *  from the type every frame, so the whole dome changed in the time it

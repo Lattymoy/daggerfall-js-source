@@ -254,3 +254,33 @@ SAMPLES, never the render grid, so the far ring is presentation all
 the way down. distantland.test.js pins all of it; the moving picture
 (the far haze at distance 4, the vanished seam lattice at grazing
 sun) is owed to a data-bearing session.
+
+EV5 (2026-08-31): MOONLIGHT AND THE NIGHT. The enhanced sky computed
+both moons' directions, phases and visibilities every frame since ES1
+and the world's light consumed none of it - now it does. The pure
+half (enhancedSky.js): phaseLitFraction folds the 0..7 phase ring at
+Full; moonlightTerm derives the term from skyState's OWN output - the
+MASSER leads (MOONLIGHT.masser 0.25 x phase-lit x vis, where vis is
+already daylight- and cloud-dimmed by the same eased cover the dome
+is drawn with - the cloud tripwire satisfied by construction), and
+SECUNDA rides the ambient (0.06 lift, her colour) because she is too
+small for a readable second shadow direction; null by day, null when
+neither contributes. The renderer: uMoonDir/uMoonScale/uMoonColor +
+a second N.L term in exactly the three normal-bearing programs (the
+pinned "0.45 + 0.55*diffuse" base is UNCHANGED - the term is
+additive, scale 0 by default); the flats (no normals) take the
+Lambert-average half on the tint INSIDE the _clockLit latch; the
+studio borrow zeroes and returns the scale so UI read-backs stay
+moonless; setMoonlight(null) is the off switch. The seam: shared.js's
+sky.moonlight() answers from enhancedSky.state - the classic sky has
+no moon state, so the 1:1 lane keeps DFU's hard-off night VERBATIM by
+having nothing to answer with; interiors and dungeons never call
+setMoonlight at all. Both exterior hosts set the key and fold
+secunda's lift into the ambient (withMoonAmbient, in place - the
+EV2 allocation law). Magnitudes: night ambient is 0.25, so a clear
+full Masser (scale ~0.22, warm #d39a86) roughly doubles a moonlit
+face and a storm mutes it through the vis law - a dimmer, not a
+switch. moonlight.test.js pins the fraction table, the formula
+against the state's own numbers, the day/new-moon/cloud gates, the
+in-place fold, and the wiring shape; the moonlit picture is owed to
+a data-bearing session (?tod= at night, phases from the calendar).
