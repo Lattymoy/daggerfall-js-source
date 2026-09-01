@@ -6283,3 +6283,33 @@ incremental swap of the weapon part alone rather than a rebuild, which
 is a real piece of work and is NOT started here: what is recorded is
 the diagnosis and the correction of the false one, so the next session
 does not begin by trusting a sentence I got wrong.
+
+MW-D44 CORRECTS MW-D34, which read half the reference and stopped one
+level too high. Mac: "I genuinely think the arrow placement in the hand
+is not 1:1 as you claim." He was right, and the claim was mine.
+
+attachArrow IS a bare getInstance(model, parent) - it never goes
+through SceneUtil::attach, so the ARROW mesh's own "BoneOffset" node is
+never searched for and never applied. MW-D34 stands on that and is
+MW-D44's control. But `parent` is getArrowBone(), and that is the
+ArrowBone node INSIDE the weapon's live scene graph. The weapon reached
+that graph through SceneUtil::attach, which applied the WEAPON's
+BoneOffset one level above ArrowBone. Everything below inherits it, the
+arrow included.
+
+The port gave the arrow its preTransform - the weapon NIF's own
+root-to-ArrowBone chain - and boneOffset: null, so the round sat
+displaced from the hand by exactly the weapon's offset. MW-D34's own
+comment already stated the correct rule, "what the arrow DOES inherit
+is its parent chain"; the code stopped short of the parent's offset.
+
+ONLY ON THE SECOND BRANCH. preTransform is set exactly when
+getArrowBone falls back to the weapon's mesh. When the ACTOR's skeleton
+carries the attach bone the parent is that bone and the weapon is not
+in the chain at all, so inheriting its offset there would be the same
+error mirrored.
+
+WHAT IS STILL OWED: a bow fixture carrying BOTH an ArrowBone and a
+BoneOffset. generate.py has neither in one mesh - boneoffset.nif is
+ammunition - so MW-D44 is pinned at SOURCE while MW-D34 holds the
+behavioural half. Named here rather than left to be rediscovered.

@@ -1676,6 +1676,13 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 export function bindPartsInto(assembly, parts) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
+  // MW-D44: the WEAPON's own BoneOffset, kept for the ammunition that
+  // rides inside its mesh. resolveWeaponParts pushes 'weapon' before
+  // 'arrow', so by the time the arrow binds this is the offset the
+  // reference has already applied one level above ArrowBone. Null for
+  // every other part list and reset per call, so a body without a
+  // weapon cannot inherit a stale one.
+  let weaponBoneOffset = null;
   for (const part of parts) {
     // `part.bones` overrides the table so a test can drive real assembly
     // against a fixture skeleton whose bone names are not Morrowind's.
@@ -1820,10 +1827,43 @@ export function bindPartsInto(assembly, parts) {
             // What the arrow DOES inherit is its parent chain: the
             // weapon's node (preTransform above) when it rides the
             // weapon's ArrowBone, mirror and all.
-            boneOffset: part.ammo ? null : (bound.boneOffset || null),
+            // MW-D44 (Mac: "the arrow placement in the hand is not 1:1"
+            // - and he was right): AMMUNITION TAKES THE WEAPON'S
+            // OFFSET, THOUGH NEVER ITS OWN. MW-D34 read half the
+            // reference correctly and stopped one level too high.
+            // attachArrow is a bare getInstance(model, parent)
+            // (weaponanimation.cpp:87-93) so the ARROW mesh's own
+            // "BoneOffset" node is never searched for - that half
+            // stands. But `parent` is getArrowBone(), which is the
+            // ArrowBone node INSIDE the weapon's live scene graph, and
+            // the weapon got there through SceneUtil::attach, which
+            // applied the WEAPON's BoneOffset above it. Everything
+            // under ArrowBone inherits that, the arrow included.
+            //
+            // The port gave the arrow preTransform - the weapon NIF's
+            // own root-to-ArrowBone chain - and nothing else, so it
+            // was displaced from the hand by exactly the weapon's
+            // offset. The comment below already stated the right rule,
+            // "what the arrow DOES inherit is its parent chain"; the
+            // code just stopped short of the parent's offset.
+            //
+            // ONLY WHEN IT RIDES THE WEAPON. preTransform is set in
+            // exactly the fallback case (getArrowBone's second branch).
+            // When the ACTOR's skeleton carries the attach bone, the
+            // reference's parent is that bone and the weapon is not in
+            // the chain at all - inheriting its offset there would be
+            // the same mistake pointing the other way.
+            boneOffset: part.ammo
+              ? (part.preTransform ? weaponBoneOffset : null)
+              : (bound.boneOffset || null),  // MW-D44: recorded as the weapon binds, spent when the
+            // arrow does - see the head of this function.
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
+        // MW-D44: the weapon's offset, held for the ammunition that
+        // rides inside its mesh. Only the weapon's - a shield or a
+        // body part must not lend the arrow anything.
+        if (part.slot === 'weapon') weaponBoneOffset = bound.boneOffset || null;
       }
       // THE SILENT HOLE, CLOSED. A bone whose every NAMED skinned shape
       // fails rule 15's filter used to bind NOTHING and say NOTHING -

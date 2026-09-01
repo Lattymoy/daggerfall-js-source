@@ -339,3 +339,40 @@ test('MW-D42: an empty quiver still draws an EMPTY bow', async () => {
   arm.attack('StrikeDown');
   assert.equal(arm.status().arrowShown, false, 'the draw cannot nock what was never built');
 });
+
+// MW-D44: AMMUNITION TAKES THE WEAPON'S OFFSET, THOUGH NEVER ITS OWN
+// (Mac: "I genuinely think the arrow placement in the hand is not 1:1"
+// - and he was right). MW-D34 above read half the reference and stopped
+// one level too high. attachArrow IS a bare getInstance(model, parent)
+// (weaponanimation.cpp:87-93), so the ARROW's own BoneOffset is never
+// searched for - MW-D34 stands and is the control for this. But
+// `parent` is getArrowBone(), the ArrowBone node INSIDE the weapon's
+// live scene graph, and the weapon reached that graph through
+// SceneUtil::attach, which applied the WEAPON's BoneOffset above it.
+// Everything under ArrowBone inherits it, the arrow included. The port
+// gave the arrow only preTransform - the weapon NIF's own
+// root-to-ArrowBone chain - so it sat displaced from the hand by
+// exactly the weapon's offset.
+//
+// SOURCE-PINNED, and the reason is a missing fixture rather than a
+// missing law: proving it live needs a bow mesh carrying BOTH an
+// ArrowBone and a BoneOffset, and generate.py has no such fixture -
+// boneoffset.nif is ammunition. That fixture is the honest next step
+// and is named here so it is not rediscovered.
+test('MW-D44: the arrow inherits the WEAPON\'s BoneOffset, and only when it rides the weapon', () => {
+  const src = readFileSync('src/formats/mwFirstPerson.js', 'utf8');
+  // The weapon's offset is recorded as the weapon binds...
+  assert.match(src, /if \(part\.slot === 'weapon'\) weaponBoneOffset = bound\.boneOffset \|\| null;/,
+    'the weapon records its offset for the round that rides inside it');
+  // ...and spent by the ammo, gated on preTransform - which is set in
+  // exactly getArrowBone's SECOND branch. When the actor's own skeleton
+  // carries the attach bone the weapon is not in the chain at all, and
+  // inheriting its offset there is the same mistake pointing the other
+  // way.
+  assert.match(src, /boneOffset: part\.ammo\s*\?\s*\(part\.preTransform \? weaponBoneOffset : null\)/,
+    'the ammo takes it only on the weapon-mesh branch');
+  // And it is reset per call, so a body built without a weapon cannot
+  // inherit a stale offset from the previous one.
+  assert.match(src, /let weaponBoneOffset = null;\s*\n\s*for \(const part of parts\)/,
+    'the carry is per-call, not module state');
+});
