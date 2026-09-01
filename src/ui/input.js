@@ -192,7 +192,14 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
  * one door for a key, and routeAction keeps the arm for the panel,
  * which has no poll.
  */
-export const POLLED_ACTIONS = new Set(['ReadyWeapon']);
+/** a12: SwitchHand joins it, for the same reason one rung up - it is
+ *  read inside WeaponManager.Update (:271-273), not by GameManager's
+ *  dispatch chain, and every host now polls it on the RELEASE edge
+ *  ActionComplete gives it. Nothing in routeAction answers it (the
+ *  large HUD has no hand panel; DFU's does not either), so the decline
+ *  here is the claim that the frame owns the key - written down where
+ *  the ReadyWeapon comment above says a second one belongs. */
+export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);
 
 /**
  * THE ACTION LADDER ALONE, without the key event. U45 pulled it out

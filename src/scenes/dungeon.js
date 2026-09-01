@@ -183,6 +183,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const activateGate = createActivateGate();   // A8: this host's ActivateCenterObject frame state
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   const tryActivate = () => {
     const dir = [
       Math.sin(cam.yaw) * Math.cos(cam.pitch),
@@ -563,6 +564,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
       if (zNow && !zPrev) ctx.toggleSheath?.();
       zPrev = zNow;
+// a12: SwitchHand (H) - ActionComplete's RELEASE edge
+      // (WeaponManager.cs:272), so the latch is inverted against Z's.
+      const hNow = held(keys, 'SwitchHand');
+      if (!hNow && hPrev) ctx.switchHand?.();
+      hPrev = hNow;
       if (_act.activate || (useHeld && !prevUse)) tryActivate();
       prevUse = useHeld;
       // `held` here USED to be this frame's local overlay boolean; it was

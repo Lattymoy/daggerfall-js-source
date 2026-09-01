@@ -3100,6 +3100,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // re-trigger across a mode switch.
   const latch = { use: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
   let zPrevW = false;   // C9: the exterior ReadyWeapon (Z) edge
+  let hPrevW = false;   // a12: the exterior SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   if (playerPixel.location) {
     const tilePos = getLocationTerrainTileOrigin(startLoc);
     const extentZ = startLoc.exterior.exteriorData.height * RMB_SIDE;
@@ -5138,6 +5139,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         const zNowW = held(keys, 'ReadyWeapon');
         if (zNowW && !zPrevW) weaponRig.toggleSheath();
         zPrevW = zNowW;
+        // a12: SwitchHand (H) - WeaponManager.cs:272 reads it through
+        // ActionComplete, the RELEASE edge, so the latch is inverted
+        // against Z's above. The rig owns the isAttacking gate.
+        const hNowW = held(keys, 'SwitchHand');
+        if (!hNowW && hPrevW) weaponRig.switchHand();
+        hPrevW = hNowW;
         // P14 fall damage (host parity - CheckFallingDamage +
         // PlayerHealth verbatim; sounds 91/92). FD1 took the
         // outdoor-water exemption off the board: playerGroundTile is

@@ -1082,6 +1082,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
+  let hPrevW = false;   // a12: the SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   const modeNow = () => modes?.mode ?? 'exterior';   // lazy - modes binds below (boot-time mouse events)
   // ENGINE RIG (slice 2, ?rig): the canonical animated character in
   // the world - same body, same animate.js runtime as the viewer.
@@ -1780,6 +1781,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       const zNowW = held(keys, 'ReadyWeapon');
       if (zNowW && !zPrevW) weaponRig.toggleSheath();
       zPrevW = zNowW;
+      // a12: SwitchHand (H) - ActionComplete's RELEASE edge
+      // (WeaponManager.cs:272), so the latch is inverted against Z's.
+      const hNowW = held(keys, 'SwitchHand');
+      if (!hNowW && hPrevW) weaponRig.switchHand();
+      hPrevW = hNowW;
       // P14 fall damage (host parity). FD1: the outdoor-water
       // exemption is live here too - playerGroundTileRaw below is this
       // host's twin of world.js's FS1 probe, read off the same

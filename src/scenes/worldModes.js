@@ -465,6 +465,7 @@ export function createWorldModes(host) {
 
   let mode = 'exterior';
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
   // own audited copy; the host rule wants the weapon in every mode).
   const interiorWeapon = createWeaponRig({
@@ -4012,6 +4013,15 @@ export function createWorldModes(host) {
       else interiorWeapon.toggleSheath();
     }
     zPrev = zNow;
+// a12: SwitchHand (H) - ActionComplete's RELEASE edge
+    // (WeaponManager.cs:272), so the latch is inverted against Z's.
+    // Same per-mode routing, same reason: dungeonCtx is null indoors.
+    const hNow = held(keys, 'SwitchHand');
+    if (!hNow && hPrev) {
+      if (mode === 'dungeon') dungeonCtx?.switchHand?.();
+      else interiorWeapon.switchHand();
+    }
+    hPrev = hNow;
     if ((_act.activate || (useHeld && !latch.use)) && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
     // A successful exit destroyed the modal context and flipped the
