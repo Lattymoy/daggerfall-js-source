@@ -25,6 +25,8 @@ import { generateSamples, ghostSampler } from './terrainSampler.js';
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
+import { paintRoads } from './roadPainter.js';
+import { MAP_W } from './roadNetwork.js';
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -48,14 +50,23 @@ import { layoutNature } from './terrainNature.js';
  *   tilemapBytes: Uint8Array, avg: number,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null }) {
   const samples = generateSamples(woods, px, py);
   let avg = 0;
   if (hasLocation) {
     [avg] = calcAvgMaxHeight(samples);
     blendLocationTerrain(samples, avg, locationRect);
   }
-  assignTiles(generateTileData(samples, px, py), tilemap, true);
+  // ROADS 2: the one seam. Ground classified, squares not yet run, so a
+  // road tile lands over a known ground type and the marching squares
+  // blend around it. `roads` is null in a solo build with no network
+  // loaded and the pipeline is then byte-for-byte what it was.
+  const tileData = generateTileData(samples, px, py);
+  if (roads) {
+    const i = py * MAP_W + px;
+    paintRoads(tileData, tilemap, roads.roads[i], roads.tracks[i], hasLocation ? locationRect : null);
+  }
+  assignTiles(tileData, tilemap, true);
   const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
   const tilemapBytes = convertTilemap(tilemap);
   const nature = layoutNature(samples, tilemap, {
