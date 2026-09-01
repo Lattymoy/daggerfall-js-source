@@ -35,13 +35,20 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  * (the voxel rigs measure Y-up rig bounds; the Morrowind body measures
  * its Z-up assembly and maps axes before calling).
  */
-export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH }, proj, view, eye) {
+/** MW-D43b (Mac: "3rd person is still pixelated"): `pixel` defaults to
+ *  CHAR_PIXEL, which is the SPRITE standard and stays the law for every
+ *  Daggerfall character drawn through here. The Morrowind third-person
+ *  body is not one - it is the same mesh the first-person arm is, and
+ *  MW-D43 already gave that its own dial while missing this pass, which
+ *  is the OTHER half of the same picture and the half Mac was looking
+ *  at when he said it was still wrong. */
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH }, proj, view, eye, pixel = CHAR_PIXEL) {
   const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
   const pvS = multiply(proj, view);
   const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
   const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;
-  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / CHAR_PIXEL)));
+  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / pixel)));
   const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const camDir = [dx / dist, dy / dist, dz / dist];
   const rl = Math.hypot(camDir[0], camDir[2]) || 1;

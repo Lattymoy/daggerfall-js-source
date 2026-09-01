@@ -2933,7 +2933,10 @@ export function createFpArm() {
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;
       const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
-      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
+      // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
+      // dial, not the sprite standard - the same fix MW-D43 made for
+      // the first-person pass and missed here.
+      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
       return true;
     },
 
