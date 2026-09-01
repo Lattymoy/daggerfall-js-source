@@ -165,3 +165,153 @@ test('FX1 (F024/F025): the show clocks - the bow cooldown FREEZES the state, an 
   // and the latch records every non-cooldown answer
   assert.match(rig, /_lastShown = v;\n\s+return v;/);
 });
+
+// ── THE BOW'S PATH INTO THE MORROWIND ARM ────────────────────────────
+//
+// Mac: "the arrow doesn't show on the weapon being readied and fired,
+// instead the shot shoots like classic dagger and doesn't follow the
+// animation." Chasing it found the seam UNPINNED at both ends:
+// mwarrow.test.js drives arm.attack() DIRECTLY, and this file pinned
+// the machine without ever asking what the arm was handed. So a bow
+// could swing on the melee path and every suite stayed green.
+//
+// AND THE FIRST DIAGNOSIS OFF THIS HARNESS WAS WRONG, which is the
+// reason the idle loop below is not decoration. Attacking on the very
+// first frame reads machine.isBow ONE FRAME STALE - update() is what
+// sets it (playerWeapon.js:258, "read per step"), and update() runs
+// AFTER gesture() inside frame(). The bow swings StrikeRight on the
+// melee clock, and it looks exactly like the reported bug. It is not
+// the bug: real play has frames between drawing and shooting. The pin
+// holds BOTH readings so the distinction cannot be lost again - the
+// stale one as the artifact it is, the settled one as the law.
+test('the drawn bow reaches the Morrowind arm as a SHOOT, on the bow clock', async () => {
+  const { fpArm } = await import('../src/combat/fpArm.js');
+  const LONG_BOW = { name: 'Long Bow', templateIndex: 130, material: 0 };
+  const ARROWS = { name: 'Arrow', templateIndex: 131, stackCount: 20 };
+  const calls = [];
+  const saved = { ready: fpArm.ready, attack: fpArm.attack };
+  // The arm's own nock cycle is pinned in mwarrow.test.js against real
+  // key times; what is NOT pinned anywhere is that the rig ever calls
+  // it for a bow, so the stand-in only has to be READY and record.
+  fpArm.ready = () => true;
+  fpArm.attack = (strike, opts) => { calls.push({ strike, opts }); return 'shoot'; };
+  try {
+    const r = rig({ entity: { items: [ARROWS], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW } } } });
+    r.toggleSheath();
+    assert.equal(r.playerWeapon.machine.isBow, false,
+      'isBow is not set until a step runs - update() owns it, per step');
+
+    // THE ARTIFACT, pinned as one: attacking before any step has run
+    // reads that stale false and takes the MELEE gesture.
+    r.attackInput(900, 0, true);
+    r.frame(1 / 60);
+    assert.equal(calls[0].strike, 'StrikeRight',
+      'a same-frame attack swings the bow on the melee path - the harness artifact, not the bug');
+
+    // THE LAW: let the rig step, the way play does between drawing and
+    // shooting, and the bow takes its own branch.
+    const r2 = rig({ entity: { items: [ARROWS], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW } } } });
+    r2.toggleSheath();
+    for (let i = 0; i < 30; i++) r2.frame(1 / 60);
+    assert.equal(r2.playerWeapon.machine.isBow, true, 'a step settles it');
+
+    calls.length = 0;
+    const evs = [];
+    r2.attackInput(900, 0, true);
+    for (let i = 0; i < 60; i++) {
+      for (const e of r2.frame(1 / 60)) evs.push(e);
+      if (i === 0) r2.attackInput(900, 0, false);
+    }
+    // WeaponManager.cs:355-358 - a bow never tracks a swing; the input
+    // fires forced to StrikeDown. `hold` stays false because the port's
+    // bow is DFU's BowDrawback-OFF instant shot.
+    assert.equal(calls.length, 1, 'the arm is told once');
+    assert.equal(calls[0].strike, 'StrikeDown', 'forced to StrikeDown, not the drag direction');
+    assert.equal(calls[0].opts.hold, false, 'BowDrawback-off does not hold at full draw');
+    // AUDIT 23 (combat-2): the bow's OWN clock - bowSound at frame 4,
+    // hit at frame 5. A bow on the melee clock has no bowSound at all,
+    // which is what makes this the check that separates them.
+    assert.ok(evs.includes('bowSound'), 'the bow clock ran, not the melee one');
+    assert.ok(evs.includes('hit'), 'and it reached the loose');
+  } finally {
+    fpArm.ready = saved.ready;
+    fpArm.attack = saved.attack;
+  }
+});
+
+// MW-D42: THE LOOSE WAITS FOR THE ARM (Mac: the 3D Morrowind bow
+// "damages on click instead of following the bow animation"). The
+// machine's 'hit' for a bow is frame 5 of the classic release, which
+// has nothing to do with the animation the player is watching. It is
+// HELD now and let go at rule 24's "shoot release" - but only for a
+// bow, only while the arm is active, and never swallowed.
+test('MW-D42: the bow\'s hit is held for the arm\'s release, and never swallowed', async () => {
+  const { fpArm } = await import('../src/combat/fpArm.js');
+  const LONG_BOW = { name: 'Long Bow', templateIndex: 130, material: 0 };
+  const ARROWS = { name: 'Arrow', templateIndex: 131, stackCount: 20 };
+  const saved = {
+    ready: fpArm.ready, attack: fpArm.attack, active: fpArm.active,
+    take: fpArm.takeShootRelease, update: fpArm.update, release: fpArm.release,
+    setWeapon: fpArm.setWeapon, setSheathed: fpArm.setSheathed, setWorn: fpArm.setWorn,
+    readySpell: fpArm.readySpell,
+  };
+  let released = false;
+  let armActive = true;
+  fpArm.ready = () => true;
+  fpArm.active = () => armActive;
+  fpArm.attack = () => 'shoot';
+  fpArm.takeShootRelease = () => { if (!released) return false; released = false; return true; };
+  for (const k of ['update', 'release', 'setSheathed', 'setWorn', 'readySpell']) fpArm[k] = () => {};
+  fpArm.setWeapon = () => true;
+  const bowRig = () => {
+    const r = rig({ entity: { items: [ARROWS], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW } } } });
+    r.toggleSheath();
+    for (let i = 0; i < 30; i++) r.frame(1 / 60);
+    return r;
+  };
+  const shoot = (r, frames, onFrame = () => {}) => {
+    const evs = [];
+    r.attackInput(900, 0, true);
+    for (let i = 0; i < frames; i++) {
+      for (const e of r.frame(1 / 60)) evs.push(e);
+      if (i === 0) r.attackInput(900, 0, false);
+      onFrame(i);
+    }
+    return evs;
+  };
+  try {
+    // THE LAW: no hit while the arm is still drawing.
+    const r = bowRig();
+    const early = shoot(r, 40);
+    assert.ok(!early.includes('hit'), 'the classic frame-5 hit is HELD, not fired on the click');
+    assert.ok(early.includes('bowSound'), 'and the rest of the bow clock is untouched');
+    // ...and it lands the moment the arm looses.
+    released = true;
+    const evs = [];
+    for (const e of r.frame(1 / 60)) evs.push(e);
+    assert.ok(evs.includes('hit'), 'the arm\'s "shoot release" lets the hit go');
+    // ONCE. takeShootRelease consumes, so a held flag cannot fire twice.
+    const after = [];
+    for (let i = 0; i < 20; i++) for (const e of r.frame(1 / 60)) after.push(e);
+    assert.ok(!after.includes('hit'), 'and exactly once');
+
+    // NEVER-TRAPS: an arm that never signals still gets its shot off,
+    // late rather than never. This is the whole reason the ceiling
+    // exists - a .kf without rule 24's release key must not delete
+    // archery from the game.
+    released = false;
+    const r2 = bowRig();
+    const silent = shoot(r2, 200);
+    assert.ok(silent.includes('hit'), 'a silent arm falls through to the ceiling rather than swallowing the shot');
+
+    // AND THE CLASSIC PATH IS UNTOUCHED. With no arm active the hit
+    // rides the machine exactly as it always has - this is the check
+    // that stops the fix leaking onto the 2D skin.
+    armActive = false;
+    const r3 = bowRig();
+    const classic = shoot(r3, 40);
+    assert.ok(classic.includes('hit'), 'no arm, no hold - the classic bow is exactly as it was');
+  } finally {
+    Object.assign(fpArm, saved);
+  }
+});

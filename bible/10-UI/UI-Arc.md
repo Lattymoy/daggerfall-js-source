@@ -8529,3 +8529,187 @@ is trivial, `TransportManager` is not - `motor.js:517` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
+
+## THE ENHANCED PACK: grid, armour tab, height (2026-08-31) - REVERTED
+
+Mac asked for three things on `ui/enhancedInventory.js`: more height, a
+grid, armour its own tab. What shipped BROKE THE PACK and was reverted
+whole (78324c99 + 2fb32c9a). Nothing of it is in the tree; this section
+is what it cost and what to do differently, because the asks are still
+good ones.
+
+**Four wrong turns, in order:**
+
+1. **Read as a parity question.** The first answer argued against
+   departing from DFU. The enhanced UI is the project's OWN design
+   surface; parity does not bind it. Wasted a turn.
+2. **Answered with a new window.** A standalone `pack-proto.html` with
+   its own palette and type - "veered away too far from what's
+   currently ingame".
+3. **Answered with a copy of the window.** The second prototype
+   hand-copied `enhancedStyle.js` into a fixture page. Still a parallel
+   copy: it would drift, and anything liked in it had to be rebuilt in
+   the real module anyway. "Why are you so hell bent on redesigning
+   what's already there?"
+4. **Then changed the real files and broke them.** Height 660 -> 820
+   swallowed the game behind the window; a second pass to 700/62 did
+   not save it. The grid, the split and the height went in TOGETHER, so
+   when it was wrong there was nothing to bisect - the revert had to
+   take all three.
+
+**What to do instead, when this is picked up again:**
+
+- ONE change at a time, each shippable and reversible on its own. The
+  armour split is a data change with no visual risk and should go first
+  and alone; the grid is a layout change and should follow only once
+  the split is confirmed good.
+- Numbers come from the REAL screen. 74px and 820px were both picked
+  against a fixture page and both were wrong in play.
+- `?packgrid=0` was the right instinct and the wrong scope: a switch
+  that leaves the default broken still ships a broken default.
+
+**The findings worth keeping** (they cost nothing to re-derive but are
+easy to miss): a shield IS group Armor in Daggerfall - Buckler 109,
+Round 110, Kite 111, Tower 112 - so armour-plus-shields is ONE
+predicate; the classic window's `TABS`/`filterByTab` must keep DFU's
+four whatever the pack does; and `itemRow`'s click has to be shared
+rather than copied if a cell ever runs it.
+
+## PX31 - THE INVENTORY GETS A COLUMN (2026-08-31)
+
+Mac: "the inventory itself. Its hidden at the bottom and doesnt get
+much breathing room."
+
+MEASURED FIRST, because the reverted 2026-08-31 attempt picked 74px
+and 820px against a fixture page and both were wrong in play. On the
+shipped screen at 1440x900, 1920x1080 and 1280x720 - all three
+IDENTICAL, since `.pack-win` is `min(660px, 94dvh)` and the cap binds
+on every desktop:
+
+| region | px |
+|---|---|
+| window | 1040 x 660 |
+| title bar | 62 |
+| character region | 400 (full 1036 width) |
+| tab strip | 38 |
+| **item list viewport** | **116** |
+
+The list had 17.6% of the window, two tiles deep and 1036 wide. The
+character region is `flex: 0 0 auto` - its own content's height, and
+the worn map inside it is 298 and does not shrink - so every pixel the
+window does not have came out of the list, and the list was the only
+thing in the window that scrolls. A wide window paying for a stacked
+layout vertically.
+
+So the dock becomes a COLUMN at `min-width: 1000px`: the region keeps
+the width it actually uses (the map is `width: min(960px, 100%)` with
+`minmax(0, 1fr)` flanks, so it narrows without a rewrite) and the list
+takes the rest at full height. **List viewport 116 -> 483, three rows
+of tiles -> nine.** The window's height is untouched; raising the 660
+cap is what swallowed the game behind the window and was reverted.
+
+THE PHONE IS NOT THIS PROBLEM and is not touched - a Pixel 5 measures
+a 250px list showing seven rows, because there `94dvh` wins and the
+region is the same 400. The breakpoint is min-width, so stacked stays
+the default and this is the wide-screen departure from it.
+
+**Two things the measurements could not see and the screenshot did:**
+
+1. THE TAB STRIP WRAPPED. `.packtabs` carries `flex-wrap: wrap` from
+   its base rule, latent until the strip was narrow. The four tabs
+   need about 550px on one line and no column here is that wide, so it
+   is a deliberate 2x2 now - same 76px the ragged wrap cost, and
+   `TABS` comes from `nativeInventory` and is DFU's four, always, so
+   two by two is a shape rather than a guess.
+2. 180px OF DEAD GLASS under the transport strip. The region now has
+   height it does not need.
+
+**Three drafts of that second fix, and the lesson is in the last two.**
+The first put `flex: 1` on `.wornmap` in a block sitting ABOVE the
+`.charcol .wornmap` rule it tied with at (0,3,0) - later-in-sheet wins
+a tie, the trap this file already records for `.packtip.packdetail`;
+the block moved rather than growing a specificity hack. The second
+still did nothing, because THE GROWING ELEMENT IS THE WRAPPER: the
+map is a child of `.equipped`, whose own `flex: 1` was correct all
+along and had nothing to fill, since `.equipped` defaults to
+`flex: 0 1 auto`. The third did nothing EITHER, and that one was
+self-inflicted - a second comment paragraph appended after a comment
+that had already closed, so prose sat raw in the stylesheet and the
+parser discarded the rules behind it. Computed styles read off the
+live element found it in one call; three CSS guesses had not. Read the
+element, not the rule you think applies to it.
+
+The map fills now (304 -> 455) and that is more than tidiness: the
+doll is height-driven at `aspect-ratio: 110/184`, so a taller map is a
+BIGGER SPRITE, which is what PX20a asked for and the stacked layout
+could not afford.
+
+**FLAGGED, and it needs Mac's eyes on real data:** this container has
+no ARENA2, so the doll rendered as the `.noart` placeholder, which is
+not aspect-locked. With art the doll cell is `455 * 110/184 = 272`
+wide against `298 * 110/184 = 178` before, which takes the worn flanks
+from 379 to about 157 each. 157 still carries a 34px tile, the family
+word and the name, but it is a real narrowing that only shows with the
+sprite present. If the flanks read cramped in play, the map wants a
+max-height rather than the region wanting width - the dock's 380 is
+what buys the nine rows.
+
+### PX31 addendum - the pin, and the nine probes that could not reach it
+
+PX31 is a MEDIA QUERY and node cannot see one, so its pin is a browser
+probe: `tools/enhancedPackLayoutProbe.mjs`, 13 checks over two desktop
+sizes and a Pixel 5. The checks are GEOMETRIC on purpose - they ask
+where the dock IS and how much the list GOT, not what a rule says, so
+they die when the breakpoint dies rather than when a selector is
+renamed.
+
+**Five mutations, four dead, one argued:**
+
+| # | mutation | result |
+|---|---|---|
+| M1 | breakpoint disabled (1000px -> 10000px) | 6 checks fail |
+| M2 | `.equipped` back to `flex: 0 1 auto` | dead glass 16px -> 167px, fails |
+| M3 | the 2x2 tab grid removed | **SURVIVED FIRST** - see below |
+| M4 | dock column 380 -> 200 | tabs escape their box, fails |
+| M5 | dock keeps `border-top` instead of `border-left` | survives, argued |
+
+M3 IS THE ONE WORTH READING. The first draft asserted four tabs in two
+rows, and removing the grid changed nothing it could see, because
+`flex-wrap` also lands two rows at 380px - the check was pinning the
+WRAP and calling it the grid. Columns are what tell them apart: a grid
+puts every tab on two x positions, a wrap packs them to ragged ones. So
+`tabCols === 2` joined it and the mutant reads 2x3 and dies. A pin
+asserting the thing you already had is the vacuous-pin shape this bible
+keeps catching, and it took a mutation run to see it here too.
+
+M5 is a RECORDED EQUIVALENT with its proof: a border swap has no
+geometric signature by construction, and no measurement probe can see
+it. Its verifier is the screenshot, which is where it was chosen.
+
+**AND THE PROBE FLEET WAS ALREADY DEAD.** Writing the pin meant running
+`enhancedPackProbe.mjs`, which timed out at its FRONT DOOR: it waits on
+`#enhanced-menu .railbtn`, and `railbtn` is the shell rail's class,
+which the boot door has not carried since PX1 replaced it with the
+pixel home. Nine probes had the same line. Every one had been
+unreachable since 2026-08-27 and no gate noticed, because a probe is
+not a gate - AUDIT 17f F4's shape, at fleet scale.
+
+Rooted rather than patched: the door's buttons carry `doorbtn
+door-<id>` now and the probes select on that. Matching on the visible
+words was the obvious fix and is the same bug waiting on a relabel.
+
+Opening the door then showed the rot goes DEEPER in at least two of
+them - `enhancedPackProbe` and `enhancedDollProbe` still assert the U53
+slot map (`.node`, `.node.filled`) that PX19d and PX20a replaced with
+the worn map, so they now reach their checks and fail on a screen that
+no longer exists. **That repair is NOT done and is not PX31's**; it is
+recorded here so the next reader finds it named rather than discovering
+it the way this slice did.
+
+**One measurement corrected, and it is worth knowing.** The phone check
+was first floored at 200px because an early reading said 250 - taken at
+a 393x851 viewport. A real Pixel 5 is 727 tall and the list measures
+126px, two rows. PX31 does not change that number in either direction
+(the breakpoint cannot match at 393px wide), but it means THE PHONE HAS
+A MILDER VERSION OF THE SAME COMPLAINT: the character region is the
+same fixed 400 on a shorter window. Its own slice, when Mac wants it.

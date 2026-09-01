@@ -471,7 +471,20 @@ export function studioLight(view) {
     indirect: new Float32Array([0, 0, 0, 0]),
   };
 }
-export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (E3d): screenW/CHAR_PIXEL at 1440p ~ 366
+export const CHAR_SPRITE_RT_SIZE = 1024;   // raised for the FP viewmodel frame (E3d), and again at MW-D43 for MW_ARM_PIXEL
+
+/** MW-D43 (Mac: the first person and third person views are extremely
+ *  pixelized): THE MORROWIND ARM IS NOT A SPRITE, and CHAR_PIXEL is
+ *  the SPRITE standard. Nine is Mac's locked look for Daggerfall's 2D
+ *  characters, whose source art is already chunky - running a
+ *  Morrowind MESH through the same dial throws away detail that was
+ *  there, which is what "extremely pixelized" is. Its own dial, so the
+ *  sprite standard stays exactly where he put it (9 -> 12 -> 9 over
+ *  three revisions; the comment above CHAR_PIXEL still describes the
+ *  first of those and is stale, left alone here rather than edited on
+ *  the way past). TUNABLE BY EYE, like STUDIO_AMBIENT and STUDIO_KEY -
+ *  raise it toward 9 for chunkier arms, drop it toward 1 for none. */
+export const MW_ARM_PIXEL = 3;
 
 /**
  * AUDIT 19 F6: the smooth/blend opt-ins used to be pinned by SOURCE REGEX,

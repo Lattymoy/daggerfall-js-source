@@ -8,7 +8,7 @@ lines of `src/`, cross-checked against the reference clone at
 **How to read this page.** It is the audit's MEASUREMENT - the state of
 the tree at commit `6881171`, before the AUDIT-39 fix wave. Every
 defect named below was confirmed adversarially, and the fix wave landed
-all 166 of them the same day (see `Audit-39.md`); the per-area notes
+all 166 of them the same day (see `Audit-44.md`); the per-area notes
 keep the defects because they are the evidence for each verdict. What
 REMAINS open after the wave is the short list at the bottom of this
 page. `Port-Completion-Analysis.md` (snapshot 2026-08-22) is
@@ -120,7 +120,7 @@ excluded. **[FIXED]** = closed by the AUDIT-39 wave the same day.
 - **The voxel rig is editor-only**: the departure lane exists and is
   faithful, but no game host ships it.
 - **The 151 FLAGGED/INTERIM sites** (`Home.md` open flags) and the
-  finder lanes' overflow tail (Audit-39.md, "The tail") - the known,
+  finder lanes' overflow tail (Audit-44.md, "The tail") - the known,
   recorded backlog.
 - **No parity oracle for the port-original render modules** (frustum,
   far ring, precipitation, enhanced sky): their tests pin the port's

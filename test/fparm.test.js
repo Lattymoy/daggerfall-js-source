@@ -2418,7 +2418,7 @@ test('MW-D36: the pack takes the model only when it stands, and never lets the m
 
 test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quantised yaw', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1400);
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 2600);
   // F1: the inventory opens from first person; the figure must not
   // demand the wheel's view mode or a mesh only the wheel uploads.
   assert.ok(!/thirdActive\(\)/.test(fig), 'the figure gates on the wheel being active');
@@ -2995,7 +2995,7 @@ test('PX26 F4: the interior lane sends the jump-state inputs - without them the 
 test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-build swap is not dropped', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   // F1: the portrait shows the weapon whether or not it is drawn
-  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1800);
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 3000);
   assert.match(fig, /if \(r\.slot === 'weapon'\) r\.hidden = false;/, 'a paperdoll shows what you carry, drawn or not');
   assert.match(fig, /else if \(r\.slot === 'arrow'\) r\.hidden = !arrowShown;/, 'the arrow still follows its shoot keys');
   // F2: the pack hands the rig the hand as well as the worn table
@@ -3069,4 +3069,31 @@ test('PX29: the movement rate divides by the PLAYING clip\u2019s own velocity (M
   assert.equal(sourceVelocityOf(null, 'runforward'), 0);
   assert.equal(sourceVelocityOf({ keys: new Map(), trackMap: new Map() }, 'runforward'), 0);
   assert.equal(typeof sourcesVelocity, 'function', 'the reference walk stays available');
+});
+
+// PX32: THE PORTRAIT POSES ITSELF (Mac: the 3D paperdoll "sometimes
+// shows in your last animated state"). poseAssembly for the third body
+// ran in ONE place - stepUpper's `viewMode === 'third'` arm - and the
+// inventory is opened from FIRST person, where that arm never runs. So
+// figure() uploaded whatever bone matrices were left in t.arm from the
+// last time the wheel was in third person, or from the build if it
+// never was. Not a stale frame: a stale SESSION, which is exactly why
+// Mac saw it "sometimes".
+//
+// Source-pinned, like AUDIT 33's checks above it, because a live pin
+// would need a third-person BUILD and the fixtures reach the first-
+// person arm only - and a check that cannot run is worse than one that
+// says what it is (Testing.md's own lesson from the nine dead probes).
+test('PX32: the inventory figure poses the body before it uploads it', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  const start = arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {');
+  const fig = arm.slice(start, start + 3000);
+  const pose = fig.indexOf('poseAssembly(t.arm');
+  const upload = fig.indexOf('uploadThirdMesh(t);');
+  assert.ok(pose > 0, 'the figure poses the body it is about to draw');
+  assert.ok(upload > pose, 'and poses it BEFORE the upload, or the upload carries the old matrices');
+  // The playhead is stepUpper's, not a second opinion about which clip
+  // is showing - two answers to that question is the drift this pins.
+  assert.match(fig, /actionState \|\| movementState \|\| jumpState \|\| idleState/,
+    'the portrait reads the SAME playhead the wheel does');
 });

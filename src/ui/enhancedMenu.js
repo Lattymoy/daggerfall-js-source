@@ -1168,7 +1168,15 @@ function renderHome() {
   for (const label of sections) {
     if (label === 'About') continue;
     const id = idOf(label);
-    const b = el('button');
+    // PX31: THE DOOR'S BUTTONS CARRY THEIR OWN NAME. Until now they
+    // were classless, and nine probes still reached for `.railbtn` -
+    // the SHELL rail's class, which this door has never had since PX1
+    // replaced it. Every one of them timed out at its front door and
+    // no gate noticed, because a probe is not a gate (AUDIT 17f F4).
+    // Selecting on PROSE would be the same bug waiting on a relabel,
+    // so the hook is structural: doorbtn plus the section id, which
+    // is what a probe actually means when it says New Game.
+    const b = el('button', `doorbtn door-${id}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);

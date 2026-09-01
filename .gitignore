@@ -56,3 +56,4 @@ firsthour-shots/
 # Python bytecode from the fixture generators.
 __pycache__/
 *.pyc
+prototype/
