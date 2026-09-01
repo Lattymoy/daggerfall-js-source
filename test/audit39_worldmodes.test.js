@@ -275,3 +275,38 @@ test('AUDIT39 #164: the greeting-deferred entry catches, like the two host call 
   // the throw the catch exists for is still the design
   assert.match(WM, /throw new Error\('no interior landing'\)/);
 });
+
+// ---------------------------------------------------------------
+// AUDIT 39r (R16) - #64's header claimed the missile's own position
+// was DFU's impactPosition, "the one place these hosts hold the real
+// hit point rather than the body centre", and splashed at the arrow
+// tip on that reading. AssignBowDamageToTarget passes
+// `hitTransform.position` (DaggerfallMissile.cs:679-687) - the struck
+// entity's transform origin; only the MELEE callers pass a contact
+// point (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
+// WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
+// ---------------------------------------------------------------
+
+test('AUDIT39r R16: a player arrow bleeds its TARGET, not its own tip', () => {
+  const foe = {
+    entity: { isPlayer: false, level: 1, skills: 0, stats: { agility: 0, luck: 0 }, armor: 0, items: [], basics: { bloodIndex: 2 } },
+    ai: { feet: [3, 0, 4], yaw: 0, height: 1.8 },
+  };
+  const splashes = [];
+  const dmg = playerArrowHitFoe(
+    { weapon: null, pos: [0, 1, 0], dir: [0, 0, 1] }, foe,
+    {
+      playerEntity: { isPlayer: true, level: 20, skills: 100, stats: { strength: 100, agility: 100, luck: 100 } },
+      playerFeet: [0, 0, -1], dealDamage: () => {}, rolls: () => 0.5,
+      hitEffects: { showBloodSplash: (i, p) => splashes.push([i, p]) },
+    });
+  assert.ok(dmg > 0, 'the shot landed');
+  assert.equal(splashes.length, 1);
+  assert.equal(splashes[0][0], 2, 'MobileEnemy.BloodIndex');
+  assert.deepEqual(splashes[0][1], [3, 0, 4], 'hitTransform.position - the target\'s own origin');
+  // the stale gloss is gone from the header with the code
+  const af = src('src/combat/arrowFlight.js');
+  assert.ok(!af.includes('The missile\'s\n * own position is DFU\'s impactPosition'),
+    'the mis-citation no longer stands as this module\'s law');
+  assert.match(af, /hitTransform\.position/, 'and the real fifth argument is named');
+});

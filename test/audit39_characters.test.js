@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  EnemyAI, MELEE_DISTANCE, CLASSIC_MELEE_DISTANCE_VS_AI, enemyMoveSpeed,
+  EnemyAI, MELEE_DISTANCE, CLASSIC_MELEE_DISTANCE_VS_AI, enemyMoveSpeed, CLASSIC_UPDATE_INTERVAL,
 } from '../src/characters/enemyMotor.js';
 import { EnemyAttack, ATTACK_SPEED_FLOOR } from '../src/characters/enemyAttack.js';
 import { collectDungeonEnemies } from '../src/characters/dungeonEnemies.js';
@@ -308,4 +308,67 @@ test('audit39 #77: the daedra header reads minMetalToHit 5 as Mithril', async ()
   const hdr = rd('src/characters/daedra.js');
   assert.ok(!hdr.includes('daedric weapons or nothing'), 'the four-tier misreading is gone');
   assert.ok(hdr.includes('WeaponMaterialTypes.Mithril'), 'and the threshold is named for what it is');
+});
+
+// ---------------------------------------------------------------
+// AUDIT 39r (R14/R15) - #72 narrowed the hostility gate at CanAct, at
+// the `moving = false` sweep and inside _senses, and left two holes.
+//
+//   R14  _handleNoAction still keyed its first arm on `!isHostile`
+//        alone. DFU's is `senses.Target == null` (EnemyMotor.cs:359),
+//        no hostility term - so the pacified foe #72 freed to pursue
+//        had its search ramp zeroed underneath it on every step.
+//   R15  the foeTarget term was read BEFORE `_armedTargeting` was
+//        assigned and before the target machine ran, i.e. against the
+//        previous step's targeting state - so the step on which a foe
+//        target is first acquired still froze, and a foe's first
+//        armed step could not take the exception at all.
+// ---------------------------------------------------------------
+
+/** A pacified foe in an armed pool, mid-fight but with no target yet -
+ *  the state a real host hands one (nothing pre-seeds ai.target). */
+const mkPacified = () => {
+  const ai = new EnemyAI(clearCollider(), [0, 0, 0], 0, { liveSpeed: 50 });
+  ai._classicSenses = () => {};
+  ai._senses = () => {};
+  ai.isHostile = false;
+  ai.detected = true;
+  ai.inSight = true;
+  ai.giveUpTimer = 200;
+  ai.lastKnownTargetPos = [0, 0, 8];
+  ai.predictedTargetPos = ai.lastKnownTargetPos;
+  return ai;
+};
+
+test('audit39r R15: the foe-target exception reads THIS step\'s target machine', () => {
+  const senses = { gameMinutes: 0, playerStealth: 0, rolls: () => 0.5 };
+  const mauler = { isPlayer: false, ai: { feet: [0, 0, 8], height: 1.8 } };
+  const pacified = mkPacified();
+  assert.equal(pacified.target, null, 'the host seeds no target - the machine picks one');
+  assert.equal(pacified._armedTargeting, false);
+  // arm the classic tick so the target machine runs on THIS step
+  pacified._classicTimer = CLASSIC_UPDATE_INTERVAL;
+  pacified._step(1 / 60, [0, 0, 20], { ...senses, targeting: (ai) => { ai.target = mauler; } });
+  assert.equal(pacified.target, mauler, 'the machine acquired it this step');
+  assert.equal(pacified.canAct, true,
+    'CanAct is decided after the machine, on the freshly resolved senses - not one step late');
+  assert.equal(pacified.moving, true, 'and it pursues on the step it acquires, as DFU\'s motor does');
+});
+
+test('audit39r R14: HandleNoAction\'s first arm is Target == null, not !IsHostile', () => {
+  const senses = { gameMinutes: 0, playerStealth: 0, rolls: () => 0.5 };
+  const mauler = { isPlayer: false, ai: { feet: [0, 0, 8], height: 1.8 } };
+  const pacified = mkPacified();
+  pacified.target = mauler;
+  pacified._armedTargeting = true;
+  pacified.searchMult = 7;                     // a ramp built over earlier steps
+  pacified._step(1 / 60, [0, 0, 20], { ...senses, targeting: () => {} });
+  assert.ok(pacified.searchMult > 0,
+    'a live FOE target is not `Target == null` - the ramp survives (EnemyMotor.cs:357-366)');
+
+  // ...and the arm still fires for a pacified foe with NO target
+  const alone = mkPacified();
+  alone.searchMult = 7;
+  alone._step(1 / 60, [0, 0, 20], senses);
+  assert.equal(alone.searchMult, 0, 'no target, ramp reset - the arm is intact');
 });

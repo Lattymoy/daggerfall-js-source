@@ -216,11 +216,13 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door) {
 /**
  * H2 - EVERY building in a location, each carrying its buildingKey.
  *
- * buildBuildingDirectory answers only the NAMED types, because its job
- * is the talk directory. Houses are not named, so nothing in the port
- * could enumerate them - and H1's houses-for-sale roll was written
- * against `location.exterior.buildings`, the raw DFLocation.BuildingData
- * array, whose records carry nameSeed/factionId/quality/buildingType
+ * buildBuildingDirectory is the talk directory and walks DOORS (AUDIT
+ * 39 #110 retired its named-only gate, so it now carries residences
+ * too, but only where an exterior door put them in reach). Nothing in
+ * the port could enumerate every house - and H1's houses-for-sale roll
+ * was written against `location.exterior.buildings`, the raw
+ * DFLocation.BuildingData array, whose records carry
+ * nameSeed/factionId/quality/buildingType
  * and NO KEY AT ALL. The roll therefore handed out houses with
  * `buildingKey: undefined`, allocateHouseToPlayer wrote it into the
  * registry, and `ownsHouse` tests `> 0` - so the house you were just
@@ -329,6 +331,18 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
  * Location's own skip list, and every named-type consumer here filters
  * by type or by name.
  *
+ * AUDIT 39r (R10): dropping the named-type gate dropped this walk's
+ * ONLY per-record bound. DFU's loop is
+ * `for (i = 0; i < buildingsInBlock.Length; ++i)` over
+ * RMBLayout.GetBuildingData, sized `SubRecords.Length`
+ * (RMBLayout.cs:552-553) - the record count IS DFU law, and the same
+ * wave gave it to the three sibling walks. `merged.get(inst)` is the
+ * full 32-slot header copy, so an out-of-range recordIndex reads
+ * whatever bytes follow the declared records: rmbLayout's enhanced
+ * windmill APPENDS a subrecord without bumping numBlockDataRecords and
+ * hands its recordIndex to a door, which is a phantom shop in every
+ * consumer of this directory. Bounded here like everywhere else.
+ *
  * FLAGGED: the walk is still over DOORS, so a building with no
  * exterior door is absent where DFU's list holds it.
  */
@@ -342,6 +356,8 @@ export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpt
     const inst = blockOf(d);
     const list = inst ? merged.get(inst) : null;
     if (!list) continue;
+    const count = Math.min(list.length, blockBuildingCount(inst.dfBlock) ?? list.length);
+    if (!(d.recordIndex < count)) continue;
     const data = list[d.recordIndex];
     if (!data) continue;
     const key = `${blockIdx.get(inst)}_${d.recordIndex}`;

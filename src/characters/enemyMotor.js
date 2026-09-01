@@ -1062,13 +1062,20 @@ export class EnemyAI {
     return true;
   }
 
-  /** HandleNoAction (:357-366), the UNCONDITIONAL half - no target
-   *  (a pacified foe's equivalent in this single-target port), the
-   *  give-up timer spent, or a position never seen, and the search
+  /** HandleNoAction (:357-366), the UNCONDITIONAL half - no target,
+   *  the give-up timer spent, or a position never seen, and the search
    *  ramp resets on EVERY arm. DFU also drops CanAct here; the port's
-   *  _classicTick keeps its own early returns for that half. */
-  _handleNoAction() {
-    if (!this.isHostile || this.giveUpTimer <= 0 || this.predictedTargetPos === null) {
+   *  _classicTick keeps its own early returns for that half.
+   *
+   *  AUDIT 39r (R14): the first arm is DFU's `senses.Target == null`
+   *  (:359), which carries no hostility term. `!isHostile` is the
+   *  pacified player-drop half of it - but MT-iii established that a
+   *  FOE target survives that drop, so the caller passes the same
+   *  foeTarget the canAct/moving sites take, or a pacified foe that
+   *  acts and pursues gets its search ramp zeroed underneath it on
+   *  every step and searches at multiplier 0 forever. */
+  _handleNoAction(foeTarget = false) {
+    if ((!this.isHostile && !foeTarget) || this.giveUpTimer <= 0 || this.predictedTargetPos === null) {
       this.searchMult = 0;
     }
   }
@@ -1203,8 +1210,13 @@ export class EnemyAI {
     // file's own _senses exception), and DFU's motor then pursues and
     // turns towards it. The port ANDed IsHostile in flat, so a
     // pacified foe another enemy was mauling stood rooted.
-    const foeTarget = this._armedTargeting && this.target != null && !this.target.isPlayer;
-    this.canAct = !paralyzed && !knocked && (this.isHostile || foeTarget);
+    // AUDIT 39r (R15): and it is computed BELOW, after the target
+    // machine - reading `_armedTargeting`/`target` here read the
+    // PREVIOUS step's targeting state, so a pacified foe stayed frozen
+    // for the whole step on which it first acquired a foe target (and
+    // could never take the exception on its first armed step at all,
+    // the constructor seeding both to null/false). This file's own law,
+    // eight lines up: decisions read the freshly resolved senses.
     // EnemyMotor.UpdateTimers runs every FixedUpdate, after
     // HandleParalysis and KnockbackMovement have settled CanAct, and
     // BEFORE TakeAction reads avoidObstaclesTimer (:166-172).
@@ -1247,6 +1259,9 @@ export class EnemyAI {
       targetFeet = this.target == null ? null
         : (this.target.isPlayer ? playerFeet : this.target.ai.feet);
     } else this._targetCandidate = null;
+    // MT-iii's hostility narrowing, now on THIS step's target machine.
+    const foeTarget = this._armedTargeting && this.target != null && !this.target.isPlayer;
+    this.canAct = !paralyzed && !knocked && (this.isHostile || foeTarget);
     if (targeting && targetFeet == null) {
       this.inSight = false;
       this.detected = false;
@@ -1269,7 +1284,7 @@ export class EnemyAI {
     // gave up resumed a later pursuit aiming 10 units past the
     // last-known position. HandleNoAction runs BEFORE UpdateTimers'
     // refill in DFU's order, and does here too.
-    this._handleNoAction();
+    this._handleNoAction(foeTarget);
     if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
     for (let i = 0; i < classicTicks; i++) {
       if (!this.detected && this.giveUpTimer > 0) this.giveUpTimer--;

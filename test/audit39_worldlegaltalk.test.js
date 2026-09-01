@@ -324,3 +324,50 @@ test('AUDIT 39 (#112): the NPC session gets fullName - the TWO-argument form', (
   assert.match(deps, /fullName: \(nameBank, gender\) => nameHelperFullName\(nameBank, gender\)/,
     'the entry\'s own bank, not the region\'s - talkMcp\'s one-argument form is a different object');
 });
+
+// ---------------------------------------------------------------
+// AUDIT 39r (R10) - #110 removed buildBuildingDirectory's named-type
+// gate, which was its ONLY per-record bound, and the same wave gave
+// the three sibling walks blockBuildingCount(). DFU's loop is
+// `for (i = 0; i < buildingsInBlock.Length; ++i)` over
+// RMBLayout.GetBuildingData, sized SubRecords.Length
+// (RMBLayout.cs:552-553) - the record count is DFU law. `merged` here
+// is the full 32-slot header copy, so an out-of-range recordIndex
+// reads whatever follows the declared records; rmbLayout's enhanced
+// windmill APPENDS a subrecord without bumping numBlockDataRecords
+// and hands its recordIndex to a static door, and world.js pushes
+// that straight into townTalk's `doors`.
+// ---------------------------------------------------------------
+
+/** fakeBlock's shape plus the appended-subrecord tail: `declared`
+ *  records the block owns, then extra header slots nothing declares. */
+const overrunBlock = (declared, tail) => ({
+  x: 2, y: 1, originX: 0, originZ: 0,
+  dfBlock: {
+    rmbBlock: {
+      fldHeader: {
+        otherNames: null,
+        numBlockDataRecords: declared.length,
+        buildingDataList: [...declared, ...tail].map((buildingType, i) => ({
+          buildingType, nameSeed: 4000 + i, factionId: 0, quality: 10, sector: 0, locationId: 0,
+        })),
+      },
+      // rmbLayout.attachWindmillRecord's shape: the subrecord array
+      // grows, numBlockDataRecords does not.
+      subRecords: [...declared, ...tail].map(() => ({})),
+    },
+  },
+});
+
+test('AUDIT 39r (R10): the door walk is bounded by the block\'s record count', () => {
+  const blk = overrunBlock([BUILDING_TYPES.Tavern, BUILDING_TYPES.House2],
+    [BUILDING_TYPES.GeneralStore, BUILDING_TYPES.Palace]);
+  const doors = [0, 1, 2, 3].map((recordIndex) => ({ dfBlock: blk.dfBlock, recordIndex, position: [1, 0, 1] }));
+  const dir = buildBuildingDirectory([], [blk], doors, { locationName: 'Tulune', regionName: 'Tigonus' });
+  assert.equal(dir.length, 2, 'the two DECLARED records only - buildingsInBlock.Length is the loop bound');
+  assert.deepEqual(dir.map((d) => d.buildingType), [BUILDING_TYPES.Tavern, BUILDING_TYPES.House2]);
+  // the residences #110 restored are all inside the count and stay
+  assert.ok(dir.some((d) => d.buildingType === BUILDING_TYPES.House2 && d.buildingKey > 0));
+  // and the phantom shop never reaches a Where-is category list
+  assert.ok(!dir.some((d) => d.buildingType === BUILDING_TYPES.GeneralStore));
+});

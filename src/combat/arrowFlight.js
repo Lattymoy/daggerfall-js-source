@@ -129,15 +129,28 @@ export class ArrowFlight {
 /**
  * AUDIT 39 (#64): a PLAYER arrow that meets a foe, verbatim to the
  * dungeon host's own arm (dungeonContext's `m.fromPlayer` block) so
- * the four hosts price one shot one way. DaggerfallMissile.cs:681-687
- * routes an arrow into WeaponManager.WeaponDamage with `arrowHit`
- * true, which is the SAME CalculateAttackDamage a melee swing runs -
- * `attacker == player`, so the swing modifiers, the backstab chance
- * and the enemy-type modifier all apply, and the hit sound and the
- * splash ring BEFORE the knockback and the pain voice. The missile's
- * own position is DFU's impactPosition, the one place these hosts
- * hold the real hit point rather than the body centre. The arrow is
- * recoverable from the target whatever the damage was (BowDamage).
+ * the three hosts that call it price one shot one way. (FLAGGED: the
+ * dungeon host still carries its own inline copy of this law rather
+ * than calling here - four bodies, not four callers.)
+ * DaggerfallMissile.cs:681-687 routes an arrow into
+ * WeaponManager.WeaponDamage with `arrowHit` true, which is the SAME
+ * CalculateAttackDamage a melee swing runs - `attacker == player`, so
+ * the swing modifiers, the backstab chance and the enemy-type modifier
+ * all apply, and the hit sound and the splash ring BEFORE the
+ * knockback and the pain voice. The arrow is recoverable from the
+ * target whatever the damage was (BowDamage).
+ *
+ * AUDIT 39r (R16): the splash is at the TARGET, not the arrow tip.
+ * The header used to claim the missile's own position was DFU's
+ * impactPosition, "the one place these hosts hold the real hit point"
+ * - it is not. AssignBowDamageToTarget passes `hitTransform.position`
+ * (DaggerfallMissile.cs:679-687), the struck entity's own transform
+ * origin; only the MELEE callers pass a contact point
+ * (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
+ * WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
+ * `foe.ai.feet` is that transform origin (magicCandle.js:61-64), bare
+ * - not bloodCentre, which is the melee-miss centre+height/8 point
+ * EnemyAttack.cs:326-328 builds when there is no contact point at all.
  *
  * `dealDamage` is the pool's own damage door, so death runs whole -
  * corpse, loot, crime - and this function never writes health itself.
@@ -159,7 +172,7 @@ export function playerArrowHitFoe(m, foe, {
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
   if (dmg > 0) {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, 1.1, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, [m.pos[0], m.pos[1], m.pos[2]]);
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, [at[0], at[1], at[2]]);
     const pain = enemyPainVoice(foe, dmg, rolls);
     if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16 });
     dealDamage?.(foe, dmg);
