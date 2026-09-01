@@ -1206,6 +1206,14 @@ layout(location=0) in vec2 aP;
 out vec2 vNdc;
 void main(){ vNdc = aP; gl_Position = vec4(aP, 1.0, 1.0); }`, SKY_FS);
 
+/** AUDIT 42 F1: no non-finite number reaches any shader on this page.
+ *  Not a fix for a bug - a fix for the CLASS of bug, since the one
+ *  that cost an hour was invisible precisely because a NaN uniform
+ *  raises nothing and renders black. */
+const safe1 = (x) => (Number.isFinite(x) ? x : 0);
+const safe3 = (v) => new Float32Array([safe1(v[0]), safe1(v[1]), safe1(v[2])]);
+const safeN = (v) => new Float32Array(Array.from(v, safe1));
+
 const skyVao = gl.createVertexArray();
 gl.bindVertexArray(skyVao);
 {
@@ -1816,14 +1824,16 @@ function frame(now) {
   gl.useProgram(skyProg);
   gl.depthMask(false);
   gl.disable(gl.DEPTH_TEST);
-  const S1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), v);
-  // and a NaN can never reach the shader again: one bad number in a
-  // cloud colour blackened the entire dome, silently, twice.
-  const S3 = (n, v) => {
-    const safe = v.map((x) => (Number.isFinite(x) ? x : 0));
-    gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(safe));
-  };
-  const S4 = (n, v) => gl.uniform4fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
+  const S1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), safe1(v));
+  // AUDIT 42 F1: THE GUARD COVERED ONE SETTER ON ONE PROGRAM. A NaN in
+  // a cloud colour blackened the whole dome silently; the same value in
+  // the ground's ambient, the blades' sun colour or the rain's wind
+  // vector would do the same to those passes and be just as invisible.
+  // safe3/safe1 are shared now, and every uniform this page sets goes
+  // through them - the fix and the guard are only worth anything if the
+  // guard is where the next one will land.
+  const S3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), safe3(v));
+  const S4 = (n, v) => gl.uniform4fv(gl.getUniformLocation(skyProg, n), safeN(v));
   // the game builds its ray from yaw/pitch/fov; this page has them
   S1('uYaw', cam.yaw); S1('uPitch', cam.pitch);
   S1('uTanHalfFov', Math.tan(1.05 / 2)); S1('uAspect', w / h);
@@ -1878,9 +1888,9 @@ function frame(now) {
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uDim'), (wx.dim + flash * 0.5) * (1 - occ * 0.55));
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uFog'), wx.fog);
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uWet'), wx.wet);
-  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), new Float32Array(sky));
-  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uAmb'), new Float32Array(skyAmb));
-  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSunCol'), new Float32Array(sunCol));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), safe3(sky));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uAmb'), safe3(skyAmb));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSunCol'), safe3(sunCol));
   gl.uniform2fv(gl.getUniformLocation(groundProg, 'uFieldOrigin'), new Float32Array(fieldOrigin));
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uFieldM'), FIELD_M);
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
@@ -1920,8 +1930,8 @@ function frame(now) {
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uRange'), state.range);
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uEye'), eye);
     gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunDir'), sun);
-    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), new Float32Array(skyAmb));
-    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), new Float32Array(sunCol));
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), safe3(skyAmb));
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), safe3(sunCol));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uDim'), wx.dim + flash * 0.5);
     gl.bindVertexArray(gr.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
