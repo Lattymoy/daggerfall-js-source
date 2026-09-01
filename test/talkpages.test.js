@@ -111,7 +111,12 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   // nameSeed, which is what the answer PRNG is seeded with in DFU - the
   // block-person record has no such field, so `pn.nameSeed ?? 0` gave
   // every static NPC in the game the same conversation randomization
-  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{\s*\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: displayName \}\);/);
+  // AUDIT 39 (#108) MOVED THIS PIN: the push now spends
+  // StartNewConversation first. DaggerfallTalkWindow.OnPush runs it
+  // through SetStartConversation (:654) on EVERY push, and the static
+  // door ran none of it - the deferred topic-list rebuild was never
+  // spent and numQuestionsAsked never returned to 0.
+  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{[\s\S]*?npcSession\?\.startNewConversation\(\);\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: displayName \}\);/);
   // the guild popup's TALK button routes TalkToStaticNPC with menu TRUE
   // (DaggerfallGuildServicePopupWindow.cs:294) and yields to the window
   // G6 gave that door a SECOND caller, so the pin follows the law

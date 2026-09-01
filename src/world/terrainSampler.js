@@ -30,7 +30,11 @@ export const WORLD_MAP_TERRAIN_DIM = 32768; // MapsFile.WorldMapTerrainDim
 export const TERRAIN_SIZE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE; // 819.2
 const MAX_MAP_PIXEL_Y = 500; // MapsFile.MaxMapPixelY
 
-const BASE_HEIGHT_SCALE = 8;
+// AUDIT EV F-DOC7: exported - the overworld relief and the far ring
+// build their macro heights on this exact term, and each carrying a
+// private copy of the 8 is how the ring would silently diverge from
+// the streamed law it claims to share.
+export const BASE_HEIGHT_SCALE = 8;
 const NOISE_MAP_SCALE = 4;
 const EXTRA_NOISE_SCALE = 10;
 export const SCALED_OCEAN_ELEVATION = 3.4 * BASE_HEIGHT_SCALE;
@@ -57,14 +61,16 @@ export function getNoise(x, y, frequency, amplitude, persistance, octaves, seed 
 }
 
 /**
- * Generate the height samples for one world map pixel.
- * @param {object} woods - loaded WoodsFile.
- * @param {number} mapPixelX
- * @param {number} mapPixelY
- * @param {number} hDim - heightmap dimension (default 129).
- * @returns {Float32Array} normalized samples; sample(x, y) = out[x * hDim + y].
+ * EV4: the per-sample kernel for one world map pixel, factored from
+ * generateSamples so a NEIGHBOR pixel's edge rows can be computed
+ * without generating its whole 129x129 grid (the ghost rows that make
+ * chunk-edge normals true central differences). The window reads
+ * happen once here; the returned closure is the loop body of
+ * generateSamples verbatim - same reads, same arithmetic, same order,
+ * so the sampler's numeric pins hold through the refactor.
+ * @returns {(x: number, y: number) => number} normalized sample.
  */
-export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
+export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
   // Divisor ensures continuous 0-1 range of height samples.
   const div = (hDim - 1) / 3;
   const sd = 4;
@@ -74,9 +80,8 @@ export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DI
   const shmAt = (r, c) => shm[r + c * sd]; // JobA.Idx
   const lhmAt = (r, c) => lhm[r + c * ld];
 
-  const data = new Float32Array(hDim * hDim);
-  for (let x = 0; x < hDim; x++) {
-    for (let y = 0; y < hDim; y++) {
+  return (x, y) => {
+    {
       const rx = x / div;
       const ry = y / div;
       const ix = Math.floor(rx);
@@ -113,8 +118,58 @@ export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DI
       // Clamp lower values to ocean elevation.
       if (scaledHeight < SCALED_OCEAN_ELEVATION) scaledHeight = SCALED_OCEAN_ELEVATION;
 
-      data[x * hDim + y] = Math.min(1, Math.max(0, scaledHeight / MAX_TERRAIN_HEIGHT));
+      return Math.min(1, Math.max(0, scaledHeight / MAX_TERRAIN_HEIGHT));
+    }
+  };
+}
+
+/**
+ * Generate the height samples for one world map pixel.
+ * @param {object} woods - loaded WoodsFile.
+ * @param {number} mapPixelX
+ * @param {number} mapPixelY
+ * @param {number} hDim - heightmap dimension (default 129).
+ * @returns {Float32Array} normalized samples; sample(x, y) = out[x * hDim + y].
+ */
+export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
+  const kernel = sampleKernel(woods, mapPixelX, mapPixelY, hDim);
+  const data = new Float32Array(hDim * hDim);
+  for (let x = 0; x < hDim; x++) {
+    for (let y = 0; y < hDim; y++) {
+      data[x * hDim + y] = kernel(x, y);
     }
   }
   return data;
+}
+
+/**
+ * EV4: a sampler that answers OUT-OF-RANGE coordinates from the
+ * correct NEIGHBOR pixel's kernel, for the ghost rows that make
+ * chunk-edge normals central differences. The mapping is the
+ * continuity law the sampler already guarantees (shared edges:
+ * x=0 of pixel px equals x=128 of px-1; y=0 of py equals y=128 of
+ * py+1 - map Y runs south), so x=-1 reads the west pixel's x=127
+ * and x=129 reads the east pixel's x=1, and likewise for y. Neighbor
+ * kernels build lazily - a pixel build pays only for the edges it
+ * actually asks about. RAW samples: a neighbor's location blending is
+ * not reflected here, so a normal at the seam of a blended pixel can
+ * differ slightly from the neighbor's own - strictly better than the
+ * one-sided difference it replaces, and recorded in the EV arc.
+ * @returns {(x: number, y: number) => number} normalized sample.
+ */
+export function ghostSampler(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
+  const span = hDim - 1;
+  const kernels = new Map();
+  const kernelAt = (dx, dy) => {
+    const key = `${dx},${dy}`;
+    let k = kernels.get(key);
+    if (!k) kernels.set(key, k = sampleKernel(woods, mapPixelX + dx, mapPixelY + dy, hDim));
+    return k;
+  };
+  return (x, y) => {
+    let dx = 0, dy = 0;
+    if (x < 0) { dx = -1; x += span; } else if (x > span) { dx = 1; x -= span; }
+    if (y < 0) { dy = 1; y += span; } else if (y > span) { dy = -1; y -= span; }
+    return kernelAt(dx, dy)(x, y);
+  };
 }

@@ -16,6 +16,7 @@ import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevea
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
+import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-time SmallerDungeons stamp
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
@@ -39,6 +40,7 @@ import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
+import { setInfectionHost } from '../systems/infection.js';   // AUDIT 39 (#37): the borrowed seam goes back on teardown
 // U26: this host's own equip hook is retired - the native inventory
 // window owns equipping, the career gate (S23) and the paperdoll, so
 // the duplicate pair here had nothing left to serve. AUDIT 17e F17's
@@ -135,7 +137,7 @@ import {
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
 import { floorLanding, closestDoorTo } from '../player/enterExit.js';   // DE1: TransitionDungeonInterior orients away from the door it came through
-import { trs, multiply } from '../world/mat4.js';
+import { trs, multiply, UP_Y } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
@@ -617,7 +619,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
-        liveSpeed: entity.liveSpeed,
+        // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
+        // Stats.LiveSpeed every FixedUpdate (EnemyMotor.cs:432).
+        liveSpeed: () => liveStat(entity, 'speed'),
+        // AUDIT 39: RDBLayout.AddEnemy :1519-1521 -> EnemyMotor.cs:122.
+        // The marker's Passive action byte (99) was minted by
+        // collectDungeonEnemies and dropped here, so a castle guard
+        // charged on sight instead of standing down until struck.
+        isHostile: e.reaction !== 'passive',
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7): EnemySenses.cs:231 - the marker's band row
         isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
@@ -627,7 +636,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hasBowAttack: hasBowAttack(basics),
         canCastRangedSpell: () => foeDeps.hasRangedSpell(entity),
       });
-      const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
       // FLAGS, with zero inventory involvement (AUDIT 18 - minting
       // this from an equipped bow meant no enemy could ever fire one,
@@ -685,7 +694,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
-        liveSpeed: entity.liveSpeed,
+        liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads it per FixedUpdate
+        isHostile: e.reaction !== 'passive',          // AUDIT 39: RDBLayout.AddEnemy :1519-1521 -> EnemyMotor.cs:122
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7)
@@ -696,7 +706,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hasBowAttack: hasBowAttack(basics),
         canCastRangedSpell: () => foeDeps.hasRangedSpell(entity),
       });
-      const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // The same EnemyMotor.cs:131-137 flag test the class branch
       // runs - false for all 43 monsters today, but it must not stay
       // undefined (the archer draw/loose path reads it every frame).
@@ -853,8 +863,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // fortnight clock raise and the popup (THE FOUR HOSTS RULE). The
   // dungeon has no FACTION.TXT of its own, so a player turned
   // underground reads the clan off GetVampireClan's own default,
-  // which is Lyrezi and not a missing value.
-  wireInfectionVideos(renderer, {
+  // which is Lyrezi and not a missing value. AUDIT 39 (#37): borrowed,
+  // and handed back in destroy() - this set has no clan lookup and no
+  // cemetery transfer, and a turn above ground needs both.
+  const _prevInfectionHost = wireInfectionVideos(renderer, {
     textAt: (id) => textRsc?.plainText(id) ?? null,
     showText: (lines) => { if (!activeOverlay) activeOverlay = new ActionTextBox(lines); },
   });
@@ -930,6 +942,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     questMessages: () => opts.questBridge.machine.getAllQuestLogMessages() ?? [],
     notebook: () => opts.questBridge.notebook ?? null,
   } : {});
+
+  /** AUDIT 39 (#38): the chronicle's ONE builder. The key doors mount
+   *  it themselves; the pause window's Chronicle button needs the
+   *  WINDOW back, because its own slot is still holding the pause
+   *  overlay it has just closed. No bridge, no book - the same nothing
+   *  the sheet's button gives. */
+  function makeJournalWindow(mode) {
+    if (!opts.questBridge) return null;
+    preloadQuestJournalArt({ renderer, fetchBytes, palette });
+    // PX24d: through the chronicle's door, the way the spellbook goes
+    // through its own. This host has no map, so it leaves gotoPlace
+    // unset - the same nothing a CanFindPlace miss gives.
+    return createChronicleWindow({
+      ...questJournalHooks(),
+      mode,
+      entity: playerEntity,
+      section: mode === 'messages' ? 'messages' : 'notes',
+    });
+  }
 
   function openInventory(lootItems, onEmptied = null, { wagonPrompt = false } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
@@ -1240,18 +1271,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // shared damage door, not a second door of its own. It was the only one of
   // the four writers that checked for death, which is exactly why the other
   // three could go on writing health raw and nobody noticed.
-  setDeathPresenter(() => {
+  // AUDIT 39 (#35): the seam is BORROWED, not taken. playerEntity's
+  // setter answers the previous holder for exactly this reason, and
+  // destroy() hands it back - nothing above ground re-registers on the
+  // way out, so a dungeon that kept the seam left every later death
+  // above ground presenting into a torn-down context's overlay slot.
+  const _prevDeathPresenter = setDeathPresenter(() => {
     if (!(activeOverlay instanceof DeathScreen)) {
       // A1 review: this is the one FORCED overwrite of the overlay
       // slot - a window holding GL resources (the automap's batches
       // + micro-map texture) must release them or they leak per death.
       activeOverlay?.dispose?.();
       // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads
-      // them. The motor lives in the scene host (dungeon.js), so it
-      // arrives through opts.motorState - the F222 pose seam's shape,
-      // late-bound because the motor is built after this context. A
-      // host that passes none (worldModes replaces this presenter
-      // outright) falls to the constructor's standing defaults.
+      // them. The motor lives in the scene host (dungeon.js, worldModes),
+      // so it arrives through opts.motorState - the F222 pose seam's
+      // shape, late-bound because the motor is built after this context.
+      // A host that passes none falls to the constructor's standing
+      // defaults, which is the crouched death's geometry lost.
       const _ms = opts.motorState?.() ?? null;
       activeOverlay = new DeathScreen({ eyeHeight: _ms?.eyeLevel, capsuleHeight: _ms?.capsule, onReset: () => endRunToTitleMenu(renderer) });   // D1
     }
@@ -1259,10 +1295,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
   // presenter. This is the ONE host with a submersion model, so the
   // breath tick's marker rides in - a drowning Stendarr priest is not
-  // saved (Temple.AvoidDeath tests !IsPlayerSubmerged). worldModes
-  // re-installs its own hook when the dungeon is left, exactly as it
-  // takes the presenter back.
-  setAvoidDeathHook(() => {
+  // saved (Temple.AvoidDeath tests !IsPlayerSubmerged). AUDIT 39 (#35):
+  // borrowed and handed back in destroy(), like the presenter above -
+  // this hook closes over a submersion marker that dies with the
+  // context, so above ground it must not be the one consulted.
+  const _prevAvoidDeath = setAvoidDeathHook(() => {
     if (!avoidDeath(activeMemberships(playerEntity), { submerged: _submergedNow })) return false;
     hudText.add(AVOID_DEATH_TEXT);
     return true;
@@ -1385,7 +1422,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // handed down by world.js/worldModes; the standalone ?dungeon
     // probe has none and the chain no-ops).
     onNewReadySpell: (sp) => opts.questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => opts.questBridge?.machine?.notifyCastReadySpell?.(sp),
+    onCastReadySpell: (sp) => {
+      opts.questBridge?.machine?.notifyCastReadySpell?.(sp);
+      // MW-D39: THE SPELL GOES, AND SO DOES THE ARM. The reference's
+      // own cast moment - RaiseOnCastReadySpell, the frame the spell
+      // leaves the hand - runs the spellcast group's release. An
+      // animation, never a gate: a missing clip is a note on the card
+      // and the spell still flies.
+      weaponRig.castSpellAnim(sp?.rangeType);
+    },
     // hudText.add, not `say?.()`. There is no `say` in this scope — the
     // optional-call syntax made an undefined identifier look like a
     // guarded one, so it read as safe and was a ReferenceError waiting
@@ -2244,6 +2289,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       f.dead = true;
       f.questBehaviour?.notifyDestroyed();   // Destroy(gameObject): the resource uncouples
+      // MT-iv (AUDIT 39, #40): a culled record keeps its HEALTH, and the
+      // target machine's dead-target cull reads health - so a survivor
+      // outside the spawn band holds this one for ever unless the sweep
+      // runs here too. Every removal calls it; this was the one that did not.
+      dropCandidate(f);
       foes.splice(i, 1);
     }
     // SL2: pile items rewind BOTH ways and the flat FOLLOWS the
@@ -3108,7 +3158,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _spellBatches = magic.batches();   // M3: player spell missiles
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
-        new Float32Array([-view[0], -view[4], -view[8]]), new Float32Array([0, 1, 0]));
+        new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }
     // LAST before the HUD: the classic weapon overlay composites over
     // the whole frame (DaggerfallUI draws it under the HUD). The rig
@@ -3126,6 +3176,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       { font: hudFont, cursorActive: !!activeOverlay,
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
         largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
+        // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
+        readied: magic.readied() ?? null,
+        weapon: playerWeapon.weapon ?? null,
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
@@ -3273,9 +3326,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
         // sheet. Each host passes the arms it already has; a host
         // without one passes nothing and the button never draws.
-        openPack: () => { const w = api.makeInventory?.(); if (w) activeOverlay = w; },
+        // AUDIT 39 (#38): THIS context's own builders. These two used to
+        // optional-chain off `api` for the world host's makers, which
+        // this context has never exported - so both doors DREW (the
+        // filter asks only that a function was handed over) and both
+        // resumed the game and opened nothing.
+        openPack: () => { const w = openInventory(null); if (w) activeOverlay = w; },
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) activeOverlay = w; },
-        openChronicle: () => { const w = api.makeJournal?.('notebook'); if (w) activeOverlay = w; },
+        openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) activeOverlay = w; },
         // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
         // the F5 journal at :3449 and the notebook at :867) - the PX3
         // flag was too conservative, so it is paid with the same walk
@@ -3546,6 +3604,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
+      // AUDIT-39r: CleanupUntrackedObjects' MISSILE half. Its trigger
+      // is SaveLoadManager_OnStartLoad - a LOAD, in every host - and
+      // DFU reaches a dungeon's flights the other way round: the load
+      // runs RespawnPlayer, whose first act is Destroy(dungeon)
+      // (PlayerEnterExit.cs:453-457, :622-630), and the missiles are
+      // parented to that dungeon. This context is REUSED across its own
+      // quickload, so nothing tears the flights down - a missile in the
+      // air when F12 landed kept flying at the restored player. The
+      // world host's teleport already sweeps its own (world.js).
+      magic.clearMissiles();
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // B4: quest after entity, conversation after quest (the C#'s own
@@ -3807,16 +3875,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleNotebook() { this._openJournal('notebook'); },
     _openJournal(mode) {
       if (activeOverlay || !opts.questBridge) return;
-      preloadQuestJournalArt({ renderer, fetchBytes, palette });
-      // PX24d: through the chronicle's door, the way the spellbook
-      // goes through its own. This host has no map, so it leaves
-      // gotoPlace unset - the same nothing a CanFindPlace miss gives.
-      activeOverlay = createChronicleWindow({
-        ...questJournalHooks(),
-        mode,
-        entity: playerEntity,
-        section: mode === 'messages' ? 'messages' : 'notes',
-      });
+      activeOverlay = makeJournalWindow(mode);
     },
     toggleInventory() {
       if (activeOverlay) return;
@@ -3855,6 +3914,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const w = makeSpellbookWindow();
       if (w) activeOverlay = w;
     },
+    /** TR5: dfuiOpenTransportWindow's INDOORS arm (:691-694) - a
+     *  dungeon is inside, so the key refuses with a HUD line. */
+    openTransport() { hudText.add(CANNOT_CHANGE_INDOORS); },
     /** UI1: the U key in a dungeon. Nothing usable, no window
      *  (DaggerfallUI :581-583); the use runs the host's seam. */
     openUseMagicItem() {
@@ -3986,6 +4048,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // page's worldModes registration) - a latched dungeon answer
       // would keep the sun off the player forever after the exit.
       setPassiveSpecialsHost(_prevPassiveHost);
+      // AUDIT 39 (#35, #37): the other three process-global seams this
+      // context borrowed leave with it. Nothing above ground takes them
+      // back on the exit path, so a seam left pointed here presents,
+      // consults and turns the player INTO a torn-down context.
+      setDeathPresenter(_prevDeathPresenter);
+      setAvoidDeathHook(_prevAvoidDeath);
+      setInfectionHost(_prevInfectionHost);
     },
   };
   return api;

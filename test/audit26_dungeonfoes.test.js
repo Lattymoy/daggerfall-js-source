@@ -281,7 +281,11 @@ function poolDeps(freed) {
     rolls: () => 0.5,
   };
 }
+let _standId = 0;
 const standFoe = (mobileType, feet) => ({
+  // AUDIT 39: the guard pool names its corpses by `id` (its array is
+  // pruned now), so a hand-stood record carries one too.
+  id: _standId++,
   mobileType, gender: 'male', dead: false, entity: { health: 10, maxHealth: 10, items: [], activeEffects: [] },
   ai: { feet: [...feet], isHostile: true, detected: false, height: 1.8 },
   tex: stubTex, archive: ENEMY_BASICS[mobileType].maleTexture, batch: {}, _mout: null,
@@ -329,6 +333,61 @@ test('F212: an exterior corpse is a LOOSE OBJECT - it dies with its map pixel (S
   assert.equal(pool.foes.includes(away), true);
 });
 
+test('AUDIT 39: a recenter DURING a spawn moves the foe that is still being built', async () => {
+  // AUDIT 17e F23 / THE FOUR HOSTS RULE. spawnFoe crosses two real
+  // awaits - the career file, then a cold TEXTURE archive - and its
+  // record joins `foes` only at the very end, while offsetAll can
+  // shift only what the pool already holds. world.js applies r.offset
+  // from the FRAME LOOP on every map-pixel crossing, so an encounter
+  // that spawned across one stood 819.2 units from where it was meant
+  // to happen, and the cull then removed it undetected.
+  const freed = { n: 0 };
+  let land;
+  const pool = createExteriorFoes({
+    ...poolDeps(freed),
+    // one 74-byte CLASS*.CFG record: zeroes parse, and this pin is
+    // about the await, not about the career's numbers
+    fetchBytes: () => new Promise((res) => { land = () => res(new Uint8Array(74)); }),
+    getTexture: async () => ({ ...stubTex, getFrameCount: () => 1 }),
+  });
+  const spawning = pool.spawnFoe(GUARD_MOBILE_TYPE, [10, 0, 10]);   // a CLASS foe, so the career is a CFG read
+  await settle();
+  assert.equal(pool.foes.length, 0, 'the record has not landed yet');
+  pool.offsetAll([-819.2, 0, 0]);   // the floating origin moves under it
+  land();
+  const f = await spawning;
+  assert.ok(f, 'the foe stood');
+  assert.equal(pool.foes.length, 1);
+  assert.deepEqual([f.ai.feet[0], f.ai.feet[2]], [10 - 819.2, 10], 'and it took the recenter with everything else');
+});
+
+test('AUDIT-39r: and the WATCH, whose spawn crosses the same two awaits', async () => {
+  // The pending-feet list went to one of the two pools world.js
+  // recenters on the same frame (its cityGuards.offsetAll /
+  // exteriorFoes.offsetAll pair), and spawnGuardAt has the identical
+  // shape: CLASS18.CFG, then a cold texture archive, then the push. A
+  // guard summoned by a crime across a map-pixel crossing marched to
+  // where the crime USED to be, 819.2 units out.
+  const freed = { n: 0 };
+  let land;
+  const pool = createCityGuards({
+    ...poolDeps(freed),
+    fetchBytes: () => new Promise((res) => { land = () => res(new Uint8Array(74)); }),   // CLASS18.CFG, parked
+    getTexture: async () => ({ ...stubTex, getFrameCount: () => 1 }),
+  });
+  // restoreWorld is the pool's own door onto spawnGuardAt
+  pool.restoreWorld([{ nativeX: 10, nativeZ: 10, y: 0, yaw: 0, health: 10, maxHealth: 10 }], (x, z) => [x, z]);
+  await settle();
+  assert.equal(pool.guards.length, 0, 'the record has not landed yet');
+  pool.offsetAll([-819.2, 0, 0]);
+  land();
+  await settle();
+  await settle();
+  assert.equal(pool.guards.length, 1, 'the guard stood');
+  assert.deepEqual([pool.guards[0].ai.feet[0], pool.guards[0].ai.feet[2]], [10 - 819.2, 10],
+    'and it took the recenter with everything else');
+});
+
 test('F212: the city watch\'s corpses are the same loose objects, on the same law', async () => {
   const freed = { n: 0 };
   const pool = createCityGuards({ ...poolDeps(freed), currentPixelKey: () => '3,4' });
@@ -346,10 +405,45 @@ test('F212: the city watch\'s corpses are the same loose objects, on the same la
   pool.collectPixel('3,4');
   assert.equal(freed.n, before + 1, 'its own pixel frees the batch');
   assert.equal(pool.lootTargets().length, 0, 'and the body stops being a target');
-  // the guards ARRAY still cannot be spliced - lootTargets keys corpses
-  // by array index - so clearing the flag IS the destroy
-  assert.equal(pool.guards.includes(g), true);
-  assert.equal(g.corpse, false);
+  assert.equal(g.corpse, false, 'the record is destroyed, not merely hidden');
+  // AUDIT 39 moved this pin: the guards array used to be unprunable
+  // (lootTargets keyed corpses by array index), so clearing the flag
+  // WAS the whole destroy. The key is the guard's own id now, and
+  // update()'s tail prune takes the record itself - the encounter
+  // pool's law, on the encounter pool's schedule.
+  pool.update(0, [0, 0, 0], [0, 1.7, 0], {});
+  assert.equal(pool.guards.includes(g), false, 'the collected corpse leaves the pool');
+});
+
+test('AUDIT 39: dead guards do not accumulate - the walk-away is pruned, the corpse stays', async () => {
+  // EnemyEntity.cs:184-191 destroys the city watch outright when the
+  // active crime returns to none ("Despawn city watch when active
+  // crime state returns to none ... GameObject.Destroy"), where a
+  // KILLED enemy is deliberately kept (EnemyDeath disables the object
+  // and leaves the corpse). The port marked both `dead` and pruned
+  // neither, so every guard of a session stayed in `guards` with its
+  // entity, items and AI, and update(), offsetAll(), collectPixel(),
+  // snapshotWorld() and activeCount() all paid for it every frame.
+  const freed = { n: 0 };
+  const player = { level: 1, reflexes: 2, skills: 30, items: [], stats: { strength: 50, agility: 50, luck: 50 }, crimeCommitted: 5 };
+  const pool = createCityGuards({ ...poolDeps(freed), playerEntity: player, currentPixelKey: () => '3,4' });
+  const walker = standFoe(GUARD_MOBILE_TYPE, [5, 0, 5]);
+  const killed = standFoe(GUARD_MOBILE_TYPE, [7, 0, 7]);
+  killed.entity.items = [{ name: 'Gold', group: 'Currency', stackCount: 5 }];
+  pool.guards.push(walker, killed);
+  pool.hurtGuard(killed, 99, [0, 0, 0]);
+  await settle();
+  assert.equal(pool.guards.length, 2);
+
+  player.crimeCommitted = 0;   // the court releases: the watch walks away
+  pool.update(0, [0, 0, 0], [0, 1.7, 0], {});
+  assert.deepEqual(pool.guards, [killed], 'the walk-away is gone; the body with loot on it stays');
+  // and the surviving corpse still answers to its OWN key, which an
+  // index would not have done after the splice
+  const t = pool.lootTargets();
+  assert.equal(t.length, 1);
+  assert.equal(t[0].key, `guardCorpse:${killed.id}`);
+  assert.equal(pool.takeLoot(t[0].key), 1, 'the right purse');
 });
 
 test('F212: the world host collects both pools with the pixel, which is also what the teleport tears down', () => {
@@ -362,8 +456,15 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // ClearStreamingWorld's CollectLooseObjects(true) is the teleport core
   // walking every built pixel through that same function.
   const t = WORLD.indexOf('async function _teleportToPixel(px, py, localPos = null)');
-  assert.ok(WORLD.slice(t, t + 400).includes('destroyPixel(bx, by);'),
+  // AUDIT 39 (#158): the window widened from 400 - CleanupUntrackedObjects'
+  // own half (clearLive on both pools, the missiles, the arrows) now stands
+  // at the head of the core, above this loop. Corpses ride the pixel;
+  // the LIVE records are swept by name, which is the finding this moved for.
+  const core = WORLD.slice(t, t + 1600);
+  assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
+  assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),
+    'and the live pools with them (StreamingWorld.cs:1624-1635)');
   // and the stamp is the same key shape the pile seam already used
   assert.equal((WORLD.match(/currentPixelKey: \(\) => `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`/g) ?? []).length, 2,
     'both pools are stamped, with the streamer\'s current pixel (TrackLooseObject :462-476)');

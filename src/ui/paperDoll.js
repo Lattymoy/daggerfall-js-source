@@ -36,6 +36,7 @@
 import { ImgFile } from '../formats/imgFile.js';
 import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
@@ -63,6 +64,45 @@ export { CLOTHING_DYES };
 // RaceTemplate verbatim) - this file used to carry a Breton-only
 // table, the loud INTERIM the U8f/U8g records flagged.
 const CONTEXT_BG = Object.freeze({ town: 'SCBG04I0.IMG', dungeon: 'SCBG07I0.IMG', graveyard: 'SCBG08I0.IMG' });
+
+// UI3 - GEOGRAPHIC BACKGROUNDS: PaperDoll.GetPaperDollBackground
+// (:207-230). `EnableGeographicBackgrounds` ships FALSE, so DFU's
+// DEFAULT paperdoll backdrop is the RACE's - and the port has been
+// passing `context = 'town'` since U8f, which is the geographic
+// answer. Every player has been looking at the town backdrop.
+//
+// With the setting on: town, then dungeon, then graveyard, then the
+// REGION's own char - and a region index outside the table or the
+// reader's count falls back to the race's, which is why the guard is
+// not just a bounds check but the same answer as `off`.
+
+/** `regionBackgroundIdxChars` (:203-205), all 64. */
+export const REGION_BACKGROUND_CHARS = Object.freeze([
+  '3', '1', '2', '2', '2', '0', '5', '1', '5', '2', '1', '1', '2', '2', '2', '0',
+  '2', '0', '2', '2', '3', '0', '5', '6', '2', '2', '2', '2', '0', '0', '0', '0',
+  '0', '6', '6', '6', '0', '6', '6', '0', '6', '0', '0', '3', '3', '3', '3', '3',
+  '3', '5', '5', '5', '5', '1', '3', '3', '3', '2', '0', '0', '2', '3',
+]);
+
+/**
+ * GetPaperDollBackground, verbatim.
+ * @param {string} raceBackground - RaceTemplate.PaperDollBackground
+ * @param {{enabled?:boolean, region?:number, regionCount?:number,
+ *          inTown?:boolean, inDungeon?:boolean, inGraveyard?:boolean}} where
+ *   `region` is GetPoliticIndex - 128, as DFU computes it.
+ */
+export function paperDollBackground(raceBackground, {
+  enabled = getBool('GUI', 'EnableGeographicBackgrounds'),
+  region = -1, regionCount = REGION_BACKGROUND_CHARS.length,
+  inTown = false, inDungeon = false, inGraveyard = false,
+} = {}) {
+  if (!enabled) return raceBackground;
+  if (region < 0 || region >= regionCount || region >= REGION_BACKGROUND_CHARS.length) return raceBackground;
+  if (inTown) return CONTEXT_BG.town;
+  if (inDungeon) return CONTEXT_BG.dungeon;
+  if (inGraveyard) return CONTEXT_BG.graveyard;
+  return `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG`;
+}
 
 // AUDIT 17e F32/F33: clampArmorVariant + the armor archive rule
 // moved to systems/armorMaterials.js (they were duplicated here with
@@ -115,8 +155,8 @@ let _pending = null;   // AUDIT 17e F16: the coalesced follow-up
  *  boot, and the doll must follow) - `_identity` is the guard that
  *  used to be a bare `if (_art) return`. */
 let _identity = null;
-export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town' } = {}) {
-  const key = `${race}|${gender}|${faceIndex}|${context}`;
+export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town', where = null } = {}) {
+  const key = `${race}|${gender}|${faceIndex}|${context}|${where?.region ?? -1}`;
   if (_art && _identity === key) return;
   try {
     const { fetchBytes, palette } = deps;
@@ -132,7 +172,12 @@ export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'mal
     const fi = Math.max(0, Math.min(FACES_PER_RACE - 1, faceIndex | 0));
     _art = {
       palette,
-      bg: await loadImgBmp(CONTEXT_BG[context] ?? art.background),
+      // UI3: the SETTING decides, not the caller's context word. Off -
+      // which is how it ships - every race gets its own backdrop.
+      bg: await loadImgBmp(paperDollBackground(art.background, {
+        inTown: context === 'town', inDungeon: context === 'dungeon', inGraveyard: context === 'graveyard',
+        region: where?.region ?? -1, regionCount: where?.regionCount ?? REGION_BACKGROUND_CHARS.length,
+      })),
       nude: await loadImgBmp(unclothed),
       clothed: await loadImgBmp(clothed),
       head: { bmp: face.getDFBitmap(fi, 0), off: face.getOffset(fi) },
@@ -284,8 +329,15 @@ export async function refreshPaperDoll(entity) {
     if (!suppress) {
       blit(out, _art.nude);
       const split = WAIST_HEIGHT;
-      if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
-      if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
+      // BlitBody (PaperDollRenderer.cs:346-353): the WELDS as a whole
+      // hang off the setting - the nude body above is drawn either
+      // way, and the two slot tests only decide whether a weld would
+      // show around real clothes. The setting ships False, which is
+      // why the port drawing the welds unconditionally looked right.
+      if (!getBool('ChildGuard', 'PlayerNudity')) {
+        if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
+        if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
+      }
       // V5: the vampire's clanless head replaces the racial one
       const headOv = racialOverrideHeadArt(entity);
       const headArt = headOv ? await loadOverrideArt(headOv.file, headOv.record) : null;

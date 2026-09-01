@@ -71,7 +71,12 @@ export class EnemyAttack {
    *  (hasBowAttack - mobile flags, not the equipped weapon). */
   constructor({ liveSpeed = 50, playerLevel = 10, reflexes = 2, rolls = Math.random } = {}) {
     this.machine = createWeaponMachine(false);
-    this.liveSpeed = liveSpeed;
+    // AUDIT 39: FixedUpdate reads `entity.Stats.LiveSpeed` on every
+    // pass (:69-72), under the source's own note that the floor exists
+    // "so Drain Speed does not prevent attack ever firing" - so DFU
+    // expects a live drain on a foe to bite. A number captured at
+    // spawn cannot drain; callers that own the entity pass a THUNK.
+    this._liveSpeed = typeof liveSpeed === 'function' ? liveSpeed : () => liveSpeed;
     this.playerLevel = playerLevel;
     this.reflexes = reflexes;
     this.rolls = rolls;   // ENGINE-PRNG: DoRangedAttack's Random.value + the strike/timer picks
@@ -79,6 +84,9 @@ export class EnemyAttack {
     this._classicTimer = 0;
     this.firedRanged = false;   // C-slice: WHICH decision started the running swing
   }
+
+  /** EnemyAttack.cs:70 - a READ, not a field, so nothing can freeze it. */
+  get liveSpeed() { return this._liveSpeed(); }
 
   /**
    * @param ai the foe's EnemyAI (senses + yaw + feet)

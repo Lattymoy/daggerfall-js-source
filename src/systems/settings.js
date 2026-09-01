@@ -150,6 +150,16 @@ export const LIVE = Object.freeze({
   // AUDIT 28 W13: FPSWeapon.FlipHorizontal (StartGameBehaviour :269) -
   // left-hand rendering; GetInt 0..3, only 1 does anything in DFU.
   'Controls/Handedness': 'src/combat/fpsWeapon.js',
+  // UI3: PaperDoll.GetPaperDollBackground (:207-230) - the region's own
+  // backdrop instead of the race's. Ships False, and the port had been
+  // behaving as if it were True.
+  'GUI/EnableGeographicBackgrounds': 'src/ui/paperDoll.js',
+  // UI4: the item info panel is only ADDED when this is on
+  // (DaggerfallInventoryWindow :303-307).
+  'GUI/EnableInventoryInfoPanel': 'src/ui/nativeInventory.js',
+  // UI6: DaggerfallTalkWindow's modern conversation style - the
+  // greeting, questions and answers smaller, narrower and blocked.
+  'GUI/EnableModernConversationStyleInTalkWindow': 'src/ui/nativeTalk.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
@@ -423,8 +433,18 @@ export function effectiveSettings() {
 /** Drop every override. DFU's wizard has no reset button; ours does,
  *  because a browser player cannot delete an ini by hand. */
 export function resetToDefaults() {
+  const dropped = _values ?? {};
   _values = {};
   saveSettings();
+  // AUDIT 39: Reset is a WRITE, and a write is published - the channel
+  // above exists because a looping song has no next occasion to
+  // re-read the volume, and Reset left one playing at the old level.
+  // Every key that had an override moved, and it moved TO the
+  // default's string, which is the same value setValue's
+  // drop-the-override arm publishes.
+  for (const [section, keys] of Object.entries(dropped)) {
+    for (const key of Object.keys(keys)) _publish(section, key, String(DEFAULTS[section]?.[key] ?? ''));
+  }
 }
 
 /** Test seam: forget the loaded state so the next read re-loads. */

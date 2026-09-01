@@ -118,7 +118,13 @@ test('TN1 world: the seven hooks stand on questWorld, wired to their one homes',
   }
   assert.ok((world.match(/npcSession\.npcData\?\.pcFactionName \?\? ''/g) ?? []).length >= 2,
     'factionPC and factionName\'s fall-through both read pcFactionName');
-  assert.match(world, /GUILD_GROUPS\.HolyOrder[^]{0,200}getDivine\(townTalk\.factionDict, modes\?\.interiorBuilding\?\.factionID \?\? 0\)/,
+  // AUDIT 39 (#26) MOVED THIS PIN: it pinned `factionID`, the
+  // uppercase spelling, which the building record does not carry -
+  // buildingDataForDoor's merge writes `factionId`, every other read
+  // in the tree uses it, and the uppercase one belongs to StaticNPC
+  // records. So getDivine was always called with 0, always missed,
+  // and the HolyOrder arm always fell through to pcFactionName.
+  assert.match(world, /GUILD_GROUPS\.HolyOrder[^]{0,400}getDivine\(townTalk\.factionDict, modes\?\.interiorBuilding\?\.factionId \?\? 0\)/,
     'GetFactionName\'s HolyOrder arm answers the temple\'s deity (:1815-1822)');
   assert.match(world, /lordNameForFaction: \(id, old = false\) => lordNameForFaction\(townTalk\.factionDict, id, old\)/,
     'the lord names ride the one home in systems/talk.js');

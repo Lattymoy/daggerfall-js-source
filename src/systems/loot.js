@@ -22,10 +22,11 @@ import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
-import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
+import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue } from './itemTemplates.js';   // F103: SetItem writes the value with the name
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 import { getRandomBookID } from './books.js';   // IM1: CreateRandomBook's message roll
+import { potionRecipeByKey } from './potions.js';   // F103: PotionRecipeKey's price side effect
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -119,8 +120,22 @@ const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
  *  AUDIT 18: the loot factories minted bare {group, templateIndex},
  *  so the dungeon item list (the keyed window that lived in what is
  *  now ui/deathScreen.js) labelled a looted
- *  Yellow Flowers "PlantIngredients1". */
-const named = (item) => ({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name });
+ *  Yellow Flowers "PlantIngredients1".
+ *
+ *  AUDIT 39 F103: and SetItem's OTHER write goes with the name -
+ *  `value = itemTemplate.basePrice` (DaggerfallUnityItem.cs:563),
+ *  through SetItemPropertiesByMaterial's multiplier (ItemBuilder.cs:
+ *  649) for the material bands, which is what itemBaseValue answers.
+ *  NO DFU item exists without a value, and the trade window reads
+ *  `item.value` raw: an undefined one summed to NaN, and
+ *  CalculateTradePrice's `>>8` collapsed that to 0 - looted gear sold
+ *  for nothing and was taken. Anything minted with its own value
+ *  (a magic item's enchantment sum) keeps it. */
+const named = (item) => ({
+  ...item,
+  name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name,
+  value: item.value ?? itemBaseValue(item),
+});
 
 /** ItemBuilder.CreateRandomClothing verbatim (:184-208): a uniform
  *  template over the gender's group, then RandomClothingDye, THEN
@@ -367,9 +382,18 @@ export const POTION_RECIPE_TEMPLATE_INDEX = 278;
 /** UselessItems1 index 1 = the glass bottle a potion IS (:754). */
 export const POTION_TEMPLATE_INDEX = GROUP_TEMPLATE_INDICES.UselessItems1[1];
 
+/** AUDIT 39 F103: PotionRecipeKey's setter carries the PRICE - "has a
+ *  side effect (ugh, sorry) of populating the item value from the
+ *  recipe price" (DaggerfallUnityItem.cs:387-399), and it is the whole
+ *  worth of a potion or a recipe: the bottle's own basePrice is 1.
+ *  A key no recipe answers leaves the template value standing, as the
+ *  setter's own null guard does. */
+const potionValue = (recipeKey, item) => potionRecipeByKey(recipeKey)?.price ?? itemBaseValue(item);
+
 /** ItemBuilder.CreatePotion (:752-755) - a bottle carrying a key. */
 export function createPotion(recipeKey) {
-  return mintCondition({ group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: recipeKey });
+  const potion = { group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: recipeKey };
+  return mintCondition({ ...potion, value: potionValue(recipeKey, potion) });
 }
 
 /** ItemBuilder.CreateRandomPotion (:761-766). */
@@ -381,7 +405,7 @@ export function createRandomPotion(rolls = Math.random) {
  *  chance of 0 never fires and no roll is wasted deciding that. */
 export function randomlyAddMap(chance, items, rolls = Math.random) {
   if (!dice100(chance, rolls())) return null;
-  const map = mintCondition({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX });
+  const map = mintCondition({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX, value: itemBaseValue({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX }) });   // F103: SetItem's basePrice
   items.push(map);
   return map;
 }
@@ -398,7 +422,10 @@ export function randomlyAddPotion(chance, items, rolls = Math.random) {
 export function randomlyAddPotionRecipe(chance, items, rolls = Math.random) {
   if (!dice100(chance, rolls())) return null;
   const key = CLASSIC_RECIPE_KEYS[Math.floor(rolls() * CLASSIC_RECIPE_KEYS.length)];
-  const recipe = mintCondition({ group: 'MiscItems', templateIndex: POTION_RECIPE_TEMPLATE_INDEX, potionRecipeKey: key });
+  // CreateRandomRecipe sets PotionRecipeKey too (ItemBuilder.cs:772),
+  // so a recipe is priced by the potion it teaches, not by MiscItems 4.
+  const row = { group: 'MiscItems', templateIndex: POTION_RECIPE_TEMPLATE_INDEX, potionRecipeKey: key };
+  const recipe = mintCondition({ ...row, value: potionValue(key, row) });
   items.push(recipe);
   return recipe;
 }

@@ -15,7 +15,7 @@
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
-import { enchantArmorMod, enchantChanceToHitMod, enchantWeightAllowanceMult, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload   // the monster multi-attack reflex gate (F2)
+import { enchantArmorMod, enchantChanceToHitMod, enchantWeightAllowanceMult, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
@@ -310,9 +310,12 @@ export function adjustmentsToHit(target) {
  *  four atronachs, horse, dragonling, dreugh, Lamia). The enemy half only
  *  works once the career is stored - AUDIT 21 F1.
  *
- *  ImprovedAdrenalineRush is an unported enchantment, so the improved
- *  modifier (8) is unreachable and the base (5) stands. That is a routed gap,
- *  not a blocker: DFU's ternary picks the base whenever it is false. */
+ *  AUDIT 39. ImprovedAdrenalineRush is NOT unported - ImprovesTalents(2)
+ *  decodes into the enchantment fold's bag (enchantments.js) - but the
+ *  ternary read a top-level `entity.improvedAdrenalineRush` that nothing
+ *  writes, so the improved modifier (8) was unreachable anyway. The read
+ *  is the fold's own accessor, which is where DFU's entity flag lives
+ *  here. */
 export const ADRENALINE_RUSH_MODIFIER = 5;
 export const IMPROVED_ADRENALINE_RUSH_MODIFIER = 8;
 /** DFCareer.HasSpecialAbility: the flag masked against the bitfield's LOW
@@ -325,10 +328,10 @@ const inAdrenalineRush = (e) => Boolean(e)
 export function adrenalineRushToHit(attacker, target) {
   let mod = 0;
   if (inAdrenalineRush(attacker)) {
-    mod += attacker.improvedAdrenalineRush ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
+    mod += entityImprovedAdrenalineRush(attacker) ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
   }
   if (inAdrenalineRush(target)) {
-    mod -= target.improvedAdrenalineRush ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
+    mod -= entityImprovedAdrenalineRush(target) ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
   }
   return mod;
 }
@@ -466,7 +469,7 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null } = {}) {
   if (!attacker || !target) return 0;
   // HN1: THE RESOLUTION IS REPORTED, once per attack, through one seam
   // (setPlayerAttackHook - the enhanced HUD's damage numbers). Every
@@ -535,7 +538,16 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
         [b.minDamage2 ?? 0, b.maxDamage2 ?? 0],
         [b.minDamage3 ?? 0, b.maxDamage3 ?? 0],
       ];
-      const reflexesChance = 50 - 10 * ((target.reflexes ?? 2) - 2);
+      // AUDIT 39: the gate is the PLAYER'S Reflexes setting, whoever is
+      // being bitten. FormulaHelper.cs:551 binds `player` from the game
+      // and :654 reads `player.Reflexes` regardless of `target`, so a
+      // monster mauling another foe rolls the same band as one mauling
+      // the player. Only the player carries the field (playerEntity.js),
+      // so foe-vs-foe strikes hand it in as `playerReflexes` (the same
+      // value their EnemyAttack timer is already seeded with); a strike
+      // AT the player finds it on the target itself. 2 = Average.
+      const reflexes = playerReflexes ?? (target.isPlayer ? target.reflexes : null) ?? 2;
+      const reflexesChance = 50 - 10 * (reflexes - 2);
       for (const [min, max] of spans) {
         let hitDamage = 0;
         if (dfRand() % 100 < reflexesChance && min > 0 &&
@@ -623,7 +635,10 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0)) {
     damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, weapon, {
       entity: attacker, target, damage,
-      nowMinutes: enchantCtx?.nowMinutes ?? 0, ctx: enchantCtx,
+      // AUDIT 39: null, not 0 - no caller passes an enchantCtx here, and
+      // a literal 0 stamped HealthLeech's use clock at the epoch. The
+      // dispatcher falls back to the HOST's classic minute.
+      nowMinutes: enchantCtx?.nowMinutes ?? null, ctx: enchantCtx,
     });
   }
   // V2a/V2b: RacialOverrideEffect.OnWeaponHitEntity, at the same tail
@@ -637,7 +652,16 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // that cycle. worldTick registers it, and every host loads worldTick.
   if (attacker.isPlayer && attacker.racialOverride) {
     _racialHitHook?.(attacker, target, {
-      nowMinutes: enchantCtx?.nowMinutes ?? 0,
+      // AUDIT 39: THE LIVE MINUTE, never 0. DFU's UpdateSatiation reads
+      // the clock itself (ToClassicDaggerfallTime()), so the stamp is
+      // always the current classic minute - and no strike site passes an
+      // enchantCtx, so the old `?? 0` inverted both mechanics: the
+      // satiation tests compare that stamp against the ABSOLUTE minute
+      // (523530 at the classic start), so a fed vampire read unfed
+      // forever and the werewolf's kill clock never reset. The player's
+      // own per-minute marker is the clock every host already writes
+      // (worldTick's PlayerEntity.Update:521 leg).
+      nowMinutes: enchantCtx?.nowMinutes ?? attacker.lastGameMinutes ?? 0,
       mobileType: target?.mobileType ?? null,
       isCivilian: !!enchantCtx?.targetIsCivilian,
     });

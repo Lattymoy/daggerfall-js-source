@@ -105,7 +105,11 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   // below (endurance >> 3) + 4.
   assert.match(src, /const showBreath = held > 0;/);
   assert.match(src, /breathShortThreshold\(liveStat\(vitals, 'endurance'\)\) > held/);
-  assert.match(src, /import \{ compassScroll, breathShortThreshold \} from '\.\/hud\.js'/,
+  // AUDIT 39 F133 widened this import (compassMarkerLerp +
+  // DETECT_MARKER_RGB for the Detect markers); the law pinned here is
+  // that the threshold comes from the classic HUD rather than being
+  // restated, so the pin asks for the name, not the whole list.
+  assert.match(src, /import \{ compassScroll, breathShortThreshold[^}]*\} from '\.\/hud\.js'/,
     'the threshold is the classic HUD\'s own');
   assert.match(read('src/ui/hud.js'), /export const breathShortThreshold = \(liveEndurance\) => \(liveEndurance >> 3\) \+ 4;/);
   assert.match(src, /maxBreath\(vitals\) \|\| 1/, 'and the ceiling is statMods\', not a number typed here');
@@ -128,6 +132,33 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   // ...and both are still GUARDED writes, like everything else here.
   assert.match(src, /if \(last\.readied !== readyName\) \{/);
   assert.match(src, /if \(last\.weapon !== weaponName\) \{/);
+});
+
+test('AUDIT 39: every host that draws a HUD fills the two hands', () => {
+  // "A host that knows neither passes neither" was true of all FOUR of
+  // them: PX30b built the plaques, hud.js forwarded the keys, and no
+  // drawHud call site ever supplied one - so both were permanently
+  // display:none in the played game, which is a drawn door with a
+  // stylesheet block behind it. Every host had both values one
+  // argument over from the weaponSheathed it already passed.
+  const hosts = {
+    'src/scenes/world.js': 'weaponRig.playerWeapon.weapon',
+    'src/scenes/exterior.js': 'weaponRig.playerWeapon.weapon',
+    'src/scenes/worldModes.js': 'interiorWeapon.playerWeapon.weapon',
+    'src/scenes/dungeonContext.js': 'playerWeapon.weapon',
+  };
+  for (const [f, rig] of Object.entries(hosts)) {
+    const src = read(f);
+    const at = src.indexOf('drawHud(renderer, canvas, hudArt');
+    assert.ok(at > 0, `${f} draws no HUD`);
+    // the bag ends at the call's own closing brace
+    const bag = src.slice(at, src.indexOf('});', at));
+    assert.match(bag, /readied: magic[?.]*\.readied[?.]*\(\) \?\? null,/, `${f} hands over no readied spell`);
+    assert.ok(bag.includes(`weapon: ${rig} ?? null,`), `${f} hands over no held weapon`);
+    // and the rig it reads is the SAME one weaponSheathed comes off,
+    // which is what stops a host reading two different weapons.
+    assert.ok(bag.includes(`${rig.replace(/\.weapon$/, '')}.sheathed`), `${f} reads two rigs`);
+  }
 });
 
 test('PX30c: the HUD scales from a SETTING, and the percentage lives in the bar', () => {

@@ -895,6 +895,7 @@ import {
 import { SAVE_VERSION } from '../src/systems/save.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { GUILD_GROUPS } from '../src/formats/factionFile.js';
+import { CLASSIC_RECIPE_KEYS } from '../src/systems/loot.js';   // AUDIT 39: PotionRecipe.classicRecipeKeys
 
 // A parameterized 107-byte item record data block.
 function itemData({ name = 'Thing', group = 3, index = 4, value = 100, flags = 0,
@@ -1064,7 +1065,12 @@ test('SAV2: item conversion - template mapping, arrows stack, enchantment discar
     name: 'My Sword', group: 3, index: 4, value: 999, flags: 0,
     currentCondition: 300, maxCondition: 400, typeDependentData: 0,
     image1: 0x1234, material: 2, color: 0, enchantmentPoints: 0, message: 0,
-    magic: Array.from({ length: 10 }, () => ({ type: 0, param: 0 })),
+    // AUDIT 39: the empty fixture moved from 0 to -1. EnchantmentTypes.
+    // None is -1 (ItemsFile.cs:113) and classic writes 0xFFFF into the
+    // unused slots, which the reader takes signed; 0 is CastWhenUsed, a
+    // REAL enchantment. The old pin asserted the discard over an array
+    // of ten CastWhenUsed entries, so it passed on the wrong sentinel.
+    magic: Array.from({ length: 10 }, () => ({ type: -1, param: -1 })),
   } });
   assert.equal(sword.group, 'Weapons');
   assert.equal(sword.templateIndex, 117);              // Weapons[4]
@@ -1072,6 +1078,16 @@ test('SAV2: item conversion - template mapping, arrows stack, enchantment discar
   assert.equal(sword.value, 999);
   assert.equal(sword.stackCount, 1);
   assert.equal(sword.enchantments, undefined, 'an all-None magic array is discarded');
+
+  // and the other side of the sentinel: ten CastWhenUsed(0) entries are
+  // ten real enchantments and the array is KEPT.
+  const cast = classicItemFromRecord({ parsedData: {
+    name: 'Wand', group: 3, index: 4, value: 999, flags: 0,
+    currentCondition: 300, maxCondition: 400, typeDependentData: 0,
+    image1: 0x1234, material: 2, color: 0, enchantmentPoints: 0, message: 0,
+    magic: Array.from({ length: 10 }, () => ({ type: 0, param: 0 })),
+  } });
+  assert.equal(cast.enchantments?.length, 10, 'EnchantmentTypes.CastWhenUsed is not None');
 
   const arrows = classicItemFromRecord({ parsedData: {
     name: 'Arrows', group: 3, index: 18, value: 1, flags: 0,
@@ -1087,6 +1103,46 @@ test('SAV2: item conversion - template mapping, arrows stack, enchantment discar
     magic: [{ type: 24, param: 7 }, { type: -1, param: -1 }],
   } });
   assert.deepEqual(magic.enchantments, [{ type: 24, param: 7 }, { type: -1, param: -1 }]);
+});
+
+// AUDIT 39: FromItemRecord's recipe arm (DaggerfallUnityItem.cs:1577-1579)
+// - "Convert classic recipes to DFU recipe key". Without it an imported
+// bottle carries no key and drinks as nothing, and an imported recipe
+// sheet names no potion.
+test('SAV2: classic potions and recipes carry their DFU recipe key across the import', () => {
+  const potion = classicItemFromRecord({ parsedData: {
+    name: 'Potion', group: 1, index: 1, value: 25, flags: 0,
+    currentCondition: 1, maxCondition: 1, typeDependentData: 2,   // classic recipe 2 = Healing
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(potion.group, 'UselessItems1');
+  assert.equal(potion.templateIndex, 83, 'a potion IS a glass bottle');
+  assert.equal(potion.potionRecipeKey, CLASSIC_RECIPE_KEYS[2]);
+
+  const recipe = classicItemFromRecord({ parsedData: {
+    name: 'Recipe', group: 27, index: 4, value: 100, flags: 0,
+    currentCondition: 1, maxCondition: 1, typeDependentData: 19,   // the last row
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(recipe.templateIndex, 278);
+  assert.equal(recipe.potionRecipeKey, CLASSIC_RECIPE_KEYS[19]);
+
+  // DFU's guard is the upper bound alone, and it is exclusive: a byte
+  // past the twenty rows leaves the item keyless rather than throwing.
+  const junk = classicItemFromRecord({ parsedData: {
+    name: 'Potion', group: 1, index: 1, value: 25, flags: 0,
+    currentCondition: 1, maxCondition: 1, typeDependentData: CLASSIC_RECIPE_KEYS.length,
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(junk.potionRecipeKey, undefined);
+
+  // and nothing else takes a key - the same byte is an arrow stack.
+  const arrows = classicItemFromRecord({ parsedData: {
+    name: 'Arrows', group: 3, index: 18, value: 1, flags: 0,
+    currentCondition: 0, maxCondition: 0, typeDependentData: 5,
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(arrows.potionRecipeKey, undefined);
 });
 
 test('SAV2: items and spells - discard law, wagon split, equip, soul, conjured time, gold', () => {
@@ -1254,6 +1310,15 @@ test('SAV2: classicSaveToSnapshot - the whole envelope, at SAVE_VERSION', () => 
   assert.equal(snap.biographyReactionMod, -2);
   assert.equal(snap.lastSkillCheckTime, 13579);
   assert.equal(snap.timeOfLastSkillTraining, 666666);
+  // AUDIT 39: the rest of AssignCharacter's clock/tally block
+  // (PlayerEntity.cs:856-861). The document carried them and the
+  // envelope did not, so restorePlayer's `?? 0` arms zeroed both
+  // crime-guild tallies and both letter clocks on every import.
+  assert.equal(snap.lastTimePlayerAteOrDrankAtTavern, 555555);
+  assert.equal(snap.timeForThievesGuildLetter, 777777);
+  assert.equal(snap.timeForDarkBrotherhoodLetter, 888888);
+  assert.equal(snap.darkBrotherhoodRequirementTally, 3);
+  assert.equal(snap.thievesGuildRequirementTally, 4);
 
   assert.deepEqual(snap.sGroupReputations.slice(0, 5), [10, -20, 30, -40, 50]);
   assert.equal(snap.sGroupReputations.length, 11);

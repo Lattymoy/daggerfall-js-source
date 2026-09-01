@@ -6,6 +6,25 @@
 //   - Indexed color means hard pixels: NEAREST filtering.
 //   - Alpha 0 texels are palette-index cutouts; the shader discards them.
 
+/** EE4/EE5: THE CLOUD-SHADOW BLOCK, ONE SOURCE. Both the world FS and
+ *  TERRAIN_FS sample the sky's cover to shadow the ground, so both need
+ *  these uniforms and the sky's own hash/fbm - and TERRAIN_FS carried
+ *  the USES without the DECLARATIONS. A shader that cannot compile is a
+ *  Renderer constructor that throws, which is the black screen on boot.
+ *  Interpolated into both rather than written twice: two copies of a
+ *  uniform list is the same bug waiting for the next uniform. */
+const CLOUD_SHADOW_GLSL = `
+uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
+uniform vec2 uCloudWind;
+// EE4: the sky's own hash and fbm, term for term - the same per-octave
+// offsets, so the ground reads the field the sky drew and not a
+// lookalike of it.
+float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
+float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
+`;
+
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNormal;
@@ -35,6 +54,10 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
+uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
+uniform vec3 uMoonColor;
+${CLOUD_SHADOW_GLSL}
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -63,7 +86,18 @@ void main() {
   if (tex.a < 0.5) discard;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff));
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  // AUDIT 39r R17: DaggerfallDefault.shader:83-85 - "Emission cancels out
+  // other lights". The lit term runs on albedo.rgb - emission, NOT on
+  // the raw albedo, so an auto-emissive record (whose mask IS its albedo,
+  // TextureReader.cs:301-308, worn at EmissionColor = Color.white) lands
+  // at exactly its albedo whatever the scene light is. Adding on top of
+  // full lighting put a lantern at ~2.3x albedo outdoors. The clamp is
+  // ours: a window mask can be brighter than the glass texel under it,
+  // and a negative albedo has no honest meaning here.
+  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   vec3 pointAcc = vec3(0.0);
@@ -74,17 +108,17 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += tex.rgb * pointAcc;
+  lit += albedo * pointAcc;
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  lit += tex.rgb * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  // Window emission: white mask from getWindowColors32, tinted by the
-  // active window style (MaterialReader semantics: emission adds on top).
-  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  // The emission (window style from getWindowColors32, or an auto-emissive
+  // record's own albedo at Color.white) goes back on top of the lighting
+  // its subtraction above paid for - o.Emission = emission.
   outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
   // A2: the Daggerfall/Automap shader's presentation, verbatim
   // (DaggerfallAutomap.shader:102-110): brightness falls with vertical
@@ -142,6 +176,9 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
+uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
+uniform vec3 uMoonColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -170,7 +207,8 @@ void main() {
   if (uAlphaCut > 0.0 && texel.a < uAlphaCut) discard;
   vec3 albedo = vColor * texel.rgb;
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff));
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -254,12 +292,20 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * uPointColors[i];
   }
-  vec3 emission = texture(uEmissionTex, vUV).rgb;   // spectral eyes/body glow (black tex otherwise)
+  // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
+  // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
+  // albedo.rgb - emission and adds the emission back - "Emission cancels
+  // out other lights" - so a self-lit flat draws at exactly its albedo in
+  // any light. Adding it on top of the exterior tint (~1.31 at noon) put
+  // every missile, impact flash and fire daedra at ~2.3x albedo, clipped
+  // to white. The clamp is ours; a negative albedo has no meaning here.
+  vec3 emission = texture(uEmissionTex, vUV).rgb;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
   // R12: the indirect term, attenuation-only like the lantern term
   // (billboards have no normal).
   float iD = length(uIndirect.xyz - vBBWorld);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lit = tex.rgb * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
+  vec3 lit = albedo * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), uSpectral == 1 ? tex.a : 1.0);
 }`;
 
@@ -337,6 +383,7 @@ const TERRAIN_FS = `#version 300 es
 precision highp float;
 precision highp usampler2D;
 precision highp sampler2DArray;
+${CLOUD_SHADOW_GLSL}
 in vec3 vNormal;
 in vec3 vWorldPos;
 in vec2 vLocalXZ;
@@ -347,6 +394,9 @@ uniform vec3 uLightDir;
 uniform vec3 uAmbient;
 uniform float uSunScale;
 uniform vec3 uSunColor;
+uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
+uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
+uniform vec3 uMoonColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -386,8 +436,24 @@ void main() {
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
+  // EE4 (Enhanced Environments): CLOUD SHADOWS. The sky already draws a
+  // two-deck cloud field; this samples THE SAME FIELD, at the point
+  // where this ground's ray to the sun crosses the cloud plane, so the
+  // shadow and the cloud that casts it are one field rather than two
+  // that drift apart. The plane is high and the dome is far, so the
+  // parallax belongs to the WIND: shadows move with the weather, not
+  // with the player.
+  //
+  // uShadowAmt is 0 for the classic skin and indoors, so this whole
+  // term costs nothing there and cannot change what classic draws.
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff));
+  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
+    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
+    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
+    diff *= 1.0 - cov * uShadowAmt;
+  }
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -406,12 +472,15 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
+// MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
+const EMISSION_WHITE = new Float32Array([1, 1, 1]);
 
 /** THE CHARACTER PIXELIZE STANDARD (Mac): characters and everything
  *  character-side render at this pixel size; the WORLD is excluded.
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
 import { TextureFile } from '../formats/textureFile.js';
+import { buildEnhancedTiles } from './groundSurfaces.js';   // EE5: the drawn ground
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
 export const CHAR_PIXEL = 9;
@@ -439,7 +508,20 @@ export function studioLight(view) {
     indirect: new Float32Array([0, 0, 0, 0]),
   };
 }
-export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (E3d): screenW/CHAR_PIXEL at 1440p ~ 366
+export const CHAR_SPRITE_RT_SIZE = 1024;   // raised for the FP viewmodel frame (E3d), and again at MW-D43 for MW_ARM_PIXEL
+
+/** MW-D43 (Mac: the first person and third person views are extremely
+ *  pixelized): THE MORROWIND ARM IS NOT A SPRITE, and CHAR_PIXEL is
+ *  the SPRITE standard. Nine is Mac's locked look for Daggerfall's 2D
+ *  characters, whose source art is already chunky - running a
+ *  Morrowind MESH through the same dial throws away detail that was
+ *  there, which is what "extremely pixelized" is. Its own dial, so the
+ *  sprite standard stays exactly where he put it (9 -> 12 -> 9 over
+ *  three revisions; the comment above CHAR_PIXEL still describes the
+ *  first of those and is stale, left alone here rather than edited on
+ *  the way past). TUNABLE BY EYE, like STUDIO_AMBIENT and STUDIO_KEY -
+ *  raise it toward 9 for chunkier arms, drop it toward 1 for none. */
+export const MW_ARM_PIXEL = 3;
 
 /**
  * AUDIT 19 F6: the smooth/blend opt-ins used to be pinned by SOURCE REGEX,
@@ -491,6 +573,9 @@ export class Renderer {
     this.uAmbient = gl.getUniformLocation(this.program, 'uAmbient');
     this.uSunScale = gl.getUniformLocation(this.program, 'uSunScale');
     this.uSunColor = gl.getUniformLocation(this.program, 'uSunColor');
+    this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
+    this.uMoonScale = gl.getUniformLocation(this.program, 'uMoonScale');
+    this.uMoonColor = gl.getUniformLocation(this.program, 'uMoonColor');
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
     this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
@@ -502,6 +587,34 @@ export class Renderer {
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
     this.emissionTextures = new Map(); // "archive_record" -> window mask
+    // AUDIT 39 F49: keys whose emission map is the AUTO-EMISSIVE albedo
+    // (MaterialReader.cs:448-453 - EmissionColor = Color.white), not a
+    // window mask wearing the active window style. The billboard shader
+    // already reads its mask untinted, which IS white; the mesh path
+    // multiplies by uEmissionColor, so it needs the distinction.
+    this.emissionWhite = new Set();
+    // The value last uploaded to the solid program's uEmissionColor
+    // (uniforms are program state, so this survives a program switch).
+    this._emissionColorUp = null;
+    // EV2: the sub-mesh texture cache's generation. drawMesh used to
+    // mint a `${archive}_${record}` string per sub-mesh per frame -
+    // thousands of short-lived strings a frame, the render loop's
+    // single largest GC source. Sub-meshes now cache their resolved
+    // textures, stamped with this generation AND the texRemap object
+    // identity; any texture or emission upload bumps it, so a texture
+    // that streams in later is re-looked-up rather than staying a
+    // cached miss.
+    this._texGen = 1;
+    // EV2: per-frame draw statistics, reset in beginFrame. Integer
+    // increments only - cheap enough to keep on always, so probes and
+    // the __renderer surface can measure a real frame (the EV arc's
+    // "land wins against numbers" doctrine).
+    // AUDIT 39 F50: EVERY pass counts, not drawMesh alone - the terrain,
+    // water, billboard, character, sprite-quad and screen-quad draws
+    // were invisible here, which made the counter blind to exactly the
+    // terrain culling it exists to measure. texBinds counts the binds a
+    // DRAW pays; upload-time binds are creation cost, not frame cost.
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._pointColor = new Float32Array([1, 1, 1]);
@@ -543,6 +656,9 @@ export class Renderer {
       ambient: gl.getUniformLocation(cp, 'uAmbient'),
       sunScale: gl.getUniformLocation(cp, 'uSunScale'),
       sunColor: gl.getUniformLocation(cp, 'uSunColor'),
+      moonDir: gl.getUniformLocation(cp, 'uMoonDir'),
+      moonScale: gl.getUniformLocation(cp, 'uMoonScale'),
+      moonColor: gl.getUniformLocation(cp, 'uMoonColor'),
       pointCount: gl.getUniformLocation(cp, 'uPointCount'),
       pointLights: gl.getUniformLocation(cp, 'uPointLights'),
       pointColors: gl.getUniformLocation(cp, 'uPointColors'),
@@ -557,6 +673,12 @@ export class Renderer {
     this._ambient = new Float32Array([0.45, 0.45, 0.45]);
     this._sunScale = 0.55;
     this._sunColor = new Float32Array([1, 1, 1]);
+    // EV5: the moon term defaults OFF - scale 0 is a no-op in every
+    // shader, so classic scenes, interiors and dungeons (which never
+    // call setMoonlight) keep DFU's hard-off night to the byte.
+    this._moonDir = new Float32Array([0, 1, 0]);
+    this._moonScale = 0;
+    this._moonColor = new Float32Array([1, 1, 1]);
     // Billboards stay full-bright until a scene installs the clock via
     // setLighting - the solid defaults above reproduce the pre-R5 solid
     // shading, but 0.45 + 0.55 * 0.5 would silently dim flats to 72.5%
@@ -575,6 +697,11 @@ export class Renderer {
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
+    this.tUShadowAmt = gl.getUniformLocation(this.terrainProgram, 'uShadowAmt');
+    this.tUCloudCover = gl.getUniformLocation(this.terrainProgram, 'uCloudCover');
+    this.tUCloudSoft = gl.getUniformLocation(this.terrainProgram, 'uCloudSoft');
+    this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
+    this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -582,14 +709,41 @@ export class Renderer {
     this.tUAmbient = gl.getUniformLocation(this.terrainProgram, 'uAmbient');
     this.tUSunScale = gl.getUniformLocation(this.terrainProgram, 'uSunScale');
     this.tUSunColor = gl.getUniformLocation(this.terrainProgram, 'uSunColor');
+    this.tUMoonDir = gl.getUniformLocation(this.terrainProgram, 'uMoonDir');
+    this.tUMoonScale = gl.getUniformLocation(this.terrainProgram, 'uMoonScale');
+    this.tUMoonColor = gl.getUniformLocation(this.terrainProgram, 'uMoonColor');
     this.tUPointCount = gl.getUniformLocation(this.terrainProgram, 'uPointCount');
     this.tUPointLights = gl.getUniformLocation(this.terrainProgram, 'uPointLights');
     this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
-    this._terrainIndexBuffer = null;
-    this._terrainIndexCount = 0;
+    /** EE3: set by the host from the Enhanced Environments switch. It
+     *  is read at UPLOAD time, and an archive's array is cached, so a
+     *  flip takes effect when the world next loads - the same law the
+     *  sky pass already follows. */
+    this.enhancedGround = false;
+    /** AUDIT 46: THE GROUND'S BISECT DOOR. A black world shipped and I
+     *  could not reproduce it - my GL gate passes on the broken code,
+     *  because SwiftShader accepts what a real driver may not. Rather
+     *  than guess a fourth time, the three states are selectable:
+     *    ?ground=classic  the original tiles, NEAREST      (pre-EE3)
+     *    ?ground=tiles    the original tiles, mipmapped    (EE3)
+     *    ?ground=drawn    our surfaces, mipmapped          (EE7)
+     *  Whichever one is black names the slice that broke it, in the
+     *  time it takes to reload. */
+    this.groundMode = null;
+    /** EE4: the cloud deck the ground shadows under, handed over by the
+     *  host from the SKY's own eased weather row. Null = no shadows,
+     *  which is the classic skin and every interior. */
+    this._cloudShadow = null;
+    // EV4: one shared index buffer PER INDEX SET, keyed by the array's
+    // identity - the world host shares one full-grid array across every
+    // pixel and one strided far-ring array across the LOD ring. The old
+    // single-buffer cache silently drew every later surface with the
+    // FIRST set ever uploaded, which was invisibly correct only while
+    // exactly one set existed.
+    this._terrainIndexSets = new Map(); // indices array -> { buffer, count }
 
     this.waterProgram = this._buildProgram(WATER_VS, WATER_FS);
     this._bbFog = {
@@ -622,14 +776,14 @@ export class Renderer {
     {
       // Shared unit XZ quad for water planes.
       this.waterVao = gl.createVertexArray();
-      gl.bindVertexArray(this.waterVao);
+      this._bindVao(this.waterVao);
       const vb = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vb);
       gl.bufferData(gl.ARRAY_BUFFER,
         new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);
       gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
     }
     this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
     this.bbUView = gl.getUniformLocation(this.bbProgram, 'uView');
@@ -661,6 +815,48 @@ export class Renderer {
     // hard way (the sky-blue-screen regression; tools/cullProbe.mjs).
     gl.frontFace(gl.CW);
     gl.clearColor(0.53, 0.7, 0.92, 1.0); // pale Iliac Bay sky
+    // EV6: the JS shadow of that clear colour - the sprite pass used
+    // to gl.getParameter(COLOR_CLEAR_VALUE) it back, a synchronous
+    // driver query per sprite frame (the class EV2 killed in
+    // precipitation). Every borrower restores what it took, so the
+    // shadow stays true.
+    this._clearColor = new Float32Array([0.53, 0.7, 0.92, 1.0]);
+    // EV6: GL STATE SHADOWS. Every program bind and VAO bind in this
+    // file funnels through _use/_bindVao, which skip the call when the
+    // shadow says it is already bound - a city frame ran ~1045
+    // useProgram calls for a handful of distinct programs. The shadows
+    // reset at beginFrame and at markForeignPass (the four passes
+    // that change programs behind the renderer's back: both skies,
+    // precipitation, and the overworld map since AUDIT 39 F55 - the R9
+    // law's other half: an entry point may only trust a binding it can
+    // account for).
+    this._lastProgram = null;
+    this._lastVao = null;
+  }
+
+  /** EV6: bind `program` unless the shadow says it already is. */
+  _use(program) {
+    if (this._lastProgram === program) return;
+    this.gl.useProgram(program);
+    this._lastProgram = program;
+    this.stats.programBinds++;
+  }
+
+  /** EV6: bind `vao` (or null) unless the shadow says it already is. */
+  _bindVao(vao) {
+    if (this._lastVao === vao) return;
+    this.gl.bindVertexArray(vao);
+    this._lastVao = vao;
+    if (vao) this.stats.vaoBinds++;
+  }
+
+  /** EV6: a pass outside this renderer (the skies, precipitation) has
+   *  changed program/VAO state behind the shadows' back - forget them
+   *  and unbind the VAO for real, so the next entry point rebinds. */
+  markForeignPass() {
+    this.gl.bindVertexArray(null);
+    this._lastProgram = null;
+    this._lastVao = null;
   }
 
   _buildProgram(vsSrc, fsSrc) {
@@ -698,7 +894,7 @@ export class Renderer {
     const uv = !!opts.uv;
     const floats = uv ? 11 : 9;
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
     const vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferData(gl.ARRAY_BUFFER, packed, gl.STATIC_DRAW);
@@ -713,7 +909,7 @@ export class Renderer {
       gl.enableVertexAttribArray(3);
       gl.vertexAttribPointer(3, 2, gl.FLOAT, false, stride, 36);
     }
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats };
   }
 
@@ -762,7 +958,7 @@ export class Renderer {
   drawCharacter(mesh, modelMatrix) {
     const gl = this.gl;
     const c = this._char;
-    gl.useProgram(this.charProgram);
+    this._use(this.charProgram);
     gl.uniformMatrix4fv(c.proj, false, this._proj);
     gl.uniformMatrix4fv(c.view, false, this._view);
     gl.uniformMatrix4fv(c.model, false, modelMatrix);
@@ -770,6 +966,9 @@ export class Renderer {
     gl.uniform3fv(c.ambient, this._ambient);
     gl.uniform1f(c.sunScale, this._sunScale);
     gl.uniform3fv(c.sunColor, this._sunColor);
+    gl.uniform3fv(c.moonDir, this._moonDir);
+    gl.uniform1f(c.moonScale, this._moonScale);
+    gl.uniform3fv(c.moonColor, this._moonColor);
     const count = this._pointLights.length / 4;
     gl.uniform1i(c.pointCount, count);
     if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
@@ -778,7 +977,7 @@ export class Renderer {
     gl.uniform3fv(c.indirectColor, this._indirectColor);
     this._uploadFog(this._charFog);
     gl.disable(gl.CULL_FACE);
-    gl.bindVertexArray(mesh.vao);
+    this._bindVao(mesh.vao);
     // MW-D11: a textured mesh carries RANGES - one per piece, each with
     // its own texture - because a Morrowind arm is several meshes with
     // several textures and this path issues drawArrays. Without ranges
@@ -801,17 +1000,19 @@ export class Renderer {
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
         gl.drawArrays(gl.TRIANGLES, r.first, r.count);
+        this.stats.texBinds++; this.stats.draws++;
       }
     } else {
       gl.uniform1f(c.useTex, 0);
       gl.uniform1f(c.alphaCut, 0);
       gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
       gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+      this.stats.texBinds++; this.stats.draws++;
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.enable(gl.CULL_FACE);
   }
 
@@ -868,19 +1069,39 @@ export class Renderer {
     // GL state, and beginFrame (:1104) clears without setting one - so
     // leaving this transparent black behind repainted EVERY later
     // frame's uncovered pixels, visible before the sky panorama loads
-    // and in skyless scenes. Same save/restore the automap preview
-    // has used since its own pass (worldModes.js:1463/:1476).
-    const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);
+    // and in skyless scenes.
+    // EV6: the restore now reads the JS shadow (_clearColor, kept true
+    // by the constructor and every borrower) instead of a synchronous
+    // gl.getParameter round-trip per sprite frame; and the clear is
+    // SCISSORED to the sprite's own pw x ph corner instead of wiping
+    // the full 512x512 target - the quad only ever samples that
+    // corner.
     gl.clearColor(0, 0, 0, 0);
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(0, 0, pw, ph);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.disable(gl.SCISSOR_TEST);
     gl.viewport(0, 0, pw, ph);
-    const sp = this._proj, sv = this._view;
-    this._proj = proj; this._view = view;
+    // AUDIT 39 F47/F48: THE FOG IS BORROWED OFF, the same borrow-and-
+    // return shape as the clear colour and the studio light. Two things
+    // make an offscreen fog wrong. The composite quad
+    // (drawCharacterSpriteQuad) fogs the finished sprite at the rig's
+    // own world point, so fogging inside the RT too darkened a
+    // character as f^2 while the wall behind it went as f. And _camPos
+    // is the WORLD camera - beginFrame is its only producer - while
+    // this pass takes a private camera: the callers that draw at the
+    // origin in a lens-local space (the FP viewmodel, the inventory
+    // figure, the item icons) were fogged by the player's absolute
+    // distance from the world origin, and the icon read-back baked that
+    // darkness into its cache.
+    const sp = this._proj, sv = this._view, sf = this._fogMode;
+    this._proj = proj; this._view = view; this._fogMode = 0;
     this.drawCharacter(mesh, modelMatrix);
-    this._proj = sp; this._view = sv;
+    this._proj = sp; this._view = sv; this._fogMode = sf;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);
+    const cc = this._clearColor;
+    gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
     return cs.tex;
   }
 
@@ -903,11 +1124,13 @@ export class Renderer {
     const saved = studio ? {
       lightDir: this._lightDir, ambient: this._ambient, sunScale: this._sunScale,
       sunColor: this._sunColor, pointLights: this._pointLights, indirect: this._indirect,
+      moonScale: this._moonScale,   // EV5: no moonlight on a UI panel
     } : null;
     if (studio) {
       const st = studioLight(view);
       this._lightDir = st.lightDir; this._ambient = st.ambient; this._sunScale = st.sunScale;
       this._sunColor = st.sunColor; this._pointLights = st.pointLights; this._indirect = st.indirect;
+      this._moonScale = 0;
     }
     try {
       this.renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph);
@@ -915,6 +1138,7 @@ export class Renderer {
       if (saved) {
         this._lightDir = saved.lightDir; this._ambient = saved.ambient; this._sunScale = saved.sunScale;
         this._sunColor = saved.sunColor; this._pointLights = saved.pointLights; this._indirect = saved.indirect;
+        this._moonScale = saved.moonScale;
       }
     }
     const cs = this._charSpriteRT();
@@ -974,7 +1198,7 @@ void main() {
         camPos: gl.getUniformLocation(P, 'uCamPos'),
       };
       const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
+      this._bindVao(vao);
       const vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 5 * 4, gl.DYNAMIC_DRAW);
@@ -982,7 +1206,7 @@ void main() {
       gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
       gl.enableVertexAttribArray(1);
       gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
       this._charQuadVAO = vao; this._charQuadVBO = vbo;
     }
     const [cx, cy, cz] = center, [rx, , rz] = right;
@@ -992,7 +1216,7 @@ void main() {
       cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
       cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
     ]);
-    gl.useProgram(this.charQuadProgram);
+    this._use(this.charQuadProgram);
     const c = this._charQuad;
     gl.uniformMatrix4fv(c.proj, false, this._proj);
     gl.uniformMatrix4fv(c.view, false, this._view);
@@ -1000,13 +1224,14 @@ void main() {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(c.tex, 0);
     this._uploadFog(this._charQuad);
-    gl.bindVertexArray(this._charQuadVAO);
+    this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
     gl.disable(gl.CULL_FACE);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
     gl.enable(gl.CULL_FACE);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
   }
 
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
@@ -1090,7 +1315,7 @@ void main() {
         color: gl.getUniformLocation(this.screenQuadProgram, 'uColor'),
       };
       const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
+      this._bindVao(vao);
       const vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
@@ -1099,11 +1324,11 @@ void main() {
       const ibo = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
       this._screenQuadVao = vao;
     }
-    gl.useProgram(this.screenQuadProgram);
-    gl.bindVertexArray(this._screenQuadVao);
+    this._use(this.screenQuadProgram);
+    this._bindVao(this._screenQuadVao);
     gl.disable(gl.DEPTH_TEST);
     // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
     // blit has no facing, but with CULL_FACE left ON the global
@@ -1119,7 +1344,7 @@ void main() {
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
     gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); }
+    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); this.stats.texBinds++; }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
     // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
@@ -1132,10 +1357,11 @@ void main() {
     const blend = screenQuadBlends(tex, color, opts);
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    this.stats.draws++;
     if (blend) gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
   }
 
     drawScreenOverlayQuad(tex, u1, v1) {
@@ -1158,25 +1384,26 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         uv1: gl.getUniformLocation(this.overlayProgram, 'uUV1'),
       };
       const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
+      this._bindVao(vao);
       const vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0);
       gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-      gl.bindVertexArray(null);
+      this._bindVao(null);
       this._overlayVAO = vao;
     }
-    gl.useProgram(this.overlayProgram);
+    this._use(this.overlayProgram);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(this._overlay.tex, 0);
     gl.uniform2f(this._overlay.uv1, u1, v1);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
-    gl.bindVertexArray(this._overlayVAO);
+    this._bindVao(this._overlayVAO);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-    gl.bindVertexArray(null);
+    this.stats.texBinds++; this.stats.draws++;
+    this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
   }
@@ -1221,6 +1448,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
+    this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
 
@@ -1243,6 +1471,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this.textures.delete(key);
       freed = true;
     }
+    // AUDIT 39 F51: the EV2 generation covers BOTH directions of the
+    // map. A sub-mesh stamps its resolved texture and re-reads it while
+    // the generation holds, so a delete that did not bump left it
+    // binding a deleted WebGLTexture (INVALID_OPERATION, incomplete
+    // black) until some unrelated upload happened to bump.
+    if (freed) this._texGen++;
     return freed;
   }
 
@@ -1250,7 +1484,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   createMesh(model) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
 
     const buffers = [];
     const buf = (target, data) => {
@@ -1271,11 +1505,28 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
     buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
 
-    gl.bindVertexArray(null);
-    return { vao, subMeshes: model.subMeshes, buffers };
+    this._bindVao(null);
+    // HOTFIX 2026-08-31 (field crash, Firefox): the sub-meshes are
+    // COPIED, never shared with the model. drawMesh's EV2 texture
+    // cache stamps `_evTex`/`_evGen`/... onto each sub-mesh, and the
+    // windmill bake ships its sub-meshes as FROZEN module constants
+    // (windmillMesh.js) - `sm._evTex = tex` on a frozen object is a
+    // strict-mode TypeError, so the first mill drawn took the whole
+    // frame loop down ("can't define property _evTex: Object is not
+    // extensible"). The renderer may only stamp renderer-private
+    // fields on objects it OWNS; a shallow copy at upload time makes
+    // that true for every mesh, present and future, at build cost
+    // only.
+    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers };
   }
 
   beginFrame(proj, view, lightDir) {
+    const s = this.stats;
+    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
+    // EV6: the shadows reset with the counters - whatever ran between
+    // frames (UI passes, another context's work) is not trusted.
+    this._lastProgram = null;
+    this._lastVao = null;
     const gl = this.gl;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
@@ -1285,7 +1536,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(this.program);
+    this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uLightDir, lightDir);
@@ -1293,9 +1544,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uAmbient, this._ambient);
     gl.uniform1f(this.uSunScale, this._sunScale);
     gl.uniform3fv(this.uSunColor, this._sunColor);
+    gl.uniform3fv(this.uMoonDir, this._moonDir);
+    gl.uniform1f(this.uMoonScale, this._moonScale);
+    gl.uniform3fv(this.uMoonColor, this._moonColor);
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
+    this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -1316,6 +1571,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Active window style emission (windowEmissionRGB output). */
   setWindowEmission(rgb) {
     this._windowEmission = rgb;
+  }
+
+  /** EV5: the second directional term - the masser's key light. Takes
+   *  moonlightTerm's output or null; null (day, classic sky, indoors)
+   *  zeroes the scale and every shader's moon term is a no-op. */
+  setMoonlight(moon) {
+    if (!moon) { this._moonScale = 0; return; }
+    this._moonScale = moon.scale;
+    this._moonDir[0] = moon.dir[0]; this._moonDir[1] = moon.dir[1]; this._moonDir[2] = moon.dir[2];
+    this._moonColor[0] = moon.color[0]; this._moonColor[1] = moon.color[1]; this._moonColor[2] = moon.color[2];
   }
 
   /** Time-of-day lighting: ambient color, sun scale, sun color. */
@@ -1359,7 +1624,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._clipY = y ?? 1e9;
     if (this._solidFog?.clipY) {
       const gl = this.gl;
-      gl.useProgram(this.program);
+      this._use(this.program);
       gl.uniform1f(this._solidFog.clipY, this._clipY);
     }
   }
@@ -1373,7 +1638,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._automapMode = m ?? 0;
     if (this._solidFog?.amMode) {
       const gl = this.gl;
-      gl.useProgram(this.program);
+      this._use(this.program);
       gl.uniform1f(this._solidFog.amMode, this._automapMode);
     }
   }
@@ -1409,9 +1674,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._indirectColor = scaledColor;
   }
 
-  /** Upload a getWindowColors32 mask for a window (archive, record). */
-  uploadEmissionTexture(archive, record, color32) {
+  /** Upload an emission mask for (archive, record): a getWindowColors32
+   *  window mask, a spectral glow, or - with { white: true } - the
+   *  ALBEDO of an auto-emissive record, which wears no window tint
+   *  (MaterialReader.cs:448-453, EmissionColor = Color.white). */
+  uploadEmissionTexture(archive, record, color32, opts = {}) {
     const key = `${archive}_${record}`;
+    if (opts.white) this.emissionWhite.add(key);
     if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -1428,6 +1697,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
+    this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
 
@@ -1468,7 +1738,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
 
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
     const vb = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vb);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
@@ -1479,7 +1749,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const ib = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
 
     // FA1: `frame` is null for a still flat and a frame INDEX for an
     // animated one, which the draw folds into the texture key. Still
@@ -1515,21 +1785,28 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Lazily create the shared 129x129 terrain index buffer. */
   _terrainIndices(indices) {
-    if (this._terrainIndexBuffer) return;
+    let entry = this._terrainIndexSets.get(indices);
+    if (entry) return entry;
     const gl = this.gl;
-    this._terrainIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._terrainIndexBuffer);
+    // EV6: this element bind happens OUTSIDE any VAO of its own, and a
+    // drawn VAO may still be bound (drawMesh no longer unbinds) - an
+    // unguarded bind here would capture this buffer into that VAO.
+    this._bindVao(null);
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    this._terrainIndexCount = indices.length;
+    entry = { buffer, count: indices.length };
+    this._terrainIndexSets.set(indices, entry);
+    return entry;
   }
 
   /** Create one pixel's terrain surface (positions + normals grid). */
   createTerrainSurface(positions, normals, indices) {
     const gl = this.gl;
-    this._terrainIndices(indices);
+    const indexSet = this._terrainIndices(indices);
     const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    this._bindVao(vao);
     const buffers = [];
     const buf = (data, loc) => {
       const b = gl.createBuffer();
@@ -1542,9 +1819,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     };
     buf(positions, 0);
     buf(normals, 1);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._terrainIndexBuffer);
-    gl.bindVertexArray(null);
-    return { vao, buffers, indexCount: this._terrainIndexCount };
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexSet.buffer);
+    this._bindVao(null);
+    return { vao, buffers, indexCount: indexSet.count };
   }
 
   /** Upload a 128x128 tilemap byte texture (R8UI, NEAREST). */
@@ -1564,39 +1841,143 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
   uploadTileArray(archive, layers) {
-    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
+    // AUDIT 44 F2: THE CACHE OUTLIVED THE SWITCH. This returned the
+    // stored array before it ever looked at enhancedGround, and the
+    // cache lives on the RENDERER, which survives a world load - so a
+    // player who flipped Enhanced Environments and loaded a new world
+    // got the sampler the array had been built with the first time,
+    // and the row's promise that it "takes effect when the world next
+    // loads" was false for the ground. Only a page reload would have
+    // done it, which nobody would guess. The mode is part of the key
+    // now: two modes, two arrays, and flipping picks the other one.
+    const key = `${archive}:${this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic')}`;
+    if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
+    // EE5: THE DRAWN SURFACES. The enhanced ground keeps Daggerfall's
+    // tile SHAPES and replaces what is inside them - the four bases are
+    // ours and procedural, and the fifty-two blends are DERIVED by
+    // masking those bases through each original tile's own
+    // classification. Built here, on the machine that has the game,
+    // and stored nowhere: doctrine forbids a raster of game data in
+    // the repo, and it is right to.
+    //
+    // 128px, four times the original's pixels. 256 was measured at
+    // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
+    // two-second stall on entering the world is worse than the detail
+    // is good. Moving this to a worker is the way to 256 and is its
+    // own slice.
+    // EE7: WIRED. EE5 built these and left them out because they
+    // carried a seam - the noise wraps on its integer lattice, and
+    // every surface scaled its frequency by a fraction, so u = 0 and
+    // u = 1 landed on different corners. Frequencies are WHOLE CYCLES
+    // PER TILE now, per axis, and the worst join across all five
+    // surfaces measures 0.0000 of 255. The seam is closed by
+    // construction rather than by care.
+    //
+    // 128px, four times the original's pixels. 256 was measured at
+    // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
+    // two-second stall on entering the world is worse than the detail
+    // is good. A worker is the way to 256 and is its own slice.
+    const mode = this.groundMode
+      ?? (this.enhancedGround ? 'drawn' : 'classic');
+    const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
-    const w = layers[0].width;
-    const h = layers[0].height;
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    for (let i = 0; i < layers.length; i++) {
-      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
+    const w = src[0].width;
+    const h = src[0].height;
+    // EE8: A SIZED INTERNAL FORMAT, and this is what made the ground a
+    // void. generateMipmap requires the texture to be colour-renderable
+    // and filterable, which an UNSIZED gl.RGBA on a 2D array is not - so
+    // the call failed, no mips existed, and EE3's LINEAR_MIPMAP_LINEAR
+    // left the sampler MIPMAP-INCOMPLETE. An incomplete sampler returns
+    // BLACK, for every tile, everywhere: the empty void. The upload had
+    // worked for years under NEAREST because NEAREST needs no mips.
+    // RGBA8 is the same eight bits per channel, spelled the way WebGL2
+    // requires when mips are wanted.
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (let i = 0; i < src.length; i++) {
+      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(src[i].colors.buffer, src[i].colors.byteOffset, w * h * 4));
     }
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // EE3 (Enhanced Environments): MIPMAPS AND ANISOTROPY, on the
+    // enhanced skin only.
+    //
+    // A 64px tile sampled NEAREST is Daggerfall's own look and the
+    // classic skin keeps it exactly. But that sampling is also why the
+    // ground BOILS at distance: a tile covers 6.4 world units, so a
+    // pixel a hundred metres out spans dozens of texels and NEAREST
+    // picks one of them per frame, at random as the camera moves. Mips
+    // are what stop that, and anisotropy is what keeps the ground from
+    // going to mush at grazing angles - which is the angle almost all
+    // ground is seen at.
+    //
+    // It is also a PREREQUISITE, not just a polish: a higher-resolution
+    // tile without mips shimmers WORSE than the 64px one, because it
+    // has more texels to alias between. Nothing else in this arc can
+    // land until this does.
+    //
+    // Per-layer, so tiles never bleed into each other: WebGL2's
+    // generateMipmap on a 2D array filters each layer independently.
+    if (mode !== 'classic') {
+      // ...and if it fails anyway, FALL BACK rather than draw black. A
+      // sampler that cannot be completed must not be asked for mips:
+      // the ground looking like the classic ground is a disappointment,
+      // and the ground looking like a void is a broken game.
+      while (gl.getError() !== gl.NO_ERROR) { /* drain, so the next read is ours */ }
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      if (gl.getError() !== gl.NO_ERROR) {
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        this.tileArrays.set(key, tex);
+        return tex;
+      }
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+      if (aniso) {
+        gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT,
+          Math.min(16, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+      }
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.tileArrays.set(archive, tex);
+    this.tileArrays.set(key, tex);
     return tex;
   }
 
   /** Draw one terrain surface with its tilemap + tile array. */
+  /** EE4: the deck the terrain shadows under. {cover, soft, wind, time,
+   *  amount}; null clears it. */
+  setCloudShadow(d) { this._cloudShadow = d ?? null; }
+
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
-    gl.useProgram(this.terrainProgram);
+    this._use(this.terrainProgram);
     gl.uniformMatrix4fv(this.tUProj, false, this._proj);
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
+    // EE4: the deck, or nothing at all
+    const cs = this._cloudShadow;
+    gl.uniform1f(this.tUShadowAmt, cs ? cs.amount : 0);
+    gl.uniform1f(this.tUCloudCover, cs ? cs.cover : 0);
+    gl.uniform1f(this.tUCloudSoft, cs ? cs.soft : 1);
+    gl.uniform1f(this.tUCloudTime, cs ? cs.time : 0);
+    gl.uniform2f(this.tUCloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
     this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);
     gl.uniform1f(this.tUSunScale, this._sunScale);
     gl.uniform3fv(this.tUSunColor, this._sunColor);
+    gl.uniform3fv(this.tUMoonDir, this._moonDir);
+    gl.uniform1f(this.tUMoonScale, this._moonScale);
+    gl.uniform3fv(this.tUMoonColor, this._moonColor);
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.tUPointCount, count);
     if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
@@ -1610,9 +1991,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(this.tUTilemap, 2);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindVertexArray(surface.vao);
+    this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    gl.bindVertexArray(null);
+    this.stats.texBinds += 2; this.stats.draws++;
+    this._bindVao(null);
   }
 
   /**
@@ -1624,7 +2006,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawWater(quads, color, waterTex, scrollTiles = 0) {
     if (!quads.length) return;
     const gl = this.gl;
-    gl.useProgram(this.waterProgram);
+    this._use(this.waterProgram);
     gl.uniformMatrix4fv(this.waterUProj, false, this._proj);
     gl.uniformMatrix4fv(this.waterUView, false, this._view);
     gl.uniform4fv(this.waterUColor, color);
@@ -1637,12 +2019,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
-    gl.bindVertexArray(this.waterVao);
+    this._bindVao(this.waterVao);
+    this.stats.texBinds++;
     for (const q of quads) {
       gl.uniform4f(this.waterURect, q.x, q.z, q.size, q.y);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+      this.stats.draws++;
     }
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
@@ -1651,7 +2035,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
     const gl = this.gl;
-    gl.useProgram(this.bbProgram);
+    this._use(this.bbProgram);
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
     gl.uniformMatrix4fv(this.bbUView, false, this._view);
     gl.uniform3fv(this.bbURight, camRight);
@@ -1662,11 +2046,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // billboards): ambient plus the Lambert-average half of the sun term.
     // Clockless scenes keep the pre-R5 full-bright flats.
     if (this._clockLit) {
+      // EV5: the flats have no normals, so the moon takes the same
+      // Lambert-average half the sun does - a scalar on the tint.
       gl.uniform3f(
         this.bbUTint,
-        this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5,
-        this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5,
-        this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5
+        this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5 + this._moonColor[0] * this._moonScale * 0.5,
+        this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5 + this._moonColor[1] * this._moonScale * 0.5,
+        this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5 + this._moonColor[2] * this._moonScale * 0.5
       );
     } else {
       gl.uniform3f(this.bbUTint, 1, 1, 1);
@@ -1698,8 +2084,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
       const o = b.origin || ZERO_ORIGIN;
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
-      gl.bindVertexArray(b.vao);
+      this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
+      this.stats.texBinds += 2; this.stats.draws++;
     };
     gl.uniform1i(this.bbUSpectral, 0);
     for (const b of batches) if (!isSpectralArchive(b.archive)) drawOne(b);
@@ -1715,9 +2102,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.disable(gl.BLEND);
     }
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindVertexArray(null);
+    this._bindVao(null);
     gl.enable(gl.CULL_FACE);
-    gl.useProgram(this.program);
+    this._use(this.program);
   }
 
   /** Draw one placed mesh: bind per-submesh texture, indexed draw per range. */
@@ -1765,20 +2152,61 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // drawBillboards / drawWater already do) - R9 interleaved terrain
     // draws before the model loop, which silently ran meshes on the
     // terrain program and vanished every building (caught by Mac).
-    gl.useProgram(this.program);
+    // EV6: ownership now flows through the _use shadow - the bind is
+    // still this call's to account for, it just costs nothing when the
+    // program is already bound.
+    this._use(this.program);
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
-    gl.bindVertexArray(mesh.vao);
+    this._bindVao(mesh.vao);
     for (const sm of mesh.subMeshes) {
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
-      const tex = this.textures.get(resolved);
+      // EV2: the resolved textures cache on the sub-mesh, stamped with
+      // the texture generation and the remap's identity. The old body
+      // built the `${archive}_${record}` key fresh here - per sub-mesh,
+      // per placement, per frame - and hashed it twice; a city frame
+      // minted thousands of strings for the GC. A MISS is deliberately
+      // not stamped: the texture may still be streaming in, and caching
+      // the miss would blank the model until the next upload bump.
+      let tex;
+      if (sm._evGen === this._texGen && sm._evRemap === texRemap) {
+        tex = sm._evTex;
+      } else {
+        // AUDIT 39 F52: the key is minted ONCE per sub-mesh and kept.
+        // The stamp validates the remap by IDENTITY, and the streaming
+        // world mints a fresh texRemap per map pixel over GPU meshes
+        // shared by every pixel - so an archetype standing in N loaded
+        // pixels misses N times a frame, and the string EV2 killed was
+        // being re-minted on every one of those misses.
+        const key = sm._evKey ?? (sm._evKey = `${sm.textureArchive}_${sm.textureRecord}`);
+        const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
+        tex = this.textures.get(resolved);
+        if (tex) {
+          sm._evTex = tex;
+          sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;
+          sm._evEmisWhite = this.emissionWhite.has(resolved);
+          sm._evGen = this._texGen;
+          sm._evRemap = texRemap;
+        }
+      }
       if (!tex) continue;
+      // F49: an auto-emissive record's mask is its own albedo and wears
+      // Color.white; only a window mask wears the window style.
+      const emisColor = sm._evEmisWhite ? EMISSION_WHITE : this._windowEmission;
+      if (this._emissionColorUp !== emisColor) {
+        gl.uniform3fv(this.uEmissionColor, emisColor);
+        this._emissionColorUp = emisColor;
+      }
       gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(resolved) || this._blackTex);
+      gl.bindTexture(gl.TEXTURE_2D, sm._evEmis);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
+      this.stats.texBinds += 2;
       gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
+      this.stats.draws++;
     }
-    gl.bindVertexArray(null);
+    // EV6: no trailing unbind - the sorted drawLists mean the next
+    // drawMesh is very often the SAME mesh, and the shadow then skips
+    // the whole bind. Everything that binds a VAO or an element buffer
+    // in this file goes through _bindVao (or binds its own fresh VAO
+    // first), so nothing can capture state into the one left bound.
   }
 }

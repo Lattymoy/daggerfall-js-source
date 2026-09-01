@@ -7,6 +7,7 @@
 import { TextureFile } from '../formats/textureFile.js';
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
+import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
@@ -85,11 +86,20 @@ export function createDataPipeline({ renderer, arch, palette }) {
     // emission mask together from one remap, and replacing half of it
     // would leave a ghost lit by a texture it no longer wears.
     const swap = decodedTexture(archive, record, 0);
-    renderer.uploadTexture(archive, record, swap ?? t.getColor32(bitmap, 0));
+    const color32 = swap ?? t.getColor32(bitmap, 0);
+    renderer.uploadTexture(archive, record, color32);
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+      // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
+      // -> TextureReader.cs:301-308 "Just reuse albedo map for basic
+      // colour emission" -> :448-453 EmissionColor = Color.white). The
+      // `!isWindow` is the C#'s own; the white flag keeps the window
+      // style off it, so a lit lantern draws its own texels instead of
+      // sitting at scene ambient beside the light it casts.
+      renderer.uploadEmissionTexture(archive, record, color32, { white: true });
     }
   };
   // C11 mobile monsters: per-FRAME uploads under a composite record
@@ -117,12 +127,33 @@ export function createDataPipeline({ renderer, arch, palette }) {
     // else leaves the remaining frames classic, which is what a
     // partial pack should do.
     const swapFrame = decodedTexture(archive, record, frame);
-    renderer.uploadTexture(archive, key, swapFrame ?? t.getColor32(bitmap, 0));
+    const color32 = swapFrame ?? t.getColor32(bitmap, 0);
+    renderer.uploadTexture(archive, key, color32);
+    // F49: the auto-emissive arm follows the FRAME - DFU builds a
+    // material per frame, and a torch's every frame is self-lit. The
+    // billboard path looks the mask up under this same composite key.
+    if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+      renderer.uploadEmissionTexture(archive, key, color32, { white: true });
+    }
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
+  const meshPromises = new Map(); // IN-FLIGHT builds, getTexture's shape
   const cpuModels = new Map(); // id -> {positions, indices} for the collider
+  /** AUDIT 39: the COMPLETED cache is not enough on its own. A build
+   *  awaits its texture archives, and two cold callers for one model id
+   *  - a teleport's buildPixel racing the pump's, two adjacent pixels
+   *  sharing a building - each ran createMesh and the second `set`
+   *  overwrote the first, leaking a VAO and its buffers for the
+   *  session (nothing destroys a gpuMeshes entry). The in-flight map is
+   *  the law getTexture above and buildPixel already carry. */
   async function getGpuMesh(modelIdNum) {
     if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
+    if (!meshPromises.has(modelIdNum)) {
+      meshPromises.set(modelIdNum, buildGpuMesh(modelIdNum).finally(() => meshPromises.delete(modelIdNum)));
+    }
+    return meshPromises.get(modelIdNum);
+  }
+  async function buildGpuMesh(modelIdNum) {
     // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
     // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
     // is asked first; ARCH3D only when it has nothing). Model 41601 is

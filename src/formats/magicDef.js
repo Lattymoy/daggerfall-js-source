@@ -6,6 +6,8 @@
 // group u8, groupIndex u8, 10 x { type s8, param s8 } enchantments,
 // uses i16, value i32, material u8 - 62 bytes per record.
 
+import { readCStringFixed } from './saveTreeFile.js';
+
 export const MAGIC_ITEM_NAME_LENGTH = 32;
 export const MAGIC_ITEM_RECORD_SIZE = 62;
 export const MAGIC_ITEM_TYPES = Object.freeze({ RegularMagicItem: 0, ArtifactClass1: 1, ArtifactClass2: 2 });
@@ -33,9 +35,11 @@ export function readMagicDef(bytes) {
   let o = 4;
   for (let r = 0; r < count && o + MAGIC_ITEM_RECORD_SIZE <= bytes.byteLength; r++) {
     const index = o;   // stream position, per the source
-    let name = '';
-    for (let i = 0; i < MAGIC_ITEM_NAME_LENGTH; i++) name += String.fromCharCode(v.getUint8(o + i));
-    name = name.split('\0')[0];
+    // MagicItemsFile.cs:87 reads the name with a NON-ZERO readLength
+    // (`nameLength = 32`), which skips ReadCString's terminator scan
+    // entirely: only TRAILING NULs come off, an embedded one and its tail
+    // stay.
+    const name = readCStringFixed(bytes, o, MAGIC_ITEM_NAME_LENGTH);
     o += MAGIC_ITEM_NAME_LENGTH;
     const type = v.getUint8(o++);
     const group = v.getUint8(o++);

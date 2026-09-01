@@ -20,7 +20,8 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // t
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
-import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
+import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
+import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64): a poisoned shaft doses its mark
 import { spendArrow, totalWeight } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
@@ -37,7 +38,9 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
+import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { collectExteriorNpcs, exteriorNpcRecord, isExteriorNpcFlat } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
@@ -94,13 +97,13 @@ import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
-import { isInvisible } from '../systems/effects.js';
+import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup's box
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -110,7 +113,8 @@ import {
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM4c: and the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
+import { isEnhanced } from '../systems/uiSkin.js';
+import { getPref } from '../systems/uiPrefs.js';   // EE3: the ground half of the Enhanced Environments switch   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -122,7 +126,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
@@ -159,7 +163,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   const dfLocation = maps.getLocationByName(regionName, locationName);
   if (!dfLocation) throw new Error(`location not found: ${regionName}/${locationName}`);
   status(`laying out ${locationName}`);
-  const loc = layoutLocation(dfLocation, maps, blocks);
+  // AUDIT 39 (#18): the skin reaches the layout, because the mill's
+  // subrecord widens the block's building count and must not exist on
+  // the classic one.
+  const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced() });
 
   // Climate + season: swap every submesh archive exactly as DFU's
   // MaterialReader.ChangeClimate does - pixels from the swapped archive,
@@ -271,6 +278,21 @@ export async function bootExterior(canvas, renderer, params, status) {
   };
   const drawList = [];
   const windmills = [];   // WM2b: placed mills whose rotor turns each frame
+  // EV3: THE FRUSTUM. This host builds in plain world space, so every
+  // drawList row carries a world-space box (one local scan per model
+  // ARCHETYPE, eight corner transforms per placement, all at build).
+  // ?cull=off is the escape hatch, read once here like the world host's.
+  const cullOn = !cullDisabled();
+  const _planes = new Float32Array(24);
+  const _pv = new Float32Array(16);
+  const archAabbs = new Map();
+  const archAabb = (id, positions) => {
+    let b = archAabbs.get(id);
+    if (!b) archAabbs.set(id, b = localAabb(positions));
+    return b;
+  };
+  const MILL_SAIL_PAD = 30;   // the sails sweep past the tower's own box
+  const _visBatches = [];     // refilled per frame, never reallocated (the EV2 lesson)
   // WM2d: the mill's two parts, uploaded once for the location and only
   // when a block here actually stands one - a town with no farm pays
   // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
@@ -299,8 +321,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
-      drawList.push({ mesh, matrix });
       const cpu = cpuModels.get(placed.modelIdNum);
+      drawList.push({ mesh, matrix, order: placed.modelIdNum, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) });   // EV3; EV6: sort key
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
       // Building models expose their static doors for E-transitions
@@ -327,10 +349,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (millParts) {
       for (const w of b.layout.windmills) {
         const matrix = multiply(originMatrix, w.matrix);
-        drawList.push({ mesh: millParts.body, matrix });
+        // EV3: tower box padded for the sails' sweep - the same box
+        // gates the tower row and the rotor draw below.
+        const box = transformedAabb(archAabb('millBody', BODY.positions), matrix);
+        for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
+        drawList.push({ mesh: millParts.body, matrix, order: -1, box });   // EV6: the mills group together
         collider.addMesh('world', BODY.positions, BODY.indices, matrix);
         windmills.push({
-          matrix,
+          matrix, box,
           // Deterministic in the mill's own world position, so a farm's
           // mills are not a chorus line and the same mill is at the same
           // phase every time the player walks up to it.
@@ -394,6 +420,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
     }
   }
+  // EV6: the draw list sorts by MESH at build, so the frame's draws of
+  // one archetype run back to back and the renderer's VAO shadow skips
+  // the rebind. Opaque geometry under a depth test - order costs
+  // nothing visually.
+  drawList.sort((a, b) => a.order - b.order);
 
   // R9 ground GL: cached tile array per archive, the location tilemap,
   // and a flat 2x2 surface at GroundOffset spanning the exact extent
@@ -404,6 +435,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (let r = 0; r < groundTex.recordCount; r++) {
       layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
     }
+    // EE3: the ground's own half of the Enhanced Environments switch,
+    // set before the upload because the sampler state is chosen there
+    // and the array is cached afterwards.
+    renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
+    // AUDIT 46: ?ground=classic|tiles|drawn bisects the three states.
+    renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
     renderer.uploadTileArray(groundArchive, layers);
   }
   const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(locationTilemap), tilemapDim);
@@ -459,6 +496,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
     const batch = renderer.createBillboardBatch(archive, record, size, centers);
+    batch._box = flatBatchAabb(centers, size);   // EV3: world-space here - this host has no floating origin
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     flatCount += centers.length;
@@ -484,6 +522,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // them. Animated exactly as the group would have animated it.
     uploadRecord(flat.archive, flat.record);
     const batch = renderer.createBillboardBatch(flat.archive, flat.record, size, [[flat.x, flat.y, flat.z]]);
+    batch._box = flatBatchAabb([[flat.x, flat.y, flat.z]], size);   // EV3: the cull reads it, body and sprite alike
     armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
     exteriorNpcs.push({ ...pn, width: size.w, height: size.h, batch });
   }
@@ -762,6 +801,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
     cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
+  /** AUDIT 39 (#22): SpawnCityGuards(FALSE) - the WITNESS arm, the
+   *  world host's twin (THE FOUR HOSTS RULE). The mode machine's
+   *  private-property theft calls the member through the bag below
+   *  and the bool picks the arm; this host had only the crime half. */
+  function _witnessResponse() {
+    const feet = walkMode ? player.pos : cam.pos;
+    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
+    cityGuards.spawnCityGuards(false, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+  }
   /** S40: THE REST KEY, OUTDOORS - world.js's twin (THE FOUR HOSTS
    *  RULE). This host stands in ONE location and never leaves its
    *  rect, so IsPlayerInTown(true, true) is the type test plus "not
@@ -851,7 +899,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // defaults advanceDays to the real clock, so there is no argument left for a
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
-  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex });
+  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex, onCourtScreen: () => cameraRecoiler.reset() });
   // NPC3b: one counter, so every wandering person gets a stable number
   // of their own without touching DFU's shared PRNG - that stream is
   // named, looted and quested from, and a draw spent here would shift
@@ -865,9 +913,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // optional - a host that forgets it gets the classic sprite and a
     // named reason rather than an arm at the world origin.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
-      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0 } }),   // MW-D26: the movement-settings vector, the reference's own selection source
+      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
+        grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
     spellArmed: () => magic.spellArmed(),   // M2: HasReadySpell hides the weapon
   });
   // M2 (the AUDIT 23 hosts-2 priority row): SPELLCASTING ABOVE GROUND.
@@ -933,6 +982,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
+    // AUDIT 36 F1: THE THIRD HOST CASTS TOO. MW-D39 wired the arm's
+    // spellcast release into the dungeon and world hosts and MISSED
+    // this one - the standalone exterior page, which has its own magic
+    // engine and its own rig - so a spell cast above ground played the
+    // stance and never the cast. The same moment, the same one door.
+    onCastReadySpell: (sp) => { weaponRig?.castSpellAnim?.(sp?.rangeType); },
   });
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch (this host mints no encounter foes).
   // OnNewMagicRound is global and every EntityEffectManager handles it, so
@@ -1034,10 +1089,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // WORLD CAMERA MODES (slice 6): first person (default) / third
   // person. In third person the rig RIDES the player - position from
   // the motor's feet, facing from cam.yaw, gait from live input - and
-  // the camera pulls back along the view ray. V toggles at runtime
-  // (lazy rig build); ?tp starts in third person. ?rig keeps its
-  // fixed-park probe semantics when not riding.
-  let tpMode = params.has('tp');
+  // the camera pulls back along the view ray. ?tp is BOOT-ONLY: I2
+  // retired the runtime V toggle (V is DFU's TravelMap default, see
+  // the note at the keydown ladder), so tpMode is never reassigned and
+  // the rig is built once, here. ?rig keeps its fixed-park probe
+  // semantics when not riding.
+  const tpMode = params.has('tp');
   const buildRig = async () => {
     const [{ createEngineRig, deriveClassicRamps }, { ImgFile }] = await Promise.all([
       import('../characters/engineRig.js'),
@@ -1296,14 +1353,25 @@ export async function bootExterior(canvas, renderer, params, status) {
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
   // world behind the map.
-  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  // AUDIT 39r: the button goes into the held-keys set too. InputManager
+  // polls Mouse0/1/2 through the same GetKey dictionary as the keyboard
+  // (:995/:1010/:1017), and this Set was keydown-fed only - so AutoRun
+  // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
+  // un-draw (Mouse0) could never read true. mouseCode owns the
+  // Unity/DOM middle-button crossover; the RELEASE is unconditional.
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
-    attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
+// AUDIT 39 (#127 dropped the dead attack(dx,dy,held) drag hook -
+    // touch.js never called it; the tap IS the whole touch strike).
+    // AUDIT 39 (#130): the tap takes the M2 gate the other attack
+    // entries take - an armed cast eats the click
+    // (WeaponManager.cs:244-263 defers to HasReadySpell before it
+    // handles any attack), and touch.js:98 already promises the tap casts.
+    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 
@@ -1323,6 +1391,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // location TYPE alone (PlayerGPS.cs:504-527), which is what
     // CanRest's inside-a-building arm asks.
     inTownLocation: () => isPlayerInTown(_musicLocationType()),
+    // AUDIT 39 (#22): PlayerEntity.SpawnCityGuards(bool) - the theft
+    // arm's caller, which neither host answered. Same shape as the
+    // world host's.
+    spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),
@@ -1390,6 +1462,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it
+    window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
     window.__pose = (x, y, z, yaw, pitch) => {
       cam.yaw = yaw; cam.pitch = pitch;
       // walk mode: the camera FOLLOWS the motor - move the player
@@ -1534,6 +1607,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT 39 (#160): a full-screen video owns the canvas for its
+    // lifetime (DFU pauses the game for it). The loop WAITS - it
+    // neither simulates nor draws - and the clock does not accrue.
+    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -1554,7 +1631,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: townTalk.overlayActive || (modes?.overlayHeld ?? false), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: false, levitating: !!player.levitating,
+        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
@@ -1616,6 +1693,15 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
+    // AUDIT 39 (S19 host gap): PARALYSIS, above ground. Every DFU gate
+    // reads PlayerEntity.IsParalyzed with no interior/exterior test -
+    // FrictionMotor.GroundedMovement (:75-81) and
+    // AcrobatMotor.CheckAirControl (:135-141) zero the movement input,
+    // HandleJumpInput (:64-70) and LevitateMotor.Update (:67-69)
+    // return, WeaponManager (:235-239) does ShowWeapons(false) and
+    // takes no swing. Declared above `walkMode` because the motor and
+    // the weapon rig are two sibling blocks.
+    const paralyzed = entityIsParalyzed(playerEntity);
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
       const jumpHeld = held(keys, 'Jump');
@@ -1652,10 +1738,23 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
       // held overlay is DFU's timeScale 0 - no climb, no friction).
       const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-      if (!_overlayHeld) player.update(dt, {
+      const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
+      // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
+      // gates movement and the jump only (DecideHeightAction has no check).
+      // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
+      // movement VECTOR (FrictionMotor :75-81, AcrobatMotor :135-141);
+      // CaptureInputSpeedAdjustment runs in Update behind a levitate gate
+      // and nothing else. Dropping run/sneak/autoRun/back from this bag read
+      // as a RELEASE to the motor's press-edge latches, so a key held
+      // through the paralysis fired a synthetic press on the frame it lifted.
+      if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
+        // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+        // press flips ToggleRun; MoveBackwards is its cancel key.
+        autoRun: held(keys, 'AutoRun'),
+        back: mv.backwards,
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         // LevitateMotor.Update (:71-91) reads Jump/FloatUp for up and
@@ -1688,12 +1787,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       {
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !anyMove(mv),
+          standingStill: !moving,
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       // DC1: PlayerDeath.Update's camera sink (per-frame off the fresh eye array).
       if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
       const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
@@ -1767,6 +1866,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       Math.max(2000, extentX * 4)
     ));
     const view = lookAt(eye, target, [0, 1, 0]);
+    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3: the same matrices the draws ride
 
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
@@ -1787,11 +1887,23 @@ export async function bootExterior(canvas, renderer, params, status) {
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
     ambience.update(dt, { playerPos: eye });
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
-    // Storm lightning: verbatim frame-strobe multiplier on the sun (2x
-    // during a flash frame); ?flashtest pins it on for shots.
-    const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
+    // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
+    // Shipped DFU renders no flash at all - PlayEffects starts the
+    // coroutine only `if (PlayLightningEffect)` and both
+    // AmbientEffectsPlayer instances serialize PlayLightningEffect: 0
+    // with LightForEffects unassigned, so the storm is sound-only; and
+    // the line this models sets an ABSOLUTE intensity on that separate
+    // light, never a multiplier on the sun. The player keeps ticking on
+    // both skins - it is the clip schedule the Audio arc reads.
+    // ?flashtest pins the strobe on for shots.
+    const strobe = lightning ? lightning.tick(dt) : 1;
+    const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
+    // EV5: the moons light the night - the masser as a second key, the
+    // secunda folded into the ambient. null by day and under classic.
+    const moonNow = sky.moonlight();
+    renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
+      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), moonNow), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect point light (SunlightRig) -
     // intensity x the daylight curve, weather-dimmed with the rig,
@@ -1847,10 +1959,18 @@ export async function bootExterior(canvas, renderer, params, status) {
       const horiz = Math.hypot(dx, dz) || 1e-6;
       sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(),
         canvas.clientWidth / canvas.clientHeight);
+      renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
+    // EE4: the ground shadows under the SKY'S OWN deck - one field for
+    // the cloud and for the shadow it casts. Null when there is no
+    // enhanced sky, which is the classic skin and every interior.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
-    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    for (const d of drawList) {
+      if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
+      renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    }
     // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
     // deck overhead is drawn with (shared.js's sky.wind()), so a storm
     // picks the mills up on the same fourteen-second curve it picks the
@@ -1860,7 +1980,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       const wind = sky.wind();
       if (wind) {
         for (const w of windmills) {
+          // EV3: the ANGLE always advances (an off-screen mill keeps
+          // turning); only the draw itself is gated.
           advanceRotor(w.state, dt, wind);
+          if (cullOn && aabbOutside(_planes, w.box)) continue;
           renderer.drawMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
         }
       }
@@ -1931,20 +2054,46 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // C13: exterior arrows fly with the scene meshes (lost on
     // geometry, as DFU misses are).
-    arrows.update(dt);
+    // AUDIT 39 (#64): the player's shaft LANDS. It used to fly, spend
+    // its Arrow and tally Archery against a live watchman and inflict
+    // nothing - the module's foe arm was gated on `m.enemy` and this
+    // host resolved no player arrow at all. cityGuards owns the damage
+    // door, so a killed watchman still runs the crime and the corpse.
+    // (No enemy arm here: this host mounts no bow-armed pool.)
+    arrows.update(dt, {
+      foeTargets: cityGuards.guards.filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
+        playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
+        dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos, m.dir),   // AUDIT-39r: WeaponManager's KnockbackDirection, the missile's forward
+        audio, hitEffects, say: (l) => townTalk.say(l),
+        onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+      }),
+    });
     arrows.draw(renderer, texRemap);
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
-    renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // EV3: per-batch skip off the build-time boxes; the clocks above
+    // ticked already, so an off-screen fire keeps its frame.
+    _visBatches.length = 0;
+    for (const b of billboardBatches) {
+      if (cullOn && aabbOutside(_planes, b._box)) continue;
+      _visBatches.push(b);
+    }
+    renderer.drawBillboards(_visBatches, camRight, UP_Y);
     // NPC4c: THE PEOPLE STANDING IN THE STREET. RMBLayout stands a
     // StaticNPC on any flat carrying a faction, and they are the same
     // kind of person a building holds - so they take the same lane,
     // through the mode machine's own derivation (one identity, shared
     // with the click that talks to them). Body or sprite, never both;
     // they stand still and face you, exactly as the billboard does.
+    //
+    // EV3's cull applies to their sprites too - they carry the same
+    // build-time box every other batch does - and to the BODY, which
+    // is a much more expensive thing to draw off-screen than a quad.
     {
       const _npcBatches = [];
       for (const pn of exteriorNpcs) {
         if (!pn.batch) continue;
+        if (cullOn && aabbOutside(_planes, pn.batch._box)) continue;
         const _opts = modes?.staticNpcMwOpts?.(pn) ?? null;
         const _body = _opts ? requestMwBody(pn, _opts, -1) : null;
         if (_body && drawMwActor(renderer, canvas, _body, pn._mwState, {
@@ -1959,9 +2108,9 @@ export async function bootExterior(canvas, renderer, params, status) {
         })) continue;
         _npcBatches.push(pn.batch);
       }
-      if (_npcBatches.length) renderer.drawBillboards(_npcBatches, camRight, new Float32Array([0, 1, 0]));
+      if (_npcBatches.length) renderer.drawBillboards(_npcBatches, camRight, UP_Y);
     }
-    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles in flight
+    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
     // daytime only; live persons render as C11-style mobile batches
@@ -2041,10 +2190,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 24 (wave 39): blood splashes ride the person axis too.
       hitEffects.tick(dt);
       personBatches.push(...hitEffects.batches());
-      if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
+      if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
+      renderer.markForeignPass();   // EV6: so did the rain
     }
     // C9: the exterior FP weapon (first-person walk only - the V
     // third-person view has no FP overlay). Same residuals as the
@@ -2061,7 +2211,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
-      for (const ev of weaponRig.frame(dt)) {
+      for (const ev of weaponRig.frame(dt, { paralyzed })) {
         // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
@@ -2073,7 +2223,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             // CriticalStrike) - this arm tallied Archery alone, free.
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
-            arrows.fire(eye, fwd);
+            arrows.fire(eye, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon });   // #64: LastBowUsed rides the shaft - the impact prices off it
           }
           continue;
         }
@@ -2103,7 +2253,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw();
+      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -2117,7 +2267,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // vitals, heading01) - so this is the art loaded once and drawn last,
     // over the viewmodel, exactly as dungeonContext draws it. Under the talk
     // layer, because a talk window is a modal above the vitals.
-    if (hudArt) {
+    // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
+    // flash and the enhanced DOM HUD ABOVE its own `!art` return
+    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // HUD art failed to load still has vitals". Wrapping the whole
+    // call in `if (hudArt)` inverted that: hudArt starts null and is
+    // filled by a fire-and-forget load whose failure leaves it null
+    // forever.
+    {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. This host's nearby pool is the city
       // guards - the only entities it spawns - and, since FX1 (F207),
@@ -2130,6 +2287,9 @@ export async function bootExterior(canvas, renderer, params, status) {
         { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
           detected: _detected, playerXZ: [_dFeet[0], _dFeet[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
+          // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
+          readied: magic?.readied?.() ?? null,
+          weapon: weaponRig.playerWeapon.weapon ?? null,
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything

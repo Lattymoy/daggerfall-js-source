@@ -273,6 +273,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .row-name { font-size: 14px; }
 .row.blocked .row-name { color: var(--dim); }
+/* AUDIT 39: THE ANNOTATION LINES, which had no rule at all. A note
+   under a label inherits \`body\`'s 15px full-bone, so it drew LARGER
+   and brighter than the 14px .row-name it hangs from - the bare
+   running text the AUDIT UI 2 sweep was written for and cannot see:
+   that sweep compares one shell against another, and a class styled
+   in NO shell has nothing to compare. Base rules, so every shell
+   that draws one gets the same treatment. */
+.row-note, .row-sub { color: var(--dim); font-size: 12.5px; margin-top: 3px; }
+.note { color: var(--dim); font-size: 13px; margin: 10px 0 0; max-width: 58ch; }
 
 /* THE CONTROL IS THE VALUE. A row shows the word a player reads,
    never the ini string - \`4\` reads Beautiful, \`True\` reads On.
@@ -494,7 +503,13 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 /* THE FOUR NAVIGATION BUTTONS, in the thumb's arc on a phone and along
    the foot of the sheet everywhere. A button is drawn only where the
-   host handed a factory - see ui/enhancedCharSheet.js's nav(). */
+   host handed a factory.
+   AUDIT 39: the view that drew them - ui/enhancedCharSheet.js's own
+   sheet - retired with PX27's door, so this block and the .sheet-id /
+   .sheetcol / .meter / .skillrow rules above it now style nothing. The
+   sheet's SHARED parts are still live (.sheet-notice below is drawn by
+   the pack and the spellbook); untangling the rest is a sweep of this
+   file, not of that module. */
 .sheet-nav {
   display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 30px;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
@@ -1585,6 +1600,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
   color: #d8cfae; font: inherit; font-size: 15px; }
 .sb-shell .sb-rename input:focus { outline: none; border-color: var(--brass); }
+/* AUDIT-39r: the delete prompt covers the window it asks about. DFU's
+   DaggerfallMessageBox is a PUSHED window, so the book beneath it is
+   inert; here the book's controls are disabled and this scrim is what
+   makes that visible rather than merely true. */
+.sb-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.sb-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
+.sb-shell .sb-ask .sb-acts { justify-content: center; }
 
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the
@@ -1946,12 +1969,18 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 #enhanced-hitnums { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
 .hitnum { position: absolute; left: 50%; top: 42%;
   transform: translate(calc(-50% + var(--dx, 0px)), 0);
-  font-family: var(--display, 'Cinzel', serif); font-size: calc(26px * var(--hud-scale, 1)); font-weight: 700;
+  /* HN1b (Mac, from a three-face comparison: "the middle") - the numbers
+     are set in the enhanced skin's own face, Pixelify Sans, unsmoothed
+     like every other pixel glyph on the HUD. Cormorant was the serif
+     odd one out; Jacquard 12 crits were unmistakable and unreadable in
+     the half second a number lives. */
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-size: calc(26px * var(--hud-scale, 1)); font-weight: 600;
   letter-spacing: 0.04em; color: #e6dcb8; text-shadow: 2px 2px 0 rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
   animation: hitnum-rise var(--rise, 950ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; will-change: transform, opacity; }
-.hitnum-crit { font-size: calc(36px * var(--hud-scale, 1)); color: #f1c04f; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 10px rgba(241,192,79,0.45);
+.hitnum-crit { font-size: calc(36px * var(--hud-scale, 1)); font-weight: 700; color: #f1c04f; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 10px rgba(241,192,79,0.45);
   animation-name: hitnum-crit; }
-.hitnum-miss, .hitnum-ineffective, .hitnum-absorbed { font-size: calc(20px * var(--hud-scale, 1)); font-weight: 400; color: rgba(168,159,136,0.85); }
+.hitnum-miss, .hitnum-ineffective, .hitnum-absorbed { font-size: calc(20px * var(--hud-scale, 1)); font-weight: 500; color: rgba(168,159,136,0.85); }
 .hitnum-tag { display: block; font-size: calc(12px * var(--hud-scale, 1)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
   text-align: center; color: #f1c04f; margin-top: -2px; }
 @keyframes hitnum-rise {
@@ -2095,6 +2124,61 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .charcol .wornrow .tile { width: 34px; height: 34px; }
 .pack-shell .charcol .transport .tplaque { min-height: 44px; padding: 6px 12px; }
 .pack-shell .charcol .transport { margin-top: 10px; }
+/* PX31 (Mac: the inventory is hidden at the bottom and gets no
+   breathing room): AT DESKTOP WIDTHS THE DOCK IS A COLUMN, not a
+   dock. Measured on the shipped screen before this rule at three
+   desktop viewports, all identical because the window is capped at
+   660: title 62, character region 400, tab strip 38, and the item
+   list left with A 116px VIEWPORT - 17.6% of the window, two tiles
+   deep and 1036 wide. The region is fixed to its content (the worn
+   map is 298 tall and does not shrink), so every pixel the window
+   does not have comes out of the list, and the list was the only
+   thing in the window that scrolls.
+   The window is WIDE and the layout was stacked, so the fix is
+   horizontal: the region keeps the width it actually uses (the map
+   is width min(960px,100%) and its flanks are 1fr, so it narrows
+   without a rewrite) and the list takes the rest at FULL HEIGHT.
+   Nothing about the window's height changes - raising the 660 cap
+   is what swallowed the game behind the window on 2026-08-31 and
+   was reverted whole.
+   THE PHONE IS NOT THIS PROBLEM and is not touched: a Pixel 5
+   measured a 250px list showing seven rows, because there the
+   window is 94dvh and the region is the same 400. The breakpoint is
+   min-width, so the stacked layout stays the default and this is
+   the wide-screen departure from it. */
+@media (min-width: 1000px) {
+  .pack-shell .pack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    flex-direction: row; min-height: 0; }
+  .pack-shell .pack-main { min-width: 0; min-height: 0; }
+  /* the border moves with the wall: it was the top of a dock and it
+     is the side of a column. */
+  .pack-shell .pack-dock { min-height: 0; border-top: 0;
+    border-left: 2px solid rgba(125,116,96,0.35); }
+  /* THE TAB STRIP IS A 2x2, DELIBERATELY. The four tabs need about
+     550px on one line and no column here is that wide, so the strip
+     WRAPPED - which cost the same 76px this grid costs and looked
+     like an accident, the counts flung to the right of two ragged
+     rows by their own margin-left:auto. TABS is imported from
+     nativeInventory and is DFU's four, always, so two by two is a
+     shape rather than a guess. */
+  .pack-shell .pack-dock .packcats .packtabs { display: grid;
+    grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  /* THE MAP FILLS THE COLUMN IT WAS GIVEN. Stacked, the region was
+     its content's height and the map was flex 0 0 auto so it would
+     not steal from the list below it. Beside the list it steals
+     nothing, and left at content height it drew 180px of dead glass
+     under the transport strip. Filling is not just tidier: the doll
+     is height-driven at aspect-ratio 110/184, so a taller map is a
+     BIGGER SPRITE, which is what PX20a asked for and what the
+     stacked layout could not afford.
+     THE GROWING ELEMENT IS THE WRAPPER, not the map. .charcol holds
+     .equipped and .transport; the map is a child of .equipped, whose
+     own flex:1 (line ~2194) was correct all along and had nothing to
+     fill because .equipped defaults to flex 0 1 auto. Two rules that
+     both look like the fix and only one of them is it. */
+  .pack-shell .charcol .equipped { flex: 1 1 auto; min-height: 0; }
+  .pack-shell .charcol .wornmap { grid-template-rows: repeat(6, minmax(44px, 1fr)); }
+}
 /* .packtip.packdetail outranks the base .packdetail column rules
    (same-specificity, later-in-sheet was the trap: the tip computed
    RELATIVE, joined the flex column and folded the whole window -

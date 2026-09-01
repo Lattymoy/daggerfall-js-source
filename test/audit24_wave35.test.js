@@ -112,7 +112,11 @@ test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee st
   // near edge excludes it) but by the ordinary stop.
   const src = rd('src/characters/enemyMotor.js');
   const body = src.slice(src.indexOf('  _classicTick(playerFeet) {'));
-  assert.ok(body.indexOf('_doRangedAttack(dx, dz)') < body.indexOf('distance <= MELEE_DISTANCE'),
+  // AUDIT 39: the stop test now reads `this.stopDistance`, which
+  // TakeAction:443-449 sets per pass (2.25 vs the player, 1.5 vs
+  // another AI). The ORDERING law this pin guards is unchanged - only
+  // the literal it anchored on moved.
+  assert.ok(body.indexOf('_doRangedAttack(dx, dz)') < body.indexOf('distance <= this.stopDistance'),
     'ranged first, melee stop second');
   // AUDIT 26 F011: this pin used to assert the detour came FIRST -
   // restating the port rather than the C#. TakeAction calls

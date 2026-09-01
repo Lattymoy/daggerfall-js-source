@@ -84,8 +84,8 @@ test('HE1: the frame ticks and draws it, on the shared billboard axis', () => {
   const frame = wm.slice(wm.indexOf('interiorCtx.flatAnims.tick(dt);'), wm.indexOf('if (interiorCtx.animateChars)'));
   assert.match(frame, /interiorHitEffects\.tick\(dt\);/);
   assert.match(frame, /const _blood = interiorHitEffects\.batches\(\);/);
-  assert.match(frame, /if \(_blood\.length\) renderer\.drawBillboards\(_blood, camRight, new Float32Array\(\[0, 1, 0\]\)\);/,
-    'the same axis every other billboard in this frame rides');
+  assert.match(frame, /if \(_blood\.length\) renderer\.drawBillboards\(_blood, camRight, UP_Y\);/,
+    'the same axis every other billboard in this frame rides (EV2 made it the ONE shared array)');
 });
 
 test('HE1: BOTH interior teardowns clear the pool', () => {

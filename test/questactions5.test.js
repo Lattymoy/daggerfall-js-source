@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
-import { UnrestrainFoe } from '../src/systems/quest/actions.js';
+import { UnrestrainFoe, JournalNote, TrainPc, RunQuest } from '../src/systems/quest/actions.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from '../src/systems/advancement.js';
 import { CRIMES } from '../src/systems/court.js';
@@ -40,6 +40,7 @@ function makeMachine(overrides = {}) {
     currentLocation: () => ({ loaded: true, mapTableData: { locationType: 0 } }),
     getFactionData: () => null,
     addNote: capture('addNote'),
+    addNoteTokens: capture('addNoteTokens'),
     currentWeatherKey: () => world._weather,
     currentClimateIndex: () => world._climate,
     _weather: 'sunny', _climate: 231,
@@ -53,6 +54,9 @@ function makeMachine(overrides = {}) {
     getGoldPieces: () => (m.pieces ?? 0),
     deductGoldPieces: (n) => { m.pieces -= n; calls.push(['deductGoldPieces', n]); },
     getGold: () => (m.money ?? 0),
+    // AUDIT 39 #92: PayMoney's `money` arm gates on GetGoldAmount, a
+    // seam of its own - getGold stays the bare GoldPieces read.
+    getTotalGold: () => (m.money ?? 0),
     deductGold: (n) => { m.money -= n; calls.push(['deductGold', n]); },
     raiseTime: capture('raiseTime'),
     spawnCityGuards: capture('spawnCityGuards'),
@@ -155,13 +159,32 @@ test('Q5: PayMoney - `gold` counts COINS alone, `money` the purse; paid or not, 
   m3.tick();
   assert.deepEqual(m3.of('deductGold'), [['deductGold', 150]], 'the money arm spends the whole purse\'s tender');
   assert.equal(trig(q3, 'paid'), true);
+  // AUDIT 39 #92: the `money` GATE is GetGoldAmount - coins PLUS
+  // letters of credit (PayMoney.cs:79-82) - not the bare GoldPieces
+  // read the other actions use. The pin had been vacuous because one
+  // host wired both quantities to the same coins-only function, so a
+  // solvent player carrying paper took the `otherwise` task.
+  const m4 = makeMachine({ deps: { getGold: () => 10, getTotalGold: () => 5010 } });
+  const q4 = schedule(m4, [' pay 100 money do _paid_ otherwise do _broke_', '', ...PAY_TASKS]);
+  m4.tick();
+  assert.equal(trig(q4, 'paid'), true, '10 coins and a 5000-gold letter covers 100');
+  assert.deepEqual(m4.of('deductGold'), [['deductGold', 100]], 'DeductGoldAmount takes it');
 });
 
 test('Q5: JournalNote files the message\'s tokens; TrainPc trains for free with the three-hour raise', () => {
   const m = makeMachine({ nowMinutes: 1000 });
   schedule(m, [' journal note 1004', ' train pc Climbing', '', 'variable _pad_']);
   m.tick();
-  assert.equal(m.of('addNote').length, 1, 'the notebook takes the note');
+  // AUDIT 39 #89: the pin moved from addNote to addNoteTokens. DFU
+  // calls the TOKEN overload (JournalNote.cs:52 ->
+  // PlayerNotebook.AddNote(List<TextFile.Token>)); the string overload
+  // this used to hit concatenated the token array into a note reading
+  // '[object Object],[object Object]' and threw past 70 tokens.
+  assert.equal(m.of('addNote').length, 0, 'NOT the string overload');
+  const filed = m.of('addNoteTokens');
+  assert.equal(filed.length, 1, 'the notebook takes the note as TOKENS');
+  assert.ok(Array.isArray(filed[0][1]) && typeof filed[0][1][0]?.text === 'string',
+    'an array of {formatting,text}, the shape AddNote(List<Token>) walks');
   const before = 5000;
   assert.deepEqual(m.of('raiseTime'), [['raiseTime', 3 * 3600]], 'SecondsPerHour * 3');
   assert.equal(m.entity.timeOfLastSkillTraining, 1000, 'the training stamp, in classic minutes');
@@ -219,6 +242,75 @@ test('Q5: RunQuest waits on the child and routes success/failure; an unservable 
   assert.equal(trig(q, 'won'), false);
 });
 
+const CHILD_SOURCE = ['Quest: __CHILD', 'QRC:', 'Message:  1004', ' done', '', 'QBN:', 'variable _pad_'];
+
+test('AUDIT 39 #91: RunQuest tombstones a child still running when the parent quest ends', () => {
+  // RunQuest.cs Dispose: "Will ensure that target quest is also
+  // terminated if still running when parent quest ends." Without it
+  // the orphan ticks on alone, keeping its SiteLinks, placed foes and
+  // talk topics alive.
+  const m = makeMachine({ deps: { getQuestSourceLines: (name) => (name === '__CHILD' ? CHILD_SOURCE : null) } });
+  const q = schedule(m, [
+    ' run quest __CHILD then _won_ or _lost_', '',
+    '_won_ task:', ' setvar _w2_', '',
+    '_lost_ task:', ' setvar _l2_', '',
+    'variable _w2_', 'variable _l2_',
+  ]);
+  m.tick();
+  m.tick();
+  const child = [...m.quests.values()].find((c) => c.questName === '__CHILD');
+  assert.ok(child, 'the child quest is live');
+  assert.equal(child.questComplete, false, 'and still running');
+  assert.equal(child.questTombstoned, false);
+  m.tombstoneQuest(q);
+  assert.equal(child.questTombstoned, true, 'the child dies with the parent');
+});
+
+test('AUDIT 39 #90: JournalNote, TrainPc and RunQuest are allowRearm=false - a cleared task cannot re-run them', () => {
+  const m = makeMachine({ nowMinutes: 1000 });
+  const q = schedule(m, [
+    '_t_ task:', ' journal note 1004', ' train pc Climbing', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  q.getTask({ name: 't' }).start(); m.tick();
+  assert.equal(m.of('addNoteTokens').length, 1);
+  assert.equal(m.of('raiseTime').length, 1);
+  q.getTask({ name: 't' }).clear();
+  q.getTask({ name: 't' }).start(); m.tick();
+  assert.equal(m.of('addNoteTokens').length, 1, 'JournalNote.cs ctor allowRearm = false - no duplicate note');
+  assert.equal(m.of('raiseTime').length, 1, 'TrainPc.cs ctor allowRearm = false - free training is once EVER');
+  // the flag itself, straight off the ctor (RunQuest's rearm needs a
+  // servable child to observe, and the ctor is where C# sets it)
+  for (const [Cls, cs] of [[JournalNote, 'JournalNote.cs'], [TrainPc, 'TrainPc.cs'], [RunQuest, 'RunQuest.cs']]) {
+    assert.equal(new Cls(null).allowRearm, false, `${cs} ctor sets allowRearm = false`);
+  }
+});
+
+test('AUDIT 39 #94: Climate keeps C#\'s alternative ORDER - desert2 binds desert, mountainwoods binds mountain', () => {
+  // Both engines take the leftmost alternative that matches at the
+  // earliest start and Test() is unanchored, so C# never reaches
+  // desert2/mountainwoods at all; the port had sorted the alternation
+  // longest-first and bound 225/230 where DFU binds 224/226.
+  const m = makeMachine();
+  m.world._climate = 224;   // Climates.Desert
+  const q = schedule(m, [
+    '_d2_ task:', ' climate desert2', '',
+    '_mw_ task:', ' climate mountainwoods', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  assert.equal(trig(q, 'd2'), true, "'climate desert2' bound desert (224) - the trailing '2' is never consumed");
+  assert.equal(trig(q, 'mw'), false);
+  m.world._climate = 226;   // Climates.Mountain
+  m.tick();
+  assert.equal(trig(q, 'd2'), false);
+  assert.equal(trig(q, 'mw'), true, "'climate mountainwoods' bound mountain (226)");
+  m.world._climate = 230;   // Climates.MountainWoods - NOT what the line bound
+  m.tick();
+  assert.equal(trig(q, 'mw'), false, 'bug-for-bug: the woods climate does not trigger the woods line');
+});
+
 test('Q5: SpawnCityGuards and Enemies fire their host doors, flags intact', () => {
   const m = makeMachine();
   schedule(m, [
@@ -229,8 +321,16 @@ test('Q5: SpawnCityGuards and Enemies fire their host doors, flags intact', () =
     'variable _pad_',
   ]);
   m.tick();
-  assert.deepEqual(m.of('spawnCityGuards'), [['spawnCityGuards', true], ['spawnCityGuards', false]],
-    'the immediate flag rides; the bare spelling spawns unhurried');
+  // AUDIT 39 #93: the pin moved to DFU's own two quirks. The Pattern
+  // is `spawncityguards (immediate)?` - the space sits OUTSIDE the
+  // optional group, so a bare `spawncityguards` line matches no
+  // template and the registry drops it (QuestMachine logs "Action not
+  // found. Ignoring"). And CreateNew reads `match.Groups.Count > 1`,
+  // the group count of the PATTERN (always 2), so every line that does
+  // match spawns immediately. The port had matched the bare spelling
+  // and computed the flag honestly; neither is C#.
+  assert.deepEqual(m.of('spawnCityGuards'), [['spawnCityGuards', true]],
+    'only the `immediate` line matches, and it spawns immediate');
   assert.equal(m.of('makeEnemiesHostile').length, 1);
   assert.equal(m.of('clearEnemies').length, 1);
 });
@@ -243,7 +343,17 @@ test('Q5: the world host mounts every new door', () => {
     'raiseTime: (seconds) => setWorldMinutes(worldMinutes() + seconds / 60)',
     'spawnCityGuards: (immediate) =>',
     'makeEnemiesHostile: () =>', 'clearEnemies: () =>',
-    'currentWeatherKey: () => WEATHER_TYPES[', 'currentClimateIndex: () => maps.getClimateIndex(']) {
+// AUDIT 39 (#27) MOVED THIS PIN. It used to read
+    // `currentWeatherKey: () => WEATHER_TYPES[`, which pinned the bug:
+    // WEATHER_TYPES is the NAME array and both operands are already
+    // names, so the index answered undefined -> null on every call and
+    // the always-on Weather trigger could never match. The fold is the
+    // identity, so the seam is the bare read.
+    'currentWeatherKey: () => weatherOverride ?? currentWeather()', 'currentClimateIndex: () => maps.getClimateIndex(',
+    // AUDIT 39: the two seams this wave mounted - JournalNote's TOKEN
+    // overload and PayMoney's GetGoldAmount gate.
+    'addNoteTokens: (tokens) => questBridge?.notebook?.addNoteTokens(tokens)',
+    'getTotalGold: () => totalGoldAmount(playerEntity)']) {
     assert.ok(w.includes(door), `world.js mounts ${door.split(':')[0]}`);
   }
 });

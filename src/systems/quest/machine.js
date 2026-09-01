@@ -8,14 +8,20 @@
 // is the law to pace by) and injects the world clock as nowSeconds.
 //
 // deps (all injectable, every one a routed system):
-//   nowSeconds()               - world time in DFU year-zero seconds
-//                                (DaggerfallDateTime.ToSeconds - the
-//                                host injects CLASSIC_EPOCH_IN_SECONDS
-//                                + classicMinutes*60 so DailyFrom's
-//                                hour-of-day and PlaySound's cadence
-//                                read the SAME calendar as DFU's
-//                                WorldTime.Now; clocks use deltas, so
-//                                the base change is invisible to them)
+//   nowSeconds()               - world time in EPOCH-RELATIVE seconds:
+//                                the host injects classicMinutes*60,
+//                                i.e. ToClassicDaggerfallTime scaled
+//                                to seconds, NOT ToSeconds. Clocks use
+//                                deltas so the base is invisible to
+//                                them, and CLASSIC_EPOCH_IN_SECONDS is
+//                                exactly 404 x 360-day years, so
+//                                hour/minute/day/month/season read the
+//                                same as DFU's WorldTime.Now off this
+//                                base. Only the YEAR needs the epoch
+//                                added back before the date is read
+//                                (questMacros' nowDate does it), and
+//                                only TrainPc's timeOfLastSkillTraining
+//                                wants the counter raw.
 //   getQuestSourceLines(name)  - quest source by name (the vendored
 //                                pack through the host's data seam;
 //                                the QuestListsManager stand-in that
@@ -65,6 +71,8 @@
 //                                quest clock's travel arm starts here)
 //   discoverLocation(regionName, locationName) - PlayerGPS.DiscoverLocation
 //   addNote(text)              - the notebook (RevealLocation readmap)
+//   addNoteTokens(tokens)      - PlayerNotebook.AddNote(List<Token>),
+//                                the OTHER overload (JournalNote)
 //   respawnPlayerAtSite(place) - TeleportPc's transport: resolve the
 //                                site's location and begin the
 //                                respawn (C# GetLocation +
@@ -102,6 +110,10 @@
 //                                (the G2 court system owns both)
 //   playerLevel()              - PlayerEntity.Level (LevelCompleted)
 //   getGold() / deductGold(n)  - PlayerEntity.GoldPieces (ClickedNpc)
+//   getTotalGold()             - PlayerEntity.GetGoldAmount: coins
+//                                PLUS letters of credit, what
+//                                deductGold spends and what PayMoney's
+//                                `money` arm gates on
 //   playVideo(name)            - "ANIM0013.VID" (Q4 UI)
 //   playSound(soundId)         - one-shot; return truthy if it PLAYED
 //                                (C# skips while the source is busy,
@@ -320,6 +332,8 @@ export class QuestMachine {
       playerLevel: () => this.deps.playerLevel?.() ?? 0,
       playerGender: () => this.deps.playerGender?.() ?? 'male',
       getGold: () => this.deps.getGold?.() ?? 0,
+      // PlayerEntity.GetGoldAmount - the quantity deductGold spends.
+      getTotalGold: () => this.deps.getTotalGold?.() ?? 0,
       deductGold: (amount) => this.deps.deductGold?.(amount),
       addGold: (amount) => this.deps.addGold?.(amount),
       addHUDText: (text) => this.deps.addHUDText?.(text),
@@ -404,6 +418,9 @@ export class QuestMachine {
       // both actions exactly as C# does with no enemy standing.
       questFoeInstances: (symbol) => this.deps.questFoeInstances?.(symbol) ?? [],
       getQuest: (uid) => this.getQuest(uid),
+      // RunQuest.Dispose's teardown of a child quest still running
+      // when the parent ends (QuestMachine.TombstoneQuest).
+      tombstoneQuest: (quest) => this.tombstoneQuest(quest),
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
       removeFactionListener: (factionID) => this.removeFactionListener(factionID),
       activeFactionPersons: (factionID) => this.activeFactionPersons(factionID),

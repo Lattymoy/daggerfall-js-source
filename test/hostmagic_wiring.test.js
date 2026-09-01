@@ -62,7 +62,15 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
 test('M5: spell damage reaches guards through the ONE damage door', () => {
   // cityGuards.damageGuard owns corpse + Murder on kill; the engine's
   // foe sinks must route there, not mint a second bookkeeping path.
-  assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet) => damageGuard(g, dmg, playerFeet, null)'),
+  // AUDIT-39r: the pin MOVED, deliberately. The door grew a fourth
+  // parameter because the player's ARROW carries a knock direction and
+  // C15's whole block is gated on it (WeaponManager.cs:576-595 sets
+  // KnockbackDirection on every EnemyClass hit) - the hard-coded null
+  // was this spell caller's shape, and it silently disarmed the shaft.
+  // What this pin is FOR is unchanged and still checked: the engine's
+  // sink reaches damageGuard, the pool's one death/Murder/corpse door,
+  // and a SPELL still passes no direction (the default).
+  assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet, knockDir = null) => damageGuard(g, dmg, playerFeet, knockDir)'),
     'cityGuards exports the door');
   for (const f of HOSTS) {
     assert.ok(/hurt: \(n\) => \{ if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos\) : cityGuards\.hurtGuard\(g, n, player\.pos\)\))/.test(src(f)),

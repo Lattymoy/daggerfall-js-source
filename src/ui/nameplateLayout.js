@@ -68,7 +68,15 @@ export function resolveNameplates(input) {
     for (const p of plates) {
       if (p.placed || p.count !== 1) continue;
       const q = plates.find((o) => o !== p && !o.placed && nameplatesIntersect(p, o));
-      if (!q) continue;
+      // AUDIT 39 F134: the search MISS is a placement, not a skip
+      // (:1179-1184) - `if (j >= buildingNameplates.Length) { first.
+      // numCollisionsDetected = 0; first.placed = true; continue; }`.
+      // The state is reachable: countAll counts every plate while this
+      // search takes only UNPLACED ones, so a count-1 plate whose sole
+      // collider was placed mid-pass lands here. Skipped, it fell to
+      // the ±h hop and then to the "*" surrender F139 already caught
+      // on the neighbouring arm.
+      if (!q) { p.count = 0; p.placed = true; continue; }
       const dy = Math.abs((p.y + p.offY) - (q.y + q.offY));
       const ySize = p.h / 2 + q.h / 2;
       const [dp, dq] = dirsOf(p, q);

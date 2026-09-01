@@ -32,7 +32,7 @@
 // hosts' own values in a finally, alongside the slice plane.
 
 import { drawText } from './text.js';
-import { mirrorProjectionX, perspective, lookAt, trs } from '../world/mat4.js';
+import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4.js';
 import { getBool, getString } from '../systems/settings.js';
 import { slicingPositionY, DEFAULT_SLICING_BIAS_Y } from '../systems/automap.js';
 import { DUNGEON_AMBIENT } from '../world/dungeonLights.js';
@@ -209,13 +209,14 @@ export class AutomapWindow {
     renderer.setClipY(sliceMaxed ? null : slicingPositionY(p?.eye?.[1] ?? this.refY, 0, this.biasY));
     renderer.setFog('off');                                      // NoFogCamera (:2017)
     renderer.setLighting(new Float32Array([0.9, 0.9, 0.9]), 0);  // key/fill/back 0.9/0.7/0.5 collapsed to ambient (:2073-2075, recorded)
+    renderer.setMoonlight(null);   // AUDIT EV F-R1: a map pass takes no stale exterior moon (the beacons are _clockLit billboards)
     try {
       const yaw = this.yawDeg * DEG;
       const upv = [Math.sin(yaw), 0, Math.cos(yaw)];
       const aspect = (renderer.canvas.clientWidth || 1) / (renderer.canvas.clientHeight || 1);
       const proj = mirrorProjectionX(perspective(FIELD_OF_VIEW_2D * DEG, aspect, NEAR_CLIP, FAR_CLIP));   // HANDEDNESS (mat4's law): this pass culls
       const view = lookAt([this.center[0], this.refY + this.height, this.center[1]], [this.center[0], this.refY, this.center[1]], upv);
-      renderer.beginFrame(proj, view, new Float32Array([0, 1, 0]));
+      renderer.beginFrame(proj, view, UP_Y);
       // SolidColor clear: the port's clear color is the Iliac sky, so
       // paint the map's black ground (depth untouched - drawScreenQuad
       // runs with the depth test off).

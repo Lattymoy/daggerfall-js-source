@@ -18,13 +18,78 @@
 
 import { deref, TEX_SLOT } from './mwNifFile.js';
 
+// EVERY NiNode-derived record is recursed into: nifloader.cpp:932-937 walks
+// `ninode->mChildren` for anything that casts to Nif::NiNode, and the switch
+// and LOD classes get their own osg wrapper first (:907-924) rather than a
+// pruned subtree. Four of these were parsed and then dropped on the floor.
 const NODE_TYPES = new Set([
   'NiNode',
   'NiBSAnimationNode',
   'NiBSParticleNode',
   'NiBillboardNode',
   'AvoidNode',
+  'NiSwitchNode',
+  'NiLODNode',
+  'NiSortAdjustNode',
+  'NiCollisionSwitch',
 ]);
+
+/**
+ * The one child a selector node shows, or null for a plain node that shows
+ * all of them. NiSwitchNode: `setSingleChildOn(mInitialIndex)` on a switch
+ * whose new-child default is false (nifloader.cpp:568-575) - the index the
+ * file names, nothing else. NiLODNode: osg::LOD with one range per level
+ * and DISTANCE_FROM_EYE_POINT (:553-565), whose traversal draws child i
+ * when `range[i].min <= distance < range[i].max`. A flattener bakes one
+ * static scene and has no eye, so it reads the LOD at its own centre -
+ * distance 0, the nearest level, which is how Morrowind authors level 0.
+ * NiSortAdjustNode and NiCollisionSwitch are plain NiNodes in the
+ * reference (no Switch/LOD wrapper), so they keep every child.
+ */
+function selectedChild(rec) {
+  if (rec.type === 'NiLODNode') {
+    const levels = rec.lodLevels;
+    if (Array.isArray(levels)) {
+      for (let i = 0; i < levels.length; i++) {
+        if (levels[i].near <= 0 && levels[i].far > 0) return i;
+      }
+      // No level covers the centre: nothing is in range, exactly as
+      // osg::LOD's traversal draws nothing when no range matches.
+      if (levels.length) return -1;
+    }
+    return 0;
+  }
+  // An index past the last child leaves NO branch on, which is what an
+  // out-of-range setSingleChildOn leaves behind too.
+  if (rec.type === 'NiSwitchNode') return Number.isInteger(rec.index) ? rec.index : 0;
+  return null;
+}
+
+/** The geometry classes this flattener draws. NiLines is parsed and is NOT
+ *  here: the reference gives it a LINES primitive set (nifloader.cpp:1624-
+ *  1631) and a batch here is a triangle list by contract, so a line shape
+ *  has no honest home downstream - it is dropped rather than drawn as
+ *  triangles. */
+const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);
+
+/** nifloader.cpp:1609-1621: one TRIANGLE_STRIP primitive per strip, strips
+ *  shorter than 3 skipped, and a shape whose strips are ALL short draws
+ *  nothing. Unrolled to the triangle list this module emits, with GL's own
+ *  winding flip on odd triangles and the degenerate joins (a repeated index,
+ *  which GL drops) left out. */
+function stripsToTriangles(data) {
+  const out = [];
+  for (const strip of data.strips ?? []) {
+    if (!strip || strip.length < 3) continue;
+    for (let i = 0; i + 2 < strip.length; i++) {
+      const a = strip[i], b = strip[i + 1], c = strip[i + 2];
+      if (a === b || b === c || a === c) continue;
+      if (i & 1) out.push(b, a, c);
+      else out.push(a, b, c);
+    }
+  }
+  return Uint16Array.from(out);
+}
 
 /** Row-major 3x3 multiply: out = a*b. */
 function mat33Mul(a, b) {
@@ -298,6 +363,13 @@ export function flattenNif(nif, opts = {}) {
   function emit(shape, world, props) {
     const data = deref(nif, shape.data);
     if (!data || !data.vertices) return;
+    let indices;
+    if (shape.type === 'NiTriStrips') {
+      indices = stripsToTriangles(data);
+      if (!indices.length) return;   // no strip of 3: the reference draws none
+    } else {
+      indices = Uint16Array.from(data.triangles);
+    }
     const skinned = shape.skin >= 0;
     const n = data.numVertices;
     const positions = new Float32Array(n * 3);
@@ -382,7 +454,7 @@ export function flattenNif(nif, opts = {}) {
       normals,
       uvs: data.uvSets.length ? Float32Array.from(data.uvSets[0]) : null,
       colors: data.colors ? Float32Array.from(data.colors) : null,
-      indices: Uint16Array.from(data.triangles),
+      indices,
       material: resolveMaterial(nif, props, !!data.colors),
     });
   }
@@ -421,7 +493,7 @@ export function flattenNif(nif, opts = {}) {
         if (prop) nextProps.push(prop);
       }
     }
-    if (rec.type === 'NiTriShape') {
+    if (GEOMETRY_TYPES.has(rec.type)) {
       // Rule 59's skip list, applied where the reference applies it: at
       // the GEOMETRY, by NAME, after the transforms and properties have
       // been composed. The node is still walked - it simply emits
@@ -431,6 +503,19 @@ export function flattenNif(nif, opts = {}) {
       return;
     }
     if (NODE_TYPES.has(rec.type) && rec.children) {
+      // AUDIT 39r R18: a switch and a LOD hold every branch but SHOW one.
+      // nifloader.cpp:907-924 hangs their children off an osg::Switch
+      // (`setNewChildDefaultValue(false); setSingleChildOn(mInitialIndex)`,
+      // :568-575) or an osg::LOD with one DISTANCE_FROM_EYE_POINT range per
+      // level (:553-565), so exactly one subtree ever draws. This flattener
+      // emits drawables, so the selection has to happen here - walking all
+      // of them superimposed every branch and every LOD level at once.
+      const only = selectedChild(rec);
+      if (only !== null) {
+        const child = rec.children[only];
+        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps);
+        return;
+      }
       for (const child of rec.children) {
         if (child >= 0) walk(child, nextWorld, nextProps);
       }

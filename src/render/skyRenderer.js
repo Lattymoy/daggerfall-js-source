@@ -19,14 +19,16 @@
 // The presentation is ours (Port-Doctrine): DFU scrolls two screen-space
 // quads by camera angles; we render one fullscreen pass that maps the view
 // ray to a cylinder. The afternoon half is additionally REFLECTED here,
-// which DFU never does - under our azimuth convention (azimuth 0 = +X, map
-// east, starts the east half) reflecting the swapped halves is what keeps
+// which DFU never does - under our azimuth convention (azimuth 0 = +Z, map
+// north, starts the east half) reflecting the swapped halves is what keeps
 // the sun travelling east-to-west, the same thing DFU's screen-space rects
 // achieve by re-centring. Documented equivalence, not a verbatim step.
 // Each 512-wide half spans 180 degrees of azimuth
 // (anglePerPixel = PI/512, so the 220-row strip covers ~77.3 degrees of
 // elevation above the horizon), the same angular size DFU's layout implies.
-// Azimuth 0 (+X, map east) starts the east half. Documented equivalence.
+// Azimuth 0 (+Z, map north) starts the east half - the shader's azimuth is
+// atan(dir.x, dir.z), which is 0 at +Z - so that half runs north -> east ->
+// south and is CENTRED on map east at u = 0.25. Documented equivalence.
 
 export const SKY_ANGLE_PER_PIXEL = Math.PI / 512;
 
@@ -259,7 +261,11 @@ export class SkyRenderer {
   draw(yaw, pitch, fovY, aspect) {
     if (!this.texture) return;
     const gl = this.gl;
-    const previousProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+    // EV6: no program save/restore, and no gl.getParameter round-trip
+    // to learn what to restore - the R9 law (renderer.js drawMesh) is
+    // that every draw entry point owns its binding, and the hosts mark
+    // this pass as a foreign seam (renderer.markForeignPass) so the
+    // renderer's state shadows rebind after it.
     gl.useProgram(this.program);
     gl.depthMask(false);
     gl.disable(gl.DEPTH_TEST);
@@ -285,7 +291,6 @@ export class SkyRenderer {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
-    gl.useProgram(previousProgram);
     gl.activeTexture(gl.TEXTURE0);
   }
 }

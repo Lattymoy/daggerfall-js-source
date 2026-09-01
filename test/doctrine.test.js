@@ -31,28 +31,14 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
  *  that keeps the original silhouette answers yes. */
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
-  // ── THE INTRO (U65) ────────────────────────────────────────────
-  // The doctrine's question is "did these pixels come from ARENA2?",
-  // and for all four the answer is no - none of them was read out of a
-  // .BSA, rendered from one, or traced off one. The flyover the intro
-  // plays them over is GENERATED (ui/introMap.js), which is the whole
-  // reason it can run before the folder pick.
-  //
-  // A SECOND QUESTION APPLIES TO TWO OF THEM AND THIS LIST DOES NOT
-  // ANSWER IT. The Workshop and Nexus marks are third-party
-  // TRADEMARKS. Port-Doctrine requires that anything public-facing
-  // credit Daggerfall Unity, so Interkarma's mark is attribution the
-  // doctrine actively asks for; the Nexus mark is a distribution mark
-  // and its owners may have a view. That is a licensing decision, it
-  // is Mac's, it was made deliberately when he supplied the files, and
-  // it is recorded here rather than buried so the next person reading
-  // this list knows it was asked.
-  // THE ONE PIECE OF MUSIC THIS PORT SHIPS, and a real departure:
-  // every other note is synthesised from the player's own MIDI.BSA
-  // (systems/songPlayer.js, the A5 arc) precisely so nothing has to
-  // ship. This is an original recording of the main theme, Mac's, and
-  // it can ship for the same reason it can play before the ARENA2
-  // pick - it is not game data. Ledger A.
+  // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
+  // (U65f): two marks, a title card and the one recorded piece of
+  // music this port ever shipped. The rows went with the files; this
+  // sentence replaces the rationale that outlived them, because a
+  // licensing position stated over an empty list tells a reader the
+  // repo publishes a music recording and two third-party trademarks,
+  // and it publishes neither. Every note is synthesised from the
+  // player's own MIDI.BSA again (systems/songPlayer.js, the A5 arc).
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -
   // landing.test.js pins <img> absent - so the three menu screens,
@@ -177,10 +163,12 @@ test('AUDIT 27: the allow-list is checked BOTH ways - no row outlives its file',
   // a tracked file must have a row - so a row could be written for a
   // file that never landed, or outlive one that was deleted, and the
   // list would still pass while meaning less than it claims.
-  // The list stopped being public-only when the intro's assets moved
-  // into src/assets - Vite emits them into the build, so they are just
-  // as PUBLISHED as public/ and their rows stay. The reverse check now
-  // reads each row's own directory rather than assuming public/.
+  // The list is public-only again: it briefly reached into src/assets
+  // for the intro (Vite emits those into the build, so they are just
+  // as PUBLISHED as public/), and 1c62e11 took the intro out. The
+  // reverse check still reads each row's OWN directory rather than
+  // assuming public/, so the next published-but-not-public row needs
+  // no new machinery.
   const stale = [...PUBLIC_ALLOWLIST.keys()]
     .filter((f) => !tracked(f.split('/')[0]).includes(f));
   assert.deepEqual(stale, [],

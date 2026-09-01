@@ -301,13 +301,26 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     for (const pn of people) {
       if (!pn.active) continue;   // SetActive(false): the away copy does not draw
       const rg = rigFor(raceOfArchive(pn.textureArchive));
-      charDraws.push({ mesh: rg.mesh, matrix: trs(pn.x, pn.y - rg.footY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) });
+      // AUDIT 39 (#76): the person's FLOOR position rides with the draw
+      // - the matrix is re-seated every frame below, off the live foot.
+      charDraws.push({ mesh: rg.mesh, rig: rg, at: [pn.x, pn.y, pn.z], matrix: trs(pn.x, pn.y - rg.liveFootY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) });
     }
     animateChars = (t, mode = 'idle') => {
       const L = mode === 'walk' ? WALK : IDLE;
       for (const rg of raceMeshes.values()) {
         if (mode === 'off') rg.drive(0, POSE_L, null, false);
         else rg.drive(t * L.cadence, L, null, true);
+      }
+      // AUDIT 39 (#76): grounded on the LIVE support point, the rule
+      // every other host follows (engineRig: "the stride arc dips below
+      // rest minY"). Built once off the REST footY, the placement could
+      // not follow the stride and the feet went through the floor -
+      // and the two rigs whose rest low point is fur or scale sat
+      // above it. The rigs are shared per race, so this is one matrix
+      // per PERSON off a value computed once per race by drive().
+      for (const d of charDraws) {
+        const s = d.rig.scale;
+        d.matrix = trs(d.at[0], d.at[1] - d.rig.liveFootY * s, d.at[2], 0, 0, 0, s, s, s);
       }
     };
   }

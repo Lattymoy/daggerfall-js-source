@@ -842,10 +842,17 @@ function paneEnhanced(body) {
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
   // same uiPrefs shelf as roads.
-  live.append(prefRow('proceduralSky', 'Procedural sky',
-    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
-    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
-    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
+  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, because the sky is
+  // now one part of the thing it switches. The prose says what the
+  // switch actually covers - a row that names less than it does is the
+  // same fault RA1 fixed here when this said "not built".
+  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors, as one system: a procedural sky with the sun, both moons on their '
+    + 'real phases, stars and weather clouds; ground lit by that sky, with real surface detail; '
+    + 'three-dimensional grass that bends in the wind; rain and snow that fall through the world '
+    + 'rather than across the screen; and puddles and snow that gather, deform underfoot and melt '
+    + 'back. Off returns Daggerfall\u2019s painted sky and flat ground. Takes effect when the '
+    + 'world next loads.'));
   body.append(live);
 
   // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -997,6 +1004,27 @@ function paneEnhanced(body) {
   // rig's defining behaviour and is the one outcome forbidden here.
   if (armState.notes && armState.notes.length) {
     mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
+  }
+  // MW-D45: WHERE THE ROUND HUNG, said out loud. getArrowBone has two
+  // branches and they place the arrow in completely different places -
+  // OpenMW issue 5642, which added the first one: "By default, OpenMW
+  // attaches arrow to the ArrowBone node from bow mesh... I suggest to
+  // check if 'Bip01 Arrow' bone exists in actors skeleton, if it is
+  // not, attach arrow to the ArrowBone as fallback." The skeleton bone
+  // is a MODDER'S opt-in for quiver-style fetching; vanilla has no such
+  // bone and always takes the bow mesh.
+  //
+  // The port recorded which branch won in arrowInfo.viaWeaponMesh from
+  // the day it was written and NOTHING EVER READ IT. Four rounds of
+  // "the arrow is in the wrong place" were spent guessing at a fact the
+  // rig already knew, because the only place it existed was a field on
+  // an object nobody printed. A value computed and never surfaced is
+  // not diagnostics, it is a comment.
+  if (armState.arrow) {
+    const a = armState.arrow;
+    mw.append(el('p', 'meta', `Arrow: ${a.name} on "${a.bone}" - ${a.viaWeaponMesh
+      ? 'the bow mesh\'s ArrowBone (vanilla)'
+      : 'this skeleton\'s own bone (the modded quiver branch)'}`));
   }
   // MW-D33: WHAT YOU ARE WEARING, AND WHETHER THE RIG AGREES. One line
   // per equipped piece - the parts it dressed, or the reason it kept
@@ -1178,7 +1206,15 @@ function renderHome() {
   for (const label of sections) {
     if (label === 'About') continue;
     const id = idOf(label);
-    const b = el('button');
+    // PX31: THE DOOR'S BUTTONS CARRY THEIR OWN NAME. Until now they
+    // were classless, and nine probes still reached for `.railbtn` -
+    // the SHELL rail's class, which this door has never had since PX1
+    // replaced it. Every one of them timed out at its front door and
+    // no gate noticed, because a probe is not a gate (AUDIT 17f F4).
+    // Selecting on PROSE would be the same bug waiting on a relabel,
+    // so the hook is structural: doorbtn plus the section id, which
+    // is what a probe actually means when it says New Game.
+    const b = el('button', `doorbtn door-${id}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);
@@ -1428,6 +1464,38 @@ function statsStanding(detail) {
  *  log is a side quest. */
 const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
+/** PX28 (Mac: remove the titles - Main Quest, Side Quest - from the
+ *  quest NAMES in the enhanced journal; they already have sections).
+ *
+ *  THE RAIL ALREADY SAYS WHICH KIND A QUEST IS, by the section it sits
+ *  in, so a name that repeats it says the same fact twice - the cut
+ *  PX22 already made to the detail pane's kind tag, finished here on
+ *  the names themselves. A quest pack is free to title its quests
+ *  however it likes and the port does not edit its data: this strips
+ *  the label at the DISPLAY seam only, and only when it is a real
+ *  label - a kind phrase at the FRONT, followed by a separator.
+ *
+ *  What is deliberately NOT stripped:
+ *   - "Clavicus Vile's Quest", "Main Quest Backbone" - the word sits
+ *     at the end, or the phrase runs on into the title with no
+ *     separator, so it IS the name.
+ *   - anything that would leave nothing behind: a quest actually
+ *     called "Main Quest" keeps its name rather than becoming blank.
+ */
+// AUDIT 38 F1: the SEPARATOR between the kind word and the noun is
+// optional too. A pack is as free to write "Sidequest:" or
+// "Main-Quest -" as "Side Quest:", and the first cut required a
+// space, so the joined spellings sailed through with the label still
+// on. The kind and the noun may be joined, spaced or hyphenated; the
+// LABEL still needs its own trailing separator, which is what keeps
+// "Main Quest Backbone" a name.
+const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)[\s\-\u2013]*(?:quest|quests|questline|storyline|story)\s*[:\u2013\u2014|\-\u2022]\s*/i;
+export function questTitleOf(name) {
+  const raw = String(name ?? '').trim();
+  const cut = raw.replace(QUEST_KIND_LABEL, '').trim();
+  return cut || raw;
+}
+
 /** PX5: remaining game seconds as words - days+hours above a day,
  *  hours+minutes below it, minutes alone under an hour. */
 function remainWords(s) {
@@ -1505,7 +1573,7 @@ function pauseQuests(body) {
   const railList = (items, cls) => {
     for (const q of items) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
-      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(q.name));
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));   // PX28
       if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
       b.onclick = () => { questSel = q.key; render(); };
       rail.append(b);
@@ -1542,7 +1610,7 @@ function pauseQuests(body) {
   const detail = el('div', 'px-qdetail');
   if (sel) {
     const head2 = el('div', 'px-qname');
-    head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));   // PX28
     detail.append(head2);
     if (sel.entries) {
       // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside

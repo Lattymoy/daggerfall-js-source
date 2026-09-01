@@ -59,6 +59,7 @@ import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
 import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays, walkTravelPath } from '../systems/travel.js';
+import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData } from '../systems/travelMapState.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
@@ -333,6 +334,10 @@ export class OverworldMapWindow {
           markerScale: clamp(220 / this._cam.dist, 0.35, 2.4),
           rings: this._rings(),
         });
+        // EV6 seam: the pass changed programs behind the renderer's
+        // back and no longer restores (AUDIT 39 F55) - the veil quad
+        // below draws on the renderer's own program and must rebind.
+        renderer.markForeignPass();
         this._proj = proj; this._view = view; this._vw = w; this._vh = h;
       }
       if (this._veil > 0.001) {
@@ -605,10 +610,22 @@ export class OverworldMapWindow {
       travelShip: st.opts.travelShip,
       hasHorse: st.hasHorse, hasCart: st.hasCart,
     });
-    const cost = calculateTripCost(time.minutes, time.oceanPixels, {
+    // TP1 - GuildManager.FastTravel (DaggerfallTravelPopUp.cs:284),
+    // BETWEEN CalculateTravelTime and CalculateTripCost exactly as DFU
+    // orders them, so the Temple of Akatosh's blessing shortens the
+    // fare and the days as well as the journey. The classic popup
+    // folds it at ui/travelPopUp.js:166; this is the same fold on the
+    // same deps, and everything the card bills or commits reads the
+    // blessed minutes. `_journey` stays raw - its memo is keyed on the
+    // route, and the flight only wants the path.
+    const minutes = guildFastTravel(this.deps.playerEntity?.() ?? null, time.minutes);
+    const cost = calculateTripCost(minutes, time.oceanPixels, {
       sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,
+      // TravelTimeCalculator.cs:163 - the same Knightly Order consult
+      // the native popup makes; the enhanced skin bills the same fare.
+      freeTavernRooms: !!this.deps.freeTavernRooms?.(),
     });
-    st.trip = { ...time, ...cost, days: travelDays(time.minutes) };
+    st.trip = { ...time, minutes, ...cost, days: travelDays(minutes) };
     st.notice = null;
     this._renderCard();
   }

@@ -258,15 +258,35 @@ const HANDLERS = new Map([
   }],
 ]);
 
-/** DrainTargetStrength (MaceOfMolagBalEffect.cs:214-227): the TARGET
- *  loses strength through the same entry channel. */
+/** DrainTargetStrength (MaceOfMolagBalEffect.cs:186-212): the target
+ *  takes a real DRAIN STRENGTH incumbent - the effect assigns a
+ *  DrainStrength bundle and calls drain.IncreaseMagnitude(amount) - so
+ *  the mace's drain is the ordinary drainAttribute channel, not a
+ *  channel of its own.
+ *
+ *  AUDIT 39: it WAS a bespoke `kind: 'artifact'` entry with an
+ *  unbounded negative statMod, and both halves of DrainEffect went
+ *  missing with it. IncreaseMagnitude never lets a drain take a stat
+ *  below 1 of its permanent value ("DrainEffect alone does not reduce
+ *  attribute to 0 and does not kill"), where the port's
+ *  killIfAnyLiveStatZero kills any entity whose live stat reaches 0 -
+ *  so repeated strikes on a magicka-less foe were an instant kill.
+ *  And healAttributeDamage walks drain/transfer/disease/poison only,
+ *  so a Heal Strength could never repair the old entry.
+ *
+ *  The clamp is DrainEffect.IncreaseMagnitude verbatim, and it is
+ *  spelled out here rather than imported: effects.js owns it, and
+ *  effects.js imports enchantments.js, which imports THIS file - the
+ *  same cycle the header's magicDef note names. */
 function drainStrength(target, amount) {
-  let entry = (target.activeEffects ?? []).find((a) => a.kind === 'artifact' && a.key === 'maceOfMolagBalDrain' && !a.ended);
+  let entry = (target.activeEffects ?? []).find((a) => a.kind === 'drainAttribute' && a.stat === 'strength' && !a.ended);
   if (!entry) {
-    entry = { kind: 'artifact', key: 'maceOfMolagBalDrain', statMods: {} };
+    entry = { kind: 'drainAttribute', stat: 'strength', magnitude: 0, permanent: true };
     (target.activeEffects ??= []).push(entry);
   }
-  entry.statMods.strength = (entry.statMods.strength ?? 0) - amount;
+  const permanentValue = target.stats?.strength ?? 0;
+  if (permanentValue - (entry.magnitude + amount) < 1) entry.magnitude = permanentValue - 1;
+  else entry.magnitude += amount;
 }
 
 /** The ONE registry row enchantments.js mounts for type 26: flags are

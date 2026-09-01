@@ -49,17 +49,21 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';   // U40: the lett
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
+import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
-import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
+import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
+import { calculateAttackDamage } from '../combat/formulas.js';   // AUDIT 39 (#64/#65): the interior arrow's damage, both ways
+import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry
 import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
 import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
+import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
 import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
 import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
@@ -162,6 +166,8 @@ import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at
+import { dismountOnTransition } from '../systems/transport.js';   // TR5: the interior dismount
+import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 // U39: the tavern - the window, the knightly free-room perk and the
@@ -212,6 +218,10 @@ let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
 // Dungeon water surface (R11 values, mirroring the dungeon scene).
+// AUDIT EV F-R1: the modal frames' explicit "no exterior light in
+// here" - hoisted, not minted per frame (the EV2 law).
+const NO_INDIRECT_POS = [0, 0, 0];
+const NO_INDIRECT_COLOR = new Float32Array(3);
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
@@ -465,9 +475,10 @@ export function createWorldModes(host) {
     // MW-D8: see world.js's twin note - the arm rides the eye, and the
     // dep is required so a missing one is a reason, never a wrong place.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
+    camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking,
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
-      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0 } }),   // MW-D26: the movement-settings vector, the reference's own selection source
+      move: { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0,
+        grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
     say,
   });
   // C13: the interior arrow flights (collider late-resolved - each
@@ -610,6 +621,24 @@ export function createWorldModes(host) {
         interiorArrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
         audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
       },
+      // AUDIT 39 (#39): the MAGIC half of the same payload. SetEnemySpells
+      // runs inside SetEnemyCareer on every construction (EnemyEntity
+      // .cs:453-461) with no scene test, so a foe standing in a shop
+      // owes its spell lists and its EnemyCaster exactly as one in the
+      // street does - and without the lists the S19 monster paralyze
+      // rider had no Spider Touch to free-cast either. Both deps were
+      // in scope at the host destructure the whole time.
+      spellsByIndex,
+      magicHooks: magic ? {
+        explodeAt: (...a) => magic.explodeAt(...a),
+        // world.js's arm, minus its walk-mode gate: the interior frame
+        // runs magic.update itself, so a missile loosed here flies.
+        fireMissile: (from, spell, casterLevel, foe) => {
+          const d = [player.pos[0] - from[0], player.pos[1] + 0.9 - from[1], player.pos[2] - from[2]];
+          const l = Math.hypot(...d) || 1;
+          magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
+        },
+      } : null,
     });
   }
   // E2: the entered building's identity + the shop browse overlay.
@@ -1193,7 +1222,10 @@ export function createWorldModes(host) {
       // at the concluded deal (:1036-1051). FLAGGED: the equipped test
       // is the WINDOW's in DFU (FilterLocalItems :693 `!item.IsEquipped`
       // in every mode); moving it there is what would let this hand
-      // over the live array and transfer at the click.
+      // over the live array and transfer at the click. Until that
+      // happens the WINDOW owes the selection its own guard, and has
+      // one: localList drops what is already staged (AUDIT 39 F102),
+      // which is what DFU's splice does for FilterLocalItems.
       packItems: () => (playerEntity.items ??= []).filter((it) => !isEquipped(it)),
       accepts: (it) => shopBuysItem(b.buildingType, it),
       enchanted: (it) => isEnchanted(it),
@@ -1298,11 +1330,14 @@ export function createWorldModes(host) {
         // AUDIT 26 F067: the SPELL runs DoModeAction (:954-995), a
         // path that never reaches ConfirmTrade at all. Two laws come
         // with that. First its magicka refusal (:960-963) turns back
-        // the WHOLE pass - nothing identified, nothing spent:
+        // the WHOLE pass - nothing identified, nothing spent - and
+        // AUDIT 39 F144 answers it FALSE to the window, because DFU
+        // returns before ClearSelectedItems: the lot stays staged for
+        // a caster who steps out and comes back with the points.
         if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
           townTalk?.say?.(NOT_ENOUGH_SPELL_POINTS_TEXT);
           surfacePlayer();
-          return;
+          return false;
         }
         const pass = identifySpellPass(staged, identifySpell.chance, Math.random);
         for (const it of pass.identified) it.isIdentified = true;
@@ -1665,6 +1700,15 @@ export function createWorldModes(host) {
     // overlay draws and takes input in every mode - the hosts route
     // townTalk first). A host with no session keeps the old line.
     if (talk?.kind === 'talk' && townTalk?.openTalkWindow) {
+      // AUDIT 39 (#108): StartNewConversation is the WINDOW's reset -
+      // DaggerfallTalkWindow.OnPush runs it through SetStartConversation
+      // (:654) on EVERY push, static NPCs included - and the static
+      // door ran none of it: the deferred topic-list rebuild was never
+      // spent (a blank Where-is page, or the last town's list) and
+      // numQuestionsAsked never returned to 0, so every conversation
+      // after the session's first question opened on the follow-up
+      // record. talkToNpc is TalkToNpc alone; this is the other member.
+      npcSession?.startNewConversation();
       townTalk.openTalkWindow(talk.greeting, { npcSeed: npcData.nameSeed, npcName: displayName });   // the DERIVED seed (StaticNPC.Data), as the engine's own reads are
       return;
     }
@@ -1805,8 +1849,17 @@ export function createWorldModes(host) {
         containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null,
       })),
     ];
-    const actionDoors = [...(ctx.actions?.objects?.values?.() ?? [])]
-      .map((o) => ({ key: o.key, state: o.state }));
+    // AUDIT 39 (#32): the whole door record, not the state word alone.
+    // SerializableActionDoor round-trips currentRotation and
+    // actionPercentage beside currentState (plus the lock and the
+    // pick latch), and RestoreSaveData's RestartTween(1 - percentage)
+    // is what puts an open door back OPEN. Cached as {key, state} the
+    // pose and the collider stayed where addDoor minted them, so a
+    // door left open came back drawn shut and solid while the machine
+    // read open - and the next activation shut an already-shut door.
+    // collectSaveData IS that record; the action system already owns
+    // both halves.
+    const actionDoors = ctx.actions?.collectSaveData?.() ?? [];
     // ID1: the player's own piles are DaggerfallLoot in the interior
     // scene, so they cache and restore with it - the same trio
     // LootContainerData_v1 carries and the dungeon already snapshots.
@@ -1841,10 +1894,13 @@ export function createWorldModes(host) {
       // browse still roll fresh goods after an uneventful visit.
       if (target && c.items !== null) target.items = c.items;
     }
-    for (const d of data.actionDoors) {
-      const o = interiorCtx.actions?.objects?.get?.(d.key);
-      if (o) o.state = d.state;
-    }
+    // #32: through the system's own restore, which settles the matrix
+    // and the collider bucket (syncRestored) - a door restored open
+    // must not stay solid. A scene cached before this shipped carries
+    // the state word alone; `t` is derived from it so the legacy entry
+    // restores as a settled pose rather than a NaN matrix.
+    interiorCtx.actions?.restoreSaveData?.(
+      data.actionDoors.map((d) => (d.t == null ? { ...d, t: d.state === 'end' ? 1 : 0 } : d)));
     // ID1: a scene cached before this shipped has no `droppedPiles`,
     // and restorePiles CLEARS on an absent list - which is right: the
     // pool was rebuilt empty on the way in, so clearing is a no-op,
@@ -2091,6 +2147,7 @@ export function createWorldModes(host) {
       { menu: true, isSpyMaster });
     if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
       interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
+      npcSession?.startNewConversation();   // #108: the same OnPush reset - this door is a push too
       townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2 });
       return;
     }
@@ -3078,7 +3135,13 @@ export function createWorldModes(host) {
             : shopQualityPresentation();   // the law reads the setting, as PresentShopQuality does
           if (lines.length && how === 'popup' && townTalk?.showOverlay) {
             // :617-623 - the transition DEFERS to the box closing.
-            townTalk.showOverlay(new ChoiceWindow({ lines }), () => { enterInteriorCore(hit, entries); });
+            // AUDIT 39 (#164): the callback fires synchronously and
+            // discarded the promise, so a refused interior (the
+            // no-landing throw) escaped to main.js's unhandledrejection
+            // handler and painted CRASH over a game still running. The
+            // catch is the one the two host call sites already put on
+            // the non-deferred arm.
+            townTalk.showOverlay(new ChoiceWindow({ lines }), () => { enterInteriorCore(hit, entries).catch((e) => console.error(e)); });
             return true;
           }
           // The HUD arm speaks and does NOT defer (:1379-1386); 'none'
@@ -3106,7 +3169,19 @@ export function createWorldModes(host) {
    *  shop entered while open an open shop) - and the saved position,
    *  which lands RAW after the layout (RestorePosition's interior arm,
    *  transform.position = the saved value). */
+  /** TransportManager.HandleTransition (:196-202): the two interior
+   *  transitions dismount, and nothing else does - DFU has no arm for
+   *  LEAVING one, so you walk out on foot. TR5. */
+  function dismountPlayer(transition) {
+    const next = dismountOnTransition(player.transportMode, transition);
+    if (next !== player.transportMode) host.setTransportMode?.(next);
+  }
+
   async function enterInteriorCore(hit, entries, restore = null) {
+    // TR5: TransportManager.HandleTransition (:196-202) - a BUILDING
+    // interior puts you back on foot. The law shipped in TR1 with no
+    // caller; this is it.
+    dismountPlayer('ToBuildingInterior');
     transitioning = true;
     try {
       // E2/P1: the building's identity, resolved BEFORE the interior
@@ -3291,7 +3366,7 @@ export function createWorldModes(host) {
         // Teleport just ABOVE the marker and let gravity floor it -
         // FixStanding's re-floor, without tunneling thin boards.
         player.spawn(to[0], to[1] + 0.1, to[2]);
-        cam.pos = player.eye;
+        cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       }
       return true;
     }
@@ -3434,6 +3509,7 @@ export function createWorldModes(host) {
     // cached location the exterior shares is never touched.
     const dfLocation = dungeonLocationFor(hit.dfLocation, { questMachine: questBridge?.machine });
     if (!dfLocation || !dfLocation.hasDungeon) return false;
+    dismountPlayer('ToDungeonInterior');   // TR5: the other half of :196-202
     transitioning = true;
     try {
       const ctx = await buildDungeonContext(
@@ -3464,6 +3540,12 @@ export function createWorldModes(host) {
           // restored-Symbol duplicate quirk sceneMount records.
           questBridge, talkSave,
           onQuestRestored: () => { onQuestRestored?.(); mountQuestResources(); },
+          // AUDIT 39 (#41): PlayerDeath.cs reads the camera's LIVE local
+          // y and the controller's LIVE height at the moment of death,
+          // so a crouched death sinks from the crouched eye. dungeon.js
+          // has always passed this; without it the world-hosted dungeon
+          // death fell to the standing defaults.
+          motorState: () => ({ eyeLevel: player.eye[1] - player.pos[1], capsule: player.height }),
           // AUDIT 26 F222/F223/F101: the host's half of the pose -
           // this mode machine owns the modal player and camera; the
           // context owns the weapon and folds weaponDrawn in itself.
@@ -3496,9 +3578,6 @@ export function createWorldModes(host) {
         candidates: entries.filter((e) =>
           e.group === hit.group && e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE),
       };
-      mode = 'dungeon';
-      dungeonLoc = dfLocation;
-      player.collider = ctx.collider;
       // DE1: WHICH DFU MEMBER THIS IS. Walking in through the door is
       // TransitionDungeonInterior, which uses the START marker and
       // aborts where there is none; startInDungeon (a new game) is
@@ -3510,9 +3589,27 @@ export function createWorldModes(host) {
       // (:923-929) rather than dropping the player at an invented
       // point. The port answers false, which is this door's "nothing
       // happened" - the player stays outside, standing at the door.
-      if (!spawn) { console.error('[dungeon] no start marker; transition aborted'); return false; }
+      //
+      // AUDIT 39 (#29): and that sentence did not describe the code
+      // under it. The marker test used to run AFTER mode, dungeonLoc
+      // and the player's collider had been switched, so the "abort"
+      // left the host in dungeon mode with the player at their
+      // EXTERIOR position on the dungeon's collider and a built
+      // context nobody destroyed. DFU tests the marker BEFORE
+      // EnableDungeonParent/MovePlayerToMarker and Destroys the layout
+      // on the way out; the three commits move below the test, and the
+      // refusal unwinds the context it just built.
+      if (!spawn) {
+        console.error('[dungeon] no start marker; transition aborted');
+        ctx.destroy();
+        dungeonCtx = null;
+        return false;
+      }
+      mode = 'dungeon';
+      dungeonLoc = dfLocation;
+      player.collider = ctx.collider;
       player.spawn(spawn[0], spawn[1], spawn[2]);
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       // ...and the orientation half of the same two members: away from
       // the door you came through, or north for a start with no door.
       const _yaw = ctx.entryFacingYaw(spawn, { preferEnterMarker });
@@ -3531,6 +3628,13 @@ export function createWorldModes(host) {
         cam.pitch = 0;
       }
       mountQuestResources();   // B2: AddQuestResourceObjects(SiteTypes.Dungeon) on the transition, as PlayerEnterExit raises it
+      // AUDIT 39 (#31): the sixth of TalkManager's six subscriptions.
+      // PlayerEnterExit raises OnTransitionDungeonInterior from BOTH
+      // members this function serves (:958 and :1016), and the handler
+      // is castleNPCsSpokenTo.Clear() - so a castle NPC gets a fresh
+      // work roll on each visit. The two exterior transitions here
+      // already notify the session; the entry notified nothing.
+      npcSession?.onEnterDungeonInterior();   // TK-v: OnTransitionToDungeonInterior (:3611-3614)
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
         `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris, ${ctx.enemies.length} enemies`);
     } finally {
@@ -3657,7 +3761,7 @@ export function createWorldModes(host) {
       // put you outside still looking at them.
       cam.pitch = 0;
     }
-    cam.pos = player.eye;
+    cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     console.log('exterior: returned at dungeon entrance');
     return true;
   }
@@ -3713,7 +3817,15 @@ export function createWorldModes(host) {
     // input zeroed, jump cancelled - the player still falls; look
     // stays live (FrictionMotor/AcrobatMotor verbatim gates).
     // P12 crouch: KeyX edge toggle (host parity with ?dungeon).
-    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
+    // AUDIT 39r: the INTERIOR arm hardcoded false, so a building was the
+    // one place in the game paralysis did nothing - in the same file
+    // that mounts spellsByIndex/magicHooks on the interior foe pool so
+    // the S19 monster rider has Spider Touch indoors. Every DFU gate
+    // reads PlayerEntity.IsParalyzed with no interior/exterior test
+    // (FrictionMotor :75-81, AcrobatMotor :135-141, WeaponManager
+    // :235-239), which is the fold world.js and exterior.js took; the
+    // dungeon arm keeps its context read, the same answer one seam over.
+    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);
     // E2: the shop overlay holds the motor like every other window
     // (typing digits must not walk the player).
     // AUDIT 18 HOST GAP: the dungeon overlay was absent from this
@@ -3723,7 +3835,15 @@ export function createWorldModes(host) {
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
     // which is what dungeon.js:218's `held` already implements.
-    const overlayHeld = (mode === 'interior' && !!interiorOverlay) ||
+    // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
+    // pauses for the window, not for the slot it was pushed into -
+    // and townTalk's slot really does hold one in these modes: this
+    // file's own openStaticNpc tail opens a talk window while the
+    // player stands in a shop, and world.js runs the classic-start
+    // chargen wizard there with the player already inside Privateer's
+    // Hold. The keydown chain already conceded the point below.
+    const overlayHeld = !!townTalk?.overlayActive ||
+      (mode === 'interior' && !!interiorOverlay) ||
       (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive);
     // Q4-v: the quest layer's modal frame. Behaviours update every
     // frame (Unity Update runs whatever Time.timeScale is); the
@@ -3756,10 +3876,20 @@ export function createWorldModes(host) {
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
-      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
+      // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
+      // movement VECTOR (FrictionMotor :75-81, AcrobatMotor :135-141);
+      // CaptureInputSpeedAdjustment runs in Update behind a levitate gate
+      // and nothing else. Dropping run/sneak/autoRun/back from this bag read
+      // as a RELEASE to the motor's press-edge latches, so a key held
+      // through the paralysis fired a synthetic press on the frame it lifted.
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
+        // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+        // press flips ToggleRun; MoveBackwards is its cancel key.
+        autoRun: held(keys, 'AutoRun'),
+        back: mv.backwards,
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         up: jumpHeld || held(keys, 'FloatUp'),
@@ -3779,7 +3909,7 @@ export function createWorldModes(host) {
         const _surf = player.waterSurfaceY;
         const _step = _footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !anyMove(mv),
+          standingStill: !moving,   // AUDIT 39r: `moving` is the paralysis-folded read - a frozen player takes no stride (world.js/exterior.js's own line)
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet(mode === 'interior'
           ? { inside: true, inBuilding: true }
@@ -3798,7 +3928,7 @@ export function createWorldModes(host) {
       // by the update that sets them, so their readers ride the motor's
       // own gate: a jump taken the instant before a window opened would
       // otherwise be re-reported on every paused frame.
-      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
+      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
       // only dungeon.js:270 fed it, so in a world-hosted dungeon the
@@ -3850,12 +3980,14 @@ export function createWorldModes(host) {
         }));
       }
     }
-    cam.pos = player.eye;
-    // DC1: PlayerDeath.Update's camera sink. Both modal modes route
-    // death to interiorOverlay (the AUDIT 23 hosts-1 presenter), so
-    // this ONE per-frame write covers a building and a ?world dungeon
-    // alike; the fresh eye array keeps it per-frame, never cumulative.
+    cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+    // DC1: PlayerDeath.Update's camera sink; the fresh eye array keeps
+    // it per-frame, never cumulative. AUDIT 39 (#36) added the dungeon
+    // arm - the context registers its OWN death presenter for the whole
+    // visit, so a dungeon death mounts its DeathScreen in the CONTEXT's
+    // slot and the one write below never saw it.
     if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;
+    if (mode === 'dungeon') cam.pos[1] -= dungeonCtx?.deathDrop ?? 0;
     const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
     const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
     // C9: per-mode routing (the old unconditional dungeonCtx read
@@ -3897,6 +4029,17 @@ export function createWorldModes(host) {
       // wings rendered about five times darker than DFU. The predicate
       // was already live here, driving music and water sounds.
       renderer.setLighting(new Float32Array(dungeonCtx.ambient), 0);
+      // AUDIT EV F-R1 (the F001 shape, one field over): the MOON and
+      // the player-following INDIRECT light are renderer globals the
+      // exterior hosts set per frame and nothing here ever cleared -
+      // a dungeon entered on a clear full-Masser night kept a warm
+      // ~0.22 directional term at the moon's exterior bearing (about
+      // 2x this ambient on moonward faces) for the whole visit, and
+      // the R12 indirect sat at stale exterior coordinates. Underground
+      // has no sky: both go dark explicitly, exactly as the emission
+      // line below already learned to.
+      renderer.setMoonlight(null);
+      renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
       // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
       // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
       // window style - so a dungeon's window records keep the colour a
@@ -3916,14 +4059,14 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       dungeonCtx.flatAnims.tick(dt);   // FA1
-      renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+      renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, UP_Y);
       // AUDIT 17e F1: this MUST return true like every other exit of
       // the dungeon branch. Returning undefined let the host fall
       // through and run its whole exterior frame on top - the town
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0 }, player.bobOffset ? player.bobOffset[1] : 0);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0, grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating }, player.bobOffset ? player.bobOffset[1] : 0);   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
@@ -3939,6 +4082,10 @@ export function createWorldModes(host) {
     // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
     // night interior takes the darker purple-tinted ambient.
     renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
+    // AUDIT EV F-R1: no moonlight and no stale exterior indirect
+    // through the walls - see the dungeon arm's note above.
+    renderer.setMoonlight(null);
+    renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
     // AUDIT 26 F001: DaggerfallInterior lays out EVERY interior mesh
     // with WindowStyle.Disabled - individual models (:473), the
@@ -3959,13 +4106,20 @@ export function createWorldModes(host) {
         (l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]),
       magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw));   // X11 candle; T1 torch
     renderer.setPointLights(_itLit.data, null, _itLit.colors);
-    interiorCtx.actions.update(dt);
+    // AUDIT 39 (#33): the gate the dungeon arm above already carries.
+    // A paused game advances no movers - DFU's door swing is an iTween
+    // that never opts out of timeScale - so a swing begun before the
+    // window opened used to complete under it and ring its close sound
+    // over a frozen world, while the frame's own ridePlatform (gated)
+    // declined to carry the player with it.
+    if (!overlayHeld) interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     // WM4b: the mill's machinery turns at Kamer's rate, in here too.
     for (const r of interiorCtx.rotors) {
-      advanceMachinery(r.state, dt, r.child);
+      // #33: the rotors are movers too - the DRAW below still paints them
+      if (!overlayHeld) advanceMachinery(r.state, dt, r.child);
       renderer.drawMesh(r.gpu, mountMachineryChild(r.parent, r.child, r.state.angle), interiorCtx.texRemap);
       // WM4c: the part that carries Spin_Up hums (the gear; the roller's
       // script adds no source). Retried until the context is up.
@@ -3975,10 +4129,50 @@ export function createWorldModes(host) {
     // C13: interior arrows fly and draw with the meshes; a new
     // interior (different ctx) drops the stale flights.
     if (_arrowsCtx !== interiorCtx) { interiorArrows.arrows.length = 0; _arrowsCtx = interiorCtx; }
-    interiorArrows.update(dt);
+    // AUDIT 39 (#65): with no options this call was pure geometry -
+    // every arm of ArrowFlight's impact is gated on the seams it takes
+    // here, so the bow-armed quest foe this host mounts shot at the
+    // player with sound and animation and landed nothing. The four are
+    // world.js's, sourced from this host's own motor and pool.
+    // (#64): and the fifth is the PLAYER's shaft, which no non-dungeon
+    // host resolved at all.
+    interiorArrows.update(dt, {
+      playerFeet: player.pos,
+      onPlayerHit: (m) => {
+        const shooter = m.shooterFoe;
+        tallySkill(playerEntity, SKILLS.Dodging, 1);
+        const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
+          weapon: m.weapon,
+          onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
+          say: (l) => say(l),
+        }) : 0;
+        if (dmg > 0) {
+          hurtPlayer(playerEntity, dmg);
+          audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          // AUDIT 39r: and the FLASH, which this arm was copied without.
+          // An arrow reaches the player through BowDamage ->
+          // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
+          // a blow (world.js:5453's own wave-46 note); the interior
+          // MELEE hit already flashes inside exteriorFoes, so only this
+          // arm - which applies its own damage - was missing it.
+          flashPlayerDamage();
+          playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+          surfacePlayer();
+        }
+        addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
+      },
+      foeTargets: (interiorFoes?.foes ?? []).filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onFoeHit: (m, t) => interiorFoes?.arrowHitFoe(m, t),
+      onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
+        playerEntity, playerWeapon: interiorWeapon.playerWeapon, playerFeet: player.pos,
+        dealDamage: (f, d) => interiorFoes?.damageFoe(f, d, player.pos, m.dir),
+        audio, hitEffects: interiorHitEffects, say: (l) => say(l),
+        onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
+      }),
+    });
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
-    renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawBillboards(interiorCtx.billboardBatches, camRight, UP_Y);
     // NPC4: THE PEOPLE STANDING IN THE ROOM.
     //
     // Their batches are per person (interiorContext), so this loop
@@ -4015,21 +4209,21 @@ export function createWorldModes(host) {
         })) continue;
         _pplBatches.push(pn.batch);
       }
-      if (_pplBatches.length) renderer.drawBillboards(_pplBatches, camRight, new Float32Array([0, 1, 0]));
+      if (_pplBatches.length) renderer.drawBillboards(_pplBatches, camRight, UP_Y);
     }
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.
     interiorHitEffects.tick(dt);
     {
       const _blood = interiorHitEffects.batches();
-      if (_blood.length) renderer.drawBillboards(_blood, camRight, new Float32Array([0, 1, 0]));
+      if (_blood.length) renderer.drawBillboards(_blood, camRight, UP_Y);
     }
     // ID1: the player's own piles, on the same axis and the same call
     // the dungeon host makes for its droppedLoot.
     interiorDropped.tickFlats(dt);
     {
       const _dropBatches = interiorDropped.batches();
-      if (_dropBatches.length) renderer.drawBillboards(_dropBatches, camRight, new Float32Array([0, 1, 0]));
+      if (_dropBatches.length) renderer.drawBillboards(_dropBatches, camRight, UP_Y);
     }
     // IF: the pool's own billboards ride the same axis, the same call
     // the exterior host makes for its foes.
@@ -4040,14 +4234,14 @@ export function createWorldModes(host) {
       // watch already take. Without it every foe is a sprite, exactly
       // as before.
       const _foeBatches = interiorFoes.batches({ canvas, proj, view, eye: mwv.eye }, dt);
-      if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, new Float32Array([0, 1, 0]));
+      if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, UP_Y);
     }
     if (magic) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
       magic.firePending([...cam.pos], eyeDir());
       magic.update(dt, player.pos, eyeDir(), player.height);   // X11: the candle hangs off the look direction
-      if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));
+      if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -4073,7 +4267,17 @@ export function createWorldModes(host) {
     // which disagreed with the dungeon's own bow arm. A bow always takes the
     // tally arm in DFU (`!hitEnemy && WeaponType != Bow` is false for a bow),
     // so it is tallySwingSkills - Archery AND CriticalStrike - not one skill.
-    for (const ev of interiorWeapon.frame(dt)) {
+    // AUDIT 39 (#34): the rig's MACHINE is held under a window like
+    // every other consumer of this frame - a swing in flight when the
+    // level-up screen, the death screen or a quest popup opened used
+    // to land its hit frame under it, draining fatigue, spending an
+    // arrow and tallying skills over a paused game. The draw below
+    // stays outside: the viewmodel still paints.
+    // AUDIT 39r: ...and the rig takes the paralysis flag the other two
+    // above-ground hosts pass (WeaponManager.cs:235-239 - ShowWeapons
+    // (false) and no swing). This host's interior rig was handed
+    // nothing, so a paralysed player indoors kept swinging.
+    for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed }))) {
       // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
       if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
       if (ev !== 'hit') continue;
@@ -4081,7 +4285,7 @@ export function createWorldModes(host) {
         if (spendArrow(playerEntity.items)) {
           drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
           tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
-          interiorArrows.fire(player.eye, eyeDir());
+          interiorArrows.fire(player.eye, eyeDir(), { fromPlayer: true, weapon: interiorWeapon.playerWeapon.weapon });   // #64: LastBowUsed rides the shaft - the impact prices off it
         }
         continue;
       }
@@ -4106,13 +4310,20 @@ export function createWorldModes(host) {
       // strike-entry whoosh is gone).
       audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);
     }
-    interiorWeapon.draw();
+    interiorWeapon.draw({ paralyzed });   // AUDIT 39r: ShowWeapons(false) - no viewmodel while frozen
     // AUDIT 21 (hosts lane, F7): THE HUD, in a building. drawHud lives inside
     // dungeonContext.drawFoes, which the interior arm never calls - so the
     // whole classic status bar vanished the moment you stepped through a door
     // and came back when you stepped out. Same call, same place in the order:
     // last, over the viewmodel, under the overlay.
-    if (hudArt) {
+    // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
+    // flash and the enhanced DOM HUD ABOVE its own `!art` return
+    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // HUD art failed to load still has vitals". Wrapping the whole
+    // call in `if (hudArt)` inverted that: hudArt starts null and is
+    // filled by a fire-and-forget load whose failure leaves it null
+    // forever.
+    {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers, interior arm. THE FOUR HOSTS RULE
       // mounted the feed here before this host had anything to put in
@@ -4133,6 +4344,17 @@ export function createWorldModes(host) {
           // now the arrow count) could draw indoors while DFU draws
           // the one HUD everywhere. townTalk owns the host's FONT0003.
           font: townTalk?.font ?? null,
+// AUDIT 39 (#132): the flag the other three hosts pass and
+          // this one never did, so with a window up indoors the HUD
+          // was never told the pointer was free - the enhanced strip
+          // stayed painted over the window, the crosshair drew, the
+          // vitals detector never paused and the spell tooltip could
+          // not appear. This frame ends `return true`, so world.js's
+          // own drawHud (which does pass it) never runs in here.
+          cursorActive: overlayHeld,
+          // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
+          readied: magic?.readied?.() ?? null,
+          weapon: interiorWeapon.playerWeapon.weapon ?? null,
           weaponSheathed: !!interiorWeapon.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U45
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
@@ -4886,6 +5108,10 @@ export function createWorldModes(host) {
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
+    /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
+     *  :691-694) - inside, the key refuses with a HUD line instead of
+     *  opening the picker. Both interior modes are inside. */
+    openTransport() { townTalk?.say?.(CANNOT_CHANGE_INDOORS); },
     // UI1: the U key indoors. Nothing usable, no window (DaggerfallUI
     // :581-583); the use itself is the host's own inventory use path.
     openUseMagicItem() {
@@ -5280,7 +5506,7 @@ export function createWorldModes(host) {
       } else {
         player.spawn(p.x, p.y, p.z);
       }
-      cam.pos = player.eye;
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     },
     /** TP-slice: the Teleport effect leaves ANY mode - the exit
      *  cores of the door flows minus the landing (the caller owns

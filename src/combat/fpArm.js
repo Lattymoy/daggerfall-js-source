@@ -40,7 +40,7 @@
 // takes the player's pitch through the neck the reference rotates.
 
 import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
-import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
+import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
 } from '../formats/mwAnim.js';
@@ -49,18 +49,19 @@ import { nodeTransformOf } from '../formats/mwCharacter.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import {
-  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
-  armReport, armMeshPaths,
-  dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
+  assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, clipSweepTimes, bindPartsInto,
+  armReport, armMeshPaths, bodyParts,
+  weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
-  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
+  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   sneakOffset,
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
-  sourcesKeyTime, sourcesVelocity,
+  jumpAnimState,
+  sourcesKeyTime, sourcesVelocity, sourceVelocityOf,
 } from '../formats/mwFirstPerson.js';
 // NPC1: the records every actor build reads, walked once per data set.
 import { mwActorCatalog, catalogRace } from '../formats/mwActorCatalog.js';
@@ -149,16 +150,26 @@ export const FP_IDLE_LOOPS = () => 1 + Math.floor(Math.random() * 4);
  * "idlehh" with fists up, which is Morrowind's ready stance played while
  * Daggerfall says the weapon is away.
  */
-export function animWeaponType(mwType, sheathed) {
+export function animWeaponType(mwType, sheathed, spellReady = false) {
+  // MW-D39 (Mac: Morrowind's spellcasting animations): A READIED SPELL IS
+  // A STANCE. In the reference the spell is a WEAPON TYPE - Spell(-1),
+  // whose short group is "spell" and long group "spellcast" - and
+  // getWeaponType returns it whenever a spell is readied, before any
+  // equipped weapon is consulted (weapontype.cpp / character.cpp's
+  // getActiveWeapon). Daggerfall readies a spell the same way, so the
+  // port asks the same question in the same order. The SHEATHED test
+  // still comes first: a readied spell with the weapon put away is the
+  // caster's own empty hands, which is exactly what the spellcast
+  // animation wants, so the spell stance survives it.
+  if (spellReady) return MW_WEAPON_TYPE.Spell;
   if (sheathed) return MW_WEAPON_TYPE.None;
   return mwType === MW_WEAPON_TYPE.None ? MW_WEAPON_TYPE.HandToHand : mwType;
 }
 
 /** CharacterController::UpperBodyState (character.hpp:107-117), in its own
- *  order. Casting is out of scope for this slice - Daggerfall's spell
- *  hand is the port's own viewmodel - and is absent rather than aliased,
- *  because an enum with a member the code never reaches is a lie the next
- *  reader has to disprove. */
+ *  order. MW-D39 adds Casting, which the reference carries as
+ *  UpperCharState_CastingSpell: the slice that reaches it is here now,
+ *  so the member is no longer a lie the next reader has to disprove. */
 export const UPPER_BODY = Object.freeze({
   None: 0,
   Equipping: 1,
@@ -167,6 +178,7 @@ export const UPPER_BODY = Object.freeze({
   AttackWindUp: 4,
   AttackRelease: 5,
   AttackEnd: 6,
+  Casting: 7,
 });
 
 /** MW-D13: THE ORDER IS LOAD-BEARING, so these are numbers.
@@ -181,6 +193,17 @@ export const UPPER_BODY_NAME = Object.freeze(
 /** setAccurateAiming's argument, verbatim. Casting sits above
  *  AttackEnd in the reference's enum and is out of scope here, so the
  *  test is the same shape with one fewer state above the line. */
+/** MW-D39: the spell's ATTACK TYPE, which names its key pair
+ *  (character.cpp:1618-1636). Morrowind has three ranges; Daggerfall
+ *  has five, and the two area forms cast like the point form they
+ *  surround - an area at range is aimed, an area around the caster is
+ *  not. */
+export function spellAttackType(rangeType) {
+  if (rangeType === 1) return 'touch';
+  if (rangeType === 0 || rangeType === 3) return 'self';
+  return 'target';
+}
+
 export const accurateAiming = (upper) => upper > UPPER_BODY.WeaponEquipped;
 
 /** AnimState::getCompletion (animation.cpp:2160-2166) - the fraction of
@@ -412,6 +435,27 @@ parseNifOnce.cache = new WeakMap();
 
 /** getArrowBone's FIRST branch: does the ACTOR's own skeleton carry the
  *  ammo type's attach bone? */
+/** MW-D46: the bone OpenMW issue 5642 added the quiver branch for. */
+const QUIVER_BONE = 'Bip01 Arrow';
+
+/** MW-D46: is this name present in these bytes at all? A .kf stores node
+ *  names as plain ASCII, so a clip that animates a bone necessarily
+ *  contains its name - and one that does not, cannot. A scan rather than
+ *  a parse: the question is existence, not structure, and a wrong answer
+ *  only ever costs the VANILLA placement, which is the one that works. */
+function bytesHaveName(bytes, name) {
+  if (!bytes || !bytes.length) return false;
+  const want = [];
+  for (let i = 0; i < name.length; i++) want.push(name.charCodeAt(i));
+  const last = bytes.length - want.length;
+  for (let i = 0; i <= last; i++) {
+    let hit = true;
+    for (let j = 0; j < want.length; j++) { if (bytes[i + j] !== want[j]) { hit = false; break; } }
+    if (hit) return true;
+  }
+  return false;
+}
+
 function skeletonHasBone(skeletonBytes, name) {
   try {
     const skel = buildSkeleton(parseNifOnce(skeletonBytes));
@@ -667,7 +711,7 @@ export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
 }
 
-export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
+export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes, quiverDriven = true }) {
   const notes = [];
   const parts = [];
   let weaponInfo = null;
@@ -716,16 +760,47 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
               // the WEAPON's mesh - which brings the weapon's whole
               // transform chain, and its MIRROR, along with it.
               const skelBone = arrowAttachBone(mwType);
-              const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
-              let pre = null;
-              let arrowBone = skelBone;
-              if (!onActor) {
-                pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
-                arrowBone = pre ? bone : null;
+              // MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS
+              // FOR. OpenMW issue 5642 added it so modded skeletons
+              // could fetch arrows from a quiver - "allows to implement
+              // better shooting animations" - and a skeleton carrying
+              // "Bip01 Arrow" with no clip that MOVES it parks the
+              // round on the body for the whole shot, which is what Mac
+              // has been looking at. `quiverDriven` is the caller's
+              // answer to "does any loaded clip drive that bone"; false
+              // sends the round down the vanilla path the bow mesh
+              // already carries. Defaults true, so every existing
+              // caller and pin is unchanged.
+              // MW-D47: THE BOW MESH IS ASKED FIRST. This inverts
+              // getArrowBone's order and it is a DELIBERATE DIVERGENCE,
+              // recorded as one.
+              //
+              // The reference tries the actor's quiver bone first and
+              // falls back to the bow. That order is right for OpenMW
+              // because the modder who adds "Bip01 Arrow" also ships
+              // the clips that CARRY the round from the quiver to the
+              // string - issue 5642's whole purpose, "better shooting
+              // animations". This port does not run those clips. It
+              // drives Daggerfall's own weapon machine, so a round
+              // placed at the quiver has nothing to move it and stays
+              // in the actor's chest for the entire shot. Six rounds of
+              // Mac's play reports are that one sentence: through the
+              // face in first person, in the character in third - the
+              // same bone, seen from two camera positions.
+              //
+              // So the bow's own ArrowBone wins wherever the mesh has
+              // one, which is every vanilla bow, and the quiver bone is
+              // what is left for a mesh that carries none. `pre` is set
+              // exactly when the bow branch won, which is what MW-D44's
+              // weapon-offset inheritance keys off, so that stays true.
+              const pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
+              let arrowBone = pre ? bone : null;
+              if (!arrowBone && quiverDriven && skelBone && skeletonHasBone(skeletonBytes, skelBone)) {
+                arrowBone = skelBone;
               }
               if (!arrowBone) {
-                notes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
-                  + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
+                notes.push(`arrow: no "${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} `
+                  + `and no usable "${skelBone}" bone on this skeleton - nowhere to put it`);
               } else {
                 parts.push({
                   // MW-D34: `ammo` marks the one part attachArrow
@@ -736,7 +811,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                 });
                 arrowInfo = {
                   id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
-                  bone: arrowBone, viaWeaponMesh: !onActor,
+                  bone: arrowBone, viaWeaponMesh: !!pre,
                 };
               }
             }
@@ -797,7 +872,9 @@ export async function buildTpBody({
       const path = `meshes/${row.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${row.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: row.slot, bones: row.bones, bytes: arc.get(path).slice() });
+      // partName rides along: a worn add's slot is a label carrying its
+      // record id, and the binder's part rules key on the part itself.
+      partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: arc.get(path).slice() });
     }
     if (!partBytes.length) {
       return { ok: false, stage: 'parts', error: `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
@@ -805,7 +882,22 @@ export async function buildTpBody({
     // Rule 8 on THIS skeleton: the third-person rig carries its own
     // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
     // record hangs off the same column with no new law.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    // MW-D46b: THE SAME QUESTION, AT THE SAME DOOR. MW-D46 asked "does
+    // any loaded clip drive the quiver bone" in the FIRST-PERSON build
+    // only, and the third-person body resolves through its own call
+    // site - so the quiver branch went on winning here, and this is the
+    // rig whose skeleton is most likely to carry the bone. That split
+    // is the whole history of the report: first person falls back and
+    // wants an ArrowBone in the bow mesh, third person takes the body
+    // bone and parks the round in the torso. One symptom, two branches,
+    // two views.
+    const quiverDriven = tpAnimSources(skeletonPath, exists).some((cp) => {
+      const a = find(cp);
+      return !!a && bytesHaveName(a.get(cp), QUIVER_BONE);
+    });
+    const resolvedWeapon = resolveWeaponParts({
+      weapon, hasAmmo, allWeapons, find, skeletonBytes, quiverDriven,
+    });
     partBytes.push(...resolvedWeapon.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
@@ -854,6 +946,7 @@ export async function buildTpBody({
       keys: idlePick.source.keys,
       sources,
       sourcePaths,
+      quiverDriven,   // MW-D46b: the swap reads it rather than re-deciding
       clip: idlePick.state,
       groups: [...groupSet].sort(),
       groupSet,
@@ -877,6 +970,8 @@ export async function buildTpBody({
 
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
+  // MW-D46: the pins' override - see the use site below.
+  quiverDriven: quiverDrivenOpt = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -981,12 +1076,30 @@ export async function buildFpArm({
       const path = `meshes/${add.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: add.slot, bones: add.bones, bytes: arc.get(path).slice() });
+      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice() });
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    // NPC1: `allWeapons` is the CATALOG's (one ESM walk for the whole
+    // actor lane, above) - the local re-walk this line used to do is
+    // the second home mwActorCatalog exists to retire.
+    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
+    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
+
+    // MW-D46: DOES ANY LOADED CLIP DRIVE THE QUIVER BONE? Asked here,
+    // before the weapon resolves, because the answer decides which of
+    // getArrowBone's two branches the round is allowed to take.
+    // The override exists for the PINS: MW-D16's two branch tests drive
+    // a fixture skeleton that carries the bone against a fixture clip
+    // that does not animate it, which is precisely the combination
+    // MW-D46 now refuses - so they state the branch law by asserting
+    // the answer rather than by accident of the fixtures.
+    const quiverDriven = quiverDrivenOpt
+      ?? sourceBytes.some((x) => bytesHaveName(x.bytes, QUIVER_BONE));
+    const resolvedWeapon = resolveWeaponParts({
+      weapon, hasAmmo, allWeapons, find, skeletonBytes, quiverDriven,
+    });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
     const weaponInfo = resolvedWeapon.weaponInfo;
@@ -995,8 +1108,6 @@ export async function buildFpArm({
 
     // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
     // as addSingleAnimSource filters it.
-    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
-    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
 
     if (!partBytes.length) {
       // "no record for this actor" is a dead end for whoever reads it.
@@ -1103,9 +1214,20 @@ export async function buildFpArm({
     const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
     for (const so of sources) so.accumRoot = accumRoot;
     const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
+    // PX27 (Mac: the full arms do not show on a swing or a bow): THE
+    // REACH IS SWEPT OVER EVERY CLIP THE ARM WILL EVER PLAY, not the
+    // idle alone. `reach` sets the fp camera's near and far planes
+    // (reach/200 and reach*4), and the idle is the SHORTEST pose the
+    // arm ever holds - an attack extends it forward, a bow draw pulls
+    // it back past the camera, and either can leave a box measured on
+    // a resting hand. The far plane then cut the swing off mid-arm:
+    // "your full arms don't show", exactly. Sweeping every source's
+    // every clip costs one build-time pass over poses already
+    // computable, and cannot under-measure a pose the rig can reach.
+    const sweep = clipSweepTimes(sources, idleCheck);
+    const union = clipUnionBounds(arm, poseAt, sweep);
     const c = idleCheck;
-    const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-    const union = clipUnionBounds(arm, poseAt, times);
+    const idleTimes = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
     poseAt(c.startTime);
 
     // RULE 54. No third fallback, and no invented camera: a rig with
@@ -1122,7 +1244,19 @@ export async function buildFpArm({
         rows: wanted,
       };
     }
-    const reach = armReach(firstPersonEye(arm.mats, cameraRef), union);
+    // AUDIT 37 F1: TWO REACHES, because the two planes want opposite
+    // answers. PX27 swept every clip so the FAR plane could not cut a
+    // swing short - and both planes hang off the same number, so the
+    // same change pushed the NEAR plane out with it (near = reach/200).
+    // A rig whose widest pose is four times its idle would have started
+    // clipping the knuckles off the camera to fix the elbow. The far
+    // plane takes the SWEEP; the near plane keeps the IDLE's reach,
+    // which is the pose it was tuned against and the one the arm holds
+    // closest to the eye.
+    const eye = firstPersonEye(arm.mats, cameraRef);
+    const reach = armReach(eye, union);
+    const idleReach = armReach(eye, clipUnionBounds(arm, poseAt, idleTimes));
+    poseAt(c.startTime);
     if (weaponInfo) weaponInfo.side = weaponRestSide(arm, weaponInfo.bone);
     if (arrowInfo) arrowInfo.side = weaponRestSide(arm, arrowInfo.bone);
 
@@ -1146,6 +1280,7 @@ export async function buildFpArm({
       // whose tracks must pose it.
       sources,
       sourcePaths,
+      quiverDriven,   // MW-D46b: the swap reads it rather than re-deciding
       clip: c,
       // MW-D12: the file's own answer to "does this animation exist",
       // which rules 9 and 10 both consult. A Set, because
@@ -1160,6 +1295,7 @@ export async function buildFpArm({
       textures,
       cameraRef,
       reach,
+      idleReach,
       skeletonPath,
       settingsSkeleton,
       sneakDelta,
@@ -1496,7 +1632,11 @@ export function drawMwBodyAt(renderer, canvas, mesh, arm, raceScale, { feet, yaw
   const halfH = ((maxZ - minZ) * u * rs.height) / 2;
   const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
   const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
-  drawRigSpriteBox(renderer, canvas, mesh, model, { center, halfW, halfH }, proj, view, eye);
+  // MW-D43b (folded into the ONE home at the NPC1 merge): a Morrowind
+  // body is a MESH, so it takes the arm's pixel dial, not the sprite
+  // standard - and every enhanced NPC takes it with the player's own
+  // third-person body, because there is only one place that decides.
+  drawRigSpriteBox(renderer, canvas, mesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
   return true;
 }
 
@@ -1517,6 +1657,7 @@ export function createFpArm() {
   let built = null;
   const listeners = new Set();   // MW-D36
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
+  let pendingWeapon = null;      // PX26: the hand that arrived mid-build
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1564,12 +1705,26 @@ export function createFpArm() {
   let movementBase = null;
   let movementStance = null;
   let movementRate = 1;
+  // MW-D39: THE FOURTH SLOT - JUMP. Priority_Jump sits BELOW
+  // Priority_Movement in the reference's enum (character.hpp:34-35),
+  // so the winner ladder reads action > movement > JUMP > idle - and
+  // the jump still SHOWS in the air because the movestate ladder only
+  // runs inside `if (!mInJump)` (character.cpp:2296): airborne, the
+  // movement slot empties and the jump is the highest thing playing.
+  // On the landing frame movement selects again, so a player who lands
+  // holding W walks over the landing tail - the reference's own look.
+  let jumpState = null;
+  let jumpGroup = null;
+  let jumpSource = null;
+  let jumpStance = null;
+  let jumpKind = null;          // mJumpState: null | 'inair' | 'landing'
   // character.cpp:2355-2366 - the turn animation HOLDS 0.05s past the
   // last actual rotation, so mouse jitter does not flicker it.
   let lastYaw = null;
   let turnHold = 0;
   let turnDir = 0;
   let upper = UPPER_BODY.None;
+  let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let attackType = null;
   let attackStrength = 1;
   let sheathed = true;
@@ -1579,6 +1734,9 @@ export function createFpArm() {
   // is empty until you start to draw it, and only the CROSSBOW reloads
   // itself at the end of a section.
   let arrowShown = false;
+  // MW-D42: set at rule 24's "shoot release" key and CONSUMED by the
+  // rig, so a host that never asks cannot accumulate a stale true.
+  let shootReleased = false;
   let holdWindUp = false;
   let resetIdleOnAttackEnd = false;
   // mAimingFactor (npcanimation.cpp:712-719). It is STATE, not a
@@ -1628,10 +1786,10 @@ export function createFpArm() {
   let thirdPacked = null;
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
 
-  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || idleState)
+  const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
     && viewMode === 'first');
   const thirdActive = () => !!(built && built.ok && thirdBuilt && thirdBuilt.ok && thirdMesh
-    && renderer && (actionState || movementState || idleState) && viewMode === 'third');
+    && renderer && (actionState || movementState || jumpState || idleState) && viewMode === 'third');
 
   /**
    * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.
@@ -1651,7 +1809,7 @@ export function createFpArm() {
    * These are exactly update()'s own requirements: a camera is a DRAW
    * term, and posing without one is harmless work, not a wrong picture.
    */
-  const ready = () => !!(built && built.ok && (actionState || movementState || idleState) && renderer);
+  const ready = () => !!(built && built.ok && (actionState || movementState || jumpState || idleState) && renderer);
 
   function releaseGpu(m) {
     if (m && renderer && renderer.gl) {
@@ -1765,7 +1923,7 @@ export function createFpArm() {
    */
   function refreshIdle(force = false) {
     if (!built || !built.ok) return;
-    const type = animWeaponType(built.mwType, sheathed);
+    const type = animWeaponType(built.mwType, sheathed, spellReady);
     if (!force && idleState && idleState.playing) {
       // Only the GROUP can have gone stale; a playing idle of the right
       // group is left exactly where it is.
@@ -1802,6 +1960,12 @@ export function createFpArm() {
     movementStance = null;
   }
 
+  /** resetCurrentJumpState (character.cpp:350-354). */
+  function resetJump() {
+    jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null;
+    jumpKind = null;
+  }
+
   /** The velocity the clip itself travels at, so the played speed can
    *  scale to the actor's real speed (character.cpp:743-752): the
    *  accum root's horizontal displacement over the clip, falling back
@@ -1825,7 +1989,87 @@ export function createFpArm() {
    * port's yaw is mouse-driven per frame, so the hold IS the port of
    * the threshold, stated rather than smuggled.
    */
-  function refreshMovement(cam, dt) {
+  /**
+   * MW-D39: REFRESHJUMPANIMS (character.cpp:494-532), fed by the
+   * frame's derived JumpState (jumpAnimState above the fold in
+   * mwFirstPerson.js - update()'s :2195-2296, animation half).
+   *
+   * The reference's laws, kept in its own order:
+   *   - the early-out is `jump == mJumpState` unless forced (:496);
+   *     the force here is the weapon-stance transition, MW-D29's law
+   *     carried over from movement - a sword drawn mid-air recomposes
+   *     jump -> jump1h THAT frame;
+   *   - None resets the jump slot AND the idle (:499-505 - the idle
+   *     replays from its start when a jump ends over it);
+   *   - the group is "jump" + the weapon short suffix through
+   *     fallbackShortWeaponGroup's ladder (:508-513), which
+   *     composeStanceGroup already IS (MW-D26's one-home law); a name
+   *     nothing serves resets both, exactly as None does (:515-520);
+   *   - startAtLoop (:522): a forced re-pick in the SAME state starts
+   *     at "loop start" (resetClip carries Animation::reset's own
+   *     ": start" fallback for it, :986-991), so a mid-air stance
+   *     change does not replay the takeoff;
+   *   - InAir plays start -> stop with unbounded loops and NO
+   *     loopfallback (:528-529 - a group with real loop keys loops
+   *     forever, one without plays once and HOLDS its last pose, which
+   *     is the reference's autodisable=false falling pose);
+   *   - Landing plays ONCE from "loop stop" to "stop" (:531). A group
+   *     with no "jump: loop stop" key fails the pick - which is
+   *     Animation::reset:992 returning false and the reference's play
+   *     silently doing nothing: no landing animation is the correct
+   *     outcome for data that carries none.
+   *
+   * Returns the frame's inJump, which gates the movestate ladder
+   * (character.cpp:2296 - it runs only inside `if (!mInJump)`).
+   */
+  function refreshJump(mv) {
+    if (!built || !built.ok) return false;
+    const derived = jumpAnimState({
+      grounded: mv ? mv.grounded !== false : true,
+      swimming: !!(mv && mv.swimming),
+      levitating: !!(mv && mv.levitating),
+      jumpQueued: !!(mv && mv.jumping),
+      priorInAir: jumpKind === 'inair',
+      jumpPlaying: !!(jumpState && jumpState.playing),
+    });
+    const stance = animWeaponType(built.mwType, sheathed, spellReady);
+    const force = !!jumpState && jumpStance !== stance;
+    if (!force && derived.jump === jumpKind) return derived.inJump;   // :496
+    if (!derived.jump) {
+      if (jumpState) { resetJump(); resetIdle(); }   // :499-505
+      else resetJump();
+      return derived.inJump;
+    }
+    const composed = composeStanceGroup('jump', stance, hasGroup);   // :508-513
+    if (!composed.group) {
+      if (jumpState) { resetJump(); resetIdle(); }   // :515-520
+      else resetJump();
+      return derived.inJump;
+    }
+    const startAtLoop = derived.jump === jumpKind;   // :522
+    const pick = derived.jump === 'inair'
+      ? pickAnimSource(rig().sources, composed.group, resetClip,
+        { start: startAtLoop ? 'loop start' : 'start', stop: 'stop', loopCount: Infinity })
+      : pickAnimSource(rig().sources, composed.group, resetClip,
+        { start: 'loop stop', stop: 'stop', loopCount: 0 });
+    if (!pick) {
+      // The Landing arm lands here on loop-key-less data; the InAir arm
+      // on a group hasGroup approved whose keys resetClip refuses.
+      // Either way the reference's outcome is a jump slot with nothing
+      // playing (:515-520 / Animation::reset:992).
+      if (jumpState) { resetJump(); resetIdle(); }
+      else resetJump();
+      return derived.inJump;
+    }
+    jumpState = pick.state;
+    jumpSource = pick.source;
+    jumpGroup = composed.group;
+    jumpStance = stance;
+    jumpKind = derived.jump;
+    return derived.inJump;
+  }
+
+  function refreshMovement(cam, dt, inJump = false) {
     if (!built || !built.ok) return;
     const yaw = cam ? (cam.yaw || 0) : 0;
     let yawRate = 0;
@@ -1839,7 +2083,12 @@ export function createFpArm() {
     }
     lastYaw = yaw;
     const mv = (cam && cam.move) || null;
-    const base = movementAnimState({
+    // MW-D39: the movestate ladder runs only inside `if (!mInJump)`
+    // (character.cpp:2296) - airborne, the movement slot EMPTIES and
+    // the jump slot beneath it is what shows. The null flows into the
+    // existing empty-movement branch, which already carries the
+    // reset-both law (:646-651).
+    const base = inJump ? null : movementAnimState({
       forward: mv ? mv.forward : 0,
       strafe: mv ? mv.strafe : 0,
       running: !!(mv && mv.running),
@@ -1863,7 +2112,7 @@ export function createFpArm() {
     // sword mid-walk re-composes walkforward -> walkforward1h THAT
     // frame - the port's old gate keyed on the movestate name alone and
     // kept the bare-handed walk playing with the sword out.
-    const stance = animWeaponType(built.mwType, sheathed);
+    const stance = animWeaponType(built.mwType, sheathed, spellReady);
     const fresh = !(movementState && movementState.playing
       && movementBase === base && movementStance === stance);
     if (fresh) {
@@ -1892,10 +2141,25 @@ export function createFpArm() {
       // refreshMovementAnims runs (character.cpp:743-752), and the
       // fallback constant reads the FRESH state's run/sneak, which is
       // exactly the run->walk-swap case where the clip stays put and
-      // the state does not. The velocity itself is getVelocity's
-      // multi-source walk (animation.cpp:1267-1338), not the one picked
-      // source's answer.
-      const vel = sourcesVelocity(rig().sources, movementGroup);
+      // the state does not. That half stands.
+      //
+      // PX29 - REVERTED AT MAC'S DIRECTION, and recorded as the
+      // DECLARED DIVERGENCE it is. MW-D29 also changed WHICH source
+      // answers for the velocity: from the one source that won the
+      // group pick to getVelocity's multi-source walk
+      // (animation.cpp:1267-1338). In first person that is invisible -
+      // the .1st clips carry no accumulation-root movement, every
+      // source answers 0, and the fallback constants decide. In THIRD
+      // person the body's clips carry real movement, so the walk can
+      // answer with a DIFFERENT source's velocity than the clip
+      // actually playing, and the divisor changes under a sprint that
+      // did not change: Mac watched the third-person sprint alter and
+      // asked for it back. The picked source's own velocity is the
+      // number that matches the clip on screen, which is the property
+      // that matters more here than the citation. If a future 1:1
+      // sweep wants the multi-source walk again it must come with
+      // Mac's eye on the sprint, not a line number.
+      const vel = movementSource ? sourceVelocityOf(movementSource, movementGroup) : 0;
       movementAnimSpeed = vel > 1 ? vel
         : sneaking ? MOVEMENT_FALLBACK_SPEED.sneak
           : (mv && mv.running) ? MOVEMENT_FALLBACK_SPEED.run : MOVEMENT_FALLBACK_SPEED.walk;
@@ -1916,7 +2180,7 @@ export function createFpArm() {
    *  and attack sections all live in it. */
   function refreshWeaponGroup() {
     if (!built || !built.ok) { weaponGroup = null; return; }
-    const type = animWeaponType(built.mwType, sheathed);
+    const type = animWeaponType(built.mwType, sheathed, spellReady);
     weaponGroup = composeWeaponGroup(type, hasGroup).group;
   }
 
@@ -1938,7 +2202,17 @@ export function createFpArm() {
     // follow-through, which is why a bow looks loaded again before the
     // animation has finished.
     else if (action === 'shoot attach' || action === 'shoot follow attach') arrowShown = true;
-    else if (action === 'shoot release') arrowShown = false;
+    // MW-D42 (Mac: the arrow damages ON CLICK instead of following the
+    // bow animation): the release is now SIGNALLED, not just drawn.
+    // Rule 24's note at Morrowind-Rules.md:246-255 kept every gameplay
+    // key with Daggerfall's machine so two clocks could not disagree
+    // about when a blow lands, and it was right that they must not -
+    // but it settled the disagreement by making the ARM follow nothing.
+    // The shot left on frame 4 of the classic clock while the arm was
+    // still drawing. One clock still decides, and it is still
+    // Daggerfall's machine that owns damage; what changes is WHEN it is
+    // allowed to say so for a bow the arm is animating.
+    else if (action === 'shoot release') { arrowShown = false; shootReleased = true; }
   }
 
   /** PREPAREHIT's strength half (character.cpp:1250-1259), which is the
@@ -2028,6 +2302,15 @@ export function createFpArm() {
       case UPPER_BODY.AttackEnd:
         endAttack();
         break;
+      case UPPER_BODY.Casting:
+        // MW-D39: the cast's section finished - back to the stance, and
+        // the idle replays from its start (the reference's own
+        // resetCurrentIdleState on leaving an upper-body action).
+        actionState = null;
+        actionSource = null;
+        upper = UPPER_BODY.WeaponEquipped;
+        if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
+        break;
       default:
         if (actionState) actionState = null;
         break;
@@ -2061,6 +2344,7 @@ export function createFpArm() {
         buildDeps = (opts && opts.deps) || null;
         idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
         movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+        jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
         lastYaw = null; turnDir = 0; turnHold = 0;
         upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
         weaponShown = false; arrowShown = false; notes.length = 0; aimFactor = 0; sneaking = false;
@@ -2088,8 +2372,9 @@ export function createFpArm() {
         // change, asynchronously, and a panel drawn before the rebuild
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
-        // PX25: the table that arrived mid-build goes now.
+        // PX25/PX26: the table and the hand that arrived mid-build go now.
         if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
+        if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; this.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
       }
     },
 
@@ -2101,6 +2386,7 @@ export function createFpArm() {
       releaseMesh(); built = null; packed = null;
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
+      jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
       lastYaw = null; turnDir = 0; turnHold = 0;
       idleState = null; actionState = null; idleGroup = null; weaponGroup = null;
       upper = UPPER_BODY.None; attackType = null; holdWindUp = false;
@@ -2221,9 +2507,17 @@ export function createFpArm() {
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
     setWeapon(item, { hasAmmo = false } = {}) {
-      if (!built || !built.ok || busy) return false;
+      if (!built || !built.ok) return false;
       const key = fpWeaponKey(item, hasAmmo);
       if (key === wornKey) return false;
+      // PX26 F3: A SWAP DURING A BUILD IS NOT DROPPED, the same law
+      // PX25 gave the worn table. The pack now hands the hand over on
+      // every action, and a sword swapped while the body is rebuilding
+      // for the cloak before it would have been lost with the key
+      // unmoved - the wheel would show the old blade until something
+      // else changed. The latest hand waits and goes when the build
+      // settles.
+      if (busy) { pendingWeapon = { item, hasAmmo }; return false; }
       busy = true;
       const token = built;
       return (async () => {
@@ -2238,6 +2532,9 @@ export function createFpArm() {
           const resolved = resolveWeaponParts({
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
             skeletonBytes: token.skeletonBytes,
+            // MW-D46b: the build already asked the clips; a swap must
+            // not silently answer differently from the body it edits.
+            quiverDriven: token.quiverDriven ?? false,
           });
           const arm = token.arm;
           arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
@@ -2264,7 +2561,7 @@ export function createFpArm() {
           });
           const c = token.clip;
           const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));
+          token.reach = armReach(firstPersonEye(arm.mats, token.cameraRef), clipUnionBounds(arm, poseAt, times));   // PX27: `times` here is the swap's own sweep
           poseAt(c.startTime);
           if (token.weapon) token.weapon.side = weaponRestSide(arm, token.weapon.bone);
           if (token.arrow) token.arrow.side = weaponRestSide(arm, token.arrow.bone);
@@ -2277,6 +2574,7 @@ export function createFpArm() {
             const tResolved = resolveWeaponParts({
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
               skeletonBytes: t.skeletonBytes,
+              quiverDriven: t.quiverDriven ?? false,   // MW-D46b
             });
             t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
             bindPartsInto(t.arm, tResolved.parts);
@@ -2325,7 +2623,28 @@ export function createFpArm() {
             if (wasDrawn) { busy = false; api.setSheathed(false); }
           }
           return true;
-        } finally { busy = false; }
+        } finally {
+          busy = false;
+          // PX33 (Mac: the bow "doesn't equip instantly visually in the
+          // inventory"): THE SWAP LANDS SILENTLY, and that was the whole
+          // bug. build() ends by notifying every listener - MW-D36's
+          // law, "whoever shows the body repaints when a build settles,
+          // ok or not, because a panel drawn before the rebuild lands
+          // would show the old clothes on the new equip table" - and
+          // this path, which is the INCREMENTAL swap and never touches
+          // build(), never did. The pack calls setWeapon and render()
+          // back to back; render() draws first, the swap resolves its
+          // NIFs an async tick later, and nothing asks the panel to
+          // look again. The new weapon then appears at the next repaint
+          // for any other reason, which is exactly what "not instantly"
+          // looks like from the chair.
+          //
+          // Same notify, same shape, same guard: a dead panel is not
+          // the rig's problem. It runs in the finally so a swap that
+          // THREW still repaints - a panel showing a weapon the rig
+          // failed to bind is the state most worth redrawing.
+          for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+        }
       })();
     },
 
@@ -2369,6 +2688,23 @@ export function createFpArm() {
       holdWindUp = !!hold;
       upper = UPPER_BODY.AttackWindUp;
       const k = attackKeys(type, 1);
+      // MW-D42 (Mac: the arrow is not shown on the bow during the
+      // animation): THE NOCK HAS A FLOOR AT THE DRAW. Rule 24's "shoot
+      // attach" still drives it - the key is authoritative wherever the
+      // data carries it - but the arrow may no longer DEPEND on that
+      // key existing. It is a text key inside the user's own .kf, and
+      // when it is absent or named otherwise, arrowShown stayed false
+      // through the entire shot and the bow drew empty with nothing
+      // anywhere saying why. That is the never-traps law: a missing
+      // asset degrades, it does not silently delete the feature.
+      // The floor is not a departure from the reference either. MW-D16
+      // records the surprise as "a freshly drawn BOW is empty-handed
+      // UNTIL YOU BEGIN TO DRAW IT", and this line is exactly that
+      // moment - attack() IS the beginning of the draw. What it must
+      // not do is nock a bow at rest, which is why it lives here and
+      // not in the equip section, and why reloadCrossbow stays the
+      // only other way in.
+      if (type === MW_SHOOT_ATTACK && built.arrow) arrowShown = true;
       if (!playAction(k.windUp.start, k.windUp.stop, 0)) {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
@@ -2378,7 +2714,80 @@ export function createFpArm() {
       return type;
     },
 
+    /** MW-D39: A SPELL IS READIED. The stance changes and the idle,
+     *  the movement and the weapon group all re-compose to the
+     *  spellcast family on the next frame - the same path a drawn
+     *  sword takes. Idempotent; false when nothing changed, so a host
+     *  may call it every frame. */
+    readySpell(ready) {
+      const want = !!ready;
+      if (!built || !built.ok || spellReady === want) return false;
+      spellReady = want;
+      // A cast in flight is abandoned by an un-ready (the spell was
+      // aborted): the arm returns to its stance rather than finishing
+      // an animation for a spell that is not going out.
+      if (!want && upper === UPPER_BODY.Casting) { actionState = null; actionSource = null; upper = UPPER_BODY.WeaponEquipped; }
+      refreshWeaponGroup();
+      resetIdle();
+      resetMovement();
+      return true;
+    },
+
+    /** MW-D39: THE SPELL GOES. The key pair is THE SPELL'S RANGE, not a
+     *  single "cast": character.cpp:1618-1636 sets mAttackType from the
+     *  first effect's range - self / touch / target - and plays
+     *  "<type> start" ... "<type> stop" in the spellcast group. A first
+     *  draft here guessed "cast start", which no Morrowind animation
+     *  carries, and every cast would have been a silent note. The
+     *  Daggerfall range byte maps onto the reference's three
+     *  (spellcast.js TARGET_TYPES): CasterOnly and AreaAroundCaster are
+     *  SELF, ByTouch is TOUCH, SingleTargetAtRange and AreaAtRange are
+     *  TARGET. Lands back in the stance through the upper-body machine.
+     *  Never a gate: a missing clip is a note on the card and the spell
+     *  still flies. */
+    castSpell(rangeType = 2) {
+      if (!built || !built.ok) return false;
+      if (upper !== UPPER_BODY.WeaponEquipped && upper !== UPPER_BODY.Casting) return false;
+      // AUDIT 36 F2 (severe): THE CAST LATCHES ITS OWN STANCE. A
+      // CasterOnly spell is readied and cast in ONE synchronous call -
+      // hostMagic's readySpell runs castInput immediately for
+      // rangeType 0 - so no frame ticked between them, the rig had
+      // never read spellArmed() as true, and spellReady was still
+      // false here. The old gate refused outright; worse, had it not,
+      // playAction would have played "self start" in the SWORD's group,
+      // because weaponGroup is composed from the stance. Every instant
+      // self-cast - the healing and buff spells a player casts most -
+      // was silent. The cast is proof enough that a spell is going, so
+      // it latches the stance and composes the group before it plays.
+      if (!spellReady) { spellReady = true; refreshWeaponGroup(); resetIdle(); resetMovement(); }
+      const type = spellAttackType(rangeType);
+      attackType = type;
+      attackStrength = 1;
+      resetIdleOnAttackEnd = true;
+      upper = UPPER_BODY.Casting;
+      if (!playAction(`${type} start`, `${type} stop`, 0)) {
+        // no keys for this range in this group: the stance stands, and
+        // the note on the card says which group could not answer.
+        upper = UPPER_BODY.WeaponEquipped;
+        attackType = null;
+        return false;
+      }
+      return true;
+    },
+
     /** The held bow comes up. Everything else releases itself. */
+    /** MW-D42: has the arm crossed "shoot release" since last asked?
+     *  CONSUMING, because the rig asks once per frame and a flag that
+     *  is only ever set is a second shot waiting to happen. Answers
+     *  false for an arm that is not driving, which is what lets the
+     *  rig fall through to the classic frame rather than trap the
+     *  shot (the never-traps law). */
+    takeShootRelease() {
+      if (!shootReleased) return false;
+      shootReleased = false;
+      return true;
+    },
+
     release() {
       if (upper !== UPPER_BODY.AttackWindUp) return false;
       holdWindUp = false;
@@ -2417,24 +2826,35 @@ export function createFpArm() {
         advanceClip(actionState, (actionSource || rig()).keys, dt * weapSpeed, onActionKey);
         stepUpper();
       }
-      refreshMovement(cam, dt);
+      // MW-D39: jump refreshes BEFORE movement, the reference's own
+      // order (refreshCurrentAnims, character.cpp:841-844: hit recoil,
+      // jump, movement, idle last), and its inJump is what gates the
+      // movestate ladder this frame.
+      const inJump = refreshJump((cam && cam.move) || null);
+      refreshMovement(cam, dt, inJump);
       if (movementState) advanceClip(movementState, (movementSource || rig()).keys, dt * movementRate, null);
+      // The jump plays at speedmult 1.0 (character.cpp:528-531 pass
+      // 1.0f) - no rate scaling, unlike movement.
+      if (jumpState) advanceClip(jumpState, (jumpSource || rig()).keys, dt, null);
       if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
-      if (!actionState && !movementState && !idleState) return;
+      if (!actionState && !movementState && !jumpState && !idleState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
       // person both animations are played on BlendMask_All, so the higher
       // priority takes every bone for as long as it is playing.
-      // THE THREE-SLOT WINNER (MW-D26): weapon action, then movement,
-      // then idle - the reference's priority order with BlendMask_All
-      // everywhere. The per-bone-group vector is the recorded gap.
-      const state = actionState || movementState || idleState;
+      // THE FOUR-SLOT WINNER (MW-D26, MW-D39): weapon action, then
+      // movement, then jump, then idle - the reference's priority order
+      // (character.hpp:30-43: Jump below Movement below Weapon) with
+      // BlendMask_All everywhere. The jump wins the air because the
+      // movement slot empties there, not by outranking it. The
+      // per-bone-group vector is the recorded gap.
+      const state = actionState || movementState || jumpState || idleState;
       // MW-D14: and the TRACKS come from the same file as the clip. A
       // female actor can win her idle from xbase_anim_female.1st.kf and
       // her swing from the base xbase_anim.1st.kf, and posing one with
       // the other's tracks is a bind pose with no error.
-      poseSource = actionState ? actionSource : (movementState ? movementSource : idleSource);
+      poseSource = actionState ? actionSource : (movementState ? movementSource : (jumpState ? jumpSource : idleSource));
       // Rule 54's neck: the camera node hangs off "bip01 neck", so the
       // pitch has to be in the pose before any matrix is composed - the
       // eye MOVES with the look, it is not a lens tilt.
@@ -2556,8 +2976,9 @@ export function createFpArm() {
       if (!active() || !canvas) return false;
       const cam = camera();
       if (!cam) return false;
-      const wantW = canvas.clientWidth / CHAR_PIXEL;
-      const wantH = canvas.clientHeight / CHAR_PIXEL;
+      // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
+      const wantW = canvas.clientWidth / MW_ARM_PIXEL;
+      const wantH = canvas.clientHeight / MW_ARM_PIXEL;
       const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
@@ -2619,7 +3040,10 @@ export function createFpArm() {
       // The planes are in RIG UNITS and come off the arm's own reach, so
       // a file authored at any scale is framed by its own geometry
       // rather than by a constant that assumes metres.
-      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, Math.max(built.reach / 200, 1e-4), built.reach * 4);
+      // AUDIT 37 F1: the near plane off the IDLE reach, the far off the
+      // swept one - see the build's note.
+      const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
+      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
       const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph);
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;
@@ -2646,6 +3070,7 @@ export function createFpArm() {
       viewMode = want;
       actionState = null; actionSource = null; attackType = null; holdWindUp = false;
       resetMovement();
+      resetJump();   // MW-D39: the clip state came from the OTHER rig's sources; the next frame re-derives
       if (upper !== UPPER_BODY.None && upper !== UPPER_BODY.WeaponEquipped) {
         upper = weaponShown ? UPPER_BODY.WeaponEquipped : UPPER_BODY.None;
       }
@@ -2774,11 +3199,40 @@ export function createFpArm() {
       // is opened from first person, where the wheel is off.
       if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
       const t = thirdBuilt;
+      // PX32 (Mac: the 3D paperdoll "sometimes shows in your last
+      // animated state"): THE PORTRAIT POSES ITSELF. poseAssembly for
+      // this body runs in ONE place - stepUpper's `viewMode === 'third'`
+      // arm - and the inventory is opened from FIRST person, where that
+      // arm never runs. So figure() uploaded whatever bone matrices
+      // happened to be in t.arm from the last time the wheel was in
+      // third person, or from the build if it never was. Not a stale
+      // frame: a stale SESSION. "Sometimes" is exactly the shape of
+      // that - it depends on whether the player has ever been in third
+      // person and what they were doing when they left it.
+      // Posed with the same inputs stepUpper uses, so the portrait is
+      // the body as it stands NOW rather than a leftover, and every
+      // caller gets the same answer for the same state.
+      // The live playhead, exactly as stepUpper picks it (:2620).
+      const shown = actionState || movementState || jumpState || idleState;
+      if (shown) {
+        poseAssembly(t.arm, {
+          tracks: poseSource ? poseSource.trackMap : t.tracks,
+          sampleTrack,
+          time: shown.time,
+          accumRoot: t.accumRoot,
+        });
+      }
       uploadThirdMesh(t);
-      // the figure shows what the body wears, sheathed or drawn, exactly
-      // as the wheel's rule 57 does
+      // PX26 F1 (Mac: weapons and shields are not on the menu sprite):
+      // THE FIGURE IS A PORTRAIT, NOT THE WORLD. The wheel hides the
+      // weapon when it is sheathed - rule 57, right for a body standing
+      // in the world - and the inventory panel inherited that, so the
+      // sword you just equipped was invisible because you had not drawn
+      // it. A paperdoll shows what you carry. The arrow still follows
+      // its own shoot keys: a nocked arrow on a portrait is a pose, not
+      // an inventory.
       for (const r of thirdMesh.ranges) {
-        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
       }
       const u = 1 / MW_UNITS_PER_METER;
@@ -2816,6 +3270,8 @@ export function createFpArm() {
         notes: built && built.notes,
         binding: built && built.binding,
         weapon: built && built.ok ? built.weapon : null,
+        spellReady,                       // MW-D39
+        casting: upper === UPPER_BODY.Casting,
         raceScale: built && built.ok ? built.raceScale : null,
         worn: built && built.ok ? built.worn : null,
         face: built && built.ok ? built.face : null,
@@ -2847,6 +3303,10 @@ export function createFpArm() {
         movementGroup,
         movementRate: movementState ? +movementRate.toFixed(3) : null,
         movementSource: movementSource && movementSource.name,
+        // MW-D39: the jump slot, on the card like the others.
+        jumpGroup,
+        jumpKind,
+        jumpSource: jumpSource && jumpSource.name,
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
         frames,

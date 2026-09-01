@@ -24,6 +24,7 @@
 // built. A menu-side loader would be a duplicate port of a path that
 // already works, which is the shape this project's audits keep finding.
 
+import { UP_Y } from '../world/mat4.js';   // EV2: the shared billboard up axis
 import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js';
@@ -123,7 +124,7 @@ export async function runMenu(canvas, renderer, status) {
     // The menu is 2D only: drawScreenQuad works in screen space, so
     // the frame just needs a cleared buffer and a bound program.
     const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    const LIGHT = new Float32Array([0, 1, 0]);
+    const LIGHT = UP_Y;
     const frame = () => {
       if (!suspended) {
         renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
@@ -166,7 +167,7 @@ export async function runTitle(canvas, renderer, status) {
   const title = new TitleScreen(art);
 
   const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-  const LIGHT = new Float32Array([0, 1, 0]);
+  const LIGHT = UP_Y;
   await new Promise((resolve) => {
     const finish = () => {
       if (title.done) return;
@@ -348,7 +349,7 @@ export async function runClassicLoad(canvas, renderer, status) {
     };
     canvas.addEventListener('pointerdown', onPointerDown);
     const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    const LIGHT = new Float32Array([0, 1, 0]);
+    const LIGHT = UP_Y;
     const frame = () => {
       renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
       win.draw(renderer, canvas);
@@ -423,7 +424,7 @@ export async function runSaveLoadWindow(canvas, renderer, status) {
     canvas.addEventListener('pointerdown', onPointerDown);
     addEventListener('keydown', onKeyDown);
     const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    const LIGHT = new Float32Array([0, 1, 0]);
+    const LIGHT = UP_Y;
     const frame = () => {
       if (!win.done && font) {
         renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);

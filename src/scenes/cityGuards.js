@@ -108,8 +108,32 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   if (typeof currentMinute !== 'function') throw new Error('createCityGuards needs currentMinute (the classic-minute clock)');
   const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, sounds }
   const corpseBatches = [];
+  // AUDIT-39r / THE FOUR HOSTS RULE: an IN-FLIGHT spawn's feet, the
+  // encounter pool's list to the line (exteriorFoes.js). spawnGuardAt
+  // crosses two real awaits (CLASS18.CFG on the first watchman of the
+  // session, then a cold texture archive) before its record joins
+  // `guards`, and offsetAll can only shift what the pool already
+  // holds - so a recenter inside that window left the new guard a map
+  // pixel (819.2) from the crime. `feet` is repointed at the AI's own
+  // array as soon as there is one, because EnemyAI COPIES the
+  // position it is handed.
+  const spawning = [];     // { feet }
+  // AUDIT-39r: THE SWEEP'S EPOCH - clearLive's other half. Emptying
+  // `guards`/`corpseBatches` cannot reach a spawn or a corpse mint
+  // still crossing its awaits; that work resolves after the sweep and
+  // pushes a departure-world record into the destination. DFU
+  // instantiates synchronously and has no such window. Everything
+  // that lands late compares its starting epoch against this.
+  let epoch = 0;
   let _career = null;      // CLASS18.CFG, fetched once
   let countdown = 0;       // guardsArriveCountdown (seconds)
+  // PlayerEntity.cs:741 - `guardsArriveCountdownLocation = dfLocation;`
+  // "Also track location so guards don't appear if player leaves during
+  // countdown". The host's streamed pixel IS the port's location handle
+  // (a location occupies one map pixel); a host that streams nothing
+  // answers null on both reads, which is one unchanging location.
+  let countdownLocation = null;
+  let _nextGuardId = 0;    // the corpse's stable loot key (droppedLoot's _nextId shape)
   // The last camera-view predicate a host handed resolvePlayerHit.
   // Both exterior hosts call resolvePlayerHit with a live
   // makeInView() every swing and only then fall through to
@@ -130,58 +154,75 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
   async function spawnGuardAt(pos, yaw, attackerFeet = null) {
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
-    const career = await ensureCareer();
-    const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
-    // AUDIT 18: LootTables.cs:212/:229/:237 pass the PLAYER's gender
-    // into the random-item builders; the hard-coded 'male' here made
-    // a female character's guard loot roll male clothing.
-    entity.items = generateItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
-    // (Knight_CityWatch has NO LootTableKey in DFU - the table roll is
-    // legitimately empty; the corpse's loot is the EQUIPMENT below.)
-    // AUDIT 18: the whole SetEnemyEquipment chain is now shared with
-    // the dungeon host's two spawn branches (hostCombat.equipEnemy).
-    equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
-    addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-    const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
-      liveSpeed: entity.liveSpeed,
-      seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
-      playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
-      // wave 35: DoRangedAttack's band. Knight_CityWatch has
-      // HasRangedAttack1 = false and CastsMagic = false
-      // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack
-      // below is the literal `false` and not a computed value - so the
-      // stand-off can never engage for the watch. Passed rather than
-      // defaulted, beside the same literal, so the two stay together if
-      // the table ever changes.
-      hasBowAttack: false,
-      canCastRangedSpell: () => hasRangedSpell(entity),
-    });
-    // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
-    // crime-responding guard pursues without having seen the player.
-    ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
-    const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });
-    // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
-    // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
-    // HasRangedAttack1 = false / CastsMagic = false - so DFU's
-    // predicate is FALSE here and this literal IS the verbatim value,
-    // not an interim. (Checked in AUDIT 18: the routed claim that 146
-    // carries HasRangedAttack1 does not hold against the table.)
-    attack.rangedAttack = false;
-    const archive = basics.maleTexture;
-    const tex = await getTexture(archive);
-    const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
-    const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-    const g = { mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, dead: false, _prevMState: 'Idle', _mout: null,
-      sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
-      // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
-      // melee frame inside its OWN pool's loop, so the target's pool
-      // has to expose its death chain on the record itself - the
-      // candidate IS the handle both pools already share. `fromPlayer
-      // = false`: a monster's blow is not the player's, so it levies
-      // no Murder (DaggerfallEntityBehaviour.cs:203).
-      hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false }) };   // AUDIT 24 (wave 41)
-    guards.push(g);
-    return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
+    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT-39r: shifted by offsetAll until the record lands
+    spawning.push(pending);
+    const gen = epoch;   // AUDIT-39r: the world this guard is being posted to
+    try {
+      const career = await ensureCareer();
+      const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
+      // AUDIT 18: LootTables.cs:212/:229/:237 pass the PLAYER's gender
+      // into the random-item builders; the hard-coded 'male' here made
+      // a female character's guard loot roll male clothing.
+      entity.items = generateItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
+      // (Knight_CityWatch has NO LootTableKey in DFU - the table roll is
+      // legitimately empty; the corpse's loot is the EQUIPMENT below.)
+      // AUDIT 18: the whole SetEnemyEquipment chain is now shared with
+      // the dungeon host's two spawn branches (hostCombat.equipEnemy).
+      equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
+      addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
+      const ai = new EnemyAI(collider, pending.feet, yaw, {
+        liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
+        seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+        playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
+        // wave 35: DoRangedAttack's band. Knight_CityWatch has
+        // HasRangedAttack1 = false and CastsMagic = false
+        // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack
+        // below is the literal `false` and not a computed value - so the
+        // stand-off can never engage for the watch. Passed rather than
+        // defaulted, beside the same literal, so the two stay together if
+        // the table ever changes.
+        hasBowAttack: false,
+        canCastRangedSpell: () => hasRangedSpell(entity),
+      });
+      pending.feet = ai.feet;   // AUDIT-39r: the AI's copy is the live array from here
+      // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
+      // crime-responding guard pursues without having seen the player.
+      ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
+      // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
+      // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
+      // HasRangedAttack1 = false / CastsMagic = false - so DFU's
+      // predicate is FALSE here and this literal IS the verbatim value,
+      // not an interim. (Checked in AUDIT 18: the routed claim that 146
+      // carries HasRangedAttack1 does not hold against the table.)
+      attack.rangedAttack = false;
+      const archive = basics.maleTexture;
+      const tex = await getTexture(archive);
+      // AUDIT-39r: a sweep crossed this spawn - the town it was posted
+      // to is gone, and pushing it now would land a departure-point
+      // watchman in the destination beside restoreWorld's copies.
+      // Nothing is allocated yet, so dropping the record is the whole
+      // cancel; both callers already read a missing guard as no spawn.
+      if (gen !== epoch) return null;
+      const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
+      const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, dead: false, _prevMState: 'Idle', _mout: null,
+        sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
+        // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
+        // melee frame inside its OWN pool's loop, so the target's pool
+        // has to expose its death chain on the record itself - the
+        // candidate IS the handle both pools already share. `fromPlayer
+        // = false`: a monster's blow is not the player's, so it levies
+        // no Murder (DaggerfallEntityBehaviour.cs:203).
+        hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false }) };   // AUDIT 24 (wave 41)
+      guards.push(g);
+      return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
+    } finally {
+      // The hand-off is synchronous with `guards.push`, so there is no
+      // frame in which the spawn is in neither list.
+      const i = spawning.indexOf(pending);
+      if (i >= 0) spawning.splice(i, 1);
+    }
   }
 
   /** The verbatim SpawnCityGuards law. pool = live persons as
@@ -259,7 +300,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
     // AUDIT 24 scenes: `Random.Range(5, 10 + 1)` is the INT overload -
     // one of {5,6,7,8,9,10}, never 7.3 and never short of 10.
-    if (!seenByGuard && seen) countdown = 5 + Math.floor(rand() * 6);   // Random.Range(5, 11) seconds
+    // PlayerEntity.cs:739-741: the location is stored WITH the
+    // countdown, and the arrival below is gated on it.
+    if (!seenByGuard && seen) { countdown = 5 + Math.floor(rand() * 6); countdownLocation = currentPixelKey(); }   // Random.Range(5, 11) seconds
   }
 
   function angleDeg(v, fwd) {
@@ -274,9 +317,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  every dead guard and a corpse draws from its own entry in
    *  corpseBatches, so the live batch - a VAO and two GL buffers - was
    *  simply abandoned, on both death paths, for every guard the watch
-   *  ever spawned. The `guards` ARRAY cannot be pruned alongside it:
-   *  lootTargets keys corpses by their array INDEX (`guardCorpse:${i}`)
-   *  and takeLoot reads guards[i] back, so a splice would hand the
+   *  ever spawned. AUDIT 39: the RECORD goes too once nothing is left
+   *  on it - the prune at the end of update(). What made that
+   *  impossible was lootTargets keying corpses by their array INDEX;
+   *  the key is the guard's own `id` now, so a splice cannot hand the
    *  player someone else's purse. */
   function releaseGuardBatch(g) {
     if (!g.batch) return;
@@ -330,6 +374,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
       // pixel is read at the death, not when the texture lands.
       const _corpsePixel = currentPixelKey();
+      const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
       mintCorpseMarker({
         renderer, getTexture, uploadRecordFrame, collider,
         corpseTexture: ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture,
@@ -338,6 +383,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         stillDead: () => g.dead,
       }).then((c) => {
         if (!c) return;
+        // AUDIT-39r: the sweep took this pool's world while the marker
+        // was still loading its art. `stillDead` cannot catch it - the
+        // guard stays dead - and the batch would be stamped with the
+        // departure pixel, already torn down, so collectPixel could
+        // never free it and batches() would draw it at the old
+        // position for the rest of the session.
+        if (_corpseGen !== epoch) { renderer.destroyBillboardBatch(c.batch); return; }
         g.corpseMarker = c;
         // TrackLooseObject's stamp: the streamer's pixel at the death.
         c.pixelKey = g.corpsePixelKey = _corpsePixel;
@@ -425,7 +477,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
     if (countdown > 0) {
       countdown -= dt;
-      if (countdown <= 0) spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
+      // PlayerEntity.cs:355-359 verbatim: the arrival is gated on
+      // `guardsArriveCountdownLocation == CurrentPlayerLocationObject`.
+      // A player who left the location inside the 5-10 second window is
+      // not ambushed by a ring of watchmen in the wilderness - and the
+      // countdown is spent either way, exactly as DFU spends it.
+      if (countdown <= 0 && currentPixelKey() === countdownLocation) {
+        spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
+      }
     }
     const out = [];
     for (const g of guards) {
@@ -581,6 +640,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.batch.origin = g.ai.feet;
       out.push(g.batch);
     }
+    // AUDIT 39: THE PRUNE, on the encounter pool's schedule
+    // (exteriorFoes.js). A guard with no corpse left on it - the
+    // walk-away when the crime clears, and the killed body whose
+    // pixel collectPixel has taken - is DFU's
+    // `GameObject.Destroy(sender.gameObject)` (EnemyEntity.cs:184-191),
+    // and every per-frame walk over `guards` paid for it for the rest
+    // of the session. A KILLED body stays while its corpse does, which
+    // is what DFU keeps too (EnemyDeath disables, never destroys).
+    for (let i = guards.length - 1; i >= 0; i--) if (guards[i].dead && !guards[i].corpse) guards.splice(i, 1);
     return [...out, ...corpseBatches.map((c) => c.batch)];
   }
 
@@ -713,10 +781,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return corpseLootTargets(guards, 'guardCorpse', {
       isCorpse: (g) => !!g.corpse && !!g.entity,
       feetOf: (g) => g.corpseMarker?.pos ?? g.ai?.feet ?? null,
+      idOf: (g) => g.id,   // AUDIT 39: stable across the walk-away prune, where an index is not
     });
   }
   function takeLoot(key, say2 = () => {}) {
-    return takeCorpseLoot(guards[Number(key.split(':')[1])], playerEntity, say2);
+    const id = Number(key.split(':')[1]);
+    return takeCorpseLoot(guards.find((g) => g.id === id), playerEntity, say2);
   }
 
   /** CollectLooseObjects (StreamingWorld.cs:1040-1052), the corpse
@@ -728,10 +798,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  travel do. Nothing removed a corpse batch before, so the watch's
    *  dead grew a VAO and two GL buffers per kill for the session.
    *
-   *  The `guards` array itself still cannot be spliced (lootTargets
-   *  keys corpses by array INDEX), so clearing `corpse` IS the
-   *  destroy: batches() stops drawing it and lootTargets stops
-   *  probing it. */
+   *  Clearing `corpse` is the whole destroy: batches() stops drawing
+   *  it, lootTargets stops probing it, and update()'s prune takes the
+   *  record itself on the next frame. */
   function collectPixel(pixelKey) {
     for (let i = corpseBatches.length - 1; i >= 0; i--) {
       if (corpseBatches[i].pixelKey !== pixelKey) continue;
@@ -743,6 +812,26 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.corpse = false;
       g.corpseMarker = null;
     }
+  }
+
+  /** AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1624-1635),
+   *  which a teleport reaches too through ClearStreamingWorld ->
+   *  CollectLooseObjects(true) (:993-998) - loose enemies survive
+   *  neither a load nor a fast travel. collectPixel above frees only
+   *  CORPSES, so a quickload mid-pursuit re-minted the save's watch on
+   *  top of the live one and the player was hunted by two of it.
+   *  Emptying `guards` is safe HERE where a splice is not: the index
+   *  keys lootTargets hands out are read back the same frame, and
+   *  nothing survives the teleport to read a stale one. */
+  function clearLive() {
+    // AUDIT-39r: the epoch turns FIRST, so anything already in flight
+    // (a spawn between its two awaits, a corpse marker waiting on its
+    // texture) resolves into a world it can see it does not belong to.
+    epoch++;
+    for (const g of guards) releaseGuardBatch(g);
+    for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
+    corpseBatches.length = 0;
+    guards.length = 0;
   }
 
   /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters
@@ -758,6 +847,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       if (g.ai?.feet) { g.ai.feet[0] += dx; g.ai.feet[1] += dy; g.ai.feet[2] += dz; }
       if (g.ai?.knockbackDir) continue;   // a direction, not a position
     }
+    // AUDIT-39r: the spawns still crossing their awaits move too - the
+    // encounter pool's law, and this pool is recentred from the same
+    // host frame (world.js's cityGuards/exteriorFoes offsetAll pair).
+    for (const s of spawning) { s.feet[0] += dx; s.feet[1] += dy; s.feet[2] += dz; }
     // live guards rebuild their billboards every frame from ai.feet,
     // so shifting the feet is enough for them; the persistent CORPSE
     // batches bake their centers into a static buffer and must be
@@ -804,11 +897,21 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }).catch((e) => console.error('[guards] restore failed:', e?.message ?? e));
     }
   }
-  return { guards, spawnCityGuards, update, offsetAll, collectPixel, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
+  return { guards, spawnCityGuards, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.
-    hurtGuard: (g, dmg, playerFeet) => damageGuard(g, dmg, playerFeet, null),
+    // AUDIT-39r: and the PLAYER's ARROW carries a direction. C15's
+    // knockback block is wholly gated on knockDir, so the spell-shaped
+    // null this door was written for meant a shaft could never shove a
+    // watchman - while the melee swing (lookDir), an ENEMY's arrow
+    // (hurtFromFoe) and the same shaft on an encounter foe all did.
+    // WeaponManager.cs:576-595 sets KnockbackDirection = direction
+    // inside `if (damage > 0)` for every EnemyClass hit, and
+    // DaggerfallMissile.cs:681-687 hands the arrow's forward in as that
+    // direction - Knight_CityWatch is EnemyClass, so the first arm
+    // fires. A caller with no direction (a spell) still passes none.
+    hurtGuard: (g, dmg, playerFeet, knockDir = null) => damageGuard(g, dmg, playerFeet, knockDir),
     _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

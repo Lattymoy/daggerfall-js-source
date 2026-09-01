@@ -186,6 +186,10 @@ export const PASSIVE_GUARD_LEGAL_REP = -10;
 export const PASSIVE_GUARD_LOW_REP_CHANCE = 5;
 export const PASSIVE_GUARD_BANISHED_CHANCE = 10;
 export const SEVERE_PUNISHMENT_BANISHED = 1;
+/** The court's own second write (DaggerfallCourtWindow.cs:288, state
+ *  5). Nothing READS bit 2 in DFU - it is a record, not a trigger -
+ *  but the two bits are one field and belong in one home. */
+export const SEVERE_PUNISHMENT_EXECUTED = 2;
 
 /** How many SpawnCityGuards(false) calls this ONE catch-up minute
  *  owes: 0, 1 or - both rolls landing, which DFU permits because the

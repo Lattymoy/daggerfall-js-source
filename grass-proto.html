@@ -1,0 +1,2274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daggerfall JS &mdash; ground + 3D grass prototype</title>
+<!--
+  GRASS PROTOTYPE (Mac: prototype the new ground textures AND the 3D
+  grass before any code change, so he can see them).
+
+  NOTHING HERE TOUCHES THE GAME. This is a standalone page over the
+  same ideas the engine would use, so the look can be judged and tuned
+  before a line of renderer changes:
+
+    - the GROUND is the prototype tileset from tools/groundProto.mjs,
+      sampled with mipmaps and anisotropy - the two things the live
+      terrain array does NOT do today, and the reason a high-res tile
+      would shimmer at distance if it were dropped in as-is.
+
+    - the GRASS is one instanced draw. Every blade is the same three
+      quads; a per-instance attribute carries its position, height,
+      lean, phase and tint. That is the shape the engine needs
+      (drawArraysInstanced, one call per terrain chunk) and the piece
+      the renderer does not have yet.
+
+    - placement is DETERMINISTIC on a hashed seed, the same rule the
+      nature pass already uses for billboards, so blades do not crawl
+      or repopulate as you move.
+
+    - WIND is a vertex-shader offset weighted by height along the
+      blade, so the tip travels and the root does not.
+
+    - the far fade drops blades by distance so the count stays bounded.
+-->
+<style>
+  html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
+    font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; }
+  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.72);
+    border:1px solid #55503f; padding:10px 12px; max-width:min(380px,46vw); }
+  .hud h1 { margin:0 0 6px; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:#e0d5ad; }
+  .hud label { display:flex; align-items:center; gap:8px; margin:3px 0; }
+  .hud input[type=range] { flex:1; }
+  .hud .v { width:52px; text-align:right; color:#9c9378; }
+  .hud p { margin:6px 0 0; color:#8d836c; }
+  .note { margin:6px 0 0; color:#8b836c; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <h1>Ground + 3D grass</h1>
+  <label>blades <input id="density" type="range" min="20000" max="1200000" step="10000" value="1200000"><span class="v" id="vdensity"></span></label>
+  <label>height <input id="height" type="range" min="10" max="120" step="1" value="120"><span class="v" id="vheight"></span></label>
+  <label>wind <input id="wind" type="range" min="0" max="200" step="1" value="70"><span class="v" id="vwind"></span></label>
+  <label>wind dir <input id="windDir" type="range" min="0" max="359" step="1" value="20"><span class="v" id="vwindDir"></span></label>
+  <label>range <input id="range" type="range" min="10" max="200" step="1" value="200"><span class="v" id="vrange"></span></label>
+  <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
+  <label>sun&deg; <input id="sun" type="range" min="-20" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
+  <label>weather <select id="wx">
+    <option>sunny</option><option>cloudy</option><option>overcast</option><option>fog</option>
+    <option>rain</option><option>thunder</option><option>snow</option>
+  </select></label>
+  <label><input id="retro" type="checkbox"> retro sky (the game's ?sky= pass)</label>
+  <label>warmth <input id="warmth" type="range" min="0" max="100" step="1" value="35"><span class="v" id="vwarmth"></span></label>
+  <label>front s <input id="frontS" type="range" min="2" max="90" step="1" value="9"><span class="v" id="vfrontS"></span></label>
+  <label>surface <select id="surf">
+    <option>grass</option><option>dirt</option><option>stone</option><option>sand</option>
+  </select></label>
+  <p class="note">drag to look &middot; W/S to move &middot; G grass &middot; T ground &middot; walk on snow to leave prints</p>
+  <p class="note" id="fps"></p>
+</div>
+<script type="module">
+const cv = document.getElementById('c');
+const gl = cv.getContext('webgl2', { antialias: true });
+if (!gl) document.body.innerHTML = '<p style="padding:20px">WebGL2 is needed for this prototype.</p>';
+
+const R = (id) => document.getElementById(id);
+// the grass buffers, declared BEFORE the sliders that build them - the
+// slider sync fires during setup and reached `gr` in its dead zone.
+let gr = { vao: null, count: 0, verts: 0 };
+let ready = false;   // the GL objects exist only after the programs link
+const state = { density: 1200000, height: 120, wind: 70, windDir: 20, warmth: 35, frontS: 9, range: 200, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
+for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun', 'warmth', 'frontS']) {
+  const el = R(k); const out = R(`v${k}`);
+  const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
+  el.addEventListener('input', sync); sync();
+}
+// the surface picker repaints both sheets and re-uploads them; the
+// grass blades follow, because blades of grass on snow is a lie
+function setSurface(name) {
+  state.surface = name;
+  paintSheet(name); paintNormals();
+  gl.bindTexture(gl.TEXTURE_2D, groundTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.bindTexture(gl.TEXTURE_2D, groundNrm);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, nrm);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  // AUDIT 39 F5: the picker turned the blades OFF for a non-grass
+  // surface and never turned them back on, so choosing dirt and then
+  // grass again left a bare field with no way back but a reload.
+  state.grass = name === 'grass';
+  R('surf').value = name;
+}
+addEventListener('keydown', (e) => {
+  if (e.key === 'g' || e.key === 'G') state.grass = !state.grass;
+  if (e.key === 't' || e.key === 'T') state.newGround = !state.newGround;
+});
+
+// ── the ground, GENERATED HERE ──────────────────────────────────────
+// The offline tool derives Daggerfall's 56 tiles by masking its own
+// shapes; those are a raster of game data and doctrine forbids
+// shipping them, correctly. So this page draws its four bases with
+// the SAME procedural surfaces the tool uses - which are ours - and
+// the blend derivation stays offline, over a player's own archives.
+function makeNoise(seed) {
+  let s = seed >>> 0;
+  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const perm = Array.from({ length: 256 }, (_, i) => i);
+  for (let i = 255; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [perm[i], perm[j]] = [perm[j], perm[i]]; }
+  const p = new Uint8Array(512);
+  for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+  const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+  const grad = (h, x, y) => (((h & 4) ? -((h & 1) ? x : y) : ((h & 1) ? x : y)) + ((h & 8) ? -((h & 2) ? y : x) : ((h & 2) ? y : x)));
+  return (x, y, period) => {
+    const w = (n) => ((n % period) + period) % period;
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const X = w(xi) & 255, Y = w(yi) & 255, X1 = w(xi + 1) & 255, Y1 = w(yi + 1) & 255;
+    const u = fade(xf), v = fade(yf);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    return lerp(lerp(grad(p[(p[X] + Y) & 255], xf, yf), grad(p[(p[X1] + Y) & 255], xf - 1, yf), u),
+      lerp(grad(p[(p[X] + Y1) & 255], xf, yf - 1), grad(p[(p[X1] + Y1) & 255], xf - 1, yf - 1), u), v) * 0.5 + 0.5;
+  };
+}
+const nz = makeNoise(0x51ed);
+const fbm = (x, y, period, oct, gain = 0.5) => {
+  let a = 1, f = 1, sum = 0, norm = 0;
+  for (let o = 0; o < oct; o++) { sum += a * nz(x * f, y * f, period * f); norm += a; a *= gain; f *= 2; }
+  return sum / norm;
+};
+function worley(x, y, period, seed) {
+  const rnd = (i, j) => { let h = ((i * 374761393) ^ (j * 668265263) ^ (seed * 2246822519)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return [(h & 0xffff) / 65536, ((h >>> 16) & 0xffff) / 65536]; };
+  const xi = Math.floor(x), yi = Math.floor(y); let f1 = 9, f2 = 9;
+  for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+    const ci = xi + di, cj = yi + dj, w = (n) => ((n % period) + period) % period;
+    const [ox, oy] = rnd(w(ci), w(cj));
+    const d = Math.hypot(ci + ox - x, cj + oy - y);
+    if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d;
+  }
+  return { f1, f2 };
+}
+const cl = (v, a, b) => Math.min(b, Math.max(a, v));
+const mixc = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const sh = (c, k) => c.map((v) => cl(v * k, 0, 255));
+// PROTO-2 (Mac: go deeper on the detail). The first cut painted grass
+// as a TINTED FIELD - noise for colour, Worley for clumps - and it
+// read as a net, because real turf is not a field. It is thousands of
+// DRAWN BLADES lying over soil, each with a length, a direction and a
+// shadow. So the texture is drawn the way it is made:
+//
+//   1. SOIL first, its own surface with grain and pebbles, because
+//      every gap between blades shows it.
+//   2. LITTER: a few thousand individual blades PLACED on a hashed
+//      jittered lattice, each a short capsule with its own angle,
+//      length, width and hue, drawn back-to-front so the near ones
+//      overlap. Every blade darkens the soil just off its own axis -
+//      a contact shadow, which is what makes a lawn read as depth
+//      rather than pattern.
+//   3. TUFTS: a low Worley field lifts whole clumps a shade brighter
+//      and drops the hollows between them, so the sward has terrain.
+//   4. DRY STRAW and BARE PATCHES, sparse, so it is not one colour.
+//
+// The lattice wraps, so the texture still tiles seamlessly.
+/** The blade lattice. Cells wrap, so the sheet still tiles; each cell
+ *  holds a few blades with hashed angle, length, width and hue, and a
+ *  point is tested against the capsules of its own cell and its
+ *  neighbours. Returns the nearest blade covering the point (or null)
+ *  and, separately, how much shadow the point sits in. */
+function makeBlades({ cells = 30, perCell = 6, len = [0.028, 0.075], wid = [0.0026, 0.0050] }) {
+  const h2 = (i, j, k) => {
+    let h = ((i * 374761393) ^ (j * 668265263) ^ (k * 2246822519)) >>> 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+    return [(h & 1023) / 1024, ((h >>> 10) & 1023) / 1024, ((h >>> 20) & 1023) / 1024];
+  };
+  const capsule = (px, py, ax, ay, bx, by) => {
+    const dx = bx - ax, dy = by - ay;
+    const t = cl(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1e-9), 0, 1);
+    return { d: Math.hypot(px - (ax + dx * t), py - (ay + dy * t)), t };
+  };
+  const visit = (u, v, fn) => {
+    const ci = Math.floor(u * cells), cj = Math.floor(v * cells);
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+      const gi = ci + di, gj = cj + dj;
+      const wi = ((gi % cells) + cells) % cells, wj = ((gj % cells) + cells) % cells;
+      for (let k = 0; k < perCell; k++) {
+        const [a, b, c2] = h2(wi, wj, k);
+        const [d, e, f] = h2(wi + 977, wj + 331, k);
+        // the blade's root, in this cell, offset into unwrapped space
+        const rx = (gi + a) / cells, ry = (gj + b) / cells;
+        const ang = c2 * 6.2832;
+        const L = len[0] + d * (len[1] - len[0]);
+        fn({ rx, ry, tx: rx + Math.cos(ang) * L, ty: ry + Math.sin(ang) * L,
+          w: wid[0] + e * (wid[1] - wid[0]), hue: f, L });
+      }
+    }
+  };
+  return {
+    /** the blade covering this point, if any - nearest wins */
+    at(u, v, tuft, bare) {
+      let best = null;
+      visit(u, v, (bl) => {
+        // thin the lattice where the sward thins
+        if (bl.hue > 0.62 + tuft * 0.38 - bare * 0.80) return;
+        const { d, t } = capsule(u, v, bl.rx, bl.ry, bl.tx, bl.ty);
+        const w = bl.w * (1 - t * 0.7);          // blades taper
+        if (d < w && (!best || t > best.t)) best = { t, shade: bl.hue };
+      });
+      return best;
+    },
+    /** how much this point sits in a blade's shadow: the same capsules,
+     *  tested a hair off-axis, which is what gives a lawn its depth */
+    shadow(u, v) {
+      let s2 = 0;
+      visit(u + 0.004, v + 0.006, (bl) => {
+        const { d } = capsule(u + 0.004, v + 0.006, bl.rx, bl.ry, bl.tx, bl.ty);
+        if (d < bl.w * 2.2) s2 = Math.max(s2, 1 - d / (bl.w * 2.2));
+      });
+      return s2;
+    },
+  };
+}
+const BLADES = makeBlades({});
+
+function grassPixel(u, v) {
+  const P = 8, x = u * P, y = v * P;
+  // the soil, seen in every gap
+  const grain = fbm(x * 30 + 21, y * 30 + 9, P * 30, 3);
+  const tone = fbm(x * 1.4 - 4, y * 1.4 + 2, P * 1.4, 4);
+  let c = mixc([74, 58, 40], [104, 82, 56], cl((tone - 0.35) * 2.0, 0, 1));
+  c = sh(c, 0.86 + grain * 0.3);
+  const peb = worley(x * 11 + 0.5, y * 11 + 0.5, P * 11, 17);
+  const stone = cl((0.13 - peb.f1) * 11, 0, 1);
+  if (stone > 0.01) c = mixc(c, [130, 122, 110], stone * 0.7);
+  // the sward's terrain
+  const t = worley(x * 3.1, y * 3.1, P * 3.1, 91);
+  const tuft = cl((t.f2 - t.f1) * 2.6, 0, 1);
+  const dry = cl((fbm(x * 0.5 + 11, y * 0.5 - 7, P * 0.5, 3) - 0.5) * 3.4, 0, 1);
+  const bare = cl((0.34 - fbm(x * 0.7, y * 0.7, P * 0.7, 4)) * 4.5, 0, 1);
+  const lit = BLADES.at(u, v, tuft, bare);
+  if (lit) {
+    const base = mixc([48, 76, 32], [118, 152, 66], cl(lit.t * 1.15, 0, 1));
+    let bc = mixc(base, [152, 146, 84], dry * 0.5);
+    bc = sh(bc, 0.78 + tuft * 0.30 + lit.shade * 0.40);
+    bc = sh(bc, 0.94 + fbm(x * 70, y * 70, P * 70, 2) * 0.14);
+    // the HEIGHT the normal map is built from: a blade stands, and
+    // stands taller toward its tip
+    return { rgb: bc, h: 0.45 + lit.t * 0.55 + tuft * 0.18 };
+  }
+  const sha = BLADES.shadow(u, v);
+  c = sh(c, 0.62 + (1 - sha) * 0.50);
+  c = mixc(c, [58, 80, 40], cl(0.35 + tuft * 0.65, 0, 1) * (1 - bare) * 0.62);
+  return { rgb: c, h: 0.06 + stone * 0.30 + grain * 0.10 + tuft * 0.10 };
+}
+
+// PROTO-3 (Mac: push the land texture to extreme fidelity). Four
+// things separate "a nice tile" from ground you believe:
+//
+//   1. RESOLUTION. 1024px, and the blade lattice scaled with it, so
+//      the detail is real detail and not the same blades enlarged.
+//   2. A NORMAL MAP, derived from the same blade field's own height -
+//      every blade and every pebble gets a lit side and a shaded one
+//      that MOVE with the sun. A flat albedo is the single biggest
+//      reason a ground texture looks painted.
+//   3. TWO SCALES. One sheet at ~2m tiles the near ground; a second,
+//      LOW-frequency sheet at ~19m modulates it, so the eye never
+//      finds the repeat that a single tile always shows on open land.
+//   4. DISTANCE BLEND to a filtered average, so the far field settles
+//      into colour instead of boiling.
+// PROTO-4 (Mac: the other textures while we are at it). The same law
+// the grass proved: a surface is DRAWN and it RECORDS ITS HEIGHT, so
+// the normal map lights the thing itself. Each returns { rgb, h }.
+
+/** DIRT: soil, and the things lying on it. The height is what sells
+ *  it - pebbles stand, ruts sink, and the sun finds both. */
+function dirtPixel(u, v) {
+  const P = 6, x = u * P, y = v * P;
+  const tone = fbm(x * 1.2 - 4, y * 1.2 + 2, P * 1.2, 4);
+  const grain = fbm(x * 40 + 21, y * 40 + 9, P * 40, 3);
+  let c = mixc([104, 78, 52], [148, 116, 78], cl((tone - 0.35) * 2.0, 0, 1));
+  c = sh(c, 0.84 + grain * 0.34);
+  let h = 0.35 + grain * 0.14 + tone * 0.10;
+  // ruts and cracks: long low channels the light pools in
+  const rut = cl(1 - Math.abs(fbm(x * 1.9 + 40, y * 0.7, P * 1.9, 4) - 0.5) * 11, 0, 1);
+  c = sh(c, 1 - rut * 0.24); h -= rut * 0.22;
+  // pebbles: PLACED, with a catch-light and a dropped shadow
+  for (const [freq, seed, size, tint] of [[7.5, 17, 0.20, [156, 146, 132]], [15, 71, 0.13, [128, 118, 104]]]) {
+    const w = worley(x * freq + 0.5, y * freq + 0.5, P * freq, seed);
+    const st = cl((size - w.f1) * (1 / size) * 1.6, 0, 1);
+    if (st > 0.01) {
+      c = mixc(c, tint, st * 0.78);
+      c = sh(c, 1 + st * 0.16);
+      h += st * 0.40;
+    }
+    const sha = cl((size * 1.7 - w.f1) * (1 / size), 0, 1) - st;
+    if (sha > 0.01) c = sh(c, 1 - sha * 0.20);
+  }
+  // dry straw and root litter, sparse
+  const straw = cl((fbm(x * 26 + 61, y * 9 - 3, P * 26, 2) - 0.74) * 7, 0, 1);
+  c = mixc(c, [150, 132, 84], straw * 0.6); h += straw * 0.10;
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+/** STONE: plates, not cobbles. The first cut read as a cartoon
+ *  pavement because every cell was one flat tone with a black moat.
+ *  A plate is DOMED off sqrt(f2)-sqrt(f1) - zero at the seam, highest
+ *  mid-plate - and the seam is a CRACK, narrow. */
+function stonePixel(u, v) {
+  const P = 5, x = u * P, y = v * P;
+  const wx = (fbm(x * 0.9, y * 0.9, P * 0.9, 3) - 0.5) * 1.1;
+  const wy = (fbm(x * 0.9 + 31, y * 0.9 - 17, P * 0.9, 3) - 0.5) * 1.1;
+  const w = worley(x * 2.6 + wx, y * 2.6 + wy, P * 2.6, 53);
+  const dome = cl((Math.sqrt(w.f2) - Math.sqrt(w.f1)) * 3.0, 0, 1);
+  const mott = fbm(x * 2.4 + 7, y * 2.4 - 3, P * 2.4, 5);
+  const grit = fbm(x * 44, y * 44, P * 44, 3);
+  // each plate takes its own tone, so a wall is not one grey
+  const plateTint = fbm(Math.floor(x * 2.6 + wx) * 3.7, Math.floor(y * 2.6 + wy) * 3.7, P * 9, 2);
+  let c = mixc([88, 86, 82], [142, 139, 130], dome * 0.55 + mott * 0.3 + plateTint * 0.15);
+  c = sh(c, 0.86 + grit * 0.30);
+  let h = 0.25 + dome * 0.62 + grit * 0.08;
+  const seam = cl(1 - dome * 8, 0, 1);
+  c = mixc(c, [58, 57, 56], seam * 0.6); h -= seam * 0.42;
+  // fine fracture lines ACROSS the plates, which real stone has
+  const frac = cl(1 - Math.abs(fbm(x * 6 + 90, y * 6, P * 6, 3) - 0.5) * 16, 0, 1) * dome;
+  c = sh(c, 1 - frac * 0.22); h -= frac * 0.12;
+  // lichen only on the crowns, and it lifts the surface a hair
+  const lich = cl((fbm(x * 3.6 + 60, y * 3.6 + 12, P * 3.6, 4) - 0.60) * 4.5, 0, 1) * dome;
+  c = mixc(c, [104, 116, 68], lich * 0.42); h += lich * 0.05;
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+/** SAND: the desert climate's ground. Ripples are a HEIGHT field
+ *  before they are a colour - a dune's light comes entirely from its
+ *  own slope, so the normal map does nearly all the work here. */
+function sandPixel(u, v) {
+  const P = 6, x = u * P, y = v * P;
+  const drift = fbm(x * 0.7 + 3, y * 0.7 - 2, P * 0.7, 4);
+  // wind ripples: a warped periodic train, crests perpendicular to it
+  const wx2 = x + (fbm(x * 1.1, y * 1.1, P * 1.1, 3) - 0.5) * 1.6;
+  const wy2 = y + (fbm(x * 1.1 + 19, y * 1.1 + 7, P * 1.1, 3) - 0.5) * 1.6;
+  const ripple = Math.sin((wx2 * 3.0 + wy2 * 1.1) * Math.PI * 2 / P * 3) * 0.5 + 0.5;
+  const fine = fbm(x * 55, y * 55, P * 55, 2);
+  let c = mixc([196, 168, 118], [226, 202, 152], cl(drift * 0.7 + ripple * 0.3, 0, 1));
+  c = sh(c, 0.94 + fine * 0.12);
+  let h = 0.30 + ripple * 0.46 + drift * 0.18 + fine * 0.06;
+  // the odd stone and a scatter of darker grains
+  const st = worley(x * 8 + 0.5, y * 8 + 0.5, P * 8, 29);
+  const stone = cl((0.09 - st.f1) * 14, 0, 1);
+  if (stone > 0.01) { c = mixc(c, [148, 132, 108], stone * 0.7); h += stone * 0.30; }
+  const dark = cl((fbm(x * 70 + 40, y * 70 + 12, P * 70, 2) - 0.72) * 6, 0, 1);
+  c = sh(c, 1 - dark * 0.14);
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+/** SNOW: the winter archives. Wind-packed drifts with a sparkle -
+ *  the sparkle is a SPECULAR cue, so it rides the height, not the
+ *  albedo, and appears only when the sun is low enough to catch it. */
+function snowPixel(u, v) {
+  const P = 6, x = u * P, y = v * P;
+  const drift = fbm(x * 0.8, y * 0.8, P * 0.8, 5);
+  const sastrugi = Math.sin((x * 2.2 + fbm(x * 1.4, y * 1.4, P * 1.4, 3) * 4) * Math.PI * 2 / P * 2) * 0.5 + 0.5;
+  const grain = fbm(x * 60, y * 60, P * 60, 2);
+  let c = mixc([206, 214, 226], [244, 248, 255], cl(drift * 0.6 + sastrugi * 0.4, 0, 1));
+  c = sh(c, 0.96 + grain * 0.08);
+  let h = 0.34 + drift * 0.40 + sastrugi * 0.22 + grain * 0.06;
+  // the blue of a hollow: snow's shadows are not grey
+  const holl = cl((0.42 - drift) * 3.2, 0, 1);
+  c = mixc(c, [166, 186, 214], holl * 0.5); h -= holl * 0.18;
+  // crystals, sparse and sharp
+  const sp = cl((fbm(x * 120 + 7, y * 120 + 31, P * 120, 1) - 0.84) * 9, 0, 1);
+  c = mixc(c, [255, 255, 255], sp * 0.9); h += sp * 0.10;
+  return { rgb: c, h: cl(h, 0, 1) };
+}
+
+// PROTO-12 (Mac: with this snow implementation there is no need for a
+// snow texture at all). He is right, and it is the better answer: a
+// snow TILE is a lie the moment anything happens to it. It cannot
+// accumulate, cannot be walked through, cannot melt into the ground
+// beneath it - because it IS the ground. The field's snow lies ON the
+// real surface, so grass shows through a thin fall, a path wears back
+// toward the dirt under it, and a thaw uncovers exactly what was
+// always there. snowPixel is kept only for reference and is not
+// offered as a ground: it has no consumer, and the ground picker no
+// longer lists it.
+const SURFACES = { grass: grassPixel, dirt: dirtPixel, stone: stonePixel, sand: sandPixel };
+const SURFACE_KEYS = Object.keys(SURFACES);
+
+const SIZE = 1024;
+const px = new Uint8Array(SIZE * SIZE * 4);
+const hgt = new Float32Array(SIZE * SIZE);
+function paintSheet(name) {
+  const fn = SURFACES[name] || grassPixel;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const r = fn(x / SIZE, y / SIZE), o = (y * SIZE + x) * 4;
+      px[o] = r.rgb[0]; px[o + 1] = r.rgb[1]; px[o + 2] = r.rgb[2]; px[o + 3] = 255;
+      hgt[y * SIZE + x] = r.h;
+    }
+  }
+}
+paintSheet('grass');
+// the normal map, Sobel over the height the sheet just recorded
+const nrm = new Uint8Array(SIZE * SIZE * 4);
+function paintNormals() {
+  const at = (x, y) => hgt[(((y % SIZE) + SIZE) % SIZE) * SIZE + (((x % SIZE) + SIZE) % SIZE)];
+  const S = 3.2;   // how tall a blade stands relative to a texel
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const dx = (at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1))
+        - (at(x - 1, y - 1) + 2 * at(x - 1, y) + at(x - 1, y + 1));
+      const dy = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1))
+        - (at(x - 1, y - 1) + 2 * at(x, y - 1) + at(x + 1, y - 1));
+      let nx = -dx * S, ny = -dy * S, nz = 1;
+      const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
+      const o = (y * SIZE + x) * 4;
+      nrm[o] = (nx * 0.5 + 0.5) * 255; nrm[o + 1] = (ny * 0.5 + 0.5) * 255;
+      nrm[o + 2] = (nz * 0.5 + 0.5) * 255; nrm[o + 3] = 255;
+    }
+  }
+}
+paintNormals();
+// the LOW-frequency modulation sheet: broad damp/dry/worn variation
+const LOW = 256;
+const lowPx = new Uint8Array(LOW * LOW * 4);
+for (let y = 0; y < LOW; y++) {
+  for (let x = 0; x < LOW; x++) {
+    const u = x / LOW * 4, v = y / LOW * 4;
+    const damp = fbm(u * 0.9, v * 0.9, 3.6, 5);
+    const worn = cl((fbm(u * 2.1 + 31, v * 2.1 - 12, 8.4, 4) - 0.52) * 3.4, 0, 1);
+    const o = (y * LOW + x) * 4;
+    lowPx[o] = cl(damp * 255, 0, 255);          // R: damp -> greener, darker
+    lowPx[o + 1] = cl(worn * 255, 0, 255);      // G: worn -> soil shows
+    lowPx[o + 2] = cl(fbm(u * 0.45 + 7, v * 0.45 + 3, 1.8, 4) * 255, 0, 255);  // B: hue drift
+    lowPx[o + 3] = 255;
+  }
+}
+const mkTex = (data, size, mip = true) => {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  if (mip) { gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); }
+  else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  const ext = gl.getExtension('EXT_texture_filter_anisotropic');
+  if (ext && mip) gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(16, gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  return t;
+};
+const groundTex = mkTex(px, SIZE);
+const groundNrm = mkTex(nrm, SIZE);
+const groundLow = mkTex(lowPx, LOW);
+
+const prog = (vs, fs) => {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    gl.attachShader(p, sh);
+  }
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+};
+
+const HEAD = `#version 300 es
+precision highp float;
+`;
+// the same height field both passes read, so blades sit ON the ground
+const FIELD = `
+float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y);
+}
+float terrain(vec2 p){
+  return vnoise(p*0.020)*7.0 + vnoise(p*0.055)*2.4 + vnoise(p*0.15)*0.7;
+}`;
+
+const groundProg = prog(HEAD + FIELD + `
+layout(location=0) in vec2 aXZ;
+uniform mat4 uVP; uniform float uTilePx;
+// PROTO-22 (Mac: grass STILL shows through snow). MEASURED, finally,
+// instead of guessed: at the maxed height slider a blade is 0.78m to
+// 2.26m tall and I had set the snow line to 1.35m, so 61% of the
+// sward was TALLER THAN THE DEEPEST SNOW and correctly stuck out. The
+// geometry was right twice over; the number was wrong twice over,
+// because I picked it out of the air instead of against the thing it
+// had to cover.
+//
+// The line is a UNIFORM now, computed from the tallest blade the
+// current height setting can produce, with headroom - so full snow
+// buries the field whatever the slider says. Ground and grass read
+// the SAME uniform, so the surface the ground draws and the surface
+// the grass is planted on cannot drift apart.
+uniform float uSnowFull;
+uniform sampler2D uField; uniform vec2 uFieldOrigin; uniform float uFieldM;
+uniform float uSnowGlobal2;
+uniform vec2 uLocalOff;   // AUDIT 41 F2: 0 for the wide plane, the field's origin for the near patch
+out vec2 vUV; out vec3 vPos; out vec2 vFieldUV; out vec4 vField;
+void main(){
+  vec2 xz = aXZ + uLocalOff;
+  vec3 p = vec3(xz.x, terrain(xz), xz.y);
+  vFieldUV = (xz - uFieldOrigin) / uFieldM;
+  vec4 fRaw = texture(uField, clamp(vFieldUV, 0.0, 1.0));
+  vec2 fe = min(vFieldUV, 1.0 - vFieldUV);
+  float inWin = smoothstep(0.0, 0.05, min(fe.x, fe.y));
+  vField = mix(vec4(0.0, uSnowGlobal2, 0.0, 0.0), fRaw, inWin);
+  // LAW 3: SNOW IS A HEIGHT. The land rises as it falls, and a packed
+  // print is a real dent in that height - not a dark decal on a flat
+  // plane. Packed snow sits lower than fresh, which is what makes a
+  // trail read as a trail from any angle.
+  // PROTO-20 (Mac: grass is showing through the snow). The burial line
+  // was 0.45m at full depth and a blade at the maxed height slider is
+  // over two metres, so the snow COULD NOT bury the sward however deep
+  // it lay - the geometry was right and the scale was absurd. One
+  // shared depth now, and it is a depth a winter actually reaches.
+  float snow = vField.g * (1.0 - vField.b * 0.55);
+  p.y += snow * uSnowFull;
+  vPos = p; vUV = xz / uTilePx;
+  gl_Position = uVP * vec4(p,1.0);
+}`, HEAD + `
+in vec2 vUV; in vec3 vPos; in vec2 vFieldUV; in vec4 vField;
+// PROTO-21: the constant is declared in EVERY stage that uses it. It
+// was put in the ground's VERTEX shader and used in the ground's
+// FRAGMENT shader, which is a separate compilation unit - the
+// fragment stage failed to compile, the program threw at link, the
+// module died on load, and the page came up grey. GLSL stages do not
+// share declarations; a vertex-shader const is invisible to the
+// fragment shader that follows it.
+uniform float uSnowFull;
+float hash21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+uniform sampler2D uTex, uNrm, uLow, uField2;
+uniform float uFieldM2;
+uniform float uNew, uDim, uFog, uWet; uniform vec3 uEye, uSun, uSky, uAmb, uSunCol;
+uniform float uCover2, uSoft2, uTime2, uRain; uniform vec2 uWind2;
+float h21g(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float vng(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(h21g(i),h21g(i+vec2(1,0)),f.x), mix(h21g(i+vec2(0,1)),h21g(i+vec2(1,1)),f.x), f.y); }
+float fbm2g(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*vng(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
+out vec4 o;
+void main(){
+  float d = length(vPos - uEye);
+  if (uNew < 0.5) {
+    // the CLASSIC look for comparison: a 64px NEAREST tile, posterised
+    vec3 q = texture(uTex, floor(vUV*64.0)/64.0).rgb;
+    vec3 cc = floor(q*14.0)/14.0;
+    cc *= 0.72 + 0.28*smoothstep(0.0, 40.0, 40.0-d*0.35);
+    o = vec4(mix(cc, vec3(0.55,0.62,0.70), clamp(d/260.0,0.0,0.75)), 1.0);
+    return;
+  }
+  // PROTO-3: DETAIL TILING. The albedo repeats every ~2m; a second
+  // read at a tenth the frequency modulates it, so the eye never
+  // finds the tile's own period on open ground. The low sheet
+  // carries damp (R), worn (G) and a hue drift (B).
+  // PROTO-7: the LOD is the HARDWARE'S, always. A first cut forced
+  // LOD 0 within 14m to keep the art pixels square, and the near
+  // ground boiled - a ground plane seen at a grazing angle minifies
+  // hard, and refusing the mip is refusing the filter that exists to
+  // stop exactly that. Pixel art on a floor stays crisp by being
+  // BIGGER in world space (an 8x art pixel over a 2m tile), not by
+  // fighting the sampler.
+  vec3 alb = texture(uTex, vUV).rgb;
+  vec3 low = texture(uLow, vUV * 0.105).rgb;
+  vec3 damp = mix(alb, alb * vec3(0.72,0.86,0.66), low.r * 0.55);   // wetter = deeper green
+  vec3 worn = mix(damp, damp * vec3(1.22,1.06,0.86) + vec3(0.06,0.04,0.02), low.g * 0.6);
+  vec3 c = mix(worn, worn * vec3(1.06,1.02,0.92), low.b * 0.35);
+
+  // 2. THE NORMAL MAP - every blade and pebble gets a lit side and a
+  // shaded one, and they move with the sun. This is the single term
+  // that stops a ground texture looking painted.
+  vec3 n = texture(uNrm, vUV).xyz * 2.0 - 1.0;
+  vec3 N = normalize(vec3(n.x, n.z, n.y));           // tangent -> world (flat ground)
+  // the SNOW's own surface normal, from the field's slope: a drift has
+  // shape, and a footprint's rim catches the light. Read at the field's
+  // own resolution, so a print has crisp walls.
+  float e = 1.0 / 256.0;
+  float sL = texture(uField2, vFieldUV - vec2(e,0.0)).g * (1.0 - texture(uField2, vFieldUV - vec2(e,0.0)).b*0.55);
+  float sR = texture(uField2, vFieldUV + vec2(e,0.0)).g * (1.0 - texture(uField2, vFieldUV + vec2(e,0.0)).b*0.55);
+  float sD = texture(uField2, vFieldUV - vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV - vec2(0.0,e)).b*0.55);
+  float sU = texture(uField2, vFieldUV + vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV + vec2(0.0,e)).b*0.55);
+  float snowD = vField.g * (1.0 - vField.b * 0.55);
+  vec3 snowN = normalize(vec3((sL - sR) * 22.0 * uSnowFull, 1.0, (sD - sU) * 22.0 * uSnowFull));
+  float snowCov = smoothstep(0.02, 0.16, snowD);
+  N = normalize(mix(N, snowN, snowCov));
+  // PROTO-14 (2): CLOUD SHADOWS. The deck's own field, sampled where
+  // this point's ray to the sun crosses the cloud plane - so a bank
+  // racing overhead drags its shadow across the land, and the shadow
+  // and the cloud that casts it are ONE field, exactly as the sun-disc
+  // occlusion is. The plane is high and the dome is far, so the
+  // parallax is the wind's, not the walker's: shadows move with the
+  // weather and not with you.
+  vec3 sd = normalize(uSun);
+  vec2 shp = (vPos.xz + sd.xz / max(sd.y, 0.12) * 260.0) * 0.0038 + uWind2 * uTime2;
+  float shn = fbm2g(shp);
+  float shadow = smoothstep(1.0 - uCover2, 1.0 - uCover2 + uSoft2, shn) * 0.62 * step(0.02, sd.y);
+  float lam = max(dot(N, normalize(uSun)), 0.0) * (1.0 - shadow);
+  // the AMBIENT is the sky's own colour, so dusk warms the ground and
+  // fog flattens it without a second set of numbers
+  float sky = 0.34 + 0.66 * clamp(N.y, 0.0, 1.0);
+  c *= (uAmb * 1.15 * sky + uSunCol * 1.05 * lam);
+  // a low specular sheen along the blades, which wet grass has
+  vec3 V = normalize(uEye - vPos);
+  vec3 H = normalize(normalize(uSun) + V);
+  // 4. THE WORLD ANSWERS. Wet ground is DARKER and SHINIER - water
+  // fills the pores, so it absorbs more and reflects sharper. That
+  // pair together is what reads as rain-soaked; either alone does not.
+  // ── the FIELD's own contribution ────────────────────────────────
+  // SNOW: fresh snow is near-white and takes the sky's colour; PACKED
+  // snow is duller, greyer and a shade blue, because compressed snow
+  // is denser ice and scatters less. That difference is what makes a
+  // trail visible on a white field at all.
+  // matte, and a touch blue where it is shaded - snow's shadows are
+  // sky-lit, which is most of what makes it read as snow rather than
+  // as white paint
+  vec3 fresh = vec3(0.86, 0.89, 0.95);
+  vec3 packed2 = vec3(0.66, 0.70, 0.79);
+  vec3 snowC = mix(fresh, packed2, vField.b);
+  c = mix(c, snowC, snowCov);
+  // WEAR: the memory of a path, after the print itself has healed
+  c = mix(c, c * vec3(0.92,0.94,0.98), vField.a * snowCov * 0.6);
+
+  // WATER: a puddle is DARK, SMOOTH and REFLECTIVE. Dark because the
+  // water fills the pores; smooth because the surface is water, not
+  // ground, so the normal goes flat; reflective because it is a
+  // mirror at grazing angles - which is the Fresnel term, and the
+  // reason a puddle looks like a puddle from across a field and like
+  // wet dirt underfoot.
+  float pud = smoothstep(0.05, 0.28, vField.r) * (1.0 - snowCov);
+  vec3 V2 = normalize(uEye - vPos);
+  float fres = pow(1.0 - max(dot(V2, vec3(0,1,0)), 0.0), 4.0);
+  if (pud > 0.001) {
+    N = normalize(mix(N, vec3(0,1,0), pud * 0.92));
+    // PROTO-14 (4): RIPPLES. Rings expand from where drops land, only
+    // where there is water to land in. Each cell of a coarse lattice
+    // owns one impact with its own phase, so the rings are scattered
+    // rather than in step, and the ring is a NORMAL disturbance - a
+    // ripple you can only see because it bends the reflection, which
+    // is the only way you ever see one.
+    if (uRain > 0.01) {
+      vec2 rp = vPos.xz * 3.2;
+      vec2 rc = floor(rp), rf = fract(rp) - 0.5;
+      float ph = h21g(rc);
+      float age = fract(uTime2 * 1.35 + ph);
+      float r = length(rf);
+      float ring = sin((r * 26.0 - age * 22.0)) * exp(-r * 6.0) * exp(-age * 3.2);
+      float amp = ring * uRain * pud * 0.55;
+      N = normalize(N + vec3(rf.x, 0.0, rf.y) * amp * 2.6);
+    }
+    c *= mix(1.0, 0.42, pud);
+    // the sky in the water, stronger at a grazing angle
+    c = mix(c, uSky * 1.05, pud * (0.10 + fres * 0.72));
+  }
+  c *= mix(1.0, 0.66, uWet);
+  float sheen = pow(max(dot(N,H),0.0), mix(26.0, 90.0, uWet + pud * 0.9)) * (0.35 + low.r*0.65 + uWet*1.3 + pud*2.2);
+  // PROTO-12: the ground's own sheen belongs to the GROUND. Snow lying
+  // over it must not inherit a wet-grass gloss, so the term fades out
+  // as the cover comes in.
+  c += vec3(0.16,0.18,0.12) * sheen * (1.0 - snowCov * 0.92);
+  // snow SPARKLES: sharp specular on its own normal, only where fresh
+  // PROTO-12 (Mac: the snow is way too shiny). Snow is not a mirror -
+  // it is a heap of ice crystals, and what it does with light is
+  // SCATTER it, not reflect it. Three corrections:
+  //   - the broad specular comes off almost entirely: a snowfield's
+  //     sheen is faint and only shows at a grazing angle;
+  //   - the sparkle is SPARSE and SHARP - a few crystals catching the
+  //     sun, gated on a hashed field so it twinkles across the ground
+  //     rather than laying a gloss over all of it;
+  //   - and both are killed by pack, because trodden snow is dull.
+  float graze = pow(1.0 - max(dot(normalize(uEye - vPos), N), 0.0), 3.0);
+  float glint = hash21(floor(vFieldUV * 2600.0));
+  c += vec3(0.85,0.90,1.0)
+     * pow(max(dot(N,H),0.0), 400.0)
+     * step(0.982, glint)                 // a few crystals, not a coat
+     * snowCov * (1.0 - vField.b) * 0.45;
+  c += vec3(0.72,0.78,0.92) * graze * snowCov * (1.0 - vField.b) * 0.06;
+  c *= uDim;
+
+  // 4. the far field settles into colour instead of boiling: blend to
+  // the sheet's own average as the mips take over
+  vec3 far = textureLod(uTex, vUV, 7.0).rgb * (uAmb*1.15*sky + uSunCol*1.05*0.62) * uDim * mix(1.0,0.66,uWet);
+  c = mix(c, far, smoothstep(28.0, 130.0, d));
+  c *= 0.74 + 0.26*smoothstep(0.0, 40.0, 40.0-d*0.35);
+  // fog closes the distance: the far plane of the fade comes IN as the
+  // weather thickens, which is the whole reason fog feels enclosing
+  float fogFar = mix(260.0, 26.0, uFog);
+  o = vec4(mix(c, uSky, clamp(d/fogFar, 0.0, mix(0.75, 0.99, uFog))), 1.0);
+}`);
+
+const grassProg = prog(HEAD + FIELD + `
+layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
+layout(location=1) in vec4 aInst;        // xz, height, phase
+layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
+uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
+uniform vec2 uWindDir;
+uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
+uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
+out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
+void main(){
+  vec2 root = aInst.xy;
+  float d = distance(root, uEye.xz);
+  vFade = 1.0 - smoothstep(uRange*0.55, uRange, d);
+  // PROTO-18: the fade thins the FIELD, it does not shrink the blades.
+  // A hashed threshold drops whole blades with distance, so the count
+  // falls away and every blade that remains is its true size.
+  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }
+  // PROTO-14 (3): THE GRASS KNOWS ABOUT THE GROUND IT STANDS IN.
+  // Blades stood up through snow that was supposedly burying them and
+  // stayed green in standing water. Snow BURIES them - the depth eats
+  // the height, and what is left is bent over and pale; water DROWNS
+  // them; and a footfall PUSHES them over, because the field already
+  // records where a foot went.
+  // PROTO-16 (1, Mac: the grass pops out of the snow when moving).
+  // The field is 64m across and the grass is drawn to 90m and beyond,
+  // so most blades stand OUTSIDE the window. Their UV clamped to the
+  // edge texel, and when the window jumped its 4m block the blades at
+  // the boundary flipped between buried and bare in one frame - the
+  // pop. Two things fix it, and both are needed: blades outside the
+  // window fall back to the GLOBAL snow depth, because snow falls on
+  // the whole world and not only on the part being simulated; and the
+  // handover is FADED over the last few metres, so no blade changes
+  // state in a single step.
+  vec2 fuv = (root - uGFieldOrigin) / uGFieldM;
+  vec4 fld = texture(uGField, clamp(fuv, 0.0, 1.0));
+  vec2 edge = min(fuv, 1.0 - fuv);
+  float inWin = smoothstep(0.0, 0.06, min(edge.x, edge.y));
+  fld = mix(vec4(0.0, uSnowGlobal, 0.0, 0.0), fld, inWin);
+  float snowD = fld.g * (1.0 - fld.b * 0.55);
+  float drown = smoothstep(0.10, 0.40, fld.r);
+  vSnow = smoothstep(0.02, 0.22, snowD);
+  vWet = smoothstep(0.0, 0.35, fld.r) + fld.a * 0.5;
+  // PROTO-18 (Mac: grass pops THROUGH THE SNOW during movement, and
+  // the snow itself is fine).
+  //
+  // THE HEIGHT WAS SCALED BY THE DISTANCE FADE. A blade far off stood
+  // at 55% of its height and grew to 100% as you approached - which is
+  // invisible on bare ground, and on snow is the whole bug: the snow
+  // surface is a FIXED line, so a blade that was under it grows up
+  // through it as you walk toward it. Every blade in the field does it,
+  // continuously, which is exactly "popping through when moving".
+  //
+  // BURIAL IS GEOMETRIC NOW, not a multiplier. The snow has a real
+  // surface height; a blade's true height is fixed and never changes
+  // with distance; what shows is simply the part standing ABOVE that
+  // surface, and the root is planted ON the snow rather than under it.
+  // A blade shorter than the snow is gone because it is buried, not
+  // because a factor shrank it - and walking toward it changes
+  // nothing, because nothing in this depends on the camera any more.
+  float snowSurf = snowD * uSnowFull;             // the SAME line the ground displaces to
+  float trueH = aInst.z * (1.0 - drown * 0.9);
+  float h = trueH - snowSurf;
+  // PROTO-23 (Mac: the BLADES peek out of the snow, and have through
+  // every one of my last four attempts).
+  //
+  // HERE IT IS. Clamping the height to zero does NOT remove a buried
+  // blade - it FLATTENS it. Every vertex collapses onto the snow
+  // surface, but the blade's WIDTH offset is still applied, so what is
+  // left is a horizontal green sliver lying exactly coplanar with the
+  // ground, z-fighting the snow it is supposed to be under. A million
+  // of those is a green speckle across the whole field, and no amount
+  // of moving the snow line could ever have fixed it - I was making
+  // MORE blades flat, not fewer blades visible.
+  //
+  // A buried blade is GONE. It is culled outright, before it can
+  // contribute a single fragment.
+  if (h <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vT = aCorner.y;
+  // the tip travels, the root does not: the offset is weighted by
+  // height along the blade, squared, which is what a stalk does
+  // AUDIT 39 F1: THE GRASS BENDS THE WAY THE WIND BLOWS. The sway was
+  // on a fixed axis with a fixed 0.6 cross-term, so the field always
+  // leaned the same way however the wind slider was set - and once the
+  // rain took a direction, the grass and the rain disagreed in plain
+  // sight. Now the lean is the wind VECTOR: a steady push plus a gust
+  // that travels ACROSS the field as a wave (the phase carries the
+  // blade's position along the wind), which is what makes a gust look
+  // like one thing moving rather than every blade wobbling alone.
+  vec2 wdir = length(uWindV) > 1e-4 ? normalize(uWindV) : vec2(1.0, 0.0);
+  float along = dot(root, wdir);
+  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;
+  float push = length(uWindV) * (0.55 + gust * 0.75);
+  vec2 lean = aInst2.xy + wdir * push * 0.055;
+  vec3 p;
+  p.xz = root + lean * (vT*vT) * h;
+  p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
+  // planted on the snow's own surface, so the burial line is the one
+  // the ground draws and not an approximation of it
+  p.y = terrain(root) + snowSurf + vT * h;
+  vTint = aInst2.z;
+  // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
+  // roughly its own lean crossed with up, so a leaning blade catches
+  // a low sun on one side and goes dark on the other - which is what
+  // makes a dawn field glow along one edge.
+  vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
+  vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
+  gl_Position = uVP * vec4(p,1.0);
+}`, HEAD + `
+in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet;
+uniform vec3 uAmb, uSunCol; uniform float uDim;
+out vec4 o;
+void main(){
+  // PROTO-2: the blade is LIT along its length - dark at the root
+  // where the sward shades it, bright at the tip where the sky does -
+  // and the very tip catches a rim, which is what makes a field of
+  // blades read as depth instead of a green haze.
+  // PROTO-7 (Mac: reduce the bright colour): the sward is olive, not
+  // emerald - a Daggerfall field, not a golf course.
+  vec3 root = vec3(0.10,0.14,0.06);
+  vec3 mid  = vec3(0.21,0.29,0.11);
+  vec3 tip  = vec3(0.36,0.44,0.19);
+  vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
+  c = mix(c, tip, smoothstep(0.5,1.0,vT));
+  c *= 0.80 + vTint*0.42;
+  // wet grass is DARKER; snow-laden grass is pale and cold
+  c *= mix(1.0, 0.72, clamp(vWet, 0.0, 1.0));
+  c = mix(c, vec3(0.74,0.78,0.86), vSnow * 0.75);
+  // lit by the same sky and sun the ground is, so a blade at dusk is
+  // the colour of dusk and not a green cut-out on an orange field
+  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol * 1.15 * vLam);
+  c *= uDim;
+  // the rim is the SUN's colour, and only where the sun can reach
+  c += uSunCol * 0.20 * smoothstep(0.86,1.0,vT) * vLam;
+  o = vec4(c, vFade);
+}`);
+
+// ── geometry ───────────────────────────────────────────────────────
+// AUDIT 41 F2: THE MESH COULD NOT EXPRESS A FOOTPRINT. The ground was
+// 220 quads over 300m - 1.36m a vertex - while the field is 0.25m a
+// texel and a print is 0.34m across: HALF a vertex spacing. The
+// displacement law was real and the geometry could not say it, so a
+// print only ever showed as shading. A NEAR PATCH is added at the
+// field's own resolution over the field's own 64m, drawn on top of the
+// coarse plane, so within the field every texel has vertices to move
+// and outside it the far ground stays cheap.
+const GROUND_N = 220, GROUND_SPAN = 300;
+const gverts = [];
+for (let j = 0; j < GROUND_N; j++) {
+  for (let i = 0; i < GROUND_N; i++) {
+    const x0 = (i / GROUND_N - 0.5) * GROUND_SPAN, x1 = ((i + 1) / GROUND_N - 0.5) * GROUND_SPAN;
+    const z0 = (j / GROUND_N - 0.5) * GROUND_SPAN, z1 = ((j + 1) / GROUND_N - 0.5) * GROUND_SPAN;
+    gverts.push(x0, z0, x1, z0, x1, z1, x0, z0, x1, z1, x0, z1);
+  }
+}
+// the near patch, in FIELD-LOCAL metres; the shader offsets it to the
+// field's origin, so it follows the player without a rebuild
+const NEAR_N = 192;                       // 64m / 192 = 0.33m a vertex
+const nverts = [];
+for (let j = 0; j < NEAR_N; j++) {
+  for (let i = 0; i < NEAR_N; i++) {
+    const s0 = 64 / NEAR_N;
+    const x0 = i * s0, x1 = (i + 1) * s0, z0 = j * s0, z1 = (j + 1) * s0;
+    nverts.push(x0, z0, x1, z0, x1, z1, x0, z0, x1, z1, x0, z1);
+  }
+}
+const gvao = gl.createVertexArray();
+gl.bindVertexArray(gvao);
+const gbuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, gbuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gverts), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+// AUDIT 41 F2: the near patch's own VAO, at the field's resolution
+const nvao = gl.createVertexArray();
+gl.bindVertexArray(nvao);
+{
+  const nb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, nb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(nverts), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+}
+
+function build() {
+  const N = state.density | 0;
+  const inst = new Float32Array(N * 4), inst2 = new Float32Array(N * 4);
+  // deterministic placement on a hashed seed - the rule the nature
+  // pass already uses, so a blade is where it was last frame
+  let s = 0x2f6e2b1;
+  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  const SPAN = 210;   // PROTO-16: the placement span follows the draw range
+  for (let i = 0; i < N; i++) {
+    // clustered placement: a tuft centre plus a tight jitter, so the
+    // sward reads as clumps rather than an even scatter
+    const cx = (rnd() - 0.5) * SPAN * 2, cz = (rnd() - 0.5) * SPAN * 2;
+    const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
+    const x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
+    inst[i * 4] = x; inst[i * 4 + 1] = z;
+    inst[i * 4 + 2] = (0.22 + rnd() * 0.42) * (state.height / 34);
+    inst[i * 4 + 3] = rnd() * 6.283;
+    inst2[i * 4] = (rnd() - 0.5) * 0.5;
+    inst2[i * 4 + 1] = (rnd() - 0.5) * 0.5;
+    inst2[i * 4 + 2] = rnd();
+    inst2[i * 4 + 3] = 0.052 + rnd() * 0.055;
+  }
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  // three quads per blade, stacked, so it can bend instead of shearing
+  const corners = [];
+  for (let seg = 0; seg < 5; seg++) {
+    const a = seg / 5, b = (seg + 1) / 5;
+    corners.push(0, a, 1, a, 1, b, 0, a, 1, b, 0, b);
+  }
+  const cbuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(corners), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  for (const [loc, data] of [[1, inst], [2, inst2]]) {
+    const b = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(loc, 1);
+  }
+  gr = { vao, count: N, verts: corners.length / 2 };
+}
+ready = true;
+build();
+R('surf').addEventListener('change', (e) => setSurface(e.target.value));
+R('retro').addEventListener('change', (e) => { state.retro = e.target.checked; });
+R('wx').addEventListener('change', (e) => {
+  state.weather = e.target.value;
+  front.set(state.weather);
+  // snow lies on the ground, so the surface follows the sky
+  // PROTO-12: snow no longer swaps the ground. It LIES on whatever is
+  // there, which is the whole point of the field.
+});
+
+// ── THE SKY (Mac: implement what is in-game and enhance it) ────────
+// The port's enhancedSky already carries the model: a nine-key
+// elevation ramp from midnight to noon (zenith, horizon, sun, glow,
+// glow amount, star amount), a weather hand on cover/grey/wind, two
+// moons, and a sun. Those numbers are lifted VERBATIM here so the lab
+// tunes the same thing the game draws - not a lookalike.
+//
+// What the lab ADDS, and why each:
+//   - a real DOME rather than a screen gradient, so the horizon bends
+//     with the view and the sun sits IN the sky instead of on it;
+//   - MIE FORWARD SCATTER around the sun, which is what makes a low
+//     sun bleed light across half the sky instead of being a disc
+//     with a halo;
+//   - a horizon HAZE band that thickens with the weather's grey;
+//   - CLOUDS as a two-layer warped fbm that drifts on the weather's
+//     own wind, lit from the sun's side and shaded away from it;
+//   - and the whole thing feeding the GROUND: the sky's own colour is
+//     what the ambient term uses, so dusk turns the grass warm and
+//     the fog turns it flat, without a second set of numbers.
+const SKY_KEYS = [
+  { elev: -90, zenith: [0x04,0x06,0x0d], horizon: [0x09,0x0c,0x16], glow: [0,0,0], glowAmount: 0.0, stars: 1.0 },
+  { elev: -18, zenith: [0x06,0x09,0x14], horizon: [0x0f,0x13,0x1f], glow: [0x1a,0x14,0x20], glowAmount: 0.0, stars: 1.0 },
+  { elev: -9,  zenith: [0x0c,0x13,0x30], horizon: [0x2b,0x22,0x38], glow: [0x6a,0x3a,0x3a], glowAmount: 0.30, stars: 0.85 },
+  { elev: -6,  zenith: [0x12,0x1e,0x48], horizon: [0x3c,0x33,0x4c], glow: [0xa8,0x4e,0x3c], glowAmount: 0.55, stars: 0.62 },
+  { elev: -4,  zenith: [0x1a,0x2a,0x5a], horizon: [0x4e,0x42,0x58], glow: [0xd6,0x69,0x3a], glowAmount: 0.75, stars: 0.45 },
+  // PROTO-9: the SUNRISE/SUNSET band, finely stepped. The game's ramp
+  // jumps -4 -> 0 -> 4, and the whole of a sunset happens inside that
+  // eight degrees: the horizon goes ember, then peach, then the sky
+  // above it turns the violet that only exists for a few minutes.
+  // Four keys where there were two, and the glow colour swings warm
+  // and then cools, which is what a real one does as the sun clears
+  // the haze.
+  { elev: -2,  zenith: [0x23,0x36,0x74], horizon: [0x8e,0x60,0x62], glow: [0xf0,0x7c,0x3c], glowAmount: 0.92, stars: 0.24 },
+  { elev: 0,   zenith: [0x2c,0x4d,0x8e], horizon: [0xc4,0xa4,0x9a], glow: [0xff,0x9a,0x4c], glowAmount: 1.00, stars: 0.10 },
+  { elev: 2,   zenith: [0x33,0x5c,0xa4], horizon: [0xe0,0xb4,0x9c], glow: [0xff,0xac,0x60], glowAmount: 0.84, stars: 0.03 },
+  { elev: 4,   zenith: [0x3a,0x68,0xb4], horizon: [0xd9,0xc6,0xb4], glow: [0xff,0xbd,0x7a], glowAmount: 0.60, stars: 0.0 },
+  { elev: 7,   zenith: [0x3c,0x70,0xc0], horizon: [0xd2,0xcf,0xc8], glow: [0xff,0xcf,0x9c], glowAmount: 0.42, stars: 0.0 },
+  { elev: 12,  zenith: [0x3f,0x77,0xcc], horizon: [0xc9,0xdc,0xf0], glow: [0xff,0xe1,0xb8], glowAmount: 0.28, stars: 0.0 },
+  { elev: 30,  zenith: [0x33,0x6b,0xc6], horizon: [0xb6,0xd0,0xec], glow: [0xff,0xf0,0xd8], glowAmount: 0.14, stars: 0.0 },
+  { elev: 90,  zenith: [0x2a,0x5a,0xb8], horizon: [0xa8,0xc8,0xea], glow: [0xff,0xff,0xff], glowAmount: 0.08, stars: 0.0 },
+];
+// ── PROTO-9: THE FRONT (Mac: cloud cover should morph and build up,
+// and change colour when rain or snow is coming; same for snow) ─────
+//
+// Weather in the game is a STATE. Weather in the sky is a PROCESS: the
+// deck thickens for a quarter of an hour before the first drop, the
+// light goes flat and then bruised, the cloud bellies go from white to
+// slate to that green-grey a summer storm gets, and only THEN does it
+// rain. A dropdown that hard-cuts between seven skies can never look
+// like weather, however good each of the seven is.
+//
+// So every sky quantity - cover, softness, grey, the two cloud colours
+// and the wind - is EASED between the state you left and the state you
+// asked for, over a real span, and a FRONT term runs AHEAD of the
+// transition:
+//
+//   - cover builds first and fastest (a deck arrives before its rain);
+//   - the cloud colours turn toward the incoming weather's shade
+//     EARLY, and overshoot it a little, because the darkest a sky ever
+//     looks is just before it breaks;
+//   - the particles hold off until the front is mostly in - the rain
+//     starts when the sky already looks like rain, not with it;
+//   - and the wind picks up before the rain and drops after it, which
+//     is the part everyone has felt and nobody draws.
+// AUDIT 43 F1: THE LAB COULD NOT BE OBSERVED. A front took 26 seconds
+// and the particles only begin at 45% of it, so nothing fell for the
+// first twelve seconds after choosing a weather and the ground took
+// twenty more to whiten. Measuring the field's own texture found
+// maxSnow = 0 twice in a row, and the third read never landed before
+// the harness gave out - which is not a bug in the system, it is a bug
+// in how long the system makes you wait to see it. A lab that cannot
+// be watched inside one run cannot be tuned. The pace is a SLIDER now,
+// and it starts fast; the game's own front is minutes, not seconds,
+// and the slider is what maps between the two.
+let FRONT_SECONDS = 9;
+const SNOW_TINT = [0.92, 0.95, 1.02];   // snow light is cold; rain light is not
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerp3 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const ease = (t) => t * t * (3 - 2 * t);
+const front = {
+  from: 'sunny', to: 'sunny', t: 1,
+  /** ask for a change; the sky takes its own time about it */
+  set(name) { if (name === this.to) return; this.from = this.sample().key; this.to = name; this.t = 0; },
+  tick(dt) { this.t = Math.min(1, this.t + dt / Math.max(0.5, FRONT_SECONDS)); },
+  /** the sky RIGHT NOW: the two states eased together, with the front
+   *  running ahead of the ease so the deck arrives before its weather */
+  sample() {
+    const a = WEATHER_SKY[this.from], b = WEATHER_SKY[this.to];
+    const t = ease(this.t);
+    // cover leads: it is most of the way in when the ease is a third
+    const tc = ease(Math.min(1, this.t * 2.2));
+    // the colours lead too, and OVERSHOOT toward the darker of the two
+    const tk = ease(Math.min(1, this.t * 1.7));
+    // THE BLACK SKY WAS HERE. `darker` picked the darker weather ROW -
+    // an object - and then mixTo indexed it as if it were a COLOUR:
+    // darker[0] is undefined, and `undefined * 0` is NaN, not 0, so the
+    // bruise term poisoned the cloud colours even at rest, with the
+    // front settled and the overshoot at zero. NaN uniforms went to the
+    // shader, the cloud mix carried the NaN into every sky pixel, and
+    // the dome came out black - which is exactly what Mac saw twice and
+    // I twice diagnosed as something else. It is the darker SHADE now,
+    // and the arithmetic can no longer touch a non-number.
+    const darkShade = (b.shade[0] + b.shade[1] + b.shade[2]) < (a.shade[0] + a.shade[1] + a.shade[2]) ? b.shade : a.shade;
+    const over = Math.sin(Math.PI * Math.min(1, this.t * 1.4)) * 0.22;   // a bruise, then it settles
+    const cold = this.to === 'snow' || this.from === 'snow' ? SNOW_TINT : [1, 1, 1];
+    const mixTo = (p, q) => lerp3(p, q, tk).map((v, i) => cl(v * (1 - over) + darkShade[i] * over, 0, 255) * cold[i]);
+    return {
+      key: this.t >= 1 ? this.to : this.from,
+      cover: lerp(a.cover, b.cover, tc),
+      soft: lerp(a.soft, b.soft, t),
+      grey: lerp(a.grey, b.grey, tk),
+      lit: mixTo(a.lit, b.lit),
+      shade: mixTo(a.shade, b.shade),
+      // the wind gusts THROUGH the change: up before, easing after
+      wind: [lerp(a.wind[0], b.wind[0], t) * (1 + Math.sin(Math.PI * this.t) * 0.9),
+        lerp(a.wind[1], b.wind[1], t) * (1 + Math.sin(Math.PI * this.t) * 0.9)],
+      // the particles wait for the sky to look the part
+      fall: cl((this.t - 0.45) / 0.4, 0, 1),
+    };
+  },
+};
+
+const WEATHER_SKY = {
+  sunny:    { cover: 0.32, soft: 0.34, grey: 0.00, lit: [0xf4,0xf6,0xfa], shade: [0x98,0xa4,0xb2], wind: [0.010, 0.004] },
+  cloudy:   { cover: 0.55, soft: 0.28, grey: 0.25, lit: [0xee,0xf1,0xf5], shade: [0x8a,0x95,0xa2], wind: [0.016, 0.006] },
+  overcast: { cover: 0.94, soft: 0.22, grey: 0.75, lit: [0xa5,0xad,0xb6], shade: [0x5f,0x68,0x73], wind: [0.014, 0.004] },
+  fog:      { cover: 0.98, soft: 0.30, grey: 0.85, lit: [0xae,0xb4,0xba], shade: [0x7c,0x83,0x8a], wind: [0.006, 0.002] },
+  rain:     { cover: 0.97, soft: 0.20, grey: 0.85, lit: [0x7f,0x88,0x90], shade: [0x44,0x4b,0x53], wind: [0.030, 0.010] },
+  snow:     { cover: 0.95, soft: 0.26, grey: 0.80, lit: [0xc3,0xc8,0xce], shade: [0x7f,0x87,0x8f], wind: [0.012, 0.004] },
+  thunder:  { cover: 1.00, soft: 0.18, grey: 0.95, lit: [0x5b,0x62,0x6b], shade: [0x26,0x2b,0x31], wind: [0.045, 0.016] },
+};
+const GREY_ZENITH = [0x66,0x70,0x7c], GREY_HORIZON = [0x9a,0xa3,0xac];
+/** paletteAt, verbatim from the game: linear between the two keys the
+ *  sun's elevation falls between. */
+function paletteAt(elevDeg) {
+  const K = SKY_KEYS;
+  const row = (k) => ({ zenith: k.zenith, horizon: k.horizon, glow: k.glow, glowAmount: k.glowAmount, stars: k.stars });
+  if (elevDeg <= K[0].elev) return row(K[0]);
+  for (let i = 1; i < K.length; i++) {
+    if (elevDeg <= K[i].elev) {
+      const a = K[i-1], b = K[i], t = (elevDeg - a.elev) / (b.elev - a.elev);
+      const m3 = (p, q) => p.map((v, j) => v + (q[j] - v) * t);
+      return { zenith: m3(a.zenith, b.zenith), horizon: m3(a.horizon, b.horizon), glow: m3(a.glow, b.glow),
+        glowAmount: a.glowAmount + (b.glowAmount - a.glowAmount) * t, stars: a.stars + (b.stars - a.stars) * t };
+    }
+  }
+  return row(K[K.length - 1]);
+}
+// PROTO-8 (Mac: ensure the procedural sky is 1:1 - I'm noticing bugs).
+// IT WAS NOT 1:1, and the bugs were mine. The lab had my own dome: a
+// different exponent, Mie forward scatter where the game has an
+// azimuth glow that hugs the horizon, ONE cloud sheet where the game
+// has two lit decks, no below-horizon fall-off, no moons, no star
+// pole, no cube snap, and an fbm missing the game's own per-octave
+// offsets. Every one of those is a visible difference.
+//
+// So the lab now runs THE GAME'S FRAGMENT SHADER, verbatim - the same
+// text enhancedSky.js hands its renderer, lifted whole. The only
+// adaptation is the ray, which the game builds from yaw/pitch/fov and
+// which this page has directly. If it looks wrong here now, it looks
+// wrong in the game, which is the entire point of a lab.
+const SKY_FS = `#version 300 es
+precision highp float;
+in vec2 vNdc;
+uniform float uYaw, uPitch, uTanHalfFov, uAspect;
+uniform vec3 uZenith, uHorizon, uSunColor, uGlowColor, uCloudLit, uCloudShade, uFogColor;
+uniform vec3 uSunDir;
+uniform float uSunRadius, uSunVis, uGlowAmount, uStars;
+uniform vec4 uMoonA, uMoonB;          // xyz direction, w radius
+uniform vec3 uMoonAColor, uMoonBColor;
+uniform float uMoonAVis, uMoonBVis;
+uniform float uCloudCover, uCloudSoft, uTime;
+uniform vec2 uWind;
+uniform float uFogMix;
+uniform vec3 uStarPole;
+uniform float uStarAngle;
+uniform float uRetroStep;   // 0 = the smooth pass; else the angular pixel (radians)
+uniform float uRetroLevels; // 0 = no posterise
+
+// ES1f: A CELL ON THE CUBE, NOT ON A LAT-LONG GRID.
+// Snapping azimuth and elevation put the grid's POLE at the zenith:
+// the elevation rings became concentric circles and the azimuth cells
+// converged to nothing, so looking straight up was a bullseye with
+// everything woven into it. A cube has no pole. The direction is
+// projected onto whichever of the six faces it points at, snapped on
+// that face's square grid, and rebuilt - cells stay near-square
+// everywhere, the zenith is an ordinary patch of an ordinary face, and
+// the only cost is the cube's own mild corner distortion, which has no
+// centre for the eye to find.
+// The n argument is cells per face; the cell id (with the face folded in) comes
+// back in cellOut for the dither and the star field.
+vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
+  vec3 a = abs(dir);
+  float m = max(a.x, max(a.y, a.z));
+  vec2 raw; float face;
+  if (a.x >= m) { raw = dir.zy / a.x; face = dir.x > 0.0 ? 0.0 : 1.0; }
+  else if (a.y >= m) { raw = dir.xz / a.y; face = dir.y > 0.0 ? 2.0 : 3.0; }
+  else { raw = dir.xy / a.z; face = dir.z > 0.0 ? 4.0 : 5.0; }
+  // EQUI-ANGULAR faces (ES1f, second pass). A plain cube face is a
+  // TANGENT plane, so its cells cover 2.6x less sky at the corners than
+  // at the centre - and a cell size that varies across the frame beats
+  // against the screen's own grid and draws curved moire rings, which
+  // is the pole artifact's ghost rather than its cure. Warping the face
+  // by atan (the equi-angular cubemap of 360 video) makes every cell
+  // the SAME ANGLE everywhere, so the grid reads as an even bitmap in
+  // every direction. A face spans 90 degrees, so n = (PI/2)/step gives
+  // the painted sky's pixel: 256 a face, 512 across 180 degrees, which
+  // is SKY??.DAT's own width.
+  vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
+  vec2 cell = floor(uv * n);
+  vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
+  cellOut = cell + face * 977.0;                    // a face's cells are its own
+  if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
+  if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
+  return normalize(vec3(t.x, t.y, sign(dir.z)));
+}
+
+// Bayer 4x4, the ordered dither a 256-colour gradient used.
+float bayer4(vec2 p) {
+  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
+  int i = y * 4 + x;
+  float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+  return m[i] / 16.0;
+}
+out vec4 outColor;
+
+float hash21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  float a = hash21(i), b = hash21(i + vec2(1, 0)), c = hash21(i + vec2(0, 1)), d = hash21(i + vec2(1, 1));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++) { v += a * vnoise(p); p = p * 2.03 + vec2(17.1, 9.7); a *= 0.5; }
+  return v;
+}
+
+// ES1c: ONE CLOUD DECK. The far deck is given a smaller, slower,
+// thinner treatment; sunAz is how much this ray points at the sun,
+// which is what lights the deck. Returns cover (x) and the noise the
+// colour is chosen by (y).
+vec2 deck(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias) {
+  vec2 p = dir.xz / (dir.y + 0.18) * scale + wind * uTime;
+  float n = fbm(p) + bias;
+  float cov = smoothstep(1.0 - cover, 1.0 - cover + soft, n);
+  return vec2(cov, n);
+}
+
+vec3 moon(vec3 dir, vec4 m, vec3 col, float vis) {
+  if (vis <= 0.0) return vec3(0.0);
+  vec3 md = m.xyz; float r = m.w;
+  float cosA = dot(dir, md);
+  if (cosA < cos(r * 1.6)) return vec3(0.0);
+  vec3 up = abs(md.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+  vec3 ex = normalize(cross(up, md)); vec3 ey = cross(md, ex);
+  vec2 uv = vec2(dot(dir, ex), dot(dir, ey)) / r;
+  float rr = dot(uv, uv);
+  float disc = 1.0 - smoothstep(0.88, 1.06, rr);
+  // The sphere's normal at this point of the disc, facing the viewer.
+  vec3 n = normalize(ex * uv.x + ey * uv.y - md * sqrt(max(0.0, 1.0 - min(rr, 1.0))));
+  float lit = smoothstep(-0.06, 0.16, dot(n, uSunDir));
+  float limb = 0.85 + 0.15 * (1.0 - rr);
+  return col * (0.05 + 0.95 * lit) * limb * disc * vis;
+}
+
+// PROTO-15 (Mac: the stars are still stripes in a lot of places).
+// The sub-cell position was fixed in PROTO-14 and the field STILL
+// banded, because the fault is one level down: hash21 is a
+// float-multiply-and-fract hash, and the star field feeds it CELL IDS
+// - integers, and large ones, since cubeSnap folds the face in as
+// +977 per face and the scale is 127 or 236. Feeding a weak float
+// hash a lattice of large integers is the textbook way to get
+// correlated output: fract(n * 123.34) walks in near-constant steps
+// as n increments, so neighbouring cells get neighbouring values, the
+// threshold test cuts them in bands, and the sky comes out ruled.
+//
+// A star field needs an INTEGER hash. This is a 32-bit avalanche - two
+// multiply-xor-shift rounds over the cell coordinates - which
+// decorrelates adjacent integers by construction. The same hash gives
+// the threshold, the sub-cell position and the brightness, so all
+// three are independent of the lattice instead of drawn on it.
+uint uhash(uvec2 v) {
+  uint h = v.x * 1597334677u ^ v.y * 3812015801u;
+  h ^= h >> 15; h *= 2246822519u;
+  h ^= h >> 13; h *= 3266489917u;
+  h ^= h >> 16;
+  return h;
+}
+float ihash(vec2 cell, float salt) {
+  uvec2 u = uvec2(ivec2(floor(cell)) + ivec2(4096));
+  return float(uhash(u + uvec2(uint(salt * 71.0), uint(salt * 131.0)))) * (1.0 / 4294967296.0);
+}
+
+float stars(vec3 dir, float amount) {
+  if (amount <= 0.0 || dir.y < 0.0) return 0.0;
+  float s = 0.0;
+  // ES1c: THE FIELD WHEELS. The stars were fixed in world space, so
+  // midnight's sky was dusk's sky exactly - the one thing about a night
+  // sky everybody has seen is that it turns. It turns about a POLE
+  // (uStarPole: north, tilted off the zenith), by uStarAngle, which the
+  // clock advances a full turn a day, so the field rises in the east
+  // and sets in the west like everything else.
+  vec3 axis = normalize(uStarPole);
+  float ca = cos(uStarAngle), sa = sin(uStarAngle);
+  vec3 d = dir * ca + cross(axis, dir) * sa + axis * dot(axis, dir) * (1.0 - ca);   // Rodrigues
+  // ES1f: the field is cast on the CUBE too. On a lat-long grid the
+  // cells converged at the pole - a pinwheel of stars - and the density
+  // piled up there, which is exactly wrong: a star field is even.
+  for (int layer = 0; layer < 2; layer++) {
+    // The cube covers the sphere with 6n^2 cells where the lat-long grid
+    // used ~2*pi^2*scale^2, so the same star density wants a bigger n:
+    // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
+    float scale = layer == 0 ? 127.0 : 236.0;
+
+    // PROTO-15 (Mac: stars are STILL stripes in a lot of places). The
+    // first fix kept cubeSnap's integer cell id as the key and derived
+    // the sub-cell offset SEPARATELY - two computations of the same
+    // thing, and any disagreement between them puts every star in a
+    // cell on one line. cubeSnap is not consulted here at all now: the
+    // face coordinate is computed ONCE, and the cell id and the
+    // position inside it are the floor and the fract OF THE SAME
+    // NUMBER. They cannot disagree, because there is nothing left to
+    // disagree about.
+    vec3 ad = abs(d);
+    float md = max(ad.x, max(ad.y, ad.z));
+    vec2 raw; float face;
+    if (ad.x >= md) { raw = d.zy / ad.x; face = d.x > 0.0 ? 0.0 : 1.0; }
+    else if (ad.y >= md) { raw = d.xz / ad.y; face = d.y > 0.0 ? 2.0 : 3.0; }
+    else { raw = d.xy / ad.z; face = d.z > 0.0 ? 4.0 : 5.0; }
+    vec2 uvf = atan(raw) * 1.27323954;          // equi-angular: one cell, one angle
+    vec2 g = uvf * scale + vec2(face * 977.0 + float(layer) * 31.7);
+    vec2 cell = floor(g), f = fract(g);
+    float h = ihash(cell, 7.3 + float(layer) * 3.0);
+    float thresh = layer == 0 ? 0.955 : 0.985;
+    if (h > thresh) {
+      vec2 star = vec2(ihash(cell, 1.1 + float(layer)), ihash(cell, 2.2 + float(layer))) * 0.7 + 0.15;
+      float d = length(f - star);
+      float b = 0.35 + 0.65 * (h - thresh) / (1.0 - thresh);
+      s += b * (layer == 0 ? 1.4 : 0.8) * exp(-d * d * 60.0);
+    }
+  }
+  return s * amount * smoothstep(0.0, 0.08, dir.y);   // the fade is on the REAL elevation: a star sets where the horizon is
+}
+
+void main() {
+  // PROTO-19 (1, Mac: the sky should not rotate when you rotate the
+  // camera). It was built on a DIFFERENT convention from the camera
+  // that looks at it. The page's camera faces -Z and its forward is
+  // (-sin y cos p, sin p, -cos y cos p); this ray was built facing +Z
+  // and then yawed the other way, which is a 180-degree offset AND an
+  // inverted pitch. The dome was still world-fixed in its own frame -
+  // it was fixed to the WRONG frame, so turning swung the sky against
+  // the ground and the whole vault appeared to follow the head.
+  //
+  // The ray is built in the camera's own convention now: down -Z,
+  // pitched and yawed exactly as the lookAt does. At yaw 0 and pitch 0 the
+  // sky's forward IS the camera's forward, so the sun stays where the
+  // world put it however you turn.
+  vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, -1.0));
+  float cp = cos(uPitch), sp = sin(uPitch);
+  vec3 r1 = vec3(ray.x, ray.y * cp - ray.z * sp, ray.y * sp + ray.z * cp);
+  float cy = cos(uYaw), sy = sin(uYaw);
+  // PROTO-20 (Mac: the sky STILL rotates). I fixed two of the three
+  // terms and broke the one that was right. Worked out against the
+  // camera's own forward, which is (-sin y cos p, sin p, -cos y cos p):
+  // with the ray down -Z and the corrected pitch, a straight-ahead ray
+  // must come out as (-cp*sy, sp, -cp*cy). My yaw form gave (+cp*sy,
+  // ...) - MIRRORED in x - so turning moved the sky the wrong way,
+  // which is precisely "the sky rotates when you turn". The game's own
+  // yaw expression was correct all along and is restored; only the
+  // ray's -Z and the pitch sign were ever wrong.
+  vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
+
+  // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
+  // (SKY_ANGLE_PER_PIXEL) - and ES1f: on a CUBE, so it has no pole. The
+  // direction is snapped BEFORE anything is computed, so every feature
+  // below is drawn on the grid and the pixels are fixed to the world
+  // rather than to the screen. The faces are equi-angular, so a face's
+  // 90 degrees over n cells makes every cell exactly one step wide:
+  // n = (PI/2)/step is 256 a face, 512 across 180 degrees - SKY??.DAT.
+  vec2 cell = vec2(0.0);
+  if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
+
+  // The dome: horizon to zenith.
+  float e = clamp(dir.y, 0.0, 1.0);
+  vec3 color = mix(uHorizon, uZenith, pow(e, 0.55));
+  // BELOW THE HORIZON the terrain is what a player sees, but the sky is
+  // drawn first and shows wherever the ground does not reach - and a
+  // flat slab of the horizon colour with the full dawn glow on it read
+  // as a bright BAND with a hard seam at the horizon (the first
+  // render's one fault). So the dome keeps going down: the horizon
+  // colour darkens toward the nadir, and the glow falls off below the
+  // horizon as fast as it does above it, so the horizon is a line
+  // rather than an edge.
+  float below = clamp(-dir.y, 0.0, 1.0);
+  color = mix(color, uHorizon * 0.55, pow(below, 0.7));
+
+  // The glow on the sun's side of the horizon (dawn, dusk).
+  vec2 dh = normalize(dir.xz + vec2(1e-5, 0.0));
+  vec2 sh = normalize(uSunDir.xz + vec2(1e-5, 0.0));
+  float az = max(dot(dh, sh), 0.0);
+  color += uGlowColor * pow(az, 2.5) * exp(-abs(dir.y) * 9.0) * uGlowAmount;
+
+  // Stars, then the moons, under the clouds.
+  color += vec3(0.95, 0.97, 1.0) * stars(dir, uStars);
+  color += moon(dir, uMoonA, uMoonAColor, uMoonAVis);
+  color += moon(dir, uMoonB, uMoonBColor, uMoonBVis);
+
+  // The sun: a disc and a halo.
+  float cosSun = dot(dir, uSunDir);
+  float disc = smoothstep(cos(uSunRadius), cos(uSunRadius * 0.6), cosSun) * uSunVis;
+  float halo = (pow(max(cosSun, 0.0), 40.0) * 0.55 + pow(max(cosSun, 0.0), 8.0) * 0.10) * uSunVis;
+
+  // ES1c: TWO DECKS, LIT BY THE SUN. One fbm sheet coloured by its own
+  // noise was a smear: it had no depth (nothing moved against anything)
+  // and no idea where the sun was, so a bank never had a bright rim and
+  // never had a dark belly. Now a HIGH deck - small, slow, thin - sits
+  // behind a LOW one - large, faster, thicker - and both are lit by
+  // sunAz, how far this ray is from the sun: toward the sun a bank is
+  // rimmed (the light coming through its edge), away from it the thick
+  // parts go to the shade colour. The lighting fades out at night with
+  // the palette's own sun colour, which is black below the horizon.
+  float cloud = 0.0;
+  if (dir.y > 0.0) {
+    float near = smoothstep(0.28, 0.0, dir.y);
+    vec2 hi = deck(dir, 0.95, uWind * 0.55, uCloudCover * 0.75, uCloudSoft * 1.5, 0.0);
+    vec2 lo = deck(dir, 1.9, uWind, uCloudCover, uCloudSoft, 0.0);
+    // The low deck covers the high one where it is; what is left of the
+    // high deck shows through the gaps.
+    float covHi = hi.x * (1.0 - lo.x) * 0.7;
+    float cov = lo.x + covHi;
+    // PROTO-14 (5, Mac: the horizon stays unclouded under full cover).
+    // The game thins the deck toward the horizon by multiplying cover
+    // BY cover - at 0.5 cover that is a quarter of the cloud where the
+    // sky is largest, so an overcast day has a clear rim all round.
+    // Declared divergence: the haze stays (a deck does go pale with
+    // distance) and the THINNING goes, so cover means cover to the
+    // horizon.
+    cloud = mix(cov, cov * mix(uCloudCover, 1.0, 0.75), near);
+    float n = mix(hi.y, lo.y, lo.x);                       // the deck in front decides the colour
+    float sunAz = max(dot(dir, uSunDir), 0.0);
+    // The rim: strongest at the thin edges of a bank, and only near the sun.
+    float edge = 1.0 - abs(n - (1.0 - uCloudCover)) * 3.0;
+    float rim = clamp(edge, 0.0, 1.0) * pow(sunAz, 3.0);
+    float thick = smoothstep(0.45, 0.95, n);
+    vec3 cc = mix(uCloudShade, uCloudLit, thick * 0.75 + 0.25 * pow(sunAz, 1.5));
+    cc += uSunColor * rim * 0.55 * uSunVis;                 // lit through the edge
+    cc = mix(cc, cc * 0.86, (1.0 - pow(sunAz, 0.7)) * thick);   // the belly away from the sun
+    cc = mix(cc, mix(uHorizon, cc, 0.55), near);            // into the haze at the horizon
+    color = mix(color, cc, cloud);
+  }
+  color += uSunColor * disc * (1.0 - cloud) + uSunColor * halo * (1.0 - 0.7 * cloud);
+
+  // ES1c: DITHER. A dome is one big smooth gradient and eight bits is
+  // not enough for one: 46% of the rows in a noon frame came out
+  // byte-identical to the row above, which is a visible stair. A
+  // sub-bit of hash noise before the write breaks the stair and costs
+  // two instructions; it is about one quantisation step, so it is never
+  // itself visible. TRIANGULAR, not flat: two hashes summed give the
+  // error a triangular distribution, which is the shape that fully
+  // decorrelates it from the signal - a flat one left a third of the
+  // rows still identical to the row above.
+  vec3 out3 = mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix);
+  if (uRetroLevels > 0.0) {
+    // ES1e: posterise with an ORDERED dither, indexed by the ANGULAR
+    // cell - one Bayer cell per sky pixel, or it is a fine weave under a
+    // coarse one, which is two eras at once, and it would crawl when the
+    // camera turned.
+    float b = bayer4(uRetroStep > 0.0 ? cell : gl_FragCoord.xy) - 0.5;
+    out3 = floor(out3 * uRetroLevels + 0.5 + b) / uRetroLevels;
+  } else {
+    // The SMOOTH pass's dither. Interleaved gradient noise, not a hash:
+    // the hash of ES1c measured well (46% of identical rows to 25%) but
+    // it is STRUCTURED at integer coordinates - a visible weave under
+    // magnification, which is the one thing a dither must not be. IGN is
+    // the standard for exactly this and is three constants.
+    float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
+    out3 += (ign - 0.5) / 255.0;
+  }
+  outColor = vec4(out3, 1.0);
+}`;
+const skyProg = prog(`#version 300 es
+precision highp float;
+layout(location=0) in vec2 aP;
+out vec2 vNdc;
+void main(){ vNdc = aP; gl_Position = vec4(aP, 1.0, 1.0); }`, SKY_FS);
+
+/** AUDIT 42 F1: no non-finite number reaches any shader on this page.
+ *  Not a fix for a bug - a fix for the CLASS of bug, since the one
+ *  that cost an hour was invisible precisely because a NaN uniform
+ *  raises nothing and renders black. */
+const safe1 = (x) => (Number.isFinite(x) ? x : 0);
+const safe3 = (v) => new Float32Array([safe1(v[0]), safe1(v[1]), safe1(v[2])]);
+const safeN = (v) => new Float32Array(Array.from(v, safe1));
+
+const skyVao = gl.createVertexArray();
+gl.bindVertexArray(skyVao);
+{
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+}
+const inv4 = (m) => {
+  const a = m, o2 = new Float32Array(16);
+  const s0=a[0]*a[5]-a[1]*a[4], s1=a[0]*a[6]-a[2]*a[4], s2=a[0]*a[7]-a[3]*a[4],
+        s3=a[1]*a[6]-a[2]*a[5], s4=a[1]*a[7]-a[3]*a[5], s5=a[2]*a[7]-a[3]*a[6],
+        c5=a[10]*a[15]-a[11]*a[14], c4=a[9]*a[15]-a[11]*a[13], c3=a[9]*a[14]-a[10]*a[13],
+        c2=a[8]*a[15]-a[11]*a[12], c1=a[8]*a[14]-a[10]*a[12], c0=a[8]*a[13]-a[9]*a[12];
+  const det = s0*c5-s1*c4+s2*c3+s3*c2-s4*c1+s5*c0, id = 1/det;
+  o2[0]=(a[5]*c5-a[6]*c4+a[7]*c3)*id;  o2[1]=(-a[1]*c5+a[2]*c4-a[3]*c3)*id;
+  o2[2]=(a[13]*s5-a[14]*s4+a[15]*s3)*id; o2[3]=(-a[9]*s5+a[10]*s4-a[11]*s3)*id;
+  o2[4]=(-a[4]*c5+a[6]*c2-a[7]*c1)*id; o2[5]=(a[0]*c5-a[2]*c2+a[3]*c1)*id;
+  o2[6]=(-a[12]*s5+a[14]*s2-a[15]*s1)*id; o2[7]=(a[8]*s5-a[10]*s2+a[11]*s1)*id;
+  o2[8]=(a[4]*c4-a[5]*c2+a[7]*c0)*id;  o2[9]=(-a[0]*c4+a[1]*c2-a[3]*c0)*id;
+  o2[10]=(a[12]*s4-a[13]*s2+a[15]*s0)*id; o2[11]=(-a[8]*s4+a[9]*s2-a[11]*s0)*id;
+  o2[12]=(-a[4]*c3+a[5]*c1-a[6]*c0)*id; o2[13]=(a[0]*c3-a[1]*c1+a[2]*c0)*id;
+  o2[14]=(-a[12]*s3+a[13]*s1-a[14]*s0)*id; o2[15]=(a[8]*s3-a[9]*s1+a[10]*s0)*id;
+  return o2;
+};
+
+// ── WEATHER (Mac: overhauled weather effects, in the same lab) ─────
+// The port's sim already carries Daggerfall's seven states - sunny,
+// cloudy, overcast, fog, rain, thunder, snow - so what is missing is
+// not a model, it is a LOOK. Every wet state here is ONE INSTANCED
+// DRAW of the same quad, exactly the shape the grass proved, with a
+// per-instance seed deciding fall speed, size, drift and phase.
+//
+// The four things a replacement has to get right, and the reason each:
+//   1. IT FALLS THROUGH A VOLUME AROUND THE CAMERA, not across the
+//      screen. Particles live in a box that FOLLOWS the eye and wrap
+//      inside it, so a fixed count covers any view distance and the
+//      rain does not thin out when you turn.
+//   2. RAIN IS STRETCHED ALONG ITS OWN VELOCITY, not a round dot.
+//      A drop is a streak whose length is its speed; that single
+//      thing is the difference between rain and TV static.
+//   3. SNOW TUMBLES. A flake's drift is a slow sine on its own phase,
+//      so no two fall alike and the field never reads as a sheet.
+//   4. THE WORLD ANSWERS: the sun dims and cools, fog closes the
+//      distance, and the ground darkens and takes a wet sheen. A
+//      particle layer over an unchanged world is a screensaver.
+const WEATHER = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
+const WX = {
+  sunny:    { n: 0,     fog: 0.00, dim: 1.00, wet: 0.0, sky: [0.40, 0.48, 0.58] },
+  cloudy:   { n: 0,     fog: 0.10, dim: 0.90, wet: 0.0, sky: [0.46, 0.50, 0.56] },
+  overcast: { n: 0,     fog: 0.28, dim: 0.72, wet: 0.15, sky: [0.44, 0.46, 0.49] },
+  fog:      { n: 0,     fog: 0.86, dim: 0.66, wet: 0.25, sky: [0.60, 0.62, 0.64] },
+  rain:     { n: 26000, fog: 0.42, dim: 0.60, wet: 0.85, sky: [0.36, 0.39, 0.43], kind: 0 },
+  thunder:  { n: 42000, fog: 0.52, dim: 0.46, wet: 1.00, sky: [0.26, 0.28, 0.33], kind: 0 },
+  snow:     { n: 20000, fog: 0.45, dim: 0.80, wet: 0.10, sky: [0.62, 0.64, 0.68], kind: 1 },
+};
+const wxProg = prog(HEAD + `
+layout(location=0) in vec2 aCorner;
+layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
+uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
+uniform float uTime, uKind, uBox, uFall;
+uniform vec2 uWindV, uWindOff;
+out float vT; out float vSeed;
+void main(){
+  vSeed = aSeed.w;
+  // 1. a volume that FOLLOWS the eye, wrapped - a fixed count covers
+  // any view, and turning never thins the fall
+  vec3 p = aSeed.xyz;
+  float fall = uFall * (0.72 + fract(vSeed*7.3)*0.6);
+  // PROTO-9 (Mac: the wind should have a HEAVY impact on direction).
+  // The drift was a tenth of the fall and the streaks stayed vertical.
+  // Now the horizontal speed is a real fraction OF the fall - a gale
+  // drives rain nearly sideways - and every drop takes a per-instance
+  // gust so the sheet is not one rigid direction. The streak is then
+  // stretched along the ACTUAL velocity, which is what makes a driven
+  // rain read as driven rather than as a leaning texture.
+  // PROTO-19 (2, Mac: the particles fall inverted when it first
+  // starts). They were advected by wind multiplied by uTime - a CHANGING wind
+  // multiplied by the page's whole uptime. uTime is tens of seconds,
+  // so the smallest gust change moved every drop by metres at once,
+  // and at the start, when the front is ramping the wind hardest, the
+  // field lurched sideways and backwards faster than it fell: drops
+  // visibly travelling the wrong way. The wind's displacement is
+  // INTEGRATED on the CPU now and handed over as a distance already
+  // travelled, so a change in the wind changes where drops go NEXT
+  // and never where they have already been.
+  float gust = 0.75 + fract(vSeed*3.7)*0.5;
+  vec3 drift = vec3(uWindV.x, 0.0, uWindV.y) * gust;
+  p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
+  p.y -= uTime * fall;
+  p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
+  // PROTO-14 (7, Mac: the particles show upright at the start instead
+  // of coming down). The streak was oriented from a velocity whose
+  // horizontal part is the wind - and the billboard's side vector came
+  // from a cross product with the direction to the EYE, which goes
+  // DEGENERATE for any drop near the eye line: a zero-length cross
+  // normalises to NaN, the quad collapses, and what survives reads as
+  // a standing sliver. Gravity now always dominates the orientation,
+  // and the side vector falls back to a fixed axis when the cross is
+  // too short to trust.
+  vec3 vel = normalize(vec3(drift.x, -max(fall, 4.0), drift.z));
+  float sz, len;
+  if (uKind < 0.5) {
+    // 2. a DROP is a streak along its own velocity, length = speed
+    sz = 0.010 + fract(vSeed*13.1)*0.006;
+    len = 0.06 + fall*0.030;
+    // the streak's LENGTH is the true speed, so a driven drop is a
+    // longer streak as well as a leaning one
+    len *= length(vec3(drift.x, fall, drift.z)) / max(1.0, fall);
+    p += vel * (aCorner.y-0.5) * len;
+    vec3 toEye = uEye - p;
+    vec3 c0 = cross(vel, toEye);
+    vec3 side = length(c0) > 1e-4 ? normalize(c0) : vec3(1.0, 0.0, 0.0);
+    p += side * (aCorner.x-0.5) * sz;
+  } else {
+    // 3. a FLAKE tumbles on its own phase, and faces the camera
+    sz = 0.035 + fract(vSeed*11.7)*0.045;
+    // a flake is LIGHT: the wind throws it much further than rain, and
+    // its tumble rides on top of that
+    float w1 = sin(uTime*1.1 + vSeed*24.0), w2 = cos(uTime*0.7 + vSeed*11.0);
+    p += vec3(w1, 0.0, w2) * (0.55 + length(uWindV) * 0.35);
+    p += (uRight*(aCorner.x-0.5) + uUp*(aCorner.y-0.5)) * sz;
+  }
+  vT = aCorner.y;
+  gl_Position = uVP * vec4(p, 1.0);
+}`, HEAD + `
+in float vT; in float vSeed;
+uniform float uKind;
+out vec4 o;
+void main(){
+  if (uKind < 0.5) {
+    // a drop is bright at its head and fades along the streak
+    float a = smoothstep(0.0,0.35,vT) * 0.42;
+    o = vec4(vec3(0.72,0.78,0.86), a);
+  } else {
+    o = vec4(vec3(0.94,0.96,1.0), 0.72);
+  }
+}`);
+const BOX = 42;
+const windOffset = [0, 0];   // PROTO-19: integrated wind travel
+/** PROTO-22: the depth full snow reaches. The blade generator makes
+ *  heights of (0.22 .. 0.64) x (height/34), so the tallest blade the
+ *  current setting can produce is 0.64x that factor; the snow line
+ *  clears it with a little headroom, and never sits below a metre. */
+const snowFullDepth = () => Math.max(1.1, 0.64 * (state.height / 34) * 1.12);
+let wxVao = null, wxCount = 0, wxVerts = 6;
+function buildWeather(n) {
+  const inst = new Float32Array(n * 4);
+  let s2 = 0x9e3779b9;
+  const rnd = () => { s2 ^= s2 << 13; s2 ^= s2 >>> 17; s2 ^= s2 << 5; s2 >>>= 0; return s2 / 4294967296; };
+  for (let i = 0; i < n; i++) {
+    inst[i*4] = rnd()*BOX; inst[i*4+1] = rnd()*BOX; inst[i*4+2] = rnd()*BOX; inst[i*4+3] = rnd();
+  }
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const q = new Float32Array([0,0, 1,0, 1,1, 0,0, 1,1, 0,1]);
+  const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+  gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+  gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribDivisor(1, 1);
+  wxVao = vao; wxCount = n;
+}
+buildWeather(42000);
+
+// ══ THE SURFACE STATE FIELD ═════════════════════════════════════════
+// PROTO-10 (Mac: puddles that build and shrink, real snow accumulation
+// you can walk through and deform, and seasonal melt that turns snow
+// back into puddles and then into ground). Three effects, ONE field,
+// because they are three readings of the same thing: how much water is
+// on this patch of ground and what state it is in.
+//
+// A texture over the world around the player, one texel to ~25cm:
+//   R  WATER   depth of standing water (puddles)
+//   G  SNOW    depth of lying snow
+//   B  PACK    how trampled the snow is - a footprint is written here
+//   A  WEAR    the slow memory that keeps a trail after the print fades
+//
+// THE LAWS, and the reason each one is not optional:
+//
+//  1. WATER POOLS IN HOLLOWS. Rain falls evenly; puddles are not even.
+//     Accumulation is weighted by a POOLING term read off the terrain
+//     itself - the local concavity, low ground minus its neighbours -
+//     so water gathers in the dips and runs off the rises. Without
+//     this, "puddles" are random blobs and the eye refuses them.
+//  2. SNOW LIES ON THE FLAT. A slope sheds it; accumulation scales
+//     with how upward the ground faces. This is why real snow draws
+//     the shape of the land instead of coating it.
+//  3. SNOW IS A HEIGHT, NOT A COLOUR. It DISPLACES the ground, so the
+//     land visibly rises as it falls and a footprint is a real dent
+//     in that height rather than a dark decal.
+//  4. WALKING DEFORMS IT. A step packs the snow down, throws a little
+//     to the sides, and leaves wear that outlasts the print. Puddles
+//     get the same stamp as a splash ring.
+//  5. MELT IS A CONVERSION, NOT A DELETION. Warmth turns snow into
+//     WATER - the puddle is the snow that was there - and then the sun
+//     dries the water. That chain is the whole seasonal effect Mac
+//     asked for, and it falls straight out of holding both in one
+//     field.
+const FIELD_N = 256;                 // texels a side
+const FIELD_M = 64;                  // metres a side  (~25cm a texel)
+const field = new Float32Array(FIELD_N * FIELD_N * 4);
+const fieldPx = new Uint8Array(FIELD_N * FIELD_N * 4);
+const fieldTex = gl.createTexture();
+let fieldOrigin = [0, 0];            // world position of texel (0,0)
+gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, FIELD_N, FIELD_N, 0, gl.RGBA, gl.UNSIGNED_BYTE, fieldPx);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+/** POOLING: how much this patch collects, from the terrain's own
+ *  concavity. Low relative to its neighbours = a dip = it holds water.
+ *  Cached per texel because the terrain does not move. */
+const poolCache = new Float32Array(FIELD_N * FIELD_N);
+let poolValid = false;
+function rebuildPooling() {
+  const step = FIELD_M / FIELD_N;
+  for (let j = 0; j < FIELD_N; j++) {
+    for (let i = 0; i < FIELD_N; i++) {
+      const x = fieldOrigin[0] + i * step, z = fieldOrigin[1] + j * step;
+      const h = terrainAt(x, z);
+      const r = 1.4;
+      const around = (terrainAt(x + r, z) + terrainAt(x - r, z) + terrainAt(x, z + r) + terrainAt(x, z - r)) * 0.25;
+      // concave (h below its ring) pools; convex sheds
+      const conc = cl((around - h) * 1.7 + 0.35, 0, 1);
+      // and the FLATNESS, which is what snow needs
+      const slope = Math.hypot(terrainAt(x + r, z) - terrainAt(x - r, z), terrainAt(x, z + r) - terrainAt(x, z - r)) / (2 * r);
+      const flat = cl(1 - slope * 2.6, 0, 1);
+      poolCache[j * FIELD_N + i] = conc * 0.75 + flat * 0.25;
+      // the flatness rides in the same cache's fractional part is a
+      // trick too clever to debug: keep them apart
+      poolFlat[j * FIELD_N + i] = flat;
+    }
+  }
+  poolValid = true;
+}
+const poolFlat = new Float32Array(FIELD_N * FIELD_N);
+
+/** One texel's pooling and flatness, from the terrain under it. */
+function poolAt(i, j) {
+  const step = FIELD_M / FIELD_N;
+  const x = fieldOrigin[0] + i * step, z = fieldOrigin[1] + j * step;
+  const h = terrainAt(x, z), r = 1.4;
+  const around = (terrainAt(x + r, z) + terrainAt(x - r, z) + terrainAt(x, z + r) + terrainAt(x, z - r)) * 0.25;
+  const slope = Math.hypot(terrainAt(x + r, z) - terrainAt(x - r, z), terrainAt(x, z + r) - terrainAt(x, z - r)) / (2 * r);
+  const flat = cl(1 - slope * 2.6, 0, 1);
+  const k = j * FIELD_N + i;
+  poolFlat[k] = flat;
+  poolCache[k] = cl((around - h) * 1.7 + 0.35, 0, 1) * 0.75 + flat * 0.25;
+}
+/** The pooling travels with the field, exactly as the state does. */
+function scrollPooling(di, dj) {
+  if (!di && !dj) return;
+  if (Math.abs(di) >= FIELD_N || Math.abs(dj) >= FIELD_N) return;
+  const iS = di > 0 ? 0 : FIELD_N - 1, iE = di > 0 ? FIELD_N : -1, iSt = di > 0 ? 1 : -1;
+  const jS = dj > 0 ? 0 : FIELD_N - 1, jE = dj > 0 ? FIELD_N : -1, jSt = dj > 0 ? 1 : -1;
+  for (let j = jS; j !== jE; j += jSt) {
+    const sj = j + dj;
+    for (let i = iS; i !== iE; i += iSt) {
+      const si = i + di, d = j * FIELD_N + i;
+      if (si < 0 || si >= FIELD_N || sj < 0 || sj >= FIELD_N) { poolCache[d] = 0; poolFlat[d] = 0; continue; }
+      const sK = sj * FIELD_N + si;
+      poolCache[d] = poolCache[sK]; poolFlat[d] = poolFlat[sK];
+    }
+  }
+}
+/** Measure ONLY the rows and columns that have just come into view. */
+function rebuildPoolingStrip(di, dj) {
+  if (Math.abs(di) >= FIELD_N || Math.abs(dj) >= FIELD_N) { rebuildPooling(); return; }
+  if (di > 0) for (let j = 0; j < FIELD_N; j++) for (let i = FIELD_N - di; i < FIELD_N; i++) poolAt(i, j);
+  if (di < 0) for (let j = 0; j < FIELD_N; j++) for (let i = 0; i < -di; i++) poolAt(i, j);
+  if (dj > 0) for (let j = FIELD_N - dj; j < FIELD_N; j++) for (let i = 0; i < FIELD_N; i++) poolAt(i, j);
+  if (dj < 0) for (let j = 0; j < -dj; j++) for (let i = 0; i < FIELD_N; i++) poolAt(i, j);
+}
+
+/** A stamp: the player's foot, or a drip. Writes in world space. */
+function stampField(x, z, radius, fn) {
+  const step = FIELD_M / FIELD_N;
+  const i0 = Math.max(0, Math.floor((x - radius - fieldOrigin[0]) / step));
+  const i1 = Math.min(FIELD_N - 1, Math.ceil((x + radius - fieldOrigin[0]) / step));
+  const j0 = Math.max(0, Math.floor((z - radius - fieldOrigin[1]) / step));
+  const j1 = Math.min(FIELD_N - 1, Math.ceil((z + radius - fieldOrigin[1]) / step));
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) {
+      const wx = fieldOrigin[0] + i * step, wz = fieldOrigin[1] + j * step;
+      const d = Math.hypot(wx - x, wz - z);
+      if (d > radius) continue;
+      fn(j * FIELD_N + i, 1 - d / radius);
+    }
+  }
+}
+
+/** AUDIT 41 F1: move the field's CONTENTS by whole texels so the state
+ *  stays where the world put it. Copies in the safe direction so the
+ *  shift cannot read what it has already written, and clears the edge
+ *  that has just come into view - unseen ground has no snow on it. */
+function scrollField(di, dj) {
+  if (!di && !dj) return;
+  if (Math.abs(di) >= FIELD_N || Math.abs(dj) >= FIELD_N) { field.fill(0); return; }
+  const iStart = di > 0 ? 0 : FIELD_N - 1, iEnd = di > 0 ? FIELD_N : -1, iStep = di > 0 ? 1 : -1;
+  const jStart = dj > 0 ? 0 : FIELD_N - 1, jEnd = dj > 0 ? FIELD_N : -1, jStep = dj > 0 ? 1 : -1;
+  for (let j = jStart; j !== jEnd; j += jStep) {
+    const sj = j + dj;
+    for (let i = iStart; i !== iEnd; i += iStep) {
+      const si = i + di;
+      const dst = (j * FIELD_N + i) * 4;
+      if (si < 0 || si >= FIELD_N || sj < 0 || sj >= FIELD_N) {
+        // PROTO-17 (Mac: the grass is STILL popping out when moving).
+        // HERE is the pop, and my last fix could not have reached it:
+        // the strip of ground that scrolls INTO the window was cleared
+        // to ZERO. Unseen ground is not BARE ground - it has been
+        // snowing on it the whole time - so every blade the window
+        // caught up with found no snow at that instant and stood
+        // straight up, in a line, four metres at a time. New cells
+        // inherit the world's own mean instead: what the fallback
+        // outside the window already said was there, so crossing the
+        // boundary changes nothing at all.
+        field[dst] = fieldMeanWater; field[dst + 1] = fieldMeanSnow;
+        field[dst + 2] = 0; field[dst + 3] = 0;
+        continue;
+      }
+      const src = (sj * FIELD_N + si) * 4;
+      field[dst] = field[src]; field[dst + 1] = field[src + 1];
+      field[dst + 2] = field[src + 2]; field[dst + 3] = field[src + 3];
+    }
+  }
+}
+
+let lastStep = [0, 0], stepPhase = 0;
+let fieldDirty = true;   // a stamp or a scroll owes an upload
+/** PROTO-16: what the world OUTSIDE the simulated window is wearing.
+ *  The mean of the field's own snow, so the fallback is measured
+ *  rather than invented, and a blade beyond the edge is dressed like
+ *  its neighbours instead of standing bare. */
+let fieldMeanSnow = 0;
+let fieldMeanWater = 0;
+function tickField(dt, eye, rainRate, snowRate, warmth) {
+  if (!poolValid) rebuildPooling();
+  const n = FIELD_N * FIELD_N;
+  for (let k = 0; k < n; k++) {
+    const o = k * 4;
+    let water = field[o], snow = field[o + 1], pack = field[o + 2], wear = field[o + 3];
+    const pool = poolCache[k], flat = poolFlat[k];
+    // 1. rain fills, weighted by where water actually goes
+    if (rainRate > 0) water += rainRate * dt * (0.15 + pool * 1.5);
+    // 2. snow lies on the flat, and packed snow takes less
+    if (snowRate > 0) snow += snowRate * dt * (0.25 + flat * 1.4) * (1 - pack * 0.45);
+    // 5. MELT IS A CONVERSION: the snow becomes the water
+    if (warmth > 0 && snow > 0) {
+      const melted = Math.min(snow, warmth * dt * 0.5 * (0.4 + (1 - flat) * 0.8));
+      snow -= melted;
+      water += melted * 0.35;          // snow is mostly air
+      pack = Math.max(0, pack - warmth * dt * 0.3);
+    }
+    // the sun dries what is left, slower in a hollow
+    const dry = warmth * dt * 0.16 * (1.1 - pool * 0.6);
+    water = Math.max(0, water - dry);
+    // wind and fresh fall heal a print; wear outlasts it
+    pack = Math.max(0, pack - dt * (0.015 + snowRate * 0.9));
+    wear = Math.max(0, wear - dt * 0.004);
+    field[o] = Math.min(1, water); field[o + 1] = Math.min(1, snow);
+    field[o + 2] = Math.min(1, pack); field[o + 3] = Math.min(1, wear);
+  }
+  // 4. WALKING DEFORMS IT - a step every ~0.75m of travel
+  const moved = Math.hypot(eye[0] - lastStep[0], eye[2] - lastStep[1]);
+  if (moved > 0.75) {
+    stepPhase += 1;
+    lastStep = [eye[0], eye[2]];
+    // the foot lands a little to one side, alternating
+    const side = (stepPhase % 2 ? 1 : -1) * 0.22;
+    const fx = eye[0] + Math.cos(cam.yaw) * side, fz = eye[2] - Math.sin(cam.yaw) * side;
+    stampField(fx, fz, 0.34, (k, w) => {
+      const o = k * 4;
+      // snow COMPRESSES: it does not vanish, it packs down and a
+      // little is thrown to the rim
+      const bite = w * 0.55;
+      const taken = field[o + 1] * bite;
+      field[o + 1] -= taken;
+      field[o + 2] = Math.min(1, field[o + 2] + w * 0.8);
+      field[o + 3] = Math.min(1, field[o + 3] + w * 0.5);
+      // a puddle SPLASHES: the water is pushed out of the print
+      field[o] = Math.max(0, field[o] - w * 0.35);
+    });
+    fieldDirty = true;
+    stampField(fx, fz, 0.52, (k, w) => {
+      const o = k * 4;
+      if (w < 0.35) field[o + 1] = Math.min(1, field[o + 1] + (1 - w) * 0.05);   // the rim
+    });
+  }
+  // the mean the world outside the window wears - computed BEFORE the
+  // early return, because a scroll on a dry frame still inherits it
+  let sumS = 0, sumW = 0;
+  for (let k = 0; k < n; k++) { sumS += field[k * 4 + 1]; sumW += field[k * 4]; }
+  fieldMeanSnow = sumS / n;
+  fieldMeanWater = sumW / n;
+  // and the UPLOAD only when the field has anything to say: a dry
+  // sunny field with nobody walking is 256KB a frame for nothing.
+  if (rainRate <= 0 && snowRate <= 0 && warmth <= 0 && !fieldDirty) return;
+  fieldDirty = false;
+  for (let k = 0; k < n; k++) {
+    const o = k * 4;
+    fieldPx[o] = field[o] * 255; fieldPx[o + 1] = field[o + 1] * 255;
+    fieldPx[o + 2] = field[o + 2] * 255; fieldPx[o + 3] = field[o + 3] * 255;
+  }
+  gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, FIELD_N, FIELD_N, gl.RGBA, gl.UNSIGNED_BYTE, fieldPx);
+}
+
+// ── camera ─────────────────────────────────────────────────────────
+const cam = { x: 0, z: 0, yaw: 0.6, pitch: -0.22, h: 1.7 };
+let drag = null;
+cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: cam.yaw, pitch: cam.pitch }; });
+addEventListener('pointerup', () => { drag = null; });
+addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  cam.yaw = drag.yaw + (e.clientX - drag.x) * 0.005;
+  cam.pitch = Math.max(-1.35, Math.min(1.35, drag.pitch + (e.clientY - drag.y) * 0.004));   // PROTO-8: a SKY lab has to be able to look up
+});
+const keys = new Set();
+addEventListener('keydown', (e) => keys.add(e.key.toLowerCase()));
+addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+
+const mul = (a, b) => { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s2 = 0; for (let k = 0; k < 4; k++) s2 += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s2; } return o; };
+const persp = (fov, asp, n, f) => { const t = 1 / Math.tan(fov / 2); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]); };
+const look = (e, c, u) => {
+  const f = [c[0] - e[0], c[1] - e[1], c[2] - e[2]]; const fl = Math.hypot(...f); f.forEach((v, i) => f[i] = v / fl);
+  const s2 = [f[1] * u[2] - f[2] * u[1], f[2] * u[0] - f[0] * u[2], f[0] * u[1] - f[1] * u[0]]; const sl = Math.hypot(...s2); s2.forEach((v, i) => s2[i] = v / sl);
+  const uu = [s2[1] * f[2] - s2[2] * f[1], s2[2] * f[0] - s2[0] * f[2], s2[0] * f[1] - s2[1] * f[0]];
+  return new Float32Array([s2[0], uu[0], -f[0], 0, s2[1], uu[1], -f[1], 0, s2[2], uu[2], -f[2], 0,
+    -(s2[0] * e[0] + s2[1] * e[1] + s2[2] * e[2]), -(uu[0] * e[0] + uu[1] * e[1] + uu[2] * e[2]), f[0] * e[0] + f[1] * e[1] + f[2] * e[2], 1]);
+};
+const hash = (p) => { let x = p[0] * 123.34, y = p[1] * 456.21; x -= Math.floor(x); y -= Math.floor(y); const d = x * x + y * y + 45.32; x += d; y += d; const r = x * y; return r - Math.floor(r); };
+const vnoise = (x, y) => {
+  const ix = Math.floor(x), iy = Math.floor(y); let fx = x - ix, fy = y - iy;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+  const h = (a, b) => hash([a, b]);
+  return (h(ix, iy) * (1 - fx) + h(ix + 1, iy) * fx) * (1 - fy) + (h(ix, iy + 1) * (1 - fx) + h(ix + 1, iy + 1) * fx) * fy;
+};
+const terrainAt = (x, z) => vnoise(x * 0.020, z * 0.020) * 7 + vnoise(x * 0.055, z * 0.055) * 2.4 + vnoise(x * 0.15, z * 0.15) * 0.7;
+
+let last = performance.now(), acc = 0, frames = 0;
+let lastStrike = -1e9, nextStrike = 3000;   // AUDIT 39 F3
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  acc += dt; frames++;
+  if (acc > 0.5) { R('fps').textContent = `${Math.round(frames / acc)} fps  ·  ${(gr.count / 1000).toFixed(0)}k blades`; acc = 0; frames = 0; }
+  const sp = (keys.has('shift') ? 26 : 9) * dt;
+  if (keys.has('w')) { cam.x -= Math.sin(cam.yaw) * sp; cam.z -= Math.cos(cam.yaw) * sp; }
+  if (keys.has('s')) { cam.x += Math.sin(cam.yaw) * sp; cam.z += Math.cos(cam.yaw) * sp; }
+
+  const w = cv.width = cv.clientWidth * devicePixelRatio | 0;
+  const h = cv.height = cv.clientHeight * devicePixelRatio | 0;
+  gl.viewport(0, 0, w, h);
+  const wxT = WX[state.weather] || WX.sunny;
+  const wxF = WX[front.from] || WX.sunny;
+  const ft = ease(front.t);
+  // the WORLD's own terms ease with the sky, and the particles wait
+  const wx = {
+    n: wxT.n, kind: wxT.kind ?? 0,
+    fog: lerp(wxF.fog, wxT.fog, ft),
+    dim: lerp(wxF.dim, wxT.dim, ft),
+    wet: lerp(wxF.wet, wxT.wet, ft),
+    sky: lerp3(wxF.sky, wxT.sky, ft),
+  };
+  FRONT_SECONDS = state.frontS;
+  front.tick(dt);
+  const wsky = front.sample();
+  // PROTO-14 (1): ONE WIND. The grass swayed on one number, the rain
+  // drove on another and the deck drifted on a third, so a gust never
+  // arrived anywhere - three effects sharing a screen instead of one
+  // system. There is a single wind now: a direction that WANDERS
+  // slowly, a base strength from the slider, and GUSTS on two beating
+  // periods so the field breathes instead of pulsing. Everything reads
+  // it, so a gust hits the grass, leans the rain and is already moving
+  // the deck.
+  const tsec = now / 1000;
+  const gust = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7)
+    + 0.10 * Math.sin(tsec * 2.10 + 0.4);
+  const windDirRad = state.windDir * Math.PI / 180 + Math.sin(tsec * 0.07) * 0.35;
+  const windSpeed = state.wind * gust;                       // slider units
+  const WIND = { dir: [Math.cos(windDirRad), Math.sin(windDirRad)], speed: windSpeed, gust };
+  // the distance the wind has actually carried things, integrated -
+  // never speed multiplied by uptime
+  windOffset[0] += WIND.dir[0] * WIND.speed * 0.16 * dt;
+  windOffset[1] += WIND.dir[1] * WIND.speed * 0.16 * dt;
+  // the sun's ELEVATION is the time of day, and it drives everything:
+  // the sky ramp, the ground's light, and the blades' own colour
+  const elev = state.sun;
+  const palRaw = paletteAt(elev);
+  // AUDIT 39 F3 (the big one): THE GAME PREPARES ITS SKY STATE BEFORE
+  // the shader ever runs, and the lab was handing the shader raw
+  // palette rows. Six laws lived in that preparation and every one is
+  // visible - three of them exactly in the sunset Mac asked about:
+  //
+  //   1. WEATHER GREYS THE DOME, by grey * (0.35 + 0.65*day): a storm
+  //      at noon is grey, a storm at midnight is still night.
+  //   2. THE CLOUDS GO TO NIGHT COLOURS through a twilight term. The
+  //      lab lit them with the day colours at every hour, so midnight
+  //      had bright white banks over a black sky.
+  //   3. THE LIT SIDE TAKES THE SUN'S OWN COLOUR near the horizon -
+  //      this is what makes sunset clouds burn orange, and it was
+  //      simply absent.
+  //   4. GREY EATS THE GLOW: glowAmount * (1 - grey*0.7), so an
+  //      overcast dawn does not blaze.
+  //   5. COVER EATS THE STARS: stars * (1 - cover*0.5).
+  //   6. THE MOONS ARE FAINT BY DAY and dimmed by cover.
+  const day = cl((Math.sin(elev * Math.PI / 180) + 0.1) * 2.2, 0, 1);   // daylightScale' shape
+  const twilight = cl((elev + 12) / 16, 0, 1);
+  const GREYZ = [0x66, 0x70, 0x7c], GREYH = [0x9a, 0xa3, 0xac];
+  const NIGHT_LIT = [0.16 * 255, 0.19 * 255, 0.25 * 255], NIGHT_SHADE = [0.07 * 255, 0.09 * 255, 0.13 * 255];
+  const greyAmt = wsky.grey * (0.35 + 0.65 * day);
+  const pal = {
+    zenith: lerp3(palRaw.zenith, GREYZ, greyAmt),
+    horizon: lerp3(palRaw.horizon, GREYH, greyAmt),
+    glow: palRaw.glow,
+    glowAmount: palRaw.glowAmount * (1 - wsky.grey * 0.7),
+    stars: palRaw.stars * (1 - wsky.cover * 0.5),
+  };
+  // the cloud colours the shader actually gets
+  const sunTint = palRaw.glow;
+  const cloudLit = lerp3(NIGHT_LIT, lerp3(wsky.lit, sunTint, 0.25 * (1 - cl(elev / 20, 0, 1))), twilight);
+  const cloudShade = lerp3(NIGHT_SHADE, wsky.shade, twilight);
+  const skyAmb = [
+    (pal.zenith[0] * 0.55 + pal.horizon[0] * 0.45) / 255,
+    (pal.zenith[1] * 0.55 + pal.horizon[1] * 0.45) / 255,
+    (pal.zenith[2] * 0.55 + pal.horizon[2] * 0.45) / 255,
+  ].map((v) => v * (1 - wsky.grey * 0.35) + wsky.grey * 0.30);
+  // the SUN's own light colour, warm at the horizon and white at noon
+  const sunCol = [pal.glow[0] / 255, pal.glow[1] / 255, pal.glow[2] / 255];
+  const sunUp = Math.max(0, Math.sin(elev * Math.PI / 180));
+  // AUDIT 39 F1: sunOcclusion is the GAME'S, exactly. The first cut
+  // rebuilt it out of the lab's own PERIODIC noise and a LINEAR ramp
+  // where the game uses smoothstep - up to 0.10 of cover wrong in the
+  // middle of a transition, on the one term that dims the whole world
+  // when a bank crosses the sun. The sky was reading one field and the
+  // ground another, which is exactly what enhancedSky's own comment
+  // says must never happen ("it is one field evaluated at one
+  // direction"). It is the game's hash, the game's fbm with its
+  // per-octave offsets, and the game's smoothstep now.
+  const gHash = (x, y) => {
+    const fract = (v) => v - Math.floor(v);
+    let px = fract(x * 123.34), py = fract(y * 456.21);
+    const dd = px * (px + 45.32) + py * (py + 45.32);
+    px += dd; py += dd;
+    return fract(px * py);
+  };
+  const gVnoise = (x, y) => {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    let fx = x - ix, fy = y - iy;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const a = gHash(ix, iy), b2 = gHash(ix + 1, iy), c2 = gHash(ix, iy + 1), d2 = gHash(ix + 1, iy + 1);
+    const lo = a + (b2 - a) * fx, hi2 = c2 + (d2 - c2) * fx;
+    return lo + (hi2 - lo) * fy;
+  };
+  const gFbm = (x, y) => {
+    let v = 0, amp = 0.5, px = x, py = y;
+    for (let i = 0; i < 5; i++) { v += amp * gVnoise(px, py); const nx = px * 2.03 + 17.1; py = py * 2.03 + 9.7; px = nx; amp *= 0.5; }
+    return v;
+  };
+  const gStep = (e0, e1, x) => { const q = cl((x - e0) / (e1 - e0), 0, 1); return q * q * (3 - 2 * q); };
+  const occ = (() => {
+    const d = [Math.cos(elev * Math.PI / 180) * 0.92, Math.sin(elev * Math.PI / 180), 0.30];
+    if (d[1] <= 0) return 0;
+    // AUDIT 39 F2: ONE CLOCK. The shader's cloud field runs on the
+    // frame's own `now`; this ran on performance.now() read a moment
+    // later, so the sky and the ground were sampling the same field at
+    // two different times - a drift that grows with frame cost and is
+    // worst exactly when the machine is busy.
+    const t = now / 1000;
+    const deckC = (scale, wind, cover, soft) => {
+      const k = 1 / (d[1] + 0.18);
+      return gStep(1 - cover, 1 - cover + soft, gFbm(d[0] * k * scale + wind[0] * t, d[2] * k * scale + wind[1] * t));
+    };
+    const hi = deckC(0.95, [wsky.wind[0] * 0.55, wsky.wind[1] * 0.55], wsky.cover * 0.75, wsky.soft * 1.5);
+    const lo = deckC(1.9, wsky.wind, wsky.cover, wsky.soft);
+    return cl(lo + hi * (1 - lo) * 0.7, 0, 1);
+  })();;
+  // thunder flashes: a rare, brief, near-white sky, and the ground
+  // takes it too - a flash that only lights the sky is a wallpaper
+  // AUDIT 39 F3: THE FLASH BELONGS TO THE SKY THAT IS ACTUALLY THERE.
+  // It keyed off the state you had ASKED for, so lightning struck out
+  // of a clear sky the instant the dropdown moved - before a single
+  // cloud had built. It rides the front's own progress now, and its
+  // shape is a real decay on a seeded strike rather than a sine of the
+  // wall clock, so it does not change with the frame rate.
+  const stormy = (state.weather === 'thunder' ? ease(front.t) : 0)
+    + (front.from === 'thunder' ? 1 - ease(front.t) : 0);
+  if (stormy > 0.35 && now - lastStrike > nextStrike) {
+    lastStrike = now; nextStrike = 2200 + Math.random() * 7000;
+  }
+  const since = (now - lastStrike) / 1000;
+  const flash = stormy > 0.35
+    ? Math.max(0, Math.exp(-since * 5.5) * (since < 0.06 ? 1 : 0.55) * (1 - since * 0.5)) * stormy : 0;
+  const sky = wx.sky.map((v, i) => Math.min(1, v * (0.55 + 0.45 * Math.sin(state.sun * Math.PI / 180)) + flash * 0.55 + (i === 2 ? 0.02 : 0)));
+  gl.clearColor(sky[0], sky[1], sky[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  // AUDIT 39 F2: ONE WIND, read by everything. The rain built its own
+  // vector inside the weather block and the sky used the palette's,
+  // so three systems had three winds and could point three ways.
+  const wa = state.windDir * Math.PI / 180;
+  const wspeed = state.wind * 0.16;
+  const windV = [Math.cos(wa) * wspeed, Math.sin(wa) * wspeed];
+  const sa = state.sun * Math.PI / 180;
+  const sun = [Math.cos(sa) * 0.92, Math.sin(sa), 0.30];
+  const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
+  // the field follows the player in whole texels, so its contents do
+  // not smear when it re-centres
+  // MAC'S BUG 1: THE FPS DROP WHEN MOVING WAS THIS. The field
+  // re-centred whenever the player crossed a single TEXEL - a quarter
+  // of a metre - and each re-centre scrolled 65,536 cells AND rebuilt
+  // the pooling from scratch, which is 65,536 texels x 5 terrain
+  // samples = a third of a million noise evaluations. Walking crossed
+  // texels several times a second, so the cost landed on exactly the
+  // frames that were already moving the camera.
+  //
+  // Two fixes, and both are needed. The window now moves in a DEAD
+  // BAND: it only re-centres when the player is more than an eighth of
+  // the field from the middle, and then jumps by whole blocks. And the
+  // pooling is rebuilt ONLY FOR THE STRIP that has just come into
+  // view, because the rest of it describes ground that has not moved.
+  const fstep = FIELD_M / FIELD_N;
+  const centre = [fieldOrigin[0] + FIELD_M / 2, fieldOrigin[1] + FIELD_M / 2];
+  const slack = FIELD_M / 8;
+  let wantO = fieldOrigin;
+  if (Math.abs(cam.x - centre[0]) > slack || Math.abs(cam.z - centre[1]) > slack) {
+    const blk = fstep * 16;   // whole blocks, so the scroll is rare and coarse
+    wantO = [Math.round((cam.x - FIELD_M / 2) / blk) * blk, Math.round((cam.z - FIELD_M / 2) / blk) * blk];
+  }
+  if (wantO[0] !== fieldOrigin[0] || wantO[1] !== fieldOrigin[1]) {
+    // AUDIT 41 F1 (severe): THE FIELD MUST SCROLL, NOT JUST MOVE ITS
+    // ORIGIN. Re-centring rebuilt the pooling for the new patch of
+    // ground and left the water, snow, pack and wear at their old
+    // TEXEL INDICES - so every accumulated thing slid along with the
+    // player. Walk ten metres and your own footprints follow you,
+    // which is the exact opposite of what a footprint is. The
+    // contents are shifted by the whole-texel delta and the newly
+    // exposed edge is cleared, so the field is fixed to the WORLD and
+    // the window moves over it.
+    const di = Math.round((wantO[0] - fieldOrigin[0]) / fstep);
+    const dj = Math.round((wantO[1] - fieldOrigin[1]) / fstep);
+    scrollField(di, dj);
+    scrollPooling(di, dj);
+    fieldDirty = true;
+    fieldOrigin = wantO;
+    // only the strip that just arrived needs measuring
+    rebuildPoolingStrip(di, dj);
+  }
+  // the RATES come from the weather that is actually falling, and the
+  // warmth from the season slider - which is the melt, and therefore
+  // the whole seasonal chain
+  const rainRate = state.weather === 'rain' || state.weather === 'thunder' ? wsky.fall * (state.weather === 'thunder' ? 1.1 : 0.7) : 0;   // lab rate
+  const snowRate = state.weather === 'snow' ? wsky.fall * 0.85 : 0;   // lab rate: a field whitens in ~20s, not an hour
+  const warmth = cl(state.warmth / 100, 0, 1) * (0.35 + 0.65 * Math.max(0, Math.sin(elev * Math.PI / 180)));
+  tickField(Math.min(dt, 0.05), eye, rainRate, snowRate, warmth);
+  const dir = [-Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), -Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+  const vp = mul(persp(1.05, w / h, 0.1, 600), look(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]], [0, 1, 0]));
+
+  // THE SKY, first and depth-less: it is the backdrop everything else
+  // stands in front of.
+  // MAC'S BUG 2: THE SKY NEVER DREW. Its triangle sits at z = 1.0 -
+  // the far plane, which is the right place for a backdrop - and the
+  // depth buffer is CLEARED to 1.0, and the default depth function is
+  // LESS. 1.0 < 1.0 is false, so every sky pixel failed the test and
+  // was thrown away: no dome, no clouds, no sun, no stars, and what
+  // was left on screen was the clear colour and the distance haze on
+  // the ground. LEQUAL for the pass, restored after. This is why "not
+  // 1:1" was the wrong diagnosis and I should have checked the render
+  // before the shader: the shader was the game's and never ran.
+  // ...and belt with braces: the pass runs with the depth test OFF
+  // entirely. A backdrop drawn first, before anything it could hide,
+  // has no business consulting a depth buffer at all - and a pass that
+  // does not consult one cannot be silently thrown away by it again.
+  gl.useProgram(skyProg);
+  gl.depthMask(false);
+  gl.disable(gl.DEPTH_TEST);
+  const S1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), safe1(v));
+  // AUDIT 42 F1: THE GUARD COVERED ONE SETTER ON ONE PROGRAM. A NaN in
+  // a cloud colour blackened the whole dome silently; the same value in
+  // the ground's ambient, the blades' sun colour or the rain's wind
+  // vector would do the same to those passes and be just as invisible.
+  // safe3/safe1 are shared now, and every uniform this page sets goes
+  // through them - the fix and the guard are only worth anything if the
+  // guard is where the next one will land.
+  const S3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), safe3(v));
+  const S4 = (n, v) => gl.uniform4fv(gl.getUniformLocation(skyProg, n), safeN(v));
+  // the game builds its ray from yaw/pitch/fov; this page has them
+  S1('uYaw', cam.yaw); S1('uPitch', cam.pitch);
+  S1('uTanHalfFov', Math.tan(1.05 / 2)); S1('uAspect', w / h);
+  S3('uZenith', pal.zenith.map((v) => v / 255));
+  S3('uHorizon', pal.horizon.map((v) => v / 255));
+  S3('uGlowColor', pal.glow.map((v) => v / 255));
+  S3('uSunColor', sunCol);
+  S3('uCloudLit', cloudLit.map((v) => v / 255));
+  S3('uCloudShade', cloudShade.map((v) => v / 255));
+  S3('uFogColor', sky);
+  S3('uSunDir', sun);
+  S1('uSunRadius', 0.032); S1('uSunVis', sun[1] > -0.02 ? 1 : 0);   // AUDIT 39: the game's own threshold
+  S1('uGlowAmount', pal.glowAmount); S1('uStars', pal.stars);
+  // the two moons, on their own slow arcs - Masser big and red,
+  // Secunda small, pale and higher (MOONS, verbatim)
+  const mt = now / 1000 * 0.02;
+  const md = (ph, tilt) => { const a = mt + ph; return [Math.cos(a) * 0.9, Math.sin(a), tilt]; };
+  const ma = md(1.1, 0.0), mb = md(2.3, 0.22);
+  S4('uMoonA', [...ma, 0.040]); S4('uMoonB', [...mb, 0.021]);
+  S3('uMoonAColor', [0xd3 / 255, 0x9a / 255, 0x86 / 255]);
+  S3('uMoonBColor', [0xe9 / 255, 0xe6 / 255, 0xdc / 255]);
+  // AUDIT 39 F3.6: faint by day, and the cover hides them
+  const mvis = (d2) => (d2[1] > -0.05 ? cl(1 - 0.9 * day, 0, 1) * (1 - wsky.cover * 0.35) : 0);
+  S1('uMoonAVis', mvis(ma)); S1('uMoonBVis', mvis(mb));
+  S1('uCloudCover', wsky.cover); S1('uCloudSoft', wsky.soft);
+  S1('uTime', now / 1000);
+  // the deck drifts DOWNWIND, at the front's own speed - the clouds
+  // and the rain now agree, which they did not
+  const wlen = Math.hypot(wsky.wind[0], wsky.wind[1]);
+  const wdir = wspeed > 1e-4 ? [windV[0] / wspeed, windV[1] / wspeed] : [1, 0];
+  gl.uniform2fv(gl.getUniformLocation(skyProg, 'uWind'),
+    new Float32Array([wdir[0] * wlen, wdir[1] * wlen]));
+  S1('uFogMix', wx.fog * 0.55);
+  S3('uStarPole', [0, 0.622244, 0.782823]);          // STAR_POLE, verbatim
+  S1('uStarAngle', now / 1000 * 0.02);
+  // the RETRO pass, the game's own: PI/512 the angular pixel, 26 levels
+  S1('uRetroStep', state.retro ? Math.PI / 512 : 0);
+  S1('uRetroLevels', state.retro ? 26 : 0);
+  gl.bindVertexArray(skyVao);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthMask(true);
+
+  gl.useProgram(groundProg);
+  gl.uniformMatrix4fv(gl.getUniformLocation(groundProg, 'uVP'), false, vp);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uTilePx'), state.tile);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uNew'), state.newGround ? 1 : 0);
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uEye'), eye);
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSun'), sun);
+  // the game's own sunOcclusion: when a bank crosses the sun the disc
+  // goes AND the ground goes with it, from one field at one direction
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uDim'), (wx.dim + flash * 0.5) * (1 - occ * 0.55));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uFog'), wx.fog);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uWet'), wx.wet);
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSky'), safe3(sky));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uAmb'), safe3(skyAmb));
+  gl.uniform3fv(gl.getUniformLocation(groundProg, 'uSunCol'), safe3(sunCol));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uCover2'), safe1(wsky.cover));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uSoft2'), safe1(wsky.soft));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uTime2'), tsec);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uRain'), safe1(rainRate > 0 ? Math.min(1, rainRate * 1.4) : 0));
+  gl.uniform2fv(gl.getUniformLocation(groundProg, 'uWind2'), safeN([
+    WIND.dir[0] * (0.0016 + WIND.speed * 0.00006),
+    WIND.dir[1] * (0.0016 + WIND.speed * 0.00006)]));
+  gl.uniform2fv(gl.getUniformLocation(groundProg, 'uFieldOrigin'), new Float32Array(fieldOrigin));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uFieldM'), FIELD_M);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uSnowGlobal2'), safe1(fieldMeanSnow));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uSnowFull'), safe1(snowFullDepth()));
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uField'), 3);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uField2'), 3);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, groundTex);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uTex'), 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, groundNrm);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uNrm'), 1);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, groundLow);
+  gl.uniform1i(gl.getUniformLocation(groundProg, 'uLow'), 2);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.uniform2fv(gl.getUniformLocation(groundProg, 'uLocalOff'), new Float32Array([0, 0]));
+  gl.bindVertexArray(gvao);
+  gl.drawArrays(gl.TRIANGLES, 0, gverts.length / 2);
+  // AUDIT 41 F3: the near patch is COINCIDENT with the wide plane -
+  // the same height field evaluated at two resolutions - so without a
+  // depth bias the two z-fight and the near ground shimmers with every
+  // step. The patch is pulled toward the camera by a polygon offset,
+  // which is the right tool: it biases in depth only, so the surfaces
+  // stay in the same place and only their ordering is decided.
+  gl.enable(gl.POLYGON_OFFSET_FILL);
+  gl.polygonOffset(-1, -2);
+  gl.uniform2fv(gl.getUniformLocation(groundProg, 'uLocalOff'), new Float32Array(fieldOrigin));
+  gl.bindVertexArray(nvao);
+  gl.drawArrays(gl.TRIANGLES, 0, nverts.length / 2);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+
+  if (state.grass) {
+    gl.useProgram(grassProg);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniformMatrix4fv(gl.getUniformLocation(grassProg, 'uVP'), false, vp);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uTime'), now / 1000);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uWind'), WIND.speed);
+    gl.uniform2fv(gl.getUniformLocation(grassProg, 'uWindDir'), safeN(WIND.dir));
+    gl.uniform2fv(gl.getUniformLocation(grassProg, 'uGFieldOrigin'), safeN(fieldOrigin));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uGFieldM'), FIELD_M);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uSnowGlobal'), safe1(fieldMeanSnow));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uSnowFull'), safe1(snowFullDepth()));
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+    gl.uniform1i(gl.getUniformLocation(grassProg, 'uGField'), 3);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform2fv(gl.getUniformLocation(grassProg, 'uWindV'), new Float32Array(windV));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uRange'), state.range);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uEye'), eye);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunDir'), sun);
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uAmb'), safe3(skyAmb));
+    gl.uniform3fv(gl.getUniformLocation(grassProg, 'uSunCol'), safe3(sunCol));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uDim'), wx.dim + flash * 0.5);
+    gl.bindVertexArray(gr.vao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, gr.verts, gr.count);
+    gl.disable(gl.BLEND);
+  }
+
+  if (wx.n > 0 && wsky.fall > 0.01) {
+    gl.useProgram(wxProg);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const up = [0, 1, 0];
+    gl.uniformMatrix4fv(gl.getUniformLocation(wxProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(wxProg, 'uEye'), eye);
+    gl.uniform3fv(gl.getUniformLocation(wxProg, 'uRight'), new Float32Array(right));
+    gl.uniform3fv(gl.getUniformLocation(wxProg, 'uUp'), new Float32Array(up));
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uTime'), now / 1000);
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uBox'), BOX);
+    // AUDIT 39 F4: the fall speed follows the front, not the dropdown.
+    // Reading the TARGET made the last rain of a rain->snow change
+    // crawl at flake speed the instant the menu moved.
+    const fallT = wxT.kind === 1 ? 1.6 : 22.0, fallF = (WX[front.from] || WX.sunny).kind === 1 ? 1.6 : 22.0;
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uFall'), lerp(fallF, fallT, ease(front.t)));
+    gl.uniform1f(gl.getUniformLocation(wxProg, 'uKind'), ease(front.t) > 0.5 ? (wxT.kind ?? 0) : ((WX[front.from] || WX.sunny).kind ?? 0));
+    // the wind VECTOR: a direction and a real speed, so rain drives
+    // across the world rather than drifting in one axis
+    gl.uniform2fv(gl.getUniformLocation(wxProg, 'uWindV'), new Float32Array(windV));
+    gl.bindVertexArray(wxVao);
+    // the rain starts when the sky already LOOKS like rain
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, wxVerts, Math.min(wxCount, Math.round(wx.n * wsky.fall)));
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

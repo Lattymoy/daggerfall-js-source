@@ -407,9 +407,49 @@ export function buildNeutralBody(ramps, opts = {}) {
   });
   const AO_R = 0.11, AO_K = 0.55; // radius, strength
   const ao = new Array(faces.length).fill(1);
+  // AO NEIGHBOURS, BINNED. This was a bare face-against-every-face
+  // walk: 2136^2 pairs, ~160ms a build, and buildPaperdollPayload runs
+  // ~90 of them in one synchronous statement - the editor page froze
+  // for ~15s before it painted a pixel.
+  //
+  // Only faces inside AO_R can contribute, so the centroids go into a
+  // uniform grid of exactly that cell size and each face reads its own
+  // cell plus the 26 around it. The gathered indices are SORTED before
+  // the sum: float addition is not associative, and this pass feeds a
+  // ramp index and the villager DELTAS, so the accumulation order has
+  // to stay the ascending-j order the flat walk had - the numbers out
+  // are bit-identical, only the pairs never examined are gone.
+  //
+  // The candidate list is a property of the CELL, not the face, so it
+  // is built and sorted once per occupied cell and shared by every
+  // face in it - ~170 sorts instead of one per face.
+  const CELL = AO_R;
+  const key = (ix, iy, iz) => ((ix + 512) * 1024 + (iy + 512)) * 1024 + (iz + 512);
+  const cellOf = (v) => Math.floor(v / CELL);
+  const grid = new Map();
+  const cellKey = new Array(faces.length);
+  for (let i = 0; i < faces.length; i++) {
+    const k = key(cellOf(cen[i][0]), cellOf(cen[i][1]), cellOf(cen[i][2]));
+    cellKey[i] = k;
+    const bucket = grid.get(k);
+    if (bucket) bucket.push(i); else grid.set(k, [i]);
+  }
+  const nearOf = new Map();
   for (let i = 0; i < faces.length; i++) {
     const c = cen[i], n = faces[i].n; let occ = 0;
-    for (let j = 0; j < faces.length; j++) {
+    let near = nearOf.get(cellKey[i]);
+    if (near === undefined) {
+      near = [];
+      const bx = cellOf(c[0]), by = cellOf(c[1]), bz = cellOf(c[2]);
+      for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) for (let oz = -1; oz <= 1; oz++) {
+        const bucket = grid.get(key(bx + ox, by + oy, bz + oz));
+        if (bucket) for (let b = 0; b < bucket.length; b++) near.push(bucket[b]);
+      }
+      near.sort((a, b) => a - b);
+      nearOf.set(cellKey[i], near);
+    }
+    for (let t = 0; t < near.length; t++) {
+      const j = near[t];
       if (j === i) continue;
       const dx = cen[j][0]-c[0], dy = cen[j][1]-c[1], dz = cen[j][2]-c[2];
       const d = Math.hypot(dx, dy, dz);

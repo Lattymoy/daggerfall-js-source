@@ -214,9 +214,45 @@ test('MW-D9g: LEARNING the archive count is not a data change - the boot must no
   // whole reason MWFIX 3 put it there. The guard is the only thing
   // between the two behaviours, so it is stated exactly.
   const src = readFileSync(join(ROOT, 'src/scenes/dataSource.js'), 'utf8');
-  assert.match(src, /if \(_mwCount >= 0 && next !== _mwCount\) \{ _mwGeneration\+\+;/,
-    'a KNOWN count that differs still bumps; an unknown one never does');
+  // AUDIT 39 moved this pin off `_mwCount`: the guard is the same law
+  // (an unknown previous set is not a change) over the whole stored
+  // set instead of the archive count - see the MW-D40 test below.
+  assert.match(src, /if \(_mwFingerprint !== null && print !== _mwFingerprint\) \{ _mwGeneration\+\+;/,
+    'a KNOWN set that differs still bumps; an unknown one never does');
+  assert.match(src, /let _mwFingerprint = null;/, 'null is "not counted yet", and it must stay distinguishable from an empty set');
   assert.match(src, /let _mwCount = -1;/, '-1 is "not counted yet", and it must stay distinguishable from 0');
+});
+
+test('MW-D40: the attach generation answers for the WHOLE STORED SET, not the .bsa count', () => {
+  // THE DEFECT (AUDIT 39, #43): the generation was the number of
+  // stored .bsa files, and this line is the ONLY writer of it and the
+  // only place `_mwEsm`, `_mwArchiveCache` and `_mwFileCache` are
+  // dropped. So a player who attached Data Files (one .bsa) and THEN
+  // attached a loose mod folder (Pegas Horse Ranch: .nif/.dds, no
+  // .bsa) or a .esm bumped nothing: loadMorrowindArchives returned
+  // early on the unchanged generation with the pre-loose list, and
+  // weaponRig's fpRecheck saw the same integer and never rebuilt. The
+  // MW-D40 loose override and the MW7 .esm door stayed dead until the
+  // page was reloaded - the report's "after uploading does not work at
+  // all" wearing its second face.
+  const src = rd('src/scenes/dataSource.js');
+  const fn = src.slice(src.indexOf('export async function registerMorrowindData()'));
+  assert.match(fn, /const names = await storedMorrowindNames\(\);/,
+    'the whole stored set is read once');
+  assert.match(fn, /const print = mwFingerprint\(names\);/, 'and fingerprinted whole');
+  assert.doesNotMatch(fn.slice(0, fn.indexOf('_mwCount = next;')),
+    /_mwGeneration\+\+[\s\S]*?next !== _mwCount/, 'the bump never rides the archive count again');
+  // the count the settings row prints is still ARCHIVES ("Morrowind
+  // archives attached: N"), which a loose .dds must not inflate
+  assert.match(fn, /const next = names\.filter\(\(n\) => \/\\\.bsa\$\/i\.test\(n\)\)\.length;/,
+    'the reported count stays the archive count');
+  // the fingerprint moves on ANY change to the set, including a
+  // same-size re-attach that swaps one file for another
+  const print = (names) => [...names].sort().join('\n');
+  assert.notEqual(print(['Morrowind.bsa']), print(['Morrowind.bsa', 'meshes/x.nif']), 'a loose file moves it');
+  assert.notEqual(print(['Morrowind.bsa']), print(['Morrowind.bsa', 'Morrowind.esm']), 'an esm moves it');
+  assert.equal(print(['b.bsa', 'a.bsa']), print(['a.bsa', 'b.bsa']), 'pick order does not');
+  assert.notEqual(print(['meshes/a.nif']), print(['meshes/b.nif']), 'and a same-count swap does');
 });
 
 test('MW-D9g: the rig unloads on a CHANGE only, and the arm survives an unchanged poll', async () => {

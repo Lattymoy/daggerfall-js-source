@@ -49,7 +49,12 @@ test('AUDIT 23 ui-native-5: the drawn space omits GlyphSpacing; the measured spa
   const t = src('src/ui/text.js');
   assert.ok(t.includes('cx += spaceGlyphWidth(fnt) * scale;'), 'drawText: width alone');
   assert.equal(/cx \+= \(spaceGlyphWidth\(fnt\) \+ FNT_GLYPH_SPACING\) \* scale/.test(t), false, 'the old symmetric advance is gone');
-  assert.ok(/w \+= \(code < FNT_ASCII_START \? spaceGlyphWidth\(fnt\) : fnt\.glyphWidth\(code - FNT_ASCII_START\)\) \+ FNT_GLYPH_SPACING;/.test(t),
+  // AUDIT 39 F129 MOVED THIS PIN: the space test is now `code ===
+  // FNT_SPACE_CODE`, because measureText folds through Encoding.ASCII
+  // and substitutes ErrorCode first (:373-379) - after that, the only
+  // sub-33 code left IS the space. The law pinned here is unchanged:
+  // every glyph, space included, adds GlyphSpacing to the measure.
+  assert.ok(/w \+= \(code === FNT_SPACE_CODE \? spaceGlyphWidth\(fnt\) : fnt\.glyphWidth\(code - FNT_ASCII_START\)\) \+ FNT_GLYPH_SPACING;/.test(t),
     'measureText adds the spacing for every glyph, space included');
 });
 

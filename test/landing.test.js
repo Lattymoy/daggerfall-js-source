@@ -395,11 +395,13 @@ test('U63: the fi ligature is off - "files" is not "Ales", on the site AND in th
 // ── U64: THE DOMAIN, AND THE HAT ──────────────────────────────────
 test('U64: the Ko-fi mark is a plaque with a drawn cup, near the top, and it is the only ask', () => {
   const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
-  // ONE link, and one in the credits with a reason attached - not a
-  // banner, not a badge, and not an <img>: an image would be the page's
-  // only raster, and a raster is the one thing this site does not carry.
+  // ONE link - the corner mark alone. Not a banner, not a badge, and
+  // not an <img>: an image would be the page's only raster, and a
+  // raster is the one thing this site does not carry. (The credits
+  // line came off with the DA cleanup's follow-up, Mac's call - the
+  // mark is the whole ask now.)
   const asks = [...landing.matchAll(/href="(https:\/\/ko-fi\.com\/[\w-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(asks, ['https://ko-fi.com/dfjs', 'https://ko-fi.com/dfjs'], 'the mark, and the credits line');
+  assert.deepEqual(asks, ['https://ko-fi.com/dfjs'], 'the mark, and nothing else');
   assert.match(landing, /<a class="kofi" href="https:\/\/ko-fi\.com\/dfjs" rel="noopener">/);
   assert.doesNotMatch(landing, /<img[^>]*ko-fi/i, 'no badge image');
   // Near the top, out of the wordmark's way, and a thumb's target.

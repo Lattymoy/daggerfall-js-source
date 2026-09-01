@@ -253,7 +253,10 @@ test('MW-D30: the pose carries the camera and the load FORCES it', () => {
   // mwCamera.restore, and a pose without a camera (older save, the
   // classic import) leaves the live camera standing.
   const src = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.ok(/camera: mwCamera\.state\(\) \}/.test(src), 'the saved pose carries mwCamera.state()');
+  // AUDIT 39 (#24) MOVED THIS PIN: the pose grew `transport` after the
+  // camera (the mount rides the quicksave now), so the camera is no
+  // longer the pose's last key. The law pinned is the CARRY, not the tail.
+  assert.ok(/camera: mwCamera\.state\(\),/.test(src), 'the saved pose carries mwCamera.state()');
   assert.ok(/mwCamera\.restore\(pose\.camera\);/.test(src), 'and the one pose-apply restores it');
   // restore(undefined) is the older-save no-op, behaviorally:
   const cam = createMwCamera();

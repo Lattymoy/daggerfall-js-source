@@ -40,14 +40,35 @@ test('bss: the header is five Int16 and the frames follow it back to back', () =
   // every frame and this fails on the first one.
 });
 
-test('bss: the refusals - a wrong extension, a truncated body, an empty header', () => {
+test('bss: the only refusals are the extension and a negative header', () => {
+  // AUDIT 39 moved this pin. It used to require a truncated body and an
+  // empty header to FAIL the load; ReadImageData (:210-222) does neither.
+  // BinaryReader.ReadBytes returns a SHORT array at end of stream rather
+  // than throwing, and `new DFBitmap[0]` is legal, so Read() never enters
+  // its catch and Load returns true for both. Only a NEGATIVE count or
+  // frame size throws (`new byte[-1]`).
   assert.equal(new BssFile().load(makeBss(), 'TEST.IMG'), false, 'the extension test is DFU:114');
   assert.equal(new BssFile().load(makeBss(), 'TEST.bss'), true, 'and it is case-insensitive');
-  const short = makeBss().slice(0, 12);
+
+  const short = makeBss().slice(0, 12);   // 3x2 frames, only 2 body bytes present
   const f = new BssFile();
-  assert.equal(f.load(short, 'TEST.BSS'), false, 'Read() catches and returns false rather than throwing');
-  assert.equal(f.recordCount, 0, 'a failed load leaves no record behind');
-  assert.equal(new BssFile().load(makeBss({ n: 0 }), 'TEST.BSS'), false);
+  assert.equal(f.load(short, 'TEST.BSS'), true, 'a truncated body still loads');
+  assert.equal(f.recordCount, 1);
+  assert.equal(f.getFrameCount(0), 4, 'the header count is believed');
+  assert.equal(f.getDFBitmap(0, 0).data.length, 2, 'the first frame is short');
+  assert.equal(f.getDFBitmap(0, 3).data.length, 0, 'and the trailing ones empty');
+
+  const empty = new BssFile();
+  assert.equal(empty.load(makeBss({ n: 0 }), 'TEST.BSS'), true, 'a zero frame count loads');
+  assert.equal(empty.recordCount, 1, 'RecordCount is 1 for any loaded file');
+  assert.equal(empty.getFrameCount(0), 0);
+  assert.equal(empty.getDFBitmap(0, 0).width, 0, 'with no frame to hand back');
+
+  const neg = makeBss();
+  new DataView(neg.buffer).setInt16(8, -1, true);
+  const nf = new BssFile();
+  assert.equal(nf.load(neg, 'TEST.BSS'), false, '`new DFBitmap[-1]` throws, Read() catches');
+  assert.equal(nf.recordCount, 0, 'a failed load leaves no record behind');
 });
 
 test('bss: the index checks are ASYMMETRIC, which is DFU\'s own', () => {

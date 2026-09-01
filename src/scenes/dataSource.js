@@ -116,6 +116,7 @@ const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three
   name === 'CLASSES.DAT' ||
+  name === 'PAINT.DAT' ||                   // AUDIT 39 F156: the painting descriptions (40-byte records, 24KB)
   name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50), reused as V1's fake death
   name === 'ANIM0002.VID' ||                // V1 the lycanthropy dream (LycanthropyInfection.cs:95)
@@ -123,7 +124,7 @@ export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   name === 'ROGUE.CEL' || name === 'MAGE.CEL' || name === 'WARRIOR.CEL' ||   // F2 the chargen constellations
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 8;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles - all auto-wiped
+const MANIFEST_V = 9;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles, v8 = the sets missing PAINT.DAT (AUDIT 39 F156) - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {
@@ -292,16 +293,21 @@ export async function clearStoredData() {
 /** Put the accepted files from a pick into `store`. `accept(name)`
  *  answers whether a file belongs to this domain, so a pack folder
  *  with its readme and cover art in it just works. Returns the count. */
-async function storeAssets(store, files, accept) {
+async function storeAssets(store, files, accept, keyOf = null) {
   const d = await getDb();
   let kept = 0;
   for (const f of files) {
     const base = f.name.slice(f.name.lastIndexOf('/') + 1);
     if (!accept(base)) continue;
+    // MW-D40: a store may key by more than the basename - loose
+    // Morrowind files are only addressable by their RELATIVE path
+    // (meshes/maxhorse/xhorse1.nif), which the directory picker
+    // carries on webkitRelativePath. Default stays the basename law.
+    const key = keyOf ? keyOf(f, base) : base;
     const buf = await f.arrayBuffer();
     await new Promise((res, rej) => {
       const tx = d.transaction(store, 'readwrite');
-      tx.objectStore(store).put(buf, base);
+      tx.objectStore(store).put(buf, key);
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
@@ -381,10 +387,47 @@ export async function storeDerived(key, bytes) {
 export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
 export const clearDerived = () => clearAssets(DERIVED_STORE);
 
+/** MW-D40: the canonical relative path of a LOOSE Morrowind file. The
+ *  directory picker hands paths like "Pegas Horse Ranch/morrowind/Data
+ *  Files/Meshes/maxhorse/Xhorse1.nif"; every engine lookup asks in the
+ *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
+ *  from the FIRST known asset root, lowercased, slashes normalized. A
+ *  path with no known root keys by its basename (a file picked alone). */
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/'];
+export function mwLoosePath(name) {
+  const p = String(name).replace(/\\/g, '/').toLowerCase();
+  for (const root of MW_LOOSE_ROOTS) {
+    const at = p.indexOf(root);
+    if (at !== -1) return p.slice(at);
+  }
+  return p.slice(p.lastIndexOf('/') + 1);
+}
+const MW_LOOSE_EXT = /\.(nif|kf|dds|tga|wav)$/i;
+
+/** MW-D40: the {has, get} duck the whole MW stack already speaks
+ *  (fpArm resolves everything via `archives.find((a) => a.has(path))`),
+ *  over a Map of canonical loose paths. Pure and node-testable. */
+export function makeLooseArchive(files) {
+  const norm = (p) => String(p).replace(/\\/g, '/').toLowerCase();
+  return {
+    loose: true,
+    names: [...files.keys()],
+    has: (p) => files.has(norm(p)),
+    get: (p) => files.get(norm(p)) ?? null,
+  };
+}
+
 export async function storeMorrowindFiles(files) {
-  // .bsa archives + .esm records; MwBsaFile magic-checks at read, so a
-  // wrong archive fails loudly there, not silently here.
-  return storeAssets(MW_STORE, files, (n) => /\.(bsa|esm)$/i.test(n));
+  // .bsa archives + .esm/.esp records; MwBsaFile magic-checks at read,
+  // so a wrong archive fails loudly there, not silently here.
+  // MW-D40: LOOSE files join - a mod like Pegas Horse Ranch ships
+  // meshes/textures/sounds outside any .bsa, and the engine's own law
+  // is that loose data files override archived ones. Archives and
+  // plugins keep their basename keys (stable for existing attaches);
+  // loose files key by canonical relative path.
+  return storeAssets(MW_STORE, files,
+    (n) => /\.(bsa|esm|esp)$/i.test(n) || MW_LOOSE_EXT.test(n),
+    (f, base) => (MW_LOOSE_EXT.test(base) ? mwLoosePath(f.webkitRelativePath || f.name) : base));
 }
 export const storedMorrowindNames = () => assetNames(MW_STORE);
 // IG2: THE SWAP-SPEED CACHES (Mac: "load times when swapping weapons,
@@ -426,6 +469,22 @@ export async function loadMorrowindArchives() {
   };
   names.sort((a, b) => rank(a) - rank(b));
   const archives = [];
+  // MW-D40: LOOSE FILES FIRST - the engine's own data-files-over-BSA
+  // law. Every stored non-archive asset joins one {has, get} duck
+  // ranked ahead of every .bsa, so a mod's meshes/textures/sounds
+  // (Pegas Horse Ranch's whole maxhorse tree) resolve through the
+  // exact seam fpArm already speaks, and can also OVERRIDE an
+  // archived file of the same path. Resident like the archives are -
+  // the IG2 cost statement above covers both.
+  const looseNames = (await storedMorrowindNames()).filter((n) => MW_LOOSE_EXT.test(n));
+  if (looseNames.length) {
+    const loose = new Map();
+    for (const n of looseNames) {
+      const bytes = await assetBytes(MW_STORE, n);
+      if (bytes) loose.set(n, bytes);
+    }
+    archives.push(makeLooseArchive(loose));
+  }
   for (const n of names) {
     try {
       archives.push(new MwBsaFile(await loadMorrowindFile(n)));
@@ -455,13 +514,28 @@ export const morrowindDataCount = () => Math.max(_mwCount, 0);
  */
 let _mwGeneration = 0;
 export const morrowindDataGeneration = () => _mwGeneration;
+/**
+ * MW-D40: the generation answers for the WHOLE STORED SET, never the
+ * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
+ * attached beside an archive that is already there leaves the archive
+ * count untouched - and this line is the only writer of the generation
+ * and the only place `_mwEsm`/`_mwArchiveCache`/`_mwFileCache` are
+ * dropped, so counting archives alone left the loose override and the
+ * ESM door dead until the page was reloaded. The sorted names also
+ * move when a re-attach swaps one file for another of the same count,
+ * which a length never does.
+ */
+let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
+const mwFingerprint = (names) => [...names].sort().join('\n');
 
 /** Bootstrap arm (scenes/shared.js): count the stored archives once so
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
-  const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  // MW-D9g: `_mwCount` STARTS AT -1, MEANING "NOT COUNTED YET", AND
-  // LEARNING A COUNT IS NOT A CHANGE.
+  const names = await storedMorrowindNames();
+  const next = names.filter((n) => /\.bsa$/i.test(n)).length;   // the settings row's count stays ARCHIVES
+  const print = mwFingerprint(names);
+  // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",
+  // AND LEARNING A SET IS NOT A CHANGE.
   //
   // Without the first term this bumped on every host's first boot, for
   // every player, even with an empty store: -1 !== 0. And the bump is
@@ -476,7 +550,8 @@ export async function registerMorrowindData() {
   //
   // The generation means THE STORED SET CHANGED. It cannot mean that
   // until there is a previous set to compare against.
-  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  _mwFingerprint = print;
   _mwCount = next;
   return _mwCount;
 }
@@ -515,7 +590,9 @@ export async function pickMorrowindFiles() {
       browser, exactly like the ARENA2 pick.</p>
       <p style="color:#999">Powers the opt-in 3D asset layer. You need
       to own Morrowind; Tribunal.bsa and Bloodmoon.bsa join in if
-      they're in the folder.</p>`,
+      they're in the folder. Loose mod files (meshes, textures,
+      sounds - a mod folder like Pegas Horse Ranch's) join too and
+      override the archives, engine-style.</p>`,
     store: storeMorrowindFiles,
     register: registerMorrowindData,
   });

@@ -22,11 +22,13 @@ export const RMB_SIDE = RMB_DIMENSION * GLOBAL_SCALE;
  * @param {object} dfLocation - MapsFile.getLocation output.
  * @param {MapsFile} mapsFile - for block-name resolution.
  * @param {BlocksFile} blocksFile - block source.
+ * @param {{enhanced?:boolean}} [opts] - the caller's skin, passed to
+ *   layoutRmbBlock (the mill subrecord it attaches is enhanced-only).
  * @returns {{width:number,height:number,groundArchive:number,
  *   blocks:Array<{x:number,y:number,blockName:string,dfBlock:object,
  *   layout:object,originX:number,originZ:number}>}}
  */
-export function layoutLocation(dfLocation, mapsFile, blocksFile) {
+export function layoutLocation(dfLocation, mapsFile, blocksFile, { enhanced = false } = {}) {
   const width = dfLocation.exterior.exteriorData.width;
   const height = dfLocation.exterior.exteriorData.height;
   const blocks = [];
@@ -41,7 +43,7 @@ export function layoutLocation(dfLocation, mapsFile, blocksFile) {
         y,
         blockName,
         dfBlock,
-        layout: layoutRmbBlock(dfBlock),
+        layout: layoutRmbBlock(dfBlock, { enhanced }),
         originX: x * RMB_SIDE,
         originZ: y * RMB_SIDE,
       });

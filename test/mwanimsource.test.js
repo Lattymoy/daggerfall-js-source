@@ -374,7 +374,9 @@ test('MW-D15 rule 32(a): the arm reads the stance off the camera dep, in all fou
   // MW-D26 widened the dep with the movement report; the stance still
   // rides it, so the regex asks for the field, not the closing brace.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(rd(host), /camera: \(\) => \(\{[^)]*sneaking: !!player\.isSneaking,/,
+    // EV1 put eyeAt() on the dep, whose parens ended the old [^)]* -
+    // the pin asks for the FIELD, reaching across any earlier ones.
+    assert.match(rd(host), /camera: \(\) => \(\{[^]*?sneaking: !!player\.isSneaking,/,
       `${host} passes the live sneak stance`);
   }
   // The dungeon context latches it with the eye and the pitch, one frame

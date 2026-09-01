@@ -667,7 +667,17 @@ export function movementAnimState({
 export function composeMovementGroup(base, type, hasGroup) {
   const short = weaponShortGroup(type);
   let name = base;
-  if (short) {
+  if (short && type === MW_WEAPON_TYPE.Spell && (base === 'turnleft' || base === 'turnright')) {
+    // "Spellcasting stance turning is a special case" (character.cpp:676-687):
+    // the short group PREFIXES the movement name - "spellturnleft", never
+    // "turnleftspell", which is a name no .kf carries. A miss falls to
+    // fallbackShortWeaponGroup, and a spell is not a real weapon, so that
+    // hands back the BARE base at once (:604-611) - the suffix ladder is
+    // never asked here. (isTurning's swim states are excluded upstream by
+    // the reference's own swimpos gate.)
+    const prefixed = `${short}${base}`;
+    name = hasGroup(prefixed) ? prefixed : base;
+  } else if (short) {
     const r = composeStanceGroup(base, type, hasGroup);
     name = r.group ?? base;
   }
@@ -677,6 +687,52 @@ export function composeMovementGroup(base, type, hasGroup) {
     return { group: null, walked: false };
   }
   return { group: name, walked: false };
+}
+
+/**
+ * MW-D39: THE JUMP STATE - update()'s in-air derivation
+ * (character.cpp:2195-2296), the ANIMATION half only. The same block's
+ * fall damage, Acrobatics progression, knockdown and landing sounds
+ * are DFU's own laws in this port (fallwater/footsteps own them; the
+ * reference's DefaultLand is NoPlayerLocal anyway - the first-person
+ * player never hears their own), so what this derives is exactly what
+ * refreshJumpAnims consumes: which of the two jump plays is owed, and
+ * whether movement selection is suppressed this frame.
+ *
+ * The reference's shape, kept:
+ *   - mInJump is re-derived EVERY frame from the world, not latched
+ *     (:2195-2196 - wasInJump is remembered, mInJump starts false);
+ *   - in the air and not swimming, not levitating: InAir, and inJump
+ *     (:2206-2212 - the reference's !inwater && !flying && solid gate;
+ *     this port has no noclip, so solid is construction);
+ *   - THE TAKEOFF FRAME (:2224-2227): a jump STARTING while still
+ *     grounded sets mInJump - movement gates off one frame before the
+ *     feet leave - but plays nothing yet; the `priorInAir` guard is
+ *     the reference's own `mJumpState != JumpState_InAir`, which is
+ *     what keeps the LANDING frame (motor's jump latch not yet
+ *     cleared) from reading as a fresh takeoff;
+ *   - not in a jump, and the jump clip is still playing: Landing
+ *     (:2292-2293) - the state that plays the clip's tail once and
+ *     clears itself when the clip stops.
+ *
+ * `jumpQueued` is the port's crossing for `vec.z() > 0`: the motor's
+ * own jump latch (AcrobatMotor.Jumping - set at the jump, cleared on
+ * the next grounded frame), true on exactly the takeoff frame while
+ * grounded. Swim-family jump groups are out with the swim movement
+ * family (MW-D26's recorded deferral, one line over).
+ *
+ * @returns {{ jump: 'inair'|'landing'|null, inJump: boolean }}
+ */
+export function jumpAnimState({ grounded = true, swimming = false, levitating = false,
+  jumpQueued = false, priorInAir = false, jumpPlaying = false } = {}) {
+  let inJump = false;
+  let jump = null;
+  if (!swimming && !levitating) {
+    if (!grounded) { inJump = true; jump = 'inair'; }
+    else if (!priorInAir && jumpQueued) inJump = true;   // :2224-2227, the takeoff frame
+  }
+  if (!inJump && jumpPlaying) jump = 'landing';   // :2292-2293
+  return { jump, inJump };
 }
 
 /** character.cpp:750-752 - the animation speeds assumed when a clip
@@ -1620,6 +1676,13 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 export function bindPartsInto(assembly, parts) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
+  // MW-D44: the WEAPON's own BoneOffset, kept for the ammunition that
+  // rides inside its mesh. resolveWeaponParts pushes 'weapon' before
+  // 'arrow', so by the time the arrow binds this is the offset the
+  // reference has already applied one level above ArrowBone. Null for
+  // every other part list and reset per call, so a body without a
+  // weapon cannot inherit a stale one.
+  let weaponBoneOffset = null;
   for (const part of parts) {
     // `part.bones` overrides the table so a test can drive real assembly
     // against a fixture skeleton whose bone names are not Morrowind's.
@@ -1688,7 +1751,10 @@ export function bindPartsInto(assembly, parts) {
       // Head bone but its geometry filter is the word "hair"
       // (npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ?
       // "hair" : bonename`). Every other slot filters on its bone name.
-      const geomFilter = part.slot === 'hair' ? 'hair' : bone;
+      // AUDIT 39: on the part's OWN name, never its display slot - a worn
+      // add's slot reads "hair (record id)" (mwItemMap composeRefs) and
+      // silently missed this test, filtering a wig on the bone "head".
+      const geomFilter = (part.partName ?? part.slot) === 'hair' ? 'hair' : bone;
       let namelessHere = false;
       for (const batch of bound.skinned) {
         const nameless = !String(batch.name || '').trim();
@@ -1761,10 +1827,43 @@ export function bindPartsInto(assembly, parts) {
             // What the arrow DOES inherit is its parent chain: the
             // weapon's node (preTransform above) when it rides the
             // weapon's ArrowBone, mirror and all.
-            boneOffset: part.ammo ? null : (bound.boneOffset || null),
+            // MW-D44 (Mac: "the arrow placement in the hand is not 1:1"
+            // - and he was right): AMMUNITION TAKES THE WEAPON'S
+            // OFFSET, THOUGH NEVER ITS OWN. MW-D34 read half the
+            // reference correctly and stopped one level too high.
+            // attachArrow is a bare getInstance(model, parent)
+            // (weaponanimation.cpp:87-93) so the ARROW mesh's own
+            // "BoneOffset" node is never searched for - that half
+            // stands. But `parent` is getArrowBone(), which is the
+            // ArrowBone node INSIDE the weapon's live scene graph, and
+            // the weapon got there through SceneUtil::attach, which
+            // applied the WEAPON's BoneOffset above it. Everything
+            // under ArrowBone inherits that, the arrow included.
+            //
+            // The port gave the arrow preTransform - the weapon NIF's
+            // own root-to-ArrowBone chain - and nothing else, so it
+            // was displaced from the hand by exactly the weapon's
+            // offset. The comment below already stated the right rule,
+            // "what the arrow DOES inherit is its parent chain"; the
+            // code just stopped short of the parent's offset.
+            //
+            // ONLY WHEN IT RIDES THE WEAPON. preTransform is set in
+            // exactly the fallback case (getArrowBone's second branch).
+            // When the ACTOR's skeleton carries the attach bone, the
+            // reference's parent is that bone and the weapon is not in
+            // the chain at all - inheriting its offset there would be
+            // the same mistake pointing the other way.
+            boneOffset: part.ammo
+              ? (part.preTransform ? weaponBoneOffset : null)
+              : (bound.boneOffset || null),  // MW-D44: recorded as the weapon binds, spent when the
+            // arrow does - see the head of this function.
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
         }
+        // MW-D44: the weapon's offset, held for the ammunition that
+        // rides inside its mesh. Only the weapon's - a shield or a
+        // body part must not lend the arrow anything.
+        if (part.slot === 'weapon') weaponBoneOffset = bound.boneOffset || null;
       }
       // THE SILENT HOLE, CLOSED. A bone whose every NAMED skinned shape
       // fails rule 15's filter used to bind NOTHING and say NOTHING -
@@ -2220,6 +2319,17 @@ export function sourcesKeyTime(sources, textKey) {
  * remaining earlier sources until one yields more. The port had stopped
  * at the single source the clip was picked from.
  */
+/** PX29: ONE source's own velocity for a group - the number that
+ *  matches the clip actually playing, which is what the movement rate
+ *  divides by after Mac's revert. sourcesVelocity (below) is the
+ *  reference's multi-source walk and stays for any consumer that
+ *  wants it; nothing in the movement lane does. */
+export function sourceVelocityOf(source, group) {
+  if (!source) return 0;
+  const acc = ACCUM_ROOT_NAMES.find((n) => source.trackMap && source.trackMap.has && source.trackMap.has(n));
+  return acc ? animVelocity(source.keys, source.trackMap.get(acc), group) : 0;
+}
+
 export function sourcesVelocity(sources, group) {
   const list = sources || [];
   const velOf = (so) => {
@@ -2317,6 +2427,47 @@ export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', cli
  *  time the arm moves, which cancels out exactly the motion this stage
  *  exists to show - the arm would appear to hold still while its numbers
  *  changed underneath. Sample, union, fix the mapper once. */
+/** PX27: the sample times to measure an arm's REACH over - every clip
+ *  every source carries, not the idle alone. A clip is a start/stop
+ *  pair in a source's text keys; each is sampled at a fixed count, so
+ *  the cost is bounded by the data's own clip count and a rig with one
+ *  animation costs exactly what it did before. Falls back to the idle's
+ *  own span when a source carries no readable pairs, so a rig this
+ *  cannot read is measured no worse than it was. */
+export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
+  const spans = [];
+  for (const so of sources ?? []) {
+    // A source's keys are normalizeTextKeys' ARRAY of {time,text} - the
+    // port's one text-key shape (mwAnim.js:411), handed over by clipReport.
+    const keys = so?.keys;
+    if (!Array.isArray(keys)) continue;
+    const starts = new Map();
+    for (const k of keys) {
+      const time = k?.time;
+      const n = String(k?.text ?? '').toLowerCase();
+      const i = n.lastIndexOf(': ');
+      if (i < 0) continue;
+      const group = n.slice(0, i);
+      const word = n.slice(i + 2);
+      if (word.endsWith('start')) starts.set(`${group}|${word.slice(0, -5)}`, time);
+      else if (word.endsWith('stop')) {
+        const from = starts.get(`${group}|${word.slice(0, -4)}`);
+        if (from != null && time > from) spans.push([from, time]);
+      }
+    }
+  }
+  if (!spans.length) {
+    const a = idleState?.startTime ?? 0;
+    const b = idleState?.stopTime ?? a;
+    return Array.from({ length: 25 }, (_, i) => a + ((b - a) * i) / 24);
+  }
+  const out = [];
+  for (const [a, b] of spans) {
+    for (let i = 0; i < perClip; i++) out.push(a + ((b - a) * i) / (perClip - 1));
+  }
+  return out;
+}
+
 export function clipUnionBounds(assembly, poseAt, times) {
   let acc = null;
   for (const t of times ?? []) {

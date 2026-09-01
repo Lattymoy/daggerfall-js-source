@@ -264,7 +264,9 @@ test('audit18 hosts: the streaming recenter carries fallStart AND the arrows', (
   const block = s.slice(s.indexOf('if (r.offset) {'), s.indexOf('if (r.pixelChanged)'));
   assert.match(block, /adjustFallStart\(player, r\.offset\[1\]\)/,
     'the recenter shifts the player but not fallStart');
-  assert.ok(block.indexOf('adjustFallStart') < block.indexOf('player.pos[0] +='),
+  // EV1 moved the shift into player.offsetOrigin (both ends of the
+  // interpolation span move together); the ORDER law is unchanged.
+  assert.ok(block.indexOf('adjustFallStart') < block.indexOf('player.offsetOrigin('),
     'AdjustFallStart runs BEFORE the position shift (FloatingOrigin.cs:176-181)');
   assert.match(block, /offsetArrows\(arrows, r\.offset\)/);
   assert.doesNotMatch(s, /arrows\.offsetAll\?\./,
@@ -718,7 +720,10 @@ test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
   assert.ok(keep, 'the diet is still one expression');
   const version = Number(text.match(/const MANIFEST_V = (\d+);/)[1]);
   const sum = createHash('sha256').update(keep).digest('hex').slice(0, 16);
-  assert.deepEqual([version, sum], [8, 'b790da41e4823038'],
+  // MOVED at AUDIT 39 F156: PAINT.DAT joined the diet - the painting
+  // descriptions had no reader host at all, and a name KEEP rejects
+  // has no source in production. v8 -> v9 re-ingests the stale sets.
+  assert.deepEqual([version, sum], [9, 'f898f68bcee8501a'],
     'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });
 

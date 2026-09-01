@@ -4,10 +4,14 @@
 //
 // The SkyRenderer/PrecipitationRenderer shape: this class takes the
 // ONE shared gl, compiles its own programs, owns its own VAOs, takes
-// proj/view as ARGUMENTS, saves the previous program and restores it,
-// and brackets every piece of state it changes - so it is safe to run
-// anywhere in a frame (it runs inside the overworld window's own
-// second beginFrame, the automap's precedent).
+// proj/view as ARGUMENTS, and brackets every piece of state it changes
+// - so it is safe to run anywhere in a frame (it runs inside the
+// overworld window's own second beginFrame, the automap's precedent).
+// EV6, like both of those passes: no program save/restore, and no
+// gl.getParameter round-trip to learn what to restore - every draw
+// entry point owns its own binding (the R9 law), and the host marks
+// this pass as a foreign seam (renderer.markForeignPass) so the
+// renderer's state shadows rebind after it.
 //
 // The relief keeps the streamed world's axis labels - east +x,
 // north +z, up +y - and that triple is LEFT-handed (east x up =
@@ -315,7 +319,6 @@ export class OverworldRenderer {
    */
   draw(proj, view, opts = {}) {
     const gl = this.gl;
-    const prev = gl.getParameter(gl.CURRENT_PROGRAM);
     gl.disable(gl.CULL_FACE);
 
     // backdrop - farthest depth, no write, so terrain draws over it
@@ -392,7 +395,6 @@ export class OverworldRenderer {
 
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
-    gl.useProgram(prev);
   }
 
   /** Every allocation has an owner (AUDIT 17e). */

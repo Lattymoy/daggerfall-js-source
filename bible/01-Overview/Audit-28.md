@@ -568,6 +568,87 @@ with this note: three spot-reads (EnemyBlood, the wagon capacity law,
 RoundToInt's tie) came back equal, and the productive vein was the
 checkable list. The next audit should find its list first.
 
+## THE UI-ONLY KEYS (2026-08-31, open)
+
+The six the settings sweep handed to the UI arc, taken one at a time:
+
+- **UI3 CLOSED: `GUI/EnableGeographicBackgrounds`** (PaperDoll
+  :203-230). It ships FALSE, so DFU's default backdrop is the RACE's -
+  and the port has passed `context = 'town'` since U8f, the geographic
+  answer, so every player has seen the town backdrop. The law is the
+  setting's now, with DFU's 62-char region table and its
+  guard-before-the-arms order. The world host supplies
+  `GetPoliticIndex - 128`.
+- **REFUTED: `GUI/DimAlphaStrength`.** DaggerfallPopupWindow's own line
+  is `this.screenDimColor.a = 0; //DaggerfallUnity.Settings
+  .DimAlphaStrength;` (:58) - commented out. DFU reads it NOWHERE, the
+  same shape as WeaponSensitivity. It stays stored, and this is why.
+- **NOT APPLICABLE: `GUI/HideLoginName`.** Its only consumer is
+  DaggerfallUnitySetupGameWizard, DFU's first-run setup wizard, which
+  the port does not have and is not porting (Ledger A).
+- **UI4 CLOSED: `GUI/EnableInventoryInfoPanel`** (DaggerfallInventory
+  Window :303-307). Setup only ADDS the panel when it is on; the port
+  drew it unconditionally, which ships-True made invisible. Gated, with
+  the cutout and the label both inside the gate. The TRADE window's own
+  panel (:217-223) does not exist in the port yet and its pin fails the
+  day it appears.
+- **UI5 SCOPED, NOT STARTED: `GUI/EnableEnhancedItemLists`**
+  (ItemListScroller :195-210). Read from source so the next session
+  does not have to: enhanced replaces the FOUR 50x38 cells with SIXTEEN
+  25x19 ones - `listDisplayUnits` 8, `listWidth` 2,
+  `itemButtonRects16`, `itemButtonMargin` 1 (from 2), `textScale` 0.75
+  (from 1). Its blast radius is bigger than the geometry:
+  - the port's `itemScroller.js` publishes the classic numbers as
+    MODULE CONSTANTS (`LIST_SLOTS`, `CELL_X`, `CELL_W`, `SLOT_H`,
+    `CELL_MARGIN`), and three windows import them - `nativeInventory`,
+    `nativeTrade`, `itemMakerWindow` - for slicing, drawing AND hit
+    testing. Enhanced needs a per-scroller layout object, not a
+    constant, so this is a small refactor before it is a feature.
+  - only some scrollers take it. DFU builds enhanced scrollers in the
+    INVENTORY window (both lists) and the ITEM MAKER; the POTION MAKER
+    uses the explicit-geometry constructor (4x3 and 4x2) and is never
+    enhanced, and the TRADE window has no ItemListScroller at all.
+  - the ITEM MAKER additionally covers two background seams with
+    panels when enhanced (:385-387), because the 16-cell list exposes
+    parts of the base art the 4-cell one hid.
+  It is a proper slice, not a gate.
+
+  **STARTED AND PARKED (2026-08-31), with three findings worth more
+  than the code was:**
+  1. **It ships TRUE.** `EnableEnhancedItemLists` is `"True"` in the
+     shipped ini, so the 16-cell grid is DFU's DEFAULT and the port has
+     been showing the classic 4-cell list all along. UI5 is a PARITY
+     FIX, not an optional extra.
+  2. **The scrollbar counts ROWS, not items.** `TotalUnits =
+     (items.Count + listWidth - 1) / listWidth` (:412) and the index is
+     converted with `scrollIndex *= listWidth` (:416) just before the
+     cells fill. An item-indexed scroll is right at one column and
+     wrong at two.
+  3. **`itemCutoutRects16` is a whole feature, not a detail** (:73-83,
+     :516-523). In enhanced mode every cell gets a BACKGROUND cut from
+     **INVE00I0.IMG** - not the window's own ITEM00I0 - because the base
+     art has no 16-cell grid drawn on it. Sixteen entries, not a grid
+     walk, and the last four repeat earlier rects.
+
+  The first cut of this slice was built from the CONSTRUCTOR's five
+  assignments without reading the class body: it derived cell rects
+  arithmetically instead of using `itemButtonRects16`, used an
+  item-indexed scroll, and missed the cell backgrounds entirely. Mac
+  caught it. The code was reverted rather than committed half-built;
+  these three findings are the part worth keeping.
+- **UI6 CLOSED: `GUI/EnableModernConversationStyleInTalkWindow`**
+  (DaggerfallTalkWindow :53-60 and the three label arms). Smaller text
+  (0.8), a narrower wrap (0.75 of the panel) and a per-speaker
+  background block behind each line. Found while building it:
+  `shadowText` had no `scale` option, so the first cut passed one that
+  would have been silently ignored - it takes a real one now, with the
+  shadow offset staying one native pixel because DFU's ShadowPosition
+  is in the label's own space.
+
+With UI6 the six UI-only keys are DONE: UI3 and UI4 closed, UI6 closed,
+DimAlphaStrength refuted, HideLoginName not applicable, and UI5
+(`EnableEnhancedItemLists`) scoped above as the one real slice left.
+
 ### Refuted on the way
 
 - **LycanthropyEffect's `Mathf.RoundToInt(urgeDuration * 24f/1440)`

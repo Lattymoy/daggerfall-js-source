@@ -162,7 +162,12 @@ test('BG1: the door arm carries DFU\'s two variables and DEFERS behind the box',
   assert.equal(arm.slice(pick - 400, pick).includes('opened = true'), false,
     'and never raises buildingUnlocked - that is what keeps the shop arm reachable after a pick');
   // the box defers the transition
-  assert.match(arm, /townTalk\.showOverlay\(new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterInteriorCore\(hit, entries\); \}\);/);
+  // AUDIT 39 (#164) MOVED THIS PIN: the deferred call discarded its
+  // promise, so a refused interior (enterInteriorCore's no-landing
+  // throw) escaped to main.js's unhandledrejection handler and painted
+  // CRASH over a running game. The catch is the one both host call
+  // sites already put on the non-deferred arm.
+  assert.match(arm, /townTalk\.showOverlay\(new ChoiceWindow\(\{ lines \}\), \(\) => \{ enterInteriorCore\(hit, entries\)\.catch\(\(e\) => console\.error\(e\)\); \}\);/);
   // the HUD arm speaks and does NOT defer
   assert.match(arm, /if \(lines\.length && how === 'hud'\) for \(const l of lines\) townTalk\?\.say\?\.\(l, getInt\('GUI', 'ShopQualityHUDDelay', 1, 10\)\);/);
   // the house greeting is a RANDOM variant; the quality line is not

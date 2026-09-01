@@ -664,6 +664,37 @@ where they were (:711-713). Both rigs ride it: the group resolves per
 active rig, so a first-person .kf with no walkforward simply leaves
 the arm to its idle - the reference's own outcome.
 
+MW-D39: JUMP - THE FOURTH SLOT. The three-slot winner grows the jump
+at the reference's own rank: Priority_Jump sits BELOW Priority_Movement
+(character.hpp:34-35), so the ladder reads action > movement > jump >
+idle - and the jump still shows in the air because the movestate
+ladder only runs inside `if (!mInJump)` (character.cpp:2296): airborne,
+the movement slot EMPTIES and the jump is the highest thing playing.
+The state is update()'s own derivation (:2195-2296, the animation half;
+the same block's fall damage, Acrobatics and knockdown are DFU's laws
+in this port, and its DefaultLand sound is NoPlayerLocal - the
+first-person player never hears their own): in the air and neither
+swimming nor levitating, InAir; a jump STARTING while grounded gates
+movement one frame early without playing anything (:2224-2227, crossed
+to the motor's own jump latch, with the reference's mJumpState guard
+keeping the landing frame from reading as a fresh takeoff); grounded
+with the jump clip still playing, Landing (:2292-2293). The refresh is
+refreshJumpAnims verbatim (:494-532): the group is "jump" + the weapon
+short suffix through the ONE ladder (composeStanceGroup IS
+fallbackShortWeaponGroup, :508-513); a name nothing serves resets the
+slot AND the idle, exactly as None does (:499-520); a forced same-state
+re-pick (a sword drawn mid-air) starts at "loop start" (:522, with
+Animation::reset's own ": start" fallback, :986-991); InAir plays
+start -> stop, unbounded loops, NO loopfallback (:528-529 - real loop
+keys loop forever, keyless data plays once and HOLDS its falling
+pose); Landing plays ONCE from "loop stop" (:531), and data with no
+loop-stop key fails the pick as Animation::reset:992 fails the play -
+no landing animation is the correct outcome for data that carries
+none. The jump advances at speedmult 1.0, unscaled. All FOUR hosts
+feed the state (exterior, world, worldModes, and dungeon through
+dungeonContext's playerMove latch): grounded, the jump latch,
+swimming, levitation - one spelling, swept by the fparm suite.
+
 STILL NOT PORTED, with reasons rather than silence:
   RULE 26's PRIORITY VECTOR, per bone group: MW-D26's three slots
     resolve whole-body, so a swing while walking shows the swing on
@@ -671,10 +702,11 @@ STILL NOT PORTED, with reasons rather than silence:
     ladder is the reference's PRIORITY ORDER exactly; what is missing
     is the per-group half, and it is missing by name here rather than
     approximated silently.
-  SWIM AND JUMP FAMILIES: the movestate ladder's swim column
-    (character.cpp:2300-2317) and the jump states (:2198-2293) wait on
-    the port's own swim/jump animation hosts; the selection nest is
-    structured so the columns drop in without re-deriving the rest.
+  THE SWIM FAMILY: the movestate ladder's swim column
+    (character.cpp:2300-2317) waits on the port's own swim animation
+    host; the selection nest is structured so the column drops in
+    without re-deriving the rest. (The JUMP half of this entry shipped
+    as MW-D39 above - swimjump/swim groups are what remain.)
   RULE 57's second half - a hidden node whose own controller chain has a
     NiVisController keeps its meshes, because the controller may make
     them visible later. The port skips a hidden subtree's drawables
@@ -6104,6 +6136,332 @@ inputs do not include the look cannot move with it, on any data, by
 construction. The reference's law path is untouched and still measured
 by the probe's law layers.
 
+## DECLARED DIVERGENCE (PX29, 2026-08-31): the movement rate's divisor
+
+The reference divides the movement playback rate by
+`getVelocity(mCurrentMovement)`, a multi-source walk
+(animation.cpp:1267-1338) that takes the newest source carrying the
+group and falls back through the older ones until one answers > 1.
+MW-D29 replicated that walk.
+
+THE PORT DIVIDES BY THE PICKED SOURCE'S OWN VELOCITY INSTEAD, at
+Mac's direction. In first person the divergence cannot show - the
+.1st clips carry no accumulation-root movement, so every source
+answers 0 and the fallback constants decide - but in third person the
+body's clips carry real movement, and the walk can answer with a
+different source's number than the clip actually playing. Mac watched
+the third-person sprint change speed under a sprint that had not
+changed, and asked for it back.
+
+`sourcesVelocity` stays exported for any consumer that wants the
+reference's walk; nothing in the movement lane does. The divergence
+is pinned in fparm.test.js, both on the divisor and on this note's
+own presence, so a 1:1 sweep cannot undo it silently: it must come
+with Mac's eye on the sprint, not a line number.
+
+MW-D40: LOOSE FILES AND THE EXTERNAL-SOUND DOOR (2026-08-31, Mac:
+"implement this mod 1 to 1 to replace the current horses for the
+enhanced version" - the Pegas Horse Ranch mod). Two doors the mod
+walked in through, both general. The MW store accepts loose
+.nif/.kf/.dds/.tga/.wav beside the archives, keyed by CANONICAL
+relative path (mwLoosePath: lowercase, slashes normalized, sliced
+from the first known asset root - the picker hands whatever wrapper
+folders the player extracted into), and loadMorrowindArchives ranks
+one {has, get} duck of them AHEAD of every .bsa - the engine's own
+data-files-over-archive law, through the exact seam fpArm has always
+resolved paths by, so loose files can also OVERRIDE archived ones.
+The audio engine's _buffer takes a registered STRING key anywhere it
+took a DAGGERFALL.SND index (registerSound decodes a user WAV the way
+the music module has since MU1; setLoop's F-F3 swap semantics carry
+keys unchanged); a rejected clip registers nothing and the classic
+fallback stands. mwd40_loosefiles.test.js.
+
+MW-D41: THE PEGAS HORSE ASSEMBLY (systems/pegasHorse.js). THE LICENSE
+IS THE ARCHITECTURE: the mod's readme (MADMAX, 2004) forbids
+modifying its files or building them into another mod - so NOTHING is
+baked or bundled; the module reads the PLAYER'S OWN copy at runtime
+through the archives seam, exactly as the port reads their ARENA2,
+and the repo carries only interoperability code. What the mod's data
+is (measured on the real files, per the staging law): one skinned
+NiTriShape "Tri cavallo" (~1k verts, coat Cait_horse<N>x.dds, twenty
+variants) - its 43 "Tri Bone##" siblings are HIDDEN per-bone hit
+boxes the flattener rightly skips - over a 40+-bone skeleton, and a
+.kf whose text keys carry the full creature vocabulary (Idle 1-7 with
+SoundGen keys, Walkforward/Runforward with loop markers, turns, hits,
+attacks, death). The assembly is the arm's own proven sequence:
+parse -> flatten -> buildSkeleton -> text keys/tracks -> resetClip,
+and per frame advanceClip -> poseSkeleton -> skeletonSpaceMatrices ->
+skinBatch -> packFpArm (whose repack re-derives flat normals from the
+deformed triangles) -> updateCharacterMesh. Never throws: {ok:false,
+stage} at every gap, a missing coat degrades to lit white with a
+note. Proven end to end on the real mod files in the dev container
+(17 clip groups indexed, coat hung, all three gaits deform);
+committed tests ride the crafted fixtures. mwd41_pegashorse.test.js.
+
+MW-D42: THE RIDE. The classic mount stays EXACTLY the 1:1 CFA sprite
+the TR arc closed on (Systems-Arc; its pins moved two lines, both
+recorded in tr3/tr5); the enhanced skin, when the player's attached
+data carries the mod, draws the real horse WORLD-SPACE through the
+character pass - full scene lighting, moonlight included - at the
+fpArm drawThird placement law (feet, yaw+180, the metre scale with
+the handedness mirror, Z-up tipped). Gait rides the SAME motor flags
+the sprite's animator reads: still=Idle, under half speed=
+Walkforward, above=Runforward, airborne=HOLD (the sprite resets its
+frame; a 3D stride freezing mid-jump reads right where a reset would
+pop). Pause HIDES (the sprite's own F-E1 law). The mod's lifesize
+build (~1.7m withers, measured) sits under the motor's F-E3 ride
+capsule (eye 2.51) at unit scale - PEGAS_SCALE is the dial. Sounds
+swap key by key through the MW-D40 door (trot/gallop on the
+half-speed edge, the roar for the neigh window) and any unregistered
+key keeps its classic clip - a partial attach degrades sound by
+sound. The saddle hangs off the ONE transport-mode door (U53), fires
+once per session, never throws, and every failure leaves the sprite
+riding. The cart keeps the sprite always - the mod carries no cart.
+mwd42_ride.test.js. RECORDED, NOT BUILT: the other nineteen coats
+(a variant picker), the idle SoundGen moans, turn-in-place clips,
+and the unicorn/wings - all present in the data, all waiting.
+
+MW-D42 REOPENED RULE 24'S LAST LINE, and it needed reopening. Mac,
+playing it: the 3D bow "damages on click instead of following the bow
+animation and the arrow isn't shown during the animation on the bow
+itself."
+
+THE LOOSE. The note at :246-255 kept "shoot release" and the hit keys
+with Daggerfall's machine so that two clocks could not disagree about
+when a blow lands. That reason is still right and nothing here breaks
+it: Daggerfall's machine remains the ONLY thing that decides a hit
+happened, with its damage, its skills and its cooldown. What the note
+got wrong is that it settled the disagreement by making the ARM follow
+NOTHING - the arrow left on frame 5 of the classic release while the
+bow on screen was still being drawn. So the machine's 'hit' is HELD for
+a bow while the arm is animating and let go at the arm's release key.
+One clock still decides; only the moment it may announce itself moves.
+A silent arm - a .kf without the key - falls through a 1.2s ceiling
+rather than swallowing the shot, because the whole classic release is
+seven frames at a 0.0625 tick, about 0.44s, so a real release always
+wins that race.
+
+THE NOCK. Rule 24's "shoot attach" still drives the arrow wherever the
+data carries it, but the arrow may no longer DEPEND on that key
+existing. It is a text key inside the user's own .kf, and when it is
+absent or named otherwise arrowShown stayed false through the entire
+shot: the bow drew empty and nothing anywhere said why. The floor is
+attack() itself, which is not a departure from the reference - MW-D16
+records the surprise as "a freshly drawn BOW is empty-handed UNTIL YOU
+BEGIN TO DRAW IT", and attack() is that moment exactly. Gated on the
+shoot class and on an arrow part existing, so an empty quiver still
+draws an empty bow.
+
+THE FIXTURES COULD NOT HAVE CAUGHT EITHER. Every one of them carries
+rule 24's keys, so the port was correct against synthetic data and
+wrong in play, and no suite could tell. The nock pin is written to
+assert the state BEFORE any update() steps the playhead to the key,
+because that is the only place a fixture-shaped blind spot can be seen
+from. Worth remembering the next time a Morrowind rule is pinned only
+against generate.py.
+
+
+PX32b CORRECTS A WRONG ROOT I RECORDED ONE COMMIT EARLIER. PX32's
+message said the bow's slow equip in the pack was pendingWeapon
+draining from update(), which the host does not tick while a window is
+up. That is FALSE and the code says so plainly: the drain is in
+build()'s own `finally` (:2169-2170), beside the MW-D36 listener
+notify, so it settles asynchronously and needs no host frame at all.
+
+The pack's wiring is correct too, and was already made correct twice.
+equipItem is followed by refresh(), which hands the rig both the worn
+table and the hand through their own doors (PX25, PX26 F2), then
+refreshFigure(), then render(); the MW-D36 listener repaints again when
+the build lands.
+
+THE ACTUAL ROOT IS THAT A WEAPON SWAP REBUILDS THE WHOLE BODY.
+setWeapon's non-busy path calls build(), which reopens the archives,
+re-resolves every part and repacks the mesh - for a bow it resolves the
+ammunition on top. Nothing shows until that settles, and "not
+instantly" is that latency, not a lost message. The fix is an
+incremental swap of the weapon part alone rather than a rebuild, which
+is a real piece of work and is NOT started here: what is recorded is
+the diagnosis and the correction of the false one, so the next session
+does not begin by trusting a sentence I got wrong.
+
+MW-D44 CORRECTS MW-D34, which read half the reference and stopped one
+level too high. Mac: "I genuinely think the arrow placement in the hand
+is not 1:1 as you claim." He was right, and the claim was mine.
+
+attachArrow IS a bare getInstance(model, parent) - it never goes
+through SceneUtil::attach, so the ARROW mesh's own "BoneOffset" node is
+never searched for and never applied. MW-D34 stands on that and is
+MW-D44's control. But `parent` is getArrowBone(), and that is the
+ArrowBone node INSIDE the weapon's live scene graph. The weapon reached
+that graph through SceneUtil::attach, which applied the WEAPON's
+BoneOffset one level above ArrowBone. Everything below inherits it, the
+arrow included.
+
+The port gave the arrow its preTransform - the weapon NIF's own
+root-to-ArrowBone chain - and boneOffset: null, so the round sat
+displaced from the hand by exactly the weapon's offset. MW-D34's own
+comment already stated the correct rule, "what the arrow DOES inherit
+is its parent chain"; the code stopped short of the parent's offset.
+
+ONLY ON THE SECOND BRANCH. preTransform is set exactly when
+getArrowBone falls back to the weapon's mesh. When the ACTOR's skeleton
+carries the attach bone the parent is that bone and the weapon is not
+in the chain at all, so inheriting its offset there would be the same
+error mirrored.
+
+WHAT IS STILL OWED: a bow fixture carrying BOTH an ArrowBone and a
+BoneOffset. generate.py has neither in one mesh - boneoffset.nif is
+ammunition - so MW-D44 is pinned at SOURCE while MW-D34 holds the
+behavioural half. Named here rather than left to be rediscovered.
+
+MW-D45: WHICH BRANCH THE ARROW TOOK, SAID OUT LOUD. Mac, after four
+rounds on arrow placement: "when shooting, the arrow isnt held in the
+hand, it spawns on the body."
+
+THE RESEARCH THAT SETTLES WHAT THE TWO BRANCHES MEAN. OpenMW issue
+5642, which is the change that added the first one: "By default, OpenMW
+attaches arrow to the ArrowBone node from bow mesh, so arrow fetching
+animation is baked into bow mesh... I suggest to check if 'Bip01 Arrow'
+bone exists in actors skeleton, if it is not, attach arrow to the
+ArrowBone as fallback." The modding docs say the same from the other
+side: a "Bip01 Arrow" bone may be ADDED to actor skeletons, and then
+arrows attach there instead, which exists so beast races can carry
+quivers at their own angle.
+
+SO THE SKELETON BRANCH IS A MODDER'S OPT-IN AND VANILLA NEVER TAKES IT.
+That reframes the symptom: an arrow "on the body" is the quiver branch
+winning, which on vanilla data it cannot. Either the skeleton in play
+genuinely carries the bone, or something upstream says it does.
+
+AND THE PORT ALREADY KNEW WHICH BRANCH IT TOOK. arrowInfo.viaWeaponMesh
+has been set since the day MW-D16 was written and NOTHING EVER READ IT
+- not the card, not a note, not a probe. Four rounds of "the arrow is
+in the wrong place" were spent guessing at a fact the rig had already
+computed, because the only place it existed was a field on an object
+nobody printed. A value computed and never surfaced is not diagnostics,
+it is a comment. The arm card prints it now, with the bone it hung on.
+
+THE STANDING LESSON, and it is the session's: this port is read by
+someone who can run it and written by someone who cannot. Every fact
+the rig computes about DATA IT LOADED belongs on the card, because the
+card is the only wire between those two.
+
+MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS FOR. Mac, four
+rounds into arrow placement: "the placement is still not correct. It
+still spawns in the character."
+
+OpenMW issue 5642 is the change that added getArrowBone's first branch,
+and it says what the branch is FOR: modded skeletons that fetch arrows
+from a quiver, "allows to implement better shooting animations". The
+bone and the clips that move it ship together - a modder adds both.
+
+A skeleton carrying "Bip01 Arrow" against animations that never touch
+it is the one combination the feature cannot survive: the round hangs
+at the quiver and stays there for the whole shot, ON THE BODY, which is
+the symptom exactly. The port takes that branch on the bone alone, so
+any skeleton with the node - a replacer, a mod's xbase_anim - moved
+every arrow onto the body while the vanilla path the bow mesh already
+carries sat unused.
+
+The branch now asks BOTH questions. A .kf stores node names as plain
+ASCII, so "does any loaded clip drive this bone" is a byte scan, not a
+parse, and a name absent from every clip cannot be animated by one. No
+driver, no quiver: the round goes down the bow-mesh path.
+
+NOT A DEPARTURE FROM THE REFERENCE SO MUCH AS THE NEVER-TRAPS LAW
+APPLIED TO IT - a feature whose driving data is absent degrades to the
+default rather than deleting the picture. A wrong answer from the scan
+can only ever cost the VANILLA placement, which is the one that works.
+
+MW-D16's two branch pins now state the law instead of relying on the
+fixtures to imply it: they pass quiverDriven explicitly, because the
+fixture skeleton has the bone and the fixture clip does not drive it -
+precisely the combination this refuses.
+
+EE5b: THE BLACK SCREEN, AND THE PIN NOBODY HAD. Mac: "the game black
+screens on opening."
+
+TERRAIN_FS used uShadowAmt, uCloudCover, uCloudSoft, uCloudTime,
+uCloudWind and tfbm, and declared none of them - the block lived only
+in the world FS. A shader that will not compile throws inside the
+Renderer constructor, main.js's catch replaces document.body with the
+message, and nothing draws at all.
+
+Rooted rather than patched: the uniforms and the sky's hash/fbm are one
+interpolated chunk (CLOUD_SHADOW_GLSL) that both shaders read. Two
+copies of a uniform list is the same bug waiting for the next uniform,
+and copying the block into TERRAIN_FS would have been exactly that.
+
+THE PART WORTH KEEPING is what did not catch it. Suite green, build
+green, lint green - because node never compiles GLSL and the build
+never runs the page. Five thousand pins, and not one asked whether the
+game STARTS. tools/bootProbe.mjs asks it now, on both skins, in about
+five seconds, and needs no ARENA2 because the boot door draws before
+any game data is touched. Run it before a push that goes near a shader.
+
+MW-D46b: EVERY DOOR ASKS, NOT JUST THE FIRST ONE. Mac, after MW-D46:
+"Arrows are still not correctly attached to the hand and bow."
+
+MW-D46 wired the quiver check into the FIRST-PERSON build alone, and
+resolveWeaponParts has FOUR callers - both builds and both halves of
+the live weapon swap. The three I did not visit kept the parameter's
+default, which means the old behaviour, so the third-person body went
+on taking the quiver branch. And that is the rig whose skeleton
+actually carries "Bip01 Arrow": the full xbase_anim, not the
+first-person arms. It is the one that put the round in the torso.
+
+THIS ALSO EXPLAINS THE WHOLE HISTORY OF THE REPORT, which never fit one
+branch. First person has no "Bip01 Arrow", falls back, and wants an
+ArrowBone in the bow mesh - when the mesh has none it refuses and the
+bow draws empty. Third person HAS the bone, takes the quiver branch,
+and parks the round on the body. One symptom in Mac's words, two
+branches, two views - which is why every single-branch theory failed
+against half his evidence.
+
+The swap now READS the build's answer instead of re-deciding it: a body
+that resolved one way and swaps the other way mid-session is two
+answers to one question about one skeleton.
+
+THE SHAPE TO REMEMBER, and it is the third time this session: MW-D43
+fixed one of two pixelize passes, MW-D42 held the hit in one of two
+views, MW-D46 asked at one of four doors. A default that means "old
+behaviour" hides every caller you did not visit, and the port's own
+four-hosts rule exists for exactly this. Name every caller before
+shipping the parameter.
+
+MW-D47: THE BOW MESH IS ASKED FIRST. A DELIBERATE DIVERGENCE FROM
+getArrowBone's ORDER, recorded as one.
+
+Mac, six reports in: "the arrow isnt held in the hand, it spawns on the
+body." Every one of those reports was the SAME placement. "Through the
+face" in first person and "in the character" in third are one bone seen
+from two camera positions - the first-person camera sits at the head,
+so a round on a body bone renders through it. I read them as two
+symptoms and spent six rounds choosing which half of the evidence to
+believe.
+
+THE REFERENCE'S ORDER IS RIGHT FOR THE REFERENCE. OpenMW tries the
+actor's "Bip01 Arrow" first because the modder who adds that bone also
+ships the clips that CARRY the round from the quiver to the string -
+issue 5642's stated purpose, "better shooting animations". THIS PORT
+DOES NOT RUN THOSE CLIPS. It drives Daggerfall's own weapon machine, so
+a round placed at the quiver has nothing to move it and stays in the
+actor's chest for the whole shot.
+
+MW-D46 tried to gate the branch on whether a clip mentions the bone.
+That was the right instinct and too weak a test: an animation replacer
+that names the bone without carrying the arrow passes it. The order is
+the honest fix. The bow's own ArrowBone wins wherever the mesh has one,
+which is every vanilla bow; the quiver bone is what is left for a mesh
+that carries none, and still needs a clip that drives it.
+
+MW-D46's gate is kept for exactly that fallback, so both conditions
+guard the branch that can strand a round in a torso.
+
+WHAT WOULD MAKE THE REFERENCE ORDER CORRECT HERE: an arrow-fetching
+animation the port actually plays. Until that exists, the quiver branch
+has no way to end with the arrow on the string, and a first branch that
+cannot finish is not a first branch.
 ---
 
 # THE NPC ARC (NPC1-NPC5, 2026-08-31 / 2026-09-01)

@@ -1,9 +1,16 @@
-// TR1-TR3: THE TEST ROOM - a prebuilt character and a packed armory,
+// TSR1-TSR3: THE TEST ROOM - a prebuilt character and a packed armory,
 // behind a front-door rail entry. The pins here walk the ONE home
 // (systems/testRoom.js) and the three doors that read it (the pane,
-// the route, the boot), plus TR2's opts home in weaponRig - where the
+// the route, the boot), plus TSR2's opts home in weaponRig - where the
 // `!!gender` bug lived (the string 'male' is truthy, so every arms
 // build asked for the FEMALE skeleton and body columns).
+//
+// AUDIT 39 RENUMBERED THESE. They shipped as TR1-TR3 on the same day
+// the TRANSPORT arc closed TR1-TR5 (Systems-Arc.md), so one id named
+// two slices in two arcs and the ledger could not be grepped. The test
+// room is TSR; the transport arc keeps TR. Source comments in
+// ui/enhancedMenu.js and combat/weaponRig.js still carry the old
+// spelling.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -21,7 +28,7 @@ import { EQUIP_SLOTS } from '../src/systems/equip.js';
 
 const read = (p) => readFileSync(p, 'utf8');
 
-test('TR1: the presets cover the identity axes the body pipelines branch on', () => {
+test('TSR1: the presets cover the identity axes the body pipelines branch on', () => {
   assert.equal(TEST_PRESETS.length, 6);
   assert.equal(new Set(TEST_PRESETS.map((p) => p.id)).size, 6, 'ids are unique');
   for (const p of TEST_PRESETS) {
@@ -41,7 +48,7 @@ test('TR1: the presets cover the identity axes the body pipelines branch on', ()
   assert.equal(testPresetById('no-such'), null, 'an unknown id answers null, never a guess');
 });
 
-test('TR1: the armory is total where it claims to be, and every row is a real template', () => {
+test('TSR1: the armory is total where it claims to be, and every row is a real template', () => {
   for (const gender of ['male', 'female']) {
     const rows = testGearRows(gender);
     for (const r of rows) {
@@ -77,7 +84,7 @@ test('TR1: the armory is total where it claims to be, and every row is a real te
   }
 });
 
-test('TR1: rows mint through the game\'s own constructors, not a second copy', () => {
+test('TSR1: rows mint through the game\'s own constructors, not a second copy', () => {
   const rows = testGearRows('male');
   const sword = testItemOf(rows.find((r) => r.label === 'Steel Longsword'));
   assert.equal(sword.group, 'Weapons');
@@ -95,7 +102,7 @@ test('TR1: rows mint through the game\'s own constructors, not a second copy', (
   assert.equal(robe.name, 'Plain Robes', 'the template names the item');
 });
 
-test('TR2: armBuildOptsOf reads the STRING gender - the !! that built the female skeleton for everyone is dead', () => {
+test('TSR2: armBuildOptsOf reads the STRING gender - the !! that built the female skeleton for everyone is dead', () => {
   const entity = (gender) => ({
     race: 'DarkElf', gender, faceIndex: 3,
     items: [{ group: 'Weapons', templateIndex: ARROW_TEMPLATE, stackCount: 5 }],
@@ -111,7 +118,7 @@ test('TR2: armBuildOptsOf reads the STRING gender - the !! that built the female
   assert.equal(armBuildOptsOf({ ...entity('male'), items: [] }).hasAmmo, false);
 });
 
-test('TR3: the three doors all read the one home', () => {
+test('TSR3: the three doors all read the one home', () => {
   // The pane shows TEST_PRESETS and fires test:<id>.
   const menu = read('src/ui/enhancedMenu.js');
   assert.match(menu, /for \(const p of TEST_PRESETS\)/, 'the pane iterates the home, not a copy');
@@ -137,7 +144,7 @@ test('TR3: the three doors all read the one home', () => {
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 ? 'ARENA2_PATH not set - real-data validation skipped' : false;
 
-test('TR1: a preset becomes a live character - identity, armory, dressed baseline', { skip: skipReal }, async () => {
+test('TSR1: a preset becomes a live character - identity, armory, dressed baseline', { skip: skipReal }, async () => {
   const fetchBytes = async (name) => new Uint8Array(readFileSync(join(ARENA2, name)));
   const entity = { gender: 'male', race: 'Breton', raceId: 1, faceIndex: 0 };
   const preset = testPresetById('argonian-barbarian');

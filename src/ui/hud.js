@@ -385,8 +385,33 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // forget it or run it twice. It is a DOM readout, so it returns
   // before the canvas work below: the classic bars, the classic
   // compass and the classic icons are the CLASSIC skin's, and drawing
-  // both would be two HUDs at once.
+  // both would be two HUDs at once. What is NOT the classic skin's is
+  // hoisted above that return: the detector below, its tint, and the
+  // escort column - see F131/F133.
   //
+  // VB1: the one vitals snapshot both rigs read - the same fallbacks
+  // the plain bars carried since S15. `cursorActive` stands in for
+  // DFU's IsGamePaused at the detector (see hudVitals.js's header).
+  const cur = {
+    health: vitals.health ?? 0, maxHealth: vitals.maxHealth || 1,
+    fatigue: vitals.fatigue ?? 0, maxFatigue: maxFatigue(vitals) || 1,   // S15: the (Str+End) x 64 ceiling
+    magicka: vitals.magicka ?? 0, maxMagicka: vitals.maxMagicka || 1,
+  };
+  // AUDIT 39 F131 - THE DETECTOR IS A GAME-STATE SEAM, NOT A SKIN ONE.
+  // VitalsChangeDetector is its own MonoBehaviour (:66-81) and
+  // CameraRecoiler reads HealthLost/HealthLostPercent off it every
+  // Update whatever HUD is on screen; HUDFlickerController the same.
+  // Run below the skin fork, the detector never ran in the shipping
+  // default, so lastHealthLost() was pinned at 0 and a default-ON
+  // camera recoil and near-death warning were both dead. It runs
+  // above the `!art` return too, like the damage flash: a host whose
+  // HUD art failed still takes damage.
+  const rig = updateHudVitals(!!largeHud?.art, cur, dt, cursorActive);
+  // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
+  // paused game holds at 0 (timeScale) - the tint FREEZES under a
+  // window rather than throbbing on. cursorActive is this HUD's
+  // paused, exactly as the vitals line above treats it.
+  drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d: the parent panel's tint, under everything
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
   if (isEnhanced() && typeof document !== 'undefined') {
@@ -397,18 +422,20 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       // neither passes neither, and the plaque never draws.
       readied: readied ?? null,
       weapon: weapon ?? null,
+      // AUDIT 39 F133: the Detect markers are the whole visible output
+      // of Detect Magic/Enemy/Treasure, so the skin that replaces the
+      // classic compass carries them too.
+      detected: detected ?? null,
+      playerXZ: playerXZ ?? null,
     });
+    // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
+    // - DaggerfallHUD adds it unconditionally (:183-185) and even the
+    // large-HUD force-off block never names it - so it draws under
+    // this skin as well, from its own canvas layer.
+    drawEscortFaces(renderer, canvas);
     return;
   }
   if (!art) return;
-  // VB1: the one vitals snapshot both rigs read - the same fallbacks
-  // the plain bars carried since S15. `cursorActive` stands in for
-  // DFU's IsGamePaused at the detector (see hudVitals.js's header).
-  const cur = {
-    health: vitals.health ?? 0, maxHealth: vitals.maxHealth || 1,
-    fatigue: vitals.fatigue ?? 0, maxFatigue: maxFatigue(vitals) || 1,   // S15: the (Str+End) x 64 ceiling
-    magicka: vitals.magicka ?? 0, maxMagicka: vitals.maxMagicka || 1,
-  };
   const skin = vitalsSkin(art);
   const indicators = vitalsIndicatorsEnabled();
   // U45 - THE LARGE HUD IS AN ALTERNATIVE, NOT AN ADDITION.
@@ -423,15 +450,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     const s2 = hudScale(canvas.width, canvas.height);
     // VB1: HUDLarge owns its OWN HUDVitals instance (HUDLarge.cs:66) -
     // the second rig, updated only while this branch is the live HUD.
-    const largeRig = updateHudVitals(true, cur, dt, cursorActive);
-    // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
-    // paused game holds at 0 (timeScale) - the tint FREEZES under a
-    // window rather than throbbing on. cursorActive is this HUD's
-    // paused, exactly as the vitals line above treats it.
-    drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d: the parent panel's tint, under the bar
+    // F131 moved that update above the skin fork; `rig` IS the large
+    // instance here, since the fork asked the same `largeHud?.art`.
     lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
       ...largeHud,
-      vitalsBars: { rig: largeRig, skin, indicators },
+      vitalsBars: { rig, skin, indicators },
     });
     drawCrosshairAndModeIcon(renderer, canvas, font,
       { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
@@ -455,8 +478,6 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // between, the art-filled mains on top (Components.Add order,
   // HUDVitals.cs:108-119) - and the skin carries the F149 swap.
   {
-    const rig = updateHudVitals(false, cur, dt, cursorActive);
-    drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d + F-A6: the tint, frozen while paused like the bars
     let x = HUD_BORDER;
     const rects = {};
     for (const k of VITAL_KEYS) {

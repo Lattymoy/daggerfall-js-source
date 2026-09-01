@@ -94,7 +94,11 @@ test('V3: Mehrunes\' Razor - a failed save adds the target\'s WHOLE health and b
 test('V3: the Mace of Molag Bal - magicka drain with overflow raising max, the dry-target strength arm, the 12-minute decay', () => {
   const mace = SPECIAL_ARTIFACT_HANDLERS.get(ARTIFACTS.MaceOfMolagBal);
   const wielder = P();   // magicka 20 / max 30
-  const target = { health: 30, magicka: 10, stats: { willpower: 0, luck: 0 }, level: 1, skills: {}, activeEffects: [] };
+  // AUDIT 39: the target carries a real STRENGTH now. DrainTargetStrength
+  // goes through DrainEffect.IncreaseMagnitude, whose clamp is relative
+  // to the PERMANENT value, so a fixture with no strength at all pinned
+  // the clamp's degenerate corner instead of the law.
+  const target = { health: 30, magicka: 10, stats: { strength: 30, willpower: 0, luck: 0 }, level: 1, skills: {}, activeEffects: [] };
   // drain: damage 6 but target holds 10 -> 6 drained; 20+6 <= 30, no overflow
   let r = mace.strikes({ entity: wielder, target, damage: 6, nowMinutes: 100, rolls: () => 0.99 });
   assert.equal(target.magicka, 4);
@@ -117,7 +121,7 @@ test('V3: the Mace of Molag Bal - magicka drain with overflow raising max, the d
   mace.strikes({ entity: wielder, target, damage: 5, nowMinutes: 102, rolls: () => seq.shift() ?? 0.5 });
   assert.equal(maceState(wielder).statMods.strength, 4);
   assert.equal(liveStat(wielder, 'strength'), 54, 'the artifact arm reaches liveStat');
-  assert.equal(liveStat(target, 'strength'), 0, 'the target entry drains (fixture had no stats.strength)');
+  assert.equal(liveStat(target, 'strength'), 26, 'the target takes a real DrainStrength incumbent (30 - 4)');
   // decay: 12 game minutes after the last strike, both reset
   mace.magicRound({ entity: wielder, nowMinutes: 102 + MACE_MAX_INCREASE_ROUNDS });
   assert.equal(maceState(wielder).maxMagickaIncrease, 16, 'at the boundary nothing moves (strictly greater)');

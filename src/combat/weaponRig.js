@@ -88,7 +88,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // a named reason, never a plausible arm in the wrong place. An arm
   // drawn at the world origin while the player stands elsewhere is the
   // shape of failure this arc keeps shipping.
-  fpArm.attach(renderer, camera);
+  //
+  // AUDIT 39: AND THE BINDING FOLLOWS THE FRAME, not the constructor.
+  // fpArm is a module SINGLETON and attach() is its only writer, so the
+  // LAST rig built owned it: one dungeon visit rebound the arm to that
+  // context's per-frame eye latch, and leaving never restored it - the
+  // latch's closure keeps its last value, so afterwards the exterior
+  // rig drove the arm off a frozen pose and the walk/run/sneak/jump
+  // selection ran forever on whatever the player was doing on the last
+  // dungeon frame. The reference re-derives the state from the live
+  // actor every frame (character.cpp:2296-2330); here that is two field
+  // writes, so the rig that is stepping the arm re-claims it first.
+  const bindArm = () => fpArm.attach(renderer, camera);
+  bindArm();
   // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
   // construction, so attaching data to a running game changed nothing
   // until a reload - which is what "after uploading does not work at
@@ -148,6 +160,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  - a running EQUIP countdown shows EMPTY HANDS (:275-281) - the
    *    port drew the new weapon while silently refusing attacks,
    *    which was the block half without its cue. */
+  // MW-D42: the bow's held 'hit', waiting on the arm's release key, and
+  // the ceiling that keeps a silent arm from swallowing the shot. The
+  // classic bow release is 7 frames at the machine's 0.0625 tick, so a
+  // real release lands near 0.44s and always beats this.
+  const HELD_HIT_MAX_S = 1.2;
+  let _heldHit = false;
+  // MW-D42d: the loose SOUND, held with the loose it belongs to.
+  let _heldSound = false;
+  let _heldHitAge = 0;
   let _lastShown = false;
   function shown() {
     const m = playerWeapon.machine;
@@ -196,6 +217,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   }
 
   return {
+    /** MW-D39: the host's cast moment runs the arm's spellcast release.
+     *  One door, like setWeapon - the host never reaches into fpArm. */
+    castSpellAnim: (rangeType) => fpArm.castSpell(rangeType),
     playerWeapon,
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
@@ -231,6 +255,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *   host resolves them (or ignores them where nothing is in reach).
      */
     frame(dt, { paralyzed = false } = {}) {
+      bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
       // CH3 (characters-13): the swap pause drains at the classic
       // approximation - dt x 980 units/second, clamped at 0
@@ -282,6 +307,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
         fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items) });
+        // MW-D39: THE SPELL IS A STANCE. spellArmed() is already the
+        // rig's own per-frame read (WeaponManager's HasReadySpell leg
+        // above); the Morrowind arm rides the same one, and its fast
+        // path is a boolean compare, so the stance re-composes only
+        // when a spell is actually readied or let go.
+        fpArm.readySpell(spellArmed());
         // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
         // read that swaps the weapon now hands the rig its worn list;
         // setWorn's fast path is one key compare, and a change - a
@@ -296,11 +327,79 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
         fpArm.update(dt);
       }
-      return paralyzed ? [] : playerWeapon.update(dt);
+      if (paralyzed) return [];
+      // MW-D42 (Mac: the bow "damages on click instead of following the
+      // bow animation"): THE LOOSE WAITS FOR THE ARM. The machine's
+      // 'hit' for a bow is frame 5 of the classic 7-frame release, and
+      // when the Morrowind arm is the thing on screen that frame has
+      // nothing to do with what the player is watching - the arrow left
+      // while the bow was still being drawn.
+      //
+      // Morrowind-Rules.md:246-255 refused this and was half right: two
+      // clocks must not disagree about when a blow lands. They still do
+      // not. Daggerfall's machine remains the ONLY thing that decides a
+      // hit happens, its damage, its skills, its cooldown; all that
+      // moves is the moment it is allowed to announce one, and only for
+      // a bow, and only while the arm is actually animating the shot.
+      // The rule's own reason was the hit frame - it never argued the
+      // arrow should leave before the string does.
+      const evs = playerWeapon.update(dt);
+      // MW-D42c (Mac: "in third person, clicking instantly triggers the
+      // attack, unlike the changes we made to first person. Ensure
+      // parity"): THE ARM IS ANIMATING IN EITHER VIEW. active() is the
+      // FIRST-person predicate by construction - it ends in
+      // `viewMode === 'first'` - so MW-D42's hold silently did nothing
+      // the moment the wheel turned, and the classic frame-5 hit fired
+      // straight through on the click exactly as it always had. The
+      // question this asks is not "which view" but "is the arm the
+      // thing on screen", and in third person that is thirdActive().
+      // Same animation, same release key, same clock; only the pass
+      // that draws it differs, and the pass is none of the loose's
+      // business.
+      if (!(fpArm.active() || fpArm.thirdActive()) || !playerWeapon.machine.isBow) {
+        // The classic sprite path is untouched, and so is every melee
+        // weapon on every path.
+        if (_heldHit) _heldHit = false;
+        _heldSound = false;
+        return evs;
+      }
+      const out = [];
+      for (const ev of evs) {
+        if (ev === 'hit') { _heldHit = true; _heldHitAge = 0; continue; }
+        // MW-D42d (Mac: "the sound affect plays before the arrow is
+        // fired"): THE LOOSE SOUND RIDES WITH THE LOOSE. The machine
+        // puts bowSound on frame 4 and the hit on frame 5 - one 0.0625
+        // tick apart, which is the same instant to an ear. MW-D42 moved
+        // the HIT to the arm's release key and let the sound through
+        // untouched, so the two came apart by the whole length of the
+        // draw and the string was heard before the arrow left. Holding
+        // the arrow and not its sound is not half a fix, it is a new
+        // defect, and it was mine.
+        if (ev === 'bowSound') { _heldSound = true; continue; }
+        out.push(ev);
+      }
+      if (_heldHit) {
+        _heldHitAge += dt;
+        // NEVER-TRAPS. If the arm's "shoot release" key never comes -
+        // a .kf that does not carry it, an arm that loses its build
+        // mid-shot - the shot is not swallowed. It lands late rather
+        // than never, and HELD_HIT_MAX_S is generous enough that a real
+        // release always wins the race: the whole classic bow release
+        // is seven frames at a 0.0625 tick, about 0.44s.
+        if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
+          _heldHit = false;
+          // SOUND FIRST, then the hit - the machine's own order across
+          // frames 4 and 5, preserved rather than reinvented.
+          if (_heldSound) { _heldSound = false; out.push('bowSound'); }
+          out.push('hit');
+        }
+      }
+      return out;
     },
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */
     draw({ paralyzed = false } = {}) {
+      bindArm();    // AUDIT 39: the DRAWING rig owns it too - the arm renders through it
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();

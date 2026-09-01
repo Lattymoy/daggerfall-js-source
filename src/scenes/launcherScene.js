@@ -17,6 +17,7 @@
 //     the sound the player is setting can actually be played back.
 //   - NEVER TRAPS. A missing font costs the settings screen, never
 //     the game.
+import { UP_Y } from '../world/mat4.js';   // EV2: the shared billboard up axis
 import { SettingsWindow } from '../ui/settingsWindow.js';
 import { pointToPage, settingsMetrics } from '../ui/settingsMetrics.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -26,7 +27,7 @@ import { ensureAudio } from './shared.js';
 import { getPref } from '../systems/uiPrefs.js';
 
 const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-const LIGHT = new Float32Array([0, 1, 0]);
+const LIGHT = UP_Y;
 
 export async function runLauncher(canvas, renderer, status) {
   let font = null;

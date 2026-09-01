@@ -137,11 +137,14 @@ test('U38: drawHud is the ONE call - all four hosts get both components', () => 
   assert.doesNotMatch(code('ui/hudCrosshair.js'), /from '\.\/hud\.js'/,
     'the dependency runs ONE way - hud.js -> hudCrosshair.js');
   // and the hosts hand it a font and their cursor state
-  for (const rel of ['scenes/dungeonContext.js', 'scenes/exterior.js', 'scenes/world.js']) {
+  // AUDIT 39 (#132) MOVED THIS PIN. The comment that stood here -
+  // "worldModes MOUNTS the other two contexts rather than drawing its
+  // own HUD" - stopped being true at AUDIT 21 hosts F7, which gave the
+  // interior arm its own drawHud; the fourth host was the only one not
+  // passing the flag, so indoors the HUD was never told the pointer
+  // was free. All four are checked now.
+  for (const rel of ['scenes/dungeonContext.js', 'scenes/exterior.js', 'scenes/world.js', 'scenes/worldModes.js']) {
     assert.match(code(rel), /cursorActive:/, `${rel} reports whether the cursor is free`);
   }
-  // worldModes MOUNTS the other two contexts rather than drawing its
-  // own HUD - the four-hosts rule satisfied by composition, which is
-  // why it is checked for the MOUNT and not for a call it should not have
   assert.match(code('scenes/worldModes.js'), /buildDungeonContext/);
 });

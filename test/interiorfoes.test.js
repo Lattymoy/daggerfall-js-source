@@ -57,7 +57,13 @@ test('IF: the pool lives exactly as long as the interior, and hands its batches 
   // session - so nothing ever had to free its batches. An interior
   // pool is minted per building, so without a teardown every door you
   // left leaked a batch per foe plus every corpse on the floor.
-  assert.match(XF, /function destroy\(\) \{\n\s+for \(const f of foes\) releaseFoeBatch\(f\);/);
+  // AUDIT-39r: the pin MOVED, deliberately. destroy() gained one line
+  // AHEAD of the frees - the spawn/corpse-mint epoch it bumps, so work
+  // still crossing an await (a spawn between its two, a corpse marker
+  // waiting on its texture) is cancelled instead of landing in the
+  // pool this just emptied. What the pin is FOR is unchanged and still
+  // checked below: every batch is handed back and both lists end empty.
+  assert.match(XF, /function destroy\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+epoch\+\+;\n\s+for \(const f of foes\) releaseFoeBatch\(f\);/);
   assert.match(XF, /for \(const c of corpseBatches\) renderer\.destroyBillboardBatch\(c\.batch\);/);
   assert.match(XF, /corpseBatches\.length = 0;\n\s+foes\.length = 0;/, 'and the lists empty, so a stale handle draws nothing');
   assert.match(XF, /restoreWorld, destroy,/, 'exported');
@@ -123,8 +129,15 @@ test('IF: an interior swing can now MEET an enemy - the tally and the no-enemy s
   // with no interior pool ("trains nothing, which is what DFU does on
   // a miss") and wrong the moment one exists: a quest foe standing in
   // a building is not a miss.
-  const swing = WM.slice(WM.indexOf('for (const ev of interiorWeapon.frame(dt))'));
-  const body = swing.slice(0, swing.indexOf('interiorWeapon.draw();'));
+  // AUDIT 39 (#34) MOVED THIS ANCHOR: the rig's machine is gated on
+  // overlayHeld now (a swing in flight must not land its hit frame
+  // under an open window), so the loop header carries the gate.
+  // AUDIT 39r MOVED THIS ANCHOR AGAIN: the interior rig now takes the
+  // paralysis flag its two above-ground siblings take (WeaponManager
+  // .cs:235-239 - ShowWeapons(false) and no swing), so both ends of
+  // the slice carry the options bag.
+  const swing = WM.slice(WM.indexOf('for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed })))'));
+  const body = swing.slice(0, swing.indexOf('interiorWeapon.draw({ paralyzed })'));
   assert.match(body, /interiorFoes\?\.resolvePlayerHit\(interiorWeapon\.playerWeapon/, 'the pool is asked FIRST');
   assert.match(body, /tallySwingSkills\(playerEntity, interiorWeapon\.playerWeapon\.weapon\);\n\s+continue;/,
     'a connecting swing trains, and does not fall through to the action objects');

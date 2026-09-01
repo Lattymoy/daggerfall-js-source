@@ -172,7 +172,8 @@ test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', 
   // system (2026-08-29, Mac's call). The pane must still carry a REAL
   // one, or the law above ("every switch is real") is vacuous on an
   // empty list - the procedural sky is it.
-  assert.match(pane, /prefRow\('proceduralSky'/, 'the pane carries no live switch at all');
+  // EE1: the sky switch became ENHANCED ENVIRONMENTS, which contains it.
+  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the pane carries no live switch at all');
   assert.doesNotMatch(pane, /prefRow\('roads'/, 'the roads switch is back without its system');
   assert.match(pane, /skinRow\(\)/, 'and the skin switch comes home here');
 
@@ -200,7 +201,10 @@ test('R7: the pane does not claim a feature the tree does not have', () => {
   }
   // RA1: the sky IS built (render/enhancedSky.js, on by default), so
   // the pane must offer the switch and must no longer call it a hole.
-  assert.match(pane, /prefRow\('proceduralSky'/, 'the ES1 sky must be a real switch');
+  // EE1: that switch is now ENHANCED ENVIRONMENTS, which contains the
+  // sky along with the ground, the grass, the weather and the surface
+  // field - one switch, because they are one system.
+  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the ES1 sky must be a real switch');
   assert.ok(!/not built/.test(pane) || !/[Pp]rocedural sky[^]*not built/.test(pane),
     'the pane must not still label the shipped sky "not built"');
   assert.ok(!/Nothing procedural is built yet/.test(pane),

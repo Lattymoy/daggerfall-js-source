@@ -574,7 +574,14 @@ function composeRefs(rec, prio, female, bodyById, claim, notes, piece = null) {
     if (!id) { notes.push(`${rec.id}: ${row.name} names no body part`); continue; }
     const body = bodyById.get(id);
     if (!body) { notes.push(`${rec.id}: ${row.name} wants "${id}" and no BODY record carries it`); continue; }
-    claim(ref.part, prio, { slot: `${row.name} (${rec.id})`, bones: row.bones, model: body.model, recordId: id, piece });
+    // `slot` names the record for the notes; `partName` is the part's own
+    // identity, which is what the binder's rules key on - the reference
+    // tests the part TYPE (npcanimation.cpp:799-801's PRT_Hair filter),
+    // never a display string.
+    claim(ref.part, prio, {
+      slot: `${row.name} (${rec.id})`, partName: row.name,
+      bones: row.bones, model: body.model, recordId: id, piece,
+    });
   }
 }
 

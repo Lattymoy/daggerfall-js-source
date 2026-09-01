@@ -15,6 +15,21 @@ import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
 import { getFloat } from './settings.js';   // SETT: SoundVolume
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 
+/** The ArrayBuffer decodeAudioData is allowed to detach: THE VIEW'S OWN
+ *  RANGE, not the whole backing store.
+ *
+ *  AUDIT 39: this was `bytes.buffer.slice(0)`, which ignores byteOffset
+ *  and byteLength - a clip served out of an archive as a zero-copy
+ *  subarray (mwBsaFile.get) handed the decoder the ENTIRE .bsa, so the
+ *  decode failed on the archive header, the clip silently never
+ *  registered, and a full copy of the archive was allocated per attempt.
+ *  A plain ArrayBuffer argument passes through untouched (decodeAudioData
+ *  detaches it, which is why a view is copied at all). */
+export function decodableCopy(bytes) {
+  if (!bytes?.buffer) return bytes;
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+}
+
 /** Unsigned 8-bit PCM -> Float32 samples, verbatim (b - 128) / 128. */
 export function pcm8ToFloat32(bytes) {
   const out = new Float32Array(bytes.length);
@@ -146,9 +161,13 @@ export class AudioEngine {
   }
 
   _buffer(index) {
-    if (!this.snd) return null;
     let b = this.buffers.get(index);
     if (b !== undefined) return b;
+    // MW-D40: a REGISTERED buffer (a mod's own WAV, decoded through
+    // registerSound below) answers by string key; only the classic
+    // integer indexes fall through to DAGGERFALL.SND. An unregistered
+    // string is null - the callers' own missing-clip shape.
+    if (typeof index === 'string' || !this.snd) return null;
     const rec = this.snd.getSound(index);
     if (!rec || !rec.waveData?.length) { this.buffers.set(index, null); return null; }
     const samples = pcm8ToFloat32(rec.waveData);
@@ -156,6 +175,25 @@ export class AudioEngine {
     b.getChannelData(0).set(samples);
     this.buffers.set(index, b);
     return b;
+  }
+
+  /** MW-D40: the external-sound door. Decodes a user-supplied clip
+   *  (a mod's WAV - the music module has decoded attached files this
+   *  way since MU1) and registers it under a string key that every
+   *  existing entry point (playOneShot, setLoop, loop3d...) then takes
+   *  in place of a DAGGERFALL.SND index - setLoop's swap semantics
+   *  included. Answers false and registers nothing on a clip the
+   *  decoder rejects: the caller keeps its classic fallback. */
+  async registerSound(key, bytes) {
+    try {
+      this._ensureCtx();
+      if (!this.ctx || this.buffers.has(key)) return this.buffers.get(key) != null;
+      const buf = await this.ctx.decodeAudioData(decodableCopy(bytes));
+      this.buffers.set(key, buf);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   _ready() {
@@ -198,6 +236,70 @@ export class AudioEngine {
         src.disconnect();
       },
     };
+  }
+
+  /**
+   * TR2: a NAMED loop with live volume and pitch - Unity's
+   * `ridingAudioSource`, which TransportManager keeps as a field and
+   * re-points at a different clip mid-ride (the clop swap) while
+   * setting `.volume` and `.pitch` every frame. `clip` null stops it.
+   * Re-pointing at the same clip does NOT restart the source, which is
+   * what makes the half-speed swap audible rather than a stutter.
+   */
+  setLoop(name, clip, { volume = 1, pitch = 1 } = {}) {
+    this._loops ??= new Map();
+    const ch = this._loops.get(name);
+    if (clip == null) {
+      if (ch) { ch.stop(); this._loops.delete(name); }
+      return null;
+    }
+    if (ch) {
+      // TR-AUDIT F-F3: the clip is SWAPPED, not restarted. DFU's
+      // ridingAudioSource has `loop = false` (:190) and Update only
+      // calls Play() when it is not already playing (:273-276), so
+      // assigning `.clip` mid-clop takes effect when the CURRENT one
+      // ends. Restarting on the swap chops the hoofbeat in half.
+      ch.want = clip;
+      ch.setVolume(volume);
+      ch.setPitch(pitch);
+      return ch;
+    }
+    const made = this._makeRetriggerLoop(clip, volume, pitch);
+    if (!made) return null;
+    this._loops.set(name, made);
+    return made;
+  }
+
+  /** DFU's shape: a NON-looping source re-armed when it ends, which is
+   *  what `if (!isPlaying) Play()` on a `loop = false` source does. */
+  _makeRetriggerLoop(index, volume, pitch) {
+    if (!this._ready()) return null;
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+    gain.connect(this._out());
+    const ch = { want: index, playing: null, rate: pitch, stopped: false,
+      setVolume: (v) => { gain.gain.value = v; },
+      setPitch: (p) => { ch.rate = p; if (ch.playing) ch.playing.playbackRate.value = p; },
+      stop() {
+        ch.stopped = true;
+        if (ch.playing) { try { ch.playing.stop(); } catch { /* already stopped */ } ch.playing = null; }
+        gain.disconnect();
+      } };
+    const arm = () => {
+      if (ch.stopped) return;
+      const buf = this._buffer(ch.want);
+      if (!buf) { ch.playing = null; return; }
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.playbackRate.value = ch.rate;
+      src.connect(gain);
+      src.onended = () => { if (ch.playing === src) { ch.playing = null; arm(); } };
+      src.start();
+      ch.playing = src;
+    };
+    arm();
+    if (!ch.playing) { gain.disconnect(); return null; }
+    return ch;
   }
 
   /** Positional one-shot: a PannerNode standing in for Unity's 3D

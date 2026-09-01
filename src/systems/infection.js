@@ -304,7 +304,10 @@ export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = 
  * and a node test both reach the turn.
  */
 let _host = null;
-export function setInfectionHost(host) { _host = host ?? null; }
+/** AUDIT 39 (#37): answers the PREVIOUS host, the setDeathPresenter and
+ *  setPassiveSpecialsHost idiom - a host that mounts another over it
+ *  (worldModes mounting a dungeon) can hand the seam back on teardown. */
+export function setInfectionHost(host) { const prev = _host; _host = host ?? null; return prev; }
 
 /**
  * UpdateDisease's override, as the per-day pass a host calls. The

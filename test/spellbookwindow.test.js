@@ -240,10 +240,21 @@ test('U42 list: the scroll clause is INSIDE the movement guard, and nudges by ON
 
 // ── delete ────────────────────────────────────────────────────────
 
-test('U42 delete: the prompt arms, and EITHER answer closes the book', () => {
+test('U42/AUDIT-39r delete: the prompt arms, and either answer dismisses the BOX, not the book', () => {
   // DeleteButton_OnMouseClick (:811-838) + DeleteSpellConfirm
-  // (:840-852). The CloseWindow() sits OUTSIDE the Yes arm, so No
-  // puts you back in the world too - kept, quirk and all.
+  // (:840-852).
+  //
+  // THIS PIN MOVED, DELIBERATELY. It used to read the trailing
+  // CloseWindow() (:851) as "either answer closes the book" and
+  // asserted `done === true` on both arms. That was a misreading:
+  // CloseWindow() there is UserInterfaceWindow.CloseWindow (:127-132)
+  // -> PopWindow -> RemoveWindow (UserInterfaceManager.cs:190-199),
+  // which pops TopWindow, and TopWindow is the YesNo box mb.Show()
+  // pushed - DaggerfallMessageBox.ActivateButton (:479-484) raises
+  // the event without popping itself. The book survives, which is the
+  // only reading under which the Yes arm's own RefreshSpellsList(true)
+  // and UpdateSelection() do anything at all. nativeTrade's _confirm
+  // states the same law in this repo.
   const a = book(spell('A', 5), spell('B', 5));
   a.w.deleteButton();
   assert.equal(a.w.top, 'delete');
@@ -251,13 +262,24 @@ test('U42 delete: the prompt arms, and EITHER answer closes the book', () => {
   assert.equal(a.entity.spells.length, 2, 'nothing deleted yet');
   a.w.confirmDelete(false);
   assert.equal(a.entity.spells.length, 2, 'No deletes nothing');
-  assert.equal(a.w.done, true, '...and still closes the book (:851)');
+  assert.equal(a.w.top, null, '...the box is gone');
+  assert.equal(a.w.done, false, '...and the book is still open');
+  assert.equal(a.w.deleteSpellIndex, -1, 'and the parked row is released with it');
 
   const b = book(spell('A', 5), spell('B', 5));
   b.w.deleteButton();
   b.w.confirmDelete(true);
   assert.deepEqual(b.entity.spells.map((s) => s.name), ['B'], 'Yes removes the SELECTED spell IN PLACE');
-  assert.equal(b.w.done, true);
+  assert.equal(b.w.top, null);
+  assert.equal(b.w.done, false, 'Yes leaves the book open on a refreshed list');
+  assert.equal(b.w.deleteSpellIndex, -1);
+  assert.equal(b.w._rows.length, 1, 'RefreshSpellsList(true) ran on the shortened list');
+  assert.equal(b.w.selectedIndex, 0, 'UpdateSelection: the clamp caught the gone row');
+  // ...and the armed box can be answered twice over, which only a
+  // window that outlives the first answer can do.
+  b.w.deleteButton();
+  b.w.confirmDelete(true);
+  assert.deepEqual(b.entity.spells.map((s) => s.name), []);
 
   const empty = book();
   empty.w.deleteButton();
@@ -586,8 +608,15 @@ test('U42 sounds: OnPush/OnPop per mode, and the page turn plays ONCE', () => {
     w.input('KeyL');
     assert.deepEqual(played, [], 'arming the delete prompt is SILENT');
     w.input('KeyY');
-    assert.deepEqual(played, [SOUND.ButtonClick, SOUND.PageTurn, SOUND.PageTurn],
-      'the box answers, the edit turns a page, and the close turns another');
+    // AUDIT-39r: TWO sounds now, not three. The third was the book's
+    // own OnPop page turn, and the book no longer pops - the
+    // CloseWindow() at :851 pops the message box, whose close sounds
+    // nothing (UserInterfaceWindow.CloseWindow :127-132 raises the
+    // handler and no clip). The box answers, the edit turns a page,
+    // and the book stays open on the refreshed list.
+    assert.deepEqual(played, [SOUND.ButtonClick, SOUND.PageTurn],
+      'the box answers and the edit turns a page - nothing closes');
+    assert.equal(w.done, false, 'the book outlives its own prompt');
   });
   withSounds((played) => {
     const { w } = book(spell('A', 5), spell('B', 5));

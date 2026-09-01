@@ -202,7 +202,13 @@ test('PX24d: the journal goes through the door, on every host that has one', () 
   assert.doesNotMatch(world, /return new QuestJournalWindow\(\{/, 'the host no longer builds the classic window itself');
   assert.match(world, /makeJournal: \(mode\) => makeJournalWindow\(mode\)/, 'and the host bag carries it for worldModes');
   const dungeon = read('src/scenes/dungeonContext.js');
-  assert.match(dungeon, /activeOverlay = createChronicleWindow\(\{\n\s*\.\.\.questJournalHooks\(\),/);
+  // AUDIT 39 (#38) moved the pin, not the law: the dungeon's chronicle
+  // is now built by one `makeJournalWindow(mode)` - world.js's shape -
+  // because the pause window's Chronicle button needs the WINDOW back
+  // (its slot still holds the pause overlay it has just closed), while
+  // the key doors go on mounting it themselves.
+  assert.match(dungeon, /function makeJournalWindow\(mode\) \{[\s\S]{0,900}return createChronicleWindow\(\{\n\s*\.\.\.questJournalHooks\(\),/);
+  assert.match(dungeon, /activeOverlay = makeJournalWindow\(mode\);/, 'and _openJournal still mounts it');
   assert.doesNotMatch(dungeon, /activeOverlay = new QuestJournalWindow\(/);
   const ext = read('src/scenes/exterior.js');
   assert.doesNotMatch(ext, /new QuestJournalWindow\(/, 'the exterior has no journal and builds none');

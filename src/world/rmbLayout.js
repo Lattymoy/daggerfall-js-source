@@ -31,10 +31,13 @@ export const GROUND_TILE_DIM = 16;
 /**
  * Assemble an RMB block into world placements.
  * @param {object} dfBlock - output of BlocksFile.getBlock() (type Rmb).
+ * @param {{enhanced?:boolean}} [opts] - `enhanced` is the caller's skin.
+ *   The mills are an enhanced-skin departure and so is the SUBRECORD
+ *   they need, which mutates the parsed block - see attachWindmillRecord.
  * @returns {{models:Array<{modelId:string,modelIdNum:number,matrix:Float32Array}>,
  *   groundTiles:Array<Array<{record:number,rotated:boolean,flipped:boolean}>>}}
  */
-export function layoutRmbBlock(dfBlock) {
+export function layoutRmbBlock(dfBlock, { enhanced = false } = {}) {
   const rmb = dfBlock.rmbBlock;
   const models = [];
 
@@ -97,8 +100,19 @@ export function layoutRmbBlock(dfBlock) {
   // the block the port reads. worldModes already refuses a door whose
   // recordIndex is undefined, so the door stands and does not open,
   // rather than throwing on a subrecord that is not there.
+  //
+  // AUDIT 39 (#18): the ATTACH is gated on the skin, as the draw is.
+  // subRecords.length is the exact building count DFU bounds on
+  // (RMBLayout.cs:553, over a fixed 32-slot BuildingDataList), so a
+  // synthetic subrecord on the classic skin would give every FARM*
+  // block one phantom building - which can take a name-pool draw and
+  // misalign every named building after it in the location. `enhanced`
+  // is false by default: a caller that does not know about skins gets
+  // the block Daggerfall shipped. Without the attach the building keeps
+  // no recordIndex, which is WM2f's state - and it is not drawn on this
+  // skin anyway (`enhancedOnly`, honoured by the hosts).
   const mills = windmillsFor(dfBlock.name);
-  if (mills.length) {
+  if (mills.length && enhanced) {
     const recordIndex = attachWindmillRecord(dfBlock);
     for (const w of mills) {
       if (!w.building) continue;
@@ -125,10 +139,24 @@ export function layoutRmbBlock(dfBlock) {
  * windmillsFor above, and a subrecord carrying them as well would
  * stand every one of them twice. What it exists for is the interior.
  *
- * Idempotent, because BlocksFile CACHES its parsed blocks: the same
- * dfBlock object comes back for every location that uses this block and
- * for every re-entry, and appending on each visit would grow the array
- * without bound and change the recordIndex a saved door refers to.
+ * Idempotent, and AUDIT 39 (#20) corrected why. The old reason - that
+ * BlocksFile hands back the same parsed object every time - is false:
+ * blocksFile.js's autoDiscard is true and nothing ever clears it, so
+ * loadBlock discards the previous block on every request and an A,B,A
+ * sequence re-parses A into a NEW object (DFU is the same,
+ * BlocksFile.cs:32, which is exactly why RMBLayout.cs:45-47 keeps its
+ * own locationCache). The guard therefore covers the case that DOES
+ * arise: one parse handed to this function more than once - and it must
+ * stay, because a second append would grow the array and move the
+ * recordIndex a live door refers to.
+ *
+ * The port's stand-in for that locationCache is locationLayout, which
+ * retains one parse PER GRID CELL of the location it lays out; dfBlock
+ * object identity is therefore per-cell, which worldModes' `e.dfBlock
+ * === hit.dfBlock` test silently depends on.
+ *
+ * ENHANCED SKIN ONLY - see the call site: this widens subRecords, and
+ * subRecords.length is the building count three subsystems bound on.
  */
 export function attachWindmillRecord(dfBlock) {
   const subs = dfBlock.rmbBlock.subRecords;

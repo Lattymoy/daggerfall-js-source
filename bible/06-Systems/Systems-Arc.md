@@ -881,10 +881,14 @@ buy/sell windows are E2.
   too) - the daily UpdateRegionalPrices drift is FLAGGED to the
   calendar/economy sim.
 
-INTERIM loud: MagicItems stock SKIPPED (the loot MI interim); the
-Alchemist's 25% potion recipe pends recipes; books carry the
-template price (classic prices each BOOK FILE); restocking pends
-the shared calendar.
+INTERIM loud: books carry the template price (classic prices each
+BOOK FILE); restocking pends the shared calendar. (AUDIT 39 F106
+struck two clauses from this list because they had SHIPPED and the
+list still swore they had not - the MagicItems stock, F130, and the
+Alchemist's 25% recipe roll, F129. A pend list that names closed work
+is worse than no list: Home.md pins these lines mechanically, so the
+false clause was certified, and it is what kept the ungated MagicItems
+arm from being read as the bug it was.)
 
 Suite 448/98 (shopstock.test.js x3: the table + enum-mapping +
 material-value pins, the stock law incl. the rarity gate / gender
@@ -4784,11 +4788,14 @@ the wereclaws (V5) and nothing in between.
 
 Three details are load-bearing and each has its own mutant:
 
-- **The timer is armed at the CURSE**, in `Start` (`:67`), not at the
-  first transform and not lazily on the first frame. A lazy arm burns a
-  frame and makes the first howl after a morph a fresh 4-20s instead of
-  the remainder of a wait already running. The first cut did exactly
-  that and the campaign's expectation caught it.
+- **The timer is armed at three places, and never lazily on the first
+  frame.** `InitMoveSoundTimer` is called at the curse in `Start`
+  (`:67`), after every fire (`:209`), and inside `MorphSelf`'s own
+  `if (!isTransformed)` transform branch (`:521`), right after the
+  compound-race name swap. So a morph into beast form starts a **fresh**
+  4-20s. AUDIT 39 corrected this bullet: it used to name the curse as
+  the only arming site, on the strength of a note in `lycanthropy.js`
+  that read the C# as re-arming only there.
 - **The wait is real time**, `Time.deltaTime` inside ConstantEffect, so
   a rested night queues no howls and time-scaled travel does not
   either.
@@ -4798,8 +4805,10 @@ Three details are load-bearing and each has its own mutant:
   and my own expectation was wrong about it before the code was.
 
 The whole block sits inside DFU's `if (isTransformed)`, so an
-untransformed lycanthrope does not tick the timer down at all -
-morphing back mid-wait and returning later **resumes** it. Ticked by
+untransformed lycanthrope does not tick the timer down at all: the wait
+**pauses** while the beast is away. But returning is a `MorphSelf`, and
+that re-arms (`:521`) - so the paused remainder is **replaced**, never
+resumed. Ticked by
 all four hosts; in `worldModes` the arm sits deliberately outside the
 `if (magic)` block, because the beast makes its noise whether or not a
 cast engine was built.
@@ -5173,3 +5182,260 @@ should be re-read when its dependencies land; BG1 adds that a flag
 covering more than one claim should be *split* when it is written, or
 the first reader to check the hardest claim will file the whole thing as
 blocked.
+
+## TR - THE TRANSPORT ARC (2026-08-31, open)
+
+Mac: "let's work on the horses and carts". The port has carried the CART
+as an inventory fact since the W-slice - the wagon's 750kg, the
+dungeon-exit prompt, the transfer guards - and the HORSE as an item
+nobody could sit on. `motor.js:517` passed `riding: false` into the
+climbing gate with the note "the transport arc pends", and
+`DaggerfallTransportWindow` is the last of DFU's 60 real windows the
+port does not have (UI-Arc.md's table).
+
+DFU's arc, and how it splits:
+
+| Slice | What | State |
+|---|---|---|
+| **TR1** | TransportManager's MODE half + every law that reads it | **CLOSED** |
+| **TR2** | the riding sprite and its audio | **CLOSED** |
+| **TR3** | the transport window, and the ride made real in the world host | **CLOSED** |
+| **TR4** | the ship: board and disembark | **CLOSED** |
+
+### TR1 CLOSED: the mode
+
+`systems/transport.js` is TransportManager's mode half - the four modes,
+`horseItemIndexes` seeded with Transportation.Horse, HasHorse/HasCart,
+ToggleMount (mounted dismounts; on foot the HORSE is preferred and the
+cart is the fallback; with neither the mode is UNCHANGED, because there
+is no else arm) and the transition dismount (building and dungeon
+interiors only - DFU has no arm for LEAVING one, so you walk out on
+foot).
+
+Everything that reads the mode was already waiting for it:
+`PlayerSpeedChanger`'s two ride bases (dfRideBase walk+225, dfCartBase
+walk+100, neither taking walkSpeed's drag term), GetRunSpeed's riding
+arm - **a canter has no run base of its own**, it is the ride speed
+times the Running multiplier - CanRunUnlessRiding, PlayerEntity's
+"no Running tally from a saddle", ClimbingMotor's "no climbing from a
+saddle", and HeadBobber's Horse style, which AUDIT 28 W10 ported and
+then passed `riding: false` into. The motor carries `transportMode` and
+answers `riding`; the hosts pass it on.
+
+One DFU order kept rather than tidied: GetBaseSpeed tests CROUCH before
+riding, so a crouched rider takes the crouch base. It cannot happen in
+DFU (PlayerHeightChanger refuses to crouch while mounted, which is TR2's
+neighbour) but the order is the law and the port keeps it.
+
+**Nothing mounts yet** - TR3 owns the door. TR1 is the system under it,
+and every one of its laws is live the moment a mode is set.
+
+### TR2 CLOSED: the sprite and the audio
+
+`formats/cfaFile.js` is CfaFile whole - the FIFTH classic image format
+the port reads, after IMG, CIF/RCI, TEXTURE and GFX. One record, N
+frames of one size, RLE end-to-end behind a 14-byte header. One
+arithmetic quirk is kept verbatim and pinned as such: the run length is
+measured in COMPRESSED widths while the buffer is UNCOMPRESSED-sized,
+so where the two differ DFU stops short and the tail stays zero. The
+shipped files agree, and a "fix" would be a guess about art nobody in
+this container can open.
+
+`systems/riding.js` is the Update and OnGUI halves, pure: the 0.125s
+frame clock wrapping 3 to 0 and RESETTING (not pausing) while you
+stand, the loop that stops 0.2s after you do so a step-pause-step does
+not chop the clop, the clop that swaps on the half-speed EDGE rather
+than the state, the volume halved below half speed, the 1.2 running
+pitch (which TR1 makes unreachable while mounted - DFU has the same
+dead branch), the neigh at 1..4s on mounting and 2..39s after, firing
+for a CART too and at a standstill because its block sits outside both
+forks. The draw rect is bottom-centre at ScaleFactorX 0.8 on the
+200-line scale.
+
+Three sound ids joined the roster at DFU's numbers: HorseClop 97,
+HorseAndCart 104, HorseClop2 298.
+
+### TR3 CLOSED: the window, and the ride
+
+`ui/transportWindow.js` is DaggerfallTransportWindow whole - the last
+of DFU's 60 real windows the port did not have. Four rows and an exit
+on MOVE00I0; the three disabled rows are SUB-RECTS of a second image,
+MOVE01I0, whose sheet is declared 122x36, which is why the disabled
+rects sit at (-4,-4) from the button rects: they are sheet coordinates,
+not panel ones. Ownership is read once at Setup; foot is always
+enabled; a disabled row is a dead button that eats its click.
+
+The door is `dfuiOpenTransportWindow` (:690-700) on the T key, which
+`input.js` had routed to `ctx.openTransport` with no host implementing
+it - the same dangling door UI1 found. Grounded only, and AIRBORNE IS
+SILENTLY IGNORED: no message, no window.
+
+**You can ride now.** The world host picks a mode, loads the mount's
+CFA, ticks TR2's animator on the frame and draws the sprite under the
+HUD. The riding loop needed a real audio channel - `audio.setLoop`,
+a named loop with live volume and pitch, which is what Unity's
+`ridingAudioSource` field is; the first cut of this slice
+optional-chained into a method that did not exist, and that is the same
+lie UI1 had just been written to fix.
+
+### THE PARITY AUDIT (2026-08-31, Mac: "a deep comprehensive parity audit on all of this")
+
+TR1-TR3 re-read against TransportManager, PlayerSpeedChanger,
+PlayerMotor and PlayerHeightChanger. Four findings, ALL FOUR against
+this arc's own work, all fixed here:
+
+- **F-E1** OnGUI (:293) refuses to draw at all while the game is
+  paused - `!GameManager.IsGamePaused` sits in the same condition as
+  the Repaint test. An open window HIDES the mount; the first cut
+  froze the frame and kept drawing it.
+- **F-E2** `IsMovingLessThanHalfSpeed`'s else arm compares
+  `GetBaseSpeed()/2`, and TR1 made GetBaseSpeed return the RIDE base.
+  The port's line said "both DFU branches collapse to walk/2 here",
+  which was TRUE UNTIL TR1 SHIPPED AND FALSE AFTER. The case that
+  separates them is a SNEAKING rider: he lands between the two lines,
+  and under the old one he lost the half-speed stealth benefit DFU
+  gives him. TR2's clop swap and volume halving key off the same flag.
+- **F-E3** PlayerHeightChanger has DoMount/DoDismount actions of its
+  own (:159-170, :287-320): `controllerRideHeight` is 2.6 - "a horse
+  plus seated rider (1.6m + 1m)" - against 1.8 standing, so a rider's
+  eye sits at 2.51 and his CAPSULE is the horse's, which is what he
+  clears and bumps. Mounting rises over timerMedium, dismounting falls
+  over timerFast, and mounting CLEARS the crouch (:306) - the very law
+  that makes GetBaseSpeed's crouch-before-riding order unreachable,
+  which TR1 had already recorded and then not implemented.
+- **F-E4** ApplyInputSpeedAdjustment's SNEAK arm subtracts from
+  whatever GetBaseSpeed returned, ride base included. TR1's first cut
+  put the ride arm BESIDE the sneak instead of under it, so a sneaking
+  rider trotted.
+
+The shape is the one every self-audit in AUDIT 28 found: the
+transcription of each DFU function was right, and the seams between
+them were where the faults lived - three of these four are a law that
+was correct before TR1 and that TR1 silently invalidated.
+
+### TR5 CLOSED: the tail, and two dangling doors of this arc's own
+
+TR1 ported `dismountOnTransition` and nothing called it: you could ride
+into a shop and stay mounted. TR3 exported `CANNOT_CHANGE_INDOORS` and
+nothing said it: the T key indoors did nothing at all. Both are the
+shape this session found three times in older code - a live seam that
+claims a feature - and then left twice in its own. Fixed: the two DFU
+transitions dismount through one helper, both interior hosts refuse
+with the line, and the mode change is ONE place (U53) that the T-key
+pick and the interior dismount both take, so the mount's art is dropped
+on every change rather than only on the pick.
+
+### TR4 CLOSED: the ship, and THE ARC WITH IT
+
+It was smaller than scoped: the OWNERSHIP half needed nothing, because
+the bank arc has carried ShipType, the prices, the two map-pixel coords
+and `ownedShip` since H3 - TR4 is simply its first reader. What was
+missing is that "Ship" is not a mode you travel IN (DFU's own comment
+on the enum): it is a TELEPORT that lands back on Foot, with
+`boardShipPosition` as the whole of its state. Boarding remembers where
+you were and lands at a RandomStartMarker; disembarking returns to the
+remembered spot with NO reposition and forgets it; and IsOnShip is a
+remembered boarding AND standing on the ship's own pixel, so a player
+who boards, saves and loads elsewhere is not aboard - DFU's behaviour,
+kept.
+
+FOUND WHILE LANDING IT: SerializablePlayer (:180, :425) persists the
+boarding memory and the port did not. A save taken at sea loaded with
+IsOnShip false, so the next disembark would BOARD again and overwrite
+where the player actually was. `save.js` carries it now; an older
+envelope restores null, which is the never-boarded state rather than a
+broken one.
+
+The terrain-sampler check (:373-379) has no counterpart - the port has
+one sampler and no version, so the fallback it guards can never fire.
+Recorded, not invented.
+
+### THE SECOND PARITY AUDIT (2026-08-31)
+
+TR2 and TR4 re-read against TransportManager's audio and ship arms.
+Two findings and one REFUTATION:
+
+- **F-F1** `shipTransition` answers a `reposition` and the host inferred
+  the landing from `restore` instead of reading it - two encodings of
+  one decision, free to drift. The host reads it now. Recorded with it:
+  StreamingWorld's RandomStartMarker is `PositionPlayerToLocation`,
+  which falls back to the TERRAIN ORIGIN when the pixel carries no
+  location (:1437-1447) - the ship coords are open sea, so the fallback
+  is the arm that runs and the port's default landing stands in for it.
+  FLAGGED for the first session with ARENA2: confirm (2,2) and (5,5)
+  carry no location.
+- **F-F3** DFU's `ridingAudioSource` is `loop = false` (:190) and Update
+  only calls `Play()` when it is not already playing (:273-276) - so
+  assigning `.clip` mid-clop takes effect when the CURRENT one ENDS.
+  TR2 used a true-loop source and restarted it on the swap, chopping
+  the hoofbeat in half. `audio.setLoop` is DFU's shape now: one
+  non-looping source re-armed on `ended`, reading `want` each time.
+- **REFUTED: `Settings.SoundVolume`.** DFU multiplies by it at every
+  riding call site (:197, :271, :282) and the port passes 1 - which is
+  CORRECT here: the SETT-slice applies SoundVolume once on the master
+  bus every source connects through, so multiplying again would
+  double-scale it. Not a finding.
+
+**THE TRANSPORT ARC IS CLOSED.** TR1 mode, TR2 sprite and audio, TR3
+window, TR4 ship, TR5 tail - and with TR3, all sixty of DFU's real
+windows are ported.
+
+(2026-08-31, after closing: MW-D42 hangs an ENHANCED-SKIN 3D horse
+beside the sprite - the player's own Pegas Horse Ranch data, read at
+runtime through the MW lane, never bundled. The arc stays closed: the
+sprite is still the 1:1 lane and every classic path is byte-identical;
+two pins moved by exactly the lines the swap needed (tr3's ride-loop
+clip, tr5's mode-door tail), both recorded in their tests. The whole
+story lives in Morrowind-Rules MW-D40..42.)
+
+## TSR - THE TEST ROOM (2026-08-31, Mac's ask)
+
+Mac: "a menu option that leads to a sort of test environment where I
+can pick a prebuilt character and loot armor, weapons, etc." There is
+no DFU original - this is a port tool - but it SHIPS, and until AUDIT
+39 its entire record in the bible was one Testing.md row, which is how
+a shipped systems module ends up unfindable.
+
+THE IDS, corrected here. The room shipped as TR1-TR3 on the day the
+transport arc above closed TR1-TR5, so two arcs claimed the same three
+ids and a grep for "TR2" answered with the riding sprite AND the
+gender bug. The room is **TSR** from now on (renumbered in
+`test/testroom.test.js` and Testing.md's row); the transport arc keeps
+TR. Source comments in `ui/enhancedMenu.js` and `combat/weaponRig.js`
+still carry the old spelling, which this paragraph exists to catch.
+
+**TSR1 - ONE HOME.** `systems/testRoom.js` holds all three parts: the
+six prebuilt characters, the armory they walk in with, and the seeding
+that turns a preset into a live entity. The presets exercise the axes
+the body pipelines actually branch on - both sexes, human and elf and
+BOTH beast races, a real `faceIndex` - because a second copy of a
+preset in any door is how two rooms drift apart. The armory is TOTAL
+where it claims to be: one of every weapon type in steel (each its own
+Morrowind animation class and attach bone), every armor slot with all
+four shields, the material spread that changes the Morrowind record,
+a 60-arrow quiver so the bow draws loaded, and the SEX'S OWN clothing
+templates. Every row mints through the game's own constructors
+(`createWeapon`, `mintCondition`, the arrow arm's classic zero) -
+never a second item table.
+
+**WHAT THE ROOM IS NOT: a new scene.** It boots the same streaming
+world every other door boots, through the same headless-chargen seam
+`?class=` has used since AUDIT 17f. The room is a CHARACTER and a
+PACK, not a place - the point is to see the real rigs wearing real
+equipment through the real equip table, and a bespoke scene would be
+testing itself.
+
+**TSR2 - THE !!GENDER BUG, found building the room.** Gender is the
+string 'male'/'female' everywhere in this port, so the pause card's
+`female: !!playerEntity.gender` was TRUE FOR EVERYONE: every Morrowind
+build asked for the female skeleton and body columns, half-masked by
+the male-record fallback fills. The arms-build opts now live in one
+home (`weaponRig.armBuildOptsOf`) that the card and the room both ride,
+and the pin requires the string compare - a `!!` dies on 'male'.
+
+**TSR3 - THREE DOORS, ONE HOME.** The pane iterates `TEST_PRESETS` and
+fires `test:<id>`; `main.js` sets that param on this choice and DELETES
+it on every other (F12's law - New Game must not re-enter the room);
+the world boot resolves the preset BEFORE branching, so an unknown id
+falls through to the wizard rather than guessing, and builds the arms
+only when Morrowind data is attached.

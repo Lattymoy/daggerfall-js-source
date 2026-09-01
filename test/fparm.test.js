@@ -8,7 +8,7 @@ import { PART_BONES } from '../src/formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../src/formats/mwFaceMatch.js';
 import { assembleFirstPersonArm, poseAssembly } from '../src/formats/mwFirstPerson.js';
 import {
-  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, wornEquipKeyOf,
+  packFpArm, fpSkeletonPath, buildFpArm, createFpArm, wornVerdicts, animWeaponType, UPPER_BODY, wornEquipKeyOf,
   FP_CLIP_PATH, NIF_TO_PASS, FP_FIELD_OF_VIEW, firstPersonEye, FP_FLOATS,
   collectArmTextures,
 } from '../src/combat/fpArm.js';
@@ -244,7 +244,14 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   }
   // The planes come off the arm's own reach, in RIG units, because the
   // file need not be authored in metres.
-  assert.match(draw, /Math\.max\(built\.reach \/ 200, 1e-4\), built\.reach \* 4/);
+  // AUDIT 37 F1: TWO reaches - the near plane off the IDLE pose it was
+  // tuned against, the far off PX27's sweep of every clip, because one
+  // number could not answer both: growing it to stop the far plane
+  // cutting a swing short pushed the near plane out with it, and a rig
+  // whose widest pose is four times its idle would have clipped the
+  // knuckles off the camera to save the elbow.
+  assert.match(draw, /const near = Math\.max\(\(built\.idleReach \?\? built\.reach\) \/ 200, 1e-4\);/);
+  assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, built\.reach \* 4\)/);
 });
 
 test('MW-D8: a build that cannot reach its data REFUSES with a stage, and never throws', async () => {
@@ -293,7 +300,7 @@ test('MW-D8: active() is false unless EVERY term holds - a frozen arm is not a r
   // MW-D26 widened the clip term: SOME slot playing - action, movement
   // or idle - is the same guarantee (a rig with none is the frozen bind
   // pose, and the sprite is the correct picture).
-  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| idleState\)\s*&& viewMode === 'first'\);/,
+  assert.match(src, /const active = \(\) => !!\(built && built\.ok && mesh && renderer && camera && \(actionState \|\| movementState \|\| jumpState \|\| idleState\)\s*&& viewMode === 'first'\);/,   // MW-D39 widened the clip term again: the jump slot counts
     'built, built.ok, mesh, renderer, camera, a clip AND the first-person view - all seven');
 });
 
@@ -610,7 +617,7 @@ test('MW-D9f: the rig gates the step on ready() and the draw on active()', () =>
 
   // ready() must not require the mesh, or the deadlock comes straight back.
   const src = rd('src/combat/fpArm.js');
-  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| idleState\) && renderer\);/,
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && \(actionState \|\| movementState \|\| jumpState \|\| idleState\) && renderer\);/,   // MW-D39: the jump slot counts here too
     'ready() is update()\'s own requirements - no mesh term, no camera term (MW-D26 widened the clip term)');
 });
 
@@ -2427,7 +2434,7 @@ test('MW-D36: the pack takes the model only when it stands, and never lets the m
 
 test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quantised yaw', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 1400);
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 2600);
   // F1: the inventory opens from first person; the figure must not
   // demand the wheel's view mode or a mesh only the wheel uploads.
   assert.ok(!/thirdActive\(\)/.test(fig), 'the figure gates on the wheel being active');
@@ -2802,4 +2809,369 @@ test('PX25: the pack hands the rig the worn table on every refresh', () => {
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);
   assert.match(src, /if \(pendingWorn\) \{ const p = pendingWorn; pendingWorn = null; this\.setWorn\(p\); \}/);
+});
+
+// ── MW-D39: JUMP - THE FOURTH SLOT ──────────────────────────────────
+
+import { jumpAnimState } from '../src/formats/mwFirstPerson.js';
+import { resetClip, advanceClip } from '../src/formats/mwAnim.js';
+
+test('MW-D39: the jump state is update()\'s own derivation (character.cpp:2195-2296)', () => {
+  // In the air, not swimming, not levitating: InAir, movement gated.
+  assert.deepEqual(jumpAnimState({ grounded: false }), { jump: 'inair', inJump: true });
+  // THE TAKEOFF FRAME (:2224-2227): the jump latch fires while still
+  // grounded - movement gates off, but nothing plays yet.
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpQueued: true }), { jump: null, inJump: true });
+  // THE LANDING FRAME: the motor's latch is not yet cleared, but the
+  // prior state was InAir - the reference's mJumpState guard keeps it
+  // from reading as a fresh takeoff, and the still-playing clip makes
+  // it Landing (:2292-2293).
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpQueued: true, priorInAir: true, jumpPlaying: true }),
+    { jump: 'landing', inJump: false });
+  // A ledge walked off and landed - no jump latch ever - still lands.
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpPlaying: true }), { jump: 'landing', inJump: false });
+  // The landing clip finished: nothing plays, nothing gates.
+  assert.deepEqual(jumpAnimState({ grounded: true }), { jump: null, inJump: false });
+  // Swimming and levitation refuse the whole family (:2206 - the
+  // reference's !inwater && !flying gate), airborne or not.
+  assert.deepEqual(jumpAnimState({ grounded: false, swimming: true }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: false, levitating: true }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: true, jumpQueued: true, levitating: true }), { jump: null, inJump: false });
+});
+
+test('MW-D39: the two jump plays over real keys - InAir loops on its loop window, Landing plays the tail once', () => {
+  const keys = [
+    { time: 0.0, text: 'jump: start' },
+    { time: 0.2, text: 'jump: loop start' },
+    { time: 0.8, text: 'jump: loop stop' },
+    { time: 1.0, text: 'jump: stop' },
+  ];
+  // InAir (character.cpp:528-529): start -> stop, unbounded loops, NO
+  // loopfallback - the loop window is the group's own keys.
+  const air = resetClip(keys, 'jump', { start: 'start', stop: 'stop', loopCount: Infinity });
+  assert.ok(air.ok);
+  advanceClip(air, keys, 2.5, null);
+  assert.ok(air.playing, 'a long fall keeps playing');
+  assert.ok(air.time >= 0.2 && air.time <= 0.8, `the playhead lives in the loop window (${air.time})`);
+  // A mid-air stance change re-picks from "loop start" (:522's
+  // startAtLoop), never replaying the takeoff.
+  const rePick = resetClip(keys, 'jump', { start: 'loop start', stop: 'stop', loopCount: Infinity });
+  assert.equal(rePick.time, 0.2);
+  // Landing (:531): ONCE, from "loop stop" to "stop".
+  const land = resetClip(keys, 'jump', { start: 'loop stop', stop: 'stop', loopCount: 0 });
+  assert.ok(land.ok);
+  assert.equal(land.time, 0.8);
+  advanceClip(land, keys, 5, null);
+  assert.ok(!land.playing, 'the landing tail ends');
+  assert.equal(land.time, 1.0);
+  // Data with no loop keys: InAir plays once and HOLDS (the
+  // reference's autodisable=false falling pose)...
+  const bare = [{ time: 0, text: 'jump: start' }, { time: 1, text: 'jump: stop' }];
+  const held = resetClip(bare, 'jump', { start: 'start', stop: 'stop', loopCount: Infinity });
+  advanceClip(held, bare, 3, null);
+  assert.ok(!held.playing && held.time === 1, 'held at its last pose');
+  // ...and Landing FAILS the pick outright - Animation::reset:992
+  // returns false and the reference's play silently does nothing.
+  assert.ok(!resetClip(bare, 'jump', { start: 'loop stop', stop: 'stop', loopCount: 0 }).ok);
+});
+
+test('MW-D39: refreshJumpAnims\' wiring, source-pinned (character.cpp:494-532, :841-844)', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  // The refresh order is the reference's: jump before movement, and
+  // its inJump is the movestate ladder's gate (:2296).
+  assert.match(arm, /const inJump = refreshJump\(\(cam && cam\.move\) \|\| null\);\s*\n\s*refreshMovement\(cam, dt, inJump\);/,
+    'jump refreshes first and gates movement');
+  assert.match(arm, /const base = inJump \? null : movementAnimState\(\{/,
+    'airborne, the movestate ladder does not run');
+  // The four-slot winner, in the priority enum's order
+  // (character.hpp:30-43: Weapon > Movement > Jump > idle-tier).
+  assert.match(arm, /actionState \|\| movementState \|\| jumpState \|\| idleState/);
+  // The group is the one-home ladder, from the jump base.
+  assert.match(arm, /composeStanceGroup\('jump', stance, hasGroup\)/);
+  // InAir: unbounded loops, startAtLoop on a forced same-state re-pick,
+  // and NO loopFallback in the options.
+  assert.match(arm, /\{ start: startAtLoop \? 'loop start' : 'start', stop: 'stop', loopCount: Infinity \}/);
+  // Landing: the tail, once.
+  assert.match(arm, /\{ start: 'loop stop', stop: 'stop', loopCount: 0 \}/);
+  // The jump advances at speedmult 1.0 - no rate scaling (:528-531).
+  assert.match(arm, /advanceClip\(jumpState, \(jumpSource \|\| rig\(\)\)\.keys, dt, null\)/);
+  // A jump ending resets the idle with it (:499-505), and the slot dies
+  // with a rebuild, an unload and a view switch like the others.
+  assert.match(arm, /function resetJump\(\)/);
+  assert.equal((arm.match(/jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null;/g) ?? []).length, 3,
+    'resetJump, the rebuild wipe and the unload wipe all clear the slot');
+});
+
+test('MW-D39: THE FOUR HOSTS feed the jump-state inputs, named and swept', () => {
+  // exterior.js, world.js, worldModes.js drive the camera dep; the
+  // dungeon host routes through dungeonContext.drawFoes' playerMove
+  // latch. All four carry the same spelling, so none can quietly hand
+  // the arm a rig that never jumps.
+  const literal = 'grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating';
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
+    assert.ok(readFileSync(host, 'utf8').includes(literal), `${host} feeds the jump-state inputs`);
+  }
+});
+
+// ═══ MW-D39: the spellcast stance and the cast ══════════════════════
+test('MW-D39: a readied spell IS the stance, and outranks the sheath', async () => {
+  const { MW_WEAPON_TYPE, weaponShortGroup, weaponLongGroup, composeWeaponGroup } = await import('../src/formats/mwFirstPerson.js');
+  // the reference asks for the spell's weapon type before it asks what
+  // is in the hand; sheathed hands with a spell readied are the
+  // caster's own, which is what the spellcast animation wants.
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, false, true), MW_WEAPON_TYPE.Spell);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, true, true), MW_WEAPON_TYPE.Spell);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.None, true, true), MW_WEAPON_TYPE.Spell);
+  // and without one, nothing moved
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, false, false), MW_WEAPON_TYPE.LongBladeOneHand);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.LongBladeOneHand, true), MW_WEAPON_TYPE.None);
+  assert.equal(animWeaponType(MW_WEAPON_TYPE.None, false), MW_WEAPON_TYPE.HandToHand);
+  // the spell's groups are the reference's own names
+  assert.equal(weaponShortGroup(MW_WEAPON_TYPE.Spell), 'spell');
+  assert.equal(weaponLongGroup(MW_WEAPON_TYPE.Spell), 'spellcast');
+  // the group composes when the data has it, and answers nothing when
+  // it does not - a spell is not a "real weapon", so it takes no melee
+  // fallback ladder and the arm keeps its stance rather than swinging.
+  assert.equal(composeWeaponGroup(MW_WEAPON_TYPE.Spell, (g) => g === 'spellcast').group, 'spellcast');
+  assert.equal(composeWeaponGroup(MW_WEAPON_TYPE.Spell, () => false).group, null);
+});
+
+test('MW-D39: readySpell and castSpell are the two doors, and neither gates the magic', async () => {
+  const arm = createFpArm();
+  // no build: both doors answer false and nothing throws - a host may
+  // call them before the archives exist.
+  assert.equal(arm.readySpell(true), false);
+  assert.equal(arm.castSpell(), false);
+  assert.equal(arm.status().spellReady ?? false, false);
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  // the stance re-composes on ready, and the three group readers take the flag
+  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 4,
+    'idle, movement (x2) and the weapon group must all read the spell stance');
+  assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
+  // a cast in flight is abandoned by an un-ready (an aborted spell)
+  assert.match(src, /if \(!want && upper === UPPER_BODY\.Casting\)/);
+  // the cast plays the group's own section and lands back in the stance
+  assert.match(src, /if \(!playAction\(`\$\{type\} start`, `\$\{type\} stop`, 0\)\)/);
+  assert.match(src, /case UPPER_BODY\.Casting:\n\s+\/\/ MW-D39[\s\S]*?upper = UPPER_BODY\.WeaponEquipped;/);
+  assert.equal(UPPER_BODY.Casting, 7);
+  // the key pair is the SPELL'S RANGE (character.cpp:1618-1636), not a
+  // single "cast" - a first draft guessed 'cast start', which no
+  // Morrowind animation carries, and every cast would have been a
+  // silent note. Daggerfall's five ranges fold onto the reference's
+  // three: the areas cast like the point form they surround.
+  const { spellAttackType } = await import('../src/combat/fpArm.js');
+  assert.equal(spellAttackType(0), 'self');          // CasterOnly
+  assert.equal(spellAttackType(3), 'self');          // AreaAroundCaster
+  assert.equal(spellAttackType(1), 'touch');         // ByTouch
+  assert.equal(spellAttackType(2), 'target');        // SingleTargetAtRange
+  assert.equal(spellAttackType(4), 'target');        // AreaAtRange
+  assert.equal(spellAttackType(undefined), 'target', 'a host that names no range aims');
+});
+
+test('MW-D39: the hosts wire it through the rig\u2019s one door, on the reference\u2019s own moments', () => {
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  // the ready rides the per-frame read the rig already makes
+  assert.match(rig, /fpArm\.readySpell\(spellArmed\(\)\);/, 'the arm must follow the rig\u2019s own HasReadySpell read');
+  assert.match(rig, /castSpellAnim: \(rangeType\) => fpArm\.castSpell\(rangeType\),/, 'the cast must have one door, and it carries the range');
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
+    const h = readFileSync(host, 'utf8');
+    assert.match(h, /castSpellAnim/, `${host} does not run the cast animation`);
+    // it hangs off the CAST moment, not the ready one
+    const cast = h.slice(h.indexOf('onCastReadySpell'), h.indexOf('onCastReadySpell') + 500);
+    assert.match(cast, /castSpellAnim\??\.?\(sp\?\.rangeType\)/, `${host} does not hand the cast its range`);
+    assert.ok(!/castSpellAnim/.test(h.slice(h.indexOf('onNewReadySpell'), h.indexOf('onCastReadySpell'))),
+      `${host} casts on the READY moment - the spell has not gone yet`);
+  }
+});
+
+// ═══ AUDIT 36: the spellcast lane, read against the hosts ═══════════
+test('AUDIT 36 F1: ALL THREE hosts run the cast animation, on the cast moment, with the range', () => {
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = readFileSync(host, 'utf8');
+    const at = h.indexOf('onCastReadySpell');
+    assert.ok(at > 0, `${host} raises no cast moment`);
+    assert.match(h.slice(at, at + 700), /castSpellAnim\??\.?\(sp\?\.rangeType\)/, `${host} does not run the cast animation with its range`);
+  }
+});
+
+test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stance', async () => {
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  const fn = src.slice(src.indexOf('    castSpell(rangeType = 2) {'), src.indexOf('    /** The held bow comes up.'));
+  // the old gate refused a cast that arrived before any frame read the
+  // ready - which is EVERY CasterOnly spell, readied and cast in one
+  // synchronous call (hostMagic readySpell -> castInput for range 0).
+  assert.ok(!/!spellReady\) return false/.test(fn), 'the cast must not refuse before the ready has been read');
+  assert.match(fn, /if \(!spellReady\) \{ spellReady = true; refreshWeaponGroup\(\); resetIdle\(\); resetMovement\(\); \}/,
+    'the cast must latch the stance, or it plays its keys in the WEAPON\u2019s group');
+  // the group is composed from the stance, which is why the latch is
+  // not merely a gate: without it the keys land in the sword's group.
+  assert.match(src, /weaponGroup = composeWeaponGroup\(type, hasGroup\)\.group;/);
+  // and the instant path exists in the engine exactly as described
+  const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{ castInput\(null, null\); return; \}/,
+    'the CasterOnly instant cast is the case F2 exists for');
+  assert.match(hm, /onCastReadySpell\?\.\(sp\);\s+\/\/ QG1: RaiseOnCastReadySpell, before the ready clears/,
+    'the cast callback must fire while the spell is still readied');
+});
+
+// ═══ PX26: Mac's four notes ═════════════════════════════════════════
+test('PX26 F4: the interior lane sends the jump-state inputs - without them the jump can never play', async () => {
+  const { jumpAnimState } = await import('../src/formats/mwFirstPerson.js');
+  // the defect, stated as data: a move vector with no grounded/jumping
+  // fields derives "on the ground, no jump" for EVERY frame of a jump,
+  // so refreshJumpAnims is never owed a play and the arm never leaves
+  // the ground. `grounded` defaults TRUE, which is right for a caller
+  // that cannot know - and wrong for a lane that simply forgot to say.
+  assert.deepEqual(jumpAnimState({ priorInAir: false, jumpPlaying: false }), { jump: null, inJump: false });
+  assert.deepEqual(jumpAnimState({ grounded: false, jumping: true, priorInAir: false, jumpPlaying: false }),
+    { jump: 'inair', inJump: true });
+  // every host that drives the rig sends them
+  for (const [host, sites] of [['src/scenes/dungeon.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1]]) {
+    const h = readFileSync(host, 'utf8');
+    const n = (h.match(/grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating/g) || []).length;
+    assert.equal(n, sites, `${host} sends the jump inputs at ${n} of ${sites} sites`);
+  }
+});
+
+test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-build swap is not dropped', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  // F1: the portrait shows the weapon whether or not it is drawn
+  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 3000);
+  assert.match(fig, /if \(r\.slot === 'weapon'\) r\.hidden = false;/, 'a paperdoll shows what you carry, drawn or not');
+  assert.match(fig, /else if \(r\.slot === 'arrow'\) r\.hidden = !arrowShown;/, 'the arrow still follows its shoot keys');
+  // F2: the pack hands the rig the hand as well as the worn table
+  const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(pack, /arm\.setWeapon\?\.\(slots\?\.\[EQUIP_SLOTS\.RightHand\] \?\? null,/, 'the pack must hand over the hand while a window is up');
+  assert.match(pack, /hasAmmo: hasDaggerfallArrows\(deps\.entity\.items\)/, 'and the port\u2019s own arrow test, not a second one');
+  // F3: a swap during a build waits, exactly as the worn table does
+  assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo \}; return false; \}/);
+  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; this\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
+});
+
+test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', async () => {
+  const { clipSweepTimes } = await import('../src/formats/mwFirstPerson.js');
+  // Mac's note 1: the full arms do not show on a swing or a bow. `reach`
+  // sets the fp camera's near and far planes (reach/200, reach*4) and
+  // was measured over the IDLE clip only - the shortest pose the arm
+  // ever holds. An attack extends it forward and a bow draw pulls it
+  // back, and either can leave a box measured on a resting hand; the
+  // far plane then cuts the swing off mid-arm.
+  // AUDIT 39 moved this fixture off a Map. A source's `keys` is
+  // normalizeTextKeys' ARRAY of {time,text} (mwAnim.js:411), which is what
+  // clipReport hands fpArm; read with Map semantics the callback took
+  // (element, index), no key ever carried ": ", and every sweep fell back
+  // to the idle span - the very failure PX27 landed to fix.
+  const keys = [
+    { time: 0, text: 'idle1h: start' }, { time: 2, text: 'idle1h: stop' },
+    { time: 5, text: 'weapononehand: chop start' }, { time: 6.5, text: 'weapononehand: chop stop' },
+    { time: 10, text: 'bowandarrow: shoot start' }, { time: 12, text: 'bowandarrow: shoot stop' },
+  ];
+  const t = clipSweepTimes([{ keys }], { startTime: 0, stopTime: 2 });
+  assert.ok(t.some((x) => x >= 5 && x <= 6.5), 'the swing is never sampled');
+  assert.ok(t.some((x) => x >= 10 && x <= 12), 'the bow draw is never sampled');
+  assert.ok(t.some((x) => x >= 0 && x <= 2), 'the idle is still sampled');
+  assert.ok(!t.some((x) => x > 2 && x < 5), 'and only the spans, not the gaps between clips');
+  // a stop before its start is not a span; a stop with no start is not a span
+  const bad = clipSweepTimes([{ keys: [
+    { time: 1, text: 'g: chop stop' }, { time: 9, text: 'g: slash start' }, { time: 3, text: 'g: slash stop' },
+  ] }], { startTime: 0, stopTime: 1 });
+  assert.equal(bad.length, 25, 'an unreadable source falls back to the idle span, no worse than before');
+  // no sources at all: the idle span, exactly as it was
+  assert.equal(clipSweepTimes([], { startTime: 0, stopTime: 2 }).length, 25);
+  assert.equal(clipSweepTimes(null, null).length, 25);
+  // and the build uses it
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /const sweep = clipSweepTimes\(sources, idleCheck\);\n    const union = clipUnionBounds\(arm, poseAt, sweep\);/,
+    'the build must measure the reach over the sweep');
+  // AUDIT 37 F1: and the IDLE reach is measured SEPARATELY, over the
+  // idle's own times - not aliased to the swept one, which would put
+  // the near plane back on the widest pose.
+  assert.match(arm, /const idleReach = armReach\(eye, clipUnionBounds\(arm, poseAt, idleTimes\)\);/);
+  assert.match(arm, /const idleTimes = Array\.from\(\{ length: 25 \}/, 'the idle span is still swept at 25');
+});
+
+test('PX29: the movement rate divides by the PLAYING clip\u2019s own velocity (Mac\u2019s revert)', async () => {
+  const { sourceVelocityOf, sourcesVelocity } = await import('../src/formats/mwFirstPerson.js');
+  // MW-D29 moved the divisor from the picked source's velocity to
+  // getVelocity's multi-source walk. In first person that is invisible
+  // (the .1st clips carry no accumulation-root movement, so every
+  // source answers 0 and the fallback constants decide); in THIRD
+  // person the body's clips DO carry movement, so the walk can answer
+  // with a different source's number than the clip on screen, and the
+  // sprint's rate changed under Mac without the sprint changing.
+  // Reverted at his direction; the multi-source walk stays exported.
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(src, /const vel = movementSource \? sourceVelocityOf\(movementSource, movementGroup\) : 0;/,
+    'the rate must divide by the clip that is playing');
+  assert.ok(!/sourcesVelocity\(rig\(\)\.sources, movementGroup\)/.test(src), 'the multi-source walk must not decide the movement rate');
+  assert.match(src, /PX29 - REVERTED AT MAC'S DIRECTION/, 'a declared divergence must say so where it lives');
+  // the helper reads ONE source and answers 0 for a source with no
+  // accumulation root - which is every first-person clip.
+  assert.equal(sourceVelocityOf(null, 'runforward'), 0);
+  assert.equal(sourceVelocityOf({ keys: new Map(), trackMap: new Map() }, 'runforward'), 0);
+  assert.equal(typeof sourcesVelocity, 'function', 'the reference walk stays available');
+});
+
+// PX32: THE PORTRAIT POSES ITSELF (Mac: the 3D paperdoll "sometimes
+// shows in your last animated state"). poseAssembly for the third body
+// ran in ONE place - stepUpper's `viewMode === 'third'` arm - and the
+// inventory is opened from FIRST person, where that arm never runs. So
+// figure() uploaded whatever bone matrices were left in t.arm from the
+// last time the wheel was in third person, or from the build if it
+// never was. Not a stale frame: a stale SESSION, which is exactly why
+// Mac saw it "sometimes".
+//
+// Source-pinned, like AUDIT 33's checks above it, because a live pin
+// would need a third-person BUILD and the fixtures reach the first-
+// person arm only - and a check that cannot run is worse than one that
+// says what it is (Testing.md's own lesson from the nine dead probes).
+test('PX32: the inventory figure poses the body before it uploads it', () => {
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  const start = arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {');
+  const fig = arm.slice(start, start + 3000);
+  const pose = fig.indexOf('poseAssembly(t.arm');
+  const upload = fig.indexOf('uploadThirdMesh(t);');
+  assert.ok(pose > 0, 'the figure poses the body it is about to draw');
+  assert.ok(upload > pose, 'and poses it BEFORE the upload, or the upload carries the old matrices');
+  // The playhead is stepUpper's, not a second opinion about which clip
+  // is showing - two answers to that question is the drift this pins.
+  assert.match(fig, /actionState \|\| movementState \|\| jumpState \|\| idleState/,
+    'the portrait reads the SAME playhead the wheel does');
+});
+
+// PX33: THE INCREMENTAL WEAPON SWAP MUST NOTIFY TOO (Mac: the bow
+// "doesn't equip instantly visually in the inventory"). build() ends by
+// notifying every listener - MW-D36's law, pinned above - and setWeapon
+// takes a DIFFERENT path: it filters the weapon and arrow pieces out
+// and rebinds without ever calling build(). That path never notified,
+// so the pack called setWeapon and render() back to back, render() drew
+// first, the swap resolved its NIFs an async tick later, and nothing
+// asked the panel to look again. "Not instantly" was the panel never
+// being told.
+test('PX33: a weapon swap notifies the panel, like every other settlement', async () => {
+  const arm = createFpArm();
+  let fired = 0;
+  const off = arm.subscribe(() => { fired++; });
+  // A refused build settles and notifies (the law above); from there the
+  // arm has no body, so setWeapon short-circuits without a notify -
+  // which is correct and is what makes the count below meaningful.
+  await arm.build({ race: 'nord', deps: { loadMorrowindArchives: async () => [] } });
+  assert.equal(fired, 1, 'the build settled');
+  assert.equal(await arm.setWeapon({ templateIndex: 130 }, { hasAmmo: true }), false,
+    'no body, no swap');
+  assert.equal(fired, 1, 'and nothing to repaint for');
+  off();
+
+  // The law itself, at source, because driving a real swap needs a built
+  // body and the fixtures that reach one live in the mw* suites. The
+  // notify must sit in the FINALLY: a swap that threw leaves the panel
+  // showing a weapon the rig failed to bind, which is the state most
+  // worth redrawing.
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const body = sw.slice(0, sw.indexOf('\n    attack(strike'));
+  const fin = body.indexOf('} finally {');
+  assert.ok(fin > 0, 'the swap still ends in a finally');
+  assert.match(body.slice(fin), /for \(const fn of listeners\)/,
+    'and notifies the panel there, so a throw still repaints');
 });

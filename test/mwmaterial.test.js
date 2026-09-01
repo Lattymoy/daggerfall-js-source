@@ -202,8 +202,12 @@ test('MW-D13 rule 30: accurate aiming is an ORDER comparison on the upper-body e
   assert.equal(accurateAiming(UPPER_BODY.AttackWindUp), true);
   assert.equal(accurateAiming(UPPER_BODY.AttackRelease), true);
   assert.equal(accurateAiming(UPPER_BODY.AttackEnd), true, 'the follow-through still aims');
+  // MW-D39: Casting is the reference's own last member (character.hpp:
+  // 107-117), so the comparison makes a cast aim too - which is the
+  // reference's behaviour, not an accident of appending.
+  assert.equal(accurateAiming(UPPER_BODY.Casting), true);
   // The order itself, which is what the comparison rests on.
-  assert.deepEqual(Object.values(UPPER_BODY), [0, 1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(Object.values(UPPER_BODY), [0, 1, 2, 3, 4, 5, 6, 7]);
 });
 
 test('MW-D13 rule 64: a colour array ALONE selects AmbientAndDiffuse', () => {

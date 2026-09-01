@@ -24,6 +24,10 @@
 
 import { deref } from './mwNifFile.js';
 
+// Every NiNode-derived record, the reference's own membership test
+// (nifloader.cpp:932-937 recurses whatever casts to Nif::NiNode) - a
+// skeleton that stopped at NiSwitchNode/NiLODNode/NiSortAdjustNode/
+// NiCollisionSwitch lost every bone under one.
 const NODE_TYPES = new Set([
   'NiNode',
   'NiBSAnimationNode',
@@ -31,6 +35,10 @@ const NODE_TYPES = new Set([
   'NiBillboardNode',
   'AvoidNode',
   'RootCollisionNode',
+  'NiSwitchNode',
+  'NiLODNode',
+  'NiSortAdjustNode',
+  'NiCollisionSwitch',
 ]);
 
 // Affine {a: Float32Array(9) row-major rotation*scale, t: [x,y,z]}.

@@ -53,8 +53,21 @@ export const SKY_KEYS = Object.freeze([
   { elev: -18, zenith: '#060914', horizon: '#0f131f', sun: '#000000', glow: '#1a1420', glowAmount: 0.0, stars: 1.0 },
   { elev: -9,  zenith: '#0c1330', horizon: '#2b2238', sun: '#000000', glow: '#6a3a3a', glowAmount: 0.30, stars: 0.85 },
   { elev: -4,  zenith: '#1a2a5a', horizon: '#4e4258', sun: '#000000', glow: '#d6693a', glowAmount: 0.75, stars: 0.45 },
+  // EE6 (parity with the Enhanced Environments lab): THE SUNSET BAND.
+  // The ramp stepped -4 -> 0 -> 4 and the WHOLE of a sunrise or a
+  // sunset happens inside those eight degrees, so the most-looked-at
+  // sky in the game was three keys wide and everything between them
+  // was a straight line. Four keys where there were two: the horizon
+  // goes ember, then peach; the zenith takes the violet that exists
+  // for a few minutes either side of the horizon; and the glow swings
+  // warm and then cools as the sun clears the haze, which is what a
+  // real one does. The interpolation is unchanged - only the rungs
+  // it walks are closer together where the eye is looking.
+  { elev: -2,  zenith: '#233674', horizon: '#8e6062', sun: '#e06a2c', glow: '#f07c3c', glowAmount: 0.92, stars: 0.24 },
   { elev: 0,   zenith: '#2c4d8e', horizon: '#c4a49a', sun: '#ffa64e', glow: '#ff9a4c', glowAmount: 1.0, stars: 0.10 },
+  { elev: 2,   zenith: '#335ca4', horizon: '#e0b49c', sun: '#ffb96a', glow: '#ffac60', glowAmount: 0.84, stars: 0.03 },
   { elev: 4,   zenith: '#3a68b4', horizon: '#d9c6b4', sun: '#ffd39a', glow: '#ffbd7a', glowAmount: 0.6, stars: 0.0 },
+  { elev: 7,   zenith: '#3c70c0', horizon: '#d2cfc8', sun: '#ffe0b8', glow: '#ffcf9c', glowAmount: 0.42, stars: 0.0 },
   { elev: 12,  zenith: '#3f77cc', horizon: '#c9dcf0', sun: '#ffefd2', glow: '#ffe1b8', glowAmount: 0.28, stars: 0.0 },
   { elev: 30,  zenith: '#336bc6', horizon: '#b6d0ec', sun: '#fff7e6', glow: '#fff0d8', glowAmount: 0.14, stars: 0.0 },
   { elev: 90,  zenith: '#2a5ab8', horizon: '#a8c8ea', sun: '#ffffff', glow: '#ffffff', glowAmount: 0.08, stars: 0.0 },
@@ -188,7 +201,19 @@ export function sunOcclusion(state) {
   const d = state.sunDir, w = state.wind, t = state.seconds;
   const hi = deckCover(d, 0.95, [w[0] * 0.55, w[1] * 0.55], state.cloudCover * 0.75, state.cloudSoft * 1.5, t);
   const lo = deckCover(d, 1.9, w, state.cloudCover, state.cloudSoft, t);
-  return clamp01(lo + hi * (1 - lo) * 0.7);
+  const cov = clamp01(lo + hi * (1 - lo) * 0.7);
+  // AUDIT 39 F54: the HORIZON term the shader applies to the same cover
+  // before it dims the disc (`cloud = mix(cov, cov * uCloudCover, near)`)
+  // - without it, a sun below ~16 degrees took up to half again as much
+  // light off the ground as off the disc the player can still see, and
+  // those are the hours the palette is built around.
+  const near = smoothstep(0.28, 0, d[1]);
+  // EE6 F2: the CPU occlusion follows the shader's thinning EXACTLY -
+  // that is the whole point of this function, and a divergence here
+  // would put a shadow under a cloud that is no longer there. The
+  // shader now thins by mix(cover, 1, 0.75); so does this.
+  const thin = state.cloudCover + (1 - state.cloudCover) * 0.75;
+  return cov * (1 - near) + cov * thin * near;
 }
 
 /** How much of the sun a full cover takes off the WORLD. Not 1: even
@@ -251,6 +276,60 @@ export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
   const p = phase === LUNAR_PHASES.None ? 0 : phase;   // 0..7, New=0 ... Full=4
   const angle = (p / 8) * Math.PI * 2;
   return rotX(rotZ(sun, -angle), tilt);
+}
+
+/* ── EV5: MOONLIGHT (Mac: "I want sunlight and moonlight to matter") ──
+   The sky has computed both moons' directions, phases and
+   visibilities every frame since ES1 and the world's light consumed
+   none of it. The MASSER leads: it is the big moon, and its phase-lit
+   fraction times its visibility (already dimmed by daylight and by the
+   eased cloud cover - the same field the dome is drawn with) scales a
+   second directional N.L term in the lit shaders, coloured like the
+   disc. SECUNDA rides the AMBIENT: too small and too white for a
+   readable second shadow direction, it lifts the night floor a little
+   when it is up and lit. Both terms exist only while skyState answers
+   night - by day the sun owns the sky - and only under the ENHANCED
+   sky, because only it has this state at all: the classic lane keeps
+   DFU's hard-off night verbatim. The two scales are the dials, the
+   STUDIO_AMBIENT shape. */
+export const MOONLIGHT = Object.freeze({
+  masser: 0.25,    // full-Masser key scale (night ambient is 0.25 - a full moon roughly doubles a moonlit face)
+  secunda: 0.06,   // full-Secunda ambient lift
+});
+
+/** How much of a moon's disc is lit, 0..1: New (0) none, Full (4)
+ *  all, the halves half - the phase ring folded at Full. */
+export function phaseLitFraction(phase) {
+  const p = phase === LUNAR_PHASES.None ? 0 : phase;
+  return p <= 4 ? p / 4 : (8 - p) / 4;
+}
+
+/** The world light's moon term for one frame, from skyState's own
+ *  output: null when the sky is not night's, or when neither moon
+ *  contributes. `dir`/`scale`/`color` drive the second directional
+ *  term (the masser); `ambient` is secunda's additive floor lift. */
+export function moonlightTerm(state) {
+  if (!state.night) return null;
+  const key = MOONLIGHT.masser * phaseLitFraction(state.masser.phase) * state.masser.vis;
+  const lift = MOONLIGHT.secunda * phaseLitFraction(state.secunda.phase) * state.secunda.vis;
+  if (key <= 0 && lift <= 0) return null;
+  const sc = state.secunda.color;
+  return {
+    dir: state.masser.dir,
+    scale: key,
+    color: state.masser.color,
+    ambient: [sc[0] * lift, sc[1] * lift, sc[2] * lift],
+  };
+}
+
+/** Fold the secunda lift into a host's ambient, in place (the hosts
+ *  mint the ambient array fresh each frame - no second allocation). */
+export function withMoonAmbient(ambient, moon) {
+  if (!moon) return ambient;
+  ambient[0] += moon.ambient[0];
+  ambient[1] += moon.ambient[1];
+  ambient[2] += moon.ambient[2];
+  return ambient;
 }
 
 /** THE WEATHER'S HAND, EASED (ES1c). The sim flips its type on one
@@ -387,7 +466,14 @@ vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
   vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
   vec2 cell = floor(uv * n);
   vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
-  cellOut = cell + face * 977.0;                    // a face's cells are its own
+  // AUDIT 39 F53: cellOut is CONTINUOUS - the cell id is floor(cellOut),
+  // and its fraction is where the fragment sits INSIDE the cell, which
+  // is what the star field draws a star at. Handing back the floored id
+  // made fract() of it exactly zero, so the bright first star layer
+  // could not produce a lit pixel anywhere on the sphere. Callers floor
+  // it for the id; the face offset is integral, so flooring here or
+  // there names the same cell.
+  cellOut = uv * n + face * 977.0;                  // a face's cells are its own
   if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
   if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
   return normalize(vec3(t.x, t.y, sign(dir.z)));
@@ -419,7 +505,15 @@ float fbm(vec2 p) {
 // which is what lights the deck. Returns cover (x) and the noise the
 // colour is chosen by (y).
 vec2 deck(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias) {
-  vec2 p = dir.xz / (dir.y + 0.18) * scale + wind * uTime;
+  // EE2 F1 (found in the Enhanced Environments lab): THE DECK STOPPED
+  // AT THE HORIZON. This projection runs away as the ray flattens - at
+  // the horizon the lookup reaches the tens of thousands, a float32
+  // loses its fraction, and the noise returns a CONSTANT, so the last
+  // band of sky carried no cloud at all whatever the cover said. It is
+  // the largest part of the sky and the part a player looks at most.
+  // Capping the projection keeps the coordinates in a range the noise
+  // can still resolve, and the deck runs all the way down.
+  vec2 p = dir.xz * min(1.0 / (dir.y + 0.18), 9.0) * scale + wind * uTime;
   float n = fbm(p) + bias;
   float cov = smoothstep(1.0 - cover, 1.0 - cover + soft, n);
   return vec2(cov, n);
@@ -463,9 +557,23 @@ float stars(vec3 dir, float amount) {
     // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
     float scale = layer == 0 ? 127.0 : 236.0;
 
-    vec2 sc2;
-    cubeSnap(d, scale, sc2);
-    vec2 g = sc2 + float(layer) * 31.7;
+    // EE2 F2 (found in the lab, and it is THIS shader's bug): THE STARS
+    // WERE RULED INTO ROWS. cubeSnap returns the cell's INTEGER id, so
+    // fract() of it is a CONSTANT - every star sat at the same offset
+    // inside its cell, and a field of stars all at the same sub-cell
+    // position is a grid of lines, which is what the night sky looked
+    // like. The id and the position have to come from ONE number: the
+    // face is chosen once, its equi-angular coordinate computed once,
+    // and the cell is that number's floor while the position is its
+    // fract. They cannot disagree because there is nothing left to
+    // disagree about.
+    vec3 ad2 = abs(d);
+    float md2 = max(ad2.x, max(ad2.y, ad2.z));
+    vec2 raw2; float face2;
+    if (ad2.x >= md2) { raw2 = d.zy / ad2.x; face2 = d.x > 0.0 ? 0.0 : 1.0; }
+    else if (ad2.y >= md2) { raw2 = d.xz / ad2.y; face2 = d.y > 0.0 ? 2.0 : 3.0; }
+    else { raw2 = d.xy / ad2.z; face2 = d.z > 0.0 ? 4.0 : 5.0; }
+    vec2 g = atan(raw2) * 1.27323954 * scale + vec2(face2 * 977.0 + float(layer) * 31.7);
     vec2 cell = floor(g), f = fract(g);
     float h = hash21(cell + 7.3 * float(layer));
     float thresh = layer == 0 ? 0.955 : 0.985;
@@ -495,6 +603,7 @@ void main() {
   // n = (PI/2)/step is 256 a face, 512 across 180 degrees - SKY??.DAT.
   vec2 cell = vec2(0.0);
   if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
+  cell = floor(cell);                               // F53: bayer4 indexes the CELL, not its interior
 
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);
@@ -544,7 +653,13 @@ void main() {
     // high deck shows through the gaps.
     float covHi = hi.x * (1.0 - lo.x) * 0.7;
     float cov = lo.x + covHi;
-    cloud = mix(cov, cov * uCloudCover, near);
+    // EE6 F2 (the lab's declared divergence, brought over): the deck
+    // was thinned toward the horizon by multiplying cover BY cover -
+    // at half cover that is a QUARTER of the cloud where the sky is
+    // largest, so an overcast day kept a clear rim all the way round.
+    // The haze stays, because a deck does go pale with distance; the
+    // thinning goes, because cover should mean cover to the horizon.
+    cloud = mix(cov, cov * mix(uCloudCover, 1.0, 0.75), near);
     float n = mix(hi.y, lo.y, lo.x);                       // the deck in front decides the colour
     float sunAz = max(dot(dir, uSunDir), 0.0);
     // The rim: strongest at the thin edges of a bank, and only near the sun.
@@ -636,13 +751,27 @@ export class EnhancedSkyRenderer {
     this.state = state;
     this.clearColor = new Float32Array(state.clearColor);
     this.fillColor = new Float32Array(state.fillColor);
+    // EE4: the deck the GROUND shadows under, published from the same
+    // state the dome is drawn from - so the shadow on the land and the
+    // cloud overhead are one field, and a host cannot feed them
+    // different numbers by accident. The scale matches the low deck's
+    // (1.9), and the amount is held below one because a cloud dims the
+    // sun rather than extinguishing it.
+    this.cloudShadow = {
+      cover: state.cloudCover ?? 0,
+      soft: Math.max(1e-3, state.cloudSoft ?? 0.25),
+      wind: state.wind ?? [0, 0],
+      time: state.seconds ?? 0,
+      amount: 0.62,
+    };
   }
 
   draw(yaw, pitch, fovY, aspect) {
     const s = this.state;
     if (!s) return;
     const gl = this.gl, u = this.u;
-    const previousProgram = gl.getParameter(gl.CURRENT_PROGRAM);
+    // EV6: no program save/restore and no getParameter round-trip -
+    // the R9 law, as the classic pass; the hosts mark the seam.
     gl.useProgram(this.program);
     gl.depthMask(false);
     gl.disable(gl.DEPTH_TEST);
@@ -675,6 +804,5 @@ export class EnhancedSkyRenderer {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
-    gl.useProgram(previousProgram);
   }
 }

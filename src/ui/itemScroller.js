@@ -28,26 +28,58 @@ export const CELL_MARGIN = 2;
 // (ItemListScroller.cs:360-365; DaggerfallUI.cs:69).
 export const STACK_LABEL_COLOR = [230 / 255, 230 / 255, 200 / 255, 1];
 
+// The scrollbar itself, in scroller-local px: Position (1,18), Size
+// (6, itemListPanelRect.height - 35) = 117 (ItemListScroller.cs:279-284).
+export const SCROLLBAR_Y = 18;
+export const SCROLLBAR_H = 117;
+
+/** The thumb's span in BAR-LOCAL px (VerticalScrollBar.DrawScrollBar,
+ *  :203-211): height is the displayed fraction of the bar with a 10px
+ *  floor, and y walks the leftover by scrollIndex / (total - display).
+ *  Null when the list FITS - Draw returns before DrawScrollBar (:136)
+ *  so no thumb rect is ever computed. */
+export function scrollThumbSpan(scroll, len) {
+  if (len <= LIST_SLOTS) return null;
+  const h = Math.max(10, SCROLLBAR_H * (LIST_SLOTS / len));
+  return { y: scroll * (SCROLLBAR_H - h) / (len - LIST_SLOTS), h };
+}
+
 /** Hit-test a scroller-relative click. rect = [x,y,w,h] virtual;
- *  returns null outside, {kind:'up'|'down'|'page-up'|'page-down'}
- *  on the LEFT rail, or {kind:'slot', slot} on a button. */
-export function scrollerHit(rect, vx, vy) {
+ *  returns null outside, {kind:'up'|'down'|'page-up'|'page-down'|'thumb'}
+ *  on the LEFT rail, or {kind:'slot', slot} on a button.
+ *
+ *  AUDIT 39 F126: the rail pages off the THUMB, never off the rail's
+ *  own midpoint - VerticalScrollBar.MouseClick (:142-150) compares the
+ *  bar-local click against thumbRect.yMin/yMax, so at scrollIndex 0 a
+ *  click halfway down the rail is BELOW the thumb and pages down. The
+ *  midpoint split answered 'page-up' there and the clamp ate it. A
+ *  click on the thumb moves nothing (neither branch fires), and a list
+ *  that fits leaves thumbRect at the zero rect, where every rail click
+ *  falls into the `>` arm and SetScrollIndex clamps it away. */
+export function scrollerHit(rect, vx, vy, scroll = 0, len = 0) {
   const [rx, ry, rw, rh] = rect;
   if (vx < rx || vy < ry || vx >= rx + rw || vy >= ry + rh) return null;
   const x = vx - rx, y = vy - ry;
   if (x < CELL_X) {
     if (y < ARROW_H) return { kind: 'up' };
     if (y >= DOWN_ARROW_Y) return { kind: 'down' };
-    return { kind: y < rh / 2 ? 'page-up' : 'page-down' };
+    const span = scrollThumbSpan(scroll, len);
+    if (!span) return { kind: 'page-down' };
+    const by = y - SCROLLBAR_Y;
+    if (by < span.y) return { kind: 'page-up' };
+    if (by > span.y + span.h) return { kind: 'page-down' };
+    return { kind: 'thumb' };
   }
   return { kind: 'slot', slot: Math.floor(y / SLOT_H) };
 }
 
 /** Fold a rail hit into a scroll index (arrows one slot, the bar a
- *  page), clamped to the list. */
+ *  page), clamped to the list. A click ON the thumb - or any other
+ *  kind - moves nothing: DFU's MouseClick has only the two arms. */
 export function applyScroll(current, kind, len) {
   const max = Math.max(0, len - LIST_SLOTS);
-  const d = kind === 'up' ? -1 : kind === 'down' ? 1 : kind === 'page-up' ? -LIST_SLOTS : LIST_SLOTS;
+  const d = kind === 'up' ? -1 : kind === 'down' ? 1
+    : kind === 'page-up' ? -LIST_SLOTS : kind === 'page-down' ? LIST_SLOTS : 0;
   return Math.max(0, Math.min(max, current + d));
 }
 

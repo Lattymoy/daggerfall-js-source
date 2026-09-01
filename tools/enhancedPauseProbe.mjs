@@ -85,7 +85,7 @@ async function toGamePage(page, skin) {
   }, SAVE);
   await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'networkidle' });
   if (skin === 'enhanced') {
-    await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 15000 });
+    await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 15000 });
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await page.getByRole('button', { name: 'Begin', exact: true }).click();
     await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 15000 });

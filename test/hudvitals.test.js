@@ -267,8 +267,14 @@ test('VB1 draw: without indicators only the three mains draw - the old HUD exact
 
 test('VB1 wiring: drawHud runs the rig on BOTH branches and hudLarge draws through the same law', () => {
   const hud = src('ui/hud.js');
-  assert.match(hud, /updateHudVitals\(false, cur, dt, cursorActive\)/, 'the small HUD is the enabled instance');
-  assert.match(hud, /updateHudVitals\(true, cur, dt, cursorActive\)/, 'the large HUD is the OTHER instance');
+  // AUDIT 39 F131 MOVED THIS PIN: the two calls became ONE, above the
+  // skin fork - `!!largeHud?.art` names which instance is enabled, the
+  // same question the branch below asks, and the detector now runs
+  // whatever skin is on (VitalsChangeDetector is its own MonoBehaviour).
+  // Below the fork it never ran under the default skin at all.
+  assert.match(hud, /const rig = updateHudVitals\(!!largeHud\?\.art, cur, dt, cursorActive\);/,
+    'one detector call, and the large HUD is the OTHER instance');
+  assert.equal((hud.match(/updateHudVitals\(/g) || []).length, 1, 'called ONCE, not once per branch');
   assert.match(hud, /drawVitalsBars\(renderer, rig, skin, rects, indicators\)/);
   const large = src('ui/hudLarge.js');
   assert.match(large, /drawVitalsBars\(renderer, vitalsBars\.rig, vitalsBars\.skin, \{/,

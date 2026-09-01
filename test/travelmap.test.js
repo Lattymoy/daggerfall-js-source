@@ -269,8 +269,23 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   assert.ok(src.includes('poisonCount: () => poisonCount(playerEntity)'), 'and a poison reaches the warning');
   const k = src.indexOf('async function _teleportToPixel');
   assert.ok(k > 0, 'the shared teleport core exists');
-  const core = src.slice(k, k + 900);
+  // AUDIT 39 (#158): the window widened from 900 - CleanupUntrackedObjects
+  // now stands at the head of the core and pushed the streaming needles down.
+  const core = src.slice(k, k + 1600);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
+  }
+  // AUDIT 39 (#158) - StreamingWorld.CleanupUntrackedObjects (:1620-1644,
+  // SaveLoadManager_OnStartLoad) and ClearStreamingWorld (:993-998): loose
+  // enemies and missiles survive neither a load nor a teleport. collectPixel
+  // frees only CORPSES, so without this a quickload mid-fight left every live
+  // foe and guard standing and restoreWorld spawned the save's copies on top.
+  // BEFORE the rebuild, so the destination mints into an empty world.
+  const teardownAt = core.indexOf('for (const key of [...built.keys()])');
+  assert.ok(teardownAt > 0, 'the teardown loop anchors the sweep');
+  for (const needle of ['exteriorFoes.clearLive()', 'cityGuards.clearLive()',
+    'magic.clearMissiles()', 'arrows.arrows.length = 0']) {
+    const j = core.indexOf(needle);
+    assert.ok(j > 0 && j < teardownAt, `${needle} sweeps before the pixels come down`);
   }
 });

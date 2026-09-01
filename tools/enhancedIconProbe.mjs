@@ -117,8 +117,8 @@ await page.route('**/arena2/**', async (route) => {
 });
 
 await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
-await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
-await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
+await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
+await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
 await page.getByRole('button', { name: 'Begin', exact: true }).click();
 await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
 await bootSettled(page);
@@ -242,8 +242,8 @@ await ctx.close();
   p2.on('pageerror', (e) => errs2.push(e.message));
   await p2.route('**/arena2/**', (route) => route.fulfill({ status: 404, body: '' }));
   await p2.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
-  await p2.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
-  await p2.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
+  await p2.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
+  await p2.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await p2.getByRole('button', { name: 'Begin', exact: true }).click();
   await p2.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
   await bootSettled(p2);

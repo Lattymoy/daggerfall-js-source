@@ -196,6 +196,19 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
 - `01-Overview/Audit-UI.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE AUDIT. Twelve sweeps over the PX arc's 54 slices, nine modules and 7,130 lines - and LIVE, not static, because a sheet this size answers grep questions with grep answers. Two findings, both fixed: the 44px touch rule hung off a SCREEN WIDTH and failed on the device the proxy stands in for (measured on an iPad in landscape: skin switch 28px, steppers 34px, value buttons 38px), and the reason the fix at first did not take - three controls sized INLINE in JavaScript, which no media query can reach. Eight sweeps came back clean, including the class-collision shape that has bitten this file four times.
 - `01-Overview/Audit-UI-2.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE, SECOND PASS. 38 PX slices on from the first, and shaped by what actually went wrong since - six faults, every one of which passed its own pins, because they verified the thing built and not the PATH a player takes to it. Six sweeps: every surface at desktop/tablet/phone (12 combinations, clean), and the two recurring faults turned into PINS - no part styled for one shell and left bare in another (four occurrences), and every enhanced window reachable from a host following DYNAMIC imports (PX24's unhung door). Both mutation-tested against the real historical faults.
+- `01-Overview/Audit-46.md` - CLOSED 2026-09-01: THE BLACK WORLD, AND THE GATE THAT COULD NOT SEE IT. F1: the tile array was allocated with an UNSIZED gl.RGBA, which generateMipmap is not guaranteed to accept - a failed chain leaves the sampler mipmap-incomplete, and an incomplete sampler returns BLACK for every tile; RGBA8 now, with a soft fallback to NEAREST. F2, and it matters more: every gate passed on the black world, because eslint, the node suite and a vite build have no GL context between them and the lab's render gate loads a page that needs no game data. tools/glGate.mjs now runs the renderer's real upload path against a real WebGL2 context in both modes - AND reintroducing the bug did not fail it, because SwiftShader accepts what a real driver may not. So the gate is kept for the next unconditional format fault and is NOT claimed to confirm this one. Since I have guessed at the cause three times, the ground's three states are a URL door instead: ?ground=classic|tiles|drawn, cache-keyed by mode, so whichever is black names the slice in a reload. Verified: the builder against the REAL archive gives a grass tile mean of 85.2, not 0 - the surfaces are not coming out empty.
+- `01-Overview/Audit-45.md` - CLOSED 2026-09-01: ENHANCED ENVIRONMENTS, THE PARITY LEDGER. The honest answer to "is it 1:1" is no, and the useful answer is a ledger of exactly what crossed and what did not. IN: the sky's shader (the lab lifted it from here), the horizon projection cap and the star cell fix (EE2), mipmaps and anisotropy (EE3), cloud shadows from the deck's own field (EE4), and this audit's two - F1 the sunset band was three rungs wide for the eight degrees a whole sunrise happens in, now four keys with an ember-to-peach horizon and a violet zenith; F2 the deck was thinned to a QUARTER at the horizon by multiplying cover by cover, where the sky is largest. NOT IN, named: the drawn surfaces (built, unwired, seamed), the ground's normal map and detail tiling, the 3D grass (no instanced draw exists), the weather particles, and the surface state field. The lab's front is deliberately not ported - the game has its own eased weather and two easings would fight. Two mutants dead; one pin re-taught (elev 2 became a real key) and the CPU occlusion updated to thin exactly as the shader does.
+- `01-Overview/Audit-44.md` - CLOSED 2026-09-01: THE COMPREHENSIVE PARITY/BUG AUDIT, fleets end to end - a 32-lane finder sweep with 2-3 adversarial refuters per finding (528 agents), a 21-group fix wave in isolated worktrees, an 8-lane review of the fixes, and a 7-group review round. 183 findings judged, 172 confirmed, 166 canonical after dupes - ALL FIXED: the trade window's repeat-pay gold duplication, loot minted with no value, the bow that resolved nothing above ground, Levitate billing the fall it broke, the crime region frozen at boot, the dungeon keeping the death presenter, TG/DB unjoinable, the default skin's crash doors and dead HUD laws, the save envelope's dropped features and the quickload foe pile-up, and the talk surface's five empty macro reads. The review round then caught 39 defects IN the fixes (a merge collision cemented by its own pin, the third host's paralysis arm, in-flight spawns surviving the teleport sweep, an emission sign error vs DFU's shaders) and fixed those too. Port status measured whole: `Port-Status-2026-09.md`, which supersedes Port-Completion-Analysis for volume figures. The standing lesson: 26 of 32 lanes found the caller-does-not-deliver seam class - the law layer is near-verbatim, the wiring is where the bugs live, and the audit39_* tests now pin seams, not just laws.
+- `01-Overview/Audit-44.md` - CLOSED 2026-09-01: ENHANCED ENVIRONMENTS, SLICES 1-3. F1: EE1's rename swept src/ and not tools/, so enhancedMenuProbe still clicked "Procedural sky" and read the retired key - it would have failed on a row it could not find rather than on a fault. F2: uploadTileArray returned its cached array BEFORE consulting enhancedGround, and the cache lives on the renderer which survives a world load, so the switch was really a page-reload-only setting while the row promised "when the world next loads"; the mode is part of the cache key now (mutant dead). Verified: nothing live reads proceduralSky, the migration is one-way and once, classic cannot inherit the enhanced sampler, ?sky=classic still forces the panorama, and the lab's RAY convention fix was deliberately NOT ported because it was a lab bug rather than the game's.
+- `01-Overview/Audit-43.md` - CLOSED 2026-08-31: THE LAB AFTER PROTO-14 - Audit 42's measure-the-running-page method re-run after the PROTO-14 slice; every active uniform of every program probed at four states.
+- `01-Overview/Audit-42.md` - CLOSED 2026-08-31: THE LAB, MEASURED - the enhanced lab audited by probing the LIVE page (uniforms read off the running programs) instead of re-reading the code; the black-sky class caught by measurement.
+- `01-Overview/Audit-41.md` - CLOSED 2026-08-31: THE SURFACE STATE FIELD - the puddle/snow/deformation field's laws traced from world coordinates to the pixel, the numbers checked against each other.
+- `01-Overview/Audit-39.md` - CLOSED 2026-08-31: THE GROUND/SKY/WEATHER LAB - the enhanced prototype's cross-system agreement audit (wind as ONE vector across grass, rain and cloud drift; eased values eased everywhere they are read). The lab series took numbers 39-43 on main while the comprehensive audit ran as a fleet on the branch - that audit's record is `Audit-44.md`, its commits and tests carry the working label AUDIT 39.
+- `01-Overview/Audit-EV.md` - CLOSED 2026-08-31: THE ENHANCED VISUALS ARC, AUDITED WHOLE (EV1-EV8, `07-Rendering/Enhanced-Visuals-Arc.md`). Three adversarial lanes - simulation/async, rendering, test/pin/doc integrity - with the arc's own record as the statement of intent to attack. Two severe, both the same shape as bugs this project has already had: F-R1, ONE Renderer serves the whole session and the modal frames never cleared the moon, so a tavern entered on a full-Masser night kept a warm directional term at the moon's exterior bearing for the whole visit (AUDIT 26 F001's class, one screen away; the R12 indirect light was leaking the same way and is zeroed at the same two sites). F-SIM1, a teleport overlapping an in-flight build DOUBLE-BUILT the pixel and leaked its VAO, tilemap and batches for the session - one build per pixel ever in flight now. Plus the far ring's half-pixel asymmetric hole, the rim fade that never closed at the edge midpoints, the ring ignoring the moon, and two pins that were pinning nothing (an unexecuted worker shell, a kernel test comparing f(x) to f(x)). STANDING LESSONS for the next slice: a shared renderer's per-frame state is a leak until someone clears it, and one build per pixel.
+- `01-Overview/Audit-DA.md` - CLOSED 2026-08-31: THE DESKTOP-APP SLICE, audited before it hardened (`01-Overview/Desktop-App.md`). Three lanes over the frozen tree (the 17l law), two proving findings by execution - node against the real modules, the real Electron shell under xvfb. Three bugs: a non-canonical `SAVE03` folder indexed as slot 3 while every file probe read `SAVE3`, listing one save twice; "Locate ARENA2 Folder" silently shadowed by a prior in-page ingest, because `getBytes` answers from memory/IndexedDB before the new path is ever asked; and the macOS app menu closing over a window Cmd-W had destroyed. Hardening landed with it - navigation fences on every webContents (dagger:// allowed, http(s) to the system browser, everything else refused; child windows proved NOT to inherit the preload), single instance per userData, atomic tmp writes, and a protocol handler that answers 400/404 instead of dying. `sandbox: false` is the recorded standing tradeoff, with the fences as its compensating control.
+- `01-Overview/Audit-38.md` - CLOSED 2026-08-31: THE QUEST-NAME STRIP (PX28), audited the hour it shipped. F1: the pattern required whitespace between the kind word and its noun, so 'Sidequest:', 'MainQuest:' and 'Side-Quest:' kept their labels - exactly the thing Mac asked removed; the kind and noun may now be joined, spaced or hyphenated while the LABEL still needs its trailing separator, which is what keeps 'Main Quest Backbone' a name (pinned on four spellings and four keepers; mutant dead). Verified: exactly two enhanced surfaces show a quest name and both strip; the classic skin strips nothing and is swept to stay that way; the data is untouched at the parser; the archive rows are covered through the same rail; and the repo's own vendored quests carry NO kind labels at all - every 'Quest' in them is at the end or runs into the title - so the strip is a no-op here and exists for packs this repo does not edit. Said plainly: a non-English label is not matched, because the kind words are English literals and guessing translations would be inventing data.
+- `01-Overview/Audit-37.md` - CLOSED 2026-08-31: THE PLAY-NOTES LANE, read for what PX26/PX27 broke as well as what they fixed. F1 (mine, an hour old): the fp camera's two planes both hang off ONE number - near = reach/200, far = reach*4 - and PX27 grew `reach` on purpose to stop the far plane cutting a swing short, which pushed the NEAR plane out by the same factor; on a rig whose widest pose is four times its idle the near plane moves ~0.15 -> ~0.7 rig units and a knuckle a quarter-unit from the camera vanishes, so the fix for the elbow would have clipped the hand. TWO reaches now: the far off PX27's sweep, the near off the IDLE pose it was tuned against (pinned on draw and build, the idle reach asserted measured not aliased; 2 mutants dead). THE SPRINT traced line by line against the fetched character.cpp - rate, cap, clip velocity, the three fallback constants, the turn expression and the run->walk swap all match, and the two divergences (mAdjustMovementAnimSpeed, mMovementAnimationHasMovement) are creature-branch and movement-from-animation, neither of which this lane has: NO FINDING, and the next step is the card's own movementRate readout on Mac's data, not more source reading.
+- `01-Overview/Audit-36.md` - CLOSED 2026-08-31: THE SPELLCAST LANE, read against the three hosts that cast and against the engine's own call ORDER. F1: only two of the three were wired - the standalone exterior page has its own magic engine and its own rig, and a spell cast above ground took the stance and never played the cast; wired, and pinned as ALL THREE by name. F2 SEVERE: every INSTANT self-cast was silent - a CasterOnly spell is readied and cast in one synchronous call, so no frame ticked between them, the rig's per-frame spellArmed() read had never happened, and castSpell refused; worse, without the gate the keys would have played in the SWORD's group, since weaponGroup composes from the stance. The cast latches its own stance and re-composes the group before playing. 3 mutants dead. Verified: the cast fires while the spell is still readied (so the ranged path's latch is a no-op), the range reaches all three doors, neither door gates the magic, readySpell is idempotent and abandons an aborted cast, the enum order gives the reference's aiming behaviour.
 - `01-Overview/Audit-35.md` - CLOSED 2026-08-31: THE CLOSING TOOLTIP, BOTH SIDES. Every action the tooltip carries traced to the state it leaves the pick in, pack side and loot side. F1: the TAKE (from containers, bodies, piles, the wagon) cleared the pick only in the loot-only flow; with the pack open the taken item stayed selected and re-raised the tooltip over the bag after every take - PX24's quirk on the loot side. It clears on both sides now, the tab still following the arrival; the PX28 pin re-taught, mutant dead. Verified: one tooltip node for both frames, the click-away on either, the in-world loot hover is a readout not a control, refusals keep the tip open with the notice everywhere.
 - `01-Overview/Audit-34.md` - CLOSED 2026-08-31: PX22 AND THE ITEM-SPRITE INTEGRATION. PX22 re-rendered headless at three sizes with the regions measured (phone: four rows, strip unclipped; short desktop: the honest one-row floor; the 660 window: two rows, scroll memory 197 -> 197) - no finding. In the sprite lane, F1: D37's garment colour sampler pre-measured EVERY CLOT record in the master the first time a garment was worn, and being async and build-local the D38 icon door could not reach it, so an icon and the worn piece could resolve to different shirts; one lazy synchronous door (clothingColourOf) now serves build and icon, memoised per generation, the eager sampler gone and swept. F2: the report judged weapons by the ARMOR chain and called elven-on-silver a fallback; it reads the weapon chain (pinned; mutant dead). Verified: GPU ownership of icon renders, the icon cache key, itemTile as the one tile door, the weapon key on non-weapons, the icon framing.
 - `01-Overview/Audit-33.md` - CLOSED 2026-08-30: THE MODEL IN THE INVENTORY (D36), read the hour it shipped for the state the game is actually in when the pack opens. F1 SEVERE - the figure gated on thirdActive(), which demands the WHEEL's view and a mesh only the wheel uploads; the inventory opens from first person, so the model would never have appeared. One upload helper now serves the wheel and the figure, and the figure stands whenever a body is built (pinned: figure free of thirdActive, helper with two callers and one body; mutant dead). F2 - a drag re-rendered per pixel; yaw quantised to a tenth of a radian. Verified: rebuild releases the third mesh, pieces posed at build, the read-back's rows and alpha, orientation from the wheel's proven conventions, enhanced-only, subscription ownership.
@@ -269,53 +282,54 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:20` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:27` - skills: 30,       // INTERIM flat skills until chargen
 - `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
-- `src/combat/combatVoices.js:121` - * FLAGGED, both sites: DFU consults the racial override first -
+- `src/combat/arrowFlight.js:132` - * the three hosts that call it price one shot one way. (FLAGGED: the
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
 - `src/combat/playerWeapon.js:48` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/weaponRig.js:79` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/arrestFlow.js:199` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
-- `src/scenes/arrestFlow.js:267` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
+- `src/scenes/arrestFlow.js:316` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/dungeonContext.js:254` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:785` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1360` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1395` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1431` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3314` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3422` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:639` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:645` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:892` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1135` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1480` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/shared.js:311` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/dungeonContext.js:256` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:795` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:1397` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1440` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1476` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3372` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3480` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/exterior.js:678` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:684` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:941` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1192` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1553` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/shared.js:345` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:362` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:529` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:917` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:923` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:3079` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3874` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4931` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1193` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1208` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1417` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1422` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1653` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:1893` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1925` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2146` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2268` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2543` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2588` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2607` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2712` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2937` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2949` - FLAGGED, and narrowed to what is actually missing: the two BASH
-- `src/scenes/worldModes.js:3011` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4271` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4370` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4708` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/world.js:1106` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1112` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2368` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:3446` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:4363` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4464` - FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
+- `src/scenes/world.js:5594` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/worldModes.js:1222` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1240` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1452` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1457` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1688` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:1949` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1981` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2203` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2325` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2600` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2645` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2664` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2769` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2994` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:3006` - FLAGGED, and narrowed to what is actually missing: the two BASH
+- `src/scenes/worldModes.js:3068` - the FLAGGED note above), so it starts false.
+- `src/scenes/worldModes.js:4493` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4592` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4930` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
@@ -328,7 +342,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargen.js:132` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-- `src/systems/chargenSession.js:310` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
+- `src/systems/chargenSession.js:331` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
 - `src/systems/controlsConfig.js:8` - FLAGGED with I1's combo flag: GetDuplicates' second and third
 - `src/systems/court.js:28` - FLAGGED loud: execution (punishmentType 1) is unreachable in classic
 - `src/systems/effects.js:48` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
@@ -336,15 +350,15 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:685` - enchantment bundles are FLAGGED to their own arc.
 - `src/systems/effects.js:1461` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:151` - had been FLAGGED at its own site since S4c - "a magic item still
-- `src/systems/enchantments.js:679` - a MagicRound-FLAGGED row's is the payload callback :1767
+- `src/systems/enchantments.js:685` - a MagicRound-FLAGGED row's is the payload callback :1767
 - `src/systems/encounters.js:79` - :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
-- `src/systems/encounters.js:258` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
+- `src/systems/encounters.js:262` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
 - `src/systems/equip.js:284` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
-- `src/systems/guildServiceActions.js:189` - *  turning into a vampire or werebeast - FLAGGED: the port has no
+- `src/systems/guildServiceActions.js:194` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:239` - *  override's law). Every other arm is FLAGGED with the window it
 - `src/systems/inputActions.js:313` - FLAGGED, each with the slice it waits on:
-- `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
+- `src/systems/inventory.js:45` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
 - `src/systems/itemInfo.js:97` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
 - `src/systems/itemInfo.js:182` - *  screen. FLAGGED as a group - they land with their own arcs.
@@ -352,23 +366,23 @@ combat line numbers below are refreshed with it.
 - `src/systems/knightlyGifts.js:31` - FLAGGED, not ported: RestoreGuildData's legacy flag migration
 - `src/systems/knightlyGifts.js:100` - * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
-- `src/systems/loot.js:228` - G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
+- `src/systems/loot.js:243` - G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
 - `src/systems/passiveSpecials.js:8` - arms FLAGGED since E1.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/systems/potions.js:245` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
-- `src/systems/save.js:140` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:150` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
-- `src/systems/shopStock.js:22` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-- `src/systems/shopStock.js:185` - (DaggerfallLootDataTables.cs:61). The INTERIM skip predated
+- `src/systems/shopStock.js:22` - INTERIM (loud): book items carry the template price (classic prices
 - `src/systems/skills.js:113` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
 - `src/systems/talk.js:293` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
+- `src/systems/talkTopics.js:346` - * FLAGGED: the walk is still over DOORS, so a building with no
 - `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
 - `src/systems/tradeModes.js:177` - *  (DaggerfallTradeWindow.cs:960-963). FLAGGED: DFU reads the text
@@ -379,22 +393,23 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/enhancedMenu.js:1692` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1863` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/enhancedMenu.js:1760` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1931` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
+- `src/ui/hudLarge.js:56` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
 - `src/ui/input.js:15` - and E's DFU meaning (AbortSpell) with Q's (RecastSpell) - FLAGGED
 - `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
-- `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:302` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeTalk.js:273` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:298` - B5-6: the four pages that were INTERIM no-ops. Each falls back
+- `src/ui/nativeInventory.js:42` - still said Equip and equip-after-transfer were FLAGGED after U8g
+- `src/ui/nativeInventory.js:364` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeTalk.js:285` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:310` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
-- `src/ui/paperDoll.js:64` - table, the loud INTERIM the U8f/U8g records flagged.
+- `src/ui/paperDoll.js:65` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/pixelDial.js:36` - FLAGGED (THE FOUR HOSTS RULE): no host is wired yet — world.js,
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
@@ -402,8 +417,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
 - `src/ui/restWindow.js:140` - FLAGGED, all three from OnPop/Update and all three belonging to
 - `src/ui/restWindow.js:414` - where classic counts DOWN. The backgrounds are still FLAGGED
-- `src/ui/spellbookWindow.js:104` - FLAGGED, idling loudly: the effect popup's body
-- `src/ui/spellbookWindow.js:931` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
+- `src/ui/spellbookWindow.js:114` - FLAGGED, idling loudly: the effect popup's body
+- `src/ui/spellbookWindow.js:951` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
 - `src/ui/teleportPopUp.js:8` - `Teleport: null, // FLAGGED: the travel map's teleport mode`. Two
 - `src/ui/teleportPopUp.js:37` - FLAGGED: the HUD smash-to-black/fade either side of the jump
@@ -1811,11 +1826,16 @@ through the fetchBytes seam, signature unchanged.
 
 ## Repo layout
 
-`src/main.js` is a thin scene router (37 lines). Scenes live in
-`src/scenes/` (exterior, interior, dungeon, terrain, world) with shared
-helpers in `src/scenes/shared.js`; each file carries its milestone header.
-Data readers in `src/formats/`, world assembly in `src/world/`, GL in
-`src/render/`. Extraction verified pixel-identical across all five scenes.
+`src/main.js` is the entry point and scene router - no longer thin: it
+builds the Renderer, holds the ARENA2 data gate, installs the cursor,
+the settings/skin front-door choice and the stale-chunk recovery, then
+dispatches on the query string to the scene boots it imports. Those live
+in `src/scenes/` (exterior, interior, dungeon, world) with shared helpers
+in `src/scenes/shared.js`; each file carries its milestone header. Data
+readers in `src/formats/`, world assembly in `src/world/`, GL in
+`src/render/`. `main.js` is one of the modules the module-body smoke
+cannot import (`import.meta.glob` is a bundler transform), so its body is
+held by text pins - tdz_selfreference.test.js is the standing guard.
 
 ## Ground rules carried from project-final
 

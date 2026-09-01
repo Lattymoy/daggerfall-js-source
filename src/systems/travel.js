@@ -11,6 +11,7 @@
 
 import { CLIMATES } from '../formats/mapsFile.js';
 import { MINUTES_PER_HOUR, MINUTES_PER_DAY } from './gameDate.js';
+import { isOnShip } from './ship.js';   // TransportManager.IsOnShip, the origin rule's whole test
 
 // TravelTimeCalculator.cs:30 - indexed by (climate - Ocean); also the
 // dungeon-texture climate index table.
@@ -82,10 +83,34 @@ export function travelPixelMinutes(terrain, transportModifier, {
   return thisMove;
 }
 
+/** GetPlayerTravelPosition (:47-56) - the ONE origin every travel
+ *  reckoning starts from, and the reason CalculateTravelTime resolves
+ *  its own start in C# rather than taking one:
+ *
+ *      if (playerGPS && !transportManager.IsOnShip()) position = playerGPS.CurrentMapPixel;
+ *      else position = MapsFile.WorldCoordToMapPixel(transportManager.BoardShipPosition...)
+ *
+ *  Aboard an owned ship the player's LIVE pixel is the ship's mooring
+ *  - (2,2) or (5,5), open ocean either way - so DFU reckons from where
+ *  they BOARDED instead. Without it (AUDIT 39 F114) a journey planned
+ *  from the deck was priced and timed as a couple of hundred
+ *  mostly-ocean pixels, and the same figure fed quest clock deadlines.
+ *
+ *  The port's boardShipPosition already carries its own map pixel
+ *  (systems/ship.js's `position`), so there is no world coordinate to
+ *  convert back. */
+export function playerTravelPosition(player, boardShipPosition, currentPixel) {
+  if (!isOnShip(player, boardShipPosition, currentPixel)) return currentPixel;
+  const px = boardShipPosition.mapPixel;
+  return px ? { x: px.x, y: px.y } : currentPixel;
+}
+
 /** CalculateTravelTime (:64-157). start/end are map pixels
  *  ({x, y}); getClimateIndex(x, y) answers CLIMATE.PAK (the
  *  MapsFile method). Returns { minutes, oceanPixels } - the ocean
- *  count feeds the trip cost exactly as the C# field did.
+ *  count feeds the trip cost exactly as the C# field did. `start` is
+ *  the caller's because this module owns no GameManager: every caller
+ *  gets it from playerTravelPosition above.
  *
  *  It carried two optional deps for the road system - a substitute
  *  pixel `path` and a `roadAt` class lookup - and both went with it
@@ -111,8 +136,11 @@ export function calculateTravelTime(start, end, {
 /** CalculateTripCost (:159-173). Taverns only accept gold PIECES -
  *  the split survives for when letters of credit land; today the
  *  port's gold is one pool and totalCost is what the host deducts.
- *  freeTavernRooms = the Knightly Order perk hook (false until the
- *  guild perk wires). */
+ *  freeTavernRooms is DFU's own consult on this line
+ *  (`GuildManager.GetGuild(KnightlyOrder).FreeTavernRooms()`), hoisted
+ *  to a parameter because this module owns no GuildManager; every
+ *  caller supplies it (AUDIT 39 F101/F115 - it defaulted false on
+ *  every trip, so a knight paid the inn nights DFU waives). */
 export function calculateTripCost(travelTimeMinutes, oceanPixels, {
   sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false,
 } = {}) {

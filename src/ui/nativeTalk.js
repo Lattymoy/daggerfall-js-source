@@ -33,6 +33,7 @@
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
+import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversationStyleInTalkWindow
 import { measureText } from './text.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -79,6 +80,17 @@ export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI sele
 export const TOPIC_ROWS = Math.ceil(TALK_RECTS.topicList[3] / TOPIC_ROW_H);
 export const QUESTION_COLOR = [0.698, 0.812, 1, 1];      // DaggerfallQuestionTextColor
 export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerTextColor
+// UI6 - THE MODERN CONVERSATION STYLE (DaggerfallTalkWindow :53-60,
+// :645-650, :1262-1267, :1273-1278). With
+// EnableModernConversationStyleInTalkWindow the three conversation
+// labels - the NPC's greeting, each question and each answer - are
+// drawn SMALLER (TextScale 0.8), WRAPPED NARROWER (MaxWidth x 0.75)
+// and on their own BACKGROUND BLOCK, one colour for questions and one
+// for answers. Ships False; the classic path above is unchanged.
+export const MODERN_TEXT_SCALE = 0.8;              // :59
+export const MODERN_BLOCK_SIZE = 0.75;             // :60
+export const MODERN_QUESTION_BG = [0.3, 0.35, 0.43, 1];    // :53
+export const MODERN_ANSWER_BG = [0.32, 0.31, 0.06, 1];     // :54
 export const PLAYER_SAYS_RECT = Object.freeze([123, 8, 124, 38]);
 export const TALK_TOGGLE_COLOR = [162 / 255, 36 / 255, 12 / 255, 1];   // DaggerfallTalkWindow.toggleColor
 export const TOPIC_ARROW_SCROLL = 5;   // ButtonTopicUp/Down_OnMouseClick: ScrollIndex -/+= 5
@@ -353,6 +365,9 @@ export class NativeTalkWindow {
       shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2]), m, R.topicList[0], R.topicList[1] + y);
     });
     // conversation - AUDIT 17e F11/F18. Two laws were wrong here:
+    // UI6: the modern conversation style, read once for the whole
+    // conversation block (DFU sets it per label, from the same flag).
+    const modern = getBool('GUI', 'EnableModernConversationStyleInTalkWindow');
     // (1) RowSpacing 4 is per LIST ITEM, not per wrapped line, so
     //     rows INSIDE one entry sit 7px apart (FONT0003 fixedHeight)
     //     and only the gap BETWEEN entries adds 4 - the port applied
@@ -365,14 +380,19 @@ export class NativeTalkWindow {
     const entries = [];
     for (const c of this.conversation) {
       const e = typeof c === 'string' ? { text: c, kind: 'answer' } : c;
-      entries.push({ lines: wrapText(font.fnt, e.text, R.conversation[2]), kind: e.kind });
+      // UI6: MaxWidth is multiplied by textBlockSizeModernConversationStyle
+      // BEFORE the wrap, so a modern line breaks at three quarters of
+      // the panel; the glyphs are then drawn at TextScale 0.8.
+      const wrapW = modern ? Math.trunc(R.conversation[2] * MODERN_BLOCK_SIZE) : R.conversation[2];
+      entries.push({ lines: wrapText(font.fnt, e.text, modern ? Math.round(wrapW / MODERN_TEXT_SCALE) : wrapW), kind: e.kind });
     }
     // AUDIT 18: DFU lays the conversation out FORWARD from the listbox
     // origin at y = -scrollIndex, and UpdateScrollBarConversation's
     // HeightContent() - Size.y is floored at 0 - so a short
     // conversation fills from the TOP and only a long one is pinned to
     // its last row. The port anchored every conversation to the bottom.
-    const heights = entries.map((e) => e.lines.length * ROW_H);
+    const rowH = modern ? ROW_H * MODERN_TEXT_SCALE : ROW_H;
+    const heights = entries.map((e) => e.lines.length * rowH);
     const contentH = heights.reduce((a, b) => a + b, 0) + Math.max(0, entries.length - 1) * ROW_SPACING;
     // F159: null = new content since the last draw - pin to the
     // newest row ONCE (UpdateScrollBarConversation), then hold the
@@ -395,10 +415,19 @@ export class NativeTalkWindow {
       // Left on both, so a wrapped line's own text stays left-run and
       // each row is offset by its OWN width.
       e.lines.forEach((text, j) => {
+        const tw = measureText(font.fnt, text) * (modern ? MODERN_TEXT_SCALE : 1);
         const x = e.kind === 'question'
-          ? R.conversation[0] + R.conversation[2] - measureText(font.fnt, text)
+          ? R.conversation[0] + R.conversation[2] - tw
           : R.conversation[0];
-        shadowText(renderer, font, text, m, x, R.conversation[1] + y + j * ROW_H, { color });
+        const ly = R.conversation[1] + y + j * rowH;
+        if (modern) {
+          // The label's own BackgroundColor fills the label's box, so
+          // the block is exactly the drawn line, not the panel.
+          renderer.drawScreenQuad(null,
+            { x: m.ox + x * m.s, y: m.oy + ly * m.s, w: tw * m.s, h: rowH * m.s },
+            undefined, e.kind === 'question' ? MODERN_QUESTION_BG : MODERN_ANSWER_BG);
+        }
+        shadowText(renderer, font, text, m, x, ly, { color, scale: modern ? MODERN_TEXT_SCALE : 1 });
       });
     }
   }

@@ -38,7 +38,7 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { CharSheet, charSheetArtLoaded } from './charsheet.js';
+import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 
 export { charSheetArtLoaded };
@@ -57,6 +57,16 @@ export function charSheetDoorReady() {
  * button, on either skin.
  */
 export function createCharSheetWindow(deps = {}) {
+  // AUDIT 39: THE SHEET IS WHERE DFU LEVELS YOU UP. UpdatePlayerValues
+  // (DaggerfallCharacterSheetWindow.cs:369-394) mounts the stats
+  // rollout on the sheet itself whenever ReadyToLevelUp is set - there
+  // is no separate window in DFU - and the Oghma Infinium's only push
+  // is that sheet (OghmaInfiniumEffect posts
+  // dfuiOpenCharacterSheetWindow after setting both flags). The port
+  // splits the rollout out as LevelUpScreen, so the door mounts THAT
+  // while a level-up is owed; the book was otherwise consumed for a
+  // read-only sheet that never read either flag.
+  if (deps.entity?.readyToLevelUp) return new LevelUpScreen(deps.entity);
   const hooks = charSheetHooks(deps);
   // `document` for the reason chargenSession's and pauseDoor's forks
   // give: node drives these hosts headless and keeps the canvas window
@@ -128,10 +138,19 @@ function enhancedSheetPageOverlay(hooks) {
     close();
   });
   return {
+    // THE HOST CONTRACT, in the hosts' own words - `input`, not
+    // `onKey`. The hosts dereference these unguarded and the DOM view
+    // only claims the keys it uses, so a missing arm is a TypeError
+    // thrown inside the host's keydown handler. Same arms as
+    // ui/pauseDoor.js and ui/inventoryDoor.js.
+    isChoiceWindow: true,
     get done() { return fired; },
-    draw() {},
-    onKey() { return false; },
-    onPointer() { return false; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* nothing on this screen moves on a clock */ },
+    draw() { /* DOM, not canvas */ },
     close,
     // `dispose` and `destroy` are both the hosts' words for the same
     // act; the overlay this replaced answered both, so this does too.

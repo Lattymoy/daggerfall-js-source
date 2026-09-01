@@ -26,11 +26,17 @@
 
 import { buildNeutralBody, WRIST_JUNCTION_Y, ARM_X, NECK_PIVOT_Y } from './neutralBody.js';
 import { ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, REACTIONS, DIRECTION_TO_STRIKE, STRIKES } from './anims.js';
-import { buildCuirass, STEEL_RAMP } from './pieces/cuirass.js';
-import { buildGreaves } from './pieces/greaves.js';
+import { STEEL_RAMP } from './pieces/cuirass.js';
 import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from './pieces/pieceLoft.js';
-import { clothingZones } from './clothing.js';
-import { armorZones } from './armorSet.js';
+// AUDIT 39: `buildCuirass`, `buildGreaves`, `clothingZones` and
+// `armorZones` were imported here and never called - the four
+// item-to-geometry modules (pieces/cuirass.js, pieces/greaves.js,
+// clothing.js, armorSet.js) have no live consumer anywhere, and these
+// imports were the only thing making grep report them as wired. They
+// are STAGED, not shipped: the equip-table -> clothZones/armorZones
+// seam is the arc's next step and is deliberately not taken. Only
+// STEEL_RAMP is live (the pauldrons and helm below).
+import { buildHair, HAIR_RAMPS } from './pieces/hair.js';
 import { buildPauldrons } from './pieces/pauldrons.js';
 import { buildHelm } from './pieces/helm.js';
 import { buildTail } from './pieces/tail.js';
@@ -317,6 +323,11 @@ export function buildPaperdollPayload(pal, img, cif) {
     return {
       archive: d.archive, race: d.race, gender: d.gender, name: d.name, build: d.build,
       tone: RACE_TONE[d.race],
+      // AUDIT 39: every design has named a hairstyle and a hair colour
+      // since the designs landed, and the viewer's applyVillagerHair
+      // reads exactly `v.hair.style` / `v.hair.ramp` - the pack never
+      // carried the field, so all 25 villagers came out bald.
+      hair: d.hair,
       drape: withFit(designDrape(d, pal), vf),
       ...villagerDelta(faces, vf),
     };
@@ -324,6 +335,27 @@ export function buildPaperdollPayload(pal, img, cif) {
 
   // armor pieces (separate meshes in the viewer, toggleable).
   const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[], pI=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pI.push(Math.round((f._i ?? 0.6) * 255)); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG, I: pI }; };
+
+  // ── HAIR. AUDIT 39: pieces/hair.js built seven styles in three
+  // colours and the viewer had the whole consumer written -
+  // applyVillagerHair off `D.hair[race][style]` and `D.hairRamps` -
+  // but this payload emitted neither, so every figure in the editor
+  // was bald and the 25 designs' `hair:` field was inert.
+  //
+  // Baked in BROWN and recoloured by the pack's own recolor() (the
+  // static-drape path: re-snap each face's stored intensity onto the
+  // wanted ramp), which is why one build per style serves all three
+  // colours. Only the races hair.js grows hair on get packs - a
+  // Khajiit's coat and an Argonian's crest are not hairstyles, and an
+  // empty style list is what the viewer's `!h.styles.length` guards
+  // already expect.
+  const HAIR_RACES = ['Human', 'Elf'];
+  const HAIR_STYLES = ['short', 'buzz', 'medium', 'long', 'ponytail', 'topknot', 'mohawk'];
+  const hairPacks = {};
+  for (const R of HAIR_RACES) {
+    hairPacks[R] = {};
+    for (const st of HAIR_STYLES) hairPacks[R][st] = packPiece(buildHair(HAIR_RAMPS.brown, R, ramps.skin, st));
+  }
 
   // ── the ORC LINE (editor only - nothing here touches a game host).
   // Same DELTA mechanism as the villagers, and for the same reason: a
@@ -543,6 +575,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     // another's colour, so the tails take the race hide/fur ramps - the
     // same ones raceCharacter.js:48-49 shades the in-engine bake with.
     faceSet,
+    hair: hairPacks, hairRamps: HAIR_RAMPS,
     tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),
     tailCat: packPiece(buildTail(KHAJIIT_FUR, 'khajiit')),
     arrow: packPiece(buildNockedArrow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),

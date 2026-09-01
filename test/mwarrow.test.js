@@ -30,13 +30,16 @@ const wpdt = (id, model, type) => {
 };
 
 const LONG_BOW = { templateIndex: 130 };
-function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif' } = {}) {
+function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif', bowFixture = 'bowmesh.nif' } = {}) {
   const files = new Map([
     [fpSkeletonPath({}), f(skeleton)],
     [FP_CLIP_PATH, f('armfpweapon.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
     ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
-    ['meshes/w/bowmesh.nif', f('bowmesh.nif')],
+    // MW-D47: swappable, so a bow WITHOUT rule 24's ArrowBone can be
+    //          driven - which is the only way to reach the quiver
+    //          fallback now that the mesh is asked first.
+    ['meshes/w/bowmesh.nif', f(bowFixture)],
     ['textures/tx_fixture.dds', f('fixture.dds')],
   ]);
   if (ammo) files.set('meshes/w/arrow.nif', f(ammoFixture));
@@ -105,19 +108,31 @@ test('MW-D16: with no "Bip01 Arrow" bone the arrow rides the WEAPON MESH', async
     'so it hangs on the WEAPON\'s bone, with the mesh chain baked in');
 });
 
-test('MW-D16: a skeleton that HAS the bone takes the first branch instead', async () => {
+// MW-D47 INVERTED THIS. The bow mesh is asked FIRST now - see the rule
+// - so the quiver bone is what a bow WITHOUT an ArrowBone falls to,
+// rather than what wins over one. The fixture bow carries the node, so
+// the branch is reached by taking it away.
+test('MW-D47: the quiver bone is the FALLBACK, reached when the bow mesh has no ArrowBone', async () => {
   const res = await buildFpArm({
-    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    // A bow mesh with NO ArrowBone, so the mesh branch cannot win, and
+    // a skeleton that carries the quiver bone. quiverDriven is stated
+    // because the fixture clip does not animate it (MW-D46).
+    deps: bowDeps({ skeleton: 'armfparrow.nif', bowFixture: 'armfphand.nif' }),
+    quiverDriven: true,
   });
   assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(res.arrow, 'the round resolves on the fallback');
   assert.equal(res.arrow.viaWeaponMesh, false);
-  assert.equal(res.arrow.bone, 'Bip01 Arrow', 'the ACTOR\'s own bone wins');
+  assert.equal(res.arrow.bone, 'Bip01 Arrow', 'the skeleton bone is what is left');
 });
 
 test('MW-D16: the mesh chain is BAKED, so the two branches put it in different places', async () => {
   const viaMesh = await buildFpArm({ race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps() });
   const viaBone = await buildFpArm({
-    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ skeleton: 'armfparrow.nif', bowFixture: 'armfphand.nif' }),   // MW-D47: no ArrowBone, so the quiver wins
+    quiverDriven: true,
   });
   const arrowOf = (res) => res.arm.pieces.find((p) => p.slot === 'arrow');
   assert.ok(arrowOf(viaMesh) && arrowOf(viaBone));
@@ -296,4 +311,157 @@ test('MW-D16: the arrow is a HIDDEN RANGE, like the weapon', async () => {
   arm.update(0.05);
   assert.equal(arm.mesh().ranges.length, before, 'the range list never changes length');
   assert.equal(arm.mesh().ranges.filter((r) => r.slot === 'arrow')[0].hidden, false);
+});
+
+// MW-D42: THE NOCK HAS A FLOOR AT THE DRAW (Mac: the arrow is not shown
+// on the bow during the animation). Rule 24's "shoot attach" still
+// drives the nock wherever the data carries it - the test above pins
+// that - but the arrow may no longer DEPEND on that key existing. It is
+// a text key inside the user's own .kf, and when it is absent or named
+// otherwise the bow drew empty through the whole shot with nothing
+// saying why. THE FIXTURES ALL CARRY THE KEY, which is exactly why this
+// pin cannot be written with a clip: it asserts the state BEFORE any
+// update() steps the playhead to 5.9, where only the floor can have set
+// it. Remove the floor and this dies while every other arrow test stays
+// green - which is what a fixture-shaped blind spot looks like.
+test('MW-D42: the arrow is on the string the moment the draw BEGINS, key or no key', async () => {
+  const arm = liveArm();
+  const res = await arm.build({ race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps() });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  arm.setSheathed(false);
+  for (let i = 0; i < 80 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
+  // MW-D16's surprise still holds: a bow at REST is empty-handed.
+  assert.equal(arm.status().arrowShown, false, 'a bow at rest carries nothing');
+
+  assert.equal(arm.attack('StrikeDown'), 'shoot');
+  // NOT ONE update() - the playhead has not reached "shoot attach" at
+  // 5.9 yet, so a true here can only be the floor.
+  assert.equal(arm.status().arrowShown, true,
+    'attack() IS the beginning of the draw, and that is where MW-D16 says the round goes on');
+});
+
+// AND THE FLOOR IS A FLOOR, NOT A BLANKET. It is gated on the shoot
+// class AND on the arm actually having an arrow part, so an empty
+// quiver still draws an empty bow - MW-D16's law, which the floor must
+// not quietly overturn by conjuring a round from a weapon class test.
+test('MW-D42: an empty quiver still draws an EMPTY bow', async () => {
+  const arm = liveArm();
+  const res = await arm.build({ race: 'fprace', weapon: LONG_BOW, hasAmmo: false, deps: bowDeps() });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.equal(res.arrow, null, 'no ammunition, no arrow part');
+  arm.setSheathed(false);
+  for (let i = 0; i < 80 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
+  arm.attack('StrikeDown');
+  assert.equal(arm.status().arrowShown, false, 'the draw cannot nock what was never built');
+});
+
+// MW-D44: AMMUNITION TAKES THE WEAPON'S OFFSET, THOUGH NEVER ITS OWN
+// (Mac: "I genuinely think the arrow placement in the hand is not 1:1"
+// - and he was right). MW-D34 above read half the reference and stopped
+// one level too high. attachArrow IS a bare getInstance(model, parent)
+// (weaponanimation.cpp:87-93), so the ARROW's own BoneOffset is never
+// searched for - MW-D34 stands and is the control for this. But
+// `parent` is getArrowBone(), the ArrowBone node INSIDE the weapon's
+// live scene graph, and the weapon reached that graph through
+// SceneUtil::attach, which applied the WEAPON's BoneOffset above it.
+// Everything under ArrowBone inherits it, the arrow included. The port
+// gave the arrow only preTransform - the weapon NIF's own
+// root-to-ArrowBone chain - so it sat displaced from the hand by
+// exactly the weapon's offset.
+//
+// SOURCE-PINNED, and the reason is a missing fixture rather than a
+// missing law: proving it live needs a bow mesh carrying BOTH an
+// ArrowBone and a BoneOffset, and generate.py has no such fixture -
+// boneoffset.nif is ammunition. That fixture is the honest next step
+// and is named here so it is not rediscovered.
+test('MW-D44: the arrow inherits the WEAPON\'s BoneOffset, and only when it rides the weapon', () => {
+  const src = readFileSync('src/formats/mwFirstPerson.js', 'utf8');
+  // The weapon's offset is recorded as the weapon binds...
+  assert.match(src, /if \(part\.slot === 'weapon'\) weaponBoneOffset = bound\.boneOffset \|\| null;/,
+    'the weapon records its offset for the round that rides inside it');
+  // ...and spent by the ammo, gated on preTransform - which is set in
+  // exactly getArrowBone's SECOND branch. When the actor's own skeleton
+  // carries the attach bone the weapon is not in the chain at all, and
+  // inheriting its offset there is the same mistake pointing the other
+  // way.
+  assert.match(src, /boneOffset: part\.ammo\s*\?\s*\(part\.preTransform \? weaponBoneOffset : null\)/,
+    'the ammo takes it only on the weapon-mesh branch');
+  // And it is reset per call, so a body built without a weapon cannot
+  // inherit a stale offset from the previous one.
+  assert.match(src, /let weaponBoneOffset = null;\s*\n\s*for \(const part of parts\)/,
+    'the carry is per-call, not module state');
+});
+
+// MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS FOR (Mac,
+// four rounds in: "the placement is still not correct. It still spawns
+// in the character"). OpenMW issue 5642 added that branch so MODDED
+// skeletons could fetch arrows from a quiver - "allows to implement
+// better shooting animations" - and it is worthless without clips that
+// move the bone. A skeleton carrying "Bip01 Arrow" against animations
+// that never touch it parks the round ON THE BODY for the whole shot,
+// which is the symptom exactly. The vanilla path the bow mesh carries
+// is the one that works, and it is where the round goes now.
+//
+// This is the never-traps law, not a new opinion: a feature whose
+// driving data is absent degrades to the default rather than deleting
+// the picture.
+test('MW-D46: a quiver bone with no clip to drive it falls back to the bow mesh', async () => {
+  // Same skeleton as MW-D16's branch pin - it HAS "Bip01 Arrow" - but
+  // without the override, so the real clip check runs and the fixture
+  // clip does not animate that bone.
+  const res = await buildFpArm({
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ skeleton: 'armfparrow.nif', bowFixture: 'armfphand.nif' }),
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(!res.arrow, 'no bow ArrowBone and no clip driving the quiver: nowhere to put it');
+  assert.ok(res.notes.some((n) => n.startsWith('arrow:')), 'and it says so');
+});
+
+// MW-D47: AND WITH A NORMAL BOW THE MESH ALWAYS WINS, even against a
+// skeleton that carries the quiver bone and clips that drive it. This
+// is the inversion itself: the round goes on the STRING, because the
+// port has no animation that would carry it off a quiver.
+test('MW-D47: a bow with an ArrowBone beats the quiver bone outright', async () => {
+  const res = await buildFpArm({
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ skeleton: 'armfparrow.nif' }),   // HAS "Bip01 Arrow"
+    quiverDriven: true,                              // and clips that drive it
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(res.arrow, 'the round resolves');
+  assert.equal(res.arrow.viaWeaponMesh, true, 'the bow mesh is asked FIRST');
+  assert.notEqual(res.arrow.bone, 'Bip01 Arrow', 'never the body bone when the bow offers one');
+});
+
+// MW-D46b: EVERY DOOR ASKS, NOT JUST THE FIRST ONE (Mac: "Dude. Please
+// just get this right"). MW-D46 wired the quiver check into the
+// FIRST-PERSON build alone, and resolveWeaponParts has FOUR callers:
+// both builds and both halves of the live weapon swap. The third-person
+// body went on taking the quiver branch - and that is the rig whose
+// skeleton actually carries "Bip01 Arrow", so it is the one that put
+// the round in the torso. Same shape as MW-D43 fixing one of two
+// pixelize passes: a default that means "old behaviour" hides every
+// caller you did not visit.
+//
+// Source-pinned because three of the four doors need a built body or a
+// live swap to drive, and the fixtures reach the first-person build
+// only - the fourth is pinned behaviourally above.
+test('MW-D46b: every resolveWeaponParts caller answers the quiver question', () => {
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  // The DEFINITION matches the same text, and its default is the thing
+  // under test - so it is excluded by that default rather than by
+  // position, which would rot the moment the file is reordered.
+  const calls = src.split('resolveWeaponParts({').slice(1)
+    .filter((c) => !c.slice(0, c.indexOf('})')).includes('= true'));
+  assert.equal(calls.length, 4, 'four callers: both builds, both halves of the swap');
+  for (const [i, c] of calls.entries()) {
+    const args = c.slice(0, c.indexOf('})'));
+    assert.match(args, /quiverDriven/, `caller ${i + 1} decides the branch by default instead of asking`);
+  }
+  // The swap READS the build's answer rather than re-deciding it: a
+  // body that resolved one way and then swaps the other way mid-session
+  // is two answers to one question about the same skeleton.
+  assert.match(src, /quiverDriven: token\.quiverDriven \?\? false/);
+  assert.match(src, /quiverDriven: t\.quiverDriven \?\? false/);
 });

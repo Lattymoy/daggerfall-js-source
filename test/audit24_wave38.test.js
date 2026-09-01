@@ -76,6 +76,51 @@ test('audit24 wave38: the corpse lands on the GROUND, not where the flyer died',
   assert.deepEqual(c2.pos, [1, 9, 2]);
 });
 
+test('AUDIT 39: a recenter DURING the corpse mint moves the body with the world', async () => {
+  // AUDIT 17e F23 / THE FOUR HOSTS RULE. The mint baked `pos` from
+  // `feet` BEFORE `await getTexture(archive)` - a cold TEXTURE.###
+  // read that spans frames on a first kill of a type - and the record
+  // joins `corpseBatches` only in the caller's `.then`, so offsetAll
+  // (the only thing that shifts a corpse) could reach neither the
+  // record nor the position. A recenter in that window left the body
+  // AND its loot AABB a whole map pixel (819.2) from the kill.
+  //
+  // The pools shift `ai.feet` IN PLACE, so reading it after the warm
+  // is what makes the mint follow the world.
+  const r = rig({ floorY: 0 });
+  let land;
+  const feet = [10, 0, -4];                       // the pool's live array
+  const c = mintCorpseMarker({
+    renderer: r.renderer,
+    getTexture: () => new Promise((res) => { land = () => res({ recordCount: 8, getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }) }); }),
+    uploadRecordFrame: r.uploadRecordFrame,
+    collider: r.collider, corpseTexture: { archive: 405, record: 1 }, feet,
+  });
+  await new Promise((res) => setTimeout(res, 0));
+  assert.equal(r.made.length, 0, 'nothing is baked while the archive warms');
+  feet[0] -= 819.2;                               // the floating origin recenters
+  land();
+  const marker = await c;
+  assert.deepEqual(marker.pos, [10 - 819.2, 0, -4], 'the body stands where the foe now does');
+  assert.deepEqual(r.made[0].centres[0], [10 - 819.2, 0, -4], 'and the STATIC_DRAW batch was baked there');
+});
+
+test('AUDIT 39: a pool that prunes keys its corpses by a stable id, not by the array index', () => {
+  // cityGuards splices walk-aways out of `guards` now, so an index is
+  // no longer a name: the body at index 1 when the target list was
+  // built is a different body once anything ahead of it leaves. Pools
+  // that never splice (exteriorFoes) keep the index, which is what the
+  // default is for.
+  const bodies = [{ corpse: true, id: 7 }, { corpse: true, id: 9 }];
+  const byId = corpseLootTargets(bodies, 'guardCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0], idOf: (e) => e.id });
+  assert.deepEqual(byId.map((t) => t.key), ['guardCorpse:7', 'guardCorpse:9']);
+  bodies.shift();   // the walk-away ahead of it is pruned
+  assert.deepEqual(corpseLootTargets(bodies, 'guardCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0], idOf: (e) => e.id })
+    .map((t) => t.key), ['guardCorpse:9'], 'the surviving body keeps its name');
+  const byIndex = corpseLootTargets(bodies, 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });
+  assert.deepEqual(byIndex.map((t) => t.key), ['foeCorpse:0'], 'no idOf, the index stands');
+});
+
 test('audit24 wave38: the SL2 guard, and the two ways a mint declines', async () => {
   const r = rig({ floorY: 0 });
   const base = {
