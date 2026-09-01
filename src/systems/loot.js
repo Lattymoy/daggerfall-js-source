@@ -25,7 +25,7 @@ import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue } from './itemTemplates.js';   // F103: SetItem writes the value with the name
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
-import { getRandomBookID } from './books.js';   // IM1: CreateRandomBook's message roll
+import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
 import { potionRecipeByKey } from './potions.js';   // F103: PotionRecipeKey's price side effect
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
@@ -70,7 +70,7 @@ const LOOT_GROUP_KEYS = Object.freeze([
 ]);
 export const ITEM_GROUPS = Object.freeze(Object.fromEntries(
   LOOT_GROUP_KEYS.map((k) => [k, GROUP_TEMPLATE_INDICES[k]])));
-export const BOOK_TEMPLATE = 277;
+export { BOOK_TEMPLATE };   // ONE DFU MEMBER, ONE EXPORT: template 277's home is books.js now
 
 // DaggerfallLootDataTables + LootTables.GenerateLoot verbatim data
 // (moved here from the dungeon scene in the 2026-07-06b audit - a
@@ -187,9 +187,10 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   // mint never set it, so a dungeon-loot book had no id: no title on
   // the info panel and nothing for the reader to open), THEN
   // CurrentVariant = Range(0, book.TotalVariants), variants 2 for
-  // template 277. The file-read price (book.value = bookFile.Price)
-  // stays the loud interim shopStock records.
-  halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: getRandomBookID(rolls), variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) }));
+  // template 277, THEN `book.value = bookFile.Price`. A2 closed that
+  // last clause and took the whole member into books.js, so the three
+  // sites that had it inline share one mint and one draw order.
+  halving(matrix.BK, () => createRandomBook(rolls));
   halving(matrix.RL, () => ({ group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) }));
   return items;
 }

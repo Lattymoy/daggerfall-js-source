@@ -26,6 +26,7 @@ import { itemBaseValue, templateByIndex, templateFor } from './itemTemplates.js'
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
 import { ensureReactionState } from './talk.js';
+import { createRandomBook } from './books.js';   // A2: ItemBuilder.CreateRandomBook, one member
 
 /** ItemGroups (ItemEnums.cs:27-59) - the numbers a BIOG line carries. */
 export const ITEM_GROUP_BY_ID = Object.freeze({
@@ -62,6 +63,11 @@ const ARROW_TEMPLATE = 131;
 const mintItem = (group, groupIndex, material, rolls) => {
   const t = templateFor(group, groupIndex);
   if (!t) return null;
+  // A2: an IT Books row IS CreateRandomBook - the id, the variant and
+  // the BOOK FILE's price - so it leaves through the one member rather
+  // than through the generic template mint below. This closes the loud
+  // interim that used to log here on every biography book.
+  if (group === 'Books') return createRandomBook(rolls);
   const item = { group, templateIndex: t.index };
   if (group === 'Weapons') {
     // ItemBuilder.CreateWeapon:353-368 - "Ignored for arrows": an
@@ -76,16 +82,6 @@ const mintItem = (group, groupIndex, material, rolls) => {
       item.currentCondition = 0;
     } else item.material = material;
   } else if (group === 'Armor') item.material = weaponToArmorMaterial(material);
-  // CreateRandomBook (ItemBuilder.cs:256-269) rolls Range(0,
-  // TotalVariants) so biography books vary the way shop books do.
-  // INTERIM, loud and the same one shopStock.js:115 carries: message
-  // (GetRandomBookID) and value (BookFile.Price, a 300..800 roll off
-  // the file's own seed) need the books arc's BOOKS reader, so the
-  // value below is the TEMPLATE price.
-  else if (group === 'Books') {
-    item.variant = Math.floor(rolls() * (t.variants ?? 1));
-    console.log('[biog] IT Books - book-file pricing pends (loud); the value is the template price');
-  }
   item.name = templateByIndex(t.index)?.name;
   item.value = itemBaseValue(item);
   return item;

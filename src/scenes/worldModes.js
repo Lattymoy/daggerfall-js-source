@@ -89,7 +89,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
+import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
@@ -1136,7 +1136,21 @@ export function createWorldModes(host) {
         || b.buildingType === BUILDING_TYPES.Temple) openBookshelf(shelf, b);
       return;
     }
-    shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    // A2: PlayerActivate.ActivateLootContainer's ShopShelves arm
+    // (:881-886) - "Stock shop shelf on first access" is DFU's own
+    // comment and DFU's own understatement, because the test is a DAY
+    // comparison and not a null latch. StockShopShelf CLEARS the
+    // collection before it mints (:153), so a shelf picked bare
+    // yesterday is full again this morning and a shelf opened twice in
+    // one afternoon does not reroll. The `??=` that stood here stocked
+    // once per interior BUILD, which made the whole economy static:
+    // every shop in the world held whatever it rolled the first time
+    // the player walked in, for ever.
+    const today = stockedToday();
+    if (needsRestock(shelf, today)) {
+      shelf.stockedDate = today;
+      shelf.items = stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    }
     // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
     // closed shop. PlayerActivate gates shelf activation on
     // IsPlayerInsideOpenShop (:887-899) - open opens Buy, CLOSED
@@ -1181,9 +1195,16 @@ export function createWorldModes(host) {
     if (!b || !tradeArtLoaded() || !_shopFont) return false;
     const shelf = (interiorCtx?.shelves ?? [])[0] ?? (interiorCtx ? (interiorCtx.shelves ??= [])[0] : null);
     const target = shelf ?? { items: null };
-    target.items ??= isShop(b.buildingType)
-      ? stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)
-      : [];
+    // A2: the same stockedDate gate the shelf arm takes - this IS that
+    // shelf, and a merchant screen opened on a new day must find the
+    // new day's stock rather than yesterday's leavings.
+    const today = stockedToday();
+    if (needsRestock(target, today)) {
+      target.stockedDate = today;
+      target.items = isShop(b.buildingType)
+        ? stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)
+        : [];
+    }
     let win = null;
     win = openTradeWindow(target, b, 'Sell');
     // NOTE (found wiring X6): this assignment is INERT. NativeTradeWindow
@@ -1489,6 +1510,12 @@ export function createWorldModes(host) {
    *  straight through - the epoch is already in it, and S28's
    *  elapsed-minute bridge is retired. */
   const gameDate = () => dateFromClassicMinutes(interiorTicker.classicMinutes);
+
+  /** A2 - DaggerfallLoot.CreateStockedDate over the live date (:68-71).
+   *  PlayerActivate's three loot arms read it on EVERY activation
+   *  (:882 shelves, :907 the owned latch, :911 house containers), so
+   *  it is spelled once here and not three times below. */
+  const stockedToday = () => createStockedDate(gameDate());
 
   function activateStaticNpc(pn) {
     if (!pn) return;
@@ -1824,12 +1851,19 @@ export function createWorldModes(host) {
   function currentSceneState() {
     const ctx = interiorCtx;
     if (!ctx) return { lootContainers: [], actionDoors: [] };
+    // A2: stockedDate rides the cached record - SerializableLootContainer
+    // round-trips it (:72, :151) for exactly this reason. Without it a
+    // shelf restocked on every re-entry no matter what day it was,
+    // because the day it was stocked did not survive the walk out of
+    // the door.
     const lootContainers = [
       ...(ctx.shelves ?? []).map((sh, i) => ({
         containerType: LOOT_CONTAINER_TYPES.ShopShelves, key: `shelf:${i}`, items: sh.items ?? null,
+        stockedDate: sh.stockedDate ?? 0,
       })),
       ...(ctx.containers ?? []).map((c, i) => ({
         containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null,
+        stockedDate: c.stockedDate ?? 0,
       })),
     ];
     // AUDIT 39 (#32): the whole door record, not the state word alone.
@@ -1876,6 +1910,12 @@ export function createWorldModes(host) {
       // as null keeps the LAZY stock, which is what makes a first
       // browse still roll fresh goods after an uneventful visit.
       if (target && c.items !== null) target.items = c.items;
+      // A2: and the day it was stocked, which is what decides whether
+      // the next browse rerolls (SerializableLootContainer:151). A
+      // record cached before this shipped carries none, and a missing
+      // stockedDate is DFU's own 0 - "never stocked" - so such a shelf
+      // restocks once and then behaves.
+      if (target) target.stockedDate = c.stockedDate ?? 0;
     }
     // #32: through the system's own restore, which settles the matrix
     // and the collider bucket (syncRestored) - a door restored open
@@ -3427,10 +3467,24 @@ export function createWorldModes(host) {
           const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
             || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
           if (owned) {
-            c.items ??= [];   // stockedDate = 1: latched, so the save carries it
+            // ":907 - loot.stockedDate = 1; // Ensure it gets
+            // serialized". A literal 1 is below any real
+            // CreateStockedDate and above the 0 that means "never
+            // stocked", so an owned container is saved AND never
+            // restocked out from under the player's own storage.
+            c.stockedDate = 1;
+            c.items ??= [];
             openLoot();
           } else {
-            c.items ??= stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);
+            // A2 (:910-915): the same day comparison the shelves take.
+            // StockHouseContainer clears and re-mints (:293-294), so a
+            // stranger's cupboard refills overnight; the `??=` that
+            // stood here stocked it once per interior build.
+            const today = stockedToday();
+            if (needsRestock(c, today)) {
+              c.stockedDate = today;
+              c.items = stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);
+            }
             if (c.items.length === 0) return true;   // "If no contents, do nothing"
             interiorOverlay = new ChoiceWindow({
               lines: _rowsText(townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID) ?? [], 'This looks like private property. Do you still want to look through it?'),
