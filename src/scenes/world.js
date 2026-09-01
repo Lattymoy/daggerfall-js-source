@@ -23,7 +23,7 @@ import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../wor
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
-import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
+import { collectExteriorNpcs, exteriorNpcRecord, isExteriorNpcFlat } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
@@ -530,6 +530,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
         }
         for (const flat of blockFlats) {
+          // NPC4c: a flat with a non-zero FactionID is a street
+          // StaticNPC and gets a batch of its own below - a merged
+          // (archive, record) group cannot leave one person out of the
+          // sprite pass, which is what the Morrowind body lane needs.
+          if (isExteriorNpcFlat(flat)) continue;
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
           // A4: every archive-201 town animal is an audio source
@@ -630,18 +635,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so destroyPixel takes it away with everything else.
     await pipeline.loadFlats();
     const pixelNpcs = [];
+    const pixelNpcBatches = [];
     for (const flat of pixelNpcFlats) {
       const t = await getTexture(flat.archive);
       if (!t || flat.record >= t.recordCount) continue;
       const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
       const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-      pixelNpcs.push({ ...pn, width: size.w, height: size.h });
+      // NPC4c: their own batch, PIXEL-LOCAL like every other batch this
+      // host builds - the frame stamps `origin` with the pixel's
+      // translation, so a street NPC recenters with their town.
+      uploadRecord(flat.archive, flat.record);
+      const batch = renderer.createBillboardBatch(flat.archive, flat.record, size, [[flat.x, flat.y, flat.z]]);
+      armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
+      pixelNpcBatches.push(batch);
+      pixelNpcs.push({ ...pn, width: size.w, height: size.h, batch });
     }
 
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
+      npcBatches: pixelNpcBatches,   // NPC4c: one per person, freed with the pixel
       locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
@@ -660,6 +674,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
+    for (const b of p.npcBatches ?? []) renderer.destroyBatch(b);   // NPC4c: the street NPCs' own batches
     collider.removeBucket(key);
     // T3d fix: the pixel's doors leave with it - they accumulated
     // across every rebuild (duplicate E-targets + unbounded growth
@@ -4707,6 +4722,33 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const b of p.batches) {
         b.origin = t;
         allBatches.push(b);
+      }
+      // NPC4c: THE PEOPLE STANDING IN THE STREET. RMBLayout stands a
+      // StaticNPC on any flat carrying a faction, and they are the
+      // same kind of person a building holds, so they take the same
+      // lane - through the mode machine's own derivation, which is
+      // the identity the click that talks to them uses too.
+      //
+      // Body or sprite, never both. Their FEET fold in the pixel
+      // translation the sprite gets through `origin`, so a street
+      // person recenters with their town instead of drifting away
+      // from it.
+      for (const pn of p.npcs ?? []) {
+        if (!pn.batch) continue;
+        const _opts = modes?.staticNpcMwOpts?.(pn) ?? null;
+        const _body = _opts ? requestMwBody(pn, _opts, -1) : null;
+        if (_body && drawMwActor(renderer, canvas, _body, pn._mwState, {
+          dt: townTalk.overlayActive ? 0 : dt,
+          moving: false,
+          running: false,
+          feet: [pn.x + t[0], pn.y + t[1], pn.z + t[2]],
+          yaw: Math.atan2(cam.pos[0] - (pn.x + t[0]), cam.pos[2] - (pn.z + t[2])),
+          proj,
+          view,
+          eye: mwv.eye,
+        })) continue;
+        pn.batch.origin = t;
+        allBatches.push(pn.batch);
       }
     }
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);

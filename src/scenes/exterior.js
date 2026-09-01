@@ -40,7 +40,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
-import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
+import { collectExteriorNpcs, exteriorNpcRecord, isExteriorNpcFlat } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -361,6 +361,12 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     const blockFlats = collectBlockFlats(b.dfBlock, natureArchive);
     for (const flat of blockFlats) {
+      // NPC4c: a flat with a NON-ZERO FactionID is a street StaticNPC
+      // (RMBLayout.cs:366-378), and it gets a batch of its own below -
+      // a merged (archive, record) batch of centres cannot leave one
+      // person out, which is what the Morrowind body lane needs. Same
+      // split interiorContext makes for a building's people.
+      if (isExteriorNpcFlat(flat)) continue;
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
@@ -474,7 +480,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!t || flat.record >= t.recordCount) continue;
     const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
     const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-    exteriorNpcs.push({ ...pn, width: size.w, height: size.h });
+    // NPC4c: their own batch, since the shared groups no longer carry
+    // them. Animated exactly as the group would have animated it.
+    uploadRecord(flat.archive, flat.record);
+    const batch = renderer.createBillboardBatch(flat.archive, flat.record, size, [[flat.x, flat.y, flat.z]]);
+    armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
+    exteriorNpcs.push({ ...pn, width: size.w, height: size.h, batch });
   }
 
   // Camera.
@@ -1924,6 +1935,32 @@ export async function bootExterior(canvas, renderer, params, status) {
     arrows.draw(renderer, texRemap);
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // NPC4c: THE PEOPLE STANDING IN THE STREET. RMBLayout stands a
+    // StaticNPC on any flat carrying a faction, and they are the same
+    // kind of person a building holds - so they take the same lane,
+    // through the mode machine's own derivation (one identity, shared
+    // with the click that talks to them). Body or sprite, never both;
+    // they stand still and face you, exactly as the billboard does.
+    {
+      const _npcBatches = [];
+      for (const pn of exteriorNpcs) {
+        if (!pn.batch) continue;
+        const _opts = modes?.staticNpcMwOpts?.(pn) ?? null;
+        const _body = _opts ? requestMwBody(pn, _opts, -1) : null;
+        if (_body && drawMwActor(renderer, canvas, _body, pn._mwState, {
+          dt: townTalk.overlayActive ? 0 : dt,
+          moving: false,
+          running: false,
+          feet: [pn.x, pn.y, pn.z],
+          yaw: Math.atan2(cam.pos[0] - pn.x, cam.pos[2] - pn.z),
+          proj,
+          view,
+          eye,
+        })) continue;
+        _npcBatches.push(pn.batch);
+      }
+      if (_npcBatches.length) renderer.drawBillboards(_npcBatches, camRight, new Float32Array([0, 1, 0]));
+    }
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),

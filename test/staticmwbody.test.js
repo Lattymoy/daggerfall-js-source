@@ -185,3 +185,48 @@ test('NPC4: they stand still and face you, because that is what the sprite did',
   // is no facing in the block record to be faithful to instead.
   assert.match(loop, /yaw: Math\.atan2\(cam\.pos\[0\] - pn\.x, cam\.pos\[2\] - pn\.z\)/);
 });
+
+test('NPC4c: a street StaticNPC is pulled out of the shared flat groups, in BOTH hosts', () => {
+  // RMBLayout stands a StaticNPC on any flat carrying a faction
+  // (:366-378 / :442-454). Those flats used to pour into the shared
+  // (archive, record) groups with the scenery, and a merged batch of
+  // centres cannot leave one person out - which is exactly what the
+  // body lane needs.
+  for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    const host = rd(f);
+    assert.match(host, /if \(isExteriorNpcFlat\(flat\)\) continue;/,
+      `${f}: street NPCs are still merged into the scenery's batches`);
+    assert.match(host, /armFlatAnim\(batch, t, flat\.archive, flat\.record/,
+      `${f}: a street NPC's own batch lost the flat animation the group gave it`);
+    assert.match(host, /\}\)\) continue;/, `${f}: no body-or-sprite decision`);
+  }
+  // ONE predicate, because the collection and the batch loop now ask
+  // the same question and two spellings is how the lists drift.
+  const src = rd('src/characters/exteriorNpcs.js');
+  assert.match(src, /export const isExteriorNpcFlat = \(f\) => f\.factionID !== 0 && f\.factionID !== undefined;/);
+  assert.match(src, /return flats\.filter\(isExteriorNpcFlat\);/,
+    'the collection kept its own copy of the test');
+  // The streaming host frees them with the pixel, or every town the
+  // player walks away from leaves a batch per person behind.
+  assert.match(rd('src/scenes/world.js'),
+    /for \(const b of p\.npcBatches \?\? \[\]\) renderer\.destroyBatch\(b\);/,
+    'the streaming host leaks a batch per street NPC per pixel');
+});
+
+test('NPC4c: the street NPC\'s identity is the mode machine\'s, not a second one', () => {
+  // A street NPC is DRAWN by the exterior hosts and CLICKED through
+  // worldModes. Deriving the body in the host would mean two
+  // derivations off two faction stores, and a person whose body is a
+  // different race from their own dialogue.
+  const wm = rd('src/scenes/worldModes.js');
+  assert.match(wm, /\n    staticNpcMwOpts,\n/, 'the machine stopped publishing its derivation');
+  for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    assert.match(rd(f), /modes\?\.staticNpcMwOpts\?\.\(pn\) \?\? null/,
+      `${f}: the host derives a street NPC's identity itself`);
+  }
+  // The streaming host's feet fold in the pixel translation, or a
+  // street person drifts away from their town on every recenter.
+  assert.match(rd('src/scenes/world.js'),
+    /feet: \[pn\.x \+ t\[0\], pn\.y \+ t\[1\], pn\.z \+ t\[2\]\],/,
+    'a street NPC\'s body stands at pixel-local feet');
+});

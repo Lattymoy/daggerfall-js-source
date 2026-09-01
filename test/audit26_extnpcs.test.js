@@ -127,7 +127,11 @@ test('AUDIT 26 F019: the wiring - collectExteriorNpcs has production callers in 
   // building, so neither has an exterior flat to collect.
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const host = src(f);
-    assert.match(host, /import \{ collectExteriorNpcs, exteriorNpcRecord \}/, `${f}: the collection is not imported`);
+    // NPC4c added isExteriorNpcFlat to the same import - the ONE
+    // predicate, because the batch loop now asks the same question
+    // ("is this flat a person?") to keep them out of the shared flat
+    // groups, and two spellings of it is how the two lists drift.
+    assert.match(host, /import \{ collectExteriorNpcs, exteriorNpcRecord(, isExteriorNpcFlat)? \}/, `${f}: the collection is not imported`);
     assert.ok(host.includes('collectExteriorNpcs(blockFlats)'), `${f}: the collection is never called on the block's flats`);
     assert.ok(host.includes('exteriorNpcRecord('), `${f}: no NPC record is ever stood`);
     assert.ok(host.includes('npcTargets: ()'), `${f}: the NPCs never reach the mode machine`);

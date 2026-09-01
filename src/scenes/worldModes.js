@@ -5072,6 +5072,12 @@ export function createWorldModes(host) {
   }
 
   return {
+    /** NPC4c: a static NPC's Morrowind body opts, derived through THIS
+     *  machine's own scene context - the same one openStaticNpc uses.
+     *  The street NPCs are drawn by the exterior hosts but CLICKED
+     *  through here, so publishing the derivation is what keeps a
+     *  street person's body and their dialogue the same person. */
+    staticNpcMwOpts,
     get mode() { return mode; },
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
