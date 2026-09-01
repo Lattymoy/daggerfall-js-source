@@ -56,17 +56,26 @@
 //    and the browser's key repeat supplies the hold. The MOUSE arms
 //    have no such gap: the chrome's press-hold machine and both drags
 //    run off the real down/move/up seam and are frame-exact.
-//  - THE PLATE ANCHOR IS STILL THE DISCOVERED EXTERIOR DOOR. DFU
-//    anchors every plate on the building subrecord's own Position over
-//    ALL buildings of ALL blocks (ExteriorAutomap.cs:664-665); nothing
-//    in the port enumerates a building without a door yet, so the
-//    directory's door position stands in. HALF B of this stage closes
-//    it - and moves every plate in every town when it does.
 //  - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
 //    the port's quest bridge exposes no locationWasMarkedOnMapByNPC.
 //  - the plate label is the port's FNT text, not DFU's yellow-reloaded
 //    DaggerfallFont Texture2D, so TextScale is halved for the port's
 //    16px-cell glyphs (the A2 legibility pick, kept).
+//  - the arrow draws as a WHITE silhouette tinted at the blit, not with
+//    mesh 99900's own skin. DFU's arrow carries Unlit/Texture and its
+//    stamp Unlit/Color, so only the ARROW loses anything - and at
+//    ~8.5 native px across (see meshStamp.js's arithmetic) what it
+//    loses is a handful of texels.
+//
+// FLAGGED, both awaiting a seam this stage does not own:
+//  - the eight BUTTON tooltips. ToolTipText for the exterior chrome is
+//    the Internal_Strings automap block with hotkey substitution, which
+//    ui/automapText.js carries for the dungeon window; the PLATE
+//    tooltips (ToolTipDelay 0, the canonical name) ship here.
+//  - map_revealbuildings / map_hidebuildings (:1796-1830). The flag
+//    they set - `revealUndiscoveredBuildings` - is live on this window
+//    and pinned; the port has no console for them to live in, exactly
+//    as ui/travelMapWindow.js records for map_reveallocations.
 //
 // THE COPY LAW: getBlockAutoMap's removeGroundFlats mutates the
 // CACHED block array in place, and cityNavigation carves the navgrid
@@ -77,7 +86,7 @@
 import { drawText, measureText } from './text.js';
 import { getBool, getInt, getString } from '../systems/settings.js';
 import { hexColor32 } from './automapWindow.js';
-import { resolveNameplates } from './nameplateLayout.js';
+import { resolveNameplates, nameplateAnchor } from './nameplateLayout.js';
 import {
   nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
 } from './nativePanel.js';
@@ -257,10 +266,12 @@ export class ExteriorAutomapWindow {
    *  locOrigin -> the location's origin inside its map pixel (so the
    *  marker law above can see the TILE frame DFU's modulo needs),
    *  isCustomLocation, playerYaw() -> rad, arrowMesh -> the CPU mesh
-   *  99900 ({positions, indices}) or null, discovered() -> discovery
-   *  records, directory() -> the talk directory (the plate names and,
-   *  until HALF B, the plate ANCHORS), compassArt ->
-   *  { compass, compassBox } or null }. */
+   *  99900 ({positions, indices}) or null, buildings() -> the
+   *  Position-bearing subrecord walk (world/buildingSummaries.js),
+   *  discovered() -> discovery records, directory() -> the talk
+   *  directory (the pre-S10 name source, still the fallback),
+   *  rename(buildingKey, name), compassArt -> { compass, compassBox }
+   *  or null }. */
   constructor(deps) {
     this.deps = deps;
     this.done = false;
@@ -286,6 +297,7 @@ export class ExteriorAutomapWindow {
     this._plates = null;  // cached solver output for the current view
     this._platesKey = '';
     this._hoverPlate = null;
+    this.revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
   }
 
   // ---- the verb table (ui/automapChrome.js answers NAMES) -----------
@@ -418,6 +430,7 @@ export class ExteriorAutomapWindow {
       }
     }
     if (phase === 'move') this._hoverAt = [nx, ny];
+    if (phase === 'down' && out.doubleClick && button === 0) this._renameAt(nx, ny);
     return out;
   }
 
@@ -564,8 +577,11 @@ export class ExteriorAutomapWindow {
   }
 
   /**
-   * The plates, now drawn through the real camera: they turn with the
-   * map because their ANCHOR does, and the solver is untouched.
+   * The plates. c2/S10 HALF B moved the ANCHOR: DFU walks EVERY
+   * building of EVERY block and anchors on the building subrecord's own
+   * Position (ExteriorAutomap.cs:664-665), where the port used to
+   * anchor on the discovered exterior DOOR. Every plate in every town
+   * moves; the layout pins were re-baselined with the move.
    *
    * THE CORNERS STAY AXIS-ALIGNED. RotateBuildingNameplates (:370-386)
    * rotates the stored corners by Quaternion.AngleAxis(-angle,
@@ -600,40 +616,63 @@ export class ExteriorAutomapWindow {
   }
 
   /**
-   * UpdateAutomapView's plate build (:860-880). Exposed so the pins can
-   * read the plate set without a renderer.
-   *
-   * THE ANCHOR IS THE DISCOVERED EXTERIOR DOOR, still - the A2
-   * substitution, recorded in the header and closed by HALF B of this
-   * stage. What changed here is only the projection: the anchor goes
-   * through the real orthographic camera, so a plate turns with the map
-   * instead of sitting on a north-up grid.
+   * UpdateAutomapView's plate build (:860-880) + CreateBuildingNameplates'
+   * name law (:665-720). Exposed so the pins can read the plate set
+   * without a renderer.
+   *  - a discovered NON-residence (or an override name) shows its
+   *    displayName, with customUserDisplayName drawn in its place while
+   *    the TOOLTIP keeps the canonical one (:882-885);
+   *  - a discovered RESIDENCE shows a plate only when an active quest
+   *    marked it - FLAGGED, the port's quest bridge exposes no
+   *    locationWasMarkedOnMapByNPC, so the arm reads a `questName` the
+   *    host may supply and is otherwise silent;
+   *  - an UNdiscovered building shows a plate only under
+   *    revealUndiscoveredBuildings, from the BuildingNames table
+   *    (:712-719);
+   *  - a plate with an empty name is never created at all (:786).
    */
   buildPlates(font, m) {
     const rect = this.panelRect(m);
+    const discovered = new Map((this.deps.discovered?.() ?? []).map((r) => [r.buildingKey, r]));
     const byKey = new Map((this.deps.directory?.() ?? []).map((d) => [d.buildingKey, d]));
     // TextScale = max(1.4, 60/orthographicSize * LocalScale) (:26-27,
     // :866), halved for the port's 16px-cell FNT glyphs (A2's pick)
     const scale = Math.max(1.4, (60 / this.cam.orthoSize) * m.s) / 2;
     const lineH = (font.fnt?.fixedHeight ?? 6) * scale;
     const out = [];
-    for (const rec of this.deps.discovered?.() ?? []) {
-      const dir = byKey.get(rec.buildingKey);
-      if (!dir?.position) continue;
-      const name = rec.displayName || dir.name;
+    for (const b of this.deps.buildings?.() ?? []) {
+      const rec = discovered.get(b.buildingKey) ?? null;
+      let name = '';
+      let custom = '';
+      if (rec) {
+        if (!b.isResidence || rec.isOverrideName) {
+          name = rec.displayName || byKey.get(b.buildingKey)?.name || '';
+          custom = rec.customUserDisplayName || '';
+        } else if (b.questName) {
+          name = b.questName;   // FLAGGED: the port has no locationWasMarkedOnMapByNPC
+        }
+      } else if (this.revealUndiscoveredBuildings) {
+        name = b.name || '';
+      }
       if (!name) continue;
-      // the door's LOCATION-LOCAL position -> the layout world frame,
-      // whose unit is one layout pixel and whose origin is the layout's
-      // centre (:862-864 subtracts half the layout the same way)
-      const [sx, sy] = toPanelScreen(this.cam, rect,
-        dir.position[0] / WORLD_PER_PX - this.layoutW / 2,
-        dir.position[2] / WORLD_PER_PX - this.layoutH / 2);
+      const anchor = nameplateAnchor(b.blockX, b.blockY, b.position);
+      const [sx, sy] = toPanelScreen(this.cam, rect, anchor[0] - this.layoutW / 2, anchor[1] - this.layoutH / 2);
+      const text = custom || name;
       out.push({
-        x: sx, y: sy, w: measureText(font.fnt, name) * scale, h: lineH,
-        text: name, name, scale, buildingKey: rec.buildingKey,
+        x: sx, y: sy, w: measureText(font.fnt, text) * scale, h: lineH,
+        text, name, scale, buildingKey: b.buildingKey, isResidence: !!b.isResidence,
       });
     }
     return out;
+  }
+
+  /** TextLabel_OnMouseDoubleClick -> SetCustomBuildingName (:857-899):
+   *  a RESIDENCE cannot be renamed (its name is quest-generated and
+   *  temporary), and the input lands on the discovery record. */
+  _renameAt(nx, ny) {
+    const p = this._hoverPlate;
+    if (!p || p.isResidence) return;
+    this.deps.rename?.(p.buildingKey, p.name);
   }
 
   /** The native chrome: the caption strip's three live swatches

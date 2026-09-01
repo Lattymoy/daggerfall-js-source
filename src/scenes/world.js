@@ -72,6 +72,7 @@ import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: th
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
@@ -200,7 +201,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -3491,6 +3492,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // once from its CPU data (ui/meshStamp.js). Kicked off here and
     // read lazily - the window draws its two other layers meanwhile.
     getGpuMesh(99900).catch(() => {});
+    // HALF B: the plates now come off the Position-bearing subrecord
+    // walk over ALL buildings, not off the discovered doors.
+    const summaries = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
     townTalk.showOverlay(new ExteriorAutomapWindow({
       locationName: dfLoc.name,
       locationId: locId,
@@ -3504,9 +3509,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       playerYaw: () => cam.yaw,
       arrowMesh: () => cpuModels.get(99900) ?? null,
       compassArt: hudArt,
+      buildings: () => summaries,
       directory: () => townTalk.directory,
       discovered: () => discoveredBuildings(locId),
+      rename: (buildingKey, name) => renameMapBuilding(locId, buildingKey, name),
     }));
+  };
+  /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
+   *  double-click raises DFU's DaggerfallInputMessageBox over the open
+   *  map (a PUSH, not a replace - the map is still there underneath),
+   *  pre-filled with the canonical name, and the answer lands on the
+   *  discovery record. MaxCharacters 80, WidthOverride 306 (:893-894);
+   *  the "Custom name: " label is Internal_Strings' `customName`. */
+  const renameMapBuilding = (locId, buildingKey, canonical) => {
+    townTalk.pushOverlay(new ServiceFlowWindow([{
+      rows: ['Custom name: '],
+      field: { numeric: false, maxCharacters: 80, initial: canonical ?? '' },
+      onInput: (text) => { setDiscoveredBuildingCustomName(locId, buildingKey, text); return null; },
+    }]));
   };
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.

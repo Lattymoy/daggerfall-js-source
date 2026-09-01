@@ -130,7 +130,9 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
-import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
+import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
+import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
+import { discoveredBuildings, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 
@@ -1278,9 +1280,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // DaggerfallUI.cs:633-650); this host always stands on a location.
     toggleAutomap: () => {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
-      // ROAD-C c2/S10: the real mesh-99900 arrow, rasterised once by
-      // ui/meshStamp.js.
+      // ROAD-C c2/S10: the real mesh-99900 arrow (rasterised once by
+      // ui/meshStamp.js) and the Position-bearing subrecord walk the
+      // plate anchors now come off.
       getGpuMesh(99900).catch(() => {});
+      const summaries = buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
+        { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex) });
       townTalk.showOverlay(new ExteriorAutomapWindow({
         locationName: dfLocation.name ?? locationName,
         locationId: locId,
@@ -1294,8 +1299,14 @@ export async function bootExterior(canvas, renderer, params, status) {
         playerYaw: () => cam.yaw,
         arrowMesh: () => cpuModels.get(99900) ?? null,
         compassArt: hudArt,
+        buildings: () => summaries,
         directory: () => townTalk.directory,
         discovered: () => discoveredBuildings(locId),
+        rename: (buildingKey, name) => townTalk.pushOverlay(new ServiceFlowWindow([{
+          rows: ['Custom name: '],   // Internal_Strings `customName` (:889)
+          field: { numeric: false, maxCharacters: 80, initial: name ?? '' },
+          onInput: (text) => { setDiscoveredBuildingCustomName(locId, buildingKey, text); return null; },
+        }])),
       }));
     },
     // PlayerActivate.ChangeInteractionMode through townTalk, which owns

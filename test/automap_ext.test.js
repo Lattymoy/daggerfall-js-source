@@ -6,10 +6,13 @@
 // nameplate collision solver, the zoom band with its memory, the
 // M-outside dispatch, and the renderer's uAutomapMode seam.
 //
-// c2/S10 HALF A RE-BASELINED THE CONTROL PINS, deliberately: the window
-// became native and its camera real, so the pins moved off A2's stepped
-// stand-ins (PAN_FRACTION, ZOOM_FACTOR) onto DFU's own per-second
-// speeds and ComputeZoom. HALF B moves the plate anchor next.
+// c2/S10 RE-BASELINED TWO FAMILIES OF PIN HERE, both deliberately:
+//  - HALF A made the window native and the camera real, so the control
+//    pins moved off A2's stepped stand-ins (PAN_FRACTION, ZOOM_FACTOR)
+//    onto DFU's own per-second speeds and ComputeZoom;
+//  - HALF B moved the plate ANCHOR off the discovered exterior door
+//    onto the building subrecord's own Position, which moves EVERY
+//    PLATE IN EVERY TOWN. The solver itself is untouched.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,10 +25,15 @@ import {
   toPanelScreen, layoutQuadRotation, playerMarkerLayoutPos,
   MARKER_TILE_SCALE, MARKER_REF_SPAN, CUSTOM_LOCATION_OFFSET, BACKGROUNDS,
 } from '../src/ui/exteriorAutomapWindow.js';
-import { nameplatesIntersect, resolveNameplates } from '../src/ui/nameplateLayout.js';
+import { nameplatesIntersect, resolveNameplates, nameplateAnchor } from '../src/ui/nameplateLayout.js';
 import { CAPTION_STRIP, CAPTION_SWATCHES } from '../src/ui/automapChrome.js';
 import { EXT_ZOOM_SPEED, EXT_SCROLL_UP_DOWN_SPEED } from '../src/ui/automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc, STAMP_INK } from '../src/ui/meshStamp.js';
+import { buildingSummaries, buildingPosition } from '../src/world/buildingSummaries.js';
+import {
+  discoverBuilding, discoveredBuildings, setDiscoveredBuildingCustomName,
+  snapshotDiscovery, restoreDiscovery,
+} from '../src/systems/discovery.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,13 +57,35 @@ const deps = (id) => ({
   blocks: [], playerPos: () => [102.4, 0, 102.4], playerYaw: () => 0,
   locOrigin: [0, 0, 0], isCustomLocation: false,
   arrowMesh: () => null, compassArt: null,
-  directory: () => [], discovered: () => [],
+  buildings: () => [], directory: () => [], discovered: () => [],
 });
 
 /** A two-triangle quad in the XZ plane, for the stamp path. */
 const TRI_MESH = {
   positions: new Float32Array([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1]),
   indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+};
+
+/** A block instance with TWO subrecords - a shop and a house - so the
+ *  plate walk has something with and something without a name. */
+const FAKE_BLOCK = {
+  x: 1,
+  y: 0,
+  dfBlock: {
+    rmbBlock: {
+      fldHeader: {
+        numBlockDataRecords: 2,
+        buildingDataList: [
+          { buildingType: 9, nameSeed: 1, factionId: 0, quality: 10 },
+          { buildingType: 17, nameSeed: 2, factionId: 0, quality: 4 },
+        ],
+      },
+      subRecords: [
+        { xPos: 2048, zPos: 1024, yRotation: 0, exterior: { block3dObjectRecords: [] }, interior: {} },
+        { xPos: 512, zPos: 3072, yRotation: 0, exterior: { block3dObjectRecords: [] }, interior: {} },
+      ],
+    },
+  },
 };
 
 /** A call-recording stand-in for the renderer. The window only ever
@@ -390,6 +420,99 @@ test('c2/S10: the mesh stamp rasteriser, pixel for pixel, on a synthetic mesh', 
   const disc = rasterizeDisc(8);
   assert.equal(disc.colors[0], 0, 'the corner is outside');
   assert.notEqual(disc.colors[4 * 8 + 4], 0, 'the centre is inside');
+});
+
+test('c2/S10 HALF B: the plate ANCHOR is the building subrecord\'s own Position (ExteriorAutomap.cs:664-665)', () => {
+  // a subrecord dead centre of its own 4096-unit block
+  assert.deepEqual(nameplateAnchor(0, 0, buildingPosition({ xPos: 2048, zPos: 2048 })), [32, 32]);
+  // the block's grid cell is layout.rect.xpos/ypos = the cell x 64
+  assert.deepEqual(nameplateAnchor(2, 3, buildingPosition({ xPos: 2048, zPos: 2048 })), [2 * 64 + 32, 3 * 64 + 32]);
+  // Position.z is RMBDimension - ZPos (RMBLayout.cs:570), so ZPos 0 is
+  // the block's NORTH edge
+  assert.deepEqual(nameplateAnchor(0, 0, buildingPosition({ xPos: 0, zPos: 0 })), [0, 64]);
+  assert.deepEqual(nameplateAnchor(0, 0, buildingPosition({ xPos: 0, zPos: 4096 })), [0, 0]);
+  // the cast is C#'s (int) - TRUNCATION, not a floor: 4095/4096*64 is
+  // 63.98..., which lands on 63
+  assert.deepEqual(nameplateAnchor(0, 0, buildingPosition({ xPos: 4095, zPos: 4096 })), [63, 0]);
+  // and the walk itself keys and places EVERY building of EVERY block
+  const rows = buildingSummaries(
+    [{ buildingType: 9, nameSeed: 1, factionId: 0, quality: 10 }], [FAKE_BLOCK], { locationName: 'T', regionName: 'R' });
+  assert.equal(rows.length, 2, 'BOTH subrecords - not just the one an exterior door reaches');
+  assert.deepEqual(rows.map((b) => b.blockX), [1, 1]);
+  assert.deepEqual(rows.map((b) => b.recordIndex), [0, 1]);
+  assert.deepEqual(rows[0].position, [2048 * 0.025, 0, (4096 - 1024) * 0.025]);
+  assert.equal(rows[0].isResidence, false);
+  assert.equal(rows[1].isResidence, true, 'House1 is a residence - the plate arm gates on it');
+  assert.notEqual(rows[0].buildingKey, rows[1].buildingKey);
+});
+
+test('c2/S10 HALF B: the plates - the discovery gate, the residence arm, the rename, and axis-aligned corners at a non-zero yaw', () => {
+  _resetForTests(); _resetZoomForTests();
+  restoreDiscovery(null);
+  try {
+    const summaries = buildingSummaries(
+      [{ buildingType: 9, nameSeed: 1, factionId: 0, quality: 10 }], [FAKE_BLOCK], {});
+    const shop = summaries[0], house = summaries[1];
+    const renames = [];
+    const w = new ExteriorAutomapWindow({
+      ...deps('r:plate'),
+      buildings: () => summaries,
+      discovered: () => discoveredBuildings('r:plate'),
+      rename: (k, n) => renames.push([k, n]),
+    });
+    const m = { s: 3, ox: 0, oy: 0 };
+    // UNDISCOVERED: no plate at all - the default name is "" (:670) and
+    // an empty name never becomes a nameplate (:786)
+    assert.deepEqual(w.buildPlates(FONT, m), []);
+    // ...unless revealUndiscoveredBuildings, which names them off the
+    // BuildingNames table (:711-719, map_revealbuildings)
+    w.revealUndiscoveredBuildings = true;
+    // ...and note it is ONE, not two: BuildingNames.GetName answers the
+    // EMPTY STRING for a residence, and an empty name never becomes a
+    // nameplate (:786). DFU's own reveal command shows named buildings
+    // only, for exactly that reason.
+    assert.equal(w.buildPlates(FONT, m).length, 1);
+    w.revealUndiscoveredBuildings = false;
+    // DISCOVERED non-residence: its displayName
+    discoverBuilding('r:plate', { buildingKey: shop.buildingKey, name: 'The Odd Blades', buildingType: 9 });
+    let plates = w.buildPlates(FONT, m);
+    assert.equal(plates.length, 1, 'the discovered shop, and NOT the residence beside it');
+    assert.equal(plates[0].text, 'The Odd Blades');
+    // DISCOVERED residence: still silent, because no quest marked it
+    discoverBuilding('r:plate', { buildingKey: house.buildingKey, name: 'House', buildingType: 17 });
+    assert.equal(w.buildPlates(FONT, m).length, 1,
+      'a residence shows a plate only when an active quest marked it (:682-709)');
+    // THE RENAME: the custom name is DRAWN and the tooltip keeps the
+    // canonical one (:880-885), and it rides the save envelope
+    assert.equal(setDiscoveredBuildingCustomName('r:plate', shop.buildingKey, '  My Smith  '), true);
+    plates = w.buildPlates(FONT, m);
+    assert.equal(plates[0].text, 'My Smith', 'trimmed, and drawn in the label\'s place');
+    assert.equal(plates[0].name, 'The Odd Blades', 'the tooltip keeps the canonical name');
+    restoreDiscovery(snapshotDiscovery());
+    assert.equal(w.buildPlates(FONT, m)[0].text, 'My Smith', 'and it survives a save round trip');
+    // a rename of a building that is NOT discovered changes nothing
+    assert.equal(setDiscoveredBuildingCustomName('r:plate', 999999, 'nope'), false);
+    // THE CORNERS STAY AXIS-ALIGNED at a non-zero yaw: what reaches the
+    // solver is still (x, y, w, h) with no rotated corner vectors, and
+    // the box keeps its size however the map is turned.
+    w.cam = { ...w.cam, yawDeg: 61 };
+    const turned = w.buildPlates(FONT, m);
+    assert.equal(turned.length, 1);
+    assert.deepEqual(Object.keys(turned[0]).filter((k) => /corner/i.test(k)), [],
+      'no rotated corner vectors reach the solver - RotateBuildingNameplates is dead in DFU');
+    assert.equal(turned[0].w, plates[0].w);
+    assert.equal(turned[0].h, plates[0].h);
+    // ...but the plate really did MOVE with the turn
+    assert.notEqual(turned[0].x, plates[0].x);
+    // the residence refuses the rename gesture entirely (:876-878)
+    w._hoverPlate = { buildingKey: house.buildingKey, name: 'House', isResidence: true };
+    w._renameAt(0, 0);
+    assert.deepEqual(renames, [], 'a residence cannot be renamed - its name is quest-generated and temporary');
+    w._hoverPlate = { buildingKey: shop.buildingKey, name: 'The Odd Blades', isResidence: false };
+    w._renameAt(0, 0);
+    assert.deepEqual(renames, [[shop.buildingKey, 'The Odd Blades']],
+      'and the prompt is pre-filled with the CANONICAL name, never the custom one');
+  } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
 });
 
 test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a location (DaggerfallUI.cs:633-650)', () => {
