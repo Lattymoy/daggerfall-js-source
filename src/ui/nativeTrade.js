@@ -28,7 +28,8 @@
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
+import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
+  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
@@ -92,6 +93,7 @@ export async function preloadTradeArt(deps) {
       base, cost, panels: new Map(names.map((n, i) => [n, panels[i]])),
       font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004'),
     };
+    await preloadScrollerArrowArt(deps);   // ROAD-A7: the red/green arrow strips
   } catch { console.warn('[trade] INVE00I0/SHOP00I0/mode panels unavailable; the keyed shelf window stands in'); }
 }
 export const tradeArtLoaded = () => !!_art;
@@ -429,7 +431,7 @@ export class NativeTradeWindow {
       const hit = scrollerHit(rect, vx, vy, this[which], items.length);
       if (!hit) continue;
       if (hit.kind === 'slot') pick(hit.slot);
-      else this[which] = applyScroll(this[which], hit.kind, items.length);
+      else { playScrollerArrowClick(hit.kind); this[which] = applyScroll(this[which], hit.kind, items.length); }   // ROAD-A7: the two arrows click
       return true;
     }
     // the remaining action-panel buttons (wagon/info/select/steal)
@@ -475,6 +477,9 @@ export class NativeTradeWindow {
         this._drawIcon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
       });
+      // ROAD-A7: the arrows' red/green states and the art thumb.
+      drawScrollerArrows(renderer, m, rect, scroll, items.length);
+      drawScrollerThumb(renderer, m, rect, scroll, items.length);
     }
     // The confirm / refusal box sits OVER the panel - DFU pushes it as
     // its own window and the trade screen stays behind it, which is

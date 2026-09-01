@@ -998,7 +998,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
-      rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2
+      // ROAD-A7: the reader takes a PICK now. The painting arm of the
+      // info panel asks for GetRandomTokens' dfRand draw (TextProvider
+      // .cs:228); everything else keeps Random.Range's default.
+      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
       // U42: USING the Spellbook item opens the book
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
@@ -3787,7 +3790,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering
      *  never closes anything. */
-    overlayHover(vx, vy) { activeOverlay?.hover?.(vx, vy); },
+    // ROAD-A7: the DOM mousemove rides along. VerticalScrollBar.Update
+    // (:105) polls InputManager.GetMouseButton(0) every frame, and
+    // `e.buttons` is the port's only read of that - without it the
+    // list picker's thumb could latch but never move.
+    overlayHover(vx, vy, e = null) { activeOverlay?.hover?.(vx, vy, e); },
     /** U26: ui/input.js asks this before mapping a key to an action -
      *  a native window keys off raw codes. */
     get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },

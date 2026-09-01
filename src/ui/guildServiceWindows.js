@@ -143,6 +143,10 @@ export class ServiceFlowWindow {
     this._advance(t.onClick?.() ?? null);
   }
 
+  /** ROAD-A7: the picker's hover seam (ListBox.MouseMove's highlight
+   *  and VerticalScrollBar.Update's drag) reaches it through here. */
+  hover(vx, vy, e = null) { if (this.top?.picker) this._picker?.hover(vx, vy, e); }
+
   click(vx, vy) {
     const t = this.top;
     if (!t) { this._close(); return true; }

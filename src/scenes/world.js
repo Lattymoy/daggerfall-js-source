@@ -2095,7 +2095,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
     entity: playerEntity,
     icons: { getTexture, uploadRecord, textures: renderer.textures },
-    rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+    rows: (id, pick) => townTalk.lines(id, pick),   // U25: the real item info + use text (TEXT.RSC)
     // U42: USING the Spellbook item opens the book
     // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
     // the slot, so this bypasses toggleSpellbook's already-open guard
@@ -2139,7 +2139,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     entity: playerEntity,
     magic,
     castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-    rows: (id) => townTalk.lines(id),
+    rows: (id, pick) => townTalk.lines(id, pick),
   }));
   const toggleSpellbook = () => {
     if (townTalk.overlayActive) return;

@@ -1275,7 +1275,7 @@ export function createWorldModes(host) {
         skills: skills(),
       }),
       gold: () => goldAmount(playerEntity),
-      rows: (id) => townTalk?.lines?.(id) ?? [],
+      rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       cityName: () => townTalk?.cityName?.() ?? (interiorBuilding?.name ?? ''),
       weight: () => ({
         carriedWeightKg: totalWeight(playerEntity.items ?? []),
@@ -1964,7 +1964,7 @@ export function createWorldModes(host) {
       now: () => Math.floor(worldMinutes()),
       player: bankPurse(),
       wagonGold: () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0,
-      rows: (id) => townTalk?.lines?.(id) ?? [],
+      rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
       dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
@@ -2115,7 +2115,7 @@ export function createWorldModes(host) {
     let win = null;
     win = new TavernWindow({
       entity: playerEntity,
-      rows: (id) => townTalk?.lines?.(id) ?? [],
+      rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       now: () => Math.floor(worldMinutes()),
       mapId: () => questSceneCtx?.()?.mapId ?? 0,
       buildingKey: () => b?.buildingKey ?? 0,
@@ -2316,7 +2316,7 @@ export function createWorldModes(host) {
     entity: playerEntity,
     magic,
     castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-    rows: (id) => townTalk?.lines?.(id) ?? [],
+    rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
   });
 
   /** DoGuildService's three built arms (U24). Each returns a
@@ -5324,12 +5324,12 @@ export function createWorldModes(host) {
     };
     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
       const v = at();
-      dungeonCtx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      dungeonCtx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e);   // ROAD-A7: e.buttons drives the scroll-bar drag
       return true;
     }
     if (mode !== 'interior' || !interiorOverlay?.hover) return false;
     const v = at();
-    interiorOverlay.hover(v ? v[0] : -1, v ? v[1] : -1);
+    interiorOverlay.hover(v ? v[0] : -1, v ? v[1] : -1, e);   // ROAD-A7: e.buttons drives the scroll-bar drag
     return true;
   }
 

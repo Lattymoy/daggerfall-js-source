@@ -297,7 +297,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const v = pointToNative(nativeMetrics(canvas),
         (e.clientX - r.left) * (canvas.width / r.width),
         (e.clientY - r.top) * (canvas.height / r.height));
-      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e);   // ROAD-A7: e.buttons is the scroll-bar drag's held-button poll
       return;
     }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
