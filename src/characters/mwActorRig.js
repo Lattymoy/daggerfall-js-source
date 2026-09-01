@@ -27,6 +27,38 @@ import {
 } from '../formats/mwFirstPerson.js';
 import { advanceClip, resetClip, sampleTrack } from '../formats/mwAnim.js';
 import { uploadMwBodyMesh, drawMwBodyAt, FP_IDLE_BASE } from '../combat/fpArm.js';
+import { mwActorBody, mwCreatureBody } from './mwActorBody.js';
+
+/**
+ * NPC3a: ASK FOR AN ACTOR'S BODY, ONCE, WITHOUT EVER BLOCKING.
+ *
+ * Every host that draws actors needs the same three-state dance - not
+ * asked, in flight, settled - and two copies of it is how the dungeon
+ * and the street would drift. The actor object carries the state
+ * (`_mwBody`, `_mwPending`, `_mwState`) because the actor is what the
+ * host already keeps per frame.
+ *
+ * A settled NULL is remembered: an actor the data cannot dress must
+ * not re-ask on every frame for the rest of its life. A build in
+ * flight answers null too, so this frame draws the classic sprite and
+ * the next one may not - which is the whole fallback story.
+ *
+ * @param actor      the host's own per-actor object (mutated)
+ * @param opts       humanoid body opts, or null for a creature
+ * @param mobileType used when `opts` is null
+ */
+export function requestMwBody(actor, opts, mobileType) {
+  if (actor._mwBody !== undefined) return actor._mwBody;
+  if (actor._mwPending) return null;
+  actor._mwPending = true;
+  // A humanoid wears a dressed body; a beast IS a model. One door,
+  // two builders - a rat is not a skeleton in clothes.
+  (opts ? mwActorBody(opts) : mwCreatureBody(mobileType))
+    .then((body) => { actor._mwBody = body; actor._mwState = mwActorState(); })
+    .catch(() => { actor._mwBody = null; })
+    .finally(() => { actor._mwPending = false; });
+  return null;
+}
 
 /** Everything one actor keeps between frames. Deliberately tiny. */
 export function mwActorState() {

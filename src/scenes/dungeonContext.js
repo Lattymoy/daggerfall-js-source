@@ -23,8 +23,7 @@ import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
 // NPC2: the enhanced humanoid body - shared per outfit, drawn per actor.
-import { mwActorBody, mwCreatureBody } from '../characters/mwActorBody.js';
-import { mwActorState, drawMwActor } from '../characters/mwActorRig.js';
+import { mwActorState, drawMwActor, requestMwBody } from '../characters/mwActorRig.js';
 import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
@@ -2644,20 +2643,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // forever, for anyone the data cannot dress - the classic sprite
     // draws exactly as it always has, which is the fallback this
     // whole lane is built to keep.
-    const _mwBodyFor = (f) => {
-      if (f._mwBody !== undefined) return f._mwBody;      // built, or a settled null
-      if (f._mwPending) return null;                      // in flight; sprite this frame
-      // NPC2 humanoids wear a dressed body; NPC2b beasts ARE a model.
-      // One seam, two builders - a rat is not a skeleton in clothes.
-      const opts = f.entity && enemyMwBodyOpts(f.entity, f.mobileType, f.mobile?.gender);
-      const want = opts ? mwActorBody(opts) : mwCreatureBody(f.mobileType);
-      f._mwPending = true;
-      want
-        .then((body) => { f._mwBody = body; f._mwState = mwActorState(); })
-        .catch(() => { f._mwBody = null; })
-        .finally(() => { f._mwPending = false; });
-      return null;
-    };
+    // NPC3a: the three-state dance (not asked / in flight / settled)
+    // is requestMwBody's, shared with every other host that draws
+    // actors - the street's guards ask it the same way.
+    const _mwBodyFor = (f) => requestMwBody(
+      f, f.entity && enemyMwBodyOpts(f.entity, f.mobileType, f.mobile?.gender), f.mobileType);
     const _drawMwFoe = (f, dt, proj, view, eye, paralyzed) => drawMwActor(renderer, canvas, f._mwBody, f._mwState, {
       dt: paralyzed ? 0 : dt,   // S19 FreezeAnims: a held foe holds its frame
       moving: !!f.ai.moving,

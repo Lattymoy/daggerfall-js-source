@@ -1954,8 +1954,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       // G1: the guards drive + draw on the same flats' axis; the sim
       // freezes with the population under the talk overlay.
+      // NPC3a: the frame's render context rides along, so a guard whose
+      // Morrowind body has built draws as that body instead of pushing
+      // a billboard. Without it - and until the body arrives - every
+      // guard is the classic sprite exactly as before.
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
-        walkMode ? player.pos : cam.pos, eye, _foeSenses());
+        walkMode ? player.pos : cam.pos, eye, _foeSenses(),
+        { canvas, proj, view, eye });
       personBatches.push(...guardBatches);
       droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles

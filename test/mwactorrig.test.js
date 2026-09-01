@@ -198,12 +198,25 @@ test('NPC2: the enemy remembers its worn pieces, and the foe pass falls back to 
   assert.ok(seam > 0 && push > seam, 'the sprite must remain the fallback BELOW the body');
   // Never blocking: the build is asked for once and the frame carries
   // on - a seconds-long build must never stall a frame.
-  assert.match(ctx, /if \(f\._mwPending\) return null;/, 'a build in flight blocks the frame');
-  assert.match(ctx, /if \(f\._mwBody !== undefined\) return f\._mwBody;/, 'a settled answer is re-derived every frame');
-  // NPC2b: ONE seam, TWO builders - a humanoid wears a dressed body,
-  // a beast IS a model. A rat is not a skeleton in clothes.
-  assert.match(ctx, /const want = opts \? mwActorBody\(opts\) : mwCreatureBody\(f\.mobileType\);/,
+  // NPC3a: the three-state dance (not asked / in flight / settled) and
+  // the two-builder split live in requestMwBody, and EVERY host that
+  // draws actors rides that one implementation - the dungeon's foes
+  // and the street's guards alike. Two copies is how they drift.
+  const rig = readFileSync('src/characters/mwActorRig.js', 'utf8');
+  assert.match(rig, /if \(actor\._mwBody !== undefined\) return actor\._mwBody;/, 'a settled answer is re-derived every frame');
+  assert.match(rig, /if \(actor\._mwPending\) return null;/, 'a build in flight blocks the frame');
+  assert.match(rig, /\(opts \? mwActorBody\(opts\) : mwCreatureBody\(mobileType\)\)/,
     'beasts do not reach the creature builder');
+  assert.match(ctx, /const _mwBodyFor = \(f\) => requestMwBody\(/, 'the dungeon keeps its own copy');
+  const guards = readFileSync('src/scenes/cityGuards.js', 'utf8');
+  assert.match(guards, /requestMwBody\(g, enemyMwBodyOpts\(g\.entity, g\.mobileType, g\.mobile\?\.gender\), g\.mobileType\)/,
+    'the street keeps its own copy');
+  // ...and a guard's body draws INSTEAD of its billboard, with the
+  // sprite still the fallback below it.
+  assert.match(guards, /if \(mw && _drawMwGuard\(g, dt, mw\)\) continue;/, 'the guard body does not take the frame');
+  const gseam = guards.indexOf('if (mw && _drawMwGuard(');
+  const gpush = guards.indexOf('out.push(g.batch);');
+  assert.ok(gseam > 0 && gpush > gseam, 'the guard sprite must remain the fallback BELOW the body');
   // A held foe holds its frame (S19 FreezeAnims) - the body obeys the
   // same rule the sprite does.
   assert.match(ctx, /dt: paralyzed \? 0 : dt,/, 'a paralysed foe keeps animating');
