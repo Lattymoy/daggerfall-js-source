@@ -32,6 +32,18 @@ import { composeWornArmor } from '../formats/mwItemMap.js';
  *  actors asking for the same outfit in one frame must share one
  *  build, not race two. */
 const BODIES = new Map();
+/**
+ * THE CAP (the NPC1 audit's own finding). A body holds parsed meshes
+ * and decoded textures - megabytes - and nothing evicted them but a
+ * re-attach. A player who never re-attaches and crosses many towns
+ * would grow this without bound, and DFU rolls enemy and townsfolk
+ * equipment at random, so distinct outfits are not a small closed set.
+ * Insertion order is the eviction order and a hit refreshes it, so
+ * what stays is what is being worn NOW. Evicting is always SAFE: an
+ * actor holding a body keeps its own reference, and the next actor to
+ * ask for that outfit simply rebuilds it.
+ */
+export const MAX_BODIES = 64;
 /** The generation the cache belongs to. A re-attach drops every body -
  *  the meshes came from archives that are no longer the ones loaded. */
 let _gen = null;
@@ -90,7 +102,8 @@ export async function mwActorBody(opts = {}, deps = null) {
   const { beast, raceScale } = catalogRace(cat, race, female, opts.beast ?? null);
   const key = mwBodyKey({ race, female, beast, faceIndex, worn: armor, weapon, hasAmmo });
   const hit = BODIES.get(key);
-  if (hit) return hit;
+  // A hit is the most recently worn outfit now, not the oldest.
+  if (hit) { BODIES.delete(key); BODIES.set(key, hit); return hit; }
 
   const pending = (async () => {
     _builds++;
@@ -115,13 +128,24 @@ export async function mwActorBody(opts = {}, deps = null) {
     return body;
   })();
 
-  BODIES.set(key, pending);
-  const body = await pending;
-  // A refusal is not cached as a permanent no: the data can change
-  // under the player (an archive attached mid-game), and the next
-  // generation clears the map anyway. But a null must not be re-tried
-  // every frame either - it stays until the generation turns over.
-  return body;
+  // THE CACHE STANDS DOWN WITHOUT A REAL GENERATION - the same law
+  // the walk memo, the clip memo, the texture memo and the catalog
+  // all follow, and the NPC1 audit found this one missing it. Two
+  // fixture data sets both carrying no stamp are an everyday test
+  // arrangement, and one of their bodies served the other's request:
+  // measured, before this gate existed. Production always stamps, so
+  // this costs nothing there and closes the trap here.
+  if (cat.gen !== null) {
+    BODIES.set(key, pending);
+    // Oldest first, and only ever past the cap.
+    while (BODIES.size > MAX_BODIES) BODIES.delete(BODIES.keys().next().value);
+  }
+  // A refusal IS remembered for this generation - deliberately. A race
+  // the data carries no records for will not grow them mid-session,
+  // and re-running a refused build every frame is the stutter this
+  // service exists to prevent. A re-attach drops it with everything
+  // else.
+  return pending;
 }
 
 /** For the build-count pin and the diagnostic card: how many distinct

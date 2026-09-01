@@ -51,8 +51,11 @@ export function esmWith(baseName, records) {
  * the two body meshes the fprace fixture records name, and a
  * generation stamp the caller controls - the swap caches and the
  * catalog both key on it, so a test that wants a fresh walk bumps it.
+ * It DEFAULTS to a real stamp because production always carries one:
+ * a fixture with no generation exercises the caches' stand-down path,
+ * which is a different law and should be asked for explicitly.
  */
-export function tpActorDeps({ gen = null } = {}) {
+export function tpActorDeps({ gen = 1 } = {}) {
   const files = new Map([
     ['meshes/xbase_anim.nif', f('armfp.nif')],
     ['meshes/xbase_anim.kf', f('armfpidle.kf')],

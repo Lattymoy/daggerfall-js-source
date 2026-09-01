@@ -891,7 +891,7 @@ export async function buildFpArm({
     // (AUDIT MW-A F1) and adjustScale's per-gender scale (MW-D34).
     const cat = await mwActorCatalog(d);
     if (!cat.ok) return cat;
-    const { archives, esmBytes, esmNames, gen, find, parts, armors, clothes, sneakDelta } = cat;
+    const { archives, esmNames, gen, find, parts, armors, clothes, sneakDelta } = cat;
     // The weapon records are the catalog's too - they were walked
     // eighty lines below this before, off the same memo.
     const allWeapons = cat.weapons;

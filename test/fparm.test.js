@@ -1706,7 +1706,7 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
   const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
   assert.match(cat, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
   assert.match(cat, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
-  assert.match(arm, /const \{ archives, esmBytes, esmNames, gen, find, parts, armors, clothes, sneakDelta \} = cat;/,
+  assert.match(arm, /const \{ archives, esmNames, gen, find, parts, armors, clothes, sneakDelta \} = cat;/,
     'the arm does not receive the catalog\u2019s records');
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,
   // the third person receives verdicts, the fp build filters and
@@ -2535,9 +2535,18 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
   assert.match(arm, /if \(gen === null \|\| gen === undefined\) return clipReport\(/, 'the kf parse memo is gated');
   assert.match(cat, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
     'and only the real store\'s stamp turns them on');
-  // NPC1: the catalog itself is cached on that same stamp, and a null
-  // one is NEVER cached - a test's deps must not serve a later test.
-  assert.match(cat, /if \(gen !== null\) CATALOG_CACHE\.set\(gen, out\);/, 'the catalog is not cached per generation');
+  // NPC1: the catalog is cached on that same stamp, a null one never
+  // is, and - the NPC1 audit's own finding - the new set REPLACES the
+  // old rather than accumulating beside it. A Map keyed by generation
+  // leaked a whole data set's .esm bytes per re-attach; dataSource
+  // bounds its archive cache with one replaced slot for exactly that
+  // reason (IG2's residency law) and this follows it.
+  assert.match(cat, /if \(gen !== null\) _catalog = \{ gen, value: out \};/,
+    'the catalog is not cached per generation');
+  assert.match(cat, /if \(gen !== null && _catalog && _catalog\.gen === gen\) return _catalog\.value;/,
+    'a stale generation is served');
+  assert.ok(!/const CATALOG_CACHE = new Map\(\)/.test(cat),
+    'the catalog accumulates one entry per generation again - that is the leak');
 });
 
 test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call, the classic sprite\'s behaviour', () => {

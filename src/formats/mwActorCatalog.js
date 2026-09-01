@@ -34,9 +34,18 @@ import {
  */
 export const ESM_WALK_CACHE = new Map();
 
-/** The built catalogs, one per data generation. A null generation (a
- *  test's deps) is NEVER cached - see the memo gate below. */
-const CATALOG_CACHE = new Map();
+/**
+ * ONE SLOT, NOT A MAP (the NPC1 audit's own finding).
+ *
+ * The first cut keyed catalogs by generation in a Map and never
+ * dropped the old ones - so every re-attach leaked a whole data set:
+ * the .esm BYTES of Morrowind plus its expansions, tens of megabytes,
+ * held for a generation nothing can ask for again. dataSource bounds
+ * its own archive cache with a single replaced slot for exactly this
+ * reason (IG2's residency law: an attach DROPS the old set), and this
+ * one now does the same. A null generation is never stored at all.
+ */
+let _catalog = null;   // { gen, value }
 
 /**
  * The walk memo's gate, stated once.
@@ -67,10 +76,7 @@ export function memoWalk(gen, e, kind, fn) {
 export async function mwActorCatalog(deps = null) {
   const d = deps || await import('../scenes/dataSource.js');
   const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
-  if (gen !== null) {
-    const hit = CATALOG_CACHE.get(gen);
-    if (hit) return hit;
-  }
+  if (gen !== null && _catalog && _catalog.gen === gen) return _catalog.value;
 
   const archives = await d.loadMorrowindArchives();
   if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
@@ -111,7 +117,8 @@ export async function mwActorCatalog(deps = null) {
     find: (p) => archives.find((a) => a.has(p)),
     parts, armors, clothes, weapons, sneakDelta,
   };
-  if (gen !== null) CATALOG_CACHE.set(gen, out);
+  // The new set REPLACES the old one - never accumulates beside it.
+  if (gen !== null) _catalog = { gen, value: out };
   return out;
 }
 
@@ -145,6 +152,6 @@ export function catalogRace(catalog, race, female, beastOverride = null) {
 
 /** Test seam: forget every walked catalog so the next call re-reads. */
 export function _resetActorCatalogForTests() {
-  CATALOG_CACHE.clear();
+  _catalog = null;
   ESM_WALK_CACHE.clear();
 }

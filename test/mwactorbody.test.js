@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { tpActorDeps } from './mwFixtures.mjs';
 import {
-  mwActorBody, mwBodyKey, mwActorBodyStats, _resetActorBodiesForTests,
+  mwActorBody, mwBodyKey, mwActorBodyStats, MAX_BODIES, _resetActorBodiesForTests,
 } from '../src/characters/mwActorBody.js';
 import { _resetActorCatalogForTests } from '../src/formats/mwActorCatalog.js';
 
@@ -138,4 +138,65 @@ test('NPC1: the service reuses the ONE build and the ONE catalog - it re-impleme
   // weapon" and "same outfit".
   assert.match(svc, /wornEquipKeyOf\(worn\)/, 'the outfit key is re-minted');
   assert.match(svc, /fpWeaponKey\(weapon, hasAmmo\)/, 'the weapon key is re-minted');
+});
+
+// ═══ THE NPC1 AUDIT'S OWN FINDINGS ══════════════════════════════════
+// Both were found by auditing the slice before building on it, and
+// both are the same class: a cache that looked right and shared the
+// wrong thing.
+
+test('NPC1 audit F1: WITHOUT a real generation the body cache stands down', async () => {
+  reset();
+  // MEASURED before the gate existed: two DIFFERENT fixture data sets,
+  // each carrying no stamp, produced one body - the first one served
+  // the second's request. That is the collision the mSpeed pin
+  // convicted in IG2, in a cache that had not learned it yet. Every
+  // other memo in this lane (the walk, the clip, the texture, the
+  // catalog) gates on a real stamp; this one does now too.
+  const a = tpActorDeps({ gen: null });
+  const b = tpActorDeps({ gen: null });
+  const bodyA = await mwActorBody({ race: 'fprace', worn: [] }, a.deps);
+  const bodyB = await mwActorBody({ race: 'fprace', worn: [] }, b.deps);
+  assert.ok(bodyA && bodyB, 'both must still BUILD - the gate withholds the cache, not the body');
+  assert.notEqual(bodyA, bodyB, 'one data set’s body served another’s request');
+  assert.equal(mwActorBodyStats().builds, 2, 'the unstamped builds were shared');
+  assert.equal(mwActorBodyStats().cached, 0, 'an unstamped body was cached');
+});
+
+test('NPC1 audit F2: the body cache is BOUNDED - a body is megabytes and nothing evicted them', async () => {
+  reset();
+  const fx = tpActorDeps({ gen: 7 });
+  // DFU rolls equipment at random, so distinct outfits are not a small
+  // closed set: a player crossing many towns without re-attaching grew
+  // this without bound. Past the cap the OLDEST goes.
+  for (let i = 0; i < MAX_BODIES + 8; i++) {
+    await mwActorBody({ race: 'fprace', worn: [{ templateIndex: i, material: 0 }] }, fx.deps);
+  }
+  assert.equal(mwActorBodyStats().cached, MAX_BODIES, 'the cache grew past its cap');
+  assert.equal(mwActorBodyStats().builds, MAX_BODIES + 8, 'every distinct outfit still built once');
+});
+
+test('NPC1 audit F2b: a HIT refreshes recency - what survives is what is WORN, not what came first', async () => {
+  reset();
+  const fx = tpActorDeps({ gen: 8 });
+  const outfit = (i) => ({ race: 'fprace', worn: [{ templateIndex: i, material: 0 }] });
+  // Fill the cache exactly to its cap: outfits 0..MAX-1, oldest first.
+  for (let i = 0; i < MAX_BODIES; i++) await mwActorBody(outfit(i), fx.deps);
+  assert.equal(mwActorBodyStats().cached, MAX_BODIES);
+  // TOUCH THE OLDEST. Under plain insertion-order eviction this
+  // changes nothing and outfit 0 is still first out; under the law it
+  // becomes the newest. The mutation round caught the first version of
+  // this pin asking for the NEWEST outfit, which cannot tell the two
+  // apart - it survived the eviction either way.
+  const builds = mwActorBodyStats().builds;
+  await mwActorBody(outfit(0), fx.deps);
+  assert.equal(mwActorBodyStats().builds, builds, 'the oldest was already gone before we touched it');
+  // One more outfit forces exactly one eviction.
+  await mwActorBody(outfit(MAX_BODIES), fx.deps);
+  assert.equal(mwActorBodyStats().cached, MAX_BODIES);
+  // The touched one must have SURVIVED - asking again costs no build.
+  const after = mwActorBodyStats().builds;
+  await mwActorBody(outfit(0), fx.deps);
+  assert.equal(mwActorBodyStats().builds, after,
+    'the outfit being worn was evicted while an untouched one survived');
 });
