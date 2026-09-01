@@ -137,7 +137,7 @@ import {
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
 import { floorLanding, closestDoorTo } from '../player/enterExit.js';   // DE1: TransitionDungeonInterior orients away from the door it came through
-import { trs, multiply, UP_Y } from '../world/mat4.js';
+import { trs, multiply, identity, UP_Y } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
@@ -310,7 +310,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // key and carries this address as metadata beside it.
     const amapModelCount = [0, 0];
     const amapWater = automapWaterLevel(b.layout.waterLevel);
-    const amapRow = (key, aabb, hasAction) => {
+    // ROAD-C c2/S7: the row also carries the CPU TRIANGLES and the
+    // matrix they were placed with, so the automap PICKER can answer a
+    // mouse position with a triangle-precise hit instead of a box. The
+    // two are REFERENCES to arrays this loop already holds - the shared
+    // `cpuModels` entry and the placement matrix the draw list keeps -
+    // so the whole picker costs two pointers per entry and no copy.
+    const amapRow = (key, aabb, hasAction, cpu = null, matrix = null) => {
       const elementIndex = hasAction ? 1 : 0;
       return {
         key,
@@ -321,6 +327,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         elementName: ELEMENT_NAMES[elementIndex],
         modelIndex: amapModelCount[elementIndex]++,
         waterLevel: amapWater,
+        positions: cpu?.positions ?? null,
+        indices: cpu?.indices ?? null,
+        matrix,
       };
     };
     for (const [pos, e] of b.layout.objectPositions) {
@@ -350,7 +359,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           o.aabb = aabb;
           o.restOnlyTrigger = true;
           dynamicDraws.push({ gpu, object: o });
-          automapEntries.push(amapRow(o.key, aabb, true));   // A1: revealed at the AT-REST bounds (a moved platform's probe misses - recorded)
+          automapEntries.push(amapRow(o.key, aabb, true, cpu, matrix));   // A1: revealed at the AT-REST bounds (a moved platform's probe misses - recorded)
           continue;
         }
         if (cls === 'specialDoor') {
@@ -359,7 +368,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // own bucket, swings on the chain or the player's hand.
           const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
           dynamicDraws.push({ gpu, object: o });
-          automapEntries.push(amapRow(o.key, aabb, true));   // A1
+          automapEntries.push(amapRow(o.key, aabb, true, cpu, matrix));   // A1
           continue;
         }
         if (cls === 'effect') {
@@ -381,7 +390,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // can filter the LIVE list by the revealed set - no duplicate
       // geometry (Automap.cs duplicates the whole level instead).
       drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });
-      automapEntries.push(amapRow(`${bi}:${p.position}`, aabb, !!p.action));
+      automapEntries.push(amapRow(`${bi}:${p.position}`, aabb, !!p.action, cpu, matrix));
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
     }
@@ -3433,6 +3442,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Absent from a stripped ARCH3D the window falls back to a red quad.
   let automapArrow = null;
   try { automapArrow = await getGpuMesh(99900); if (automapArrow) await ensureRemap(99900); } catch { automapArrow = null; }
+  // c2/S7: the arrow's own local bounds are the picker's proxy for it
+  // (DFU adds a MeshCollider to the same object, :1358). Absent, the
+  // arrow is drawn and simply not pickable - which is what an absent
+  // collider means.
+  const automapArrowBounds = (() => {
+    const cpu = cpuModels.get(99900);
+    if (!cpu?.positions?.length) return null;
+    return worldAabb(cpu.positions, identity());
+  })();
   // ROAD-C c2/S5: AMAP00I0 + AMAP01I0 + the compass strip, warmed the
   // way every other native window's art is (the U23 shape). A failure
   // costs the ART, not the map - the window keeps its keyed fallback.
@@ -3601,6 +3619,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // NOTHING into the micro-map's typed array (a silent no-op).
         blocks: dungeon.blocks.map((b) => ({ x: Math.round(b.originX / RDB_SIDE), z: Math.round(b.originZ / RDB_SIDE), name: b.name })),
         arrowMesh: automapArrow,
+        arrowBounds: automapArrowBounds,   // c2/S7: the picker's proxy for the player arrow
         dungeonName: dfLocation?.name ?? 'Dungeon',
         indexSize: automapModel.length,
         model: automapModel,   // c2/S1: the window's partition + explored-percentage source

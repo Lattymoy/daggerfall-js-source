@@ -69,6 +69,9 @@ function stubRenderer(log) {
     releaseTexture: () => {},
     createBillboardBatch: () => ({}),
     destroyBillboardBatch: () => {},
+    // c2/S7: the beacon bundles ride the ordinary mesh path
+    createMesh: (model) => ({ stub: true, subMeshes: model.subMeshes }),
+    destroyMesh: () => {},
     drawBillboards: (...a) => log.push(['drawBillboards', ...a]),
     drawMesh: (...a) => log.push(['drawMesh', ...a]),
     drawMeshWire: (...a) => log.push(['drawMeshWire', ...a]),   // c2/S6
@@ -121,8 +124,13 @@ test('c2/S5 the layout table, re-pinned THROUGH the window - panel, grid cut, mi
   const log = [];
   const w = fresh();
   try {
-    w.hoverText = 'x';
+    // c2/S7: the status label's TEXT is no longer settable from
+    // outside - UpdateMouseHoverOverText writes it every frame from the
+    // pick - so the pointer goes over the middle of the panel, where
+    // the player's own position beacon stands under the map camera.
+    w.hover(160, 85);
     w.draw(stubRenderer(log), CANVAS, FONT, 1);
+    assert.equal(w.hoverText, 'player position beacon');
 
     // the render panel: the geometry pass runs in dummyPanelAutomap's
     // own rect (1,1,318,169), NOT the whole canvas

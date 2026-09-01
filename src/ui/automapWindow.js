@@ -76,6 +76,30 @@
 //      the artifacts ARE the classic look and are the target, not a bug
 //      either implementation is trying to avoid.
 //
+// ── ROAD-C c2/S7: THE BEACONS AND THE PICKER ─────────────────────────
+// SetupBeacons' four objects now draw as real meshes through the SAME
+// drawMesh path the geometry takes (ui/automapMarkers.js builds them;
+// their sub-meshes name 1x1 solids in the `amap` archive, which is the
+// idiom this window already used for its billboards), and the status
+// label under the map answers GetMouseHoverOverText through
+// systems/automapPick.js. Three laws ride here rather than there:
+//
+//  - THE MARKER GROUP IS NEVER SLICED, DIMMED OR GRAYED. `clipY` is
+//    lifted and the mode dropped to OFF before it, exactly as the
+//    shipped window already did for its billboards - DFU's slicing
+//    shader is injected into the duplicated GEOMETRY alone (:1906).
+//  - THE PICK RUNS ON THE PASS'S OWN proj/view, mirrored X included, so
+//    the picker cannot disagree with what was drawn.
+//  - THE PANEL MOUSE STICKS. DFU reads `panelRenderAutomap
+//    .ScaledMousePosition`, which BaseScreenComponent only writes while
+//    the pointer is inside the component (:598-618) and never clears -
+//    so hover text found at the edge of the map survives the pointer
+//    leaving it. The port keeps that by tracking a separate panel-local
+//    position that only updates inside the rect. (It starts unset
+//    rather than at Unity's uninitialised (0,0); nothing is pickable at
+//    a panel corner, so the difference is the first frame of a window
+//    nobody has pointed at yet.)
+//
 // THE KEYED FALLBACK SURVIVES. A boot with no ARENA2 art still gets a
 // working map: the same geometry pass in the same panel rect, with a
 // text legend instead of AMAP00I0 - the shape ui/pauseWindow.js has
@@ -83,7 +107,7 @@
 // window never throws for want of a texture.
 
 import { drawText } from './text.js';
-import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4.js';
+import { mirrorProjectionX, perspective, lookAt, UP_Y } from '../world/mat4.js';
 import { getBool, getString } from '../systems/settings.js';
 import { slicingPositionY, DEFAULT_SLICING_BIAS_Y } from '../systems/automap.js';
 import { RDB_SIDE } from '../world/dungeonLayout.js';
@@ -95,7 +119,9 @@ import {
 import {
   AutomapChrome, DUNGEON_ACTIONS, CHROME_RECTS, HOVER_LABEL, compassHeading01,
 } from './automapChrome.js';
-import { automapTooltipFor, shortcutOrFallback } from './automapText.js';
+import { automapTooltipFor, shortcutOrFallback, AUTOMAP_STRINGS } from './automapText.js';
+import { automapMarkerSet, markerModels, MARKER_TEXELS } from './automapMarkers.js';   // c2/S7
+import { createAutomapPicker, hoverKeyForHit } from '../systems/automapPick.js';        // c2/S7
 import { drawToolTipBox } from './toolTip.js';
 import { drawCompassStrip } from './hud.js';
 import { bindings } from './input.js';
@@ -402,7 +428,10 @@ export class AutomapWindow {
   /** deps: { record() -> the live automap record, model (the c2/S1
    *  reveal model), drawList, dynamicDraws, texRemap,
    *  player() -> {feet, eye, yaw}, startMarker, blocks (block-grid
-   *  [{x,z,name}]), arrowMesh (gpu 99900 or null), dungeonName,
+   *  [{x,z,name}]), arrowMesh (gpu 99900 or null), arrowBounds (c2/S7:
+   *  mesh 99900's LOCAL bounds - the picker's proxy for the arrow, and
+   *  null where DFU's own MeshCollider would simply be absent),
+   *  dungeonName,
    *  insideBuilding (IsPlayerInsideBuilding, for the reset arm's
    *  default render mode) }. */
   constructor(deps) {
@@ -421,10 +450,16 @@ export class AutomapWindow {
     this.hoverText = '';
     this._renderer = null;
     this._micro = null;      // { key, tex, w, h, stamp }
-    this._markers = null;    // { entrance, player } billboard batches
+    this._markers = null;    // the arrow's billboard fallback
+    this._markerMeshes = null;   // c2/S7: markerModels() uploaded, by model key
+    this._markerSet = [];        // c2/S7: this frame's SetupBeacons list
     this._panelRect = null;
     this._scale = 1;
     this._mouse = [0, 0];    // last native pointer position (the wheel's target)
+    // c2/S7: the PANEL-local pointer, which only moves inside the panel
+    // and is never cleared - BaseScreenComponent's ScaledMousePosition
+    this._panelMouse = null;
+    this._picker = createAutomapPicker();
     this._tooltipRect = null;
     this._onPush();
   }
@@ -621,7 +656,7 @@ export class AutomapWindow {
    *  The chrome owns the press-hold flags, the click-on-release law and
    *  the drag protocol; this window owns only what a verb MEANS. */
   pointer(phase, nx, ny, button = 0) {
-    if (phase !== 'up') this._mouse = [nx, ny];
+    if (phase !== 'up') { this._mouse = [nx, ny]; this._trackPanelMouse(nx, ny); }
     const out = this.chrome.pointer(phase, nx, ny, button);
     if (out.sound) this._click();
     for (const v of out.verbs) this.runVerb(v, this._dt ?? 0);
@@ -646,7 +681,19 @@ export class AutomapWindow {
     _cam = actionMoveSliceLevel(_cam, dy * s, this._dt ?? 0);
   }
 
-  hover(nx, ny) { if (nx >= 0 && ny >= 0) this._mouse = [nx, ny]; }
+  hover(nx, ny) {
+    if (nx >= 0 && ny >= 0) { this._mouse = [nx, ny]; this._trackPanelMouse(nx, ny); }
+  }
+
+  /** c2/S7: ScaledMousePosition's law - written only while the pointer
+   *  is INSIDE the render panel, and never cleared on the way out. */
+  _trackPanelMouse(nx, ny) {
+    const P = CHROME_RECTS.panel;
+    const px = nx - P.x;
+    const py = ny - P.y;
+    if (px < 0 || py < 0 || px >= P.w || py >= P.h) return;
+    this._panelMouse = [px, py];
+  }
 
   /** The wheel (:1855-1866 and GridButton_OnMouseScroll*). The overlay
    *  wheel seam carries no position, so the LAST pointer position is
@@ -685,24 +732,37 @@ export class AutomapWindow {
     if (!r) return;
     if (this._micro) { r.releaseTexture('amap', this._micro.key); this._micro = null; }
     if (this._markers) {
-      r.destroyBillboardBatch(this._markers.entrance);
       r.destroyBillboardBatch(this._markers.player);
+      r.releaseTexture('amap', 'player');
       this._markers = null;
+    }
+    // c2/S7: EVERY ALLOCATION HAS AN OWNER - the five beacon bundles
+    // and their three 1x1 solids go back with the window that built
+    // them. The models themselves are module constants and stay.
+    if (this._markerMeshes) {
+      for (const mesh of Object.values(this._markerMeshes)) r.destroyMesh(mesh);
+      this._markerMeshes = null;
+      for (const record of Object.keys(MARKER_TEXELS)) r.releaseTexture('amap', record);
     }
   }
 
+  /** c2/S7: the beacon bundles - three colours of Unity's cylinder, its
+   *  cube, and the curved arrow - uploaded once per window through the
+   *  ordinary mesh path, plus the arrow's billboard fallback for a boot
+   *  where mesh 99900 never arrived. */
   _ensureMarkers(renderer) {
     if (this._markers) return;
-    const solid = (name, c) => {
-      const colors = new Uint32Array([c]);
-      renderer.uploadTexture('amap', name, { width: 1, height: 1, colors });
-    };
-    solid('entrance', MICRO_GREEN);   // the 0.8 green entrance cube (Automap.cs:1437-1440)
-    solid('player', MICRO_RED);       // the red position beacon's stand-in when mesh 99900 is absent
+    const colors = new Uint32Array([MICRO_RED]);
+    renderer.uploadTexture('amap', 'player', { width: 1, height: 1, colors });
     this._markers = {
-      entrance: renderer.createBillboardBatch('amap', 'entrance', { w: 0.8, h: 0.8 }, [[0, 0, 0]]),
       player: renderer.createBillboardBatch('amap', 'player', { w: 0.8, h: 0.8 }, [[0, 0, 0]]),
     };
+    for (const [record, texel] of Object.entries(MARKER_TEXELS)) {
+      renderer.uploadTexture('amap', record, { width: 1, height: 1, colors: new Uint32Array([texel]) });
+    }
+    const built = {};
+    for (const [key, model] of Object.entries(markerModels())) built[key] = renderer.createMesh(model);
+    this._markerMeshes = built;
   }
 
   /**
@@ -744,6 +804,74 @@ export class AutomapWindow {
       if (wire) renderer.drawMeshWire(r.mesh, r.matrix, this.deps.texRemap);
       else renderer.drawMesh(r.mesh, r.matrix, this.deps.texRemap);
     }
+  }
+
+  /**
+   * c2/S7: SetupBeacons' object list for THIS frame. DFU rebuilds the
+   * beacons' transforms in UpdateAutomapStateOnWindowPush (:407-414)
+   * and their pivot rotation in UpdateAutomapView (window :1297), which
+   * together is "every time the map is drawn" - so this is computed per
+   * draw and nothing caches a stale position.
+   */
+  _buildMarkerSet(rec, p) {
+    const sm = this.deps.startMarker;
+    this._markerSet = automapMarkerSet({
+      playerPos: p?.feet ?? null,
+      playerYawDeg: (p?.yaw ?? 0) / DEG,
+      pivotPos: _cam ? rotationPivot(_cam) : null,
+      cameraYawDeg: _cam ? cameraYawDeg(_cam) : 0,
+      entrancePos: sm ? [sm.x, sm.y, sm.z] : null,
+      // hidden until discovered (:1447-1448 sets the beacon inactive
+      // for a dungeon; the LOS tick is what lights it)
+      entranceDiscovered: !!rec?.entranceDiscovered,
+      arrowBounds: this.deps.arrowBounds ?? null,
+    });
+    return this._markerSet;
+  }
+
+  /** The never-sliced marker group. The caller has already lifted
+   *  clipY, dropped the mode to OFF and cleared the water level. */
+  _drawMarkerGroup(renderer, p) {
+    const batches = [];
+    for (const mk of this._markerSet) {
+      if (mk.model === 'playerArrow') {
+        // mesh 99900 at the player's own transform (:1355-1363), or the
+        // billboard the art-less boot falls back to
+        if (this.deps.arrowMesh) renderer.drawMesh(this.deps.arrowMesh, mk.matrix, this.deps.texRemap);
+        else if (p?.feet) { this._markers.player.origin = [...p.feet]; batches.push(this._markers.player); }
+        continue;
+      }
+      const gpu = this._markerMeshes?.[mk.model];
+      if (gpu) renderer.drawMesh(gpu, mk.matrix, this.deps.texRemap);
+    }
+    if (!batches.length) return;
+    const yaw = cameraYawDeg(_cam) * DEG;
+    renderer.drawBillboards(batches,
+      new Float32Array([Math.cos(yaw), 0, -Math.sin(yaw)]),
+      new Float32Array([Math.sin(yaw), 0, Math.cos(yaw)]));
+  }
+
+  /**
+   * UpdateMouseHoverOverText (window :1023-1029). Runs every frame, so
+   * the picker caches on the mouse position plus a stamp of everything
+   * else the answer depends on - the camera and the revealed set.
+   */
+  _updateHoverText(proj, view, rec) {
+    if (!this._panelMouse) { this.hoverText = ''; return; }
+    const P = CHROME_RECTS.panel;
+    const hit = this._picker.pick({
+      proj, view, panel: { w: P.w, h: P.h },
+      px: this._panelMouse[0], py: this._panelMouse[1],
+      model: this.deps.model ?? null,
+      rec,
+      markers: this._markerSet,
+      stamp: `${_cam?.pos ?? ''}|${_cam?.fwd ?? ''}|${_cam ? cameraLens(_cam).fov : 0}|${rec?.revealed?.size ?? 0}`,
+    });
+    // a user note answers the NOTE, not a localized string (c2/S8);
+    // everything the chain does not name answers "" - which is all of
+    // the level geometry
+    const key = hoverKeyForHit(hit);
+    this.hoverText = key ? AUTOMAP_STRINGS[key] : (hit?.note ?? '');
   }
 
   // ── draw ──────────────────────────────────────────────────────────
@@ -800,6 +928,12 @@ export class AutomapWindow {
     const proj = mirrorProjectionX(perspective(lens.fov * DEG, aspect, lens.near, FAR_CLIP));
     const eye = _cam.pos;
     const view = lookAt(eye, [eye[0] + _cam.fwd[0], eye[1] + _cam.fwd[1], eye[2] + _cam.fwd[2]], _cam.up);
+    // c2/S7: the beacons and the hover answer are built from the SAME
+    // proj/view the pass draws with, before either is used - a picker
+    // that unprojected through a different lens than the one that drew
+    // would be wrong in exactly the way nobody notices.
+    this._buildMarkerSet(rec, p);
+    this._updateHoverText(proj, view, rec);
     renderer.panelFrame({
       proj,
       view,
@@ -857,23 +991,7 @@ export class AutomapWindow {
       renderer.setClipY(null);
       renderer.setAutomapMode(AUTOMAP_MODE.OFF);
       renderer.setAutomapWater(null);
-      if (this.deps.arrowMesh && p?.feet) {
-        renderer.drawMesh(this.deps.arrowMesh, trs(p.feet[0], p.feet[1], p.feet[2], 0, (p.yaw ?? 0) / DEG, 0), this.deps.texRemap);
-      }
-      const yaw = cameraYawDeg(_cam) * DEG;
-      const camR = new Float32Array([Math.cos(yaw), 0, -Math.sin(yaw)]);
-      const camU = new Float32Array([Math.sin(yaw), 0, Math.cos(yaw)]);
-      const batches = [];
-      const sm = this.deps.startMarker;
-      if (rec?.entranceDiscovered && sm) {   // hidden until discovered (:1447-1448)
-        this._markers.entrance.origin = [sm.x, sm.y, sm.z];
-        batches.push(this._markers.entrance);
-      }
-      if (!this.deps.arrowMesh && p?.feet) {
-        this._markers.player.origin = [...p.feet];
-        batches.push(this._markers.player);
-      }
-      if (batches.length) renderer.drawBillboards(batches, camR, camU);
+      this._drawMarkerGroup(renderer, p);
     });
 
     // ── 3. THE CHROME OVER THE MAP ───────────────────────────────────

@@ -284,12 +284,12 @@ combat line numbers below are refreshed with it.
 - `src/combat/weaponRig.js:85` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/dungeonContext.js:273` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:857` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1527` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1564` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
-- `src/scenes/dungeonContext.js:1619` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3585` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3701` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:866` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:1536` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1573` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
+- `src/scenes/dungeonContext.js:1628` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3603` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3720` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:734` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:740` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:1021` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -323,7 +323,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:4875` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:4974` - *  FLAGGED null this slice closed. */
 - `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/automap.js:81` - beacon focus cycling - so what is FLAGGED here is now: the render
+- `src/systems/automap.js:84` - picker. So what is FLAGGED here is now: user note markers, teleporter
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -

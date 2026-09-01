@@ -301,7 +301,7 @@ test('c2/S5: the slice bias still resets on open unless AutomapRememberSliceLeve
 test('A1 wiring pins: entry identity at the push sites, the 5 Hz tick in BOTH dungeon hosts, the load re-entry', () => {
   const ctx = src('src/scenes/dungeonContext.js');
   assert.match(ctx, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb \}\)/, 'static entries carry the action-key identity');
-  assert.match(ctx, /automapEntries\.push\(amapRow\(o\.key, aabb, true\)\)/, 'dynamic entries key by the live action object (c2/S1: through the identity row builder)');
+  assert.match(ctx, /automapEntries\.push\(amapRow\(o\.key, aabb, true, cpu, matrix\)\)/, 'dynamic entries key by the live action object (c2/S1: through the identity row builder; c2/S7: carrying the picker\'s triangles)');
   assert.match(ctx, /enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: true \}\)/, 'quickLoad re-enters on the LOAD arm');
   assert.match(src('src/scenes/dungeon.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the standalone host ticks');
   assert.match(src('src/scenes/worldModes.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the streaming host ticks');
@@ -336,8 +336,8 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // A1 review: beacons are never sliced (DFU injects the slicing
   // shader into the GEOMETRY only, Automap.cs:1906 vs :1355-1362) -
   // the slice lifts before the arrow/marker draws
-  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);\n\s*renderer\.setAutomapWater\(null\);\n\s*if \(this\.deps\.arrowMesh/,
-    'the arrow draws with the slice lifted, the presentation off and (c2/S6) the water tint off');
+  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);\n\s*renderer\.setAutomapWater\(null\);\n\s*this\._drawMarkerGroup\(/,
+    'the marker group draws with the slice lifted, the presentation off and (c2/S6) the water tint off');
   // A1 review: the death presenter force-replaces the overlay slot -
   // it must release the occupant, and the micro-map version counter
   // is module-global so a leaked key can never serve a stale bitmap

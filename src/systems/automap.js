@@ -78,11 +78,12 @@
 // took the DUNGEON window native - AMAP00I0/AMAP01I0, the nine buttons
 // on their own rects with DFU's press-hold speeds, the mouse drags, the
 // 3D view mode, the four backgrounds, the map compass, the tooltips and
-// beacon focus cycling - so what is FLAGGED here is now: the render
-// modes' above-slice presentation (wireframe/transparent), the marker
-// meshes and the hover picker, user note markers, teleporter portals,
-// the interior-BUILDING automap arm, and the exterior window's own
-// native chrome.
+// beacon focus cycling; c2/S6 added the shader's above-slice half
+// (transparent and wireframe, the water tint, Cutout as the absence of
+// the second pass); c2/S7 the beacons, the marker meshes and the hover
+// picker. So what is FLAGGED here is now: user note markers, teleporter
+// portals, the interior-BUILDING automap arm, and the exterior window's
+// own native chrome.
 
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';

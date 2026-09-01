@@ -130,6 +130,13 @@ export function buildAutomapModel(entries) {
       elementName: e.elementName ?? '',
       modelIndex: e.modelIndex ?? -1,
       waterLevel: e.waterLevel ?? null,
+      // ROAD-C c2/S7: the picker's narrowphase. REFERENCES to the CPU
+      // model's own arrays and to the placement matrix the draw list
+      // already holds - never copies, so an entry costs two pointers
+      // and a row built without them still answers its AABB.
+      positions: e.positions ?? null,
+      indices: e.indices ?? null,
+      matrix: e.matrix ?? null,
       _seq: seq++,
     });
   }

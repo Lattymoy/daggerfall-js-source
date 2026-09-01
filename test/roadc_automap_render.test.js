@@ -385,6 +385,8 @@ function windowStub(log) {
     releaseTexture: () => {},
     createBillboardBatch: () => ({}),
     destroyBillboardBatch: () => {},
+    createMesh: (model) => ({ stub: true, subMeshes: model.subMeshes }),   // c2/S7
+    destroyMesh: () => {},
     drawBillboards: () => {},
     drawMesh: (mesh) => log.push(['drawMesh', mesh]),
     drawMeshWire: (mesh) => log.push(['drawMeshWire', mesh]),
@@ -481,7 +483,9 @@ test('c2/S6 wireframe uses the LINE path and only above the slice; transparent u
   const seen = [];
   for (const e of wf) {
     if (e[0] === 'setAutomapMode') mode = e[1];
-    else if (e[0] === 'drawMesh' || e[0] === 'drawMeshWire') seen.push([mode, e[0]]);
+    // mode 0 is c2/S7's NEVER-SLICED marker group, which is not a
+    // presentation of the geometry and takes no part in this law
+    else if (mode !== 0 && (e[0] === 'drawMesh' || e[0] === 'drawMeshWire')) seen.push([mode, e[0]]);
   }
   assert.deepEqual(seen, [
     [1, 'drawMesh'], [1, 'drawMesh'],
@@ -492,7 +496,12 @@ test('c2/S6 wireframe uses the LINE path and only above the slice; transparent u
 
   const t = drawInMode('Transparent');
   assert.equal(t.some((e) => e[0] === 'drawMeshWire'), false, 'transparent never takes the line path');
-  assert.equal(t.filter((e) => e[0] === 'drawMesh').length, 8, 'four models, twice - once per pass');
+  let tm = 0;
+  const geo = t.filter((e) => {
+    if (e[0] === 'setAutomapMode') { tm = e[1]; return false; }
+    return tm !== 0 && e[0] === 'drawMesh';
+  });
+  assert.equal(geo.length, 8, 'four models, twice - once per pass');
 });
 
 test('c2/S6 the water level rides per BLOCK, uploaded only when it changes, and never re-orders the draws', () => {
