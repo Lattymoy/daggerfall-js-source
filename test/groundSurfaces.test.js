@@ -101,7 +101,7 @@ test('AUDIT 46: the ground has a bisect door, and the GL gate exists even though
   assert.match(r, /this\.groundMode = null;/);
   assert.match(r, /const mode = this\.groundMode\s*\n\s*\?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);/);
   assert.match(r, /const src = mode === 'drawn' \? buildEnhancedTiles\(layers, \{ size: 128 \}\) : layers;/);
-  assert.match(r, /if \(mode !== 'classic'\) \{/, "'tiles' must mipmap the ORIGINAL tiles - that is the middle state");
+  assert.match(r, /if \(mode === 'tiles'\) \{/, 'EE9: only ?ground=tiles asks for mips now');
   // and the cache key follows the mode, or a bisect would hand back
   // the array built for the previous one
   assert.match(r, /const key = `\$\{archive\}:\$\{this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\)\}`;/);
@@ -110,4 +110,24 @@ test('AUDIT 46: the ground has a bisect door, and the GL gate exists even though
     assert.match(h, /renderer\.groundMode = new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('ground'\);/,
       `${host} must offer the door`);
   }
+});
+
+test('AUDIT 47: the enhanced array PROVES itself, and falls back to classic if it samples black', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  // I could not reproduce the void on any driver I can run, and a
+  // fourth theory is worth less than a check. The upload draws one
+  // pixel through the finished array and looks at it.
+  assert.match(r, /if \(mode !== 'classic' && !this\._probeTileArray\(tex\)\) \{/);
+  assert.match(r, /this\.groundMode = 'classic';\n\s*const plain = this\.uploadTileArray\(`\$\{archive\}:fallback`, layers\);/,
+    'the fallback must re-upload the ORIGINAL layers with the classic sampler');
+  assert.match(r, /this\.groundMode = fallback;/, 'and must put the mode back, or every later archive is classic too');
+  // the probe reads a real pixel through a real draw - asking the
+  // driver whether a texture is complete does not answer this
+  assert.match(r, /gl\.readPixels\(2, 2, 1, 1, gl\.RGBA, gl\.UNSIGNED_BYTE, px\);/);
+  assert.match(r, /if \(px\[0\] === 255 && px\[1\] === 0 && px\[2\] === 255\) return true;/,
+    'magenta is "the probe never drew", which is not the array\u2019s fault');
+  assert.match(r, /return \(px\[0\] \+ px\[1\] \+ px\[2\]\) > 0;/);
+  // and a probe that cannot run must never condemn the ground
+  assert.match(r, /return true;\s*\/\/ cannot probe: do not punish the player for that/);
+  assert.match(r, /\} catch \{\s*\n\s*return true;\s*\/\/ a probe that cannot run must not condemn the ground/);
 });
