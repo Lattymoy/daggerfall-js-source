@@ -6313,3 +6313,35 @@ WHAT IS STILL OWED: a bow fixture carrying BOTH an ArrowBone and a
 BoneOffset. generate.py has neither in one mesh - boneoffset.nif is
 ammunition - so MW-D44 is pinned at SOURCE while MW-D34 holds the
 behavioural half. Named here rather than left to be rediscovered.
+
+MW-D45: WHICH BRANCH THE ARROW TOOK, SAID OUT LOUD. Mac, after four
+rounds on arrow placement: "when shooting, the arrow isnt held in the
+hand, it spawns on the body."
+
+THE RESEARCH THAT SETTLES WHAT THE TWO BRANCHES MEAN. OpenMW issue
+5642, which is the change that added the first one: "By default, OpenMW
+attaches arrow to the ArrowBone node from bow mesh, so arrow fetching
+animation is baked into bow mesh... I suggest to check if 'Bip01 Arrow'
+bone exists in actors skeleton, if it is not, attach arrow to the
+ArrowBone as fallback." The modding docs say the same from the other
+side: a "Bip01 Arrow" bone may be ADDED to actor skeletons, and then
+arrows attach there instead, which exists so beast races can carry
+quivers at their own angle.
+
+SO THE SKELETON BRANCH IS A MODDER'S OPT-IN AND VANILLA NEVER TAKES IT.
+That reframes the symptom: an arrow "on the body" is the quiver branch
+winning, which on vanilla data it cannot. Either the skeleton in play
+genuinely carries the bone, or something upstream says it does.
+
+AND THE PORT ALREADY KNEW WHICH BRANCH IT TOOK. arrowInfo.viaWeaponMesh
+has been set since the day MW-D16 was written and NOTHING EVER READ IT
+- not the card, not a note, not a probe. Four rounds of "the arrow is
+in the wrong place" were spent guessing at a fact the rig had already
+computed, because the only place it existed was a field on an object
+nobody printed. A value computed and never surfaced is not diagnostics,
+it is a comment. The arm card prints it now, with the bone it hung on.
+
+THE STANDING LESSON, and it is the session's: this port is read by
+someone who can run it and written by someone who cannot. Every fact
+the rig computes about DATA IT LOADED belongs on the card, because the
+card is the only wire between those two.
