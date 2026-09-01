@@ -861,9 +861,26 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  *  used it - and a name that misleads the next reader is the same
  *  defect as a stale comment, which this run has now found four of.
  *  It is DFU's member name instead. */
-export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
-  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
-  for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
+export const MASTERY_TEXT_ID = 4020;   // youAreNowAMasterOfTextID (PlayerEntity.cs:1361)
+
+export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random,
+  // THE MASTERY BOX (RaiseSkills :1390-1407). `lines` is the host's
+  // TEXT.RSC reader (townTalk.lines), `box` its click-anywhere
+  // presenter. A host that hands neither still gets the fanfare, the
+  // way DFU plays it outside the `tokens != null` gate.
+  lines = null, box = null } = {}) {
+  const mastered = [];
+  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp, (id) => mastered.push(id)) ?? [];
+  for (const id of raised) {
+    say(`Your ${SKILL_NAMES[id]} skill has improved.`);
+    // Interleaved, not batched: DFU pops the skillImprove message and
+    // then, for that same skill, the master box - so a pass that
+    // raises two skills reads in the source's order.
+    if (!mastered.includes(id)) continue;
+    const rows = plainLines(lines?.(MASTERY_TEXT_ID));
+    if (rows?.length) box?.(rows);
+    audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
+  }
   return raised;
 }
 
@@ -1446,6 +1463,10 @@ export const restFullyHealed = (entity) =>
 export function createRestDeps(entity, opts = {}) {
   const {
     say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
+    // The mastery box's presenter (RaiseSkills :1390-1407). The rows
+    // come from the host's `endLines`, which is already its TEXT.RSC
+    // reader - one host dep, not a second one that could disagree.
+    box = null,
     place = null, ...rest
   } = opts;
   return {
@@ -1470,7 +1491,7 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
-    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp }),
+    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
     dead: () => entity.health <= 0,

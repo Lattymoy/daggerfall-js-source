@@ -347,7 +347,11 @@ export function createWorldModes(host) {
     say,
     onLevelUp: () => {
       say('You have gained a level!');
-      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+      // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
+      // levels the player in classic. This host builds no windows -
+      // host.makeCharSheet is the outer host's own builder, the same
+      // one toggleCharSheet mounts.
+      if (!interiorOverlay) interiorOverlay = host.makeCharSheet?.() ?? new LevelUpScreen(playerEntity);
     },
   });
 
@@ -5101,6 +5105,8 @@ export function createWorldModes(host) {
   // marker CanRest picked (PlayerMotor.transform.position +
   // FixStanding; the port's spawn does the standing fix).
   const interiorRestDeps = createRestDeps(playerEntity, {
+    // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
+    box: (rows) => mountInterior(new ActionTextBox(rows)),
     advanceMinutes: (n) => interiorTicker.advance(n),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED (DFU calls the machine directly,
@@ -5140,7 +5146,11 @@ export function createWorldModes(host) {
     say,
     onLevelUp: () => {
       say('You have gained a level!');
-      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+      // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
+      // levels the player in classic. This host builds no windows -
+      // host.makeCharSheet is the outer host's own builder, the same
+      // one toggleCharSheet mounts.
+      if (!interiorOverlay) interiorOverlay = host.makeCharSheet?.() ?? new LevelUpScreen(playerEntity);
     },
     day: () => false, inside: () => true,   // a building interior, always
   });

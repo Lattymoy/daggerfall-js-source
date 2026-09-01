@@ -5,7 +5,7 @@
 // chargenSession - AUDIT 23). INTERIM until then, loudly: flat
 // skills 30 and maxHealth 50. armor 0 until player equipment.
 // LiveSpeed lives in PlayerMotor stats.
-import { SKILL_COUNT } from '../systems/skills.js';
+import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from '../systems/skills.js';
 
 export const playerEntity = {
   isPlayer: true,
@@ -40,7 +40,12 @@ export const playerEntity = {
   // with `new uint[2]` here too (PlayerEntity.cs:76) and both
   // accessors INDEX into it - Get reads a word, Set ORs into one - so
   // the field can never legitimately be absent (PlayerEntity.cs:70).
-  skillsRecentlyRaised: [0, 0],
+  // PlayerEntity.skillsRecentlyRaised (:70) - the uint[2] the char
+  // sheet highlights from. Constructed here for the same reason
+  // skillUses is: DFU's entity is built WITH it, and the save lane
+  // reads the field by this name.
+  skillsRecentlyRaised: new Array(SKILLS_RECENTLY_RAISED_WORDS).fill(0),
+
 };
 
 /** Debug/probe surface: one place writes window.__player (audit

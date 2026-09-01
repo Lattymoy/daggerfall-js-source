@@ -74,7 +74,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
+import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
@@ -609,7 +609,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     onExhausted: onExhaustedExterior,
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
-      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+      townTalk.showOverlay(makeCharSheetWindow());   // dfuiOpenCharacterSheetWindow (RaiseSkills :1414)
     },
   });   // AUDIT 18: the per-minute tick every host owes
   // AUDIT 21 (hosts lane, F6): this host's death presenter. Guard damage,
@@ -838,6 +838,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
   const outdoorRestDeps = createRestDeps(playerEntity, {
+    // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
+    box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
     advanceMinutes: (n) => playerTicker.advance(n),
     // No tickQuests: this dev host mounts no quest bridge at all
     // (grep questBridge in this file returns nothing), so TickRest
@@ -866,7 +868,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     say: (msg) => townTalk.say(msg),
     onLevelUp: () => {
       townTalk.say('You have gained a level!');
-      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+      townTalk.showOverlay(makeCharSheetWindow());   // dfuiOpenCharacterSheetWindow (RaiseSkills :1414)
     },
     day: () => !isNight(minuteNow()), inside: () => false,
   });

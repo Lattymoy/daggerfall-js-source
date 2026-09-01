@@ -95,7 +95,7 @@ import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js'; 
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
-import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
+import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
@@ -1062,7 +1062,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (msg) => console.log('[player]', msg),
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
-      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+      // DFU posts dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -
+      // the SHEET is where classic levels you up, and the door picks
+      // the skin's face for it.
+      townTalk.showOverlay(makeCharSheetWindow());
     },
   });   // AUDIT 18: the per-minute tick every host owes
   // AUDIT 21 (hosts lane, F6): this host's death presenter. Guard damage,
@@ -2202,6 +2205,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
   const outdoorRestDeps = createRestDeps(playerEntity, {
+    // The MASTERY box (RaiseSkills :1390-1401): TEXT.RSC 4020 in a
+    // click-anywhere box when a primary skill lands on 100. Same
+    // overlay slot the rest window has just vacated.
+    box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
     // U48: the ENCOUNTER catch-up rides INSIDE the advance. This host
     // is the only one with a mobile foe pool to spawn into, and its
     // frame body returns at the overlay gate - so left to the frame, a
@@ -2247,7 +2254,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (msg) => townTalk.say(msg),
     onLevelUp: () => {
       townTalk.say('You have gained a level!');
-      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+      townTalk.showOverlay(makeCharSheetWindow());   // dfuiOpenCharacterSheetWindow (RaiseSkills :1414)
     },
     // CalculateHealthRecoveryRate's flags, live: outdoors, and day by
     // the clock - which is the ONE place RapidHealing InLight differs.
@@ -2909,7 +2916,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // DFU calls the same PlayerEntity.RaiseSkills at both.
       raisePlayerSkills(playerEntity, {
         say: (m) => townTalk.say(m),
-        onLevelUp: () => townTalk.showOverlay(new LevelUpScreen(playerEntity)),
+        // The MASTERY box (RaiseSkills :1390-1401): TEXT.RSC 4020 and
+        // the Arena fanfare when a primary skill lands on 100 - the
+        // arrival raise owes it exactly as the rest-end raise does.
+        lines: (id) => townTalk.lines(id),
+        box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
+        onLevelUp: () => townTalk.showOverlay(makeCharSheetWindow()),
       });
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {

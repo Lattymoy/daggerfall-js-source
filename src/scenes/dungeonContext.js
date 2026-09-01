@@ -1126,9 +1126,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _restFullyHealed = () => restFullyHealed(playerEntity);
   // U3: the level-up screen replaces the headless auto-apply (shared
   // by the rest-end raise and any future travel arm).
+  // AUDIT 44 (a11): dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -
+  // the SHEET is what classic opens, and the rollout mounts onto it.
+  // `api.toggleCharSheet` is this host's ONE sheet construction (its
+  // own free-slot guard included); calling it here rather than
+  // building a second bag is the same rule U43 wrote for F5.
   const _onLevelUp = () => {
     hudText.add('You have gained a level!');
-    if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+    api.toggleCharSheet();
   };
   // E-slice: a rest-interruption ENCOUNTER - one foe minted through
   // the same chain as the load loop, at the classic minimum distance
@@ -1256,6 +1261,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // too - three more hosts ask it, and two were asking a much coarser
   // question before this slice.
   const _restDeps = createRestDeps(playerEntity, {
+    // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
+    box: (rows) => { if (!activeOverlay) activeOverlay = new ActionTextBox(rows); },
     advanceMinutes: (n) => _restAdvance(n),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED. This host holds the bridge as
@@ -3836,6 +3843,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         else if (activeOverlay instanceof LevelUpScreen) {
           console.warn('[levelup] FONT art unavailable; applying headlessly');
           applyLevelUp(playerEntity, (st, pool) => spendPoolLowest(st, Object.keys(st), pool));
+          surfacePlayer();
+        }
+        // AUDIT 44 (a11): the classic lane levels ON THE SHEET now, so
+        // the font-less escape has to know that shape too - the sheet
+        // has already taken the Level++ and the health roll at mount
+        // and holds an UNSPENT pool. Dropping it silently would eat
+        // the points, which is the defect this arm exists to prevent.
+        else if (activeOverlay?.leveling) {
+          console.warn('[levelup] FONT art unavailable; applying headlessly');
+          spendPoolLowest(activeOverlay.working, Object.keys(activeOverlay.working), activeOverlay.pool);
+          activeOverlay.pool = 0;
+          activeOverlay.input('confirm');   // CheckIfDoneLeveling writes the working stats home
           surfacePlayer();
         }
         activeOverlay = null;
