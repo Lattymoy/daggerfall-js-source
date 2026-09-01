@@ -424,7 +424,37 @@ let _headKey = null;
 
 /** Drop the cached art - the tests' door, and the shape DFU's
  *  Refresh() has for the head on load and on new game. */
-export function _resetLargeHud() { _art = null; _loading = null; _headKey = null; }
+export function _resetLargeHud() { _art = null; _loading = null; _headKey = null; _overBar = false; }
+
+// ROAD-Ar - ActiveMouseOverLargeHUD. PlayerActivate.cs:230-236 and
+// WeaponManager.cs:293-295 both refuse the scene entirely while
+// `PlayerMouseLook.cursorActive && LargeHUD.ActiveMouseOverLargeHUD`,
+// so the bar's eleven panels are not ALSO a click on the world behind
+// them. HUDLarge keeps the flag off its panel's hover events -
+// MouseEnter sets `cursorActive && LargeHUD` (:361-365), MouseLeave
+// clears it (:368-372). The port has no screen-component hover
+// system, so the hosts' existing mousemove feeds the same question,
+// and cursorActive/largeHudEnabled are re-read at the ASK so a
+// pointer re-lock cannot leave a stale true behind (DFU's MouseLeave
+// fires on the same transition; this is the durable half of it).
+let _overBar = false;
+
+/** Host mousemove hook - the canvas-pixel twin of trackHudPointer.
+ *  `bar` is the last drawn bar, exactly as routeLargeHudClick reads
+ *  it; it is a parameter only so the pins can hand one over without
+ *  standing up a renderer. */
+export function trackLargeHudPointer(canvas, e, bar = largeHudBar()) {
+  if (!canvas?.getBoundingClientRect) { _overBar = false; return; }
+  const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) { _overBar = false; return; }
+  _overBar = !!largeHudPoint(bar,
+    (e.clientX - r.left) * (canvas.width / r.width),
+    (e.clientY - r.top) * (canvas.height / r.height));
+}
+
+/** LargeHUD.ActiveMouseOverLargeHUD, for the activate gate's guard. */
+export const activeMouseOverLargeHUD = () =>
+  _overBar && largeHudEnabled() && cursorActive();
 
 /**
  * What a host passes to drawHud as `largeHud`. Null while the setting

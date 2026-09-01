@@ -19,6 +19,9 @@
 
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
 import { weightMultipliersByMaterial } from '../characters/weapons.js';
+// A2: SetItem's two draws-and-writes, one home each (itemTemplates.js
+// is a leaf of this module's import graph - it reads the same JSON).
+import { mintCondition, rollPaintingMessage, templateByIndex } from './itemTemplates.js';
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -148,7 +151,20 @@ export function isStackable(item) {
 export function stacksWith(a, b) {
   return isStackable(a) && isStackable(b) &&
     a.group === b.group && a.templateIndex === b.templateIndex &&
-    (a.material ?? null) === (b.material ?? null) &&
+    // ROAD-Ar R5 (fallout): an ABSENT material is material 0, which is
+    // how the whole rest of the port reads the field (paperDoll :126,
+    // itemTemplates :61/:63, equip :345, weaponRig :162 - all
+    // `material ?? 0`) and what DFU's int nativeMaterialValue is when
+    // nothing sets it. The `?? null` sentinel here made undefined and 0
+    // different things, so a SplitStack mint - which writes
+    // nativeMaterialValue = 0 verbatim (DaggerfallUnityItem.cs:558) -
+    // could not re-merge into a source stack that carried no material
+    // field at all, e.g. the gold stack goldStack() mints. FLAGGED:
+    // FindExistingStack (:708-713) does not compare material AT ALL;
+    // the port's extra term is a pre-existing narrowing this line does
+    // not widen, it only stops the term firing on a spelling
+    // difference.
+    (a.material ?? 0) === (b.material ?? 0) &&
     (a.message ?? 0) === (b.message ?? 0) &&
     (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
@@ -166,17 +182,70 @@ export function addItem(list, item) {
   return item;
 }
 
-/** ItemCollection.SplitStack (:261-272). Picking the WHOLE stack
- *  answers the stack itself; picking fewer mints a new record for the
- *  picked count (added to the collection unstacked, `noStack: true`)
- *  and leaves the rest on the original. Null on a non-stack, a bad
- *  count, or a stack this collection does not hold. */
-export function splitStack(list, stack, numberToPick) {
+/**
+ * ItemCollection.SplitStack (:261-272). Picking the WHOLE stack
+ * answers the stack itself; picking fewer mints a new record for the
+ * picked count (added to the collection unstacked, `noStack: true`)
+ * and leaves the rest on the original. Null on a non-stack, a bad
+ * count, or a stack this collection does not hold - `IsAStack()` is
+ * `stackCount > 1` (DaggerfallUnityItem.cs:701-704).
+ *
+ * A2 - THE PICKED ITEM IS A FRESH TEMPLATE MINT, NOT A COPY:
+ *
+ *     pickedItems = ItemBuilder.CreateItem(stack.ItemGroup, stack.TemplateIndex)
+ *
+ * CreateItem (:102-124) runs the DaggerfallUnityItem ctor, which runs
+ * SetItem (:538-573) - and SetItem writes the TEMPLATE's row over
+ * everything: nativeMaterialValue 0, dyeColor Unchanged, currentVariant
+ * 0, value = basePrice, flags 0, condition = hitPoints both ways,
+ * enchantmentPoints from the template, message 0 (a Paintings roll),
+ * stackCount 1. It carries nothing at all from the stack it came out
+ * of except the group and the template index.
+ *
+ * The port spread the source record instead, which is a different item
+ * in four ways that matter: per-item CONDITION rode along (a stack
+ * worn to 3 split into two stacks worth 3), ENCHANTMENTS were
+ * duplicated by reference - the item maker splits ONE off a stack to
+ * enchant precisely so the rest stay plain, and a shared array would
+ * have enchanted the whole stack - and `message` and `potionRecipeKey`
+ * came with it, which stacksWith reads as identity. DFU's split is a
+ * fresh item, so a Paintings split would draw its own picture; nothing
+ * stackable is a painting, but SetItem's law is stated whole here
+ * because the next reader will ask.
+ *
+ * The two mint terms the port keeps one home for - condition
+ * (mintCondition) and the Paintings message (rollPaintingMessage) -
+ * are called by name rather than respelled.
+ *
+ * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
+ * inline re-spellings of this member (equip.js:230 and
+ * potionMakerWindow.js:163, both on paths where nothing stackable is
+ * equippable) and missed a THIRD, which was the one on the main path:
+ * itemTransfer._applyTransfer's partial arm, reached by every
+ * pack<->wagon/loot and shelf->basket move that the wagon or carry
+ * gate clamps below stackCount. That one now calls this member, so the
+ * two spellings can no longer disagree about what a split produces.
+ * The recorded remainder is therefore equip.js and potionMakerWindow.js
+ * ONLY - if a third appears, it is new.
+ */
+export function splitStack(list, stack, numberToPick, { rolls = Math.random } = {}) {
   const count = stack?.stackCount ?? 1;
   if (count <= 1 || numberToPick < 1 || numberToPick > count || !list.includes(stack)) return null;
   if (numberToPick === count) return stack;
-  const picked = { ...stack, stackCount: numberToPick };
-  list.push(picked);
+  const template = templateByIndex(stack.templateIndex);
+  const picked = mintCondition({
+    group: stack.group,
+    templateIndex: stack.templateIndex,
+    name: template?.name,
+    material: 0,                                  // nativeMaterialValue = 0
+    flags: 0,
+    variant: 0,                                   // currentVariant = 0
+    value: template?.basePrice ?? 0,              // value = itemTemplate.basePrice
+    enchantmentPoints: template?.enchantmentPoints,
+    message: stack.group === 'Paintings' ? rollPaintingMessage(rolls) : 0,
+    stackCount: numberToPick,
+  });
+  list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;
   return picked;
 }

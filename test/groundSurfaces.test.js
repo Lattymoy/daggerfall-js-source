@@ -101,7 +101,7 @@ test('AUDIT 46: the ground has a bisect door, and the GL gate exists even though
   assert.match(r, /this\.groundMode = null;/);
   assert.match(r, /const mode = this\.groundMode\s*\n\s*\?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);/);
   assert.match(r, /const src = mode === 'drawn' \? buildEnhancedTiles\(layers, \{ size: 128 \}\) : layers;/);
-  assert.match(r, /if \(mode !== 'classic'\) \{/, "'tiles' must mipmap the ORIGINAL tiles - that is the middle state");
+  assert.match(r, /if \(mode === 'tiles'\) \{/, 'EE9: only ?ground=tiles asks for mips now');
   // and the cache key follows the mode, or a bisect would hand back
   // the array built for the previous one
   assert.match(r, /const key = `\$\{archive\}:\$\{this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\)\}`;/);
@@ -111,3 +111,27 @@ test('AUDIT 46: the ground has a bisect door, and the GL gate exists even though
       `${host} must offer the door`);
   }
 });
+
+test('AUDIT 47 REVERTED: the upload touches no state it does not own', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  // THE PROBE IS GONE. It drew one pixel through the finished array to
+  // prove the array was not black - a defensive check for a fault I
+  // could not reproduce - and it broke the whole texture system,
+  // because it bound a TEXTURE_2D and a TEXTURE_2D_ARRAY on unit 0 and
+  // never put them back. Every pass after it inherited a unit bound to
+  // a 4x4 probe target, and the renderer's own shadows had no idea.
+  //
+  // The lesson is the pin: an upload path runs BETWEEN frames and in
+  // the middle of someone else's state. It may create objects. It may
+  // not draw, and it may not leave a binding behind.
+  assert.ok(!/_probeTileArray|_tileProbe/.test(r), 'the probe must not come back');
+  const up = r.slice(r.indexOf('uploadTileArray(archive, layers) {'), r.indexOf('uploadTileArray(archive, layers) {') + 5200);
+  assert.ok(!/drawArrays|drawElements/.test(up), 'an upload must not draw');
+  assert.ok(!/bindFramebuffer|viewport\(/.test(up), 'an upload must not take the frame');
+  assert.ok(!/clearColor|gl\.clear\(/.test(up), 'an upload must not clear');
+  assert.ok(!/disable\(gl\.(DEPTH_TEST|CULL_FACE|BLEND)\)/.test(up), 'an upload must not change the pipeline');
+  // what it MAY do: make a texture, fill it, and choose its sampler
+  assert.match(up, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8/);
+  assert.match(up, /gl\.texSubImage3D\(/);
+});
+

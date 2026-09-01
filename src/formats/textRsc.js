@@ -16,12 +16,43 @@
 // into text), every other control byte drops. Full token semantics
 // (positioning, fonts, pages) pend the book/scroll renderers.
 
+import { rand } from './dfRandom.js';   // ROAD-A7: GetRandomTokens' dfRand arm
+
 export const RSC = Object.freeze({
   NewLine: 0x00, EndOfPage: 0xf6, InputCursorPositioner: 0xf8,
   FontPrefix: 0xf9, PositionPrefix: 0xfb, JustifyLeft: 0xfc,
   JustifyCenter: 0xfd, EndOfRecord: 0xfe, SubrecordSeparator: 0xff,
   FirstCharacter: 0x20, LastCharacter: 0x7f,
 });
+
+/** ROAD-A7 - GetRandomTokens' TWO draws (TextProvider.cs:203-233):
+ *
+ *      int index = dfRand ? (int)(DFRandom.rand() % tokenStreams.Count)
+ *                         : UnityEngine.Random.Range(0, tokenStreams.Count);
+ *
+ * The port has only ever had the second one, and the two are NOT
+ * interchangeable: `dfRand: true` draws from the CLASSIC LCG, so the
+ * pick is reproducible from the seed AND it CONSUMES a value from the
+ * stream that the next draw would otherwise have taken. Every
+ * painting macro is a dfRand read (DaggerfallUnityItemMCP :188, :194,
+ * :201, :207 and InitPaintingInfo :65), and a painting's whole
+ * identity is one walk of that stream - so a uniform pick there does
+ * not merely choose a different word, it desynchronises everything
+ * drawn after it.
+ *
+ * `dfRandPick` is marked so the readers use its INTEGER answer
+ * directly. Scaling it through a fraction would round: `(k/n)*n` is
+ * not exactly k in doubles, and a floor of that can land on k-1. */
+export function dfRandPick(n) { return rand() % n; }
+dfRandPick.dfRand = true;
+
+/** The index one variant reader resolves. A dfRand pick answers the
+ *  index; any other `pick` is Random.Range's [0,1) fraction, clamped
+ *  off the n-1 edge as Range's exclusive upper bound is. */
+function variantIndex(pick, n) {
+  if (pick?.dfRand) return ((pick(n) % n) + n) % n;
+  return Math.min(n - 1, Math.floor(pick() * n));
+}
 
 /** TextFile.ReadTokens (TextFile.cs:421-441), the byte-token stream
  *  reader the BOOK files ride (B1). Reads {formatting, text, x, y}
@@ -171,8 +202,19 @@ export class TextRsc {
    *  established matters, so neither existing reader could do it. */
   variantLinesById(id, pick = Math.random) {
     const n = this.variantCount(id);
-    if (n <= 1) return this.linesById(id);
-    const want = Math.min(n - 1, Math.floor(pick() * n));
+    if (n <= 1) {
+      // ROAD-Ar R13: TextProvider.cs:225 completes the final stream
+      // unconditionally, so Count is at least 1 and :228's draw has NO
+      // Count guard - a single-subrecord record still burns one value.
+      // Short-circuiting before `pick` was free while `pick` was
+      // Math.random; with a7's stream-consuming dfRandPick it left the
+      // port's DFRandom one draw BEHIND classic, which is the desync
+      // the painting reads exist to close. The row content still comes
+      // from variant 0; only the draw is restored.
+      if (n === 1) variantIndex(pick, 1);
+      return this.linesById(id);
+    }
+    const want = variantIndex(pick, n);
     // AUDIT 23 (FTD-1) - TextProvider.cs:231: a record ending 0xFF 0xFE
     // mints an empty trailing stream; DFU steps back one variant when
     // the picked stream has zero tokens, so the roll never shows
@@ -209,7 +251,11 @@ export class TextRsc {
     if (!raw) return [];
     const ranges = variantRanges(raw);
     const n = ranges.length;
-    const want = n <= 1 ? 0 : Math.min(n - 1, Math.floor(pick() * n));
+    // ROAD-Ar R13, same law as variantLinesById: :228 draws whatever
+    // Count is, so a one-stream record consumes its LCG value too.
+    let want = 0;
+    if (n > 1) want = variantIndex(pick, n);
+    else if (n === 1) variantIndex(pick, 1);
     // readTokens answers NULL on an empty stream (the 0xFF 0xFE tail
     // variant) - exactly the case the FTD-1 step-back exists for
     let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord) ?? [];

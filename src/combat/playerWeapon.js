@@ -29,6 +29,8 @@ import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
+import { isShieldTemplate } from '../systems/armorMaterials.js';   // a12: UpdateHands' IsShield leg
+import { equipDelayFor } from '../systems/equip.js';               // a12: ToggleHand's EquipDelayTimes[GroupIndex]
 import { getBool, getFloat, getInt } from '../systems/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
 
 export const DEFAULT_WEAPON_REACH = 2.25;   // WeaponManager.cs:35
@@ -74,6 +76,40 @@ export function playerMeleeCanHit(dist, inView, losClear) {
   return dist <= WEAPON_REACH && inView && losClear;
 }
 
+// ── THE LEFT HAND (WeaponManager.cs, verbatim) ───────────────────────
+//
+// Classic Daggerfall fights with EITHER hand and H switches between
+// them; the port had no hand state at all - one field bound to the
+// right slot, and a weapon in the left hand could never be swung. The
+// members below are WeaponManager's own, in its own order:
+// usingRightHand (:74), holdingShield (:75), currentRightHandWeapon
+// (:76), currentLeftHandWeapon (:77), UpdateHands (:646-676),
+// ToggleHand (:702-729) and ApplyWeapon (:731-757).
+//
+// The hand is the WHOLE combat identity of a swing, not a cosmetic:
+// strikingWeapon (:909), the skill tallied on a hit (:430-433), the
+// hit sound (:564-567) and LastBowUsed (:415) all read the hand's
+// weapon, and every one of those already reads `playerWeapon.weapon`
+// here - so binding that ONE field to the used hand carries them all.
+
+/** WeaponManager.cs:45 - the switch-delay divisor, a float. */
+import { BOW_SWITCH_DIVISOR } from '../characters/weaponStates.js';   // ONE home (WeaponManager.cs:45); a12's switch law reads it here
+export { BOW_SWITCH_DIVISOR };
+
+/** Internal_Strings.csv: usingRightHand / usingLeftHand - the two
+ *  PopupMessage lines ToggleHand raises (:709, :711). */
+export const USING_RIGHT_HAND_TEXT = 'Using weapon in right hand.';
+export const USING_LEFT_HAND_TEXT = 'Using weapon in left hand.';
+
+/** StartGameBehaviour.StartFromClassicSave :605-606, the whole line:
+ *  `weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon`.
+ *  THE SEAM: formats/saveVarsFile.js has parsed the byte since SAV2
+ *  (:183, offset 0x3D9) and systems/classicSave.js recorded it as
+ *  "read but dropped - the port has no left-hand rig". It has one
+ *  now; this is the import that classicSave's snapshot builder calls,
+ *  kept here so the law and its citation live with the hand. */
+export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHandWeapon;
+
 /**
  * AUDIT 28 W2b: MeleeDamage's FRIENDLY PROTECTION (WeaponManager.cs
  * :930-944). Under Settings.MeleeAttackFriendlyProtection (ships True)
@@ -109,11 +145,104 @@ export class PlayerWeapon {
     this.machine = createWeaponMachine(false);
     this.liveSpeed = liveSpeed;
     this.weapon = weapon;
+    // a12 - WeaponManager's hand state (:74-77), same defaults: the
+    // player starts on the RIGHT hand, holding no shield, with both
+    // caches empty until the first UpdateHands.
+    this.usingRightHand = true;
+    this.holdingShield = false;
+    this.currentRightHandWeapon = null;
+    this.currentLeftHandWeapon = null;
     this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
     // DFU's Gesture: the timestamped trail, its vector sum and its
     // TRAVEL length (WeaponManager.cs:93-155).
     this._gpoints = [];
     this._gx = 0; this._gy = 0; this._gtravel = 0; this._gnow = 0; this._tracking = false;
+  }
+
+  /**
+   * WeaponManager.UpdateHands' hand half (:648-676), verbatim order.
+   *
+   * THE SHIELD RULE IS THE WHOLE POINT OF THE FIRST BLOCK: a shield in
+   * the left hand is not a weapon, so it FORCES the right hand
+   * (`usingRightHand = true`, :656) and blanks the left cache - which
+   * is also what makes ToggleHand's first line refuse to switch while
+   * one is worn. DFU re-caches the melee graphics here so an unequipped
+   * shield has art waiting (:659-660); the port's art cache is keyed by
+   * (type, material) at the draw site and warms itself, so that line
+   * has no port twin.
+   *
+   * DFU compares with CompareItems before writing each cache; the port
+   * holds the item OBJECTS themselves out of the equip table, so the
+   * write is the compare - assigning the same reference changes
+   * nothing, and the caches carry no derived state to invalidate.
+   */
+  updateHands(rightHandItem, leftHandItem) {
+    this.holdingShield = false;
+    let left = leftHandItem ?? null;
+    if (left && isShieldTemplate(left.templateIndex)) {
+      this.usingRightHand = true;
+      this.holdingShield = true;
+      left = null;
+    }
+    this.currentRightHandWeapon = rightHandItem ?? null;
+    this.currentLeftHandWeapon = left;
+  }
+
+  /**
+   * WeaponManager.ApplyWeapon (:731-757). The racial override is the
+   * FIRST arm (:735-739) and returns before either hand is read - V4's
+   * wereclaws, which the rig hands in. Otherwise the used hand's item
+   * IS the screen weapon, and a null one is SetMelee (:743-746,
+   * :751-754): weaponTypeForItem(null) already answers Melee, which is
+   * exactly SetMelee's WeaponType, and the port has no MetalType or
+   * per-field sound to clear because the draw and swing clips are read
+   * off the item at their own moment.
+   *
+   * `Reach = defaultWeaponReach` (:756) is the port's constant
+   * WEAPON_REACH - nothing in this port writes Reach per weapon, so
+   * there is no field to restore.
+   */
+  applyWeapon(racialWeapon = null) {
+    if (racialWeapon) { this.weapon = racialWeapon; return this.weapon; }
+    this.weapon = (this.usingRightHand ? this.currentRightHandWeapon : this.currentLeftHandWeapon) ?? null;
+    return this.weapon;
+  }
+
+  /**
+   * WeaponManager.ToggleHand (:702-729), verbatim.
+   *
+   * Refuses outright while the right hand is used and a shield is worn
+   * (:704-705) - there is nothing to switch TO. Otherwise the hand
+   * flips, one of the two classic lines is raised, and only then the
+   * ENHANCEMENT arm runs: BowLeftHandWithSwitching (defaults False, so
+   * the classic lane never pays it) bills the switch as
+   * `sum over both hands of (EquipDelayTimes[GroupIndex] - 500)`,
+   * divided by 1.7, onto the hand now in use.
+   *
+   * PORT NOTE (the CH3 collapse, equip.js:63): DFU keeps a countdown
+   * PER HAND and this bill lands on the used one; the port sums both
+   * into entity.equipCountdown, so the bill lands on the one clock.
+   * Same delay, same block on the swing - only the per-hand split is
+   * missing, and it is missing everywhere the collapse reaches.
+   *
+   * @returns the popup line, or null when the shield refused the switch.
+   */
+  toggleHand({
+    bowSwitching = getBool('Enhancements', 'BowLeftHandWithSwitching'),
+    entity = null,
+    apply = true,
+  } = {}) {
+    if (this.usingRightHand && this.holdingShield) return null;
+    this.usingRightHand = !this.usingRightHand;
+    const message = this.usingRightHand ? USING_RIGHT_HAND_TEXT : USING_LEFT_HAND_TEXT;
+    if (bowSwitching) {
+      let switchDelay = 0;
+      if (this.currentRightHandWeapon) switchDelay += equipDelayFor(this.currentRightHandWeapon) - 500;
+      if (this.currentLeftHandWeapon) switchDelay += equipDelayFor(this.currentLeftHandWeapon) - 500;
+      if (switchDelay > 0 && entity) entity.equipCountdown = (entity.equipCountdown ?? 0) + switchDelay / BOW_SWITCH_DIVISOR;
+    }
+    if (apply) this.applyWeapon();
+    return message;
   }
 
   /** Drag-to-swing (WeaponManager.TrackMouseAttack over the ported

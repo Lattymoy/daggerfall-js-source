@@ -95,7 +95,13 @@ test('WM4c: both exterior hosts start the hum per mill, ungated on the wind, and
   // when the pixel is destroyed.
   const world = read('src/scenes/world.js');
   assert.match(world, /else w\.hum\.move\(at\);/, 'world.js: the hum does not follow the floating origin');
-  assert.match(world, /function destroyPixel\(px, py\) \{[\s\S]{0,600}w\.hum\?\.stop\(\); w\.hum = null;/, 'world.js: a destroyed pixel leaves its hum behind');
+  // A1 MOVED THIS PIN: destroyPixel took a `{ collectLoose }` option so
+  // a season re-skin can tear a pixel down WITHOUT running the unload's
+  // loose-object sweep (DaggerfallLocation re-skins standing terrain,
+  // it does not unload it). The hum law is untouched - a torn-down
+  // pixel still stops its mills, whichever door it came through - so
+  // the pin follows the signature rather than weakening.
+  assert.match(world, /function destroyPixel\(px, py, \{ collectLoose = true \} = \{\}\) \{[\s\S]{0,600}w\.hum\?\.stop\(\); w\.hum = null;/, 'world.js: a destroyed pixel leaves its hum behind');
 });
 
 test('WM4c: both interior hosts start the gear\'s hum on the part that carries Spin_Up, and the room\'s teardown ends it', () => {

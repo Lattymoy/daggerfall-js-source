@@ -1917,7 +1917,23 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     //
     // Per-layer, so tiles never bleed into each other: WebGL2's
     // generateMipmap on a 2D array filters each layer independently.
-    if (mode !== 'classic') {
+    // EE9: MIPMAPS ARE OPT-IN NOW, and the drawn surfaces are not.
+    //
+    // Mac's world is still black, and the only term I have not been
+    // able to clear is the mip chain: an incomplete sampler returns
+    // BLACK for every tile, which is exactly what he sees, and my GL
+    // gate cannot reproduce it because SwiftShader completes chains a
+    // real driver may refuse. I have guessed three times; this stops
+    // guessing and REMOVES the suspect instead.
+    //
+    // The two enhancements were bundled and did not have to be. The
+    // drawn surfaces are the visible win and cannot blacken anything -
+    // they are ordinary level-0 texels. The mip chain is the risk. So
+    // the enhanced ground draws OUR tiles with the CLASSIC sampler by
+    // default, and the mips live behind ?ground=tiles for whoever is
+    // testing them. Worst case is now a ground that shimmers like
+    // Daggerfall's own, which is what it did last week.
+    if (mode === 'tiles') {
       // ...and if it fails anyway, FALL BACK rather than draw black. A
       // sampler that cannot be completed must not be asked for mips:
       // the ground looking like the classic ground is a disappointment,
@@ -1950,6 +1966,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.tileArrays.set(key, tex);
     return tex;
   }
+
+
 
   /** Draw one terrain surface with its tilemap + tile array. */
   /** EE4: the deck the terrain shadows under. {cover, soft, wind, time,

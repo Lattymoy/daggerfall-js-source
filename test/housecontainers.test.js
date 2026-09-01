@@ -121,9 +121,16 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   const houseGuard = arm.indexOf('|| isHouseOwned(playerEntity.houses ?? []');
   assert.ok(guard >= 0 && houseGuard > guard, 'the ship arm (:905-906) rides the same OR as the house');
   const ownedLatch = arm.indexOf('c.items ??= [];');
-  const stock = arm.indexOf('c.items ??= stockHouseContainer(');
+  // PIN MOVED at A2, deliberately: the stranger arm's `??=` became the
+  // stockedDate day comparison PlayerActivate actually makes (:911-915).
+  // The claim is unchanged - owned latches empty, and it does so before
+  // the stranger arm can stock - and the "(stockedDate = 1)" the old
+  // message parenthesised is now a real write on the line above.
+  const stock = arm.indexOf('c.items = stockHouseContainer(');
   assert.ok(ownedLatch >= 0 && stock >= 0 && ownedLatch < stock,
     'owned latches empty (stockedDate = 1) BEFORE the stranger arm ever stocks');
+  assert.ok(arm.indexOf('c.stockedDate = 1;') >= 0 && arm.indexOf('c.stockedDate = 1;') < stock,
+    'and stamps DFU\'s literal 1 so the container serialises and never restocks');
   // the storage is the loot-target inventory - DFU's LootTarget tail -
   // and it opens in BOTH arms through the one openLoot
   // RE-ANCHORED at ID1 (F041): one door for this host's inventory

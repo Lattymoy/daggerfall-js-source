@@ -14,7 +14,8 @@ import {
   scrollerHit, applyScroll, scrollThumbSpan, LIST_SLOTS, SCROLLBAR_Y, SCROLLBAR_H,
 } from '../src/ui/itemScroller.js';
 import { measureText, drawText, spaceGlyphWidth, asciiFold, hasGlyph, FNT_ERROR_CODE } from '../src/ui/text.js';
-import { shadowText } from '../src/ui/nativePanel.js';
+import { shadowText, DEFAULT_TEXT_COLOR } from '../src/ui/nativePanel.js';
+import { rowTextColor, rowShadowOffset, SELECTED_TEXT_COLOR } from '../src/ui/listPicker.js';
 import { resolveNameplates } from '../src/ui/nameplateLayout.js';
 import { drawCrosshairAndModeIcon, modeIconEnabled } from '../src/ui/hudCrosshair.js';
 import {
@@ -156,8 +157,19 @@ test('AUDIT 39 F128: the list picker gives the selected row ListBox\'s zero shad
   // ListBox.cs:41 selectedShadowPosition = Vector2.zero, handed to the
   // label in both selected arms of DecideTextColor (:363-372);
   // DaggerfallListPickerWindow never overrides it.
-  assert.match(read('src/ui/listPicker.js'),
-    /color: selected \? SELECTED_TEXT_COLOR : DEFAULT_TEXT_COLOR, shadowOffset: selected \? 0 : 1/);
+  //
+  // ROAD-A7 MOVED THIS PIN, deliberately. It used to regex the draw
+  // line's exact ternary, and that line grew DecideTextColor's other
+  // two arms (the hover colours) - the source shape it matched no
+  // longer exists. The law it was pinning did not change, so the pin
+  // is now BEHAVIOURAL over the two helpers the draw calls, which
+  // cannot drift out from under it the way a source regex can.
+  assert.equal(rowShadowOffset(true), 0, 'the selected row skips the shadow pass');
+  assert.equal(rowShadowOffset(false), 1, 'every other row keeps DaggerfallDefaultShadowPos');
+  // ...and the two selected arms of DecideTextColor still answer the
+  // selected colours, so "selected" means the same thing to both.
+  assert.deepEqual(rowTextColor(false, false), DEFAULT_TEXT_COLOR);
+  assert.deepEqual(rowTextColor(true, false), SELECTED_TEXT_COLOR);
 });
 
 // ---------------------------------------------------------------

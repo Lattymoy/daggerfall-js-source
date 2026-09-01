@@ -843,7 +843,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // AUDIT 22 F2: a RANDOM variant, because DFU shows nearly every
     // one of these with GetRandomTokens - the rank refusal alone has
     // eight, and the port drew the same one forever.
-    lines: (id) => textRsc?.variantLinesById(id, rolls) ?? [],
+    // ROAD-A7: the reader takes a PICK. GetRandomTokens has two draws
+    // (TextProvider.cs:228) and the painting macros are the dfRand one;
+    // an omitted pick keeps this host's own `rolls`.
+    lines: (id, pick = rolls) => textRsc?.variantLinesById(id, pick) ?? [],
     /** U40: MacroHelper.CityName (%cn). The reader has existed since
      *  T3 and only expandRecord could see it; the trade window's
      *  records quote it too ("the lowest prices in %cn"), so the

@@ -1,4 +1,4 @@
-import { SKILLS, SKILL_COUNT } from './skills.js';
+import { SKILLS, SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from './skills.js';
 import { spellPointsFor } from '../combat/formulas.js';   // U10
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
 import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
@@ -182,6 +182,14 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     stats,
     skills,
     skillUses: new Array(SKILL_COUNT).fill(0),   // TallySkill counters (S3b consumes them)
+    // PlayerEntity.skillsRecentlyRaised (:70): the uint[2] the char
+    // sheet highlights raised skills from, minted with the character
+    // exactly as the tally counters above are. A4: minted fresh HERE
+    // because the port assigns onto the module singleton - a new
+    // character must not open the sheet with the previous character's
+    // skills highlighted.
+    skillsRecentlyRaised: new Array(SKILLS_RECENTLY_RAISED_WORDS).fill(0),
+
     // AUDIT 23 (entity-laws lane): DFU anchors timeOfLastSkillIncreaseCheck
     // at NOW on AssignCharacter (PlayerEntity.cs:881); a fresh game's now
     // is the classic start minute, so the first raise check honors the

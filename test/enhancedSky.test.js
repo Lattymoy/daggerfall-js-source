@@ -479,7 +479,7 @@ test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', 
   assert.match(r, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);/);
   // AUDIT 46: the branch is on the MODE now, because the bisect door
   // added a middle state - the original tiles, mipmapped.
-  assert.match(r, /if \(mode !== 'classic'\) \{/);
+  assert.match(r, /if \(mode === 'tiles'\) \{/, 'EE9: mips are opt-in - they are the only uncleared suspect for the black world');
   assert.match(r, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
   assert.match(r, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/, 'ground is seen at grazing angles almost always');
   assert.match(r, /this\.enhancedGround = false;/, 'and it defaults OFF, so classic cannot inherit it');

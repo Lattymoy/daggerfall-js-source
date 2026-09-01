@@ -20,7 +20,9 @@
 //   DEFAULT shadowed style (TextLabel.cs:40-42), not a plain draw.
 // - six option buttons in two columns (:57-62) and BEGIN/EXIT at
 //   the right (:55-56); the hotkeys are DialogShortcuts' own - B
-//   begin, E exit, S speed, T transport, N inn/camp out.
+//   begin, E exit, S speed, T transport, N inn/camp out - and since
+//   A8 they are READ from that table (systems/dialogShortcuts.js)
+//   rather than transcribed into this file.
 //
 // THE FLOW, law for law:
 // - defaults are cautious / SHIP / inns (:85-87). The F-slice window
@@ -67,6 +69,15 @@ import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/t
 import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+
+/** The five Hotkey assignments this window makes, in DFU's own setup
+ *  order (:167, :171, :176, :188, :200) - Panel.ProcessHotkeySequences
+ *  walks a screen's buttons in order and stops at the first hit. */
+const TRAVEL_BUTTONS = Object.freeze([
+  'TravelBegin', 'TravelExit', 'TravelSpeedToggle',
+  'TravelTransportModeToggle', 'TravelInnCampOutToggle',
+]);
 
 /** nativePanelRect and the button rects (:54-62). */
 export const POPUP_RECTS = Object.freeze({
@@ -231,15 +242,19 @@ export class TravelPopUpWindow {
     }
     if (this.top === 'gold') { this.top = null; return; }   // ClickAnywhereToClose (:403)
     if (key === 'Escape') { this.exit(); return; }
-    switch (key) {
-      case 'KeyB': this.begin(); return;                                            // TravelBegin
-      case 'KeyE': this.exit(); return;                                             // TravelExit
-      case 'KeyS': this._click(); this.speedCautious = !this.speedCautious; this.refresh(); return;
-      case 'KeyT': this._click(); this.travelShip = !this.travelShip; this.refresh(); return;
-      case 'KeyN': this._click(); this.sleepModeInn = !this.sleepModeInn; this.refresh(); return;
+    // A8: the five buttons' Hotkeys, from the table rather than from
+    // five literals (DaggerfallTravelPopUp.cs:167/171/176/188/200).
+    // The letters do not move - B/E/S/T/N were right - but they are
+    // now the table's answer, so a table edit reaches them and a
+    // modifier held with them is masked out exactly as DFU masks it.
+    switch (firstHotkey(TRAVEL_BUTTONS, key, e)) {
+      case 'TravelBegin': this.begin(); return;
+      case 'TravelExit': this.exit(); return;
+      case 'TravelSpeedToggle': this._click(); this.speedCautious = !this.speedCautious; this.refresh(); return;
+      case 'TravelTransportModeToggle': this._click(); this.travelShip = !this.travelShip; this.refresh(); return;
+      case 'TravelInnCampOutToggle': this._click(); this.sleepModeInn = !this.sleepModeInn; this.refresh(); return;
       default: break;   // DFU offers no other accelerator on this window
     }
-    void e;
   }
 
   click(vx, vy) {
