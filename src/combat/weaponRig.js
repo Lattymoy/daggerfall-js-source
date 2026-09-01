@@ -342,7 +342,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // The rule's own reason was the hit frame - it never argued the
       // arrow should leave before the string does.
       const evs = playerWeapon.update(dt);
-      if (!fpArm.active() || !playerWeapon.machine.isBow) {
+      // MW-D42c (Mac: "in third person, clicking instantly triggers the
+      // attack, unlike the changes we made to first person. Ensure
+      // parity"): THE ARM IS ANIMATING IN EITHER VIEW. active() is the
+      // FIRST-person predicate by construction - it ends in
+      // `viewMode === 'first'` - so MW-D42's hold silently did nothing
+      // the moment the wheel turned, and the classic frame-5 hit fired
+      // straight through on the click exactly as it always had. The
+      // question this asks is not "which view" but "is the arm the
+      // thing on screen", and in third person that is thirdActive().
+      // Same animation, same release key, same clock; only the pass
+      // that draws it differs, and the pass is none of the loose's
+      // business.
+      if (!(fpArm.active() || fpArm.thirdActive()) || !playerWeapon.machine.isBow) {
         // The classic sprite path is untouched, and so is every melee
         // weapon on every path.
         if (_heldHit) _heldHit = false;

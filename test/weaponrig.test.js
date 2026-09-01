@@ -250,15 +250,17 @@ test('MW-D42: the bow\'s hit is held for the arm\'s release, and never swallowed
   const LONG_BOW = { name: 'Long Bow', templateIndex: 130, material: 0 };
   const ARROWS = { name: 'Arrow', templateIndex: 131, stackCount: 20 };
   const saved = {
-    ready: fpArm.ready, attack: fpArm.attack, active: fpArm.active,
+    ready: fpArm.ready, attack: fpArm.attack, active: fpArm.active, thirdActive: fpArm.thirdActive,
     take: fpArm.takeShootRelease, update: fpArm.update, release: fpArm.release,
     setWeapon: fpArm.setWeapon, setSheathed: fpArm.setSheathed, setWorn: fpArm.setWorn,
     readySpell: fpArm.readySpell,
   };
   let released = false;
   let armActive = true;
+  let thirdActive = false;
   fpArm.ready = () => true;
   fpArm.active = () => armActive;
+  fpArm.thirdActive = () => thirdActive;
   fpArm.attack = () => 'shoot';
   fpArm.takeShootRelease = () => { if (!released) return false; released = false; return true; };
   for (const k of ['update', 'release', 'setSheathed', 'setWorn', 'readySpell']) fpArm[k] = () => {};
@@ -311,6 +313,24 @@ test('MW-D42: the bow\'s hit is held for the arm\'s release, and never swallowed
     const r3 = bowRig();
     const classic = shoot(r3, 40);
     assert.ok(classic.includes('hit'), 'no arm, no hold - the classic bow is exactly as it was');
+
+    // MW-D42c: AND THE WHEEL DOES NOT CHANGE THE LAW (Mac: "in third
+    // person, clicking instantly triggers the attack, unlike the
+    // changes we made to first person"). active() is the FIRST-person
+    // predicate by construction, so the hold silently switched off the
+    // moment the view turned and the click fired the classic frame-5
+    // hit again. The question is whether the ARM is animating, not
+    // which pass draws it.
+    thirdActive = true;
+    released = false;
+    const r4 = bowRig();
+    const third = shoot(r4, 40);
+    assert.ok(!third.includes('hit'), 'third person holds the hit exactly as first person does');
+    released = true;
+    const landed = [];
+    for (const e of r4.frame(1 / 60)) landed.push(e);
+    assert.ok(landed.includes('hit'), 'and the release lets it go in that view too');
+    thirdActive = false;
   } finally {
     Object.assign(fpArm, saved);
   }
