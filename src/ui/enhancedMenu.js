@@ -841,9 +841,13 @@ function paneEnhanced(body) {
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
   // same uiPrefs shelf as roads.
-  live.append(prefRow('proceduralSky', 'Procedural sky',
-    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
-    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
+  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, which contains it.
+  // The prose names what the switch covers TODAY and grows as slices
+  // land - a row that claims more than the tree has is the fault RA1
+  // fixed here in the other direction.
+  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors as one system. Today: a procedural sky with the sun, both moons on '
+    + 'their real phases, stars, and clouds that follow the weather. Off returns '
     + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
 
