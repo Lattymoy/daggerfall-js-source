@@ -480,6 +480,7 @@ const EMISSION_WHITE = new Float32Array([1, 1, 1]);
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
 import { TextureFile } from '../formats/textureFile.js';
+import { buildEnhancedTiles } from './groundSurfaces.js';   // EE5: the drawn ground
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
 export const CHAR_PIXEL = 9;
@@ -1842,13 +1843,42 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const key = `${archive}:${this.enhancedGround ? 'e' : 'c'}`;
     if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
+    // EE5: THE DRAWN SURFACES. The enhanced ground keeps Daggerfall's
+    // tile SHAPES and replaces what is inside them - the four bases are
+    // ours and procedural, and the fifty-two blends are DERIVED by
+    // masking those bases through each original tile's own
+    // classification. Built here, on the machine that has the game,
+    // and stored nowhere: doctrine forbids a raster of game data in
+    // the repo, and it is right to.
+    //
+    // 128px, four times the original's pixels. 256 was measured at
+    // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
+    // two-second stall on entering the world is worse than the detail
+    // is good. Moving this to a worker is the way to 256 and is its
+    // own slice.
+    // EE5 IS BUILT AND NOT YET WIRED, deliberately. The surfaces carry
+    // a SEAM: the noise wraps on its integer lattice, so a tile only
+    // repeats cleanly when its coordinate step is a WHOLE number of
+    // lattice cells - and every surface scales its frequency by a
+    // fraction (P * 0.9, P * 1.6, P * 2.6...), which lands u = 0 and
+    // u = 1 on different corners. Measured, not suspected: the water
+    // differs by 3 units of 255 across the join, and the others by
+    // less but not by nothing.
+    //
+    // The fix is one central change - frequencies expressed as WHOLE
+    // CYCLES PER TILE rather than as multipliers - and it touches
+    // every surface, so it is its own slice rather than a patch at the
+    // end of this one. Until then the enhanced ground keeps the
+    // original tiles with EE3's mipmaps, which is a real improvement
+    // on its own and has no seam.
+    const src = layers;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
-    const w = layers[0].width;
-    const h = layers[0].height;
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    for (let i = 0; i < layers.length; i++) {
-      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
+    const w = src[0].width;
+    const h = src[0].height;
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (let i = 0; i < src.length; i++) {
+      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(src[i].colors.buffer, src[i].colors.byteOffset, w * h * 4));
     }
     // EE3 (Enhanced Environments): MIPMAPS AND ANISOTROPY, on the
     // enhanced skin only.
