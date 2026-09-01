@@ -3647,6 +3647,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         playerName: () => playerEntity.name,
         saveAs: (saveName) => worldQuickSave(saveName),
         loadKey: (key) => worldQuickLoad({ key }),
+        // ROAD-C C1: DFU PUSHES the slot window over the pause window
+        // (DaggerfallPauseOptionsWindow.cs:302/:308) rather than
+        // replacing it, and Cancel pops back onto it. This host's push
+        // door is townTalk's (ROAD-B B5).
+        pushWindow: (w) => townTalk.pushOverlay(w),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
         // PX3: the pause window's Quests tab - the SAME seam the F5

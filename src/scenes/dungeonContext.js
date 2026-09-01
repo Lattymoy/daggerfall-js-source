@@ -3524,6 +3524,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         playerName: () => playerEntity.name,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
         loadKey: (key) => ctx.quickLoad?.(setPlayerPos, key),
+        // ROAD-C C1: the slot window is PUSHED over the pause window
+        // (DaggerfallPauseOptionsWindow.cs:302/:308) so Cancel pops
+        // back onto it - pushDungeonWindow is this host's PushWindow.
+        pushWindow: (w) => pushDungeonWindow(w),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => rscLines(id),
         // PX3 FLAGGED: questMessages - the dungeon quest mount is

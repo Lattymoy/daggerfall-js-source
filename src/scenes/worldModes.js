@@ -5502,6 +5502,10 @@ export function createWorldModes(host) {
         playerName: host.playerName,
         saveAs: host.saveAs,
         loadKey: host.loadKey,
+        // ROAD-C C1: the slot window is PUSHED over the pause window
+        // (DaggerfallPauseOptionsWindow.cs:302/:308), not swapped for
+        // it - mountInterior is this host's PushWindow.
+        pushWindow: mountInterior,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
         // PX17c: the journal seams the host now carries (world.js) -

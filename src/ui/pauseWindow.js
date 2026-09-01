@@ -195,17 +195,27 @@ export class PauseOptionsWindow {
         this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)
       } else if (this.hooks.openSave) {
         // SAV4: DFU's SAVE GAME opens the slot window (:302), with
-        // this window as its previous. Done-first dispatch (U24).
-        this._closeWith(); this.hooks.openSave();
+        // this window as its previous.
+        // ROAD-C C1: `previous` means it is a PUSH - this window stays
+        // open UNDER the save window and comes back when the save
+        // window pops, so the U24 done-first dispatch is exactly wrong
+        // here and only the replace fallback keeps it. The settings
+        // latch stays armed with it: saveSettings is OnPop's (:212-215)
+        // and a pushed-over window has not popped.
+        if (!this.hooks.saveLoadPushes) this._closeWith();
+        this.hooks.openSave();
       } else { this._closeWith(); this.hooks.quickSave?.(); }
       return true;
     }
     if (inRect(R.load, vx, vy)) {
-      this._click(); this._closeWith();
+      this._click();
       // SAV4: LOAD GAME opens the slot window too (:308); a host
-      // without the loadKey seam keeps the one-press quickload.
-      if (this.hooks.openLoad) this.hooks.openLoad();
-      else this.hooks.quickLoad?.();
+      // without the loadKey seam keeps the one-press quickload. C1: a
+      // push leaves this window standing, same as SAVE above.
+      if (this.hooks.openLoad) {
+        if (!this.hooks.saveLoadPushes) this._closeWith();
+        this.hooks.openLoad();
+      } else { this._closeWith(); this.hooks.quickLoad?.(); }
       return true;
     }
     const bx = vx - panelX(), by = vy - PAUSE_PANEL_Y;
@@ -323,21 +333,37 @@ export function openClassicPauseFlow(show, hooks = {}) {
   // the controls grid uses, so all four hosts get it through the one
   // seam. A host without the saveAs/loadKey seams keeps the old
   // one-press quicksave arms (the two overlay-less hosts' posture).
+  //
+  // ROAD-C C1: DFU does not REPLACE the pause window with the save
+  // window - both buttons are `uiManager.PushWindow(... , this, ...)`
+  // (DaggerfallPauseOptionsWindow.cs:302, :308), the pause window
+  // riding underneath as `previous`, and the save window's Cancel is
+  // `CloseWindow()` (:526) which pops back onto it. The port has that
+  // depth now (ui/windowStack.js), so a host that hands over its push
+  // door gets the real shape; the rebuild-on-back below is what a host
+  // without one falls back to, and it is not the same thing - a
+  // rebuilt pause window re-reads the settings store and loses
+  // anything the open one was holding.
+  const push = hooks.pushWindow ?? null;
+  const mount = (win) => { if (push) push(win); else show(win); };
   const saveWindowHooks = (extra) => ({
     playerName: hooks.playerName,
-    onBack: () => openClassicPauseFlow(show, hooks),
+    // Under a real push the pop uncovers the pause window itself, so
+    // `done` is the whole of CloseWindow and onBack must NOT rebuild.
+    onBack: push ? null : () => openClassicPauseFlow(show, hooks),
     ...extra,
   });
   const win = new PauseOptionsWindow({
     ...hooks,
+    saveLoadPushes: !!push,   // C1: does this host's door stack, or replace?
     openControls: controlsArtLoaded()
       ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
       : null,
     openSave: hooks.saveAs
-      ? () => show(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
+      ? () => mount(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
       : null,
     openLoad: hooks.loadKey
-      ? () => show(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey })))
+      ? () => mount(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey })))
       : null,
   });
   show(win);
