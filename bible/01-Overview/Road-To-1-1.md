@@ -74,7 +74,15 @@ wait on B1's window stack.
   SwitchHand / usingRightHand, the classic import's
   usingLeftHandWeapon, the FPS draw's mirrored arm.
 
-## Wave B - the interacting band (sequenced)
+## Wave B - the interacting band - first flight CLOSED 2026-09-01
+
+B1-B4 landed and merged (PR #49, with the incident fixes aboard - see
+`Incident-2026-09-01.md`): the window stack whole with the FLAGGED
+single-slot refusal retired, the hostility model with the indoor watch
+composed from both groups' halves, exterior swimming/drowning with
+underwater fog in both hosts, and the live castle/tavern/residence
+flags. B5 runs now; the groups' recorded remainders live in the wave
+reports.
 
 - **B1 window-stack**: a real window stack in the modal hosts - the
   foundation the rest-window pause/resume and layered boxes need.
