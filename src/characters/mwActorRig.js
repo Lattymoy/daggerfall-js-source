@@ -23,11 +23,11 @@
 // this module's one real hazard and its pin says so.
 import {
   poseAssembly, pickAnimSource, composeStanceGroup, composeMovementGroup,
-  movementAnimState,
+  movementAnimState, MW_WEAPON_TYPE,
 } from '../formats/mwFirstPerson.js';
 import { advanceClip, resetClip, sampleTrack } from '../formats/mwAnim.js';
 import { uploadMwBodyMesh, drawMwBodyAt, FP_IDLE_BASE } from '../combat/fpArm.js';
-import { mwActorBody, mwCreatureBody } from './mwActorBody.js';
+import { mwActorBody, mwCreatureBody, mwBodyGeneration } from './mwActorBody.js';
 
 /**
  * NPC3a: ASK FOR AN ACTOR'S BODY, ONCE, WITHOUT EVER BLOCKING.
@@ -48,14 +48,19 @@ import { mwActorBody, mwCreatureBody } from './mwActorBody.js';
  * @param mobileType used when `opts` is null
  */
 export function requestMwBody(actor, opts, mobileType) {
-  if (actor._mwBody !== undefined) return actor._mwBody;
+  // AUDIT A5: a settled answer is only settled for the DATA it was
+  // built from. The service drops its cache on a re-attach, but an
+  // actor holds its own reference and would have kept drawing a body
+  // made of archives the player has replaced - forever, because it
+  // never asks twice. The stamp is what lets it notice.
+  if (actor._mwBody !== undefined && actor._mwGen === mwBodyGeneration()) return actor._mwBody;
   if (actor._mwPending) return null;
   actor._mwPending = true;
   // A humanoid wears a dressed body; a beast IS a model. One door,
   // two builders - a rat is not a skeleton in clothes.
   (opts ? mwActorBody(opts) : mwCreatureBody(mobileType))
-    .then((body) => { actor._mwBody = body; actor._mwState = mwActorState(); })
-    .catch(() => { actor._mwBody = null; })
+    .then((body) => { actor._mwBody = body; actor._mwState = mwActorState(); actor._mwGen = mwBodyGeneration(); })
+    .catch(() => { actor._mwBody = null; actor._mwGen = mwBodyGeneration(); })
     .finally(() => { actor._mwPending = false; });
   return null;
 }
@@ -75,7 +80,12 @@ export function mwActorState() {
  */
 export function actorGroupFor(body, { moving = false, running = false }) {
   const has = (n) => body.groupSet.has(n);
-  const stance = body.mwType ?? 0;
+  // AUDIT A1: "no weapon" is MW_WEAPON_TYPE.None, which is -1. ZERO is
+  // ShortBladeOneHand - a real weapon - so `?? 0` asked every unarmed
+  // body for a one-handed stance. The ladder's bare-group fallback was
+  // masking it, and would have STOPPED masking it the moment a rig
+  // carried an idle1h its actor had no business standing in.
+  const stance = body.mwType ?? MW_WEAPON_TYPE.None;
   if (!moving) return composeStanceGroup(FP_IDLE_BASE, stance, has).group;
   // No `|| 'walkforward'` fallback: with forward = 1 the movestate
   // ladder always answers (walkforward, or runforward when running),

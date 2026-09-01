@@ -203,7 +203,8 @@ test('NPC2: the enemy remembers its worn pieces, and the foe pass falls back to 
   // draws actors rides that one implementation - the dungeon's foes
   // and the street's guards alike. Two copies is how they drift.
   const rig = readFileSync('src/characters/mwActorRig.js', 'utf8');
-  assert.match(rig, /if \(actor\._mwBody !== undefined\) return actor\._mwBody;/, 'a settled answer is re-derived every frame');
+  assert.match(rig, /if \(actor\._mwBody !== undefined && actor\._mwGen === mwBodyGeneration\(\)\) return actor\._mwBody;/,
+    'a settled answer is re-derived every frame, or is kept across a re-attach');
   assert.match(rig, /if \(actor\._mwPending\) return null;/, 'a build in flight blocks the frame');
   assert.match(rig, /\(opts \? mwActorBody\(opts\) : mwCreatureBody\(mobileType\)\)/,
     'beasts do not reach the creature builder');
@@ -213,7 +214,11 @@ test('NPC2: the enemy remembers its worn pieces, and the foe pass falls back to 
     'the street keeps its own copy');
   // ...and a guard's body draws INSTEAD of its billboard, with the
   // sprite still the fallback below it.
-  assert.match(guards, /if \(mw && _drawMwGuard\(g, dt, mw\)\) continue;/, 'the guard body does not take the frame');
+  // AUDIT A6: and a PARALYSED guard's body holds its frame, exactly as
+  // its sprite has since wave 32 - the body must not be the one thing
+  // in the picture that keeps moving.
+  assert.match(guards, /if \(mw && _drawMwGuard\(g, _gParalyzed \? 0 : dt, mw\)\) continue;/,
+    'the guard body does not take the frame, or ignores paralysis');
   const gseam = guards.indexOf('if (mw && _drawMwGuard(');
   const gpush = guards.indexOf('out.push(g.batch);');
   assert.ok(gseam > 0 && gpush > gseam, 'the guard sprite must remain the fallback BELOW the body');

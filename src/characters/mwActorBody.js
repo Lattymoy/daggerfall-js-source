@@ -33,6 +33,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { mwActorCatalog, catalogRace } from '../formats/mwActorCatalog.js';
 import {
   buildTpBody, clothingColourOf, wornEquipKeyOf, fpWeaponKey, buildMwCreature,
+  releaseMwBodyMesh,
 } from '../combat/fpArm.js';
 import { composeWornArmor } from '../formats/mwItemMap.js';
 import { pickMwCreature } from './mwCreatureMap.js';
@@ -41,6 +42,24 @@ import { pickMwCreature } from './mwCreatureMap.js';
  *  actors asking for the same outfit in one frame must share one
  *  build, not race two. */
 const BODIES = new Map();
+
+/**
+ * AUDIT A2: EVERY WAY A BODY LEAVES THE CACHE GIVES ITS MESH BACK.
+ * A body holds a VAO, its buffers and one texture per piece; the cap
+ * and the re-attach both drop bodies, and until this existed neither
+ * freed a byte of that. A body still held by a live actor keeps
+ * DRAWING - it simply re-uploads on its next frame - so releasing is
+ * safe as well as necessary.
+ */
+async function evict(key) {
+  const pending = BODIES.get(key);
+  BODIES.delete(key);
+  if (!pending) return;
+  try { const body = await pending; if (body) releaseMwBodyMesh(body); } catch { /* a refused build holds nothing */ }
+}
+function evictAll() {
+  for (const key of [...BODIES.keys()]) evict(key);
+}
 /**
  * THE CAP (the NPC1 audit's own finding). A body holds parsed meshes
  * and decoded textures - megabytes - and nothing evicted them but a
@@ -104,7 +123,7 @@ export async function mwActorBody(opts = {}, deps = null) {
 
   // A fresh attach invalidates every body: the meshes and textures in
   // them were read out of archives that are no longer the loaded set.
-  if (cat.gen !== _gen) { BODIES.clear(); _gen = cat.gen; }
+  if (cat.gen !== _gen) { evictAll(); _gen = cat.gen; }
 
   const { race, female = false, faceIndex = 0, weapon = null, hasAmmo = false } = opts;
   const armor = opts.worn ?? [];
@@ -146,8 +165,9 @@ export async function mwActorBody(opts = {}, deps = null) {
   // this costs nothing there and closes the trap here.
   if (cat.gen !== null) {
     BODIES.set(key, pending);
-    // Oldest first, and only ever past the cap.
-    while (BODIES.size > MAX_BODIES) BODIES.delete(BODIES.keys().next().value);
+    // Oldest first, and only ever past the cap - and the evicted one
+    // hands its mesh back (AUDIT A2).
+    while (BODIES.size > MAX_BODIES) evict(BODIES.keys().next().value);
   }
   // A refusal IS remembered for this generation - deliberately. A race
   // the data carries no records for will not grow them mid-session,
@@ -175,32 +195,51 @@ export async function mwCreatureBody(mobileType, deps = null) {
   if (!isEnhanced()) return null;
   const cat = await mwActorCatalog(deps);
   if (!cat.ok) return null;
-  if (cat.gen !== _gen) { BODIES.clear(); _gen = cat.gen; }
+  if (cat.gen !== _gen) { evictAll(); _gen = cat.gen; }
 
+  // AUDIT A3: THE KEY IS THE CREATURE, NOT THE ENEMY ASKING FOR IT.
+  // Keyed on mobileType, five pairs built the SAME model twice -
+  // measured: 23 mapped enemies resolve to only 18 distinct creatures
+  // (a harpy and a seducer are both a winged twilight, a ghost and a
+  // wraith both an ancestor ghost, and so on). Resolving first is
+  // cheap - it is a filter over records already in hand - and it is
+  // the difference between 23 builds and 18.
+  const picked = pickMwCreature(mobileType, cat.creatures);
+  if (!picked.record) return null;
   // Namespaced, because one cache serves both kinds and a creature id
   // must never collide with an outfit key.
-  const key = `crea/${mobileType}`;
+  const key = `crea/${picked.record.id}`;
   const hit = BODIES.get(key);
   if (hit) { BODIES.delete(key); BODIES.set(key, hit); return hit; }
 
   const pending = (async () => {
     _builds++;
-    const picked = pickMwCreature(mobileType, cat.creatures);
-    if (!picked.record) return null;
     const body = await buildMwCreature({
       record: picked.record, archives: cat.archives, find: cat.find, gen: cat.gen,
     });
     if (!body || !body.ok) return null;
-    body.substitution = picked.why ?? null;
+    // AUDIT A4: the SUBSTITUTION does not live on the body. Once the
+    // body is shared by every enemy that resolves to it, one `why`
+    // cannot be true for all of them - a winged twilight is a stand-in
+    // for a harpy AND for a seducer, and the card must ask the map per
+    // enemy rather than read one enemy's answer off a shared object.
     return body;
   })();
 
   if (cat.gen !== null) {
     BODIES.set(key, pending);
-    while (BODIES.size > MAX_BODIES) BODIES.delete(BODIES.keys().next().value);
+    while (BODIES.size > MAX_BODIES) evict(BODIES.keys().next().value);
   }
   return pending;
 }
+
+/**
+ * AUDIT A5: WHICH DATA THE CACHED BODIES BELONG TO. An actor keeps its
+ * own reference to a body, so the service clearing its map is not
+ * enough - the actor has to be able to notice that its body came from
+ * archives that are no longer loaded, and ask again.
+ */
+export function mwBodyGeneration() { return _gen; }
 
 /** For the build-count pin and the diagnostic card: how many distinct
  *  outfits have been built, and how many builds that actually cost. */

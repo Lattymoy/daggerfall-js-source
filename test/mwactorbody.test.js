@@ -203,3 +203,97 @@ test('NPC1 audit F2b: a HIT refreshes recency - what survives is what is WORN, n
   assert.equal(mwActorBodyStats().builds, after,
     'the outfit being worn was evicted while an untouched one survived');
 });
+
+// ═══ THE CROSS-ARC AUDIT'S FINDINGS (NPC1-NPC3a) ════════════════════
+
+test('AUDIT A1: "no weapon" is None (-1) - ZERO is a real one-handed blade', async () => {
+  const { MW_WEAPON_TYPE } = await import('../src/formats/mwFirstPerson.js');
+  // The trap, stated: the enum's None is -1 and 0 is ShortBladeOneHand,
+  // so `?? 0` asked every unarmed actor for a one-handed stance. The
+  // ladder's bare-group fallback MASKED it - and would stop masking it
+  // the moment a rig carried an idle1h its actor should not stand in.
+  assert.equal(MW_WEAPON_TYPE.None, -1);
+  assert.equal(MW_WEAPON_TYPE.ShortBladeOneHand, 0, 'zero is a weapon, not the absence of one');
+  const rig = readFileSync('src/characters/mwActorRig.js', 'utf8');
+  assert.match(rig, /const stance = body\.mwType \?\? MW_WEAPON_TYPE\.None;/, 'the rig defaults to a weapon');
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  const crea = arm.slice(arm.indexOf('export async function buildMwCreature'), arm.indexOf('export function uploadMwBodyMesh'));
+  assert.match(crea, /mwType: MW_WEAPON_TYPE\.None,/, 'a creature declares a weapon type it does not have');
+  // ...and the behaviour: an unarmed body asks for the BARE group.
+  const { actorGroupFor } = await import('../src/characters/mwActorRig.js');
+  const body = { groupSet: new Set(['idle', 'idle1h']), mwType: MW_WEAPON_TYPE.None };
+  assert.equal(actorGroupFor(body, { moving: false }), 'idle',
+    'an unarmed actor took the one-handed idle that happened to exist');
+});
+
+test('AUDIT A2: a body that leaves the cache GIVES ITS MESH BACK', async () => {
+  const { releaseMwBodyMesh } = await import('../src/combat/fpArm.js');
+  // A body holds a VAO, its buffers and one texture per piece. The cap
+  // and the re-attach both drop bodies and neither freed a byte.
+  const freed = { vao: 0, buffers: 0, textures: 0 };
+  const gl = {
+    deleteVertexArray: () => { freed.vao++; },
+    deleteBuffer: () => { freed.buffers++; },
+    deleteTexture: () => { freed.textures++; },
+  };
+  const holder = {
+    meshOwner: { gl },
+    packed: { packed: new Float32Array(3) },
+    mesh: { vao: 1, buffers: [1, 2], ranges: [{ tex: 7 }, { tex: 8 }, { tex: null }] },
+  };
+  assert.equal(releaseMwBodyMesh(holder), true);
+  assert.deepEqual(freed, { vao: 1, buffers: 2, textures: 2 });
+  assert.equal(holder.mesh, null, 'the freed mesh must not still be reachable');
+  assert.equal(holder.packed, null, 'the packed buffer goes with it');
+  // Idempotent, and safe on a body that was never drawn.
+  assert.equal(releaseMwBodyMesh(holder), false);
+  assert.equal(releaseMwBodyMesh({}), false);
+  assert.equal(releaseMwBodyMesh(null), false);
+  // The service must actually CALL it on both exits.
+  const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
+  assert.match(svc, /const body = await pending; if \(body\) releaseMwBodyMesh\(body\);/, 'eviction leaks');
+  assert.match(svc, /while \(BODIES\.size > MAX_BODIES\) evict\(BODIES\.keys\(\)\.next\(\)\.value\);/, 'the cap leaks');
+  assert.match(svc, /if \(cat\.gen !== _gen\) \{ evictAll\(\); _gen = cat\.gen; \}/, 'a re-attach leaks');
+  assert.ok(!/BODIES\.clear\(\); _gen = cat\.gen;/.test(svc), 'a bare clear drops the meshes on the floor');
+  // ...and the mesh remembers who made it, or nothing could free it.
+  const arm = readFileSync('src/combat/fpArm.js', 'utf8');
+  assert.match(arm, /holder\.meshOwner = renderer;/, 'the mesh forgets its renderer');
+});
+
+test('AUDIT A3: the creature cache is keyed by the CREATURE, not the enemy asking', async () => {
+  const { pickMwCreature, MAPPED_BEASTS } = await import('../src/characters/mwCreatureMap.js');
+  // MEASURED: 23 mapped enemies resolve to only 18 distinct creatures.
+  // Keyed on mobileType, five pairs built the same model twice.
+  const C = (id) => ({ id, model: 'r/x.nif', name: id, flags: 0, scale: 1 });
+  const pool = ['rat', 'skeleton', 'ancestor_ghost', 'daedroth', 'dreugh', 'atronach_flame',
+    'atronach_frost', 'bonewalker', 'draugr', 'dremora', 'winged_twilight', 'scamp',
+    'bonelord', 'ogrim', 'spriggan', 'bear', 'werewolf', 'slaughterfish'].map(C);
+  const ids = new Set();
+  for (const mt of MAPPED_BEASTS) {
+    const r = pickMwCreature(Number(mt), pool);
+    if (r.record) ids.add(r.record.id);
+  }
+  assert.ok(ids.size < MAPPED_BEASTS.length,
+    'the map has stopped sharing models - this pin is measuring nothing');
+  assert.equal(ids.size, 18, 'the distinct-creature count changed; the saving is the claim');
+  const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
+  assert.match(svc, /const key = `crea\/\$\{picked\.record\.id\}`;/, 'the key is the enemy, not the creature');
+  // The resolve must happen BEFORE the key, or it cannot be the key.
+  const resolve = svc.indexOf('const picked = pickMwCreature(mobileType, cat.creatures);');
+  const key = svc.indexOf('const key = `crea/${picked.record.id}`;');
+  assert.ok(resolve > 0 && key > resolve, 'the creature is resolved after it is needed');
+});
+
+test('AUDIT A4/A5: a shared body carries no ONE enemy’s substitution, and no actor keeps a stale one', () => {
+  const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
+  // A4: a winged twilight stands in for a harpy AND a seducer; one
+  // `why` on the shared body cannot be true for both.
+  assert.ok(!/body\.substitution = /.test(svc), 'one enemy’s substitution is written onto a shared body');
+  // A5: the service drops its cache on a re-attach, but an ACTOR holds
+  // its own reference and never asks twice - so it would draw archives
+  // the player has replaced, forever.
+  assert.match(svc, /export function mwBodyGeneration\(\) \{ return _gen; \}/, 'an actor cannot tell which data its body came from');
+  const rig = readFileSync('src/characters/mwActorRig.js', 'utf8');
+  assert.match(rig, /actor\._mwGen === mwBodyGeneration\(\)/, 'a stale body is kept across a re-attach');
+  assert.match(rig, /actor\._mwGen = mwBodyGeneration\(\); \}\)/, 'the stamp is never written');
+});

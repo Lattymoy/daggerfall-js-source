@@ -391,6 +391,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    * one - or before the body arrives - every guard is a sprite exactly
    * as it always was.
    */
+  // AUDIT A6: `dt` arrives ALREADY zeroed for a paralysed guard - the
+  // sprite path has honoured S19's FreezeAnims since wave 32 and the
+  // body must not be the one thing in the frame that keeps moving.
   const _drawMwGuard = (g, dt, mw) => {
     const body = requestMwBody(g, enemyMwBodyOpts(g.entity, g.mobileType, g.mobile?.gender), g.mobileType);
     if (!body) return false;
@@ -572,7 +575,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // mobileType 146 - a CLASS enemy with a real entity and rolled
       // equipment - so it wears its own armour through the very same
       // opts the dungeon's humanoids do. No new law, one more host.
-      if (mw && _drawMwGuard(g, dt, mw)) continue;
+      if (mw && _drawMwGuard(g, _gParalyzed ? 0 : dt, mw)) continue;
       g.batch.record = rkey;
       g.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       g.batch.origin = g.ai.feet;

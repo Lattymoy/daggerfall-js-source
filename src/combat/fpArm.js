@@ -1302,6 +1302,29 @@ function readFollowCamera() {
 }
 
 /**
+ * AUDIT A2: GIVE A BODY'S MESH BACK TO THE GPU.
+ *
+ * The NPC lane evicts bodies (the cap) and drops them all on a
+ * re-attach, and until this existed every one of those leaked its
+ * VAO, its buffers and one texture per piece - the same leak shape
+ * MW-D11 called out when the arm learned to release its own.
+ * Idempotent, and safe on a body that was never drawn.
+ */
+export function releaseMwBodyMesh(holder) {
+  const m = holder && holder.mesh;
+  const renderer = holder && holder.meshOwner;
+  if (!m || !renderer || !renderer.gl) { if (holder) { holder.mesh = null; holder.packed = null; } return false; }
+  const gl = renderer.gl;
+  gl.deleteVertexArray(m.vao);
+  for (const b of m.buffers || []) gl.deleteBuffer(b);
+  for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+  holder.mesh = null;
+  holder.packed = null;
+  holder.meshOwner = null;
+  return true;
+}
+
+/**
  * NPC2b: A MORROWIND CREATURE, BUILT.
  *
  * The reference's own creature path, which is far shorter than the
@@ -1389,9 +1412,11 @@ export async function buildMwCreature({ record, archives, find, gen = null }) {
     // (CREA's XSCL), and it rides the same uniform field the body's
     // race scale does so one draw law serves both.
     raceScale: { weight: record.scale ?? 1, height: record.scale ?? 1 },
-    // No weapon type: the stance ladder answers the bare group, which
-    // is what a creature's own .kf carries.
-    mwType: 0,
+    // AUDIT A1: NONE, not zero. Zero is ShortBladeOneHand, so a
+    // creature declaring 0 was asking for a one-handed stance; the
+    // bare-group fallback hid it. A creature carries no weapon type at
+    // all and the ladder must be told so in the enum's own spelling.
+    mwType: MW_WEAPON_TYPE.None,
     creature: { id: record.id, name: record.name, model: animPath, animated },
     notes: [...notes, ...(arm.notes || [])],
     pieces: armPieceRows(arm.pieces).length,
@@ -1412,6 +1437,10 @@ export async function buildMwCreature({ record, archives, find, gen = null }) {
 export function uploadMwBodyMesh(renderer, holder, arm, textures) {
   holder.packed = packFpArm(arm.pieces, holder.packed);
   if (!holder.mesh) {
+    // AUDIT A2: the mesh remembers WHO made it, because whoever drops
+    // the body later (a cache eviction, a re-attach) holds no renderer
+    // and would otherwise leak a VAO, its buffers and every texture.
+    holder.meshOwner = renderer;
     holder.mesh = renderer.createCharacterMesh(holder.packed.packed, { uv: true });
     holder.mesh.ranges = holder.packed.ranges;
     for (const r of holder.mesh.ranges) {
