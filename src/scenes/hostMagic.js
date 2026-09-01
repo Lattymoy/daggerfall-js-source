@@ -107,10 +107,16 @@ export function createPlayerMagic({
 
   // AUDIT 26 F033: the impact flash needs the same three renderer deps
   // the candle takes, and rides `batches` the same way.
+  //
+  // THE FRAME UPLOADER, not the record one: hitEffects uploads every
+  // frame under the composite `${record}#${frame}` key and sets
+  // `batch.frame = 0`, so the draw looks for `375_1#0`. Handed the
+  // 2-arg `uploadRecord` it uploaded `375_1` instead and every impact
+  // flash silently found no texture and drew nothing.
   const impacts = createHitEffects({
     renderer,
     getTexture,
-    uploadRecordFrame: uploadRecord,
+    uploadRecordFrame,
     onSpawn: (b) => batches.push(b),
     onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
   });

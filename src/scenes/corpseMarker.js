@@ -60,17 +60,25 @@ export async function mintCorpseMarker({
 }) {
   if (!corpseTexture) return null;
   const { archive, record } = corpseTexture;
-  // FindGroundPosition (:817). Cast from just above the feet so a
-  // corpse already resting on the floor is not missed by its own
-  // surface; no collider (a test rig, a host without one) leaves the
-  // position verbatim rather than inventing a floor.
-  const pos = collider
-    ? floorLanding(collider, [feet[0], feet[1] + 0.1, feet[2]])
-    : [feet[0], feet[1], feet[2]];
   const t = await getTexture(archive);
   if (!t) return null;
   if (t.recordCount != null && record >= t.recordCount) return null;
   if (!stillDead()) return null;
+  // FindGroundPosition (:817). Cast from just above the feet so a
+  // corpse already resting on the floor is not missed by its own
+  // surface; no collider (a test rig, a host without one) leaves the
+  // position verbatim rather than inventing a floor.
+  //
+  // READ AFTER THE WARM, and `feet` MUST be the pool's live array: a
+  // floating-origin recenter during a cold TEXTURE.### read shifts
+  // every foe's feet in place, and this record is in no pool yet - the
+  // caller pushes it only when the mint resolves - so a position baked
+  // BEFORE the await stranded the body, and its loot AABB, a whole map
+  // pixel from the kill. Nothing can recenter between here and the
+  // caller's push: that is a microtask, and the frame loop is a task.
+  const pos = collider
+    ? floorLanding(collider, [feet[0], feet[1] + 0.1, feet[2]])
+    : [feet[0], feet[1], feet[2]];
   uploadRecordFrame(archive, record, 0);
   const size = scaledBillboardSize(t.getSize(record), t.getScale(record)) ?? fallbackSize;
   const batch = renderer.createBillboardBatch(archive, record, size, [[pos[0], pos[1], pos[2]]]);
@@ -121,16 +129,20 @@ export function playBodyFall(audio, pos) {
  * player has already emptied has been DISABLED by then and is gone
  * from this list.
  */
-export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf }) {
+export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf = null }) {
   const targets = [];
   entries.forEach((e, i) => {
     if (!isCorpse(e) || e.corpseDisabled) return;
     const p = feetOf(e);
     if (!p) return;
+    // AUDIT 39: a pool that PRUNES its list keys by a stable id
+    // instead - an index names a different body the moment anything
+    // ahead of it is spliced out. Without `idOf` the index stands.
+    const id = idOf ? idOf(e) : i;
     // PlayerActivate.cs:85/:938 - corpses reach 150 * GlobalScale, not
     // the 128-unit default.
     targets.push({
-      key: `${keyPrefix}:${i}`,
+      key: `${keyPrefix}:${id}`,
       aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] },
       distance: CORPSE_ACTIVATION_DISTANCE,
     });

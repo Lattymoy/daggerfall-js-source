@@ -107,6 +107,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   const corpseBatches = [];
   let _career = null;      // CLASS18.CFG, fetched once
   let countdown = 0;       // guardsArriveCountdown (seconds)
+  // PlayerEntity.cs:741 - `guardsArriveCountdownLocation = dfLocation;`
+  // "Also track location so guards don't appear if player leaves during
+  // countdown". The host's streamed pixel IS the port's location handle
+  // (a location occupies one map pixel); a host that streams nothing
+  // answers null on both reads, which is one unchanging location.
+  let countdownLocation = null;
+  let _nextGuardId = 0;    // the corpse's stable loot key (droppedLoot's _nextId shape)
   // The last camera-view predicate a host handed resolvePlayerHit.
   // Both exterior hosts call resolvePlayerHit with a live
   // makeInView() every swing and only then fall through to
@@ -168,7 +175,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const tex = await getTexture(archive);
     const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
     const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-    const g = { mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, dead: false, _prevMState: 'Idle', _mout: null,
+    const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, dead: false, _prevMState: 'Idle', _mout: null,
       sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
       // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
       // melee frame inside its OWN pool's loop, so the target's pool
@@ -256,7 +263,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
     // AUDIT 24 scenes: `Random.Range(5, 10 + 1)` is the INT overload -
     // one of {5,6,7,8,9,10}, never 7.3 and never short of 10.
-    if (!seenByGuard && seen) countdown = 5 + Math.floor(rand() * 6);   // Random.Range(5, 11) seconds
+    // PlayerEntity.cs:739-741: the location is stored WITH the
+    // countdown, and the arrival below is gated on it.
+    if (!seenByGuard && seen) { countdown = 5 + Math.floor(rand() * 6); countdownLocation = currentPixelKey(); }   // Random.Range(5, 11) seconds
   }
 
   function angleDeg(v, fwd) {
@@ -271,9 +280,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  every dead guard and a corpse draws from its own entry in
    *  corpseBatches, so the live batch - a VAO and two GL buffers - was
    *  simply abandoned, on both death paths, for every guard the watch
-   *  ever spawned. The `guards` ARRAY cannot be pruned alongside it:
-   *  lootTargets keys corpses by their array INDEX (`guardCorpse:${i}`)
-   *  and takeLoot reads guards[i] back, so a splice would hand the
+   *  ever spawned. AUDIT 39: the RECORD goes too once nothing is left
+   *  on it - the prune at the end of update(). What made that
+   *  impossible was lootTargets keying corpses by their array INDEX;
+   *  the key is the guard's own `id` now, so a splice cannot hand the
    *  player someone else's purse. */
   function releaseGuardBatch(g) {
     if (!g.batch) return;
@@ -397,7 +407,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
     if (countdown > 0) {
       countdown -= dt;
-      if (countdown <= 0) spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
+      // PlayerEntity.cs:355-359 verbatim: the arrival is gated on
+      // `guardsArriveCountdownLocation == CurrentPlayerLocationObject`.
+      // A player who left the location inside the 5-10 second window is
+      // not ambushed by a ring of watchmen in the wilderness - and the
+      // countdown is spent either way, exactly as DFU spends it.
+      if (countdown <= 0 && currentPixelKey() === countdownLocation) {
+        spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
+      }
     }
     const out = [];
     for (const g of guards) {
@@ -548,6 +565,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.batch.origin = g.ai.feet;
       out.push(g.batch);
     }
+    // AUDIT 39: THE PRUNE, on the encounter pool's schedule
+    // (exteriorFoes.js). A guard with no corpse left on it - the
+    // walk-away when the crime clears, and the killed body whose
+    // pixel collectPixel has taken - is DFU's
+    // `GameObject.Destroy(sender.gameObject)` (EnemyEntity.cs:184-191),
+    // and every per-frame walk over `guards` paid for it for the rest
+    // of the session. A KILLED body stays while its corpse does, which
+    // is what DFU keeps too (EnemyDeath disables, never destroys).
+    for (let i = guards.length - 1; i >= 0; i--) if (guards[i].dead && !guards[i].corpse) guards.splice(i, 1);
     return [...out, ...corpseBatches.map((c) => c.batch)];
   }
 
@@ -680,10 +706,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return corpseLootTargets(guards, 'guardCorpse', {
       isCorpse: (g) => !!g.corpse && !!g.entity,
       feetOf: (g) => g.corpseMarker?.pos ?? g.ai?.feet ?? null,
+      idOf: (g) => g.id,   // AUDIT 39: stable across the walk-away prune, where an index is not
     });
   }
   function takeLoot(key, say2 = () => {}) {
-    return takeCorpseLoot(guards[Number(key.split(':')[1])], playerEntity, say2);
+    const id = Number(key.split(':')[1]);
+    return takeCorpseLoot(guards.find((g) => g.id === id), playerEntity, say2);
   }
 
   /** CollectLooseObjects (StreamingWorld.cs:1040-1052), the corpse
@@ -695,10 +723,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  travel do. Nothing removed a corpse batch before, so the watch's
    *  dead grew a VAO and two GL buffers per kill for the session.
    *
-   *  The `guards` array itself still cannot be spliced (lootTargets
-   *  keys corpses by array INDEX), so clearing `corpse` IS the
-   *  destroy: batches() stops drawing it and lootTargets stops
-   *  probing it. */
+   *  Clearing `corpse` is the whole destroy: batches() stops drawing
+   *  it, lootTargets stops probing it, and update()'s prune takes the
+   *  record itself on the next frame. */
   function collectPixel(pixelKey) {
     for (let i = corpseBatches.length - 1; i >= 0; i--) {
       if (corpseBatches[i].pixelKey !== pixelKey) continue;

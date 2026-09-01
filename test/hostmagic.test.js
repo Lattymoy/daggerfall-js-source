@@ -48,15 +48,19 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity } = {}) 
   const world = {
     player, foes, said: [], sounds: [], hurtPlayer: 0, foeHurt: new Map(),
     batchesMade: 0, batchesFreed: 0, surfaced: 0,
+    // AUDIT 39: the two uploaders are DIFFERENT KEYS - `${a}_${r}` and
+    // `${a}_${r}#${f}` - so which one a pool is handed is observable.
+    records: [], frames: [],
   };
   const magic = createPlayerMagic({
     renderer: {
-      createBillboardBatch: () => { world.batchesMade++; return { origin: null }; },
+      createBillboardBatch: (archive, record, size, centres) => { world.batchesMade++; return { archive, record, size, centres, origin: null }; },
       destroyBillboardBatch: () => { world.batchesFreed++; },
     },
     audio: { playOneShot: (id) => world.sounds.push(id), play3d: (id) => world.sounds.push(id) },
     getTexture: async () => ({ getSize: () => [16, 16], getScale: () => [0, 0] }),
-    uploadRecord: () => {},
+    uploadRecord: (a, r) => world.records.push(`${a}_${r}`),
+    uploadRecordFrame: (a, r, f) => world.frames.push(`${a}_${r}#${f}`),
     collider: { raycast },
     playerEntity: player,
     playerSinks: {
@@ -179,6 +183,28 @@ test('hostMagic missiles: a wall retires; an AreaAtRange wall hit EXPLODES at th
   aoe.magic.update(0.05, [0, 0, 0]);
   assert.ok(aoe.world.foeHurt.get(aoe.world.foes[0]) > 0, 'the blast caught the foe');
   assert.ok(aoe.world.hurtPlayer > 0, 'and the too-close caster');
+});
+
+test('AUDIT 39: the impact flash uploads on the FRAME key, which is the key the draw looks for', async () => {
+  // DaggerfallMissile.DoCollision (:364-370) - UseSpellBillboardAnims
+  // (1, true) at ImpactBillboardFramesPerSecond. hitEffects uploads
+  // every frame of record 1 under the composite `${record}#${frame}`
+  // key and sets `batch.frame = 0`, and the draw then asks the texture
+  // map for `${archive}_${record}#${frame}` and RETURNS if it is not
+  // there. The engine handed the pool the 2-arg `uploadRecord` in the
+  // 3-arg `uploadRecordFrame` slot, so `375_1` was uploaded, `375_1#0`
+  // was asked for, and every impact flash in every host that mounts
+  // this engine drew nothing at all - F033 shipped dead and green,
+  // because its pin only counted call sites.
+  const { magic, world } = rig({ raycast: () => 0.4 });   // a wall just ahead
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true);
+  magic.update(0.05, [0, 0, 0]);                 // the missile reaches the wall
+  await new Promise((r) => setTimeout(r, 0));    // the flash's archive warms
+  assert.ok(world.frames.includes('375_1#0'),
+    `record 1 of the element archive, frame-keyed (saw ${JSON.stringify(world.frames)})`);
+  assert.equal(world.records.includes('375_1'), false,
+    'and never under the record-only key, which the draw cannot find');
 });
 
 test('hostMagic missiles: the lifespan retires a flier that hits nothing', () => {

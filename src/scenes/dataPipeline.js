@@ -120,9 +120,23 @@ export function createDataPipeline({ renderer, arch, palette }) {
     renderer.uploadTexture(archive, key, swapFrame ?? t.getColor32(bitmap, 0));
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
+  const meshPromises = new Map(); // IN-FLIGHT builds, getTexture's shape
   const cpuModels = new Map(); // id -> {positions, indices} for the collider
+  /** AUDIT 39: the COMPLETED cache is not enough on its own. A build
+   *  awaits its texture archives, and two cold callers for one model id
+   *  - a teleport's buildPixel racing the pump's, two adjacent pixels
+   *  sharing a building - each ran createMesh and the second `set`
+   *  overwrote the first, leaking a VAO and its buffers for the
+   *  session (nothing destroys a gpuMeshes entry). The in-flight map is
+   *  the law getTexture above and buildPixel already carry. */
   async function getGpuMesh(modelIdNum) {
     if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
+    if (!meshPromises.has(modelIdNum)) {
+      meshPromises.set(modelIdNum, buildGpuMesh(modelIdNum).finally(() => meshPromises.delete(modelIdNum)));
+    }
+    return meshPromises.get(modelIdNum);
+  }
+  async function buildGpuMesh(modelIdNum) {
     // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
     // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
     // is asked first; ARCH3D only when it has nothing). Model 41601 is

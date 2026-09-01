@@ -513,13 +513,28 @@ export const morrowindDataCount = () => Math.max(_mwCount, 0);
  */
 let _mwGeneration = 0;
 export const morrowindDataGeneration = () => _mwGeneration;
+/**
+ * MW-D40: the generation answers for the WHOLE STORED SET, never the
+ * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
+ * attached beside an archive that is already there leaves the archive
+ * count untouched - and this line is the only writer of the generation
+ * and the only place `_mwEsm`/`_mwArchiveCache`/`_mwFileCache` are
+ * dropped, so counting archives alone left the loose override and the
+ * ESM door dead until the page was reloaded. The sorted names also
+ * move when a re-attach swaps one file for another of the same count,
+ * which a length never does.
+ */
+let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
+const mwFingerprint = (names) => [...names].sort().join('\n');
 
 /** Bootstrap arm (scenes/shared.js): count the stored archives once so
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
-  const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  // MW-D9g: `_mwCount` STARTS AT -1, MEANING "NOT COUNTED YET", AND
-  // LEARNING A COUNT IS NOT A CHANGE.
+  const names = await storedMorrowindNames();
+  const next = names.filter((n) => /\.bsa$/i.test(n)).length;   // the settings row's count stays ARCHIVES
+  const print = mwFingerprint(names);
+  // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",
+  // AND LEARNING A SET IS NOT A CHANGE.
   //
   // Without the first term this bumped on every host's first boot, for
   // every player, even with an empty store: -1 !== 0. And the bump is
@@ -534,7 +549,8 @@ export async function registerMorrowindData() {
   //
   // The generation means THE STORED SET CHANGED. It cannot mean that
   // until there is a previous set to compare against.
-  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  _mwFingerprint = print;
   _mwCount = next;
   return _mwCount;
 }
