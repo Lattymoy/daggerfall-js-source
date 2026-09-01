@@ -106,15 +106,8 @@ test('U37: the four GUI/ToolTip* settings are LIVE, and the delay is a REST', ()
 
 test('U37: the hover seam reaches a window in all four hosts', () => {
   const code = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
-  // the two overlay channels expose it. ROAD-A7 MOVED THIS PIN
-  // deliberately: the seam grew a third argument, the DOM mousemove,
-  // because VerticalScrollBar.Update (:105) polls
-  // InputManager.GetMouseButton(0) every frame and `e.buttons` is the
-  // port's only read of that - without it the list picker's thumb can
-  // latch but never move. The law the pin holds is unchanged (the
-  // channel exists and forwards to the overlay), so the regex follows
-  // the signature rather than the pin being deleted.
-  assert.match(code('scenes/dungeonContext.js'), /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \}/);
+  // the two overlay channels expose it
+  assert.match(code('scenes/dungeonContext.js'), /overlayHover\(vx, vy\) \{ activeOverlay\?\.hover\?\.\(vx, vy\); \}/);
   assert.match(code('scenes/townTalk.js'), /function hover\(e\) \{/);
   // and every host routes mousemove into one of them
   assert.match(code('scenes/dungeon.js'), /ctx\.overlayHover\?\.\(/);

@@ -158,12 +158,9 @@ export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already, distan
 
 /** EnemySenses.BlockedByIllusionEffect, verbatim (rolled per CLASSIC
  *  UPDATE): sees-through enemies are never blocked; an invisible
- *  target always blocks; blending (chameleon) tries an 8% see-through,
- *  a shade 4%; FailedRoll keeps the block. The three flags come from
- *  the TARGET's entity either way - the player's off the senses
- *  context, a foe target's off its candidate's concealment() closure
- *  (A5 built that closure in the three foe pools; the Illusion effect
- *  classes have written the flags entity-blind since S21). */
+ *  target always blocks (the Invisibility effect pends - inert);
+ *  blending (chameleon) tries an 8% see-through, a shade 4% (the
+ *  Shade effect pends); FailedRoll keeps the block. */
 export function blockedByIllusionEffect(seesThrough, { invisible = false, blending = false, shade = false } = {}, rolls = Math.random) {
   if (seesThrough) return false;
   if (invisible) return true;
@@ -336,12 +333,9 @@ export class EnemyAI {
      *  taken, which is correct for it. */
     this.isActionDoor = isActionDoor ?? (() => false);
     this.rolls = rolls;
-    /** IsLevitating (EnemyMotor.cs:89). WRITTEN by the Levitate effect's
-     *  enemy arm - Levitate.SetEnemyMotor (:140-154) via
-     *  StartLevitating/StopLevitating - which the port folds into
-     *  effects.applyEnemyMotorEffectFlags, called by each foe pool
-     *  before update() the way the player's own levitate flag is folded
-     *  in scenes/shared.js. False for a foe carrying no Levitate. */
+    /** IsLevitating - the port has no enemy levitation source yet
+     *  (no effect writes it on a foe), so it reads false and the arms
+     *  that consult it are written out rather than dropped. */
     this.levitating = false;
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
@@ -416,16 +410,11 @@ export class EnemyAI {
     this.canCastRangedSpell = canCastRangedSpell ?? (() => false);
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
-    // Flyers, LEVITATORS and the slaughterfish aim for the target FACE
+    // Flyers (and the slaughterfish) aim for the target FACE
     // (PredictedTargetPos + targetHeight/2 above the center = feet +
     // height); other swimmers aim at the center (no ground flatten).
-    // ROAD-Ar R4: the who-aims-where split is decided PER CALL in
-    // _getDestination, not frozen here - `levitating` is a live effect
-    // flag (effects.applyEnemyMotorEffectFlags) and the foe pools
-    // rewrite `ai.flies` for a transformed Seducer, so a birth-time
-    // constant answered for a shape the foe no longer has. Only the
-    // slaughterfish test is immutable, so only it is cached.
-    this.isFaceAimingSwimmer = this.swims && mobileId === MOBILE_SLAUGHTERFISH_ID;
+    this._aimY = this.flies || (this.swims && mobileId === MOBILE_SLAUGHTERFISH_ID)
+      ? CAPSULE_HEIGHT : CAPSULE_HEIGHT / 2;
     this.waterSurfaceY = waterSurfaceY;
     this.velY = 0;
     this.detected = false;
@@ -1011,17 +1000,10 @@ export class EnemyAI {
       const d = [predicted[0], predicted[1], predicted[2]];
       // Flyers, levitators and the slaughterfish aim for the target FACE
       // (:543-544) - `targetController.height * 0.5f`, the TARGET's
-      // capsule, on top of a destination DFU takes at the target's
-      // CENTRE. `d` is feet-space here, so the port folds the two
-      // cases together: the face-aimers get the whole target height
-      // (feet + h = centre + h/2 = top), a plain swimmer gets half
-      // (feet + h/2 = centre, DFU's no-add case). The predicate is
-      // DFU's own `flies || IsLevitating || (swims && Slaughterfish)`
-      // and is read LIVE - `levitating` changes with the effect.
-      if (this.flies || this.levitating || this.swims) {
-        d[1] += (this.flies || this.levitating || this.isFaceAimingSwimmer)
-          ? tHeight : tHeight / 2;
-      }
+      // capsule. _aimY carries the port's who-aims-where split (a
+      // flyer at the face, a swimmer at the centre); the HEIGHT it
+      // scales is the target's, which only MT-ii made variable.
+      if (this.flies || this.levitating || this.swims) d[1] += this._aimY * (tHeight / CAPSULE_HEIGHT);
       this.destination = d;
       this.searchMult = 0;
     } else {
@@ -1336,16 +1318,8 @@ export class EnemyAI {
           if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
           this.collider.move(this.feet, mx, my, mz);
         }
-      } else if (this.flies || this.levitating) {
-        // :293-298 - `else if (flies || IsLevitating) controller.Move(...)`,
-        // the full 3D ray. A LEVITATOR takes no gravity with it:
-        // KnockbackMovement raises flyerFalls, but ApplyGravity's
-        // flyer arm is `flyerFalls && flies && !IsLevitating`
-        // (:347) and its walker arm is `!flies && !swims &&
-        // !IsLevitating` (:335) - both refuse a levitating foe, so a
-        // knocked-back levitator sails and does not drop.
-        if (this.flies && !this.levitating) this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
-        else this.velY = 0;   // no gravity arm claims a levitator: the port's accumulator must not carry one either
+      } else if (this.flies) {
+        this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
         const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz);
         if (r.grounded) this.velY = 0;
         this._trackFall(r.grounded);   // CH3: a knocked-down flyer lands hard
@@ -1385,19 +1359,7 @@ export class EnemyAI {
 
     // C12 flying (CanFly = Flying|Spectral): 3D pursuit at the face,
     // NO gravity - except flyerFalls (paralysis) which drops them.
-    //
-    // A5: a LEVITATING foe rides the same branch, and rides it even
-    // while paralyzed. DFU's Move (:1006-1009) sends `flies ||
-    // IsLevitating || swims` through controller.Move with the y kept
-    // in direction2d (:978-979), and NO arm of ApplyGravity will take
-    // a levitator: the walker arm excludes IsLevitating (:335), the
-    // slow-fall arm excludes it (:328) and the flyerFalls arm excludes
-    // it too (:347). So paralysis, which drops a plain flyer out of
-    // the air, leaves a levitator hanging - it simply stops acting
-    // (moving is already false above), hovers, and re-anchors
-    // lastGroundedY per ApplyFallDamage's second arm (:1416, which
-    // names IsLevitating in its own right).
-    if ((this.flies && !paralyzed) || this.levitating) {
+    if (this.flies && !paralyzed) {
       this.velY = 0;
       // CH3 (AUDIT 24 characters-1): ApplyFallDamage's SECOND arm -
       // `else if ((flies && !flyerFalls) || IsLevitating ||
@@ -1418,10 +1380,7 @@ export class EnemyAI {
       // forces direction.y up to 0.1 (not renormalized, as DFU). Wave
       // 34: the clause is gated on `avoidObstaclesTimer <= 0` (:925) -
       // a flyer working its way round an obstacle is allowed to dive.
-      // A5: `flies` ALONE opens it (:925) - a levitator gets no floor
-      // lift, which is why the arm is spelled out rather than folded
-      // into the branch condition above.
-      if (this.flies && this.avoidObstaclesTimer <= 0 && d[1] < 0) {
+      if (this.avoidObstaclesTimer <= 0 && d[1] < 0) {
         const hit = this.collider.raycast(
           [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]], [0, -1, 0],
           this.height / 2 + FLYER_FLOOR_CLEARANCE);
@@ -1509,7 +1468,7 @@ export class EnemyAI {
    *  whatever it was handed. GetDestination is where DFU puts it
    *  (:542-545), and once that was ported the flyer got it twice - it
    *  aimed 1.8 above the target's head and stopped 3.6 short instead of
-   *  at melee range. One home: _getDestination applies the aim bump, this
+   *  at melee range. One home: _getDestination applies _aimY, this
    *  returns the direction to the point it is given. */
   _dir3(point) {
     const dx = point[0] - this.feet[0];

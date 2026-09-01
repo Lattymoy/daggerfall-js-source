@@ -255,9 +255,6 @@ export class PotionMakerWindow {
     if (code === 'KeyR') this._recipes();
   }
 
-  /** ROAD-A7: the recipe picker's hover seam. */
-  hover(vx, vy, e = null) { this.picker?.hover(vx, vy, e); }
-
   click(vx, vy) {
     if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
     if (this.box) { this.box = null; return true; }

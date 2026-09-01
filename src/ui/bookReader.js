@@ -32,7 +32,7 @@ import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText } from './text.js';
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { BookFile } from '../formats/bookFile.js';
-import { getBookFileName, loadBookPrices } from '../systems/books.js';   // A2: the book-price warm
+import { getBookFileName } from '../systems/books.js';
 import { setBookAuthor } from '../systems/itemInfo.js';   // IM1: the %ba cache
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -50,14 +50,6 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
 
 let _art = null;
 export async function preloadBookArt(deps) {
-  // A2: the boot that warms the reader's art warms the books' PRICES
-  // too, and this is the one books boot all three hosts already call.
-  // DFU opens the book file inside ItemBuilder.CreateRandomBook - one
-  // read per mint - which a synchronous mint over an async data seam
-  // cannot do, so the reads happen here and the mint reads a registry
-  // (systems/books.js). Fire-and-forget: an unwarmed registry prices
-  // books at the template's basePrice and says so, once, loudly.
-  loadBookPrices(deps?.fetchBytes).catch(() => {});
   if (_art) return;
   try { _art = await loadImg(deps, 'BOOK00I0.IMG'); }
   catch { console.warn('[book] BOOK00I0.IMG unavailable; the text fallback stands in'); }

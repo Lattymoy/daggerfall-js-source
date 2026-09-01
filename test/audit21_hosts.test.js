@@ -53,25 +53,10 @@ test('AUDIT 21 hosts F3: every ticker host passes onLevelUp', () => {
     `these hosts build a player ticker with no onLevelUp, so a level-up there\n`
     + `silently auto-spends into the lowest stats:\n${missing.join('\n')}`);
 
-  // and each one must open the SHEET, not just log.
-  //
-  // AUDIT 44 (a11) MOVED this pin, deliberately: it used to demand
-  // `new LevelUpScreen(playerEntity)` at each site, and that address
-  // was the port's own invention. DFU has no level-up window -
-  // RaiseSkills' tail posts dfuiOpenCharacterSheetWindow
-  // (PlayerEntity.cs:1413-1414) and UpdatePlayerValues
-  // (DaggerfallCharacterSheetWindow.cs:369-394) mounts the StatsRollout
-  // onto the CHARACTER SHEET. So the law is the same law - a level-up
-  // must MOUNT A WINDOW, never merely announce itself - aimed at the
-  // window classic actually opens. The door behind it still hands the
-  // enhanced skin a LevelUpScreen; that fork is charSheetDoor's.
+  // and each one must open the SCREEN, not just log
   for (const h of TICKER_HOSTS) {
-    const arms = [...code(h).matchAll(/onLevelUp: \(\) => \{(.*?)\n\s*\},/gs)].map((m) => m[1]);
-    assert.ok(arms.length > 0, `${h} has no multi-line onLevelUp arm to check`);
-    for (const arm of arms) {
-      assert.match(arm, /makeCharSheet/,
-        `${h} must open the character sheet on a level-up, not merely announce the level`);
-    }
+    assert.match(code(h), /new LevelUpScreen\(playerEntity\)/,
+      `${h} must open the level-up screen, not merely announce the level`);
   }
 });
 

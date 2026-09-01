@@ -28,15 +28,6 @@ export const GROUND_OFFSET = -1;
 export const GROUND_TILE_SIZE = 256;   // RMBTileSide mirror - value-pinned, no mesh consumer yet (AUDIT 23 wa-5)
 export const GROUND_TILE_DIM = 16;
 
-/** RMBLayout.BulletinBoardModelID (RMBLayout.cs:42). DFU stands this
- *  model STANDALONE rather than folding it into the block combiner
- *  (:857, :935) precisely so it can carry its own activation
- *  component (:966-970), and IsBulletinBoard (:1013-1017) is the whole
- *  test - "Only a single variant of Bulletin Board model known". */
-export const BULLETIN_BOARD_MODEL_ID = 41739;
-/** IsBulletinBoard (RMBLayout.cs:1013-1017). */
-export const isBulletinBoard = (modelID) => modelID === BULLETIN_BOARD_MODEL_ID;
-
 /**
  * Assemble an RMB block into world placements.
  * @param {object} dfBlock - output of BlocksFile.getBlock() (type Rmb).

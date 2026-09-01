@@ -16,18 +16,13 @@
 //   (RandomizeInitialRegionalPrices - engine PRNG in DFU too, the
 //   approved uniform-roll slot) and then DRIFT once per elapsed day
 //   through UpdateRegionalPrices (S41), which the day-change block in
-//   worldTick.js drives - condition flags and all (S42 built the
-//   RegionDataFlags store that half was waiting on; the member's own
-//   docblock below carries the three arms).
+//   worldTick.js drives. The condition-flag half of that member
+//   (PricesHigh/PricesLow) pends the region-conditions arc.
 //
-// A2 (ROAD TO 1:1) closed the two INTERIM clauses that stood here.
-// Book items now carry the BOOK FILE's price through
-// books.createRandomBook, and shelf/container restocking rides
-// CreateStockedDate below - the calendar the pend was waiting on has
-// been shipped since S41. The regional-price line above lost its
-// stale "pends the region-conditions arc" tail in the same pass: S42
-// shipped it and the summary had not been told, which is precisely
-// the F106 disease named below.
+// INTERIM (loud): book items carry the template price (classic prices
+// each BOOK FILE - pends the books arc); shelf restocking rides
+// CreateStockedDate (pends the shared calendar - stock is fresh per
+// build for now).
 //
 // AUDIT 39 F106: two clauses were struck from this list because they
 // had SHIPPED and the header still swore they had not - the MagicItems
@@ -41,11 +36,11 @@ import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
 import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from './itemTemplates.js';
-import { createRandomBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
+import { getRandomBookID } from './books.js';   // B1
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
+import { MINUTES_PER_DAY } from './gameDate.js';   // X6: the soul-gem stock's daily seed
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
 import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
@@ -154,33 +149,6 @@ export function randomizeArmorVariant(templateIndex, material, rolls = Math.rand
   return 0;
 }
 
-/**
- * A2 - DaggerfallLoot.CreateStockedDate (:68-71), verbatim:
- *
- *     (date.Year * 1000) + date.DayOfYear
- *
- * ONE integer that names a game day, and the whole of the restock law.
- * StockShopShelf (:152) and StockHouseContainer (:293) stamp it on the
- * container as they mint; PlayerActivate's ActivateLootContainer
- * compares it on EVERY activation (:882 for shelves, :911 for house
- * containers) and re-stocks - `items.Clear()` first - when the stored
- * day is behind today. So a bookseller picked bare on the 3rd of
- * Sun's Dawn is full again on the 4th, and a shelf opened twice in one
- * afternoon does not reroll.
- *
- * DayOfYear is 1-based (gameDate.dayOfYear, GetDayOfYear :629-633), so
- * the year term at 1000 can never collide across years: 360 days fit
- * inside the thousand with room to spare. It is also why an OWNED
- * house's container is stamped a literal 1 (:907) - a value below any
- * real date is still ABOVE the zero that means "never stocked", which
- * is what SerializableLootContainer.ShouldSave tests (:225-226).
- */
-export const createStockedDate = (date) => ((date?.year ?? 0) * 1000) + dayOfYear(date ?? { month: 0, day: 0 });
-
-/** PlayerActivate's own comparison (:882, :911), spelled once so the
- *  three activation arms in the host cannot drift apart. */
-export const needsRestock = (container, today) => (container?.stockedDate ?? 0) < today;
-
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value. */
 export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random } = {}) {
@@ -254,12 +222,9 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       if (qualityMod >= 4) --qualityMod;
       qualityMod++;
       for (let j = 0; j <= qualityMod; ++j) {
-        // CreateRandomBook whole (books.js): the id, then Range(0,
-        // book.TotalVariants) - the template's variant count (2), NOT
-        // the 4 Books enum names - then `value = bookFile.Price`. A2:
-        // that last term is what made the bookseller sell every title
-        // at the template's flat 2500 instead of its own 300..800.
-        add(createRandomBook(rolls));
+        // CreateRandomBook: Range(0, book.TotalVariants) = the
+        // template's variant count (2), NOT the 4 Books enum names.
+        add({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)), message: getRandomBookID(rolls) });   // B1: message = the book id (CreateRandomBook); book-file pricing pends (loud)
       }
       continue;
     }
@@ -270,24 +235,9 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       const stockChance = Math.trunc(chanceMod * 5 * (21 - t.rarity) / 100);
       if (!dice100(stockChance, rolls())) continue;
       if (group === 'Weapons') {
-        // A2: `CreateWeapon(j + Weapons.Dagger, RandomMaterial(level))`
-        // (DaggerfallLoot.cs:227), ONE call for every weapon on the
-        // shelf - so the arrow arm is CreateWeapon's own (:359-364)
-        // and not a copy of it here. The copy that stood here dropped
-        // `currentCondition = 0` ("not sure if this is necessary, but
-        // classic does it"), so shelf arrows arrived at FULL condition
-        // where loot arrows and conjured arrows arrive at zero, and
-        // the two stacks could not merge in the pack.
-        //
-        // PIN MOVED DELIBERATELY (AUDIT 17e F14): that note read
-        // "CreateWeapon's arrow branch takes NO material roll", which
-        // is true of the BRANCH and false of this SITE. C# evaluates
-        // RandomMaterial before it enters CreateWeapon, so the shelf
-        // draws the material roll for an arrow too and throws it away
-        // - one extra draw per shelved arrow, in DFU's stream.
         const templateIndex = GROUP_TEMPLATE_INDICES.Weapons[j];
-        const material = randomMaterial(level, rolls);   // the ARGUMENT, drawn before the call - arrows included
-        add(createWeapon(templateIndex, material, rolls));
+        if (templateIndex === 131) add({ group: 'Weapons', name: 'Arrow', templateIndex, material: 0, stackCount: 1 + Math.floor(rolls() * 20) });   // AUDIT 17e F14: CreateWeapon's arrow branch takes NO material roll and DFU stocks a real stack (loot.js already had this right)
+        else add({ group: 'Weapons', ...createWeapon(templateIndex, randomMaterial(level, rolls)) });
       } else if (group === 'Armor') {
         // CreateArmor(gender, race, piece, RandomArmorMaterial(level))
         // - the material roll, THEN RandomizeArmorVariant's roll.
@@ -416,7 +366,7 @@ export function stockHouseContainer({ buildingType, record }, playerEntity = {},
         const templates = getMagicItemTemplates();
         if (templates) item = createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls);
       } else if (group === 'Books') {
-        item = createRandomBook(rolls);   // A2: the book FILE's price, same member as the shelf
+        item = { group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)), message: getRandomBookID(rolls) };
       } else if (group === 'Weapons') {
         item = createRandomWeapon(level, rolls);
       } else if (group === 'Armor') {

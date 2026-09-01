@@ -19,19 +19,16 @@
 //   243,239,44 and the SELECTED 162,36,12 - a dark red, not a
 //   brighter yellow, which is the one people guess wrong.
 //
-// ROAD-A7 closes this file's FLAGGED note. The bar is now a real
-// VerticalScrollBar (ui/verticalScrollBar.js): DFU's three thumb art
-// slices, the trough paging off thumbRect, and Update's DRAG - which
-// Update (:103-119) feeds back the other way, `listBox.ScrollIndex =
-// scrollBar.ScrollIndex` while DraggingThumb and the reverse when it
-// is not. The list itself gained the two laws it was missing:
-// MouseClick SELECTS and MouseDoubleClick USES (ListBox.cs:465-512),
-// and MouseMove's highlightedIndex feeds DecideTextColor's two hover
-// arms (:360-380).
+// FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
+// from art, because VerticalScrollBar paints a solid colour in DFU too
+// - but its exact thumb colour comes from a Panel default this port
+// has not needed anywhere else, so the bar is drawn from the same
+// palette the rest of the window uses and the drag is not implemented
+// (the two paging buttons cover the list; the wheel scrolls one row
+// per notch through the hosts' wheel seam).
 
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
-import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
-import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
+import { drawMenuBackdrop } from './chargenArt.js';
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
 export const PICKER_W = 200, PICKER_H = 128;
@@ -52,31 +49,6 @@ export const ROW_SPACING = 1;
 
 /** DaggerfallUI.cs :62 - the SELECTED row is dark red. */
 export const SELECTED_TEXT_COLOR = [162 / 255, 36 / 255, 12 / 255, 1];
-/** DaggerfallUI.cs:57 - DaggerfallAlternateHighlightTextColor, the
- *  colour a row under the CURSOR takes (ListItem.highlightedTextColor,
- *  ListBox.cs:71). An orange, not the default gold. */
-export const HIGHLIGHTED_TEXT_COLOR = [255 / 255, 130 / 255, 40 / 255, 1];
-/** DaggerfallUI.cs:63 - DaggerfallBrighterSelectedTextColor, for the
- *  row that is BOTH selected and hovered (:362-366). */
-export const HIGHLIGHTED_SELECTED_TEXT_COLOR = [254 / 255, 56 / 255, 18 / 255, 1];
-
-/** DecideTextColor (ListBox.cs:360-380), the four arms in DFU's own
- *  order. Every list item in this window is Enabled, so the two
- *  disabled arms collapse away. */
-export function rowTextColor(selected, highlighted) {
-  if (highlighted && selected) return HIGHLIGHTED_SELECTED_TEXT_COLOR;
-  if (selected) return SELECTED_TEXT_COLOR;
-  if (highlighted) return HIGHLIGHTED_TEXT_COLOR;
-  return DEFAULT_TEXT_COLOR;
-}
-
-/** AUDIT 39 F128: the SELECTED row carries NO shadow - ListBox.cs:41
- *  holds selectedShadowPosition = Vector2.zero and DecideTextColor
- *  hands it to the label in BOTH selected arms, where TextLabel's
- *  zero-position guard skips the pass outright. The picker window
- *  never overrides it, unlike the talk window. The two HIGHLIGHT arms
- *  keep the default shadowPosition (:376, :382). */
-export const rowShadowOffset = (selected) => (selected ? 0 : 1);
 
 let _art = null;
 export async function preloadListPickerArt(deps) {
@@ -119,37 +91,8 @@ export class ListPickerWindow {
     this.isChoiceWindow = true;
     this.scrollIndex = 0;
     this.selectedIndex = Math.min(Math.max(0, selectedIndex | 0), Math.max(0, items.length - 1));
-    // ListBox.cs:29 - nothing is highlighted until the cursor moves
-    // over a row, and MouseLeave puts it back (:460-463).
-    this.highlightedIndex = -1;
     this.scrollToSelected();
-    // Setup (:96-100): the bar is a pickerPanel child at (181,23),
-    // 5x82. Its rect is kept in NATIVE coordinates so the window's own
-    // hit tests and its draw share one origin.
-    this.scrollBar = new VerticalScrollBar({
-      rect: [PICKER_X + PICKER_RECTS.scrollBar[0], PICKER_Y + PICKER_RECTS.scrollBar[1],
-        PICKER_RECTS.scrollBar[2], PICKER_RECTS.scrollBar[3]],
-      totalUnits: this.items.length, displayUnits: ROWS_DISPLAYED, scrollIndex: this.scrollIndex,
-    });
-    this._lastRowClick = null;
   }
-
-  /** Update (:103-119). TotalUnits/DisplayUnits are refreshed from the
-   *  live list every frame, and the index flows FROM the bar while the
-   *  thumb is being dragged and TO it the rest of the time. */
-  syncScrollBar() {
-    const bar = this.scrollBar;
-    bar.totalUnits = this.items.length;
-    bar.displayUnits = ROWS_DISPLAYED;
-    if (bar.draggingThumb) {
-      this.scrollIndex = bar.scrollIndex;
-      this._clampScroll();
-    } else {
-      bar.setScrollIndexWithoutRaisingScrollEvent(this.scrollIndex);
-    }
-  }
-
-  _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
 
   /** ListBox.ScrollToSelected: put the selection on screen without
    *  moving it. Called by the constructor and by the arrow keys. */
@@ -186,18 +129,11 @@ export class ListPickerWindow {
     this._clampScroll();
   }
 
-  /** ListBox.UseSelectedItem (:785-789) -> OnUseSelectedItem ->
-   *  DaggerfallListPickerWindow.RaiseOnItemPickedEvent (:136-149). The
-   *  index it reports is the LIST's selectedIndex, never the row that
-   *  was clicked - MouseClick has already moved the selection there. */
   _pick(index) {
     if (index < 0 || index >= this.items.length) return;
     this.done = true;
     this.onPick?.(index, this.items[index]);
   }
-
-  /** UseSelectedItem over the live selection. */
-  _use() { this._pick(this.selectedIndex); }
 
   _cancel() {
     if (!this.allowCancel) return;   // AllowCancel gates the back button (DaggerfallPopupWindow :69-73)
@@ -207,9 +143,7 @@ export class ListPickerWindow {
 
   input(code) {
     if (code === 'Escape') { this._cancel(); return; }
-    // ListBox.Update (:296-297): Return is UseSelectedItem, the same
-    // door the double click goes through.
-    if (code === 'Enter') { this._use(); return; }
+    if (code === 'Enter') { this._pick(this.selectedIndex); return; }
     if (code === 'ArrowDown' || code === 'KeyN') this.selectedIndex = Math.min(this.items.length - 1, this.selectedIndex + 1);
     if (code === 'ArrowUp' || code === 'KeyP') this.selectedIndex = Math.max(0, this.selectedIndex - 1);
     // keep the selection visible, which is ClampSelectionToVisibleRange's
@@ -233,66 +167,19 @@ export class ListPickerWindow {
    *  glyphHeight + rowSpacing. */
   rowHeight(font) { return (font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
-  /** MouseMove (:428-458) and MouseLeave (:460-463): the row under the
-   *  cursor is the highlightedIndex, and anything off the LIST clears
-   *  it. The host's hover seam also drives VerticalScrollBar.Update -
-   *  `e` is the DOM mousemove, whose `buttons` bit 0 stands in for
-   *  InputManager.GetMouseButton(0). A host that hands no event holds
-   *  no button, so the drag lets go, which is the safe direction. */
-  hover(vx, vy, e = null) {
-    const rh = this.rowHeight(this._font);
-    this.highlightedIndex = -1;
-    if (this.items.length && inRect(PICKER_RECTS.list, vx, vy)) {
-      const row = Math.floor((vy - PICKER_Y - PICKER_RECTS.list[1]) / rh);
-      const index = this.scrollIndex + row;
-      if (index >= 0 && index < this.items.length) this.highlightedIndex = index;
-    }
-    this.syncScrollBar();
-    if (this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
-  }
-
-  /** The button let go: Update's else arm (:123-129). */
-  release() { this.scrollBar.draggingThumb = false; }
-
-  click(vx, vy, font = null, now = null) {
+  click(vx, vy, font = null) {
     if (inRect(PICKER_RECTS.previous, vx, vy)) { this._select(-1); return true; }
     if (inRect(PICKER_RECTS.next, vx, vy)) { this._select(1); return true; }
-    // ROAD-A7: the bar. A press inside thumbRect latches the DRAG
-    // (Update :108-113); a press above or below it pages by
-    // DisplayUnits (MouseClick :146-149). The bar rect is already
-    // native, so no PICKER_X/Y fold here.
-    this.syncScrollBar();
-    if (this.scrollBar.contains(vx, vy)) {
-      this.scrollBar.press(vx, vy);
-      this.scrollIndex = this.scrollBar.scrollIndex;
-      this._clampScroll();
-      return true;
-    }
     if (inRect(PICKER_RECTS.list, vx, vy)) {
       const rh = this.rowHeight(font ?? this._font);
       const row = Math.floor((vy - PICKER_Y - PICKER_RECTS.list[1]) / rh);
       if (row >= 0 && row < ROWS_DISPLAYED) {
         const index = this.scrollIndex + row;
-        // ROAD-A7: DFU's real law at last. ListBox.MouseClick
-        // (:465-505) only SELECTS - it sets selectedIndex and raises
-        // OnSelectItem; it takes MouseDoubleClick (:507-512) to reach
-        // UseSelectedItem, and through it OnItemPicked. The port used
-        // to pick straight through on one click, which meant no list
-        // in the game could be browsed and the DFU behaviour every
-        // other list window in this port already carries (the class
-        // picker, the save window) stopped at this one door.
-        //
-        // The double-click test is on TIME ALONE
-        // (BaseScreenComponent.cs:691, the chargen precedent): the
-        // second click need not land on the same row, because
-        // MouseClick has already moved the selection to it.
-        if (index >= 0 && index < this.items.length) {
-          const t = now ?? this._now();
-          const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
-          this.selectedIndex = index;          // MouseClick
-          this._lastRowClick = t;
-          if (wasDouble) { this._lastRowClick = null; this._use(); }   // MouseDoubleClick
-        }
+        // DFU selects on the first click and USES on the second
+        // (ListBox raises OnUseSelectedItem from a double click or
+        // Return); the port picks straight through, because a
+        // one-shot service list has nothing to preview.
+        this._pick(index);
       }
       return true;
     }
@@ -317,16 +204,24 @@ export class ListPickerWindow {
     const [lx, ly] = PICKER_RECTS.list;
     const rh = this.rowHeight(font);
     this.items.slice(this.scrollIndex, this.scrollIndex + ROWS_DISPLAYED).forEach((label, r) => {
-      const i = this.scrollIndex + r;
-      const selected = i === this.selectedIndex;
-      // DecideTextColor (:360-380): selected, hovered, both, or plain.
+      const selected = this.scrollIndex + r === this.selectedIndex;
+      // AUDIT 39 F128: the SELECTED row carries no shadow -
+      // ListBox.cs:41 holds selectedShadowPosition = Vector2.zero and
+      // DecideTextColor (:363-372) hands it to the selected label,
+      // where TextLabel's zero-position guard skips the pass outright.
+      // The picker window never overrides it, unlike the talk window.
       shadowText(renderer, font, label, m, PICKER_X + lx, PICKER_Y + ly + r * rh,
-        { color: rowTextColor(selected, i === this.highlightedIndex), shadowOffset: rowShadowOffset(selected) });
+        { color: selected ? SELECTED_TEXT_COLOR : DEFAULT_TEXT_COLOR, shadowOffset: selected ? 0 : 1 });
     });
-    // ROAD-A7: the bar, from DFU's own thumb art. Draw (:136) paints
-    // nothing at all when the list fits, which drawScrollThumb honours
-    // through thumbSpan's null.
-    this.syncScrollBar();
-    drawScrollThumb(renderer, m, this.scrollBar.rect, this.scrollBar.thumbSpan);
+    // the scroll bar's thumb, sized and placed by the same
+    // TotalUnits/DisplayUnits ratio VerticalScrollBar uses (:105-112)
+    const [sx, sy, sw, sh] = PICKER_RECTS.scrollBar;
+    const total = Math.max(this.items.length, ROWS_DISPLAYED);
+    const thumbH = Math.max(1, Math.round(sh * ROWS_DISPLAYED / total));
+    const thumbY = sy + Math.round(sh * this.scrollIndex / total);
+    renderer.drawScreenQuad(null, {
+      x: m.ox + (PICKER_X + sx) * m.s, y: m.oy + (PICKER_Y + thumbY) * m.s,
+      w: sw * m.s, h: thumbH * m.s,
+    }, undefined, DEFAULT_TEXT_COLOR);
   }
 }

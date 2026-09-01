@@ -143,10 +143,6 @@ export class ServiceFlowWindow {
     this._advance(t.onClick?.() ?? null);
   }
 
-  /** ROAD-A7: the picker's hover seam (ListBox.MouseMove's highlight
-   *  and VerticalScrollBar.Update's drag) reaches it through here. */
-  hover(vx, vy, e = null) { if (this.top?.picker) this._picker?.hover(vx, vy, e); }
-
   click(vx, vy) {
     const t = this.top;
     if (!t) { this._close(); return true; }
@@ -275,13 +271,9 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
 
 /** CureDiseaseService (:54-130). */
 export function buildCureDiseaseFlow(entity, guild, membership, deps) {
-  // A4: `becomingVampireOrWerebeast` is no longer a host argument -
-  // cureDiseaseOffer reads TimeToBecomeVampireOrWerebeast off the
-  // entity, exactly as DaggerfallGuildServiceCureDisease.cs:58 reads
-  // it off playerEntity. One less thing for a host to remember.
-  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', priceAdjustment = 1000 } = deps;
+  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', becomingVampireOrWerebeast = false, priceAdjustment = 1000 } = deps;
   const offer = cureDiseaseOffer(entity, guild, membership, {
-    quality, regionIndex, nowClassicMinutes: now(), priceAdjustment,
+    quality, regionIndex, nowClassicMinutes: now(), becomingVampireOrWerebeast, priceAdjustment,
   });
   const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });
 

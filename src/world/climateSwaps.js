@@ -23,39 +23,7 @@
 // API ClimateBaseType values (Desert 0 / Mountain 100 / Temperate 300 /
 // Swamp 400) directly - the exact integers DFU's conversion produces.
 
-import { SEASONS, seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';
-
 export const SEASON = { Summer: 0, Winter: 1, Rain: 2 };
-
-/** THE TEXTURE SEASON IS THE CALENDAR'S (A1). ClimateSeason has three
- *  members and the world clock only ever selects TWO of them: every
- *  production site in the reference writes the same one-line test -
- *  ClimateSwaps.cs:382-386 (the GetNatureArchive overload that takes a
- *  DaggerfallDateTime.Seasons), DaggerfallLocation.ApplyTimeAndSpace
- *  (:135-139), StreamingWorld.cs:812, RuntimeMaterials.cs:169,
- *  DaggerfallBankPurchasePopUp.cs:265. ClimateSeason.Rain is reachable
- *  only by hand (ApplyClimate's `supportsRain` arm and GetGroundArchive
- *  +2 stay ported for it), so it stays a debug choice here too.
- *
- *  DaggerfallLocation.Update (:118-130) re-reads this every frame and
- *  re-skins the standing location when `lastSeason` differs - the
- *  season is LIVE, not a value read once at load. */
-export function climateSeasonFromDate(date) {
-  return seasonValue(date) === SEASONS.Winter ? SEASON.Winter : SEASON.Summer;
-}
-
-/** The same law off the port's one clock (worldTick's classic minute
- *  count) - what DaggerfallUnity.WorldTime.Now.SeasonValue reads. */
-export function climateSeasonFromMinutes(classicMinutes) {
-  return climateSeasonFromDate(dateFromClassicMinutes(classicMinutes));
-}
-
-/** DaggerfallInterior.cs:51 - `ClimateSeason climateSeason =
- *  ClimateSeason.Summer;`, a field the class declares and NEVER
- *  assigns. An interior is summer-skinned in the reference in the
- *  depths of Evening Star, so the season a door carries inside is a
- *  constant, not the weather outside. */
-export const INTERIOR_SEASON = SEASON.Summer;
 const WEATHER_WINTER = 1; // DFLocation.ClimateWeather.Winter
 const WEATHER_RAIN = 2; // DFLocation.ClimateWeather.Rain
 

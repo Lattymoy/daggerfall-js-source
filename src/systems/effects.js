@@ -144,62 +144,10 @@ export const BUFF_KINDS = Object.freeze({
 
 /** DaggerfallEntity.IsInvisible / IsBlending / IsAShade, verbatim:
  *  normal OR true power. The senses' illusion gate consumes these
- *  (S21) - for the PLAYER through the senses context and, since the
- *  A5 residue pass, for a FOE target through concealmentFlags below. */
+ *  (S21); foe-side concealment VISUALS pend their arc. */
 export const isInvisible = (en) => hasActiveEffect(en, 'invisNormal') || hasActiveEffect(en, 'invisTrue');
 export const isBlending = (en) => hasActiveEffect(en, 'chameleonNormal') || hasActiveEffect(en, 'chameleonTrue');
 export const isAShade = (en) => hasActiveEffect(en, 'shadeNormal') || hasActiveEffect(en, 'shadeTrue');
-/** DaggerfallEntity.IsMagicallyConcealed (:204-207) -
- *  `MagicalConcealmentFlags != None`, i.e. ANY of the six bits. The
- *  port's active-effect entries ARE those bits (BUFF_KINDS above), so
- *  the OR of the three predicates is the same set. Consumed by
- *  EntityConcealmentBehaviour's foe-side visual (:41-42). */
-export const isMagicallyConcealed = (en) => isInvisible(en) || isBlending(en) || isAShade(en);
-
-/**
- * EnemySenses.BlockedByIllusionEffect reads `target.Entity.IsInvisible
- * / IsBlending / IsAShade` (EnemySenses.cs:668-683) whatever the target
- * is - the player or another enemy. ConcealmentEffect.StartConcealment
- * (:56-74) is likewise entity-blind: it ORs the flag onto
- * `entityBehaviour.Entity` and only the HUD line is gated on the host
- * being the player, so a Chameleon or Shadow that lands on a foe
- * conceals that foe from every other foe.
- *
- * The port's senses gate has read a foe target's `concealment()`
- * closure since MT-i and NOTHING built one, so the whole foe-vs-foe
- * arm answered "unconcealed" - the effects were live on the entity and
- * unread. This is that closure's body, in one place, so the three foe
- * pools spell it the same way the senses context spells the player's
- * (scenes/shared.js sensesContext).
- */
-export const concealmentFlags = (en) => ({
-  invisible: isInvisible(en), blending: isBlending(en), shade: isAShade(en),
-});
-
-/**
- * Levitate.SetEnemyMotor (Levitate.cs:140-154) - the ENEMY half of
- * StartLevitating/StopLevitating (:92-126). Levitate's own Start,
- * Resume, ConstantEffect and End all funnel into those two, and for an
- * EntityTypes.EnemyMonster / EnemyClass host they write
- * `enemyMotor.IsLevitating` exactly as the player arm writes
- * LevitateMotor.IsLevitating.
- *
- * The port keeps the flag where DFU keeps it - on the motor - and
- * folds Start/End into a read of the effect's PRESENCE, which is the
- * same idiom the player's own arm already uses (scenes/shared.js
- * applyMotorEffectFlags, scenes/dungeon.js). Before this the AI's
- * `levitating` was a hard-wired false with no writer anywhere in src/,
- * so every arm that consults it (the fall check, the detour dodge, the
- * face aim, the destination drop, and the no-gravity movement branch)
- * was dead code.
- *
- * @returns {boolean} the flag as written
- */
-export function applyEnemyMotorEffectFlags(ai, entity) {
-  if (!ai) return false;
-  ai.levitating = hasActiveEffect(entity, 'levitate');
-  return ai.levitating;
-}
 
 /** ConcealmentEffect start messages (Internal_Strings verbatim),
  *  shown ONCE when the effect becomes incumbent on the player host
