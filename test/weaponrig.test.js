@@ -165,3 +165,76 @@ test('FX1 (F024/F025): the show clocks - the bow cooldown FREEZES the state, an 
   // and the latch records every non-cooldown answer
   assert.match(rig, /_lastShown = v;\n\s+return v;/);
 });
+
+// ── THE BOW'S PATH INTO THE MORROWIND ARM ────────────────────────────
+//
+// Mac: "the arrow doesn't show on the weapon being readied and fired,
+// instead the shot shoots like classic dagger and doesn't follow the
+// animation." Chasing it found the seam UNPINNED at both ends:
+// mwarrow.test.js drives arm.attack() DIRECTLY, and this file pinned
+// the machine without ever asking what the arm was handed. So a bow
+// could swing on the melee path and every suite stayed green.
+//
+// AND THE FIRST DIAGNOSIS OFF THIS HARNESS WAS WRONG, which is the
+// reason the idle loop below is not decoration. Attacking on the very
+// first frame reads machine.isBow ONE FRAME STALE - update() is what
+// sets it (playerWeapon.js:258, "read per step"), and update() runs
+// AFTER gesture() inside frame(). The bow swings StrikeRight on the
+// melee clock, and it looks exactly like the reported bug. It is not
+// the bug: real play has frames between drawing and shooting. The pin
+// holds BOTH readings so the distinction cannot be lost again - the
+// stale one as the artifact it is, the settled one as the law.
+test('the drawn bow reaches the Morrowind arm as a SHOOT, on the bow clock', async () => {
+  const { fpArm } = await import('../src/combat/fpArm.js');
+  const LONG_BOW = { name: 'Long Bow', templateIndex: 130, material: 0 };
+  const ARROWS = { name: 'Arrow', templateIndex: 131, stackCount: 20 };
+  const calls = [];
+  const saved = { ready: fpArm.ready, attack: fpArm.attack };
+  // The arm's own nock cycle is pinned in mwarrow.test.js against real
+  // key times; what is NOT pinned anywhere is that the rig ever calls
+  // it for a bow, so the stand-in only has to be READY and record.
+  fpArm.ready = () => true;
+  fpArm.attack = (strike, opts) => { calls.push({ strike, opts }); return 'shoot'; };
+  try {
+    const r = rig({ entity: { items: [ARROWS], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW } } } });
+    r.toggleSheath();
+    assert.equal(r.playerWeapon.machine.isBow, false,
+      'isBow is not set until a step runs - update() owns it, per step');
+
+    // THE ARTIFACT, pinned as one: attacking before any step has run
+    // reads that stale false and takes the MELEE gesture.
+    r.attackInput(900, 0, true);
+    r.frame(1 / 60);
+    assert.equal(calls[0].strike, 'StrikeRight',
+      'a same-frame attack swings the bow on the melee path - the harness artifact, not the bug');
+
+    // THE LAW: let the rig step, the way play does between drawing and
+    // shooting, and the bow takes its own branch.
+    const r2 = rig({ entity: { items: [ARROWS], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW } } } });
+    r2.toggleSheath();
+    for (let i = 0; i < 30; i++) r2.frame(1 / 60);
+    assert.equal(r2.playerWeapon.machine.isBow, true, 'a step settles it');
+
+    calls.length = 0;
+    const evs = [];
+    r2.attackInput(900, 0, true);
+    for (let i = 0; i < 60; i++) {
+      for (const e of r2.frame(1 / 60)) evs.push(e);
+      if (i === 0) r2.attackInput(900, 0, false);
+    }
+    // WeaponManager.cs:355-358 - a bow never tracks a swing; the input
+    // fires forced to StrikeDown. `hold` stays false because the port's
+    // bow is DFU's BowDrawback-OFF instant shot.
+    assert.equal(calls.length, 1, 'the arm is told once');
+    assert.equal(calls[0].strike, 'StrikeDown', 'forced to StrikeDown, not the drag direction');
+    assert.equal(calls[0].opts.hold, false, 'BowDrawback-off does not hold at full draw');
+    // AUDIT 23 (combat-2): the bow's OWN clock - bowSound at frame 4,
+    // hit at frame 5. A bow on the melee clock has no bowSound at all,
+    // which is what makes this the check that separates them.
+    assert.ok(evs.includes('bowSound'), 'the bow clock ran, not the melee one');
+    assert.ok(evs.includes('hit'), 'and it reached the loose');
+  } finally {
+    fpArm.ready = saved.ready;
+    fpArm.attack = saved.attack;
+  }
+});
