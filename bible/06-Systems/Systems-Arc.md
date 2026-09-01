@@ -5378,3 +5378,55 @@ sprite is still the 1:1 lane and every classic path is byte-identical;
 two pins moved by exactly the lines the swap needed (tr3's ride-loop
 clip, tr5's mode-door tail), both recorded in their tests. The whole
 story lives in Morrowind-Rules MW-D40..42.)
+
+## TSR - THE TEST ROOM (2026-08-31, Mac's ask)
+
+Mac: "a menu option that leads to a sort of test environment where I
+can pick a prebuilt character and loot armor, weapons, etc." There is
+no DFU original - this is a port tool - but it SHIPS, and until AUDIT
+39 its entire record in the bible was one Testing.md row, which is how
+a shipped systems module ends up unfindable.
+
+THE IDS, corrected here. The room shipped as TR1-TR3 on the day the
+transport arc above closed TR1-TR5, so two arcs claimed the same three
+ids and a grep for "TR2" answered with the riding sprite AND the
+gender bug. The room is **TSR** from now on (renumbered in
+`test/testroom.test.js` and Testing.md's row); the transport arc keeps
+TR. Source comments in `ui/enhancedMenu.js` and `combat/weaponRig.js`
+still carry the old spelling, which this paragraph exists to catch.
+
+**TSR1 - ONE HOME.** `systems/testRoom.js` holds all three parts: the
+six prebuilt characters, the armory they walk in with, and the seeding
+that turns a preset into a live entity. The presets exercise the axes
+the body pipelines actually branch on - both sexes, human and elf and
+BOTH beast races, a real `faceIndex` - because a second copy of a
+preset in any door is how two rooms drift apart. The armory is TOTAL
+where it claims to be: one of every weapon type in steel (each its own
+Morrowind animation class and attach bone), every armor slot with all
+four shields, the material spread that changes the Morrowind record,
+a 60-arrow quiver so the bow draws loaded, and the SEX'S OWN clothing
+templates. Every row mints through the game's own constructors
+(`createWeapon`, `mintCondition`, the arrow arm's classic zero) -
+never a second item table.
+
+**WHAT THE ROOM IS NOT: a new scene.** It boots the same streaming
+world every other door boots, through the same headless-chargen seam
+`?class=` has used since AUDIT 17f. The room is a CHARACTER and a
+PACK, not a place - the point is to see the real rigs wearing real
+equipment through the real equip table, and a bespoke scene would be
+testing itself.
+
+**TSR2 - THE !!GENDER BUG, found building the room.** Gender is the
+string 'male'/'female' everywhere in this port, so the pause card's
+`female: !!playerEntity.gender` was TRUE FOR EVERYONE: every Morrowind
+build asked for the female skeleton and body columns, half-masked by
+the male-record fallback fills. The arms-build opts now live in one
+home (`weaponRig.armBuildOptsOf`) that the card and the room both ride,
+and the pin requires the string compare - a `!!` dies on 'male'.
+
+**TSR3 - THREE DOORS, ONE HOME.** The pane iterates `TEST_PRESETS` and
+fires `test:<id>`; `main.js` sets that param on this choice and DELETES
+it on every other (F12's law - New Game must not re-enter the room);
+the world boot resolves the preset BEFORE branching, so an unknown id
+falls through to the wizard rather than guessing, and builds the arms
+only when Morrowind data is attached.

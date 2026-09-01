@@ -429,3 +429,50 @@ test('WM2h: no bible document carries a merge conflict marker', () => {
   }
   assert.deepEqual(bad, [], `merge conflict markers in the bible:\n${bad.join('\n')}`);
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 39: the tripwire the EV arc said was already here.
+//
+// Enhanced-Visuals-Arc.md's hard-constraints section told every following
+// slice that this file pins Rendering.md's "directional light 0.45 +
+// 0.55*diffuse", and EV5's own record leans on that pin - but no test in the
+// repo held the string. The base term is not a GLSL literal a shader-text
+// sweep could catch either: it is renderer.js's JS defaults, so a retune
+// would leave Rendering.md stating a formula the renderer no longer had with
+// the suite green. Both halves are pinned, so the doc and the defaults can
+// only move together.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 39: Rendering.md\'s "0.45 + 0.55*diffuse" base is the renderer\'s real defaults', () => {
+  const doc = read('bible/07-Rendering/Rendering.md').replace(/\s+/g, ' ');
+  assert.match(doc, /directional light 0\.45 \+ 0\.55\*diffuse/,
+    'Rendering.md lost the base-lighting formula the EV arc treats as pinned');
+  const r = read('src/render/renderer.js');
+  assert.match(r, /this\._ambient = new Float32Array\(\[0\.45, 0\.45, 0\.45\]\);/,
+    "the solid programs' ambient default moved - Rendering.md still says 0.45");
+  assert.match(r, /this\._sunScale = 0\.55;/,
+    "the solid programs' sun scale moved - Rendering.md still says 0.55");
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 39: the index indexes.
+//
+// Home.md declares "Bible is flat under `bible/`. This file is the index",
+// and the two newest audit records (Audit-DA, Audit-EV) were reachable only
+// from the arc pages they close - a reader following the instruction reached
+// AUDIT 38 and stopped. The gate is the same both-ways shape as the
+// open-flags list: a new record must be indexed, and a renamed one cannot
+// leave a dead row behind.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 39: Home.md names every audit record under bible/01-Overview/', () => {
+  const home = read('bible/Home.md');
+  const records = readdirSync(join(root, 'bible/01-Overview'))
+    .filter((f) => /^Audit-.+\.md$/.test(f)).sort();
+  const missing = records.filter((f) => !home.includes(f));
+  assert.deepEqual(missing, [],
+    `audit records the index does not name:\n${missing.join('\n')}`);
+  const named = [...home.matchAll(/`01-Overview\/(Audit-[A-Za-z0-9.-]+\.md)`/g)].map((m) => m[1]);
+  const dead = [...new Set(named)].filter((f) => !records.includes(f));
+  assert.deepEqual(dead, [], `the index names audit records that are gone:\n${dead.join('\n')}`);
+});
