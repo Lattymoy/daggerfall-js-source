@@ -128,6 +128,7 @@ export class BankPurchaseWindow {
     const all = this.houses;
     const maxScroll = Math.max(0, all.length - LIST_ROWS);
     if (this.scroll > maxScroll) this.scroll = maxScroll;
+    if (this.scroll < 0) this.scroll = 0;   // scrollIndex is never negative in DFU; no path may leave one standing
     return all.slice(this.scroll, this.scroll + LIST_ROWS)
       .map((h, i) => ({ house: h, index: this.scroll + i, text: priceRow(housePrice(h.meshRadius ?? 0)) }));
   }
@@ -181,14 +182,23 @@ export class BankPurchaseWindow {
 
   input(code) {
     if (code === 'Escape' || code === 'KeyE') { this._close(); return; }
+    // ListBox.SelectPrevious/SelectNext (ListBox.cs:709-741): the
+    // scroll adjustment lives INSIDE the move guard. Hoisted out, an
+    // ArrowUp on the freshly opened list - SelectNone's -1 - moved
+    // nothing and still assigned `scroll = -1`, and rows() clamps only
+    // downward, so the list collapsed to one unbuyable row at index -1.
     if (code === 'ArrowUp') {
-      if (this.selected > 0) this.selected--;
-      if (this.selected < this.scroll) this.scroll = this.selected;
+      if (this.selected > 0) {
+        this.selected--;
+        if (this.selected < this.scroll) this.scroll = this.selected;
+      }
       return;
     }
     if (code === 'ArrowDown') {
-      if (this.selected < this.houses.length - 1) this.selected++;
-      if (this.selected >= this.scroll + LIST_ROWS) this.scroll = this.selected - LIST_ROWS + 1;
+      if (this.selected < this.houses.length - 1) {
+        this.selected++;
+        if (this.selected >= this.scroll + LIST_ROWS) this.scroll = this.selected - LIST_ROWS + 1;
+      }
       return;
     }
     if (code === 'Enter' || code === 'KeyB') this._buy();

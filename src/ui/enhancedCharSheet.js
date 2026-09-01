@@ -53,6 +53,7 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../systems/statMods.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { carriedWeight, NAV_BUTTONS } from './charsheet.js';
+import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
 import { overlayAction } from './input.js';
@@ -86,7 +87,9 @@ export function sheetModel(entity) {
     race: e.race ?? 'Breton',
     career: e.career?.name ?? '',
     level: e.level ?? 1,
-    gold: e.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0,
+    // The classic sheet's own read: GetGoldAmount, coins plus every
+    // letter of credit (DaggerfallCharacterSheetWindow.cs:401).
+    gold: totalGoldAmount(e),
     health: { now: e.health ?? 0, max: e.maxHealth ?? 0 },
     magicka: { now: e.magicka ?? 0, max: e.maxMagicka ?? 0 },
     // FatigueMultiplier is the DISPLAY divisor: DFU stores fatigue in

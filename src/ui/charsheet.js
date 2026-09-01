@@ -27,6 +27,7 @@
 
 import { statUp, statDown } from './chargen.js';
 import { itemWeight } from '../systems/inventory.js';   // AUDIT 17e F30
+import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // U10
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -305,7 +306,12 @@ export class CharSheet {
     label(e.race ?? 'Breton', 41, 14);
     label(e.career?.name ?? '', 46, 24);
     label(e.level ?? 1, 45, 34);
-    label(e.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0, 39, 44);
+    // DaggerfallCharacterSheetWindow.cs:401 is
+    // `goldLabel.Text = PlayerEntity.GetGoldAmount().ToString()`, and
+    // GetGoldAmount (PlayerEntity.cs:1313-1316) is goldPieces PLUS
+    // every letter of credit in the pack - the coin stack alone
+    // under-reports a banked player by the whole letter.
+    label(totalGoldAmount(e), 39, 44);
     label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER)}/${Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER)}`, 57, 54);
     label(`${e.health}/${e.maxHealth}`, 52, 64);
     label(`${Math.trunc(carriedWeight(e))}/${entityMaxEncumbrance(e)}`, 90, 74);   // DaggerfallCharacterSheetWindow.cs:404 reads PlayerEntity.MaxEncumbrance

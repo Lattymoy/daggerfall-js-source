@@ -138,10 +138,19 @@ function enhancedSheetPageOverlay(hooks) {
     close();
   });
   return {
+    // THE HOST CONTRACT, in the hosts' own words - `input`, not
+    // `onKey`. The hosts dereference these unguarded and the DOM view
+    // only claims the keys it uses, so a missing arm is a TypeError
+    // thrown inside the host's keydown handler. Same arms as
+    // ui/pauseDoor.js and ui/inventoryDoor.js.
+    isChoiceWindow: true,
     get done() { return fired; },
-    draw() {},
-    onKey() { return false; },
-    onPointer() { return false; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* nothing on this screen moves on a clock */ },
+    draw() { /* DOM, not canvas */ },
     close,
     // `dispose` and `destroy` are both the hosts' words for the same
     // act; the overlay this replaced answered both, so this does too.
