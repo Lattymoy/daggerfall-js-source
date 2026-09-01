@@ -46,6 +46,7 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { NativeTalkWindow, preloadTalkArt, talkArtLoaded } from '../ui/nativeTalk.js';   // U8b
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
+import { preloadExteriorAutomapArt } from '../ui/exteriorAutomapWindow.js';   // ROAD-C c2/S10: the town map's native art
 
 export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
 
@@ -158,6 +159,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
       catch { console.warn('[town] FONT0003.FNT unavailable; talk UI text disabled'); }
       if (palette) preloadTalkArt({ renderer, fetchBytes, palette });   // U8b: TALK01I0 (art-less keeps the text chain)
+      // ROAD-C c2/S10: the town map's native art (AMAP00I0 + TOWN00I0).
+      // ONE preload for BOTH exterior hosts, because this is the one
+      // seam both of them already share - and it is fire-and-forget for
+      // the same reason the talk art is: an art-less boot keeps the
+      // window's keyed fallback.
+      if (palette) {
+        preloadExteriorAutomapArt({ renderer, fetchBytes, palette })
+          .catch(() => console.warn('[town] AMAP00I0/TOWN00I0 unavailable; the town map keeps its keyed shell'));
+      }
       try {
         factions = new FactionFile();
         factions.load(await fetchBytes('FACTION.TXT'));
@@ -886,9 +896,41 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // window has none), and a window that HAS one may clear this slot
     // from inside it (S40's does, through the PopToHUD door), so the
     // `.done` read below is optional too.
-    if (v) overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+    // ROAD-C c2/S10: a window with the THREE-PHASE seam takes the press
+    // through it and never through `click` as well - two 'down's would
+    // arm the automap chrome's press-hold machine twice.
+    if (v) {
+      if (overlay.pointer) overlay.pointer('down', v[0], v[1], e.button ?? 0);
+      else overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+    }
     if (overlay?.done) dropOverlay();
     return true;   // an open native window owns the pointer either way
+  }
+
+  /**
+   * ROAD-C c2/S10: THE OTHER TWO POINTER PHASES, on this slot.
+   * dungeonContext has carried `overlayPointer` since c2/S4 because the
+   * automap's chrome is press-HOLD and drag driven; the town map is the
+   * same machine (ui/automapChrome.js, EXTERIOR_ACTIONS) in the
+   * exterior hosts' slot, and a host that delivers `down` alone latches
+   * a drag that spins the map forever - with nothing to error on.
+   *
+   * A window that has no `pointer` is untouched: every window on this
+   * slot before S10 keeps the click-only seam above.
+   *
+   * The RELEASE is delivered WHEREVER it lands, including outside the
+   * canvas (the listener is on the window, not the canvas) - the
+   * chrome's own header records why that is deliberate.
+   */
+  function pointer(phase, e) {
+    if (!overlay?.pointer) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.pointer(phase, v ? v[0] : -1, v ? v[1] : -1, e.button ?? 0);
+    if (overlay?.done) dropOverlay();
+    return true;
   }
 
   /** U37: THE HOVER SEAM - native coords to whatever window is up.
@@ -915,7 +957,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's
+    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a

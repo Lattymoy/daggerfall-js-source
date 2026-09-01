@@ -684,15 +684,13 @@ test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   assert.ok(windows.length >= 8, `${windows.length} enhanced windows found`);
   assert.deepEqual(windows.filter((w) => !seen.has(w)), [],
     'a window nothing reaches is a window nobody can open');
-  // ...and no src/ui module at all is orphaned. ONE staging exemption,
-  // dated: automapChrome.js is C2 flight 1's foundation (the automap
-  // action tables and drag protocol) and its consumers are the automap
-  // WINDOWS flight 2 builds - until those land nothing imports it.
-  // Remove the exemption when flight 2 mounts the windows; a chrome
-  // still orphaned after that is exactly PX24's fault again.
-  const staged = ['src/ui/automapChrome.js'];
-  assert.deepEqual(
-    files.filter((f) => f.startsWith('src/ui/') && !seen.has(f) && !staged.includes(f)), []);
-  assert.deepEqual(staged.filter((f) => seen.has(f)), [],
-    'a staged module is now reachable - delete its exemption above');
+  // ...and no src/ui module at all is orphaned. THE STAGING EXEMPTION
+  // IS GONE, as its own counter-pin instructed: ROAD-C c2/S10 mounted
+  // ui/automapChrome.js in the exterior automap window (the nine rects,
+  // the EXTERIOR_ACTIONS table and the press-hold/drag machine), so the
+  // chrome is reached from the exterior hosts like everything else and
+  // the list is unconditional again.
+  assert.deepEqual(files.filter((f) => f.startsWith('src/ui/') && !seen.has(f)), []);
+  assert.ok(seen.has('src/ui/automapChrome.js'),
+    'the automap chrome is reachable - c2/S10 mounted it in the town map');
 });

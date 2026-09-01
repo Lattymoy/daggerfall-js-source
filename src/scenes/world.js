@@ -72,6 +72,7 @@ import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: th
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
@@ -3485,15 +3486,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     // conversion (setTopics' playerPos closure); the overlay holds
     // the motor, so the open-time capture stays truthful
     const local = [feet[0] - t[0] - b.locOrigin[0], feet[1] - t[1] - b.locOrigin[1], feet[2] - t[2] - b.locOrigin[2]];
+    const locId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    // ROAD-C c2/S10: the arrow/stamp is the REAL mesh 99900, rasterised
+    // once from its CPU data (ui/meshStamp.js). Kicked off here and
+    // read lazily - the window draws its two other layers meanwhile.
+    getGpuMesh(99900).catch(() => {});
     townTalk.showOverlay(new ExteriorAutomapWindow({
       locationName: dfLoc.name,
-      locationId: `${dfLoc.regionIndex}:${dfLoc.name}`,
+      locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
       blocks: b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData })),
       playerPos: () => local,
+      // the marker law is DFU's modulo of the MAP PIXEL frame, so the
+      // window needs the location's origin inside that pixel back
+      locOrigin: [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]],
+      isCustomLocation: hasCustomLocationPosition(dfLoc),
       playerYaw: () => cam.yaw,
+      arrowMesh: () => cpuModels.get(99900) ?? null,
+      compassArt: hudArt,
       directory: () => townTalk.directory,
-      discovered: () => discoveredBuildings(`${dfLoc.regionIndex}:${dfLoc.name}`),
+      discovered: () => discoveredBuildings(locId),
     }));
   };
   // Edge-detect latch shared with the mode machine: a held key must not
@@ -3838,7 +3850,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The listeners are on the WINDOW, not the canvas, because a release
   // outside the canvas must still end the drag.
   addEventListener('pointermove', (e) => { modes?.pointermove?.(e); });
-  addEventListener('pointerup', (e) => { modes?.pointerup?.(e); });
+  // ROAD-C c2/S10: townTalk's slot needs the RELEASE too, for the same
+  // reason. Its 'down' rides `townTalk.pointerdown` and its 'move'
+  // rides `townTalk.hover` (the mousemove listener below), so this is
+  // the third phase and the only one with no existing route - a town
+  // map that never hears the release keeps panning forever.
+  addEventListener('pointerup', (e) => { townTalk.pointer('up', e); modes?.pointerup?.(e); });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());

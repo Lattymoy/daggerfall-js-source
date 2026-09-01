@@ -39,7 +39,7 @@ import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, 
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getTerrainGroundArchive, getNatureArchive, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
-import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
+import { RMB_SIDE, layoutLocation, hasCustomLocationPosition } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
@@ -1278,13 +1278,22 @@ export async function bootExterior(canvas, renderer, params, status) {
     // DaggerfallUI.cs:633-650); this host always stands on a location.
     toggleAutomap: () => {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
+      // ROAD-C c2/S10: the real mesh-99900 arrow, rasterised once by
+      // ui/meshStamp.js.
+      getGpuMesh(99900).catch(() => {});
       townTalk.showOverlay(new ExteriorAutomapWindow({
         locationName: dfLocation.name ?? locationName,
         locationId: locId,
         gridW: loc.width, gridH: loc.height,
         blocks: loc.blocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData })),
         playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
+        // this host lays the location at the map pixel's own origin, so
+        // the location frame IS the tile frame DFU's modulo needs
+        locOrigin: [0, 0, 0],
+        isCustomLocation: hasCustomLocationPosition(dfLocation),
         playerYaw: () => cam.yaw,
+        arrowMesh: () => cpuModels.get(99900) ?? null,
+        compassArt: hudArt,
         directory: () => townTalk.directory,
         discovered: () => discoveredBuildings(locId),
       }));
@@ -1419,7 +1428,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // The listeners are on the WINDOW, not the canvas, because a release
   // outside the canvas must still end the drag.
   addEventListener('pointermove', (e) => { modes?.pointermove?.(e); });
-  addEventListener('pointerup', (e) => { modes?.pointerup?.(e); });
+  // ROAD-C c2/S10: townTalk's slot needs the RELEASE too, for the same
+  // reason. Its 'down' rides `townTalk.pointerdown` and its 'move'
+  // rides `townTalk.hover` (the mousemove listener below), so this is
+  // the third phase and the only one with no existing route - a town
+  // map that never hears the release keeps panning forever.
+  addEventListener('pointerup', (e) => { townTalk.pointer('up', e); modes?.pointerup?.(e); });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());

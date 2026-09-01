@@ -1226,6 +1226,25 @@ void main() {
 
   clearScreenScissor() { this.gl.disable(this.gl.SCISSOR_TEST); }
 
+  /**
+   * ROAD-C c2/S10: THE SCISSOR-ONLY BRACKET, and it exists for the same
+   * reason beginPanelFrame does - the renderer owns GL state, and a
+   * leaked SCISSOR_TEST silently blanks the next host frame's clear
+   * rather than erroring (see setScreenScissor's own warning).
+   *
+   * The exterior automap needs a clipped region but NOT a panel frame:
+   * it is a CPU composition of screen quads drawn OVER the window art
+   * that is already on the canvas, so beginPanelFrame's beginFrame -
+   * which resizes the canvas and clears it - would wipe the chrome it
+   * is composing into. This is the narrow bracket for that case: set,
+   * run, clear, in a finally, so a throwing body cannot leave the
+   * scissor on.
+   */
+  screenScissor(rect, body) {
+    this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);
+    try { return body(); } finally { this.clearScreenScissor(); }
+  }
+
   drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1], opts = {}) {
     const gl = this.gl;
     if (!this.screenQuadProgram) {
@@ -1234,11 +1253,24 @@ layout(location=0) in vec2 aPos;
 uniform vec4 uDst;      // x, y, w, h in pixels (top-left origin)
 uniform vec2 uCanvas;
 uniform vec4 uSrc;      // u0, v0, u1, v1
+uniform vec4 uRot;      // cos, sin, pivotX, pivotY (screen pixels)
+uniform int uRotOn;
 out vec2 vUV;
 void main() {
   vec2 p = aPos * 0.5 + 0.5;                     // 0..1
   vUV = mix(uSrc.xy, uSrc.zw, vec2(p.x, p.y));
   vec2 px = uDst.xy + p * uDst.zw;
+  // ROAD-C c2/S10: the ONE new GL of the exterior automap. DFU's town
+  // map is a world quad seen by an orthographic camera that is rotated
+  // about -up, so its layout texture, its arrow and its stamp all draw
+  // TURNED. This is that turn, in the screen-quad's own space: a plain
+  // 2D rotation about a pixel pivot, applied AFTER uDst places the
+  // rect. It deliberately does NOT touch mirrorProjectionX - screen
+  // quads run with CULL_FACE disabled and have no facing to mirror.
+  if (uRotOn == 1) {
+    vec2 d = px - uRot.zw;
+    px = uRot.zw + vec2(d.x * uRot.x - d.y * uRot.y, d.x * uRot.y + d.y * uRot.x);
+  }
   vec2 ndc = vec2(px.x / uCanvas.x * 2.0 - 1.0, 1.0 - px.y / uCanvas.y * 2.0);
   gl_Position = vec4(ndc, 0.0, 1.0);
 }`;
@@ -1273,6 +1305,8 @@ void main() {
         useTex: gl.getUniformLocation(this.screenQuadProgram, 'uUseTex'),
         blendTex: gl.getUniformLocation(this.screenQuadProgram, 'uBlendTex'),
         color: gl.getUniformLocation(this.screenQuadProgram, 'uColor'),
+        rot: gl.getUniformLocation(this.screenQuadProgram, 'uRot'),
+        rotOn: gl.getUniformLocation(this.screenQuadProgram, 'uRotOn'),
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -1304,6 +1338,14 @@ void main() {
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
     gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
+    // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
+    // space dst is (the screen offset applies to both, so a rotated
+    // quad and its unrotated siblings letterbox together).
+    const rot = opts.rotate ?? null;
+    gl.uniform1i(this._screenQuad.rotOn, rot ? 1 : 0);
+    if (rot) {
+      gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
+    }
     if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); this.stats.texBinds++; }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -

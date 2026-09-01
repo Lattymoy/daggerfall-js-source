@@ -294,18 +294,18 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:740` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:1021` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1273` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1669` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1683` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:352` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:369` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:536` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1236` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1242` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1656` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2712` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:4049` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5109` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6275` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1237` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1243` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1657` - *  through the `if`. This host's FLAGGED note (below, at the mode
+- `src/scenes/world.js:2713` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:4066` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:5126` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+- `src/scenes/world.js:6292` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1352` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1370` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1582` - is the quest machine's, FLAGGED with it.
@@ -386,7 +386,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/enhancedMenu.js:1722` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/enhancedMenu.js:1893` - if (action === 'delete') return;   // FLAGGED: no save manager yet
-- `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
+- `src/ui/exteriorAutomapWindow.js:65` - - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
 - `src/ui/hudLarge.js:56` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
