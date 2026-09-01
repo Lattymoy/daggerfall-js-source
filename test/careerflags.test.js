@@ -72,13 +72,16 @@ test('CF1 expertise: wired into the attack ladder in DFU\'s slot - player only, 
 // 2. ACUTE HEARING (DaggerfallEnemy.Start :53-71)
 // ---------------------------------------------------------------
 
-test('CF1 hearing: x1.25 with the career bit, x1.5 with the unported enchantment\'s flag, x1 without', () => {
+test('CF1 hearing: x1.25 with the career bit, x1.5 with the enchantment\'s flag, x1 without', () => {
   assert.equal(acuteHearingMultiplier(null), 1);
   assert.equal(acuteHearingMultiplier({ career: {} }), 1);
   const hearer = { career: { abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY_BITS.acuteHearing } };
   assert.equal(acuteHearingMultiplier(hearer), 1.25);
-  assert.equal(acuteHearingMultiplier({ ...hearer, improvedAcuteHearing: true }), 1.5,
-    'ImprovedAcuteHearing waits on the enchantment arc - the routed gap, not this reader');
+  // AUDIT 39 moved this pin: ImprovesTalents(0) is not unported, it
+  // decodes into the enchantment fold's bag - and the reader was asking a
+  // top-level entity field nothing writes, so the improved arm was dead.
+  assert.equal(acuteHearingMultiplier({ ...hearer, _enchantMods: { improvedAcuteHearing: true } }), 1.5,
+    'ImprovedAcuteHearing reads the fold, where ImprovesTalents writes it');
 });
 
 test('CF1 hearing: the multiplier reaches the ONE clip seam\'s maxDistance', () => {

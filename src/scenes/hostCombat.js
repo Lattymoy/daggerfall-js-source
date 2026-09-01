@@ -10,6 +10,7 @@
 
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
+import { liveLycanthropy } from '../systems/lycanthropy.js';   // AUDIT 39: SuppressOptionalCombatVoices, the racial override's own gate
 import {
   ENEMY_GROUPS, dice100,
   enemyKnockbackApplies, weaponKnockbackSpeed, enemyWeightClassicUnits,   // MT-ii: ApplyDamageToNonPlayer's knockback
@@ -209,6 +210,17 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
   });
 }
 
+/** RacialOverrideEffect.SuppressOptionalCombatVoices
+ *  (RacialOverrideEffect.cs:37-40, false by default). LycanthropyEffect
+ *  .cs:105-108 is the ONE override and it returns isTransformed - a
+ *  transformed lycanthrope has its own attack voices (the beast bark
+ *  the hosts play on a landed hit), so the human grunt and scream are
+ *  silenced while the beast is out. Vampirism does not override it; it
+ *  overrides the CLIP instead (the grunt below). Asked AHEAD of the
+ *  Dice100 draw at both sites, exactly as DFU asks it, so the roll
+ *  stream is unchanged. */
+export const suppressOptionalCombatVoices = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+
 /** The PLAYER's 20% attack grunt at the hit frame - never for a bow
  *  (WeaponManager.cs:385-389). V5: the racial override's clip rides
  *  GetRaceGenderAttackSound's own order (DaggerfallEntity.cs:979-988)
@@ -216,7 +228,7 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
  *  a vampire grunts as a vampire, by gender. Returns
  *  { clip, pitchLift } or null. */
 export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
-  if (!combatVoicesEnabled() || isBow) return null;
+  if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
   const vamp = vampireAttackVoice(playerEntity, rolls);
   if (vamp != null) return { clip: vamp, pitchLift: 0 };
@@ -259,7 +271,7 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
  * in the port.
  */
 export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
-  if (!combatVoicesEnabled() || !(damage > 0)) return null;
+  if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || !(damage > 0)) return null;
   if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
   return playerVoice({
     race: RACES[playerEntity.race] ?? 1,
@@ -382,7 +394,13 @@ export function applyDamageToNonPlayer(attacker, target, {
 } = {}) {
   if (!target || !attacker) return 0;   // :305-306, `senses.Target == null`
   const aEnt = attacker.entity, tEnt = target.entity;
-  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls });
+  // AUDIT 39: the monster multi-attack gate reads the PLAYER's Reflexes
+  // setting even when the player is nowhere in the strike
+  // (FormulaHelper.cs:551/:654), and neither entity here carries it.
+  // Every pool seeds its striker's melee timer from the same field
+  // (`new EnemyAttack({ ..., reflexes: playerEntity.reflexes })`), so
+  // the value the game holds is already on the attacker's record.
+  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls, playerReflexes: attacker.attack?.reflexes ?? null });
   // :316-317 - the ATTACKER's normal-power concealment breaks on a
   // landed blow, whoever it landed on.
   if (damage > 0 && attacker.breakConcealment) attacker.breakConcealment();

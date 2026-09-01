@@ -118,12 +118,16 @@ export const isHeavyDamage = (damage, maxHealth) => damage >= Math.trunc(maxHeal
  * both read the player's OWN race and gender, roll the same 0..0.3
  * pitch lift, and skip the High Elf swap entirely.
  *
- * FLAGGED, both sites: DFU consults the racial override first -
- * `GetCustomRaceGenderAttackSoundData` for the grunt (vampire and
- * lycanthrope voices) and `SuppressOptionalCombatVoices` for the pain
- * - and the port has no racial-override effect to ask yet. Both arms
- * idle here rather than silently: when the vampirism arc lands, this
- * is the one function that has to learn about it.
+ * AUDIT 39 retired the flag that stood here. It said the port had no
+ * racial-override effect to ask, and both curses had already shipped:
+ * `GetCustomRaceGenderAttackSoundData` picks the grunt's clip at the
+ * CALLER (hostCombat's playerAttackGrunt asks the vampire), and
+ * `SuppressOptionalCombatVoices` - the half that was genuinely
+ * unported - gates BOTH voices at the same caller, ahead of their
+ * Dice100 draws, because that is where DFU tests it
+ * (WeaponManager.cs:385-388, PlayerFootsteps.cs:352-354). This
+ * function stays what it always was: the clip tables, by race and
+ * gender, with none of PlayCombatVoice's NPC handling.
  */
 export function playerVoice({ race, gender, isAttack, heavyDamage = false, rolls = Math.random }) {
   const clip = isAttack

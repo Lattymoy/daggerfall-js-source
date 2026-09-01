@@ -102,8 +102,11 @@ test('AUDIT 21 F2: Adrenaline Rush is APPLIED, not merely decoded', () => {
     'trunc(100/8) = 12, and 12 < 12 is false');
   assert.equal(adrenalineRushToHit(rusher(11, 100), plain(50, 100)), ADRENALINE_RUSH_MODIFIER);
 
-  // the improved modifier is reachable if an enchantment ever mints it
-  const improved = { ...rusher(11, 96), improvedAdrenalineRush: true };
+  // the improved modifier is reachable, and AUDIT 39 moved the read: the
+  // flag lives in the enchantment fold's bag (`_enchantMods`, where
+  // ImprovesTalents(2) writes it), not on a top-level entity field that
+  // nothing in src ever assigned.
+  const improved = { ...rusher(11, 96), _enchantMods: { improvedAdrenalineRush: true } };
   assert.equal(adrenalineRushToHit(improved, plain(50, 96)), IMPROVED_ADRENALINE_RUSH_MODIFIER);
   assert.notEqual(ADRENALINE_RUSH_MODIFIER, IMPROVED_ADRENALINE_RUSH_MODIFIER);
 
