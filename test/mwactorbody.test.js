@@ -295,5 +295,46 @@ test('AUDIT A4/A5: a shared body carries no ONE enemy’s substitution, and no a
   assert.match(svc, /export function mwBodyGeneration\(\) \{ return _gen; \}/, 'an actor cannot tell which data its body came from');
   const rig = readFileSync('src/characters/mwActorRig.js', 'utf8');
   assert.match(rig, /actor\._mwGen === mwBodyGeneration\(\)/, 'a stale body is kept across a re-attach');
-  assert.match(rig, /actor\._mwGen = mwBodyGeneration\(\); \}\)/, 'the stamp is never written');
+  // AUDIT-N F3: the stamp is written ON SETTLE, beside the identity key
+  // - which is the guard against an identity that changes while a
+  // build is in flight. The settle records which identity actually
+  // arrived, so a mismatch the next frame re-asks instead of serving
+  // the old body under the new name.
+  assert.match(rig, /actor\._mwGen = mwBodyGeneration\(\); actor\._mwKey = want;/, 'the stamp is never written');
+});
+
+test('AUDIT-N F4: the test seam frees meshes like the eviction path does', async () => {
+  // AUDIT A2 made eviction hand the GPU mesh back. The RESET seam kept
+  // doing `BODIES.clear()`, which drops the map and leaves every mesh,
+  // buffer and texture in it alive with nobody holding a renderer to
+  // free them. That cost nothing while only this suite called it - no
+  // renderer, no meshes - and then the arm probe started calling it in
+  // a real browser against a real GL context. A seam that behaves
+  // differently from the path it stands in for hides the bug it exists
+  // to reveal.
+  const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
+  assert.match(svc, /export function _resetActorBodiesForTests\(\) \{\n  evictAll\(\);/,
+    'the reset drops the map without freeing what is in it');
+  assert.ok(!/_resetActorBodiesForTests\(\) \{\n  BODIES\.clear\(\);/.test(svc),
+    'the bare clear is back');
+  // ...and eviction is still the thing that frees, so the seam above
+  // is not merely calling a differently-named clear.
+  assert.match(svc, /const body = await pending; if \(body\) releaseMwBodyMesh\(body\);/,
+    'eviction stopped handing the mesh back');
+});
+
+test('AUDIT-N F5: the service DECLARES the beast to the composer', () => {
+  // The refusal lives in composeWornArmor and is opt-in (default
+  // false, so every existing caller keeps its behaviour). A caller
+  // that forgets to say puts boots on a Khajiit and nothing complains
+  // - measured: a mutant that dropped `beast` from this call survived
+  // every behavioural test of the law itself.
+  const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
+  assert.match(svc, /bodyPool: cat\.parts, female, beast, colourOf,/,
+    'the actor service composes an outfit without saying what race is wearing it');
+  // ...and the PLAYER's own body says it too, from the same argument
+  // catalogRace resolved.
+  assert.match(readFileSync('src/combat/fpArm.js', 'utf8'),
+    /bodyPool: parts, female, beast, colourOf \}\)/,
+    'the player body composes without declaring the beast');
 });

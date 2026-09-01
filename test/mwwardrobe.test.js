@@ -152,8 +152,17 @@ test('NPC3b: the crowd never spends a draw from DFU’s shared PRNG', () => {
   assert.ok(!/\bMath\.random\b|\bsrand\b|\brand\(/.test(code), 'the wardrobe rolls dice instead of hashing a seed');
   assert.match(w, /function spread\(seed\)/, 'there is no self-contained spread');
   const ext = readFileSync('src/scenes/exterior.js', 'utf8');
-  assert.match(ext, /person\._mwSeed \?\?= \(_mwTownSeed = \(_mwTownSeed \+ 0x9e3779b9\) \| 0\);/,
-    'the per-person seed is not assigned once');
+  // AUDIT-N F3: the seed follows the IDENTITY, not the pool slot. It
+  // was `person._mwSeed ??= ...`, assigned once and never again - but a
+  // walker is a POOL ENTRY whose archive, sex and name re-roll on every
+  // spawn (townPopulation.js:116, _randomiseNPC), so a recycled walker
+  // wore the clothes rolled for the person they replaced. Once per
+  // IDENTITY is the law; it is still exactly once while they walk.
+  assert.match(ext, /if \(person\._mwArchive !== person\.archive\) \{/,
+    'the seed no longer re-rolls when the person does');
+  assert.match(ext, /person\._mwSeed = \(_mwTownSeed = \(_mwTownSeed \+ 0x9e3779b9\) \| 0\);/,
+    'the per-person seed is not the accumulating step');
+  assert.ok(!/_mwSeed \?\?=/.test(ext), 'the assign-once-forever seed is back');
   // ...and the body draws INSTEAD of the billboard, sprite below.
   assert.match(ext, /if \(_drawMwTownsperson\(person, popDt, proj, view, eye\)\) continue;/);
   const seam = ext.indexOf('if (_drawMwTownsperson(');

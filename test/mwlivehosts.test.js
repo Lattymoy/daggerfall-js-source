@@ -60,8 +60,17 @@ test('NPC4b: the seed is the person\'s own, assigned once, and never from DFU\'s
   // srand/rand is ONE stream that names, loot and quests all pull
   // from. A draw spent on a shirt shifts every later roll in the game.
   const w = rd('src/scenes/world.js');
-  assert.match(w, /person\._mwSeed \?\?= \(_mwTownSeed = \(_mwTownSeed \+ 0x9e3779b9\) \| 0\);/,
-    'the crowd\'s wardrobe seed is not the once-per-person step');
+  // AUDIT-N F3: the seed follows the IDENTITY, not the pool slot. It
+  // was `person._mwSeed ??= ...`, assigned once and never again - but a
+  // walker is a POOL ENTRY whose archive, sex and name re-roll on every
+  // spawn (townPopulation.js:116, _randomiseNPC), so a recycled walker
+  // wore the clothes rolled for the person they replaced. Once per
+  // IDENTITY is the law; it is still exactly once while they walk.
+  assert.match(w, /if \(person\._mwArchive !== person\.archive\) \{/,
+    'the seed no longer re-rolls when the person does');
+  assert.match(w, /person\._mwSeed = \(_mwTownSeed = \(_mwTownSeed \+ 0x9e3779b9\) \| 0\);/,
+    'the per-person seed is not the accumulating step');
+  assert.ok(!/_mwSeed \?\?=/.test(w), 'the assign-once-forever seed is back');
   // The counter must live ABOVE the frame loop, or every frame starts
   // it at zero again and every newly spawned person in the town shares
   // one seed - a street of identical shirts.

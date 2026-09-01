@@ -27,7 +27,7 @@ import {
 } from '../formats/mwFirstPerson.js';
 import { advanceClip, resetClip, sampleTrack } from '../formats/mwAnim.js';
 import { uploadMwBodyMesh, drawMwBodyAt, FP_IDLE_BASE } from '../combat/fpArm.js';
-import { mwActorBody, mwCreatureBody, mwBodyGeneration } from './mwActorBody.js';
+import { mwActorBody, mwCreatureBody, mwBodyGeneration, mwBodyKey } from './mwActorBody.js';
 
 /**
  * NPC3a: ASK FOR AN ACTOR'S BODY, ONCE, WITHOUT EVER BLOCKING.
@@ -48,19 +48,37 @@ import { mwActorBody, mwCreatureBody, mwBodyGeneration } from './mwActorBody.js'
  * @param mobileType used when `opts` is null
  */
 export function requestMwBody(actor, opts, mobileType) {
+  // AUDIT-N F3: ...and only settled for the IDENTITY it was asked
+  // with. The wandering crowd is a POOL: TownPopulation._randomiseNPC
+  // re-rolls a walker's archive, sex and name on EVERY spawn and hands
+  // back the same object (townPopulation.js:116), so a recycled walker
+  // who was a Redguard man returns as a Nord woman - and kept the
+  // Redguard man's body, because the only thing the guard below
+  // compared was the data generation, which had not changed. The key
+  // is the identity, so an actor that becomes someone else asks again.
+  const want = opts ? `npc/${mwBodyKey(opts)}` : `crea/${mobileType}`;
   // AUDIT A5: a settled answer is only settled for the DATA it was
   // built from. The service drops its cache on a re-attach, but an
   // actor holds its own reference and would have kept drawing a body
   // made of archives the player has replaced - forever, because it
   // never asks twice. The stamp is what lets it notice.
-  if (actor._mwBody !== undefined && actor._mwGen === mwBodyGeneration()) return actor._mwBody;
+  if (actor._mwBody !== undefined && actor._mwGen === mwBodyGeneration()
+    && actor._mwKey === want) return actor._mwBody;
   if (actor._mwPending) return null;
   actor._mwPending = true;
+  // The key is stamped ON SETTLE, not here, and that is the whole
+  // guard against an identity that changes mid-build: the settle
+  // records which identity actually arrived, so the next frame sees
+  // the mismatch and re-asks rather than serving the old body under
+  // the new name.
   // A humanoid wears a dressed body; a beast IS a model. One door,
   // two builders - a rat is not a skeleton in clothes.
   (opts ? mwActorBody(opts) : mwCreatureBody(mobileType))
-    .then((body) => { actor._mwBody = body; actor._mwState = mwActorState(); actor._mwGen = mwBodyGeneration(); })
-    .catch(() => { actor._mwBody = null; actor._mwGen = mwBodyGeneration(); })
+    .then((body) => {
+      actor._mwBody = body; actor._mwState = mwActorState();
+      actor._mwGen = mwBodyGeneration(); actor._mwKey = want;
+    })
+    .catch(() => { actor._mwBody = null; actor._mwGen = mwBodyGeneration(); actor._mwKey = want; })
     .finally(() => { actor._mwPending = false; });
   return null;
 }

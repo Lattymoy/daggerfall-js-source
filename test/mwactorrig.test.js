@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { tpActorDeps } from './mwFixtures.mjs';
 import { mwActorBody, _resetActorBodiesForTests } from '../src/characters/mwActorBody.js';
 import { _resetActorCatalogForTests } from '../src/formats/mwActorCatalog.js';
-import { mwActorState, drawMwActor, actorGroupFor } from '../src/characters/mwActorRig.js';
+import { mwActorState, drawMwActor, actorGroupFor, requestMwBody } from '../src/characters/mwActorRig.js';
 
 const reset = () => { _resetActorBodiesForTests(); _resetActorCatalogForTests(); };
 
@@ -203,8 +203,17 @@ test('NPC2: the enemy remembers its worn pieces, and the foe pass falls back to 
   // draws actors rides that one implementation - the dungeon's foes
   // and the street's guards alike. Two copies is how they drift.
   const rig = readFileSync('src/characters/mwActorRig.js', 'utf8');
-  assert.match(rig, /if \(actor\._mwBody !== undefined && actor\._mwGen === mwBodyGeneration\(\)\) return actor\._mwBody;/,
-    'a settled answer is re-derived every frame, or is kept across a re-attach');
+  assert.match(rig, /if \(actor\._mwBody !== undefined && actor\._mwGen === mwBodyGeneration\(\)\s*\n?\s*&& actor\._mwKey === want\) return actor\._mwBody;/,
+    'a settled answer is re-derived every frame, or is kept across a re-attach or an identity change');
+  // AUDIT-N F3: THE THIRD THING A SETTLED ANSWER IS SETTLED FOR.
+  // The wandering crowd is a POOL - TownPopulation._randomiseNPC
+  // re-rolls a walker's archive, sex and name on every spawn and hands
+  // back the SAME object (townPopulation.js:116) - so a recycled walker
+  // who was a Redguard man came back as a Nord woman still wearing the
+  // Redguard man's body. Nothing had changed that the guard could see:
+  // the data generation was the same.
+  assert.match(rig, /const want = opts \? `npc\/\$\{mwBodyKey\(opts\)\}` : `crea\/\$\{mobileType\}`;/,
+    'the remembered body is not keyed by the identity it was built for');
   assert.match(rig, /if \(actor\._mwPending\) return null;/, 'a build in flight blocks the frame');
   assert.match(rig, /\(opts \? mwActorBody\(opts\) : mwCreatureBody\(mobileType\)\)/,
     'beasts do not reach the creature builder');
@@ -225,4 +234,64 @@ test('NPC2: the enemy remembers its worn pieces, and the foe pass falls back to 
   // A held foe holds its frame (S19 FreezeAnims) - the body obeys the
   // same rule the sprite does.
   assert.match(ctx, /dt: paralyzed \? 0 : dt,/, 'a paralysed foe keeps animating');
+});
+
+test('AUDIT-N F3: an actor asks ONCE per identity - and asks again when it becomes someone else', async () => {
+  // BEHAVIOURAL, not a source scan, because the source scan for this
+  // law matched the wrong one of two identical lines: a mutant that
+  // deleted the identity stamp from the SETTLE arm left the CATCH
+  // arm's copy in place, the regex found that, and the mutant lived.
+  //
+  // What is observed is `_mwPending` - "did this ask START A BUILD" -
+  // and NOT the body that comes back. requestMwBody takes no deps
+  // (production has none to give), so here the build settles to null,
+  // and a test that compared the ANSWERS would pass for a guard that
+  // did nothing at all: null === null on every branch. The first cut
+  // of this pin did exactly that.
+  reset();
+  const opts = { race: 'fprace', female: false, faceIndex: 0, worn: [] };
+  const actor = {};
+  assert.equal(requestMwBody(actor, opts, -1), null, 'the first ask must not block');
+  assert.equal(actor._mwPending, true, 'the first ask did not start a build');
+  for (let i = 0; i < 100 && actor._mwPending; i++) await new Promise((r) => setTimeout(r, 1));
+  assert.equal(actor._mwPending, false, 'the build never settled');
+  assert.ok(actor._mwKey, 'the settle did not record WHICH identity arrived');
+  const settled = actor._mwBody;
+
+  // SETTLED: the same identity is answered off the actor, and starts
+  // NOTHING. Without the stamp this re-asks on every frame for the
+  // rest of the session - the stutter the service exists to prevent.
+  assert.equal(requestMwBody(actor, opts, -1), settled);
+  assert.equal(actor._mwPending, false, 'a settled identity started a second build');
+  assert.equal(requestMwBody(actor, opts, -1), settled);
+  assert.equal(actor._mwPending, false);
+
+  // ...and a DIFFERENT identity IS a new question. This is the
+  // recycled walker: same object, new archive, new sex.
+  requestMwBody(actor, { ...opts, female: true }, -1);
+  assert.equal(actor._mwPending, true, 'the actor kept the previous identity\'s body');
+  for (let i = 0; i < 100 && actor._mwPending; i++) await new Promise((r) => setTimeout(r, 1));
+
+  // A CREATURE's identity is its type, by the same law.
+  // BOTH ARMS STAMP. The catch arm is pinned by COUNT rather than by
+  // observation, and the limit is stated rather than hidden: this
+  // suite has no way to make a build REJECT - requestMwBody takes no
+  // deps, and mwActorBody answers null rather than throwing on missing
+  // data, so the settle path is the only one a test here can reach. A
+  // mutant that stripped the stamp from the catch arm alone survived
+  // the observation above, and this is what kills it.
+  const rigSrc = readFileSync('src/characters/mwActorRig.js', 'utf8');
+  assert.equal((rigSrc.match(/actor\._mwKey = want;/g) ?? []).length, 2,
+    'the settle and the refusal must BOTH record which identity arrived');
+
+  const beast = {};
+  requestMwBody(beast, null, 4);
+  for (let i = 0; i < 100 && beast._mwPending; i++) await new Promise((r) => setTimeout(r, 1));
+  assert.equal(beast._mwKey, 'crea/4');
+  requestMwBody(beast, null, 4);
+  assert.equal(beast._mwPending, false, 'a settled creature started a second build');
+  requestMwBody(beast, null, 17);
+  assert.equal(beast._mwPending, true, 'a zombie was served the rat\'s body');
+  for (let i = 0; i < 100 && beast._mwPending; i++) await new Promise((r) => setTimeout(r, 1));
+  reset();
 });

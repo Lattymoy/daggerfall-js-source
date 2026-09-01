@@ -149,7 +149,11 @@ export async function mwActorBody(opts = {}, deps = null) {
     const colourOf = (c) => clothingColourOf(c, cat.parts, cat.archives, cat.gen);
     const worn = composeWornArmor({
       pieces: armor, armors: cat.armors ?? [], clothes: cat.clothes ?? [],
-      bodyPool: cat.parts, female, colourOf,
+      // AUDIT-N F5: the beast refusal is the reference's own equip
+      // test (clothing.cpp:212-227), and this is where the equip
+      // would have been - the wardrobe is the port's invention and
+      // nothing else stands between it and the body.
+      bodyPool: cat.parts, female, beast, colourOf,
     });
     const body = await buildTpBody({
       race, female, beast, faceIndex, faceMatch: null, weapon, hasAmmo, worn,
@@ -255,9 +259,18 @@ export function mwActorBodyStats() {
   return { builds: _builds, cached: BODIES.size, gen: _gen };
 }
 
-/** Test seam: forget every body and the build tally. */
+/** Test seam: forget every body and the build tally.
+ *
+ *  AUDIT-N F4: through evictAll, NOT `BODIES.clear()`. The clear
+ *  dropped the map and left every GPU mesh, buffer and texture in it
+ *  alive with nobody holding a renderer to free them - the exact leak
+ *  AUDIT A2 closed on the eviction path, still open on this one. It
+ *  cost nothing while only the suite called it (no renderer, no
+ *  meshes); the arm probe calls it now, in a real browser, against a
+ *  real GL context. A seam that behaves differently from the path it
+ *  stands in for is a seam that hides the bug it should reveal. */
 export function _resetActorBodiesForTests() {
-  BODIES.clear();
+  evictAll();
   _gen = null;
   _builds = 0;
 }

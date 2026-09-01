@@ -1706,7 +1706,7 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf \}\)/);
+  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, beast, colourOf \}\)/);
   // NPC1: the ARMO and CLOT walks moved to the one catalog with the
   // rest of the records - the arm receives them, and every other
   // actor build reads the same walk off the same memo.
@@ -3174,4 +3174,110 @@ test('PX33: a weapon swap notifies the panel, like every other settlement', asyn
   assert.ok(fin > 0, 'the swap still ends in a finally');
   assert.match(body.slice(fin), /for \(const fn of listeners\)/,
     'and notifies the panel there, so a throw still repaints');
+});
+
+test('AUDIT-N F1: the first-person target has ONE size, and the probe reads the shipped one', () => {
+  // MW-D43 moved the arm's pixel dial (CHAR_PIXEL 9 -> MW_ARM_PIXEL 3)
+  // and the RT (512 -> 1024) in fpArm's draw, and the probe kept its
+  // own `clientWidth / 9` against a 512 clamp. It then read a 107x80
+  // crop of a 320x240 picture and reported EIGHT failures - clip
+  // variety, arm width, x-symmetry, the look-down draw, the quarter
+  // lag - none of them real. The arms in the game were fine the whole
+  // time; the instrument had drifted off the thing it measures.
+  const arm = rd('src/combat/fpArm.js');
+  const probe = rd('tools/mwArmProbe.mjs');
+  assert.match(arm, /export function fpViewportSize\(canvas\) \{/, 'the one home is gone');
+  assert.match(arm, /const \{ pw, ph \} = fpViewportSize\(canvas\);/, 'the draw stopped using it');
+  // ONE computation. A second `clientWidth / MW_ARM_PIXEL` anywhere is
+  // the drift coming back.
+  assert.equal((arm.match(/clientWidth \/ MW_ARM_PIXEL/g) ?? []).length, 1,
+    'the viewport arithmetic has a second home again');
+  // ...and the probe must not carry a copy of the dial AT ALL - not the
+  // constant, not the clamp. COMMENT-STRIPPED FIRST: the note at that
+  // seam explains the old `clientWidth / 9`, and the first run of this
+  // very pin matched its own prose - MW-D23's failure, and NPC3b's,
+  // for the third time in this file's history.
+  assert.match(probe, /window\.__vp = window\.__fpViewport\(window\.__cv\);/,
+    'the probe computes the read viewport itself again');
+  const probeCode = probe.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/clientWidth \/ 9\b/.test(probeCode), 'the probe still hardcodes the old sprite dial');
+  assert.ok(!/\b512 \/ want[WH]/.test(probeCode), 'the probe still hardcodes the old RT clamp');
+  assert.match(probe, /window\.__fpViewport = fp\.fpViewportSize;/,
+    'the probe never receives the shipped helper');
+});
+
+test('AUDIT-N F5: a beast race cannot wear a full helm or boots (clothing.cpp:212-227)', () => {
+  // The reference refuses the EQUIP, and the refusal is a test on the
+  // ITEM'S OWN PART LIST rather than on its slot: a garment supplying
+  // PRT_Head (0), PRT_RFoot (15) or PRT_LFoot (16) cannot go on a
+  // Khajiit or an Argonian. mwclass/armor.cpp:364-378 runs the
+  // identical test, so both arms of the composer take it.
+  //
+  // The port has no equip step for a townsperson's clothes - they are
+  // the port's own invention (mwWardrobe.js) - so the composition is
+  // where the equip would have been. NPC4's wardrobe put shoes on
+  // every shopkeeper, and a static NPC's race comes off their faction,
+  // which really does answer Khajiit (FactionRaces 1) and Argonian (4).
+  const armors = [
+    { id: 'iron_helm', model: 'h.nif', name: '', enchanted: false, parts: [{ part: 0, male: 'b_hd', female: null }] },
+    { id: 'iron_boots', model: 'b.nif', name: '', enchanted: false,
+      parts: [{ part: 15, male: 'b_rf', female: null }, { part: 16, male: 'b_lf', female: null }] },
+    { id: 'iron_cuirass', model: 'c.nif', name: '', enchanted: false, parts: [{ part: 3, male: 'b_cu', female: null }] },
+  ];
+  const bodyPool = [
+    { id: 'b_hd', model: 'm/hd.nif' }, { id: 'b_rf', model: 'm/rf.nif' },
+    { id: 'b_lf', model: 'm/lf.nif' }, { id: 'b_cu', model: 'm/cu.nif' },
+  ];
+  const pieces = [
+    { templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Iron },
+    { templateIndex: ARMOR_ENUM.Boots, material: ARMOR_MATERIAL.Iron },
+    { templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
+  ];
+  // A MAN wears all three.
+  const man = composeWornArmor({ pieces, armors, bodyPool, female: false, beast: false });
+  assert.deepEqual(man.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_hd', 'b_lf', 'b_rf']);
+
+  // A BEAST wears the cuirass and nothing else - and the refusal is
+  // NAMED, because a silent drop is indistinguishable from a missing
+  // record.
+  const beast = composeWornArmor({ pieces, armors, bodyPool, female: false, beast: true });
+  assert.deepEqual(beast.adds.map((a) => a.recordId), ['b_cu'], 'a Khajiit is wearing human boots');
+  assert.equal(beast.notes.filter((n) => /beast race cannot wear/.test(n)).length, 2,
+    'the refusals are silent - the card cannot say why the boots are missing');
+  assert.ok(beast.notes.some((n) => /a head piece/.test(n)));
+  assert.ok(beast.notes.some((n) => /a right foot piece|a left foot piece/.test(n)));
+
+  // ...and the test is PER PART REFERENCE, not per slot: a garment
+  // carrying one foot and nothing else is refused just the same.
+  const oneFoot = [{ id: 'x', model: 'x.nif', name: '', enchanted: false, parts: [{ part: 16, male: 'b_lf', female: null }] }];
+  const half = composeWornArmor({
+    pieces: [{ templateIndex: ARMOR_ENUM.Boots, material: ARMOR_MATERIAL.Iron }],
+    armors: oneFoot, bodyPool, female: false, beast: true,
+  });
+  assert.equal(half.adds.length, 0, 'a one-footed garment slipped past a slot-shaped test');
+
+  // The default is NOT beast - every existing caller keeps its
+  // behaviour, and a caller that forgets to say wears its boots.
+  const dflt = composeWornArmor({ pieces, armors, bodyPool, female: false });
+  assert.equal(dflt.adds.length, 4);
+
+  // THE CLOTHING ARM TAKES THE SAME TEST (clothing.cpp is where the
+  // reference states it; armor.cpp copies it). A mutant that removed
+  // the refusal from this arm alone survived the armor cases above -
+  // and the clothing arm is the one the WARDROBE walks, so it is the
+  // arm that actually dresses a Khajiit shopkeeper.
+  const clothes = [
+    { id: 'c_shoes', type: 1, enchanted: false, parts: [{ part: 15, male: 'b_rf', female: null }, { part: 16, male: 'b_lf', female: null }] },
+    { id: 'c_shirt', type: 2, enchanted: false, parts: [{ part: 3, male: 'b_cu', female: null }] },
+  ];
+  const garments = [
+    { kind: 'clothing', name: 'Shoes', templateIndex: 147, dye: 0 },
+    { kind: 'clothing', name: 'Short Shirt', templateIndex: 165, dye: 0 },
+  ];
+  const dressedMan = composeWornArmor({ pieces: garments, armors: [], clothes, bodyPool, female: false, beast: false });
+  assert.deepEqual(dressedMan.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_lf', 'b_rf']);
+  const dressedBeast = composeWornArmor({ pieces: garments, armors: [], clothes, bodyPool, female: false, beast: true });
+  assert.deepEqual(dressedBeast.adds.map((a) => a.recordId), ['b_cu'],
+    'the wardrobe still puts human shoes on a Khajiit');
+  assert.ok(dressedBeast.notes.some((n) => /beast race cannot wear/.test(n)), 'and does it silently');
 });

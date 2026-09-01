@@ -230,3 +230,40 @@ test('NPC4c: the street NPC\'s identity is the mode machine\'s, not a second one
     /feet: \[pn\.x \+ t\[0\], pn\.y \+ t\[1\], pn\.z \+ t\[2\]\],/,
     'a street NPC\'s body stands at pixel-local feet');
 });
+
+test('AUDIT-N F2: EVERY consumer of the interior context draws its people', () => {
+  // NPC4 pulled a building's people out of the shared flat groups so
+  // the body lane could leave one person out of the sprite pass. Two
+  // hosts read that context. Only ONE of them was updated, and the
+  // other - ?interior, which draws `billboardBatches` and nothing else
+  // - silently stopped drawing anybody at all: every shopkeeper and
+  // tavern patron in that host vanished, with the suite green.
+  //
+  // NPC4b's gate asks "does this host take the BODY seam". That is a
+  // different question from "does this host still draw the SPRITES I
+  // moved", and this is the second one. When a list moves, every
+  // reader of the old list has to be found - so the readers are
+  // enumerated here, and a third one has to be added before its pin
+  // can pass.
+  const CONSUMERS = ['src/scenes/worldModes.js', 'src/scenes/interior.js'];
+  for (const f of CONSUMERS) {
+    const host = rd(f);
+    assert.match(host, /buildInteriorContext\(/, `${f} is no longer an interior-context consumer - fix the list`);
+    assert.match(host, /for \(const pn of (interiorCtx|ctx)\.people\)/,
+      `${f}: nothing walks the people, so none of them draw`);
+    assert.match(host, /if \(!pn\.active \|\| !pn\.batch\) continue;/,
+      `${f}: the away copy draws, or the people never reach a batch`);
+    assert.match(host, /drawBillboards\(_ppl|drawBillboards\(_people/,
+      `${f}: the people's batches are collected and never drawn`);
+  }
+  // ...and the sweep that finds a THIRD consumer: no other file may
+  // build an interior context without appearing above.
+  const all = ['src/scenes/worldModes.js', 'src/scenes/interior.js', 'src/scenes/world.js', 'src/scenes/exterior.js',
+    'src/scenes/dungeon.js', 'src/scenes/dungeonContext.js'];
+  for (const f of all) {
+    if (CONSUMERS.includes(f)) continue;
+    const host = rd(f);
+    assert.ok(!/await buildInteriorContext\(/.test(host),
+      `${f} builds an interior context and is not in the people-draw list`);
+  }
+});

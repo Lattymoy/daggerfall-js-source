@@ -5486,7 +5486,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // The seed is assigned ONCE per person and never drawn from
         // DFU's PRNG - that stream is shared with names, loot and
         // quests.
-        person._mwSeed ??= (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        // AUDIT-N F3: the seed follows the IDENTITY, not the slot. A
+        // walker is a pool entry whose archive, sex and name re-roll on
+        // every spawn (townPopulation.js:116), so `??=` gave a recycled
+        // walker the previous person's wardrobe seed - a Nord woman
+        // wearing the clothes rolled for the Redguard man she replaced.
+        if (person._mwArchive !== person.archive) {
+          person._mwArchive = person.archive;
+          person._mwSeed = (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        }
         const _mwBody = requestMwBody(person, townMwBodyOpts(person.archive, person._mwSeed), -1);
         if (_mwBody && drawMwActor(renderer, canvas, _mwBody, person._mwState, {
           dt: townTalk.overlayActive ? 0 : dt,

@@ -295,11 +295,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1476` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3372` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/dungeonContext.js:3480` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:678` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:684` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:941` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1192` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1553` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:679` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:685` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:942` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1193` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1554` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:345` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:362` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:529` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -310,7 +310,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3446` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:4363` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:4464` - FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
-- `src/scenes/world.js:5594` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:5602` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1222` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1240` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1452` - is the quest machine's, FLAGGED with it.

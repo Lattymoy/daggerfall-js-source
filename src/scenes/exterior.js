@@ -524,6 +524,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const batch = renderer.createBillboardBatch(flat.archive, flat.record, size, [[flat.x, flat.y, flat.z]]);
     batch._box = flatBatchAabb([[flat.x, flat.y, flat.z]], size);   // EV3: the cull reads it, body and sprite alike
     armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
+    flatCount++;   // AUDIT-N: the diagnostic counts them - they are still flats, just no longer grouped
     exteriorNpcs.push({ ...pn, width: size.w, height: size.h, batch });
   }
 
@@ -1596,7 +1597,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
   console.log(
     `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
-    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ${cityLights.length} lights, ` +
+    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length + exteriorNpcs.length} batches, ${cityLights.length} lights, ` +
     `ground ${groundArchive}, climate ${climateBase}, season ${season}, ${texRemap.size} swaps, ${renderer.emissionTextures.size} window masks`
   );
 
@@ -2168,7 +2169,15 @@ export async function bootExterior(canvas, renderer, params, status) {
         // quests. These people re-roll their identity per spawn
         // anyway, so a per-spawn seed is the identity they already
         // have.
-        person._mwSeed ??= (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        // AUDIT-N F3: the seed follows the IDENTITY, not the slot. A
+        // walker is a pool entry whose archive, sex and name re-roll on
+        // every spawn (townPopulation.js:116), so `??=` gave a recycled
+        // walker the previous person's wardrobe seed - a Nord woman
+        // wearing the clothes rolled for the Redguard man she replaced.
+        if (person._mwArchive !== person.archive) {
+          person._mwArchive = person.archive;
+          person._mwSeed = (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        }
         if (_drawMwTownsperson(person, popDt, proj, view, eye)) continue;
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };

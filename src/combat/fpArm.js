@@ -1014,7 +1014,10 @@ export async function buildFpArm({
     // MW-D37: the garments' measured colours, so the dye can choose -
     // lazily, one candidate at a time (AUDIT 34 F1).
     const colourOf = (c) => clothingColourOf(c, parts, archives, gen);
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
+    // AUDIT-N F5: `beast` rides in, so a Khajiit or Argonian PLAYER
+    // gets the reference's own equip refusal too (clothing.cpp
+    // :212-227) - the classic game will happily hand them boots.
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, beast, colourOf });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
     // AUDIT 32 F2: memoised per identity per data generation - a
@@ -1638,6 +1641,30 @@ export function drawMwBodyAt(renderer, canvas, mesh, arm, raceScale, { feet, yaw
   // third-person body, because there is only one place that decides.
   drawRigSpriteBox(renderer, canvas, mesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
   return true;
+}
+
+/**
+ * AUDIT-N F1: HOW BIG THE FIRST-PERSON TARGET IS, IN ONE PLACE.
+ *
+ * The arm renders into a pw x ph corner of the shared character-sprite
+ * RT, and ANYONE who reads that target back has to read exactly that
+ * corner. There were two copies of this arithmetic - the draw's, and
+ * the probe's own `canvas.clientWidth / 9` against a 512 clamp - and
+ * MW-D43 changed the dial (CHAR_PIXEL 9 -> MW_ARM_PIXEL 3) and the RT
+ * (512 -> 1024) in the first without touching the second.
+ *
+ * The probe then read a 107x80 crop of a 320x240 picture - the bottom
+ * corner of the arm - and reported EIGHT failures about clip variety,
+ * arm width, x-symmetry and the look-down draw, none of which were
+ * real. A measuring instrument that keeps its own copy of the thing it
+ * measures will eventually measure something else; this is the copy,
+ * removed.
+ */
+export function fpViewportSize(canvas) {
+  const wantW = canvas.clientWidth / MW_ARM_PIXEL;
+  const wantH = canvas.clientHeight / MW_ARM_PIXEL;
+  const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+  return { pw: Math.max(2, Math.round(wantW * s)), ph: Math.max(2, Math.round(wantH * s)) };
 }
 
 /**
@@ -2976,12 +3003,10 @@ export function createFpArm() {
       if (!active() || !canvas) return false;
       const cam = camera();
       if (!cam) return false;
-      // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
-      const wantW = canvas.clientWidth / MW_ARM_PIXEL;
-      const wantH = canvas.clientHeight / MW_ARM_PIXEL;
-      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
-      const pw = Math.max(2, Math.round(wantW * s));
-      const ph = Math.max(2, Math.round(wantH * s));
+      // MW-D43: the ARM's dial, not the sprite pass's - fpViewportSize
+      // decides, in ONE place, for the draw and for whoever reads the
+      // target back. See AUDIT-N F1 in that function's own note.
+      const { pw, ph } = fpViewportSize(canvas);
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //

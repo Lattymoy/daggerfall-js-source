@@ -201,6 +201,7 @@ async function boot(bsaB64, { esm = FIX.esm, weapon = null } = {}) {
     window.__arm = arm;
     window.__armRaw = built.ok ? built.arm : null;
     window.__cv = cv;
+    window.__fpViewport = fp.fpViewportSize;   // AUDIT-N F1: the target's size, from the module that draws it
     window.__frame = () => {
       // A neutral frame so drawCharacter's light caches are populated.
       const I = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
@@ -219,9 +220,12 @@ async function shoot(t) {
     window.__frame();
     arm.update(time.dt);
     const drew = arm.draw(window.__cv);
-    const wantW = window.__cv.clientWidth / 9; const wantH = window.__cv.clientHeight / 9;
-    const sc = Math.min(1, 512 / wantW, 512 / wantH);
-    window.__vp = { pw: Math.max(2, Math.round(wantW * sc)), ph: Math.max(2, Math.round(wantH * sc)) };
+    // AUDIT-N F1: the SHIPPED arithmetic, not a copy of it. This used
+    // to be `clientWidth / 9` against a 512 clamp - the dial and the RT
+    // size as they stood before MW-D43 moved both - so every layer
+    // below was reading a 107x80 crop of a 320x240 picture and calling
+    // the missing four fifths a failure.
+    window.__vp = window.__fpViewport(window.__cv);
     const gl = window.__r.gl;
     const cs = window.__r._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
