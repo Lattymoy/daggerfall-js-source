@@ -63,7 +63,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // host must still ride it, with the live bridge and the full trio
   assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
   const j = s.indexOf('async function worldQuickLoad');
-  const lf = s.slice(j, j + 4200);   // Q4-v widened the function (the quest envelope restore); TK-iv widened it again (the conversation halves)
+  const lf = s.slice(j, j + 6400);   // Q4-v widened the function (the quest envelope restore); TK-iv widened it again (the conversation halves); AUDIT 39 widened it a third time (the teleport's live-pool sweep, the mount and the extras trio ride the load)
   assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
   assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');

@@ -80,7 +80,10 @@ test('AUDIT 39 (#21): a plain NUMBER still works - the probe host builds one loc
 
 test('AUDIT 39 (#21): the streaming host hands the getter, not startLoc', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /createArrestFlow\(\{ townTalk, playerEntity, regionIndex: \(\) => _questRegionIndex\(\) \}\)/);
+  // INTEGRATION MOVED THIS PIN: #62 (player-motor) hung onCourtScreen -
+  // the CameraRecoiler reset - off the same bag in the same wave, so the
+  // call carries both keys. The law pinned here is the GETTER.
+  assert.match(w, /createArrestFlow\(\{ townTalk, playerEntity, regionIndex: \(\) => _questRegionIndex\(\), onCourtScreen: \(\) => cameraRecoiler\.reset\(\) \}\)/);
   assert.doesNotMatch(w, /regionIndex: startLoc\.regionIndex/,
     'the boot number filed every later crime under the province the session started in');
 });

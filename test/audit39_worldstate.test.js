@@ -197,9 +197,13 @@ test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell l
   // it handles any attack; touch.js:98 already promises the tap casts.
   assert.ok(EXTERIOR.includes("attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },"),
     'the tap is the world host\'s shape now');
+  // INTEGRATION MOVED THIS PIN 4 -> 3: #127 (ui-core-hud) removed the
+  // dead attack(dx,dy,held) drag hook in the same wave - touch.js never
+  // called it - taking its interceptAttack call with it. The three live
+  // doors are mousemove, mousedown and the TAP.
   for (const [name, s] of HOSTS) {
-    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 4,
-      `${name}: mousemove, mousedown, the drag arm and the TAP`);
+    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 3,
+      `${name}: mousemove, mousedown and the TAP`);
   }
 });
 
