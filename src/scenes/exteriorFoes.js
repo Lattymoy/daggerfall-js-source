@@ -23,13 +23,13 @@ import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';  
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
-import { applySpell, maxFatigue, entityIsParalyzed } from '../systems/effects.js';   // X3: self-casts land through the effect spine
+import { applySpell, maxFatigue, entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // X3: self-casts land through the effect spine   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
 import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT, fillEmptyTrap } from '../systems/mysticism.js';   // X3: the enemy silence gate; X5: the soul trap's kill intercept
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
-import { MobileUnit } from '../characters/mobileUnit.js';
+import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
 import { ClassFile } from '../formats/classFile.js';
 import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
 import { generateItems as generateLootItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
@@ -174,9 +174,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // reference does). The two quest halves are LIVE GETTERS, never
       // frozen booleans: bindQuestFoeHost runs after this line, and
       // ChangeFoeInfighting flips IsAttackableByAI mid-quest.
+      // A5 adds `concealment`: the closure the illusion gate has read
+      // since MT-i and nothing ever built. BlockedByIllusionEffect
+      // (EnemySenses.cs:658-683) reads `target.Entity.IsInvisible /
+      // IsBlending / IsAShade` for WHATEVER it is looking at - the
+      // player or another enemy - and ConcealmentEffect writes the
+      // flag entity-blind (:63), so a Shadow cast on a rat hides that
+      // rat from the guard hunting it.
       Object.defineProperties(f, {
         isQuestFoe: { get: () => !!f.questBehaviour, enumerable: false },
         questAttackable: { get: () => !!f.questBehaviour?.isAttackableByAI, enumerable: false },
+        concealment: { value: () => concealmentFlags(f.entity), enumerable: false },
       });
       // MT-ii: the cross-pool damage door (the guard pool's twin) - a
       // striker in the OTHER pool reaches this foe's death chain
@@ -189,6 +197,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // struck. (The audit lane's F041 pin caught exactly this on the
       // merge - the two laws meet here.)
       f.hurtFromFoe = (dmg, dir) => damageFoe(f, dmg, null, dir ?? null, { fromPlayer: false });
+      // A5 - SetupDemoEnemy.cs:191-195: "Add special behaviour for
+      // Daedra Seducer mobiles", gated on the mobile ID and nothing
+      // else. RandomEncounters lists the seducer in five outdoor
+      // tables, so this pool stands them too.
+      if (mobileType === MOBILE_DAEDRA_SEDUCER) f.seducer = new SeducerTransformBehaviour(mobile, entity);
       foes.push(f);
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
@@ -318,7 +331,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
       mintCorpseMarker({
         renderer, getTexture, uploadRecordFrame, collider,
-        corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
+        // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`,
+        // the per-mobile STRUCT COPY: SetSpecialTransformationCompleted
+        // swaps the seducer's unwinged corpse (400/6) for the winged
+        // one (400/5), which the static row cannot carry.
+        corpseTexture: f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture,
         feet: f.ai.feet,
         fallbackSize: scaledBillboardSize(f.tex.getSize(0), f.tex.getScale(0)),
         stillDead: () => f.dead,
@@ -406,6 +423,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // (:247-260) drops CanAct, and EnemyAttack returns at the top of both
       // its Update (:91-94) and its FixedUpdate (:55-57).
       const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
+      applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
       f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);
       // MT-ii: the foe now aims at whatever it SELECTED - the player
       // (the only candidate in an unarmed host) or another enemy.
@@ -493,6 +511,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
+      // A5 - DaedraSeducerMobileBehaviour.Update (the dungeon pool's
+      // law, one spelling): a MonoBehaviour Update that runs BEFORE
+      // the anim step consumes the state it raises, keyed on
+      // `enemySenses.Target == PlayerEntityBehaviour`.
+      f.seducer?.update(dt, isPlayerTarget(f.ai.target) || !f.ai._armedTargeting);
+      // EnemyMotor.CanFly (:837-845) reads mobile.Enemy.Behaviour LIVE
+      // - "This can change in the case of a transformed Seducer".
+      if (f.seducer) f.ai.flies = f.mobile.basics.behaviour === 'Flying' || f.mobile.basics.behaviour === 'Spectral';
       f._mout = f.mobile.update(dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,
@@ -683,6 +709,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const out = [];
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
+      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
+      // (:36-43, :56-62): "Handles magical concealment for entities
+      // other than player". A non-player entity whose
+      // IsMagicallyConcealed is true has its renderer DISABLED - any
+      // of the six flags, normal or true power. The entity keeps
+      // acting, it simply is not drawn. (The player's own concealment
+      // has no visual: DFU never disables the first-person view.)
+      if (isMagicallyConcealed(f.entity)) continue;
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
