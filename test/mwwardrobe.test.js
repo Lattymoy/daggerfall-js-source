@@ -112,6 +112,20 @@ test('NPC3b: the wardrobe is a BUDGET - every outfit is a cached body', () => {
   const crowd = Object.keys(PERSON_TEXTURES).length * 2 * PERSONAS_PER_TIER;
   assert.equal(crowd, 24);
   assert.ok(MAX_BODIES >= crowd + 40, `the cap (${MAX_BODIES}) cannot hold a crowd plus a dungeon`);
+  // AUDIT-N F6: ...and the STATIC lane, which NPC4 added after this
+  // pin was written. A static NPC's race comes off their FACTION, not
+  // the region, so its product is races x 2 x tiers x personas and
+  // runs past the cap - deliberately. Overflow costs a REBUILD, never
+  // a wrong body, so what the pin holds is the arithmetic being
+  // STATED rather than a number being big enough for a worst case
+  // that cannot be bounded here.
+  const staticLane = 8 * 2 * WARDROBE_TIERS.length * PERSONAS_PER_TIER;
+  assert.equal(staticLane, 320, 'the static lane\'s product changed - restate the budget in mwActorBody');
+  assert.ok(staticLane > MAX_BODIES, 'the budget note claims this lane overflows; it no longer does');
+  const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
+  assert.match(svc, /races-present x 2 x 5 tiers x 4 personas/, 'the budget note does not name the static lane');
+  assert.match(svc, /the cost of overflow is a REBUILD, not a\n \* wrong body/,
+    'the note must say WHY overflowing is safe, or the next reader raises the cap on a guess');
 });
 
 test('NPC3b: race and sex are READ, not invented - PERSON_TEXTURES is the real table', () => {

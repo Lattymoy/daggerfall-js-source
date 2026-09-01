@@ -72,12 +72,30 @@ function evictAll() {
  * ask for that outfit simply rebuilds it - and hands its mesh back
  * (AUDIT A2).
  *
- * THE NUMBER IS A BUDGET, not a guess. A region's wandering crowd is
- * 3 races x 2 sexes x 4 personas = 24 bodies (mwWardrobe's own
- * arithmetic), a dungeon's foes are as many as its distinct rolled
- * loadouts, and the creature roster tops out at 18 distinct models.
- * 128 holds all three at once with room to spare; the card's tally is
- * how a wrong guess here becomes visible rather than merely slow.
+ * THE NUMBER IS A BUDGET, and AUDIT-N F6 restates it, because NPC4
+ * changed the arithmetic and the sentence here still described the
+ * arc as it stood two slices earlier.
+ *
+ * What is bounded, and by what:
+ *   the wandering crowd   3 races x 2 sexes x 4 personas = 24
+ *                         (PERSON_TEXTURES is a 3-race table, and the
+ *                          street crowd is COMMONERS only)
+ *   the creature roster   18 distinct models, whatever the enemy mix
+ *   a building's people   however many stand in the ONE interior that
+ *                         is mounted - the context dies on the way out
+ *   the watch and the foes  their distinct rolled loadouts
+ *
+ * What is NOT bounded the way the crowd is: a STATIC NPC's race comes
+ * off their FACTION (GetRaceFromFaction), not off the region, so the
+ * static lane's product is races-present x 2 x 5 tiers x 4 personas -
+ * up to 320 in theory, well past this cap. That is deliberate and it
+ * is not a correctness problem: eviction is safe, the LRU keeps what
+ * is being worn NOW, and the cost of overflow is a REBUILD, not a
+ * wrong body. What it would be is SLOW, and the pause card's tally is
+ * how that becomes visible - builds climbing while cached sits at the
+ * cap is thrash, and it is the measurement to raise this number on.
+ * Raising it without that measurement would be the guess this comment
+ * says it is not.
  */
 export const MAX_BODIES = 128;
 /** The generation the cache belongs to. A re-attach drops every body -
