@@ -112,22 +112,26 @@ test('AUDIT 46: the ground has a bisect door, and the GL gate exists even though
   }
 });
 
-test('AUDIT 47: the enhanced array PROVES itself, and falls back to classic if it samples black', () => {
+test('AUDIT 47 REVERTED: the upload touches no state it does not own', () => {
   const r = readFileSync('src/render/renderer.js', 'utf8');
-  // I could not reproduce the void on any driver I can run, and a
-  // fourth theory is worth less than a check. The upload draws one
-  // pixel through the finished array and looks at it.
-  assert.match(r, /if \(mode !== 'classic' && !this\._probeTileArray\(tex\)\) \{/);
-  assert.match(r, /this\.groundMode = 'classic';\n\s*const plain = this\.uploadTileArray\(`\$\{archive\}:fallback`, layers\);/,
-    'the fallback must re-upload the ORIGINAL layers with the classic sampler');
-  assert.match(r, /this\.groundMode = fallback;/, 'and must put the mode back, or every later archive is classic too');
-  // the probe reads a real pixel through a real draw - asking the
-  // driver whether a texture is complete does not answer this
-  assert.match(r, /gl\.readPixels\(2, 2, 1, 1, gl\.RGBA, gl\.UNSIGNED_BYTE, px\);/);
-  assert.match(r, /if \(px\[0\] === 255 && px\[1\] === 0 && px\[2\] === 255\) return true;/,
-    'magenta is "the probe never drew", which is not the array\u2019s fault');
-  assert.match(r, /return \(px\[0\] \+ px\[1\] \+ px\[2\]\) > 0;/);
-  // and a probe that cannot run must never condemn the ground
-  assert.match(r, /return true;\s*\/\/ cannot probe: do not punish the player for that/);
-  assert.match(r, /\} catch \{\s*\n\s*return true;\s*\/\/ a probe that cannot run must not condemn the ground/);
+  // THE PROBE IS GONE. It drew one pixel through the finished array to
+  // prove the array was not black - a defensive check for a fault I
+  // could not reproduce - and it broke the whole texture system,
+  // because it bound a TEXTURE_2D and a TEXTURE_2D_ARRAY on unit 0 and
+  // never put them back. Every pass after it inherited a unit bound to
+  // a 4x4 probe target, and the renderer's own shadows had no idea.
+  //
+  // The lesson is the pin: an upload path runs BETWEEN frames and in
+  // the middle of someone else's state. It may create objects. It may
+  // not draw, and it may not leave a binding behind.
+  assert.ok(!/_probeTileArray|_tileProbe/.test(r), 'the probe must not come back');
+  const up = r.slice(r.indexOf('uploadTileArray(archive, layers) {'), r.indexOf('uploadTileArray(archive, layers) {') + 5200);
+  assert.ok(!/drawArrays|drawElements/.test(up), 'an upload must not draw');
+  assert.ok(!/bindFramebuffer|viewport\(/.test(up), 'an upload must not take the frame');
+  assert.ok(!/clearColor|gl\.clear\(/.test(up), 'an upload must not clear');
+  assert.ok(!/disable\(gl\.(DEPTH_TEST|CULL_FACE|BLEND)\)/.test(up), 'an upload must not change the pipeline');
+  // what it MAY do: make a texture, fill it, and choose its sampler
+  assert.match(up, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8/);
+  assert.match(up, /gl\.texSubImage3D\(/);
 });
+

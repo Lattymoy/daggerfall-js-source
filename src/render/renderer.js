@@ -1963,105 +1963,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    // AUDIT 47: THE ARRAY PROVES ITSELF, or the ground goes back to
-    // classic. I have now theorised three causes for a black world I
-    // cannot reproduce - the void samples BLACK on Mac's driver and
-    // non-black on every one I can run - and a fourth theory is worth
-    // less than a check. So the enhanced upload DRAWS one pixel
-    // through the finished array and looks at it. If it comes back
-    // black, the enhanced path is abandoned for this archive and the
-    // original tiles are uploaded with the classic sampler instead.
-    //
-    // A ground that looks like Daggerfall's is a disappointment. A
-    // ground that is a void is a broken game. When I cannot tell which
-    // driver will do which, the code should find out rather than the
-    // player.
-    if (mode !== 'classic' && !this._probeTileArray(tex)) {
-      gl.deleteTexture(tex);
-      const fallback = this.groundMode;
-      this.groundMode = 'classic';
-      const plain = this.uploadTileArray(`${archive}:fallback`, layers);
-      this.groundMode = fallback;
-      this.tileArrays.set(key, plain);
-      return plain;
-    }
     this.tileArrays.set(key, tex);
     return tex;
   }
 
-  /** AUDIT 47: does this tile array actually sample? One pixel, drawn
-   *  through the array with the filters the upload chose, read back.
-   *  Black is the answer that matters; anything else passes. Cheap
-   *  enough to run once per archive and the only check that can see
-   *  the fault the player sees. */
-  _probeTileArray(tex) {
-    const gl = this.gl;
-    try {
-      if (!this._tileProbe) {
-        const vs = `#version 300 es
-layout(location=0) in vec2 aP; out vec2 vUV;
-void main(){ vUV = aP * 0.5 + 0.5; gl_Position = vec4(aP, 0.0, 1.0); }`;
-        const fs = `#version 300 es
-precision highp float; precision highp sampler2DArray;
-in vec2 vUV; uniform sampler2DArray uArr; out vec4 o;
-void main(){ o = vec4(texture(uArr, vec3(vUV, 0.0)).rgb, 1.0); }`;
-        const prog = this._buildProgram(vs, fs);
-        const fbo = gl.createFramebuffer();
-        const rt = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, rt);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 4, 4, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        const vao = gl.createVertexArray();
-        // EV6's law: every VAO bind in this file goes through _bindVao,
-        // or the shadow it keeps stops matching the driver's state.
-        this._bindVao(vao);
-        const buf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-        this._bindVao(null);
-        this._tileProbe = { prog, fbo, rt, vao, loc: gl.getUniformLocation(prog, 'uArr') };
-      }
-      const p2 = this._tileProbe;
-      const prevFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-      const prevVp = gl.getParameter(gl.VIEWPORT);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, p2.fbo);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, p2.rt, 0);
-      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, prevFbo);
-        return true;   // cannot probe: do not punish the player for that
-      }
-      gl.viewport(0, 0, 4, 4);
-      gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
-      gl.clearColor(1, 0, 1, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      this._use(p2.prog);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
-      gl.uniform1i(p2.loc, 0);
-      this._bindVao(p2.vao);
-      // AUDIT 39 F50's law: every draw in this file reports. This one is
-      // a LOAD-TIME probe rather than a frame's work, so it counts and
-      // is named - a draw the counter cannot see makes EV3's culling
-      // measurements a lie, and an uncounted probe is still a draw.
-      this.stats.draws++;
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      const px = new Uint8Array(4);
-      gl.readPixels(2, 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, prevFbo);
-      gl.viewport(prevVp[0], prevVp[1], prevVp[2], prevVp[3]);
-      gl.enable(gl.DEPTH_TEST);
-      this._bindVao(null);
-      // magenta means the probe never drew, which is not the array's
-      // fault; black means it drew and the array had nothing in it
-      if (px[0] === 255 && px[1] === 0 && px[2] === 255) return true;
-      return (px[0] + px[1] + px[2]) > 0;
-    } catch {
-      return true;   // a probe that cannot run must not condemn the ground
-    }
-  }
+
 
   /** Draw one terrain surface with its tilemap + tile array. */
   /** EE4: the deck the terrain shadows under. {cover, soft, wind, time,
