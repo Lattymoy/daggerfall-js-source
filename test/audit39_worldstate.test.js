@@ -39,10 +39,6 @@ test('AUDIT 39 #59: the two above-ground hosts gate the motor and the weapon on 
       `${name}: the read-time fold (DaggerfallEntity.IsParalyzed + the FreeAction immunity)`);
     assert.match(s, /const paralyzed = entityIsParalyzed\(playerEntity\);/,
       `${name}: one read per frame, above the motor and the weapon rig`);
-    // dungeon.js:465's own bag, verbatim - and the crouch toggle stays
-    // LIVE (DecideHeightAction has no paralysis check).
-    assert.ok(s.includes('player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {'),
-      `${name}: movement, run, jump and the levitate axes are zeroed; crouch is not`);
     assert.ok(s.includes('const moving = !paralyzed && anyMove(mv);'),
       `${name}: a frozen player takes no stride`);
     assert.ok(s.includes('standingStill: !moving,'), `${name}: and the footstep machine reads it`);
@@ -51,6 +47,58 @@ test('AUDIT 39 #59: the two above-ground hosts gate the motor and the weapon on 
   }
   // the standalone dungeon host is the shape being matched
   assert.match(src('src/scenes/dungeon.js'), /const paralyzed = ctx\.playerParalyzed\?\.\(\) \?\? false;/);
+});
+
+test('AUDIT 39r: the paralysed bag zeroes the movement VECTOR and keeps the speed-adjustment keys', () => {
+  // PIN MOVED, deliberately: it used to read `run: false` and carried
+  // neither autoRun, back nor sneak. DFU zeroes moveDirection
+  // (FrictionMotor :75-81, AcrobatMotor :135-141) and never
+  // CaptureInputSpeedAdjustment, which PlayerMotor.Update (:363-379)
+  // runs behind a levitate gate and nothing else - so with the wave's
+  // new press-edge latches a run/sneak/AutoRun key held through the
+  // paralysis read as RELEASED and fired a synthetic press the frame it
+  // lifted. The crouch toggle stays live either way (DecideHeightAction
+  // has no paralysis check).
+  const KEYS = "run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak')";
+  for (const [name, s, latch] of [
+    ['world.js', WORLD, 'latch.crouch'], ['exterior.js', EXTERIOR, 'latch.crouch'],
+    ['worldModes.js', WORLD_MODES, 'latch.crouch'], ['dungeon.js', src('src/scenes/dungeon.js'), 'prevCrouch'],
+  ]) {
+    assert.ok(s.includes(`player.update(dt, paralyzed ? { forward: 0, strafe: 0, ${KEYS}, jump: false, up: false, down: false, crouch: crouchHeld && !${latch} } : {`),
+      `${name}: the vector is zeroed, the capture keys ride through`);
+    assert.ok(!s.includes('paralyzed ? { forward: 0, strafe: 0, run: false,'), `${name}: and the old reduced bag is gone`);
+  }
+});
+
+test('AUDIT 39r: the THIRD above-ground host - worldModes\' interior arm - reads the same gate', () => {
+  // The #59 fix wired world.js and exterior.js and left worldModes'
+  // interior arm hardcoded `false`, in the same file whose #39 mounts
+  // spellsByIndex/magicHooks on the interior foe pool so "the S19
+  // monster paralyze rider" has Spider Touch indoors. Inside a building
+  // the motor took full input, the footstep machine strode, and the
+  // interior rig was handed no flag at all.
+  assert.match(WORLD_MODES, /import \{ entityIsParalyzed \} from '\.\.\/systems\/effects\.js';/,
+    'the read-time fold, the other two hosts\' own import');
+  assert.ok(WORLD_MODES.includes("const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);"),
+    'one fold: the dungeon context underground, the entity above it');
+  assert.ok(!WORLD_MODES.includes("(dungeonCtx.playerParalyzed?.() ?? false) : false;"), 'the hardcoded false is gone');
+  assert.ok(WORLD_MODES.includes('const moving = !paralyzed && anyMove(mv);'), 'a frozen player takes no stride');
+  assert.ok(WORLD_MODES.includes('standingStill: !moving,'), 'and the footstep machine reads the folded flag');
+  assert.ok(!WORLD_MODES.includes('standingStill: !anyMove(mv),'), 'not the raw keys');
+  assert.ok(WORLD_MODES.includes('interiorWeapon.frame(dt, { paralyzed })'), 'WeaponManager :235-239 - no swing while frozen');
+  assert.ok(WORLD_MODES.includes('interiorWeapon.draw({ paralyzed })'), 'ShowWeapons(false) - and no viewmodel');
+});
+
+test('AUDIT 39r: the interior arrow that lands on the player flashes the screen', () => {
+  // AUDIT 24 (wave 46): an arrow reaches the player through BowDamage
+  // -> ApplyDamageToPlayer -> SendDamageToPlayer, the same door as a
+  // blow, so it owes the flash. The new interior arm was world.js's
+  // four lines minus that call, and this host imported no damageFlash.
+  assert.match(WORLD_MODES, /import \{ flashPlayerDamage \} from '\.\.\/ui\/damageFlash\.js';/);
+  const hit = WORLD_MODES.slice(WORLD_MODES.indexOf('onPlayerHit: (m) => {'));
+  const body = hit.slice(0, hit.indexOf('addItem(playerEntity.items,'));
+  assert.ok(body.includes('hurtPlayer(playerEntity, dmg);') && body.includes('flashPlayerDamage();'),
+    'the flash sits with the damage, the sound and the cry');
 });
 
 // ---------------------------------------------------------------------

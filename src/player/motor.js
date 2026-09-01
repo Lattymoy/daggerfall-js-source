@@ -602,6 +602,46 @@ export class PlayerMotor {
     this.heightTimerMax = HEIGHT_TIMER_FAST;
   }
 
+  /** CaptureInputSpeedAdjustment (AUDIT 28 W5, PlayerSpeedChanger.cs
+   *  :70-99): the run and sneak MODES - each toggled on its press edge
+   *  under its toggle flag, the held key without it (:72-78) - plus
+   *  the AutoRun latch. The run flag is ToggleRun, which nothing but
+   *  that latch ever raises. Called from update(), which is where
+   *  DFU calls it (see the note at the call). */
+  _captureSpeedAdjustment(input) {
+    const runStarted = !!input.run && !this._prevRunHeld;
+    this._prevRunHeld = !!input.run;
+    if (!this._toggleRun) this._runMode = !!input.run;
+    else if (runStarted) this._runMode = !this._runMode;
+    const sneakStarted = !!input.sneak && !this._prevSneakHeld;
+    this._prevSneakHeld = !!input.sneak;
+    if (getBool('Controls', 'ToggleSneak')) {
+      if (sneakStarted) this._sneakMode = !this._sneakMode;
+    } else {
+      this._sneakMode = !!input.sneak;
+    }
+    // AUTORUN (:82-99): the press flips InputManager.ToggleAutorun and
+    // hands it to ToggleRun, and enabling it while NOT already running
+    // forces the run mode on ("this allows a player already running to
+    // keep running instead of moving to autowalking" - isRunning here
+    // is last step's, as DFU's is). The press is refused while
+    // MoveBackwards is held, and a MoveBackwards PRESS drops the latch
+    // (InputManager.cs:1851 clears ToggleAutorun on the same key).
+    // DFU's own forward force under autorun lives in InputManager and
+    // is the input layer's half; this is PlayerSpeedChanger's.
+    const autoRunStarted = !!input.autoRun && !this._prevAutoRunHeld;
+    this._prevAutoRunHeld = !!input.autoRun;
+    const backHeld = !!input.back;
+    const backStarted = backHeld && !this._prevBackHeld;
+    this._prevBackHeld = backHeld;
+    if (autoRunStarted && !backHeld) {
+      this._autorun = !this._autorun;
+      this._toggleRun = this._autorun;
+      if (this._toggleRun && !this.isRunning) this._runMode = !this._runMode;   // ^= ToggleAutorun, true in this arm
+    }
+    if (backStarted) this._toggleRun = false;
+  }
+
   /** The RENDER-frame entry: accumulates dt and runs fixed physics
    *  steps (see the FIXED_DT note). Per-frame report flags (jumped,
    *  landedFallDistance) reset here and OR/carry across the steps.
@@ -615,6 +655,18 @@ export class PlayerMotor {
     this.landedFallDistance = 0;
     const frameDt = Math.min(dt, MAX_FRAME_DT);
     this._heightAction(frameDt, input);
+    // AUDIT 39r: CaptureInputSpeedAdjustment is PlayerMotor.Update's
+    // (:363-379), NOT FixedUpdate's, and Update has exactly ONE early
+    // return: levitation, with DFU's own note beside it - "Don't
+    // return here for swimming because player should still be able to
+    // crouch when swimming". It lived inside _step below the
+    // swim/levitate return, so a swimmer's run mode, sneak mode and
+    // AutoRun latch all froze and their press-edge trackers went
+    // stale; and being per-STEP rather than per-FRAME it shared the
+    // crouch key's old bug - a render frame that accumulates less
+    // than one physics step swallowed the press. Same home as
+    // _heightAction (DecideHeightAction, :371) for the same reason.
+    if (!this.levitating) this._captureSpeedAdjustment(input);
     this._acc = (this._acc ?? 0) + frameDt;
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
@@ -854,41 +906,6 @@ export class PlayerMotor {
       if (!this.jumping) this.velY = 0;
     }
 
-    // CaptureInputSpeedAdjustment (AUDIT 28 W5): the run and sneak
-    // MODES - each toggled on its press edge under its toggle flag,
-    // the held key without it (:72-78). The run flag is ToggleRun,
-    // which nothing but the AutoRun latch below ever raises.
-    const runStarted = !!input.run && !this._prevRunHeld;
-    this._prevRunHeld = !!input.run;
-    if (!this._toggleRun) this._runMode = !!input.run;
-    else if (runStarted) this._runMode = !this._runMode;
-    const sneakStarted = !!input.sneak && !this._prevSneakHeld;
-    this._prevSneakHeld = !!input.sneak;
-    if (getBool('Controls', 'ToggleSneak')) {
-      if (sneakStarted) this._sneakMode = !this._sneakMode;
-    } else {
-      this._sneakMode = !!input.sneak;
-    }
-    // AUTORUN (:82-99): the press flips InputManager.ToggleAutorun and
-    // hands it to ToggleRun, and enabling it while NOT already running
-    // forces the run mode on ("this allows a player already running to
-    // keep running instead of moving to autowalking" - isRunning here
-    // is last step's, as DFU's is). The press is refused while
-    // MoveBackwards is held, and a MoveBackwards PRESS drops the latch
-    // (InputManager.cs:1851 clears ToggleAutorun on the same key).
-    // DFU's own forward force under autorun lives in InputManager and
-    // is the input layer's half; this is PlayerSpeedChanger's.
-    const autoRunStarted = !!input.autoRun && !this._prevAutoRunHeld;
-    this._prevAutoRunHeld = !!input.autoRun;
-    const backHeld = !!input.back;
-    const backStarted = backHeld && !this._prevBackHeld;
-    this._prevBackHeld = backHeld;
-    if (autoRunStarted && !backHeld) {
-      this._autorun = !this._autorun;
-      this._toggleRun = this._autorun;
-      if (this._toggleRun && !this.isRunning) this._runMode = !this._runMode;   // ^= ToggleAutorun, true in this arm
-    }
-    if (backStarted) this._toggleRun = false;
     // ApplyInputSpeedAdjustment (P15): the run/sneak states re-latch
     // only while GROUNDED - "you can't switch running on/off while in
     // mid air" - and running beats sneaking.

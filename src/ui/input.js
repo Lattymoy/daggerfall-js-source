@@ -37,6 +37,21 @@ export function held(keys, action) {
   return false;
 }
 
+/** AUDIT 39r: the MOUSE half of the held-keys set. InputManager binds
+ *  three actions to buttons and polls them through the same GetKey
+ *  dictionary as the keyboard - Mouse2/AutoRun (:995), Mouse1/
+ *  SwingWeapon (:1010), Mouse0/ActivateCenterObject (:1017) - but the
+ *  port's `keys` Set was fed by keydown alone, so `held(keys,
+ *  'AutoRun')` could never answer true and the AutoRun latch and the
+ *  drawn bow's un-draw were both unreachable at the shipped bindings.
+ *  The ORDER is not the DOM's: Unity's KeyCode counts Mouse0/1/2 as
+ *  left/RIGHT/MIDDLE, MouseEvent.button as left/MIDDLE/right, so the
+ *  two middle names cross. One table, so no host spells 'Mouse' +
+ *  e.button and hands the wheel the right button's action. */
+export const MOUSE_CODES = Object.freeze(['Mouse0', 'Mouse2', 'Mouse1']);
+/** The binding code for a MouseEvent.button, or null past the third. */
+export function mouseCode(button) { return MOUSE_CODES[button] ?? null; }
+
 /** The four movement axes in one read - each host's frame builds this
  *  once and derives forward/strafe/moving/standingStill from it,
  *  instead of twelve raw keys.has() calls. */

@@ -29,6 +29,8 @@ import {
 } from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
 import { TRANSPORT_MODES, DF_RIDE_BASE } from '../src/systems/transport.js';
+import { held, mouseCode, MOUSE_CODES, setBindings } from '../src/ui/input.js';   // 39r: the AutoRun key's own reachability
+import { createBindings, resetDefaults } from '../src/systems/inputActions.js';
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -245,5 +247,120 @@ test('AUDIT 39 #63: every host feeds the AutoRun action and its MoveBackwards ca
   for (const f of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeon.js', 'scenes/worldModes.js']) {
     const s = src(f);
     assert.match(s, /autoRun: held\(keys, 'AutoRun'\),\n\s*back: mv\.backwards,/, `${f} feeds the latch`);
+  }
+});
+
+// ── 39r: where the capture runs, and whether the key can reach it ──
+
+test('AUDIT 39r: a SWIMMER still captures the speed adjustment - only levitation returns above it', () => {
+  // PlayerMotor.Update (:363-379) calls CaptureInputSpeedAdjustment
+  // behind ONE early return, with DFU's own note beside it: "Don't
+  // return here for swimming because player should still be able to
+  // crouch when swimming". The port had the capture inside the fixed
+  // step, below `if (this.levitating || this.swimming) ... return`, so
+  // a swimmer's run mode, sneak mode and AutoRun latch all froze and
+  // their press-edge trackers went stale under the water.
+  const m = new PlayerMotor(floored(), { speed: 50, running: 40 });
+  m.spawn(0, 0.1, 0);
+  for (let f = 0; f < 5; f++) m.update(DT, still(), 0);
+  m.swimming = true;
+  m.update(DT, still({ autoRun: true }), 0);   // the press, taken UNDER water
+  m.update(DT, still(), 0);
+  m.swimming = false;
+  for (let f = 0; f < 3; f++) m.update(DT, still(), 0);
+  assert.equal(m.isRunning, true, 'the latch was captured while swimming and stands on surfacing');
+
+  // ...and the levitate arm is the one that does return (:374-376).
+  const l = new PlayerMotor(floored(), { speed: 50, running: 40 });
+  l.spawn(0, 0.1, 0);
+  for (let f = 0; f < 5; f++) l.update(DT, still(), 0);
+  l.levitating = true;
+  l.update(DT, still({ autoRun: true }), 0);
+  l.update(DT, still(), 0);
+  l.levitating = false;
+  for (let f = 0; f < 3; f++) l.update(DT, still(), 0);
+  assert.equal(l.isRunning, false, 'levitation is the single early return, so no capture happened');
+});
+
+test('AUDIT 39r: the capture is per FRAME, not per fixed step - a short frame cannot swallow the press', () => {
+  // Same law as the crouch key (AUDIT 18): DFU reads both in Update,
+  // so a render frame that accumulates less than one physics step must
+  // not drop the edge. A press and its release inside two sub-step
+  // frames is still one press.
+  const m = new PlayerMotor(floored(), { speed: 50, running: 40 });
+  m.spawn(0, 0.1, 0);
+  for (let f = 0; f < 5; f++) m.update(DT, still(), 0);
+  m.update(DT / 4, still({ autoRun: true }), 0);   // no step runs in this frame
+  m.update(DT / 4, still(), 0);
+  for (let f = 0; f < 5; f++) m.update(DT, still(), 0);
+  assert.equal(m.isRunning, true, 'the sub-step frame carried the AutoRun press');
+});
+
+test('AUDIT 39r: the paralysed input bag carries the capture keys, so no press is fabricated when it lifts', () => {
+  // The hosts' paralysis arm zeroes the movement VECTOR only (see
+  // audit39_worldstate). Feeding the motor a bag WITHOUT the held keys
+  // clears the press-edge trackers and the first free frame reads a
+  // false->true transition: this is the motor half of that law.
+  const m = new PlayerMotor(floored(), { speed: 50, running: 40 });
+  m.spawn(0, 0.1, 0);
+  for (let f = 0; f < 5; f++) m.update(DT, still(), 0);
+  // the key goes down and STAYS down across the whole paralysis
+  m.update(DT, still({ autoRun: true }), 0);
+  assert.equal(m.isRunning, true, 'the press latched before the freeze');
+  const frozen = still({ autoRun: true, run: false, sneak: false, back: false });
+  for (let f = 0; f < 10; f++) m.update(DT, frozen, 0);
+  for (let f = 0; f < 3; f++) m.update(DT, still({ autoRun: true }), 0);
+  assert.equal(m.isRunning, true, 'a HELD key is not a new press - the latch is untouched');
+  // and the reduced bag the fix removed would have flipped it back:
+  const n = new PlayerMotor(floored(), { speed: 50, running: 40 });
+  n.spawn(0, 0.1, 0);
+  for (let f = 0; f < 5; f++) n.update(DT, still(), 0);
+  n.update(DT, still({ autoRun: true }), 0);
+  n.update(DT, still(), 0);                       // the DROPPED key (the old bag)
+  n.update(DT, still({ autoRun: true }), 0);       // ...reads as a fresh press
+  for (let f = 0; f < 3; f++) n.update(DT, still({ autoRun: true }), 0);
+  assert.equal(n.isRunning, false, 'which is exactly the fabricated press the bag now prevents');
+});
+
+test('AUDIT 39r: the AutoRun key can actually be HELD - the mouse buttons reach the held-keys set', () => {
+  // #63's latch was dead code at the shipped bindings: AutoRun's only
+  // binding is Mouse2 (InputManager.cs:995), the `keys` Set was fed by
+  // keydown's e.code alone, and the controls window puts AutoRun past
+  // the rebind grid - so `held(keys, 'AutoRun')` could never answer
+  // true. This goes through held() with a real Set, not the source.
+  const b = createBindings();
+  resetDefaults(b);
+  setBindings(b);
+  try {
+    const keys = new Set();
+    assert.equal(held(keys, 'AutoRun'), false, 'nothing held');
+    // the button the WHEEL is: DOM 1, Unity Mouse2.
+    keys.add(mouseCode(1));
+    assert.equal(held(keys, 'AutoRun'), true, 'the latch is reachable at the shipped bindings');
+    keys.delete(mouseCode(1));
+    // ...and the right button is Unity's Mouse1 (SwingWeapon), the LEFT
+    // is Mouse0 (ActivateCenterObject - the drawn bow's un-draw). The
+    // DOM numbers the middle button 1 and the right 2, so the two
+    // middle names cross: 'Mouse' + e.button would hand the wheel the
+    // right button's action.
+    assert.deepEqual([...MOUSE_CODES], ['Mouse0', 'Mouse2', 'Mouse1']);
+    assert.equal(mouseCode(2), 'Mouse1');
+    assert.equal(mouseCode(0), 'Mouse0');
+    assert.equal(mouseCode(3), null, 'past the third button there is no binding code');
+    keys.add(mouseCode(0));
+    assert.equal(held(keys, 'ActivateCenterObject'), true, 'and the un-draw read is live again');
+  } finally { setBindings(null); }
+});
+
+test('AUDIT 39r: the hosts add and drop the mouse code on the button edges', () => {
+  for (const f of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeon.js']) {
+    const s = src(f);
+    assert.match(s, /import \{[^}]*mouseCode[^}]*\} from '\.\.\/ui\/input\.js';/, `${f}: the one translation table`);
+    const down = s.split('\n').find((l) => l.includes("addEventListener('mousedown'"));
+    const up = s.split('\n').find((l) => l.includes("addEventListener('mouseup'"));
+    assert.ok(down.includes('const mc = mouseCode(e.button); if (mc) keys.add(mc);'), `${f}: down feeds the set`);
+    assert.ok(up.includes('const mc = mouseCode(e.button); if (mc) keys.delete(mc);'), `${f}: up drops it`);
+    // never the raw DOM number - that crosses the middle and right names
+    assert.ok(!s.includes("'Mouse' + e.button"), `${f}: no hand-spelled code`);
   }
 });

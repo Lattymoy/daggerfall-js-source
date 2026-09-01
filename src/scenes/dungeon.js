@@ -32,7 +32,7 @@ import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
+import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
@@ -241,7 +241,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
   bindCursorToggle(canvas, () => ctx.uiOverlayActive, actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
+  // AUDIT 39r: the button goes into the held-keys set too. InputManager
+  // polls Mouse0/1/2 through the same GetKey dictionary as the keyboard
+  // (:995/:1010/:1017), and this Set was keydown-fed only - so AutoRun
+  // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
+  // un-draw (Mouse0) could never read true. mouseCode owns the
+  // Unity/DOM middle-button crossover; the RELEASE is unconditional.
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
@@ -257,7 +263,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // character and left them standing wherever they were.
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
   });
-  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -474,7 +480,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const moving = !paralyzed && anyMove(mv);
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement/jump only (DecideHeightAction has no check).
-      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
+      // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
+      // movement VECTOR (FrictionMotor :75-81, AcrobatMotor :135-141);
+      // CaptureInputSpeedAdjustment runs in Update behind a levitate gate
+      // and nothing else. Dropping run/sneak/autoRun/back from this bag read
+      // as a RELEASE to the motor's press-edge latches, so a key held
+      // through the paralysis fired a synthetic press on the frame it lifted.
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),

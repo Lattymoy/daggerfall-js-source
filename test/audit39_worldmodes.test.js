@@ -106,10 +106,14 @@ test('AUDIT39 #33: the interior movers are held under a window, like the dungeon
 });
 
 test('AUDIT39 #34: an in-flight interior swing does not land its hit frame under a window', () => {
-  assert.match(WM, /for \(const ev of \(overlayHeld \? \[\] : interiorWeapon\.frame\(dt\)\)\) \{/,
+  // PIN MOVED (AUDIT 39r): the overlay gate is unchanged, but the rig
+  // now takes the paralysis flag its two above-ground siblings take
+  // (WeaponManager.cs:235-239). The gate under test is `overlayHeld ?
+  // [] :`, which still reads exactly as it did.
+  assert.match(WM, /for \(const ev of \(overlayHeld \? \[\] : interiorWeapon\.frame\(dt, \{ paralyzed \}\)\)\) \{/,
     'the rig MACHINE is held; the events it would have yielded do real work');
   // ...and the viewmodel still paints, outside the gate
-  assert.match(WM, /\n\s+interiorWeapon\.draw\(\);/);
+  assert.match(WM, /\n\s+interiorWeapon\.draw\(\{ paralyzed \}\);/);
 });
 
 // ---------------------------------------------------------------

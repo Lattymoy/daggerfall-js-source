@@ -122,7 +122,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
@@ -1326,8 +1326,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
   // world behind the map.
-  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  // AUDIT 39r: the button goes into the held-keys set too. InputManager
+  // polls Mouse0/1/2 through the same GetKey dictionary as the keyboard
+  // (:995/:1010/:1017), and this Set was keydown-fed only - so AutoRun
+  // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
+  // un-draw (Mouse0) could never read true. mouseCode owns the
+  // Unity/DOM middle-button crossover; the RELEASE is unconditional.
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -1708,7 +1714,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement and the jump only (DecideHeightAction has no check).
-      if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
+      // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
+      // movement VECTOR (FrictionMotor :75-81, AcrobatMotor :135-141);
+      // CaptureInputSpeedAdjustment runs in Update behind a levitate gate
+      // and nothing else. Dropping run/sneak/autoRun/back from this bag read
+      // as a RELEASE to the motor's press-edge latches, so a key held
+      // through the paralysis fired a synthetic press on the frame it lifted.
+      if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),

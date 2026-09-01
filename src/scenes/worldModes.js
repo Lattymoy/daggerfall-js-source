@@ -62,6 +62,8 @@ import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-poo
 import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
+import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
 import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
 import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
@@ -3790,7 +3792,15 @@ export function createWorldModes(host) {
     // input zeroed, jump cancelled - the player still falls; look
     // stays live (FrictionMotor/AcrobatMotor verbatim gates).
     // P12 crouch: KeyX edge toggle (host parity with ?dungeon).
-    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
+    // AUDIT 39r: the INTERIOR arm hardcoded false, so a building was the
+    // one place in the game paralysis did nothing - in the same file
+    // that mounts spellsByIndex/magicHooks on the interior foe pool so
+    // the S19 monster rider has Spider Touch indoors. Every DFU gate
+    // reads PlayerEntity.IsParalyzed with no interior/exterior test
+    // (FrictionMotor :75-81, AcrobatMotor :135-141, WeaponManager
+    // :235-239), which is the fold world.js and exterior.js took; the
+    // dungeon arm keeps its context read, the same answer one seam over.
+    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);
     // E2: the shop overlay holds the motor like every other window
     // (typing digits must not walk the player).
     // AUDIT 18 HOST GAP: the dungeon overlay was absent from this
@@ -3841,7 +3851,13 @@ export function createWorldModes(host) {
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
-      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
+      // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
+      // movement VECTOR (FrictionMotor :75-81, AcrobatMotor :135-141);
+      // CaptureInputSpeedAdjustment runs in Update behind a levitate gate
+      // and nothing else. Dropping run/sneak/autoRun/back from this bag read
+      // as a RELEASE to the motor's press-edge latches, so a key held
+      // through the paralysis fired a synthetic press on the frame it lifted.
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
@@ -3868,7 +3884,7 @@ export function createWorldModes(host) {
         const _surf = player.waterSurfaceY;
         const _step = _footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !anyMove(mv),
+          standingStill: !moving,   // AUDIT 39r: `moving` is the paralysis-folded read - a frozen player takes no stride (world.js/exterior.js's own line)
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet(mode === 'interior'
           ? { inside: true, inBuilding: true }
@@ -4108,6 +4124,13 @@ export function createWorldModes(host) {
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
           audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          // AUDIT 39r: and the FLASH, which this arm was copied without.
+          // An arrow reaches the player through BowDamage ->
+          // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
+          // a blow (world.js:5453's own wave-46 note); the interior
+          // MELEE hit already flashes inside exteriorFoes, so only this
+          // arm - which applies its own damage - was missing it.
+          flashPlayerDamage();
           playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
           surfacePlayer();
         }
@@ -4182,7 +4205,11 @@ export function createWorldModes(host) {
     // to land its hit frame under it, draining fatigue, spending an
     // arrow and tallying skills over a paused game. The draw below
     // stays outside: the viewmodel still paints.
-    for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt))) {
+    // AUDIT 39r: ...and the rig takes the paralysis flag the other two
+    // above-ground hosts pass (WeaponManager.cs:235-239 - ShowWeapons
+    // (false) and no swing). This host's interior rig was handed
+    // nothing, so a paralysed player indoors kept swinging.
+    for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed }))) {
       // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
       if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
       if (ev !== 'hit') continue;
@@ -4215,7 +4242,7 @@ export function createWorldModes(host) {
       // strike-entry whoosh is gone).
       audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);
     }
-    interiorWeapon.draw();
+    interiorWeapon.draw({ paralyzed });   // AUDIT 39r: ShowWeapons(false) - no viewmodel while frozen
     // AUDIT 21 (hosts lane, F7): THE HUD, in a building. drawHud lives inside
     // dungeonContext.drawFoes, which the interior arm never calls - so the
     // whole classic status bar vanished the moment you stepped through a door
