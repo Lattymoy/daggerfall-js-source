@@ -432,6 +432,27 @@ parseNifOnce.cache = new WeakMap();
 
 /** getArrowBone's FIRST branch: does the ACTOR's own skeleton carry the
  *  ammo type's attach bone? */
+/** MW-D46: the bone OpenMW issue 5642 added the quiver branch for. */
+const QUIVER_BONE = 'Bip01 Arrow';
+
+/** MW-D46: is this name present in these bytes at all? A .kf stores node
+ *  names as plain ASCII, so a clip that animates a bone necessarily
+ *  contains its name - and one that does not, cannot. A scan rather than
+ *  a parse: the question is existence, not structure, and a wrong answer
+ *  only ever costs the VANILLA placement, which is the one that works. */
+function bytesHaveName(bytes, name) {
+  if (!bytes || !bytes.length) return false;
+  const want = [];
+  for (let i = 0; i < name.length; i++) want.push(name.charCodeAt(i));
+  const last = bytes.length - want.length;
+  for (let i = 0; i <= last; i++) {
+    let hit = true;
+    for (let j = 0; j < want.length; j++) { if (bytes[i + j] !== want[j]) { hit = false; break; } }
+    if (hit) return true;
+  }
+  return false;
+}
+
 function skeletonHasBone(skeletonBytes, name) {
   try {
     const skel = buildSkeleton(parseNifOnce(skeletonBytes));
@@ -688,7 +709,7 @@ export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
 }
 
-export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
+export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes, quiverDriven = true }) {
   const notes = [];
   const parts = [];
   let weaponInfo = null;
@@ -737,7 +758,18 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
               // the WEAPON's mesh - which brings the weapon's whole
               // transform chain, and its MIRROR, along with it.
               const skelBone = arrowAttachBone(mwType);
-              const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
+              // MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS
+              // FOR. OpenMW issue 5642 added it so modded skeletons
+              // could fetch arrows from a quiver - "allows to implement
+              // better shooting animations" - and a skeleton carrying
+              // "Bip01 Arrow" with no clip that MOVES it parks the
+              // round on the body for the whole shot, which is what Mac
+              // has been looking at. `quiverDriven` is the caller's
+              // answer to "does any loaded clip drive that bone"; false
+              // sends the round down the vanilla path the bow mesh
+              // already carries. Defaults true, so every existing
+              // caller and pin is unchanged.
+              const onActor = quiverDriven && skelBone && skeletonHasBone(skeletonBytes, skelBone);
               let pre = null;
               let arrowBone = skelBone;
               if (!onActor) {
@@ -896,6 +928,8 @@ async function buildTpBody({
 
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
+  // MW-D46: the pins' override - see the use site below.
+  quiverDriven: quiverDrivenOpt = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -1085,7 +1119,22 @@ export async function buildFpArm({
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
     const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
+    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
+
+    // MW-D46: DOES ANY LOADED CLIP DRIVE THE QUIVER BONE? Asked here,
+    // before the weapon resolves, because the answer decides which of
+    // getArrowBone's two branches the round is allowed to take.
+    // The override exists for the PINS: MW-D16's two branch tests drive
+    // a fixture skeleton that carries the bone against a fixture clip
+    // that does not animate it, which is precisely the combination
+    // MW-D46 now refuses - so they state the branch law by asserting
+    // the answer rather than by accident of the fixtures.
+    const quiverDriven = quiverDrivenOpt
+      ?? sourceBytes.some((x) => bytesHaveName(x.bytes, QUIVER_BONE));
+    const resolvedWeapon = resolveWeaponParts({
+      weapon, hasAmmo, allWeapons, find, skeletonBytes, quiverDriven,
+    });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
     const weaponInfo = resolvedWeapon.weaponInfo;
@@ -1094,8 +1143,6 @@ export async function buildFpArm({
 
     // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
     // as addSingleAnimSource filters it.
-    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
-    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
 
     if (!partBytes.length) {
       // "no record for this actor" is a dead end for whoever reads it.

@@ -6345,3 +6345,35 @@ THE STANDING LESSON, and it is the session's: this port is read by
 someone who can run it and written by someone who cannot. Every fact
 the rig computes about DATA IT LOADED belongs on the card, because the
 card is the only wire between those two.
+
+MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS FOR. Mac, four
+rounds into arrow placement: "the placement is still not correct. It
+still spawns in the character."
+
+OpenMW issue 5642 is the change that added getArrowBone's first branch,
+and it says what the branch is FOR: modded skeletons that fetch arrows
+from a quiver, "allows to implement better shooting animations". The
+bone and the clips that move it ship together - a modder adds both.
+
+A skeleton carrying "Bip01 Arrow" against animations that never touch
+it is the one combination the feature cannot survive: the round hangs
+at the quiver and stays there for the whole shot, ON THE BODY, which is
+the symptom exactly. The port takes that branch on the bone alone, so
+any skeleton with the node - a replacer, a mod's xbase_anim - moved
+every arrow onto the body while the vanilla path the bow mesh already
+carries sat unused.
+
+The branch now asks BOTH questions. A .kf stores node names as plain
+ASCII, so "does any loaded clip drive this bone" is a byte scan, not a
+parse, and a name absent from every clip cannot be animated by one. No
+driver, no quiver: the round goes down the bow-mesh path.
+
+NOT A DEPARTURE FROM THE REFERENCE SO MUCH AS THE NEVER-TRAPS LAW
+APPLIED TO IT - a feature whose driving data is absent degrades to the
+default rather than deleting the picture. A wrong answer from the scan
+can only ever cost the VANILLA placement, which is the one that works.
+
+MW-D16's two branch pins now state the law instead of relying on the
+fixtures to imply it: they pass quiverDriven explicitly, because the
+fixture skeleton has the bone and the fixture clip does not drive it -
+precisely the combination this refuses.

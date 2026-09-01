@@ -108,6 +108,10 @@ test('MW-D16: with no "Bip01 Arrow" bone the arrow rides the WEAPON MESH', async
 test('MW-D16: a skeleton that HAS the bone takes the first branch instead', async () => {
   const res = await buildFpArm({
     race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
+    // MW-D46: the branch also needs a clip that DRIVES the bone, and
+    // the fixture clip does not - stated here rather than left to the
+    // fixtures to imply.
+    quiverDriven: true,
   });
   assert.ok(res.ok, `${res.stage}: ${res.error}`);
   assert.equal(res.arrow.viaWeaponMesh, false);
@@ -118,6 +122,7 @@ test('MW-D16: the mesh chain is BAKED, so the two branches put it in different p
   const viaMesh = await buildFpArm({ race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps() });
   const viaBone = await buildFpArm({
     race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
+    quiverDriven: true,   // MW-D46: the branch also needs a clip that drives it
   });
   const arrowOf = (res) => res.arm.pieces.find((p) => p.slot === 'arrow');
   assert.ok(arrowOf(viaMesh) && arrowOf(viaBone));
@@ -375,4 +380,31 @@ test('MW-D44: the arrow inherits the WEAPON\'s BoneOffset, and only when it ride
   // inherit a stale offset from the previous one.
   assert.match(src, /let weaponBoneOffset = null;\s*\n\s*for \(const part of parts\)/,
     'the carry is per-call, not module state');
+});
+
+// MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS FOR (Mac,
+// four rounds in: "the placement is still not correct. It still spawns
+// in the character"). OpenMW issue 5642 added that branch so MODDED
+// skeletons could fetch arrows from a quiver - "allows to implement
+// better shooting animations" - and it is worthless without clips that
+// move the bone. A skeleton carrying "Bip01 Arrow" against animations
+// that never touch it parks the round ON THE BODY for the whole shot,
+// which is the symptom exactly. The vanilla path the bow mesh carries
+// is the one that works, and it is where the round goes now.
+//
+// This is the never-traps law, not a new opinion: a feature whose
+// driving data is absent degrades to the default rather than deleting
+// the picture.
+test('MW-D46: a quiver bone with no clip to drive it falls back to the bow mesh', async () => {
+  // Same skeleton as MW-D16's branch pin - it HAS "Bip01 Arrow" - but
+  // without the override, so the real clip check runs and the fixture
+  // clip does not animate that bone.
+  const res = await buildFpArm({
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(res.arrow, 'the round still resolves - the point is WHERE, not whether');
+  assert.equal(res.arrow.viaWeaponMesh, true,
+    'no clip drives the quiver bone, so the round takes the vanilla bow-mesh branch');
+  assert.notEqual(res.arrow.bone, 'Bip01 Arrow', 'and not the body bone it would have sat on');
 });
