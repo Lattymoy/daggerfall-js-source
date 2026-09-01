@@ -1,0 +1,108 @@
+// ═══════════════════════════════════════════════════════════════════
+// EE0: THE WORLD RENDER GATE.
+//
+// The first Enhanced Environments attempt shipped a black world and
+// every gate said pass, because no gate ever rendered the game: eslint,
+// the node suite and a vite build have no GL context, and the lab's
+// render gate loads a page that needs no data. The game needs ARENA2.
+//
+// This boots the ACTUAL exterior against ACTUAL data and reads ACTUAL
+// pixels. It fails on:
+//   - a page error;
+//   - the frame never advancing (the world did not boot);
+//   - a black ground: the lower half's mean under 20;
+//   - a flat ground: fewer than 8 distinct colours in the lower half
+//     (a void is one colour; so is a single unlit tile);
+//   - a black sky: the upper half's mean under 20.
+//
+// Every slice of the arc runs it before committing. A slice that
+// touches a shader runs it AND tools/bootProbe.mjs.
+//
+//   ARENA2_PATH=/path/to/ARENA2 node tools/worldRenderGate.mjs [--minutes N] [--mode classic|enhanced]
+//
+// Standalone: it starts its own vite server on 5223, like the other
+// world probes, so nothing else needs to be running.
+import { createServer } from 'vite';
+import { chromium } from 'playwright';
+
+process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
+const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
+const MINUTES = Number(arg('minutes', 720));        // noon by default: the sun is up and the ground is lit
+const MODE = arg('mode', 'enhanced');
+const PORT = 5223;
+
+const fails = [];
+const check = (name, ok, detail = '') => {
+  if (ok) console.log(`  ok   ${name}`);
+  else { console.error(`  FAIL ${name}${detail ? ` - ${detail}` : ''}`); fails.push(name); }
+};
+
+const server = await createServer({ server: { port: PORT, strictPort: true } });
+await server.listen();
+const browser = await chromium.launch({
+  headless: true,
+  args: ['--use-gl=angle', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'],
+});
+const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
+const errors = [];
+page.on('pageerror', (e) => errors.push(String(e.message)));
+
+// the classic skin is the control; the enhanced skin is what the arc
+// changes. ?sky=classic is NOT set, so the enhanced sky draws when the
+// pref allows it.
+const skin = MODE === 'classic' ? '&classic' : '';
+await page.goto(`http://localhost:${PORT}/play/?exterior&shot&novideo&nofoes${skin}`);
+
+// wait for the world to actually render frames
+const until = Date.now() + 240000;
+let frames = 0;
+while (Date.now() < until) {
+  frames = await page.evaluate(() => (typeof window.__frame === 'number' ? window.__frame : 0));
+  if (frames > 30) break;
+  await page.waitForTimeout(1000);
+}
+check('the exterior boots and renders frames', frames > 30, `frames=${frames}`);
+check('no page error', errors.length === 0, errors.slice(0, 2).join(' | '));
+
+// set the time of day, then let a few frames settle
+if (MINUTES !== null) {
+  await page.evaluate((m) => { if (window.__setWorldMinutes) window.__setWorldMinutes(m); }, MINUTES);
+  await page.waitForTimeout(1500);
+}
+
+// the frame comes back as a SCREENSHOT of the canvas element, not a
+// pixel read-back: the default framebuffer is cleared on present, so a
+// read-back outside the game's own rAF returns zeros - which is the
+// false "everything is black" this gate's first run reported. The
+// compositor's copy is what the player sees, and it is what we judge.
+const canvas = await page.$('canvas');
+const png = await canvas.screenshot({ type: 'png' });
+const { PNG } = await import('pngjs');
+const img = PNG.sync.read(png);
+const { width: w, height: h, data: px } = img;
+const stats = (y0, y1) => {
+  let sum = 0, n = 0; const seen = new Set();
+  for (let y = y0; y < y1; y += 3) {
+    for (let x = 0; x < w; x += 3) {
+      const o = (y * w + x) * 4;
+      const r = px[o], g = px[o + 1], b = px[o + 2];
+      sum += (r + g + b) / 3; n++;
+      seen.add(`${r >> 4},${g >> 4},${b >> 4}`);
+    }
+  }
+  return { mean: sum / n, colours: seen.size };
+};
+// PNG rows run top-down: the sky is the LOW rows, the ground the HIGH
+const sample = { sky: stats(0, Math.floor(h * 0.4)), ground: stats(Math.floor(h * 0.55), h) };
+check(`the ground is lit (mean ${sample.ground.mean.toFixed(1)} > 20)`, sample.ground.mean > 20);
+check(`the ground has detail (${sample.ground.colours} colours > 8)`, sample.ground.colours > 8);
+check(`the sky is drawn (mean ${sample.sky.mean.toFixed(1)} > 20)`, sample.sky.mean > 20);
+if (process.argv.includes('--save')) {
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync('/tmp/worldGate.png', png);
+}
+
+await browser.close();
+await server.close();
+if (fails.length) { console.error(`\nworld render gate: ${fails.length} failure(s)`); process.exit(1); }
+console.log(`\nworld render gate ok (${MODE}, ${MINUTES} min)`);

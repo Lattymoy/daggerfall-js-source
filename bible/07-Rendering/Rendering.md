@@ -84,3 +84,5 @@ GetFireWallColors32 stays unported until a firewall consumer exists
 (a two-line lerp). Live visual sign-off open (Mac). R13 shipped precipitation + verbatim storm
 lightning. R10 retired groundMesh.js - all ground
 (exterior + terrain) runs the verbatim tilemap shader.
+
+See `Enhanced-Environments-Arc.md` for the Enhanced Environments arc plan (second attempt): its laws, its slices in order, and the gate each one must pass.
