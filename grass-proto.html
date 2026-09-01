@@ -1236,11 +1236,24 @@ float stars(vec3 dir, float amount) {
 }
 
 void main() {
-  vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
+  // PROTO-19 (1, Mac: the sky should not rotate when you rotate the
+  // camera). It was built on a DIFFERENT convention from the camera
+  // that looks at it. The page's camera faces -Z and its forward is
+  // (-sin y cos p, sin p, -cos y cos p); this ray was built facing +Z
+  // and then yawed the other way, which is a 180-degree offset AND an
+  // inverted pitch. The dome was still world-fixed in its own frame -
+  // it was fixed to the WRONG frame, so turning swung the sky against
+  // the ground and the whole vault appeared to follow the head.
+  //
+  // The ray is built in the camera's own convention now: down -Z,
+  // pitched and yawed exactly as the lookAt does. At yaw 0 and pitch 0 the
+  // sky's forward IS the camera's forward, so the sun stays where the
+  // world put it however you turn.
+  vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, -1.0));
   float cp = cos(uPitch), sp = sin(uPitch);
-  vec3 r1 = vec3(ray.x, ray.y * cp + ray.z * sp, -ray.y * sp + ray.z * cp);
+  vec3 r1 = vec3(ray.x, ray.y * cp - ray.z * sp, ray.y * sp + ray.z * cp);
   float cy = cos(uYaw), sy = sin(uYaw);
-  vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
+  vec3 dir = normalize(vec3(r1.x * cy - r1.z * sy, r1.y, r1.x * sy + r1.z * cy));
 
   // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
   // (SKY_ANGLE_PER_PIXEL) - and ES1f: on a CUBE, so it has no pole. The
@@ -1424,7 +1437,7 @@ layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
 uniform float uTime, uKind, uBox, uFall;
-uniform vec2 uWindV;
+uniform vec2 uWindV, uWindOff;
 out float vT; out float vSeed;
 void main(){
   vSeed = aSeed.w;
@@ -1439,9 +1452,19 @@ void main(){
   // gust so the sheet is not one rigid direction. The streak is then
   // stretched along the ACTUAL velocity, which is what makes a driven
   // rain read as driven rather than as a leaning texture.
+  // PROTO-19 (2, Mac: the particles fall inverted when it first
+  // starts). They were advected by wind multiplied by uTime - a CHANGING wind
+  // multiplied by the page's whole uptime. uTime is tens of seconds,
+  // so the smallest gust change moved every drop by metres at once,
+  // and at the start, when the front is ramping the wind hardest, the
+  // field lurched sideways and backwards faster than it fell: drops
+  // visibly travelling the wrong way. The wind's displacement is
+  // INTEGRATED on the CPU now and handed over as a distance already
+  // travelled, so a change in the wind changes where drops go NEXT
+  // and never where they have already been.
   float gust = 0.75 + fract(vSeed*3.7)*0.5;
   vec3 drift = vec3(uWindV.x, 0.0, uWindV.y) * gust;
-  p += drift * uTime;
+  p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   p.y -= uTime * fall;
   p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
   // PROTO-14 (7, Mac: the particles show upright at the start instead
@@ -1492,6 +1515,7 @@ void main(){
   }
 }`);
 const BOX = 42;
+const windOffset = [0, 0];   // PROTO-19: integrated wind travel
 let wxVao = null, wxCount = 0, wxVerts = 6;
 function buildWeather(n) {
   const inst = new Float32Array(n * 4);
@@ -1832,6 +1856,10 @@ function frame(now) {
   const windDirRad = state.windDir * Math.PI / 180 + Math.sin(tsec * 0.07) * 0.35;
   const windSpeed = state.wind * gust;                       // slider units
   const WIND = { dir: [Math.cos(windDirRad), Math.sin(windDirRad)], speed: windSpeed, gust };
+  // the distance the wind has actually carried things, integrated -
+  // never speed multiplied by uptime
+  windOffset[0] += WIND.dir[0] * WIND.speed * 0.16 * dt;
+  windOffset[1] += WIND.dir[1] * WIND.speed * 0.16 * dt;
   // the sun's ELEVATION is the time of day, and it drives everything:
   // the sky ramp, the ground's light, and the blades' own colour
   const elev = state.sun;
