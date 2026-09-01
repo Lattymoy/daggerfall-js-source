@@ -67,7 +67,17 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
+  // AUDIT 39r R17: DaggerfallDefault.shader:83-85 - "Emission cancels out
+  // other lights". The lit term runs on albedo.rgb - emission, NOT on
+  // the raw albedo, so an auto-emissive record (whose mask IS its albedo,
+  // TextureReader.cs:301-308, worn at EmissionColor = Color.white) lands
+  // at exactly its albedo whatever the scene light is. Adding on top of
+  // full lighting put a lantern at ~2.3x albedo outdoors. The clamp is
+  // ours: a window mask can be brighter than the glass texel under it,
+  // and a negative albedo has no honest meaning here.
+  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   vec3 pointAcc = vec3(0.0);
@@ -78,17 +88,17 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += tex.rgb * pointAcc;
+  lit += albedo * pointAcc;
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  lit += tex.rgb * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  // Window emission: white mask from getWindowColors32, tinted by the
-  // active window style (MaterialReader semantics: emission adds on top).
-  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  // The emission (window style from getWindowColors32, or an auto-emissive
+  // record's own albedo at Color.white) goes back on top of the lighting
+  // its subtraction above paid for - o.Emission = emission.
   outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
   // A2: the Daggerfall/Automap shader's presentation, verbatim
   // (DaggerfallAutomap.shader:102-110): brightness falls with vertical
@@ -262,12 +272,20 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * uPointColors[i];
   }
-  vec3 emission = texture(uEmissionTex, vUV).rgb;   // spectral eyes/body glow (black tex otherwise)
+  // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
+  // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
+  // albedo.rgb - emission and adds the emission back - "Emission cancels
+  // out other lights" - so a self-lit flat draws at exactly its albedo in
+  // any light. Adding it on top of the exterior tint (~1.31 at noon) put
+  // every missile, impact flash and fire daedra at ~2.3x albedo, clipped
+  // to white. The clamp is ours; a negative albedo has no meaning here.
+  vec3 emission = texture(uEmissionTex, vUV).rgb;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
   // R12: the indirect term, attenuation-only like the lantern term
   // (billboards have no normal).
   float iD = length(uIndirect.xyz - vBBWorld);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lit = tex.rgb * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
+  vec3 lit = albedo * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), uSpectral == 1 ? tex.a : 1.0);
 }`;
 

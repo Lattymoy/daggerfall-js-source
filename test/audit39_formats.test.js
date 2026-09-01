@@ -207,6 +207,73 @@ test('audit39 formats: the flattener walks EVERY NiNode-derived class and draws 
   assert.deepEqual(Array.from(batches[0].indices), [0, 1, 2, 0, 2, 1]);
 });
 
+test('audit39r R18: a switch shows ONE branch and a LOD ONE level, not the union', () => {
+  // nifloader.cpp:907-924 hangs a NiSwitchNode's children off an
+  // osg::Switch built with `setNewChildDefaultValue(false);
+  // setSingleChildOn(mInitialIndex)` (:568-575) and a NiLODNode's off an
+  // osg::LOD with one DISTANCE_FROM_EYE_POINT range per level (:553-565):
+  // exactly one subtree draws. F8 walked the subtrees but emitted every
+  // branch and every level superimposed, leaving the parsed `index` and
+  // `lodLevels` dead.
+  const triData = cat(
+    pack('H', 3), pack('I', 1),                    // 3 vertices, has vertices
+    pack('fff', 0, 0, 0), pack('fff', 1, 0, 0), pack('fff', 0, 1, 0),
+    pack('I', 0),                                  // no normals
+    pack('ffff', 0, 0, 0, 1),                      // bound centre + radius
+    pack('I', 0),                                  // no colours
+    pack('H', 0), pack('I', 0),                    // no UV sets
+    pack('H', 1), pack('I', 3), pack('HHH', 0, 1, 2),
+    pack('H', 0),                                  // no match groups
+  );
+  const shape = (name, dataRef) => cat(
+    sstr(name), pack('ii', -1, -1), pack('H', 0),
+    pack('fff', 0, 0, 0),
+    pack('fffffffff', 1, 0, 0, 0, 1, 0, 0, 0, 1),
+    pack('f', 1), pack('fff', 0, 0, 0),
+    pack('I', 0), pack('I', 0),
+    pack('ii', dataRef, -1),                       // data ref, skin ref
+  );
+  const drawn = (records) => flattenNif(parseNif(nifOf(records))).map((b) => b.name);
+
+  const switchTree = (index) => [
+    ['NiNode', nodePayload('Root', [1], [0, 0, 0])],
+    ['NiSwitchNode', nodePayload('Switch', [2, 3], [0, 0, 0], pack('I', index))],
+    ['NiTriShape', shape('Branch0', 4)],
+    ['NiTriShape', shape('Branch1', 4)],
+    ['NiTriShapeData', triData],
+  ];
+  assert.deepEqual(drawn(switchTree(1)), ['Branch1'], 'the index the file names, and only it');
+  assert.deepEqual(drawn(switchTree(0)), ['Branch0']);
+  // An index past the last child leaves no branch on, exactly as an
+  // out-of-range setSingleChildOn does.
+  assert.deepEqual(drawn(switchTree(7)), []);
+
+  // NiLODNode inherits the switch index but the reference routes it to the
+  // LOD wrapper instead, so the RANGES decide: a flattener has no eye, and
+  // reads the LOD at its own centre - distance 0, the nearest level. The
+  // index below is 1 on purpose; the near level still wins.
+  const lodTail = cat(
+    pack('I', 1),                                  // switch index (ignored here)
+    pack('fff', 0, 0, 0),                          // LOD centre
+    pack('I', 2), pack('ff', 0, 100), pack('ff', 100, 1e9),
+  );
+  assert.deepEqual(drawn([
+    ['NiNode', nodePayload('Root', [1], [0, 0, 0])],
+    ['NiLODNode', nodePayload('Lod', [2, 3], [0, 0, 0], lodTail)],
+    ['NiTriShape', shape('Near', 4)],
+    ['NiTriShape', shape('Far', 4)],
+    ['NiTriShapeData', triData],
+  ]), ['Near']);
+  // A plain NiNode-alias keeps every child - only Switch and LOD select.
+  assert.deepEqual(drawn([
+    ['NiNode', nodePayload('Root', [1], [0, 0, 0])],
+    ['NiSortAdjustNode', nodePayload('Sorted', [2, 3], [0, 0, 0], pack('Ii', 0, -1))],
+    ['NiTriShape', shape('A', 4)],
+    ['NiTriShape', shape('B', 4)],
+    ['NiTriShapeData', triData],
+  ]), ['A', 'B']);
+});
+
 test('audit39 formats: a spell stance TURNS on the prefixed group', () => {
   // character.cpp:676-687 - "Spellcasting stance turning is a special
   // case": the short group PREFIXES the movement name. The port only ever

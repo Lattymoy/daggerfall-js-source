@@ -136,6 +136,37 @@ test('audit39 F49: an auto-emissive mask wears Color.white, a window mask wears 
   assert.deepEqual(emisAt(before + 1)[1], [...new Float32Array([0.3, 0.2, 0.1])], 'and the window keeps its style');
 });
 
+// The one shader in the file whose name is asked for, body only.
+const shaderBody = (s, name) => {
+  const m = new RegExp('const ' + name + ' = `([^`]*)`;').exec(s);
+  assert.ok(m, `${name} still lives in renderer.js as one template`);
+  return m[1];
+};
+
+test('audit39r R17: emission CANCELS the lighting it replaces, it does not ride on top of it', () => {
+  // DaggerfallBillboard.shader:56-58 and DaggerfallDefault.shader:83-85 are
+  // the same two lines: `o.Albedo = albedo.rgb - emission; // Emission
+  // cancels out other lights` then `o.Emission = emission;`. An
+  // auto-emissive record's mask IS its albedo (TextureReader.cs:301-308) and
+  // wears Color.white (MaterialReader.cs:448-453), so the flat lands at
+  // exactly its albedo in ANY light. F49 shipped the mask and the upload but
+  // kept an ADD, which outdoors (uTint = 0.9 ambient + 0.816 sun * 0.5 at
+  // noon) drew every missile, impact flash and fire daedra at ~2.3x albedo.
+  const s = src('src/render/renderer.js');
+  for (const name of ['FS', 'BB_FS']) {
+    const body = shaderBody(s, name);
+    assert.match(body, /vec3 albedo = max\(tex\.rgb - emission, vec3\(0\.0\)\);/,
+      `${name} lights albedo - emission`);
+    assert.ok(!/tex\.rgb \*/.test(body) && !/\* tex\.rgb/.test(body),
+      `${name}: no light term multiplies the RAW albedo any more`);
+    assert.match(body, /\+ emission/, `${name} adds the emission back - o.Emission = emission`);
+  }
+  // and the law, arithmetically: a white-masked flat at the noon tint.
+  const tint = 0.9 + 0.816 * 0.5;   // EXTERIOR_NOON_AMBIENT + SUN_RIG_COLOR * 0.5
+  const texel = 0.8;
+  assert.equal(Math.max(texel - texel, 0) * tint + texel, texel, 'the lit flat sits at its albedo');
+});
+
 // ---------------------------------------------------------------
 // F50: renderer.stats counted drawMesh alone.
 // ---------------------------------------------------------------
