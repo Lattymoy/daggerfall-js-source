@@ -1378,6 +1378,43 @@ function rebuildPooling() {
 }
 const poolFlat = new Float32Array(FIELD_N * FIELD_N);
 
+/** One texel's pooling and flatness, from the terrain under it. */
+function poolAt(i, j) {
+  const step = FIELD_M / FIELD_N;
+  const x = fieldOrigin[0] + i * step, z = fieldOrigin[1] + j * step;
+  const h = terrainAt(x, z), r = 1.4;
+  const around = (terrainAt(x + r, z) + terrainAt(x - r, z) + terrainAt(x, z + r) + terrainAt(x, z - r)) * 0.25;
+  const slope = Math.hypot(terrainAt(x + r, z) - terrainAt(x - r, z), terrainAt(x, z + r) - terrainAt(x, z - r)) / (2 * r);
+  const flat = cl(1 - slope * 2.6, 0, 1);
+  const k = j * FIELD_N + i;
+  poolFlat[k] = flat;
+  poolCache[k] = cl((around - h) * 1.7 + 0.35, 0, 1) * 0.75 + flat * 0.25;
+}
+/** The pooling travels with the field, exactly as the state does. */
+function scrollPooling(di, dj) {
+  if (!di && !dj) return;
+  if (Math.abs(di) >= FIELD_N || Math.abs(dj) >= FIELD_N) return;
+  const iS = di > 0 ? 0 : FIELD_N - 1, iE = di > 0 ? FIELD_N : -1, iSt = di > 0 ? 1 : -1;
+  const jS = dj > 0 ? 0 : FIELD_N - 1, jE = dj > 0 ? FIELD_N : -1, jSt = dj > 0 ? 1 : -1;
+  for (let j = jS; j !== jE; j += jSt) {
+    const sj = j + dj;
+    for (let i = iS; i !== iE; i += iSt) {
+      const si = i + di, d = j * FIELD_N + i;
+      if (si < 0 || si >= FIELD_N || sj < 0 || sj >= FIELD_N) { poolCache[d] = 0; poolFlat[d] = 0; continue; }
+      const sK = sj * FIELD_N + si;
+      poolCache[d] = poolCache[sK]; poolFlat[d] = poolFlat[sK];
+    }
+  }
+}
+/** Measure ONLY the rows and columns that have just come into view. */
+function rebuildPoolingStrip(di, dj) {
+  if (Math.abs(di) >= FIELD_N || Math.abs(dj) >= FIELD_N) { rebuildPooling(); return; }
+  if (di > 0) for (let j = 0; j < FIELD_N; j++) for (let i = FIELD_N - di; i < FIELD_N; i++) poolAt(i, j);
+  if (di < 0) for (let j = 0; j < FIELD_N; j++) for (let i = 0; i < -di; i++) poolAt(i, j);
+  if (dj > 0) for (let j = FIELD_N - dj; j < FIELD_N; j++) for (let i = 0; i < FIELD_N; i++) poolAt(i, j);
+  if (dj < 0) for (let j = 0; j < -dj; j++) for (let i = 0; i < FIELD_N; i++) poolAt(i, j);
+}
+
 /** A stamp: the player's foot, or a drip. Writes in world space. */
 function stampField(x, z, radius, fn) {
   const step = FIELD_M / FIELD_N;
@@ -1421,6 +1458,7 @@ function scrollField(di, dj) {
 }
 
 let lastStep = [0, 0], stepPhase = 0;
+let fieldDirty = true;   // a stamp or a scroll owes an upload
 function tickField(dt, eye, rainRate, snowRate, warmth) {
   if (!poolValid) rebuildPooling();
   const n = FIELD_N * FIELD_N;
@@ -1468,12 +1506,16 @@ function tickField(dt, eye, rainRate, snowRate, warmth) {
       // a puddle SPLASHES: the water is pushed out of the print
       field[o] = Math.max(0, field[o] - w * 0.35);
     });
+    fieldDirty = true;
     stampField(fx, fz, 0.52, (k, w) => {
       const o = k * 4;
       if (w < 0.35) field[o + 1] = Math.min(1, field[o + 1] + (1 - w) * 0.05);   // the rim
     });
   }
-  // upload
+  // and the UPLOAD only when the field has anything to say: a dry
+  // sunny field with nobody walking is 256KB a frame for nothing.
+  if (rainRate <= 0 && snowRate <= 0 && warmth <= 0 && !fieldDirty) return;
+  fieldDirty = false;
   for (let k = 0; k < n; k++) {
     const o = k * 4;
     fieldPx[o] = field[o] * 255; fieldPx[o + 1] = field[o + 1] * 255;
@@ -1664,8 +1706,27 @@ function frame(now) {
   const eye = [cam.x, terrainAt(cam.x, cam.z) + cam.h, cam.z];
   // the field follows the player in whole texels, so its contents do
   // not smear when it re-centres
+  // MAC'S BUG 1: THE FPS DROP WHEN MOVING WAS THIS. The field
+  // re-centred whenever the player crossed a single TEXEL - a quarter
+  // of a metre - and each re-centre scrolled 65,536 cells AND rebuilt
+  // the pooling from scratch, which is 65,536 texels x 5 terrain
+  // samples = a third of a million noise evaluations. Walking crossed
+  // texels several times a second, so the cost landed on exactly the
+  // frames that were already moving the camera.
+  //
+  // Two fixes, and both are needed. The window now moves in a DEAD
+  // BAND: it only re-centres when the player is more than an eighth of
+  // the field from the middle, and then jumps by whole blocks. And the
+  // pooling is rebuilt ONLY FOR THE STRIP that has just come into
+  // view, because the rest of it describes ground that has not moved.
   const fstep = FIELD_M / FIELD_N;
-  const wantO = [Math.round((cam.x - FIELD_M / 2) / fstep) * fstep, Math.round((cam.z - FIELD_M / 2) / fstep) * fstep];
+  const centre = [fieldOrigin[0] + FIELD_M / 2, fieldOrigin[1] + FIELD_M / 2];
+  const slack = FIELD_M / 8;
+  let wantO = fieldOrigin;
+  if (Math.abs(cam.x - centre[0]) > slack || Math.abs(cam.z - centre[1]) > slack) {
+    const blk = fstep * 16;   // whole blocks, so the scroll is rare and coarse
+    wantO = [Math.round((cam.x - FIELD_M / 2) / blk) * blk, Math.round((cam.z - FIELD_M / 2) / blk) * blk];
+  }
   if (wantO[0] !== fieldOrigin[0] || wantO[1] !== fieldOrigin[1]) {
     // AUDIT 41 F1 (severe): THE FIELD MUST SCROLL, NOT JUST MOVE ITS
     // ORIGIN. Re-centring rebuilt the pooling for the new patch of
@@ -1679,8 +1740,11 @@ function frame(now) {
     const di = Math.round((wantO[0] - fieldOrigin[0]) / fstep);
     const dj = Math.round((wantO[1] - fieldOrigin[1]) / fstep);
     scrollField(di, dj);
+    scrollPooling(di, dj);
+    fieldDirty = true;
     fieldOrigin = wantO;
-    poolValid = false;
+    // only the strip that just arrived needs measuring
+    rebuildPoolingStrip(di, dj);
   }
   // the RATES come from the weather that is actually falling, and the
   // warmth from the season slider - which is the melt, and therefore
@@ -1694,8 +1758,22 @@ function frame(now) {
 
   // THE SKY, first and depth-less: it is the backdrop everything else
   // stands in front of.
+  // MAC'S BUG 2: THE SKY NEVER DREW. Its triangle sits at z = 1.0 -
+  // the far plane, which is the right place for a backdrop - and the
+  // depth buffer is CLEARED to 1.0, and the default depth function is
+  // LESS. 1.0 < 1.0 is false, so every sky pixel failed the test and
+  // was thrown away: no dome, no clouds, no sun, no stars, and what
+  // was left on screen was the clear colour and the distance haze on
+  // the ground. LEQUAL for the pass, restored after. This is why "not
+  // 1:1" was the wrong diagnosis and I should have checked the render
+  // before the shader: the shader was the game's and never ran.
+  // ...and belt with braces: the pass runs with the depth test OFF
+  // entirely. A backdrop drawn first, before anything it could hide,
+  // has no business consulting a depth buffer at all - and a pass that
+  // does not consult one cannot be silently thrown away by it again.
   gl.useProgram(skyProg);
   gl.depthMask(false);
+  gl.disable(gl.DEPTH_TEST);
   const S1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), v);
   const S3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
   const S4 = (n, v) => gl.uniform4fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
@@ -1739,6 +1817,7 @@ function frame(now) {
   S1('uRetroLevels', state.retro ? 26 : 0);
   gl.bindVertexArray(skyVao);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.enable(gl.DEPTH_TEST);
   gl.depthMask(true);
 
   gl.useProgram(groundProg);
