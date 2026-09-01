@@ -214,7 +214,12 @@ test('A2 grayscale pins: the shader law and the two-tier dungeon pass (Daggerfal
   // tier a choice made inside it. Both halves are pinned, because
   // collapsing them back into one conditional is exactly the mistake.
   assert.match(aw, /if \(!rec\.revealed\.has\(key\)\) return;/, 'revealed IS the draw gate (MeshRenderer.enabled)');
-  assert.match(aw, /const row = run\.has\(key\) \? visited : prior;/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
+  // RE-BASELINED at ROAD-C c2/S9: `run` is NULL inside a building, which
+  // is the always-colour law (AutomapModel.cs:46-72 passes
+  // visitedInThisEntering = playerIsInsideBuilding), so the predicate
+  // reads through that arm. Both halves stay pinned.
+  assert.match(aw, /const run = this\.deps\.insideBuilding \? null : rec\.visitedThisRun;/, 'inside a building there is no prior-run tier');
+  assert.match(aw, /const row = \(run === null \|\| run\.has\(key\)\) \? visited : prior;/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
   assert.match(aw, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);/, 'beacons ride neither the slice nor the tint');
   // PIN MOVED, ROAD-C c2/S2: the automap mode is one of the globals
   // renderer.panelFrame saves and returns in its own finally, so the

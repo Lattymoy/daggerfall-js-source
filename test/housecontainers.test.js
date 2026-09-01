@@ -102,7 +102,7 @@ test('HC1: the host answers houseOwned at BUILD, off the bank registry (:816)', 
   const wm = src('scenes/worldModes.js');
   assert.ok(wm.includes('const houseOwned = !!interiorBuilding && isHouseOwned(playerEntity.houses ?? [], interiorBuilding.regionIndex ?? 0, interiorBuilding.buildingKey);'),
     'the host owns the registry and evaluates at BUILD');
-  assert.ok(wm.includes('setupStaticNpc, houseOwned, peopleVisible })'),
+  assert.ok(wm.includes('setupStaticNpc, houseOwned, peopleVisible,'),
     'the answer rides the opts into buildInteriorContext - the peopleVisible idiom');
 });
 

@@ -82,9 +82,9 @@
 // (transparent and wireframe, the water tint, Cutout as the absence of
 // the second pass); c2/S7 the beacons, the marker meshes and the hover
 // picker. c2/S8 the USER-DATA HALF - note markers, teleporter
-// connections and the click verbs that mint them. So what is FLAGGED
-// here is now: the interior-BUILDING automap arm, and the exterior
-// window's own native chrome.
+// connections and the click verbs that mint them. c2/S9 the
+// interior-BUILDING arm (the visit-scoped record below). So what is
+// FLAGGED here is now: the exterior window's own native chrome.
 //
 // ── ROAD-C c2/S8: NOTES AND TELEPORTERS ──────────────────────────────
 // AutomapDungeonState carries two more collections (Automap.cs:93-94):
@@ -265,7 +265,142 @@ export function restoreAutomap(snap) {
     });
   }
 }
-export function resetAutomapStore() { _dungeons = new Map(); _inside = false; _liveKey = null; }
+export function resetAutomapStore() {
+  _dungeons = new Map();
+  _inside = false;
+  _liveKey = null;
+  _interior = null;   // c2/S9: the visit-scoped interior record dies with the store
+}
+
+// ── ROAD-C c2/S9: THE INTERIOR-BUILDING RECORD ───────────────────────
+//
+// A building interior gets a map too - CheckForNewlyDiscoveredMeshes
+// runs on IsPlayerInsideBuilding exactly as it runs in a dungeon
+// (:1155) - but the state it writes lives NOWHERE PERSISTENT, and that
+// is DFU's own arrangement rather than an omission. Four facts, all
+// verified against Automap.cs this stage and all reproduced here:
+//
+//  (1) ALWAYS COLOUR. The material injection passes
+//      `visitedInThisEntering = playerIsInsideBuilding`
+//      (AutomapModel.cs:46-72 -> UpdateMaterialsOfMeshRenderer
+//      :76-101), so inside a building RENDER_IN_GRAYSCALE is DISABLED
+//      on every model and never enabled again. The same branch also
+//      skips `meshRenderer.enabled = false`, so the injection leaves a
+//      building's geometry nominally DISCOVERED - which the restore
+//      below immediately takes back. The window's own always-colour
+//      law is the port's half of this (ui/automapWindow.js).
+//
+//  (2) THE ENTRANCE BEACON IS LIT AND THEN PUT OUT, in that order.
+//      CreateIndoorGeometryForAutomap ends in SetupBeacons(door)
+//      (:1898), whose building arm parks the beacon at the entered
+//      door and `SetActive(true)` - "set do discovered" (:1450-1457).
+//      InitWhenInInteriorOrDungeon's very next statement is
+//      RestoreStateAutomapDungeon(true) (:2485), which opens with
+//      HideAll() (:2355) - and HideAll deactivates the entrance beacon
+//      (:2460-2461). So a building's map opens FULLY HIDDEN with an
+//      UNDISCOVERED entrance, and the entrance re-lights on the next
+//      LOS tick like any other. The sequence is the quirk; a port that
+//      only reproduced the end state would look identical for one
+//      frame and diverge for ever after (and one that only reproduced
+//      SetupBeacons would show the door through the walls at once).
+//
+//  (3) ...WITH ONE TAIL. After HideAll, RestoreStateAutomapDungeon
+//      looks the BUILDING up in the DUNGEON dictionary by the current
+//      location's "RegionName/Name" (:2362-2365) - a town and the
+//      dungeon under it share that string - and, if a record is there,
+//      sets the beacon to ITS entranceDiscovered (:2379) BEFORE the
+//      locationName comparison that then returns (:2381). So entering
+//      a shop in a town whose dungeon you have mapped lights the
+//      shop's own entrance beacon immediately. Reproduced by
+//      `dungeonEntranceDiscovered` below; the lookup is a READ and
+//      the interior never joins that dictionary.
+//
+//  (4) NOTHING SURVIVES LEAVING. That same locationName mismatch ends
+//      the restore before any discovery is applied, so interior
+//      discovery is PER-VISIT: leave and come back and the room is
+//      dark again.
+//
+// DEPARTURE (Port-Ledger, this file): DFU has a FIFTH arm and the port
+// declines it. SaveStateAutomapDungeon runs on every save and only
+// skips when the player is OUTSIDE (:2139-2143), so a save taken
+// inside a shop walks the INTERIOR's hierarchy, writes it into the
+// dungeon dictionary under the town's "RegionName/Name" with the
+// interior's scene name as its locationName, and then runs the LRU
+// prune over the result - evicting a real dungeon map to make room for
+// a shop, and shadowing that town's dungeon record until the dungeon
+// is next entered. Reload in the same building and (2)'s restore does
+// match the locationName, so the interior even comes back. The port
+// keeps the interior record OUT of the dungeon dictionary entirely:
+// this record is a session object, never snapshot, never restored, and
+// its `int:<n>` keys never enter the save's `${bi}:${position}` space.
+// Interior discovery is therefore per-visit across a save/load too,
+// which is (4)'s behaviour applied to one more door.
+//
+// AND ONE PIECE OF DFU IS DELIBERATELY ABSENT. SaveStateAutomapInterior
+// (:2085-2121) fills `automapGeometryInteriorState` on the way out of a
+// building (:2526), and RestoreStateAutomapInterior (:2280-2305) would
+// read it back onto fresh geometry - but NOTHING ANYWHERE CALLS
+// RestoreStateAutomapInterior. A whole-tree grep of the pinned clone
+// finds the definition and no caller. It is dead code, the write half
+// feeds nothing, and porting either half would invent a feature DFU
+// does not have: interior discovery that survives leaving. There is no
+// interior snapshot in this module for that reason.
+
+/** The ONE interior record. Not a dictionary: DFU holds a single
+ *  `automapGeometryInteriorState` field (:262) and a single geometry
+ *  object, so at most one building is ever mapped. */
+let _interior = null;
+
+/**
+ * OnTransitionToInterior -> InitWhenInInteriorOrDungeon's building arm
+ * (:2482-2487). A FRESH record every time, which is the per-visit
+ * lifetime (4) made structural: there is nowhere for the old one to
+ * have been kept.
+ *
+ * `dungeonEntranceDiscovered` is (3)'s tail - the caller looks the
+ * current location up in the dungeon dictionary (getDungeonAutomap) and
+ * hands over what it found, or false. HideAll runs FIRST here, exactly
+ * as it does at :2355, so the beacon is dark unless that lookup lights
+ * it.
+ */
+export function enterInteriorAutomap({ dungeonEntranceDiscovered = false } = {}) {
+  const rec = {
+    revealed: new Set(),
+    visitedThisRun: new Set(),
+    entranceDiscovered: false,
+    lastVisited: 0,
+    blockNames: null,
+    notes: new Map(),
+    teleporters: new Map(),
+  };
+  _interior = rec;
+  // THE SEQUENCE, statement for statement, in DFU's order. Each step is
+  // its own exported function so the ORDER is what a pin drives, rather
+  // than a final state that three different orders could produce.
+  setupInteriorEntranceBeacon(rec);   // CreateIndoorGeometryForAutomap -> SetupBeacons(door) (:1898, :1450-1457)
+  hideAllAutomap(rec);                // InitWhenInInteriorOrDungeon -> RestoreStateAutomapDungeon(true) -> HideAll() (:2485, :2355, :2450-2461)
+  // ...and the dictionary tail (3), which is the ONLY thing that can
+  // leave the beacon lit before the player has looked at the door.
+  if (dungeonEntranceDiscovered) rec.entranceDiscovered = true;   // :2379
+  return rec;
+}
+
+/** SetupBeacons' building arm (:1450-1457): the beacon is parked at the
+ *  door the player walked through and `SetActive(true)` - DFU's own
+ *  comment is "set do discovered". The POSITION is the host's (the
+ *  window's `startMarker` dep); this is the discovery bit alone. */
+export function setupInteriorEntranceBeacon(rec) {
+  if (!rec) return false;
+  rec.entranceDiscovered = true;
+  return true;
+}
+
+/** OnTransitionToExterior (:2525-2528): the beacons are destroyed and
+ *  the state written to a field nothing reads. The port drops the
+ *  record instead - see the dead-restore note above. */
+export function exitInteriorAutomap() { _interior = null; }
+
+export const getInteriorAutomap = () => _interior;
 
 // ---- the reveal index + the probe law ------------------------------
 

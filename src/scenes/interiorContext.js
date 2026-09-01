@@ -18,7 +18,7 @@
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutInterior, INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { multiply, transformPoint } from '../world/mat4.js';
+import { multiply, transformPoint, identity } from '../world/mat4.js';
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
@@ -39,6 +39,9 @@ import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { worldAabb } from '../player/activate.js';   // ROAD-C c2/S9: the automap rows' world bounds
+import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, SCAN_INTERVAL_S } from '../systems/automap.js';   // ROAD-C c2/S9
+import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S9
 
 /**
  * The A1 door-audio seams for a BUILDING interior's ActionSystem.
@@ -164,6 +167,40 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   }
 
   const drawList = [];
+  // ROAD-C c2/S9: THE INTERIOR AUTOMAP'S ROWS, minted at the ONE push
+  // site every building entry runs through.
+  //
+  // IDENTITY. DFU's interior discovery record has the same three-level
+  // shape as a dungeon's - block -> blockElement -> model - with ONE
+  // block (the interior scene) and the two elements AddModels creates,
+  // "Models" and "Doors", of which only the first is ever populated
+  // (DaggerfallInterior.cs:398-401; automapModel.js records why). The
+  // port carries that address as METADATA, exactly as the dungeon host
+  // does, and mints its own key. The key is POSITIONAL here - the
+  // placement's index - where the dungeon's is the action system's
+  // `${bi}:${blockLocalPosition}`, because an interior placement has no
+  // byte offset to be named by and, crucially, because this record is
+  // VISIT-SCOPED: it is never written to a save, so a positional key
+  // costs a map at worst and never a save. The `int:` prefix keeps it
+  // out of the dungeon's `<digits>:<digits>` space by construction.
+  //
+  // THE INDEX IS THE PLACEMENTS ARRAY'S, not a running counter, so a
+  // model this ARCH3D lacks leaves a GAP rather than renumbering every
+  // key after it - the same layout must mint the same keys on every
+  // visit or discovery lands on the wrong walls.
+  //
+  // ONE THING DFU DOES THAT THE PORT DOES NOT, stated because it is
+  // visible: Option_CombineRMB is true by default (DaggerfallUnity.cs
+  // :80), so DFU's interior automap folds every non-prop, non-ladder,
+  // non-custom-activation model into ONE "CombinedModels" mesh
+  // (:459-461, :505-517) - one MeshRenderer, so revealing any part of
+  // the shell reveals all of it at once. This port combines nowhere
+  // (world/rmbLayout.js has stood standalone models since the block
+  // layout shipped), so it reveals model by model, which is DFU's own
+  // behaviour with the option off. Finer-grained, never coarser.
+  const automapEntries = [];
+  const amapModelCount = [0, 0];
+  const amapBlockName = `${dfBlock.name ?? ''}:${recordIndex}`;
   // WM4b: the machinery's MOVING PARTS - {gpu, child, parent, state}.
   // The body of 41601 is an ordinary draw above; its Plank_Gear and
   // Roller are drawn by the host each frame under mountMachineryChild
@@ -189,7 +226,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // the OWNED-house arm lands below (HC1).
   const shelves = [];
   const collider = new Collider(() => -Infinity);
-  for (const p of interior.placements) {
+  for (const [pi, p] of interior.placements.entries()) {
     const matrix = parent(p.matrix);
     // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
     // does not carry (dataPipeline.js:82, and it CACHES the null), and
@@ -205,7 +242,27 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       console.warn(`[interior] model ${p.modelIdNum} is not in this ARCH3D - the placement is skipped`);
       continue;
     }
-    drawList.push({ mesh: gpu, matrix });
+    // ROAD-C c2/S9: the automap row rides the draw entry, key and all,
+    // so the map filters the LIVE list and no second copy of the
+    // building exists (Automap.cs duplicates the whole interior into
+    // its own GameObject instead - CreateIndoorGeometryForAutomap
+    // :1862-1910).
+    const aabb = worldAabb(cpu.positions, matrix);
+    const key = `int:${pi}`;
+    drawList.push({ mesh: gpu, matrix, key, aabb });
+    automapEntries.push({
+      key,
+      aabb,
+      blockIndex: 0,
+      blockName: amapBlockName,
+      elementIndex: 0,
+      elementName: INTERIOR_ELEMENT_NAMES[0],
+      modelIndex: amapModelCount[0]++,
+      waterLevel: null,   // AddWater is a DUNGEON block's (Automap.cs:1982-2001); an interior has no water level
+      positions: cpu.positions,
+      indices: cpu.indices,
+      matrix,
+    });
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
     if (p.modelIdNum === MACHINERY_MODEL_ID && getMachineryParts) {
       machineryParts ??= await getMachineryParts();
@@ -498,9 +555,70 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // whatever the enemies arc grows into.
   const spawnPoints = interior.spawnPoints.map(([x, y, z]) => parentPt(x, y, z));
 
+  // ── ROAD-C c2/S9: THE INTERIOR AUTOMAP MOUNT ───────────────────────
+  // InitWhenInInteriorOrDungeon's BUILDING arm (Automap.cs:2482-2487),
+  // in the one place both interior hosts build their room. The record
+  // is minted here and dropped in destroy(): it is a session object,
+  // never a save's - see systems/automap.js's interior block for the
+  // four DFU facts it reproduces and the one arm it declines.
+  const automapModel = buildRevealIndex(automapEntries);
+  const automapRec = enterInteriorAutomap({
+    // Automap.cs:2379 - the beacon takes the DUNGEON dictionary's answer
+    // for this same location when there is one. A read, nothing more.
+    dungeonEntranceDiscovered: !!opts.dungeonEntranceDiscovered,
+  });
+  bindAutomapLayout(automapRec, automapModel);
+  // SetupBeacons' building arm parks the entrance beacon at the door the
+  // player walked through (:1450-1457); rayEntrancePosOffset is (0,0,0)
+  // (:236), so this is the door's world position exactly. The standalone
+  // ?interior route has no entered door at all - DFU's building arm is
+  // gated on `door.HasValue` (:2482) - and passes none.
+  const automapEntrance = Array.isArray(opts.entrance) ? [...opts.entrance] : null;
+  // The player marker arrow, Daggerfall mesh 99900 (Automap.cs:1355) -
+  // the dungeon host's own idiom. Absent from a stripped ARCH3D the
+  // window falls back to a red quad.
+  let automapArrow = null;
+  let automapArrowBounds = null;
+  try {
+    automapArrow = await getGpuMesh(99900);
+    if (automapArrow) {
+      await remapSubMeshes(cpuModels.get(99900)?.subMeshes, texRemap, climateArchive, deps);
+      const acpu = cpuModels.get(99900);
+      if (acpu?.positions?.length) automapArrowBounds = worldAabb(acpu.positions, identity());
+    }
+  } catch { automapArrow = null; }
+  let automapScanT = SCAN_INTERVAL_S;   // the first tick probes at once (Automap.cs:993-1002's lazy-init scan)
+
   return {
     drawList,
     actions,
+    // ROAD-C c2/S9: the window's model + the live record.
+    automapModel,
+    automapRecord: () => automapRec,
+    automapEntrance: () => automapEntrance,
+    automapArrow,
+    automapArrowBounds,
+    /** CheckForNewlyDiscoveredMeshes' BUILDING arm (:1155 - the same
+     *  body a dungeon runs, gated on IsPlayerInsideBuilding beside
+     *  IsPlayerInsideDungeon), at the 5 Hz cadence (:172). Hosts call
+     *  this every gameplay frame with the live eye + view direction. */
+    automapTick(dt, eye, fwd) {
+      automapScanT += dt;
+      if (automapScanT < SCAN_INTERVAL_S) return;
+      automapScanT = 0;
+      automapRevealTick(automapRec, {
+        eye, fwd, collider, model: automapModel,
+        // The three-ray scan's door blocker: an interior swing door is
+        // its own collider bucket (actionSystem addDoor), and the
+        // automap copy has no action doors at all - DoLayoutAutomap
+        // calls AddModels alone (DaggerfallInterior.cs:170-188).
+        isDoorBucket: (k) => actions.objects.get(k)?.kind === 'door',
+      });
+      // The entrance beacon's LOS check runs OUTSIDE the geometry block
+      // (:1196-1274), so it ticks indoors too - and it is what re-lights
+      // the beacon HideAll put out when the room was built.
+      automapEntranceTick(automapRec, automapEntrance, eye, collider);
+    },
     dynamicDraws,
     billboardBatches,
     flatAnims,   // FA1: the host ticks the flats it draws
@@ -526,6 +644,14 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,
     destroy() {
+      // ROAD-C c2/S9: OnTransitionToExterior's automap half
+      // (Automap.cs:2525-2528) - the beacons go and the interior state
+      // is written to a field NOTHING EVER READS
+      // (RestoreStateAutomapInterior has no caller anywhere in the
+      // reference). The port drops the record instead of writing it
+      // nowhere, which is the same behaviour with one fewer dead field:
+      // interior discovery is per-visit.
+      exitInteriorAutomap();
       for (const r of rotors) { r.hum?.stop(); r.hum = null; }   // WM4c: the gear's hum ends with the room
       for (const b of billboardBatches) renderer.destroyBatch(b);
       // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU

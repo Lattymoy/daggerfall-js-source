@@ -1024,7 +1024,16 @@ export class AutomapWindow {
    * metadata, which c2/S1 minted from AddWater's law.
    */
   _partitionDraws(rec) {
-    const run = rec.visitedThisRun;
+    // ROAD-C c2/S9: INSIDE A BUILDING THE MAP IS ALWAYS IN COLOUR, and
+    // it is a LAW rather than an accident of the sets agreeing. The
+    // material injection passes `visitedInThisEntering =
+    // playerIsInsideBuilding` (AutomapModel.cs:46-72), so every
+    // interior material is born with RENDER_IN_GRAYSCALE DISABLED and
+    // nothing indoors ever enables it again - there is no
+    // prior-run tier in a building, because there is no prior run
+    // (interior discovery is per-visit; systems/automap.js). `null`
+    // here means "every revealed row is a visited row".
+    const run = this.deps.insideBuilding ? null : rec.visitedThisRun;
     const byKey = this.deps.model?.byKey ?? null;
     const visited = [];
     const prior = [];
@@ -1037,7 +1046,7 @@ export class AutomapWindow {
       // second, so a map_hideall'd dungeon must go dark even where
       // `visitedThisRun` still holds the key.
       if (!rec.revealed.has(key)) return;
-      const row = run.has(key) ? visited : prior;
+      const row = (run === null || run.has(key)) ? visited : prior;
       row.push({ mesh, matrix, water: byKey?.get(key)?.waterLevel ?? null });
     };
     for (const d of this.deps.drawList) push(d.mesh, d.matrix, d.key);
@@ -1355,6 +1364,16 @@ export class AutomapWindow {
    *  Rebuilt only when the player crosses a half-block (the marker's own
    *  resolution); versioned keys because uploadTexture memoizes. */
   _drawMicroMap(renderer, p, m) {
+    // ROAD-C c2/S9: THERE IS NO MICRO-MAP INSIDE A BUILDING.
+    // UpdateMicroMapTexture's two-armed wrapper (Automap.cs:1722-1732)
+    // hands `null` for a building and the location for a dungeon, and
+    // the null arm sets `textureMicroMap = null` and returns
+    // (:1743-1748) - the overlay panel keeps no texture, so its 28x28
+    // rect stays empty. A building has no DungeonBlocks to draw and no
+    // grid to place them on. Gated on the HOST'S OWN ANSWER, not on an
+    // empty `blocks` list, so a caller that hands the town's blocks in
+    // by mistake still draws nothing.
+    if (this.deps.insideBuilding) return;
     if (getBool('Map', 'AutomapDisableMicroMap')) return;
     const blocks = this.deps.blocks;
     if (!blocks?.length) return;

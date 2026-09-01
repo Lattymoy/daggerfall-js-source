@@ -62,6 +62,20 @@ export const ELEMENT_MODELS = 'Models';
 export const ELEMENT_ACTION_MODELS = 'Action Models';
 export const ELEMENT_NAMES = [ELEMENT_MODELS, ELEMENT_ACTION_MODELS];
 
+/** ROAD-C c2/S9: THE INTERIOR'S OWN TWO ELEMENTS. A BUILDING's automap
+ *  copy is laid out by DaggerfallInterior.DoLayoutAutomap (:170-188),
+ *  which calls AddModels and nothing else - no AddActionDoors, no
+ *  AddFlats, no AddPeople - and AddModels creates exactly two child
+ *  nodes, in this order: "Models" and "Doors" (:398-401). Only the
+ *  first ever receives a child; "Doors" stays EMPTY, because the
+ *  static doors it was named for go into a DaggerfallStaticDoors
+ *  COMPONENT (:521-522) rather than under the node. So every interior
+ *  model addresses as element 0, and element 1 exists to be walked
+ *  past - which is exactly what SaveStateAutomapDungeon's blockElement
+ *  loop does when it runs over an interior. */
+export const ELEMENT_DOORS = 'Doors';
+export const INTERIOR_ELEMENT_NAMES = [ELEMENT_MODELS, ELEMENT_DOORS];
+
 /**
  * AddWater (Automap.cs:1982-2001): the block's native water level
  * becomes the shader's `_WaterLevel`, and 10000 means NO WATER - the

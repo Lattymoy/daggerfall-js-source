@@ -23,6 +23,8 @@
 
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle
+import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
+import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb } from '../player/activate.js';   // QG1: the foe-click door
 import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
@@ -834,6 +836,8 @@ export function createWorldModes(host) {
     preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
     preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
       .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
+    preloadAutomapArt({ renderer, fetchBytes, palette })   // ROAD-C c2/S9: AMAP00I0 + AMAP01I0 - the map opens inside a building too
+      .catch((e) => console.warn('[automap] native map art unavailable; keyed fallback:', e?.message ?? e));
   };
 
   // X11c: WARM THE WINDOW ART AT BOOT, not only on interior entry.
@@ -3549,7 +3553,22 @@ export function createWorldModes(host) {
         // a building was entered from ?world / ?exterior - the same
         // building reached through ?interior=NAME:REC omitted it.
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
-        hit.door.matrix, { voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible });
+        hit.door.matrix, {
+          voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible,
+          // ROAD-C c2/S9: SetupBeacons(door)'s building arm - the
+          // entrance beacon stands at the door walked through
+          // (Automap.cs:1450-1457), with rayEntrancePosOffset (0,0,0).
+          entrance: doorWorldPosition(hit.door),
+          // ...and RestoreStateAutomapDungeon's tail (:2362-2379): the
+          // BUILDING is looked up in the DUNGEON dictionary by this
+          // location's own "RegionName/Name" - which a town and the
+          // dungeon beneath it share - and the beacon takes that
+          // record's entranceDiscovered before the locationName
+          // mismatch ends the restore. A READ; nothing about a
+          // building ever enters that dictionary (systems/automap.js).
+          dungeonEntranceDiscovered: !!getDungeonAutomap(
+            automapDungeonKey(hit.dfLocation?.regionIndex ?? -1, hit.dfLocation?.name ?? ''))?.entranceDiscovered,
+        });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -3570,6 +3589,13 @@ export function createWorldModes(host) {
       // (interiorBuilding was resolved above, before the context was
       // built - P1 needs it to gate the people.)
       ensureInteriorWindowArt();   // U23: every interior can open a window now
+      // ROAD-C c2/S9: InitWhenInInteriorOrDungeon's building arm raises
+      // `resetAutomapSettingsFromExternalScript` exactly as the dungeon
+      // arm does (Automap.cs:2486), so the window's next OnPush resets
+      // the view - and picks CUTOUT as the default render mode, because
+      // "floors above the current are often distracting" in a building
+      // (window :587-596). The signal is pulled and erased once.
+      signalAutomapReset();
       // P1: RestoreCachedScene (:804) - after the identity is known,
       // because the scene NAME is built from the building key.
       restoreInteriorScene();
@@ -4514,6 +4540,10 @@ export function createWorldModes(host) {
     // over a frozen world, while the frame's own ridePlatform (gated)
     // declined to carry the player with it.
     if (!overlayHeld) interiorCtx.actions.update(dt);
+    // ROAD-C c2/S9: the 5 Hz reveal probes, the dungeon arm's own gate.
+    // CheckForNewlyDiscoveredMeshes runs on IsPlayerInsideBuilding
+    // exactly as it runs in a dungeon (Automap.cs:1155).
+    if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
@@ -5516,14 +5546,43 @@ export function createWorldModes(host) {
         questLog: () => host.pauseQuestLog?.() ?? { active: [], finished: [] },
       });
     },
-    // PX15b: THE DIAL - three arms here, because the interior ctx has
-    // three doors (no automap inside a building); the rose never
+    /** ROAD-C c2/S9: THE M WINDOW INSIDE A BUILDING, in the same one
+     *  overlay slot every other interior window uses. DFU has no scene
+     *  gate on the automap at all - GameManager's dispatch is one flat
+     *  chain (:509-557) and Automap's own geometry arm covers
+     *  IsPlayerInsideBuilding beside IsPlayerInsideDungeon (:1155) - so
+     *  the only reason this host had no map was that the arm was
+     *  unbuilt. The deps are the dungeon host's, with the three
+     *  interior differences DFU itself makes: no micro-map blocks
+     *  (:1724-1731), `insideBuilding` true (which selects the cutout
+     *  default on reset, forces the always-colour tier and closes the
+     *  note/teleporter click arm at window :1871), and the entrance
+     *  beacon at the entered door rather than a dungeon start marker. */
+    toggleAutomap() {
+      if (interiorOverlay || !interiorCtx) return;
+      interiorOverlay = new AutomapWindow({
+        record: () => interiorCtx.automapRecord(),
+        drawList: interiorCtx.drawList, dynamicDraws: interiorCtx.dynamicDraws, texRemap: interiorCtx.texRemap,
+        player: () => ({ feet: player.pos, eye: cam.pos, yaw: cam.yaw }),
+        startMarker: (() => { const e = interiorCtx.automapEntrance(); return e ? { x: e[0], y: e[1], z: e[2] } : null; })(),
+        blocks: null,   // there is no dungeon block grid in a building - the micro-map is null indoors
+        arrowMesh: interiorCtx.automapArrow,
+        arrowBounds: interiorCtx.automapArrowBounds,
+        dungeonName: interiorBuilding?.name ?? 'Interior',
+        indexSize: interiorCtx.automapModel.length,
+        model: interiorCtx.automapModel,
+        insideBuilding: true,   // IsPlayerInsideBuilding (window :587-596, :1871)
+      });
+    },
+    // PX15b: THE DIAL - four arms now that the interior ctx has four
+    // doors (ROAD-C c2/S9 gave a building its automap); the rose never
     // draws a dead arm.
     toggleDial() {
       return openPixelDial([
         { id: 'skills', label: 'Skills', dir: 'n', open: () => interiorKeyCtx.openSheetPage() },
         { id: 'items', label: 'Items', dir: 'e', open: () => interiorKeyCtx.toggleInventory() },
         { id: 'magic', label: 'Magic', dir: 'w', open: () => interiorKeyCtx.toggleSpellbook() },
+        { id: 'map', label: 'Map', dir: 's', open: () => interiorKeyCtx.toggleAutomap() },
       ]);
     },
     toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
@@ -5701,6 +5760,13 @@ export function createWorldModes(host) {
     }
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
+    // ROAD-C c2/S9: THE POINTER SEAM REACHES THE INTERIOR SLOT TOO. The
+    // automap chrome is press-HOLD and drag driven, and c2/S9 puts that
+    // window in THIS slot - so a host that delivered only `click` here
+    // would give a building's map buttons that never repeat and a pan
+    // drag that never starts. Down/move/up are all three or none (the
+    // c2/S4 rule, and the reason its pin counts routes per host).
+    if (v) interiorOverlay.pointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (interiorOverlay?.done) interiorOverlay = null;
     interiorWindows.reconcile(interiorOverlay);   // ROAD-B B1: the click's drain is PopWindow too
@@ -5720,12 +5786,26 @@ export function createWorldModes(host) {
       (e.clientY - r.top) * (canvas.height / r.height));
   }
   function pointermove(e) {
+    if (mode === 'interior' && interiorOverlay) {
+      const vi = pointerNative(e);
+      if (vi) interiorOverlay.pointer?.('move', vi[0], vi[1], 0);
+      return true;
+    }
     if (mode !== 'dungeon' || !dungeonCtx?.uiOverlayActive) return false;
     const v = pointerNative(e);
     if (v) dungeonCtx.overlayPointer?.('move', v[0], v[1], 0);
     return true;
   }
   function pointerup(e) {
+    // ROAD-C c2/S9: the release, in BOTH modes. A move without an up is
+    // the defect this seam exists to make impossible - the drag latches
+    // and the map spins for ever - so the interior arm lands in the
+    // same three functions, not in a fourth one.
+    if (mode === 'interior' && interiorOverlay) {
+      const vi = pointerNative(e);
+      interiorOverlay.pointer?.('up', vi ? vi[0] : -1, vi ? vi[1] : -1, e.button);
+      return true;
+    }
     if (mode !== 'dungeon' || !dungeonCtx?.uiOverlayActive) return false;
     const v = pointerNative(e);
     dungeonCtx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);

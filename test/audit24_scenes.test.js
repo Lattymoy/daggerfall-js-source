@@ -115,7 +115,7 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
   // being handed over rather than on the exact shape of the literal -
   // what this gate is for is that setupStaticNpc reaches the context,
   // not that nothing else ever travels with it.
-  assert.match(wm, /\{ voxelfolk, piece, paint, setupStaticNpc[,}][^)]*\)/,
+  assert.match(wm, /\{\s*voxelfolk, piece, paint, setupStaticNpc[,}]/,
     'and hands it to buildInteriorContext');
 
   const ic = rd('src/scenes/interiorContext.js');

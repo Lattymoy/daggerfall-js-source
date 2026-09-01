@@ -27,6 +27,10 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // AUDIT: the F
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { AutomapWindow, preloadAutomapArt } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the second interior host's M window
+import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C c2/S9
+import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
+import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -98,14 +102,82 @@ export async function bootInterior(canvas, renderer, params, status) {
     pitch: 0,
   };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+
+  // ── ROAD-C c2/S9: THE SECOND INTERIOR HOST'S MAP ────────────────────
+  // The FOUR HOSTS rule, applied to the arm this stage builds: the map
+  // belongs to the interior CONTEXT, and both hosts that mount one owe
+  // it a tick and a door. This scene is the dev route - a fly camera
+  // over one building record, no player, no HUD - so its window has no
+  // entrance beacon (DFU's building arm is gated on `door.HasValue`,
+  // Automap.cs:2482, and there is no entered door here either) and its
+  // "player" is the camera. Everything else is the same window.
+  let overlay = null;
+  let mapFont = null;
+  makeFontFor().catch((e) => console.warn('[automap] FONT0003 unavailable:', e?.message ?? e));
+  async function makeFontFor() {
+    mapFont = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003');
+  }
+  preloadAutomapArt({ renderer, fetchBytes, palette })
+    .catch((e) => console.warn('[automap] native map art unavailable; keyed fallback:', e?.message ?? e));
+  const toggleAutomap = () => {
+    if (overlay) return;
+    overlay = new AutomapWindow({
+      record: () => ctx.automapRecord(),
+      drawList: ctx.drawList, dynamicDraws: ctx.dynamicDraws, texRemap: ctx.texRemap,
+      player: () => ({ feet: cam.pos, eye: cam.pos, yaw: cam.yaw }),
+      startMarker: null,
+      blocks: null,
+      arrowMesh: ctx.automapArrow,
+      arrowBounds: ctx.automapArrowBounds,
+      dungeonName: blockName,
+      indexSize: ctx.automapModel.length,
+      model: ctx.automapModel,
+      insideBuilding: true,
+    });
+  };
+  const nativeAt = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return pointToNative(nativeMetrics(canvas),
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height));
+  };
+  const drainOverlay = () => { if (overlay?.done) { overlay.dispose?.(); overlay = null; } };
+
   const keys = new Set();
   addEventListener('keydown', (e) => {
+    // The open map owns the keyboard, exactly as it does in the three
+    // hosts that already carry it - including the toggle key, which the
+    // window itself defers to its own close.
+    if (overlay) { overlay.input(e.code, e); drainOverlay(); e.preventDefault(); return; }
+    if (e.code === 'KeyM') { toggleAutomap(); e.preventDefault(); return; }
     keys.add(e.code);
     // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
     if (document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => keys.delete(e.code));
-  canvas.addEventListener('pointerdown', () => requestLook(canvas));
+  canvas.addEventListener('pointerdown', (e) => {
+    // An open window withholds the pointer lock (the dungeon.js law) -
+    // the drag has to work with the lock released.
+    if (overlay) {
+      const v = nativeAt(e);
+      if (v) overlay.pointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
+      drainOverlay();
+      return;
+    }
+    requestLook(canvas);
+  });
+  addEventListener('pointermove', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    if (v) { overlay.pointer?.('move', v[0], v[1], 0); overlay.hover?.(v[0], v[1]); }
+  });
+  addEventListener('pointerup', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    overlay.pointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
+    drainOverlay();
+  });
+  addEventListener('wheel', (e) => { if (overlay) overlay.wheel?.(Math.sign(e.deltaY)); });
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
@@ -176,6 +248,17 @@ export async function bootInterior(canvas, renderer, params, status) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
+
+    // ROAD-C c2/S9: the 5 Hz reveal probes and the map over them. The
+    // probes run whether or not the window is open (DFU's Update does
+    // the same - CheckForNewlyDiscoveredMeshes is on the component, not
+    // on the window), and this host has no pause, so there is no gate.
+    ctx.automapTick?.(dt, cam.pos, fwd);
+    if (overlay) {
+      overlay.tick(dt);
+      drainOverlay();
+      if (overlay) overlay.draw(renderer, canvas, mapFont, 1);
+    }
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

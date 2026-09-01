@@ -306,24 +306,24 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:4049` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:5109` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
 - `src/scenes/world.js:6275` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1352` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1370` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1582` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1587` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1832` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:2123` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:2155` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2377` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2499` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2774` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2819` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2838` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2943` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:3199` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:4875` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4974` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:1356` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1374` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1586` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1591` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1836` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:2127` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:2159` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2381` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2503` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2778` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2823` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2842` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2947` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:3203` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:4905` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:5004` - *  FLAGGED null this slice closed. */
 - `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/automap.js:85` - connections and the click verbs that mint them. So what is FLAGGED
+- `src/systems/automap.js:87` - FLAGGED here is now: the exterior window's own native chrome.
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
