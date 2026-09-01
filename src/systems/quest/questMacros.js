@@ -44,7 +44,7 @@ const FACTION_RACE_KEYS = Object.freeze({
   0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
   4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
 });
-import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue } from '../gameDate.js';
+import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
 import { REGION_TEMPLES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 
@@ -679,9 +679,13 @@ const signedOff = (hooks, field) => {
   return e ? signedFmt(e[field] ?? 0) : null;
 };
 const pgender = (hooks) => hooks?.playerGender?.() === 'female';
+/** hooks.nowSeconds is EPOCH-RELATIVE (classic minutes x 60), so the
+ *  epoch goes back on before the date is read - otherwise %year answers
+ *  1 where DFU's WorldTime.Now.Year answers 405. The epoch is exactly
+ *  404 x 360-day years, so every other field is unmoved by this. */
 const nowDate = (hooks) => {
   const sec = hooks?.nowSeconds?.();
-  return sec == null ? null : dateFromSeconds(sec);
+  return sec == null ? null : dateFromSeconds(CLASSIC_EPOCH_IN_SECONDS + sec);
 };
 /** GetSuffix (DaggerfallDateTime.cs:641-651), on the ONE-based day. */
 const daySuffix = (day) => (day === 1 || day === 21 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th');

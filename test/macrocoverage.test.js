@@ -83,7 +83,15 @@ test('M-X: the date/time block - one-based days and months, the suffix law, MinT
   assert.equal(getContextValue('%day', null, dateHooks), '2', 'DayOfMonth is Day + 1 (:626)');
   assert.equal(getContextValue('%days', null, dateHooks), '2nd', 'GetSuffix on the ONE-based day');
   assert.equal(getContextValue('%mon', null, dateHooks), '1', 'MonthOfYear is one-based');
-  assert.equal(getContextValue('%year', null, dateHooks), '0');
+  // AUDIT 39 #95: the pin moved from '0'. hooks.nowSeconds is
+  // EPOCH-RELATIVE (classic minutes x 60), so nowDate adds
+  // CLASSIC_EPOCH_IN_SECONDS back before reading the date - it is
+  // exactly 404 x 360-day years, which is why every field above is
+  // unmoved and only the year was wrong (%year answered 1 at the
+  // classic game start where DFU's WorldTime.Now.Year answers 405).
+  assert.equal(getContextValue('%year', null, dateHooks), '404');
+  assert.equal(getContextValue('%year', null, { nowSeconds: () => S(CLASSIC_GAME_START_TIME) }), '405',
+    'the classic game start is 3E405, MacroHelper %year');
   // the suffix boundaries (GetSuffix :641-651)
   const at = (day0) => getContextValue('%days', null, { nowSeconds: () => S(day0 * 1440) });
   assert.equal(at(0), '1st');

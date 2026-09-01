@@ -3006,8 +3006,14 @@ export class ClimateCondition extends ActionTemplate {
     this.climate = -1;       // MapsFile.Climates value, or -1
     this.climateBase = '';   // 'desert'|'mountain'|'temperate'|'swamp', or ''
   }
+  /** C#'s alternative ORDER is load-bearing and must not be sorted
+   *  longest-first: both engines take the leftmost alternative that
+   *  matches at the earliest start, and Test() is unanchored, so
+   *  `climate desert2` binds desert (224) with the trailing '2' left
+   *  unconsumed, and `climate mountainwoods` binds mountain (226).
+   *  Bug-for-bug, verbatim. */
   get pattern() {
-    return /climate (?<climate>desert2|desert|mountainwoods|mountain|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (?<base>base) (?<climatebase>desert|mountain|temperate|swamp)/;
+    return /climate (?<climate>desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (?<base>base) (?<climatebase>desert|mountain|temperate|swamp)/;
   }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -3098,7 +3104,10 @@ export class PayMoney extends ActionTemplate {
   update(_caller) {
     const hooks = this.parentQuest.hooks;
     if (this.amount > 0) {
-      const held = this.goldOnly ? (hooks?.getGoldPieces?.() ?? 0) : (hooks?.getGold?.() ?? 0);
+      // The `money` arm gates on PlayerEntity.GetGoldAmount() - coins
+      // PLUS letters of credit - which is what deductGold then spends.
+      // getGold is the bare GoldPieces read the other actions use.
+      const held = this.goldOnly ? (hooks?.getGoldPieces?.() ?? 0) : (hooks?.getTotalGold?.() ?? 0);
       if (held >= this.amount) {
         if (this.goldOnly) hooks?.deductGoldPieces?.(this.amount);
         else hooks?.deductGold?.(this.amount);
@@ -3112,12 +3121,14 @@ export class PayMoney extends ActionTemplate {
 }
 
 /** JournalNote.cs - the message's tokens into the notebook's NOTES
- *  page (the addNote seam Q3 mounted). */
+ *  page through the TOKEN overload, PlayerNotebook.AddNote(List<Token>)
+ *  (RevealLocation's readmap note is the string one). */
 export class JournalNote extends ActionTemplate {
   static typeName = 'JournalNote';
   get saveShape() { return [['id']]; }
   constructor(parentQuest) {
     super(parentQuest);
+    this.allowRearm = false;
     this.id = 0;
   }
   get pattern() { return /journal note (?<id>\d+)/; }
@@ -3130,7 +3141,7 @@ export class JournalNote extends ActionTemplate {
   }
   update(_caller) {
     const message = this.parentQuest.getMessage(this.id);
-    if (message) this.parentQuest.hooks?.world?.addNote?.(message.getTextTokens());
+    if (message) this.parentQuest.hooks?.world?.addNoteTokens?.(message.getTextTokens());
     this.setComplete();
   }
 }
@@ -3147,6 +3158,7 @@ export class TrainPc extends ActionTemplate {
   get saveShape() { return [['skill']]; }
   constructor(parentQuest) {
     super(parentQuest);
+    this.allowRearm = false;
     this.skill = -1;
   }
   get pattern() { return /train pc (?<skillName>\w+)/; }
@@ -3242,6 +3254,7 @@ export class RunQuest extends ActionTemplate {
   get saveShape() { return [['questName'], ['successSymbol'], ['failureSymbol'], ['questStarted'], ['questUId']]; }
   constructor(parentQuest) {
     super(parentQuest);
+    this.allowRearm = false;
     this.questName = '';
     this.successSymbol = null;
     this.failureSymbol = null;
@@ -3280,6 +3293,16 @@ export class RunQuest extends ActionTemplate {
       this._quest = null;
     }
   }
+  /** Dispose: a child still RUNNING when the parent quest is
+   *  tombstoned dies with it - otherwise it ticks on alone, keeping
+   *  its SiteLinks, placed foes and talk topics alive. */
+  dispose() {
+    super.dispose();
+    if (this._quest && !this._quest.questComplete) {
+      this.parentQuest.hooks?.tombstoneQuest?.(this._quest);
+      this._quest = null;
+    }
+  }
 }
 
 /** SpawnCityGuards.cs - PlayerEntity.SpawnCityGuards(immediate),
@@ -3291,12 +3314,18 @@ export class SpawnCityGuardsAction extends ActionTemplate {
     super(parentQuest);
     this.immediateSpawn = false;
   }
-  get pattern() { return /spawncityguards (?<immediate>immediate)|spawncityguards/; }
+  /** Two C# quirks, both load-bearing. The space before the optional
+   *  group is MANDATORY, so a bare `spawncityguards` line matches no
+   *  template at all and the registry drops it. And CreateNew reads
+   *  `match.Groups.Count > 1` - the number of groups IN THE PATTERN,
+   *  always 2, not whether the group participated - so every line
+   *  that DOES match spawns immediately. Verbatim. */
+  get pattern() { return /spawncityguards (immediate)?/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
     const action = new SpawnCityGuardsAction(parentQuest);
-    action.immediateSpawn = !!match.groups?.immediate;
+    action.immediateSpawn = true;
     return action;
   }
   update(_caller) {

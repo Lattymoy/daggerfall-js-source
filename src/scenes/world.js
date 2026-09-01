@@ -3555,8 +3555,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!loc?.loaded) throw new Error(`Error finding location ${regionName} : ${locationName}`);
       discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });
     },
-    /** RevealLocation's readmap note - PlayerNotebook.AddNote. */
+    /** RevealLocation's readmap note - PlayerNotebook.AddNote(string). */
     addNote: (text) => questBridge?.notebook?.addNote(text),
+    /** JournalNote's filing - the OTHER overload,
+     *  PlayerNotebook.AddNote(List<TextFile.Token>). */
+    addNoteTokens: (tokens) => questBridge?.notebook?.addNoteTokens(tokens),
     /** PlayerGPS.GetRaceOfCurrentRegion (:432-435): a RACES value,
      *  RegionRaces[index] + 1 - NOT a FactionRaces one. */
     currentRegionRace: () => REGION_RACES[_questRegionIndex()] + 1,
@@ -4119,6 +4122,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
     getGold: () => goldAmount(playerEntity),
+    // AUDIT 39: PayMoney's `money` arm gates on GetGoldAmount - coins
+    // PLUS letters of credit - which is what deductGold then spends.
+    getTotalGold: () => totalGoldAmount(playerEntity),
     deductGold: (n) => deductGold(playerEntity, n),
     addGold: (n) => addGold(playerEntity, n),
     addHUDText: (t) => townTalk.say(t),

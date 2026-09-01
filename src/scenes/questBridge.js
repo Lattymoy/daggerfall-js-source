@@ -157,6 +157,7 @@ export function createQuestBridge(ctx) {
     questFoeInstances: (symbol) => ctx.questFoeInstances?.(symbol) ?? [],   // MT-iii
     getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
     getGold: () => ctx.getGold?.() ?? 0,
+    getTotalGold: () => ctx.getTotalGold?.() ?? 0,   // PayMoney's `money` arm - GetGoldAmount
     deductGold: (n) => ctx.deductGold?.(n),
     addGold: (n) => ctx.addGold?.(n),
     addHUDText: (t) => ctx.addHUDText?.(t),
