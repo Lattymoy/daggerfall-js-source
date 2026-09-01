@@ -19,6 +19,7 @@ import { buildBuildingDirectory } from '../src/systems/talkTopics.js';
 import { BUILDING_TYPES, isNamedBuildingType } from '../src/world/buildingNames.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
 import { currentWeather, setWeather } from '../src/systems/weatherSim.js';
+import { setSeed } from '../src/formats/dfRandom.js';   // R33: the surrender's classic draw, pinned
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
@@ -76,6 +77,57 @@ test('AUDIT 39 (#21): a plain NUMBER still works - the probe host builds one loc
   });
   flow.onGuardHit(1, () => {});
   assert.equal(player.legalRep[17], -REPUTATION_LOSS_PER_CRIME[CRIMES.Murder]);
+});
+
+test('AUDIT 39 (#21): the FATAL-BLOW surrender reads the live region too', () => {
+  // R33 (AUDIT-39r): onGuardHit's second arm - the would-be-fatal hit
+  // that forces SurrenderToCityGuards(false) - was entered by NO test in
+  // the suite (every driver hit health 30 with dmg 1), so its region()
+  // could be reverted to the boot number for free. DFU opens that call
+  // on PlayerGPS.CurrentRegionIndex (PlayerEntity.cs:2313), the same
+  // live read as LowerRepForCrime (:2286).
+  //
+  // The discriminator is the arrest DECISION: an involuntary surrender
+  // is refused outright below -20 legal rep and taken outright above 0,
+  // and only the 0..-20 band rolls the classic RNG. Region 12 stands at
+  // +30, so under the live read the guards take the player in without a
+  // draw; keyed by the getter object instead, the standing reads 0 and
+  // the seeded odd draw refuses - the blow kills and no court opens.
+  setSeed(3);
+  let region = 3;
+  const player = {
+    name: 'Mack', health: 5, maxHealth: 40,
+    crimeCommitted: CRIMES.Murder,
+    haveShownSurrenderDialogue: true,        // the box has been shown once already
+    legalRep: { 12: 30 },
+  };
+  let damaged = false;
+  const flow = createArrestFlow({
+    townTalk: { texts: () => null, showOverlay: () => {} },
+    playerEntity: player,
+    regionIndex: () => region,
+    rolls: () => 0,
+    guildRankOf: () => null,
+    advanceDays: () => {}, advanceMinutes: () => {},
+  });
+
+  region = 12;                               // fast travel, then take a fatal blow
+  const withheld = flow.onGuardHit(5, () => { damaged = true; });
+
+  assert.equal(withheld, true, 'the surrender owns the moment - the blow is withheld');
+  assert.equal(damaged, false);
+  assert.equal(player.health, 1, 'PlayerEntity.cs:2321 forces health to 1 on the arrest');
+  assert.equal(player.arrested, true, 'and the court opened, in the province travelled to');
+
+  // The sibling KeyY site cannot be pinned this way: a VOLUNTARY
+  // surrender returns true on every path (the refusals both require
+  // !voluntary), so its region argument has no behavioural tell. Hold
+  // it at source with the other three.
+  const a = read('src/scenes/arrestFlow.js');
+  assert.equal((a.match(/surrenderToCityGuards\(playerEntity, region\(\)/g) ?? []).length, 2,
+    'both surrender calls read the region live');
+  assert.doesNotMatch(a, /\(playerEntity, regionIndex[,)]/,
+    'no consumer keeps the raw parameter - under the streaming host it is a Function');
 });
 
 test('AUDIT 39 (#21): the streaming host hands the getter, not startLoc', () => {

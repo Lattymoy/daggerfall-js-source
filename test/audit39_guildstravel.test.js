@@ -27,6 +27,8 @@ import { canAffordTraining, donate, payForCure } from '../src/systems/guildServi
 import { calculateTripCost, playerTravelPosition } from '../src/systems/travel.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 import { SEVERE_PUNISHMENT_BANISHED, SEVERE_PUNISHMENT_EXECUTED } from '../src/systems/encounters.js';
+import { createArrestFlow } from '../src/scenes/arrestFlow.js';
+import { CRIMES } from '../src/systems/court.js';
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
@@ -130,13 +132,56 @@ test('F99: banishment sets bit 1 and execution bit 2, on the COURT\'S region', (
   assert.equal(SEVERE_PUNISHMENT_EXECUTED, 2);
   const a = src('scenes/arrestFlow.js');
   const fn = a.slice(a.indexOf('  function severePunishment(bit) {'));
-  assert.match(fn.slice(0, 260), /playerEntity\.regionConditions\?\.\[regionIndex\]/,
-    'DFU writes RegionData[regionIndex], the region the court sits in');
-  assert.match(fn.slice(0, 260), /if \(r\) r\.severePunishmentFlags \|= bit;/,
+  // PIN MOVED DELIBERATELY, AUDIT-39r (R0): this used to demand the RAW
+  // `regionConditions?.[regionIndex]`, which cemented a merge collision.
+  // #21 (world-legal-talk) landed the region() thunk in the same wave and
+  // converted every other consumer; this one write, landed here, kept the
+  // parameter - so under the streaming host (world.js passes a getter) the
+  // store was keyed by a Function and both bits silently no-oped. DFU reads
+  // the index live too (DaggerfallCourtWindow.cs:118), so region() IS the
+  // law, and the old spelling would have failed the fix.
+  assert.match(fn.slice(0, 420), /playerEntity\.regionConditions\?\.\[region\(\)\]/,
+    'DFU writes RegionData[regionIndex] - the region the court sits in, read live');
+  assert.match(fn.slice(0, 420), /if \(r\) r\.severePunishmentFlags \|= bit;/,
     'an OR into the field, never an assignment - the two bits share it');
   // the FLAGGED marker that licensed the gap is gone: the consumer
   // (encounters.passiveGuardSpawns) has been live for slices.
   assert.equal(a.includes('SeverePunishmentFlags |= 1 consequences pend (FLAGGED)'), false);
+});
+
+test('F99 (AUDIT-39r): the bit lands in the region the GETTER host names', () => {
+  // The source pin above cannot see the host contract, and the raw
+  // parameter read the same in it. This drives the arm end to end under
+  // world.js's shape - `regionIndex` is a thunk - and would have written
+  // nothing at all before the fix: regionConditions[<function>] is
+  // undefined, so `if (r)` is false and banishment cost nothing.
+  let region = 3;
+  const player = {
+    name: 'Mack', health: 1, maxHealth: 40,
+    crimeCommitted: CRIMES.Murder, haveShownSurrenderDialogue: true,
+    // legalRep < 0 opens startCourt's thresholds; roll 0 fails the
+    // FIRST one, which is punishmentType 0 - Banishment.
+    legalRep: { 12: -50 },
+    regionConditions: { 3: { severePunishmentFlags: 0 }, 12: { severePunishmentFlags: 0 } },
+  };
+  let win = null;
+  const flow = createArrestFlow({
+    townTalk: { texts: () => null, showOverlay: (w) => { win = w; } },
+    playerEntity: player,
+    regionIndex: () => region,
+    rolls: () => 0,
+    guildRankOf: () => null,            // no guild rescue arms
+    advanceDays: () => {}, advanceMinutes: () => {},
+  });
+
+  region = 12;                          // the court sits where the player IS
+  flow.startCourtFlow();
+  win.input('KeyG');                    // guilty plea -> punishmentType 0 -> banished
+
+  assert.equal(player.regionConditions[12].severePunishmentFlags, SEVERE_PUNISHMENT_BANISHED,
+    'PlayerEntity.cs:506-511 rolls the 10% Criminal_Conspiracy spawn off this bit, for ever');
+  assert.equal(player.regionConditions[3].severePunishmentFlags, 0,
+    'and never against the province the session booted in');
 });
 
 // ── F100 ──────────────────────────────────────────────────────────

@@ -276,16 +276,22 @@ onCourtScreen();
 
   /** DaggerfallCourtWindow's two severe-punishment writes: state 4
    *  (Banished) `RegionData[regionIndex].SeverePunishmentFlags |= 1`
-   *  (:272) and state 5 (Execution) `|= 2` (:288). Bit 1 is not a
+   *  (:272) and state 5 (Execution) `|= 2` (:289). Bit 1 is not a
    *  record - PlayerEntity.cs:506-511 reads it every catch-up minute
    *  and rolls a 10% Criminal_Conspiracy guard spawn in that region
    *  for ever after, which is the whole cost of being banished. The
    *  port's consumer (encounters.passiveGuardSpawns, fed at
    *  world.js's minute catch-up) has been live with nothing to read.
    *  A host whose region store is absent writes nothing rather than
-   *  minting one - DFU's RegionData is allocated at chargen. */
+   *  minting one - DFU's RegionData is allocated at chargen.
+   *
+   *  AUDIT-39r: through region(), like every other consumer. DFU reads
+   *  regionIndex live (DaggerfallCourtWindow.cs:118) and the streaming
+   *  host hands this flow a getter, so keying the store by the raw
+   *  parameter indexed it by a Function and both bits no-oped exactly
+   *  where fast travel makes banishment reachable. */
   function severePunishment(bit) {
-    const r = playerEntity.regionConditions?.[regionIndex];
+    const r = playerEntity.regionConditions?.[region()];
     if (r) r.severePunishmentFlags |= bit;
   }
 
