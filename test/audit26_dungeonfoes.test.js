@@ -462,7 +462,12 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   assert.ok(fn.includes('exteriorFoes.collectPixel(key);'), 'and the encounter pool\'s');
   // ClearStreamingWorld's CollectLooseObjects(true) is the teleport core
   // walking every built pixel through that same function.
-  const t = WORLD.indexOf('async function _teleportToPixel(px, py, localPos = null)');
+  // PIN MOVED (Road to 1:1, a3): the core took a fourth argument.
+  // StreamingWorld.RepositionPlayer's `grounded` (:1587, :1592) is what
+  // the court's location-entrance arm passes TRUE, so the signature now
+  // reads `(px, py, localPos = null, { grounded = false } = {})`. Anchor
+  // on the name and the first three, which is what this test is about.
+  const t = WORLD.indexOf('async function _teleportToPixel(px, py, localPos = null,');
   // AUDIT 39 (#158): the window widened from 400 - CleanupUntrackedObjects'
   // own half (clearLive on both pools, the missiles, the arrows) now stands
   // at the head of the core, above this loop. Corpses ride the pixel;

@@ -128,6 +128,10 @@ import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocat
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, ghostSampler } from '../world/terrainSampler.js';   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
+// The court release's RandomStartMarker arm (StreamingWorld's
+// PositionPlayerToLocation), the law and its two location-type reads.
+import { positionPlayerToLocation, locationStartMarkers, entranceOptionsForLocationType } from '../world/locationEntrance.js';
+import { preloadPrisonScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
@@ -1170,6 +1174,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
     .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { where: paperDollWhere() });   // U8f/U8g + UI3: SCBG/BODY/FACE + the item-record pipeline ( Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
+  preloadPrisonScreenArt({ renderer, fetchBytes, palette })   // PRIS00I0 - the serving-time screen
+    .catch((e) => console.warn('[court] prison screen art unavailable:', e?.message ?? e));
   // S3d: the INTERIM dagger seed is the FALLBACK only - a character
   // who runs chargen gets AssignStartingGear's real kit instead, so
   // seeding here would leave a stray dagger in the bag.
@@ -1452,7 +1458,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   function runEncounterTick(playerFeet) {
     const now = Math.floor(playerTicker.classicMinutes);
     if (_lastEncMinutes == null) _lastEncMinutes = now;
-    const span = Math.min(now - _lastEncMinutes, 1440);
+    // THE FLAG, AT LAST WITH A READER. PlayerEntity.Update wraps this
+    // whole loop - the spawn roll AND the passive guard rolls inside
+    // it - in `if (!preventEnemySpawns)` (:479-482), and clears the
+    // flag at the tail of the same update (:524-525). This function IS
+    // that loop in this host, so it owns both halves: nowhere else can
+    // clear the flag without racing the frame's own draw order, and a
+    // flag cleared before the loop that reads it is no flag at all.
+    //
+    // The three writers are the clock JUMPS - fast travel, the
+    // vampirism transformation, and the jail skip (both its arms:
+    // DaggerfallCourtWindow.cs:473 across the sentence, :484 on every
+    // release). A thirty-day sentence would otherwise walk thirty days
+    // of encounter rolls the instant the courthouse door opened.
+    const span = playerEntity.preventEnemySpawns ? 0 : Math.min(now - _lastEncMinutes, 1440);
     for (let l = 0; l < span; l++) {
       const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
       const hit = intermittentEnemySpawn({
@@ -1497,7 +1516,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         _witnessResponse();
       }
     }
+    // :522 - `lastGameMinutes = gameMinutes`, OUTSIDE the guard: the
+    // suppressed window is skipped, not replayed later.
     _lastEncMinutes = now;
+    // :524-525 - "Allow enemy spawns again if they have been disabled".
+    if (playerEntity.preventEnemySpawns) playerEntity.preventEnemySpawns = false;
   }
   const _guardPool = () => _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard,
@@ -1532,8 +1555,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the no-op was no longer inert once DAYS drive diseases - a thirty-day
   // sentence cost the player and the world nothing. createArrestFlow now
   // defaults advanceDays to the real clock, so there is no argument left for a
-  // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
-  // full refill, neither of which is a calendar.
+  // host to forget.
 // AUDIT 39 (#21): a GETTER, not startLoc's number. LowerRepForCrime
   // (PlayerEntity.cs:2286-2299), SurrenderToCityGuards (:2313) and
   // RaiseReputationForDoingSentence (:2301-2303) all read
@@ -1541,7 +1563,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // host fast-travels - a boot-time value filed every later crime's
   // legal-rep loss, fine and banishment under the province the session
   // started in. Same read, same reason, as townTalk's above.
-  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: () => _questRegionIndex(), onCourtScreen: () => cameraRecoiler.reset() });
+  const arrestFlow = createArrestFlow({
+    townTalk, playerEntity, regionIndex: () => _questRegionIndex(),
+    onCourtScreen: () => cameraRecoiler.reset(),
+    // ReleaseFromPrison's last two lines (DaggerfallCourtWindow.cs:488-489).
+    // GameManager.ClearEnemies destroys every active enemy object and every
+    // pending foe spawner; above ground that is the encounter pool. The
+    // WATCH is not swept here - it does not need to be, because the crime
+    // clearing one line earlier already despawns it (cityGuards' own
+    // crime-clear law), which is DFU's order too.
+    clearEnemies: () => { for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } },
+    positionPlayerAtLocationEntrance: () => positionPlayerAtLocationEntrance(),
+  });
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -2349,7 +2382,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  every built pixel, re-origin the streamer (its own verbatim
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
-  async function _teleportToPixel(px, py, localPos = null) {
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -2392,7 +2425,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // has its terrain and its blocks; nothing beneath leaves the +2
     // (and gravity) as the fallback it always was.
     const raw = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
-    const pos = walkMode && !localPos ? floorLanding(collider, raw) : raw;
+    // `grounded` is StreamingWorld.RepositionPlayer's own last argument
+    // (:1587, :1592), which the location-entrance arm passes TRUE for
+    // every location but HomeYourShips: the entrance point is computed
+    // on the location's flat origin plane and FixStanding drops it onto
+    // whatever the terrain actually is. A localPos WITHOUT it stands
+    // exactly where it was told (the ship's remembered deck).
+    const pos = walkMode && (!localPos || grounded) ? floorLanding(collider, raw) : raw;
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
     // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a
@@ -2404,6 +2443,64 @@ export async function bootWorld(canvas, renderer, params, status) {
     // :3616-3620) - a new world origin means a new building list and a
     // stale topic list
     npcSession.onWorldChanged();
+  }
+
+  /**
+   * DaggerfallCourtWindow.PositionPlayerAtLocationEntrance (:452-463) -
+   * where the court puts you down.
+   *
+   *     DFPosition mapPixel = PlayerGPS.CurrentMapPixel;
+   *     if (ContentReader.HasLocation(mapPixel.X, mapPixel.Y, out _))
+   *         StreamingWorld.TeleportToCoordinates(x, y, RandomStartMarker);
+   *
+   * Three things are load-bearing and all three were missing. The
+   * HasLocation guard: arrested in the wilderness (a guard chased you
+   * out of the rect), the release moves you nowhere at all rather than
+   * dumping you at a terrain origin. The TELEPORT, to the SAME pixel:
+   * DFU re-initialises the world around you, which is this host's
+   * _teleportToPixel - the guards, the missiles and the loose foes go
+   * with it. And RandomStartMarker, which is StreamingWorld's
+   * PositionPlayerToLocation (world/locationEntrance.js): a random side
+   * of the town's rectangle, facing in, snapped to the nearest start
+   * marker for a city.
+   *
+   * The markers are the location's own archive-199 record-10 editor
+   * flats - the same flats buildPixel already collects for the exterior
+   * NPCs - read in the LOCATION frame and handed the law with the
+   * location origin, so the arithmetic below is entirely DFU's.
+   */
+  function positionPlayerAtLocationEntrance() {
+    const px = playerTravelPixel();
+    const key = `${px.x},${px.y}`;
+    const dfLoc = locationIndex.get(key);
+    if (!dfLoc?.exterior?.exteriorData) return;   // HasLocation false - DFU teleports nowhere
+    const b = built.get(key);
+    const tilePos = getLocationTerrainTileOrigin(dfLoc);
+    // The location origin DFU builds at :1452-1453: the tile origin in
+    // world units, y = 2.0f * MeshReader.GlobalScale. buildPixel's
+    // locOrigin is that same vector with the pixel's own average height
+    // already in it, so it is preferred when the pixel is standing.
+    const origin = b?.locOrigin
+      ? [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]]
+      : [tilePos.x * tileSide, 2.0 * 0.025, tilePos.y * tileSide];
+    const opts = entranceOptionsForLocationType(dfLoc.mapTableData?.locationType ?? 0);
+    const markers = b?.locBlocks
+      ? locationStartMarkers(b.locBlocks.map((bl) => ({
+        originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
+      })))
+      : [];
+    const at = positionPlayerToLocation({
+      mapWidth: dfLoc.exterior.exteriorData.width,
+      mapHeight: dfLoc.exterior.exteriorData.height,
+      origin, startMarkers: markers, useNearestStartMarker: opts.useNearestStartMarker,
+    });
+    // The pixel is re-origined by the teleport, so the location frame
+    // above IS the destination pixel's local frame; only the vertical
+    // compensation the streamer carries has to be added back.
+    const local = [at.pos[0], at.pos[1] + state.compensation[1] + 2, at.pos[2]];
+    _teleportToPixel(px.x, px.y, local, { grounded: opts.grounded })
+      .then(() => { cam.yaw = at.yaw; })
+      .catch((e) => console.error('[court] reposition failed:', e));
   }
 
   /**

@@ -658,13 +658,19 @@ export function createWorldModes(host) {
   // IsPlayerInside/holy-place/dungeon for all three modes, routed by
   // LIVE mode (the death-presenter lesson: never latch a mode).
   // The dungeon branch's own dungeonContext re-registers on build and
-  // restores this one on destroy. inPrison stays absent: the port
-  // serves a sentence as a clock move (arrestFlow), never as a live
-  // scene the sun could reach into.
+  // restores this one on destroy.
   setPassiveSpecialsHost({
     now: () => Math.floor(interiorTicker.classicMinutes),   // a VIEW on the one world clock
     isInside: () => mode !== 'exterior',
     inDungeon: () => mode === 'dungeon',
+    // PlayerEnterExit.cs:371 - `IsDay && !IsPlayerInside &&
+    // !PlayerEntity.InPrison`. This seam used to be left absent with
+    // the note that "the port serves a sentence as a clock move, never
+    // as a live scene the sun could reach into"; the sentence is a
+    // live screen now (DaggerfallCourtWindow's state 3, ui/prisonScreen
+    // .js) and the flag it sets is real, so the read is real too - a
+    // vampire does not burn in a cell.
+    inPrison: () => !!playerEntity.inPrison,
     // PlayerEnterExit.cs:1424-1431: a Temple-type building, or the
     // Fighter Trainers' faction - DFU's own quirky pair.
     isHolyPlace: () => mode === 'interior' && !!interiorBuilding
