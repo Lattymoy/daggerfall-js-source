@@ -50,18 +50,20 @@ import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds, bindPartsInto,
-  armReport, armMeshPaths, bodyParts,
-  weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
+  armReport, armMeshPaths,
+  dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
-  gmstValue, GMST_SNEAK_DELTA, sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
+  sneakOffset,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   sourcesKeyTime, sourcesVelocity,
 } from '../formats/mwFirstPerson.js';
+// NPC1: the records every actor build reads, walked once per data set.
+import { mwActorCatalog, catalogRace } from '../formats/mwActorCatalog.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
@@ -449,9 +451,8 @@ function skeletonHasBone(skeletonBytes, name) {
  */
 /** MW-D32: the worn list as one comparable key - kind, template,
  *  material, in the readout's own order. */
-/** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
- *  esm files a data set carries, times three record kinds. */
-const ESM_WALK_CACHE = new Map();
+/** NPC1: the ESM walk memo moved to formats/mwActorCatalog.js with the
+ *  walks it serves - the records belong to the DATA, not to the arm. */
 // IG2: the .kf ANIMATION-SOURCE parse memo. clipReport parses a whole
 // keyframe file and matches its tracks by NAME; for one skeleton path
 // in one data generation the answer cannot change, and with the body
@@ -487,7 +488,7 @@ const CLOT_COLOUR_CACHE = new Map();
  *  Now one record is measured when the resolver asks for it (the
  *  resolver only asks about its own type's pool), memoised per data
  *  generation, and the same function serves the build and the icon. */
-function clothingColourOf(rec, parts, archives, gen) {
+export function clothingColourOf(rec, parts, archives, gen) {
   const key = `${gen}:${rec.id}`;
   if (CLOT_COLOUR_CACHE.has(key)) return CLOT_COLOUR_CACHE.get(key);
   let rgb = null;
@@ -761,7 +762,11 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * A body that refuses does NOT refuse the arm: the player keeps first
  * person and the card names the reason the wheel cannot leave it.
  */
-async function buildTpBody({
+// NPC1: EXPORTED. The third-person body build is no longer the
+// player's alone - every enhanced humanoid NPC is the same assembly
+// from the same records, and characters/mwActorBody.js orchestrates
+// them against one catalog. Nothing about the build changed.
+export async function buildTpBody({
   race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
@@ -876,85 +881,25 @@ export async function buildFpArm({
   let settingsSkeleton = null;
   let skeletonPath = null;
   try {
-    const archives = await d.loadMorrowindArchives();
-    if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
-
-    // EVERY .esm, not the first one.
-    //
-    // THE DEFECT THIS REPLACES, reported by Mac with three archives
-    // attached: `.find()` took whichever .esm the store listed first. An
-    // expansion carries no base-race BODY records, so if Tribunal.esm or
-    // Bloodmoon.esm sorted ahead of Morrowind.esm every arm slot came
-    // back "no record for this actor" and the card had nothing more to
-    // say. loadMorrowindArchives (dataSource.js) already RANKS the .bsa
-    // files by name for exactly this reason; the .esm door simply never
-    // got the same treatment.
-    //
-    // Reading all of them is also what the engine does - later masters
-    // add to and override earlier ones - so this is the load order
-    // rather than a workaround for it.
-    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n));
-    if (!esmNames.length) {
-      return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the body records live there, not in the .bsa' };
-    }
-    const esmBytes = [];
-    for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
-    // MW-D32 / IG2: the ESM WALK MEMO, hoisted above every record scan
-    // so ALL of them ride it - the records do not change between two
-    // rebuilds of the same data, only the pieces do. Keyed on the
-    // store's generation stamp, so a re-attached archive is a fresh
-    // walk and never a stale one. IG2 routed the race, GMST and weapon
-    // scans through it too: with the body following the equip table,
-    // every swap re-walked tens of megabytes of .esm five ways.
-    // A test's deps carry no generation: gen stays NULL there and the
-    // clip/texture memos stand down (the walk memo below keys on the
-    // byte length too, so it is collision-safe either way). Only the
-    // real store's monotonic stamp turns the swap caches on.
-    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
-    const walk = (e, kind, fn) => {
-      // No generation (a test's deps) = no memo: two fixtures of the
-      // same name AND length but different bytes are an everyday test
-      // arrangement, and the byteLength fingerprint cannot tell them
-      // apart - the mSpeed pin proved it the day the weapon walk
-      // joined this memo.
-      if (gen === null) return fn(e.bytes);
-      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
-      let hit = ESM_WALK_CACHE.get(key);
-      if (hit === undefined) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
-      return hit;
-    };
-    const raceKey = String(race || '').toLowerCase();
-    // AUDIT MW-A F1: BEAST COMES FROM THE DATA. The skeleton switch
-    // and the tail row both read this flag, and no production caller
-    // ever set it - an Argonian player built on the human skeleton
-    // with the tail silently skipped. The RACE record's own RADT bit
-    // decides now, last esm wins (load order); an explicit option
-    // still overrides, which is what the fixtures use.
-    if (beast === null) {
-      beast = false;
-      for (const e of esmBytes) {
-        const rrec = walk(e, 'races', raceRecords).get(raceKey);
-        if (rrec && rrec.radt) beast = rrec.beast;   // raceBeastFlag's own rule, off the memo
-      }
-    }
-    // MW-D34: Npc::adjustScale (npc.cpp:1102-1136) - the race record's
-    // RADT carries per-gender height and weight, and the rendered body
-    // scales x,y by WEIGHT and z by HEIGHT (:1124-1135). The player's
-    // own FIRST-person meshes take uniform HEIGHT only - "Race weight
-    // should not affect 1st-person meshes, otherwise it will change
-    // hand proportions and can break aiming" (:1112-1121); in this
-    // port's FP composition (rule 54: camera and rig share one space)
-    // a uniform scale of both cancels exactly, so the carve-out is the
-    // no-op the reference's comment wants. Collision never scales
-    // (:1104-1106) - the classic motor's collider is untouched. Last
-    // .esm wins, the load order as everywhere else.
-    let raceScale = { weight: 1, height: 1 };
-    for (const e of esmBytes) {
-      const rrec = walk(e, 'races', raceRecords).get(raceKey);
-      if (rrec && rrec.radt) {
-        raceScale = { weight: rrec.weight[female ? 1 : 0], height: rrec.height[female ? 1 : 0] };
-      }
-    }
+    // NPC1: THE RECORDS COME FROM THE ONE CATALOG. The preamble that
+    // stood here - open the archives, read every .esm in load order,
+    // walk it five ways - is formats/mwActorCatalog.js now, because
+    // the enhanced NPC lane builds MANY actors against the same data
+    // and two copies of that walk is the shape MW7 died of. Every law
+    // travelled with it and none was rewritten: all .esm files in load
+    // order, the walk memo's null-generation gate, RADT's beast flag
+    // (AUDIT MW-A F1) and adjustScale's per-gender scale (MW-D34).
+    const cat = await mwActorCatalog(d);
+    if (!cat.ok) return cat;
+    const { archives, esmBytes, esmNames, gen, find, parts, armors, clothes, sneakDelta } = cat;
+    // The weapon records are the catalog's too - they were walked
+    // eighty lines below this before, off the same memo.
+    const allWeapons = cat.weapons;
+    // An explicit `beast` still overrides the data, which is what the
+    // fixtures use; null means ask the RACE record.
+    const race_ = catalogRace(cat, race, female, beast);
+    beast = race_.beast;
+    const raceScale = race_.raceScale;
     // MW-D14 / RULE 18: the settings name is not the final name. The
     // x-form is used only when its .kf is in the archive, which for a
     // male is never (the entry is already x-form, so the insert yields
@@ -963,25 +908,6 @@ export async function buildFpArm({
     // HERE and not before the data (AUDIT MW-A F1).
     settingsSkeleton = fpSkeletonPath({ female, beast });
     skeletonPath = correctActorModelPath(settingsSkeleton, (p) => archives.some((a) => a.has(p)));
-    // bodyParts(), not loadMorrowindEsm(). The store's parseEsm door
-    // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
-    // there is no adapter and writing one by guess inside this slice is
-    // exactly how MW7 died. Raw bytes through the pinned path instead.
-    const parts = esmBytes.flatMap((e) => walk(e, 'parts', bodyParts));
-    // MW-D29: the ARMO records ride the same esm walk, load order and
-    // all - the composer resolves DF pieces against them by token.
-    const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
-    const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
-    // RULE 32(a)'s GMST, read from the player's own data. Later masters
-    // override earlier ones, so the LAST .esm that carries it wins -
-    // which is the load order, not a preference.
-    let sneakDelta = null;
-    for (const e of esmBytes) {
-      const g = walk(e, 'gmst-sneak', (b) => ({ v: gmstValue(b, GMST_SNEAK_DELTA) }));
-      if (typeof g.v === 'number') sneakDelta = g.v;
-    }
-
-    const find = (p) => archives.find((a) => a.has(p));
     const skelArc = find(skeletonPath);
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
@@ -1059,7 +985,6 @@ export async function buildFpArm({
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
-    const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;

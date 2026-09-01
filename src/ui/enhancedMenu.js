@@ -92,7 +92,8 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
+import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';
+import { mwActorBodyStats } from '../characters/mwActorBody.js';   // NPC1: the shared-body tally   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -927,6 +928,15 @@ function paneEnhanced(body) {
       : armState.active ? 'none - empty hands' : '-'],
     // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
     // game to see it, and when the wheel refuses, this line is why.
+    // NPC1: the shared humanoid bodies - how many distinct outfits
+    // have been built, and what that cost. A town of thirty guards in
+    // one uniform must read as ONE build here; if this line ever
+    // tracks the actor count, the cache key has stopped sharing.
+    ['NPC bodies', (() => {
+      const st = mwActorBodyStats();
+      return st.builds ? `${st.cached} outfit${st.cached === 1 ? '' : 's'} shared, ${st.builds} build${st.builds === 1 ? '' : 's'}`
+        : 'none built yet';
+    })()],
     // IG6b: the CURRENT arms mode, stated where a state belongs - on
     // the stats block, not on the button that changes it.
     ['Arms mode', fpArm.followCamera()

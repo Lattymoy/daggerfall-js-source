@@ -1575,13 +1575,23 @@ test('AUDIT 29 F1: the derivation is WIRED - beast defaults to the data, the opt
   // proof needs a RACE-bearing fixture esm the harness does not own.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /beast = null, faceIndex/, 'the option no longer defaults to unresolved');
-  assert.match(arm, /if \(beast === null\) \{/, 'the derivation gate is gone');
-  // IG2 routed the race scan through the esm walk memo; the rule is
-  // raceBeastFlag's own, read off the memoised map.
-  assert.match(arm, /walk\(e, 'races', raceRecords\)\.get\(raceKey\)/, 'the RACE records are not consulted');
-  assert.match(arm, /if \(rrec && rrec\.radt\) beast = rrec\.beast;/, 'the RADT rule is gone');
-  // and the skeleton must resolve AFTER the answer exists.
-  const gate = arm.indexOf('if (beast === null) {');
+  // NPC1: the DERIVATION moved to the one catalog with the walks it
+  // reads (formats/mwActorCatalog.js, catalogRace) - many actors now
+  // ask the same question of the same data. The law is unchanged and
+  // is swept at its new home: an explicit override wins, otherwise the
+  // RACE record's own RADT bit decides, off the memoised walk.
+  const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
+  assert.match(cat, /export function catalogRace\(catalog, race, female, beastOverride = null\)/,
+    'the derivation has no home');
+  assert.match(cat, /memoWalk\(catalog\.gen, e, 'races', raceRecords\)\.get\(raceKey\)/,
+    'the RACE records are not consulted');
+  assert.match(cat, /if \(beastOverride === null\) beast = rrec\.beast;/, 'the RADT rule is gone');
+  assert.match(cat, /let beast = beastOverride === null \? false : beastOverride;/,
+    'an explicit beast no longer overrides the data');
+  // ...and the arm still ASKS it, before it picks a skeleton: the
+  // skeleton must resolve AFTER the answer exists (AUDIT MW-A F1).
+  assert.match(arm, /const race_ = catalogRace\(cat, race, female, beast\);/, 'the arm does not ask');
+  const gate = arm.indexOf('const race_ = catalogRace(cat, race, female, beast);');
   const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast })');
   assert.ok(gate > 0 && skel > gate, 'the skeleton is chosen before the data can say beast');
 });
@@ -1690,8 +1700,14 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf \}\)/);
-  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
-  assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
+  // NPC1: the ARMO and CLOT walks moved to the one catalog with the
+  // rest of the records - the arm receives them, and every other
+  // actor build reads the same walk off the same memo.
+  const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
+  assert.match(cat, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
+  assert.match(cat, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
+  assert.match(arm, /const \{ archives, esmBytes, esmNames, gen, find, parts, armors, clothes, sneakDelta \} = cat;/,
+    'the arm does not receive the catalog\u2019s records');
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,
   // the third person receives verdicts, the fp build filters and
   // shadows from the same result.
@@ -2511,10 +2527,17 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
   // The memos stand DOWN without a real generation: a test\'s fixtures
   // can share a name and a byte length while differing in content -
   // the mSpeed pin proved it the day the weapon walk joined the memo.
-  assert.match(arm, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
+  // NPC1: the walk memo moved to the catalog with the walks it serves;
+  // the GATE is the law and it travelled unchanged.
+  const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
+  assert.match(cat, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
+  assert.ok(!/const ESM_WALK_CACHE = new Map\(\);/.test(arm), 'the arm keeps a second memo');
   assert.match(arm, /if \(gen === null \|\| gen === undefined\) return clipReport\(/, 'the kf parse memo is gated');
-  assert.match(arm, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
+  assert.match(cat, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
     'and only the real store\'s stamp turns them on');
+  // NPC1: the catalog itself is cached on that same stamp, and a null
+  // one is NEVER cached - a test's deps must not serve a later test.
+  assert.match(cat, /if \(gen !== null\) CATALOG_CACHE\.set\(gen, out\);/, 'the catalog is not cached per generation');
 });
 
 test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call, the classic sprite\'s behaviour', () => {
