@@ -684,15 +684,13 @@ test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   assert.ok(windows.length >= 8, `${windows.length} enhanced windows found`);
   assert.deepEqual(windows.filter((w) => !seen.has(w)), [],
     'a window nothing reaches is a window nobody can open');
-  // ...and no src/ui module at all is orphaned. ONE staging exemption,
-  // dated: automapChrome.js is C2 flight 1's foundation (the automap
-  // action tables and drag protocol) and its consumers are the automap
-  // WINDOWS flight 2 builds - until those land nothing imports it.
-  // Remove the exemption when flight 2 mounts the windows; a chrome
-  // still orphaned after that is exactly PX24's fault again.
-  const staged = ['src/ui/automapChrome.js'];
-  assert.deepEqual(
-    files.filter((f) => f.startsWith('src/ui/') && !seen.has(f) && !staged.includes(f)), []);
-  assert.deepEqual(staged.filter((f) => seen.has(f)), [],
-    'a staged module is now reachable - delete its exemption above');
+  // ...and no src/ui module at all is orphaned. THE STAGING EXEMPTION
+  // IS GONE (ROAD-C c2/S5): automapChrome.js sat here while flight 1
+  // built the automap's action tables and drag protocol with no
+  // consumer; the native dungeon window is that consumer, so the list
+  // is empty again and the sweep is unconditional - which is the state
+  // it has to be in for PX24's fault (a window nothing reaches) to
+  // stay caught.
+  assert.deepEqual(files.filter((f) => f.startsWith('src/ui/') && !seen.has(f)), [],
+    'a src/ui module nothing reaches is a module nobody can open');
 });

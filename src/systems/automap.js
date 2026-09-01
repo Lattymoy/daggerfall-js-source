@@ -74,11 +74,15 @@
 //
 // A2 shipped the grayscale presentation (the renderer's uAutomapMode
 // - visitedThisRun draws colour, prior-run geometry grayscale) and
-// the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
-// residue: user note markers, teleporter portals, the 3D view mode +
-// the native AMAP art windows, the render modes (wireframe/
-// transparent/cutout), beacon focus cycling, and the
-// interior-BUILDING automap arm.
+// the exterior town map (ui/exteriorAutomapWindow.js). ROAD-C c2/S5
+// took the DUNGEON window native - AMAP00I0/AMAP01I0, the nine buttons
+// on their own rects with DFU's press-hold speeds, the mouse drags, the
+// 3D view mode, the four backgrounds, the map compass, the tooltips and
+// beacon focus cycling - so what is FLAGGED here is now: the render
+// modes' above-slice presentation (wireframe/transparent), the marker
+// meshes and the hover picker, user note markers, teleporter portals,
+// the interior-BUILDING automap arm, and the exterior window's own
+// native chrome.
 
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';

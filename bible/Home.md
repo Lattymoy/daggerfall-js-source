@@ -288,8 +288,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1527` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
 - `src/scenes/dungeonContext.js:1564` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
 - `src/scenes/dungeonContext.js:1619` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3576` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3688` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3585` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3701` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:734` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:740` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:1021` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -323,7 +323,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:4875` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:4974` - *  FLAGGED null this slice closed. */
 - `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/automap.js:77` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
+- `src/systems/automap.js:81` - beacon focus cycling - so what is FLAGGED here is now: the render
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
@@ -379,7 +379,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:177` - *  (DaggerfallTradeWindow.cs:960-963). FLAGGED: DFU reads the text
 - `src/systems/tradeModes.js:402` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:318` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankWindow.js:28` - law's. The SHIP popup is still FLAGGED - it needs the two fixed
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry

@@ -19,9 +19,13 @@ import {
   automapRevealTick, automapEntranceTick, slicingPositionY, DEFAULT_SLICING_BIAS_Y,
 } from '../src/systems/automap.js';
 import {
-  AutomapWindow, buildMicroMap, hexColor32,
-  FIELD_OF_VIEW_2D, CAMERA_HEIGHT_VIEW_FROM_TOP, MICRO_SIZE_MIN, MICRO_BLOCK_PX,
+  AutomapWindow, buildMicroMap, hexColor32, MICRO_SIZE_MIN, MICRO_BLOCK_PX,
+  resetAutomapWindowState, signalAutomapReset, automapCameraState,
 } from '../src/ui/automapWindow.js';
+// ONE HOME, ROAD-C c2/S5: the lens constants live in ui/automapCamera.js
+// with the rest of the control law - the window stopped re-exporting them
+// when it stopped owning a camera of its own.
+import { FIELD_OF_VIEW_2D, CAMERA_HEIGHT_VIEW_FROM_TOP, VIEW_2D, VIEW_3D } from '../src/ui/automapCamera.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 
@@ -263,36 +267,35 @@ test('A1 micro-map: the 2px/block grid with sizeMin 7, B-prefix border colour, h
   assert.equal(hexColor32('nonsense', 7), 7);
 });
 
-test('A1 window: stepped controls - pan/rotate/zoom/slice/reset, M and Escape close', () => {
+// A1's "stepped controls" pin is RETIRED, not lost (ROAD-C c2/S5). It
+// held a recorded DEPARTURE - "one action per press, scaled from DFU's
+// per-second speeds", with WASD/QE/+- as the whole vocabulary - and the
+// native window replaces that departure with DFU's own control law:
+// nine buttons on their own rects, press-HOLD polled per frame, mouse
+// drags, and the DialogShortcuts hotkey table. The replacement laws are
+// pinned against the C# in test/roadc_automap_window.test.js, where the
+// camera they drive (ui/automapCamera.js) also lives. What stays here is
+// the slice bias, which is still this arc's state and still resets on
+// open unless the setting holds.
+test('c2/S5: the slice bias still resets on open unless AutomapRememberSliceLevel holds (:567-572)', () => {
   _resetForTests();
+  resetAutomapWindowState();
   try {
     const deps = { player: () => ({ feet: [10, 1, 20], eye: [10, 2.7, 20], yaw: 0 }) };
+    signalAutomapReset();
     const w = new AutomapWindow(deps);
-    assert.deepEqual(w.center, [10, 20], 'opens straight above the player (:1160-1165)');
-    assert.equal(w.height, 150);
-    assert.equal(w.biasY, DEFAULT_SLICING_BIAS_Y, 'slice resets on open without AutomapRememberSliceLevel (:568-572)');
-    w.input('up');
-    assert.deepEqual(w.center, [10, 28], 'pan follows the map north at yaw 0');
-    w.input('char:q');
-    assert.equal(w.yawDeg, 22.5);
-    w.input('plus');
-    assert.equal(w.height, 120);
-    w.input('minus'); w.input('char:-');
-    assert.equal(w.height, 187.5, 'both spellings of zoom-out land (overlayAction quirk)');
-    w.input('char:t');
-    assert.equal(w.biasY, DEFAULT_SLICING_BIAS_Y + 2.5);
-    w.input('char:c');
-    assert.deepEqual([w.height, w.yawDeg, w.biasY], [150, 0, DEFAULT_SLICING_BIAS_Y], 'ActionResetView (:1774-1793)');
-    // the remember setting carries the bias to the NEXT window
-    w.input('char:t');
+    assert.equal(automapCameraState().slicingBiasY, DEFAULT_SLICING_BIAS_Y);
+    w.runVerb('ActionIncreaseSliceLevel', 1);
+    assert.equal(automapCameraState().slicingBiasY, DEFAULT_SLICING_BIAS_Y + 25, 'moveUpDownSpeed 25/s (:1589-1596)');
+    // a REOPEN with the setting off goes back to the default...
+    new AutomapWindow(deps);
+    assert.equal(automapCameraState().slicingBiasY, DEFAULT_SLICING_BIAS_Y);
+    // ...and with it on, the bias survives the close
+    w.runVerb('ActionIncreaseSliceLevel', 1);
     setValue('Map', 'AutomapRememberSliceLevel', true);
-    const w2 = new AutomapWindow(deps);
-    assert.equal(w2.biasY, DEFAULT_SLICING_BIAS_Y + 2.5);
-    w2.input('char:m');
-    assert.equal(w2.done, true, 'M closes, DFU toggle-to-close (:703-714)');
-    w.input('back');
-    assert.equal(w.done, true, 'Escape closes');
-  } finally { _resetForTests(); }
+    new AutomapWindow(deps);
+    assert.equal(automapCameraState().slicingBiasY, DEFAULT_SLICING_BIAS_Y + 25);
+  } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
 test('A1 wiring pins: entry identity at the push sites, the 5 Hz tick in BOTH dungeon hosts, the load re-entry', () => {
@@ -319,7 +322,7 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // the window rides the mirrored projection (its mesh pass CULLS -
   // the handedness law) and hands lighting/fog/slice back after
   const w = src('src/ui/automapWindow.js');
-  assert.match(w, /mirrorProjectionX\(perspective\(FIELD_OF_VIEW_2D/, 'HANDEDNESS: the culling pass mirrors');
+  assert.match(w, /mirrorProjectionX\(perspective\(lens\.fov \* DEG/, 'HANDEDNESS: the culling pass mirrors, at the LIVE mode\'s lens (c2/S5)');
   // PIN MOVED, ROAD-C c2/S2: the window no longer holds its own
   // save/restore list at all - `renderer.panelFrame` saves the whole
   // global surface before the pass and returns it in a finally
@@ -333,7 +336,7 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // A1 review: beacons are never sliced (DFU injects the slicing
   // shader into the GEOMETRY only, Automap.cs:1906 vs :1355-1362) -
   // the slice lifts before the arrow/marker draws
-  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(0\);\n\s*\/\/ the player marker arrow/, 'the arrow draws with the slice lifted (and untinted, A2)');
+  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(0\);\n\s*if \(this\.deps\.arrowMesh/, 'the arrow draws with the slice lifted (and untinted, A2)');
   // A1 review: the death presenter force-replaces the overlay slot -
   // it must release the occupant, and the micro-map version counter
   // is module-global so a leaked key can never serve a stale bitmap

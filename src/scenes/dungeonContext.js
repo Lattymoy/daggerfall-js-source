@@ -14,7 +14,7 @@ import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound }
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
-import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
+import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
@@ -3433,6 +3433,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Absent from a stripped ARCH3D the window falls back to a red quad.
   let automapArrow = null;
   try { automapArrow = await getGpuMesh(99900); if (automapArrow) await ensureRemap(99900); } catch { automapArrow = null; }
+  // ROAD-C c2/S5: AMAP00I0 + AMAP01I0 + the compass strip, warmed the
+  // way every other native window's art is (the U23 shape). A failure
+  // costs the ART, not the map - the window keeps its keyed fallback.
+  preloadAutomapArt({ renderer, fetchBytes, palette })
+    .catch((e) => console.warn('[automap] native map art unavailable; keyed fallback:', e?.message ?? e));
+  // InitWhenInInteriorOrDungeon raises the reset signal the window's
+  // next OnPush pulls and erases (Automap.cs:2490-2494) - entering a
+  // dungeon IS that moment.
+  signalAutomapReset();
 
   const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
@@ -3595,6 +3604,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         dungeonName: dfLocation?.name ?? 'Dungeon',
         indexSize: automapModel.length,
         model: automapModel,   // c2/S1: the window's partition + explored-percentage source
+        // IsPlayerInsideBuilding (:587-596): this host is never inside
+        // one, so the reset arm's default render mode is TRANSPARENT.
+        // The interior arm that flips it is c2/S9's.
+        insideBuilding: false,
       });
     },
     enemies,

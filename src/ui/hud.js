@@ -368,6 +368,29 @@ function drawArrowCount(renderer, canvas, font, entity, weaponSheathed, compass,
   drawText(renderer, font, label.text, x, y, s, label.color);
 }
 
+/**
+ * HUDCompass.DrawCompass (:105-157) at an ARBITRARY top-left corner:
+ * the strip window inset by the 2 px box outline first, the COMPBOX
+ * frame over it. Two windows draw this - the HUD's bottom-right corner
+ * and (ROAD-C c2/S5) the dungeon automap's own (3,172) panel, which
+ * mounts a HUDCompass of its own and hands it the MAP camera
+ * (DaggerfallAutomapWindow.cs:503-508). ONE HOME: the scroll law, the
+ * outline inset and the strip height live here and nowhere else.
+ * `x`/`y` are real canvas pixels; `s` is the caller's scale.
+ * Answers the box's drawn size, which the HUD's arrow label needs.
+ */
+export function drawCompassStrip(renderer, art, x, y, s, heading01) {
+  const box = art.compassBox;
+  const bw = box.w * s, bh = box.h * s;
+  const scroll = compassScroll(heading01);
+  const stripH = art.compass.h * s;
+  renderer.drawScreenQuad(art.compass.tex,
+    { x: x + COMPASS_BOX_OUTLINE * s, y: y + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
+    { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
+  renderer.drawScreenQuad(box.tex, { x, y, w: bw, h: bh });
+  return { bw, bh };
+}
+
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null,
     readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate
@@ -492,16 +515,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // DaggerfallHUD.cs:254-257 sets compass.Position to
   // (screenRect.xMax - Size.x, screenRect.yMax - Size.y) and HUDCompass
   // never calls SetMargins - COMPBOX sits FLUSH in the corner.
-  const box = art.compassBox;
-  const bw = box.w * s, bh = box.h * s;
-  const bx = canvas.width - bw;
-  const by = canvas.height - bh;
-  const scroll = compassScroll(heading01);
-  const stripH = art.compass.h * s;
-  renderer.drawScreenQuad(art.compass.tex,
-    { x: bx + COMPASS_BOX_OUTLINE * s, y: by + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
-    { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
-  renderer.drawScreenQuad(box.tex, { x: bx, y: by, w: bw, h: bh });
+  const bx = canvas.width - art.compassBox.w * s;
+  const by = canvas.height - art.compassBox.h * s;
+  const { bw, bh } = drawCompassStrip(renderer, art, bx, by, s, heading01);
   drawArrowCount(renderer, canvas, font, vitals, weaponSheathed, { bw, bh }, s);
   // X4: DrawTrackedObjects (HUDCompass.cs:198-217), AFTER the box -
   // HUDCompass.Draw() calls DrawCompass() then DrawTrackedObjects(),

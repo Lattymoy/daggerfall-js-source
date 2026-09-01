@@ -225,6 +225,41 @@ export function resetCameraPosition(s, mainPos) {
 
 export const resetRotationPivotAxisPosition = (s, playerPos) => ({ ...s, pivot2D: [...playerPos], pivot3D: [...playerPos] });
 
+/**
+ * SaveCameraTransformViewFromTop / ...View3D (:1180-1194) and their
+ * RestoreOld... twins (:1197-1212), as their own four verbs. The reset
+ * helpers above already save on the way out, exactly as DFU's Reset...
+ * methods do; these exist because OnPush's NON-reset arm (:607-635)
+ * restores, refocuses and re-saves each mode's transform IN TURN, with
+ * the view mode temporarily switched under it - a sequence no single
+ * reset verb spells.
+ */
+export const saveCameraTransformViewFromTop = (s) => ({ ...s, savedViewFromTop: cloneTransform(s) });
+export const saveCameraTransformView3D = (s) => ({ ...s, savedView3D: cloneTransform(s) });
+export const restoreCameraTransformViewFromTop = (s) => (s.savedViewFromTop ? withTransform(s, s.savedViewFromTop) : s);
+export const restoreCameraTransformView3D = (s) => (s.savedView3D ? withTransform(s, s.savedView3D) : s);
+
+/**
+ * `cameraAutomap.transform.rotation.eulerAngles.y` - the ONE reading
+ * the compass takes (Automap.CreateAutomapCamera registers the automap
+ * camera with HUDCompass, which divides that angle by 360;
+ * HUDCompass.cs:120-121). Unity's YXZ extraction reads it off the
+ * FORWARD axis, `atan2(fwd.x, fwd.z)` - except at the gimbal lock a
+ * straight-down 2D camera sits in exactly, where fwd carries no yaw at
+ * all and the angle lives in the UP axis instead. A port that read fwd
+ * unconditionally would answer a constant for the whole 2D mode, i.e.
+ * a compass that never turns.
+ * Answers DEGREES in [0, 360).
+ */
+export function cameraYawDeg(s) {
+  const f = s.fwd ?? [0, 0, 1];
+  const u = s.up ?? [0, 1, 0];
+  const deg = Math.abs(f[1]) > 0.9999
+    ? Math.atan2(u[0], u[2]) / DEG
+    : Math.atan2(f[0], f[2]) / DEG;
+  return ((deg % 360) + 360) % 360;
+}
+
 /** ActionResetRotationPivotAxis (:1799-1818): the CURRENT mode's pivot
  *  only - the other mode's stays where the player left it. */
 export const actionResetRotationPivotAxis = (s, playerPos) => (s.viewMode === VIEW_2D
