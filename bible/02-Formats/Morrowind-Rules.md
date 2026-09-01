@@ -6566,3 +6566,42 @@ ENUMERATES every file that draws living actors and demands the seam of
 each, so a new host has to be added to the list before its pin can
 pass. A slice is not finished when its seam exists; it is finished
 when its seam is on the path the player takes.
+
+MW-D48: WHAT THE ARROW'S MISPLACEMENT IS *NOT*. Mac: "the arrow has
+always been there. It's just not positioned correct" - which retires
+every branch theory at once. The round has been resolving and drawing
+the whole time; only its PLACE is wrong. MW-D46, D46b and D47 were
+answering a question nobody asked.
+
+ELIMINATED BY EXECUTION, not by reading - reading two of these side by
+side is how one got called a bug and nearly shipped as a fix:
+
+  - mulAffine composes parent x child correctly, rotation and
+    translation both.
+  - applyPre applies that affine to vertices correctly.
+  - placeAtBone is bone x (offset + mirror(v)), which IS osg's
+    T(position) x R(attitude) x S(scale) on one
+    PositionAttitudeTransform - the order the reference gets from OSG
+    rather than chooses.
+  - nodeTransformOf (affineOf folds scale INTO the 3x3) and flattenNif's
+    composeTransform (scale as its own field, applied to the child's
+    translation) LOOK like two arithmetics for one job, and the arrow is
+    the only part that uses the first. Run over a chain with rotations
+    and scales they agree exactly. Pinned as MW-D48 so it is not
+    re-suspected, and so changing one without the other fails.
+
+STILL OPEN, and the one lead that survives execution: the two
+traversals differ in their FILTERS even though their arithmetic
+matches. flattenNif honours rule 58 (Bounding Box, RootCollisionNode)
+and the hidden flag; findNodeByName honours neither. That cannot move a
+transform, but it decides WHICH node answers to "ArrowBone" if a mesh
+carries more than one, or carries it under a subtree one walk enters
+and the other does not.
+
+ALSO UNVERIFIED: MW-D44 gave the arrow the weapon's BoneOffset. OpenMW
+issue 5937 says Morrowind.exe supports BoneOffset for LIGHTS only - "it
+didn't work for weapons and shields at least" - and that OpenMW applies
+a 90 DEGREE ROTATION to meshes carrying that node (attach.cpp:145),
+which placeAtBone does not replicate. On a vanilla bow the node is
+absent and MW-D44 is a no-op; on a mesh that has one, the port takes
+the translation and drops the rotation. Close that before trusting it.
