@@ -310,12 +310,35 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
         else rg.drive(t * L.cadence, L, null, true);
       }
     };
-  } else {
+  }
+  // NPC4: A PERSON GETS THEIR OWN BATCH, NOT A SHARED ONE.
+  //
+  // Interior people used to pour into flatGroups with the furniture,
+  // which merges every (archive, record) into ONE batch of centres -
+  // and a merged batch cannot leave one person out. The Morrowind body
+  // lane needs exactly that: a shopkeeper whose body has built draws
+  // as the body and must NOT also draw as a sprite, while the person
+  // beside them, whose build is still in flight, keeps theirs.
+  //
+  // These stay OUT of `billboardBatches`: the host walks `people` and
+  // decides per person, which is also why the batch is built for
+  // EVERYONE rather than only the visible - `pn.active` is a runtime
+  // flag the quest machine's away arm flips both ways (SetActive), and
+  // the draw-time check reads it live.
+  //
+  // The cost is one batch per person instead of one per sprite kind.
+  // An interior holds a handful of people; the furniture is untouched.
+  const peopleBatches = [];
+  if (!(opts.voxelfolk && people.length)) {
     for (const pn of people) {
-      if (!pn.active) continue;   // SetActive(false): the away copy does not draw
-      const key = `${pn.textureArchive}_${pn.textureRecord}`;
-      if (!flatGroups.has(key)) flatGroups.set(key, []);
-      flatGroups.get(key).push([pn.x, pn.y, pn.z]);
+      const t = await getTexture(pn.textureArchive);
+      if (!t || pn.textureRecord >= t.recordCount) continue;
+      uploadRecord(pn.textureArchive, pn.textureRecord);
+      const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+      const batch = renderer.createBillboardBatch(pn.textureArchive, pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
+      armFlatAnim(batch, t, pn.textureArchive, pn.textureRecord, flatAnims, uploadRecordFrame);
+      pn.batch = batch;
+      peopleBatches.push(batch);
     }
   }
   for (const flat of interior.flats) {
@@ -384,6 +407,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     actions,
     dynamicDraws,
     billboardBatches,
+    peopleBatches,   // NPC4: one per person - the host picks body or sprite
     flatAnims,   // FA1: the host ticks the flats it draws
     rotors,      // WM4b: the machinery's moving parts; the host turns and draws them
     parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
@@ -409,6 +433,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     destroy() {
       for (const r of rotors) { r.hum?.stop(); r.hum = null; }   // WM4c: the gear's hum ends with the room
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      for (const b of peopleBatches) renderer.destroyBatch(b);   // NPC4: the per-person batches are ours too
       // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
       // meshes per context - every interior exit leaked them.
       for (const rg of _raceMeshes?.values?.() ?? []) renderer.destroyMesh(rg.mesh);

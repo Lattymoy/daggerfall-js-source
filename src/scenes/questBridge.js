@@ -259,6 +259,14 @@ export function createQuestBridge(ctx) {
     machine, questLists, offerFlow, notebook,
     tick,
 
+    /** NPC4: GetRaceFromFaction's two inputs, published. The static
+     *  NPC's Morrowind body is derived from the SAME NPCData the talk
+     *  window reads, so the host needs the same two lookups the click
+     *  path already folds in - and it must not mint a second pair off
+     *  a different store, which is how a shopkeeper's body would end
+     *  up a different race from their own dialogue. */
+    npcRaceLookups,
+
     /** SetLayoutData's direct overload for a host that has a quest
      *  Person rather than a block record (worldModes' quest-flat
      *  click). AUDIT 24: it is a bridge method now so the race lookup
