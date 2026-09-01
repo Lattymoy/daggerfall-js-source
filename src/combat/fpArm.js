@@ -2412,7 +2412,28 @@ export function createFpArm() {
             if (wasDrawn) { busy = false; api.setSheathed(false); }
           }
           return true;
-        } finally { busy = false; }
+        } finally {
+          busy = false;
+          // PX33 (Mac: the bow "doesn't equip instantly visually in the
+          // inventory"): THE SWAP LANDS SILENTLY, and that was the whole
+          // bug. build() ends by notifying every listener - MW-D36's
+          // law, "whoever shows the body repaints when a build settles,
+          // ok or not, because a panel drawn before the rebuild lands
+          // would show the old clothes on the new equip table" - and
+          // this path, which is the INCREMENTAL swap and never touches
+          // build(), never did. The pack calls setWeapon and render()
+          // back to back; render() draws first, the swap resolves its
+          // NIFs an async tick later, and nothing asks the panel to
+          // look again. The new weapon then appears at the next repaint
+          // for any other reason, which is exactly what "not instantly"
+          // looks like from the chair.
+          //
+          // Same notify, same shape, same guard: a dead panel is not
+          // the rig's problem. It runs in the finally so a swap that
+          // THREW still repaints - a panel showing a weapon the rig
+          // failed to bind is the state most worth redrawing.
+          for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+        }
       })();
     },
 

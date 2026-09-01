@@ -3089,3 +3089,40 @@ test('PX32: the inventory figure poses the body before it uploads it', () => {
   assert.match(fig, /actionState \|\| movementState \|\| jumpState \|\| idleState/,
     'the portrait reads the SAME playhead the wheel does');
 });
+
+// PX33: THE INCREMENTAL WEAPON SWAP MUST NOTIFY TOO (Mac: the bow
+// "doesn't equip instantly visually in the inventory"). build() ends by
+// notifying every listener - MW-D36's law, pinned above - and setWeapon
+// takes a DIFFERENT path: it filters the weapon and arrow pieces out
+// and rebinds without ever calling build(). That path never notified,
+// so the pack called setWeapon and render() back to back, render() drew
+// first, the swap resolved its NIFs an async tick later, and nothing
+// asked the panel to look again. "Not instantly" was the panel never
+// being told.
+test('PX33: a weapon swap notifies the panel, like every other settlement', async () => {
+  const arm = createFpArm();
+  let fired = 0;
+  const off = arm.subscribe(() => { fired++; });
+  // A refused build settles and notifies (the law above); from there the
+  // arm has no body, so setWeapon short-circuits without a notify -
+  // which is correct and is what makes the count below meaningful.
+  await arm.build({ race: 'nord', deps: { loadMorrowindArchives: async () => [] } });
+  assert.equal(fired, 1, 'the build settled');
+  assert.equal(await arm.setWeapon({ templateIndex: 130 }, { hasAmmo: true }), false,
+    'no body, no swap');
+  assert.equal(fired, 1, 'and nothing to repaint for');
+  off();
+
+  // The law itself, at source, because driving a real swap needs a built
+  // body and the fixtures that reach one live in the mw* suites. The
+  // notify must sit in the FINALLY: a swap that threw leaves the panel
+  // showing a weapon the rig failed to bind, which is the state most
+  // worth redrawing.
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const body = sw.slice(0, sw.indexOf('\n    attack(strike'));
+  const fin = body.indexOf('} finally {');
+  assert.ok(fin > 0, 'the swap still ends in a finally');
+  assert.match(body.slice(fin), /for \(const fn of listeners\)/,
+    'and notifies the panel there, so a throw still repaints');
+});
