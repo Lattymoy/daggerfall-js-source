@@ -1301,6 +1301,79 @@ function readFollowCamera() {
 }
 
 /**
+ * NPC2: PACK, UPLOAD AND DRESS a Morrowind body's mesh - one home for
+ * a pattern this file already carried three times and the NPC lane
+ * would have made a fourth.
+ *
+ * `holder` owns the two things that must persist together: the packed
+ * float buffer (reused in place - the frame path must not allocate)
+ * and the GPU mesh the ranges and textures hang on. MW-D11's law:
+ * textures resolve ONCE onto the ranges, and the per-frame path
+ * re-uploads vertices and touches nothing else.
+ */
+export function uploadMwBodyMesh(renderer, holder, arm, textures) {
+  holder.packed = packFpArm(arm.pieces, holder.packed);
+  if (!holder.mesh) {
+    holder.mesh = renderer.createCharacterMesh(holder.packed.packed, { uv: true });
+    holder.mesh.ranges = holder.packed.ranges;
+    for (const r of holder.mesh.ranges) {
+      if (!r.textureFile) continue;
+      const entry = textures && textures.get(r.textureFile);
+      if (!entry) continue;
+      const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+      // NiAlphaProperty's own threshold, 0-255 in the file.
+      r.alphaCut = r.piece.material && r.piece.material.alphaTest
+        ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+    }
+  } else {
+    renderer.updateCharacterMesh(holder.mesh, holder.packed.packed);
+  }
+  return holder.mesh;
+}
+
+/**
+ * NPC2: WHERE A MORROWIND BODY STANDS IN THE WORLD, and how big the
+ * sprite box around it is. One home, because the player's third-person
+ * body and every enhanced NPC ask the identical question and a second
+ * copy of adjustScale's axes would drift from the first.
+ *
+ * MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135) - x,y
+ * take the race's WEIGHT, z its HEIGHT. In this frame the local x/z
+ * pair is the MW horizontal (side/forward through Rx(-90)) and local y
+ * is the MW vertical.
+ *
+ * The box the sprite law needs is measured off the POSED pieces in MW
+ * axes and mapped: MW z is world up, MW x/y are the horizontal pair.
+ * The azimuth-safe half-width holds under yaw for free, exactly as the
+ * voxel rigs' does.
+ */
+export function drawMwBodyAt(renderer, canvas, mesh, arm, raceScale, { feet, yaw = 0, proj, view, eye }) {
+  if (!renderer || !canvas || !mesh || !arm || !feet) return false;
+  const u = 1 / MW_UNITS_PER_METER;
+  const yawDeg = (yaw * 180 / Math.PI) + 180;
+  const rs = raceScale || { weight: 1, height: 1 };
+  const model = multiply(
+    trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
+    NIF_TO_PASS,
+  );
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (const r of armPieceRows(arm.pieces)) {
+    const b = r.bounds;
+    if (!b) continue;
+    if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+    if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+    if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+  }
+  if (!(maxX > minX)) return false;
+  const halfH = ((maxZ - minZ) * u * rs.height) / 2;
+  const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
+  const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+  drawRigSpriteBox(renderer, canvas, mesh, model, { center, halfW, halfH }, proj, view, eye);
+  return true;
+}
+
+/**
  * THE LIVE ARM. One per game, module-level, because there is one player.
  *
  * active() is the whole safety story and every term earns its place: an
@@ -1513,22 +1586,11 @@ export function createFpArm() {
    *  doll and the model never appeared. The body's pieces are posed at
    *  build regardless of view; only the upload was view-gated. */
   function uploadThirdMesh(t) {
-    thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
-    if (!thirdMesh) {
-      thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
-      thirdMesh.ranges = thirdPacked.ranges;
-      for (const r of thirdMesh.ranges) {
-        if (!r.textureFile) continue;
-        const entry = t.textures.get(r.textureFile);
-        if (!entry) continue;
-        const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
-        r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
-        r.alphaCut = r.piece.material && r.piece.material.alphaTest
-          ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-      }
-    } else {
-      renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
-    }
+    // NPC2: through the one upload law - the holder carries the packed
+    // buffer and the mesh together, exactly as it did inline here.
+    const holder = { mesh: thirdMesh, packed: thirdPacked };
+    uploadMwBodyMesh(renderer, holder, t.arm, t.textures);
+    thirdMesh = holder.mesh; thirdPacked = holder.packed;
     return thirdMesh;
   }
 
@@ -2523,36 +2585,12 @@ export function createFpArm() {
      */
     drawThird(canvas, { proj, view, eye, feet, yaw }) {
       if (!thirdActive() || !canvas || !feet) return false;
-      const t = thirdBuilt;
-      const u = 1 / MW_UNITS_PER_METER;
-      const yawDeg = (yaw * 180 / Math.PI) + 180;
-      // MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135):
-      // x,y take the race's WEIGHT, z its HEIGHT. In this frame the
-      // local x/z pair is the MW horizontal (side/forward through
-      // Rx(-90)) and local y is the MW vertical.
-      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-      const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
-        NIF_TO_PASS,
-      );
-      // The box the sprite law needs, measured off the POSED pieces in
-      // MW axes and mapped: MW z is world up, MW x/y are the horizontal
-      // pair. The azimuth-safe half-width holds under yaw for free,
-      // exactly as the voxel rigs' does.
-      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-      for (const r of armPieceRows(t.arm.pieces)) {
-        const b = r.bounds;
-        if (!b) continue;
-        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
-        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
-        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
-      }
-      if (!(maxX > minX)) return false;
-      const halfH = ((maxZ - minZ) * u * rs.height) / 2;
-      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
-      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
-      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye);
-      return true;
+      // NPC2: the placement and the box are drawMwBodyAt's now - the
+      // player's body and every enhanced NPC stand in the world by ONE
+      // law. Two copies of adjustScale's axes and the sprite box is
+      // exactly the drift MW7 died of.
+      return drawMwBodyAt(renderer, canvas, thirdMesh, thirdBuilt.arm,
+        (built && built.raceScale) || null, { feet, yaw, proj, view, eye });
     },
 
     /** MW-D38: THE ITEM ICON - a Daggerfall item's Morrowind GROUND

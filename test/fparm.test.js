@@ -2435,7 +2435,16 @@ test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quan
   assert.match(fig, /uploadThirdMesh\(t\);/, 'the figure does not upload through the one helper');
   // one upload for both consumers: the wheel's update path uses the same helper.
   assert.equal((arm.match(/uploadThirdMesh\(t\);/g) || []).length, 2, 'the upload has two callers and one body');
-  assert.equal((arm.match(/renderer\.createCharacterMesh\(thirdPacked\.packed/g) || []).length, 1, 'a second third-mesh upload is growing');
+  // NPC2: the law is STRONGER now - there is one place that creates a
+  // body mesh AT ALL (uploadMwBodyMesh), and uploadThirdMesh is one of
+  // its callers. The pattern had been written inline three times in
+  // this file before the NPC lane would have made a fourth.
+  assert.match(arm, /export function uploadMwBodyMesh\(renderer, holder, arm, textures\) \{/,
+    'the one upload law has no home');
+  assert.equal((arm.match(/renderer\.createCharacterMesh\(holder\.packed\.packed/g) || []).length, 1,
+    'a second body-mesh upload is growing');
+  assert.match(arm, /const holder = \{ mesh: thirdMesh, packed: thirdPacked \};/,
+    'the third-person mesh no longer rides the one upload');
   // F2: the pack quantises the yaw before it asks.
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
   assert.match(pack, /const yaw = Math\.round\(_figureYaw \/ 0\.1\) \* 0\.1;/);
