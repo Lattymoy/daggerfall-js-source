@@ -162,17 +162,20 @@ import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships } from '../systems/guilds.js';   // V2e: the per-read vampire book pick
-import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read
+import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
-import { expandQuestMessage } from '../systems/quest/questMacros.js';
+// AUDIT 39 (#109): SetFactionIdsAndRegionID's two setters bracket the
+// common-rumor macro pass, as TalkManager.cs:1417-1419 brackets its own.
+import { expandQuestMessage, setIdRegion, setIdFactions } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
-import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court
+import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, lordNameForFaction, findFactions } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court   // AUDIT 39 (#23): GetRegionFaction
+import { liveVampirism } from '../systems/racialLive.js';   // AUDIT 39 (#23): the PC's clan, off the curse entry
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
@@ -1432,7 +1435,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // defaults advanceDays to the real clock, so there is no argument left for a
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
-  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: startLoc.regionIndex });
+  // AUDIT 39 (#21): a GETTER, not startLoc's number. LowerRepForCrime
+  // (PlayerEntity.cs:2286-2299), SurrenderToCityGuards (:2313) and
+  // RaiseReputationForDoingSentence (:2301-2303) all read
+  // PlayerGPS.CurrentRegionIndex at the MOMENT of the crime, and this
+  // host fast-travels - a boot-time value filed every later crime's
+  // legal-rep loss, fine and banishment under the province the session
+  // started in. Same read, same reason, as townTalk's above.
+  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: () => _questRegionIndex() });
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -3301,6 +3311,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     const px = playerTravelPixel();
     return maps.getRegionIndexAt(px.x, px.y);
   };
+  /** PersistentFactionData.GetRegionFaction (:272-287): FindFactions
+   *  (Province, -1, -1, region) and take the first row - the record
+   *  both GetCurrentRegionFaction and GetCurrentRegionVampireClan
+   *  read. C# throws on a miss; the port answers null, the refusal
+   *  convention its People/Courts siblings already keep. */
+  const _regionFaction = () => {
+    const dict = _questStore()?.dict ?? null;
+    if (!dict) return null;
+    return findFactions(dict, { type: FACTION_TYPES.Province, region: _questRegionIndex() })[0] ?? null;
+  };
   // Quest parchment boxes land in whichever overlay slot is LIVE:
   // exterior -> the townTalk overlay, interior -> the mode machine's
   // slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
@@ -3386,7 +3406,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Q5: the Weather and Climate triggers' reads - the weather IS
     // the seven-name enum, the climate the MAPS.BSA index at the
     // player's pixel.
-    currentWeatherKey: () => WEATHER_TYPES[weatherOverride ?? currentWeather()] ?? null,
+    // AUDIT 39 (#27): the fold IS the identity and the index was a
+    // NAME - WEATHER_TYPES is the name array and currentWeather()
+    // already answers out of it, so the read was undefined -> null on
+    // every call and the always-on Weather trigger could never match.
+    currentWeatherKey: () => weatherOverride ?? currentWeather() ?? null,
     // QG1: CastSpellDo's two documented world reads, live at last -
     // the machine has declared both since the Q-arc and nothing
     // production-side answered them, so `cast X spell do` (three
@@ -3444,7 +3468,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     factionPC: () => npcSession.npcData?.pcFactionName ?? '',
     factionName: () => {
       if (npcSession.npcData?.guildGroup === GUILD_GROUPS.HolyOrder) {
-        const divine = getDivine(townTalk.factionDict, modes?.interiorBuilding?.factionID ?? 0);
+        // AUDIT 39 (#26): factionId. The building record carries the
+        // lowercase spelling (buildingDataForDoor's merge); the
+        // uppercase one belongs to StaticNPC records, and reading it
+        // here handed getDivine a 0 that can never resolve.
+        const divine = getDivine(townTalk.factionDict, modes?.interiorBuilding?.factionId ?? 0);
         if (divine) return divine;
       }
       return npcSession.npcData?.pcFactionName ?? '';
@@ -3493,6 +3521,36 @@ export async function bootWorld(canvas, renderer, params, status) {
     /** PlayerGPS.GetRaceOfCurrentRegion (:432-435): a RACES value,
      *  RegionRaces[index] + 1 - NOT a FactionRaces one. */
     currentRegionRace: () => REGION_RACES[_questRegionIndex()] + 1,
+    // AUDIT 39 (#23): THE FIVE FACTION-TYPE READS Person.cs's
+    // GetFactionTypeFactionID makes (:967-1018) and the %vam name
+    // beside them. Unmounted, each `?? -1` landed in
+    // _setupFactionTypeNPC's ZERO_FACTION arm, so every quest Person
+    // declared `factiontype People/Courts/Province/Vampire_Clan` -
+    // and every `group Resident1-4` career default - was built from
+    // the zero record with a console warning. All five producers were
+    // already in this file; only the mounts were missing.
+    /** PlayerGPS.GetPeopleOfCurrentRegion (:440-457). Its sibling
+     *  npcSession seam takes the LOCATION's region; this one is
+     *  CurrentRegionIndex, which is what the C# reads. */
+    currentRegionPeople: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questRegionIndex())?.id ?? -1,
+    /** PlayerGPS.GetCourtOfCurrentRegion (:469-483). */
+    currentRegionCourt: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, _questRegionIndex())?.id ?? -1,
+    /** PlayerGPS.GetCurrentRegionFaction (:459-467) - GetRegionFaction
+     *  is FindFactions(Province, -1, -1, region), first row. */
+    currentRegionFaction: () => _regionFaction()?.id ?? -1,
+    /** PlayerGPS.GetCurrentRegionVampireClan (:485-490): the SAME
+     *  Province record's `vam` column. */
+    currentRegionVampireClan: () => _regionFaction()?.vam ?? -1,
+    /** (racialEffect as VampirismEffect).VampireClan - the clan the
+     *  curse entry carries; -1 when the PC is no vampire. */
+    playerVampireClan: () => liveVampirism(playerEntity)?.clan ?? -1,
+    /** VampirismEffect.GetClanName (:317-320). NULL - never '' - is
+     *  what makes %vam print C#'s own "PC not a vampire" literal. */
+    playerVampireClanName: () => {
+      const clan = liveVampirism(playerEntity)?.clan ?? 0;
+      if (!clan) return null;
+      return _questStore()?.dict.get(clan)?.name ?? '';
+    },
     /** TextProvider.GetRandomText (:250-268) - the flat Text-token
      *  pool over one TEXT.RSC record. */
     getRandomText: (id) => townTalk.randomText(id),
@@ -3526,7 +3584,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's
      *  LOCAL arm, over the SAME closure the answer pipeline is given. */
     buildingCompassDirection: (buildingKey) => talkBuildingCompassDirection(buildingKey),
-    changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
+    // AUDIT 39 (#25): LegalRepute.cs:48-52 writes
+    // PlayerGPS.CurrentRegionIndex, which is the POLITIC read - the
+    // location's regionIndex is absent across the whole wilderness,
+    // so the `?? 0` arm was the common case and filed the change
+    // against Alik'r. The object's own read (legalRepNow) always used
+    // _questRegionIndex; the write now agrees with it.
+    changeLegalRep: (amount) => changeLegalRep(playerEntity, _questRegionIndex(), amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1 (AUDIT 25 blocker 1): THE FOE SPAWN SEAMS. The machine
     // has declared these since Q3-iii and no host answered - the
@@ -3636,6 +3700,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
     expandQuestTokens,
+    // AUDIT 39 (#109): THE COMMON-RUMOR MACRO PASS, which no host
+    // ever supplied - so every regional-conditions rumor the sim
+    // files (TEXT.RSC 1400-1483, all of them naming %fx1/%fx2/%fl1/
+    // %fl2/%ol1/%reg) reached the player with its macros raw. DFU:
+    //   SetFactionIdsAndRegionID(f1, f2, regionID);
+    //   ExpandMacros(ref tokens, this);
+    //   SetFactionIdsAndRegionID(-1, -1, -1);
+    // (TalkManager.cs:1417-1419, and :1379-1381 for the board). The
+    // walk is the machine's quest-SHAPED macro context - the same
+    // one the status box rides - because the getters those symbols
+    // read are the questWorld's own.
+    expandCommonTokens: (tokens, ctx) => {
+      setIdFactions(ctx?.faction1 ?? -1, ctx?.faction2 ?? -1);
+      setIdRegion(ctx?.regionID ?? -1);
+      try {
+        expandQuestMessage(questBridge?.machine.macroContext() ?? null, tokens);
+      } finally {
+        setIdFactions(-1, -1);
+        setIdRegion(-1);
+      }
+      return tokens;
+    },
     expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
     rolls: Math.random,
   });
@@ -3690,6 +3776,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     courtOfCurrentRegion: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
     currentLocationIndex: () => _questLoc()?.locationIndex ?? 0,
     nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
+    // AUDIT 39 (#112): GetQuestorName (TalkManager.cs:2586-2590) is
+    // srand(entry nameSeed) then NameHelper.FullName over the ENTRY's
+    // OWN nameBank - not the region's, so this is not talkMcp's
+    // one-argument form. Unmounted, %pqn in the "any work" answers
+    // (8076/8077) named nobody while still spending the seeded roll.
+    fullName: (nameBank, gender) => nameHelperFullName(nameBank, gender),
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
     isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
     guildMemberships: () => Object.entries(activeMemberships(playerEntity))
@@ -3751,6 +3843,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     randomFullName: () => talkFullName(GENDERS.Male),
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
+    // AUDIT 39 (#107): THE FIVE READS THE HANDLERS ALREADY MAKE.
+    // Absent, expandTalkMacros substituted the empty string, so
+    // %pcf/%pcn/%cn/%ra were DELETED from every greeting and where-is
+    // record, getHonoric's `gender === 'male'` arm never fired (every
+    // player was "Ma'am"), and %1com always drew the tone-1 (Normal)
+    // opening whatever tone the player had picked.
+    playerName: () => playerEntity.name ?? '',
+    playerGender: () => playerEntity.gender,
+    playerRace: () => playerEntity.race,
+    cityName: () => townTalk.cityName(),
+    toneIndex: () => townTalk.toneIndex(),
     // PlayerGPS.GetRaceOfCurrentRegion, through the same REGION_RACES
     // table getNameBankOfRegion reads
     // AUDIT 24: over the POLITIC-derived region index, like every
@@ -3804,7 +3907,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     specialDungeonName: () => specialDungeonName(
       questWorld.currentRegionName(), _questLoc()?.name ?? '', (id) => townTalk.lines(id)?.[0] ?? null),
     dungeonRegionName: () => questWorld.currentRegionName(),
-    currentRegion: () => null,          // the region walk rides the automap slice
+    // AUDIT 39 (#111): the REGION WALK, mounted. GetLocationWith-
+    // RegionalBuilding (TalkManager.cs:1891-1918) counts the region's
+    // map-table keys and re-walks to the pick, then answers
+    // MapFileReader.GetLocation(CurrentRegionIndex, i). Hardcoded
+    // null, the count loop never ran, so every Regional row - "Any
+    // tavern", the ten knightly orders - answered record 11, the
+    // not-found line, and %fcn stayed empty forever. This is the plain
+    // reader, not the quest layer's dungeon-sized adapter: TalkManager
+    // reads MapFileReader directly.
+    currentRegion: () => maps.getRegion(_questRegionIndex()) ?? null,
+    getLocation: (r, i) => maps.getLocation(r, i),
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
     getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)
@@ -4200,6 +4313,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         portTownAndUnknown: loc.exterior?.exteriorData?.portTownAndUnknown ?? 0,
       };
     },
+    // AUDIT 39 (#22): PlayerEntity.SpawnCityGuards(bool), for the mode
+    // machine's private-property theft arm (DaggerfallInventoryWindow
+    // .AttemptPrivatePropertyTheft :1848-1859 raises the crime and
+    // calls it). worldModes has read this key since the theft landed
+    // and NO host supplied it, so the optional call no-opped: the
+    // player robbed every house in the Bay and no watch ever came.
+    // The immediate/witness split is what the bool means.
+    // FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
+    // lowest outer door (PlayerEntity.cs:628-641); this host's pool is
+    // the exterior street, so the watch is waiting outside.
+    spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     // S40: IsPlayerInTown() with BOTH flags at their defaults - the

@@ -297,6 +297,23 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
   return out;
 }
 
+/**
+ * AUDIT 39 (#110): THE NAMED-ONLY GATES ARE GONE. This list is
+ * TalkManager's listBuildings (GetBuildingList :2778-2797), whose only
+ * gate is `buildingKey != 0` - BuildingNames.GetName answers the EMPTY
+ * STRING for a residence and DFU adds it anyway, because
+ * GetBuildingTypeForBuildingKey has to resolve a quest residence's key
+ * for the Where-is "General" section. Dropping only named types made
+ * that section unreachable by construction: its next gate is
+ * isResidence(), and residences were exactly what this walk removed.
+ * The per-type groups stay clean regardless - House1..6, HouseForSale,
+ * Ship, Special1-4 and Town23/Town4 all sit in AssembleTopicList-
+ * Location's own skip list, and every named-type consumer here filters
+ * by type or by name.
+ *
+ * FLAGGED: the walk is still over DOORS, so a building with no
+ * exterior door is absent where DFU's list holds it.
+ */
 export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpts) {
   const merged = mergeNamedBuildings(exteriorBuildings, blocks);
   const blockOf = (d) => blockInstanceOf(blocks, d);
@@ -308,12 +325,11 @@ export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpt
     const list = inst ? merged.get(inst) : null;
     if (!list) continue;
     const data = list[d.recordIndex];
-    if (!data || !isNamedBuildingType(data.buildingType)) continue;
+    if (!data) continue;
     const key = `${blockIdx.get(inst)}_${d.recordIndex}`;
     if (seen.has(key)) continue;   // one entry per building (multi-door)
     seen.add(key);
     const name = generateBuildingName(data.nameSeed, data.buildingType, { ...nameOpts, factionId: data.factionId });
-    if (!name) continue;
     dirs.push({
       name, buildingType: data.buildingType, factionId: data.factionId, quality: data.quality, position: d.position,
       buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, d.recordIndex),   // the knowledge roll's per-building term

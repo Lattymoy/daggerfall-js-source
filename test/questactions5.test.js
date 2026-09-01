@@ -243,7 +243,13 @@ test('Q5: the world host mounts every new door', () => {
     'raiseTime: (seconds) => setWorldMinutes(worldMinutes() + seconds / 60)',
     'spawnCityGuards: (immediate) =>',
     'makeEnemiesHostile: () =>', 'clearEnemies: () =>',
-    'currentWeatherKey: () => WEATHER_TYPES[', 'currentClimateIndex: () => maps.getClimateIndex(']) {
+    // AUDIT 39 (#27) MOVED THIS PIN. It used to read
+    // `currentWeatherKey: () => WEATHER_TYPES[`, which pinned the bug:
+    // WEATHER_TYPES is the NAME array and both operands are already
+    // names, so the index answered undefined -> null on every call and
+    // the always-on Weather trigger could never match. The fold is the
+    // identity, so the seam is the bare read.
+    'currentWeatherKey: () => weatherOverride ?? currentWeather()', 'currentClimateIndex: () => maps.getClimateIndex(']) {
     assert.ok(w.includes(door), `world.js mounts ${door.split(':')[0]}`);
   }
 });

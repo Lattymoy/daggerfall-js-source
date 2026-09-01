@@ -776,6 +776,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
     cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
+  /** AUDIT 39 (#22): SpawnCityGuards(FALSE) - the WITNESS arm, the
+   *  world host's twin (THE FOUR HOSTS RULE). The mode machine's
+   *  private-property theft calls the member through the bag below
+   *  and the bool picks the arm; this host had only the crime half. */
+  function _witnessResponse() {
+    const feet = walkMode ? player.pos : cam.pos;
+    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
+    cityGuards.spawnCityGuards(false, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+  }
   /** S40: THE REST KEY, OUTDOORS - world.js's twin (THE FOUR HOSTS
    *  RULE). This host stands in ONE location and never leaves its
    *  rect, so IsPlayerInTown(true, true) is the type test plus "not
@@ -1339,6 +1348,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // location TYPE alone (PlayerGPS.cs:504-527), which is what
     // CanRest's inside-a-building arm asks.
     inTownLocation: () => isPlayerInTown(_musicLocationType()),
+    // AUDIT 39 (#22): PlayerEntity.SpawnCityGuards(bool) - the theft
+    // arm's caller, which neither host answered. Same shape as the
+    // world host's.
+    spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),

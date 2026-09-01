@@ -61,6 +61,13 @@ export function createArrestFlow({
     return m ? (m.rank ?? 0) : null;
   },
 }) {
+  /** AUDIT 39 (#21): every DFU consumer of this number reads
+   *  PlayerGPS.CurrentRegionIndex AT THE MOMENT it acts - the crime,
+   *  the surrender, the sentence - so a host that can travel hands a
+   *  getter and the read stays live. A plain number is still accepted
+   *  (the single-location probe host has nowhere to travel to). */
+  const region = () => (typeof regionIndex === 'function' ? regionIndex() : regionIndex);
+
   const text = (id, fallback) => {
     const v = townTalk.texts(id);
     return v?.length && v[0] ? v : [fallback];
@@ -77,11 +84,11 @@ export function createArrestFlow({
     if (crimeId() === 0) return false;
     if (!playerEntity.haveShownSurrenderDialogue) {
       playerEntity.haveShownSurrenderDialogue = true;
-      lowerRepForCrime(playerEntity, regionIndex, crimeId());
+      lowerRepForCrime(playerEntity, region(), crimeId());
       townTalk.showOverlay(new ChoiceWindow({
         lines: text(TEXT_SURRENDER, 'Halt! You are under arrest. Do you surrender?'),
         options: [
-          { code: 'KeyY', label: 'Y - surrender', action: () => { if (surrenderToCityGuards(playerEntity, regionIndex, true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
+          { code: 'KeyY', label: 'Y - surrender', action: () => { if (surrenderToCityGuards(playerEntity, region(), true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
           { code: 'KeyN', label: 'N - fight on', action: () => applyDamage() },
         ],
       }));
@@ -89,7 +96,7 @@ export function createArrestFlow({
     }
     // Shown before: a fatal blow forces the surrender attempt
     if (playerEntity.health <= dmg) {
-      const accepted = surrenderToCityGuards(playerEntity, regionIndex, false, { setHealth1: () => { playerEntity.health = 1; } });
+      const accepted = surrenderToCityGuards(playerEntity, region(), false, { setHealth1: () => { playerEntity.health = 1; } });
       if (accepted) { startCourtFlow(); return true; }
     }
     return false;
@@ -137,7 +144,7 @@ export function createArrestFlow({
     // entirely, so the court has its own song. The flag existed nowhere in
     // the port, which left CourtSongs unreachable.
     playerEntity.arrested = true;
-    const court = startCourt(playerEntity, regionIndex, crimeId(), { rolls });
+    const court = startCourt(playerEntity, region(), crimeId(), { rolls });
     // CR1: the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
     // BEFORE the plead box - a rescued player never pleads. The exit
     // is the acquittal's own trio (:191-193): FillVitalSigns,
