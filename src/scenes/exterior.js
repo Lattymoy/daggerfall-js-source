@@ -1329,12 +1329,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
-    // AUDIT 39: the tap is an attack entry like the other three, so it
-    // takes the M2 gate they take - an armed cast eats the click
+// AUDIT 39 (#127 dropped the dead attack(dx,dy,held) drag hook -
+    // touch.js never called it; the tap IS the whole touch strike).
+    // AUDIT 39 (#130): the tap takes the M2 gate the other attack
+    // entries take - an armed cast eats the click
     // (WeaponManager.cs:244-263 defers to HasReadySpell before it
-    // handles any attack). This was the one door in the host without
-    // it, and touch.js:98 already promises the tap casts.
+    // handles any attack), and touch.js:98 already promises the tap casts.
     attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });

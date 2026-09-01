@@ -52,6 +52,22 @@
 // the viewmodel; both settings exist in the store and neither is
 // read, because the port draws no horse sprite and its viewmodel has
 // no such offset seam.
+//
+// FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
+// SHRINK. DFU pairs the docked bar with Utility/ViewportChanger.cs:
+// 53-62, which every frame sets the camera rect to
+// `new Rect(0, hudHeight, 1, 1 - hudHeight)` - the world is rendered
+// into what the bar leaves, so nothing is hidden behind it - and
+// HUDCrosshair.cs:43-52 answers by re-centring the crosshair into the
+// reduced view (`y = (Screen.height - largeHUD.ScreenHeight -
+// crosshairSize.y) / 2`). This port draws the bar as an opaque quad
+// over a full-canvas 3D frame, so a docked bar costs the bottom
+// 46/320 of the view. The two halves MUST land together: the world
+// pass, its projection aspect and every screen-to-ray conversion live
+// in the renderer and the four scene hosts, and re-centring the
+// crosshair alone would put the reticle somewhere the camera is not
+// pointing - a lying reticle is worse than a covered strip. Recorded
+// here rather than half-ported.
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';

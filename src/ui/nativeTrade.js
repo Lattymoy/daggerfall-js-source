@@ -369,7 +369,9 @@ export class NativeTradeWindow {
       [R.remoteList, 'remoteScroll', this.remoteList(), (s) => this._pickRemote(s)],
       [R.localList, 'localScroll', this.localList(), (s) => this._pickLocal(s)],
     ]) {
-      const hit = scrollerHit(rect, vx, vy);
+      // AUDIT 39 F126: the rail pages off the live thumb, so the hit
+      // needs this list's scroll index and length.
+      const hit = scrollerHit(rect, vx, vy, this[which], items.length);
       if (!hit) continue;
       if (hit.kind === 'slot') pick(hit.slot);
       else this[which] = applyScroll(this[which], hit.kind, items.length);

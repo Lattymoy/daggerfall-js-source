@@ -262,8 +262,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
-    attackTap: () => ctx.playerClickAttack(),
+    attackTap: () => ctx.playerClickAttack(),   // AUDIT 39 F127: the tap is the whole touch strike; the drag hook was never called
   });
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8

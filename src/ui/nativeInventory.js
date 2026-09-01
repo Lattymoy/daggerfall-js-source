@@ -698,13 +698,15 @@ export class NativeInventoryWindow {
       }
       return true;
     }
-    const hit = scrollerHit(R.localList, vx, vy);
+    // AUDIT 39 F126: the rail pages off the live thumb, so the hit
+    // needs the scroll index and the list length.
+    const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) {
       if (hit.kind === 'slot') this._pick(hit.slot);
       else this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length);
       return true;
     }
-    const rhit = scrollerHit(R.remoteList, vx, vy);
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
     if (rhit) {
       if (rhit.kind === 'slot') this._pickRemote(rhit.slot);
       else this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length);

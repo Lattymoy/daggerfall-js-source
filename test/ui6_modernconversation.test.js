@@ -43,13 +43,19 @@ test('UI6: the wrap narrows BEFORE the scale, the row pitch follows the scale, a
 
 test('UI6: shadowText grew a REAL scale - the option existed nowhere before, so a `scale:` would have been silently ignored', () => {
   const panel = read('src/ui/nativePanel.js');
-  assert.match(panel, /shadow = DEFAULT_SHADOW_COLOR, scale = 1 \} = \{\}\)/);
+  // AUDIT 39 F128 added shadowOffset after scale (ListBox's selected
+  // row draws with ShadowPosition zero); the pin keeps asking for the
+  // scale option it was written for.
+  assert.match(panel, /shadow = DEFAULT_SHADOW_COLOR, scale = 1[,}]/);
   assert.match(panel, /const tw = measureText\(font\.fnt, text\) \* scale;/, 'the measure scales, so right-aligned questions still hug the margin');
   assert.match(panel, /m\.s \* scale, shadow\);/);
   assert.match(panel, /m\.s \* scale, color\);/);
   // The shadow OFFSET stays one native pixel: DFU's ShadowPosition is
-  // in the label's own space, not the scaled glyph's.
-  assert.match(panel, /m\.ox \+ \(ax \+ 1\) \* m\.s, m\.oy \+ \(y \+ 1\) \* m\.s, m\.s \* scale, shadow\);/);
+  // in the label's own space, not the scaled glyph's. F128 made that
+  // ONE the default of a `shadowOffset` option rather than a literal,
+  // so the offset is still unscaled - it just has a name now.
+  assert.match(panel, /shadowOffset = 1 \} = \{\}\)/);
+  assert.match(panel, /m\.ox \+ \(ax \+ shadowOffset\) \* m\.s, m\.oy \+ \(y \+ shadowOffset\) \* m\.s, m\.s \* scale, shadow\);/);
 });
 
 test('UI6: the classic path is untouched and the key is LIVE', () => {

@@ -27,7 +27,7 @@ import { mountHitNumbers } from './hitNumbers.js';   // HN1
 import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
-import { compassScroll, breathShortThreshold } from './hud.js';
+import { compassScroll, breathShortThreshold, compassMarkerLerp, DETECT_MARKER_RGB } from './hud.js';
 import { maxBreath, maxFatigue, liveStat } from '../systems/statMods.js';   // PX30b/PX30d: DFU's own ceilings
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
 import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
@@ -96,6 +96,49 @@ export function compassPlace(point01, heading01, span = COMPASS_SPAN) {
   const half = span / 2;
   if (d < -half || d > half) return null;
   return (d + half) / span;
+}
+
+// AUDIT 39 F133 - THE DETECT MARKERS RIDE THIS COMPASS TOO.
+// The three Detect effects draw nothing themselves: each registers
+// with the compass and HUDCompass.Draw runs DrawCompass() then
+// DrawTrackedObjects() (:198-252), one marker per detected object. So
+// a skin that REPLACES the classic compass owes the player the
+// markers, or a Detect costs spell points and shows nothing.
+// The bearing is the classic box's own (hud.js compassMarkerLerp) with
+// Mathf.Lerp's clamp, and it lands on this strip because both windows
+// are the same quarter turn: 64/258 of the classic strip, COMPASS_SPAN
+// here. The SHAPE is this skin's - a 5x3 triangle in DFU's own
+// (154,24,8), drawn as a CSS border wedge.
+//
+// LAZY, and for the reason hud.js's own ToolTip is: hud.js imports
+// this module, so reading its exports at THIS module's top level runs
+// before hud.js has evaluated them. Built on first marker instead.
+const detectMarkCss = () => 'position:absolute;bottom:0;width:0;height:0;margin-left:-3px;'
+  + 'border-left:3px solid transparent;border-right:3px solid transparent;'
+  + `border-top:4px solid rgb(${DETECT_MARKER_RGB[0]},${DETECT_MARKER_RGB[1]},${DETECT_MARKER_RGB[2]});`
+  + 'pointer-events:none';
+
+/** The marker row, pooled: nodes are made once and re-placed, the same
+ *  updated-not-rebuilt law the rest of this HUD keeps. */
+function drawDetectMarkers(detected, playerXZ, heading01) {
+  const list = (detected && playerXZ) ? detected : [];
+  while (parts.detectMarks.length < list.length) {
+    const node = el('i', 'hud-detect');
+    node.style.cssText = detectMarkCss();
+    parts.compass.append(node);
+    parts.detectMarks.push(node);
+  }
+  for (let i = 0; i < parts.detectMarks.length; i++) {
+    const node = parts.detectMarks[i];
+    if (i >= list.length) {
+      if (node.style.display !== 'none') node.style.display = 'none';
+      continue;
+    }
+    if (node.style.display === 'none') node.style.display = '';
+    const at = Math.min(1, Math.max(0, compassMarkerLerp(list[i], playerXZ, heading01)));
+    const l = `${(at * 100).toFixed(1)}%`;
+    if (node.style.left !== l) node.style.left = l;
+  }
 }
 
 /** The effects row: name, rounds left, and whether it is going. */
@@ -220,7 +263,7 @@ function build(doc) {
   root.append(bottom);
 
   doc.body.append(root);
-  return { root, compass, marks, foe, foeName, foeFill, magicka, health, fatigue, effects,
+  return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, magicka, health, fatigue, effects,
     breath, breathFill, readied, weapon };
 }
 
@@ -266,6 +309,8 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
       if (m.style.left !== l) m.style.left = l;
     }
   }
+  // ...and the Detect markers over the same strip.
+  drawDetectMarkers(opts.detected ?? null, opts.playerXZ ?? null, heading01);
 
   // THE TARGET, when there is one.
   const t = foeTarget();

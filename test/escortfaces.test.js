@@ -194,10 +194,20 @@ test('FE1 world: the ctx mounts, the session init, the faction-face read', () =>
     'the session mount, with the persistent-store faction read');
 });
 
-test('FE1 hud: drawn on BOTH branches - the large-HUD force-off never names the faces', () => {
+test('FE1 hud: drawn on EVERY branch - the large-HUD force-off never names the faces', () => {
   const hud = read('src/ui/hud.js');
-  assert.equal((hud.match(/drawEscortFaces\(renderer, canvas\);/g) ?? []).length, 2,
+  // AUDIT 39 F133 MOVED THIS PIN from 2 to 3: the ENHANCED skin is the
+  // shipping default and returned before either call, so the escort
+  // column never drew for a default player. DaggerfallHUD adds the
+  // panel unconditionally (:183-185) and the force-off block
+  // (:214-220) names vitals, compass and mode icon only - so all three
+  // branches draw it.
+  assert.equal((hud.match(/drawEscortFaces\(renderer, canvas\);/g) ?? []).length, 3,
     'DaggerfallHUD.cs:214-220 turns off vitals/compass/mode icon only');
+  const enhanced = hud.indexOf('if (isEnhanced() && typeof document');
+  const ret = hud.indexOf('return;', enhanced);
+  assert.ok(hud.lastIndexOf('drawEscortFaces(renderer, canvas);', ret) > enhanced,
+    'the enhanced branch draws the column before it returns');
 });
 
 test('FE1 save: the envelope carries escortingFaces beside quest/talk/travelMap', () => {

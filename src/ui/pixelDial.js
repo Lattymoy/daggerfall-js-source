@@ -122,7 +122,11 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
   function commit(dir) {
     const entry = byDir[dir ?? selected];
     if (!entry) return;
-    unmount();            // the dial leaves FIRST — the window it opens
+    // THE ONE EXIT: close(), not the bare unmount() — the door's
+    // singleton is cleared by onClose, and a commit that tore the root
+    // down behind its back left _open holding a dead handle, which the
+    // player's next Tab spent raising nothing.
+    close();              // the dial leaves FIRST — the window it opens
     entry.open();         // must not find the dial still eating keys
   }
 

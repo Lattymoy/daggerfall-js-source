@@ -86,10 +86,15 @@ test('itemScroller: the shared rail law (hit kinds + clamped paging)', () => {
   // the LEFT 9px rail: 16px arrows at y0/y136, the bar between
   assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 5), { kind: 'up' });
   assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + DOWN_ARROW_Y + 5), { kind: 'down' });
-  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 70), { kind: 'page-up' });
-  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 100), { kind: 'page-down' });
+  // AUDIT 39 F126 moved these two: the rail used to split on its own
+  // midpoint (y=76), where VerticalScrollBar.cs:142-150 pages off the
+  // THUMB. A 20-item list at scroll 0 puts the thumb at the bar's top,
+  // so y=70 is BELOW it and pages down - it answered 'page-up' before
+  // and applyScroll clamped the click into nothing.
+  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 70, 0, 20), { kind: 'page-down' });
+  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 100, 0, 20), { kind: 'page-down' });
   assert.equal(scrollerHit(rect, 162, 100), null, 'outside the scroller');
-  assert.equal(scrollerHit(rect, 163 + 4, 48 + ARROW_H).kind, 'page-up', 'y16 is past the up arrow');
+  assert.equal(scrollerHit(rect, 163 + 4, 48 + ARROW_H, 0, 20).kind, 'page-up', 'y16 is past the up arrow');
   // buttons at x>=9 map slots by 38px
   assert.deepEqual(scrollerHit(rect, 163 + CELL_X, 48 + 39), { kind: 'slot', slot: 1 });
   // paging clamps to the list

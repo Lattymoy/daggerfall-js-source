@@ -105,7 +105,11 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   // below (endurance >> 3) + 4.
   assert.match(src, /const showBreath = held > 0;/);
   assert.match(src, /breathShortThreshold\(liveStat\(vitals, 'endurance'\)\) > held/);
-  assert.match(src, /import \{ compassScroll, breathShortThreshold \} from '\.\/hud\.js'/,
+  // AUDIT 39 F133 widened this import (compassMarkerLerp +
+  // DETECT_MARKER_RGB for the Detect markers); the law pinned here is
+  // that the threshold comes from the classic HUD rather than being
+  // restated, so the pin asks for the name, not the whole list.
+  assert.match(src, /import \{ compassScroll, breathShortThreshold[^}]*\} from '\.\/hud\.js'/,
     'the threshold is the classic HUD\'s own');
   assert.match(read('src/ui/hud.js'), /export const breathShortThreshold = \(liveEndurance\) => \(liveEndurance >> 3\) \+ 4;/);
   assert.match(src, /maxBreath\(vitals\) \|\| 1/, 'and the ceiling is statMods\', not a number typed here');

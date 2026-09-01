@@ -297,6 +297,19 @@ export function updateHudVitals(isLarge, cur, dt, paused = false) {
 
 // ── the draw ───────────────────────────────────────────────────────
 
+/** Mathf.Round, which is NOT Math.round: a value exactly halfway
+ *  lands on the EVEN integer (System.Math.Round's default), where JS
+ *  always rounds a half up. Bar heights hit it - a 32px bar at 13/64
+ *  is 6.5 - so the tie-break is part of the geometry. Amounts here are
+ *  never negative. */
+export const mathfRound = (v) => {
+  const f = Math.floor(v);
+  const d = v - f;
+  if (d > 0.5) return f + 1;
+  if (d < 0.5) return f;
+  return f % 2 === 0 ? f : f + 1;
+};
+
 /**
  * Draw one HUD's vitals in DFU's Components.Add order (:108-119):
  * the three LOSS bars first (behind), the three GAINS, then the three
@@ -310,8 +323,14 @@ export function updateHudVitals(isLarge, cur, dt, paused = false) {
  * HUDs share the one law with only geometry differing.
  */
 export function drawVitalsBars(renderer, rig, skin, rects, indicators = vitalsIndicatorsEnabled()) {
+  // AUDIT 39 F137: VerticalProgress.DrawProgress (:66-71) ROUNDS the
+  // destination height to whole screen pixels - `float scaledAmount =
+  // Mathf.Round(dstRect.height * amount)` - before offsetting the
+  // rect, so the classic bar's top edge lands on the pixel grid at
+  // every HUD scale. The SOURCE window stays unrounded (1 - a below),
+  // which is DFU's own asymmetry.
   const filled = (rect, a) => {
-    const h = rect.h * a;
+    const h = mathfRound(rect.h * a);
     return { x: rect.x, y: rect.y + rect.h - h, w: rect.w, h };
   };
   if (indicators) {

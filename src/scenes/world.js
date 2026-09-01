@@ -3250,8 +3250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
-    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2
+    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2; AUDIT 39 F127: the tap is the whole touch strike, the drag hook was never called
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 

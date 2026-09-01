@@ -57,6 +57,16 @@ export function iconStyleScale(setting) {
   return s === 'minimal' ? ICON_STYLE_SCALE.minimal : ICON_STYLE_SCALE.icon;
 }
 
+/** The OFF switch, and it lives outside the component: DaggerfallHUD
+ *  .cs:151 `ShowInteractionModeIcon = Settings.InteractionModeIcon
+ *  .ToLower() != "none"` feeding :205 `interactionModeIcon.Enabled =
+ *  ShowInteractionModeIcon` - so "none" (enum value 0, and the
+ *  advanced window's fallback for any word it does not know) draws no
+ *  indicator at all. HUDInteractionModeIcon itself never tests it,
+ *  which is why the gate has to be here. */
+export const modeIconEnabled = (setting) =>
+  String(setting ?? '').toLowerCase() !== 'none';
+
 /** `crosshair = iconSetting.EndsWith("xhair")` (:189). */
 export const iconReplacesCrosshair = (setting) =>
   String(setting ?? '').toLowerCase().endsWith('xhair');
@@ -134,7 +144,9 @@ export function drawCrosshairAndModeIcon(renderer, canvas, font,
   // a PANEL of its own - DaggerfallHUD.cs:219 disables this component
   // outright while the bar is up, so the corner word would be a
   // second copy of something already on screen.
-  if (asCrosshair || !font || !showModeIcon) return;
+  // AUDIT 39 F136: ...and not at all when the style is "none", the one
+  // value whose whole purpose is to switch the indicator off.
+  if (asCrosshair || !font || !showModeIcon || !modeIconEnabled(style)) return;
   const label = MODE_LABEL[mode] ?? '';
   if (!label) return;
   const iconScale = Math.max(1, (iconStyleScale(style) / iconResScale(scale)) * scale);

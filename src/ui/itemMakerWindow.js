@@ -405,7 +405,9 @@ export class ItemMakerWindow {
     }
 
     const list = this.items();
-    const hit = scrollerHit(ITEM_RECTS.itemList, vx, vy);
+    // AUDIT 39 F126: the rail pages off the live thumb, so the hit
+    // needs the scroll index and the list length.
+    const hit = scrollerHit(ITEM_RECTS.itemList, vx, vy, safeScrollIndex(this.scroll, list.length), list.length);
     if (hit) {
       if (hit.kind === 'slot') {
         const item = list[safeScrollIndex(this.scroll, list.length) + hit.slot];
