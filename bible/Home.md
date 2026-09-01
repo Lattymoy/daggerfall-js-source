@@ -190,6 +190,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `08-Audio/` - music (HMI/XMI), sound effects, audio state machine
 - `09-Testing/` - test doctrine, harnesses, data validation
 - `10-UI/` - HUD, menus, native Daggerfall UI reproduction
+- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc
 
 ## Active arcs
 
