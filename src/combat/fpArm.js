@@ -53,7 +53,7 @@ import {
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
-  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys,
+  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
@@ -1516,6 +1516,9 @@ export function createFpArm() {
   // is empty until you start to draw it, and only the CROSSBOW reloads
   // itself at the end of a section.
   let arrowShown = false;
+  // MW-D42: set at rule 24's "shoot release" key and CONSUMED by the
+  // rig, so a host that never asks cannot accumulate a stale true.
+  let shootReleased = false;
   let holdWindUp = false;
   let resetIdleOnAttackEnd = false;
   // mAimingFactor (npcanimation.cpp:712-719). It is STATE, not a
@@ -1992,7 +1995,17 @@ export function createFpArm() {
     // follow-through, which is why a bow looks loaded again before the
     // animation has finished.
     else if (action === 'shoot attach' || action === 'shoot follow attach') arrowShown = true;
-    else if (action === 'shoot release') arrowShown = false;
+    // MW-D42 (Mac: the arrow damages ON CLICK instead of following the
+    // bow animation): the release is now SIGNALLED, not just drawn.
+    // Rule 24's note at Morrowind-Rules.md:246-255 kept every gameplay
+    // key with Daggerfall's machine so two clocks could not disagree
+    // about when a blow lands, and it was right that they must not -
+    // but it settled the disagreement by making the ARM follow nothing.
+    // The shot left on frame 4 of the classic clock while the arm was
+    // still drawing. One clock still decides, and it is still
+    // Daggerfall's machine that owns damage; what changes is WHEN it is
+    // allowed to say so for a bow the arm is animating.
+    else if (action === 'shoot release') { arrowShown = false; shootReleased = true; }
   }
 
   /** PREPAREHIT's strength half (character.cpp:1250-1259), which is the
@@ -2443,6 +2456,23 @@ export function createFpArm() {
       holdWindUp = !!hold;
       upper = UPPER_BODY.AttackWindUp;
       const k = attackKeys(type, 1);
+      // MW-D42 (Mac: the arrow is not shown on the bow during the
+      // animation): THE NOCK HAS A FLOOR AT THE DRAW. Rule 24's "shoot
+      // attach" still drives it - the key is authoritative wherever the
+      // data carries it - but the arrow may no longer DEPEND on that
+      // key existing. It is a text key inside the user's own .kf, and
+      // when it is absent or named otherwise, arrowShown stayed false
+      // through the entire shot and the bow drew empty with nothing
+      // anywhere saying why. That is the never-traps law: a missing
+      // asset degrades, it does not silently delete the feature.
+      // The floor is not a departure from the reference either. MW-D16
+      // records the surprise as "a freshly drawn BOW is empty-handed
+      // UNTIL YOU BEGIN TO DRAW IT", and this line is exactly that
+      // moment - attack() IS the beginning of the draw. What it must
+      // not do is nock a bow at rest, which is why it lives here and
+      // not in the equip section, and why reloadCrossbow stays the
+      // only other way in.
+      if (type === MW_SHOOT_ATTACK && built.arrow) arrowShown = true;
       if (!playAction(k.windUp.start, k.windUp.stop, 0)) {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
@@ -2514,6 +2544,18 @@ export function createFpArm() {
     },
 
     /** The held bow comes up. Everything else releases itself. */
+    /** MW-D42: has the arm crossed "shoot release" since last asked?
+     *  CONSUMING, because the rig asks once per frame and a flag that
+     *  is only ever set is a second shot waiting to happen. Answers
+     *  false for an arm that is not driving, which is what lets the
+     *  rig fall through to the classic frame rather than trap the
+     *  shot (the never-traps law). */
+    takeShootRelease() {
+      if (!shootReleased) return false;
+      shootReleased = false;
+      return true;
+    },
+
     release() {
       if (upper !== UPPER_BODY.AttackWindUp) return false;
       holdWindUp = false;

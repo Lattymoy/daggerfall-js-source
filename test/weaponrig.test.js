@@ -238,3 +238,80 @@ test('the drawn bow reaches the Morrowind arm as a SHOOT, on the bow clock', asy
     fpArm.attack = saved.attack;
   }
 });
+
+// MW-D42: THE LOOSE WAITS FOR THE ARM (Mac: the 3D Morrowind bow
+// "damages on click instead of following the bow animation"). The
+// machine's 'hit' for a bow is frame 5 of the classic release, which
+// has nothing to do with the animation the player is watching. It is
+// HELD now and let go at rule 24's "shoot release" - but only for a
+// bow, only while the arm is active, and never swallowed.
+test('MW-D42: the bow\'s hit is held for the arm\'s release, and never swallowed', async () => {
+  const { fpArm } = await import('../src/combat/fpArm.js');
+  const LONG_BOW = { name: 'Long Bow', templateIndex: 130, material: 0 };
+  const ARROWS = { name: 'Arrow', templateIndex: 131, stackCount: 20 };
+  const saved = {
+    ready: fpArm.ready, attack: fpArm.attack, active: fpArm.active,
+    take: fpArm.takeShootRelease, update: fpArm.update, release: fpArm.release,
+    setWeapon: fpArm.setWeapon, setSheathed: fpArm.setSheathed, setWorn: fpArm.setWorn,
+    readySpell: fpArm.readySpell,
+  };
+  let released = false;
+  let armActive = true;
+  fpArm.ready = () => true;
+  fpArm.active = () => armActive;
+  fpArm.attack = () => 'shoot';
+  fpArm.takeShootRelease = () => { if (!released) return false; released = false; return true; };
+  for (const k of ['update', 'release', 'setSheathed', 'setWorn', 'readySpell']) fpArm[k] = () => {};
+  fpArm.setWeapon = () => true;
+  const bowRig = () => {
+    const r = rig({ entity: { items: [ARROWS], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW } } } });
+    r.toggleSheath();
+    for (let i = 0; i < 30; i++) r.frame(1 / 60);
+    return r;
+  };
+  const shoot = (r, frames, onFrame = () => {}) => {
+    const evs = [];
+    r.attackInput(900, 0, true);
+    for (let i = 0; i < frames; i++) {
+      for (const e of r.frame(1 / 60)) evs.push(e);
+      if (i === 0) r.attackInput(900, 0, false);
+      onFrame(i);
+    }
+    return evs;
+  };
+  try {
+    // THE LAW: no hit while the arm is still drawing.
+    const r = bowRig();
+    const early = shoot(r, 40);
+    assert.ok(!early.includes('hit'), 'the classic frame-5 hit is HELD, not fired on the click');
+    assert.ok(early.includes('bowSound'), 'and the rest of the bow clock is untouched');
+    // ...and it lands the moment the arm looses.
+    released = true;
+    const evs = [];
+    for (const e of r.frame(1 / 60)) evs.push(e);
+    assert.ok(evs.includes('hit'), 'the arm\'s "shoot release" lets the hit go');
+    // ONCE. takeShootRelease consumes, so a held flag cannot fire twice.
+    const after = [];
+    for (let i = 0; i < 20; i++) for (const e of r.frame(1 / 60)) after.push(e);
+    assert.ok(!after.includes('hit'), 'and exactly once');
+
+    // NEVER-TRAPS: an arm that never signals still gets its shot off,
+    // late rather than never. This is the whole reason the ceiling
+    // exists - a .kf without rule 24's release key must not delete
+    // archery from the game.
+    released = false;
+    const r2 = bowRig();
+    const silent = shoot(r2, 200);
+    assert.ok(silent.includes('hit'), 'a silent arm falls through to the ceiling rather than swallowing the shot');
+
+    // AND THE CLASSIC PATH IS UNTOUCHED. With no arm active the hit
+    // rides the machine exactly as it always has - this is the check
+    // that stops the fix leaking onto the 2D skin.
+    armActive = false;
+    const r3 = bowRig();
+    const classic = shoot(r3, 40);
+    assert.ok(classic.includes('hit'), 'no arm, no hold - the classic bow is exactly as it was');
+  } finally {
+    Object.assign(fpArm, saved);
+  }
+});

@@ -148,6 +148,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  - a running EQUIP countdown shows EMPTY HANDS (:275-281) - the
    *    port drew the new weapon while silently refusing attacks,
    *    which was the block half without its cue. */
+  // MW-D42: the bow's held 'hit', waiting on the arm's release key, and
+  // the ceiling that keeps a silent arm from swallowing the shot. The
+  // classic bow release is 7 frames at the machine's 0.0625 tick, so a
+  // real release lands near 0.44s and always beats this.
+  const HELD_HIT_MAX_S = 1.2;
+  let _heldHit = false;
+  let _heldHitAge = 0;
   let _lastShown = false;
   function shown() {
     const m = playerWeapon.machine;
@@ -305,7 +312,48 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
         fpArm.update(dt);
       }
-      return paralyzed ? [] : playerWeapon.update(dt);
+      if (paralyzed) return [];
+      // MW-D42 (Mac: the bow "damages on click instead of following the
+      // bow animation"): THE LOOSE WAITS FOR THE ARM. The machine's
+      // 'hit' for a bow is frame 5 of the classic 7-frame release, and
+      // when the Morrowind arm is the thing on screen that frame has
+      // nothing to do with what the player is watching - the arrow left
+      // while the bow was still being drawn.
+      //
+      // Morrowind-Rules.md:246-255 refused this and was half right: two
+      // clocks must not disagree about when a blow lands. They still do
+      // not. Daggerfall's machine remains the ONLY thing that decides a
+      // hit happens, its damage, its skills, its cooldown; all that
+      // moves is the moment it is allowed to announce one, and only for
+      // a bow, and only while the arm is actually animating the shot.
+      // The rule's own reason was the hit frame - it never argued the
+      // arrow should leave before the string does.
+      const evs = playerWeapon.update(dt);
+      if (!fpArm.active() || !playerWeapon.machine.isBow) {
+        // The classic sprite path is untouched, and so is every melee
+        // weapon on every path.
+        if (_heldHit) _heldHit = false;
+        return evs;
+      }
+      const out = [];
+      for (const ev of evs) {
+        if (ev === 'hit') { _heldHit = true; _heldHitAge = 0; continue; }
+        out.push(ev);
+      }
+      if (_heldHit) {
+        _heldHitAge += dt;
+        // NEVER-TRAPS. If the arm's "shoot release" key never comes -
+        // a .kf that does not carry it, an arm that loses its build
+        // mid-shot - the shot is not swallowed. It lands late rather
+        // than never, and HELD_HIT_MAX_S is generous enough that a real
+        // release always wins the race: the whole classic bow release
+        // is seven frames at a 0.0625 tick, about 0.44s.
+        if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
+          _heldHit = false;
+          out.push('hit');
+        }
+      }
+      return out;
     },
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */

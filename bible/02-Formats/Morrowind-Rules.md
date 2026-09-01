@@ -6220,3 +6220,42 @@ riding. The cart keeps the sprite always - the mod carries no cart.
 mwd42_ride.test.js. RECORDED, NOT BUILT: the other nineteen coats
 (a variant picker), the idle SoundGen moans, turn-in-place clips,
 and the unicorn/wings - all present in the data, all waiting.
+
+MW-D42 REOPENED RULE 24'S LAST LINE, and it needed reopening. Mac,
+playing it: the 3D bow "damages on click instead of following the bow
+animation and the arrow isn't shown during the animation on the bow
+itself."
+
+THE LOOSE. The note at :246-255 kept "shoot release" and the hit keys
+with Daggerfall's machine so that two clocks could not disagree about
+when a blow lands. That reason is still right and nothing here breaks
+it: Daggerfall's machine remains the ONLY thing that decides a hit
+happened, with its damage, its skills and its cooldown. What the note
+got wrong is that it settled the disagreement by making the ARM follow
+NOTHING - the arrow left on frame 5 of the classic release while the
+bow on screen was still being drawn. So the machine's 'hit' is HELD for
+a bow while the arm is animating and let go at the arm's release key.
+One clock still decides; only the moment it may announce itself moves.
+A silent arm - a .kf without the key - falls through a 1.2s ceiling
+rather than swallowing the shot, because the whole classic release is
+seven frames at a 0.0625 tick, about 0.44s, so a real release always
+wins that race.
+
+THE NOCK. Rule 24's "shoot attach" still drives the arrow wherever the
+data carries it, but the arrow may no longer DEPEND on that key
+existing. It is a text key inside the user's own .kf, and when it is
+absent or named otherwise arrowShown stayed false through the entire
+shot: the bow drew empty and nothing anywhere said why. The floor is
+attack() itself, which is not a departure from the reference - MW-D16
+records the surprise as "a freshly drawn BOW is empty-handed UNTIL YOU
+BEGIN TO DRAW IT", and attack() is that moment exactly. Gated on the
+shoot class and on an arrow part existing, so an empty quiver still
+draws an empty bow.
+
+THE FIXTURES COULD NOT HAVE CAUGHT EITHER. Every one of them carries
+rule 24's keys, so the port was correct against synthetic data and
+wrong in play, and no suite could tell. The nock pin is written to
+assert the state BEFORE any update() steps the playhead to the key,
+because that is the only place a fixture-shaped blind spot can be seen
+from. Worth remembering the next time a Morrowind rule is pinned only
+against generate.py.

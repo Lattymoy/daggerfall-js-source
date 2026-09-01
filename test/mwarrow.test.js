@@ -297,3 +297,45 @@ test('MW-D16: the arrow is a HIDDEN RANGE, like the weapon', async () => {
   assert.equal(arm.mesh().ranges.length, before, 'the range list never changes length');
   assert.equal(arm.mesh().ranges.filter((r) => r.slot === 'arrow')[0].hidden, false);
 });
+
+// MW-D42: THE NOCK HAS A FLOOR AT THE DRAW (Mac: the arrow is not shown
+// on the bow during the animation). Rule 24's "shoot attach" still
+// drives the nock wherever the data carries it - the test above pins
+// that - but the arrow may no longer DEPEND on that key existing. It is
+// a text key inside the user's own .kf, and when it is absent or named
+// otherwise the bow drew empty through the whole shot with nothing
+// saying why. THE FIXTURES ALL CARRY THE KEY, which is exactly why this
+// pin cannot be written with a clip: it asserts the state BEFORE any
+// update() steps the playhead to 5.9, where only the floor can have set
+// it. Remove the floor and this dies while every other arrow test stays
+// green - which is what a fixture-shaped blind spot looks like.
+test('MW-D42: the arrow is on the string the moment the draw BEGINS, key or no key', async () => {
+  const arm = liveArm();
+  const res = await arm.build({ race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps() });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  arm.setSheathed(false);
+  for (let i = 0; i < 80 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
+  // MW-D16's surprise still holds: a bow at REST is empty-handed.
+  assert.equal(arm.status().arrowShown, false, 'a bow at rest carries nothing');
+
+  assert.equal(arm.attack('StrikeDown'), 'shoot');
+  // NOT ONE update() - the playhead has not reached "shoot attach" at
+  // 5.9 yet, so a true here can only be the floor.
+  assert.equal(arm.status().arrowShown, true,
+    'attack() IS the beginning of the draw, and that is where MW-D16 says the round goes on');
+});
+
+// AND THE FLOOR IS A FLOOR, NOT A BLANKET. It is gated on the shoot
+// class AND on the arm actually having an arrow part, so an empty
+// quiver still draws an empty bow - MW-D16's law, which the floor must
+// not quietly overturn by conjuring a round from a weapon class test.
+test('MW-D42: an empty quiver still draws an EMPTY bow', async () => {
+  const arm = liveArm();
+  const res = await arm.build({ race: 'fprace', weapon: LONG_BOW, hasAmmo: false, deps: bowDeps() });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.equal(res.arrow, null, 'no ammunition, no arrow part');
+  arm.setSheathed(false);
+  for (let i = 0; i < 80 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
+  arm.attack('StrikeDown');
+  assert.equal(arm.status().arrowShown, false, 'the draw cannot nock what was never built');
+});
