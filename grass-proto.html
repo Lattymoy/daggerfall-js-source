@@ -882,10 +882,19 @@ const front = {
     const tc = ease(Math.min(1, this.t * 2.2));
     // the colours lead too, and OVERSHOOT toward the darker of the two
     const tk = ease(Math.min(1, this.t * 1.7));
-    const darker = (b.shade[0] + b.shade[1] + b.shade[2]) < (a.shade[0] + a.shade[1] + a.shade[2]) ? b : a;
+    // THE BLACK SKY WAS HERE. `darker` picked the darker weather ROW -
+    // an object - and then mixTo indexed it as if it were a COLOUR:
+    // darker[0] is undefined, and `undefined * 0` is NaN, not 0, so the
+    // bruise term poisoned the cloud colours even at rest, with the
+    // front settled and the overshoot at zero. NaN uniforms went to the
+    // shader, the cloud mix carried the NaN into every sky pixel, and
+    // the dome came out black - which is exactly what Mac saw twice and
+    // I twice diagnosed as something else. It is the darker SHADE now,
+    // and the arithmetic can no longer touch a non-number.
+    const darkShade = (b.shade[0] + b.shade[1] + b.shade[2]) < (a.shade[0] + a.shade[1] + a.shade[2]) ? b.shade : a.shade;
     const over = Math.sin(Math.PI * Math.min(1, this.t * 1.4)) * 0.22;   // a bruise, then it settles
     const cold = this.to === 'snow' || this.from === 'snow' ? SNOW_TINT : [1, 1, 1];
-    const mixTo = (p, q) => lerp3(p, q, tk).map((v, i) => cl(v * (1 - over) + darker[i] * over, 0, 255) * cold[i]);
+    const mixTo = (p, q) => lerp3(p, q, tk).map((v, i) => cl(v * (1 - over) + darkShade[i] * over, 0, 255) * cold[i]);
     return {
       key: this.t >= 1 ? this.to : this.from,
       cover: lerp(a.cover, b.cover, tc),
@@ -1808,7 +1817,12 @@ function frame(now) {
   gl.depthMask(false);
   gl.disable(gl.DEPTH_TEST);
   const S1 = (n, v) => gl.uniform1f(gl.getUniformLocation(skyProg, n), v);
-  const S3 = (n, v) => gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
+  // and a NaN can never reach the shader again: one bad number in a
+  // cloud colour blackened the entire dome, silently, twice.
+  const S3 = (n, v) => {
+    const safe = v.map((x) => (Number.isFinite(x) ? x : 0));
+    gl.uniform3fv(gl.getUniformLocation(skyProg, n), new Float32Array(safe));
+  };
   const S4 = (n, v) => gl.uniform4fv(gl.getUniformLocation(skyProg, n), new Float32Array(v));
   // the game builds its ray from yaw/pitch/fov; this page has them
   S1('uYaw', cam.yaw); S1('uPitch', cam.pitch);
