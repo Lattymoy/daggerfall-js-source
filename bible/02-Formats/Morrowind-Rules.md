@@ -6259,3 +6259,27 @@ assert the state BEFORE any update() steps the playhead to the key,
 because that is the only place a fixture-shaped blind spot can be seen
 from. Worth remembering the next time a Morrowind rule is pinned only
 against generate.py.
+
+
+PX32b CORRECTS A WRONG ROOT I RECORDED ONE COMMIT EARLIER. PX32's
+message said the bow's slow equip in the pack was pendingWeapon
+draining from update(), which the host does not tick while a window is
+up. That is FALSE and the code says so plainly: the drain is in
+build()'s own `finally` (:2169-2170), beside the MW-D36 listener
+notify, so it settles asynchronously and needs no host frame at all.
+
+The pack's wiring is correct too, and was already made correct twice.
+equipItem is followed by refresh(), which hands the rig both the worn
+table and the hand through their own doors (PX25, PX26 F2), then
+refreshFigure(), then render(); the MW-D36 listener repaints again when
+the build lands.
+
+THE ACTUAL ROOT IS THAT A WEAPON SWAP REBUILDS THE WHOLE BODY.
+setWeapon's non-busy path calls build(), which reopens the archives,
+re-resolves every part and repacks the mesh - for a bow it resolves the
+ammunition on top. Nothing shows until that settles, and "not
+instantly" is that latency, not a lost message. The fix is an
+incremental swap of the weapon part alone rather than a rebuild, which
+is a real piece of work and is NOT started here: what is recorded is
+the diagnosis and the correction of the false one, so the next session
+does not begin by trusting a sentence I got wrong.
