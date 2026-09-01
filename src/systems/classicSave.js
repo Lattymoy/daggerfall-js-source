@@ -45,6 +45,9 @@ import { STAT_KEYS_ORDER } from './statMods.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';
 import { ITEM_GROUP_BY_ID } from './biography.js';
 import { GROUP_TEMPLATE_INDICES, templateFor } from './itemTemplates.js';
+import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the None sentinel FromItemRecord tests
+import { isPotion, isPotionRecipe } from './useItem.js';
+import { CLASSIC_RECIPE_KEYS } from './loot.js';   // PotionRecipe.classicRecipeKeys
 import { goldStack } from './inventory.js';
 import { equipItem } from './equip.js';
 import { guildGroupOfFaction, daySinceZero } from './guilds.js';
@@ -306,6 +309,14 @@ export function classicItemFromRecord(record) {
   // "If item is an arrow, typeDependentData is the stack count" -
   // Weapons group index 18.
   item.stackCount = (d.group === 3 && d.index === 18) ? d.typeDependentData : 1;
+  // "Convert classic recipes to DFU recipe key" (:1577-1579). The same
+  // byte names the recipe on a potion or a recipe sheet; without the
+  // conversion an imported bottle carries no key and drinks as
+  // nothing. The guard is DFU's - the upper bound only, and the byte
+  // is unsigned.
+  if ((isPotion(item) || isPotionRecipe(item)) && d.typeDependentData < CLASSIC_RECIPE_KEYS.length) {
+    item.potionRecipeKey = CLASSIC_RECIPE_KEYS[d.typeDependentData];
+  }
   // Clothing keeps its dye byte (DyeColors values match classic);
   // currentVariant = playerRecord - template.playerTextureRecord, the
   // cloak's +1 exactly as IsCloak carves it out.
@@ -320,9 +331,14 @@ export function classicItemFromRecord(record) {
     item.variant = (d.image1 & 0x7f) - template.playerTextureRecord;
   }
   // The legacy magic array becomes item.enchantments, DISCARDED whole
-  // when no entry carries a real type (EnchantmentTypes.None = 0).
+  // when no entry carries a real type. AUDIT 39: the sentinel is
+  // EnchantmentTypes.None = -1 (ItemsFile.cs:113), NOT 0 - 0 is
+  // CastWhenUsed, a real enchantment. Classic writes 0xFFFF into the
+  // empty slots and the reader takes them signed, so testing against
+  // 0 kept a ten-entry array on EVERY imported item and isEnchanted
+  // answered true for all of them.
   const enchantments = (d.magic ?? []).map((m) => ({ type: m.type, param: m.param }));
-  if (enchantments.some((e) => e.type !== 0)) item.enchantments = enchantments;
+  if (enchantments.some((e) => e.type !== ENCHANTMENT_TYPES.None)) item.enchantments = enchantments;
   return item;
 }
 
@@ -655,6 +671,18 @@ export function classicSaveToSnapshot(saveGames, {
 
     lastSkillCheckTime: saveVars.lastSkillCheckTime,
     timeOfLastSkillTraining: doc.lastTimePlayerBoughtTraining,
+    // AUDIT 39: the rest of AssignCharacter's clock/tally block
+    // (PlayerEntity.cs:856-861). The document carried all five and the
+    // envelope carried none, so restorePlayer's `?? 0` arms zeroed
+    // both crime-guild tallies and both letter clocks - a character
+    // nine thefts into the Thieves Guild requirement imported at zero
+    // and a scheduled invitation never came - and the tavern meal
+    // clock arrived undefined.
+    lastTimePlayerAteOrDrankAtTavern: doc.lastTimePlayerAteOrDrankAtTavern,
+    timeForThievesGuildLetter: doc.timeForThievesGuildLetter,
+    timeForDarkBrotherhoodLetter: doc.timeForDarkBrotherhoodLetter,
+    darkBrotherhoodRequirementTally: doc.darkBrotherhoodRequirementTally,
+    thievesGuildRequirementTally: doc.thievesGuildRequirementTally,
 
     items, wagonItems,
     otherItems: [],

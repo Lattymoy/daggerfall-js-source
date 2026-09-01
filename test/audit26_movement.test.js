@@ -91,7 +91,13 @@ test('F027: an over-encumbered swimmer is dragged down, and the sink REPLACES th
     m.swimming = true;
     return m;
   };
-  const yAfter = (m, input) => { const before = m.pos[1]; m.update(1 / 60, input, 0); return m.pos[1] - before; };
+  // AUDIT 39 (#57): a swim/levitate EDGE raises CancelMovement, and
+  // FixedUpdate spends one whole step on the cancel block (:286-294)
+  // before the mode moves anything - so spend it before measuring.
+  const yAfter = (m, input) => {
+    if (m.cancelMovement) m.update(1 / 60, input, 0);
+    const before = m.pos[1]; m.update(1 / 60, input, 0); return m.pos[1] - before;
+  };
 
   // light: holding UP surfaces
   const light = mk(10);

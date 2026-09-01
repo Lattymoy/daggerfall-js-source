@@ -15,6 +15,21 @@ import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
 import { getFloat } from './settings.js';   // SETT: SoundVolume
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 
+/** The ArrayBuffer decodeAudioData is allowed to detach: THE VIEW'S OWN
+ *  RANGE, not the whole backing store.
+ *
+ *  AUDIT 39: this was `bytes.buffer.slice(0)`, which ignores byteOffset
+ *  and byteLength - a clip served out of an archive as a zero-copy
+ *  subarray (mwBsaFile.get) handed the decoder the ENTIRE .bsa, so the
+ *  decode failed on the archive header, the clip silently never
+ *  registered, and a full copy of the archive was allocated per attempt.
+ *  A plain ArrayBuffer argument passes through untouched (decodeAudioData
+ *  detaches it, which is why a view is copied at all). */
+export function decodableCopy(bytes) {
+  if (!bytes?.buffer) return bytes;
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+}
+
 /** Unsigned 8-bit PCM -> Float32 samples, verbatim (b - 128) / 128. */
 export function pcm8ToFloat32(bytes) {
   const out = new Float32Array(bytes.length);
@@ -173,7 +188,7 @@ export class AudioEngine {
     try {
       this._ensureCtx();
       if (!this.ctx || this.buffers.has(key)) return this.buffers.get(key) != null;
-      const buf = await this.ctx.decodeAudioData(bytes.buffer ? bytes.buffer.slice(0) : bytes);
+      const buf = await this.ctx.decodeAudioData(decodableCopy(bytes));
       this.buffers.set(key, buf);
       return true;
     } catch {

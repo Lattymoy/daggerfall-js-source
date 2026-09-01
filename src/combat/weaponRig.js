@@ -88,7 +88,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // a named reason, never a plausible arm in the wrong place. An arm
   // drawn at the world origin while the player stands elsewhere is the
   // shape of failure this arc keeps shipping.
-  fpArm.attach(renderer, camera);
+  //
+  // AUDIT 39: AND THE BINDING FOLLOWS THE FRAME, not the constructor.
+  // fpArm is a module SINGLETON and attach() is its only writer, so the
+  // LAST rig built owned it: one dungeon visit rebound the arm to that
+  // context's per-frame eye latch, and leaving never restored it - the
+  // latch's closure keeps its last value, so afterwards the exterior
+  // rig drove the arm off a frozen pose and the walk/run/sneak/jump
+  // selection ran forever on whatever the player was doing on the last
+  // dungeon frame. The reference re-derives the state from the live
+  // actor every frame (character.cpp:2296-2330); here that is two field
+  // writes, so the rig that is stepping the arm re-claims it first.
+  const bindArm = () => fpArm.attach(renderer, camera);
+  bindArm();
   // MWFIX 3, RESTORED. The reverted rig read hasStoredMorrowind() ONCE at
   // construction, so attaching data to a running game changed nothing
   // until a reload - which is what "after uploading does not work at
@@ -241,6 +253,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *   host resolves them (or ignores them where nothing is in reach).
      */
     frame(dt, { paralyzed = false } = {}) {
+      bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
       // CH3 (characters-13): the swap pause drains at the classic
       // approximation - dt x 980 units/second, clamped at 0
@@ -358,6 +371,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */
     draw({ paralyzed = false } = {}) {
+      bindArm();    // AUDIT 39: the DRAWING rig owns it too - the arm renders through it
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();

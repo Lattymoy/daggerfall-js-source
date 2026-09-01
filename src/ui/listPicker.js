@@ -205,8 +205,13 @@ export class ListPickerWindow {
     const rh = this.rowHeight(font);
     this.items.slice(this.scrollIndex, this.scrollIndex + ROWS_DISPLAYED).forEach((label, r) => {
       const selected = this.scrollIndex + r === this.selectedIndex;
+      // AUDIT 39 F128: the SELECTED row carries no shadow -
+      // ListBox.cs:41 holds selectedShadowPosition = Vector2.zero and
+      // DecideTextColor (:363-372) hands it to the selected label,
+      // where TextLabel's zero-position guard skips the pass outright.
+      // The picker window never overrides it, unlike the talk window.
       shadowText(renderer, font, label, m, PICKER_X + lx, PICKER_Y + ly + r * rh,
-        { color: selected ? SELECTED_TEXT_COLOR : DEFAULT_TEXT_COLOR });
+        { color: selected ? SELECTED_TEXT_COLOR : DEFAULT_TEXT_COLOR, shadowOffset: selected ? 0 : 1 });
     });
     // the scroll bar's thumb, sized and placed by the same
     // TotalUnits/DisplayUnits ratio VerticalScrollBar uses (:105-112)

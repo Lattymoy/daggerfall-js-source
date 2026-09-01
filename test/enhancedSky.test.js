@@ -399,7 +399,13 @@ test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole
   // A cube: six faces, the major axis chosen, the cell id carrying its face.
   assert.match(fs, /vec3 cubeSnap\(vec3 dir, float n, out vec2 cellOut\) \{/);
   assert.match(fs, /if \(a\.x >= m\) \{ raw = dir\.zy \/ a\.x; face = dir\.x > 0\.0 \? 0\.0 : 1\.0; \}/);
-  assert.match(fs, /cellOut = cell \+ face \* 977\.0;/, 'a face\'s cells are its own, so the dither does not run across a seam');
+  // AUDIT 39 F53 MOVED THIS PIN: cellOut is the CONTINUOUS face
+  // coordinate now (the id is floor(cellOut)), because the star field
+  // needs the fragment's position inside its cell and fract() of an
+  // integer is zero. The face offset is integral, so flooring before or
+  // after the add names the same cell and the seam law is unchanged.
+  assert.match(fs, /cellOut = uv \* n \+ face \* 977\.0;/, 'a face\'s cells are its own, so the dither does not run across a seam');
+  assert.match(fs, /cell = floor\(cell\);/, 'and the dither indexes the cell, not its interior');
   // EQUI-ANGULAR: a plain cube face is a tangent plane, so its cells
   // cover 2.6x less sky at the corners - a cell size that varies across
   // the frame beats against the screen grid and draws curved rings,

@@ -71,10 +71,12 @@ export const VAMPIRE_SKILLS = Object.freeze([
 
 /** AssignPlayerVampireSpells (PlayerEntity.cs:1080-1140): three base
  *  spells for every clan, then the clan's own. The records are
- *  SPELLS.STD ids; DFU sets MinimumCastingCost on each - the port's
- *  calculateCastCost floors every spell at CAST_COST_FLOOR already,
- *  so the flag is the standing universal floor rather than a
- *  per-spell bit (recorded). */
+ *  SPELLS.STD ids, each granted with MinimumCastingCost set
+ *  (:1138) - a flat 5 spell points, whatever the effects price out at.
+ *  AUDIT 39: that used to read as equivalent to calculateCastCost's
+ *  universal floor. It is not - the floor RAISES a cheap spell to 5,
+ *  the flag ASSIGNS 5 (FormulaHelper.cs:2234-2236) - so Khulari's
+ *  Paralysis and Haarvenu's Ice Storm were billed in full. */
 export const VAMPIRE_BASE_SPELLS = Object.freeze([4, 90, 91]);   // Levitate, Charm Mortal, Calm Humanoid
 export const VAMPIRE_CLAN_SPELLS = Object.freeze({
   [VAMPIRE_CLANS.Vraseth]: [85],            // Nimbleness
@@ -146,7 +148,7 @@ export function grantVampireSpells(entity, clan) {
     if (!record) continue;
     const name = String(record.name ?? record.spellName ?? '').replace(/^!/, '');
     if (entity.spells.some((s) => s.tag === VAMPIRE_SPELL_TAG && s.name === name)) continue;
-    entity.spells.push({ ...record, name, tag: VAMPIRE_SPELL_TAG, custom: true });
+    entity.spells.push({ ...record, name, tag: VAMPIRE_SPELL_TAG, custom: true, minimumCastingCost: true });
     granted++;
   }
   if (!granted && !entity.spells.some((s) => s.tag === VAMPIRE_SPELL_TAG)) {

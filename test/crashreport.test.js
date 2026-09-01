@@ -118,6 +118,10 @@ test('drawMesh: a GOOD mesh still draws - the guard is not a mute button', () =>
   const self = Object.assign(Object.create(Renderer.prototype), {
     gl, program: 'P', uModel: 'M', _blackTex: 'black',
     textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+    // AUDIT 39 F49 added the next line: an auto-emissive record's mask
+    // wears Color.white while a window's wears the window style, so the
+    // draw path picks the emission colour per sub-mesh.
+    emissionWhite: new Set(), _windowEmission: new Float32Array([0, 0, 0]),
     _texGen: 1, stats: { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 },   // EV2: the cache stamp + the counters the draw path keeps
   });
   const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };
@@ -170,6 +174,10 @@ test('drawMesh: a null MATRIX is skipped too - the argument that actually threw'
   const self = Object.assign(Object.create(Renderer.prototype), {
     gl, program: 'P', uModel: 'M', _blackTex: 'black',
     textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+    // AUDIT 39 F49 added the next line: an auto-emissive record's mask
+    // wears Color.white while a window's wears the window style, so the
+    // draw path picks the emission colour per sub-mesh.
+    emissionWhite: new Set(), _windowEmission: new Float32Array([0, 0, 0]),
     _texGen: 1, stats: { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 },   // EV2: the cache stamp + the counters the draw path keeps
   });
   const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };

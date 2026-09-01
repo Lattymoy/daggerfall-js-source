@@ -273,6 +273,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .row-name { font-size: 14px; }
 .row.blocked .row-name { color: var(--dim); }
+/* AUDIT 39: THE ANNOTATION LINES, which had no rule at all. A note
+   under a label inherits \`body\`'s 15px full-bone, so it drew LARGER
+   and brighter than the 14px .row-name it hangs from - the bare
+   running text the AUDIT UI 2 sweep was written for and cannot see:
+   that sweep compares one shell against another, and a class styled
+   in NO shell has nothing to compare. Base rules, so every shell
+   that draws one gets the same treatment. */
+.row-note, .row-sub { color: var(--dim); font-size: 12.5px; margin-top: 3px; }
+.note { color: var(--dim); font-size: 13px; margin: 10px 0 0; max-width: 58ch; }
 
 /* THE CONTROL IS THE VALUE. A row shows the word a player reads,
    never the ini string - \`4\` reads Beautiful, \`True\` reads On.
@@ -494,7 +503,13 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 /* THE FOUR NAVIGATION BUTTONS, in the thumb's arc on a phone and along
    the foot of the sheet everywhere. A button is drawn only where the
-   host handed a factory - see ui/enhancedCharSheet.js's nav(). */
+   host handed a factory.
+   AUDIT 39: the view that drew them - ui/enhancedCharSheet.js's own
+   sheet - retired with PX27's door, so this block and the .sheet-id /
+   .sheetcol / .meter / .skillrow rules above it now style nothing. The
+   sheet's SHARED parts are still live (.sheet-notice below is drawn by
+   the pack and the spellbook); untangling the rest is a sweep of this
+   file, not of that module. */
 .sheet-nav {
   display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 30px;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
@@ -1585,6 +1600,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
   color: #d8cfae; font: inherit; font-size: 15px; }
 .sb-shell .sb-rename input:focus { outline: none; border-color: var(--brass); }
+/* AUDIT-39r: the delete prompt covers the window it asks about. DFU's
+   DaggerfallMessageBox is a PUSHED window, so the book beneath it is
+   inert; here the book's controls are disabled and this scrim is what
+   makes that visible rather than merely true. */
+.sb-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.sb-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
+.sb-shell .sb-ask .sb-acts { justify-content: center; }
 
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the

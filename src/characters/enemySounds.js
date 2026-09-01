@@ -21,14 +21,15 @@
 import { ENEMY_BASICS, isClassEnemyId } from './enemyBasics.js';
 import { KNIGHT_CITY_WATCH } from './mobileTypes.js';
 import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // CF1: the AcuteHearing career bit
+import { entityImprovedAcuteHearing } from '../systems/enchantments.js';   // AUDIT 39: ImprovesTalents(0) lives in the enchantment fold's bag
 
 /** CF1 - ACUTE HEARING's one reader (DaggerfallEnemy.Start :53-71,
  *  the last career flag with none). DFU multiplies each enemy
  *  AudioSource's maxDistance once at spawn: x1.25 with the career
  *  flag, x1.5 when the ImprovedAcuteHearing ENCHANTMENT also holds.
- *  The enchantment (ImprovesTalents.cs) is unported, so the ternary
- *  picks the base 1.25 - the ImprovedAdrenalineRush routed-gap
- *  posture, a gap in the enchantment arc rather than here. The port
+ *  AUDIT 39: that enchantment SHIPS - ImprovesTalents(0) decodes into
+ *  the fold's bag - and the ternary was reading a top-level entity
+ *  field nothing writes, so the improved arm was dead. The port
  *  applies the multiplier at play time on the ONE clip seam
  *  (hostCombat.playEnemyClip) instead of once per spawn - the same
  *  answer, since ATTRACT_RADIUS is the only maxDistance an enemy
@@ -38,7 +39,7 @@ import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // CF1
 export function acuteHearingMultiplier(playerEntity) {
   const bits = playerEntity?.career?.abilityFlagsAndSpellPointsBitfield ?? 0;
   if ((bits & SPECIAL_ABILITY_BITS.acuteHearing) === 0) return 1;
-  return playerEntity?.improvedAcuteHearing ? 1.5 : 1.25;
+  return entityImprovedAcuteHearing(playerEntity) ? 1.5 : 1.25;
 }
 
 /** :26-28 - the fields, verbatim. */

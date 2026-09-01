@@ -27,10 +27,12 @@
 
 import { statUp, statDown } from './chargen.js';
 import { itemWeight } from '../systems/inventory.js';   // AUDIT 17e F30
+import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // U10
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
+import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
 import { drawText, measureText } from './text.js';
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -71,7 +73,17 @@ export class LevelUpScreen {
     this.entity = entity;
     // Roll the pool NOW so the screen can show it; the base stats are
     // the floors (statDown returns points only above them).
-    this.pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    //
+    // AUDIT 39: the OGHMA arm (UpdatePlayerValues :374-383) - the
+    // Infinium's rollout is a FIXED 30 and DFU draws no BonusPool() on
+    // that branch at all. The screen rolled 4..6 unconditionally, so
+    // the book's thirty points were unspendable and applyLevelUp's
+    // oghma arm - the only place that clears the latched flag - was
+    // reached by the next GENUINE level-up, which it then ate (no
+    // Level++, no health roll).
+    this.oghma = !!entity.oghmaLevelUp;
+    this.pool = this.oghma ? OGHMA_BONUS_POOL
+      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
     this._rolledPool = this.pool;
     this.base = { ...entity.stats };
     this.working = { ...entity.stats };
@@ -98,7 +110,9 @@ export class LevelUpScreen {
     const W = canvas.width, H = canvas.height;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: W, h: H }, undefined, [0.04, 0.03, 0.02, 0.92]);
     const gold = [0.85, 0.72, 0.35, 1], white = [0.9, 0.9, 0.85, 1], hot = [1, 0.95, 0.6, 1], dim = [0.5, 0.5, 0.45, 1];
-    const t = `LEVEL ${this.entity.pendingLevel}!  POOL: ${this.pool}`;
+    // The oghma arm raises no level, so it has no pendingLevel to show
+    // (DFU's sheet prints the level it already has).
+    const t = `LEVEL ${this.entity.pendingLevel ?? this.entity.level}!  POOL: ${this.pool}`;
     drawText(renderer, font, t, (W - measureText(font.fnt, t) * s) / 2, 24 * s, s, gold);
     STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
       `${i === this.cursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.working[k]}`,
@@ -292,7 +306,12 @@ export class CharSheet {
     label(e.race ?? 'Breton', 41, 14);
     label(e.career?.name ?? '', 46, 24);
     label(e.level ?? 1, 45, 34);
-    label(e.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0, 39, 44);
+    // DaggerfallCharacterSheetWindow.cs:401 is
+    // `goldLabel.Text = PlayerEntity.GetGoldAmount().ToString()`, and
+    // GetGoldAmount (PlayerEntity.cs:1313-1316) is goldPieces PLUS
+    // every letter of credit in the pack - the coin stack alone
+    // under-reports a banked player by the whole letter.
+    label(totalGoldAmount(e), 39, 44);
     label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER)}/${Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER)}`, 57, 54);
     label(`${e.health}/${e.maxHealth}`, 52, 64);
     label(`${Math.trunc(carriedWeight(e))}/${entityMaxEncumbrance(e)}`, 90, 74);   // DaggerfallCharacterSheetWindow.cs:404 reads PlayerEntity.MaxEncumbrance

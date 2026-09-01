@@ -86,14 +86,20 @@ export function drawRect(renderer, m, x, y, w, h, color) {
  *  shape). `shadow` overrides the default shadow colour - U10: the
  *  chargen rollouts use DaggerfallAlternateShadowColor1, and the
  *  colour belongs in the ONE label helper, not a copy per window.
+ *  `shadowOffset` is TextLabel.ShadowPosition in native px:
+ *  DaggerfallDefaultShadowPos is Vector2.one, and a ZERO position
+ *  draws NO shadow pass at all (TextLabel.cs:355 guards it), which is
+ *  the law ListBox's selected row rides.
  *  Returns the text's virtual width. */
-export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0, shadow = DEFAULT_SHADOW_COLOR, scale = 1 } = {}) {
+export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0, shadow = DEFAULT_SHADOW_COLOR, scale = 1, shadowOffset = 1 } = {}) {
   // UI6: TextLabel.TextScale - the glyphs shrink and the SHADOW OFFSET
   // stays one native pixel, as DFU's shadow is a position in the
   // label's own space rather than a scaled one.
   const tw = measureText(font.fnt, text) * scale;
   const ax = align === 'center' ? x + (w - tw) / 2 : x;
-  drawText(renderer, font, text, m.ox + (ax + 1) * m.s, m.oy + (y + 1) * m.s, m.s * scale, shadow);
+  if (shadowOffset !== 0) {
+    drawText(renderer, font, text, m.ox + (ax + shadowOffset) * m.s, m.oy + (y + shadowOffset) * m.s, m.s * scale, shadow);
+  }
   drawText(renderer, font, text, m.ox + ax * m.s, m.oy + y * m.s, m.s * scale, color);
   return tw;
 }

@@ -48,15 +48,19 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity } = {}) 
   const world = {
     player, foes, said: [], sounds: [], hurtPlayer: 0, foeHurt: new Map(),
     batchesMade: 0, batchesFreed: 0, surfaced: 0,
+    // AUDIT 39: the two uploaders are DIFFERENT KEYS - `${a}_${r}` and
+    // `${a}_${r}#${f}` - so which one a pool is handed is observable.
+    records: [], frames: [],
   };
   const magic = createPlayerMagic({
     renderer: {
-      createBillboardBatch: () => { world.batchesMade++; return { origin: null }; },
+      createBillboardBatch: (archive, record, size, centres) => { world.batchesMade++; return { archive, record, size, centres, origin: null }; },
       destroyBillboardBatch: () => { world.batchesFreed++; },
     },
     audio: { playOneShot: (id) => world.sounds.push(id), play3d: (id) => world.sounds.push(id) },
     getTexture: async () => ({ getSize: () => [16, 16], getScale: () => [0, 0] }),
-    uploadRecord: () => {},
+    uploadRecord: (a, r) => world.records.push(`${a}_${r}`),
+    uploadRecordFrame: (a, r, f) => world.frames.push(`${a}_${r}#${f}`),
     collider: { raycast },
     playerEntity: player,
     playerSinks: {
@@ -181,6 +185,28 @@ test('hostMagic missiles: a wall retires; an AreaAtRange wall hit EXPLODES at th
   assert.ok(aoe.world.hurtPlayer > 0, 'and the too-close caster');
 });
 
+test('AUDIT 39: the impact flash uploads on the FRAME key, which is the key the draw looks for', async () => {
+  // DaggerfallMissile.DoCollision (:364-370) - UseSpellBillboardAnims
+  // (1, true) at ImpactBillboardFramesPerSecond. hitEffects uploads
+  // every frame of record 1 under the composite `${record}#${frame}`
+  // key and sets `batch.frame = 0`, and the draw then asks the texture
+  // map for `${archive}_${record}#${frame}` and RETURNS if it is not
+  // there. The engine handed the pool the 2-arg `uploadRecord` in the
+  // 3-arg `uploadRecordFrame` slot, so `375_1` was uploaded, `375_1#0`
+  // was asked for, and every impact flash in every host that mounts
+  // this engine drew nothing at all - F033 shipped dead and green,
+  // because its pin only counted call sites.
+  const { magic, world } = rig({ raycast: () => 0.4 });   // a wall just ahead
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true);
+  magic.update(0.05, [0, 0, 0]);                 // the missile reaches the wall
+  await new Promise((r) => setTimeout(r, 0));    // the flash's archive warms
+  assert.ok(world.frames.includes('375_1#0'),
+    `record 1 of the element archive, frame-keyed (saw ${JSON.stringify(world.frames)})`);
+  assert.equal(world.records.includes('375_1'), false,
+    'and never under the record-only key, which the draw cannot find');
+});
+
 test('hostMagic missiles: the lifespan retires a flier that hits nothing', () => {
   const { magic, world } = rig();
   magic.setReadied(spellOf(2, [damageEffect()]));
@@ -189,6 +215,38 @@ test('hostMagic missiles: the lifespan retires a flier that hits nothing', () =>
   for (let i = 0; i < steps; i++) magic.update(0.25, null);
   assert.equal(world.batchesFreed, world.batchesMade);
   assert.ok(MISSILE_SPEED > 0);
+});
+
+test('AUDIT-39r: clearMissiles is the load/teleport sweep - the flights go, the engine stays', async () => {
+  // CleanupUntrackedObjects (StreamingWorld.cs:1620-1644, on
+  // SaveLoadManager_OnStartLoad): "remove loose enemies, missiles, etc.
+  // on load or new game", and the same sweep a teleport reaches through
+  // ClearStreamingWorld. A missile in the air when a fast travel or a
+  // quickload lands must not arrive with the player. This seam shipped
+  // held by nothing but a source-text grep of world.js - deleting the
+  // whole method left the suite green while the one call site became a
+  // TypeError inside an async teleport.
+  const { magic, world } = rig();
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 1, 0]), true, 'straight up - nothing to hit');
+  assert.equal(magic.missileCount(), 1, 'one flight in the air');
+  magic.update(0.05, null);                     // the flight asks for its art
+  await new Promise((r) => setTimeout(r, 0));   // the archive warms and the billboard exists
+  assert.ok(world.batchesMade > 0, 'the flight has a billboard');
+
+  magic.clearMissiles();
+  assert.equal(magic.missileCount(), 0, 'the sweep takes it');
+  assert.equal(world.batchesFreed, world.batchesMade, 'and hands its billboard back');
+  magic.update(0.05, [0, 0, 0]);   // nothing swept is walked again
+  assert.equal(magic.missileCount(), 0);
+
+  // destroy() is the TERMINAL teardown and takes the candle and the
+  // impact batches with it; the engine outlives a teleport, so this
+  // frees the flights alone and must leave a castable engine behind.
+  magic.clearMissiles();   // idempotent
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 1, 0]), true);
+  assert.equal(magic.missileCount(), 1, 'the engine still casts after the sweep');
 });
 
 test('hostMagic click seam: interceptAttack consumes the armed click; firePending casts ONCE', () => {

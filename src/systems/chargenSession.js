@@ -161,7 +161,12 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
  *  - the kit: AssignStartingGear runs ONCE, at creation; the bag is
  *    cleared first so an interim seed leaves no stray dagger.
  *  - the reputations: PlayerEntity.AssignCharacter (:844-848) seeds
- *    the five social groups BEFORE any biography effect adds to them. */
+ *    the five social groups BEFORE any biography effect adds to them.
+ *  - the biography and the faction store (AUDIT 39): ApplyEffects runs
+ *    BEFORE AssignStartingEquipment in DFU, and the store the `rf`
+ *    deltas drain into is what InitializeRegionData then walks. A
+ *    result carrying neither (the hosts' font-less fallback) skips
+ *    both arms and keeps the rest of the seam. */
 export function applyCreationExtras(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
   if (spellsByIndex) {
     const setIndex = result.isCustom ? customSpellSetIndex(result.career) : result.careerIndex;
@@ -184,11 +189,32 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // in DFU and 30+0-50 = -20 in the port, clamped to the 3% floor.
   // Enemies essentially could not hit a new character.
   playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
-  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   if (result.customReps) {
     if (!playerEntity.sGroupReputations) playerEntity.sGroupReputations = new Array(SOCIAL_GROUP_COUNT).fill(0);
     for (let i = 0; i < result.customReps.length; i++) playerEntity.sGroupReputations[i] = result.customReps[i];
   }
+  // AUDIT 39: THE BIOGRAPHY LANDS BEFORE THE KIT, as DFU orders it -
+  // BiogFile.ApplyEffects (StartGameBehaviour.cs:415-416) then
+  // AssignStartingEquipment (:419). AddItem's default is
+  // AddPosition.Back, so the collection order IS the bag order: an
+  // answer's IT item heads the list in classic and trailed the torches
+  // here, and its GP arithmetic ran against the kit's 100 gold instead
+  // of an empty purse (a "-" command clamps at 0, so the sign of the
+  // divergence is real money). The reputations stay ahead of it -
+  // AssignCharacter seeds the five groups (:844-848) before any
+  // biography effect adds to them.
+  if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
+  // S25/AUDIT 39: the faction store, built and drained of whatever the
+  // biography parked - BiogFile.cs:339 applies its `rf` deltas INSIDE
+  // ApplyEffects, so the drain belongs immediately after it. It must
+  // also precede the region bootstrap below, which walks this very
+  // store: this call used to sit in finishChargen, thirty lines LATER,
+  // so InitializeRegionData's 24 passes walked an undefined dict and
+  // returned at once - and even a store attached by some other route
+  // was then thrown away, since attachFactionRep rebuilds fresh
+  // records out of the dictionary.
+  if (result.factionDict) attachFactionRep(playerEntity, result.factionDict);
+  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   // StartGameBehaviour.cs:432-433 "Initialize region data" ->
   // PlayerEntity.InitializeRegionData (:2189-2218): every new character
   // is born with the 62-region condition store, so the writers that
@@ -218,18 +244,13 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // character.backStory;`) and DaggerfallPlayerHistoryWindow reads it
   // back; nothing here assigned it, so save.js only ever serialised [].
   playerEntity.backStory = [...(result.backStory ?? [])];
+  // S3e: the biography effects land over the BUILT character (after
+  // applyCharacter's rolls, so a skill bonus rides on top of the
+  // distributed value) and the faction store is attached and drained
+  // with them - both inside applyCreationExtras since AUDIT 39, where
+  // DFU's own order puts them: ahead of the starting kit, and ahead of
+  // the region bootstrap that reads the store.
   applyCreationExtras(playerEntity, result, spellsByIndex, { rolls });
-  // S3e: the BIOGRAPHY effects land LAST, exactly where DFU applies
-  // them (StartGameBehaviour.cs:415-416 - at game start, over the built
-  // character), so a skill bonus rides on top of the distributed value
-  // instead of being overwritten by applyCharacter's roll.
-  if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
-  // S25: right after the biography, because applyBiographyEffects is
-  // what parks the `rf` deltas - attaching earlier would build the
-  // store and drain nothing. DFU applies these INSIDE the biography
-  // (BiogFile.cs:339), before the level-up anchor below, so this is
-  // also where the order puts it.
-  attachFactionRep(playerEntity, result.factionDict);
   // AUDIT 18: and the LEVEL-UP ANCHOR is taken AFTER them
   // (StartGameBehaviour.cs:424-426 - SetCurrentLevelUpSkillSum, then
   // StartingLevelUpSkillSum = CurrentLevelUpSkillSum), unconditionally.

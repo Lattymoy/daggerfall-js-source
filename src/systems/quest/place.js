@@ -22,7 +22,7 @@
 import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
 import { placesTable } from './tables.js';
-import { mergeNamedBuildings, makeBuildingKey } from '../talkTopics.js';
+import { mergeNamedBuildings, makeBuildingKey, blockBuildingCount } from '../talkTopics.js';
 import { generateBuildingName } from '../../world/buildingNames.js';
 import { surname, firstName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
@@ -426,7 +426,7 @@ export class Place extends QuestResource {
     for (const b of blocks) {
       if (!b.dfBlock) continue;
       const list = merged.get(b) ?? [];
-      const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+      const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
       for (let i = 0; i < count; i++) {
         const summary = list[i];
         let wildcardFound = false;

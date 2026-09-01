@@ -69,6 +69,23 @@ const latin1 = (buf, start, count) => {
   return s;
 };
 
+/** A record's variant byte ranges, operand bytes skipped so a 0xFF
+ *  payload cannot masquerade as a separator (variantCount's own law).
+ *  These are TextProvider's tokenStreams before ReadTokens runs. */
+function variantRanges(raw) {
+  const ranges = [];
+  let start = 0;
+  let i = 0;
+  for (; i < raw.length; i++) {
+    const b = raw[i];
+    if (b === RSC.EndOfRecord) break;
+    if (b === RSC.SubrecordSeparator) { ranges.push([start, i]); start = i + 1; continue; }
+    if (b === RSC.FontPrefix || b === RSC.PositionPrefix) i++;
+  }
+  ranges.push([start, i]);
+  return ranges;
+}
+
 export class TextRsc {
   load(bytes) {
     const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -156,14 +173,17 @@ export class TextRsc {
     const n = this.variantCount(id);
     if (n <= 1) return this.linesById(id);
     const want = Math.min(n - 1, Math.floor(pick() * n));
-    const rows = this.linesById(id, want);
     // AUDIT 23 (FTD-1) - TextProvider.cs:231: a record ending 0xFF 0xFE
     // mints an empty trailing stream; DFU steps back one variant when
     // the picked stream has zero tokens, so the roll never shows
     // nothing. The distribution keeps DFU's shape (the last real
     // variant is picked twice as often on such records).
-    if (!rows.length && want > 0) return this.linesById(id, want - 1);
-    return rows;
+    // AUDIT 39: the gate is that TOKEN count, not the rows linesById
+    // hands back - it drops trailing empties, so a variant made only of
+    // break bytes (one formatting token, a blank row in DFU) trimmed to
+    // nothing here and showed the PREVIOUS variant instead.
+    if (want > 0 && !this._variantTokens(id, want).length) return this.linesById(id, want - 1);
+    return this.linesById(id, want);
   }
 
   /** How many SubrecordSeparator-delimited variants a record has. */
@@ -187,18 +207,7 @@ export class TextRsc {
   variantTokensById(id, pick = Math.random) {
     const raw = this.bytesById(id);
     if (!raw) return [];
-    // variant byte ranges, operand bytes skipped so a 0xFF payload
-    // cannot masquerade as a separator (variantCount's own law)
-    const ranges = [];
-    let start = 0;
-    let i = 0;
-    for (; i < raw.length; i++) {
-      const b = raw[i];
-      if (b === RSC.EndOfRecord) break;
-      if (b === RSC.SubrecordSeparator) { ranges.push([start, i]); start = i + 1; continue; }
-      if (b === RSC.FontPrefix || b === RSC.PositionPrefix) i++;
-    }
-    ranges.push([start, i]);
+    const ranges = variantRanges(raw);
     const n = ranges.length;
     const want = n <= 1 ? 0 : Math.min(n - 1, Math.floor(pick() * n));
     // readTokens answers NULL on an empty stream (the 0xFF 0xFE tail
@@ -206,6 +215,17 @@ export class TextRsc {
     let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord) ?? [];
     if (!tokens.length && want > 0) tokens = readTokens(raw.slice(ranges[want - 1][0], ranges[want - 1][1]), 0, RSC.EndOfRecord) ?? [];
     return tokens;
+  }
+
+  /** One variant's TOKEN stream, no step-back - the raw
+   *  `tokenStreams[index]` TextProvider.cs:231 measures. */
+  _variantTokens(id, index) {
+    const raw = this.bytesById(id);
+    if (!raw) return [];
+    const ranges = variantRanges(raw);
+    const r = ranges[index];
+    if (!r) return [];
+    return readTokens(raw.slice(r[0], r[1]), 0, RSC.EndOfRecord) ?? [];
   }
 
   /** The first variant as ROWS, with the per-row alignment the record

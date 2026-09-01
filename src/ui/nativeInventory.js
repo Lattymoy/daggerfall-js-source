@@ -12,7 +12,8 @@
 //   remove y80, use y103, gold y126; local list (163,48,59,152),
 //   remote list (261,48,59,152) - the shared ItemListScroller;
 //   local/remote target icons (165/263,12,55,34); exit (222,178,39,22);
-//   paperdoll at (49,13).
+//   paperdoll at (49,13); the twelve ACCESSORY buttons in two columns
+//   (x=1 and x=24), 21x20, first pair at y=11, rowOffset 31.
 //
 // THE TAB FILTER (AddLocalItem verbatim): WeaponsAndArmor = groups
 // Weapons/Armor, not enchanted; MagicItems = enchanted or the
@@ -64,10 +65,10 @@ import { planStore, planTake, applyTransfer, planDropGold } from '../systems/ite
 import {
   openState, remoteTarget, planWagonToggle, closeSession,
 } from '../systems/inventorySession.js';
-import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
+import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
-import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
+import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -94,6 +95,26 @@ export const INV_RECTS = Object.freeze({
   itemInfoPanel: [223, 145, 37, 32],
   infoCutout: [196, 68, 50, 37],
 });
+/** SetupAccessoryElements (DaggerfallInventoryWindow.cs:523-576) -
+ *  THE TWELVE ACCESSORY BUTTONS, in equip-slot order Amulet0..Crystal1.
+ *  Two columns, col0 x=1 and col1 x=24, buttonSize 21x20, the first
+ *  pair at y=11 and each pair dropping by rowOffset 31.
+ *
+ *  These are the ONLY door to a worn amulet, bracelet, ring, bracer,
+ *  mark or crystal. FilterLocalItems drops every equipped item from
+ *  all four tabs (filterByTab's first line), and PaperDollRenderer
+ *  blits Jewellery only above slot 11 (IsEquippedToBody), so nothing
+ *  the doll hit-tests can reach slots 0..11. Without these buttons a
+ *  ring, once worn, could never be unequipped, sold or dropped. */
+export const ACCESSORY_SLOT_MIN = EQUIP_SLOTS.Amulet0;
+export const ACCESSORY_SLOT_MAX = EQUIP_SLOTS.Crystal1;
+export const ACCESSORY_RECTS = Object.freeze(
+  Array.from({ length: ACCESSORY_SLOT_MAX - ACCESSORY_SLOT_MIN + 1 },
+    (_, i) => Object.freeze([i % 2 === 0 ? 1 : 24, 11 + 31 * Math.floor(i / 2), 21, 20])));
+/** accessoryButtonMarginSize = 1 (:152) - the icon panel is a
+ *  ScaleToFit child of the button's INTERIOR, MaxAutoScale 1. */
+export const ACCESSORY_MARGIN = 1;
+
 /** itemInfoPanelLabel's own layout (:444-455): Position (2,0), middle
  *  aligned in the panel, TextScale 0.43 and ExtraLeading 3. */
 export const INFO_LABEL = Object.freeze({ x: 2, scale: 0.43, extraLeading: 3, maxWidth: 37 });
@@ -188,6 +209,45 @@ export const inventoryArtLoaded = () => !!_art;
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
+/** The accessory buttons' own icon panels (:556-563): ScaleToFit,
+ *  MaxAutoScale 1, centered both axes inside the button's 1px margin.
+ *  Separate from itemScroller's drawer because that one is welded to
+ *  the 50x38 list cell - same warm/upload dance over the host texture
+ *  pipeline, other geometry. */
+function makeAccessoryIconDrawer(icons, identityOf = null) {
+  const warm = new Set();
+  const sizes = new Map();
+  const drawer = (renderer, m, it, rect) => {
+    const img = inventoryItemImage(it, identityOf?.() ?? undefined);
+    if (!img || !img.archive) return false;
+    const key = `${img.archive}_${img.record}`;
+    if (!warm.has(key)) {
+      warm.add(key);
+      icons.getTexture(img.archive).then((tex) => {
+        if (img.record < tex.recordCount) {
+          icons.uploadRecord(img.archive, img.record);
+          sizes.set(key, tex.getSize(img.record));
+        }
+      }).catch(() => {});
+    }
+    const glTex = icons.textures.get(key);
+    const size = sizes.get(key);
+    if (!glTex || !size?.width) return false;
+    const [rx, ry, rw, rh] = rect;
+    const fit = Math.min(1, (rw - ACCESSORY_MARGIN * 2) / size.width, (rh - ACCESSORY_MARGIN * 2) / size.height);
+    const w = size.width * fit, h = size.height * fit;
+    // the V-FLIPPED source rect: record textures store BOTTOM-UP rows
+    renderer.drawScreenQuad(glTex, {
+      x: m.ox + (rx + (rw - w) / 2) * m.s, y: m.oy + (ry + (rh - h) / 2) * m.s,
+      w: w * m.s, h: h * m.s,
+    }, { u0: 0, v0: 1, u1: 1, v1: 0 });
+    return true;
+  };
+  drawer._warm = warm;       // test seams, as itemScroller's drawer has
+  drawer._sizes = sizes;
+  return drawer;
+}
+
 /** hooks = { items() -> the player bag, icons: { getTexture,
  *  uploadRecord, textures }, loot?: { items() -> the ground pile }
  *  (a loot target opened the window), onDrop?(items) (the session's
@@ -221,6 +281,7 @@ export class NativeInventoryWindow {
     this.chooseOne = open.chooseOne;
     this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
+    this._accessoryIcon = makeAccessoryIconDrawer(hooks.icons, () => hooks.entity);   // the twelve worn slots
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
     // FX1 (F128): SetEquipDelayTime(false) on the window PUSH - the
     // hand snapshot the close bills against. The swap pause is billed
@@ -610,6 +671,16 @@ export class NativeInventoryWindow {
     if (t) this._setTab(TABS[Number(t[1]) - 1]);
   }
 
+  /** Which accessory BUTTON a point falls in, as an equip slot, or
+   *  null. The rects live left of the paperdoll and below the tabs, so
+   *  they overlap nothing else on the panel. */
+  _accessoryAt(vx, vy) {
+    for (let slot = ACCESSORY_SLOT_MIN; slot <= ACCESSORY_SLOT_MAX; slot++) {
+      if (inRect(ACCESSORY_RECTS[slot - ACCESSORY_SLOT_MIN], vx, vy)) return slot;
+    }
+    return null;
+  }
+
   /**
    * U47 - THE HOVER INFO PANEL. DFU fills the 37x32 panel from
    * OnMouseEnter on every list slot, the paperdoll and the gold
@@ -640,6 +711,15 @@ export class NativeInventoryWindow {
     if (inRect(R.paperDoll, vx, vy) && this.hooks.entity) {
       const slot = slotAtPaperDoll(Math.floor(vx - R.paperDoll[0]), Math.floor(vy - R.paperDoll[1]));
       const worn = slot != null ? this.hooks.entity.equip?.slots?.[slot] : null;
+      if (worn) { this.infoItem = worn; this.infoGold = false; }
+      return;
+    }
+    // The ACCESSORY BUTTONS (AccessoryItemsButton_OnMouseEnter,
+    // :2210-2220). An EMPTY slot returns before the panel is touched,
+    // exactly as the doll's own miss leaves it standing.
+    const acc = this._accessoryAt(vx, vy);
+    if (acc != null) {
+      const worn = this.hooks.entity?.equip?.slots?.[acc];
       if (worn) { this.infoItem = worn; this.infoGold = false; }
       return;
     }
@@ -678,6 +758,22 @@ export class NativeInventoryWindow {
       this.mode = mode;
       return true;
     }
+    // AccessoryItemsButton_OnMouseClick (:1883-1906). The click sound
+    // plays FIRST, ahead of the empty-slot bail, in DFU's order - and
+    // Info then plays ShowInfoPopup's own (:1596), which is two clicks
+    // on that arm in classic too. Equip (and Select) UNEQUIPS: this is
+    // the only reach a worn ring has, the doll's mask cannot see it.
+    const acc = this._accessoryAt(vx, vy);
+    if (acc != null) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      const worn = this.hooks.entity?.equip?.slots?.[acc];
+      if (!worn) return true;
+      if (this.mode === 'equip') { unequipSlot(this.hooks.entity, acc); refreshPaperDoll(this.hooks.entity); }
+      else if (this.mode === 'info') this._info(worn);
+      // UseItem(item) with NO collection, as the doll's arm passes none
+      else if (this.mode === 'use') this._use(worn, null);
+      return true;
+    }
     // U8g: the paperdoll takes clicks - Remove unequips the topmost
     // item layer under the point (GetEquipIndex), Info pops its panel
     if (inRect(R.paperDoll, vx, vy) && this.hooks.entity) {
@@ -698,13 +794,15 @@ export class NativeInventoryWindow {
       }
       return true;
     }
-    const hit = scrollerHit(R.localList, vx, vy);
+    // AUDIT 39 F126: the rail pages off the live thumb, so the hit
+    // needs the scroll index and the list length.
+    const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) {
       if (hit.kind === 'slot') this._pick(hit.slot);
       else this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length);
       return true;
     }
-    const rhit = scrollerHit(R.remoteList, vx, vy);
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
     if (rhit) {
       if (rhit.kind === 'slot') this._pickRemote(rhit.slot);
       else this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length);
@@ -756,6 +854,16 @@ export class NativeInventoryWindow {
     const armorMod = enchantArmorDisplayMod(this.hooks.entity);
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
       shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, armorMod)), m, 49 + lx, 13 + ly));
+    // UpdateAccessoryItemsDisplay (:963-996): the twelve worn slots in
+    // equip-slot order. An EMPTY slot draws nothing - the button's own
+    // frame is already in INVE00I0.
+    const wornSlots = this.hooks.entity?.equip?.slots;
+    if (wornSlots) {
+      for (let slot = ACCESSORY_SLOT_MIN; slot <= ACCESSORY_SLOT_MAX; slot++) {
+        const it = wornSlots[slot];
+        if (it) this._accessoryIcon(renderer, m, it, ACCESSORY_RECTS[slot - ACCESSORY_SLOT_MIN]);
+      }
+    }
     this._clampScroll();
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely

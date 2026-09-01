@@ -102,8 +102,14 @@ test('audit18 items: IsItemStackable keys on the template isIngredient bit, and 
       isStackable({ group: 'UselessItems2', templateIndex: OIL_TEMPLATE }),
       isStackable({ group: 'Weapons', templateIndex: ARROW_TEMPLATE }),
       isStackable({ group: 'Currency', templateIndex: GOLD_TEMPLATE }),
+      // AUDIT 39 F105 MOVED THESE TWO UP from the negatives below: the
+      // rule's own potion and Books arms are ported now, and the
+      // identity terms that held them back (message, PotionRecipeKey)
+      // live in stacksWith where FindExistingStack keeps them.
+      isStackable({ group: 'UselessItems1', templateIndex: 83 }),            // IsPotion
+      isStackable({ group: 'Books', templateIndex: BOOK_TEMPLATE }),
     ],
-    [true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true],
   );
   // the negatives that stop a blanket true
   assert.deepEqual(
@@ -111,12 +117,11 @@ test('audit18 items: IsItemStackable keys on the template isIngredient bit, and 
       isStackable({ group: 'Armor', templateIndex: 102 }),
       isStackable({ group: 'Weapons', templateIndex: 120 }),
       isStackable({ group: 'UselessItems2', templateIndex: 279 }),          // Parchment
-      isStackable({ group: 'Books', templateIndex: BOOK_TEMPLATE }),        // deliberate: FindExistingStack compares `message`
       isStackable({ group: 'Gems', templateIndex: 1, equipSlot: 0 }),
       isStackable({ group: 'Gems', templateIndex: 1, enchantments: [{ type: 1 }] }),
       isStackable({ group: 'Gems', templateIndex: 1, questItem: true }),
     ],
-    [false, false, false, false, false, false, false],
+    [false, false, false, false, false, false],
   );
   // AddItem/FindExistingStack really merge them now
   const bag = [];
@@ -289,7 +294,12 @@ test('audit18 items: book variant is Range(0, TotalVariants) = Range(0, 2)', () 
   // before IM1: no title on the panel, nothing for the reader.
   const k = generateRandomLoot(LOOT_MATRICES.K, { level: 1, gender: 'male' },
     seq(0, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.04, 0.75, 0.99, 0.99));
-  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, message: getRandomBookID(() => 0.75), variant: 1, name: 'Book', maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
+  // AUDIT 39 F103 added `value` to this row: SetItem writes the
+  // template basePrice on every item (DaggerfallUnityItem.cs:563) and
+  // the loot mint wrote none, so the trade window's cost walk read
+  // undefined and paid 0. Template 277's basePrice is 2500 - the
+  // book-FILE price classic uses is still the file's own loud pend.
+  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, message: getRandomBookID(() => 0.75), variant: 1, name: 'Book', value: 2500, maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
   // shop: the same draw, five rows off a quality-20 Bookseller
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.75 });
   const books = shelf.filter((i) => i.group === 'Books');

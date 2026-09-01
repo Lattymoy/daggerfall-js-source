@@ -667,7 +667,17 @@ export function movementAnimState({
 export function composeMovementGroup(base, type, hasGroup) {
   const short = weaponShortGroup(type);
   let name = base;
-  if (short) {
+  if (short && type === MW_WEAPON_TYPE.Spell && (base === 'turnleft' || base === 'turnright')) {
+    // "Spellcasting stance turning is a special case" (character.cpp:676-687):
+    // the short group PREFIXES the movement name - "spellturnleft", never
+    // "turnleftspell", which is a name no .kf carries. A miss falls to
+    // fallbackShortWeaponGroup, and a spell is not a real weapon, so that
+    // hands back the BARE base at once (:604-611) - the suffix ladder is
+    // never asked here. (isTurning's swim states are excluded upstream by
+    // the reference's own swimpos gate.)
+    const prefixed = `${short}${base}`;
+    name = hasGroup(prefixed) ? prefixed : base;
+  } else if (short) {
     const r = composeStanceGroup(base, type, hasGroup);
     name = r.group ?? base;
   }
@@ -1734,7 +1744,10 @@ export function bindPartsInto(assembly, parts) {
       // Head bone but its geometry filter is the word "hair"
       // (npcanimation.cpp:801 - `bonefilter = (type == PRT_Hair) ?
       // "hair" : bonename`). Every other slot filters on its bone name.
-      const geomFilter = part.slot === 'hair' ? 'hair' : bone;
+      // AUDIT 39: on the part's OWN name, never its display slot - a worn
+      // add's slot reads "hair (record id)" (mwItemMap composeRefs) and
+      // silently missed this test, filtering a wig on the bone "head".
+      const geomFilter = (part.partName ?? part.slot) === 'hair' ? 'hair' : bone;
       let namelessHere = false;
       for (const batch of bound.skinned) {
         const nameless = !String(batch.name || '').trim();
@@ -2384,13 +2397,16 @@ export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', cli
 export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
   const spans = [];
   for (const so of sources ?? []) {
+    // A source's keys are normalizeTextKeys' ARRAY of {time,text} - the
+    // port's one text-key shape (mwAnim.js:411), handed over by clipReport.
     const keys = so?.keys;
-    if (!keys || typeof keys.forEach !== 'function') continue;
+    if (!Array.isArray(keys)) continue;
     const starts = new Map();
-    keys.forEach((time, name) => {
-      const n = String(name).toLowerCase();
+    for (const k of keys) {
+      const time = k?.time;
+      const n = String(k?.text ?? '').toLowerCase();
       const i = n.lastIndexOf(': ');
-      if (i < 0) return;
+      if (i < 0) continue;
       const group = n.slice(0, i);
       const word = n.slice(i + 2);
       if (word.endsWith('start')) starts.set(`${group}|${word.slice(0, -5)}`, time);
@@ -2398,7 +2414,7 @@ export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
         const from = starts.get(`${group}|${word.slice(0, -4)}`);
         if (from != null && time > from) spans.push([from, time]);
       }
-    });
+    }
   }
   if (!spans.length) {
     const a = idleState?.startTime ?? 0;

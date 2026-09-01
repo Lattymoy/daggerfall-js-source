@@ -151,8 +151,17 @@ test('DE1: each host call site takes the member it actually is', () => {
   assert.match(modes, /async function tryEnterDungeon\(hit, entries, \{ preferEnterMarker = false \} = \{\}\)/,
     'the DEFAULT is the door transition, because that is how a player gets in');
   assert.match(modes, /const spawn = ctx\.startSpawn\(\{ preferEnterMarker \}\);/);
-  assert.match(modes, /if \(!spawn\) \{ console\.error\('\[dungeon\] no start marker; transition aborted'\); return false; \}/,
-    'the refusal is carried through: the player stays outside at the door');
+  // AUDIT 39 (#29) MOVED THIS PIN. The one-liner it held said the
+  // player stays outside; the code around it had already switched
+  // mode, dungeonLoc and the collider, so the "abort" left the player
+  // in dungeon mode at their exterior position on a leaked context.
+  // DFU tests the marker BEFORE EnableDungeonParent/MovePlayerToMarker
+  // and Destroys the layout (PlayerEnterExit.cs:921-934), so the
+  // refusal is a block now and the law it pins is the ORDER.
+  assert.match(modes, /if \(!spawn\) \{\n\s+console\.error\('\[dungeon\] no start marker; transition aborted'\);\n\s+ctx\.destroy\(\);\n\s+dungeonCtx = null;\n\s+return false;\n\s+\}/,
+    'the refusal is carried through: the player stays outside at the door, and the layout is destroyed');
+  assert.ok(modes.indexOf("mode = 'dungeon';") > modes.indexOf('const spawn = ctx.startSpawn({ preferEnterMarker });'),
+    'nothing commits the mode before the marker is known');
   // DE2 re-anchored this: the one-liner became a block when the pitch
   // half landed, and the law it holds - the host asks for the facing
   // of the member it IS, and applies it - did not change.

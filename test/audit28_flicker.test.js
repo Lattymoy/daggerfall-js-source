@@ -120,17 +120,25 @@ test('AUDIT 28 W2d: NextCycle - the setting gates it, Normal clears, Injured run
 
 test('AUDIT 28 W2d: drawn as the parent panel\'s tint UNDER the bars in both HUD branches, off the detector\'s HealthLost', () => {
   const hud = read('src/ui/hud.js');
-  const large = hud.indexOf('const largeRig = updateHudVitals(true, cur, dt, cursorActive);');
-  const largeFlicker = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);', large);
-  const largeDraw = hud.indexOf('lastLargeHudBar = drawHudLarge(', large);
-  assert.ok(large > 0 && largeFlicker > large && largeDraw > largeFlicker, 'large HUD: detector, tint, then the bar');
-  const small = hud.indexOf('const rig = updateHudVitals(false, cur, dt, cursorActive);');
-  const smallFlicker = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);', small);
-  assert.ok(small > 0 && smallFlicker > small && smallFlicker - small < 200, 'small HUD: the tint right after the detector, before the bars');
+  // AUDIT 39 F131 MOVED THIS PIN: the detector and the tint used to be
+  // written twice, once per classic branch, and both sat BELOW the
+  // enhanced-skin return - so under the shipping default skin neither
+  // ran at all. They are one pair now, above the fork and above the
+  // art gate, the way VitalsChangeDetector and HUDFlickerController are
+  // MonoBehaviours that do not care which HUD is on screen. The order
+  // they pinned survives: detector, tint, then whatever draws.
+  const det = hud.indexOf('const rig = updateHudVitals(!!largeHud?.art, cur, dt, cursorActive);');
+  const flick = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);', det);
+  const fork = hud.indexOf('if (isEnhanced() && typeof document', det);
+  const largeDraw = hud.indexOf('lastLargeHudBar = drawHudLarge(', det);
+  assert.ok(det > 0 && flick > det && flick - det < 400, 'the tint right after the detector');
+  assert.ok(fork > flick, 'and both above the skin fork, so the default skin runs them');
+  assert.ok(hud.indexOf('if (!art) return;') > flick, '...and above the art gate, like the damage flash');
+  assert.ok(largeDraw > flick, 'the bar draws over the tint');
   assert.match(hud, /healthLost: lastHealthLost\(\)/);
   // F-A6: a paused frame steps the flicker with dt 0, as Time.timeScale
-  // holds DFU's - both branches.
-  assert.equal((hud.match(/drawNearDeathFlicker\(renderer, canvas, cur, cursorActive \? 0 : dt\)/g) || []).length, 2);
+  // holds DFU's - the one call, for every branch below it.
+  assert.equal((hud.match(/drawNearDeathFlicker\(renderer, canvas, cur, cursorActive \? 0 : dt\)/g) || []).length, 1);
   assert.match(hud, /enabled: getBool\('Enhancements', 'NearDeathWarning'\)/);
   assert.match(read('src/ui/hudVitals.js'), /_lastHealthLost = ev\.health\?\.lost \?\? 0;/);
   assert.equal(LIVE['Enhancements/NearDeathWarning'], 'src/ui/hud.js');

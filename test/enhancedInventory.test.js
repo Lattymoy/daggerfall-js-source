@@ -1036,6 +1036,18 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   assert.match(css, /\.loothover \{[\s\S]{0,400}pointer-events: none;/);
   assert.match(hov, /setAttribute\('aria-hidden', 'true'\)/);
   assert.doesNotMatch(hov, /addEventListener|onclick/, 'a readout listens to nothing');
+  // AUDIT 39: AND THE SKIN GATE IS IN THE PLAQUE, ABOVE ensure().
+  // The host gates only the PICK, and calls this every tick on every
+  // skin - so with the gate only there, a classic-skin dungeon's first
+  // tick reached ensure() with a null key and injectEnhancedStyle()
+  // put ENHANCED_CSS's UNSCOPED head rules (`*`, `html, body`, `body`,
+  // `button`, `#app`) onto the classic page. "A player who chose
+  // classic never loads a byte of this" is enhancedStyle.js's own
+  // doctrine, and this is the line that keeps it true.
+  assert.match(hov, /import \{ isEnhanced \} from '\.\.\/systems\/uiSkin\.js';/);
+  const show = hov.slice(hov.indexOf('export function showLootHover'));
+  assert.ok(show.indexOf('if (!isEnhanced()) return;') < show.indexOf('const n = ensure();'),
+    'the skin is asked BEFORE the node is built and the sheet injected');
   // The host runs the SAME pick the take runs, throttled, enhanced only.
   const ctx = read('src/scenes/dungeonContext.js');
   const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3000);

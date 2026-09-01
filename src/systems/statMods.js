@@ -47,7 +47,9 @@ export function liveStat(entity, statName) {
       // exactly as RacialOverrideEffect's constant pass does
       if (a.kind === 'racialOverride') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
       // V3: the artifact channel - the Mace of Molag Bal's strength
-      // gain (wielder) and drain (target) ride entries of this kind,
+      // gain (the WIELDER's; AUDIT 39 moved the target's drain onto the
+      // ordinary drainAttribute channel, where DFU's own DrainStrength
+      // incumbent puts it) rides an entry of this kind,
       // reset by the effect's own 12-minute decay rather than a
       // duration. RECORDED: DFU also moves the MAX (ChangeStatMaxMod);
       // the port's clamp holds at MAX_STAT_VALUE.

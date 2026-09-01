@@ -25,21 +25,63 @@ test('audio: SoundClips indices verbatim from SoundClips.cs', () => {
   assert.equal(SOUND.Hit1, 108);
   assert.equal(SOUND.Hit2, 109);
   assert.equal(SOUND.Parry6, 433);
+  assert.equal(SOUND.ArrowShoot, 3);
+  assert.equal(SOUND.None, -1);   // SoundClips.cs:24, and no valid DAGGER.SND index
 });
 
 test('audio: GetSwingSound pitch table + PlayHitSound families verbatim', () => {
-  assert.equal(swingSoundFor({ name: 'Warhammer' }), SOUND.SwingLowPitch);
-  assert.equal(swingSoundFor({ name: 'Dai-Katana' }), SOUND.SwingLowPitch);
-  assert.equal(swingSoundFor({ name: 'Longsword' }), SOUND.SwingMediumPitch);
-  assert.equal(swingSoundFor({ name: 'Wakazashi' }), SOUND.SwingMediumPitch);   // MEDIUM in the source
-  assert.equal(swingSoundFor({ name: 'Dagger' }), SOUND.SwingHighPitch);
+  // AUDIT 39: the table keys on the TEMPLATE INDEX, which is what
+  // DaggerfallUnityItem.cs:878-908 switches on. It used to key on
+  // `weapon.name`, and a name is not the template: loot.
+  // createRegularMagicItem renames an enchanted weapon to its MAGIC.DEF
+  // name and itemTemplates.json spells 123 "Dai-katana", so this pin
+  // moved from names to indices with the law.
+  const w = (templateIndex, name = 'anything') => ({ templateIndex, name });
+  assert.equal(swingSoundFor(w(126)), SOUND.SwingLowPitch, 'Warhammer');
+  assert.equal(swingSoundFor(w(123)), SOUND.SwingLowPitch, 'Dai-Katana');
+  assert.equal(swingSoundFor(w(120)), SOUND.SwingMediumPitch, 'Longsword');
+  assert.equal(swingSoundFor(w(117)), SOUND.SwingMediumPitch, 'Wakazashi - MEDIUM in the source');
+  assert.equal(swingSoundFor(w(113)), SOUND.SwingHighPitch, 'Dagger');
+  assert.equal(swingSoundFor(w(130)), SOUND.ArrowShoot, 'a bow looses instead (:900-902)');
   assert.equal(swingSoundFor(null), SOUND.SwingHighPitch);                      // barehanded (SetMelee)
+  // A MAGIC.DEF rename keeps the template, and now keeps the pitch.
+  assert.equal(swingSoundFor({ templateIndex: 121, name: 'Wabbajack' }), SOUND.SwingLowPitch,
+    'a renamed enchanted Katana is still a Katana');
+  // DFU's `default:` is SoundClips.None - a swing table entry that does
+  // not exist rings nothing rather than falling to the medium pitch.
+  assert.equal(swingSoundFor({ templateIndex: 131, name: 'Arrow' }), SOUND.None);
   // weapon: Hit1 + [0,5) - boundaries
   assert.equal(hitSoundFor({ name: 'Dagger' }, seq(0)), 108);
   assert.equal(hitSoundFor({ name: 'Dagger' }, seq(0.999)), 112);
   // barehanded: Hit1 + [2,4)
   assert.equal(hitSoundFor(null, seq(0)), 110);
   assert.equal(hitSoundFor(null, seq(0.999)), 111);
+});
+
+test('AUDIT 39: a registered clip is decoded from the VIEW\'s range, not the whole archive', async () => {
+  const { decodableCopy } = await import('../src/systems/audio.js');
+  const { readFileSync } = await import('node:fs');
+  // MwBsaFile.get returns a zero-copy subarray of the ARCHIVE buffer, so
+  // `bytes.buffer.slice(0)` - what this used to be - handed the decoder
+  // the whole .bsa: every clip served out of an archive failed to decode
+  // behind registerSound's bare catch, after allocating a copy of the
+  // archive per attempt.
+  const archive = new Uint8Array([9, 9, 9, 1, 2, 3, 4, 9, 9]);
+  const view = archive.subarray(3, 7);
+  const copy = decodableCopy(view);
+  assert.deepEqual([...new Uint8Array(copy)], [1, 2, 3, 4], 'the clip, not the archive');
+  assert.equal(copy.byteLength, 4);
+  // A plain ArrayBuffer is passed through - decodeAudioData detaches it,
+  // which is the only reason a view is copied at all.
+  const raw = new ArrayBuffer(8);
+  assert.equal(decodableCopy(raw), raw);
+
+  // Both decode doors take the same slice.
+  const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+  for (const f of ['src/systems/audio.js', 'src/systems/music.js']) {
+    assert.ok(read(f).includes('decodeAudioData(decodableCopy(bytes))'), `${f} slices the view`);
+    assert.ok(!read(f).includes('decodeAudioData(bytes.buffer'), `${f} must not slice from offset zero`);
+  }
 });
 
 test('audio: enemy sound columns restored (rat/imp verbatim rows)', async () => {

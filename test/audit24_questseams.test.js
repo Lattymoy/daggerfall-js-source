@@ -56,12 +56,17 @@ const PENDING = new Map([
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],
   // IH1 MOUNTED isHouseOwned (banking's own law over the current
   // region) and buildingNameOpts (townTalk's one name bag).
-  ['currentRegionCourt', 'GetCourtOfCurrentRegion - the region faction trio'],
-  ['currentRegionFaction', 'GetCurrentRegionFaction - the region faction trio'],
-  ['currentRegionPeople', 'GetPeopleOfCurrentRegion - the region faction trio'],
-  ['currentRegionVampireClan', 'GetCurrentRegionVampireClan - the vampirism arc'],
-  ['playerVampireClan', 'the vampirism racial effect - the vampirism arc'],
-  ['playerVampireClanName', 'rides the vampirism arc above'],
+  // AUDIT 39 (#23) MOUNTED THE SIX ROWS THAT STOOD HERE -
+  // currentRegionCourt, currentRegionFaction, currentRegionPeople,
+  // currentRegionVampireClan, playerVampireClan and
+  // playerVampireClanName. Removing a row means mounting it, and it
+  // did: every producer was already in world.js (talk.js's People and
+  // Courts getters, findFactions over the Province record for the
+  // region faction and its `vam` clan, the curse entry for the PC's).
+  // Unmounted, every quest Person declared `factiontype People/
+  // Courts/Province/Vampire_Clan` - and the Resident1-4 career
+  // default - resolved -1 into _setupFactionTypeNPC's ZERO_FACTION
+  // arm, and %vam printed C#'s error literal at an actual vampire.
   // AUDIT 26 (F092) MOUNTED buildingCompassDirection, the third seam
   // the wave-26 alias hole hid. The excuse that stood here - "no
   // automap layout to transform the player into" - measured the wrong

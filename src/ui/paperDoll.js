@@ -36,7 +36,7 @@
 import { ImgFile } from '../formats/imgFile.js';
 import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBackgrounds
+import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
@@ -329,8 +329,15 @@ export async function refreshPaperDoll(entity) {
     if (!suppress) {
       blit(out, _art.nude);
       const split = WAIST_HEIGHT;
-      if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
-      if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
+      // BlitBody (PaperDollRenderer.cs:346-353): the WELDS as a whole
+      // hang off the setting - the nude body above is drawn either
+      // way, and the two slot tests only decide whether a weld would
+      // show around real clothes. The setting ships False, which is
+      // why the port drawing the welds unconditionally looked right.
+      if (!getBool('ChildGuard', 'PlayerNudity')) {
+        if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
+        if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
+      }
       // V5: the vampire's clanless head replaces the racial one
       const headOv = racialOverrideHeadArt(entity);
       const headArt = headOv ? await loadOverrideArt(headOv.file, headOv.record) : null;

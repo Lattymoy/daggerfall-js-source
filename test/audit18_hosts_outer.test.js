@@ -720,7 +720,10 @@ test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
   assert.ok(keep, 'the diet is still one expression');
   const version = Number(text.match(/const MANIFEST_V = (\d+);/)[1]);
   const sum = createHash('sha256').update(keep).digest('hex').slice(0, 16);
-  assert.deepEqual([version, sum], [8, 'b790da41e4823038'],
+  // MOVED at AUDIT 39 F156: PAINT.DAT joined the diet - the painting
+  // descriptions had no reader host at all, and a name KEEP rejects
+  // has no source in production. v8 -> v9 re-ingests the stale sets.
+  assert.deepEqual([version, sum], [9, 'f898f68bcee8501a'],
     'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });
 

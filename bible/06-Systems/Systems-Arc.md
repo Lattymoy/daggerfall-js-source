@@ -881,10 +881,14 @@ buy/sell windows are E2.
   too) - the daily UpdateRegionalPrices drift is FLAGGED to the
   calendar/economy sim.
 
-INTERIM loud: MagicItems stock SKIPPED (the loot MI interim); the
-Alchemist's 25% potion recipe pends recipes; books carry the
-template price (classic prices each BOOK FILE); restocking pends
-the shared calendar.
+INTERIM loud: books carry the template price (classic prices each
+BOOK FILE); restocking pends the shared calendar. (AUDIT 39 F106
+struck two clauses from this list because they had SHIPPED and the
+list still swore they had not - the MagicItems stock, F130, and the
+Alchemist's 25% recipe roll, F129. A pend list that names closed work
+is worse than no list: Home.md pins these lines mechanically, so the
+false clause was certified, and it is what kept the ungated MagicItems
+arm from being read as the bug it was.)
 
 Suite 448/98 (shopstock.test.js x3: the table + enum-mapping +
 material-value pins, the stock law incl. the rarity gate / gender
@@ -4784,11 +4788,14 @@ the wereclaws (V5) and nothing in between.
 
 Three details are load-bearing and each has its own mutant:
 
-- **The timer is armed at the CURSE**, in `Start` (`:67`), not at the
-  first transform and not lazily on the first frame. A lazy arm burns a
-  frame and makes the first howl after a morph a fresh 4-20s instead of
-  the remainder of a wait already running. The first cut did exactly
-  that and the campaign's expectation caught it.
+- **The timer is armed at three places, and never lazily on the first
+  frame.** `InitMoveSoundTimer` is called at the curse in `Start`
+  (`:67`), after every fire (`:209`), and inside `MorphSelf`'s own
+  `if (!isTransformed)` transform branch (`:521`), right after the
+  compound-race name swap. So a morph into beast form starts a **fresh**
+  4-20s. AUDIT 39 corrected this bullet: it used to name the curse as
+  the only arming site, on the strength of a note in `lycanthropy.js`
+  that read the C# as re-arming only there.
 - **The wait is real time**, `Time.deltaTime` inside ConstantEffect, so
   a rested night queues no howls and time-scaled travel does not
   either.
@@ -4798,8 +4805,10 @@ Three details are load-bearing and each has its own mutant:
   and my own expectation was wrong about it before the code was.
 
 The whole block sits inside DFU's `if (isTransformed)`, so an
-untransformed lycanthrope does not tick the timer down at all -
-morphing back mid-wait and returning later **resumes** it. Ticked by
+untransformed lycanthrope does not tick the timer down at all: the wait
+**pauses** while the beast is away. But returning is a `MorphSelf`, and
+that re-arms (`:521`) - so the paused remainder is **replaced**, never
+resumed. Ticked by
 all four hosts; in `worldModes` the arm sits deliberately outside the
 `if (magic)` block, because the beast makes its noise whether or not a
 cast engine was built.
@@ -5378,3 +5387,55 @@ sprite is still the 1:1 lane and every classic path is byte-identical;
 two pins moved by exactly the lines the swap needed (tr3's ride-loop
 clip, tr5's mode-door tail), both recorded in their tests. The whole
 story lives in Morrowind-Rules MW-D40..42.)
+
+## TSR - THE TEST ROOM (2026-08-31, Mac's ask)
+
+Mac: "a menu option that leads to a sort of test environment where I
+can pick a prebuilt character and loot armor, weapons, etc." There is
+no DFU original - this is a port tool - but it SHIPS, and until AUDIT
+39 its entire record in the bible was one Testing.md row, which is how
+a shipped systems module ends up unfindable.
+
+THE IDS, corrected here. The room shipped as TR1-TR3 on the day the
+transport arc above closed TR1-TR5, so two arcs claimed the same three
+ids and a grep for "TR2" answered with the riding sprite AND the
+gender bug. The room is **TSR** from now on (renumbered in
+`test/testroom.test.js` and Testing.md's row); the transport arc keeps
+TR. Source comments in `ui/enhancedMenu.js` and `combat/weaponRig.js`
+still carry the old spelling, which this paragraph exists to catch.
+
+**TSR1 - ONE HOME.** `systems/testRoom.js` holds all three parts: the
+six prebuilt characters, the armory they walk in with, and the seeding
+that turns a preset into a live entity. The presets exercise the axes
+the body pipelines actually branch on - both sexes, human and elf and
+BOTH beast races, a real `faceIndex` - because a second copy of a
+preset in any door is how two rooms drift apart. The armory is TOTAL
+where it claims to be: one of every weapon type in steel (each its own
+Morrowind animation class and attach bone), every armor slot with all
+four shields, the material spread that changes the Morrowind record,
+a 60-arrow quiver so the bow draws loaded, and the SEX'S OWN clothing
+templates. Every row mints through the game's own constructors
+(`createWeapon`, `mintCondition`, the arrow arm's classic zero) -
+never a second item table.
+
+**WHAT THE ROOM IS NOT: a new scene.** It boots the same streaming
+world every other door boots, through the same headless-chargen seam
+`?class=` has used since AUDIT 17f. The room is a CHARACTER and a
+PACK, not a place - the point is to see the real rigs wearing real
+equipment through the real equip table, and a bespoke scene would be
+testing itself.
+
+**TSR2 - THE !!GENDER BUG, found building the room.** Gender is the
+string 'male'/'female' everywhere in this port, so the pause card's
+`female: !!playerEntity.gender` was TRUE FOR EVERYONE: every Morrowind
+build asked for the female skeleton and body columns, half-masked by
+the male-record fallback fills. The arms-build opts now live in one
+home (`weaponRig.armBuildOptsOf`) that the card and the room both ride,
+and the pin requires the string compare - a `!!` dies on 'male'.
+
+**TSR3 - THREE DOORS, ONE HOME.** The pane iterates `TEST_PRESETS` and
+fires `test:<id>`; `main.js` sets that param on this choice and DELETES
+it on every other (F12's law - New Game must not re-enter the room);
+the world boot resolves the preset BEFORE branching, so an unknown id
+falls through to the wizard rather than guessing, and builds the arms
+only when Morrowind data is attached.

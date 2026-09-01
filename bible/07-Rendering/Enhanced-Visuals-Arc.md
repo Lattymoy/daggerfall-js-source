@@ -349,11 +349,15 @@ modelIdNum, the streamed pixels' models likewise), so one archetype's
 placements draw back to back and the shadow makes the repeats free.
 The shadows reset at beginFrame and at markForeignPass - the R9 law's
 other half: an entry point may only trust a binding it can account
-for, and three passes change programs behind the renderer's back.
-Those three (both skies and precipitation) now all follow the same
-law: the skies' getParameter(CURRENT_PROGRAM) save/restore is RETIRED
-(two synchronous driver queries per frame gone - the class EV2 killed
-in precipitation) and the hosts mark the seam after each. The one
+for, and four passes change programs behind the renderer's back.
+Those four (both skies, precipitation, and - since F55 - the OVERWORLD
+MAP's own pass) now all follow the same law: the getParameter
+(CURRENT_PROGRAM) save/restore is RETIRED (two synchronous driver
+queries per frame gone - the class EV2 killed in precipitation, and
+F55 took the overworld renderer's pair the same way) and the hosts
+mark the seam after each - five call sites across the four passes
+(`world.js` sky and rain, `exterior.js` sky and rain,
+`ui/overworldMap.js`). The one
 element-buffer upload that owns no VAO (_terrainIndices) unbinds
 first, or it would capture its buffer into whatever drawMesh left
 bound. THE SPRITE RT: the borrow-and-return of the clear colour (the

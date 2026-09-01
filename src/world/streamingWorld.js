@@ -28,6 +28,13 @@ import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrainTiles
 
 export const TERRAIN_DISTANCE = 3;   // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
 const VERTICAL_THRESHOLD = 500;
+// MapsFile.MinMapPixelX/Y and MaxMapPixelX/Y - max EXCLUSIVE, so the
+// world map is 0..999 by 0..499 (terrainSampler keeps its own copy of
+// the Y bound for the same reason: no reader dependency here).
+const MIN_MAP_PIXEL_X = 0;
+const MIN_MAP_PIXEL_Y = 0;
+const MAX_MAP_PIXEL_X = 1000;
+const MAX_MAP_PIXEL_Y = 500;
 const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;
 const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel
 
@@ -142,8 +149,21 @@ export class StreamingWorldState {
     return out;
   }
 
+  /** PlaceTerrain's first statement (StreamingWorld.cs:855-860): a
+   *  pixel outside the world map is never placed. The port has no crash
+   *  to show for it - WoodsFile clamps and PakFile answers -1, which
+   *  getWorldClimateSettings turns into Temperate/Woodlands - so an
+   *  off-map pixel would stream a whole invented terrain, its climate,
+   *  its ground archive and its nature scatter where DFU leaves the
+   *  edge of the world empty. */
+  static onMap(px, py) {
+    return px >= MIN_MAP_PIXEL_X && px < MAX_MAP_PIXEL_X
+      && py >= MIN_MAP_PIXEL_Y && py < MAX_MAP_PIXEL_Y;
+  }
+
   inRange(px, py) {
-    return Math.abs(px - this.current.x) <= this.terrainDistance &&
+    return StreamingWorldState.onMap(px, py) &&
+      Math.abs(px - this.current.x) <= this.terrainDistance &&
       Math.abs(py - this.current.y) <= this.terrainDistance;
   }
 
@@ -153,6 +173,7 @@ export class StreamingWorldState {
     const d = this.terrainDistance;
     for (let py = this.current.y - d; py <= this.current.y + d; py++) {
       for (let px = this.current.x - d; px <= this.current.x + d; px++) {
+        if (!StreamingWorldState.onMap(px, py)) continue;
         if (this.loaded.has(StreamingWorldState.key(px, py))) continue;
         list.push({ px, py });
       }

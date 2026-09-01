@@ -77,20 +77,26 @@ export function fogForWeather(weather) {
 /**
  * Sky archive offset for the weather (SkyIndex = SkyBase + offset).
  * Rain/fog/thunder pick Rain1/Rain2, snow picks Snow1/Snow2, 50/50.
- * AUDIT 23 (wts-1) - DaggerfallSky.cs:354-357: the DEFAULT arm (sunny/
- * cloudy/overcast = WeatherStyle.Normal) adds the SEASON VALUE to
- * SkyBase ("Season value enum ordered same as sky indices" - Fall 0,
- * Spring 1, Summer 2, Winter 3), so three of four seasons rendered
- * the Fall panorama before this took `season`.
+ *
+ * THE RETURN IS THE WeatherStyle, and 0 IS WeatherStyle.Normal
+ * (DaggerfallUnityEnums: Normal 0, Rain1 4, Rain2 5, Snow1 6, Snow2 7).
+ * Both hosts read it as exactly that: `offset === 0` is what selects
+ * DaggerfallSky.cs:354-357's DEFAULT arm, which adds the CALENDAR
+ * season to SkyBase, and it is also DaggerfallSky.cs:363-367's
+ * `WeatherStyle != Normal -> showNightSky = false`. So the season must
+ * NEVER be folded in here - AUDIT 39 (#15) removed the production-dead
+ * `season` parameter AUDIT 23 (wts-1) added, which would have returned
+ * 1/2/3 in spring/summer/winter and killed the clear night sky. The
+ * season lives at the render sites, where those two laws are spelled.
  */
-export function skyOffsetForWeather(weather, rng, season = 0) {
+export function skyOffsetForWeather(weather, rng) {
   if (weather === 'rain' || weather === 'thunder' || weather === 'fog') {
     return rng.nextFloat() > 0.5 ? 4 : 5;
   }
   if (weather === 'snow') {
     return rng.nextFloat() > 0.5 ? 6 : 7;
   }
-  return season;
+  return 0;
 }
 
 /** Verbatim SetSunlightScale: winter first, precipitation overrides. */

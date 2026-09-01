@@ -2,8 +2,10 @@
 // glyphs, 16 columns of 16x16 cells) uploaded once through
 // renderer.uploadTexture; drawText tints per call through
 // drawScreenQuad's color - so one atlas serves every classic text
-// color. Layout is DaggerfallFont's + TextLabel's: glyph =
-// charCode - 33; codes below 33 take the SPACE glyph, whose width is
+// color. Layout is DaggerfallFont's + TextLabel's: the string is
+// folded through Encoding.ASCII first (every code above 127 becomes
+// '?'), then glyph = charCode - 33; a code the font has no glyph for
+// is drawn as SPACE and MEASURED as '?'; the space glyph's width is
 // DaggerfallFont.CreateSpaceGlyph's `fntFile.FixedWidth - 1`
 // (DaggerfallFont.cs:623-627); every glyph then advances
 // GetGlyphWidth(code) + GlyphSpacing (classic spacing 1), the
@@ -52,6 +54,22 @@ export function glyphSrc(glyphIndex) {
  *  every code the font has no glyph for is cast to it. */
 export const spaceGlyphWidth = (fnt) => fnt.fixedWidth - 1;
 
+/** DaggerfallFont.cs:36-37. */
+export const FNT_SPACE_CODE = 32;
+export const FNT_ERROR_CODE = 63;   // '?'
+
+/** Encoding.ASCII.GetBytes (DaggerfallFont.cs:304, :373): the string is
+ *  folded to BYTES before layout and ASCIIEncoding's replacement
+ *  fallback turns every code above 127 into '?', so an accent a player
+ *  types on a non-US keyboard reaches the font as a question mark and
+ *  never as a raw FNT glyph index. */
+export const asciiFold = (code) => (code > 127 ? FNT_ERROR_CODE : code);
+
+/** HasGlyph (:419-422) over the dictionary LoadFont builds (:602-608):
+ *  SpaceCode plus the 240 glyphs from asciiStart. */
+export const hasGlyph = (code) =>
+  code === FNT_SPACE_CODE || (code >= FNT_ASCII_START && code < FNT_ASCII_START + FNT_GLYPH_COUNT);
+
 /** Advance-only pass: the pixel width of a string at scale 1.
  *  Verbatim CalculateTextWidth (DaggerfallFont.cs:377-383): every
  *  glyph contributes GetGlyphWidth(code) + GlyphSpacing, the trailing
@@ -60,8 +78,13 @@ export const spaceGlyphWidth = (fnt) => fnt.fixedWidth - 1;
 export function measureText(fnt, text) {
   let w = 0;
   for (const ch of text) {
-    const code = ch.charCodeAt(0);
-    w += (code < FNT_ASCII_START ? spaceGlyphWidth(fnt) : fnt.glyphWidth(code - FNT_ASCII_START)) + FNT_GLYPH_SPACING;
+    // AUDIT 39 F129: the two substitutions are DFU's own and they
+    // DIFFER by pass - CalculateTextWidth (:378-379) measures a code
+    // the font lacks as ErrorCode '?', while DrawText (:313-314) draws
+    // it as a space. Both sit behind the same ASCII fold.
+    let code = asciiFold(ch.charCodeAt(0));
+    if (!hasGlyph(code)) code = FNT_ERROR_CODE;
+    w += (code === FNT_SPACE_CODE ? spaceGlyphWidth(fnt) : fnt.glyphWidth(code - FNT_ASCII_START)) + FNT_GLYPH_SPACING;
   }
   return w;
 }
@@ -76,8 +99,12 @@ export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1
   let cx = x;
   const { fnt } = font;
   for (const ch of text) {
-    const code = ch.charCodeAt(0);
-    if (code < FNT_ASCII_START) {
+    // The fold, then DrawText's own substitution: a code the font has
+    // no glyph for is CAST TO A SPACE (:313-314) - never dropped, and
+    // never indexed raw into the glyph table.
+    let code = asciiFold(ch.charCodeAt(0));
+    if (!hasGlyph(code)) code = FNT_SPACE_CODE;
+    if (code === FNT_SPACE_CODE) {
       // AUDIT 23 (ui-native-5) - DaggerfallFont.cs:328: the DRAWN space
       // advances by the glyph width alone (no GlyphSpacing), while
       // CalculateTextWidth (:381/:464) adds it for every glyph - the

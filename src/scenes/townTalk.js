@@ -454,7 +454,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: cityName(),
     });
     if (t.refused) { hud.add(t.text || 'You get no response.'); return; }
-    if (!directory.length) { overlay = new TalkWindow(t); return; }
+    // AUDIT 39 (#46): through the slot's own door, like every other
+    // mount here - a raw assignment leaks the outgoing window's GL
+    // resources and leaves a previous mount's close-callback armed.
+    if (!directory.length) { showOverlay(new TalkWindow(t)); return; }
     // T3c: the greeting carries the Where-is entry; the NPC keeps a
     // stable per-person seed for the reaction-tier roll (DFU seeds by
     // the NPC object hash - engine-dependent, so a lazily-assigned

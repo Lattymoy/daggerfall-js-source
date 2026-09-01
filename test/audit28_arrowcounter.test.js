@@ -88,7 +88,16 @@ test('AUDIT 28 W2a: drawn left of the compass, centred on its height, under the 
   ]) {
     assert.match(read(host), new RegExp(`weaponSheathed: !!${expr.replace(/\\./g, '\\\\.')} \\}\\);`), `${host}: drawHud is not told whether the weapon is drawn`);
   }
-  assert.match(read('src/scenes/worldModes.js'), /font: townTalk\?\.font \?\? null,\s*\n\s*weaponSheathed:/, 'the interior frame draws no text without a font');
+  // AUDIT 39 moved this pin off the ADJACENCY it used to read
+  // (`font:` immediately above `weaponSheathed:`): the enhanced HUD's
+  // two hand plaques now ride the same bag and sit between them. The
+  // law was never the neighbour - it is that the interior frame hands
+  // a font at all, because without one nothing text-shaped on the
+  // classic HUD could draw indoors.
+  const interiorBag = read('src/scenes/worldModes.js');
+  const bagAt = interiorBag.indexOf('drawHud(renderer, canvas, hudArt');
+  assert.match(interiorBag.slice(bagAt, interiorBag.indexOf('});', bagAt)),
+    /font: townTalk\?\.font \?\? null,/, 'the interior frame draws no text without a font');
   assert.equal(LIVE['GUI/EnableArrowCounter'], 'src/ui/hud.js');
   assert.equal(LIVE['Enhancements/BowLeftHandWithSwitching'], 'src/ui/hud.js');
 });

@@ -641,9 +641,15 @@ function anyNearbyOfAffinity(ctx, affinityParam, range) {
  *  Strikes. Answers the (possibly modulated) damage; durability losses
  *  land on the item through equip.js's lowerCondition, whose Breaks
  *  edge re-enters here with PAYLOAD.Breaks via the onBreak hook. */
-export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = 0, ctx = null, collection = null } = {}) {
+export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = null, ctx = null, collection = null } = {}) {
   let damageOut = damage;
   ctx = mergeCtx(ctx);   // E2: the host's mounted ctx rides under any per-call one
+  // AUDIT 39: the mounted classic clock, as doEnchantedPayloads reads
+  // it. The stamps written here are read back against the ABSOLUTE
+  // minute (HealthLeech's day/week gate), so a caller with no clock of
+  // its own must get the host's rather than 0 - the strike site passed
+  // a literal 0 and stamped every leech weapon as never used.
+  nowMinutes ??= ctx?.now?.() ?? 0;
   const enchantments = itemEnchantments(item);
   if (!enchantments) return damageOut;
   // E2: UnequipHeldItem's bundle sweep (:1074-1084) runs for EVERY

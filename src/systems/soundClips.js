@@ -2,6 +2,8 @@
 // DFU SoundClips.cs. Only the consumed subset lives here; grow it
 // with the consumers (the full 400+ enum stays in the source).
 export const SOUND = {
+  None: -1,                 // SoundClips.None (:24) - "no clip", and no valid record index
+
   // WM4c: the mill. Kamer's Spin_Up.cs loops SoundClips.ArenaFireDaemon
   // on the sail and on the machinery's plank gear (SoundClips.cs:40).
   ArenaFireDaemon: 11,
@@ -119,16 +121,32 @@ export const ANIMAL_MAX_DISTANCE = 768 * 0.025;   // animalSoundMaxDistance (19.
  *  DFRandom.rand() <= 100 plays (~0.3% per 16Hz tick). */
 export const AMBIENT_RANDOM_PLAY_MAX = 100;
 
-/** GetSwingSound verbatim (DaggerfallUnityItem): pitch by weapon
- *  name; barehanded swings ride SwingHighPitch (WeaponManager). */
-const SWING_LOW = new Set(['Warhammer', 'Battle Axe', 'Katana', 'Claymore', 'Dai-Katana', 'Flail']);
-const SWING_HIGH = new Set(['Dagger', 'Tanto', 'Shortsword']);   // Wakazashi rides MEDIUM in DFU
+/** GetSwingSound verbatim (DaggerfallUnityItem.cs:878-908): pitch by
+ *  TEMPLATE INDEX; barehanded swings ride SwingHighPitch (WeaponManager).
+ *
+ *  AUDIT 39: this keyed on `weapon.name`, and a name is not the template
+ *  - the same trap already fixed in equip.js's weaponProficiencyFlag and
+ *  hostCombat's isBowWeapon. loot.createRegularMagicItem RENAMES an
+ *  enchanted weapon to its MAGIC.DEF name (the templateIndex survives,
+ *  the display name does not), so every magic Warhammer/Battle Axe/
+ *  Katana/Claymore/Dai-katana/Flail lost the low pitch and every magic
+ *  Dagger/Tanto/Shortsword the high one; itemTemplates.json's own
+ *  spelling "Dai-katana" missed the set even unenchanted. The indices
+ *  are inline because this module is a LEAF - characters/weapons.js
+ *  imports SOUND from here. */
+const SWING_LOW = new Set([126, 127, 121, 122, 123, 125]);      // Warhammer, Battle Axe, Katana, Claymore, Dai-Katana, Flail
+const SWING_MEDIUM = new Set([118, 120, 119, 117, 128, 115, 124]); // Broadsword, Longsword, Saber, Wakazashi, War Axe, Staff, Mace
+const SWING_HIGH = new Set([113, 114, 116]);                    // Dagger, Tanto, Shortsword
+const SWING_BOWS = new Set([129, 130]);                         // Short Bow, Long Bow -> ArrowShoot
 export function swingSoundFor(weapon) {
   if (!weapon) return SOUND.SwingHighPitch;
   if (weapon.werecreatureClaws) return SOUND.SwingHighPitch;   // V4: SetFPSWeapon's SwingWeaponSound (:339)
-  if (SWING_LOW.has(weapon.name)) return SOUND.SwingLowPitch;
-  if (SWING_HIGH.has(weapon.name)) return SOUND.SwingHighPitch;
-  return SOUND.SwingMediumPitch;
+  const t = weapon.templateIndex;
+  if (SWING_LOW.has(t)) return SOUND.SwingLowPitch;
+  if (SWING_MEDIUM.has(t)) return SOUND.SwingMediumPitch;
+  if (SWING_HIGH.has(t)) return SOUND.SwingHighPitch;
+  if (SWING_BOWS.has(t)) return SOUND.ArrowShoot;
+  return SOUND.None;   // DFU's `default:` - anything that is not a weapon rings nothing
 }
 
 /** PlayHitSound verbatim (EnemySounds.cs): weapon -> Hit1 + [0,5),

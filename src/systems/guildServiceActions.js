@@ -19,7 +19,12 @@
 import { SKILLS, skillValue, permanentSkillValue } from './skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from './advancement.js';
 import { FATIGUE_LOSS } from './statMods.js';
-import { goldAmount, deductGold } from './court.js';
+// AUDIT 39 F100: all three windows gate on GetGoldAmount (PlayerEntity.cs
+// :1313-1316 = goldPieces + letters of credit), never on the purse alone -
+// Training.cs:79, CureDisease.cs:122, Donation.cs:60 - and all three then
+// spend through DeductGoldAmount, which deductGold already mirrors. Gating
+// on coins refused a purchase the payment could have made.
+import { totalGoldAmount, deductGold } from './court.js';
 import { getReputation, changeReputation } from './factionRep.js';
 import { diseaseCount } from './diseases.js';
 import { cureAllDiseases } from './effects.js';
@@ -142,7 +147,7 @@ export function trainingOffer(entity, guild, membership, nowClassicMinutes) {
  *  BEFORE the skill picker opens, so a player who cannot pay never
  *  sees the list. */
 export function canAffordTraining(entity, membership) {
-  return goldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);
+  return totalGoldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);
 }
 
 // ── DONATION (DaggerfallGuildServiceDonation.cs) ──────────────────
@@ -168,7 +173,7 @@ export const DONATION_MAX_CHARACTERS = 8;
  *  a partial gift, not a refusal to spend what they have. */
 export function donate(entity, store, divineFactionId, amount, rolls = Math.random) {
   if (!Number.isInteger(amount)) return { kind: 'invalid' };
-  if (goldAmount(entity) < amount) return { kind: 'tooGenerous', textId: TOO_GENEROUS_ID };
+  if (totalGoldAmount(entity) < amount) return { kind: 'tooGenerous', textId: TOO_GENEROUS_ID };
   deductGold(entity, amount);
   const rep = Math.abs(getReputation(store, divineFactionId));
   const chance = Math.trunc((2 * amount) / Math.max(rep, 1)) + 1;
@@ -245,7 +250,7 @@ export function cureOfferMessageOffset(costBeforeBargaining, cost) {
  *  Yes arm, so a player who says yes and cannot pay is told so rather
  *  than being stopped earlier - the opposite of training's order. */
 export function payForCure(entity, cost) {
-  if (goldAmount(entity) < cost) return { kind: 'notEnoughGold', textId: NOT_ENOUGH_GOLD_ID };
+  if (totalGoldAmount(entity) < cost) return { kind: 'notEnoughGold', textId: NOT_ENOUGH_GOLD_ID };
   deductGold(entity, cost);
   cureAllDiseases(entity);
   return { kind: 'cured', cost };

@@ -67,7 +67,17 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
-  vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
+  // AUDIT 39r R17: DaggerfallDefault.shader:83-85 - "Emission cancels out
+  // other lights". The lit term runs on albedo.rgb - emission, NOT on
+  // the raw albedo, so an auto-emissive record (whose mask IS its albedo,
+  // TextureReader.cs:301-308, worn at EmissionColor = Color.white) lands
+  // at exactly its albedo whatever the scene light is. Adding on top of
+  // full lighting put a lantern at ~2.3x albedo outdoors. The clamp is
+  // ours: a window mask can be brighter than the glass texel under it,
+  // and a negative albedo has no honest meaning here.
+  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   vec3 pointAcc = vec3(0.0);
@@ -78,17 +88,17 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += tex.rgb * pointAcc;
+  lit += albedo * pointAcc;
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  lit += tex.rgb * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  // Window emission: white mask from getWindowColors32, tinted by the
-  // active window style (MaterialReader semantics: emission adds on top).
-  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  lit += albedo * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  // The emission (window style from getWindowColors32, or an auto-emissive
+  // record's own albedo at Color.white) goes back on top of the lighting
+  // its subtraction above paid for - o.Emission = emission.
   outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
   // A2: the Daggerfall/Automap shader's presentation, verbatim
   // (DaggerfallAutomap.shader:102-110): brightness falls with vertical
@@ -262,12 +272,20 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * uPointColors[i];
   }
-  vec3 emission = texture(uEmissionTex, vUV).rgb;   // spectral eyes/body glow (black tex otherwise)
+  // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
+  // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
+  // albedo.rgb - emission and adds the emission back - "Emission cancels
+  // out other lights" - so a self-lit flat draws at exactly its albedo in
+  // any light. Adding it on top of the exterior tint (~1.31 at noon) put
+  // every missile, impact flash and fire daedra at ~2.3x albedo, clipped
+  // to white. The clamp is ours; a negative albedo has no meaning here.
+  vec3 emission = texture(uEmissionTex, vUV).rgb;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
   // R12: the indirect term, attenuation-only like the lantern term
   // (billboards have no normal).
   float iD = length(uIndirect.xyz - vBBWorld);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lit = tex.rgb * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
+  vec3 lit = albedo * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), uSpectral == 1 ? tex.a : 1.0);
 }`;
 
@@ -418,6 +436,8 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
+// MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
+const EMISSION_WHITE = new Float32Array([1, 1, 1]);
 
 /** THE CHARACTER PIXELIZE STANDARD (Mac): characters and everything
  *  character-side render at this pixel size; the WORLD is excluded.
@@ -530,6 +550,15 @@ export class Renderer {
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
     this.emissionTextures = new Map(); // "archive_record" -> window mask
+    // AUDIT 39 F49: keys whose emission map is the AUTO-EMISSIVE albedo
+    // (MaterialReader.cs:448-453 - EmissionColor = Color.white), not a
+    // window mask wearing the active window style. The billboard shader
+    // already reads its mask untinted, which IS white; the mesh path
+    // multiplies by uEmissionColor, so it needs the distinction.
+    this.emissionWhite = new Set();
+    // The value last uploaded to the solid program's uEmissionColor
+    // (uniforms are program state, so this survives a program switch).
+    this._emissionColorUp = null;
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
     // mint a `${archive}_${record}` string per sub-mesh per frame -
     // thousands of short-lived strings a frame, the render loop's
@@ -543,6 +572,11 @@ export class Renderer {
     // increments only - cheap enough to keep on always, so probes and
     // the __renderer surface can measure a real frame (the EV arc's
     // "land wins against numbers" doctrine).
+    // AUDIT 39 F50: EVERY pass counts, not drawMesh alone - the terrain,
+    // water, billboard, character, sprite-quad and screen-quad draws
+    // were invisible here, which made the counter blind to exactly the
+    // terrain culling it exists to measure. texBinds counts the binds a
+    // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
@@ -730,10 +764,11 @@ export class Renderer {
     // file funnels through _use/_bindVao, which skip the call when the
     // shadow says it is already bound - a city frame ran ~1045
     // useProgram calls for a handful of distinct programs. The shadows
-    // reset at beginFrame and at markForeignPass (the three passes
-    // that change programs behind the renderer's back: both skies and
-    // precipitation - the R9 law's other half: an entry point may only
-    // trust a binding it can account for).
+    // reset at beginFrame and at markForeignPass (the four passes
+    // that change programs behind the renderer's back: both skies,
+    // precipitation, and the overworld map since AUDIT 39 F55 - the R9
+    // law's other half: an entry point may only trust a binding it can
+    // account for).
     this._lastProgram = null;
     this._lastVao = null;
   }
@@ -904,12 +939,14 @@ export class Renderer {
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
         gl.drawArrays(gl.TRIANGLES, r.first, r.count);
+        this.stats.texBinds++; this.stats.draws++;
       }
     } else {
       gl.uniform1f(c.useTex, 0);
       gl.uniform1f(c.alphaCut, 0);
       gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
       gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+      this.stats.texBinds++; this.stats.draws++;
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.uniform1f(c.useTex, 0);
@@ -984,10 +1021,22 @@ export class Renderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.SCISSOR_TEST);
     gl.viewport(0, 0, pw, ph);
-    const sp = this._proj, sv = this._view;
-    this._proj = proj; this._view = view;
+    // AUDIT 39 F47/F48: THE FOG IS BORROWED OFF, the same borrow-and-
+    // return shape as the clear colour and the studio light. Two things
+    // make an offscreen fog wrong. The composite quad
+    // (drawCharacterSpriteQuad) fogs the finished sprite at the rig's
+    // own world point, so fogging inside the RT too darkened a
+    // character as f^2 while the wall behind it went as f. And _camPos
+    // is the WORLD camera - beginFrame is its only producer - while
+    // this pass takes a private camera: the callers that draw at the
+    // origin in a lens-local space (the FP viewmodel, the inventory
+    // figure, the item icons) were fogged by the player's absolute
+    // distance from the world origin, and the icon read-back baked that
+    // darkness into its cache.
+    const sp = this._proj, sv = this._view, sf = this._fogMode;
+    this._proj = proj; this._view = view; this._fogMode = 0;
     this.drawCharacter(mesh, modelMatrix);
-    this._proj = sp; this._view = sv;
+    this._proj = sp; this._view = sv; this._fogMode = sf;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     const cc = this._clearColor;
@@ -1119,6 +1168,7 @@ void main() {
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
     gl.disable(gl.CULL_FACE);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
     gl.enable(gl.CULL_FACE);
     this._bindVao(null);
   }
@@ -1233,7 +1283,7 @@ void main() {
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
     gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); }
+    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); this.stats.texBinds++; }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
     // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
@@ -1246,6 +1296,7 @@ void main() {
     const blend = screenQuadBlends(tex, color, opts);
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    this.stats.draws++;
     if (blend) gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -1290,6 +1341,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.disable(gl.CULL_FACE);
     this._bindVao(this._overlayVAO);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
     this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -1358,6 +1410,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this.textures.delete(key);
       freed = true;
     }
+    // AUDIT 39 F51: the EV2 generation covers BOTH directions of the
+    // map. A sub-mesh stamps its resolved texture and re-reads it while
+    // the generation holds, so a delete that did not bump left it
+    // binding a deleted WebGLTexture (INVALID_OPERATION, incomplete
+    // black) until some unrelated upload happened to bump.
+    if (freed) this._texGen++;
     return freed;
   }
 
@@ -1431,6 +1489,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
+    this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -1554,9 +1613,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._indirectColor = scaledColor;
   }
 
-  /** Upload a getWindowColors32 mask for a window (archive, record). */
-  uploadEmissionTexture(archive, record, color32) {
+  /** Upload an emission mask for (archive, record): a getWindowColors32
+   *  window mask, a spectral glow, or - with { white: true } - the
+   *  ALBEDO of an auto-emissive record, which wears no window tint
+   *  (MaterialReader.cs:448-453, EmissionColor = Color.white). */
+  uploadEmissionTexture(archive, record, color32, opts = {}) {
     const key = `${archive}_${record}`;
+    if (opts.white) this.emissionWhite.add(key);
     if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -1768,6 +1831,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    this.stats.texBinds += 2; this.stats.draws++;
     this._bindVao(null);
   }
 
@@ -1794,9 +1858,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     this._bindVao(this.waterVao);
+    this.stats.texBinds++;
     for (const q of quads) {
       gl.uniform4f(this.waterURect, q.x, q.z, q.size, q.y);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+      this.stats.draws++;
     }
     this._bindVao(null);
     gl.depthMask(true);
@@ -1858,6 +1924,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
+      this.stats.texBinds += 2; this.stats.draws++;
     };
     gl.uniform1i(this.bbUSpectral, 0);
     for (const b of batches) if (!isSpectralArchive(b.archive)) drawOne(b);
@@ -1941,17 +2008,31 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (sm._evGen === this._texGen && sm._evRemap === texRemap) {
         tex = sm._evTex;
       } else {
-        const key = `${sm.textureArchive}_${sm.textureRecord}`;
+        // AUDIT 39 F52: the key is minted ONCE per sub-mesh and kept.
+        // The stamp validates the remap by IDENTITY, and the streaming
+        // world mints a fresh texRemap per map pixel over GPU meshes
+        // shared by every pixel - so an archetype standing in N loaded
+        // pixels misses N times a frame, and the string EV2 killed was
+        // being re-minted on every one of those misses.
+        const key = sm._evKey ?? (sm._evKey = `${sm.textureArchive}_${sm.textureRecord}`);
         const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
         tex = this.textures.get(resolved);
         if (tex) {
           sm._evTex = tex;
           sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;
+          sm._evEmisWhite = this.emissionWhite.has(resolved);
           sm._evGen = this._texGen;
           sm._evRemap = texRemap;
         }
       }
       if (!tex) continue;
+      // F49: an auto-emissive record's mask is its own albedo and wears
+      // Color.white; only a window mask wears the window style.
+      const emisColor = sm._evEmisWhite ? EMISSION_WHITE : this._windowEmission;
+      if (this._emissionColorUp !== emisColor) {
+        gl.uniform3fv(this.uEmissionColor, emisColor);
+        this._emissionColorUp = emisColor;
+      }
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, sm._evEmis);
       gl.activeTexture(gl.TEXTURE0);

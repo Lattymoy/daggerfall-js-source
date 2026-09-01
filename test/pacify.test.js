@@ -170,8 +170,14 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
     'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack - through the whole C# method');
   assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
     'and reverts a struck former ally to its species');
-  // the motor's own field names the mechanic it was waiting for
-  assert.match(readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8'),
-    /isHostile = true;\s*\/\/ EnemyMotor\.IsHostile - pacification/,
-    'the seam was anticipated by name');
+  // the motor's own field names the mechanic it was waiting for.
+  // AUDIT 39 moved this pin: IsHostile is no longer hard-set true in
+  // the constructor - EnemyMotor.Start:122 seeds it from the mobile's
+  // MobileReactions, so a Passive dungeon marker spawns non-hostile
+  // and the option defaults to true for every caller without one.
+  const mot = readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8');
+  assert.match(mot, /constructor\(collider, feet, yawRad, \{ liveSpeed = 50, isHostile = true,/,
+    'the seam is an option, defaulting hostile');
+  assert.match(mot, /EnemyMotor\.Start:122 `IsHostile = mobile\.Enemy\.Reactions == Hostile`/,
+    'the seam is named against the C# that sets it');
 });

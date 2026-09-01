@@ -74,6 +74,11 @@ export const FIXED_DT = 1 / 60;
 export const MAX_FRAME_DT = 0.25;
 export const CROUCH_JUMP_DELTA = 0.8;
 export const JUMP_FWD_BOOST = 0.05;
+/** AcrobatMotor.HandleJumpInput (:82-86): a mounted jump takes a FLAT
+ *  multiplier - "At least 1.5f to be able to jump over hedges" -
+ *  INSTEAD of the Jumping/Athleticism/spell sum, and a cart refuses
+ *  the jump outright (:66-70). */
+export const HORSE_JUMP_MULTIPLIER = 1.75;
 export const SLOWFALL_SPEED = 105;          // AcrobatMotor slowFallSpeed (:9)
 /** AUDIT 26 F032: ApplyGravity writes `moveDirection.y =
  *  -slowFallSpeed * Time.deltaTime` (:187) from INSIDE FixedUpdate
@@ -259,6 +264,10 @@ export class PlayerMotor {
     this.groundedTime = 0;         // PlayerMotor.GroundedTime (the 0.1 s jump gate reads it)
     this.jumping = false;          // AcrobatMotor.Jumping: set at jump, cleared on the next grounded frame
     this.falling = false;          // AcrobatMotor.Falling (CheckInitFall / CheckFallingDamage)
+    // PlayerMotor.CancelMovement: raised by the swim/levitate edges
+    // (and by any host that relocates the player), spent by the block
+    // at the top of _step.
+    this.cancelMovement = false;
     this.fallStart = 0;            // fallStartLevel
     this.landedFallDistance = 0;   // set for the frame a fall LANDS (the host applies damage/sounds)
     this.slowFalling = false;      // IsSlowFalling (the S8 buff; hosts feed it per frame)
@@ -272,8 +281,8 @@ export class PlayerMotor {
     // P11 modes (the scene owns the toggles): swimming rides the
     // block water level; levitating rides the Levitate effect;
     // waterWalking (S8) restores normal speed in water.
-    this.swimming = false;
-    this.levitating = false;
+    this._swimming = false;
+    this._levitating = false;
     this.waterWalking = false;
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
@@ -301,6 +310,15 @@ export class PlayerMotor {
     // when it takes effect (P15).
     this._sneakMode = false;
     this._prevSneakHeld = false;
+    // The run half of the same capture (:72-75) plus the AutoRun latch
+    // (:82-99). ToggleRun is no setting in DFU either - only AutoRun
+    // writes it - so it starts false and the mode is the held key.
+    this._runMode = false;
+    this._prevRunHeld = false;
+    this._toggleRun = false;
+    this._autorun = false;          // InputManager.ToggleAutorun
+    this._prevAutoRunHeld = false;
+    this._prevBackHeld = false;
     // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
     // sneak condition, recomputed each update from the frame's input.
     this.movingLessThanHalfSpeed = true;
@@ -315,6 +333,29 @@ export class PlayerMotor {
   /** PlayerMotor.IsRiding (:138) - the one question every consumer
    *  asks of the transport mode. */
   get riding() { return isRiding(this.transportMode); }
+
+  /** LevitateMotor.IsSwimming / IsLevitating are PROPERTY setters
+   *  (:34-43): BOTH transitions of BOTH modes raise PlayerMotor
+   *  .CancelMovement (SetLevitating :151/:159, SetSwimming :174/:182),
+   *  which FixedUpdate's cancel block spends. The hosts rewrite these
+   *  every frame, so the edge is the write that CHANGES the value -
+   *  without it a fall broken by Levitate (or by a dive into dungeon
+   *  water) stays live and is billed in full when the mode ends. */
+  get swimming() { return this._swimming; }
+  set swimming(v) {
+    const b = !!v;
+    if (b === this._swimming) return;
+    this._swimming = b;
+    this.cancelMovement = true;
+  }
+
+  get levitating() { return this._levitating; }
+  set levitating(v) {
+    const b = !!v;
+    if (b === this._levitating) return;
+    this._levitating = b;
+    this.cancelMovement = true;
+  }
 
   get eye() {
     // AUDIT 28 W10: HeadBobber's camera LOCAL offset rides the eye - every
@@ -506,10 +547,16 @@ export class PlayerMotor {
     // crouch/climb/swim block below is gated `!riding && !onWater &&
     // !levitating` (:171), so a levitating player cannot toggle the
     // 0.9 capsule in mid-air and fit through gaps DFU forbids.
-    // (Riding and onWater have no port model yet - the transport and
-    // water-surface arms - so only the levitating gate is expressed.)
+    // (onWater has no port model yet - the water-surface arm - so its
+    // half of that gate is unexpressed.)
     if (this.levitating) {
       if (this.crouching) this.heightAction = 'stand';   // timerMax is NOT set here, DFU keeps its last
+    } else if (this.riding) {
+      // :171's `!riding` half, the other side of the mount. A rider
+      // cannot toggle the crouch at all - which is what makes
+      // GetBaseSpeed's crouch-before-riding order unreachable - and
+      // the climb and forced-swim arms are refused from the saddle
+      // with it. setTransportMode owns the mount/dismount actions.
     } else if (input.crouch && (!this.swimming || this.grounded)) {
       this.heightAction = this.crouching ? 'stand' : 'crouch';
       this.heightTimerMax = HEIGHT_TIMER_FAST;
@@ -555,6 +602,46 @@ export class PlayerMotor {
     this.heightTimerMax = HEIGHT_TIMER_FAST;
   }
 
+  /** CaptureInputSpeedAdjustment (AUDIT 28 W5, PlayerSpeedChanger.cs
+   *  :70-99): the run and sneak MODES - each toggled on its press edge
+   *  under its toggle flag, the held key without it (:72-78) - plus
+   *  the AutoRun latch. The run flag is ToggleRun, which nothing but
+   *  that latch ever raises. Called from update(), which is where
+   *  DFU calls it (see the note at the call). */
+  _captureSpeedAdjustment(input) {
+    const runStarted = !!input.run && !this._prevRunHeld;
+    this._prevRunHeld = !!input.run;
+    if (!this._toggleRun) this._runMode = !!input.run;
+    else if (runStarted) this._runMode = !this._runMode;
+    const sneakStarted = !!input.sneak && !this._prevSneakHeld;
+    this._prevSneakHeld = !!input.sneak;
+    if (getBool('Controls', 'ToggleSneak')) {
+      if (sneakStarted) this._sneakMode = !this._sneakMode;
+    } else {
+      this._sneakMode = !!input.sneak;
+    }
+    // AUTORUN (:82-99): the press flips InputManager.ToggleAutorun and
+    // hands it to ToggleRun, and enabling it while NOT already running
+    // forces the run mode on ("this allows a player already running to
+    // keep running instead of moving to autowalking" - isRunning here
+    // is last step's, as DFU's is). The press is refused while
+    // MoveBackwards is held, and a MoveBackwards PRESS drops the latch
+    // (InputManager.cs:1851 clears ToggleAutorun on the same key).
+    // DFU's own forward force under autorun lives in InputManager and
+    // is the input layer's half; this is PlayerSpeedChanger's.
+    const autoRunStarted = !!input.autoRun && !this._prevAutoRunHeld;
+    this._prevAutoRunHeld = !!input.autoRun;
+    const backHeld = !!input.back;
+    const backStarted = backHeld && !this._prevBackHeld;
+    this._prevBackHeld = backHeld;
+    if (autoRunStarted && !backHeld) {
+      this._autorun = !this._autorun;
+      this._toggleRun = this._autorun;
+      if (this._toggleRun && !this.isRunning) this._runMode = !this._runMode;   // ^= ToggleAutorun, true in this arm
+    }
+    if (backStarted) this._toggleRun = false;
+  }
+
   /** The RENDER-frame entry: accumulates dt and runs fixed physics
    *  steps (see the FIXED_DT note). Per-frame report flags (jumped,
    *  landedFallDistance) reset here and OR/carry across the steps.
@@ -568,6 +655,18 @@ export class PlayerMotor {
     this.landedFallDistance = 0;
     const frameDt = Math.min(dt, MAX_FRAME_DT);
     this._heightAction(frameDt, input);
+    // AUDIT 39r: CaptureInputSpeedAdjustment is PlayerMotor.Update's
+    // (:363-379), NOT FixedUpdate's, and Update has exactly ONE early
+    // return: levitation, with DFU's own note beside it - "Don't
+    // return here for swimming because player should still be able to
+    // crouch when swimming". It lived inside _step below the
+    // swim/levitate return, so a swimmer's run mode, sneak mode and
+    // AutoRun latch all froze and their press-edge trackers went
+    // stale; and being per-STEP rather than per-FRAME it shared the
+    // crouch key's old bug - a render frame that accumulates less
+    // than one physics step swallowed the press. Same home as
+    // _heightAction (DecideHeightAction, :371) for the same reason.
+    if (!this.levitating) this._captureSpeedAdjustment(input);
     this._acc = (this._acc ?? 0) + frameDt;
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
@@ -639,6 +738,11 @@ export class PlayerMotor {
         [this.pos[0], this.pos[1] + this.height / 2, this.pos[2]], [0, -1, 0], this.height / 2 + 0.12)),
     });
     if (!climbing) return false;
+    // :322-326 zeroes moveDirection before the climb/swim/levitate
+    // return, and airControl is false - so nothing of the momentum
+    // carried into the climb survives it.
+    this._airVelX = 0;
+    this._airVelZ = 0;
     this.jumping = false;   // StartClimbing resets Jumping (:539)
     if (!climb.isSlipping) {
       // the hug: horizontal press at Speed (the STALE UpdateSpeed
@@ -677,6 +781,22 @@ export class PlayerMotor {
     // PlayerMotor.FixedUpdate: time the grounded state FIRST, every
     // frame (the swim/levitate early-return comes after in DFU too).
     this.groundedTime = this.grounded ? this.groundedTime + dt : 0;
+    // The cancelMovement block (:286-294), which sits ABOVE the climb
+    // and swim/levitate returns: zero the persistent velocity, drop
+    // the active platform and run AcrobatMotor.ClearFallingDamage
+    // (:239-243) - `falling = false; fallStartLevel = position.y` -
+    // then RETURN, one step of no movement. Every swim/levitate edge
+    // raises it (the setters above), so Levitate saves a fall in the
+    // port as it does in DFU instead of deferring the bill.
+    if (this.cancelMovement) {
+      this.cancelMovement = false;
+      this._airVelX = 0;
+      this._airVelZ = 0;
+      this.groundKey = null;   // ClearActivePlatform
+      this.falling = false;
+      this.fallStart = this.pos[1];
+      return;
+    }
     // M3 CLIMBING: the check + (while climbing) the movement - before
     // the swim/levitate branch, exactly DFU's order (:319-326; the
     // climb wins the step when active).
@@ -691,6 +811,13 @@ export class PlayerMotor {
     if (this.levitating || this.swimming) {
       // LevitateMotor.Update: camera-directed movement, NO gravity.
       this.velY = 0;
+      // `moveDirection = Vector3.zero` before the return (:322-326):
+      // with airControl false the airborne arm below spends whatever
+      // stands here, so leaving levitation or water in mid-air must
+      // drop straight down rather than resume the momentum the player
+      // carried into it.
+      this._airVelX = 0;
+      this._airVelZ = 0;
       const cp = Math.cos(pitch), sp = Math.sin(pitch);
       let mx = (sin * cp * input.forward + cos * input.strafe) * factor;   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
       let my = sp * input.forward * factor;
@@ -779,22 +906,12 @@ export class PlayerMotor {
       if (!this.jumping) this.velY = 0;
     }
 
-    // CaptureInputSpeedAdjustment (AUDIT 28 W5): the sneak MODE -
-    // toggled on the press edge under ToggleSneak, the held key
-    // without it (:75-78).
-    const sneakStarted = !!input.sneak && !this._prevSneakHeld;
-    this._prevSneakHeld = !!input.sneak;
-    if (getBool('Controls', 'ToggleSneak')) {
-      if (sneakStarted) this._sneakMode = !this._sneakMode;
-    } else {
-      this._sneakMode = !!input.sneak;
-    }
     // ApplyInputSpeedAdjustment (P15): the run/sneak states re-latch
     // only while GROUNDED - "you can't switch running on/off while in
     // mid air" - and running beats sneaking.
     if (this.grounded) {
       // TR1: CanRunUnlessRiding (:137-140) - a mount does not sprint.
-      this.isRunning = !!input.run && canRunUnlessRiding(this.transportMode);
+      this.isRunning = this._runMode && canRunUnlessRiding(this.transportMode);
       this.isSneaking = !this.isRunning && this._sneakMode;
     }
     // F-C3 (self-audit 3, ApplyInputSpeedAdjustment :121-125): running
@@ -871,9 +988,17 @@ export class PlayerMotor {
     // ClimbingMotor.cs:390 does - and an ACTIVE climb never reaches
     // here, so this reads only on the frame a climb ended. The flag
     // had been written every step with no reader anywhere in src/.
+    // TR-AUDIT (AUDIT 39): the transport terms the block never had -
+    // a CART cancels the jump outright (:66-70, beside the slowfall
+    // cancel), and a HORSE takes the flat 1.75 INSTEAD of the skill
+    // sum, which is the multiplier the hedges were sized for.
     if (this.grounded && input.jump && !this.slowFalling
+        && this.transportMode !== TRANSPORT_MODES.Cart
         && (this.climb?.wasClimbing || this.groundedTime >= GROUNDED_JUMP_GATE_S)) {
-      this.velY = JUMP_SPEED * (this.jumpBoost ? this.jumpBoost() : 1);
+      const boost = this.transportMode === TRANSPORT_MODES.Horse
+        ? HORSE_JUMP_MULTIPLIER
+        : (this.jumpBoost ? this.jumpBoost() : 1);
+      this.velY = JUMP_SPEED * boost;
       if (this.crouching) this.velY *= CROUCH_JUMP_DELTA;
       if (input.forward !== 0 || input.strafe !== 0) {
         vx += sin * JUMP_SPEED * JUMP_FWD_BOOST;

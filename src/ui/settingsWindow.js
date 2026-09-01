@@ -68,7 +68,7 @@ const GROUPS = [
 const inRect = ([x, y, w, h], px, py) => px >= x && py >= y && px < x + w && py < y + h;
 
 export class SettingsWindow {
-  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null, onPickTextures = null } = {}) {
+  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null, onPickTextures = null, onPickMorrowind = null } = {}) {
     this.onLaunch = onLaunch;
     // M-EXT: the music-pack picker. A HOOK and not an import,
     // because the picker lives in scenes/dataSource.js and a ui/
@@ -78,6 +78,11 @@ export class SettingsWindow {
     // that cannot pick files (a test, a headless harness) should get.
     this.onPickMusic = onPickMusic;
     this.onPickTextures = onPickTextures;
+    // Same hook, same reason. It was the one of the three the
+    // constructor never took, so `_detail`'s M row and the KeyM arm
+    // that both read it were dead: the classic skin's screen reported
+    // the archive count while offering no door to change it.
+    this.onPickMorrowind = onPickMorrowind;
     this.dataSourceLabel = dataSourceLabel;
     this.done = false;
     this.isChoiceWindow = true;

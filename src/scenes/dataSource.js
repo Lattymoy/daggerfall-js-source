@@ -116,6 +116,7 @@ const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three
   name === 'CLASSES.DAT' ||
+  name === 'PAINT.DAT' ||                   // AUDIT 39 F156: the painting descriptions (40-byte records, 24KB)
   name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50), reused as V1's fake death
   name === 'ANIM0002.VID' ||                // V1 the lycanthropy dream (LycanthropyInfection.cs:95)
@@ -123,7 +124,7 @@ export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   name === 'ROGUE.CEL' || name === 'MAGE.CEL' || name === 'WARRIOR.CEL' ||   // F2 the chargen constellations
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 8;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles - all auto-wiped
+const MANIFEST_V = 9;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles, v8 = the sets missing PAINT.DAT (AUDIT 39 F156) - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {
@@ -513,13 +514,28 @@ export const morrowindDataCount = () => Math.max(_mwCount, 0);
  */
 let _mwGeneration = 0;
 export const morrowindDataGeneration = () => _mwGeneration;
+/**
+ * MW-D40: the generation answers for the WHOLE STORED SET, never the
+ * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
+ * attached beside an archive that is already there leaves the archive
+ * count untouched - and this line is the only writer of the generation
+ * and the only place `_mwEsm`/`_mwArchiveCache`/`_mwFileCache` are
+ * dropped, so counting archives alone left the loose override and the
+ * ESM door dead until the page was reloaded. The sorted names also
+ * move when a re-attach swaps one file for another of the same count,
+ * which a length never does.
+ */
+let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
+const mwFingerprint = (names) => [...names].sort().join('\n');
 
 /** Bootstrap arm (scenes/shared.js): count the stored archives once so
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
-  const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  // MW-D9g: `_mwCount` STARTS AT -1, MEANING "NOT COUNTED YET", AND
-  // LEARNING A COUNT IS NOT A CHANGE.
+  const names = await storedMorrowindNames();
+  const next = names.filter((n) => /\.bsa$/i.test(n)).length;   // the settings row's count stays ARCHIVES
+  const print = mwFingerprint(names);
+  // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",
+  // AND LEARNING A SET IS NOT A CHANGE.
   //
   // Without the first term this bumped on every host's first boot, for
   // every player, even with an empty store: -1 !== 0. And the bump is
@@ -534,7 +550,8 @@ export async function registerMorrowindData() {
   //
   // The generation means THE STORED SET CHANGED. It cannot mean that
   // until there is a previous set to compare against.
-  if (_mwCount >= 0 && next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  _mwFingerprint = print;
   _mwCount = next;
   return _mwCount;
 }
