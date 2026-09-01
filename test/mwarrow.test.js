@@ -30,13 +30,16 @@ const wpdt = (id, model, type) => {
 };
 
 const LONG_BOW = { templateIndex: 130 };
-function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif' } = {}) {
+function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif', bowFixture = 'bowmesh.nif' } = {}) {
   const files = new Map([
     [fpSkeletonPath({}), f(skeleton)],
     [FP_CLIP_PATH, f('armfpweapon.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
     ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
-    ['meshes/w/bowmesh.nif', f('bowmesh.nif')],
+    // MW-D47: swappable, so a bow WITHOUT rule 24's ArrowBone can be
+    //          driven - which is the only way to reach the quiver
+    //          fallback now that the mesh is asked first.
+    ['meshes/w/bowmesh.nif', f(bowFixture)],
     ['textures/tx_fixture.dds', f('fixture.dds')],
   ]);
   if (ammo) files.set('meshes/w/arrow.nif', f(ammoFixture));
@@ -105,24 +108,31 @@ test('MW-D16: with no "Bip01 Arrow" bone the arrow rides the WEAPON MESH', async
     'so it hangs on the WEAPON\'s bone, with the mesh chain baked in');
 });
 
-test('MW-D16: a skeleton that HAS the bone takes the first branch instead', async () => {
+// MW-D47 INVERTED THIS. The bow mesh is asked FIRST now - see the rule
+// - so the quiver bone is what a bow WITHOUT an ArrowBone falls to,
+// rather than what wins over one. The fixture bow carries the node, so
+// the branch is reached by taking it away.
+test('MW-D47: the quiver bone is the FALLBACK, reached when the bow mesh has no ArrowBone', async () => {
   const res = await buildFpArm({
-    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
-    // MW-D46: the branch also needs a clip that DRIVES the bone, and
-    // the fixture clip does not - stated here rather than left to the
-    // fixtures to imply.
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    // A bow mesh with NO ArrowBone, so the mesh branch cannot win, and
+    // a skeleton that carries the quiver bone. quiverDriven is stated
+    // because the fixture clip does not animate it (MW-D46).
+    deps: bowDeps({ skeleton: 'armfparrow.nif', bowFixture: 'armfphand.nif' }),
     quiverDriven: true,
   });
   assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(res.arrow, 'the round resolves on the fallback');
   assert.equal(res.arrow.viaWeaponMesh, false);
-  assert.equal(res.arrow.bone, 'Bip01 Arrow', 'the ACTOR\'s own bone wins');
+  assert.equal(res.arrow.bone, 'Bip01 Arrow', 'the skeleton bone is what is left');
 });
 
 test('MW-D16: the mesh chain is BAKED, so the two branches put it in different places', async () => {
   const viaMesh = await buildFpArm({ race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps() });
   const viaBone = await buildFpArm({
-    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
-    quiverDriven: true,   // MW-D46: the branch also needs a clip that drives it
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ skeleton: 'armfparrow.nif', bowFixture: 'armfphand.nif' }),   // MW-D47: no ArrowBone, so the quiver wins
+    quiverDriven: true,
   });
   const arrowOf = (res) => res.arm.pieces.find((p) => p.slot === 'arrow');
   assert.ok(arrowOf(viaMesh) && arrowOf(viaBone));
@@ -400,13 +410,28 @@ test('MW-D46: a quiver bone with no clip to drive it falls back to the bow mesh'
   // without the override, so the real clip check runs and the fixture
   // clip does not animate that bone.
   const res = await buildFpArm({
-    race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: bowDeps({ skeleton: 'armfparrow.nif' }),
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ skeleton: 'armfparrow.nif', bowFixture: 'armfphand.nif' }),
   });
   assert.ok(res.ok, `${res.stage}: ${res.error}`);
-  assert.ok(res.arrow, 'the round still resolves - the point is WHERE, not whether');
-  assert.equal(res.arrow.viaWeaponMesh, true,
-    'no clip drives the quiver bone, so the round takes the vanilla bow-mesh branch');
-  assert.notEqual(res.arrow.bone, 'Bip01 Arrow', 'and not the body bone it would have sat on');
+  assert.ok(!res.arrow, 'no bow ArrowBone and no clip driving the quiver: nowhere to put it');
+  assert.ok(res.notes.some((n) => n.startsWith('arrow:')), 'and it says so');
+});
+
+// MW-D47: AND WITH A NORMAL BOW THE MESH ALWAYS WINS, even against a
+// skeleton that carries the quiver bone and clips that drive it. This
+// is the inversion itself: the round goes on the STRING, because the
+// port has no animation that would carry it off a quiver.
+test('MW-D47: a bow with an ArrowBone beats the quiver bone outright', async () => {
+  const res = await buildFpArm({
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ skeleton: 'armfparrow.nif' }),   // HAS "Bip01 Arrow"
+    quiverDriven: true,                              // and clips that drive it
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(res.arrow, 'the round resolves');
+  assert.equal(res.arrow.viaWeaponMesh, true, 'the bow mesh is asked FIRST');
+  assert.notEqual(res.arrow.bone, 'Bip01 Arrow', 'never the body bone when the bow offers one');
 });
 
 // MW-D46b: EVERY DOOR ASKS, NOT JUST THE FIRST ONE (Mac: "Dude. Please

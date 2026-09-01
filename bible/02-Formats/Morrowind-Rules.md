@@ -6428,3 +6428,37 @@ views, MW-D46 asked at one of four doors. A default that means "old
 behaviour" hides every caller you did not visit, and the port's own
 four-hosts rule exists for exactly this. Name every caller before
 shipping the parameter.
+
+MW-D47: THE BOW MESH IS ASKED FIRST. A DELIBERATE DIVERGENCE FROM
+getArrowBone's ORDER, recorded as one.
+
+Mac, six reports in: "the arrow isnt held in the hand, it spawns on the
+body." Every one of those reports was the SAME placement. "Through the
+face" in first person and "in the character" in third are one bone seen
+from two camera positions - the first-person camera sits at the head,
+so a round on a body bone renders through it. I read them as two
+symptoms and spent six rounds choosing which half of the evidence to
+believe.
+
+THE REFERENCE'S ORDER IS RIGHT FOR THE REFERENCE. OpenMW tries the
+actor's "Bip01 Arrow" first because the modder who adds that bone also
+ships the clips that CARRY the round from the quiver to the string -
+issue 5642's stated purpose, "better shooting animations". THIS PORT
+DOES NOT RUN THOSE CLIPS. It drives Daggerfall's own weapon machine, so
+a round placed at the quiver has nothing to move it and stays in the
+actor's chest for the whole shot.
+
+MW-D46 tried to gate the branch on whether a clip mentions the bone.
+That was the right instinct and too weak a test: an animation replacer
+that names the bone without carrying the arrow passes it. The order is
+the honest fix. The bow's own ArrowBone wins wherever the mesh has one,
+which is every vanilla bow; the quiver bone is what is left for a mesh
+that carries none, and still needs a clip that drives it.
+
+MW-D46's gate is kept for exactly that fallback, so both conditions
+guard the branch that can strand a round in a torso.
+
+WHAT WOULD MAKE THE REFERENCE ORDER CORRECT HERE: an arrow-fetching
+animation the port actually plays. Until that exists, the quiver branch
+has no way to end with the arrow on the string, and a first branch that
+cannot finish is not a first branch.

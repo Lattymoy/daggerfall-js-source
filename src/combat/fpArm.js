@@ -769,16 +769,36 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
               // sends the round down the vanilla path the bow mesh
               // already carries. Defaults true, so every existing
               // caller and pin is unchanged.
-              const onActor = quiverDriven && skelBone && skeletonHasBone(skeletonBytes, skelBone);
-              let pre = null;
-              let arrowBone = skelBone;
-              if (!onActor) {
-                pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
-                arrowBone = pre ? bone : null;
+              // MW-D47: THE BOW MESH IS ASKED FIRST. This inverts
+              // getArrowBone's order and it is a DELIBERATE DIVERGENCE,
+              // recorded as one.
+              //
+              // The reference tries the actor's quiver bone first and
+              // falls back to the bow. That order is right for OpenMW
+              // because the modder who adds "Bip01 Arrow" also ships
+              // the clips that CARRY the round from the quiver to the
+              // string - issue 5642's whole purpose, "better shooting
+              // animations". This port does not run those clips. It
+              // drives Daggerfall's own weapon machine, so a round
+              // placed at the quiver has nothing to move it and stays
+              // in the actor's chest for the entire shot. Six rounds of
+              // Mac's play reports are that one sentence: through the
+              // face in first person, in the character in third - the
+              // same bone, seen from two camera positions.
+              //
+              // So the bow's own ArrowBone wins wherever the mesh has
+              // one, which is every vanilla bow, and the quiver bone is
+              // what is left for a mesh that carries none. `pre` is set
+              // exactly when the bow branch won, which is what MW-D44's
+              // weapon-offset inheritance keys off, so that stays true.
+              const pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
+              let arrowBone = pre ? bone : null;
+              if (!arrowBone && quiverDriven && skelBone && skeletonHasBone(skeletonBytes, skelBone)) {
+                arrowBone = skelBone;
               }
               if (!arrowBone) {
-                notes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
-                  + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
+                notes.push(`arrow: no "${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} `
+                  + `and no usable "${skelBone}" bone on this skeleton - nowhere to put it`);
               } else {
                 parts.push({
                   // MW-D34: `ammo` marks the one part attachArrow
@@ -789,7 +809,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                 });
                 arrowInfo = {
                   id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
-                  bone: arrowBone, viaWeaponMesh: !onActor,
+                  bone: arrowBone, viaWeaponMesh: !!pre,
                 };
               }
             }
