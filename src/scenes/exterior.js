@@ -81,7 +81,7 @@ import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.j
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
-import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -124,7 +124,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
-import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
+import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
@@ -1328,6 +1328,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       (e.clientX - _r.left) * (canvas.width / _r.width),
       (e.clientY - _r.top) * (canvas.height / _r.height),
       e.button, hudCtx, { windowUp: townTalk.overlayActive || (modes?.overlayHeld ?? false) })) return;
+    // ROAD-Ar: the click that GRABS the pointer back is a UI gesture,
+    // not a world click, and it presses and releases Mouse0 into the
+    // gate exactly as a window's close button does - so it takes
+    // SetClickDelay too (PlayerActivate.cs:1050-1054). ONLY on a real
+    // acquisition: with the pointer already locked this click IS the
+    // world's. (worldModes shares this host's `latch`, so its gate is
+    // this gate.)
+    if (document.pointerLockElement !== canvas) setClickDelay((latch.activate ??= createActivateGate()));
     requestLook(canvas);
   });   // U8b/U8c: native windows own the pointer
   canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e) || mwViewWheel(e.deltaY)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel; MW-D25: otherwise the Morrowind camera zoom
@@ -1340,6 +1348,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the overlay return, because an overlay up is exactly when the
     // spell-icon tooltip is allowed to show.
     trackHudPointer(canvas, e);
+    trackLargeHudPointer(canvas, e);   // ROAD-Ar: HUDLarge's MouseEnter/MouseLeave (:361-372), for the activate gate's HUD guard
     // U37: a window frees the mouse, so an open overlay gets the
     // HOVER before the look gate refuses the unlocked pointer.
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
@@ -1837,9 +1846,17 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AbortSpell; a recorded departure, not a gap this slice
       // closes) and Mouse2 stays the swing, so nothing a player
       // already does stops working.
+      // ROAD-Ar: the gate's last three inputs, which A8 declared and
+      // no host passed. `paused` is InputManager's own return under an
+      // open window (:486-503) and carries RemoveWindow's 0.3 s click
+      // delay with it; `hudBlocked` is PlayerActivate.cs:230-236;
+      // `touchSpell` is its stated exception at :250-258.
       const _act = activateFrame((latch.activate ??= createActivateGate()), {
         down: held(keys, 'ActivateCenterObject'),
         hasReadySpell: magic.spellArmed(),
+        touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
+        hudBlocked: activeMouseOverLargeHUD(),
+        paused: _overlayHeld,
       });
       if (_act.cast) magic.interceptAttack(true);   // the frame's firePending sends it down the live look
       const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell

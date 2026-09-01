@@ -81,7 +81,7 @@ import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } fro
 import { setDeathPresenter, setAvoidDeathHook, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
-import { largeHudOptions, routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { largeHudOptions, routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
@@ -4127,9 +4127,20 @@ export function createWorldModes(host) {
     // below it is (:4812): a dungeon visit mints its own cast engine on
     // the context, so reading the exterior host's HasReadySpell here
     // would arm the gate off the wrong spell.
+    // ROAD-Ar: the gate's last three inputs, which A8 declared and no
+    // host passed. `paused` is InputManager's own return under an open
+    // window (:486-503) and carries RemoveWindow's 0.3 s click delay
+    // with it - the CAST half of this block was never overlay-gated,
+    // so a left-click on an open window fired a readied spell into the
+    // room behind it; `hudBlocked` is PlayerActivate.cs:230-236;
+    // `touchSpell` is its stated exception at :250-258. The readied
+    // spell comes off the same per-mode engine HasReadySpell does.
     const _act = activateFrame((latch.activate ??= createActivateGate()), {
       down: held(keys, 'ActivateCenterObject'),
       hasReadySpell: (mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) ?? false,
+      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
+      hudBlocked: activeMouseOverLargeHUD(),
+      paused: overlayHeld,
     });
     if (_act.cast) {   // the frame's firePending sends it down the live look
       if (mode === 'dungeon') dungeonCtx?.playerAttackInput?.(0, 0, true);
@@ -5402,6 +5413,7 @@ export function createWorldModes(host) {
    *  windows and the mounted dungeon context's. */
   function hover(e) {
     trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, in BOTH modes
+    trackLargeHudPointer(canvas, e);   // ROAD-Ar: HUDLarge's MouseEnter/MouseLeave (:361-372), for the activate gate's HUD guard
     const at = () => {
       const r = canvas.getBoundingClientRect();
       return pointToNative(nativeMetrics(canvas),

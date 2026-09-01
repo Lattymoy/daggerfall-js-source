@@ -3430,6 +3430,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
+    readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
     switchHand: weaponRig.switchHand,   // a12: SwitchHand (H) - the same one door as the sheathe toggle
     // S24 probe seam: drive a real spell record onto the player
