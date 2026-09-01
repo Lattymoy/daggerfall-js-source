@@ -36,6 +36,11 @@ export const playerEntity = {
   // nothing, and raiseSkills had nothing to read. Found by the U24
   // live probe.
   skillUses: new Array(SKILL_COUNT).fill(0),
+  // A4, the same seam once more: DFU's PlayerEntity is constructed
+  // with `new uint[2]` here too (PlayerEntity.cs:76) and both
+  // accessors INDEX into it - Get reads a word, Set ORs into one - so
+  // the field can never legitimately be absent (PlayerEntity.cs:70).
+  skillsRecentlyRaised: [0, 0],
 };
 
 /** Debug/probe surface: one place writes window.__player (audit

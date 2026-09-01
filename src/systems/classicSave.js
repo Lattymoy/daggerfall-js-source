@@ -47,7 +47,12 @@ import { ITEM_GROUP_BY_ID } from './biography.js';
 import { GROUP_TEMPLATE_INDICES, templateFor } from './itemTemplates.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the None sentinel FromItemRecord tests
 import { isPotion, isPotionRecipe } from './useItem.js';
-import { CLASSIC_RECIPE_KEYS } from './loot.js';   // PotionRecipe.classicRecipeKeys
+import {
+  CLASSIC_RECIPE_KEYS,   // PotionRecipe.classicRecipeKeys
+  // A4: the flag masks and the legacy artifact-index recovery, at
+  // their one home beside createArtifact.
+  ITEM_ARTIFACT_MASK, ITEM_IDENTIFIED_MASK, legacyArtifactIndexBitfieldCheck,
+} from './loot.js';
 import { goldStack } from './inventory.js';
 import { equipItem } from './equip.js';
 import { guildGroupOfFaction, daySinceZero } from './guilds.js';
@@ -305,6 +310,18 @@ export function classicItemFromRecord(record) {
     typeDependentData: d.typeDependentData,
     enchantmentPoints: d.enchantmentPoints,
     message: d.message,
+    // A4: the two IDENTITY BITS the classic flags word carries
+    // (DaggerfallUnityItem.cs:96-97). The port models both as booleans
+    // on the record - createArtifact writes them where DFU writes the
+    // word (:617) - so an import that copied `flags` alone left every
+    // classic artifact reading as a plain enchanted item: itemInfo
+    // printed its material and armor rating (which an artifact never
+    // shows), an imported Oghma Infinium opened the plain book reader
+    // instead of its Used payload (useItem.js isBook), and the trade
+    // window offered to IDENTIFY an item classic had already
+    // identified, at (25 * value) >> 8.
+    artifact: (d.flags & ITEM_ARTIFACT_MASK) > 0,
+    isIdentified: (d.flags & ITEM_IDENTIFIED_MASK) > 0,
   };
   // "If item is an arrow, typeDependentData is the stack count" -
   // Weapons group index 18.
@@ -317,6 +334,14 @@ export function classicItemFromRecord(record) {
   if ((isPotion(item) || isPotionRecipe(item)) && d.typeDependentData < CLASSIC_RECIPE_KEYS.length) {
     item.potionRecipeKey = CLASSIC_RECIPE_KEYS[d.typeDependentData];
   }
+  // "Try to generate artifactIndexBitfield if this data is missing
+  // from save" (:1581-1582) - DFU's own comment, at DFU's own place in
+  // FromItemRecord: after the recipe conversion, before the variant.
+  // A classic record has no bitfield at all, so this is the ONLY thing
+  // that gives an imported artifact its index - and the index is what
+  // names the artifact's Info description (record 8700 + subtype) and
+  // what the Special enchantment's payload dispatch keys on.
+  legacyArtifactIndexBitfieldCheck(item);
   // Clothing keeps its dye byte (DyeColors values match classic);
   // currentVariant = playerRecord - template.playerTextureRecord, the
   // cloak's +1 exactly as IsCloak carves it out.
@@ -683,6 +708,24 @@ export function classicSaveToSnapshot(saveGames, {
     timeForDarkBrotherhoodLetter: doc.timeForDarkBrotherhoodLetter,
     darkBrotherhoodRequirementTally: doc.darkBrotherhoodRequirementTally,
     thievesGuildRequirementTally: doc.thievesGuildRequirementTally,
+    // A4: the last two AssignCharacter members the document carried
+    // and the envelope dropped (PlayerEntity.cs:855-856).
+    // timeToBecomeVampireOrWerebeast is classic's three-days stamp and
+    // this import is the ONLY way it ever reaches a character - the
+    // temple's cure counts it as one more disease and clears it
+    // (guildServiceActions.js); dropped, an imported character three
+    // days from turning was cured of everything but the turn.
+    // minMetalToHit is the weapon-material floor CalculateAttackDamage
+    // reads on the target: classic writes Silver on a live
+    // vampire/werebeast, and the two curses re-arm it on their next
+    // constant round, so this is the value that stands in between.
+    timeToBecomeVampireOrWerebeast: doc.timeToBecomeVampireOrWerebeast,
+    minMetalToHit: doc.minMetalToHit,
+    // And the two masks classic calls SkillsRaisedThisLevel, which
+    // AssignCharacter lands word for word in skillsRecentlyRaised
+    // (:851-852) - the marks the character sheet highlights on the
+    // first visit after an import.
+    skillsRecentlyRaised: [doc.skillsRaisedThisLevel1, doc.skillsRaisedThisLevel2],
 
     items, wagonItems,
     otherItems: [],
@@ -737,6 +780,17 @@ export function classicSaveToSnapshot(saveGames, {
           }
         }
       });
+      // A4 VERIFIED (Road to 1:1): `buildings` stays EMPTY because the
+      // reference leaves it empty. SaveGames.cs:215-248 is the whole
+      // of DFU's MAPSAVE handling and it walks locations only - the
+      // 0x40 bit per location index, then
+      // `gps.DiscoverLocation(regionName, location.Name)` - and
+      // PlayerGPS.DiscoverBuilding (:917) has no classic-import caller
+      // anywhere in the tree (its callers are PlayerActivate,
+      // PlayerEnterExit, TalkManager, the bank and the two secret
+      // guilds - all live play). A classic character arrives with
+      // every town they had found and no building inside any of them,
+      // exactly as they do in DFU. Not a gap; do not "fix" it.
       snap.discovery = { buildings: {}, locations };
     }
   }

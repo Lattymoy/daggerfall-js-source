@@ -275,6 +275,74 @@ export const ITEM_GROUP_NAME_BY_CLASS = Object.freeze([
   'QuestItems', 'MiscItems', 'Currency',
 ]);
 
+// ── THE ITEM FLAG BITMASKS (DaggerfallUnityItem.cs:94-98) ─────────
+//
+// A4: two constants and the derivation over them. Every item DFU
+// MINTS carries its identity as booleans on the port's record
+// (createArtifact below writes `artifact` and `isIdentified` where
+// DFU writes `flags = artifactMask | identifiedMask`, :617) - but an
+// item read out of a CLASSIC SAVE arrives with the classic flags word
+// and nothing else, so the two bits have to be read back out of it.
+
+export const ITEM_IDENTIFIED_MASK = 0x20;
+export const ITEM_ARTIFACT_MASK = 0x800;
+
+/** ItemEnums.ArtifactsSubTypes (:238-264) by NAME, in Enum.GetNames
+ *  order - which is value order, so None (-1) leads. The names are the
+ *  lookup key, not decoration: LegacyGetArtifactSubType matches them
+ *  against the item's own short name. */
+export const ARTIFACT_SUB_TYPE_NAMES = Object.freeze([
+  ['None', -1],
+  ['Masque_of_Clavicus', 0], ['Mehrunes_Razor', 1], ['Mace_of_Molag_Bal', 2],
+  ['Hircine_Ring', 3], ['Sanguine_Rose', 4], ['Oghma_Infinium', 5],
+  ['Wabbajack', 6], ['Ring_of_Namira', 7], ['Skull_of_Corruption', 8],
+  ['Azuras_Star', 9], ['Volendrung', 10], ['Warlocks_Ring', 11],
+  ['Auriels_Bow', 12], ['Necromancers_Amulet', 13], ['Chrysamere', 14],
+  ['Lords_Mail', 15], ['Staff_of_Magnus', 16], ['Ring_of_Khajiit', 17],
+  ['Ebony_Mail', 18], ['Auriels_Shield', 19], ['Spell_Breaker', 20],
+  ['Skeletons_Key', 21], ['Ebony_Blade', 22],
+]);
+
+/**
+ * ItemHelper.LegacyGetArtifactSubType (ItemHelper.cs:532-541) verbatim.
+ * The short name loses its apostrophes and turns its spaces into
+ * underscores, then the FIRST enum name it CONTAINS wins - a substring
+ * test, not equality, because classic short names carry decoration
+ * ("Auriel's Bow" but also the odd prefixed variant). Answers
+ * ArtifactsSubTypes.None (-1) when nothing matches.
+ */
+export function legacyGetArtifactSubType(itemShortName) {
+  const key = String(itemShortName ?? '').replaceAll('\'', '').replaceAll(' ', '_');
+  for (const [name, value] of ARTIFACT_SUB_TYPE_NAMES) {
+    if (key.includes(name)) return value;
+  }
+  return -1;
+}
+
+/**
+ * DaggerfallUnityItem.LegacyArtifactIndexBitfieldCheck (:1697-1707),
+ * run by FromItemRecord (:1582) on every classic item and by the
+ * legacy-save restore (:1678).
+ *
+ * "Newly created artifacts store their artifact index in
+ * artifactIndexBitfield as artifactIndex << 1 | 1" - bit 0 is the
+ * HAS-AN-INDEX flag, so an item whose flags say artifact but whose
+ * bitfield's low bit is clear came from data that predates the field,
+ * and the index is recovered by reversing the name to the enum the way
+ * older versions did. A name that matches nothing leaves the bitfield
+ * alone: an artifact with no recoverable index, which is DFU's own
+ * outcome (GetArtifactSubType then throws and the caller logs).
+ *
+ * MUTATES the item, as the C# mutates `this`. Returns the item.
+ */
+export function legacyArtifactIndexBitfieldCheck(item) {
+  if (!item?.artifact) return item;
+  if (((item.artifactIndexBitfield ?? 0) & 1) !== 0) return item;
+  const subType = legacyGetArtifactSubType(item.shortName ?? item.name);
+  if (subType !== -1) item.artifactIndexBitfield = (subType << 1) | 1;
+  return item;
+}
+
 /** DaggerfallUnityItem.SetArtifact (DaggerfallUnityItem.cs:580-612)
  *  over the MAGIC.DEF registry: the artifact template (rows with type
  *  ArtifactClass1/2, file order - ItemHelper.cs:1511-1517) expands to

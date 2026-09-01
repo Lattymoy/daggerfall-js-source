@@ -78,6 +78,44 @@ export function alreadyMasteredASkill(entity) {
   return entity.career.primarySkills.some((id) => entity.skills[id] === 100);
 }
 
+// ── skillsRecentlyRaised (PlayerEntity.cs:218-231) ────────────────
+//
+// A4: TWO 32-bit masks over the 35 skills. The raise pass sets a bit
+// (:1387), the character sheet reads it to highlight the skill and
+// then clears the pair (TextProvider.cs:492,
+// DaggerfallCharacterSheetWindow.cs:454) - so the marks say "raised
+// since you last looked", not "raised this session". The masks live
+// here, beside the pass that sets them; the sheet's half is the
+// advancement-UI slice's.
+
+/** PlayerEntity.GetSkillRecentlyIncreased (:218-221) verbatim - the
+ *  integer divide picks the word, the modulo the bit. */
+export function skillRecentlyIncreased(entity, skill) {
+  const masks = entity.skillsRecentlyRaised;
+  if (!masks) return false;
+  return (masks[Math.trunc(skill / 32)] & (1 << (skill % 32))) !== 0;
+}
+
+/** PlayerEntity.SetSkillRecentlyIncreased (:223-226). Mints the pair
+ *  on an entity that has none (a pre-A4 save, a bare test entity) -
+ *  DFU's field is constructed with `new uint[2]` and can never be
+ *  null, so the port's own null arm belongs here rather than at every
+ *  call site. */
+export function setSkillRecentlyIncreased(entity, index) {
+  if (!entity.skillsRecentlyRaised) entity.skillsRecentlyRaised = [0, 0];
+  const word = Math.trunc(index / 32);
+  // The mask is a UNSIGNED 32-bit word in C#; JS bitwise ops answer
+  // signed, so `>>> 0` keeps bit 31 (skill 31, Blunt) from turning the
+  // whole word negative and breaking a later equality pin.
+  entity.skillsRecentlyRaised[word] = (entity.skillsRecentlyRaised[word] | (1 << (index % 32))) >>> 0;
+}
+
+/** PlayerEntity.ResetSkillsRecentlyRaised (:228-231) - Array.Clear
+ *  over both words, which the character sheet calls as it draws. */
+export function resetSkillsRecentlyRaised(entity) {
+  entity.skillsRecentlyRaised = [0, 0];
+}
+
 /**
  * PlayerEntity.RaiseSkills verbatim (the >360-classic-minute gate
  * lives here via entity.lastSkillCheckTime). Returns the raised
@@ -100,6 +138,10 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
     // primary hitting 100 mid-pass blocks later 95+ raises, verbatim.
     if (entity.skills[i] < 100 && (entity.skills[i] < 95 || !alreadyMasteredASkill(entity))) {
       entity.skills[i] += 1;
+      // A4: SetSkillRecentlyIncreased(i) sits between the raise and
+      // SetCurrentLevelUpSkillSum (PlayerEntity.cs:1386-1388) - the
+      // ONE producer of the mark the character sheet highlights.
+      setSkillRecentlyIncreased(entity, i);
       raised.push(i);
     }
   }

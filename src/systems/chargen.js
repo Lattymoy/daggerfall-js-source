@@ -182,6 +182,12 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     stats,
     skills,
     skillUses: new Array(SKILL_COUNT).fill(0),   // TallySkill counters (S3b consumes them)
+    // A4: and the raise marks reset with them. DFU builds a whole new
+    // PlayerEntity for a new game; the port assigns onto the module
+    // singleton, so a character created after a session would
+    // otherwise open the character sheet with the PREVIOUS
+    // character's skills highlighted.
+    skillsRecentlyRaised: [0, 0],
     // AUDIT 23 (entity-laws lane): DFU anchors timeOfLastSkillIncreaseCheck
     // at NOW on AssignCharacter (PlayerEntity.cs:881); a fresh game's now
     // is the classic start minute, so the first raise check honors the

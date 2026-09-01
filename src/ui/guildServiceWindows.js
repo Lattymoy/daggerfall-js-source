@@ -271,9 +271,13 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
 
 /** CureDiseaseService (:54-130). */
 export function buildCureDiseaseFlow(entity, guild, membership, deps) {
-  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', becomingVampireOrWerebeast = false, priceAdjustment = 1000 } = deps;
+  // A4: `becomingVampireOrWerebeast` is no longer a host argument -
+  // cureDiseaseOffer reads TimeToBecomeVampireOrWerebeast off the
+  // entity, exactly as DaggerfallGuildServiceCureDisease.cs:58 reads
+  // it off playerEntity. One less thing for a host to remember.
+  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', priceAdjustment = 1000 } = deps;
   const offer = cureDiseaseOffer(entity, guild, membership, {
-    quality, regionIndex, nowClassicMinutes: now(), becomingVampireOrWerebeast, priceAdjustment,
+    quality, regionIndex, nowClassicMinutes: now(), priceAdjustment,
   });
   const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });
 
