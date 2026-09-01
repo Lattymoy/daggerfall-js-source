@@ -1080,7 +1080,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -1101,6 +1101,13 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // is both the headless charter and DFU's own behaviour with no
     // other enemy in the scene.
     candidates,
+    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, the FIRST
+    // statement of EnemySenses.StealthCheck (:619-621) - a
+    // non-hostile enemy in a castle never stealth-detects. It is a
+    // SCENE fact, so it rides the context with the rest of them; only
+    // the dungeon host can answer it true, and only from the block
+    // the player is standing in.
+    insideDungeonCastle,
     playerEntity: playerEntity ?? entity,
   };
 }

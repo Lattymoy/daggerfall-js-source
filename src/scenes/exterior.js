@@ -814,20 +814,25 @@ export async function bootExterior(canvas, renderer, params, status) {
   // AUDIT 17e F6: DFU clears the active crime on OnExitLocationRect.
   // This host IS one fixed location with no rect to leave - the
   // streaming host (world.js) owns that edge. Nothing to clear here.
-  function _crimeResponse() {
+  /** ROAD-B: the ONE entry to PlayerEntity.SpawnCityGuards for this
+   *  host (world.js's twin - THE FOUR HOSTS RULE). The INDOOR arm
+   *  (:628-642) is offered the call first and, when it takes it,
+   *  RETURNS: a crime in an open shop, a tavern or a residence is
+   *  answered at that building's own lowest outer door by the mode
+   *  machine's own watch pool, and the street law below never runs.
+   *  Everything else falls through, which is C#'s own fall-through. */
+  function _spawnGuards(immediate) {
+    if (modes?.spawnCityGuardsInside?.(immediate)) return;
     const feet = walkMode ? player.pos : cam.pos;
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
-    cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+    cityGuards.spawnCityGuards(!!immediate, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
+  function _crimeResponse() { _spawnGuards(true); }
   /** AUDIT 39 (#22): SpawnCityGuards(FALSE) - the WITNESS arm, the
    *  world host's twin (THE FOUR HOSTS RULE). The mode machine's
    *  private-property theft calls the member through the bag below
    *  and the bool picks the arm; this host had only the crime half. */
-  function _witnessResponse() {
-    const feet = walkMode ? player.pos : cam.pos;
-    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
-    cityGuards.spawnCityGuards(false, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
-  }
+  function _witnessResponse() { _spawnGuards(false); }
   /** S40: THE REST KEY, OUTDOORS - world.js's twin (THE FOUR HOSTS
    *  RULE). This host stands in ONE location and never leaves its
    *  rect, so IsPlayerInTown(true, true) is the type test plus "not
@@ -1420,6 +1425,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // arm's caller, which neither host answered. Same shape as the
     // world host's.
     spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
+    // ROAD-B / G2: the arrest interception for the mode machine's
+    // INDOOR watch - world.js's twin. The court flow is the host's, so
+    // the interior pool asks through here rather than owning a copy.
+    onGuardHit: (dmg, apply) => arrestFlow.onGuardHit(dmg, apply),
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),
@@ -2246,10 +2255,14 @@ export async function bootExterior(canvas, renderer, params, status) {
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             if (r) surfacePlayer();
+            // ROAD-B: WeaponEnvDamage's static-door arm (:474-477),
+            // world.js's twin - THE FOUR HOSTS RULE.
             // AUDIT 23 (C9) - WeaponManager.cs:423-424: the no-enemy
             // swing sound at the hit frame (the rig's entry whoosh is
-            // gone); a swing that found neither guard nor civilian.
-            else audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1);
+            // gone); a swing that found neither guard, civilian nor
+            // door - a swing the env arm consumed returns true and
+            // rings nothing (:1066).
+            else if (!modes?.attemptExteriorDoorBash?.(eye, fwd)) audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1);
           }).catch((e) => console.error('[civil]', e));
         }
       }

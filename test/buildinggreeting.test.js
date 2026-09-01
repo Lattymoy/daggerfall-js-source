@@ -153,7 +153,12 @@ test('BG1: ShopQualityPresentation - 0 popup, 1 HUD, everything else nothing', (
 
 test('BG1: the door arm carries DFU\'s two variables and DEFERS behind the box', () => {
   const wm = read('src/scenes/worldModes.js');
-  const arm = wm.slice(wm.indexOf('let isBrokenIn = false;'), wm.indexOf('return enterInteriorCore(hit, entries);'));
+  // ROAD-B MOVED THIS NEEDLE. `isBrokenIn` no longer starts false: it
+  // starts from the real isBash, which is DFU's own `var isBrokenIn =
+  // isBash;` (:517) now that a weapon swing can reach this arm. The
+  // facts below - the Open spell raises BOTH, the pick raises only
+  // isBrokenIn, the box defers - are unchanged.
+  const arm = wm.slice(wm.indexOf('let isBrokenIn = isBash;'), wm.indexOf('return enterInteriorCore(hit, entries);'));
   // the Open spell raises BOTH; the pick raises only isBrokenIn
   assert.match(arm, /opened = r\.opened;\n\s*if \(r\.opened\) isBrokenIn = true;/,
     'buildingUnlocked = isBrokenIn = true');
@@ -176,16 +181,24 @@ test('BG1: the door arm carries DFU\'s two variables and DEFERS behind the box',
   assert.match(arm, /\? 'popup'   \/\/ the house greeting is not behind ShopQualityPresentation/);
 });
 
-test('BG1: the bash flag is NARROWED to the input it actually needs', () => {
-  // The old flag said "no weapon-vs-static-door path exists yet" and
-  // bundled the greeting with it. The greeting shipped; what is left
-  // is the isBash INPUT, and the flag now says only that.
+test('BG1/ROAD-B: the bash flag is CLOSED - the input landed and both arms with it', () => {
+  // BG1 narrowed this flag to "the isBash INPUT" and said the arms
+  // would drop in beside it the day that input existed. ROAD-B is that
+  // day, so the pin turns over: the flag must be GONE, and the two
+  // arms it named must be live and cited where C# has them.
   const wm = read('src/scenes/worldModes.js');
-  const note = wm.slice(wm.indexOf('// FLAGGED, and narrowed to what is actually missing:'), wm.indexOf('let isBrokenIn = false;'));
-  assert.match(note, /:571-583/);
-  assert.match(note, /:621-627/);
-  assert.match(note, /`isBash`/);
-  assert.doesNotMatch(note, /house greeting/, 'the greeting is no longer part of this flag');
+  assert.ok(!wm.includes('// FLAGGED, and narrowed to what is actually missing:'),
+    'the flag is closed, not left standing beside its fix');
+  const arm = wm.slice(wm.indexOf('let isBrokenIn = isBash;'), wm.indexOf('return enterInteriorCore(hit, entries);'));
+  // :570-583 - "Classic makes a roll whether it is locked or not":
+  // FailedRoll(25 - lock) ends the activation, and 10% of those are
+  // noticed as the ATTEMPT.
+  assert.match(arm, /if \(isBash && !opened\) \{\n\s*if \(!dice100\(25 - lockValue, Math\.random\(\)\)\) \{/);
+  assert.match(arm, /CRIMES\.Attempted_Breaking_And_Entering/);
+  // :621-627 - a flat 10% on a bash that DID open, and the full crime.
+  assert.match(arm, /if \(isBash && dice100\(10, Math\.random\(\)\)\) \{\n\s*setCrimeCommitted\(playerEntity, CRIMES\.Breaking_And_Entering\);/);
+  // both call the watch, through the host's one entry
+  assert.equal((arm.match(/host\.spawnCityGuards\?\.\(true\);/g) ?? []).length, 2);
 });
 
 test('AUDIT 28 W6: the shop-quality HUD lines stay up for ShopQualityHUDDelay seconds (PlayerActivate :1382)', () => {

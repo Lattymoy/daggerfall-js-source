@@ -69,6 +69,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // range) passes nothing and its corpses are never collected, which
   // is what DFU does with a pixel that stays in range.
   currentPixelKey = () => null,
+  // ROAD-B: GameManager.MakeEnemiesHostile over the HOST's whole
+  // area, not this pool alone - DaggerfallEntityBehaviour.cs:255-258
+  // fires it when a NON-hostile foe is struck, and DFU's
+  // ActiveGameObjectDatabase is one database for the scene. A host
+  // that owns several pools (the watch and the encounters share a
+  // street) hands in the union; absent, striking a passive foe turns
+  // only that foe, which is the pre-wiring shape.
+  makeAreaHostile = null,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -290,6 +298,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
     markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
     if (fromPlayer && f.ai) {
+      // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 sits BEFORE the
+      // call below and is a different law - the whole area turns, this
+      // one foe additionally learns where the blow came from. The
+      // `!isHostile` read must precede the walk, which flips this foe
+      // too.
+      if (!f.ai.isHostile) makeAreaHostile?.();
       f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
       resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
     }

@@ -44,7 +44,7 @@ import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the b
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
@@ -1430,6 +1430,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
   // component off each enemy; there is one archive and one clock.
   const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
+  // ROAD-B: THE AREA, for GameManager.MakeEnemiesHostile.
+  // DFU's ActiveGameObjectDatabase is ONE database for the scene, so
+  // "all enemies in an area" is every live enemy this host can reach -
+  // the two exterior pools AND the inside host's pool when the player
+  // is in a building or a dungeon. That is the same join
+  // `questFoeInstances` makes below (MT-iv recorded the identical
+  // miss there: an action that walked only the outdoor pools could
+  // never touch a foe standing in a dungeon, and the quest actions
+  // that call this one - Enemies.cs:54 - run wherever the player is).
+  const _liveEnemyDatabase = () => [
+    ...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.insideFoes?.() ?? []),
+  ];
+  const _makeEnemiesHostile = () => makeEnemiesHostile(_liveEnemyDatabase());
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
@@ -1460,6 +1473,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
+    makeAreaHostile: _makeEnemiesHostile,   // ROAD-B: DaggerfallEntityBehaviour.cs:255-258
     say: (l) => townTalk.say(l),
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
@@ -1516,6 +1530,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // release). A thirty-day sentence would otherwise walk thirty days
     // of encounter rolls the instant the courthouse door opened.
     const span = playerEntity.preventEnemySpawns ? 0 : Math.min(now - _lastEncMinutes, 1440);
+    // :484 - `bool updatedGuards = false`, declared OUTSIDE the loop
+    // and inside the preventEnemySpawns guard: the sweep below runs at
+    // most once per Update, not once per caught-up minute.
+    let _updatedGuards = false;
     for (let l = 0; l < span; l++) {
       const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
       const hit = intermittentEnemySpawn({
@@ -1559,6 +1577,22 @@ export async function bootWorld(canvas, renderer, params, status) {
         setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy);   // V4: through the one setter (SuppressCrime)
         _witnessResponse();
       }
+      // ROAD-B: :513-516, the THIRD statement of the same minute -
+      // "If enemy guards have been spawned, any new NPC guards should
+      // be made into enemyMobiles". `updatedGuards` makes it run at
+      // most ONCE per Update however many minutes the loop catches
+      // up, so it is the local latch here and not a per-minute call:
+      // the conversion is a sweep of the whole population, and DFU
+      // deliberately does not repeat it inside one frame.
+      //
+      // The port had no caller for this at all, so a town whose watch
+      // was already out kept minting ordinary wandering guards the
+      // player could walk straight past.
+      if (!_updatedGuards) {
+        _updatedGuards = true;
+        cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })
+          .catch((e) => console.error('[guards]', e));
+      }
     }
     // :522 - `lastGameMinutes = gameMinutes`, OUTSIDE the guard: the
     // suppressed window is skipped, not replayed later.
@@ -1581,16 +1615,24 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  can converts on the spot (and takes every later pool entry with
    *  it, DFU's own quirk); a civilian who can starts the 5-10 second
    *  arrival countdown the pool's update already consumes. */
-  function _witnessResponse() {
+  /** ROAD-B: the ONE entry to PlayerEntity.SpawnCityGuards for this
+   *  host, both arms. The INDOOR arm (:628-642) runs first and, when
+   *  it takes the call, RETURNS - a crime in an open shop, a tavern or
+   *  a residence is answered at that building's own lowest outer door
+   *  by the interior's own watch pool, and the street law below never
+   *  runs. Every other case falls through here exactly as C# falls
+   *  through the `if`. This host's FLAGGED note (below, at the mode
+   *  machine's `spawnCityGuards` key) said the arm was unreachable
+   *  because "this host's pool is the exterior street"; the pool it
+   *  needed is worldModes' own, and this is the routing. */
+  function _spawnGuards(immediate) {
+    if (modes?.spawnCityGuardsInside?.(immediate)) return;
     const feet = walkMode && playerSpawned ? player.pos : cam.pos;
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
-    cityGuards.spawnCityGuards(false, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+    cityGuards.spawnCityGuards(!!immediate, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
-  function _crimeResponse() {
-    const feet = walkMode && playerSpawned ? player.pos : cam.pos;
-    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
-    cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
-  }
+  function _witnessResponse() { _spawnGuards(false); }
+  function _crimeResponse() { _spawnGuards(true); }
   // G2: arrest + court through the townTalk overlay seam.
   //
   // AUDIT 21 F8 RETIRED THE OPEN FLAG THAT STOOD HERE. It said the prison
@@ -4656,15 +4698,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     getGoldPieces: () => goldAmount(playerEntity),
     deductGoldPieces: (n) => deductGoldPieces(playerEntity, n),
     raiseTime: (seconds) => setWorldMinutes(worldMinutes() + seconds / 60),
-    spawnCityGuards: (immediate) => {
-      const feet = walkMode && playerSpawned ? player.pos : cam.pos;
-      cityGuards.spawnCityGuards(!!immediate, { playerFeet: [...feet], playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], pool: _guardPool() }).catch((e) => console.error('[guards]', e));
-    },
-    makeEnemiesHostile: () => {
-      for (const f of [...exteriorFoes.foes, ...cityGuards.guards]) {
-        if (!f.dead && f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(); }
-      }
-    },
+    // ROAD-B: through the host's ONE entry, so a quest that calls the
+    // watch on a player standing in a tavern gets the indoor arm too.
+    spawnCityGuards: (immediate) => _spawnGuards(!!immediate),
+    // ROAD-B: GameManager.cs:790-806 through the ONE law
+    // (hostCombat.makeEnemiesHostile), over the whole active database
+    // (`_liveEnemyDatabase` - the inside host's pool included; a quest
+    // that turns the room hostile fires wherever the player is).
+    // The private copy this replaced also called makeHostileToPlayer
+    // on every foe it flipped, which is a DIFFERENT law
+    // (MakeEnemyHostileToAttacker) that DFU does NOT run here - it
+    // handed the player's position and a 200-tick pursuit to every
+    // enemy in the scene where C# sets one boolean and lets them find
+    // the player through their own senses.
+    makeEnemiesHostile: _makeEnemiesHostile,
     clearEnemies: () => {
       for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); }
     },
@@ -4940,10 +4987,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and NO host supplied it, so the optional call no-opped: the
     // player robbed every house in the Bay and no watch ever came.
     // The immediate/witness split is what the bool means.
-    // FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
-    // lowest outer door (PlayerEntity.cs:628-641); this host's pool is
-    // the exterior street, so the watch is waiting outside.
-    spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
+    // ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+    // INDOOR arm spawns 2-5 guards at the interior's lowest outer door
+    // (PlayerEntity.cs:628-641); this host's pool is the exterior
+    // street, so the watch is waiting outside." The mode machine mints
+    // its own watch pool with the interior now, and `_spawnGuards`
+    // offers it the call first - so a theft in a shop is answered at
+    // that shop's own door, and the street arm is what happens
+    // everywhere else, as C# has it.
+    spawnCityGuards: (immediate) => _spawnGuards(!!immediate),
+    // G2: the arrest interception, for the mode machine's indoor
+    // watch. The court flow and the overlay it opens are this host's,
+    // so the interior pool asks through here instead of building a
+    // second copy. Answers TRUE when the surrender box took the blow.
+    onGuardHit: (dmg, apply) => arrestFlow.onGuardHit(dmg, apply),
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     // S40: IsPlayerInTown() with BOTH flags at their defaults - the
@@ -6126,8 +6183,17 @@ export async function bootWorld(canvas, renderer, params, status) {
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             if (r) surfacePlayer();
-            // AUDIT 23 (C9): the no-enemy swing sound at the hit frame.
-            else audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1);
+            // ROAD-B: WeaponManager.WeaponEnvDamage (:474-477) - a
+            // swing that met no living thing is offered to the STATIC
+            // DOORS, and a door under it is BASHED (PlayerActivate
+            // .AttemptExteriorDoorBash). This is the input R1's flag
+            // said the two bash arms were waiting for; outdoors there
+            // is no action-object list for envAttack to walk, so the
+            // door ray is the mode machine's.
+            // AUDIT 23 (C9): the no-enemy swing sound at the hit frame -
+            // and NOT when the env arm consumed the swing, which is
+            // what WeaponEnvDamage returning true means (:1066).
+            else if (!modes?.attemptExteriorDoorBash?.(cam.pos, lookFwd)) audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1);
           }).catch((e) => console.error('[civil]', e));
         }
       }

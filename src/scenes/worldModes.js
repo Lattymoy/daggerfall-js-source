@@ -56,11 +56,13 @@ import { createActivateGate, activateFrame } from '../systems/activateGate.js'; 
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
-import { calculateAttackDamage } from '../combat/formulas.js';   // AUDIT 39 (#64/#65): the interior arrow's damage, both ways
+import { calculateAttackDamage, dice100 } from '../combat/formulas.js';   // AUDIT 39 (#64/#65): the interior arrow's damage, both ways   // ROAD-B: the two exterior-door bash rolls
+import { WEAPON_REACH } from '../combat/playerWeapon.js';   // ROAD-B: AttemptExteriorDoorBash rides the SWING's reach, not the click's
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice, makeEnemiesHostile } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
 import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
+import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
@@ -616,6 +618,12 @@ export function createWorldModes(host) {
       // TrackLooseObject (GameObjectHelper.cs:836-839).
       currentPixelKey: () => null,
       playerSinks: interiorTicker.sinks,
+      // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 - striking a
+      // non-hostile foe turns the whole area. Inside a building the
+      // area IS this pool (the street's two pools are a different
+      // scene, and the exterior host does not tick them while the
+      // player is indoors), so the walk is the pool's own list.
+      makeAreaHostile: () => makeEnemiesHostile(interiorFoes?.foes ?? []),
       say: (l) => say(l),
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
@@ -648,6 +656,55 @@ export function createWorldModes(host) {
           magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
         },
       } : null,
+    });
+  }
+  /** ROAD-B: THE WATCH, INDOORS. PlayerEntity.SpawnCityGuards' FIRST
+   *  arm (:628-642) stands 2-5 Knight_CityWatch at the interior's
+   *  lowest outer door when the crime happened in an open shop, a
+   *  tavern or a residence - and RETURNS, so the street arm never
+   *  runs for those buildings. world.js flagged this as unreachable
+   *  because "this host's pool is the exterior street, so the watch is
+   *  waiting outside"; the pool it needed is this one. Same lifetime
+   *  and same teardown as interiorFoes - PlayerEnterExit's
+   *  OnTransitionExterior takes the interior's enemies with it, and
+   *  the watch are enemies. */
+  let interiorGuards = null;
+  /** IF/ROAD-B: the interior's senses context, built once per frame
+   *  and handed to BOTH pools. `candidates` is this host's whole
+   *  active-enemy database (MT's join): a watchman called into a shop
+   *  and a summoned daedra standing in it are one database, exactly as
+   *  the street's two pools are one for the exterior host. */
+  const _interiorSenses = () => sensesContext(playerEntity, interiorTicker.classicMinutes, {
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+    candidates: () => [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])].filter((f) => !f.dead),
+    playerEntity,
+  });
+  function makeInteriorGuards(ctx) {
+    return createCityGuards({
+      renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
+      playerEntity, audio,
+      hitEffects: interiorHitEffects,
+      playerWeaponSheathed: () => !!interiorWeapon.playerWeapon.sheathed,
+      currentMinute: () => Math.floor(interiorTicker.classicMinutes),
+      // interiorFoes' arm, for the same reason: a host whose corpses
+      // never leave streaming range hands nothing to TrackLooseObject.
+      currentPixelKey: () => null,
+      say: (l) => say(l),
+      onPlayerHurt: (dmg, wpn) => {
+        if (dmg <= 0) return;
+        const apply = () => {
+          hurtPlayer(playerEntity, dmg);
+          audio.playOneShot(hitSoundFor(wpn), 1.1);
+          playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+          surfacePlayer();
+        };
+        // G2: the arrest interception is the WORLD host's (it owns the
+        // court flow and the overlay it opens), so the indoor watch
+        // asks for it through the host seam rather than growing a
+        // second copy. A host that does not offer one just deals the
+        // damage, which is the pre-arrest shape.
+        if (!(host.onGuardHit?.(dmg, apply) ?? false)) apply();
+      },
     });
   }
   // E2: the entered building's identity + the shop browse overlay.
@@ -3088,9 +3145,25 @@ export function createWorldModes(host) {
       activateBulletinBoard(boards[Number(key.split(':')[1])], eye, dir);
       return true;
     }
-    const hit = entries[key];
+    return activateStaticDoor(entries[key], entries, false);
+  }
+
+  /** ROAD-B: ActivateStaticDoor (PlayerActivate.cs:486-632) as its own
+   *  member, because it has TWO callers in DFU and the port only ever
+   *  had one. The click reaches it through the activation ray
+   *  (tryEnter, above) with `isBash` false; a WEAPON SWING reaches it
+   *  through AttemptExteriorDoorBash (:1056-1079) with `isBash` true,
+   *  and that second caller is what R1's FLAG said was missing -
+   *  "what is missing is not the two rolls but the INPUT that would
+   *  reach them". `attemptExteriorDoorBash` below is that input. */
+  async function activateStaticDoor(hit, entries, isBash = false) {
     // Route by verbatim door type: buildings to interiors, dungeon
     // entrances into the RDB crawl.
+    // :507-509 - the bash SOUND, before any of the type routing and
+    // on every door but a dungeon exit. DFU plays it from
+    // PlayerActivate's own AudioSource (the player), not from the
+    // door, which is why this is playOneShot and not play3d.
+    if (isBash && hit.door.doorType !== DOOR_TYPE.DUNGEON_EXIT) audio.playOneShot(SOUND.PlayerDoorBash, 1);
     if (hit.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) return tryEnterDungeon(hit, entries);
     if (hit.door.doorType !== DOOR_TYPE.BUILDING || hit.recordIndex === undefined) return false;
     // R1: THE EXTERIOR DOOR LOCK (ActivateStaticDoor, PlayerActivate.cs
@@ -3107,19 +3180,18 @@ export function createWorldModes(host) {
     // TallyCrimeGuildRequirements landed at CG2 on the success arm
     // below; BG1 took the greeting (:585-628) at the tail.
     //
-    // FLAGGED, and narrowed to what is actually missing: the two BASH
-    // arms (:571-583 the failed bash -> 10% noticed ->
-    // Attempted_Breaking_And_Entering; :621-627 the bash of an ALREADY
-    // OPEN door -> 10% -> Breaking_And_Entering). Both hang off DFU's
-    // `isBash`, which is `PlayerActivate` being reached from a WEAPON
-    // SWING rather than the activation ray - and outdoors this port has
-    // no such path: `envAttack` runs against an action-object list, and
-    // an exterior static door is not one. So what is missing is not the
-    // two rolls (six lines, and the crime road they need shipped at CG2
-    // and PT1) but the INPUT that would reach them. `isBrokenIn` below
-    // is written as DFU writes it, starting from the isBash that does
-    // not exist yet, so the day that input lands the arms drop in
-    // beside it.
+    // ROAD-B CLOSED R1's FLAG. It read: "the two BASH arms (:571-583
+    // the failed bash -> 10% noticed -> Attempted_Breaking_And_Entering;
+    // :621-627 the bash of an ALREADY OPEN door -> 10% ->
+    // Breaking_And_Entering). Both hang off DFU's `isBash`... and
+    // outdoors this port has no such path... So what is missing is not
+    // the two rolls but the INPUT that would reach them... the day that
+    // input lands the arms drop in beside it." The input is
+    // `attemptExteriorDoorBash` (below, off the exterior weapon swing -
+    // WeaponManager.WeaponEnvDamage:474-477), and the arms are here:
+    // `isBrokenIn` starts from the real isBash, the Open spell and the
+    // whole lock ladder are skipped for a bash exactly as :519-521 and
+    // :523-524 skip them, and the two rolls sit where C# puts them.
     {
       const bd = buildingDataForDoor?.(hit) ?? null;
       const locId = discoveryLocationId?.() ?? null;
@@ -3168,11 +3240,14 @@ export function createWorldModes(host) {
         // Open SPELL *together with* buildingUnlocked, and is raised
         // ALONE by a successful pick - which is what makes a picked
         // shop still state its quality while a magicked house says
-        // nothing at all. It has no bash arm to start from here (see
-        // the FLAGGED note above), so it starts false.
-        let isBrokenIn = false;
+        // nothing at all. ROAD-B: `var isBrokenIn = isBash;` (:517) -
+        // "Breaking in can be done via unlocking or bashing", so a
+        // bashed house says nothing either.
+        let isBrokenIn = isBash;
         const lockValue = buildingLockValue(bd.quality);
-        if (!opened) {
+        // :519-520 - `if (!buildingUnlocked && !isBash && ...)`: a
+        // swing never spends the readied Open spell.
+        if (!opened && !isBash) {
           const spell = doorSpellFor(playerEntity);
           if (spell?.kind === 'open') {
             const r = triggerExteriorOpen(lockValue, spell.holderLevel);
@@ -3182,7 +3257,12 @@ export function createWorldModes(host) {
             if (r.opened) isBrokenIn = true;   // `buildingUnlocked = isBrokenIn = true`
           }
         }
-        if (!opened) {
+        // :523-524 - `if (!buildingUnlocked && !isBash)`: the WHOLE
+        // mode ladder (the refusal, the look-at text, the Steal pick
+        // and its anti-grind record) belongs to the activation ray. A
+        // swing does not read the interaction mode and does not train
+        // Lockpicking; it goes straight to the bash roll below.
+        if (!opened && !isBash) {
           const lockpick = skillValue(playerEntity, SKILLS.Lockpicking);
           if (getInteractionMode() !== 'steal') {
             townTalk?.say?.(LOCKED_EXTERIOR_DOOR_TEXT);
@@ -3211,6 +3291,32 @@ export function createWorldModes(host) {
             if (locId) setLastLockpickAttempt(locId, bd.buildingKey, lockpick);
             return true;
           }
+        }
+        // ROAD-B - THE FIRST BASH ARM (:570-583). "Classic makes a roll
+        // whether it is locked or not", and DFU's comment is the law:
+        // the roll is `Dice100.FailedRoll(25 - buildingLockValue)`, so
+        // the bash OPENS on a success of that chance and a FAILURE ends
+        // the activation here. A quality-50 building (lock 25) can
+        // never be bashed open at all; a hovel (lock 0) opens one time
+        // in four. `!buildingUnlocked` is `!opened`: a door already
+        // standing open is not bashed, it is walked through - that is
+        // the SECOND arm, below.
+        //
+        // And the crime is only levied when someone NOTICES: a nested
+        // Dice100.SuccessRoll(10) inside the failure. Nine failed bashes
+        // in ten cost nothing at all, which is why bashing a door is a
+        // real, if stupid, way into a house.
+        if (isBash && !opened) {
+          if (!dice100(25 - lockValue, Math.random())) {   // Dice100.FailedRoll(25 - lock)
+            if (dice100(10, Math.random())) {
+              setCrimeCommitted(playerEntity, CRIMES.Attempted_Breaking_And_Entering);   // PT1: the ONE crime write
+              host.spawnCityGuards?.(true);
+            }
+            return true;   // :582 - the failed bash consumes the swing and does NOT enter
+          }
+          // A successful bash IS the way in; `opened` stays false so
+          // the greeting below reads it exactly as DFU's
+          // buildingUnlocked does (isBrokenIn is already true).
         }
         // BG1: the greeting (:585-628). `buildingGreetingsEnabled` is a
         // DFU static defaulted TRUE, not a settings key, so it is a
@@ -3256,9 +3362,55 @@ export function createWorldModes(host) {
           // delay is not this law's.
           if (lines.length && how === 'hud') for (const l of lines) townTalk?.say?.(l, getInt('GUI', 'ShopQualityHUDDelay', 1, 10));
         }
+        // ROAD-B - THE SECOND BASH ARM (:621-627). "Bashing open an
+        // unlocked door potentially alerts the guards": a flat 10%, no
+        // lock term, and the crime is the full Breaking_And_Entering
+        // rather than the attempt - the door DID open. It sits INSIDE
+        // DFU's `if (hitBuilding && buildingGreetingsEnabled)` block
+        // and AFTER the deferred-messagebox return, so a bash that
+        // raised a greeting popup skips the roll entirely (the return
+        // above is that same return) and only a bash that showed no box
+        // - or showed the HUD line - can be noticed. Ported where C#
+        // has it rather than where it reads more sensibly.
+        if (isBash && dice100(10, Math.random())) {
+          setCrimeCommitted(playerEntity, CRIMES.Breaking_And_Entering);
+          host.spawnCityGuards?.(true);
+        }
       }
     }
     return enterInteriorCore(hit, entries);
+  }
+
+  /** ROAD-B: PlayerActivate.AttemptExteriorDoorBash (:1056-1079) - THE
+   *  INPUT R1's flag was waiting for. WeaponManager.WeaponEnvDamage
+   *  (:474-477) offers every swing that met no action object to the
+   *  static doors, and a door under the swing runs the WHOLE of
+   *  ActivateStaticDoor with isBash true.
+   *
+   *  The ray is the SWING's, not the activation click's: DFU's `hit`
+   *  comes from WeaponManager's own SphereCast along the camera at
+   *  `weapon.Reach` (:1064), which is why the reach here is
+   *  WEAPON_REACH and not DEFAULT_ACTIVATION_DISTANCE. That also makes
+   *  ActivateStaticDoor's `hit.distance > DoorActivationDistance`
+   *  refusal (:500-504) unreachable on this path - the weapon cannot
+   *  reach 3.2 units - so it is not re-tested here; the click's own
+   *  caller still enforces it through pickActivatable.
+   *
+   *  Only DOORS are targets: the street's NPCs and bulletin boards are
+   *  in the activation ray, not the weapon's. The return is DFU's -
+   *  `door.doorType != DoorTypes.DungeonExit`, i.e. the swing was
+   *  consumed - which above ground is "a door was under it".
+   *  @returns {boolean} true when the swing hit a door */
+  function attemptExteriorDoorBash(eye, dir) {
+    if (mode !== 'exterior') return false;
+    const entries = doorTargets();
+    const key = pickActivatable(eye, dir,
+      entries.map((entry, i) => ({ key: i, aabb: doorWorldAabb(entry.door), distance: WEAPON_REACH })),
+      baseCollider());
+    if (key === null) return false;
+    const hit = entries[key];
+    activateStaticDoor(hit, entries, true).catch((e) => console.error('[bash]', e));
+    return hit.door.doorType !== DOOR_TYPE.DUNGEON_EXIT;
   }
 
   /** IS1: TransitionInterior's shared core - the clicked door
@@ -3359,6 +3511,7 @@ export function createWorldModes(host) {
       exteriorDoor = hit.door;   // IS1: SetExteriorDoors - the save's way back in
       interiorCtx = ctx;
       interiorFoes = makeInteriorFoes(ctx);   // IF: the pool lives exactly as long as the interior does
+      interiorGuards = makeInteriorGuards(ctx);   // ROAD-B: ...and so does the watch that can be called into it
       // X1: an armed Open/Lock spell fires on this interior's doors
       // too - the same law the dungeon context wires for its own.
       wireDoorSpells(ctx.actions, playerEntity, (t) => townTalk?.say?.(t));
@@ -3597,6 +3750,8 @@ export function createWorldModes(host) {
     interiorCtx.destroy();
     interiorFoes?.destroy?.();   // IF: OnTransitionExterior tears the interior's enemies down with it
     interiorFoes = null;
+    interiorGuards?.clearLive?.();   // ROAD-B: the watch are enemies too - same transition, same teardown
+    interiorGuards = null;
     interiorDropped.restorePiles(null);   // ID1: the piles are cached above; free their batches with the scene
     interiorHitEffects.clear();   // HE1: a splash mid-animation must not follow the player into the next building
     interiorCtx = null;
@@ -4117,11 +4272,7 @@ export function createWorldModes(host) {
       // every other pool (MT) - the candidate list is this host's
       // whole active-enemy database, which is the pool itself.
       if (interiorFoes && interiorCtx) {
-        interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, sensesContext(playerEntity, interiorTicker.classicMinutes, {
-          movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
-          candidates: () => interiorFoes.foes.filter((f) => !f.dead),
-          playerEntity,
-        }));
+        interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, _interiorSenses());
       }
     }
     cam.pos = player.eyeAt();   // EV1: the interpolated render eye
@@ -4383,6 +4534,16 @@ export function createWorldModes(host) {
       const _foeBatches = interiorFoes.batches();
       if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, UP_Y);
     }
+    // ROAD-B: the indoor WATCH drives and draws on the same axis, in
+    // the same place the exterior host runs its own pool - update
+    // RETURNS the batches (cityGuards' shape), so the drive lives here
+    // beside the draw rather than up in the sim block, which has no
+    // render context to hand it.
+    if (interiorGuards && interiorCtx) {
+      const _guardBatches = interiorGuards.update(overlayHeld ? 0 : dt, player.pos, cam.pos,
+        _interiorSenses(), { canvas, proj, view, eye: mwv.eye });
+      if (_guardBatches.length) renderer.drawBillboards(_guardBatches, camRight, UP_Y);
+    }
     if (magic) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
@@ -4446,6 +4607,14 @@ export function createWorldModes(host) {
       // A quest foe or a summoned daedra standing in a building is
       // not a miss. WeaponManager.cs:419-436 tallies on the hit and
       // rings the no-enemy sound only when nothing was struck.
+      // ROAD-B: the WATCH resolves first, as it does above ground
+      // (world.js runs cityGuards.resolvePlayerHit ahead of the
+      // encounter pool) - killing a watchman indoors is the same
+      // Murder it is in the street, and only its own pool knows that.
+      if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
+        makeInView(proj, view, multiply), (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 }))) {
+        continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
+      }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
         makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), 1.1))) {
         tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
@@ -5610,6 +5779,52 @@ export function createWorldModes(host) {
       if (mode !== 'dungeon' || !dungeonCtx) return [];
       return dungeonCtx.foes.filter((f) => !f.dead && f.questBehaviour);
     },
+    /** ROAD-B: PlayerEntity.SpawnCityGuards' INDOOR arm
+     *  (:628-642). Answers TRUE when it took the call, which is what
+     *  DFU's unconditional `return` at :641 means - a crime committed
+     *  in an open shop, a tavern or a residence is answered by that
+     *  building's own front door and the street arm never runs. Every
+     *  other case (outdoors, or inside a temple / guild hall / palace)
+     *  answers false and falls through to the exterior host's pool,
+     *  which is exactly the fall-through C# makes.
+     *
+     *  The three flags are PlayerEnterExit's, all latched at the door
+     *  (PlayerActivate.cs:1120-1122): IsPlayerInsideOpenShop rides the
+     *  building record (AUDIT 26 F066 put it there), and Tavern and
+     *  Residence are the bare RMBLayout type predicates. */
+    spawnCityGuardsInside(immediate) {
+      if (mode !== 'interior' || !interiorCtx || !interiorGuards) return false;
+      const b = interiorBuilding;
+      const eligible = !!b && (!!b.insideOpenShop
+        || b.buildingType === BUILDING_TYPES.Tavern   // RMBLayout.IsTavern (:803)
+        || isResidence(b.buildingType));              // RMBLayout.IsResidence
+      if (!eligible) return false;
+      interiorGuards.spawnCityGuards(!!immediate, {
+        playerFeet: [...player.pos],
+        playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)],
+        pool: [],   // there is no street population in here to convert
+        interior: { doors: interiorCtx.doors, origin: interiorCtx.parentPt(0, 0, 0), eligible: true },
+      }).catch((e) => console.error('[guards]', e));
+      return true;
+    },
+    /** ROAD-B: the INSIDE half of ActiveGameObjectDatabase's enemy
+     *  join - every live enemy standing in whichever interior the
+     *  player is in, quest-spawned or not. `liveQuestFoes` above is
+     *  the same walk narrowed to QuestResourceBehaviour carriers,
+     *  which is what its one caller (questFoeInstances) asks;
+     *  GameManager.MakeEnemiesHostile asks the unnarrowed question,
+     *  and both interiors carry a real pool - the interior one since
+     *  IF gave buildings enemies. Outdoors both are empty and the
+     *  world host's own two pools are the whole database. */
+    insideFoes() {
+      if (mode === 'dungeon' && dungeonCtx) return dungeonCtx.foes.filter((f) => !f.dead);
+      // ROAD-B: a building holds TWO pools - the encounter/quest foes
+      // and the watch that can be called in through its front door.
+      if (mode === 'interior') {
+        return [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])].filter((f) => !f.dead);
+      }
+      return [];
+    },
     tryPlaceQuestFoe(handle) {
       if (mode === 'interior') return tryPlaceInteriorQuestFoe(handle);
       if (mode !== 'dungeon' || !dungeonCtx) return false;
@@ -5731,6 +5946,8 @@ export function createWorldModes(host) {
         interiorCtx.destroy();
         interiorFoes?.destroy?.();
         interiorFoes = null;
+        interiorGuards?.clearLive?.();   // ROAD-B: same teardown, the quest-teleport / load arm
+        interiorGuards = null;
         interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
         interiorHitEffects.clear();   // HE1: the same
         // ...and the OnPop the comment above is about, on every window
@@ -5943,6 +6160,7 @@ export function createWorldModes(host) {
       return mode === 'interior';
     },
     tryEnter,
+    attemptExteriorDoorBash,   // ROAD-B: WeaponEnvDamage's static-door arm (PlayerActivate.cs:1056-1079)
     frame,
     installShotProbes,
   };

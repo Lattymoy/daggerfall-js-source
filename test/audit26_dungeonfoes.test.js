@@ -250,8 +250,17 @@ test('F036: the world host runs those rolls in the catch-up loop and calls Spawn
     'each success levies Criminal_Conspiracy first, exactly as :502/:509');
   assert.ok(fn.indexOf('intermittentEnemySpawn({') < fn.indexOf('passiveGuardSpawns({'),
     'after the spawn roll, which breaks out of the loop before them (:492)');
-  assert.ok(WORLD.includes("cityGuards.spawnCityGuards(false, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() })"),
-    'the witness arm finally has a caller, with the live NPC pool');
+  // ROAD-B MOVED THIS NEEDLE. SpawnCityGuards' INDOOR arm
+  // (PlayerEntity.cs:628-642) is offered the call ahead of the street
+  // law now, so both arms route through the host's ONE entry and the
+  // literal `false` moved one frame out: `_witnessResponse` passes it
+  // to `_spawnGuards`, which passes the bool on to the pool with the
+  // live NPC list. The fact the pin guards - the witness arm HAS a
+  // production caller, over the real pool - is unchanged.
+  assert.ok(WORLD.includes('function _witnessResponse() { _spawnGuards(false); }'),
+    'the witness arm finally has a caller');
+  assert.ok(WORLD.includes("cityGuards.spawnCityGuards(!!immediate, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() })"),
+    'and it reaches the pool with the live NPC pool');
 });
 
 // =====================================================================

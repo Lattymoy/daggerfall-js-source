@@ -201,7 +201,7 @@ const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704
 const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random } = {}) {
+  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random, insideDungeonCastle = () => false } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
@@ -218,6 +218,13 @@ export class ActionSystem {
     this._playerLevel = playerLevel;
     this._lockpickSkill = lockpickSkill;   // R1: GetLiveSkillValue(Lockpicking), the scene's live read
     this._rolls = rolls;
+    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, read by
+    // AttemptBash's tail (DaggerfallActionDoor.cs:220-221) and by
+    // nothing else in this file. DFU reads the ambient
+    // GameManager.Instance; the port hands it in beside the other
+    // scene reads. Absent (an interior host, a bare pin) it answers
+    // false, which is what a building interior IS.
+    this._insideDungeonCastle = insideDungeonCastle;
     // Scene seams (P10/U6/A2):
     //   resolvePosition(ns, positionKey) -> { pos: [x,y,z], yawDeg }
     //     (teleport destinations - actionless objects live only in
@@ -240,6 +247,12 @@ export class ActionSystem {
     this.onTrespass = null;
     this.onDoorState = null;
     this.onDoorBash = null;
+    // ROAD-B: onMakeEnemiesHostile() - GameManager.MakeEnemiesHostile,
+    // fired by AttemptBash's tail inside a dungeon CASTLE and by the
+    // DoorText trespass check (onTrespass, above, is the same law at a
+    // different site and keeps its own name because DFU's call sites
+    // are two different files).
+    this.onMakeEnemiesHostile = null;
     // R1: onLockpickTally() - TallySkill(Lockpicking, 1) per attempt;
     // onLockpickResult(o, success) - the attempt line + the
     // ActivateLockUnlock sound on success
@@ -710,17 +723,40 @@ export class ActionSystem {
    *  the lock. Player bashes fire the door's own record exactly like
    *  ToggleDoor(true) does (AttemptBash calls it). The bash sound
    *  rides the onDoorBash seam (wired in the 2026-08-16c audit); the
-   *  castle MakeEnemiesHostile bit stays routed (crime).
+   *  castle MakeEnemiesHostile bit rides onMakeEnemiesHostile (below).
    *  rollProvider defaults to the system's rolls stream.
    *  A SPECIAL door is not bashable at all: DaggerfallActionDoorSpecial
    *  is a separate component and WeaponManager.WeaponEnvDamage only
    *  reaches AttemptBash through GetComponent<DaggerfallActionDoor>,
    *  which a special door does not have ("player cannot open, bash,
    *  pick, or cast their way through this type of door"). The refusal
-   *  is BEFORE the bash sound - there is no door to hear. */
-  attemptBash(o, roll01 = this._rolls()) {
+   *  is BEFORE the bash sound - there is no door to hear.
+   *
+   *  ROAD-B: ...and the TAIL is no longer "routed". :220-221
+   *
+   *      if (byPlayer && PlayerEnterExit.IsPlayerInsideDungeonCastle)
+   *          GameManager.Instance.MakeEnemiesHostile();
+   *
+   *  sits AFTER all three arms and outside every one of their returns,
+   *  so it runs on a bash-close, on a burst lock, AND on a failed roll
+   *  - taking a swing at a castle's door is what turns the castle on
+   *  you, not succeeding at it. The two early `return false`s above it
+   *  are the port's own compression of arms DFU expresses as
+   *  if/else-if, so the tail has to be lifted above them to keep
+   *  running on every path C# reaches it on; the magically-held door
+   *  is the one that made that visible (DFU falls out of the else-if
+   *  and still calls it).
+   *
+   *  `byPlayer` is DFU's own parameter (:193). Its false caller is
+   *  EnemyAttack.cs:210 - a FOE bashing the door it lost the player
+   *  behind - which this port has no arm for yet; the default is
+   *  therefore true (the player swing, `envAttack`) and the parameter
+   *  exists so the foe arm cannot land without answering it. */
+  attemptBash(o, roll01 = this._rolls(), { byPlayer = true } = {}) {
     if (o.kind !== 'door' || o.special) return false;
     this.onDoorBash?.(o);   // A1 seam (PlayerDoorBash)
+    // :220-221, hoisted above the returns below - see the note.
+    if (byPlayer && this._insideDungeonCastle()) this.onMakeEnemiesHostile?.();
     if (o.state === 'end') {
       this.toggleDoor(o, true);   // bash-close; ToggleDoor(true) fires the record
       return true;

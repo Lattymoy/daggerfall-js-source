@@ -153,10 +153,23 @@ test('IF: an interior swing can now MEET an enemy - the tally and the no-enemy s
 });
 
 test('IF: the pool is ARMED for targeting like every other pool, over its own database', () => {
-  assert.match(WM, /candidates: \(\) => interiorFoes\.foes\.filter\(\(f\) => !f\.dead\)/,
-    'the interior\'s active-enemy database is the pool itself');
-  assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, sensesContext\(/,
+  // ROAD-B MOVED THIS NEEDLE. The interior's active-enemy database is
+  // no longer "the pool itself": SpawnCityGuards' indoor arm mints a
+  // second pool in the same building (the WATCH, at its front door),
+  // and DFU's ActiveGameObjectDatabase is one database per scene - so
+  // the candidate list is the JOIN, exactly as the exterior host joins
+  // its own two pools. The law the pin guards - the pool is armed for
+  // targeting, over its host's whole database, through the ONE senses
+  // builder - is unchanged and is what these still say.
+  assert.match(WM, /candidates: \(\) => \[\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)\]\.filter\(\(f\) => !f\.dead\)/,
+    'the interior\'s active-enemy database is BOTH of its pools');
+  assert.match(WM, /const _interiorSenses = \(\) => sensesContext\(playerEntity, interiorTicker\.classicMinutes, \{/,
     'through the ONE senses builder');
+assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,
+    'and the pool takes it');
+  // INTEGRATION: b2's branch pinned the NPC4b batches(ctx, dt)
+  // signature it saw at its pre-revert base; that arc is REVERTED, so
+  // the pin holds the plain call the restored tree makes.
   assert.match(WM, /const _foeBatches = interiorFoes\.batches\(\);/, 'and its billboards ride the host\'s draw');
 });
 

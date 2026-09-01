@@ -60,6 +60,7 @@ import {
   tryLanguagePacification,         // AUDIT 24 (wave 42): EnemySenses:504-527
   playerPainVoice, playPlayerVoice,   // AUDIT 24 (wave 46): PlayerFootsteps.RemoveHealth's 40% cry
   applyDamageToNonPlayer,          // MT-iv: EnemyAttack.ApplyDamageToNonPlayer (:303-392)
+  makeEnemiesHostile,              // ROAD-B: GameManager.cs:790-806
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -187,6 +188,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // health floors at 0 (death screen: UI arc). Traps work with or
   // without ?foes - the entity import is static.
   const actions = new ActionSystem(collider, {
+    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, the read
+    // AttemptBash's tail makes (DaggerfallActionDoor.cs:220-221). The
+    // SAME live block lookup the music context takes below - it is the
+    // same question, asked at the door instead of at the song.
+    insideDungeonCastle: () => (lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false),
     damagePlayer: hurtPlayer,
     castSpell: (index, origin) => { _pendingCasts.push({ index, origin }); },   // consumed once spells load
     drainMagicka: (n) => {
@@ -1092,9 +1098,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   actions.onDoorBash = (o) => audio.play3d(SOUND.PlayerDoorBash, [o.matrix[12], o.matrix[13], o.matrix[14]]);
   // U6: the text-action seams. ShowText/ShowTextWithInput open modal
   // boxes on the overlay seam (the world holds); DoorText rides the
-  // HUD popup (AddHUDText 2.0s); the trespass check maps to our foes,
-  // which are already hostile-on-sight (MakeEnemiesHostile's passive
-  // teams pend the faction model - logged loudly).
+  // HUD popup (AddHUDText 2.0s); the trespass check is
+  // MakeEnemiesHostile over this dungeon's pool (below).
   const rscLines = (id) => {
     const v = textRsc?.plainText(id);
     return v?.length ? v[0].split('\n').filter((l) => l.length) : null;
@@ -1114,7 +1119,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!lines) return console.error(`[action] bad DoorTextID requested: ${id}`);   // DFU throws; we log loudly
     for (const l of lines) hudText.add(l);
   };
-  actions.onTrespass = () => console.warn('[action] trespass check fired (MakeEnemiesHostile) - foes are hostile-on-sight; passive teams pend the faction model');
+  // ROAD-B: THE TRESPASS CHECK IS A REAL SWITCH NOW.
+  // DaggerfallAction.cs:882-890 - a DoorText record whose
+  // ActionAxisRawValue is over 5 is classic's trespass flag, and
+  // stepping through it calls GameManager.MakeEnemiesHostile(). This
+  // logged a warning instead, on a claim ("foes are hostile-on-sight")
+  // that stopped being true when AUDIT 39 wired RDBLayout's passive
+  // marker: both spawn branches below hand the motor the marker's
+  // reaction, so a dungeon holds non-hostile foes this switch is the
+  // whole point of. The walk is the host's own live pool - one
+  // ActiveGameObjectDatabase, one dungeon.
+  actions.onTrespass = () => makeEnemiesHostile(foes);
+  // ...and the same law at DaggerfallActionDoor.cs:220-221: bashing
+  // ANY action door while inside a dungeon CASTLE turns the castle
+  // hostile, whether the bash opened it or not. The castle read is the
+  // ActionSystem's own dep (above); this is the sink.
+  actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null;
   let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
   let debugHud = false;   // F8 diagnostics
@@ -2394,6 +2414,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // must, and a foe hurt before the subsystem loaded still stands
     // up through the legacy arm.
     if (fromPlayer && foe.ai) {
+      // ROAD-B: ...and the AREA turns with it.
+      // DaggerfallEntityBehaviour.cs:249-261 is TWO calls in order -
+      //     if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile();
+      //     enemyMotor.MakeEnemyHostileToAttacker(player);
+      // - so striking one sleeping/passive foe wakes the WHOLE room,
+      // and only the struck one learns where you are. The port had the
+      // second call and not the first, which is why a passive RDB
+      // guard could be picked off one at a time in a room full of
+      // them. The `!isHostile` read has to happen BEFORE the walk,
+      // because the walk flips this foe too.
+      if (!foe.ai.isHostile) makeEnemiesHostile(foes);
       if (foeDeps) {
         foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
         foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
@@ -2784,6 +2815,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _senses = sensesContext(playerEntity, classicMinutesRef.value, {
       ..._activity,
       candidates: foeDeps ? () => foes.filter((f) => !f.dead && f.ai) : null,
+      // ROAD-B: EnemySenses.StealthCheck's first statement (:619-621).
+      // This is the ONE host that can answer it true, off the same
+      // block read the music and the ambient take.
+      insideDungeonCastle: lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false,
     });
     // AUDIT 18: the PLAYER half of this tick moved to systems/worldTick.js
     // and is now called by every host - it used to run only here, so a

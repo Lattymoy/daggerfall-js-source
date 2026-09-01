@@ -446,6 +446,50 @@ export function applyDamageToNonPlayer(attacker, target, {
   return damage;
 }
 
+// ---- GameManager.MakeEnemiesHostile (ROAD-B, hostility model) ----
+/**
+ * GameManager.cs:790-806, verbatim - "Make all enemies in an area go
+ * hostile":
+ *
+ *     foreach (DaggerfallEntityBehaviour entityBehaviour in
+ *              ActiveGameObjectDatabase.GetActiveEnemyBehaviours())
+ *         if (EntityType == EnemyMonster || EntityType == EnemyClass)
+ *             if (enemyMotor) enemyMotor.IsHostile = true;
+ *
+ * ONE field, and nothing else. No target, no GiveUpTimer, no
+ * remembered position - that is MakeEnemyHostileToAttacker, which DFU
+ * calls SEPARATELY, right after this one, at both sites that want both
+ * (DaggerfallEntityBehaviour.cs:250-261, PlayerActivate.cs:1662-1671).
+ * The port's own `makeHostileToPlayer` is that other law; calling it
+ * from here would give every foe in the room the player's position for
+ * free, which is exactly the bug the two-call shape avoids.
+ *
+ * The EntityTypes filter is satisfied by construction here: every
+ * record in a port pool is an EnemyEntity of one of those two types
+ * (EnemyMonster or EnemyClass) - the pools mint nothing else. The
+ * `if (enemyMotor)` guard is NOT free, so it stays: a record whose AI
+ * has not landed yet (cityGuards' spawn crosses two awaits) has no
+ * motor to write, and a dead one is not in ActiveGameObjectDatabase at
+ * all (EnemyDeath destroys the GameObject).
+ *
+ * "In an area" is the ACTIVE DATABASE, which is one database for the
+ * whole scene - so a caller hands this the union of every live pool
+ * its host owns, the same join `questFoeInstances` makes.
+ *
+ * @param {Iterable} foes live pool records ({ ai, dead })
+ * @returns {number} how many were NOT already hostile (the wiring's
+ *   test seam; DFU's own loop returns nothing and writes blind)
+ */
+export function makeEnemiesHostile(foes) {
+  let flipped = 0;
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !f.ai) continue;
+    if (!f.ai.isHostile) flipped++;
+    f.ai.isHostile = true;
+  }
+  return flipped;
+}
+
 // ---- First-encounter language pacification (AUDIT 24, wave 42) ----
 /**
  * EnemySenses.cs:504-527. On the FIRST time an enemy detects the

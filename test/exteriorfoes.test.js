@@ -60,7 +60,13 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   const s = src('world.js');
   const i = s.indexOf('function runEncounterTick');
   assert.ok(i > 0);
-  const fn = s.slice(i, i + 1800);
+  // ROAD-B WIDENED THIS WINDOW. It was a character count (i + 1800),
+  // which is not a claim about anything - PlayerEntity.Update:513-516's
+  // guard-conversion sweep landed inside this loop and pushed the
+  // needles below past the count. The window is the FUNCTION now
+  // (audit26_dungeonfoes' idiom for the same body), so the pin says
+  // what it meant: these facts are in runEncounterTick.
+  const fn = s.slice(i, s.indexOf('\n  }\n', i));
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the classic catch-up loop rolls per elapsed minute');
   // AUDIT 26 F061: the roll branches on the WIDENED TOWN RECT
   // (PlayerGPS.cs:687-699), not "this pixel has a location" - the old

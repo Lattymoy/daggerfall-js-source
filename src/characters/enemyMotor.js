@@ -689,15 +689,27 @@ export class EnemyAI {
     if (attacker?.isPlayer) this.isHostile = true;
   }
 
-  /** EnemySenses.StealthCheck, verbatim: the castle-non-hostile gate
-   *  is inert here (no castle detection; foes are hostile-on-sight);
-   *  un-spawnable-in-classic foes never stealth-detect; one check per
+  /** EnemySenses.StealthCheck, verbatim: a NON-HOSTILE enemy inside a
+   *  dungeon CASTLE never stealth-detects at all (:619-621) - the
+   *  palace guard ignores you until something turns the castle on you,
+   *  which is what MakeEnemiesHostile is for and why a castle door
+   *  bash calls it (DaggerfallActionDoor.cs:220-221). ROAD-B wired
+   *  both halves; this gate used to say "inert here (no castle
+   *  detection; foes are hostile-on-sight)", and BOTH clauses had
+   *  stopped being true - castleBlockAt has answered the first since
+   *  AUDIT 21 and RDBLayout's passive marker the second since AUDIT
+   *  39. The read is the senses context's, because it is a scene fact
+   *  (PlayerEnterExit's), not the motor's own; a host that does not
+   *  pass it (every above-ground one) leaves the gate false, which is
+   *  what NOT being in a castle means.
+   *  Then: un-spawnable-in-classic foes never stealth-detect; one check per
    *  classic MINUTE (between minutes the standing detection holds);
    *  a slow-moving player skips ODD minutes; a fast-moving player who
    *  has been encountered is detected outright; the Stealth skill
    *  tallies once per minute ACROSS foes (the shared minute rides the
    *  scene's senses context, like PlayerEntity.TimeOfLastStealthCheck). */
   _stealthCheck(senses) {
+    if (senses.insideDungeonCastle && !this.isHostile) return false;   // :619-621, the FIRST statement
     if (!this.wouldBeSpawned) return false;
     if (this._dist > STEALTH_MAX_DISTANCE) return false;
     const gameMinutes = senses.gameMinutes ?? 0;
