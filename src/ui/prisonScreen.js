@@ -34,6 +34,7 @@
 // needs no stack - nothing is pushed over it - so it lands whole.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
+import { DFPalette } from '../formats/dfPalette.js';
 
 /** nativeImgName / nativeImgName2 (:31-32). */
 export const COURT_IMG = 'CORT01I0.IMG';
@@ -70,7 +71,14 @@ export function daysUntilFreedomText(days, localizedText = null) {
 
 let _art = null;
 export async function preloadPrisonScreenArt(deps) {
-  if (!_art) _art = { prison: await loadImg(deps, PRISON_IMG) };
+  // PRIS00I0 is one of the SIX palettized IMGs: ImgFile._readPalette
+  // writes INTO the palette it is handed, so it gets its OWN DFPalette
+  // and never the host's shared ART_PAL (the U18/17k law - see
+  // titleScreen.js:44-46). The A3 slice took `deps` whole and the
+  // shared palette rode in with it: ONE boot-time preload repainted
+  // every texture decoded after it - weapons gold, caves and
+  // exteriors off - for the entire session (the 2026-09-01 incident).
+  if (!_art) _art = { prison: await loadImg({ ...deps, palette: new DFPalette() }, PRISON_IMG) };
   return _art;
 }
 export const prisonScreenArtLoaded = () => !!_art;

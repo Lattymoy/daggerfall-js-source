@@ -269,6 +269,24 @@ export function getNatureArchive(baseNatureArchive, season) {
 }
 
 /** Verbatim GetGroundArchive: climate base ground + Winter 1 / Rain 2. */
+/** TerrainMaterialProvider.GetClimateInfo (Terrain/TerrainMaterialProvider.cs
+ *  :120-134), verbatim - THE TERRAIN's ground tileset, distinct from
+ *  getGroundArchive below (DaggerfallGroundPlane.cs:83, the RMB ground
+ *  plane and the water tile). The terrain keys on the CLIMATE's own
+ *  GroundArchive field - MountainWoods (230) is ClimateType Temperate
+ *  but GroundArchive 102 - and refuses the winter +1 in Desert-base
+ *  climates, whose snow archive (3) is not a 56-record terrain tileset
+ *  at all (TextureReader.cs:757-766 returns null for it; DFU never
+ *  uploads it). The 2026-09-01 incident: the hosts keyed the terrain on
+ *  the ground-plane member, so a winter boot - classic starts 4th
+ *  Morning Star, WINTER - put snow under every desert and the wrong
+ *  archive family under MountainWoods. */
+export function getTerrainGroundArchive(climateSettings, season) {
+  let archive = climateSettings.groundArchive;
+  if (climateSettings.climateType !== BASE.Desert && season === SEASON.Winter) archive += 1;
+  return archive;
+}
+
 export function getGroundArchive(climateBase, season) {
   let archive;
   switch (climateBase) {
