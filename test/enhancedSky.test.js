@@ -463,3 +463,53 @@ test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has 
   assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/);
   assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/);
 });
+
+// ═══ EE3: the ground's sampling, behind the switch ══════════════════
+test('EE3: a sized format, two modes keyed in the cache, NEAREST for classic byte for byte', () => {
+  const r = read('src/render/renderer.js');
+  // the method's own body: from its signature to its closing brace
+  const start = r.indexOf('uploadTileArray(archive, layers) {');
+  const up = r.slice(start, r.indexOf('\n  }\n', start) + 4);
+  // the mode decides, and the URL door outranks the switch
+  assert.match(up, /const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'tiles' : 'classic'\);/);
+  assert.match(up, /const key = `\$\{archive\}:\$\{mode\}`;/, 'the cache lives on the renderer and survives a world load');
+  assert.match(up, /this\.tileArrays\.set\(key, tex\);/);
+  // a SIZED format: generateMipmap is guaranteed on RGBA8 and not on RGBA
+  assert.match(up, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8, w, h, layers\.length, 0, gl\.RGBA, gl\.UNSIGNED_BYTE, null\);/);
+  // classic is NEAREST, exactly as before
+  assert.match(up, /if \(mode === 'classic'\) \{\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MAG_FILTER, gl\.NEAREST\);/);
+  // tiles: drain, mip, and fall back to NEAREST if the chain fails,
+  // because an incomplete sampler returns black for every texel
+  assert.match(up, /while \(gl\.getError\(\) !== gl\.NO_ERROR\) \{/);
+  assert.match(up, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);\s*\n\s*if \(gl\.getError\(\) !== gl\.NO_ERROR\) \{\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);/);
+  assert.match(up, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
+  assert.match(up, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/);
+  // THE UPLOAD LAW: create, fill, parameterise - and nothing else
+  assert.ok(!/drawArrays|drawElements/.test(up), 'an upload must not draw');
+  assert.ok(!/bindFramebuffer|viewport\(/.test(up), 'an upload must not take the frame');
+  assert.ok(!/clearColor|gl\.clear\(/.test(up), 'an upload must not clear');
+  assert.ok(!/disable\(gl\.(DEPTH_TEST|CULL_FACE|BLEND)\)/.test(up), 'an upload must not change the pipeline');
+  assert.ok(!/bindTexture\(gl\.TEXTURE_2D,/.test(up), 'an upload binds only the texture it builds');
+  // defaults: the classic skin cannot inherit the enhanced sampler
+  assert.match(r, /this\.enhancedGround = false;/);
+  assert.match(r, /this\.groundMode = null;/);
+  // ONE DOOR TO THE CACHE. The first attempt keyed the cache by
+  // archive:mode and left both hosts reading it by archive alone - which
+  // returned undefined, drew the terrain with no texture, and WAS the
+  // black world. Nobody outside the renderer spells the key now.
+  assert.match(r, /tileArrayFor\(archive\) \{\s*\n\s*const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'tiles' : 'classic'\);\s*\n\s*return this\.tileArrays\.get\(`\$\{archive\}:\$\{mode\}`\);/);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.ok(!/renderer\.tileArrays\./.test(h), `${host} must not touch the cache directly`);
+    // flag and door BEFORE the guard asks the cache, so the guard asks
+    // about the mode the upload will use
+    assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);\n\s*renderer\.groundMode = new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('ground'\);\n\s*if \(!renderer\.tileArrayFor\(groundArchive\)/,
+      `${host}: flag, door, THEN the guard`);
+    assert.match(h, /renderer\.tileArrayFor\((p\.)?groundArchive\), (p\.)?tilemapTex, 6\.4\)/, `${host} draws through the door`);
+  }
+  // and the world gate judges the TERRAIN by a median band, because a
+  // lit building beside a void ground passed the lower-half check
+  const g = read('tools/worldRenderGate.mjs');
+  assert.match(g, /the TERRAIN is lit \(street band median/);
+  assert.match(g, /vals\.sort\(\(a, b\) => a - b\);\s*\n\s*return vals\[vals\.length >> 1\];/, 'median, so snow specks cannot lift a void');
+});

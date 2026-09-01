@@ -675,7 +675,14 @@ export class Renderer {
     this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
-    this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
+    this.tileArrays = new Map(); // archive:mode -> TEXTURE_2D_ARRAY
+    /** EE3: the ground's half of the Enhanced Environments switch, set
+     *  by the host from the skin AND the pref before each upload. OFF by
+     *  default, so the classic skin cannot inherit it. */
+    this.enhancedGround = false;
+    /** EE3: the URL door - ?ground=classic|tiles - which outranks the
+     *  switch, so a report can be bisected in one reload. */
+    this.groundMode = null;
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1779,24 +1786,87 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
+  /** EE3: the tile array for an archive in the CURRENT ground mode, or
+   *  undefined if it has not been uploaded in that mode. THE ONLY DOOR
+   *  TO THE CACHE for readers. The first attempt keyed this cache by
+   *  archive:mode and left both hosts reading it by archive alone -
+   *  which returned undefined, drew the terrain with no texture, and
+   *  was the black world. The mode is resolved here, once, and nobody
+   *  else spells the key. */
+  tileArrayFor(archive) {
+    const mode = this.groundMode ?? (this.enhancedGround ? 'tiles' : 'classic');
+    return this.tileArrays.get(`${archive}:${mode}`);
+  }
+
   uploadTileArray(archive, layers) {
-    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
+    // EE3: THE GROUND'S SAMPLING, behind the Enhanced Environments
+    // switch. Two modes, and a URL door between them:
+    //   classic  the original tiles, NEAREST - Daggerfall's own look,
+    //            byte for byte what this always did
+    //   tiles    the original tiles with a mip chain and anisotropy
+    // The host sets groundMode from ?ground=; absent, the switch
+    // decides. THE MODE IS PART OF THE CACHE KEY: this cache lives on
+    // the renderer, which survives a world load, so a key of archive
+    // alone would hand a flipped switch the array built for the old
+    // one and make the row's "takes effect when the world next loads"
+    // a lie.
+    //
+    // THE UPLOAD LAW (the arc plan, from the texture incident): this
+    // method creates, fills and parameterises ONE texture. It does not
+    // draw, bind a framebuffer, clear, change the pipeline, or leave
+    // any binding but its own behind.
+    const mode = this.groundMode ?? (this.enhancedGround ? 'tiles' : 'classic');
+    const key = `${archive}:${mode}`;
+    if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
     const w = layers[0].width;
     const h = layers[0].height;
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    // EE3: a SIZED internal format. generateMipmap requires the texture
+    // to be colour-renderable and filterable; RGBA8 is guaranteed to
+    // be, an unsized RGBA is not. Same eight bits a channel, spelled
+    // the way WebGL2 requires when mips are wanted. Classic gets it
+    // too, because it changes nothing NEAREST can see.
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     for (let i = 0; i < layers.length; i++) {
       gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
     }
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    if (mode === 'classic') {
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    } else {
+      // EE3: mips are what stop the ground BOILING at distance - a tile
+      // covers 6.4 world units, so a pixel a hundred metres out spans
+      // dozens of texels and NEAREST picks one of them at random as the
+      // camera moves - and anisotropy is what keeps it from going to
+      // mush at grazing angles, which is how almost all ground is seen.
+      // Per-layer by construction: generateMipmap on a 2D array filters
+      // each layer independently, so tiles cannot bleed.
+      //
+      // And if the chain cannot be built on some driver, the sampler
+      // goes back to NEAREST rather than staying MIPMAP-INCOMPLETE,
+      // because an incomplete sampler returns black for every texel.
+      while (gl.getError() !== gl.NO_ERROR) { /* drain: the next read must be ours */ }
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      if (gl.getError() !== gl.NO_ERROR) {
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      } else {
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+        if (aniso) {
+          gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT,
+            Math.min(16, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+        }
+      }
+    }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.tileArrays.set(archive, tex);
+    this.tileArrays.set(key, tex);
     return tex;
   }
 

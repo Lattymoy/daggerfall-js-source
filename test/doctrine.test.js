@@ -271,8 +271,12 @@ test('EE0: the world render gate boots the real exterior and judges real pixels'
   assert.match(g, /canvas\.screenshot\(\{ type: 'png' \}\)/);
   assert.ok(!/readPixels\(/.test(g), 'a read-back of the default framebuffer lies here');
   // and it fails on the three things a black world has
-  assert.match(g, /the ground is lit/);
-  assert.match(g, /the ground has detail/);
+  // EE3 sharpened these: the lower half is judged, and then the TERRAIN
+  // itself by a median band, because a lit building beside a void
+  // ground passed the lower-half check
+  assert.match(g, /the lower half is lit/);
+  assert.match(g, /the lower half has detail/);
+  assert.match(g, /the TERRAIN is lit \(street band median/);
   assert.match(g, /the sky is drawn/);
   // the arc plan names it as every slice's gate
   const plan = readFileSync('bible/07-Rendering/Enhanced-Environments-Arc.md', 'utf8');

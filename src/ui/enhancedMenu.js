@@ -848,7 +848,8 @@ function paneEnhanced(body) {
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
     'The enhanced outdoors as one system. Today: a procedural sky with the sun, both moons on '
     + 'their real phases, a star field, a finely stepped sunrise and sunset, and clouds that '
-    + 'follow the weather to the horizon. Off returns Daggerfall\u2019s SKY*.DAT panorama. '
+    + 'follow the weather to the horizon; and ground that holds still at distance instead of '
+    + 'shimmering. Off returns Daggerfall\u2019s SKY*.DAT panorama and its own ground sampling. '
     + 'Takes effect when the world next loads.'));
   body.append(live);
 

@@ -539,7 +539,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // R9 tilemap pass: shared-index height grid + per-pixel tilemap
     // texture + one cached texture array per ground archive.
     const groundTex = await getTexture(groundArchive);
-    if (!renderer.tileArrays.has(groundArchive)) {
+    // EE3: the ground's half of the Enhanced Environments switch and its
+    // URL door, set BEFORE the cache is asked - the guard below must ask
+    // about the mode the upload will use, or a flipped switch skips the
+    // upload for the new mode and draws the terrain with no texture.
+    renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
+    renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
+    if (!renderer.tileArrayFor(groundArchive)   /* EE3 */) {
       const layers = [];
       for (let r = 0; r < groundTex.recordCount; r++) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
@@ -6021,7 +6027,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
       if (pixelVisible) {
         renderer.drawTerrain(p.terrain, pixelMatrix,
-          renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+          renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4);
         for (const m of p.models) {
           if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
           if (m._worldGen !== p._worldGen || !m._world) {

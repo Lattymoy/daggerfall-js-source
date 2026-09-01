@@ -113,7 +113,8 @@ import {
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM4c: and the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
+import { isEnhanced } from '../systems/uiSkin.js';
+import { getPref } from '../systems/uiPrefs.js';   // EE3: the ground half of the Enhanced Environments switch   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -461,7 +462,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // R9 ground GL: cached tile array per archive, the location tilemap,
   // and a flat 2x2 surface at GroundOffset spanning the exact extent
   // (winding matches buildTerrainIndices' quad diagonal).
-  if (!renderer.tileArrays.has(groundArchive)) {
+  // EE3: the ground's half of the Enhanced Environments switch and its
+  // URL door, set BEFORE the cache is asked - the guard below must ask
+  // about the mode the upload will use, or a flipped switch skips the
+  // upload for the new mode and draws the terrain with no texture.
+  renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
+  renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
+  if (!renderer.tileArrayFor(groundArchive)   /* EE3 */) {
     const groundTex = textureFiles.get(groundArchive);
     const layers = [];
     for (let r = 0; r < groundTex.recordCount; r++) {
@@ -2088,7 +2095,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
     renderer.drawTerrain(groundSurface, identityMatrix,
-      renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
+      renderer.tileArrayFor(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) {
       if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
       renderer.drawMesh(d.mesh, d.matrix, texRemap);

@@ -29,6 +29,7 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
 const MINUTES = Number(arg('minutes', 720));        // noon by default: the sun is up and the ground is lit
 const MODE = arg('mode', 'enhanced');
+const GROUND = arg('ground', null);          // EE3: ?ground=classic|tiles, the kill switch
 const PORT = 5223;
 
 const fails = [];
@@ -51,7 +52,8 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 // changes. ?sky=classic is NOT set, so the enhanced sky draws when the
 // pref allows it.
 const skin = MODE === 'classic' ? '&classic' : '';
-await page.goto(`http://localhost:${PORT}/play/?exterior&shot&novideo&nofoes${skin}`);
+const ground = GROUND ? `&ground=${GROUND}` : '';
+await page.goto(`http://localhost:${PORT}/play/?exterior&shot&novideo&nofoes${skin}${ground}`);
 
 // wait for the world to actually render frames
 const until = Date.now() + 240000;
@@ -94,8 +96,31 @@ const stats = (y0, y1) => {
 };
 // PNG rows run top-down: the sky is the LOW rows, the ground the HIGH
 const sample = { sky: stats(0, Math.floor(h * 0.4)), ground: stats(Math.floor(h * 0.55), h) };
-check(`the ground is lit (mean ${sample.ground.mean.toFixed(1)} > 20)`, sample.ground.mean > 20);
-check(`the ground has detail (${sample.ground.colours} colours > 8)`, sample.ground.colours > 8);
+check(`the lower half is lit (mean ${sample.ground.mean.toFixed(1)} > 20)`, sample.ground.mean > 20);
+check(`the lower half has detail (${sample.ground.colours} colours > 8)`, sample.ground.colours > 8);
+// EE3: THE TERRAIN ITSELF, not the lower half. The lower half has
+// buildings in it, and buildings are lit even when the ground under
+// them is a void - the gate passed on a black terrain because of them.
+// The exterior boots to a fixed view, and in it the street runs
+// through a band just above the HUD, centre-left, with no building
+// standing in it. That band is the TERRAIN and it is judged alone.
+// If the boot view ever changes, this band moves with it - it is a
+// coordinate, not a law - but a band that reads under 12 has never
+// been anything but a void.
+// The band's MEDIAN, not its mean: a black terrain under falling snow
+// carries bright specks that lifted the mean to 18 on one broken run
+// and 2 on the next. The median of a void with dots in it is the void.
+const street = (() => {
+  const vals = [];
+  const y0 = Math.floor(h * 0.78), y1 = Math.floor(h * 0.83);
+  const x0 = Math.floor(w * 0.25), x1 = Math.floor(w * 0.44);
+  for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) {
+    const o = (y * w + x) * 4; vals.push((px[o] + px[o + 1] + px[o + 2]) / 3);
+  }
+  vals.sort((a, b) => a - b);
+  return vals[vals.length >> 1];
+})();
+check(`the TERRAIN is lit (street band median ${street.toFixed(1)} > 12)`, street > 12);
 // EE2: the sky's expectation follows the hour. By day it is bright;
 // at night it is DARK BUT NOT EMPTY - a mean well under day's, with
 // stars and a moon as bright specks. A night sky that read like day
@@ -116,4 +141,4 @@ if (process.argv.includes('--save')) {
 await browser.close();
 await server.close();
 if (fails.length) { console.error(`\nworld render gate: ${fails.length} failure(s)`); process.exit(1); }
-console.log(`\nworld render gate ok (${MODE}, ${MINUTES} min)`);
+console.log(`\nworld render gate ok (${MODE}${GROUND ? ', ground=' + GROUND : ''}, ${MINUTES} min)`);
