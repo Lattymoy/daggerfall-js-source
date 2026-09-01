@@ -490,7 +490,20 @@ float terrain(vec2 p){
 const groundProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aXZ;
 uniform mat4 uVP; uniform float uTilePx;
-const float SNOW_DEPTH_M = 1.35;   // PROTO-20: full snow, in metres
+// PROTO-22 (Mac: grass STILL shows through snow). MEASURED, finally,
+// instead of guessed: at the maxed height slider a blade is 0.78m to
+// 2.26m tall and I had set the snow line to 1.35m, so 61% of the
+// sward was TALLER THAN THE DEEPEST SNOW and correctly stuck out. The
+// geometry was right twice over; the number was wrong twice over,
+// because I picked it out of the air instead of against the thing it
+// had to cover.
+//
+// The line is a UNIFORM now, computed from the tallest blade the
+// current height setting can produce, with headroom - so full snow
+// buries the field whatever the slider says. Ground and grass read
+// the SAME uniform, so the surface the ground draws and the surface
+// the grass is planted on cannot drift apart.
+uniform float uSnowFull;
 uniform sampler2D uField; uniform vec2 uFieldOrigin; uniform float uFieldM;
 uniform float uSnowGlobal2;
 uniform vec2 uLocalOff;   // AUDIT 41 F2: 0 for the wide plane, the field's origin for the near patch
@@ -513,7 +526,7 @@ void main(){
   // it lay - the geometry was right and the scale was absurd. One
   // shared depth now, and it is a depth a winter actually reaches.
   float snow = vField.g * (1.0 - vField.b * 0.55);
-  p.y += snow * SNOW_DEPTH_M;
+  p.y += snow * uSnowFull;
   vPos = p; vUV = xz / uTilePx;
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
@@ -525,7 +538,7 @@ in vec2 vUV; in vec3 vPos; in vec2 vFieldUV; in vec4 vField;
 // module died on load, and the page came up grey. GLSL stages do not
 // share declarations; a vertex-shader const is invisible to the
 // fragment shader that follows it.
-const float SNOW_DEPTH_M = 1.35;
+uniform float uSnowFull;
 float hash21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
 uniform sampler2D uTex, uNrm, uLow, uField2;
 uniform float uFieldM2;
@@ -577,7 +590,7 @@ void main(){
   float sD = texture(uField2, vFieldUV - vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV - vec2(0.0,e)).b*0.55);
   float sU = texture(uField2, vFieldUV + vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV + vec2(0.0,e)).b*0.55);
   float snowD = vField.g * (1.0 - vField.b * 0.55);
-  vec3 snowN = normalize(vec3((sL - sR) * 22.0 * SNOW_DEPTH_M, 1.0, (sD - sU) * 22.0 * SNOW_DEPTH_M));
+  vec3 snowN = normalize(vec3((sL - sR) * 22.0 * uSnowFull, 1.0, (sD - sU) * 22.0 * uSnowFull));
   float snowCov = smoothstep(0.02, 0.16, snowD);
   N = normalize(mix(N, snowN, snowCov));
   // PROTO-14 (2): CLOUD SHADOWS. The deck's own field, sampled where
@@ -690,7 +703,7 @@ layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
 uniform vec2 uWindDir;
-const float SNOW_DEPTH_M = 1.35;   // PROTO-20: the same depth the ground uses
+uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
 void main(){
@@ -743,7 +756,7 @@ void main(){
   // A blade shorter than the snow is gone because it is buried, not
   // because a factor shrank it - and walking toward it changes
   // nothing, because nothing in this depends on the camera any more.
-  float snowSurf = snowD * SNOW_DEPTH_M;         // the SAME depth the ground displaces by
+  float snowSurf = snowD * uSnowFull;             // the SAME line the ground displaces to
   float trueH = aInst.z * (1.0 - drown * 0.9);
   float h = max(0.0, trueH - snowSurf);
   vT = aCorner.y;
@@ -1540,6 +1553,11 @@ void main(){
 }`);
 const BOX = 42;
 const windOffset = [0, 0];   // PROTO-19: integrated wind travel
+/** PROTO-22: the depth full snow reaches. The blade generator makes
+ *  heights of (0.22 .. 0.64) x (height/34), so the tallest blade the
+ *  current setting can produce is 0.64x that factor; the snow line
+ *  clears it with a little headroom, and never sits below a metre. */
+const snowFullDepth = () => Math.max(1.1, 0.64 * (state.height / 34) * 1.12);
 let wxVao = null, wxCount = 0, wxVerts = 6;
 function buildWeather(n) {
   const inst = new Float32Array(n * 4);
@@ -2152,6 +2170,7 @@ function frame(now) {
   gl.uniform2fv(gl.getUniformLocation(groundProg, 'uFieldOrigin'), new Float32Array(fieldOrigin));
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uFieldM'), FIELD_M);
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uSnowGlobal2'), safe1(fieldMeanSnow));
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uSnowFull'), safe1(snowFullDepth()));
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uField'), 3);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uField2'), 3);
@@ -2189,6 +2208,7 @@ function frame(now) {
     gl.uniform2fv(gl.getUniformLocation(grassProg, 'uGFieldOrigin'), safeN(fieldOrigin));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uGFieldM'), FIELD_M);
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uSnowGlobal'), safe1(fieldMeanSnow));
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uSnowFull'), safe1(snowFullDepth()));
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
     gl.uniform1i(gl.getUniformLocation(grassProg, 'uGField'), 3);
     gl.activeTexture(gl.TEXTURE0);
