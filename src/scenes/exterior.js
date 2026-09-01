@@ -67,6 +67,9 @@ import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
+// NPC3b: the wandering crowd rides the same body service the guards do.
+import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';
+import { townMwBodyOpts } from '../characters/townMwBody.js';
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
@@ -838,6 +841,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
   const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex });
+  // NPC3b: one counter, so every wandering person gets a stable number
+  // of their own without touching DFU's shared PRNG - that stream is
+  // named, looted and quested from, and a draw spent here would shift
+  // every later roll in the game.
+  let _mwTownSeed = 0;
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -1923,6 +1931,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     // on the flats' axis. The gate's AreEnemiesNearby() term reads
     // this host's one live pool, the city watch - so a townsperson
     // keeps walking while a guard is on you.
+    const _drawMwTownsperson = (person, dt, proj, view, eye) => {
+      const body = requestMwBody(person, townMwBodyOpts(person.archive, person._mwSeed), -1);
+      if (!body) return false;
+      return drawMwActor(renderer, canvas, body, person._mwState, {
+        dt,
+        moving: person.state === 'move',
+        running: false,
+        feet: person.pos,
+        yaw: person.yaw ?? 0,
+        proj,
+        view,
+        eye,
+      });
+    };
     if (walkMode) {
       _playerStill = _lastPlayerPos !== null &&
         Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
@@ -1947,6 +1969,21 @@ export async function bootExterior(canvas, renderer, params, status) {
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
         const sz = scaledBillboardSize(t.getSize(out.record), t.getScale(out.record));
+        // NPC3b: THE TOWNSPERSON'S MORROWIND BODY takes the frame when
+        // one has built. Their race and sex come off the people
+        // archive - PERSON_TEXTURES is a real race-and-sex table - and
+        // their CLOTHES are the port's own wardrobe, because
+        // Daggerfall paints a citizen's clothes into the sprite and
+        // gives them no equipment at all. A person the spawn table
+        // cannot identify (a guard's own archive) keeps its sprite.
+        //
+        // The seed is assigned ONCE per person and never drawn from
+        // DFU's PRNG: that stream is shared with names, loot and
+        // quests. These people re-roll their identity per spawn
+        // anyway, so a per-spawn seed is the identity they already
+        // have.
+        person._mwSeed ??= (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        if (_drawMwTownsperson(person, popDt, proj, view, eye)) continue;
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
         batch.origin = [person.pos[0], person.pos[1], person.pos[2]];

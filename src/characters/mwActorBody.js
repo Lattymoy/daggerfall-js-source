@@ -69,9 +69,17 @@ function evictAll() {
  * Insertion order is the eviction order and a hit refreshes it, so
  * what stays is what is being worn NOW. Evicting is always SAFE: an
  * actor holding a body keeps its own reference, and the next actor to
- * ask for that outfit simply rebuilds it.
+ * ask for that outfit simply rebuilds it - and hands its mesh back
+ * (AUDIT A2).
+ *
+ * THE NUMBER IS A BUDGET, not a guess. A region's wandering crowd is
+ * 3 races x 2 sexes x 4 personas = 24 bodies (mwWardrobe's own
+ * arithmetic), a dungeon's foes are as many as its distinct rolled
+ * loadouts, and the creature roster tops out at 18 distinct models.
+ * 128 holds all three at once with room to spare; the card's tally is
+ * how a wrong guess here becomes visible rather than merely slow.
  */
-export const MAX_BODIES = 64;
+export const MAX_BODIES = 128;
 /** The generation the cache belongs to. A re-attach drops every body -
  *  the meshes came from archives that are no longer the ones loaded. */
 let _gen = null;
