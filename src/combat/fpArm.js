@@ -2991,6 +2991,29 @@ export function createFpArm() {
       // is opened from first person, where the wheel is off.
       if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
       const t = thirdBuilt;
+      // PX32 (Mac: the 3D paperdoll "sometimes shows in your last
+      // animated state"): THE PORTRAIT POSES ITSELF. poseAssembly for
+      // this body runs in ONE place - stepUpper's `viewMode === 'third'`
+      // arm - and the inventory is opened from FIRST person, where that
+      // arm never runs. So figure() uploaded whatever bone matrices
+      // happened to be in t.arm from the last time the wheel was in
+      // third person, or from the build if it never was. Not a stale
+      // frame: a stale SESSION. "Sometimes" is exactly the shape of
+      // that - it depends on whether the player has ever been in third
+      // person and what they were doing when they left it.
+      // Posed with the same inputs stepUpper uses, so the portrait is
+      // the body as it stands NOW rather than a leftover, and every
+      // caller gets the same answer for the same state.
+      // The live playhead, exactly as stepUpper picks it (:2620).
+      const shown = actionState || movementState || jumpState || idleState;
+      if (shown) {
+        poseAssembly(t.arm, {
+          tracks: poseSource ? poseSource.trackMap : t.tracks,
+          sampleTrack,
+          time: shown.time,
+          accumRoot: t.accumRoot,
+        });
+      }
       uploadThirdMesh(t);
       // PX26 F1 (Mac: weapons and shields are not on the menu sprite):
       // THE FIGURE IS A PORTRAIT, NOT THE WORLD. The wheel hides the
