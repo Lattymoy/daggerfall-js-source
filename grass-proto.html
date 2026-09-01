@@ -490,6 +490,7 @@ float terrain(vec2 p){
 const groundProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aXZ;
 uniform mat4 uVP; uniform float uTilePx;
+const float SNOW_DEPTH_M = 1.35;   // PROTO-20: full snow, in metres
 uniform sampler2D uField; uniform vec2 uFieldOrigin; uniform float uFieldM;
 uniform float uSnowGlobal2;
 uniform vec2 uLocalOff;   // AUDIT 41 F2: 0 for the wide plane, the field's origin for the near patch
@@ -506,8 +507,13 @@ void main(){
   // print is a real dent in that height - not a dark decal on a flat
   // plane. Packed snow sits lower than fresh, which is what makes a
   // trail read as a trail from any angle.
+  // PROTO-20 (Mac: grass is showing through the snow). The burial line
+  // was 0.45m at full depth and a blade at the maxed height slider is
+  // over two metres, so the snow COULD NOT bury the sward however deep
+  // it lay - the geometry was right and the scale was absurd. One
+  // shared depth now, and it is a depth a winter actually reaches.
   float snow = vField.g * (1.0 - vField.b * 0.55);
-  p.y += snow * 0.45;
+  p.y += snow * SNOW_DEPTH_M;
   vPos = p; vUV = xz / uTilePx;
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
@@ -563,7 +569,7 @@ void main(){
   float sD = texture(uField2, vFieldUV - vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV - vec2(0.0,e)).b*0.55);
   float sU = texture(uField2, vFieldUV + vec2(0.0,e)).g * (1.0 - texture(uField2, vFieldUV + vec2(0.0,e)).b*0.55);
   float snowD = vField.g * (1.0 - vField.b * 0.55);
-  vec3 snowN = normalize(vec3((sL - sR) * 22.0, 1.0, (sD - sU) * 22.0));
+  vec3 snowN = normalize(vec3((sL - sR) * 22.0 * SNOW_DEPTH_M, 1.0, (sD - sU) * 22.0 * SNOW_DEPTH_M));
   float snowCov = smoothstep(0.02, 0.16, snowD);
   N = normalize(mix(N, snowN, snowCov));
   // PROTO-14 (2): CLOUD SHADOWS. The deck's own field, sampled where
@@ -676,6 +682,7 @@ layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
 uniform vec2 uWindDir;
+const float SNOW_DEPTH_M = 1.35;   // PROTO-20: the same depth the ground uses
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
 void main(){
@@ -728,7 +735,7 @@ void main(){
   // A blade shorter than the snow is gone because it is buried, not
   // because a factor shrank it - and walking toward it changes
   // nothing, because nothing in this depends on the camera any more.
-  float snowSurf = snowD * 0.45;                 // the same 0.45 the ground displaces by
+  float snowSurf = snowD * SNOW_DEPTH_M;         // the SAME depth the ground displaces by
   float trueH = aInst.z * (1.0 - drown * 0.9);
   float h = max(0.0, trueH - snowSurf);
   vT = aCorner.y;
@@ -1253,7 +1260,16 @@ void main() {
   float cp = cos(uPitch), sp = sin(uPitch);
   vec3 r1 = vec3(ray.x, ray.y * cp - ray.z * sp, ray.y * sp + ray.z * cp);
   float cy = cos(uYaw), sy = sin(uYaw);
-  vec3 dir = normalize(vec3(r1.x * cy - r1.z * sy, r1.y, r1.x * sy + r1.z * cy));
+  // PROTO-20 (Mac: the sky STILL rotates). I fixed two of the three
+  // terms and broke the one that was right. Worked out against the
+  // camera's own forward, which is (-sin y cos p, sin p, -cos y cos p):
+  // with the ray down -Z and the corrected pitch, a straight-ahead ray
+  // must come out as (-cp*sy, sp, -cp*cy). My yaw form gave (+cp*sy,
+  // ...) - MIRRORED in x - so turning moved the sky the wrong way,
+  // which is precisely "the sky rotates when you turn". The game's own
+  // yaw expression was correct all along and is restored; only the
+  // ray's -Z and the pitch sign were ever wrong.
+  vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
 
   // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
   // (SKY_ANGLE_PER_PIXEL) - and ES1f: on a CUBE, so it has no pole. The
