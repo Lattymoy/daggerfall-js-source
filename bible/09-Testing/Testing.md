@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 5719 tests across 574 files.
+Node 22). Suite: 5788 tests across 579 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -99,9 +99,14 @@ because the suite has never had non-English data.
 | roadb_guard_conversion.test.js | 4 | ROAD-B B2 - MakeNPCGuardsIntoEnemiesIfGuardsSpawned: wandering guards convert while enemy watchmen are up |
 | roadb_hostility.test.js | 12 | ROAD-B B2 - MakeEnemiesHostile as a location state the pools read, the DoorText trespass sink, MakeEnemyHostileToAttacker |
 | roadb_indoor_watch.test.js | 10 | ROAD-B B2+B4 - the indoor watch: 2-5 guards minted at the interior lowest outer door through the mode machine own pool; the street pool gated by the enter-exit flags returns and never comes through the wall |
+| roadc_automap_camera.test.js | 18 | ROAD-C C2 S3 - DaggerfallAutomapWindow's whole control law as pure (state, action, dt) transitions |
+| roadc_automap_chrome.test.js | 11 | ROAD-C C2 S4 - the shared window chrome: two action tables, the pointer/hold seam, never an if(exterior) ladder |
+| roadc_automap_model.test.js | 12 | ROAD-C C2 S1 - the automap reveal model: the repaired AABB index (the live field bug), the four-level DFU identity as metadata over the persisted key, the three-ray agreement reveal law with action doors as non-revealing blockers, ExploredPercentage |
+| roadc_panelframe.test.js | 7 | ROAD-C C2 S2 - renderer.beginPanelFrame/endPanelFrame: the scissored blended clear at DFU's (49,77,121,~2%) over the panel, state save/restore inside the renderer (EV6), the bank-preview fold retiring its per-frame getParameter and its F001-class leaks |
+| roadc_savewindow.test.js | 17 | ROAD-C C1 - the save/load window verified line-by-line against DaggerfallUnitySaveGameWindow.cs: the loading defer, the quoted prompt strings, the info-panel clear arm, the hidden-vs-dimmed button law, the one-row wheel, and save/load as a real PUSH over the pause window - seventeen laws drawn on real recorded quads, each revert-checked |
 | roadb_court_backdrop.test.js | 9 | ROAD-B B5 - the courtroom backdrop two deep on the window stack (CORT01I0 through the own-palette door), the prison held-Back accelerator |
 | roadb_push_doors.test.js | 9 | ROAD-B B5 - B1's refusal-guard walk: seven single-slot refusals converted to stack pushes, four kept as true re-entrancy guards on containsWindow, and the townTalk.dropOverlay successor-callback regression fixed |
-| roadb_rest_residue.test.js | 20 | ROAD-B B5 - the prevent-rest registry (register/unregister/get with the null->"" law), TickRest's two poll positions and its SECOND top-window test, UpdateNpcPresence on pop with its four differences from AddPeople, the toggle-binding close |
+| roadb_rest_residue.test.js | 24 | ROAD-B B5 - the prevent-rest registry (register/unregister/get with the null->"" law), TickRest's two poll positions and its SECOND top-window test, UpdateNpcPresence on pop with its four differences from AddPeople, the toggle-binding close |
 | roadb_window_stack.test.js | 11 | ROAD-B B1 - UserInterfaceManager ported whole: TopWindow, Push/Pop with OnPush/OnPop/OnReturn, the PauseWhileOpen latch, WindowCount, the message queue, BuildParamDict |
 | roadb_window_stack_hosts.test.js | 7 | ROAD-B B1 - the hosts adopt the stack: the FLAGGED single-slot refusal retired, a rest suspends under a message box and resumes with its session, teardowns drain and dispose the WHOLE stack |
 | road_a4_saveimport.test.js | 12 | ROAD A4 - the envelope stragglers round-trip (resistances, skillsRecentlyRaised, minMetalToHit, previousVampireClan, timeToBecomeVampireOrWerebeast) with old-save null arms, and the classic import's building-level MAPSAVE, native bank record and LegacyArtifactIndexBitfieldCheck |

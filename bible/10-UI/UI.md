@@ -17,7 +17,7 @@ bars, with the health/fatigue colour swap - and the SPELL ICON PICKER
 both icon clicks had been waiting on, and the COLOUR PICKER that makes
 the settings screen's seven colour rows editable, and the HUD
 ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABLE the About pane renders, CR1 - and the NEAR-DEATH FLICKER, AUDIT 28 W2d - and the USE-MAGIC-ITEM WINDOW, UI1, the U key's list of everything you can use by magic - and the MERCHANT SERVICE POPUP, UI2, the panel a shopkeeper or bank teller puts in front of you - and the TRANSPORT WINDOW, TR3, the last of DFU's sixty).
-103 modules
+105 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
