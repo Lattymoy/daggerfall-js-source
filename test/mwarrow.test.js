@@ -465,3 +465,97 @@ test('MW-D46b: every resolveWeaponParts caller answers the quiver question', () 
   assert.match(src, /quiverDriven: token\.quiverDriven \?\? false/);
   assert.match(src, /quiverDriven: t\.quiverDriven \?\? false/);
 });
+
+// MW-D48: THE TWO COMPOSITIONS AGREE, PROVEN BY EXECUTION. The arrow is
+// the ONLY part whose placement goes through nodeTransformOf/mulAffine
+// (affineOf folds scale into the 3x3); every other part is placed by
+// flattenNif's composeTransform, which carries scale as its own field
+// and applies it to the child's translation separately. Two different
+// shapes of arithmetic for the same job, and the arrow is the one that
+// is mispositioned - so it reads like the fault and it is NOT. Pinned
+// by RUNNING both over a chain with rotations AND scales, because
+// reading them side by side is exactly how this was called a bug once
+// already. If someone ever changes one, this says the other must move
+// with it.
+test('MW-D48: nodeTransformOf composes the same chain flattenNif does', async () => {
+  const { nodeTransformOf } = await import('../src/formats/mwCharacter.js');
+  // A hand-built NIF shape: root (rule 34 zeroes it), a scaled+rotated
+  // parent, then the named node - the shape of a real weapon chain.
+  const R = [0, -1, 0, 1, 0, 0, 0, 0, 1];
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const nif = {
+    roots: [0],
+    records: [
+      { type: 'NiNode', name: 'root', rotation: I3, translation: [0, 0, 0], scale: 1, children: [1] },
+      { type: 'NiNode', name: 'mid', rotation: R, translation: [3, 1, 0], scale: 2, children: [2] },
+      { type: 'NiNode', name: 'ArrowBone', rotation: R, translation: [10, 4, 2], scale: 1.5, children: [] },
+    ],
+  };
+  const pre = nodeTransformOf(nif, 'ArrowBone');
+  assert.ok(pre, 'the node resolves');
+  // composeTransform's arithmetic, written out: translation accumulates
+  // through the PARENT's rotation with the PARENT's scale applied to the
+  // child's translation, and scale multiplies down the chain.
+  const m33 = (A, B) => { const o = new Array(9);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c];
+    return o; };
+  const ap = (m, x, y, z) => [m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z];
+  let w = { rotation: I3, translation: [0, 0, 0], scale: 1 };
+  for (const n of nif.records) {
+    const t = ap(w.rotation, n.translation[0] * w.scale, n.translation[1] * w.scale, n.translation[2] * w.scale);
+    w = { rotation: m33(w.rotation, n.rotation),
+      translation: [w.translation[0] + t[0], w.translation[1] + t[1], w.translation[2] + t[2]],
+      scale: w.scale * n.scale };
+  }
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(pre.t[i] - w.translation[i]) < 1e-6,
+      `translation ${i}: ${pre.t[i]} vs ${w.translation[i]} - the arrow would land off the string by the difference`);
+  }
+  // And the folded scale is the chain's product, so applyPre scales the
+  // arrow's vertices by exactly what flattenNif scales the bow's by.
+  const folded = Math.hypot(pre.a[0], pre.a[3], pre.a[6]);
+  assert.ok(Math.abs(folded - w.scale) < 1e-6, `${folded} vs ${w.scale}`);
+});
+
+// MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD.
+// FindByNameVisitor is an osg::NodeVisitor walking the BUILT SCENE, and
+// by then the loader has dropped Bounding Box subtrees and
+// RootCollisionNode subtrees and masked hidden nodes. findNodeByName
+// reads the RAW PARSED NIF, where all of it is still there - so without
+// rule 58's filters it can answer with a node the reference's search
+// cannot see. flattenNif has applied these three all along; the search
+// that places the ARROW had none of them, which is the asymmetry left
+// standing after MW-D48 eliminated the arithmetic.
+test('MW-D49: findNodeByName honours rule 58, like the scene the reference searches', async () => {
+  const { findNodeByName } = await import('../src/formats/mwCharacter.js');
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const n = (name, extra = {}) => ({ type: 'NiNode', name, rotation: I3,
+    translation: [0, 0, 0], scale: 1, children: [], flags: 0, ...extra });
+  // A decoy ArrowBone inside collision, and the real one outside it.
+  const nif = { roots: [0], records: [
+    { ...n('root'), children: [1, 3] },
+    { ...n('collision'), type: 'RootCollisionNode', children: [2] },
+    { ...n('ArrowBone'), translation: [999, 999, 999] },
+    { ...n('ArrowBone'), translation: [1, 2, 3] },
+  ] };
+  const hit = findNodeByName(nif, 'ArrowBone');
+  assert.ok(hit, 'the real one is found');
+  assert.deepEqual([...hit.rec.translation], [1, 2, 3],
+    'the collision subtree is not searched - the reference never sees it');
+
+  // A hidden node is masked out of the built scene, so it cannot answer.
+  const hidden = { roots: [0], records: [
+    { ...n('root'), children: [1] },
+    { ...n('ArrowBone'), flags: 0x0001 },
+  ] };
+  assert.equal(findNodeByName(hidden, 'ArrowBone'), null, 'a hidden node is not in the scene');
+
+  // But a ROOT named "Bounding Box" is NOT skipped - the reference's
+  // guard is `args.mRootNode && ...` and mRootNode is null on the first
+  // call. flattenNif reproduces that oversight and so must this.
+  const bbRoot = { roots: [0], records: [
+    { ...n('Bounding Box'), children: [1] },
+    { ...n('ArrowBone'), translation: [4, 5, 6] },
+  ] };
+  assert.ok(findNodeByName(bbRoot, 'ArrowBone'), 'a Bounding Box ROOT is load-bearing, not skipped');
+});
