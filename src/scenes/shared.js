@@ -34,6 +34,8 @@ import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
 import { readSpellsStd } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
+import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
+import { setPaintFile } from '../systems/itemInfo.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
@@ -51,6 +53,22 @@ export async function fetchBytes(name) {
 }
 
 /**
+ * AUDIT 39 F156 - PAINT.DAT, the third file-backed registry, and it
+ * rides this call for exactly the reason the two below share it: one
+ * boot per host, THE FOUR HOSTS RULE, and a reader with nowhere else
+ * to be threaded (the info panel is handed an item and a TEXT.RSC
+ * reader, nothing more). It had no host at all: `setPaintFile` was
+ * called from no src module and formats/paintFile.js was imported by
+ * none, so every painting in the game showed TEXT.RSC 250 with its
+ * five macros - subject, adjective, both prefixes and the artist -
+ * expanded to the empty string. DFU always resolves it: GetItemInfo's
+ * painting arm returns `item.InitPaintingInfo(paintingTextId)`
+ * (ItemHelper.cs:788-789) over a PaintFileReader the ContentReader
+ * builds unconditionally.
+ *
+ * Its own try block: a bad or absent PAINT.DAT must not take the
+ * magic registries down with it, which is AUDIT 18's lesson below.
+ *
  * G4 - THE TWO MAGIC REGISTRIES, in ONE place. THE FOUR HOSTS RULE:
  * these were set only in dungeonContext's boot, so a magic item
  * minted from the EXTERIOR host - shop loot, a city corpse, and as of
@@ -80,7 +98,12 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
     magicItemTemplates = readMagicDef(await fetch('MAGIC.DEF'));
     setMagicItemTemplates(magicItemTemplates);
   } catch { /* data absent: the loot MI category and the guild shelf stay empty */ }
-  return { spellsByIndex, magicItemTemplates };
+  let paintFile = null;
+  try {
+    paintFile = new PaintFile(await fetch('PAINT.DAT'));
+    setPaintFile(paintFile);
+  } catch { /* data absent: a painting reads record 250 with blank macros */ }
+  return { spellsByIndex, magicItemTemplates, paintFile };
 }
 
 export function parseSeason(params) {

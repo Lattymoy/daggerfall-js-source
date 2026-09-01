@@ -137,11 +137,22 @@ export class NativeTradeWindow {
   get stagedForCost() { return this.mode === 'Buy' ? this.basket : this.staged; }
 
   /** FilterLocalItems (:672-703): the basket FIRST in Buy mode, then
-   *  the pack narrowed by the mode's own gate. */
+   *  the pack narrowed by the mode's own gate.
+   *
+   *  AUDIT 39 F102: and MINUS what is already staged. DFU's list needs
+   *  no such test because TransferItem physically moves the clicked
+   *  item out of localItems (PlayerEntity.Items, the live collection)
+   *  the moment it is staged. A host that hands `packItems` a FILTERED
+   *  VIEW cannot be spliced, so the staged lot is a SELECTION over a
+   *  pack that still holds the item - and without this the same item
+   *  stayed in the list, staged again on the next click, and the cost
+   *  strip paid for it once per click. The test is harmless against a
+   *  host that does hand over the live array: the item is gone from
+   *  the pack by then and matches nothing. */
   localList() {
     const pack = (this.hooks.packItems?.() ?? []).filter((it) => localListAccepts(this.mode, it, {
       accepts: this.hooks.accepts, enchanted: this.hooks.enchanted,
-    }));
+    }) && !this.staged.includes(it));
     return this.mode === 'Buy' ? [...this.basket, ...pack] : pack;
   }
 
@@ -153,6 +164,12 @@ export class NativeTradeWindow {
   cost() {
     return tradeCost(this.mode, this.stagedForCost, {
       ...(this.hooks.priceCtx?.() ?? {}),
+      // AUDIT 39 F144: the SPELL's window is the one that reaches
+      // UpdateCostAndGold's "Identify spell remains free" line
+      // (:479-481), and priceCtx is the host's PRICE context - it
+      // carries no window flags, so the guard read its own default
+      // and the spell was billed the paid service's price.
+      usingIdentifySpell: this.hooks.usingIdentifySpell ?? false,
       isBeingRepaired: this.hooks.isBeingRepaired ?? (() => false),
     });
   }
@@ -279,6 +296,13 @@ export class NativeTradeWindow {
   _modeAction() {
     const { cost, modeActionEnabled } = this.cost();
     if (!modeActionEnabled) return;          // DFU disables the button outright
+    // AUDIT 39 F144: DoModeAction opens on the SPELL (:955-995) and
+    // ShowTradePopup is its ELSE. The spell pays in magicka, rolls per
+    // item and prints the tally - no gold price is computed, no Yes/No
+    // is raised, and a penniless caster is never refused. The host's
+    // commit carries that whole pass (its magicka refusal answers
+    // false, which leaves the lot staged as DFU's early return does).
+    if (this.hooks.usingIdentifySpell) { this._castIdentifySpell(); return; }
     const ctx = this.hooks.priceCtx?.() ?? {};
     const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {});
     const d = tradeDecision(this.mode, { cost, tradePrice: price, gold: this.hooks.gold() });
@@ -288,6 +312,18 @@ export class NativeTradeWindow {
       return;
     }
     this.box = { rows: this._rows(d.textId, price), buttons: 'YesNo', price, cost, onYes: () => this._confirm(price) };
+  }
+
+  /** DoModeAction's SPELL arm (:955-995). ClearSelectedItems + Refresh
+   *  close it, which here is the staged lot going back to the pack -
+   *  the goods never physically left it (the selection shape, see
+   *  localList). No coins clink: the sound belongs to ConfirmTrade,
+   *  which this path never reaches. */
+  _castIdentifySpell() {
+    if (this.hooks.commit?.(this.mode, [...this.staged], 0, null) === false) return;
+    this.staged.length = 0;
+    this.localScroll = 0;
+    this.remoteScroll = 0;
   }
 
   /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092). */

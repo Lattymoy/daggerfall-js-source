@@ -14,7 +14,7 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
-import { mintCondition, templateByIndex } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
+import { mintCondition, templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
 import { materialArmorValue } from '../systems/armorMaterials.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
@@ -123,6 +123,11 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
   // nativeMaterialValue = 0, whatever material the caller asked for.
   // maxCondition stays the template's hitPoints because the material
   // pass never runs.
+  // AUDIT 39 F103: every arm carries SetItem's `value =
+  // itemTemplate.basePrice` (DaggerfallUnityItem.cs:563) through
+  // SetItemPropertiesByMaterial's multiplier (ItemBuilder.cs:649) -
+  // no DFU item exists without one, and the trade window's cost walk
+  // reads item.value raw.
   if (templateIndex === ARROW_TEMPLATE) {
     return {
       group: 'Weapons', name: templateByIndex(ARROW_TEMPLATE)?.name ?? 'Arrow',
@@ -130,12 +135,14 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
       stackCount: 1 + Math.floor(rolls() * 20),
       maxCondition: templateByIndex(ARROW_TEMPLATE)?.hitPoints ?? 0,
       currentCondition: 0,
+      value: itemBaseValue({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, material: 0 }),
     };
   }
   const name = WEAPON_BY_INDEX[templateIndex];
   return mintCondition({
     name, templateIndex, group: 'Weapons', material,
     flags: 0,
+    value: itemBaseValue({ group: 'Weapons', templateIndex, material }),
     minDamage: WEAPON_MIN_DAMAGE[name], maxDamage: WEAPON_MAX_DAMAGE[name],
   });   // AUDIT 23 (items-5): the condition mints with the item
 }

@@ -19,11 +19,18 @@
 //   worldTick.js drives. The condition-flag half of that member
 //   (PricesHigh/PricesLow) pends the region-conditions arc.
 //
-// INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-// the Alchemist's 25% potion recipe pends potion recipes; book items
-// carry the template price (classic prices each BOOK FILE - pends
-// the books arc); shelf restocking rides CreateStockedDate (pends
-// the shared calendar - stock is fresh per build for now).
+// INTERIM (loud): book items carry the template price (classic prices
+// each BOOK FILE - pends the books arc); shelf restocking rides
+// CreateStockedDate (pends the shared calendar - stock is fresh per
+// build for now).
+//
+// AUDIT 39 F106: two clauses were struck from this list because they
+// had SHIPPED and the header still swore they had not - the MagicItems
+// stock (F130) and the Alchemist's 25% recipe roll (F129), both live
+// below. A pend list that names closed work is worse than no list:
+// bible/Home.md pins these lines mechanically, so the false clause was
+// certified, and it is what kept the ungated MagicItems arm (F104)
+// from being read as the bug it was.
 
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
@@ -104,6 +111,11 @@ export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelI
 
 export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
+// F104: GetItemTemplate(MagicItems, 0). MagicItemSubTypes has ONE
+// name (ItemEnums.cs:233-236) and its value is 0, so the shelf's
+// rarity/chance gates read template 0 - the Ruby's row - for a magic
+// item. The generated group table has no MagicItems entry to hold it.
+export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
 import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
@@ -182,10 +194,25 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       // ItemBuilder.CreateRandomMagicItem, which IS
       // CreateRegularMagicItem at a random index, :517-520) - pawn
       // shops carry the group at chanceMod 10
-      // (DaggerfallLootDataTables.cs:61). The INTERIM skip predated
-      // the MAGIC.DEF registry this file already mints guild-shelf
-      // magic items from; a context that never registered the file
-      // still skips, the loot mint's own LOUD pend.
+      // (DaggerfallLootDataTables.cs:61). The skip that stood here
+      // predated the MAGIC.DEF registry this file already mints
+      // guild-shelf magic items from; a context that never registered
+      // the file still skips, the loot mint's own loud pend.
+      //
+      // AUDIT 39 F104: and the mint sits INSIDE the per-template loop
+      // in DFU, so it owes that loop's two gates - `rarity <=
+      // shopQuality` and the Dice100 stock roll. Ungated, every pawn
+      // shop shelved a guaranteed magic item and the general store
+      // (chanceMod 0, which never rolls true) shelved one too.
+      // GetEnumArray(MagicItems) is the one-entry MagicItemSubTypes
+      // (ItemEnums.cs:233-236), so GetItemTemplate(MagicItems, 0)
+      // resolves to template 0 - Ruby, rarity 10 - and THAT is the
+      // rarity both gates read. The generated group table carries no
+      // MagicItems row because the enum names no template of its own,
+      // which is why the index is spelled here.
+      const t = ITEM_TEMPLATES[MAGIC_ITEMS_ENUM_TEMPLATE];
+      if (t.rarity > quality) continue;
+      if (!dice100(Math.trunc(chanceMod * 5 * (21 - t.rarity) / 100), rolls())) continue;
       const templates = getMagicItemTemplates();
       if (templates) add(createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls));
       continue;
@@ -636,7 +663,10 @@ export function stockGuildMagicItems({ quality = 0, gameMinutes = 0, sellsSoulGe
       it.isIdentified = true;
       out.push(it);
     }
-    out.push(mintCondition({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }));
+    // F103: CreateItem runs SetItem, which writes the template's
+    // basePrice into value (DaggerfallUnityItem.cs:563). Without it
+    // the guild's spellbook cost the buyer nothing at all.
+    out.push(mintCondition({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX, value: itemBaseValue({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }) }));
   }
   if (sellsSoulGems) {
     for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE - numOfItems + 1 gems

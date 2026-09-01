@@ -1218,7 +1218,10 @@ export function createWorldModes(host) {
       // at the concluded deal (:1036-1051). FLAGGED: the equipped test
       // is the WINDOW's in DFU (FilterLocalItems :693 `!item.IsEquipped`
       // in every mode); moving it there is what would let this hand
-      // over the live array and transfer at the click.
+      // over the live array and transfer at the click. Until that
+      // happens the WINDOW owes the selection its own guard, and has
+      // one: localList drops what is already staged (AUDIT 39 F102),
+      // which is what DFU's splice does for FilterLocalItems.
       packItems: () => (playerEntity.items ??= []).filter((it) => !isEquipped(it)),
       accepts: (it) => shopBuysItem(b.buildingType, it),
       enchanted: (it) => isEnchanted(it),
@@ -1323,11 +1326,14 @@ export function createWorldModes(host) {
         // AUDIT 26 F067: the SPELL runs DoModeAction (:954-995), a
         // path that never reaches ConfirmTrade at all. Two laws come
         // with that. First its magicka refusal (:960-963) turns back
-        // the WHOLE pass - nothing identified, nothing spent:
+        // the WHOLE pass - nothing identified, nothing spent - and
+        // AUDIT 39 F144 answers it FALSE to the window, because DFU
+        // returns before ClearSelectedItems: the lot stays staged for
+        // a caster who steps out and comes back with the points.
         if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
           townTalk?.say?.(NOT_ENOUGH_SPELL_POINTS_TEXT);
           surfacePlayer();
-          return;
+          return false;
         }
         const pass = identifySpellPass(staged, identifySpell.chance, Math.random);
         for (const it of pass.identified) it.isIdentified = true;

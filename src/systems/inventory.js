@@ -4,8 +4,10 @@
 //   "Only ingredients, potions, gold pieces, oil and arrows are
 //    stackable, but equipped items, enchanted ingredients and quest
 //    items are never stackable."
-// Potions have no group yet (they pend the magic slice) - the rule
-// covers them the day they do.
+// Potions and books stack too - the rule's own words, and both arms
+// are live (AUDIT 39 F105; the sentence that stood here said potions
+// had no group yet, which stopped being true when the magic slice
+// landed).
 // Weight: template baseWeight, zeroed by the template's
 // hasNoEncumbrance bit (EffectiveUnitWeightInKg); weapons scale by
 // the ItemBuilder rule "Weight is baseWeight * value / 4" through the
@@ -69,6 +71,13 @@ export const letterOfCredit = (value = 0) => ({
  *  IsOfTemplate arms of IsItemStackable. */
 export const ARROW_TEMPLATE = 131;
 export const OIL_TEMPLATE = 252;
+/** UselessItems1.Glass_Bottle - IsPotion is that one template
+ *  (DaggerfallUnityItem.cs:352-355). systems/useItem.js exports the
+ *  predicate and is its home; this module cannot import it, because
+ *  combat/formulas.js imports THIS one and useItem's chain reaches
+ *  formulas - the pair is spelled here rather than closing that
+ *  cycle. */
+export const GLASS_BOTTLE_TEMPLATE = 83;
 
 // ---- X11b: SUMMONED ITEMS (the Create Item spell's conjured gear) --
 /** DaggerfallUnityItem.IsSummoned (:416-419), verbatim: "Summoned
@@ -89,11 +98,15 @@ export const isSummoned = (item) => (item?.timeForItemToDisappear ?? 0) !== 0;
  *  shelved by the Alchemist/GemStore/PawnShop stock tables, so ten
  *  bought rubies sat as ten rows. Oil was dropped the same way.
  *
- *  Books are the one arm deliberately NOT ported: IsItemStackable
- *  does name ItemGroups.Books, but ItemCollection.FindExistingStack
- *  (:699-718) additionally requires `checkItem.message == item.message`
- *  - the per-book id the port does not model - so stacking books here
- *  would merge two DIFFERENT books, which DFU never does. */
+ *  AUDIT 39 F105: the POTION and BOOKS arms land here too. Both were
+ *  held back by notes that had gone stale - potions "have no group
+ *  yet" (they are minted with their recipe key by loot.createPotion
+ *  and stocked by the alchemist and the guild) and books carry no
+ *  per-book id (every shelf and loot book has carried `message` since
+ *  IM1/B1). The identity terms those notes were right to demand are
+ *  in stacksWith now, where FindExistingStack keeps them. Note the
+ *  ingredient arm cannot stand in for either: templates 83 and 277
+ *  both ship isIngredient false. */
 export function isStackable(item) {
   // X11b: DFU's FIRST clause, ahead of the three below
   // (DaggerfallUnityItem.cs:682-689): a summoned item does not stack
@@ -108,10 +121,11 @@ export function isStackable(item) {
   // of DFU's rule were no-ops.
   if (item.equipSlot != null || isEnchanted(item) || item.questItem) return false;   // never stack
   if (templates[item.templateIndex]?.isIngredient) return true;   // IsIngredient
+  if (item.group === 'UselessItems1' && item.templateIndex === GLASS_BOTTLE_TEMPLATE) return true;   // IsPotion
+  if (item.group === 'Books') return true;                        // ItemGroup == ItemGroups.Books
   if (item.group === 'Currency') return true;                     // IsOfTemplate(Currency, Gold_pieces)
   if (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE) return true;
   if (item.group === 'UselessItems2' && item.templateIndex === OIL_TEMPLATE) return true;
-  // Potions join here when their group exists (the rule names them).
   return false;
 }
 
@@ -123,11 +137,20 @@ export function isStackable(item) {
  *  item.TimeForItemToDisappear` alongside the group and index, so two
  *  conjured arrow stacks with different lifetimes stay apart - and a
  *  conjured stack never merges into a real one, which would hand the
- *  real arrows an expiry or (worse) let the conjured ones outlive it. */
+ *  real arrows an expiry or (worse) let the conjured ones outlive it.
+ *
+ *  AUDIT 39 F105: and the same member's OTHER two identity terms,
+ *  `checkItem.message == item.message` and `checkItem.PotionRecipeKey
+ *  == item.PotionRecipeKey` (:706-713). They are what keeps the two
+ *  arms isStackable just gained honest: two different books share a
+ *  group and a template index and differ only by the book id, and two
+ *  different potions are the same glass bottle. */
 export function stacksWith(a, b) {
   return isStackable(a) && isStackable(b) &&
     a.group === b.group && a.templateIndex === b.templateIndex &&
     (a.material ?? null) === (b.material ?? null) &&
+    (a.message ?? 0) === (b.message ?? 0) &&
+    (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
 }
 

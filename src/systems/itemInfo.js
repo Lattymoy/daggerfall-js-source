@@ -411,12 +411,17 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
     .replaceAll('%mod', item?.group === 'Armor' ? armourModString(item) : '');
 }
 
-/** PAINT.DAT, registered once by whichever host loaded it - the same
- *  shape loot.js keeps for MAGIC.DEF (setMagicItemTemplates), and for
- *  the same reason: the info panel is reached from a window that is
- *  handed an item and a TEXT.RSC reader, with nowhere to thread a
- *  fourth file through. A context that never loaded PAINT.DAT reads
- *  null and a painting shows record 250 with the five macros blank. */
+/** PAINT.DAT, registered once per host boot by scenes/shared.js's
+ *  loadMagicRegistries - the same shape loot.js keeps for MAGIC.DEF
+ *  (setMagicItemTemplates), from the same block, and for the same
+ *  reason: the info panel is reached from a window that is handed an
+ *  item and a TEXT.RSC reader, with nowhere to thread a fourth file
+ *  through. A context that never loaded PAINT.DAT reads null and a
+ *  painting shows record 250 with the five macros blank.
+ *
+ *  AUDIT 39 F156: that host was named here for a slice before it
+ *  existed - nothing in src called this, so the null arm was the ONLY
+ *  arm and every painting in the game was described by four blanks. */
 let _paintFile = null;
 export function setPaintFile(paintFile) { _paintFile = paintFile ?? null; }
 export function getPaintFile() { return _paintFile; }
