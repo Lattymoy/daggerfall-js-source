@@ -487,7 +487,15 @@ float fbm(vec2 p) {
 // which is what lights the deck. Returns cover (x) and the noise the
 // colour is chosen by (y).
 vec2 deck(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias) {
-  vec2 p = dir.xz / (dir.y + 0.18) * scale + wind * uTime;
+  // EE2 F1 (found in the Enhanced Environments lab): THE DECK STOPPED
+  // AT THE HORIZON. This projection runs away as the ray flattens - at
+  // the horizon the lookup reaches the tens of thousands, a float32
+  // loses its fraction, and the noise returns a CONSTANT, so the last
+  // band of sky carried no cloud at all whatever the cover said. It is
+  // the largest part of the sky and the part a player looks at most.
+  // Capping the projection keeps the coordinates in a range the noise
+  // can still resolve, and the deck runs all the way down.
+  vec2 p = dir.xz * min(1.0 / (dir.y + 0.18), 9.0) * scale + wind * uTime;
   float n = fbm(p) + bias;
   float cov = smoothstep(1.0 - cover, 1.0 - cover + soft, n);
   return vec2(cov, n);
@@ -531,9 +539,23 @@ float stars(vec3 dir, float amount) {
     // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
     float scale = layer == 0 ? 127.0 : 236.0;
 
-    vec2 sc2;
-    cubeSnap(d, scale, sc2);
-    vec2 g = sc2 + float(layer) * 31.7;
+    // EE2 F2 (found in the lab, and it is THIS shader's bug): THE STARS
+    // WERE RULED INTO ROWS. cubeSnap returns the cell's INTEGER id, so
+    // fract() of it is a CONSTANT - every star sat at the same offset
+    // inside its cell, and a field of stars all at the same sub-cell
+    // position is a grid of lines, which is what the night sky looked
+    // like. The id and the position have to come from ONE number: the
+    // face is chosen once, its equi-angular coordinate computed once,
+    // and the cell is that number's floor while the position is its
+    // fract. They cannot disagree because there is nothing left to
+    // disagree about.
+    vec3 ad2 = abs(d);
+    float md2 = max(ad2.x, max(ad2.y, ad2.z));
+    vec2 raw2; float face2;
+    if (ad2.x >= md2) { raw2 = d.zy / ad2.x; face2 = d.x > 0.0 ? 0.0 : 1.0; }
+    else if (ad2.y >= md2) { raw2 = d.xz / ad2.y; face2 = d.y > 0.0 ? 2.0 : 3.0; }
+    else { raw2 = d.xy / ad2.z; face2 = d.z > 0.0 ? 4.0 : 5.0; }
+    vec2 g = atan(raw2) * 1.27323954 * scale + vec2(face2 * 977.0 + float(layer) * 31.7);
     vec2 cell = floor(g), f = fract(g);
     float h = hash21(cell + 7.3 * float(layer));
     float thresh = layer == 0 ? 0.955 : 0.985;

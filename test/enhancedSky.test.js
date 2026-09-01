@@ -279,7 +279,17 @@ test('ES1c stars: the field wheels about a pole, one turn a day, on the same clo
   const fs = read('src/render/enhancedSky.js');
   assert.match(fs, /float ca = cos\(uStarAngle\), sa = sin\(uStarAngle\);/, 'the turn is the CLOCK\'s angle - a constant here is a field that stands still');
   assert.match(fs, /vec3 d = dir \* ca \+ cross\(axis, dir\) \* sa \+ axis \* dot\(axis, dir\) \* \(1\.0 - ca\);/, 'Rodrigues about the pole');
-  assert.match(fs, /cubeSnap\(d, scale, sc2\);/, 'the field is sampled in the TURNED frame (d, not dir) - ES1f casts it on the cube');
+  // EE2 F2: cubeSnap is no longer called for the STARS - it returned an
+  // integer cell id, and taking fract() of an integer gave every star
+  // the same offset inside its cell, which ruled the field into rows.
+  // The cell and the position now come from one number. The law the
+  // pin exists for is unchanged and still asserted: the field is
+  // sampled in the TURNED frame (d, not dir), and it is cast on the
+  // cube's equi-angular faces.
+  assert.match(fs, /vec2 raw2; float face2;/, 'the star field must choose a cube face itself');
+  assert.match(fs, /if \(ad2\.x >= md2\) \{ raw2 = d\.zy \/ ad2\.x;/, 'the field is sampled in the TURNED frame (d, not dir)');
+  assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale/, 'equi-angular, so a cell is one angle everywhere on a face');
+  assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/, 'the cell and the position must be the floor and fract of ONE number');
   assert.match(fs, /smoothstep\(0\.0, 0\.08, dir\.y\)/, '...but a star sets where the REAL horizon is');
 });
 
@@ -421,6 +431,32 @@ test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole
   // The star field rides the same cube, so it has no pinwheel and no
   // density pile-up at a pole - and its scales were raised to keep the
   // count, because a cube covers the sphere with far fewer cells.
-  assert.match(fs, /cubeSnap\(d, scale, sc2\);/);
+  // EE2 F2: the RETRO snap still uses cubeSnap on the turned frame -
+  // that is what the cube grid is for - but the STAR field no longer
+  // does, because cubeSnap hands back an integer cell and the stars
+  // needed a position inside it. Both laws hold; they are asserted on
+  // their own sites now.
+  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/, 'the retro pass still snaps on the cube');
+  assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale/, 'and the stars sit on the same equi-angular faces');
   assert.match(fs, /float scale = layer == 0 \? 127\.0 : 236\.0;/);
+});
+
+// ═══ EE2: the two sky faults the Enhanced Environments lab found ════
+test('EE2: the deck reaches the horizon, and the star field is not ruled into rows', () => {
+  const fs = read('src/render/enhancedSky.js');
+  // F1: the projection runs away as the ray flattens - at the horizon
+  // the lookup reaches the tens of thousands and a float32 loses its
+  // fraction, so the noise returns a constant and the largest part of
+  // the sky carried no cloud whatever the cover said.
+  assert.match(fs, /vec2 p = dir\.xz \* min\(1\.0 \/ \(dir\.y \+ 0\.18\), 9\.0\) \* scale \+ wind \* uTime;/,
+    'the deck projection must be capped or the horizon has no cloud');
+  // F2: the cell id and the position inside it must be the floor and
+  // the fract of ONE number. cubeSnap returns an integer cell, so
+  // fract() of it was a constant and every star sat on the same line.
+  assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/);
+  const stars = fs.slice(fs.indexOf('float stars('), fs.indexOf('float stars(') + 3200);
+  const code = stars.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.ok(!/cubeSnap/.test(code), 'the star field must not take its position from a cell id');
+  assert.match(stars, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/,
+    'one number for the cell and the offset, on the cube\u2019s own equi-angular faces');
 });
