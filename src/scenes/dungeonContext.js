@@ -22,7 +22,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
+import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
@@ -30,6 +30,7 @@ import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
+import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
@@ -59,6 +60,7 @@ import {
   tryLanguagePacification,         // AUDIT 24 (wave 42): EnemySenses:504-527
   playerPainVoice, playPlayerVoice,   // AUDIT 24 (wave 46): PlayerFootsteps.RemoveHealth's 40% cry
   applyDamageToNonPlayer,          // MT-iv: EnemyAttack.ApplyDamageToNonPlayer (:303-392)
+  makeEnemiesHostile,              // ROAD-B: GameManager.cs:790-806
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -100,7 +102,7 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
-import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
+import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
@@ -147,6 +149,7 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
 import { pickActivatable } from '../player/activate.js';   // PX21c: the hover runs the take's own pick
 import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
 import { isEnhanced } from '../systems/uiSkin.js';
+import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 
 
 
@@ -186,6 +189,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // health floors at 0 (death screen: UI arc). Traps work with or
   // without ?foes - the entity import is static.
   const actions = new ActionSystem(collider, {
+    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, the read
+    // AttemptBash's tail makes (DaggerfallActionDoor.cs:220-221). The
+    // SAME live block lookup the music context takes below - it is the
+    // same question, asked at the door instead of at the song.
+    insideDungeonCastle: () => (lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false),
     damagePlayer: hurtPlayer,
     castSpell: (index, origin) => { _pendingCasts.push({ index, origin }); },   // consumed once spells load
     drainMagicka: (n) => {
@@ -201,6 +209,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     setGlobalVar: (index, value) => { opts.questBridge?.machine?.globalVars?.set(index, value); },
     playerLevel: () => playerEntity.level,
     lockpickSkill: () => skillValue(playerEntity, SKILLS.Lockpicking),   // R1: GetLiveSkillValue at attempt time
+    // ROAD-B B4: CastleDaggerfallMagicDoorsSpecialOpenHack's three
+    // ambient reads (DaggerfallAction.cs:261-263). This host IS the
+    // dungeon, so IsPlayerInsideDungeon is true by construction; the
+    // teleport latch is the entity field TeleportAnchor writes
+    // (PlayerEnterExit.PlayerTeleportedIntoDungeon), and the map id is
+    // the location's own MapTableData.MapId.
+    magicDoorsContext: () => ({
+      playerTeleportedIntoDungeon: !!playerEntity.playerTeleportedIntoDungeon,
+      isPlayerInsideDungeon: true,
+      currentMapId: dfLocation?.mapTableData?.mapId ?? 0,
+    }),
   });
   // A1: sound. DAGGER.SND loads through the data seam; the context
   // starts on the first gesture (mobile discipline). Dungeon doors
@@ -364,6 +383,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // reads currentLockValue).
       const o = actions.addDoor(cpu, matrix, {
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
+        loadID: d.loadID,   // ROAD-B B4: RDBLayout.cs:242 - the Castle Daggerfall foyer hack names its two doors by this
       });
       dynamicDraws.push({ gpu, object: o });
       automapEntries.push({ key: o.key, aabb: worldAabb(cpu.positions, matrix) });   // A1: doors reveal at their CLOSED bounds
@@ -548,14 +568,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  mid-quest. Non-enumerable, so the save/snapshot walks that
    *  iterate a record are untouched. */
   function asCandidate(rec) {
+    // A5 adds `concealment`: the closure the illusion gate has read
+    // since MT-i and nothing ever built (exteriorFoes' law, one
+    // spelling). BlockedByIllusionEffect (EnemySenses.cs:658-683)
+    // reads the TARGET's IsInvisible/IsBlending/IsAShade whether that
+    // target is the player or another enemy, and ConcealmentEffect
+    // writes the flag entity-blind (:63).
     Object.defineProperties(rec, {
       isQuestFoe: { get: () => !!rec.questBehaviour, enumerable: false },
       questAttackable: { get: () => !!rec.questBehaviour?.isAttackableByAI, enumerable: false },
+      concealment: { value: () => concealmentFlags(rec.entity), enumerable: false },
     });
     // the cross-pool damage door another enemy's blow lands through.
     // `fromPlayer: false` - a monster's blow is not the player's
     // (DaggerfallEntityBehaviour.cs:203).
     rec.hurtFromFoe = (dmg, dir) => damageFoe(rec, dmg, null, dir ?? null, { fromPlayer: false });
+    // A5 - SetupDemoEnemy.cs:191-195: "Add special behaviour for Daedra
+    // Seducer mobiles", gated on the mobile ID and nothing else. The
+    // component is added at SETUP, so every seducer carries its
+    // eight-second transform clock from the frame it stands.
+    if (rec.mobile && rec.mobileType === MOBILE_DAEDRA_SEDUCER) {
+      rec.seducer = new SeducerTransformBehaviour(rec.mobile, rec.entity);
+    }
     return rec;
   }
 
@@ -856,6 +890,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   let chargenFlow = null;
   let activeOverlay = null;
+  /** ROAD-B B1: the DEPTH under this context's one slot, exactly as
+   *  worldModes' interior half took it. `activeOverlay` stays the live
+   *  slot every read in this file already uses; the stack
+   *  (UserInterfaceManager.cs, ported in ui/windowStack.js) carries
+   *  what is suspended beneath it and writes the slot back through
+   *  `onTop`. showOverlay pushes; tickOverlay reconciles, so the ~15
+   *  hand-written `activeOverlay = null` close paths read as
+   *  PopWindow and uncover the window they were laid over. */
+  const dungeonWindows = makeWindowStack({ onTop: (w) => { activeOverlay = w; } });
   // V1: the infection's host seam - the dream/death videos, the
   // fortnight clock raise and the popup (THE FOUR HOSTS RULE). The
   // dungeon has no FACTION.TXT of its own, so a player turned
@@ -984,7 +1027,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
-      rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2
+      // ROAD-A7: the reader takes a PICK now. The painting arm of the
+      // info panel asks for GetRandomTokens' dfRand draw (TextProvider
+      // .cs:228); everything else keeps Random.Range's default.
+      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
       // U42: USING the Spellbook item opens the book
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
@@ -1065,9 +1111,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   actions.onDoorBash = (o) => audio.play3d(SOUND.PlayerDoorBash, [o.matrix[12], o.matrix[13], o.matrix[14]]);
   // U6: the text-action seams. ShowText/ShowTextWithInput open modal
   // boxes on the overlay seam (the world holds); DoorText rides the
-  // HUD popup (AddHUDText 2.0s); the trespass check maps to our foes,
-  // which are already hostile-on-sight (MakeEnemiesHostile's passive
-  // teams pend the faction model - logged loudly).
+  // HUD popup (AddHUDText 2.0s); the trespass check is
+  // MakeEnemiesHostile over this dungeon's pool (below).
   const rscLines = (id) => {
     const v = textRsc?.plainText(id);
     return v?.length ? v[0].split('\n').filter((l) => l.length) : null;
@@ -1087,7 +1132,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!lines) return console.error(`[action] bad DoorTextID requested: ${id}`);   // DFU throws; we log loudly
     for (const l of lines) hudText.add(l);
   };
-  actions.onTrespass = () => console.warn('[action] trespass check fired (MakeEnemiesHostile) - foes are hostile-on-sight; passive teams pend the faction model');
+  // ROAD-B: THE TRESPASS CHECK IS A REAL SWITCH NOW.
+  // DaggerfallAction.cs:882-890 - a DoorText record whose
+  // ActionAxisRawValue is over 5 is classic's trespass flag, and
+  // stepping through it calls GameManager.MakeEnemiesHostile(). This
+  // logged a warning instead, on a claim ("foes are hostile-on-sight")
+  // that stopped being true when AUDIT 39 wired RDBLayout's passive
+  // marker: both spawn branches below hand the motor the marker's
+  // reaction, so a dungeon holds non-hostile foes this switch is the
+  // whole point of. The walk is the host's own live pool - one
+  // ActiveGameObjectDatabase, one dungeon.
+  actions.onTrespass = () => makeEnemiesHostile(foes);
+  // ...and the same law at DaggerfallActionDoor.cs:220-221: bashing
+  // ANY action door while inside a dungeon CASTLE turns the castle
+  // hostile, whether the bash opened it or not. The castle read is the
+  // ActionSystem's own dep (above); this is the sink.
+  actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null;
   let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
   let debugHud = false;   // F8 diagnostics
@@ -1109,9 +1169,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _restFullyHealed = () => restFullyHealed(playerEntity);
   // U3: the level-up screen replaces the headless auto-apply (shared
   // by the rest-end raise and any future travel arm).
+  // AUDIT 44 (a11): dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -
+  // the SHEET is what classic opens, and the rollout mounts onto it.
+  // `api.toggleCharSheet` is this host's ONE sheet construction (its
+  // own free-slot guard included); calling it here rather than
+  // building a second bag is the same rule U43 wrote for F5.
   const _onLevelUp = () => {
     hudText.add('You have gained a level!');
-    if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+    api.toggleCharSheet();
   };
   // E-slice: a rest-interruption ENCOUNTER - one foe minted through
   // the same chain as the load loop, at the classic minimum distance
@@ -1239,6 +1304,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // too - three more hosts ask it, and two were asking a much coarser
   // question before this slice.
   const _restDeps = createRestDeps(playerEntity, {
+    // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
+    box: (rows) => { if (!activeOverlay) activeOverlay = new ActionTextBox(rows); },
     advanceMinutes: (n) => _restAdvance(n),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED. This host holds the bridge as
@@ -1428,13 +1495,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and the spell still flies.
       weaponRig.castSpellAnim(sp?.rangeType);
     },
+    // A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
+    // saying the anchor machinery lived in the streaming host - true of
+    // the machinery, false as a refusal: this context is the one the
+    // STREAMING host mounts for dungeon mode too, so the line meant a
+    // Recall cast underground did nothing at all, anchor or teleport.
+    // The prompt is the outer host's (it owns the pixel teleport, the
+    // mode teardown and the dungeon mount the plan needs); the
+    // standalone ?dungeon probe passes none and keeps the honest
+    // refusal, which is the AUDIT 24 seam shape done deliberately.
+    //
     // hudText.add, not `say?.()`. There is no `say` in this scope — the
     // optional-call syntax made an undefined identifier look like a
     // guarded one, so it read as safe and was a ReferenceError waiting
     // for the first Recall cast in a standalone dungeon. Every other
     // line in this file speaks through hudText, including the one four
     // below it.
-    onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    onTeleport: () => {
+      if (opts.onTeleport) { opts.onTeleport(); return; }
+      hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)');
+    },
     // X9: the creature dispel. This host is where undead and daedra
     // actually live, so it is the one that matters. removeFoe IS
     // GameObject.Destroy - no corpse, no loot, no death - and
@@ -1790,7 +1870,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // publishing GPU batches onto a torn-down scene.
   let _ctxDead = false;
   async function spawnCorpse(f) {
-    const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
+    // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`, the
+    // per-mobile STRUCT COPY, not the static row. That only matters for
+    // one enemy in the game: SetSpecialTransformationCompleted swaps
+    // the seducer's unwinged corpse (400/6) for the winged one (400/5),
+    // and the static table cannot carry both. A rig foe has no mobile
+    // and falls back to the row, which is where it always read.
+    const ct = f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture;
     // C12: a flyer dies mid-air - the corpse lands on the floor
     // below (AlignBillboardToGround semantics for every corpse).
     const p = floorLanding(collider, [f.ai.feet[0], f.ai.feet[1] + 0.1, f.ai.feet[2]]);
@@ -2341,6 +2427,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // must, and a foe hurt before the subsystem loaded still stands
     // up through the legacy arm.
     if (fromPlayer && foe.ai) {
+      // ROAD-B: ...and the AREA turns with it.
+      // DaggerfallEntityBehaviour.cs:249-261 is TWO calls in order -
+      //     if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile();
+      //     enemyMotor.MakeEnemyHostileToAttacker(player);
+      // - so striking one sleeping/passive foe wakes the WHOLE room,
+      // and only the struck one learns where you are. The port had the
+      // second call and not the first, which is why a passive RDB
+      // guard could be picked off one at a time in a room full of
+      // them. The `!isHostile` read has to happen BEFORE the walk,
+      // because the walk flips this foe too.
+      if (!foe.ai.isHostile) makeEnemiesHostile(foes);
       if (foeDeps) {
         foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
         foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
@@ -2551,6 +2648,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return null;
   }
+  /** ROAD-B (b3): UnderwaterFog wants blockWaterLevel RAW - the RDB
+   *  short PlayerEnterExit.cs:337 stores and passes to UpdateFog
+   *  (:351), not the world Y above. 10000 is DFU's "no water in this
+   *  block" sentinel (:343) and is passed through unchanged, because
+   *  UpdateFog's own arithmetic turns it into a threshold 250 units
+   *  under the deepest floor and answers "dry" without a special case.
+   *
+   *  Off every block DFU reports playerBlockIndex == -1 and simply
+   *  does not call UpdateFog that frame (:349-352); null says so. */
+  function blockWaterLevelAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return b.layout.waterLevel;
+      }
+    }
+    return null;
+  }
+  // ROAD-B (b3): the green murk. UnderwaterFog is a per-PlayerEnterExit
+  // instance in DFU (constructed once at Start, :322) because its
+  // backup/restore is stateful - so it is constructed once here, per
+  // dungeon context, and both dungeon hosts share it.
+  const _underwaterFog = new UnderwaterFog();
+  /** UnderwaterFog.UpdateFog's call site (PlayerEnterExit.cs:349-352):
+   *  every frame the player is inside a dungeon and over a block.
+   *  `base` is the fog the host would otherwise draw with (DFU's
+   *  RenderSettings at the moment of the call), and the return is what
+   *  it should draw with instead - null when there is no block under
+   *  the player, which is the frame DFU skips. */
+  function underwaterFogSettings(camY, playerFeet, base) {
+    const level = blockWaterLevelAt(playerFeet[0], playerFeet[2]);
+    if (level == null) return null;
+    return _underwaterFog.updateFog(level, camY, base);
+  }
   /** AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle.
    *
    *      isPlayerInsideDungeonCastle = playerDungeonBlockData.CastleBlock;
@@ -2731,6 +2861,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _senses = sensesContext(playerEntity, classicMinutesRef.value, {
       ..._activity,
       candidates: foeDeps ? () => foes.filter((f) => !f.dead && f.ai) : null,
+      // ROAD-B: EnemySenses.StealthCheck's first statement (:619-621).
+      // This is the ONE host that can answer it true, off the same
+      // block read the music and the ambient take.
+      insideDungeonCastle: lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false,
     });
     // AUDIT 18: the PLAYER half of this tick moved to systems/worldTick.js
     // and is now called by every host - it used to run only here, so a
@@ -2871,6 +3005,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C12: paralysis now flows THROUGH the motor (DFU CanAct=false +
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
+      applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
       f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
       const _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
       // CH3 (characters-8): a past-threshold landing bills the
@@ -3039,6 +3174,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // frame. What stops the blow is EnemyAttack's early return, which
         // is the consume-and-clear below.
         {
+          // A5 - DaedraSeducerMobileBehaviour.Update, a MonoBehaviour
+          // Update that runs BEFORE the anim step consumes the state
+          // it raises. Its one input is `enemySenses.Target ==
+          // PlayerEntityBehaviour`, spelled here exactly as the alert
+          // arm below spells it (an unarmed host targets the player).
+          f.seducer?.update(dt, !foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target));
+          // EnemyMotor.CanFly (:837-845) reads `mobile.Enemy.Behaviour`
+          // LIVE - "This can change in the case of a transformed
+          // Seducer" - where the port's motor captured it at spawn.
+          // The transform rewrites that field twice (Flying while
+          // crouched, General while standing) and once more for good
+          // at SetSpecialTransformationCompleted, so the read is folded
+          // here, on the one mobile whose behaviour is not a constant.
+          if (f.seducer) f.ai.flies = f.mobile.basics.behaviour === 'Flying' || f.mobile.basics.behaviour === 'Spectral';
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
             striking: _strikeEdge && !f.attack.firedRanged,   // the START edge (paralysis eats it - the attack machine above is gated, so ChangeEnemyState never fires: EnemyAttack.Update's early return, NOT FreezeAnims - wave 33)
@@ -3075,6 +3224,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
         }
+        // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
+        // (:36-43, :56-62): "Handles magical concealment for entities
+        // other than player". A non-player entity whose
+        // IsMagicallyConcealed is true has its renderer DISABLED -
+        // any of the six flags, normal or true power. The animation
+        // above still ran (DFU's Update on the mobile is untouched by
+        // this component); only the draw is dropped.
+        if (isMagicallyConcealed(f.entity)) continue;
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
@@ -3363,7 +3520,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
     drawFoes,
     playerAttackInput,
+    spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
+    readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
+    switchHand: weaponRig.switchHand,   // a12: SwitchHand (H) - the same one door as the sheathe toggle
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the
     // foe-cast and missile-impact sites call).
@@ -3489,6 +3649,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
     waterSurfaceYAt,
+    // ROAD-B (b3): UnderwaterFog.UpdateFog, hosted. Hosts call it with
+    // the camera Y, the player's feet and the fog they were about to
+    // set, and apply what comes back.
+    underwaterFogSettings,
     // P11: the motor-mode effect consumers (Levitate 14,255; the S8
     // waterWalking flag lands its swimmer).
     playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),
@@ -3648,7 +3812,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
-    get uiOverlayActive() { return !!activeOverlay; },
+    // ROAD-B B1: `|| depth` for the same reason worldModes' overlayHeld
+    // carries it - this is read from the hosts' event handlers, between
+    // frames, and a window that closed itself since the last reconcile
+    // still has one suspended under it that is about to be painted.
+    get uiOverlayActive() { return !!activeOverlay || dungeonWindows.depth() > 0; },
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
@@ -3661,13 +3829,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  Privateer's Hold, so a new game's opening text was among the
      *  things that never reached a screen.
      *
-     *  It REFUSES rather than clobbers: a window already up owns the
-     *  slot, exactly as townTalk.showOverlay's callers check
-     *  overlayActive first, and the caller reads the false to keep
-     *  its own reference clean. */
+     *  It used to REFUSE rather than clobber - a window already up
+     *  owned the slot, and the caller read the false to keep its own
+     *  reference clean. ROAD-B B1 made it PushWindow
+     *  (UserInterfaceManager.cs:79-91), which is what DFU does with a
+     *  quest popup and what the refusal was standing in for: the box
+     *  goes ON TOP, the window under it is suspended rather than lost,
+     *  and the drain in tickOverlay hands the slot back when the box
+     *  closes. The refusal cost the dungeon the quest text outright -
+     *  a _TUTOR__ message that arrived while the automap or a rest
+     *  window was up simply never appeared. */
     showOverlay(win) {
-      if (!win || activeOverlay) return false;
-      activeOverlay = win;
+      if (!win) return false;
+      dungeonWindows.reconcile(activeOverlay);   // whatever the slot holds NOW is the top
+      if (dungeonWindows.containsWindow(win)) return true;
+      dungeonWindows.pushWindow(win);
       return true;
     },
     dropped: () => droppedLoot._piles,
@@ -3691,6 +3867,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay?.isRestWindow) activeOverlay.abortForEnemySpawn?.();
     },
     tickOverlay(dt) {
+      // ROAD-B B1: the stack catches up with the slot FIRST. A window
+      // that closed itself between frames (the ~15 `activeOverlay =
+      // null` close paths) is a PopWindow, and the window it uncovers
+      // is the one this frame ticks and draws - a rest resumes under a
+      // dismissed quest box with no blank frame in between.
+      dungeonWindows.reconcile(activeOverlay);
       if (!activeOverlay) return;
       // D1: the death sequence's clock - and, since the rest lanes,
       // the rest window's too. RestWindow.tick IS its Update, so the
@@ -3711,6 +3893,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         surfacePlayer();
         activeOverlay = null;
       }
+      // ...and that drain is PopWindow too, reconciled in the same
+      // frame so the uncovered window is what gets painted (ROAD-B B1).
+      dungeonWindows.reconcile(activeOverlay);
     },
     chargenFlow: () => chargenFlow,   // AUDIT 17i probe surface
     /** U14: the POINTER half of the overlay seam. This host routed
@@ -3734,6 +3919,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         surfacePlayer();
         activeOverlay = null;
       }
+      // ROAD-B B1: that drain is PopWindow - reconcile now, so the
+      // window it uncovers is already in the slot for the next event
+      // and not only from the next frame's tickOverlay.
+      dungeonWindows.reconcile(activeOverlay);
       return true;
     },
     /** The wheel seam (U-scroll): scroll never closes a window, so no
@@ -3742,7 +3931,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering
      *  never closes anything. */
-    overlayHover(vx, vy) { activeOverlay?.hover?.(vx, vy); },
+    // ROAD-A7: the DOM mousemove rides along. VerticalScrollBar.Update
+    // (:105) polls InputManager.GetMouseButton(0) every frame, and
+    // `e.buttons` is the port's only read of that - without it the
+    // list picker's thumb could latch but never move.
+    overlayHover(vx, vy, e = null) { activeOverlay?.hover?.(vx, vy, e); },
     /** U26: ui/input.js asks this before mapping a key to an action -
      *  a native window keys off raw codes. */
     get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },
@@ -3760,6 +3953,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         surfacePlayer();
         activeOverlay = null;
       }
+      // ROAD-B B1: PopWindow, reconciled in the same event - a key
+      // that closes the top window hands the screen straight back to
+      // the one beneath it.
+      dungeonWindows.reconcile(activeOverlay);
     },
     drawOverlay(canvas) {
       if (!activeOverlay) { _exhaustedShowing = false; return; }   // S20: the popup guard clears with the box (OnClose)
@@ -3771,6 +3968,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         else if (activeOverlay instanceof LevelUpScreen) {
           console.warn('[levelup] FONT art unavailable; applying headlessly');
           applyLevelUp(playerEntity, (st, pool) => spendPoolLowest(st, Object.keys(st), pool));
+          surfacePlayer();
+        }
+        // AUDIT 44 (a11): the classic lane levels ON THE SHEET now, so
+        // the font-less escape has to know that shape too - the sheet
+        // has already taken the Level++ and the health roll at mount
+        // and holds an UNSPENT pool. Dropping it silently would eat
+        // the points, which is the defect this arm exists to prevent.
+        else if (activeOverlay?.leveling) {
+          console.warn('[levelup] FONT art unavailable; applying headlessly');
+          spendPoolLowest(activeOverlay.working, Object.keys(activeOverlay.working), activeOverlay.pool);
+          activeOverlay.pool = 0;
+          activeOverlay.input('confirm');   // CheckIfDoneLeveling writes the working stats home
           surfacePlayer();
         }
         activeOverlay = null;
@@ -3986,6 +4195,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
       exitDungeonAutomap();
+      // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
+      // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them
+      // all (:125-126). The outer host disposes the TOP before calling
+      // here; with a stack there can be windows under it - a rest
+      // suspended beneath a quest box still holds IsResting - so the
+      // whole stack drains with the context. dispose() is idempotent
+      // (A2), which is what makes the outer host's call harmless.
+      dungeonWindows.reconcile(activeOverlay);
+      dungeonWindows.clear((w) => w.dispose?.());
       // B1: OnDestroy for every quest foe standing in this dungeon -
       // the resource uncouples exactly as Unity's scene teardown does.
       for (const f of foes) f.questBehaviour?.notifyDestroyed();

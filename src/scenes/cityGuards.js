@@ -39,10 +39,11 @@ import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
-import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
+import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_RADIUS } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too   // ROAD-B: PlayerController.radius, for the indoor arm's door clearance
+import { findLowestOuterInteriorDoor } from '../player/enterExit.js';   // ROAD-B: DaggerfallInterior.FindLowestOuterInteriorDoor
 import { SOUND } from '../systems/soundClips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
@@ -89,6 +90,13 @@ export const GUARD_BEHIND_ANGLE = 105.469;     // convert non-guards this far be
 export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player within this sees a crime
 export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
+/** PlayerEntity.cs:634 - `lowestDoorPos += lowestDoorNormal *
+ *  (PlayerController.radius + 0.1f)`: the indoor arm stands its
+ *  watchmen one player-radius clear of the door plane, the same
+ *  clearance PositionPlayerToDungeonExit uses (enterExit's
+ *  DUNGEON_EXIT_OFFSET is the identical number from the identical
+ *  expression, for a different law). */
+export const GUARD_INDOOR_DOOR_OFFSET = CAPSULE_RADIUS + 0.1;   // 0.45
 
 export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null,
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
@@ -98,6 +106,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // carries the same dep and the same default: a host with no streamed
   // pixels never collects, which is a pixel that never leaves range.
   currentPixelKey = () => null,
+  // ROAD-B B4: PlayerEnterExit's three entry latches, for SpawnCityGuards'
+  // INDOOR arm (PlayerEntity.cs:628-641). Handed in raw -
+  // { isPlayerInside, insideOpenShop, insideTavern, insideResidence } - so
+  // the conjunction stays in this file with the rest of the law. A host
+  // with no interiors (the standalone exterior) answers null, which is
+  // that host's flags all false.
+  enterExitFlags = () => null,
   playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
@@ -212,6 +227,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // = false`: a monster's blow is not the player's, so it levies
         // no Murder (DaggerfallEntityBehaviour.cs:203).
         hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false }) };   // AUDIT 24 (wave 41)
+      // A5: the CONCEALMENT closure the illusion gate has read since
+      // MT-i and nothing ever built (the encounter pool's law, one
+      // spelling). BlockedByIllusionEffect (EnemySenses.cs:658-683)
+      // reads the TARGET's IsInvisible/IsBlending/IsAShade whether
+      // that target is the player or another enemy, and
+      // ConcealmentEffect writes the flag entity-blind (:63) - so a
+      // concealed watchman is concealed from the foe fighting it.
+      Object.defineProperty(g, 'concealment', { value: () => concealmentFlags(g.entity), enumerable: false });
       guards.push(g);
       return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
     } finally {
@@ -224,9 +247,55 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
 
   /** The verbatim SpawnCityGuards law. pool = live persons as
    *  [{ pos, fwdYaw, guard, disable() }] in the SAME frame as
-   *  playerFeet/playerFwd (the host converts). */
-  async function spawnCityGuards(immediate, { playerFeet, playerFwd, pool = [] }) {
+   *  playerFeet/playerFwd (the host converts).
+   *
+   *  ROAD-B: `interior` is the INDOOR arm's half of PlayerEnterExit
+   *  (PlayerEntity.cs:628-642) - `{ doors, origin, eligible }`, where
+   *  `eligible` is IsPlayerInside && (IsPlayerInsideOpenShop ||
+   *  IsPlayerInsideTavern || IsPlayerInsideResidence), all three
+   *  latched at the door as DFU latches them (PlayerActivate.cs
+   *  :1120-1122). Absent (an above-ground host) the arm is skipped
+   *  and the street law below runs, which is what being outside IS. */
+  async function spawnCityGuards(immediate, { playerFeet, playerFwd, pool = [], interior = null }) {
     if (activeCount() > MAX_ACTIVE_GUARD_SPAWNS) return;
+    // PlayerEntity.cs:628-642, the FIRST thing inside the cap gate and
+    // ahead of both street arms: the watch does not come down the road
+    // when the crime happened in a shop, a tavern or someone's house -
+    // it comes through that building's own front door, 2-5 of them,
+    // all facing Vector3.forward. `immediate` is not read here at all:
+    // the indoor arm is the same either way, and the RETURN is
+    // unconditional - a building whose door query fails spawns
+    // nothing and still does NOT fall through to the street.
+    // ROAD-B (b2+b4 composed): PlayerEntity.cs:628-641's arm has two
+    // halves and each pool carries the one it can state exactly. A pool
+    // WITH interior-door reach (the mode machine's watch) spawns 2-5 at
+    // the lowest outer door; the STREET pool, told by enterExitFlags
+    // that the player is inside an open shop, tavern or residence,
+    // returns and spawns nobody - the C# return is unconditional, and
+    // the watch never comes through the wall.
+    const _ee = enterExitFlags?.();
+    if (!interior?.eligible && _ee && _ee.isPlayerInside
+        && (_ee.insideOpenShop || _ee.insideTavern || _ee.insideResidence)) {
+      return;
+    }
+    if (interior?.eligible) {
+      const door = findLowestOuterInteriorDoor(interior.doors, interior.origin);
+      if (door) {
+        const at = [
+          door.pos[0] + door.normal[0] * GUARD_INDOOR_DOOR_OFFSET,
+          door.pos[1] + door.normal[1] * GUARD_INDOOR_DOOR_OFFSET,
+          door.pos[2] + door.normal[2] * GUARD_INDOOR_DOOR_OFFSET,
+        ];
+        const guardCount = 2 + Math.floor(rand() * 4);   // Random.Range(2, 6), int-exclusive
+        for (let i = 0; i < guardCount; i++) {
+          // SpawnCityGuard(lowestDoorPos, Vector3.forward): every one
+          // of them at the SAME point, facing +Z. They stack in the
+          // doorway and walk out of each other, which is classic.
+          await spawnGuardAt([...at], 0, playerFeet ?? null);
+        }
+      }
+      return;
+    }
     if (immediate) {
       let spawned = 0;
       for (const p of pool) {
@@ -300,6 +369,52 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // PlayerEntity.cs:739-741: the location is stored WITH the
     // countdown, and the arrival below is gated on it.
     if (!seenByGuard && seen) { countdown = 5 + Math.floor(rand() * 6); countdownLocation = currentPixelKey(); }   // Random.Range(5, 11) seconds
+  }
+
+  /** GameManager.HowManyEnemiesOfType(Knight_CityWatch, ...) over THIS
+   *  pool (:740-762). `includingPacified` false is the default and is
+   *  two terms, not one: a watchman counts only while it is HOSTILE
+   *  and not on the player's team - so a guard talked down by a
+   *  Language skill, or one charmed onto the player's side, is not a
+   *  watchman standing in the street as far as any caller is
+   *  concerned. `stopLookingIfFound` is a short-circuit, not a
+   *  different answer, so the port takes a boolean when that is what
+   *  the caller wanted. */
+  const anyWatchStanding = () => guards.some((g) =>
+    !g.dead && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');
+
+  /** PlayerEntity.MakeNPCGuardsIntoEnemiesIfGuardsSpawned
+   *  (:764-789), verbatim: WHILE enemy watchmen are up, every
+   *  wandering guard NPC in the location's population becomes one too
+   *  - it is replaced by a real Knight_CityWatch at its own position
+   *  and facing, and the mobile it came from is disabled, exactly as
+   *  the witnessed-crime arm converts them.
+   *
+   *  There is NO range test and NO cap here (SpawnCityGuards' 77.5
+   *  units and its maxActiveGuardSpawns are that method's, not this
+   *  one's) and no `immediate` fork: once the watch is out, the whole
+   *  town's guard population is the watch. That is what makes running
+   *  from the guards in a city an escalating thing rather than a
+   *  fixed fight, and it is why walking past a fresh patrol while
+   *  wanted turns it hostile.
+   *
+   *  The gate is HowManyEnemiesOfType(Knight_CityWatch, true) > 0 -
+   *  pacified and allied watchmen excluded, per the note above - so
+   *  the conversion stops the moment the last hostile guard is dead,
+   *  arrested away or talked down.
+   *
+   *  @param pool live persons as [{ pos, fwdYaw, guard, disable() }],
+   *    the same shape the witness arm takes (the host converts). */
+  async function makeNpcGuardsIntoEnemies({ pool = [], playerFeet = null } = {}) {
+    if (!anyWatchStanding()) return 0;
+    let made = 0;
+    for (const p of pool) {
+      if (!p.guard) continue;
+      await spawnGuardAt(p.pos, p.fwdYaw, playerFeet ?? null);
+      p.disable();   // "Classic disables the NPC that the guard is spawned from"
+      made++;
+    }
+    return made;
   }
 
   function angleDeg(v, fwd) {
@@ -469,6 +584,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // (:55-57) - a city guard is an ordinary EnemyClass entity with no
       // exemption from either.
       const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
+      applyEnemyMotorEffectFlags(g.ai, g.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
       g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);
       const _tgt = _targetFeet(g, playerFeet);   // MT-ii: whatever it SELECTED
       // AUDIT 24 (wave 36): EnemySenses.cs:531-535 - ANY enemy that is
@@ -598,6 +714,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const v = enemyAttackVoice(g);
         if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16 });
       }
+      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
+      // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
+      // true has its renderer disabled. The watchman keeps acting; it
+      // is simply not drawn.
+      if (isMagicallyConcealed(g.entity)) continue;
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);
@@ -864,7 +985,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }).catch((e) => console.error('[guards] restore failed:', e?.message ?? e));
     }
   }
-  return { guards, spawnCityGuards, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

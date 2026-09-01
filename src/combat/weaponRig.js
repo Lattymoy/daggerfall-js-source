@@ -10,8 +10,14 @@
 // has conflicted on every merge today; folding it onto this rig is a
 // recorded residual (Combat.md), not an accident.
 //
+// a12: and the HAND. The rig is where WeaponManager's per-frame
+// UpdateHands/ApplyWeapon pair lands (syncWorn) and where SwitchHand's
+// release edge arrives (switchHand); the state and the laws themselves
+// are playerWeapon's.
+//
 // Hosts without foes still get the full classic feel: ready/sheathe
-// on Z (DrawWeapon 78 on unsheathing a real weapon), RMB drag or
+// on Z (DrawWeapon 78 on unsheathing a real weapon), H to switch the
+// swinging hand, RMB drag or
 // click to swing with the pitch-matched swing sound, bows consuming
 // an Arrow per loose with the zero-arrow auto-sheathe, and the
 // optional environment-attack ray (interiors: bash/Receive on action
@@ -123,15 +129,27 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // belongs to the rig: every host that passes an entity inherits it.
   // bindWorn:false is for rigs that manage their own weapon (the
   // dungeon's scripted bow demo).
+  //
+  // a12: AND IT READS BOTH HANDS. This was the port's whole left-hand
+  // gap: one line bound the RightHand slot, so a weapon in the left
+  // hand could never be swung and a shield changed nothing. The body
+  // is UpdateHands + ApplyWeapon (WeaponManager.cs:646-676, :731-757),
+  // which playerWeapon owns; the rig's job is the per-frame read that
+  // DFU's Update does, and the order is DFU's - the hands are cached
+  // first (so the shield rule and both caches are current), then the
+  // used hand is applied.
   const syncWorn = () => {
     if (!bindWorn || !entity) return;
     // V4: SetFPSWeapon (LycanthropyEffect.cs:332-345) - while
     // transformed the rig IS the wereclaws, whatever the hand holds;
     // the per-frame sync makes the swap live the moment of the morph.
+    // It is ApplyWeapon's FIRST arm (:735-739), so it wins over both
+    // hands without disturbing either cache.
     const claws = racialFpsWeapon(entity);
-    if (claws) { playerWeapon.weapon = claws; return; }
-    if (!entity.equip?.slots) return;
-    playerWeapon.weapon = entity.equip.slots[EQUIP_SLOTS.RightHand] ?? null;
+    const slots = entity.equip?.slots;
+    if (!slots) { if (claws) playerWeapon.weapon = claws; return; }
+    playerWeapon.updateHands(slots[EQUIP_SLOTS.RightHand] ?? null, slots[EQUIP_SLOTS.LeftHand] ?? null);
+    playerWeapon.applyWeapon(claws);
   };
   const cv = typeof canvas === 'function' ? canvas : () => canvas;
   const cache = new Map();   // `${type}:${material}` -> art (null while loading)
@@ -246,6 +264,38 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
         audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
       }
+    },
+    /**
+     * a12 - SwitchHand (H). WeaponManager.Update's own leg, :271-273:
+     *
+     *   if (!isAttacking && InputManager.Instance.ActionComplete(
+     *       InputManager.Actions.SwitchHand))
+     *       ToggleHand();
+     *
+     * TWO THINGS ARE LAW HERE and neither is decoration. The gate is
+     * `!isAttacking` - the hand never changes mid-swing, or the strike
+     * would finish with a different weapon than it started with. And
+     * the edge is ActionComplete, the key's RELEASE (:634-637), not
+     * ActionStarted like ReadyWeapon (:284) - so the hosts poll this
+     * one on the falling edge, which is why every call site's latch
+     * reads `!now && prev` where Z's reads `now && !prev`.
+     *
+     * syncWorn runs first because DFU's UpdateHands runs every frame
+     * ahead of this: holdingShield has to be THIS frame's answer or
+     * the shield refusal below is stale by one press.
+     *
+     * @returns true when the hand actually changed.
+     */
+    switchHand() {
+      if (playerWeapon.machine.state !== 'Idle') return false;   // isAttacking
+      syncWorn();
+      // bindWorn:false rigs drive their own weapon (the dungeon's
+      // scripted bow) - flip the hand, but do not let ApplyWeapon
+      // overwrite a weapon no equip table ever supplied.
+      const line = playerWeapon.toggleHand({ entity, apply: bindWorn });
+      if (line === null) return false;   // :704-705, the shield refuses
+      say(line);
+      return true;
     },
     /**
      * Per-frame: gesture consume, the swing-sound edge, machine step.

@@ -135,7 +135,12 @@ test('AUDIT 39 (#21): the streaming host hands the getter, not startLoc', () => 
   // INTEGRATION MOVED THIS PIN: #62 (player-motor) hung onCourtScreen -
   // the CameraRecoiler reset - off the same bag in the same wave, so the
   // call carries both keys. The law pinned here is the GETTER.
-  assert.match(w, /createArrestFlow\(\{ townTalk, playerEntity, regionIndex: \(\) => _questRegionIndex\(\), onCourtScreen: \(\) => cameraRecoiler\.reset\(\) \}\)/);
+  // PIN MOVED AGAIN (Road to 1:1, a3): the bag took ReleaseFromPrison's
+  // last two lines - clearEnemies and positionPlayerAtLocationEntrance
+  // (DaggerfallCourtWindow.cs:488-489) - so the call is no longer one
+  // line. The law pinned here is still the GETTER.
+  assert.match(w, /createArrestFlow\(\{\s*\n\s*townTalk, playerEntity, regionIndex: \(\) => _questRegionIndex\(\),/);
+  assert.match(w, /onCourtScreen: \(\) => cameraRecoiler\.reset\(\),/);
   assert.doesNotMatch(w, /regionIndex: startLoc\.regionIndex/,
     'the boot number filed every later crime under the province the session started in');
 });
@@ -148,15 +153,30 @@ test('AUDIT 39 (#21): the streaming host hands the getter, not startLoc', () => 
 // ---------------------------------------------------------------
 
 test('AUDIT 39 (#22): EVERY host that builds the mode machine answers spawnCityGuards', () => {
+  // ROAD-B MOVED THIS NEEDLE for world.js only. Both hosts still
+  // answer the key and the bool still picks the arm; world.js now
+  // spells it `_spawnGuards(!!immediate)` because SpawnCityGuards'
+  // INDOOR arm (PlayerEntity.cs:628-642) has to be offered the call
+  // before either street arm, and that offer lives in the ONE entry
+  // both responses go through. exterior.js keeps the two-arm spelling
+  // over its own `_spawnGuards`.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const bag = literalBody(read(host), 'createWorldModes({');
-    assert.match(bag, /spawnCityGuards: \(immediate\) => \(immediate \? _crimeResponse\(\) : _witnessResponse\(\)\)/,
+    assert.match(bag, /spawnCityGuards: \(immediate\) => (\(immediate \? _crimeResponse\(\) : _witnessResponse\(\)\)|_spawnGuards\(!!immediate\))/,
       `${host}: the bool picks the arm, as SpawnCityGuards(bool) does`);
+    assert.match(read(host), /if \(modes\?\.spawnCityGuardsInside\?\.\(immediate\)\) return;/,
+      `${host}: and the indoor arm is offered the call first`);
   }
-  // the witness arm has to EXIST in both hosts for that to be true
+  // the witness arm has to EXIST in both hosts for that to be true.
+  // ROAD-B: same move as world.js's twin - the literal `false` is
+  // `_witnessResponse`'s argument to the shared entry now, and the
+  // bool reaches the pool from there.
   assert.match(read('src/scenes/exterior.js'),
-    /cityGuards\.spawnCityGuards\(false, \{ playerFeet: \[\.\.\.feet\], playerFwd: fwd, pool: _guardPool\(\) \}\)/,
-    'exterior.js grew the witness half it had never needed');
+    /function _witnessResponse\(\) \{ _spawnGuards\(false\); \}/,
+    'exterior.js keeps the witness half it grew at #22');
+  assert.match(read('src/scenes/exterior.js'),
+    /cityGuards\.spawnCityGuards\(!!immediate, \{ playerFeet: \[\.\.\.feet\], playerFwd: fwd, pool: _guardPool\(\) \}\)/,
+    'and it reaches the pool');
 });
 
 // ---------------------------------------------------------------

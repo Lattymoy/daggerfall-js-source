@@ -37,6 +37,13 @@ export const isNamedBuildingType = (t) => NAMED_BUILDING_TYPES.includes(t);
 /** RMBLayout.IsResidence (:753-760): only House1-House4 ID as a
  *  "Residence" (TK-ii's quest-residence General section reads it). */
 export const isResidence = (t) => t >= BUILDING_TYPES.House1 && t <= BUILDING_TYPES.House4;
+/** ROAD-B B4: RMBLayout.IsTavern (:803), the one-line equality beside
+ *  its sibling above - `buildingType == DFLocation.BuildingTypes.Tavern`.
+ *  Both are read by PlayerActivate.TransitionInterior (:1121-1122) to
+ *  latch PlayerEnterExit.IsPlayerInsideTavern / IsPlayerInsideResidence
+ *  at the door; the predicate had only ever existed as an inline lambda
+ *  at the guild-service seam. */
+export const isTavern = (t) => t === BUILDING_TYPES.Tavern;
 /** RMBLayout.IsResidence: House1-House4. */
 
 // DFU Internal_Strings (classic FALL.EXE), verbatim.

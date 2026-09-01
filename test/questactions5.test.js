@@ -342,7 +342,13 @@ test('Q5: the world host mounts every new door', () => {
     'deductGoldPieces: (n) => deductGoldPieces(playerEntity, n)',
     'raiseTime: (seconds) => setWorldMinutes(worldMinutes() + seconds / 60)',
     'spawnCityGuards: (immediate) =>',
-    'makeEnemiesHostile: () =>', 'clearEnemies: () =>',
+    // ROAD-B MOVED THIS NEEDLE. The door is still mounted; it is no
+    // longer an inline arrow, because MakeEnemiesHostile is now the
+    // shared law (hostCombat.makeEnemiesHostile) over the host's whole
+    // active-enemy database rather than a private walk of the two
+    // exterior pools. `_makeEnemiesHostile` IS that closure, so the
+    // pin follows it by name.
+    'makeEnemiesHostile: _makeEnemiesHostile', 'clearEnemies: () =>',
 // AUDIT 39 (#27) MOVED THIS PIN. It used to read
     // `currentWeatherKey: () => WEATHER_TYPES[`, which pinned the bug:
     // WEATHER_TYPES is the NAME array and both operands are already

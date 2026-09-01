@@ -76,12 +76,19 @@ test('IS1: interiorSaveData - interior mode only, the live scene cached first, t
   const body = src.slice(src.indexOf('interiorSaveData()'), src.indexOf('async restoreInterior'));
   assert.match(body, /if \(mode !== 'interior' \|\| !exteriorDoor\) return null;/,
     'null anywhere but interior mode - the exterior and dungeon arms have their own composers');
-  assert.ok(body.indexOf('cacheInteriorScene();') > -1 && body.indexOf('cacheInteriorScene();') < body.indexOf('return {'),
+  assert.ok(body.indexOf('cacheInteriorScene();') > -1 && body.indexOf('cacheInteriorScene();') < body.indexOf('return interiorIdentity();'),
     'the live shelves land in the entity cache BEFORE the bag returns - the envelope must carry them');
+  // A10 MOVED THIS PIN, one field at a time and nothing weakened. The
+  // Recall anchor needs the SAME two fields with NO scene write
+  // (Teleport.cs:107-112 reads ExteriorDoors and BuildingDiscoveryData
+  // and nothing else), so the identity is now one function that both
+  // readers call. The save half's cache write is pinned above, exactly
+  // as before; the field-by-field checks follow the identity.
+  const ident = src.slice(src.indexOf('function interiorIdentity()'), src.indexOf('function cacheInteriorScene'));
   for (const f of ['blockIndex: exteriorDoor.blockIndex', 'recordIndex: exteriorDoor.recordIndex', 'doorIndex: exteriorDoor.doorIndex', 'buildingKey: interiorBuilding?.buildingKey ?? 0']) {
-    assert.ok(body.includes(f), `the door identity carries ${f.split(':')[0]}`);
+    assert.ok(ident.includes(f), `the door identity carries ${f.split(':')[0]}`);
   }
-  assert.match(body, /building: interiorBuilding \? \{ \.\.\.interiorBuilding \} : null,/,
+  assert.match(ident, /building: interiorBuilding \? \{ \.\.\.interiorBuilding \} : null,/,
     'the discovery record rides as a plain copy (SerializablePlayer :185-186)');
 });
 

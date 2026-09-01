@@ -75,8 +75,20 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   assert.match(dg, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(foeDeps\.PLAYER_TARGET/, 'through the whole C# method');
   assert.match(dg, /\} else if \(!foe\.ai\.isHostile\) \{/, 'with the legacy raise as the no-subsystem fallback');
   const xf = src('scenes/exteriorFoes.js');
-  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
-    'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
+  // ROAD-B MOVED THIS NEEDLE. The two statements are no longer
+  // adjacent: DaggerfallEntityBehaviour.cs:255-258's AREA walk
+  // (`if (!f.ai.isHostile) makeAreaHostile?.()`) now sits between the
+  // gate and the per-foe law, where C# has it. The LAW this pin
+  // guards is unchanged and is what the two assertions still say -
+  // the gate is the player-source one, and the whole C# method runs
+  // inside it - so the needle drops the newline adjacency and pins
+  // the two facts separately, plus the ordering the new statement
+  // must keep.
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{/, 'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
+  const xfGate = xf.slice(xf.indexOf('if (fromPlayer && f.ai) {'));
+  assert.match(xfGate.slice(0, 600), /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
+  assert.ok(xfGate.indexOf('makeAreaHostile?.()') < xfGate.indexOf('makeEnemyHostileToAttacker'),
+    'and the area walk reads isHostile BEFORE the per-foe law flips it');
   assert.ok(!/f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET[\s\S]{0,400}\n  \}/.test(xf.slice(xf.indexOf('function damageFoe')).split('if (fromPlayer')[0]),
     'and nothing outside the gate raises hostility');
 });

@@ -131,6 +131,63 @@ export function closestDoorTo(pos, doors) {
 }
 
 /**
+ * Verbatim DaggerfallStaticDoors.FindLowestOutermostDoor (:205-238)
+ * behind DaggerfallInterior.FindLowestOuterInteriorDoor (:213-227) -
+ * "the interior door that is closest to ground level and farthest
+ * from the center of the building". PlayerEntity.SpawnCityGuards
+ * (:632) is its ONLY caller: it is where the watch comes through when
+ * the crime happened indoors.
+ *
+ * The predicate is BOTH terms at once and it is deliberately not a
+ * two-key sort - C# writes
+ *
+ *     if (y <= lowestY && dist > farthestDist)
+ *
+ * over a single pass with `lowestY` starting at MaxValue and
+ * `farthestDist` at 0, so a door only wins if it is no higher than
+ * every previous WINNER and strictly farther out than every previous
+ * WINNER. A low door near the middle can therefore lock `farthestDist`
+ * at a small value and let a slightly-lower far door through later,
+ * while an equally-low door closer in is rejected. Ported as written,
+ * quirk included: the pick is order-dependent on the door array and
+ * that IS the classic arrival point.
+ *
+ * `dist` is horizontal only (Vector2 of x/z) and measured from the
+ * INTERIOR's own origin - GetSpawnParentTransform() is the interior
+ * transform while the player is inside a building
+ * (GameObjectHelper.cs:876-882), which is the same `transform.position`
+ * the door centre is offset by, so this is the distance from the
+ * building's centre out to the door.
+ *
+ * DFU returns TRUE even when nothing matched (doorIndexOut stays -1) -
+ * `return true` sits outside the loop - and its caller then indexes
+ * Doors[-1]. That is unreachable with real data (an interior with a
+ * door array has at least one door and `record == -1` accepts every
+ * one of them), so the port answers null for "no door" rather than
+ * porting a crash.
+ *
+ * @param {Array} doors interior static doors, world-frame matrices
+ * @param {[number,number,number]} interiorOrigin the interior's own
+ *   origin in world space (parentPt(0,0,0))
+ * @returns {{pos:[x,y,z], normal:[x,y,z], index:number}|null}
+ */
+export function findLowestOuterInteriorDoor(doors, interiorOrigin = [0, 0, 0]) {
+  let best = null;
+  let lowestY = Infinity;
+  let farthestDist = 0;
+  (doors ?? []).forEach((door, i) => {
+    const c = doorWorldPosition(door);
+    const dist = Math.hypot(c[0] - interiorOrigin[0], c[2] - interiorOrigin[2]);
+    if (c[1] <= lowestY && dist > farthestDist) {
+      best = { pos: c, normal: doorWorldNormal(door), index: i };
+      lowestY = c[1];
+      farthestDist = dist;
+    }
+  });
+  return best;
+}
+
+/**
  * Verbatim PositionPlayerToDungeonExit: the LOWEST dungeon-entrance
  * door + normal * (radius + 0.1); the caller faces the normal.
  * @returns {{pos:[x,y,z], normal:[x,y,z]}|null}

@@ -271,7 +271,15 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   assert.ok(k > 0, 'the shared teleport core exists');
   // AUDIT 39 (#158): the window widened from 900 - CleanupUntrackedObjects
   // now stands at the head of the core and pushed the streaming needles down.
-  const core = src.slice(k, k + 1600);
+  // A1 widened it again, 1600 -> 2100: the core now re-reads the season
+  // before it rebuilds (a fast travel is where the calendar jumps weeks),
+  // and that note sits above the same needles.
+  // PIN MOVED (ROAD-Ar, R1/R0), 2100 -> 2600: the re-read now takes the
+  // ARRIVAL minute from the caller (RaiseTime runs after the teleport,
+  // DaggerfallTravelPopUp.cs:333/:344, so the live clock read the
+  // departure date), and the core clears the season re-skin's motor
+  // hold beside it. Both notes are above these needles.
+  const core = src.slice(k, k + 2600);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

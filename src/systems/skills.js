@@ -106,6 +106,57 @@ export function tallySkill(entity, skillId, amount = 1) {
   if (entity.skillUses[skillId] > 20000) entity.skillUses[skillId] = 20000;
 }
 
+// ---- PlayerEntity.skillsRecentlyRaised (:70, :218-231) -------------
+//
+// DFU keeps a uint[2] BITMASK of the skills that have gone up since
+// the character sheet was last closed, and the sheet uses it for one
+// thing: TextProvider.GetSkillSummary (:490-496) formats a raised
+// skill's whole row as TextHighlight instead of Text, so the skills
+// popup tells the player what the last rest bought them.
+// CheckIfDoneLeveling (:433-455) clears the mask on any close that is
+// NOT a level-up close, which is what "highlighted until viewed"
+// means - a sheet opened to distribute level-up points leaves the
+// marks standing for the next visit.
+//
+// TWO WORDS because DFU stores two, and the save field is spelled
+// `skillsRecentlyRaised` (SerializableGameObject.cs:174,
+// SerializablePlayer.cs:125,292) - the same name here so the
+// save lane and this one meet on one field rather than two.
+export const SKILLS_RECENTLY_RAISED_WORDS = 2;
+
+/** Lazily minted, because an entity literal that predates this field
+ *  (a loaded save, a test's hand-built player) must still raise a
+ *  skill rather than throw. DFU's array is constructed with the
+ *  entity; ours defaults on first touch to the same all-zero state. */
+function raisedWords(entity) {
+  if (!entity.skillsRecentlyRaised || entity.skillsRecentlyRaised.length < SKILLS_RECENTLY_RAISED_WORDS) {
+    entity.skillsRecentlyRaised = new Array(SKILLS_RECENTLY_RAISED_WORDS).fill(0);
+  }
+  return entity.skillsRecentlyRaised;
+}
+
+/** PlayerEntity.GetSkillRecentlyIncreased (:218-221). */
+export function getSkillRecentlyIncreased(entity, skillId) {
+  const w = raisedWords(entity);
+  return (w[Math.floor(skillId / 32)] & (1 << (skillId % 32))) !== 0;
+}
+
+/** PlayerEntity.SetSkillRecentlyIncreased (:223-226). The `>>> 0` is
+ *  the C# uint: Axe is skill 31, and `1 << 31` is NEGATIVE in JS, so
+ *  an unmasked store would leave the word as a negative int32 and any
+ *  save writing it as unsigned would disagree with this one. */
+export function setSkillRecentlyIncreased(entity, skillId) {
+  const w = raisedWords(entity);
+  const i = Math.floor(skillId / 32);
+  w[i] = (w[i] | (1 << (skillId % 32))) >>> 0;
+}
+
+/** PlayerEntity.ResetSkillsRecentlyRaised (:228-231) - Array.Clear
+ *  over both words. */
+export function resetSkillsRecentlyRaised(entity) {
+  raisedWords(entity).fill(0);
+}
+
 /** Verbatim AcrobatMotor.jumpSpeedMultiplier (:88-105): 1 +
  *  JumpingSkill * 0.5 / 100 (skill adds up to +50% force), plus
  *  athleticismMultiplier 0.1 when the career carries Athleticism.

@@ -106,11 +106,20 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   return { spellsByIndex, magicItemTemplates, paintFile };
 }
 
-export function parseSeason(params) {
-  const s = (params.get('season') || 'summer').toLowerCase();
+/** A1: ?season IS A DEBUG OVERRIDE NOW, NOT THE SOURCE.
+ *  The texture season is the calendar's (climateSeasonFromMinutes,
+ *  world/climateSwaps.js - the reference's own one-line test at
+ *  ClimateSwaps.cs:382-386 and friends). This reads the URL and
+ *  answers null when nothing pinned it, the ?cull=off shape: a shot or
+ *  a probe can still nail winter in Second Seed, and a real session
+ *  gets winter when Evening Star arrives and not before.
+ *  @returns {number|null} a SEASON value, or null for "ask the clock". */
+export function seasonOverride(params) {
+  const s = (params.get('season') || '').toLowerCase();
   if (s === 'winter') return SEASON.Winter;
   if (s === 'rain') return SEASON.Rain;
-  return SEASON.Summer;
+  if (s === 'summer') return SEASON.Summer;
+  return null;
 }
 
 // U54: ONE HOME - it moved to formats/textureFile.js, beside the
@@ -852,10 +861,40 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  *  used it - and a name that misleads the next reader is the same
  *  defect as a stale comment, which this run has now found four of.
  *  It is DFU's member name instead. */
-export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
-  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
-  for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
-  return raised;
+export const MASTERY_TEXT_ID = 4020;   // youAreNowAMasterOfTextID (PlayerEntity.cs:1361)
+
+export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random,
+  // THE MASTERY BOX (RaiseSkills :1390-1407). `lines` is the host's
+  // TEXT.RSC reader (townTalk.lines), `box` its click-anywhere
+  // presenter. A host that hands neither still gets the fanfare, the
+  // way DFU plays it outside the `tokens != null` gate.
+  lines = null, box = null } = {}) {
+  // ROAD-Ar R12 - THE PRESENTATION RUNS IN THE LOOP, NOT AFTER IT.
+  // RaiseSkills (:1371-1414) pops skillImprove and builds the mastery
+  // box inside the skill loop and posts dfuiOpenCharacterSheetWindow
+  // AFTER it, so DFU's sheet arrives on top of the box and both live.
+  // This used to batch both into a post-loop pass over `raised`, which
+  // put the box after `onLevelUp` - and every host but dungeonContext
+  // presents into ONE overlay slot (the b1-window-stack narrowing), so
+  // the box replaced the freshly-mounted CharSheet. The sheet had
+  // already committed the Level++ and cleared readyToLevelUp in its
+  // constructor but writes `working` back to entity.stats only when it
+  // closes, and it has no dispose - so the level's 4-6 attribute
+  // points were dropped on the floor and never re-offered. Firing in
+  // DFU's order fixes that at the cost the narrowing already records:
+  // on a pass that both masters a skill and levels the player, the box
+  // is the window the single slot loses, not the sheet.
+  //
+  // Interleaved, not batched: DFU pops the skillImprove message and
+  // then, for that same skill, the master box - so a pass that raises
+  // two skills reads in the source's order.
+  return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
+    () => {
+      const rows = plainLines(lines?.(MASTERY_TEXT_ID));
+      if (rows?.length) box?.(rows);
+      audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
+    },
+    (id) => say(`Your ${SKILL_NAMES[id]} skill has improved.`)) ?? [];
 }
 
 /**
@@ -1041,7 +1080,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -1062,6 +1101,13 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // is both the headless charter and DFU's own behaviour with no
     // other enemy in the scene.
     candidates,
+    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, the FIRST
+    // statement of EnemySenses.StealthCheck (:619-621) - a
+    // non-hostile enemy in a castle never stealth-detects. It is a
+    // SCENE fact, so it rides the context with the rest of them; only
+    // the dungeon host can answer it true, and only from the block
+    // the player is standing in.
+    insideDungeonCastle,
     playerEntity: playerEntity ?? entity,
   };
 }
@@ -1437,6 +1483,10 @@ export const restFullyHealed = (entity) =>
 export function createRestDeps(entity, opts = {}) {
   const {
     say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
+    // The mastery box's presenter (RaiseSkills :1390-1407). The rows
+    // come from the host's `endLines`, which is already its TEXT.RSC
+    // reader - one host dep, not a second one that could disagree.
+    box = null,
     place = null, ...rest
   } = opts;
   return {
@@ -1461,7 +1511,7 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
-    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp }),
+    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
     dead: () => entity.health <= 0,

@@ -140,13 +140,36 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
   return table[min + Math.floor(rolls() * (max + 1 - min))];   // Range(min, max+1)
 }
 
+// ---- PreventEnemySpawns (PlayerEntity.cs:47/:145) -------------------
+//
+// A ONE-UPDATE shield, set by the three arms that RAISE THE CLOCK
+// without the player living through the minutes: fast travel
+// (DaggerfallTravelPopUp.cs:347), the vampirism transformation
+// (VampirismInfection.cs:157), and the jail skip - which sets it
+// TWICE, once as the sentence's days elapse
+// (DaggerfallCourtWindow.cs:473) and again on every release
+// (:484). DFU's own note at :479-481 says why: "Enemy spawns are
+// prevented after time is raised for fast travel, jail time, and
+// vampire transformation." Without it, walking out of a thirty-day
+// sentence runs thirty days' worth of catch-up spawn rolls in one
+// frame, on the courthouse steps.
+//
+// PlayerEntity.Update guards the WHOLE catch-up loop with it (:482) -
+// the passive guard rolls at :498-511 are inside that loop and are
+// suppressed with the spawns - and clears it at the tail of the same
+// update (:524-525). The host that owns the loop owns both halves;
+// the read below is DFU's own belt-and-braces copy at :560, whose
+// comment admits it "should not need" to be there.
+
 /** IntermittentEnemySpawn (:547-618) as a pure decision: null, or
  *  { mobileType, minDistance }. ctx adds { inside, inDungeon,
- *  isResting, enemyAlertActive, gameMinutes } to chooseRandomEnemy's.
- *  The caller runs it per elapsed game minute (the catch-up loop)
- *  and stops on the first spawn, exactly as PlayerEntity.Update. */
+ *  isResting, enemyAlertActive, gameMinutes, preventEnemySpawns } to
+ *  chooseRandomEnemy's. The caller runs it per elapsed game minute
+ *  (the catch-up loop) and stops on the first spawn, exactly as
+ *  PlayerEntity.Update. */
 export function intermittentEnemySpawn(ctx, rolls = Math.random) {
-  if (!timeForSpawn(ctx.gameMinutes)) return null;
+  // :560 - `if (!timeForSpawn || preventEnemySpawns) return false;`
+  if (!timeForSpawn(ctx.gameMinutes) || ctx.preventEnemySpawns) return null;
   const timeOfDay = ctx.gameMinutes % 1440;
   if (!ctx.inside) {
     if (ctx.inLocationRect) {

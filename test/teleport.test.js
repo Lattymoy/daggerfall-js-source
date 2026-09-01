@@ -57,7 +57,14 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
     'the arrival consumes the anchor (:133/:255)');
   // wave 37: `modes?.` - the binding is hoisted and this line is above
   // its assignment, so the guard belongs on the OBJECT (audit24_wave37).
-  assert.ok(w.includes("!== 'exterior') modes?.forceExitToExterior();"), 'a cast inside a mode leaves it first (:151)');
+  // A10 MOVED THIS PIN. The call now carries an argument: the three-way
+  // "cache scene before departing" arm (Teleport.cs:145-151) decides
+  // whether the interior being left is cached, and the flag is how the
+  // exit is told. The law the pin guards is unchanged - a cast inside a
+  // mode leaves it first - so the pin follows the call rather than
+  // being deleted, and a10_world_misc.test.js pins the arm itself.
+  assert.ok(w.includes("!== 'exterior') {\n        modes?.forceExitToExterior({ cacheScene: plan.cacheScene === 'building' });"),
+    'a cast inside a mode leaves it first (:151)');
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   const i = wm.indexOf('forceExitToExterior(');   // IS1 grew the signature ({ cacheScene })
   const fn = wm.slice(i, wm.indexOf('},', i));

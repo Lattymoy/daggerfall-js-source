@@ -63,10 +63,17 @@ export function createCharSheetWindow(deps = {}) {
   // is no separate window in DFU - and the Oghma Infinium's only push
   // is that sheet (OghmaInfiniumEffect posts
   // dfuiOpenCharacterSheetWindow after setting both flags). The port
-  // splits the rollout out as LevelUpScreen, so the door mounts THAT
+  // split the rollout out as LevelUpScreen, so the door mounted THAT
   // while a level-up is owed; the book was otherwise consumed for a
   // read-only sheet that never read either flag.
-  if (deps.entity?.readyToLevelUp) return new LevelUpScreen(deps.entity);
+  //
+  // AUDIT 44 (a11): the CLASSIC lane now levels where DFU levels -
+  // CharSheet mounts the rollout itself from the same two flags, so
+  // the sheet a player opens on F5 is the sheet that hands out the
+  // points, and the skills pages behind it still work while it does.
+  // LevelUpScreen stays as the ENHANCED skin's door, which has no
+  // native panel to mount a rollout onto.
+  if (deps.entity?.readyToLevelUp && isEnhanced()) return new LevelUpScreen(deps.entity);
   const hooks = charSheetHooks(deps);
   // `document` for the reason chargenSession's and pauseDoor's forks
   // give: node drives these hosts headless and keeps the canvas window

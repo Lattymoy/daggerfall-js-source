@@ -32,6 +32,7 @@ import { fullName } from '../characters/nameHelper.js';   // %an: NameHelper.Ful
 import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongName's soul arm
 import { potionRecipeByKey } from './potions.js';   // IM1: %po's producer (GetPotionRecipe)
 import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
+import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -314,10 +315,12 @@ export function initPaintingInfo(item, readRecord, readInfoRows = null) {
  *
  *  `readVariant(id)` is TextProvider.GetRandomTokens(id, dfRand: true)
  *  reduced to the first token's text, which is all four record readers
- *  take (`tokens[0].text`). DFU picks that variant with DFRandom where
- *  the port's TEXT.RSC seam picks uniformly - RECORDED: pass a
- *  DFRandom-driven reader for full stream parity, and note the pick
- *  itself consumes a draw in DFU that a uniform reader does not.
+ *  take (`tokens[0].text`). ROAD-A7: that dfRand pick is now REAL -
+ *  textRsc's `dfRandPick` is `DFRandom.rand() % count` off the classic
+ *  LCG, so the variant is drawn from the same stream the four record
+ *  parts walk AND the draw it consumes lands where DFU's does. The
+ *  uniform reader used to leave the stream one value ahead of classic
+ *  for every painting looked at.
  *
  *  ExpandMacros on the %adj and %pp2 tokens (:196, :210) is DFU
  *  re-expanding a record that may itself carry macros; the caller's
@@ -453,14 +456,35 @@ export function itemInfoRows(item, rows, macros = {}) {
   let painting = macros.painting ?? null;
   let record = null;
   if (!painting && item?.group === 'Paintings' && _paintFile) {
-    const info = initPaintingInfo(item, (i) => _paintFile.read(i), rows);
+    // ROAD-A7: every one of the painting reads is GetRandomTokens with
+    // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
+    // :188/:194/:201/:207), so the host's TEXT.RSC reader is handed
+    // dfRandPick rather than left on its uniform default.
+    const info = initPaintingInfo(item, (i) => _paintFile.read(i), (id) => rows(id, dfRandPick));
     if (info) {
       record = info.rows;
-      const readVariant = macros.paintingVariant ?? ((id) => (rows(id) ?? [])[0]?.text ?? '');
+      const readVariant = macros.paintingVariant ?? ((id) => (rows(id, dfRandPick) ?? [])[0]?.text ?? '');
       painting = paintingMacros(info, readVariant);
     }
   }
   return (record ?? rows(itemInfoTextId(item)) ?? [])
     .map((r) => ({ ...r, text: expandItemInfo(r.text, item, { ...macros, painting }) }))
     .filter((r) => r.text.trim() !== '');
+}
+
+/** ROAD-A7: UpdateItemInfoPanel's own read (DaggerfallInventoryWindow
+ *  .cs:1128-1138). The little 37x32 panel beside the paperdoll shows
+ *  the SAME GetItemInfo tokens as the popup for every other item - but
+ *  for a painting it keeps ONE token, the LAST, trimmed:
+ *
+ *      // Only keep the title part for paintings
+ *
+ *  Record 250 is the sentence plus the title, and the panel is four
+ *  rows of half-height text: the port poured the whole record into it
+ *  and drew the title off the bottom. */
+export function itemInfoPanelRows(item, rows, macros = {}) {
+  const out = itemInfoRows(item, rows, macros);
+  if (item?.group !== 'Paintings' || !out.length) return out;
+  const last = out[out.length - 1];
+  return [{ ...last, text: (last.text ?? '').trim() }];
 }

@@ -54,6 +54,7 @@ import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import {
   makeIconDrawer, drawStackLabel, scrollerHit, applyScroll, safeScrollIndex,
+  playScrollerArrowClick,
   LIST_SLOTS, CELL_X,
 } from './itemScroller.js';
 import { typedChar } from './input.js';
@@ -185,7 +186,7 @@ export class ItemMakerWindow {
    *  ShowScroller (> 7 rows), stepping scrollerStep (8) against the
    *  SetScrollIndex clamp; routed to whichever list the cursor is
    *  over, since DFU's wheel fires per component. */
-  hover(vx, vy) { this._mouse = [vx, vy]; }
+  hover(vx, vy, e = null) { this._mouse = [vx, vy]; this.picker?.hover(vx, vy, e); }   // ROAD-A7: the picker's own hover
   wheel(dir) {
     if (!dir) return;
     const [vx, vy] = this._mouse;
@@ -412,7 +413,7 @@ export class ItemMakerWindow {
       if (hit.kind === 'slot') {
         const item = list[safeScrollIndex(this.scroll, list.length) + hit.slot];
         if (item) this._selectItem(item);
-      } else this.scroll = applyScroll(this.scroll, hit.kind, list.length);
+      } else { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, list.length); }   // ROAD-A7: the two arrows click
       return true;
     }
     return true;   // the background is the whole screen
@@ -481,6 +482,17 @@ export class ItemMakerWindow {
       this._icon(renderer, m, it, ITEM_RECTS.itemList, i);
       drawStackLabel(renderer, font, m, it, ITEM_RECTS.itemList, i);
     }
+    // ROAD-A7 DELIBERATELY STOPS SHORT HERE. The two windows that draw
+    // the red/green arrows and the art thumb ride ItemListScroller's
+    // DEFAULT rect - itemListPanelRect (9,0,50,152), which is what
+    // itemScroller.js's constants are. This window hands the scroller
+    // its OWN rect (DaggerfallItemMakerWindow.cs:44,
+    // itemListPanelRect = (10,0,50,148)), so the down arrow sits at
+    // 132 rather than 136 and the bar is 113 tall rather than 117.
+    // Drawing the shared art here would put both four pixels wrong.
+    // The scroller needs its rect parameterised before this window can
+    // have them; the ARROW CLICK sound above is rect-independent and
+    // lands today.
     // ...and the WELL, which shows the item being worked on. The
     // shared drawer places an icon by (rect, slot), and the well is
     // one 50x37 cell - close enough to the scroller's 50x38 that slot

@@ -166,8 +166,16 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   assert.match(dgs, /\} else if \(!foe\.ai\.isHostile\) \{\n\s*foe\.ai\.isHostile = true;/,
     'with the legacy raise kept for a degraded foe subsystem');
   const xfs = readFileSync(join(ROOT, 'src/scenes/exteriorFoes.js'), 'utf8');
-  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
-    'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack - through the whole C# method');
+  // ROAD-B MOVED THIS NEEDLE (same move as audit26_combat's twin):
+  // DaggerfallEntityBehaviour.cs:255-258's AREA walk now sits between
+  // the player-source gate and the per-foe law, so the two are no
+  // longer adjacent lines. The mechanic the pin guards - a pacified
+  // foe struck BY THE PLAYER stands back up, through the whole C#
+  // method - is unchanged, and is what these two still assert.
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/,
+    'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack');
+  assert.match(xfs.slice(xfs.indexOf('if (fromPlayer && f.ai) {'), xfs.indexOf('if (fromPlayer && f.ai) {') + 600),
+    /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
   assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
     'and reverts a struck former ally to its species');
   // the motor's own field names the mechanic it was waiting for.
