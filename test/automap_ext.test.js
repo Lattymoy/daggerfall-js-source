@@ -202,9 +202,13 @@ test('A2 grayscale pins: the shader law and the two-tier dungeon pass (Daggerfal
   assert.match(r, /dot\(outColor\.rgb, vec3\(0\.3, 0\.59, 0\.11\)\)/, 'the luminance weights digit for digit');
   assert.match(r, /setAutomapMode\(m\) \{/, 'the immediate-upload setter');
   const aw = src('src/ui/automapWindow.js');
-  assert.match(aw, /setAutomapMode\(1\);[\s\S]{0,400}setAutomapMode\(2\);/, 'visited draws colour, prior-run grayscale');
-  assert.match(aw, /rec\.revealed\.has\(d\.key\) && !run\.has\(d\.key\)/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
-  assert.match(aw, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(0\);/, 'beacons ride neither the slice nor the tint');
+  // c2/S6 named the six presentations and moved the two-tier split
+  // into _partitionDraws, so the LAW reads through the names now - the
+  // draw groups are still issued colour-then-grayscale, and the
+  // prior-run predicate is still "revealed but not visited this run".
+  assert.match(aw, /AUTOMAP_MODE\.BELOW_COLOUR\);[\s\S]{0,400}AUTOMAP_MODE\.BELOW_GRAY\);/, 'visited draws colour, prior-run grayscale');
+  assert.match(aw, /run\.has\(key\) \? visited : rec\.revealed\.has\(key\) \? prior : null/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
+  assert.match(aw, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);/, 'beacons ride neither the slice nor the tint');
   // PIN MOVED, ROAD-C c2/S2: the automap mode is one of the globals
   // renderer.panelFrame saves and returns in its own finally, so the
   // window's hand-rolled restore list is gone. The throwing-body

@@ -336,7 +336,8 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // A1 review: beacons are never sliced (DFU injects the slicing
   // shader into the GEOMETRY only, Automap.cs:1906 vs :1355-1362) -
   // the slice lifts before the arrow/marker draws
-  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(0\);\n\s*if \(this\.deps\.arrowMesh/, 'the arrow draws with the slice lifted (and untinted, A2)');
+  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);\n\s*renderer\.setAutomapWater\(null\);\n\s*if \(this\.deps\.arrowMesh/,
+    'the arrow draws with the slice lifted, the presentation off and (c2/S6) the water tint off');
   // A1 review: the death presenter force-replaces the overlay slot -
   // it must release the occupant, and the micro-map version counter
   // is module-global so a leaked key can never serve a stale bitmap

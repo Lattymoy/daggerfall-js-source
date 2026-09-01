@@ -50,7 +50,20 @@ uniform float uFogDensity;
 uniform vec2 uFogRange; // start, end
 uniform vec3 uCamPos;
 uniform float uClipY;  // A1: the automap slice plane (_SclicingPositionY's law) - fragments above it discard; 1e9 = off
-uniform float uAutomapMode;  // A2: 0 = off, 1 = automap (slice-distance dim), 2 = automap grayscale (prior-run geometry)
+// A2 + ROAD-C c2/S6: the SIX automap presentations, which are DFU's two
+// SubShader passes crossed with RENDER_IN_GRAYSCALE
+// (Assets/Shaders/DaggerfallAutomap.shader):
+//   0            off - the world
+//   1 / 2        BELOW the slice, colour / grayscale        (pass 1)
+//   3 / 4        ABOVE the slice, TRANSPARENT (alpha 0.75)  (pass 2)
+//   5 / 6        ABOVE the slice, WIREFRAME constant colour (pass 2)
+// Cutout is not a mode: DFU's #else clip(-1.0) arm means "draw the
+// above-slice group not at all", and the port simply does not issue it.
+// The EVEN modes are the grayscale halves, which is why the tests below
+// read amMode % 2 == 0.
+uniform float uAutomapMode;
+uniform float uAutomapWaterLevel;   // _WaterLevel: AddWater's per-block level (:1982-2001); the shader's own default is -10000
+uniform vec4 uAutomapWaterColor;    // _WaterColor: the (0,0.3,0.5,0.4) property default
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -61,7 +74,14 @@ float fogFactorAt(vec3 worldPos) {
   return exp(-uFogDensity * d);
 }
 void main() {
-  if (vWorldPos.y > uClipY) discard;   // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY)
+  int amMode = int(uAutomapMode + 0.5);
+  // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY). c2/S6: the
+  // above-slice pass INVERTS it - DFU's second pass keeps exactly the
+  // fragments the first one threw away (if worldPos.y > slice {...}
+  // else discard), so the two passes are a partition of the geometry
+  // and never draw the same fragment twice.
+  if (amMode >= 3) { if (vWorldPos.y <= uClipY) discard; }
+  else if (vWorldPos.y > uClipY) discard;
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
   vec3 n = normalize(vNormal);
@@ -106,10 +126,30 @@ void main() {
   // RENDER_IN_GRAYSCALE variant collapses to the 0.3/0.59/0.11
   // luminance. A maxed-out slice (1e9) dims everything to the 40%
   // floor - DFU's own AlwaysMaxOutSliceLevel behavior, bug for bug.
-  if (uAutomapMode > 0.5) {
-    float sliceDist = abs(vWorldPos.y - uClipY);
+  if (amMode > 0) {
+    // c2/S6: THE WATER TINT, which both DFU passes carry and the port
+    // omitted. It lands BEFORE the dim and before the mode's own
+    // colour decision, so wireframe's constant overwrites it exactly as
+    // the C# does (the tint is only ever visible above the slice in
+    // TRANSPARENT mode - that is DFU, not an omission).
+    if (vWorldPos.y <= uAutomapWaterLevel) {
+      outColor.rgb = mix(outColor.rgb, uAutomapWaterColor.rgb, uAutomapWaterColor.a);
+    }
+    // the above-slice arms, in the C#'s own order: WIREFRAME replaces
+    // the fragment outright, TRANSPARENT only rewrites the alpha.
+    if (amMode >= 5) outColor = (amMode >= 6) ? vec4(0.25, 0.25, 0.25, 0.6) : vec4(0.9, 0.9, 0.7, 0.6);
+    else if (amMode >= 3) outColor.a = 0.75;
+    // THE ABOVE-SLICE PASS NEVER DIMS, and this expression is why:
+    // DFU's second pass writes distance(min(worldPos.y, slice),
+    // slice), which is IDENTICALLY ZERO for every fragment it keeps
+    // (they are all above the slice, so the min IS the slice). Below
+    // the slice min(y, slice) == y and this is the first pass's
+    // distance(worldPos.y, slice) unchanged. One expression, both
+    // passes, bug for bug - a port that dims the above-slice group is
+    // wrong.
+    float sliceDist = distance(min(vWorldPos.y, uClipY), uClipY);
     outColor.rgb *= 1.0 - clamp(sliceDist / 20.0, 0.0, 0.6);
-    if (uAutomapMode > 1.5) {
+    if (amMode % 2 == 0) {
       float grayValue = dot(outColor.rgb, vec3(0.3, 0.59, 0.11));
       outColor.rgb = vec3(grayValue);
     }
@@ -542,6 +582,68 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
  *  ExteriorAutomap's panelRenderAutomap: 1, 1, 318, 169). */
 export const AUTOMAP_PANEL_NATIVE_RECT = Object.freeze({ x: 1, y: 1, w: 318, h: 169 });
 
+/**
+ * ROAD-C c2/S6: THE SIX AUTOMAP PRESENTATIONS, which are DFU's two
+ * SubShader passes crossed with the RENDER_IN_GRAYSCALE keyword
+ * (Assets/Shaders/DaggerfallAutomap.shader). `Cutout` is deliberately
+ * NOT a mode: DFU's cutout arm is `clip(-1.0)` in the second pass -
+ * i.e. "draw the above-slice group not at all" - so the port answers it
+ * by not issuing that group.
+ */
+export const AUTOMAP_MODE = Object.freeze({
+  OFF: 0,
+  BELOW_COLOUR: 1,
+  BELOW_GRAY: 2,
+  ABOVE_TRANSPARENT_COLOUR: 3,
+  ABOVE_TRANSPARENT_GRAY: 4,
+  ABOVE_WIREFRAME_COLOUR: 5,
+  ABOVE_WIREFRAME_GRAY: 6,
+});
+
+/** `_WaterLevel`'s property default (the shader's own): a level no
+ *  dungeon floor reaches, so a dry block tints nothing. AddWater
+ *  (Automap.cs:1982-1988) returns without touching a renderer when the
+ *  native level is 10000, which leaves exactly this value in place. */
+export const AUTOMAP_NO_WATER = -10000;
+/** `_WaterColor`'s property default: (0.0, 0.3, 0.5, 0.4). */
+export const AUTOMAP_WATER_COLOR = Object.freeze([0.0, 0.3, 0.5, 0.4]);
+
+/**
+ * ROAD-C c2/S6: TRIANGLE INDICES -> LINE INDICES, the pure half of the
+ * wireframe substitution (see the drawMeshWire header for what it
+ * stands in for and what the loss is).
+ *
+ * THREE EDGES PER TRIANGLE, and a shared edge therefore appears TWICE -
+ * which is not waste, it is the fidelity: DFU's geometry shader computes
+ * per-triangle barycentrics, so it too draws every triangle's own three
+ * edges independently and shows the quad diagonals. De-duplicating
+ * edges would make the port's wireframe *cleaner than the original*.
+ *
+ * The ranges come out per sub-mesh, in the sub-mesh order, so the line
+ * draw can bind exactly the textures the triangle draw does (and so the
+ * albedo alpha cutout that gates every fragment of this shader gates
+ * the lines identically).
+ */
+export function buildWireIndices(triIndices, subMeshes) {
+  let total = 0;
+  for (const sm of subMeshes) total += sm.primitiveCount * 6;
+  const indices = new Uint32Array(total);
+  const ranges = [];
+  let w = 0;
+  for (const sm of subMeshes) {
+    const start = w;
+    for (let t = 0; t < sm.primitiveCount; t++) {
+      const b = sm.startIndex + t * 3;
+      const i0 = triIndices[b], i1 = triIndices[b + 1], i2 = triIndices[b + 2];
+      indices[w++] = i0; indices[w++] = i1;
+      indices[w++] = i1; indices[w++] = i2;
+      indices[w++] = i2; indices[w++] = i0;
+    }
+    ranges.push({ start, count: w - start });
+  }
+  return { indices, ranges };
+}
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -617,12 +719,20 @@ export class Renderer {
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
-    this._automapMode = 0;   // A2: 0 off, 1 automap dim, 2 automap grayscale
+    this._automapMode = 0;   // A2/c2-S6: 0 off, 1/2 below-slice, 3/4 above-slice transparent, 5/6 above-slice wireframe
+    // c2/S6: the automap water tint. The shader property defaults are
+    // DFU's own (DaggerfallAutomap.shader Properties): _WaterLevel
+    // -10000.0 (below every dungeon floor, so a dry block tints
+    // nothing) and _WaterColor (0, 0.3, 0.5, 0.4).
+    this._automapWaterLevel = AUTOMAP_NO_WATER;
+    this._automapWaterColor = new Float32Array(AUTOMAP_WATER_COLOR);
     const fogLocs = (program) => ({
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
       amMode: gl.getUniformLocation(program, 'uAutomapMode'),
+      amWaterLevel: gl.getUniformLocation(program, 'uAutomapWaterLevel'),
+      amWaterColor: gl.getUniformLocation(program, 'uAutomapWaterColor'),
       fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
       fogRange: gl.getUniformLocation(program, 'uFogRange'),
       camPos: gl.getUniformLocation(program, 'uCamPos'),
@@ -1477,7 +1587,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // fields on objects it OWNS; a shallow copy at upload time makes
     // that true for every mesh, present and future, at build cost
     // only.
-    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers };
+    // c2/S6: `triIndices` is a REFERENCE to the model's own index array,
+    // never a copy - it is what drawMeshWire expands into edge pairs the
+    // first time a mesh is drawn in the automap's wireframe mode. A
+    // bundle built without it simply cannot be wireframed (drawMeshWire
+    // draws nothing), which is the honest answer for a hand-built one.
+    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers, triIndices: model.indices };
   }
 
   beginFrame(proj, view, lightDir) {
@@ -1570,6 +1685,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       screenOffset: this._screenOffset ? [...this._screenOffset] : [0, 0],
       clipY: this._clipY,
       automapMode: this._automapMode,
+      automapWaterLevel: this._automapWaterLevel,
+      automapWaterColor: [...this._automapWaterColor],
       fogMode: this._fogMode,
       fogDensity: this._fogDensity,
       fogRange: [this._fogRange[0], this._fogRange[1]],
@@ -1635,6 +1752,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     this.setClipY(s.clipY);
     this.setAutomapMode(s.automapMode);
+    this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
     this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
     this.setLighting(s.ambient, s.sunScale, s.sunColor);
     this._clockLit = s.clockLit;
@@ -1711,6 +1829,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(prog.camPos, this._camPos);
     if (prog.clipY) gl.uniform1f(prog.clipY, this._clipY);   // A1: only the mesh shader carries the slice
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
+    if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
+    if (prog.amWaterColor) gl.uniform4fv(prog.amWaterColor, this._automapWaterColor);
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
@@ -1731,18 +1851,55 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
   }
 
-  /** A2: the automap presentation mode for the SOLID mesh pass -
-   *  0 off (the world), 1 = automap (the slice-distance dim), 2 =
-   *  automap grayscale (prior-run geometry, RENDER_IN_GRAYSCALE's
-   *  law). Immediate upload, same reason as setClipY: the automap
-   *  window flips it between draw groups MID-pass. */
+  /**
+   * A2 + c2/S6: the automap presentation mode for the SOLID mesh pass -
+   * one of AUTOMAP_MODE. Immediate upload, same reason as setClipY: the
+   * automap window flips it between draw groups MID-pass.
+   *
+   * THE MODE IS THE QUEUE, so this setter owns the blend flip too, and
+   * that is not a convenience - it is the only way the two cannot drift.
+   * DaggerfallAutomap.shader puts the below-slice pass in
+   * `Queue = Geometry / RenderType = Opaque` (no Blend line at all) and
+   * the above-slice pass in `Queue = Transparent` under
+   * `Blend SrcAlpha OneMinusSrcAlpha` with `ZWrite On` and BlendOp Add.
+   * ZWrite ON with NO sorting is deliberate on DFU's part: the
+   * order-dependent artifacts of the transparent map ARE the classic
+   * look, not a bug for a port to fix.
+   */
   setAutomapMode(m) {
     this._automapMode = m ?? 0;
+    const gl = this.gl;
     if (this._solidFog?.amMode) {
-      const gl = this.gl;
       this._use(this.program);
       gl.uniform1f(this._solidFog.amMode, this._automapMode);
     }
+    if (this._automapMode >= AUTOMAP_MODE.ABOVE_TRANSPARENT_COLOUR) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    } else {
+      gl.disable(gl.BLEND);
+    }
+    gl.depthMask(true);   // ZWrite On in BOTH passes - the transparent group still writes depth
+  }
+
+  /**
+   * c2/S6: the automap water tint - `_WaterLevel` and `_WaterColor`,
+   * which AddWater (Automap.cs:1982-2001) sets per BLOCK through a
+   * MaterialPropertyBlock and every automap fragment reads. `level`
+   * null means a dry block: the shader's own -10000 default, which
+   * AddWater leaves in place when the native level is 10000.
+   * Immediate upload, for setClipY's reason - the draw loop changes it
+   * between blocks inside one pass.
+   */
+  setAutomapWater(level, rgba = null) {
+    this._automapWaterLevel = level ?? AUTOMAP_NO_WATER;
+    if (rgba) this._automapWaterColor.set(rgba);
+    const f = this._solidFog;
+    if (!f?.amWaterLevel && !f?.amWaterColor) return;
+    const gl = this.gl;
+    this._use(this.program);
+    if (f.amWaterLevel) gl.uniform1f(f.amWaterLevel, this._automapWaterLevel);
+    if (f.amWaterColor) gl.uniform4fv(f.amWaterColor, this._automapWaterColor);
   }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16.
@@ -1876,6 +2033,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
+    // c2/S6: the wireframe cache is the mesh's, and dies with it
+    if (mesh._wire) {
+      gl.deleteBuffer(mesh._wire.ebo);
+      gl.deleteVertexArray(mesh._wire.vao);
+    }
+    mesh._wire = null;
   }
 
   /** Release a billboard batch's GPU resources. */
@@ -2125,7 +2288,76 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     console.warn(`[renderer] drawMesh skipped a draw with ${why} - a model is missing from this scene, not from the frame loop`, mesh, modelMatrix);
   }
 
+  /**
+   * ROAD-C c2/S6: THE AUTOMAP'S WIREFRAME MODE, and a RECORDED
+   * SUBSTITUTION stated at its true size.
+   *
+   * DFU draws wireframe with a GEOMETRY SHADER: `geom` hands each
+   * fragment the triangle's barycentric distances and the fragment
+   * shader keeps only `exp2(-4*d*d) >= 0.1`, writing a CONSTANT colour
+   * on the kept fragments. WebGL2 has no geometry shader stage, so the
+   * port draws `gl.LINES` over an edge index buffer instead.
+   *
+   * THE LOSS IS SMALL, and this is why: DFU's falloff is HARD-CLIPPED at
+   * I < 0.1 and the kept fragments are a flat (0.9,0.9,0.7,0.6) /
+   * (0.25,0.25,0.25,0.6) - there is no soft falloff to lose, only a
+   * ~0.9 px hard band. The two real deltas are (a) WebGL2 caps
+   * `lineWidth` at 1 px on every desktop driver, so the band is 1 px
+   * rather than ~0.9, and (b) quad diagonals - which DFU's per-triangle
+   * barycentrics draw as well, so they are parity, not a defect.
+   * DO NOT "fix" this with a barycentric vertex variant: that needs a
+   * de-indexed copy of every mesh (three unique vertices per triangle),
+   * which doubles automap-eligible vertex memory for under a pixel.
+   *
+   * The line index buffer is built ONCE per mesh, on the first
+   * wireframe draw, and freed with the mesh. It gets its OWN VAO over
+   * the mesh's OWN vertex buffers - no vertex data is duplicated - and
+   * that second VAO is not a nicety: a WebGL2 VAO captures its
+   * ELEMENT_ARRAY_BUFFER binding, so drawing lines through the mesh's
+   * VAO would have to swap the triangle EBO out and back on every
+   * single draw, and one missed restore silently corrupts every later
+   * triangle draw of that mesh with no error anywhere.
+   */
+  drawMeshWire(mesh, modelMatrix, texRemap = null) {
+    this._drawMeshBundle(mesh, modelMatrix, texRemap, true);
+  }
+
+  /** Lazily expand a mesh's triangles into edge pairs, with a VAO of
+   *  their own over the mesh's existing vertex buffers. Answers null
+   *  for a bundle that kept no indices (nothing to line-draw). */
+  _ensureWireMesh(mesh) {
+    if (mesh._wire !== undefined) return mesh._wire;
+    if (!mesh.triIndices || !mesh.buffers || mesh.buffers.length < 3) {
+      mesh._wire = null;
+      return null;
+    }
+    const gl = this.gl;
+    const { indices, ranges } = buildWireIndices(mesh.triIndices, mesh.subMeshes);
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    // the SAME three vertex buffers createMesh built, in its layout
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffers[0]);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffers[1]);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffers[2]);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+    const ebo = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    this._bindVao(null);
+    mesh._wire = { vao, ebo, ranges, indexCount: indices.length };
+    return mesh._wire;
+  }
+
   drawMesh(mesh, modelMatrix, texRemap = null) {
+    this._drawMeshBundle(mesh, modelMatrix, texRemap, false);
+  }
+
+  _drawMeshBundle(mesh, modelMatrix, texRemap, wire) {
     // NEVER TRAPS. A mesh that is absent, or one whose subMeshes never
     // arrived, is game DATA missing - a model id the player's ARCH3D
     // does not carry, a record the ingest diet dropped - and the rule
@@ -2149,6 +2381,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       return;
     }
     const gl = this.gl;
+    const wireMesh = wire ? this._ensureWireMesh(mesh) : null;
+    if (wire && !wireMesh) return;
     // Every draw entry point owns its program binding (drawTerrain /
     // drawBillboards / drawWater already do) - R9 interleaved terrain
     // draws before the model loop, which silently ran meshes on the
@@ -2158,8 +2392,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // program is already bound.
     this._use(this.program);
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
-    this._bindVao(mesh.vao);
-    for (const sm of mesh.subMeshes) {
+    this._bindVao(wire ? wireMesh.vao : mesh.vao);
+    for (let smi = 0; smi < mesh.subMeshes.length; smi++) {
+      const sm = mesh.subMeshes[smi];
       // EV2: the resolved textures cache on the sub-mesh, stamped with
       // the texture generation and the remap's identity. The old body
       // built the `${archive}_${record}` key fresh here - per sub-mesh,
@@ -2201,8 +2436,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
       this.stats.texBinds += 2;
-      gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
-      this.stats.draws++;
+      if (wire) {
+        const range = wireMesh.ranges[smi];
+        gl.drawElements(gl.LINES, range.count, gl.UNSIGNED_INT, range.start * 4);
+        this.stats.draws++;   // F50: every gl.draw* site carries its own count
+      } else {
+        gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
+        this.stats.draws++;
+      }
     }
     // EV6: no trailing unbind - the sorted drawLists mean the next
     // drawMesh is very often the SAME mesh, and the shadow then skips

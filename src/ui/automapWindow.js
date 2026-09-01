@@ -45,6 +45,37 @@
 // cuts away the ceilings between the camera and the floor - the classic
 // look, not a mistake. Only the FAR plane is the camera's own.
 //
+// ── ROAD-C c2/S6: THE RENDER MODES ───────────────────────────────────
+// The above-slice half of DaggerfallAutomap.shader now exists
+// (renderer.js's AUTOMAP_MODE), so this window issues DFU's FOUR draw
+// groups: below-slice colour, below-slice grayscale, the above-slice
+// group by render mode, then the never-sliced markers. Cutout issues no
+// above-slice group at all, which is exactly what DFU's `clip(-1.0)`
+// arm amounts to. Two SUBSTITUTIONS are recorded here at their true
+// size, and neither is a licence to improve on the original:
+//
+//  (a) WIREFRAME IS gl.LINES OVER AN EDGE INDEX BUFFER, standing in for
+//      DFU's geometry-shader barycentric wireframe (WebGL2 has no
+//      geometry stage). THE LOSS IS SMALL: DFU hard-clips its falloff
+//      at I < 0.1 and writes a CONSTANT colour on what survives, so
+//      there is no soft falloff to lose - only a ~0.9 px hard band that
+//      becomes a 1 px line (WebGL2 caps lineWidth at 1). The other
+//      delta, quad diagonals, is not a delta at all: DFU's per-triangle
+//      barycentrics draw them too. Do NOT close this with a
+//      de-indexed barycentric mesh variant - it doubles vertex memory
+//      for every automap-eligible model to buy under a pixel.
+//
+//  (b) DFU RENDERS BOTH PASSES PER OBJECT (Unity queues each renderer's
+//      two passes together); the port draws GROUP BY GROUP - every
+//      below-slice model, then every above-slice one. The two differ
+//      only where an above-slice TRANSPARENT fragment would have
+//      blended before a LATER object's below-slice depth write. DFU
+//      sorts nothing and writes depth from the transparent pass on
+//      purpose ("Blend SrcAlpha OneMinusSrcAlpha" + "ZWrite On", no
+//      queue sorting), so its own output is order-dependent already:
+//      the artifacts ARE the classic look and are the target, not a bug
+//      either implementation is trying to avoid.
+//
 // THE KEYED FALLBACK SURVIVES. A boot with no ARENA2 art still gets a
 // working map: the same geometry pass in the same panel rect, with a
 // text legend instead of AMAP00I0 - the shape ui/pauseWindow.js has
@@ -56,7 +87,7 @@ import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4
 import { getBool, getString } from '../systems/settings.js';
 import { slicingPositionY, DEFAULT_SLICING_BIAS_Y } from '../systems/automap.js';
 import { RDB_SIDE } from '../world/dungeonLayout.js';
-import { AUTOMAP_PANEL_NATIVE_RECT } from '../render/renderer.js';   // c2/S2: the bracket's rect
+import { AUTOMAP_PANEL_NATIVE_RECT, AUTOMAP_MODE } from '../render/renderer.js';   // c2/S2: the bracket's rect; c2/S6: the six presentations
 import {
   nativeMetrics, loadImg, drawImg, drawImgCrop, drawRect, shadowText,
   SCREEN_DIM, NATIVE_W, NATIVE_H,
@@ -130,6 +161,32 @@ export const BACKGROUND_HOTKEYS = Object.freeze({
 
 /** AutomapRenderMode (Automap.cs:197-202), in the enum's own order. */
 export const RENDER_MODES = Object.freeze(['Cutout', 'Wireframe', 'Transparent']);
+
+/**
+ * SwitchToNextAutomapRenderMode (Automap.cs:464-486): `++` over the
+ * enum with a wrap past `Enum.GetNames(...).Length - 1`. The CYCLE IS
+ * THE ENUM'S ORDER, not the tooltip's or the hotkeys' - Cutout ->
+ * Wireframe -> Transparent -> Cutout. An unknown mode answers the
+ * enum's own default, Cutout(0).
+ */
+export function nextRenderMode(mode) {
+  const i = RENDER_MODES.indexOf(mode);
+  if (i < 0) return RENDER_MODES[0];
+  return RENDER_MODES[(i + 1) % RENDER_MODES.length];
+}
+
+/**
+ * Which uAutomapMode each (render mode, discovery tier) pair issues
+ * ABOVE the slice. Cutout answers 0 in both tiers, which the draw loop
+ * reads as "issue no above-slice group at all" - DFU's `clip(-1.0)`.
+ * The COLOUR arm is geometry visited in this run, the GRAY arm is
+ * geometry revealed on a prior one (RENDER_IN_GRAYSCALE, :60-79).
+ */
+export const ABOVE_SLICE_MODES = Object.freeze({
+  Cutout: Object.freeze({ colour: AUTOMAP_MODE.OFF, gray: AUTOMAP_MODE.OFF }),
+  Wireframe: Object.freeze({ colour: AUTOMAP_MODE.ABOVE_WIREFRAME_COLOUR, gray: AUTOMAP_MODE.ABOVE_WIREFRAME_GRAY }),
+  Transparent: Object.freeze({ colour: AUTOMAP_MODE.ABOVE_TRANSPARENT_COLOUR, gray: AUTOMAP_MODE.ABOVE_TRANSPARENT_GRAY }),
+});
 
 /** the automap camera's far plane (Automap.cs:2016); the NEAR plane is
  *  the VIEW MODE's, not this one - the window overwrites it at every
@@ -259,18 +316,19 @@ export function buildMicroMap(blocks, entrance, player, { qol = true, inner = 0x
  * one of these is `IsDownWith`, so one press is one action and the
  * port's keydown-only overlay seam carries them EXACTLY.
  */
-// REMAINDER (c2/S6): the FOUR render-mode rows DFU polls in the same
-// block - SwitchToNextAutomapRenderMode (Return) and the three direct
-// keys (F2 cutout, F3 wireframe, F4 transparent) - are deliberately NOT
-// here yet. `_renderMode` is real state and the OnPush reset arm already
-// sets it per host, but nothing PRESENTS a mode until the shader's
-// above-slice arm lands, and a hotkey that silently changes an invisible
-// mode is worse than one that does not answer.
+// c2/S6: the four render-mode rows sit exactly where DFU polls them
+// (:747-763) - between SwitchFocusToNextBeaconObject and the four
+// backgrounds - and in DFU's own order: next, transparent, wireframe,
+// cutout.
 export const HOTKEYS_DOWN = Object.freeze([
   'AutomapSwitchAutomapGridMode',
   'AutomapResetView',
   'AutomapResetRotationPivotAxisView',
   'AutomapSwitchFocusToNextBeaconObject',
+  'AutomapSwitchToNextAutomapRenderMode',
+  'AutomapSwitchToAutomapRenderModeTransparent',
+  'AutomapSwitchToAutomapRenderModeWireframe',
+  'AutomapSwitchToAutomapRenderModeCutout',
   'AutomapSwitchToAutomapBackgroundOriginal',
   'AutomapSwitchToAutomapBackgroundAlternative1',
   'AutomapSwitchToAutomapBackgroundAlternative2',
@@ -312,6 +370,10 @@ export const HOTKEY_VERBS = Object.freeze({
   AutomapResetView: 'ActionResetView',
   AutomapResetRotationPivotAxisView: 'ActionResetRotationPivotAxis',
   AutomapSwitchFocusToNextBeaconObject: 'ActionSwitchFocusToNextBeaconObject',
+  AutomapSwitchToNextAutomapRenderMode: 'ActionSwitchToNextAutomapRenderMode',
+  AutomapSwitchToAutomapRenderModeTransparent: 'ActionSwitchToAutomapRenderModeTransparent',
+  AutomapSwitchToAutomapRenderModeWireframe: 'ActionSwitchToAutomapRenderModeWireframe',
+  AutomapSwitchToAutomapRenderModeCutout: 'ActionSwitchToAutomapRenderModeCutout',
   AutomapMoveForward: 'ActionMoveForward',
   AutomapMoveBackward: 'ActionMoveBackward',
   AutomapMoveLeft: 'ActionMoveLeft',
@@ -466,6 +528,13 @@ export class AutomapWindow {
     switch (verb) {
       case 'ActionExit': this._close(); return;
       case 'ActionChangeAutomapGridMode': _cam = actionChangeAutomapGridMode(_cam); return;
+      // c2/S6: the render-mode verbs (:1666-1696). Each is a bare
+      // assignment on the persistent Automap component in DFU, so it
+      // survives the window's close exactly as `_renderMode` does.
+      case 'ActionSwitchToNextAutomapRenderMode': _renderMode = nextRenderMode(_renderMode); return;
+      case 'ActionSwitchToAutomapRenderModeTransparent': _renderMode = 'Transparent'; return;
+      case 'ActionSwitchToAutomapRenderModeWireframe': _renderMode = 'Wireframe'; return;
+      case 'ActionSwitchToAutomapRenderModeCutout': _renderMode = 'Cutout'; return;
       case 'ActionResetRotationPivotAxis': _cam = actionResetRotationPivotAxis(_cam, playerPos); return;
       case 'ActionResetView': _cam = actionResetView(_cam, mainPos, playerPos); return;
       case 'ActionIncreaseCameraFieldOfView': _cam = actionChangeFieldOfView(_cam, +1, dt); return;
@@ -502,7 +571,7 @@ export class AutomapWindow {
         _cam = switchFocusToGameObject(next.state, this._focusTarget(next.focus));
         return;
       }
-      default: return;   // a verb this stage does not own yet (the render-mode cycle is c2/S6)
+      default: return;   // a verb this window does not own (the note/teleporter gestures are c2/S8)
     }
   }
 
@@ -636,6 +705,47 @@ export class AutomapWindow {
     };
   }
 
+  /**
+   * c2/S6: the two discovery tiers, resolved ONCE per frame over the
+   * live draw lists and then issued up to four times (below colour,
+   * below gray, above colour, above gray). Each row carries the water
+   * level its BLOCK owns - the reveal model's own `waterLevel`
+   * metadata, which c2/S1 minted from AddWater's law.
+   */
+  _partitionDraws(rec) {
+    const run = rec.visitedThisRun;
+    const byKey = this.deps.model?.byKey ?? null;
+    const visited = [];
+    const prior = [];
+    const push = (mesh, matrix, key) => {
+      if (key == null) return;
+      const row = run.has(key) ? visited : rec.revealed.has(key) ? prior : null;
+      if (row) row.push({ mesh, matrix, water: byKey?.get(key)?.waterLevel ?? null });
+    };
+    for (const d of this.deps.drawList) push(d.mesh, d.matrix, d.key);
+    for (const d of this.deps.dynamicDraws) push(d.gpu, d.object.matrix, d.object.key);
+    return { visited, prior };
+  }
+
+  /**
+   * One draw group at one presentation mode. The WATER LEVEL is
+   * uploaded only when it CHANGES: DFU carries it per block in a
+   * MaterialPropertyBlock (Automap.cs:1982-2001), and the port's rows
+   * arrive block by block already, so this costs one comparison per
+   * draw and one upload per block. Deliberately no re-ordering: the
+   * transparent group blends unsorted on purpose.
+   */
+  _drawGroup(renderer, rows, mode, wire = false) {
+    if (!rows.length) return;
+    renderer.setAutomapMode(mode);
+    let water;   // undefined = nothing uploaded for this group yet
+    for (const r of rows) {
+      if (r.water !== water) { renderer.setAutomapWater(r.water); water = r.water; }
+      if (wire) renderer.drawMeshWire(r.mesh, r.matrix, this.deps.texRemap);
+      else renderer.drawMesh(r.mesh, r.matrix, this.deps.texRemap);
+    }
+  }
+
   // ── draw ──────────────────────────────────────────────────────────
   draw(renderer, canvas, font, s) {
     this._renderer = renderer;
@@ -715,19 +825,23 @@ export class AutomapWindow {
       // the revealed-only pass - MeshRenderer.enabled = discovered, as a
       // filter over the LIVE draw lists. Two tiers, DFU's
       // RENDER_IN_GRAYSCALE law (Automap.cs:60-79): visited in THIS run
-      // draws in colour (mode 1), geometry revealed on a PRIOR run draws
-      // grayscale (mode 2).
-      // REMAINDER (c2/S6): the ABOVE-slice group - transparent and
-      // wireframe - is the shader's second half and lands there;
-      // `_renderMode` already carries which of the three is selected.
+      // draws in colour, geometry revealed on a PRIOR run draws
+      // grayscale; and c2/S6's second axis, the slice - the same two
+      // tiers again ABOVE the plane, under the selected render mode.
       if (rec) {
-        const run = rec.visitedThisRun;
-        renderer.setAutomapMode(1);
-        for (const d of this.deps.drawList) if (d.key != null && run.has(d.key)) renderer.drawMesh(d.mesh, d.matrix, this.deps.texRemap);
-        for (const d of this.deps.dynamicDraws) if (run.has(d.object.key)) renderer.drawMesh(d.gpu, d.object.matrix, this.deps.texRemap);
-        renderer.setAutomapMode(2);
-        for (const d of this.deps.drawList) if (d.key != null && rec.revealed.has(d.key) && !run.has(d.key)) renderer.drawMesh(d.mesh, d.matrix, this.deps.texRemap);
-        for (const d of this.deps.dynamicDraws) if (rec.revealed.has(d.object.key) && !run.has(d.object.key)) renderer.drawMesh(d.gpu, d.object.matrix, this.deps.texRemap);
+        const { visited, prior } = this._partitionDraws(rec);
+        this._drawGroup(renderer, visited, AUTOMAP_MODE.BELOW_COLOUR);
+        this._drawGroup(renderer, prior, AUTOMAP_MODE.BELOW_GRAY);
+        // THE ABOVE-SLICE GROUP. Cutout issues nothing at all, which is
+        // what DFU's `#else clip(-1.0)` arm amounts to; wireframe and
+        // transparent are the shader's second pass, blended with the
+        // depth mask still ON and in no particular order (the renderer's
+        // setAutomapMode owns that flip - the mode IS the queue).
+        const above = ABOVE_SLICE_MODES[_renderMode] ?? ABOVE_SLICE_MODES.Cutout;
+        if (above.colour !== AUTOMAP_MODE.OFF) {
+          this._drawGroup(renderer, visited, above.colour, _renderMode === 'Wireframe');
+          this._drawGroup(renderer, prior, above.gray, _renderMode === 'Wireframe');
+        }
       }
       // BEACONS ARE NEVER SLICED (nor dimmed, nor grayed): DFU injects
       // the slicing shader into the duplicated GEOMETRY only (:1906);
@@ -735,8 +849,14 @@ export class AutomapWindow {
       // materials (:1355-1362), so slicing below your feet must not
       // erase your own position marker (A1 review). Both setters upload
       // immediately.
+      // c2/S6: the water tint goes off with them. A beacon standing in
+      // a flooded block is a Standard-material object in DFU and never
+      // saw _WaterLevel at all, and setAutomapMode(0) is also what puts
+      // the blend/depth state back to the opaque baseline the marker
+      // draws expect.
       renderer.setClipY(null);
-      renderer.setAutomapMode(0);
+      renderer.setAutomapMode(AUTOMAP_MODE.OFF);
+      renderer.setAutomapWater(null);
       if (this.deps.arrowMesh && p?.feet) {
         renderer.drawMesh(this.deps.arrowMesh, trs(p.feet[0], p.feet[1], p.feet[2], 0, (p.yaw ?? 0) / DEG, 0), this.deps.texRemap);
       }

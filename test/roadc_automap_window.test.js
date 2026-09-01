@@ -71,9 +71,11 @@ function stubRenderer(log) {
     destroyBillboardBatch: () => {},
     drawBillboards: (...a) => log.push(['drawBillboards', ...a]),
     drawMesh: (...a) => log.push(['drawMesh', ...a]),
+    drawMeshWire: (...a) => log.push(['drawMeshWire', ...a]),   // c2/S6
     drawScreenQuad: (tex, dst, srcUv, color) => log.push(['quad', tex, { ...dst }, srcUv, color]),
     setClipY: (y) => log.push(['setClipY', y]),
     setAutomapMode: (m) => log.push(['setAutomapMode', m]),
+    setAutomapWater: (lvl, rgba) => log.push(['setAutomapWater', lvl, rgba]),   // c2/S6
     setFog: (m) => log.push(['setFog', m]),
     setLighting: (a, s) => log.push(['setLighting', [...a], s]),
     setMoonlight: (m) => log.push(['setMoonlight', m]),
@@ -456,7 +458,7 @@ test('c2/S5 the toggle-close is TWO-PHASE: the key defers, the next frame closes
 test('c2/S5 the hotkey table: two classes, every row bound to a verb, and no verb invented', () => {
   // the DOWN class is IsDownWith (:736-781); the HELD class is
   // IsPressedWith (:783-870), and it is the one the port approximates
-  assert.equal(HOTKEYS_DOWN.length, 8);
+  assert.equal(HOTKEYS_DOWN.length, 12);   // c2/S6 added DFU's four render-mode rows (:747-763)
   assert.equal(HOTKEYS_HELD.length, 22);
   for (const b of [...HOTKEYS_DOWN, ...HOTKEYS_HELD]) {
     if (BACKGROUND_HOTKEYS[b]) continue;   // the four background arms are state, not camera verbs
@@ -466,7 +468,13 @@ test('c2/S5 the hotkey table: two classes, every row bound to a verb, and no ver
   // the four keyboard-only ones DFU's chrome has no button for
   const tableVerbs = new Set(Object.values(DUNGEON_ACTIONS)
     .flatMap((e) => [e.leftClick, e.rightClick, e.leftHold, e.rightHold, e.wheelUp, e.wheelDown]).filter(Boolean));
-  const keyboardOnly = ['ActionRotateCameraYZUp', 'ActionRotateCameraYZDown', 'ActionZoomIn', 'ActionZoomOut'];
+  const keyboardOnly = [
+    'ActionRotateCameraYZUp', 'ActionRotateCameraYZDown', 'ActionZoomIn', 'ActionZoomOut',
+    // c2/S6: the render modes have no button in either window - the
+    // Return cycle and the three direct keys are all there is
+    'ActionSwitchToNextAutomapRenderMode', 'ActionSwitchToAutomapRenderModeTransparent',
+    'ActionSwitchToAutomapRenderModeWireframe', 'ActionSwitchToAutomapRenderModeCutout',
+  ];
   for (const v of Object.values(HOTKEY_VERBS)) {
     assert.ok(tableVerbs.has(v) || keyboardOnly.includes(v), `${v} is a chrome verb or a keyboard-only one`);
   }
