@@ -14,7 +14,17 @@ replacement, custom guild/item/effect registries, quest-pack
 discovery), AdvancedClimbing/Rappel/Hanging (Ledger A), the
 SoundFont/Melody synth (no asset), shadow maps, and SDF fonts.
 
-## Wave A - the slice band (independent, fleet-parallel)
+## Wave A - the slice band - CLOSED 2026-09-01
+
+All twelve groups landed (34 slices done, 14 not-a-gap with citations,
+24 precise recorded stages - the wave reports carry both lists), then
+an 18-finding adversarial review round closed on top of it: the season
+re-skin's ground outage, the fast-travel season ordering, the activate
+gate's overlay/clickDelay/touchSpell trio (the critical: a click on an
+open window activated the world behind it), the mastery-box ordering,
+and four test-quality repairs. Recorded stages that belong to Wave B
+(the court backdrop, the combo held-order, the prison accelerator)
+wait on B1's window stack.
 
 - **A1 season-calendar**: texture season reads the CALENDAR
   (DaggerfallDateTime.SeasonValue), not a `?season` URL param - climate

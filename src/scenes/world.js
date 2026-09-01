@@ -5536,9 +5536,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // of that law - castPending included - is in
         // systems/activateGate.js so all four hosts read one copy.
         // The port's E stays live BESIDE it (DFU binds E to
-        // AbortSpell; a recorded departure, not a gap this slice
-        // closes) and Mouse2 stays the swing, so nothing a player
-        // already does stops working.
+        // AbortSpell; a recorded departure, not a gap this slice closes).
         // ROAD-Ar: the gate's last three inputs, which A8 declared and
         // no host passed. `paused` is InputManager's own return under
         // an open window (:486-503, "GUI actions do not fall-through

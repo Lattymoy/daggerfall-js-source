@@ -473,9 +473,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // of that law - castPending included - is in
     // systems/activateGate.js so all four hosts read one copy.
     // The port's E stays live BESIDE it (DFU binds E to
-    // AbortSpell; a recorded departure, not a gap this slice
-    // closes) and Mouse2 stays the swing, so nothing a player
-    // already does stops working.
+    // AbortSpell; a recorded departure, not a gap this slice closes).
     // ROAD-Ar: the gate ticks EVERY frame, walk branch or not, because
     // the paused arm is where it learns a window is up and where it
     // arms RemoveWindow's click delay (:206/:214) for the frame that

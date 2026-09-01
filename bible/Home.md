@@ -289,23 +289,23 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1455` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
 - `src/scenes/dungeonContext.js:1510` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3403` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3513` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3514` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:696` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:702` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:956` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1208` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1575` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1584` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:351` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:368` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:535` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1198` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1204` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2564` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:3859` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:4778` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4884` - FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
-- `src/scenes/world.js:5986` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1223` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1229` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2594` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:3910` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:4829` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4935` - FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
+- `src/scenes/world.js:6066` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1257` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1275` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1487` - is the quest machine's, FLAGGED with it.
@@ -322,9 +322,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:3087` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:3099` - FLAGGED, and narrowed to what is actually missing: the two BASH
 - `src/scenes/worldModes.js:3161` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4609` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4708` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:5046` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4620` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4719` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:5057` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
@@ -350,8 +350,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/guildServiceActions.js:195` - *  FLAGGED gap that stood here: the timer is
 - `src/systems/guildServiceFlow.js:239` - *  override's law). Every other arm is FLAGGED with the window it
-- `src/systems/inputActions.js:418` - STILL FLAGGED:
+- `src/systems/inputActions.js:465` - STILL FLAGGED:
 - `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
+- `src/systems/inventory.js:162` - field at all, e.g. the gold stack goldStack() mints. FLAGGED:
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
 - `src/systems/itemInfo.js:98` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
 - `src/systems/itemInfo.js:183` - *  screen. FLAGGED as a group - they land with their own arcs.
@@ -395,7 +396,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
 - `src/ui/listPicker.js:22` - ROAD-A7 closes this file's FLAGGED note. The bar is now a real
 - `src/ui/messageBox.js:35` - ROAD-A7 closes this file's FLAGGED note. Both halves are here now:
-- `src/ui/messageBox.js:250` - so the strip never rides higher than that. FLAGGED as a
+- `src/ui/messageBox.js:264` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:42` - still said Equip and equip-after-transfer were FLAGGED after U8g
 - `src/ui/nativeInventory.js:389` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
 - `src/ui/nativeTalk.js:285` - lands with the Tell-me-about slice (FLAGGED).
