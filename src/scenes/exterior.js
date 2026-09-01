@@ -110,7 +110,8 @@ import {
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM4c: and the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
+import { isEnhanced } from '../systems/uiSkin.js';
+import { getPref } from '../systems/uiPrefs.js';   // EE3: the ground half of the Enhanced Environments switch   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -425,6 +426,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (let r = 0; r < groundTex.recordCount; r++) {
       layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
     }
+    // EE3: the ground's own half of the Enhanced Environments switch,
+    // set before the upload because the sampler state is chosen there
+    // and the array is cached afterwards.
+    renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
     renderer.uploadTileArray(groundArchive, layers);
   }
   const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(locationTilemap), tilemapDim);

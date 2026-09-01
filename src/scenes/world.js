@@ -521,6 +521,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (let r = 0; r < groundTex.recordCount; r++) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       }
+      // EE3: the ground's own half of the Enhanced Environments switch,
+      // set before the upload because the sampler state is chosen there
+      // and the array is cached afterwards.
+      renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
       renderer.uploadTileArray(groundArchive, layers);
     }
     const terrain = renderer.createTerrainSurface(positions, normals,

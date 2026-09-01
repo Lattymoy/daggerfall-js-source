@@ -460,3 +460,25 @@ test('EE2: the deck reaches the horizon, and the star field is not ruled into ro
   assert.match(stars, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/,
     'one number for the cell and the offset, on the cube\u2019s own equi-angular faces');
 });
+
+// ═══ EE3: the ground's sampler follows the switch ═══════════════════
+test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', () => {
+  const r = read('src/render/renderer.js');
+  // the classic look is untouched: a 64px tile sampled NEAREST is
+  // Daggerfall's own, and the classic skin keeps it exactly.
+  assert.match(r, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);/);
+  // and the enhanced ground gets the mip chain, which is what stops
+  // the boiling at distance - and is a PREREQUISITE for any higher
+  // resolution tile, since more texels alias worse without it.
+  assert.match(r, /if \(this\.enhancedGround\) \{\s*\n\s*gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);/);
+  assert.match(r, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
+  assert.match(r, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/, 'ground is seen at grazing angles almost always');
+  assert.match(r, /this\.enhancedGround = false;/, 'and it defaults OFF, so classic cannot inherit it');
+  // both hosts set it before the upload, because the sampler state is
+  // chosen there and the array is cached afterwards
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);\n\s*renderer\.uploadTileArray\(/,
+      `${host} must set the flag immediately before the upload`);
+  }
+});

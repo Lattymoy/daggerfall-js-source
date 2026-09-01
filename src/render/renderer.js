@@ -676,6 +676,11 @@ export class Renderer {
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
+    /** EE3: set by the host from the Enhanced Environments switch. It
+     *  is read at UPLOAD time, and an archive's array is cached, so a
+     *  flip takes effect when the world next loads - the same law the
+     *  sky pass already follows. */
+    this.enhancedGround = false;
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1790,8 +1795,38 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     for (let i = 0; i < layers.length; i++) {
       gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
     }
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // EE3 (Enhanced Environments): MIPMAPS AND ANISOTROPY, on the
+    // enhanced skin only.
+    //
+    // A 64px tile sampled NEAREST is Daggerfall's own look and the
+    // classic skin keeps it exactly. But that sampling is also why the
+    // ground BOILS at distance: a tile covers 6.4 world units, so a
+    // pixel a hundred metres out spans dozens of texels and NEAREST
+    // picks one of them per frame, at random as the camera moves. Mips
+    // are what stop that, and anisotropy is what keeps the ground from
+    // going to mush at grazing angles - which is the angle almost all
+    // ground is seen at.
+    //
+    // It is also a PREREQUISITE, not just a polish: a higher-resolution
+    // tile without mips shimmers WORSE than the 64px one, because it
+    // has more texels to alias between. Nothing else in this arc can
+    // land until this does.
+    //
+    // Per-layer, so tiles never bleed into each other: WebGL2's
+    // generateMipmap on a 2D array filters each layer independently.
+    if (this.enhancedGround) {
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+      if (aniso) {
+        gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT,
+          Math.min(16, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+      }
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
