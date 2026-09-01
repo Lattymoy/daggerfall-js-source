@@ -6,6 +6,25 @@
 //   - Indexed color means hard pixels: NEAREST filtering.
 //   - Alpha 0 texels are palette-index cutouts; the shader discards them.
 
+/** EE4/EE5: THE CLOUD-SHADOW BLOCK, ONE SOURCE. Both the world FS and
+ *  TERRAIN_FS sample the sky's cover to shadow the ground, so both need
+ *  these uniforms and the sky's own hash/fbm - and TERRAIN_FS carried
+ *  the USES without the DECLARATIONS. A shader that cannot compile is a
+ *  Renderer constructor that throws, which is the black screen on boot.
+ *  Interpolated into both rather than written twice: two copies of a
+ *  uniform list is the same bug waiting for the next uniform. */
+const CLOUD_SHADOW_GLSL = `
+uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
+uniform vec2 uCloudWind;
+// EE4: the sky's own hash and fbm, term for term - the same per-octave
+// offsets, so the ground reads the field the sky drew and not a
+// lookalike of it.
+float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
+float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
+`;
+
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNormal;
@@ -38,15 +57,7 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
-uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
-uniform vec2 uCloudWind;
-// EE4: the sky's own hash and fbm, term for term - the same per-octave
-// offsets, so the ground reads the field the sky drew and not a
-// lookalike of it.
-float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
-float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
-  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
-float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
+${CLOUD_SHADOW_GLSL}
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -372,6 +383,7 @@ const TERRAIN_FS = `#version 300 es
 precision highp float;
 precision highp usampler2D;
 precision highp sampler2DArray;
+${CLOUD_SHADOW_GLSL}
 in vec3 vNormal;
 in vec3 vWorldPos;
 in vec2 vLocalXZ;

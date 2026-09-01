@@ -645,6 +645,20 @@ cannot reach its first check fails identically to a probe nobody ran,
 and neither shows up anywhere. A red probe is evidence; an unreachable
 one is silence wearing evidence's clothes.
 
+**`tools/bootProbe.mjs` - THE CHEAPEST PIN THERE IS, and the fleet did
+not have it.** EE5 shipped a TERRAIN_FS that used `uShadowAmt`, the four
+cloud uniforms and `tfbm` without declaring any of them. A shader that
+cannot compile throws inside the Renderer constructor, main.js's catch
+writes the message over `document.body`, and the player gets a BLACK
+SCREEN before the menu has drawn. A full suite and a clean build both
+passed it through, because node never compiles GLSL and vite never runs
+the page. Five thousand pins and not one asked whether the game starts.
+It runs both skins, needs no ARENA2 (the boot door draws before any
+game data is touched, which is exactly why a break there is total), and
+ignores 404s - missing art is the never-traps law working, not a death.
+Mutation-verified against the real break: 1/6 with the declarations
+removed, 6/6 with them.
+
 Pre-push gate: `npm run check` (test + build).
 
 Drift guard: `test/manifest.test.js` pins the total line and every row of

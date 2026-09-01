@@ -6377,3 +6377,24 @@ MW-D16's two branch pins now state the law instead of relying on the
 fixtures to imply it: they pass quiverDriven explicitly, because the
 fixture skeleton has the bone and the fixture clip does not drive it -
 precisely the combination this refuses.
+
+EE5b: THE BLACK SCREEN, AND THE PIN NOBODY HAD. Mac: "the game black
+screens on opening."
+
+TERRAIN_FS used uShadowAmt, uCloudCover, uCloudSoft, uCloudTime,
+uCloudWind and tfbm, and declared none of them - the block lived only
+in the world FS. A shader that will not compile throws inside the
+Renderer constructor, main.js's catch replaces document.body with the
+message, and nothing draws at all.
+
+Rooted rather than patched: the uniforms and the sky's hash/fbm are one
+interpolated chunk (CLOUD_SHADOW_GLSL) that both shaders read. Two
+copies of a uniform list is the same bug waiting for the next uniform,
+and copying the block into TERRAIN_FS would have been exactly that.
+
+THE PART WORTH KEEPING is what did not catch it. Suite green, build
+green, lint green - because node never compiles GLSL and the build
+never runs the page. Five thousand pins, and not one asked whether the
+game STARTS. tools/bootProbe.mjs asks it now, on both skins, in about
+five seconds, and needs no ARENA2 because the boot door draws before
+any game data is touched. Run it before a push that goes near a shader.
