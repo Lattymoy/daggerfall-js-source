@@ -516,3 +516,46 @@ test('MW-D48: nodeTransformOf composes the same chain flattenNif does', async ()
   const folded = Math.hypot(pre.a[0], pre.a[3], pre.a[6]);
   assert.ok(Math.abs(folded - w.scale) < 1e-6, `${folded} vs ${w.scale}`);
 });
+
+// MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD.
+// FindByNameVisitor is an osg::NodeVisitor walking the BUILT SCENE, and
+// by then the loader has dropped Bounding Box subtrees and
+// RootCollisionNode subtrees and masked hidden nodes. findNodeByName
+// reads the RAW PARSED NIF, where all of it is still there - so without
+// rule 58's filters it can answer with a node the reference's search
+// cannot see. flattenNif has applied these three all along; the search
+// that places the ARROW had none of them, which is the asymmetry left
+// standing after MW-D48 eliminated the arithmetic.
+test('MW-D49: findNodeByName honours rule 58, like the scene the reference searches', async () => {
+  const { findNodeByName } = await import('../src/formats/mwCharacter.js');
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const n = (name, extra = {}) => ({ type: 'NiNode', name, rotation: I3,
+    translation: [0, 0, 0], scale: 1, children: [], flags: 0, ...extra });
+  // A decoy ArrowBone inside collision, and the real one outside it.
+  const nif = { roots: [0], records: [
+    { ...n('root'), children: [1, 3] },
+    { ...n('collision'), type: 'RootCollisionNode', children: [2] },
+    { ...n('ArrowBone'), translation: [999, 999, 999] },
+    { ...n('ArrowBone'), translation: [1, 2, 3] },
+  ] };
+  const hit = findNodeByName(nif, 'ArrowBone');
+  assert.ok(hit, 'the real one is found');
+  assert.deepEqual([...hit.rec.translation], [1, 2, 3],
+    'the collision subtree is not searched - the reference never sees it');
+
+  // A hidden node is masked out of the built scene, so it cannot answer.
+  const hidden = { roots: [0], records: [
+    { ...n('root'), children: [1] },
+    { ...n('ArrowBone'), flags: 0x0001 },
+  ] };
+  assert.equal(findNodeByName(hidden, 'ArrowBone'), null, 'a hidden node is not in the scene');
+
+  // But a ROOT named "Bounding Box" is NOT skipped - the reference's
+  // guard is `args.mRootNode && ...` and mRootNode is null on the first
+  // call. flattenNif reproduces that oversight and so must this.
+  const bbRoot = { roots: [0], records: [
+    { ...n('Bounding Box'), children: [1] },
+    { ...n('ArrowBone'), translation: [4, 5, 6] },
+  ] };
+  assert.ok(findNodeByName(bbRoot, 'ArrowBone'), 'a Bounding Box ROOT is load-bearing, not skipped');
+});

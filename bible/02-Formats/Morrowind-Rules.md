@@ -6605,3 +6605,27 @@ a 90 DEGREE ROTATION to meshes carrying that node (attach.cpp:145),
 which placeAtBone does not replicate. On a vanilla bow the node is
 absent and MW-D44 is a no-op; on a mesh that has one, the port takes
 the translation and drops the rotation. Close that before trusting it.
+
+MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD. The lead
+MW-D48 left standing, closed.
+
+FindByNameVisitor is an osg::NodeVisitor and it walks the BUILT SCENE.
+By the time it runs, the loader has dropped Bounding Box subtrees and
+RootCollisionNode subtrees and masked hidden nodes - rule 58, which
+this port already implements in flattenNif. findNodeByName reads the
+RAW PARSED NIF, where every one of those is still present, so it could
+answer with a node the reference's search cannot see: an ArrowBone
+inside collision geometry, or under a subtree the loader drops.
+
+Same tree, or it is not the same search. The three filters are on it
+now, including the load-bearing oversight that a ROOT named "Bounding
+Box" is NOT skipped, because the reference's guard is
+`args.mRootNode && ...` and mRootNode is null on the first call.
+
+THIS IS THE PLACEMENT PATH. findNodeByName is what nodeTransformOf
+calls to find ArrowBone, and nodeTransformOf is what builds the arrow's
+preTransform. A different node answering the name is a different
+transform, which is an arrow in a different place - and unlike every
+branch theory before it, this moves the round WITHOUT changing which
+bone it hangs on, which is what Mac has been describing since the
+first report.
