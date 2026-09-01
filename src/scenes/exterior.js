@@ -2094,6 +2094,10 @@ export async function bootExterior(canvas, renderer, params, status) {
         canvas.clientWidth / canvas.clientHeight);
       renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
+    // EE5: the ground shadows under the SKY'S OWN deck - one field for the
+    // cloud and for the shadow it casts. Null when there is no enhanced
+    // sky, which is the classic skin and every interior.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrayFor(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) {

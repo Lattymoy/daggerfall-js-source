@@ -513,3 +513,38 @@ test('EE3: a sized format, two modes keyed in the cache, NEAREST for classic byt
   assert.match(g, /the TERRAIN is lit \(street band median/);
   assert.match(g, /vals\.sort\(\(a, b\) => a - b\);\s*\n\s*return vals\[vals\.length >> 1\];/, 'median, so snow specks cannot lift a void');
 });
+
+// ═══ EE5: cloud shadows - the sky and the ground share one field ════
+test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader that uses it', () => {
+  const r = read('src/render/renderer.js');
+  // the declarations live INSIDE the terrain fragment shader - the first
+  // attempt put them outside every shader and the renderer threw on boot
+  const ti = r.indexOf('const TERRAIN_FS = `'); const tj = r.indexOf('`;', ti);
+  const terrain = r.slice(ti, tj);
+  assert.match(terrain, /\$\{CLOUD_SHADOW_GLSL\}/, 'the block is interpolated into TERRAIN_FS');
+  assert.match(terrain, /if \(uShadowAmt > 0\.0 && uLightDir\.y > 0\.02\) \{/);
+  assert.match(terrain, /diff \*= 1\.0 - cov \* uShadowAmt;/, 'a cloud dims the SUN and leaves the ambient alone');
+  const fi = r.indexOf('const FS = `'); const fj = r.indexOf('`;', fi);
+  assert.ok(!/uShadowAmt/.test(r.slice(fi, fj)), 'and the mesh shader is untouched');
+  // ONE FIELD: the sky's own hash, noise and fbm, offsets and all
+  assert.match(r, /float tfbm\(vec2 p\)\{ float v=0\.0,a=0\.5; for\(int i=0;i<5;i\+\+\)\{ v\+=a\*tvn\(p\); p=p\*2\.03\+vec2\(17\.1,9\.7\); a\*=0\.5; \} return v; \}/);
+  assert.match(r, /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudWind \* uCloudTime;/,
+    'the sun\u2019s own ray picks the point on the deck');
+  // OFF is free and cannot change classic
+  assert.match(r, /this\._cloudShadow = null;/);
+  assert.match(r, /gl\.uniform1f\(this\.tUShadowAmt, cs \? cs\.amount : 0\);/);
+  assert.match(r, /setCloudShadow\(d\) \{ this\._cloudShadow = d \?\? null; \}/, 'numbers only - it binds nothing');
+  // PUBLISHED by the sky from the state the dome is drawn from
+  const sky = read('src/render/enhancedSky.js');
+  assert.match(sky, /this\.cloudShadow = \{\s*\n\s*cover: state\.cloudCover \?\? 0,/);
+  assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
+  assert.match(sky, /time: state\.seconds \?\? 0,/);
+  // both hosts hand it over immediately before the terrain draw, and
+  // hand over NOTHING when there is no enhanced sky
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(read(host), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n\s*renderer\.drawTerrain\(/, host);
+  }
+  // and the probe door, so the gate can put the sky under overcast
+  const shared = read('src/scenes/shared.js');
+  assert.match(shared, /const weatherName = params\.get\('weather'\) \?\? extra\?\.weather \?\? 'sunny';/);
+});

@@ -744,6 +744,19 @@ export class EnhancedSkyRenderer {
     this.state = state;
     this.clearColor = new Float32Array(state.clearColor);
     this.fillColor = new Float32Array(state.fillColor);
+    // EE5: the deck the GROUND shadows under, published from the SAME
+    // state the dome is drawn from - so the shadow on the land and the
+    // cloud overhead are one field, and no host can feed them different
+    // numbers by accident. The amount sits below one because a cloud
+    // dims the sun rather than extinguishing it; the softness has a
+    // floor because a zero would divide by nothing in the smoothstep.
+    this.cloudShadow = {
+      cover: state.cloudCover ?? 0,
+      soft: Math.max(1e-3, state.cloudSoft ?? 0.25),
+      wind: state.wind ?? [0, 0],
+      time: state.seconds ?? 0,
+      amount: 0.62,
+    };
   }
 
   draw(yaw, pitch, fovY, aspect) {

@@ -29,7 +29,8 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
 const MINUTES = Number(arg('minutes', 720));        // noon by default: the sun is up and the ground is lit
 const MODE = arg('mode', 'enhanced');
-const GROUND = arg('ground', null);          // EE3: ?ground=classic|tiles, the kill switch
+const GROUND = arg('ground', null);          // EE3: ?ground=classic|tiles|drawn, the kill switch
+const WEATHER = arg('weather', null);        // EE5: ?weather=<type>, the probe door
 const PORT = 5223;
 
 const fails = [];
@@ -52,7 +53,7 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 // changes. ?sky=classic is NOT set, so the enhanced sky draws when the
 // pref allows it.
 const skin = MODE === 'classic' ? '&classic' : '';
-const ground = GROUND ? `&ground=${GROUND}` : '';
+const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '');
 await page.goto(`http://localhost:${PORT}/play/?exterior&shot&novideo&nofoes${skin}${ground}`);
 
 // wait for the world to actually render frames

@@ -359,6 +359,23 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+// EE5: CLOUD SHADOWS - the sky's own deck, read by the ground. The
+// hash, the value noise and the fbm are the sky's TERM FOR TERM (the
+// same per-octave (17.1, 9.7) offsets), so the ground reads the field
+// the sky drew and not a lookalike of it. Interpolated INSIDE the
+// terrain fragment shader below: the first attempt put these outside
+// every shader, the terrain shader used uniforms it never declared,
+// and the renderer's constructor threw on boot. A GLSL declaration is
+// visible only to the compilation unit that contains it.
+const CLOUD_SHADOW_GLSL = `
+uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
+uniform vec2 uCloudWind;
+float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
+float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
+`;
+
 const TERRAIN_FS = `#version 300 es
 precision highp float;
 precision highp usampler2D;
@@ -376,6 +393,7 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
+${CLOUD_SHADOW_GLSL}
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -416,6 +434,19 @@ void main() {
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
+  // EE5: the deck's field, sampled where this ground's ray to the sun
+  // crosses the cloud plane - so a bank overhead drags its shadow across
+  // the land, and the shadow and the cloud that casts it are ONE field.
+  // The plane is high and the dome far, so the parallax is the WIND's:
+  // shadows move with the weather and not with the player. A cloud dims
+  // the SUN and leaves the ambient alone, which is what a cloud does.
+  // uShadowAmt is 0 for the classic skin and every interior: the branch
+  // does not run and classic draws exactly what it drew.
+  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
+    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
+    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
+    diff *= 1.0 - cov * uShadowAmt;
+  }
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
@@ -661,6 +692,12 @@ export class Renderer {
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
+    // EE5: the deck's uniforms
+    this.tUShadowAmt = gl.getUniformLocation(this.terrainProgram, 'uShadowAmt');
+    this.tUCloudCover = gl.getUniformLocation(this.terrainProgram, 'uCloudCover');
+    this.tUCloudSoft = gl.getUniformLocation(this.terrainProgram, 'uCloudSoft');
+    this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
+    this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -684,6 +721,10 @@ export class Renderer {
     /** EE3: the URL door - ?ground=classic|tiles - which outranks the
      *  switch, so a report can be bisected in one reload. */
     this.groundMode = null;
+    /** EE5: the cloud deck the ground shadows under, handed over by the
+     *  host from the SKY's own state. Null = no shadows, which is the
+     *  classic skin and every interior. */
+    this._cloudShadow = null;
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1886,6 +1927,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return tex;
   }
 
+  /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,
+   *  amount} - or null. Numbers only; it binds nothing. */
+  setCloudShadow(d) { this._cloudShadow = d ?? null; }
+
   /** Draw one terrain surface with its tilemap + tile array. */
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
@@ -1894,6 +1939,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
+    // EE5: the deck, or nothing at all
+    const cs = this._cloudShadow;
+    gl.uniform1f(this.tUShadowAmt, cs ? cs.amount : 0);
+    gl.uniform1f(this.tUCloudCover, cs ? cs.cover : 0);
+    gl.uniform1f(this.tUCloudSoft, cs ? cs.soft : 1);
+    gl.uniform1f(this.tUCloudTime, cs ? cs.time : 0);
+    gl.uniform2f(this.tUCloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
     this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);

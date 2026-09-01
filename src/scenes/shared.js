@@ -277,13 +277,17 @@ export function createSkyController(gl, params) {
         // ticks; the sky walks its numbers toward the new row over
         // WEATHER_EASE_SECONDS instead of changing in one frame. The
         // first call takes the row whole - a boot into rain is rain.
-        const want = weatherRow(extra?.weather ?? 'sunny');
+        // EE5: ?weather=<type> is a probe door, like ?window and ?skyframe
+        // are for the panorama - the world render gate uses it to put
+        // the sky under overcast and read the ground beneath.
+        const weatherName = params.get('weather') ?? extra?.weather ?? 'sunny';
+        const want = weatherRow(weatherName);
         const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
         weatherAt = seconds;
         weatherRowNow = easeWeather(weatherRowNow, want, dt);
         enhancedSky.setState(skyState({
           minuteOfDay,
-          weather: extra?.weather ?? 'sunny',
+          weather: weatherName,
           classicMinutes: extra?.classicMinutes ?? 0,
           seconds,
           row: weatherRowNow,
