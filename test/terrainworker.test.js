@@ -242,7 +242,9 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // AUDIT EV F-DOC1: the job crosses as a SPREAD - a hand-copied field
   // list was the one place a new kernel input could be dropped with
   // every test green
-  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods })'), 'the job forwards whole');
+  // ROADS 3: `roads` joined `woods` as worker-owned state that rides
+  // beside the spread - the job itself still crosses WHOLE.
+  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods, roads })'), 'the job forwards whole');
   // the client spells the constructor the way Vite's static analysis
   // bundles (eslint.config.js's RA1 note: never globalThis.Worker)
   const client = readFileSync('src/world/terrainGenClient.js', 'utf8');

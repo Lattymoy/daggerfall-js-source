@@ -82,9 +82,21 @@ export class TerrainGenClient {
    *  dying worker falls back to); the reply's big arrays arrive
    *  TRANSFERRED. Always resolves - a worker failure resolves through
    *  the same-thread kernel, never rejects. */
+  /** ROADS 3: hand the network to both kernels - the worker gets a
+   *  COPY (the RA1 law: the arrays this thread keeps are the fallback's)
+   *  and this thread keeps its own for the same-thread path. null
+   *  clears both. */
+  setRoads(net) {
+    this._roads = net ? { roads: net.roads, tracks: net.tracks } : null;
+    if (this._worker) {
+      const copy = this._roads ? { roads: this._roads.roads.slice(), tracks: this._roads.tracks.slice() } : null;
+      this._worker.postMessage({ t: 'roads', roads: copy }, copy ? [copy.roads.buffer, copy.tracks.buffer] : []);
+    }
+  }
+
   generate(job) {
     if (!this._worker) {
-      return Promise.resolve(generatePixelTerrain({ woods: this._woods, ...job }));
+      return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...job }));
     }
     return new Promise((resolve) => {
       this._fifo.push({ job, resolve });
@@ -99,7 +111,7 @@ export class TerrainGenClient {
     if (m.t === 'error') {
       // this job's inputs are still whole on this side - run them here
       console.warn('[terrain] worker job failed; generating on the main thread -', m.message);
-      p.resolve(generatePixelTerrain({ woods: this._woods, ...p.job }));
+      p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...p.job }));
       return;
     }
     // The reply crosses WHOLE, like the job: the envelope tag comes
@@ -117,6 +129,6 @@ export class TerrainGenClient {
     this._fifo = [];
     try { this._worker?.terminate?.(); } catch { /* already gone */ }
     this._worker = null;
-    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, ...p.job }));
+    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...p.job }));
   }
 }

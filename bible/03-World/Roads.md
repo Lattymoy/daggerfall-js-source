@@ -92,12 +92,22 @@ is left alone.
 Hooked at the seam behind `roads = null`: with no network handed in the
 solo pipeline is byte-for-byte what it was, pinned at the source.
 
+## ROADS 3 - the producer (2026-09-01)
+
+`world/roadsProducer.js` is the only thing that touches the archives:
+every region's map table through mapsFile's own lon/lat law, the small
+heightmap for the ground, and the sampler's beach line for water -
+`WATER_BYTE = SCALED_BEACH_ELEVATION / BASE_HEIGHT_SCALE`, the
+sampler's constant divided back into WOODS units so the road-builder
+and the terrain cannot disagree about where the sea starts. Built once
+in world.js when the terrain client is made, handed to BOTH kernels
+(the worker gets a copy; this thread keeps its own for the fallback),
+and a failure draws a world without roads and says so on the console.
+On a synthetic map the build is ~30ms; the real one is logged. Caching
+is deferred until the number says it is needed.
+
 ## Open
 
-- ROADS 3: the boot-time producer - read the map table and the small
-  heightmap from the player's own archives, build once, cache in
-  IndexedDB keyed on a version and the archive's size, hand the arrays
-  to the terrain client. Until then nothing is drawn.
 - ROADS 4: the enhanced skin's own road SURFACE from the ground proto's
   pixel-art ramp, beside grass and stone. Classic draws tile 46 from
   the player's ARENA2, which is exactly what the original draws.

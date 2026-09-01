@@ -143,3 +143,61 @@ test('ROADS: the solo pipeline is byte-for-byte unchanged with no network', asyn
   assert.match(src, /roads = null/, 'the seam defaults to no network');
   assert.match(src, /if \(roads\) \{/, 'and paints only when one is handed in');
 });
+
+// ROADS 3: THE PRODUCER, and the wire. The generator is pure so the
+// producer is the only thing that touches the archives; pinned on a
+// stub MapsFile and a stub WoodsFile so the enumeration and the water
+// threshold are proven here, and on the source for the two kernels.
+test('ROADS 3: every region\'s map table becomes settlements, a dead region contributes nothing', async () => {
+  const { settlementsOf, WATER_BYTE, buildRoadsFromArchives } = await import('../src/world/roadsProducer.js');
+  // longitude/latitude -> pixel is mapsFile's own law: x = lon/128, y = 499 - lat/128.
+  const maps = {
+    regionCount: 3,
+    getRegion: (r) => (r === 1 ? null : {
+      mapTable: [
+        { longitude: 200 * 128, latitude: (499 - 100) * 128, locationType: LT.TownCity },
+        { longitude: 260 * 128, latitude: (499 - 120) * 128, locationType: LT.TownHamlet },
+        null,
+      ],
+    }),
+  };
+  const s = settlementsOf(maps);
+  assert.equal(s.length, 4, 'two rows per live region, the null row skipped, the dead region skipped');
+  assert.deepEqual({ x: s[0].x, y: s[0].y, type: s[0].type, region: s[0].region }, { x: 200, y: 100, type: LT.TownCity, region: 0 });
+
+  // WATER is the sampler's beach line, in WOODS units - 5.0 * 8 / 8.
+  assert.equal(WATER_BYTE, 5, 'the threshold is the sampler\'s constant divided back, not a second number');
+  // A lake BETWEEN the two towns, on the straight line (200,100)-(260,120),
+  // so the route has to want to cross it - a sea off to one side is a
+  // pin that cannot fail, and the first draft of this one was exactly that.
+  const lake = (x, y) => x >= 225 && x <= 235 && y >= 90 && y <= 130;
+  // The lake is a FLAT sea, one unit below the shore: a deep pit would
+  // be refused by the climb dial alone and the water rule would never
+  // be the thing on trial (that mutant survived the first fixture).
+  const woods = { getHeightMapValue: (x, y) => (lake(x, y) ? WATER_BYTE : WATER_BYTE + 1) };
+  const net = buildRoadsFromArchives(maps, woods);
+  assert.ok(net, 'a network builds');
+  assert.equal(net.stats.settlements, 4);
+  assert.ok(net.stats.roadEdges >= 1, 'the two road-grade towns are joined');
+  assert.equal(net.stats.unrouted, 0, 'and the route around the lake was found');
+  for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
+    if (lake(x, y)) assert.equal(net.roads[y * MAP_W + x], 0, `no road on the lake at ${x},${y}`);
+  }
+  // And a producer that cannot read the archive answers null, not a throw.
+  assert.equal(buildRoadsFromArchives({ get regionCount() { throw new Error('bad'); } }, woods), null);
+});
+
+test('ROADS 3: the network rides both terrain kernels and the world host builds it once', async () => {
+  const fs = await import('node:fs');
+  const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
+  assert.match(worker, /m\.t === 'roads'/, 'the worker accepts the network');
+  assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'and hands it to the kernel on every job');
+  const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
+  assert.match(client, /setRoads\(net\)/, 'the client has the door');
+  assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 3,
+    'every same-thread path - direct, post-death drain, and dying-worker fallback - carries it');
+  assert.match(client, /\.slice\(\)/, 'the worker gets a COPY (the RA1 law)');
+  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(host, /buildRoadsFromArchives\(maps, woods\)/, 'the host builds it from the archives');
+  assert.match(host, /terrainGen\.setRoads\(net\)/, 'and hands it over');
+});
