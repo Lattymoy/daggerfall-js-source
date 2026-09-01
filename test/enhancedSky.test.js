@@ -48,12 +48,8 @@ test('ES1 palette: a table in the sun\'s elevation, interpolated, and the shader
   }
   // A row is returned verbatim at its own elevation, and between two
   // rows every channel is the linear blend - the whole interpolation.
-  // EE6: elev 2 is a REAL key now, so it is no longer the midpoint of
-  // 0 and 4. The law being pinned - that paletteAt interpolates
-  // linearly between the two keys an elevation falls between - is
-  // unchanged; it is checked on a gap that still has no key in it.
-  const p0 = paletteAt(4), pMid = paletteAt(5.5), p4 = paletteAt(7);
-  const row0 = SKY_KEYS.find((k) => k.elev === 4), row4 = SKY_KEYS.find((k) => k.elev === 7);
+  const p0 = paletteAt(0), pMid = paletteAt(2), p4 = paletteAt(4);
+  const row0 = SKY_KEYS.find((k) => k.elev === 0), row4 = SKY_KEYS.find((k) => k.elev === 4);
   assert.ok(near(p0.glowAmount, row0.glowAmount) && near(p4.glowAmount, row4.glowAmount));
   assert.ok(near(pMid.glowAmount, (row0.glowAmount + row4.glowAmount) / 2), 'halfway is half');
   for (let c = 0; c < 3; c++) assert.ok(near(pMid.zenith[c], (p0.zenith[c] + p4.zenith[c]) / 2, 1e-6));
@@ -213,7 +209,7 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   // hatch AND the Enhanced pane's own switch (uiPrefs proceduralSky,
   // default on) - the pane row said "not built" while this line had
   // been building it for a day.
-  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)\s*\n?\s*\? new EnhancedSkyRenderer\(gl\) : null;/,
+  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('proceduralSky'\)\s*\n?\s*\? new EnhancedSkyRenderer\(gl\) : null;/,
     'the enhanced sky is the skin\'s, behind the URL hatch and the player\'s own switch');
   assert.match(shared, /renderer: enhancedSky \?\? sky,/, 'ONE renderer field: the hosts do not know which pass they hold');
   assert.match(shared, /\(enhancedSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\)/);
@@ -283,17 +279,7 @@ test('ES1c stars: the field wheels about a pole, one turn a day, on the same clo
   const fs = read('src/render/enhancedSky.js');
   assert.match(fs, /float ca = cos\(uStarAngle\), sa = sin\(uStarAngle\);/, 'the turn is the CLOCK\'s angle - a constant here is a field that stands still');
   assert.match(fs, /vec3 d = dir \* ca \+ cross\(axis, dir\) \* sa \+ axis \* dot\(axis, dir\) \* \(1\.0 - ca\);/, 'Rodrigues about the pole');
-  // EE2 F2: cubeSnap is no longer called for the STARS - it returned an
-  // integer cell id, and taking fract() of an integer gave every star
-  // the same offset inside its cell, which ruled the field into rows.
-  // The cell and the position now come from one number. The law the
-  // pin exists for is unchanged and still asserted: the field is
-  // sampled in the TURNED frame (d, not dir), and it is cast on the
-  // cube's equi-angular faces.
-  assert.match(fs, /vec2 raw2; float face2;/, 'the star field must choose a cube face itself');
-  assert.match(fs, /if \(ad2\.x >= md2\) \{ raw2 = d\.zy \/ ad2\.x;/, 'the field is sampled in the TURNED frame (d, not dir)');
-  assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale/, 'equi-angular, so a cell is one angle everywhere on a face');
-  assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/, 'the cell and the position must be the floor and fract of ONE number');
+  assert.match(fs, /cubeSnap\(d, scale, sc2\);/, 'the field is sampled in the TURNED frame (d, not dir) - ES1f casts it on the cube');
   assert.match(fs, /smoothstep\(0\.0, 0\.08, dir\.y\)/, '...but a star sets where the REAL horizon is');
 });
 
@@ -435,135 +421,6 @@ test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole
   // The star field rides the same cube, so it has no pinwheel and no
   // density pile-up at a pole - and its scales were raised to keep the
   // count, because a cube covers the sphere with far fewer cells.
-  // EE2 F2: the RETRO snap still uses cubeSnap on the turned frame -
-  // that is what the cube grid is for - but the STAR field no longer
-  // does, because cubeSnap hands back an integer cell and the stars
-  // needed a position inside it. Both laws hold; they are asserted on
-  // their own sites now.
-  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/, 'the retro pass still snaps on the cube');
-  assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale/, 'and the stars sit on the same equi-angular faces');
+  assert.match(fs, /cubeSnap\(d, scale, sc2\);/);
   assert.match(fs, /float scale = layer == 0 \? 127\.0 : 236\.0;/);
-});
-
-// ═══ EE2: the two sky faults the Enhanced Environments lab found ════
-test('EE2: the deck reaches the horizon, and the star field is not ruled into rows', () => {
-  const fs = read('src/render/enhancedSky.js');
-  // F1: the projection runs away as the ray flattens - at the horizon
-  // the lookup reaches the tens of thousands and a float32 loses its
-  // fraction, so the noise returns a constant and the largest part of
-  // the sky carried no cloud whatever the cover said.
-  assert.match(fs, /vec2 p = dir\.xz \* min\(1\.0 \/ \(dir\.y \+ 0\.18\), 9\.0\) \* scale \+ wind \* uTime;/,
-    'the deck projection must be capped or the horizon has no cloud');
-  // F2: the cell id and the position inside it must be the floor and
-  // the fract of ONE number. cubeSnap returns an integer cell, so
-  // fract() of it was a constant and every star sat on the same line.
-  assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/);
-  const stars = fs.slice(fs.indexOf('float stars('), fs.indexOf('float stars(') + 3200);
-  const code = stars.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
-  assert.ok(!/cubeSnap/.test(code), 'the star field must not take its position from a cell id');
-  assert.match(stars, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/,
-    'one number for the cell and the offset, on the cube\u2019s own equi-angular faces');
-});
-
-// ═══ EE3: the ground's sampler follows the switch ═══════════════════
-test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', () => {
-  const r = read('src/render/renderer.js');
-  // the classic look is untouched: a 64px tile sampled NEAREST is
-  // Daggerfall's own, and the classic skin keeps it exactly.
-  assert.match(r, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);/);
-  // and the enhanced ground gets the mip chain, which is what stops
-  // the boiling at distance - and is a PREREQUISITE for any higher
-  // resolution tile, since more texels alias worse without it.
-  // EE8: the error queue is drained before the mipmap, so the check
-  // that follows reads OUR error and not someone else's.
-  assert.match(r, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);/);
-  // AUDIT 46: the branch is on the MODE now, because the bisect door
-  // added a middle state - the original tiles, mipmapped.
-  assert.match(r, /if \(mode === 'tiles'\) \{/, 'EE9: mips are opt-in - they are the only uncleared suspect for the black world');
-  assert.match(r, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
-  assert.match(r, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/, 'ground is seen at grazing angles almost always');
-  assert.match(r, /this\.enhancedGround = false;/, 'and it defaults OFF, so classic cannot inherit it');
-  // both hosts set it before the upload, because the sampler state is
-  // chosen there and the array is cached afterwards
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = read(host);
-    // AUDIT 46: the bisect door sits between them now; both must still
-    // be set before the upload chooses its sampler.
-    assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);/,
-      `${host} must set the flag before the upload`);
-    assert.match(h, /renderer\.groundMode = new URLSearchParams[^\n]*\n\s*renderer\.uploadTileArray\(/,
-      `${host} must set the mode immediately before the upload`);
-  }
-});
-
-test('AUDIT 44: the tile array cache is keyed by MODE, and the probe drives the real row', () => {
-  const r = read('src/render/renderer.js');
-  // F2: the cache lives on the renderer, which survives a world load,
-  // so keying it by archive alone made the switch a page-reload-only
-  // setting while the row promised "when the world next loads".
-  assert.match(r, /const key = `\$\{archive\}:\$\{this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\)\}`;/,
-    'the cache key must follow the MODE, or a bisect is answered by the previous one');
-  assert.match(r, /if \(this\.tileArrays\.has\(key\)\) return this\.tileArrays\.get\(key\);/);
-  assert.match(r, /this\.tileArrays\.set\(key, tex\);/);
-  assert.ok(!/tileArrays\.(has|get|set)\(archive/.test(r), 'the archive alone must not key the cache');
-  // F1: the menu probe drove a row that no longer exists, so it would
-  // have failed on a row it could not find rather than on a fault.
-  const probe = read('tools/enhancedMenuProbe.mjs');
-  assert.ok(!/proceduralSky|Procedural sky/.test(probe), 'the probe must drive the switch that exists');
-  assert.match(probe, /hasText: 'Enhanced environments'/);
-  assert.match(probe, /m\.getPref\('enhancedEnvironments'\)/);
-});
-
-// ═══ EE4: the ground shadows under the sky's own deck ═══════════════
-test('EE4: cloud shadows are ONE field with the cloud that casts them', () => {
-  const r = read('src/render/renderer.js');
-  // the terrain reads the sky's own hash and fbm, offsets and all - a
-  // lookalike field would drift from the cloud overhead
-  assert.match(r, /float tfbm\(vec2 p\)\{ float v=0\.0,a=0\.5; for\(int i=0;i<5;i\+\+\)\{ v\+=a\*tvn\(p\); p=p\*2\.03\+vec2\(17\.1,9\.7\); a\*=0\.5; \} return v; \}/);
-  // and it is the sun's own ray that picks the point on the deck
-  assert.match(r, /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudWind \* uCloudTime;/);
-  assert.match(r, /diff \*= 1\.0 - cov \* uShadowAmt;/, 'a cloud dims the sun, it does not touch the ambient');
-  // OFF is free and cannot change classic: no deck, no term
-  assert.match(r, /if \(uShadowAmt > 0\.0 && uLightDir\.y > 0\.02\)/);
-  assert.match(r, /gl\.uniform1f\(this\.tUShadowAmt, cs \? cs\.amount : 0\);/);
-  assert.match(r, /this\._cloudShadow = null;/);
-  // the deck is PUBLISHED from the sky's own state, so a host cannot
-  // feed the dome and the ground different numbers
-  const sky = read('src/render/enhancedSky.js');
-  assert.match(sky, /this\.cloudShadow = \{\s*\n\s*cover: state\.cloudCover \?\? 0,/);
-  assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
-  assert.match(sky, /time: state\.seconds \?\? 0,/);
-  // both hosts hand it over, and hand over NOTHING when there is no
-  // enhanced sky - which is the classic skin and every interior
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = read(host);
-    assert.match(h, /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n\s*renderer\.drawTerrain\(/,
-      `${host} must set the deck immediately before the terrain draw`);
-  }
-});
-
-// ═══ EE6: parity with the Enhanced Environments lab ═════════════════
-test('EE6: the sunset band is four keys wide, and the deck reaches the horizon', async () => {
-  const { paletteAt, SKY_KEYS } = await import('../src/render/enhancedSky.js');
-  // the whole of a sunrise happens between -4 and +4 degrees, and the
-  // ramp used to step -4 -> 0 -> 4: three rungs for the most-looked-at
-  // sky in the game.
-  const band = SKY_KEYS.filter((k) => k.elev >= -4 && k.elev <= 7).map((k) => k.elev);
-  assert.deepEqual(band, [-4, -2, 0, 2, 4, 7], 'the sunset band lost its rungs');
-  // the horizon walks ember -> peach through the band rather than in
-  // one straight line, so the red channel leads and then settles
-  const at = (e) => paletteAt(e);
-  const h = [-2, 0, 2].map((e) => at(e).horizon);
-  assert.ok(h[0][0] > h[0][1] * 1.3, 'at -2 the horizon must be EMBER - red well over green');
-  assert.ok(h[1][0] > h[1][1] && h[1][1] > h[1][2], 'at 0 it is peach');
-  assert.ok(h[2][1] > h[0][1], 'and it warms toward day rather than jumping');
-  // the zenith takes the violet that only exists near the horizon
-  const z = at(-2).zenith;
-  assert.ok(z[2] > z[1] && z[1] > z[0], 'at -2 the zenith must be deep blue-violet: blue over green over red');
-  // and the glow swings warm then cools as the sun clears the haze
-  assert.ok(at(0).glowAmount > at(-2).glowAmount && at(2).glowAmount < at(0).glowAmount);
-  // F2: cover means cover to the horizon
-  const fs = read('src/render/enhancedSky.js');
-  assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/,
-    'the deck must not be thinned to a quarter where the sky is largest');
 });

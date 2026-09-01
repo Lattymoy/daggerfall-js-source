@@ -21,12 +21,6 @@ directory by `test/audit18_bible_docs.test.js`:
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
-- `groundSurfaces.js` - EE5 the DRAWN GROUND SURFACES: grass, dirt,
-  stone, sand and water as procedural functions that report a colour
-  AND a height, plus the builder that keeps Daggerfall's own tile
-  shapes and replaces what is inside them. Built and NOT yet wired -
-  the surfaces carry a seam; test/groundSurfaces.test.js pins the
-  reason and fails the day they are wired without fixing it.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing

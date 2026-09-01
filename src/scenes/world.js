@@ -542,12 +542,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (let r = 0; r < groundTex.recordCount; r++) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       }
-      // EE3: the ground's own half of the Enhanced Environments switch,
-      // set before the upload because the sampler state is chosen there
-      // and the array is cached afterwards.
-      renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
-      // AUDIT 46: ?ground=classic|tiles|drawn bisects the three states.
-      renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
       renderer.uploadTileArray(groundArchive, layers);
     }
     const terrain = renderer.createTerrainSurface(positions, normals,
@@ -5872,10 +5866,6 @@ boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
       // all run for a pixel behind the camera.
       const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
       if (pixelVisible) {
-        // EE4: the ground shadows under the SKY'S OWN deck - one field for
-        // the cloud and for the shadow it casts. Null when there is no
-        // enhanced sky, which is the classic skin and every interior.
-        renderer.setCloudShadow(sky?.cloudShadow ?? null);
         renderer.drawTerrain(p.terrain, pixelMatrix,
           renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
         for (const m of p.models) {

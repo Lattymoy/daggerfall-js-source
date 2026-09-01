@@ -1,10 +1,8 @@
 // THE CHEAPEST PIN THERE IS, and the fleet did not have it: DOES THE
-// GAME BOOT? EE5 shipped a TERRAIN_FS that used uShadowAmt, the four
-// cloud uniforms and tfbm without declaring any of them. A shader that
-// cannot compile throws inside the Renderer constructor, main.js's
-// catch writes the message over document.body, and the player gets a
-// black screen before the menu has drawn. Suite 5150/0 and a clean
-// build both passed it through, because node never compiles GLSL.
+// GAME BOOT? A shader that fails to compile takes the Renderer's
+// constructor down with it, and a constructor that throws is a black
+// page - no menu, no anything - while eslint, the node suite and a
+// vite build all pass, because node never compiles GLSL.
 //
 // So this asks the one question every other probe assumes: the page
 // loads, the menu's buttons exist, and nothing threw. It needs no
