@@ -444,6 +444,7 @@ const EMISSION_WHITE = new Float32Array([1, 1, 1]);
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
 import { TextureFile } from '../formats/textureFile.js';
+import { buildEnhancedTiles } from './groundSurfaces.js';   // EE4: the drawn ground
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
 export const CHAR_PIXEL = 9;
@@ -1794,7 +1795,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  was the black world. The mode is resolved here, once, and nobody
    *  else spells the key. */
   tileArrayFor(archive) {
-    const mode = this.groundMode ?? (this.enhancedGround ? 'tiles' : 'classic');
+    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
     return this.tileArrays.get(`${archive}:${mode}`);
   }
 
@@ -1804,6 +1805,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     //   classic  the original tiles, NEAREST - Daggerfall's own look,
     //            byte for byte what this always did
     //   tiles    the original tiles with a mip chain and anisotropy
+    //   drawn    our surfaces in the original tiles' shapes (EE4), the
+    //            enhanced default
     // The host sets groundMode from ?ground=; absent, the switch
     // decides. THE MODE IS PART OF THE CACHE KEY: this cache lives on
     // the renderer, which survives a world load, so a key of archive
@@ -1815,22 +1818,35 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // method creates, fills and parameterises ONE texture. It does not
     // draw, bind a framebuffer, clear, change the pipeline, or leave
     // any binding but its own behind.
-    const mode = this.groundMode ?? (this.enhancedGround ? 'tiles' : 'classic');
+    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
     const key = `${archive}:${mode}`;
     if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
+    // EE4: THE DRAWN GROUND. A third mode, and the enhanced default:
+    //   drawn    our surfaces, masked through each original tile's own
+    //            classification, colour-matched to the archive's bases,
+    //            at 128px - four times the original's pixels - and
+    //            mipmapped as 'tiles' is
+    // Built here, on the CPU, BEFORE any GL call - so the upload law
+    // still holds: what follows creates, fills and parameterises one
+    // texture and nothing else. Nothing is fetched and nothing is
+    // stored; the surfaces are ours and the shapes are the player's
+    // own archive's. 128 because 256 measured at 2.3s against 0.7s for
+    // a climate's 56 tiles, and a two-second stall entering the world
+    // is worse than the detail is good.
+    const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
-    const w = layers[0].width;
-    const h = layers[0].height;
+    const w = src[0].width;
+    const h = src[0].height;
     // EE3: a SIZED internal format. generateMipmap requires the texture
     // to be colour-renderable and filterable; RGBA8 is guaranteed to
     // be, an unsized RGBA is not. Same eight bits a channel, spelled
     // the way WebGL2 requires when mips are wanted. Classic gets it
     // too, because it changes nothing NEAREST can see.
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    for (let i = 0; i < layers.length; i++) {
-      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (let i = 0; i < src.length; i++) {
+      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(src[i].colors.buffer, src[i].colors.byteOffset, w * h * 4));
     }
     if (mode === 'classic') {
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);

@@ -471,11 +471,11 @@ test('EE3: a sized format, two modes keyed in the cache, NEAREST for classic byt
   const start = r.indexOf('uploadTileArray(archive, layers) {');
   const up = r.slice(start, r.indexOf('\n  }\n', start) + 4);
   // the mode decides, and the URL door outranks the switch
-  assert.match(up, /const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'tiles' : 'classic'\);/);
+  assert.match(up, /const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);/);   // EE4: drawn is the default
   assert.match(up, /const key = `\$\{archive\}:\$\{mode\}`;/, 'the cache lives on the renderer and survives a world load');
   assert.match(up, /this\.tileArrays\.set\(key, tex\);/);
   // a SIZED format: generateMipmap is guaranteed on RGBA8 and not on RGBA
-  assert.match(up, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8, w, h, layers\.length, 0, gl\.RGBA, gl\.UNSIGNED_BYTE, null\);/);
+  assert.match(up, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8, w, h, src\.length, 0, gl\.RGBA, gl\.UNSIGNED_BYTE, null\);/);
   // classic is NEAREST, exactly as before
   assert.match(up, /if \(mode === 'classic'\) \{\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MAG_FILTER, gl\.NEAREST\);/);
   // tiles: drain, mip, and fall back to NEAREST if the chain fails,
@@ -497,7 +497,7 @@ test('EE3: a sized format, two modes keyed in the cache, NEAREST for classic byt
   // archive:mode and left both hosts reading it by archive alone - which
   // returned undefined, drew the terrain with no texture, and WAS the
   // black world. Nobody outside the renderer spells the key now.
-  assert.match(r, /tileArrayFor\(archive\) \{\s*\n\s*const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'tiles' : 'classic'\);\s*\n\s*return this\.tileArrays\.get\(`\$\{archive\}:\$\{mode\}`\);/);
+  assert.match(r, /tileArrayFor\(archive\) \{\s*\n\s*const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);\s*\n\s*return this\.tileArrays\.get\(`\$\{archive\}:\$\{mode\}`\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.ok(!/renderer\.tileArrays\./.test(h), `${host} must not touch the cache directly`);
