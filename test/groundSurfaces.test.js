@@ -10,31 +10,29 @@ const flat = (r, g, b) => {
   return { width: 64, height: 64, colors: c };
 };
 
-test('EE5: the surfaces carry a HEIGHT, and the seam that keeps them unwired', () => {
+test('EE7: every surface tiles - the seam is closed BY CONSTRUCTION', () => {
   const S = makeSurfaces();
   assert.deepEqual(Object.keys(S).sort(), ['dirt', 'grass', 'sand', 'stone', 'water']);
+  // frequencies are whole cycles per tile now, per axis, so u = 0 and
+  // u = 1 are an exact number of lattice cells apart. This was the one
+  // thing keeping the drawn surfaces out of the game.
   for (const [name, fn] of Object.entries(S)) {
-    const a = fn(0.31, 0.37);
-    assert.ok(a.h >= 0 && a.h <= 1.4, `${name} must report a height, not a colour alone`);
-    assert.equal(a.rgb.length, 3);
+    for (const t of [0.13, 0.37, 0.61, 0.88]) {
+      const a = fn(0, t); const b = fn(1, t);
+      const c = fn(t, 0); const d = fn(t, 1);
+      for (let i = 0; i < 3; i++) {
+        assert.ok(Math.abs(a.rgb[i] - b.rgb[i]) < 1e-6, `${name} seams in u at v=${t}`);
+        assert.ok(Math.abs(c.rgb[i] - d.rgb[i]) < 1e-6, `${name} seams in v at u=${t}`);
+      }
+      assert.ok(Math.abs(a.h - b.h) < 1e-6, `${name}'s HEIGHT seams too, which the normal map would show`);
+    }
+    assert.ok(fn(0.31, 0.37).h >= 0, `${name} must report a height, not a colour alone`);
   }
-  // THE SEAM, pinned as the fact it is rather than hidden. The noise
-  // wraps on its INTEGER lattice, so a tile repeats cleanly only when
-  // its coordinate step is a whole number of cells - and the surfaces
-  // scale their frequency by fractions (P * 0.9, P * 1.6, P * 2.6),
-  // which lands u = 0 and u = 1 on different corners. This test exists
-  // to FAIL the day someone wires these in without fixing it, and to
-  // pass the day the frequencies become whole cycles per tile.
-  const worst = Object.entries(S).reduce((acc, [name, fn]) => {
-    const a = fn(0, 0.37); const b = fn(1, 0.37);
-    const d = Math.max(...[0, 1, 2].map((i) => Math.abs(a.rgb[i] - b.rgb[i])));
-    return d > acc.d ? { name, d } : acc;
-  }, { name: null, d: 0 });
-  assert.ok(worst.d > 0.5,
-    'if the surfaces now WRAP, this pin has done its job - delete it and wire them in');
-  const r = readFileSync('src/render/renderer.js', 'utf8');
-  assert.match(r, /const src = layers;/, 'the seamed surfaces must not reach the upload');
-  assert.match(r, /EE5 IS BUILT AND NOT YET WIRED, deliberately\./, 'and the reason must be where the wiring would go');
+  // and the noise itself wraps on a whole number of cells, per axis,
+  // which is what lets an anisotropic term (a rut, a ripple) tile
+  const n = makeNoise(7);
+  assert.ok(Math.abs(n(0, 1.5, 11, 7) - n(11, 1.5, 11, 7)) < 1e-9, 'x must wrap on its own count');
+  assert.ok(Math.abs(n(1.5, 0, 11, 7) - n(1.5, 7, 11, 7)) < 1e-9, 'y must wrap on its own count');
 });
 
 test('EE5: the blends keep Daggerfall\u2019s own shapes, and only the pixels change', () => {
@@ -65,8 +63,10 @@ test('EE5: the blends keep Daggerfall\u2019s own shapes, and only the pixels cha
 
 test('EE5: nothing is shipped, and the classic path is untouched', () => {
   const r = readFileSync('src/render/renderer.js', 'utf8');
-  // when they ARE wired, they will be BUILT at upload and never read
-  // from disk - doctrine forbids a raster of game data in the repo
+  // BUILT at upload and never read from disk - doctrine forbids a
+  // raster of game data in the repo, and these are derived from one
+  assert.match(r, /const src = this\.enhancedGround \? buildEnhancedTiles\(layers, \{ size: 128 \}\) : layers;/,
+    'EE7 wired them: the seam is closed, so they go in');
   assert.ok(!/prototype\/ground|\.png'/.test(r), 'no raster of game data may be fetched');
   // and the classic skin gets its own layers, byte for byte
   assert.match(r, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA, w, h, src\.length/);

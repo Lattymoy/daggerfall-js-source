@@ -1856,22 +1856,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // two-second stall on entering the world is worse than the detail
     // is good. Moving this to a worker is the way to 256 and is its
     // own slice.
-    // EE5 IS BUILT AND NOT YET WIRED, deliberately. The surfaces carry
-    // a SEAM: the noise wraps on its integer lattice, so a tile only
-    // repeats cleanly when its coordinate step is a WHOLE number of
-    // lattice cells - and every surface scales its frequency by a
-    // fraction (P * 0.9, P * 1.6, P * 2.6...), which lands u = 0 and
-    // u = 1 on different corners. Measured, not suspected: the water
-    // differs by 3 units of 255 across the join, and the others by
-    // less but not by nothing.
+    // EE7: WIRED. EE5 built these and left them out because they
+    // carried a seam - the noise wraps on its integer lattice, and
+    // every surface scaled its frequency by a fraction, so u = 0 and
+    // u = 1 landed on different corners. Frequencies are WHOLE CYCLES
+    // PER TILE now, per axis, and the worst join across all five
+    // surfaces measures 0.0000 of 255. The seam is closed by
+    // construction rather than by care.
     //
-    // The fix is one central change - frequencies expressed as WHOLE
-    // CYCLES PER TILE rather than as multipliers - and it touches
-    // every surface, so it is its own slice rather than a patch at the
-    // end of this one. Until then the enhanced ground keeps the
-    // original tiles with EE3's mipmaps, which is a real improvement
-    // on its own and has no seam.
-    const src = layers;
+    // 128px, four times the original's pixels. 256 was measured at
+    // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
+    // two-second stall on entering the world is worse than the detail
+    // is good. A worker is the way to 256 and is its own slice.
+    const src = this.enhancedGround ? buildEnhancedTiles(layers, { size: 128 }) : layers;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
     const w = src[0].width;

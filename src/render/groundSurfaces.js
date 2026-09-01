@@ -44,22 +44,19 @@ export function makeNoise(seed) {
     const u = (h & 1) ? x : y; const v = (h & 2) ? y : x;
     return ((h & 4) ? -u : u) + ((h & 8) ? -v : v);
   };
-  return (x, y, period) => {
-    // EE5: THE PERIOD MUST BE A WHOLE NUMBER OF LATTICE CELLS. The
-    // wrap is applied to the integer lattice coordinate, so a
-    // fractional period - 4.5, say, which is what `P * 0.9` gives -
-    // wraps cell 4 to cell 4.5 and lands on a DIFFERENT corner. Every
-    // surface that scaled its period by a non-integer factor carried a
-    // seam, measured at u = 1, and no amount of offsetting could undo
-    // it because the lattice itself had no period to wrap on. Rounding
-    // here fixes it at the one place that can: the frequency is
-    // approximate either way, and a seamless tile is not.
-    const p2 = Math.max(1, Math.round(period));
-    const w = (n) => ((n % p2) + p2) % p2;
+  // EE7: TWO PERIODS, one per axis. The wrap is applied to the INTEGER
+  // lattice coordinate, so a tile repeats cleanly only when its
+  // coordinate step is a WHOLE number of cells - and a term that runs
+  // at a different rate in x than in y (a rut, a ripple train) needs
+  // its own whole number on each axis. One shared period could not
+  // express that, and rounding a fractional one only moved the seam.
+  return (x, y, px, py = px) => {
+    const wx = Math.max(1, Math.round(px)); const wy = Math.max(1, Math.round(py));
+    const w = (n, m) => ((n % m) + m) % m;
     const xi = Math.floor(x); const yi = Math.floor(y);
     const xf = x - xi; const yf = y - yi;
-    const X = w(xi) & 255; const Y = w(yi) & 255;
-    const X1 = w(xi + 1) & 255; const Y1 = w(yi + 1) & 255;
+    const X = w(xi, wx) & 255; const Y = w(yi, wy) & 255;
+    const X1 = w(xi + 1, wx) & 255; const Y1 = w(yi + 1, wy) & 255;
     const u = fade(xf); const v = fade(yf);
     const lerp = (a, b, t) => a + (b - a) * t;
     return lerp(
@@ -71,7 +68,7 @@ export function makeNoise(seed) {
 
 /** Periodic Worley: cell centres live on a wrapping lattice, so
  *  pebbles, plates and tufts repeat without a seam either. */
-export function worley(x, y, period, seed) {
+export function worley(x, y, px, seed, py = px) {
   const rnd = (i, j) => {
     let h = ((i * 374761393) ^ (j * 668265263) ^ (seed * 2246822519)) >>> 0;
     h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
@@ -82,8 +79,8 @@ export function worley(x, y, period, seed) {
   for (let dj = -1; dj <= 1; dj++) {
     for (let di = -1; di <= 1; di++) {
       const ci = xi + di; const cj = yi + dj;
-      const w = (n) => ((n % period) + period) % period;
-      const [ox, oy] = rnd(w(ci), w(cj));
+      const w = (n, m) => ((n % m) + m) % m;
+      const [ox, oy] = rnd(w(ci, Math.max(1, Math.round(px))), w(cj, Math.max(1, Math.round(py))));
       const d = Math.hypot(ci + ox - x, cj + oy - y);
       if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d;
     }
@@ -158,32 +155,51 @@ export function makeBlades({ cells = 30, perCell = 6, len = [0.028, 0.075], wid 
  *  each term exists, and the shapes are identical here. */
 export function makeSurfaces(seed = 0x51ed) {
   const n = makeNoise(seed);
-  const fbm = (x, y, period, oct, gain = 0.5) => {
+  // EE7: FREQUENCIES ARE WHOLE CYCLES PER TILE, not multipliers.
+  //
+  // This is the fix EE5 was blocked on. A surface used to be written as
+  // `fbm(x * 0.9, y * 0.9, P * 0.9, 4)` with x = u * P - and P * 0.9 is
+  // 4.5, so u = 0 and u = 1 were 4.5 lattice cells apart and landed on
+  // DIFFERENT corners. Every tile carried a seam, and no amount of
+  // offsetting could close it because the offset was never the problem:
+  // the STEP was.
+  //
+  // F(u, v, cx, cy) samples a field that completes exactly cx cycles
+  // across the tile in x and cy in y. Both are integers, the octaves
+  // double them (so they stay integers), and the wrap is therefore
+  // exact by construction rather than by care. A term can be
+  // anisotropic - a rut, a ripple train - because the two axes carry
+  // their own counts.
+  const F = (u, v, cx, cy = cx, oct = 4, gain = 0.5) => {
     let a = 1; let f = 1; let sum = 0; let norm = 0;
-    for (let o = 0; o < oct; o++) { sum += a * n(x * f, y * f, period * f); norm += a; a *= gain; f *= 2; }
+    for (let o = 0; o < oct; o++) {
+      sum += a * n(u * cx * f, v * cy * f, cx * f, cy * f);
+      norm += a; a *= gain; f *= 2;
+    }
     return sum / norm;
   };
+  /** Worley in the same currency: cells per tile, an integer. */
+  const W = (u, v, cells, seed2, cellsY = cells) => worley(u * cells, v * cellsY, cells, seed2, cellsY);
   const blades = makeBlades();
 
   const grass = (u, v) => {
-    const P = 8; const x = u * P; const y = v * P;
-    const grain = fbm(x * 30 + 21, y * 30 + 9, P * 30, 3);
-    const tone = fbm(x * 1.4 - 4, y * 1.4 + 2, P * 1.4, 4);
+    const grain = F(u, v, 240, 240, 3);
+    const tone = F(u, v, 11, 11, 4);
     let c = mix3([74, 58, 40], [104, 82, 56], cl((tone - 0.35) * 2.0, 0, 1));
     c = sh(c, 0.86 + grain * 0.3);
-    const peb = worley(x * 11 + 0.5, y * 11 + 0.5, P * 11, 17);
+    const peb = W(u, v, 88, 17);
     const stone = cl((0.13 - peb.f1) * 11, 0, 1);
     if (stone > 0.01) c = mix3(c, [130, 122, 110], stone * 0.7);
-    const t = worley(x * 3.1, y * 3.1, P * 3.1, 91);
+    const t = W(u, v, 25, 91);
     const tuft = cl((t.f2 - t.f1) * 2.6, 0, 1);
-    const dry = cl((fbm(x * 0.5 + 11, y * 0.5 - 7, P * 0.5, 3) - 0.5) * 3.4, 0, 1);
-    const bare = cl((0.34 - fbm(x * 0.7, y * 0.7, P * 0.7, 4)) * 4.5, 0, 1);
+    const dry = cl((F(u, v, 4, 4, 3) - 0.5) * 3.4, 0, 1);
+    const bare = cl((0.34 - F(u, v, 6, 6, 4)) * 4.5, 0, 1);
     const lit = blades.at(u, v, tuft, bare);
     if (lit) {
       const base = mix3([48, 76, 32], [118, 152, 66], cl(lit.t * 1.15, 0, 1));
       let bc = mix3(base, [152, 146, 84], dry * 0.5);
       bc = sh(bc, 0.78 + tuft * 0.30 + lit.shade * 0.40);
-      bc = sh(bc, 0.94 + fbm(x * 70, y * 70, P * 70, 2) * 0.14);
+      bc = sh(bc, 0.94 + F(u, v, 560, 560, 2) * 0.14);
       return { rgb: bc, h: 0.45 + lit.t * 0.55 + tuft * 0.18 };
     }
     const sha = blades.shadow(u, v);
@@ -193,64 +209,58 @@ export function makeSurfaces(seed = 0x51ed) {
   };
 
   const dirt = (u, v) => {
-    const P = 6; const x = u * P; const y = v * P;
-    const tone = fbm(x * 1.2 - 4, y * 1.2 + 2, P * 1.2, 4);
-    const grain = fbm(x * 40 + 21, y * 40 + 9, P * 40, 3);
+    const tone = F(u, v, 7, 7, 4);
+    const grain = F(u, v, 240, 240, 3);
     let c = mix3([104, 78, 52], [148, 116, 78], cl((tone - 0.35) * 2.0, 0, 1));
     c = sh(c, 0.84 + grain * 0.34);
     let h = 0.35 + grain * 0.14 + tone * 0.10;
-    const rut = cl(1 - Math.abs(fbm(x * 1.9 + 40, y * 0.7, P * 1.9, 4) - 0.5) * 11, 0, 1);
+    // the ruts run ALONG one axis: 11 cycles across, 4 along - which is
+    // exactly what the two-period noise exists for
+    const rut = cl(1 - Math.abs(F(u, v, 11, 4, 4) - 0.5) * 11, 0, 1);
     c = sh(c, 1 - rut * 0.24); h -= rut * 0.22;
-    for (const [freq, seed2, size, tint] of [[7.5, 17, 0.20, [156, 146, 132]], [15, 71, 0.13, [128, 118, 104]]]) {
-      const w = worley(x * freq + 0.5, y * freq + 0.5, P * freq, seed2);
+    for (const [cells, seed2, size, tint] of [[45, 17, 0.20, [156, 146, 132]], [90, 71, 0.13, [128, 118, 104]]]) {
+      const w = W(u, v, cells, seed2);
       const st = cl((size - w.f1) * (1 / size) * 1.6, 0, 1);
       if (st > 0.01) { c = mix3(c, tint, st * 0.78); c = sh(c, 1 + st * 0.16); h += st * 0.40; }
       const sha = cl((size * 1.7 - w.f1) * (1 / size), 0, 1) - st;
       if (sha > 0.01) c = sh(c, 1 - sha * 0.20);
     }
-    const straw = cl((fbm(x * 26 + 61, y * 9 - 3, P * 26, 2) - 0.74) * 7, 0, 1);
+    const straw = cl((F(u, v, 156, 54, 2) - 0.74) * 7, 0, 1);
     c = mix3(c, [150, 132, 84], straw * 0.6); h += straw * 0.10;
     return { rgb: c, h: cl(h, 0, 1) };
   };
 
   const stone = (u, v) => {
-    const P = 5; const x = u * P; const y = v * P;
-    const wx = (fbm(x * 0.9, y * 0.9, P * 0.9, 3) - 0.5) * 1.1;
-    const wy = (fbm(x * 0.9 + 31, y * 0.9 - 17, P * 0.9, 3) - 0.5) * 1.1;
-    const w = worley(x * 2.6 + wx, y * 2.6 + wy, P * 2.6, 53);
+    // the plate lattice is WARPED, and the warp is itself periodic, so
+    // the warped lookup still wraps: a whole-cycle field displaced by a
+    // whole-cycle field lands a whole number of cells away.
+    const wx = (F(u, v, 5, 5, 3) - 0.5) * 1.1;
+    const wy = (F(u + 0.31, v + 0.17, 5, 5, 3) - 0.5) * 1.1;
+    const w = worley(u * 13 + wx, v * 13 + wy, 13, 53, 13);
     const dome = cl((Math.sqrt(w.f2) - Math.sqrt(w.f1)) * 3.0, 0, 1);
-    const mott = fbm(x * 2.4 + 7, y * 2.4 - 3, P * 2.4, 5);
-    const grit = fbm(x * 44, y * 44, P * 44, 3);
-    const plateTint = fbm(Math.floor(x * 2.6 + wx) * 3.7, Math.floor(y * 2.6 + wy) * 3.7, P * 9, 2);
+    const mott = F(u, v, 12, 12, 5);
+    const grit = F(u, v, 220, 220, 3);
+    const plateTint = F(Math.floor(u * 13) / 13, Math.floor(v * 13) / 13, 13, 13, 2);
     let c = mix3([88, 86, 82], [142, 139, 130], dome * 0.55 + mott * 0.3 + plateTint * 0.15);
     c = sh(c, 0.86 + grit * 0.30);
     let h = 0.25 + dome * 0.62 + grit * 0.08;
     const seam = cl(1 - dome * 8, 0, 1);
     c = mix3(c, [58, 57, 56], seam * 0.6); h -= seam * 0.42;
-    const frac = cl(1 - Math.abs(fbm(x * 6 + 90, y * 6, P * 6, 3) - 0.5) * 16, 0, 1) * dome;
+    const frac = cl(1 - Math.abs(F(u, v, 30, 30, 3) - 0.5) * 16, 0, 1) * dome;
     c = sh(c, 1 - frac * 0.22); h -= frac * 0.12;
-    const lich = cl((fbm(x * 3.6 + 60, y * 3.6 + 12, P * 3.6, 4) - 0.60) * 4.5, 0, 1) * dome;
+    const lich = cl((F(u, v, 18, 18, 4) - 0.60) * 4.5, 0, 1) * dome;
     c = mix3(c, [104, 116, 68], lich * 0.42); h += lich * 0.05;
     return { rgb: c, h: cl(h, 0, 1) };
   };
 
   const water = (u, v) => {
-    // EE5: WATER IS BUILT WITHOUT A DOMAIN WARP, and that is a
-    // deliberate retreat. A warp adds an offset to the lookup, and the
-    // warped coordinate is only periodic if the offset is too - which
-    // it is not, because the offset is itself noise. Every attempt to
-    // scale the warp back into period left a visible seam at u = 1,
-    // measured, and a surface with a seam is worse than a surface with
-    // slightly less character. The ripples are two crossing periodic
-    // trains instead: less interesting than a warped ridge, and they
-    // tile, which is the property that is not negotiable.
-    const P = 5; const x = u * P; const y = v * P;
-    const depth = fbm(x * 0.9, y * 0.9, P * 0.9, 4);
+    const depth = F(u, v, 5, 5, 4);
     let c = mix3([26, 54, 86], [44, 92, 128], cl((depth - 0.35) * 2.2, 0, 1));
     const TWO_PI = Math.PI * 2;
-    const r1 = Math.sin((x * 3 + y * 1) * TWO_PI / P);
-    const r2 = Math.sin((x * 1 - y * 4) * TWO_PI / P + 1.7);
-    const chop = fbm(x * 2, y * 2, P * 2, 3);
+    // whole cycles across the tile, so the trains close on themselves
+    const r1 = Math.sin((u * 3 + v * 1) * TWO_PI);
+    const r2 = Math.sin((u * 1 - v * 4) * TWO_PI + 1.7);
+    const chop = F(u, v, 10, 10, 3);
     const ridge = cl((r1 * 0.45 + r2 * 0.35) * 0.5 + 0.5 + (chop - 0.5) * 0.4, 0, 1);
     c = sh(c, 0.9 + ridge * 0.24);
     const glint = cl((ridge - 0.88) * 9, 0, 1);
@@ -259,19 +269,18 @@ export function makeSurfaces(seed = 0x51ed) {
   };
 
   const sand = (u, v) => {
-    const P = 6; const x = u * P; const y = v * P;
-    const drift = fbm(x * 0.7 + 3, y * 0.7 - 2, P * 0.7, 4);
-    const wx2 = x + (fbm(x * 1.1, y * 1.1, P * 1.1, 3) - 0.5) * 1.6;
-    const wy2 = y + (fbm(x * 1.1 + 19, y * 1.1 + 7, P * 1.1, 3) - 0.5) * 1.6;
-    const ripple = Math.sin((wx2 * 3.0 + wy2 * 1.1) * Math.PI * 2 / P * 3) * 0.5 + 0.5;
-    const fine = fbm(x * 55, y * 55, P * 55, 2);
+    const drift = F(u, v, 4, 4, 4);
+    const TWO_PI = Math.PI * 2;
+    const warp = (F(u, v, 7, 7, 3) - 0.5) * 0.18;
+    const ripple = Math.sin((u * 9 + v * 3 + warp) * TWO_PI) * 0.5 + 0.5;
+    const fine = F(u, v, 330, 330, 2);
     let c = mix3([196, 168, 118], [226, 202, 152], cl(drift * 0.7 + ripple * 0.3, 0, 1));
     c = sh(c, 0.94 + fine * 0.12);
     let h = 0.30 + ripple * 0.46 + drift * 0.18 + fine * 0.06;
-    const st = worley(x * 8 + 0.5, y * 8 + 0.5, P * 8, 29);
+    const st = W(u, v, 48, 29);
     const stn = cl((0.09 - st.f1) * 14, 0, 1);
     if (stn > 0.01) { c = mix3(c, [148, 132, 108], stn * 0.7); h += stn * 0.30; }
-    const dark = cl((fbm(x * 70 + 40, y * 70 + 12, P * 70, 2) - 0.72) * 6, 0, 1);
+    const dark = cl((F(u, v, 420, 420, 2) - 0.72) * 6, 0, 1);
     c = sh(c, 1 - dark * 0.14);
     return { rgb: c, h: cl(h, 0, 1) };
   };
