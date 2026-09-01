@@ -7,10 +7,6 @@ export const SOUND = {
   // WM4c: the mill. Kamer's Spin_Up.cs loops SoundClips.ArenaFireDaemon
   // on the sail and on the machinery's plank gear (SoundClips.cs:40).
   ArenaFireDaemon: 11,
-  // The MASTERY fanfare (SoundClips.cs:64) - PlayerEntity.RaiseSkills
-  // :1406 plays it the moment a PRIMARY skill lands on 100. Not the
-  // level-up chime below (96); this is the Arena tune.
-  ArenaFanfareLevelUp: 32,
   MakeItem: 364,            // M4: the enchanter's chime (SoundClips.cs:448)
   MakePotion: 365,          // M2: the cauldron's chime on a matched recipe (SoundClips.cs:449)
   ArrowShoot: 3,            // SoundClips.ArrowShoot - the bow loose (frame 4)

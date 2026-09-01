@@ -190,29 +190,20 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
 
 /** CureDiseaseService (:54-113), as a decision.
  *
- *  `numberOfDiseases` is DFU's disease count PLUS ONE while the player
- *  is turning into a vampire or werebeast (:57-59). A4 closed the
- *  FLAGGED gap that stood here: the timer is
- *  PlayerEntity.TimeToBecomeVampireOrWerebeast, classic's "three days
- *  after infection" stamp, and it is read off the ENTITY exactly as
- *  DFU reads it off playerEntity rather than passed in by a host. It
- *  reaches a character only through AssignCharacter (PlayerEntity.cs
- *  :856), i.e. a classic import - the port's own infections are
- *  disease effects and diseaseCount already counts those - so a
- *  classic character three days from turning pays for one more
- *  disease than they carry, and the cure clears the turn.
+ *  `numberOfDiseases` is DFU's disease count PLUS ONE if the player is
+ *  turning into a vampire or werebeast - FLAGGED: the port has no
+ *  vampirism/lycanthropy timer, so `becomingVampireOrWerebeast` is
+ *  passed in and is false everywhere today. The moment that arc lands
+ *  it feeds this one argument and the price is right.
  *
  *  The three FREE holidays are checked before anything is priced, and
  *  they cure whether or not the player could have paid. */
-export const becomingVampireOrWerebeast = (entity) =>
-  (entity?.timeToBecomeVampireOrWerebeast ?? 0) !== 0;
-
 export function cureDiseaseOffer(entity, guild, membership, {
   quality = 0, regionIndex = 0, nowClassicMinutes = 0,
-  priceAdjustment = 1000,
+  becomingVampireOrWerebeast = false, priceAdjustment = 1000,
 } = {}) {
   let numberOfDiseases = diseaseCount(entity);
-  if (becomingVampireOrWerebeast(entity)) numberOfDiseases++;
+  if (becomingVampireOrWerebeast) numberOfDiseases++;
   const holidayId = getHolidayId(nowClassicMinutes, regionIndex);
 
   if (numberOfDiseases > 0 && FREE_CURE_HOLIDAYS.includes(holidayId)) {
@@ -262,15 +253,11 @@ export function payForCure(entity, cost) {
   if (totalGoldAmount(entity) < cost) return { kind: 'notEnoughGold', textId: NOT_ENOUGH_GOLD_ID };
   deductGold(entity, cost);
   cureAllDiseases(entity);
-  // A4: the turn is cured with the diseases (:126) - the paid arm's
-  // own line, beside CureAllDiseases and before the message.
-  entity.timeToBecomeVampireOrWerebeast = 0;
   return { kind: 'cured', cost };
 }
 
 /** The free-holiday arm's cure (:69-75), which takes no payment. */
 export function cureForFree(entity) {
   cureAllDiseases(entity);
-  entity.timeToBecomeVampireOrWerebeast = 0;   // A4: :72, the same pair on the free arm
   return { kind: 'cured', cost: 0 };
 }

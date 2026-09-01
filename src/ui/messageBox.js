@@ -32,49 +32,17 @@
 //   ("HACK: Lower vertical position if only a single button so that
 //   it aligns like two or more buttons" - :544-550, verbatim quirk).
 //
-// ROAD-A7 closes this file's FLAGGED note. Both halves are here now:
-//
-// - THE SCROLLING VARIANT (:461-470, :571-590). EnableVerticalScrolling
-//   sets MultiFormatTextLabel.MaxTextHeight, which CAPS the label's
-//   Size.y (:393-396) while leaving ActualTextHeight at its full
-//   measure - and the box is sized off the CAPPED one, so a long
-//   record no longer grows the parchment off the screen. When
-//   ActualTextHeight passes MaxTextHeight the bar turns on: 8 wide,
-//   Right/Top in the panel, TotalUnits = ActualTextHeight + 1 and
-//   DisplayUnits = MaxTextHeight + 9 - a PIXEL-wise scroll, not a row
-//   one, which is why ScrollBar_OnScroll moves the labels by the
-//   index DELTA (:668-673) and the wheel steps SIX pixels (:675-682).
-//   The clipping is RestrictedRenderArea against scrollingPanel, the
-//   scissor bracket the chargen question scroll already uses.
-// - THE IMAGE PANEL (:527-534, :555). A painting's texture makes the
-//   box taller by exactly the image, moves the label to
-//   VerticalAlignment.Bottom, and - through the `finalSize.y -
-//   buttonPanel.Size.y > 0` gate at :537, which the image height alone
-//   is enough to open - grows the label block by buttonTextDistance
-//   even with no buttons at all. That +4 is not decoration; it is the
-//   gate firing on a message box that has no buttons.
-//
-// ActualTextHeight is `totalHeight + lastLabel.TextHeight` computed on
-// the LAST label (:389), so it measures one row MORE than the text
-// really is. Verbatim: it is what the scroll range is built from.
-//
-// WHO CALLS THE SCROLLING VARIANT: in DFU, exactly one caller -
-// SaveLoadManager's mod-mismatch box (:497, EnableVerticalScrolling
-// (80)) - which is a mod-loading screen this port has no equivalent
-// of. So the variant ships here as the capability the box is supposed
-// to HAVE, off by default (maxTextHeight 0 is every existing caller),
-// and the first port window that needs to show more text than a
-// parchment holds turns it on with one option rather than growing the
-// box off the screen the way this file used to.
+// FLAGGED: the scrolling variant (a label taller than MaxTextHeight
+// gets a scroll bar and clipped rendering, :571-590) is not ported -
+// nothing in the port yet feeds a box more text than fits. The image
+// panel (paintings) rides the paint overlay, not this.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { bitmapToColor32 } from './hud.js';
 import { drawText, measureText } from './text.js';
 import { shadowText } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { clampScrollIndex, thumbSpan, drawScrollThumb } from './verticalScrollBar.js';
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -93,31 +61,6 @@ export const BUTTON_W = 32, BUTTON_H = 16;   // BUTTONS.RCI records
 export const BUTTON_SPACING = 32;     // :39
 export const BUTTON_TEXT_DISTANCE = 4;// :40
 export const SINGLE_BUTTON_NUDGE = 11;// the :546-548 quirk
-/** GetScrollingPanelHeight (:603-606) - MaxTextHeight plus NINE. */
-export const SCROLL_PANEL_PAD = 9;
-/** scrollBar.Size = new Vector2(8, ...) (:577). */
-export const SCROLL_BAR_W = 8;
-/** ScrollingPanel_OnMouseScrollUp/Down (:675-682) - SIX pixels. */
-export const SCROLL_WHEEL_STEP = 6;
-/** ROAD-Ar R14 - THE IMAGE PANEL SITS AT THE TOP MARGIN, AND THE
- *  WINDOW'S Position (0,5) IS DEAD BY DRAW TIME.
- *
- *  DaggerfallInventoryWindow's painting arm (:1622-1625) does set
- *  `ImagePanel.VerticalAlignment = None; Position = (0,5)` - but it
- *  sets BackgroundTexture at :1625 and then calls Show() at :1627, and
- *  Show (DaggerfallMessageBox.cs:295-301) runs UpdatePanelSizes()
- *  before PushWindow. That method's image arm (:528-534) fires on
- *  `BackgroundTexture != null` and reassigns
- *  `imagePanel.VerticalAlignment = VerticalAlignment.Top` (the same
- *  value Setup :249-250 gave it); nothing restores None. Under Top,
- *  BaseScreenComponent's rectangle getter ASSIGNS
- *  `rectangle.y = parentRect.yMin + Parent.TopMargin * parentScale.y`
- *  (:1228-1230) over the earlier `rectangle.y += position.y` (:1200),
- *  so Position.y is discarded - only the `None` arm (:1225-1227) ever
- *  adds it. TopMargin is 10 (DaggerfallUI.cs:931 SetMargins(All, 10)),
- *  which is this file's MARGIN. So the painting's y is `y + MARGIN`
- *  flat, and the 5 the port carried pushed it into the first text row
- *  whenever the 22-px slice rounding left under five pixels of slack. */
 
 let _art = null;   // { slices: tex[9], buttons: Map<record, tex> }
 
@@ -156,38 +99,6 @@ function buttonTex(record) {
 
 const roundUpSlice = (v) => (v > MIN_BOX_SIDE ? Math.ceil(v / SLICE) * SLICE : MIN_BOX_SIDE);
 
-/** MultiFormatTextLabel.LayoutTextElements (:316-378) over a TOKEN
- *  array - linesById's row law, but starting from tokens a caller
- *  already holds rather than from record bytes. TEXT tokens APPEND to
- *  the row being built (AddTextLabel advances cursorX, :247); NewLine
- *  (0x00, which is also NewLineOffset) and JustifyLeft (0xfc) close
- *  the row; JustifyCenter (0xfd) closes it AND centres it, because it
- *  reaches back and stamps HorizontalAlignment.Center on `lastLabel`
- *  (:342-344) - the row it has just finished. Everything else
- *  (PositionPrefix's tab, FontPrefix, the cursor positioner, the
- *  record terminator) moves no row, exactly as the switch's remaining
- *  arms do not.
- *
- *  No trimming: linesById drops trailing empties because a record's
- *  bytes always end in break bytes, and a caller composing its own
- *  token list (PlayerActivate's bulletin board, :709-736) means every
- *  row it wrote. */
-export function tokenRows(tokens) {
-  const rows = [];
-  let cur = '';
-  for (const token of tokens ?? []) {
-    const f = token?.formatting;
-    if (f === RSC.NewLine || f === RSC.JustifyLeft || f === RSC.JustifyCenter) {
-      rows.push({ text: cur, center: f === RSC.JustifyCenter });
-      cur = '';
-      continue;
-    }
-    if (f === TOKEN_TEXT) cur += token.text ?? '';
-  }
-  if (cur) rows.push({ text: cur, center: false });
-  return rows;
-}
-
 /** Rows may arrive as plain strings or as TextRsc.linesById's
  *  { text, center } records. AUDIT 17g F2: a plain string CENTRES,
  *  which is what a caller composing its own prompt wants, but a row
@@ -201,9 +112,7 @@ const normalizeRows = (lines) =>
  *  caller draws (strings, or { text, center } from linesById);
  *  `buttons` are MB_BUTTONS values. Returns everything the draw and
  *  the hit test need, in VIRTUAL (320x200) pixels. */
-export function layoutMessageBox(font, lines, buttons = [], {
-  sizingRows = null, maxTextHeight = 0, image = null, scrollIndex = 0,
-} = {}) {
+export function layoutMessageBox(font, lines, buttons = [], { sizingRows = null } = {}) {
   const rowH = font?.fnt?.fixedHeight ?? 6;         // rowLeading 0
   const rows = normalizeRows(lines);
   // AUDIT 17g F4: an input box re-measured its own live entry every
@@ -213,40 +122,22 @@ export function layoutMessageBox(font, lines, buttons = [], {
   // while the real rows are what draws.
   const measured = sizingRows ? normalizeRows(sizingRows) : rows;
   const textW = measured.length ? Math.max(...measured.map((r) => measureText(font.fnt, r.text))) : 0;
-  const rowCount = Math.max(rows.length, measured.length);
-  // MultiFormatTextLabel.RefreshLayout (:381-396): totalHeight is the
-  // last row's bottom, CAPPED at MaxTextHeight, while actualTextHeight
-  // keeps the uncapped measure - plus one extra row, because :389
-  // adds lastLabel.TextHeight to a totalHeight that already includes
-  // it. That over-count is DFU's, and the scroll range is built on it.
-  const fullTextH = rowCount * rowH;
-  const actualTextHeight = rowCount ? fullTextH + rowH : 0;
-  const textH = (maxTextHeight > 0 && fullTextH > maxTextHeight) ? maxTextHeight : fullTextH;
+  const textH = Math.max(rows.length, measured.length) * rowH;
   // the strip: n buttons of 32 with 32 between them
   const stripW = buttons.length ? buttons.length * BUTTON_W + (buttons.length - 1) * BUTTON_SPACING : 0;
   const stripH = buttons.length ? BUTTON_H : 0;
-  // UpdatePanelSizes :527-538, in DFU's own order: the image height
-  // joins finalSize.y BEFORE the `> 0` gate, and is then subtracted
-  // back out of the label's growth - so an image with no buttons still
-  // opens the gate and the label block still grows by the 4px gap.
-  const imageH = image ? (image.height ?? 0) : 0;
-  const imageW = image ? (image.width ?? 0) : 0;
-  const finalY = stripH + imageH;
-  const labelH = textH + (finalY > 0 ? finalY - imageH + BUTTON_TEXT_DISTANCE : 0);
+  // the label block grows ONCE by the strip height + the text gap
+  const labelH = textH + (buttons.length ? stripH + BUTTON_TEXT_DISTANCE : 0);
 
   let w = Math.max(stripW, textW) + MARGIN * 2;
   if (w < MIN_BOX_WIDTH) w = MIN_BOX_WIDTH;
   w = roundUpSlice(w);
-  // :555 - the image's height is part of the PANEL's height, not of
-  // the label block's.
-  const h = roundUpSlice(labelH + imageH + MARGIN * 2);
+  const h = roundUpSlice(labelH + MARGIN * 2);
 
   // messagePanel is Center/Middle on the 320x200 native panel
   const x = Math.round((320 - w) / 2), y = Math.round((200 - h) / 2);
-  // the label is Center/Middle INSIDE the panel - except with an image,
-  // where :533 moves it to VerticalAlignment.Bottom
-  // (BaseScreenComponent.cs:1231-1232: yMax - BottomMargin - height).
-  const textY = imageH ? y + h - MARGIN - labelH : y + Math.round((h - labelH) / 2);
+  // the label is Center/Middle INSIDE the panel
+  const textY = y + Math.round((h - labelH) / 2);
   let stripY = 0;
   if (buttons.length) {
     // The verbatim placement (:544-550), single-button HACK included.
@@ -270,45 +161,7 @@ export function layoutMessageBox(font, lines, buttons = [], {
     button: b,
     rect: [stripX + i * (BUTTON_W + BUTTON_SPACING), stripY, BUTTON_W, BUTTON_H],
   }));
-  // ── the SCROLLING variant (:571-590) ────────────────────────────
-  // The bar turns on only when the label really overflows; when it
-  // does the panel is scrollingPanel's, its own DisplayUnits, and the
-  // range is TotalUnits = ActualTextHeight + 1. Everything here is in
-  // PIXELS, not rows.
-  const scrollPanelH = maxTextHeight + SCROLL_PANEL_PAD;
-  const scrolling = maxTextHeight > 0 && actualTextHeight > maxTextHeight;
-  let scroll = null;
-  if (scrolling) {
-    const total = actualTextHeight + 1;
-    const index = clampScrollIndex(scrollIndex, total, scrollPanelH);
-    scroll = {
-      index, totalUnits: total, displayUnits: scrollPanelH,
-      // scrollingPanel: Center/Top, Size (label.Size.x, panelH) (:575)
-      panel: [x + Math.round((w - textW) / 2), y + MARGIN, textW, scrollPanelH],
-      // scrollBar: Right/Top, Size (8, panelH) (:577)
-      bar: [x + w - MARGIN - SCROLL_BAR_W, y + MARGIN, SCROLL_BAR_W, scrollPanelH],
-    };
-    scroll.thumb = thumbSpan(scrollPanelH, total, scrollPanelH, index);
-  }
-  // The ImagePanel's rect: Setup's Center horizontal alignment over
-  // UpdatePanelSizes' VerticalAlignment.Top, i.e. the top MARGIN. See
-  // the R14 note above for why the window's Position (0,5) is not here.
-  const imageRect = imageH
-    ? [x + Math.round((w - imageW) / 2), y + MARGIN, imageW, imageH]
-    : null;
-  return {
-    x, y, w, h, textY, textW, textH, rowH, rows, buttons: rects,
-    actualTextHeight, maxTextHeight, scroll, image: imageRect,
-  };
-}
-
-/** ScrollingPanel_OnMouseScrollUp/Down (:675-682): SIX pixels a notch,
- *  through SetScrollIndex's clamp. Answers the new index; a box with
- *  no bar answers 0, because there is nowhere to scroll to. */
-export function messageBoxWheel(box, dir) {
-  if (!box?.scroll || !dir) return box?.scroll?.index ?? 0;
-  return clampScrollIndex(box.scroll.index + Math.sign(dir) * SCROLL_WHEEL_STEP,
-    box.scroll.totalUnits, box.scroll.displayUnits);
+  return { x, y, w, h, textY, textW, textH, rowH, rows, buttons: rects };
 }
 
 /** Draw the nine-slice frame. Corners once, edges and fill tiled -
@@ -328,38 +181,19 @@ function drawFrame(renderer, m, box) {
 
 /** Draw a laid-out box. Returns false when the art is not up, so the
  *  caller keeps its flat-panel fallback. */
-export function drawMessageBox(renderer, m, font, box, { textColor = undefined, image = null } = {}) {
+export function drawMessageBox(renderer, m, font, box, { textColor = undefined } = {}) {
   if (!_art || !font) return false;
   drawFrame(renderer, m, box);
-  // The IMAGE PANEL, under the label - the paintings' arm. It draws
-  // BEFORE the text because messagePanel's children go down in Setup
-  // order and the label is added first (:243, :249).
-  if (image && box.image) {
-    const [ix, iy, iw, ih] = box.image;
-    renderer.drawScreenQuad(image, { x: m.ox + ix * m.s, y: m.oy + iy * m.s, w: iw * m.s, h: ih * m.s });
-  }
   // the LABEL BOX is textW wide, centred in the panel; a centred row
   // centres inside the panel, a left row starts at the label box's
   // left edge (MultiFormatTextLabel.cs:341-344 sets HorizontalAlignment
   // .Center on JustifyCenter rows ONLY)
   const labelX = box.x + Math.round((box.w - box.textW) / 2);
-  // StartClippingScrollingText (:592-597): the label's render area is
-  // the scrollingPanel, and ChangeScrollPosition (:668-673) walks the
-  // rows by the scroll index. Rows wholly outside skip; a row across
-  // the boundary draws and the scissor shears it, the chargen
-  // question-scroll bracket's shape.
-  const clip = box.scroll?.panel ?? null;
-  const dy = box.scroll ? box.scroll.index : 0;
-  if (clip) renderer.setScreenScissor(m.ox + clip[0] * m.s, m.oy + clip[1] * m.s, clip[2] * m.s, clip[3] * m.s);
   box.rows.forEach((r, i) => {
     const lw = measureText(font.fnt, r.text);
     const rx = r.center ? box.x + Math.round((box.w - lw) / 2) : labelX;
-    const ry = box.textY + i * box.rowH - dy;
-    if (clip && (ry + box.rowH <= clip[1] || ry >= clip[1] + clip[3])) return;
-    shadowText(renderer, font, r.text, m, rx, ry, { color: textColor });
+    shadowText(renderer, font, r.text, m, rx, box.textY + i * box.rowH, { color: textColor });
   });
-  if (clip) renderer.clearScreenScissor();
-  if (box.scroll) drawScrollThumb(renderer, m, box.scroll.bar, box.scroll.thumb);
   for (const b of box.buttons) {
     const tex = buttonTex(b.button);
     if (!tex) continue;

@@ -26,15 +26,10 @@
 //
 // THE FLOW, law for law:
 // - a LEFT CLICK on a key button enters capture: the next keydown
-//   binds (WaitForKeyPress :383-427). ReservedKeys is EMPTY in DFU
-//   (:73), so every key binds - Escape included. A8 retired half of
-//   the combo flag that stood here: a captured key pressed under
-//   Ctrl/Shift/Alt now binds a COMBO, and the grid draws it through
-//   GetButtonText's combo arm ("LSHIFT + T", elongated past ten
-//   characters with the full string on the tooltip). Still not here:
-//   DFU also captures MOUSE BUTTONS in this window, and its two-key
-//   gesture accepts ANY key as the modifier where this one reads the
-//   event's three virtual flags.
+//   binds (WaitForKeyPress :383-427; the port captures the keyboard
+//   only - DFU also takes mouse buttons and builds combos from two
+//   held keys, both flagged with I1's combo flag). ReservedKeys is
+//   EMPTY in DFU (:73), so every key binds - Escape included.
 // - a RIGHT CLICK prompts to remove the binding (:371-381,
 //   PromptRemoveKeybindMessage :290-320), Yes staging null.
 // - DUPLICATES colour the labels - red inside the shown dict, blue
@@ -48,7 +43,7 @@ import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
-import { ACTIONS, saveKeyBinds, comboCode } from '../systems/inputActions.js';
+import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
 import { bindings } from './input.js';
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
@@ -110,23 +105,6 @@ export const controlsArtLoaded = () => !!_art;
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
-/** The three virtual modifiers a KeyboardEvent reports, each mapped to
- *  the LEFT physical key - see the narrowing note in input(). The
- *  modifier keys themselves are excluded: pressing Shift alone must
- *  bind Shift, not a Shift+Shift combo. */
-const EVENT_MODIFIERS = Object.freeze([
-  ['ctrlKey', 'ControlLeft', ['ControlLeft', 'ControlRight']],
-  ['shiftKey', 'ShiftLeft', ['ShiftLeft', 'ShiftRight']],
-  ['altKey', 'AltLeft', ['AltLeft', 'AltRight']],
-]);
-export function comboFromEvent(code, e) {
-  if (!e) return null;
-  for (const [flag, mod, own] of EVENT_MODIFIERS) {
-    if (e[flag] && !own.includes(code)) return comboCode(mod, code);
-  }
-  return null;
-}
-
 /** The remove prompt's action face (:302): camel case split. */
 const splitCamel = (s) => s.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim();
 
@@ -167,28 +145,11 @@ export class ControlsWindow {
 
   _refresh() { this.dupes = checkDuplicates(this.unsaved); }
 
-  input(code, e = null) {
+  input(code) {
     if (this.capture) {
-      // WaitForKeyPress (:380-424): the next key binds - reserved keys
-      // are EMPTY in DFU, so Escape binds too rather than cancelling.
-      //
-      // A8 - THE COMBO HALF. DFU takes TWO key-downs: the first is the
-      // modifier, and a second arriving before the first comes up makes
-      // `GetComboCode(code1, code2)` (:408). The port's overlay seam
-      // delivers key-DOWNS only and no held set, so the two-key gesture
-      // is read off the event's own modifier flags instead: a captured
-      // key pressed under Ctrl, Shift or Alt binds the combo, anything
-      // else binds the single code.
-      //
-      // NARROWED, deliberately, and the narrowing is only here in the
-      // capture: DFU lets ANY key be the modifier (Z+LeftShift is legal
-      // and GetDuplicates' third phase exists for it), and it tells
-      // left from right. A browser KeyboardEvent reports three virtual
-      // flags and no side, so this door offers the LEFT side of the
-      // three - which is what every DFU default binds anyway. The
-      // storage, the duplicate law and the runtime read take any pair.
-      const combo = comboFromEvent(code, e);
-      setUnsavedBinding(this.unsaved, this.capture, combo ?? code);
+      // WaitForKeyPress: the next key binds - reserved keys are EMPTY
+      // in DFU, so Escape binds too rather than cancelling.
+      setUnsavedBinding(this.unsaved, this.capture, code);
       this.capture = null;
       this._refresh();
       return;

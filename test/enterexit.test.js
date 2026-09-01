@@ -150,18 +150,10 @@ test('the exits and the arrivals stand the player, they do not drop them', () =>
   // FixStanding (StreamingWorld.cs:1597-1608), so the teleport and the
   // first drop-in snap to the built pixel instead of falling 2u.
   const w = src('src/scenes/world.js');
-  // PIN MOVED (Road to 1:1, a3): the court's location-entrance arm is
-  // the first caller to hand a localPos that DOES want grounding -
-  // RepositionPlayer's own `grounded` argument (StreamingWorld.cs:1587,
-  // :1592), true for every location but HomeYourShips. The default is
-  // unchanged, so the ship's remembered deck still lands as saved.
-  assert.match(w, /const pos = walkMode && \(!localPos \|\| grounded\) \? floorLanding\(collider, raw\) : raw;/, 'fast travel / teleport arrivals');
+  assert.match(w, /const pos = walkMode && !localPos \? floorLanding\(collider, raw\) : raw;/, 'fast travel / teleport arrivals');
   assert.match(w, /const stand = floorLanding\(collider, \[cam\.pos\[0\], heightAt\(cam\.pos\[0\], cam\.pos\[2\]\) \+ 2, cam\.pos\[2\]\]\);/, 'the first drop-in');
   // And a saved position is restored as saved - a load or an anchor
   // recall keeps its own y (DFU restores the transform verbatim).
   assert.match(w, /const ly = \(w\.y \?\? 2\) \+ state\.compensation\[1\];/);
-  // ROAD A10 MOVED THIS PIN: the anchor arrival folded into ONE helper
-  // (anchorLanding) shared by the exterior, dungeon and interior recall
-  // arms - the compensated-y law lives on its return now.
-  assert.match(w, /return \[lx, \(a\.y \?\? 2\) \+ state\.compensation\[1\], lz\];/);
+  assert.match(w, /const ly = \(a\.y \?\? 2\) \+ state\.compensation\[1\];/);
 });

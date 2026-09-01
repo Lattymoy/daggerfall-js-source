@@ -73,24 +73,7 @@ const ENTITY_FIELDS = [
   // dropped it would let a player eat every four in-game hours OR
   // every reload, whichever came first.
   'lastTimePlayerAteOrDrankAtTavern',
-  // A4: MinMetalToHit (SerializablePlayer.cs:135, restored :304, and
-  // DFU assigns it UNCONDITIONALLY - no null arm). The two racial
-  // curses write it (VampirismEffect.cs:125, LycanthropyEffect.cs
-  // :198-200) and CalculateAttackDamage reads it on the TARGET
-  // (FormulaHelper.cs:576) to refuse a weapon of too poor a material.
-  // The port had the write and the read and no envelope between them,
-  // so a vampire who loaded a save could be cut with steel until the
-  // curse's next constant round re-armed the silver requirement. A
-  // save older than this field restores undefined, which the damage
-  // gate reads exactly as C#'s enum default of Iron does: no
-  // requirement at all.
-  'minMetalToHit',
 ];
-
-/** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35
- *  skills, and `new uint[2]` is both the constructor's value and the
- *  restore's null arm (SerializablePlayer.cs:292). */
-export const newSkillsRecentlyRaised = () => [0, 0];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
  *  field by field (SerializablePlayer.cs:152-162) and the matching
@@ -311,35 +294,6 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // 750..1250 band and shifted all shop prices mid-session.
   snap.regionPrices = entity.regionPrices ? { ...entity.regionPrices } : null;
   snap.regionConditions = snapshotRegionConditions(entity.regionConditions);   // S42
-  // A4 (Road to 1:1) - THE ENVELOPE STRAGGLERS. Three more members
-  // PlayerEntityData_v1 writes out one at a time and this envelope did
-  // not carry. Each is a COPY or a scalar; each has a live consumer
-  // named at its restore arm below.
-  //
-  // skillsRecentlyRaised (SerializablePlayer.cs:125): the two masks
-  // the skill-raise pass sets (PlayerEntity.cs:1387) and the character
-  // sheet reads to highlight what went up since it was last opened
-  // (TextProvider.cs:492), clearing them as it goes. A mask that does
-  // not survive a save is a mask that only ever reports the raises of
-  // one sitting.
-  snap.skillsRecentlyRaised = entity.skillsRecentlyRaised
-    ? [...entity.skillsRecentlyRaised] : null;
-  // previousVampireClan (:163): CureVampirism stamps the clan the
-  // player USED to belong to (VampirismEffect.cs:309) - the one piece
-  // of a cured vampire's identity that outlives the curse. DFU itself
-  // reads it nowhere yet (the property has no consumer in the tree);
-  // it is carried here because the port already WRITES it
-  // (vampirism.js cureVampirism) and a written field that a save
-  // drops is a divergence whichever way the reference reads it.
-  snap.previousVampireClan = entity.previousVampireClan ?? 0;
-  // timeToBecomeVampireOrWerebeast (:146): classic's "three days
-  // after infection" stamp, which reaches a DFU character only through
-  // AssignCharacter (PlayerEntity.cs:856) - i.e. a classic import.
-  // The temple's Cure Disease service counts it as one more disease
-  // (DaggerfallGuildServiceCureDisease.cs:58) and zeroes it on a cure
-  // (:72, :126), so a save that dropped it charged an imported
-  // character 250 gold too little and left them turning anyway.
-  snap.timeToBecomeVampireOrWerebeast = entity.timeToBecomeVampireOrWerebeast ?? 0;
   return snap;
 }
 
@@ -424,16 +378,6 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.boardShipPosition = snap.boardShipPosition ?? null;   // TR4 (:425)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
-  // A4: the three stragglers' restore arms (see the snapshot side).
-  // SerializablePlayer.cs:292 is the ONLY one of the three DFU guards -
-  // `(data...skillsRecentlyRaised != null ? it : new uint[2])` - and a
-  // guard is needed because the value is an ARRAY the raise pass
-  // indexes into; the two scalars restore straight (:315, :331) onto
-  // C#'s own type defaults, 0 and VampireClans.None (which IS 0).
-  entity.skillsRecentlyRaised = snap.skillsRecentlyRaised != null
-    ? [...snap.skillsRecentlyRaised] : newSkillsRecentlyRaised();
-  entity.previousVampireClan = snap.previousVampireClan ?? 0;
-  entity.timeToBecomeVampireOrWerebeast = snap.timeToBecomeVampireOrWerebeast ?? 0;
   entity.racialOverridePending = snap.racialOverridePending ? { ...snap.racialOverridePending } : null;   // V1
   // AUDIT 17f: a Currency stack saved before gold gained its template
   // index carries none, and stacksWith compares templateIndex - a

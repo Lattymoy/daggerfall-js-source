@@ -55,13 +55,6 @@ export class ActionTextBox {
     this.done = true;
   }
 
-  /** ClickAnywhereToClose is CLICK anywhere first (DaggerfallMessageBox
-   *  .ClickAnywhereToClose - the parent panel's OnMouseClick dismisses
-   *  it). The box was key-only, which the char sheet's level-up
-   *  refusal made visible: a mouse-driven player clicked a box that
-   *  would not go away. Same dismissal as a key, chain and all. */
-  click() { this.input(); return true; }
-
   draw(renderer, canvas, font, s) {
     if (messageBoxArtLoaded() && font) {
       const m = nativeMetrics(canvas);

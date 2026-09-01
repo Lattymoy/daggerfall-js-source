@@ -76,24 +76,8 @@ function fireListener(lineSrc, event = {}) {
   // is not even drawn would be the same class of bug as the crash.
   const routeLargeHudClick = () => false;
   const hudCtx = {};
-  // ROAD-Ar: the shipped pointerdown statement grew a third line -
-  // the pointer GRAB now arms PlayerActivate's click delay, so the
-  // click that takes the cursor back cannot also activate the world
-  // (see test/roada_activate_gate.test.js). This harness evaluates
-  // that statement literally, so it has to hand over the three names
-  // the new line reads. The pin's own subject is unchanged: `modes`
-  // is still hoisted-and-unassigned and the fall-through must still
-  // reach requestLook. `document` reports an UNLOCKED pointer, which
-  // is the state a grab happens in, so the arm is witnessed in the
-  // order it runs.
-  const document = { pointerLockElement: null };
-  const latch = {};
-  const createActivateGate = () => ({});
-  const setClickDelay = () => seen.push({ type: 'setClickDelay' });
   new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
-    'document', 'latch', 'createActivateGate', 'setClickDelay',
-    `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel,
-    document, latch, createActivateGate, setClickDelay);
+    `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);
@@ -115,7 +99,7 @@ test('audit24 wave37: the crashing shape really does crash, and the shipped one 
     const src = rd(host);
     const pd = statementAt(src, "addEventListener('pointerdown'");
     const wh = statementAt(src, "addEventListener('wheel'");
-    assert.deepEqual(fireListener(pd), ['pointerdown', 'setClickDelay', 'requestLook'], `${host}: a click before the mode machine exists still grabs the pointer, and that grab still arms the click delay`);
+    assert.deepEqual(fireListener(pd), ['pointerdown', 'requestLook'], `${host}: a click before the mode machine exists still grabs the pointer`);
     assert.deepEqual(fireListener(wh), ['wheel'], `${host}: and a scroll is simply not eaten`);
   }
 });

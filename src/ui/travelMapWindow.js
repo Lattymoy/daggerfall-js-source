@@ -1060,8 +1060,7 @@ export class TravelMapWindow {
   hover(vx, vy, e = null) {
     if (this.telePopUp) return;   // a yes/no box has nothing to hover
     if (this.popUp) { this.popUp.hover(vx, vy); return; }
-    if (this.picker) { this.picker.hover(vx, vy, e); return; }   // ROAD-A7: the teleport list's own hover
-    if (this.top) return;
+    if (this.picker || this.top) return;
     if (vx === this.lastMousePos[0] && vy === this.lastMousePos[1]) return;
     this.lastMousePos = [vx, vy];
     if (this.regionSelected) this._updateMouseOverLocation();

@@ -50,8 +50,7 @@ import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, D
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
-import { itemInfoRows, itemInfoPanelRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
-import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
+import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122: PaperDoll.cs:161's armorMod
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -68,15 +67,13 @@ import {
 } from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
-import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex,
-  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick } from './itemScroller.js';
+import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
-import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -167,24 +164,6 @@ export {
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
-/** A8: the Hotkey assignments this screen makes, in DFU's own setup
- *  order - exit first (:319), then the four tabs (:478-490), then the
- *  six action buttons (:497-517). Panel.ProcessHotkeySequences returns
- *  on the first hit, so the order is part of the law. */
-const INVENTORY_BUTTONS = Object.freeze([
-  'InventoryExit',
-  'InventoryWeapons', 'InventoryMagic', 'InventoryClothing', 'InventoryIngredients',
-  'InventoryWagon', 'InventoryInfo', 'InventoryEquip', 'InventoryRemove',
-  'InventoryUse', 'InventoryGold',
-]);
-const TAB_BUTTONS = Object.freeze({
-  InventoryWeapons: 'weapons', InventoryMagic: 'magic',
-  InventoryClothing: 'clothing', InventoryIngredients: 'ingredients',
-});
-const MODE_BUTTONS = Object.freeze({
-  InventoryInfo: 'info', InventoryEquip: 'equip',
-  InventoryRemove: 'remove', InventoryUse: 'use',
-});
 const SPELLBOOK_TEMPLATE = 132;    // MiscItems.Spellbook
 
 // DFU ItemTemplates.txt isIngredient - exactly indices 0..77
@@ -224,10 +203,6 @@ export async function preloadInventoryArt(deps) {
       deps.fetchBytes('FONT0004.FNT'),
     ]);
     _art = { base, gold, info, font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004') };
-    // ROAD-A7: the two arrow strips (ItemListScroller.cs:504-516). A
-    // missing pair is not fatal - the base image's own arrows show.
-    await preloadScrollerArrowArt(deps);
-    setPaintingArtDeps(deps);   // ROAD-A7: the *PAINT.CIF reader's renderer/palette/fetch
   } catch { console.warn('[inventory] INVE00I0/INVE01I0 unavailable; F6 stays dark'); }
 }
 export const inventoryArtLoaded = () => !!_art;
@@ -432,18 +407,7 @@ export class NativeInventoryWindow {
     // :296-349), and its quest-letter arm is what makes one quest
     // letter tell apart from another. `getQuest` is the host's
     // QuestMachine.GetQuest; a host with none leaves the plain name.
-    const infoRows = itemInfoRows(it, rows, { name: this._longName(it) });
-    // ROAD-A7: the PAINTINGS arm (:1619-1631). itemInfoRows has just
-    // minted (or found) the painting's identity on the item, and that
-    // identity names the CIF and the record the picture comes out of.
-    // DFU's arm is exclusive - a painting chains no second box, it is
-    // ClickAnywhereToClose with the image panel and nothing else.
-    if (it?.group === 'Paintings' && it.paintingInfo) {
-      this.boxes = [{ rows: infoRows, painting: it.paintingInfo }];
-      this.infoItem = it;
-      return;
-    }
-    this.boxes = [{ rows: infoRows }];
+    this.boxes = [{ rows: itemInfoRows(it, rows, { name: this._longName(it) }) }];
     if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
     this.infoItem = it;
   }
@@ -699,28 +663,12 @@ export class NativeInventoryWindow {
       this._dismissBox();
       return;
     }
-    // F6 is the TOGGLE binding closing its own window (the port's
-    // toggleClosedBinding arm); Escape and Enter are the overlay
-    // seam's. Everything else on this screen is DaggerfallShortcut's,
-    // and A8 retired the interim letters that stood here: E used to
-    // close, which is InventoryEquip's letter in DFU, and the tabs
-    // answered to digits 1-4 where DFU gives them F1-F4.
-    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }
+    if (code === 'Escape' || code === 'Enter' || code === 'KeyE' || code === 'F6') { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
-    // DaggerfallInventoryWindow.cs's own Hotkey assignments, in its
-    // setup order (:319, :478-517).
-    const hit = firstHotkey(INVENTORY_BUTTONS, code, e);
-    if (!hit) return;
-    if (hit === 'InventoryExit') { this._close(); return; }
-    const tab = TAB_BUTTONS[hit];
-    if (tab) { this._setTab(tab); return; }
-    // U25's law again, from the keyboard: WAGON and GOLD ACT, the
-    // other four SELECT a mode (:1234-1285).
-    audio.playOneShot(SOUND.ButtonClick, 1);   // every action button clicks (:1242-1272)
-    if (hit === 'InventoryWagon') { this._wagon(); return; }
-    if (hit === 'InventoryGold') { this._dropGold(); return; }
-    this.mode = MODE_BUTTONS[hit];
+    if (code === 'KeyI') this.mode = 'info';
+    const t = /^Digit([1-4])$/.exec(code);   // digits jump tabs (interim accelerator)
+    if (t) this._setTab(TABS[Number(t[1]) - 1]);
   }
 
   /** Which accessory BUTTON a point falls in, as an equip slot, or
@@ -851,15 +799,13 @@ export class NativeInventoryWindow {
     const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) {
       if (hit.kind === 'slot') this._pick(hit.slot);
-      // ROAD-A7: the two ARROWS click (ItemListScroller.cs:590-604);
-      // the rail and the thumb are silent.
-      else { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length); }
+      else this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length);
       return true;
     }
     const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
     if (rhit) {
       if (rhit.kind === 'slot') this._pickRemote(rhit.slot);
-      else { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length); }
+      else this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length);
       return true;
     }
     return false;
@@ -929,11 +875,6 @@ export class NativeInventoryWindow {
         this._icon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art.font4, m, it, rect, s);
       });
-      // ROAD-A7: UpdateListScrollerButtons (:486-501) and
-      // VerticalScrollBar.Draw - the arrows swap red/green with the
-      // range ends and the thumb draws from DFU's three art slices.
-      drawScrollerArrows(renderer, m, rect, scroll, items.length);
-      drawScrollerThumb(renderer, m, rect, scroll, items.length);
     }
     // U25: the ITEM INFO PANEL - a 50x37 cutout of ITEM00I0 drawn into
     // the 37x32 rect at (223,145), at itemInfoPanelLabel's own
@@ -953,9 +894,7 @@ export class NativeInventoryWindow {
         ? goldAmount(this.hooks.entity ?? { items: this.hooks.items() }) : 0;
       const panelRows = this.infoGold
         ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
-        // ROAD-A7: the PANEL's read, not the popup's - :1135-1137
-        // keeps only a painting's title here.
-        : ((this.infoItem && this.hooks.rows) ? itemInfoPanelRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
+        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
       if (panelRows) {
         const [px, py, , ph] = INV_RECTS.itemInfoPanel;
         const rows = panelRows;
@@ -970,16 +909,9 @@ export class NativeInventoryWindow {
     const box = this.topBox;
     if (box) {
       const rows = box.field ? [...box.rows, ` > ${this.goldEntry ?? ''}_`] : box.rows;
-      // ROAD-A7: a painting box carries an ImagePanel, which is part of
-      // the SIZING (UpdatePanelSizes :527-534) - so the picture is
-      // measured into the layout, not stamped over it. It arrives on a
-      // later frame than the click, and until it does the box is the
-      // plain parchment, which is exactly what a missing CIF leaves.
-      const pic = box.painting ? paintingImage(box.painting) : null;
       const laid = layoutMessageBox(font, rows, [],
-        box.field ? { sizingRows: [...box.rows, ` > ${'0'.repeat(8)}_`] }
-          : (pic ? { image: { width: pic.w, height: pic.h } } : {}));
-      drawMessageBox(renderer, m, font, laid, pic ? { image: pic.tex } : {});
+        box.field ? { sizingRows: [...box.rows, ` > ${'0'.repeat(8)}_`] } : {});
+      drawMessageBox(renderer, m, font, laid);
     }
   }
 }

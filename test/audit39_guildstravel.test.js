@@ -118,12 +118,7 @@ test('F98: the EXECUTION is the one exit DFU does not refill', () => {
   // ...and the refill is therefore NOT inside release(), which every
   // arm including the execution funnels through.
   const a = src('scenes/arrestFlow.js');
-  // PIN MOVED (Road to 1:1, a3): release() took ReleaseFromPrison's
-  // last two lines and with them a parameter - `repositionPlayer` is
-  // set by every arm EXCEPT the guild rescue (:191-194), so the door is
-  // `release({ reposition = true })`. The finding this pins is
-  // unchanged: no FillVitalSigns inside it.
-  const rel = a.slice(a.indexOf('  function release({ reposition = true } = {}) {'));
+  const rel = a.slice(a.indexOf('  function release() {'));
   assert.equal(/fillVitalSigns/.test(rel.slice(0, 300)), false);
   assert.ok(rel.includes("// the port's own floor, not DFU's"),
     'ReleaseFromPrison (:482-490) never touches health, so the clamp stays the port\'s own');

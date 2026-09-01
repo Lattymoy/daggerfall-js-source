@@ -16,7 +16,6 @@ import { TEMPLATES } from '../src/systems/useItem.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { TextRsc } from '../src/formats/textRsc.js';
-import { createRandomBook } from '../src/systems/books.js';   // A2
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -234,22 +233,9 @@ test('IM1: the %ba cache - the reader\'s load feeds it, an empty author line kee
 });
 
 test('IM1: a dungeon-loot book carries its id - CreateRandomBook\'s message roll, BEFORE the variant', () => {
-  // PIN MOVED at A2 (ROAD TO 1:1): the inline mint in loot.js became a
-  // call to books.createRandomBook, the one member all four sites now
-  // share, so the source pin on loot.js's expression can no longer see
-  // the draw order. The claim is the same and it is now BEHAVIOURAL -
-  // the id is drawn first and the variant second (ItemBuilder.cs:261-262).
   const loot = readFileSync(join(SRC, 'systems', 'loot.js'), 'utf8');
-  assert.match(loot, /halving\(matrix\.BK, \(\) => createRandomBook\(rolls\)\)/,
-    'the loot mint IS CreateRandomBook');
-  // A stream that answers 0 then 0.99 must take the FIRST book id and
-  // the LAST variant; swap the order and both answers swap with it.
-  const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
-  const first = createRandomBook(seq(0, 0.99));
-  const last = createRandomBook(seq(0.99, 0));
-  assert.notEqual(first.message, last.message, 'the id reads the FIRST draw');
-  assert.equal(first.variant, 1, 'and the variant the second (template 277 has two)');
-  assert.equal(last.variant, 0);
+  assert.match(loot, /message: getRandomBookID\(rolls\), variant: Math\.floor\(rolls\(\)/,
+    'the id rolls first, then the variant, in the one mint expression');
 });
 
 test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignment', () => {

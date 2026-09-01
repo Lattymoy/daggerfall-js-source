@@ -5,7 +5,6 @@ import {
   PICKER_W, PICKER_H, PICKER_X, PICKER_Y, PICKER_RECTS,
   ROWS_DISPLAYED, ROW_SPACING, SELECTED_TEXT_COLOR, ListPickerWindow,
 } from '../src/ui/listPicker.js';
-import { DOUBLE_CLICK_DELAY_MS } from '../src/ui/chargenArt.js';
 import {
   ServiceFlowWindow, buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow,
   DONATE_HOW_MUCH, FREE_HOLIDAY_CURING, CURED_DISEASE, DONATION_FIELD,
@@ -99,16 +98,7 @@ test('U24 (X11b CORRECTED): the two buttons move the SELECTION by ONE, not a pag
   assert.equal(small.selectedIndex, 1);
 });
 
-test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE click uses it', () => {
-  // THIS PIN MOVED, deliberately, and the law it now holds is DFU's.
-  // It used to assert that one click PICKED, because the port's
-  // ListPickerWindow did - and ListBox.cs does not. MouseClick
-  // (:465-505) only moves selectedIndex and raises OnSelectItem;
-  // MouseDoubleClick (:507-512) is what reaches UseSelectedItem and,
-  // through DaggerfallListPickerWindow's ListBox_OnUseSelectedItem
-  // (:136-139), OnItemPicked. The row-resolution half of the old pin -
-  // that the click resolves against the SCROLLED index, not the
-  // visible row - is the same and is kept.
+test('U24: a click in the list picks the SCROLLED row, not the visible one', () => {
   const items = Array.from({ length: 25 }, (_, i) => `item${i}`);
   const picked = [];
   const w = new ListPickerWindow({ items, onPick: (i, l) => picked.push([i, l]) });
@@ -116,29 +106,9 @@ test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE clic
   w.scrollIndex = 9;
   // row 2 of the visible page, at (glyphHeight + rowSpacing) each
   const rh = 6 + ROW_SPACING;
-  const at = [PICKER_X + PICKER_RECTS.list[0] + 1, PICKER_Y + PICKER_RECTS.list[1] + 2 * rh + 1];
-  w.click(at[0], at[1], font, 1000);
-  assert.deepEqual(picked, [], 'one click picks nothing');
-  assert.equal(w.selectedIndex, 11, 'it moved the SELECTION to the scrolled row');
-  assert.equal(w.done, false, 'and the window is still up');
-  // a second click far outside doubleClickDelay is another single click
-  w.click(at[0], at[1], font, 1000 + DOUBLE_CLICK_DELAY_MS + 1);
-  assert.deepEqual(picked, []);
-  // ...and one inside it is the double click, which uses the row
-  w.click(at[0], at[1], font, 1000 + DOUBLE_CLICK_DELAY_MS + 2);
+  w.click(PICKER_X + PICKER_RECTS.list[0] + 1, PICKER_Y + PICKER_RECTS.list[1] + 2 * rh + 1, font);
   assert.deepEqual(picked, [[11, 'item11']]);
   assert.equal(w.done, true);
-});
-
-test('U24 (ROAD-A7): Return is UseSelectedItem, the same door', () => {
-  // ListBox.Update :296-297 - KeyCode.Return calls UseSelectedItem(),
-  // which is exactly what MouseDoubleClick calls.
-  const picked = [];
-  const w = new ListPickerWindow({ items: ['a', 'b', 'c'], onPick: (i, l) => picked.push([i, l]) });
-  w.input('ArrowDown');
-  assert.equal(w.selectedIndex, 1);
-  w.input('Enter');
-  assert.deepEqual(picked, [[1, 'b']]);
 });
 
 test('U24: a click outside the panel cancels', () => {

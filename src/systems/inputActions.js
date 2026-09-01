@@ -87,137 +87,6 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F11', 'QuickLoad'],
 ]);
 
-// ── key combos ──────────────────────────────────────────────────────
-// A8: GetComboCode/GetCombo/GetComboString (:1165-1219). DFU PACKS the
-// pair into one 32-bit KeyCode - the modifier in bits 16-31, the
-// combo'd key in bits 0-15 - and everything downstream (the dicts, the
-// serializer, the controls grid) then treats a combo as just another
-// key code. The port's code alphabet is already strings, so the pack
-// is a string: `${modifier}+${key}`, one code, one dictionary entry,
-// and every existing reader keeps working unchanged.
-//
-// DFU's `x > 32767` guard is not an arithmetic nicety - combo codes
-// START at 65537 (startingComboKeyCode, :34), so the guard is what
-// forbids a combo INSIDE a combo. That is the rule ported here.
-
-/** GetComboCode(a, b) (:1165-1177). `mod` is the key held FIRST. */
-export function comboCode(mod, key) {
-  if (mod == null || key == null) return null;
-  if (isCombo(mod) || isCombo(key)) return null;   // the <= 32767 guard
-  return `${mod}+${key}`;
-}
-
-/** `(int)k >= startingComboKeyCode` (:1674, :1719, :1223). */
-export function isCombo(code) {
-  return typeof code === 'string' && code.includes('+');
-}
-
-/** GetCombo (:1195-1207) - [modifier, key], or null for a plain code. */
-export function getCombo(code) {
-  if (!isCombo(code)) return null;
-  const i = code.indexOf('+');
-  return [code.slice(0, i), code.slice(i + 1)];
-}
-
-/** GetComboString (:1214-1219): "{mod} + {key}", spaces and all - the
- *  face DFU writes into the staged dict and reads back with
- *  GetComboCode(String) (:1179-1192), which trims them off again. */
-export function comboString(code) {
-  const c = getCombo(code);
-  return c ? `${c[0]} + ${c[1]}` : String(code ?? 'None');
-}
-
-/** GetComboCode(String) (:1179-1192) - the round trip back from a
- *  displayed or hand-edited "mod + key". */
-export function parseComboString(s) {
-  if (typeof s !== 'string') return null;
-  const parts = s.split('+');
-  if (parts.length < 2) return null;
-  return comboCode(parts[0].trimEnd(), parts[1].trimStart());
-}
-
-/** modifierHeldFirstDict's key set (:1349-1358): every code serving as
- *  the held-first MODIFIER of a combo, across BOTH dicts. DFU rebuilds
- *  it inside SetupActionKeyDict, which runs after every binding change;
- *  the port rebuilds it on the same event, through `rev` - the frame
- *  loop reads this every poll and must not walk both dicts each time. */
-export function comboModifiers(store) {
-  const rev = store.rev ?? 0;
-  if (store._comboRev === rev && store._comboMods) return store._comboMods;
-  const out = new Set();
-  for (const dict of [store.primary, store.secondary]) {
-    for (const code of dict.keys()) {
-      const c = getCombo(code);
-      if (c) out.add(c[0]);
-    }
-  }
-  store._comboRev = rev;
-  store._comboMods = out;
-  return out;
-}
-
-/** primarySecondaryKeybindDict (:1345-1347, :1370-1396). ROAD-Ar R9:
- *  this is NOT a "bound in either dict" membership set, which is what
- *  the port read it as. It is a PRIMARY<->SECONDARY PAIRING map:
- *  SetupActionKeyDict clears it (:1345) and rebuilds it by running
- *  MapSecondaryBindings over the Actions enum (:1346-1347), and the
- *  only ADDITIVE arm there is `if (primKey != None && secKey != None)
- *  SetSecondaryBinding(primKey, secKey)` (:1381-1384), which writes the
- *  two codes at each other. The else arm (:1386-1395) only DETACHES.
- *
- *  So a code is a KEY of this dict exactly when its action is DOUBLE-
- *  bound, and that is what GetUnaryKey's plain-key suppression
- *  (:1683-1685) and ModifierOnlyHeld's first clause (:1636-1637)
- *  actually ask. Bind OpenInventory to LeftShift+Space with no
- *  secondary and leave Jump on Space: DFU still jumps, because the
- *  combo code was never paired. The union test suppressed it.
- *
- *  The else arm is ported too, quirk and all - it can leave a code
- *  PRESENT mapped to None (:1392) while removing the code it was
- *  detached from (:1395) - so the walk is over ACTIONS in
- *  Enum.GetValues order (:1329, :1346), not a two-dict sweep. Cached
- *  on `rev` like comboModifiers: the frame loop reads it every poll. */
-export function pairedCodes(store) {
-  const rev = store.rev ?? 0;
-  if (store._pairRev === rev && store._paired) return store._paired;
-  const map = new Map();
-  for (const action of ACTIONS) {
-    // FirstOrDefault(x => x.Value == a).Key, whose miss is KeyCode.None
-    // (:1378-1379) - getBinding's null.
-    const primKey = getBinding(store, action, true);
-    const secKey = getBinding(store, action, false);
-    if (primKey != null && secKey != null) {
-      map.set(primKey, secKey);          // SetSecondaryBinding :1372-1373
-      map.set(secKey, primKey);
-    } else {
-      const existingKey = primKey ?? secKey;
-      let detached = null;
-      if (existingKey != null && map.has(existingKey)) {
-        detached = map.get(existingKey);
-        map.set(existingKey, null);      // :1392 - the KEY stays, the pair goes
-      }
-      if (detached != null) map.delete(detached);   // :1395
-    }
-  }
-  store._pairRev = rev;
-  store._paired = map;
-  return map;
-}
-
-/** primarySecondaryKeybindDict.ContainsKey (:1684, :1637). */
-export function isPairedCode(store, code) {
-  return code != null && pairedCodes(store).has(code);
-}
-
-/** Every binding write goes through here so comboModifiers can tell
- *  when its answer went stale (SetupActionKeyDict's own trigger). */
-const touched = (store) => { store.rev = (store.rev ?? 0) + 1; };
-
-/** THE ANY-KEY MODIFIER RULE, ported straight: DFU does not restrict a
- *  combo's first key to Shift/Ctrl/Alt - LeftShift+K and Z+LeftShift
- *  are both legal, and GetDuplicates' third phase exists precisely
- *  because they can collide. Nothing here narrows it. */
-
 /** THE ONE CONSTRUCTION SEAM. Both dicts are keyed CODE -> ACTION,
  *  DFU's orientation (:79-80) - a key answers to one action per dict,
  *  an action may hold several keys only via a hand-edited save file
@@ -227,7 +96,6 @@ export function createBindings() {
   return {
     primary: new Map(),
     secondary: new Map(),
-    rev: 0,                      // bumped on every write; comboModifiers' cache key
     removedPrimary: new Set(),   // :87 - "don't autofill this default back"
     unknown: new Map(),
     secondaryUnknown: new Map(),
@@ -239,7 +107,6 @@ export function createBindings() {
  *  action, then bind - and binding an action that was force-removed
  *  un-removes it. `code = null` is KeyCode.None: a pure clear. */
 export function setBinding(store, code, action, primary = true) {
-  touched(store);
   const dict = primary ? store.primary : store.secondary;
   const alt = primary ? store.secondary : store.primary;
   alt.delete(code);
@@ -254,14 +121,12 @@ export function setBinding(store, code, action, primary = true) {
 /** ClearBinding(Actions) (:839-846) - every code the action holds in
  *  the named dict. */
 export function clearBinding(store, action, primary = true) {
-  touched(store);
   const dict = primary ? store.primary : store.secondary;
   for (const [code, a] of [...dict]) if (a === action) dict.delete(code);
 }
 
 /** ClearBinding(KeyCode) (:803-811). */
 export function clearBindingByCode(store, code, primary = true) {
-  touched(store);
   (primary ? store.primary : store.secondary).delete(code);
 }
 
@@ -297,20 +162,16 @@ export function actionForCode(store, code) {
 }
 
 // TestSetBinding (:1405-1422): a default lands only if the action is
-// missing from THIS dict, the code is free in BOTH, the action was not
-// force-removed, and the code is not serving as a combo's MODIFIER
-// (:1416-1418). A8 made that last guard reachable: before combos it
-// had nothing to walk, and the sentence saying so has been deleted
-// rather than left standing. It matters on the autofill pass - a
-// player who bound Shift+K must not have a new build's default quietly
-// take plain Shift out from under the combo.
+// missing from THIS dict, the code is free in BOTH, and the action was
+// not force-removed. (DFU also skips codes serving as combo modifiers;
+// the port has no combos - flagged below - so that guard has nothing
+// to test.)
 function testSetBinding(store, code, action, primary = true) {
   const dict = primary ? store.primary : store.secondary;
   const alt = primary ? store.secondary : store.primary;
   if (dict.has(code) || alt.has(code)) return;
   for (const a of dict.values()) if (a === action) return;
   if (primary && store.removedPrimary.has(action)) return;
-  if (comboModifiers(store).has(code)) return;
   setBinding(store, code, action, primary);
 }
 
@@ -321,7 +182,6 @@ function testSetBinding(store, code, action, primary = true) {
  *  binding on a non-default code SURVIVES the reset. Autofill mode is
  *  the startup "push new actions into an old save" pass (:445-448). */
 export function resetDefaults(store, autofill = false) {
-  touched(store);
   if (!autofill) {
     store.primary.clear();
     store.removedPrimary.clear();
@@ -360,7 +220,6 @@ export function serializeKeyBinds(store) {
 // answers to either), which setBinding's clear-first would collapse.
 function loadActionKeybinds(store, saved, primary) {
   if (!saved) return;
-  touched(store);
   const dict = primary ? store.primary : store.secondary;
   const unknown = primary ? store.unknown : store.secondaryUnknown;
   for (const [code, name] of Object.entries(saved)) {
@@ -451,18 +310,11 @@ export function endFrame(state) {
   state.current = new Set();
 }
 
-// A8 RETIRED THE COMBO FLAG THAT STOOD HERE. It said the port had no
-// combos and that the runtime held-order logic pended a slice; the
-// pack, the modifier set, the autofill guard and the duplicate check
-// are above and in controlsConfig.js, and the held-order read is in
-// ui/input.js. What is NOT here, and is the honest remainder: DFU's
-// per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the ORDER
-// two keys went down in, so holding K then Shift does not fire
-// Shift+K. The port's hosts keep a Set with no order, so a combo fires
-// on either order; the day a host grows an ordered held list, the rule
-// is GetUnaryKey's (:1690-1711) and the seam is held().
-//
-// STILL FLAGGED:
+// FLAGGED, each with the slice it waits on:
+//  - KEY COMBOS (GetComboCode :1165-1218, modifierHeldFirstDict): DFU
+//    packs "mod + key" into one 32-bit KeyCode, bindable only by
+//    editing the file. No default uses one; the runtime held-order
+//    logic pends a slice that needs it.
 //  - AXES + JOYSTICK (AxisActions, JoystickUIActions): no gamepad
 //    layer in the port; the serialized blocks are simply absent here,
 //    and loadKeyBinds ignores them in a DFU-written file.

@@ -33,10 +33,7 @@ test('PX23 door: four hosts collapse to ONE seam, and the BUY window is not it',
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js']) {
     const s = read(f);
     assert.match(s, /createSpellbookWindow\(\{/, `${f} goes through the door`);
-    // ROAD A7 MOVED THIS PIN: the painting flow widened the rows seam
-    // with the dfRand variant pick in the three hosts that hang
-    // paintings; dungeons hang none, so dungeonContext keeps (id).
-    assert.match(s, /rows: \(id(?:, pick)?\) =>/, `${f} keeps its own TEXT.RSC reach`);
+    assert.match(s, /rows: \(id\) =>/, `${f} keeps its own TEXT.RSC reach`);
     // The latch moved into the door for the PLAYER's book. worldModes
     // keeps one, and it is the BUY window's - a shop needs to know what
     // you already own to grey out what you have.
