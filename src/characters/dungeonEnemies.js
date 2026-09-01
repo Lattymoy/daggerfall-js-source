@@ -26,6 +26,7 @@ import { ENCOUNTER_TABLES } from './encounterTables.js';
 import { MOBILE_TYPES } from './mobileTypes.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W3: AlternateRandomEnemySelection
 
+const EDITOR_FLATS_ARCHIVE = 199;   // TextureReader.EditorFlatsTextureArchive
 const FIXED_RECORD = 16;
 const RANDOM_RECORD = 15;
 const UNDERWATER_TABLE = 19;
@@ -150,6 +151,15 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
 
   for (const block of blockLayouts) {
     for (const marker of block.markers) {
+      // AUDIT 39 (#19): editorObjects is archive-199 ONLY
+      // (RDBLayout.cs:352), and AddFixedEnemies/AddRandomEnemies
+      // iterate nothing else - the record-alone test below is safe only
+      // over that filtered list. The port's markers array also carries
+      // the archive-216 fixed-treasure flats, which share the record
+      // namespace (216/16 would spawn a Rat from `undefined & 0xff`,
+      // 216/15 an undefined mobile type) and none of the enemy fields.
+      // A marker with no archive is an editor flat, per rdbLayout.
+      if ((marker.archive ?? EDITOR_FLATS_ARCHIVE) !== EDITOR_FLATS_ARCHIVE) continue;
       if (marker.record === FIXED_RECORD) {
         const typeValue = marker.factionOrMobileId & 0xff;
         if (typeValue === 99) continue;

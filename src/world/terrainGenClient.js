@@ -102,11 +102,13 @@ export class TerrainGenClient {
       p.resolve(generatePixelTerrain({ woods: this._woods, ...p.job }));
       return;
     }
-    p.resolve({
-      samples: m.samples, tilemap: m.tilemap,
-      positions: m.positions, normals: m.normals,
-      tilemapBytes: m.tilemapBytes, avg: m.avg, nature: m.nature,
-    });
+    // The reply crosses WHOLE, like the job: the envelope tag comes
+    // off and the rest of the kernel's result passes through untouched,
+    // so a new generatePixelTerrain output can never be dropped on the
+    // worker path alone - the fallback arms resolve the whole object,
+    // and node always takes the fallback.
+    const { t: _tag, ...out } = m;
+    p.resolve(out);
   }
 
   _down(message) {

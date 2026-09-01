@@ -224,10 +224,13 @@ test('WM2f: the building rides the ordinary model path, and the 1:1 lane never s
 });
 
 test('WM2g: the mill\'s subrecord is attached, and attaching it twice does nothing', () => {
-  // BlocksFile CACHES its parsed blocks - the same object comes back for
-  // every location using this block and for every re-entry - so a second
-  // append would grow the array without bound AND move the recordIndex a
-  // live door already refers to.
+  // AUDIT 39 (#20) corrected this comment, not the pin. It used to say
+  // BlocksFile caches its parsed blocks so the same object comes back
+  // every time; autoDiscard is true and never cleared, so an A,B,A
+  // sequence re-parses A into a NEW object. The guard is still required
+  // for the case that does arise - one parse handed to the function
+  // more than once - because a second append would grow the array AND
+  // move the recordIndex a live door already refers to.
   const block = () => ({
     name: 'FARMAA00.RMB',
     rmbBlock: { subRecords: [{ exterior: { block3dObjectRecords: [] }, interior: {} }] },

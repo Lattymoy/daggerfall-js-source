@@ -380,6 +380,19 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
       } else if (fr.textureArchive === FIXED_TREASURE_FLATS_ARCHIVE) {
         // Renderer-disabled in DFU, restored in place by AddFixedTreasure
         // (Systems arc). Marker data only.
+        //
+        // AUDIT 39 (#19): these share `markers` with the 199 editor
+        // flats, and they share the RECORD NAMESPACE with them too -
+        // 216/15 and 216/16 exist. DFU never has to discriminate,
+        // because its editorObjects list is archive-199 by construction
+        // (RDBLayout.cs:352) and every enemy/treasure reader iterates
+        // only that. Here the archive is what separates them: a 216
+        // entry carries `archive`, a 199 entry does not, and EVERY
+        // consumer of this array must test it before trusting a record.
+        // A 216 entry also carries none of the enemy fields (rawY,
+        // flags, factionOrMobileId, soundIndex, actionByte) the 199
+        // branch above sets, so a reader that skips the test builds an
+        // enemy out of undefined.
         markers.push({ record: fr.textureRecord, archive: fr.textureArchive, x, y, z, position: obj.position, action });
         if (acts && !actionLinks.has(obj.position)) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });

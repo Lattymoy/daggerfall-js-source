@@ -564,7 +564,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     let personBatches = null;
     let locBlocks = null;    // T3d: the layout blocks for the Where-is directory
     if (dfLocation) {
-      const loc = layoutLocation(dfLocation, maps, blocks);
+      // AUDIT 39 (#18): the skin reaches the layout, because the mill's
+      // subrecord widens the block's building count and must not exist
+      // on the classic one.
+      const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced() });
       locBlocks = loc.blocks;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
@@ -5128,7 +5131,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
     ambience.update(dt, { playerPos: cam.pos });
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
-    const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
+    // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
+    // shipped DFU renders no flash (PlayLightningEffect is 0 on both
+    // AmbientEffectsPlayer instances and LightForEffects is unassigned,
+    // so the storm is sound-only, and the line this models sets an
+    // absolute intensity on that separate light, not the sun). The
+    // player ticks on both skins: the clip schedule is the Audio arc's.
+    const strobe = lightning ? lightning.tick(dt) : 1;
+    const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();

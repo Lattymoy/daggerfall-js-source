@@ -159,7 +159,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   const dfLocation = maps.getLocationByName(regionName, locationName);
   if (!dfLocation) throw new Error(`location not found: ${regionName}/${locationName}`);
   status(`laying out ${locationName}`);
-  const loc = layoutLocation(dfLocation, maps, blocks);
+  // AUDIT 39 (#18): the skin reaches the layout, because the mill's
+  // subrecord widens the block's building count and must not exist on
+  // the classic one.
+  const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced() });
 
   // Climate + season: swap every submesh archive exactly as DFU's
   // MaterialReader.ChangeClimate does - pixels from the swapped archive,
@@ -1845,9 +1848,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
     ambience.update(dt, { playerPos: eye });
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
-    // Storm lightning: verbatim frame-strobe multiplier on the sun (2x
-    // during a flash frame); ?flashtest pins it on for shots.
-    const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
+    // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
+    // Shipped DFU renders no flash at all - PlayEffects starts the
+    // coroutine only `if (PlayLightningEffect)` and both
+    // AmbientEffectsPlayer instances serialize PlayLightningEffect: 0
+    // with LightForEffects unassigned, so the storm is sound-only; and
+    // the line this models sets an ABSOLUTE intensity on that separate
+    // light, never a multiplier on the sun. The player keeps ticking on
+    // both skins - it is the clip schedule the Audio arc reads.
+    // ?flashtest pins the strobe on for shots.
+    const strobe = lightning ? lightning.tick(dt) : 1;
+    const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();

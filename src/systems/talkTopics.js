@@ -112,6 +112,24 @@ export const ANSWERS_TO_NON_DIRECTIONS = Object.freeze([
   7261, 7276, 7291, 7260, 7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
 ]);
 
+/**
+ * DFU's building count for a block: SubRecords.Length, scanned over the
+ * fixed 32-slot BuildingDataList (RMBLayout.cs:553 and :642).
+ *
+ * AUDIT 39 (#18): read the PARSED record count where it is available,
+ * not the live array's length. The enhanced skin APPENDS a synthetic
+ * subrecord to the parsed block (the windmill's interior), and a bound
+ * that widened with it would hand the first garbage 32-slot entry a
+ * name-pool draw and misalign every named building after it.
+ * numBlockDataRecords is what blocksFile sized subRecords from, so on
+ * an untouched block the two are equal by construction.
+ */
+export function blockBuildingCount(dfBlock) {
+  const rmb = dfBlock?.rmbBlock;
+  if (!rmb) return null;
+  return rmb.fldHeader?.numBlockDataRecords ?? rmb.subRecords?.length ?? null;
+}
+
 /** GetCompleteBuildingData's pool merge over OUR layout shapes.
  *  @param exteriorBuildings dfLocation.exterior.buildings
  *  @param blocks layoutLocation().blocks (y->x order preserved)
@@ -132,7 +150,7 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
     // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
     // full 32-slot header - garbage entries past the subrecord count
     // must never steal pool draws (they misalign every later name).
-    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       if (!isNamedBuildingType(list[i].buildingType)) continue;
       const item = next(list[i].buildingType);
@@ -221,7 +239,7 @@ export function locationBuildings(exteriorBuildings, blocks) {
   const out = [];
   for (const b of blocks) {
     const list = merged.get(b) ?? [];
-    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       if (!list[i]) continue;
       // H2: BuildingSummary.ModelID (RMBLayout.cs:577) - the FIRST 3D
@@ -272,7 +290,7 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
   const out = [];
   for (const b of blocks) {
     const list = merged.get(b) ?? [];
-    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       const data = list[i];
       if (!data) continue;
