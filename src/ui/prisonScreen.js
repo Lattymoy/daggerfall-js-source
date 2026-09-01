@@ -26,12 +26,22 @@
 // flags. The arrest flow owns that arm through onEndPrisonTime; this
 // window owns the clock that reaches it.
 //
-// FLAGGED, and honestly: the trial's own message boxes still stand on
-// the port's plain overlay panel rather than over CORT01I0. DFU has a
-// window STACK (uiManager.PushWindow over the live court window) and
-// townTalk's overlay slot holds exactly one occupant, so the backdrop
-// behind the plea boxes waits on a stacking seam. The PRISON screen
-// needs no stack - nothing is pushed over it - so it lands whole.
+// ROAD-B B5 RETIRED THE BACKDROP FLAG. It read: "the trial's own
+// message boxes still stand on the port's plain overlay panel rather
+// than over CORT01I0... townTalk's overlay slot holds exactly one
+// occupant, so the backdrop behind the plea boxes waits on a stacking
+// seam". B1 landed the stacking seam. CourtScreenWindow below is
+// Setup's courtPanel (:75-84) - the courtroom, opened before the first
+// plea box and standing under every one of them - and arrestFlow
+// pushes the trial over it.
+//
+// ONE DEVIATION, named: DFU has ONE window with two backgrounds, and
+// SwitchToPrisonScreen (:511-524) swaps the texture in place. Here the
+// prison screen is a separate window laid at the same stack level (the
+// port's showOverlay is DFU's CloseWindow-then-Push, which nets to a
+// one-level replacement). Both panels are the same opaque 320x200
+// native panel at the same anchor, so the screen is identical; what
+// differs is which object owns it.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -44,9 +54,18 @@ export const PRISON_IMG = 'PRIS00I0.IMG';
  *  measuring a video recording." One in-game day per tick. */
 export const PRISON_UPDATE_INTERVAL = 0.3;
 /** The held-Back accelerator (:301-304). DFU labels it "Not in
- *  classic" itself, so it is here as the constant it is and rides an
- *  optional `speedUp` read - the port's overlay slot has no key-HELD
- *  edge, so no host wires it today. */
+ *  classic" itself, and it is a HELD read: `InputManager.GetBackButton()`
+ *  is `Input.GetKey(KeyCode.Escape)` (InputManager.cs:1075-1078) - the
+ *  RAW key, not a binding and not routed through any window - polled
+ *  every frame of state 100, so the interval flips back the moment the
+ *  key comes up.
+ *
+ *  ROAD-B B5 wired it. The sentence that stood here said "the port's
+ *  overlay slot has no key-HELD edge, so no host wires it today", and
+ *  it was true of the SLOT and false of the hosts: both outdoor hosts
+ *  keep a live held-keys set, they simply return out of their keydown
+ *  ladder before reaching it while a window is up - which is exactly
+ *  what DFU's raw poll does not do. */
 export const PRISON_UPDATE_INTERVAL_FAST = 0.001;
 
 /** daysUntilFreedomLabel's anchor (:91) - HorizontalAlignment.Center
@@ -67,6 +86,54 @@ export const DAYS_UNTIL_FREEDOM = '%d days until freedom.';
 export function daysUntilFreedomText(days, localizedText = null) {
   const t = localizedText?.('daysUntilFreedom') || DAYS_UNTIL_FREEDOM;
   return t.replace('%d', String(days));
+}
+
+let _courtArt = null;
+/** ROAD-B B5 - Setup's `GetTextureFromImg(nativeImgName)` (:75).
+ *
+ *  THE PALETTE LAW, and it is the same one PRIS00I0 broke on
+ *  2026-09-01: CORT01I0 is a palettized IMG - ImgFile._readPalette
+ *  writes INTO the palette instance it is handed - so it MINTS ITS
+ *  OWN DFPalette and is never given the host's shared ART_PAL. One
+ *  boot-time preload with the session palette repaints every texture
+ *  decoded after it for the rest of the session. Read
+ *  test/incident_texture.test.js before touching this line. */
+export async function preloadCourtScreenArt(deps) {
+  if (!_courtArt) _courtArt = { court: await loadImg({ ...deps, palette: new DFPalette() }, COURT_IMG) };
+  return _courtArt;
+}
+export const courtScreenArtLoaded = () => !!_courtArt;
+export function _setCourtScreenArtForTests(art) { _courtArt = art; }
+
+/**
+ * The COURTROOM backdrop - Setup's courtPanel (:75-84), the window the
+ * whole trial is pushed over. Its own input does nothing:
+ * `AllowCancel = false` (:97), so neither Escape nor Enter walks out
+ * of a trial.
+ *
+ * `done` is the port's pop: DFU's court window closes itself from
+ * state 100 (ReleaseFromPrison -> CancelWindow, :490), which lands
+ * one frame AFTER the last box has popped off it - and townTalk's
+ * frame drains a `done` overlay every tick, so setting the flag while
+ * the final box is still up gives exactly that ordering.
+ */
+export class CourtScreenWindow {
+  constructor() {
+    this.done = false;
+    this.isChoiceWindow = true;   // the overlay slot's modal flag
+  }
+
+  /** AllowCancel = false (:97). */
+  input() {}
+
+  draw(renderer, canvas, font) {
+    const m = nativeMetrics(canvas);
+    if (_courtArt) {
+      drawImg(renderer, _courtArt.court, m, Math.floor((NATIVE_W - _courtArt.court.w) / 2), 0);
+    } else {
+      drawRect(renderer, m, 0, 0, NATIVE_W, 200, [0.03, 0.03, 0.04, 1]);
+    }
+  }
 }
 
 let _art = null;

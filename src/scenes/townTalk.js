@@ -372,7 +372,33 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // slot is not empty and reconcile reads that as a one-level
     // replacement - the successor sits over the same suspended window,
     // which is what a dispatch mid-chain means.
+    //
+    // ROAD-B B5 FIXED THE RESTORE'S GUARD. It read `if (overlay)
+    // _onOverlayClosed = _suspendedCallbacks.pop() ?? null;` and could
+    // not tell the two cases apart, because BOTH leave the slot full:
+    // a real pop (the uncovered window, whose callback must come back)
+    // and a SUCCESSOR the callback just opened (whose callback was
+    // written two lines ago and must NOT be thrown away). It threw it
+    // away - `pop()` on an empty list is undefined, `?? null` makes
+    // that a null, and the successor's own close callback was gone.
+    //
+    // That is arrestFlow's live shape, not a hypothetical: the guilty
+    // verdict shows its box with `() => finish(...)` as the close
+    // callback, and `finish` opens the prison screen with `() =>
+    // release()` as ITS close callback. The release is ReleaseFromPrison
+    // (DaggerfallCourtWindow.cs:482-491) - the crime clearing, the four
+    // hours, the reposition and ClearEnemies - so a player who was
+    // found guilty and served their days walked out of the courthouse
+    // still arrested, still wanted, still standing where they were,
+    // with the court music playing. A pre-B1 dropOverlay had no restore
+    // at all and did not have this.
+    //
+    // The successor is simply "the slot is already full BEFORE the
+    // pop": nothing else can have filled it, since it was nulled at
+    // the top of this function.
+    const successor = overlay;
     windows.reconcile(overlay);
+    if (successor) return true;
     if (overlay) _onOverlayClosed = _suspendedCallbacks.pop() ?? null;
     else _suspendedCallbacks.length = 0;
     return true;

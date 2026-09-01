@@ -127,7 +127,7 @@ import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
-import { peopleAreVisible } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail
+import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
@@ -199,7 +199,7 @@ import { WORLD_CONTEXT } from '../systems/teleportAnchor.js';   // A10: SetAncho
 // the tavern rents through, and FightersGuild.CanRest.
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
-import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
+import { interiorRestPlace, restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it   // ROAD-B B5: GetPreventedRestMessage
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
 import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
@@ -271,7 +271,16 @@ export function createWorldModes(host) {
         enemiesNearby: interiorEnemiesNearby(), swimming: false, entity: playerEntity,
         day: false, inside: true,   // IF: a building interior CAN hold foes now; the feet stay dry
       });
-      if (!interiorOverlay) interiorOverlay = new ActionTextBox(out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.']);
+      // ROAD-B B5: a PUSH. PlayerEntity's OnExhausted handler is a plain
+      // DaggerfallUI.MessageBox, and DaggerfallUI.MessageBox is
+      // `new DaggerfallMessageBox(...); mb.Show()` -> uiManager
+      // .PushWindow (DaggerfallUI.cs:1330-1360) - it has never asked
+      // whether something else is open. Collapsing from exhaustion
+      // WITH A WINDOW UP is not exotic: the fatigue drain runs through
+      // the inventory, the map and the spellbook alike, and the
+      // refusal meant the one message that explains the lost hour (or
+      // the drowning) was dropped.
+      mountInterior(new ActionTextBox(out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.']));
       if (out.kind === 'rest') {
         interiorTicker.advance(60);
         playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
@@ -365,7 +374,10 @@ export function createWorldModes(host) {
   // so a player who catches vampirism in a shop still dreams.
   wireInfectionVideos(renderer, {
     textAt: (id) => townTalk?.lines?.(id) ?? null,
-    showText: (lines) => { if (!interiorOverlay) interiorOverlay = new ChoiceWindow({ lines }); },
+    // ROAD-B B5: VampirismInfection's own DaggerfallUI.MessageBox - a
+    // PUSH, the same conversion its dungeon twin took. A player who
+    // turned with a shop's trade window open was never told.
+    showText: (lines) => mountInterior(new ChoiceWindow({ lines })),
     factionDict: () => townTalk?.factionDict ?? null,
     // V2e: the outer host's cemetery arm rides through, or this
     // re-registration would silently drop it (world.js passes it;
@@ -5366,6 +5378,12 @@ export function createWorldModes(host) {
   // marker CanRest picked (PlayerMotor.transform.position +
   // FixStanding; the port's spawn does the standing fix).
   const interiorRestDeps = createRestDeps(playerEntity, {
+    // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
+    // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
+    // TOP of its window stack, so the slot IS the answer - and the
+    // reachable test is the second one, where a quest popup pushed by
+    // the rest's own sub-tick suspends it mid-hour.
+    topWindow: () => interiorOverlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => mountInterior(new ActionTextBox(rows)),
     advanceMinutes: (n) => interiorTicker.advance(n),
@@ -5399,6 +5417,27 @@ export function createWorldModes(host) {
     onRentExpired: () => {
       playerEntity.rentedRooms = removeExpiredRooms(
         playerEntity.rentedRooms ?? [], Math.floor(worldMinutes()), sceneCache());
+    },
+    // ROAD-B B5 - OnPop's UpdateNpcPresence (DaggerfallRestWindow.cs
+    // :277-280). DFU's guard is `IsPlayerInsideBuilding && interior !=
+    // null`, which is this host's `interiorBuilding` and `interiorCtx`
+    // - and this is the ONLY host that can be inside a building, so it
+    // is the only one that owes the dep.
+    //
+    // The walk is DaggerfallInterior.cs:355-358, and it is
+    // `SetActive(true)` and nothing else: no one is removed, and the
+    // quest machine is NOT re-run over the people it stands (DFU's
+    // AddPeople hands SetupIndividualStaticNPC only to the people its
+    // own visibility tail let through, :1224). A shopkeeper who
+    // appears because you slept until opening time is a billboard, not
+    // a quest individual, in DFU exactly as here.
+    updateNpcPresence: () => {
+      if (!interiorBuilding || !interiorCtx) return;
+      const hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
+      if (!updateNpcPresence(interiorBuilding?.buildingType ?? BUILDING_TYPES.None, {
+        hour, insideOpenShop: !!interiorBuilding.insideOpenShop,
+      })) return;
+      for (const pn of interiorCtx.people) pn.host?.setActive(true);
     },
     // PopToHUD, before RaiseSkills can want the slot for a level-up
     // screen. The U24 identity guard: a window that dispatches to
@@ -5540,6 +5579,7 @@ export function createWorldModes(host) {
         enemiesNearby: interiorEnemiesNearby({ resting: true }),   // IF: rest asks the pool now
         swimming: false,        // nor water
         grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
+        preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {

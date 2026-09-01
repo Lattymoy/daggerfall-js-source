@@ -78,7 +78,7 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
-import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
+import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -610,7 +610,16 @@ export async function bootExterior(canvas, renderer, params, status) {
       });
       // RSC 1071/1072 pend the reader in this host; classic strings fall back.
       const lines = out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.'];
-      if (!townTalk.overlay) townTalk.showOverlay(new ActionTextBox(lines));
+      // ROAD-B B5: a PUSH. PlayerEntity's OnExhausted handler is a plain
+      // DaggerfallUI.MessageBox, and DaggerfallUI.MessageBox is
+      // `new DaggerfallMessageBox(...); mb.Show()` -> uiManager
+      // .PushWindow (DaggerfallUI.cs:1330-1360) - it has never asked
+      // whether something else is open. Collapsing from exhaustion
+      // WITH A WINDOW UP is not exotic: the fatigue drain runs through
+      // the inventory, the map and the spellbook alike, and the
+      // refusal meant the one message that explains the lost hour (or
+      // the drowning) was dropped.
+      townTalk.pushOverlay(new ActionTextBox(lines));
       if (out.kind === 'rest') {
         playerTicker.advance(60);   // RaiseTime(1 hour); the latch holds re-entry
         playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
@@ -872,6 +881,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
   const outdoorRestDeps = createRestDeps(playerEntity, {
+    // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
+    // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
+    // TOP of its window stack, so the slot IS the answer - and the
+    // reachable test is the second one, where a quest popup pushed by
+    // the rest's own sub-tick suspends it mid-hour.
+    topWindow: () => townTalk.overlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
     advanceMinutes: (n) => playerTicker.advance(n),
@@ -922,6 +937,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
       racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
@@ -953,7 +969,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // defaults advanceDays to the real clock, so there is no argument left for a
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
-  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex, onCourtScreen: () => cameraRecoiler.reset() });
+  const arrestFlow = createArrestFlow({
+    townTalk, playerEntity, regionIndex: dfLocation.regionIndex,
+    onCourtScreen: () => cameraRecoiler.reset(),
+    // ROAD-B B5: InputManager.GetBackButton, the prison countdown's
+    // held-Escape accelerator (DaggerfallCourtWindow.cs:301-304).
+    backButtonHeld: () => backButtonHeld,
+  });
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -1263,7 +1285,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     // see ui/hudLarge.js.
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
   };
+  // ROAD-B B5 - InputManager.GetBackButton() (InputManager.cs:1075-1078)
+  // is `Input.GetKey(KeyCode.Escape)`, a RAW held read that no window
+  // intercepts. This ladder returns at `townTalk.keydown` while a
+  // window is up, so `keys` never sees the press - hence its own latch,
+  // above the return. Its one consumer is the prison countdown's
+  // accelerator (DaggerfallCourtWindow.cs:301-304).
+  let backButtonHeld = false;
   addEventListener('keydown', (e) => {
+    if (e.code === 'Escape') backButtonHeld = true;
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
     // host rule); preventDefault stops the browser reload.
@@ -1329,7 +1359,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); });
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD

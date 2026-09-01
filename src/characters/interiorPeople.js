@@ -103,3 +103,48 @@ export function peopleAreVisible(building, {
 
   return true;
 }
+
+/**
+ * ROAD-B B5 - DaggerfallInterior.UpdateNpcPresence (:341-361), whose
+ * ONE caller in DFU's whole tree is DaggerfallRestWindow.OnPop
+ * (:277-280): "Update NPC presence for shops and guilds after
+ * resting/idling". Walk out of a rest window inside a building and the
+ * people who were not standing when you walked in are re-rolled.
+ *
+ * It is NOT peopleAreVisible re-run, and the differences are the point:
+ *
+ *  - It only ever SetActive(TRUE) (:355-358). Nobody is ever taken
+ *    away by it, so loitering until closing time does not empty the
+ *    shop around you - the sleeper gains company, never loses it.
+ *  - It does NOT consult house ownership. AddPeople's tail hides the
+ *    people of a house you bought (:1209-1212); this member never asks,
+ *    so its arms are reached for an owned house too. Harmless in
+ *    practice (an owned house is a residence, and every residence's
+ *    hours still have to pass) and left exactly as written rather than
+ *    tidied into the visibility law next door.
+ *  - The shop arm is the NEGATION of AddPeople's: there, a shop shows
+ *    its people when the player walked into an OPEN one; here, the arm
+ *    is taken when they did NOT - which is precisely the case worth
+ *    re-rolling, the shop entered before opening time.
+ *  - HouseForSale is excluded BY NAME (:349) even though its type (1)
+ *    is under the House4 bound and its hours are ordinary. An empty
+ *    house on the market stays empty.
+ *  - The clock test is IsBuildingOpen (:352) - the same
+ *    PlayerActivate.cs:102-106 hours buildingLocks.js already owns, and
+ *    it sits INSIDE the gate rather than beside it, so a building that
+ *    fails both arms is never asked about the hour at all.
+ *
+ * Answers whether the interior's people should now be made present;
+ * the host does the SetActive walk over its own billboard list.
+ *
+ * @param buildingType - DFLocation.BuildingTypes
+ * @param ctx.hour            - the classic hour (0-23)
+ * @param ctx.insideOpenShop  - PlayerEnterExit.IsPlayerInsideOpenShop
+ */
+export function updateNpcPresence(buildingType, { hour = 12, insideOpenShop = false } = {}) {
+  const type = buildingType ?? BUILDING_TYPES.None;
+  const gate = (isShop(type) && !insideOpenShop)
+    || (!isShop(type) && type <= BUILDING_TYPES.House4 && type !== BUILDING_TYPES.HouseForSale);
+  if (!gate) return false;
+  return isBuildingOpen(type, hour);
+}

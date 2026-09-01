@@ -8,16 +8,25 @@
 // break the rest, exactly the DFU shape. Escape ends a running rest
 // with its finish text; the end page closes on a click or a key.
 //
-// FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
-// that opened the window (:189-198, `toggleClosedBinding`, captured at
-// OnPush) ends the rest or closes the page. The port cannot: with a
-// window up every host routes keys through overlayAction
-// (ui/input.js), whose first line turns any single character into
-// `char:<k>`, so KeyR arrives as 'char:r' and on the selection page
-// STARTS a rest-for-a-while instead of closing. A per-window
-// toggle-close binding is a UI-arc facility, not a rest law, so this
-// is named rather than bolted on here. The comment that used to stand
-// on this line claimed the re-route already existed.
+// ROAD-B B5 RETIRED THE TOGGLE-BINDING FLAG. It read: "the port
+// cannot: with a window up every host routes keys through
+// overlayAction (ui/input.js), whose first line turns any single
+// character into `char:<k>`, so KeyR arrives as 'char:r'... a
+// per-window toggle-close binding is a UI-arc facility". The facility
+// was already built and in the wrong file's mind: A8's
+// `normalizeCode` (systems/dialogShortcuts.js) is the exact inverse -
+// it turns an action string BACK into the port's key code, 'char:r'
+// into 'KeyR', because every hotkey-carrying window has the same
+// problem and that is where the one answer lives. So Update
+// :187-196 ports whole: `toggleClosedBinding` (:87) is captured at
+// OnPush (:248, and again at :178 - DFU reads the binding twice, once
+// in Setup and once on every push, because the window is a long-lived
+// instance and the player can rebind between openings), and a key
+// event that IS it ends a running rest or closes the selection page.
+// The port's window is built per opening, so ONE capture in the
+// constructor is both reads. GetBackButtonUp's
+// half of the same line is the `back` action every state below
+// already answers.
 
 import { drawText, measureText } from './text.js';
 import {
@@ -28,7 +37,9 @@ import {
 } from '../systems/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { hotkeyHit } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { hotkeyHit, normalizeCode } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table   // B5: and its action-string -> key-code inverse
+import { bindings } from './input.js';               // B5: the live InputManager registry
+import { getBinding } from '../systems/inputActions.js';   // B5: InputManager.GetBinding(Actions.Rest)
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -80,6 +91,11 @@ export class RestWindow {
     this._remainingHoursRented = -1;   // them, carried to the session
     this._pendingEnemySpawn = false;   // a latch raised before a mode is picked
     this._closeDispatched = false;     // onClose is owed ONCE, whichever door closes this
+    // B5: "Store toggle closed binding for this window" - DFU's own
+    // comment (:177/:247). It is READ ONCE, at push, not per key event,
+    // and that is the behaviour: rebinding Rest while the window stands
+    // open does not change the key that closes it.
+    this.toggleClosedBinding = getBinding(bindings(), 'Rest');
     // OnPush (:266-268): "Raise player resting flag when UI opens.
     // This is used for random enemy spawning and influences
     // CastWhenHeld durability loss" - DFU's own comment, and it names
@@ -133,13 +149,33 @@ export class RestWindow {
     // is the exact defect AUDIT 21 hosts F3 fixed for the ticker path.
     if (this._closeDispatched) return;
     this._closeDispatched = true;
+    // B5 - OnPop's UpdateNpcPresence (:277-280). It is INSIDE the
+    // once-guard on purpose: this method is the port's OnPop and the
+    // port's CloseWindow at the same time (dispose() calls it again by
+    // design, per the note above), and re-rolling NPC presence at a
+    // later hour on a second pass would stand people up that the first
+    // pass had correctly left sitting. Ordered here rather than at
+    // DFU's exact position (before the IsResting writes) because the
+    // flags above are unguarded and this cannot be; nothing reads the
+    // two in sequence.
+    //
+    // DFU also clears `ignoreAllocatedBed` on pop (:274). The port
+    // builds a fresh window per opening - DFU keeps one instance in
+    // DaggerfallUI - so that reset has nothing to undo here, and is
+    // named rather than written as a line no pin could kill.
+    this.deps.updateNpcPresence?.();
     this.deps.onClose?.();
   }
 
   dispose() { this._close(); }
 
-  // FLAGGED, all three from OnPop/Update and all three belonging to
-  // other arcs rather than to rest:
+  // FLAGGED, both from OnPop/Update and both belonging to other arcs
+  // rather than to rest. (The third that stood here, OnPop's
+  // UpdateNpcPresence, is LANDED at B5: the law is
+  // characters/interiorPeople.js and `_close` above calls it. Its old
+  // entry said "the port has no NPC-presence pass at all; that is the
+  // interior/talk arc's" - the pass is one boolean over hours the
+  // building-locks module already owned, and it is rest's own caller.)
   //
   //  - OnSleepEnd (:288-289): a sleep of MORE than six hours
   //    (sleepEventMinimumHours, :60) raises an event whose ONE
@@ -152,9 +188,6 @@ export class RestWindow {
   //    magic rounds THROUGH the sleep, so a rested night rerolls as it
   //    passes rather than in one flush at the end. Same items, same
   //    clock, a different moment - written down, not left silent.
-  //  - UpdateNpcPresence (:277-280): leaving the rest window inside a
-  //    building re-rolls which static NPCs are home. The port has no
-  //    NPC-presence pass at all; that is the interior/talk arc's.
   //  - RaiseOnSleepTickEvent (:206-208) has no consumer in DFU's own
   //    tree - it is a mod hook.
 
@@ -223,6 +256,18 @@ export class RestWindow {
     }
   }
 
+  /** `InputManager.GetKeyUp(toggleClosedBinding)` (:193) over the
+   *  port's overlay seam. normalizeCode is A8's inverse of the seam's
+   *  own mangling - overlayAction turns any single character into
+   *  `char:<k>`, and this turns 'char:r' back into 'KeyR', which is the
+   *  alphabet inputActions.js stores bindings in. A window with no Rest
+   *  binding at all (a cleared row) has no toggle, which is DFU's
+   *  KeyCode.None answering false. */
+  _togglePressed(action, e) {
+    if (!this.toggleClosedBinding) return false;
+    return normalizeCode(action, e) === this.toggleClosedBinding;
+  }
+
   input(action, e = null) {
     // A8: the window's four buttons carry their DFU Hotkey
     // (DaggerfallRestWindow.cs:149/152/155/173 - RestForAWhile,
@@ -230,6 +275,45 @@ export class RestWindow {
     // the letter, not this file. The digit row below it is the port's
     // own accelerator, kept: DFU offers no digit here.
     const hot = (b) => hotkeyHit(b, action, e);
+    // B5 - Update :187-196, THE TOGGLE-BINDING CLOSE, and it is FIRST
+    // because DFU's is: the block sits at the head of Update, above
+    // ShowStatus and above the rest ticking.
+    //
+    // The state test is DFU's window stack, not a port invention. Only
+    // TWO of the six states below are the rest window itself: DFU's
+    // 'selection' is mainPanel and 'resting' is counterPanel, and every
+    // other state this port carries is a DaggerfallMessageBox or a
+    // DaggerfallInputMessageBox pushed OVER it (the confirm box
+    // :648-664, the hours prompts :619-624/:700-705, the refusals
+    // :594-596/:753-757, the finish popups :450-503). DaggerfallUI
+    // updates the TOP WINDOW ONLY (DaggerfallUI.cs:433), so while any
+    // of those stands, the rest window's Update - and this block with
+    // it - does not run at all. Typing the rest letter into the hours
+    // field must not close the window under it, and does not.
+    //
+    // NOT ported: the `HotkeySequenceProcessed == NotFound` gate (:189)
+    // - "no BUTTON hotkey claimed this key first". DFU can afford the
+    // race because the toggle is read on the binding's key UP
+    // (GetKeyUp, :193) and the buttons on key DOWN, so the button
+    // always wins a colliding press. The port's overlay seam has no
+    // down/up split (the same structural note StopButton's keyboard
+    // twin carries below), so a player who binds Rest onto F, U, L or S
+    // gets the close rather than the button. Named, not hidden.
+    if ((this.state === 'selection' || this.state === 'resting') && this._togglePressed(action, e)) {
+      // ":193-196 - Window will properly end the rest if the player was
+      // currently resting", DFU's own comment: `currentRestMode !=
+      // Selection` is EndRest, and Selection is CloseWindow.
+      //
+      // :193 is ONE statement - `GetKeyUp(toggleClosedBinding) ||
+      // GetBackButtonUp()` - so the toggle key and the back button are
+      // the same door and must not drift apart inside the port. Both
+      // arms below are therefore exactly what `action === 'back'`
+      // already does in each state, ButtonClick included.
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      if (this.state === 'resting') { this._end(this.session.endEarly()); return; }
+      this._close();
+      return;
+    }
     if (this.state === 'refused') { this._close(); return; }
     // F144: the over-cap box is click-anywhere; dismissing lands on
     // the selection page, NOT back in a prompt - the prompt is gone.
@@ -312,9 +396,17 @@ export class RestWindow {
     if (m && this.value.length < PROMPT_MAX_CHARS) this.value += m[1];
   }
 
+  /** `uiManager.TopWindow != this` (TickRest :364/:399) asked from the
+   *  window, which is the only side that knows which entry it is.
+   *  `deps.topWindow` is the host's live slot - B1 made every host's
+   *  slot the MIRROR OF THE TOP of its stack, so the read is one
+   *  closure and not a second stack lookup. A host that hands none has
+   *  no window over this one. */
+  _isTop() { return this.deps.topWindow ? this.deps.topWindow() === this : true; }
+
   _start(mode, hours) {
     this.mode = mode;
-    this.session = new RestSession(mode, hours, this.deps, this._remainingHoursRented);
+    this.session = new RestSession(mode, hours, this.deps, this._remainingHoursRented, () => this._isTop());
     // GameManager_OnEncounter is subscribed in OnPush (:264) and sets
     // the latch on the WINDOW, so a CreateFoe wave that lands while
     // the player is still on the selection page is not lost - DFU

@@ -108,7 +108,7 @@ import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
-import { restDecision } from '../systems/restSession.js';   // the scene-free open gate, one home
+import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // the scene-free open gate, one home   // ROAD-B B5: GetPreventedRestMessage
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
@@ -899,6 +899,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  hand-written `activeOverlay = null` close paths read as
    *  PopWindow and uncover the window they were laid over. */
   const dungeonWindows = makeWindowStack({ onTop: (w) => { activeOverlay = w; } });
+  /** ROAD-B B5 - THE PUSH DOOR, one home. B1 landed it as
+   *  `ctx.showOverlay` and recorded that a scatter of older
+   *  `if (!activeOverlay) activeOverlay = ...` REFUSALS was left
+   *  behind: each of those is a place DFU calls DaggerfallUI.MessageBox
+   *  (which is `new DaggerfallMessageBox(...); mb.Show()` ->
+   *  uiManager.PushWindow) and the port dropped the message on the
+   *  floor instead. The door is here rather than only on the returned
+   *  ctx because the sites that owe it are built above that object. */
+  function pushDungeonWindow(win) {
+    if (!win) return false;
+    dungeonWindows.reconcile(activeOverlay);   // whatever the slot holds NOW is the top
+    if (dungeonWindows.containsWindow(win)) return true;
+    dungeonWindows.pushWindow(win);
+    return true;
+  }
   // V1: the infection's host seam - the dream/death videos, the
   // fortnight clock raise and the popup (THE FOUR HOSTS RULE). The
   // dungeon has no FACTION.TXT of its own, so a player turned
@@ -908,7 +923,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // cemetery transfer, and a turn above ground needs both.
   const _prevInfectionHost = wireInfectionVideos(renderer, {
     textAt: (id) => textRsc?.plainText(id) ?? null,
-    showText: (lines) => { if (!activeOverlay) activeOverlay = new ActionTextBox(lines); },
+    // ROAD-B B5: VampirismInfection's own DaggerfallUI.MessageBox - a
+    // PUSH. The refusal here meant a player who turned while the
+    // automap or a rest window was up was never told.
+    showText: (lines) => pushDungeonWindow(new ActionTextBox(lines)),
   });
 
   // ── U26: THE NATIVE INVENTORY IN THE DUNGEON ─────────────────────
@@ -1120,12 +1138,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   actions.onShowText = (id) => {
     const lines = rscLines(id);
     if (!lines) return console.warn(`[action] ShowText ${id}: TEXT.RSC record unavailable`);
-    if (!activeOverlay) activeOverlay = new ActionTextBox(lines);
+    // ROAD-B B5: DaggerfallAction's ShowText is DaggerfallUI.MessageBox
+    // (DaggerfallAction.cs) - PushWindow, not "only if the slot is
+    // free". A dungeon's own plaque read as silence whenever anything
+    // else was open.
+    pushDungeonWindow(new ActionTextBox(lines));
   };
   actions.onShowTextInput = (id, submit) => {
     const lines = rscLines(id);
     if (!lines) return console.warn(`[action] ShowTextWithInput ${id}: TEXT.RSC record unavailable`);
-    if (!activeOverlay) activeOverlay = new ActionInputBox(lines, submit);
+    // ...and its DaggerfallInputMessageBox twin, which is worse to
+    // lose: the box is the only way to answer the riddle it asks.
+    pushDungeonWindow(new ActionInputBox(lines, submit));
   };
   actions.onDoorText = (id) => {
     const lines = rscLines(id);
@@ -1304,8 +1328,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // too - three more hosts ask it, and two were asking a much coarser
   // question before this slice.
   const _restDeps = createRestDeps(playerEntity, {
+    // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
+    // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
+    // TOP of its window stack, so the slot IS the answer - and the
+    // reachable test is the second one, where a quest popup pushed by
+    // the rest's own sub-tick suspends it mid-hour.
+    topWindow: () => activeOverlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
-    box: (rows) => { if (!activeOverlay) activeOverlay = new ActionTextBox(rows); },
+    // ROAD-B B5: a PUSH, as the interior host's has been since B1
+    // (`box: (rows) => mountInterior(...)`). RaiseSkills runs from the
+    // rest window's own close, so the slot it was testing was the one
+    // the rest window had just left - and on the level-up path it is
+    // not free at all.
+    box: (rows) => pushDungeonWindow(new ActionTextBox(rows)),
     advanceMinutes: (n) => _restAdvance(n),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED. This host holds the bridge as
@@ -3628,6 +3663,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         enemiesNearby: _restDeps.enemiesNearby(),
         swimming: _activity.swimming,
         grounded: startRestGroundedCheck(_grounded, lastPlayerFeet, collider),
+        preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
@@ -3839,13 +3875,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  closes. The refusal cost the dungeon the quest text outright -
      *  a _TUTOR__ message that arrived while the automap or a rest
      *  window was up simply never appeared. */
-    showOverlay(win) {
-      if (!win) return false;
-      dungeonWindows.reconcile(activeOverlay);   // whatever the slot holds NOW is the top
-      if (dungeonWindows.containsWindow(win)) return true;
-      dungeonWindows.pushWindow(win);
-      return true;
-    },
+    showOverlay(win) { return pushDungeonWindow(win); },
     dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost

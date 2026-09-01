@@ -44,7 +44,7 @@ import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill; F98: every other non-execution exit's
 import { SEVERE_PUNISHMENT_BANISHED, SEVERE_PUNISHMENT_EXECUTED } from '../systems/encounters.js';   // F99: the court's own two bits
-import { PrisonScreenWindow } from '../ui/prisonScreen.js';   // the serving-time presentation (SwitchToPrisonScreen + UpdatePrisonScreen)
+import { PrisonScreenWindow, CourtScreenWindow } from '../ui/prisonScreen.js';   // the serving-time presentation (SwitchToPrisonScreen + UpdatePrisonScreen)   // ROAD-B B5: Setup's courtPanel, the backdrop the trial stands on
 
 /** ReleaseFromPrison (DaggerfallCourtWindow.cs:482-491) opens with
  *      DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(240 * 60);
@@ -85,6 +85,15 @@ export function createArrestFlow({
   // `daysUntilFreedom` row. Absent, the shipped Internal_Strings
   // literal stands.
   localizedText = null,
+  // ROAD-B B5 - InputManager.GetBackButton() (:1075-1078), read every
+  // frame of state 100 (:301-304) to speed the prison countdown up.
+  // It is `Input.GetKey(KeyCode.Escape)`: the RAW key, HELD, neither a
+  // rebindable action nor a thing any window can swallow - which is
+  // why it arrives as its own seam rather than through the overlay's
+  // input(). A host that hands none serves its days at classic speed,
+  // which is what DFU's own "Not in classic" comment says the absence
+  // is worth.
+  backButtonHeld = null,
   // CR1: GuildManager.GetGuild(factionId).IsMember()/Rank for the
   // rescue arms - the member's rank, or null for a non-member. The
   // default is the same guildOfFaction/membershipOf read the quest
@@ -107,6 +116,41 @@ export function createArrestFlow({
     const v = townTalk.texts(id);
     return v?.length && v[0] ? v : [fallback];
   };
+
+  // ---- ROAD-B B5: THE COURTROOM BACKDROP ----
+  //
+  // DaggerfallCourtWindow is ONE window that OPENS on CORT01I0 (Setup
+  // :75-84) and pushes every box of the trial OVER itself
+  // (DaggerfallUI.MessageBox -> uiManager.PushWindow). The port used
+  // townTalk's single overlay slot, so each box REPLACED the last and
+  // there was never a courtroom behind any of them - the FLAG
+  // ui/prisonScreen.js carried in so many words until B1 landed the
+  // stack.
+  //
+  // Two doors, because DFU has two moments: the FIRST box is a real
+  // PushWindow onto the live court window, and each LATER box is
+  // DFU's own `sender.CloseWindow(); MessageBox(next);` - a
+  // one-level replacement that leaves the backdrop beneath, which is
+  // exactly what townTalk.showOverlay does now.
+  let courtScreen = null;
+  function openCourtScreen() {
+    courtScreen = new CourtScreenWindow();
+    townTalk.showOverlay(courtScreen);
+  }
+  /** One box of the trial, over the courtroom. */
+  function courtBox(win, onClosed = null) {
+    if (courtScreen && townTalk.overlay === courtScreen) townTalk.pushOverlay(win, onClosed);
+    else townTalk.showOverlay(win, onClosed);
+  }
+  /** State 100's tail: ReleaseFromPrison ends in CancelWindow (:490),
+   *  which pops the court window itself. The flag is enough - townTalk's
+   *  frame drains a `done` overlay every tick, and the backdrop is not
+   *  the top until the last box has popped off it, so the courtroom
+   *  goes exactly one frame after the final box and not before. The
+   *  reference is KEPT: the terminal arms call release() BEFORE they
+   *  show their box (the AUDIT 21/26/39 ordering), and courtBox still
+   *  has to know that box is the first one over the backdrop. */
+  function closeCourtScreen() { if (courtScreen) courtScreen.done = true; }
 
   function crimeId() {
     const c = playerEntity.crimeCommitted;
@@ -180,6 +224,10 @@ export function createArrestFlow({
     // the port, which left CourtSongs unreachable.
     playerEntity.arrested = true;
     onCourtScreen();
+    // Setup runs before any box: the courtroom is up first, and
+    // RaiseOnCourtScreenEvent (:86) fires from inside it - which is
+    // the line above, kept where it already stood.
+    openCourtScreen();
     const court = startCourt(playerEntity, region(), crimeId(), { rolls });
     // CR1: the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
     // BEFORE the plead box - a rescued player never pleads. The exit
@@ -197,12 +245,12 @@ export function createArrestFlow({
       fillVitalSigns(playerEntity);
       raiseRepForSentence(playerEntity, court);
       release({ reposition: false });
-      townTalk.showOverlay(new ChoiceWindow({
+      courtBox(new ChoiceWindow({
         lines: courtLines(rescue.textId, 'Your guild has arranged your release.', court),
       }));
       return;
     }
-    townTalk.showOverlay(new ChoiceWindow({
+    courtBox(new ChoiceWindow({
       lines: [courtMacros(text(TEXT_COURT_START, 'You stand accused. How do you plead?')[0] ?? '', court)],
       options: [
         { code: 'KeyG', label: 'G - guilty', action: () => finish(pleaGuilty(court, playerEntity), court) },
@@ -212,7 +260,7 @@ export function createArrestFlow({
   }
 
   function notGuilty(court) {
-    townTalk.showOverlay(new ChoiceWindow({
+    courtBox(new ChoiceWindow({
       lines: text(TEXT_HOW_CONVINCE, 'How will you convince the court?'),
       options: [
         { code: 'KeyD', label: 'D - debate (Etiquette)', action: () => verdict(court, true) },
@@ -241,11 +289,11 @@ export function createArrestFlow({
       // - so the acquitted player IS put down at the entrance, after
       // the refill and the reputation, not before.
       release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.', court) }));
+      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.', court) }));
       return;
     }
     if (r.outcome === 'banished') { finish({ outcome: 'banished' }, court); return; }
-    townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }),
+    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }),
       () => finish(resolveGuiltyVerdict(court, playerEntity), court));
   }
 
@@ -259,7 +307,7 @@ export function createArrestFlow({
       // left with 1HP outside city gates", DFU's own comment.
       fillVitalSigns(playerEntity);
       release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));
+      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));
       return;
     }
     if (result.outcome === 'executed') {
@@ -272,7 +320,7 @@ export function createArrestFlow({
       // mistaken for verified. See court.js F7.
       severePunishment(SEVERE_PUNISHMENT_EXECUTED);
       release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_EXECUTED, 'You have been executed.', court) }));
+      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_EXECUTED, 'You have been executed.', court) }));
       return;
     }
     if (result.outcome === 'prison') {
@@ -302,9 +350,16 @@ export function createArrestFlow({
       // that it is.
       raiseRepForSentence(playerEntity, court);
       const days = result.days;
+      // SwitchToPrisonScreen (:511-524). DFU swaps the background on
+      // the court window itself; the port lays the prison panel at the
+      // SAME stack level (showOverlay's one-level replacement), so the
+      // found-guilty box it replaces is gone and the courtroom is still
+      // underneath. Same screen, a different owner - named in
+      // ui/prisonScreen.js's header.
       townTalk.showOverlay(new PrisonScreenWindow({
         daysInPrison: days,
         localizedText,
+        speedUp: backButtonHeld,
         // UpdatePrisonScreen's zero arm (:471-479), in ITS order:
         // both prevent flags, THEN the one RaiseTime of the whole
         // sentence, then InPrison clears and the vitals refill.
@@ -424,6 +479,10 @@ export function createArrestFlow({
    *  else is put down at the location entrance. */
   function release({ reposition = true } = {}) {
     clearArrest();
+    // ReleaseFromPrison ends in CancelWindow (:490) - the court window
+    // itself pops. EVERY court exit funnels through release(), which is
+    // why the courtroom is closed here and not on one arm.
+    closeCourtScreen();
     // ReleaseFromPrison's tail, in ITS order (:487-489): the
     // reposition FIRST, then ClearEnemies - so the sweep runs in the
     // world the player has just landed in, not the one they left.

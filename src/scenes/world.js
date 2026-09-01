@@ -54,7 +54,7 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
-import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
+import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
 import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
@@ -136,7 +136,7 @@ import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrain
 // The court release's RandomStartMarker arm (StreamingWorld's
 // PositionPlayerToLocation), the law and its two location-type reads.
 import { positionPlayerToLocation, locationStartMarkers, entranceOptionsForLocationType } from '../world/locationEntrance.js';
-import { preloadPrisonScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen
+import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
@@ -1060,7 +1060,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         day: !isNight(minuteNow()), inside: false,
       });
       const lines = out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.'];
-      if (!townTalk.overlay) townTalk.showOverlay(new ActionTextBox(lines));
+      // ROAD-B B5: a PUSH. PlayerEntity's OnExhausted handler is a plain
+      // DaggerfallUI.MessageBox, and DaggerfallUI.MessageBox is
+      // `new DaggerfallMessageBox(...); mb.Show()` -> uiManager
+      // .PushWindow (DaggerfallUI.cs:1330-1360) - it has never asked
+      // whether something else is open. Collapsing from exhaustion
+      // WITH A WINDOW UP is not exotic: the fatigue drain runs through
+      // the inventory, the map and the spellbook alike, and the
+      // refusal meant the one message that explains the lost hour (or
+      // the drowning) was dropped.
+      townTalk.pushOverlay(new ActionTextBox(lines));
       if (out.kind === 'rest') {
         playerTicker.advance(60);
         playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
@@ -1222,6 +1231,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { where: paperDollWhere() });   // U8f/U8g + UI3: SCBG/BODY/FACE + the item-record pipeline ( Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
   preloadPrisonScreenArt({ renderer, fetchBytes, palette })   // PRIS00I0 - the serving-time screen
     .catch((e) => console.warn('[court] prison screen art unavailable:', e?.message ?? e));
+  preloadCourtScreenArt({ renderer, fetchBytes, palette })   // ROAD-B B5: CORT01I0 - Setup's courtPanel (:75-84)
+    .catch((e) => console.warn('[court] court screen art unavailable:', e?.message ?? e));
   // S3d: the INTERIM dagger seed is the FALLBACK only - a character
   // who runs chargen gets AssignStartingGear's real kit instead, so
   // seeding here would leave a stray dagger in the bag.
@@ -1664,6 +1675,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const arrestFlow = createArrestFlow({
     townTalk, playerEntity, regionIndex: () => _questRegionIndex(),
     onCourtScreen: () => cameraRecoiler.reset(),
+    // ROAD-B B5: InputManager.GetBackButton, the prison countdown's
+    // held-Escape accelerator (DaggerfallCourtWindow.cs:301-304).
+    backButtonHeld: () => backButtonHeld,
     // ReleaseFromPrison's last two lines (DaggerfallCourtWindow.cs:488-489).
     // GameManager.ClearEnemies destroys every active enemy object and every
     // pending foe spawner; above ground that is the encounter pool. The
@@ -2284,6 +2298,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
   const outdoorRestDeps = createRestDeps(playerEntity, {
+    // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
+    // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
+    // TOP of its window stack, so the slot IS the answer - and the
+    // reachable test is the second one, where a quest popup pushed by
+    // the rest's own sub-tick suspends it mid-hour.
+    topWindow: () => townTalk.overlay,
     // The MASTERY box (RaiseSkills :1390-1401): TEXT.RSC 4020 in a
     // click-anywhere box when a primary skill lands on 100. Same
     // overlay slot the rest window has just vacated.
@@ -2357,6 +2377,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
       racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
@@ -3662,7 +3683,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
   };
+  // ROAD-B B5 - InputManager.GetBackButton() (InputManager.cs:1075-1078)
+  // is `Input.GetKey(KeyCode.Escape)`, a RAW held read that no window
+  // intercepts. This ladder returns at `townTalk.keydown` while a
+  // window is up, so `keys` never sees the press - hence its own latch,
+  // above the return. Its one consumer is the prison countdown's
+  // accelerator (DaggerfallCourtWindow.cs:301-304).
+  let backButtonHeld = false;
   addEventListener('keydown', (e) => {
+    if (e.code === 'Escape') backButtonHeld = true;
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
     // host rule); preventDefault stops the browser reload.
@@ -3744,7 +3773,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); });
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
