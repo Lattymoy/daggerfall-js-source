@@ -96,23 +96,51 @@ test('AUDIT 39: DELETE is two presses in BOTH books, and the words are the class
   assert.doesNotMatch(arm, /splice/, 'the Delete button must not touch the array');
   // ...and the two refusals still answer FIRST, as they do in DFU.
   assert.ok(arm.indexOf('sel.undeletable') < arm.indexOf('deleting = sel.i;'));
-  // ONLY YES SPLICES, and the close is OUTSIDE the Yes arm (:851) -
-  // which is what the port's classic confirmDelete does too.
-  const card = del.slice(del.indexOf('if (deleting !== null) {'));
-  const yes = card.slice(card.indexOf('yes.onclick'), card.indexOf('const no ='));
-  assert.match(yes, /list\.splice\(deleting, 1\);/);
-  assert.match(yes, /onExit\(\);/);
-  assert.match(card, /no\.onclick = \(\) => \{ deleting = null; onExit\(\); \};/,
-    'No deletes nothing and still closes');
-  assert.equal((card.match(/splice/g) ?? []).length, 1, 'exactly one splice, on Yes');
-  // The box is MODAL: Escape is its No, and the rail is dead under it.
+  // ONLY YES SPLICES, and BOTH answers dismiss the CARD, not the book.
+  //
+  // AUDIT-39r: THIS PIN MOVED, DELIBERATELY. The first version read
+  // the CloseWindow() at :851 as "either answer ends the book" and
+  // demanded onExit() in both arms. That call is
+  // UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+  // RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+  // TopWindow - the YesNo box mb.Show() pushed, since
+  // DaggerfallMessageBox.ActivateButton (:479-484) only raises the
+  // event. The spellbook stays, which is why the Yes arm bothers with
+  // RefreshSpellsList(true) and UpdateSelection().
+  const confirm = src.slice(src.indexOf('function confirmDelete(yes) {'));
+  const bodyOf = confirm.slice(0, confirm.indexOf('\n}'));
+  assert.match(bodyOf, /if \(yes && deleting !== null\)/, 'only Yes splices');
+  assert.match(bodyOf, /list\.splice\(deleting, 1\);/);
+  assert.match(bodyOf, /deleting = null;\n\s*render\(\);/, 'both answers redraw the book that stays');
+  assert.doesNotMatch(bodyOf, /onExit/, 'no answer to this box closes the spellbook');
+  assert.equal((src.match(/\.splice\(/g) ?? []).length, 1, 'exactly one splice in the whole file, and it is this one');
+  // The box is MODAL, as a PUSHED DaggerfallMessageBox is: the window
+  // under the scrim is disabled outright, so Ready cannot ready a
+  // spell and a rail row cannot silently drop the question.
+  const scrim = src.slice(src.indexOf('if (deleting !== null) {', src.indexOf('win.append(body);')));
+  assert.match(scrim, /win\.querySelectorAll\('button, input'\)\) b\.disabled = true;/,
+    'every control beneath the prompt goes dead');
+  assert.match(scrim, /win\.append\(deleteScrim\(\)\);/, 'and the prompt is drawn OVER the window');
+  assert.match(read('src/ui/enhancedStyle.js'), /\.sb-shell \.sb-ask \{ position: absolute; inset: 0;/,
+    'the scrim is a scrim, not a card parked in the detail column');
+  // ...and it answers to the same two keys the classic window does
+  // (spellbookWindow.js KeyY/KeyN), which the first version had not:
+  // Escape was its only answer and nothing at all was Yes.
   const onKey = src.slice(src.indexOf('function onKey(e)'));
   assert.ok(onKey.indexOf('if (deleting !== null) {') < onKey.indexOf("e.key === 'ArrowDown'"),
     'the arrows must not walk the rail while the box is up');
-  // and the classic window it is now level with has not moved.
+  const gate = onKey.slice(onKey.indexOf('if (deleting !== null) {'), onKey.indexOf("e.key === 'ArrowDown'"));
+  assert.match(gate, /e\.code === 'KeyY'/, 'Y answers Yes');
+  assert.match(gate, /e\.code === 'KeyN'/, 'N answers No');
+  assert.match(gate, /overlayAction\(e\) === 'back'/, 'and Escape is the No the classic window reads');
+  assert.match(gate, /confirmDelete\(yes\);/, 'both keys land on the one handler the buttons use');
+  // and the classic window it is now level with reads the same law.
   const classic = read('src/ui/spellbookWindow.js');
   assert.match(classic, /this\.deleteSpellIndex = this\.selectedIndex;\n\s*this\.top = 'delete';/);
   assert.match(classic, /confirmDelete\(yes\) \{\n\s*if \(yes && this\.deleteSpellIndex !== -1\)/);
+  const classicConfirm = classic.slice(classic.indexOf('confirmDelete(yes) {'));
+  assert.doesNotMatch(classicConfirm.slice(0, classicConfirm.indexOf('\n  }')), /this\._close\(\)/,
+    'the classic book carried the same misreading and no longer does');
 });
 
 test('PX23 book: the pixel family\'s own bones, and no invented furniture', () => {

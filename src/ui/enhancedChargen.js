@@ -321,9 +321,16 @@ function classMethodStage() {
 // answer starts (aIndex/bIndex/cIndex), so here they are three
 // buttons and the scroll has nothing left to do.
 //
-// The constellation animation is CEL art and this view loads none -
-// startConstellationAnim returns 0 seconds without it - so no answer
-// here is ever locked behind one.
+// AUDIT-39r: AND THE ANSWER MUST LAND ON THE PRESS. The first draft
+// said the constellation could not play here because this view loads
+// no CEL art - which was false twice over. `_art` is a MODULE
+// singleton and every host warms it at boot (preloadChargenArt, with
+// no skin gate), so startConstellationAnim reports a real length; and
+// nothing on this side ticks the flow, so the lock it sets would only
+// have come off on the wall-clock watchdog, three to seven seconds
+// later, with the press that finally landed applying the player's
+// choice to the NEXT question. muteConstellation is the answer: this
+// view paints no chart, so it plays no animation.
 function classQuestionsStage() {
   const pane = el('div', 'stagebody solo');
   // EndQuestions' description box (:_endClassQuestions) is a Yes/No
@@ -1360,6 +1367,29 @@ function releaseLock() {
 }
 
 /**
+ * AUDIT-39r R20 - THE CONSTELLATION SEAM, CUT FOR THIS SKIN.
+ *
+ * ChargenFlow times exactly one thing: the constellation CEL an
+ * answered question lights, which locks the questions screen until
+ * CEL_OnAnimEnd releases it (chargen.js:562-568, :580-588). The
+ * CLASSIC screen paints that chart and its host ticks the flow every
+ * frame, so the lock is the animation you are watching. This view
+ * paints no chart and its overlay ticks nothing, so the same lock is
+ * three to seven seconds of dead buttons over a picture nobody drew.
+ *
+ * The seam is injectable for exactly this reason (chargen.js:216-220,
+ * "so the headless suite drives an animation with no renderer"), and
+ * a start that reports 0 is the flow's own signal to run the anim-end
+ * body AT ONCE - the same path a host with no art takes. Nothing else
+ * about the answer changes: the weight, the class resolve and the
+ * Ignite one-shot all still happen in answerClassQuestion.
+ */
+export function muteConstellation(f) {
+  if (f) f.constellationAnim = { start: () => 0, tick: () => false, stop: () => {} };
+  return f;
+}
+
+/**
  * Mount the wizard. `picker` is TAMRIEL2's DFBitmap when the caller
  * has it - absent, the map degrades to the named list and the wizard
  * runs on regardless.
@@ -1371,7 +1401,7 @@ export function mountEnhancedChargen(hostEl, {
   injectEnhancedStyle();
   injectEnhancedFonts();
   host = hostEl;
-  flow = f;
+  flow = muteConstellation(f);
   onExit = exit;
   loadFaces = faceLoader;
   faces = null;

@@ -1600,6 +1600,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
   color: #d8cfae; font: inherit; font-size: 15px; }
 .sb-shell .sb-rename input:focus { outline: none; border-color: var(--brass); }
+/* AUDIT-39r: the delete prompt covers the window it asks about. DFU's
+   DaggerfallMessageBox is a PUSHED window, so the book beneath it is
+   inert; here the book's controls are disabled and this scrim is what
+   makes that visible rather than merely true. */
+.sb-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.sb-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
+.sb-shell .sb-ask .sb-acts { justify-content: center; }
 
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the

@@ -11,7 +11,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { traceProvinces, PROVINCE_NAMES, INERT_REGION, MAP_W, MAP_H } from '../src/ui/provinceMap.js';
-import { STAGE_RAIL } from '../src/ui/enhancedChargen.js';
+import { STAGE_RAIL, muteConstellation } from '../src/ui/enhancedChargen.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
 import { STAT_KEYS_ORDER } from '../src/systems/chargen.js';
 import { RACE_TEMPLATES } from '../src/systems/races.js';
@@ -251,6 +251,58 @@ test('AUDIT 39: the quiz button reaches a question the view can draw, and A/B/C 
   assert.equal(f.applyHit({ answerClass: 0 }), true, 'the view\'s answer door');
   assert.equal(f.qAnswered, 1);
   assert.notEqual(f.qDisplay, first, 'and the next question is on screen');
+});
+
+test('AUDIT-39r: the enhanced quiz answers on the PRESS - no invisible constellation locks it', () => {
+  // The stage shipped on a false premise: "this view loads no CEL art,
+  // so startConstellationAnim returns 0". `_art` is a MODULE singleton
+  // and every host warms it at boot (preloadChargenArt, ungated by
+  // skin), so on a real install the animation starts, qAnimIndex
+  // latches, and the enhanced side - whose overlay tick() is a no-op -
+  // never runs _celAnimEnd. answerClassQuestion then refuses every
+  // press until the wall-clock watchdog (chargen.js:562-568), and the
+  // press that finally clears it releases the OLD question and applies
+  // the player's choice to the NEXT one.
+  //
+  // A host with the CELs warm, exactly: a start that reports a length
+  // and a tick that never finishes.
+  const warm = () => ({ start: () => 3, tick: () => true, stop: () => {} });
+
+  // WITHOUT the mute this is the fault, and the pin says so out loud -
+  // if muteConstellation is reverted, the assertions below are what
+  // the enhanced screen does.
+  const locked = wizard();
+  locked.state = 'classMethod';
+  locked.applyHit({ classMethod: 'questions' });
+  locked.constellationAnim = warm();
+  const q1 = locked.qDisplay;
+  assert.equal(locked.applyHit({ answerClass: 0 }), true);
+  assert.ok(locked.qAnimIndex >= 0, 'the lock latches on a host with art');
+  assert.equal(locked.qDisplay, q1, 'and the SAME question is still on screen');
+  assert.equal(locked.applyHit({ answerClass: 1 }), false, 'the second press is swallowed');
+
+  // With it, the answer lands and the next question is up at once -
+  // the path a host with no art already took.
+  const f = wizard();
+  f.state = 'classMethod';
+  f.applyHit({ classMethod: 'questions' });
+  f.constellationAnim = warm();
+  muteConstellation(f);   // what mountEnhancedChargen does to the flow it is handed
+  const first = f.qDisplay;
+  assert.equal(f.applyHit({ answerClass: 0 }), true);
+  assert.equal(f.qAnimIndex, -1, 'nothing is latched, so nothing has to be waited out');
+  assert.notEqual(f.qDisplay, first, 'the next question is on screen with the press');
+  const second = f.qDisplay;
+  assert.equal(f.applyHit({ answerClass: 1 }), true, 'and the very next press lands too');
+  assert.equal(f.qAnswered, 2);
+  assert.notEqual(f.qDisplay, second, 'on the question the player was actually reading');
+
+  // ...and the view really does cut that seam, rather than the pin
+  // proving a helper nobody calls.
+  const view = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  assert.match(view, /flow = muteConstellation\(f\);/, 'the mount mutes the flow it is handed');
+  assert.doesNotMatch(view, /startConstellationAnim returns 0 seconds without it/,
+    'and the false premise is gone from the stage that rested on it');
 });
 
 test('AUDIT 39: the class list\'s last row reaches a builder the view can drive', () => {

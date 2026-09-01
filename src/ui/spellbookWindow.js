@@ -36,10 +36,20 @@
 // - DELETE refuses the vampire and lycanthropy tags with their own
 //   messages BEFORE prompting (:821-831) - those spells have no way
 //   back until the curse is cured.
-// - both confirmations CLOSE THE BOOK. DeleteSpellConfirm and
-//   SortSpellsConfirm each end in CloseWindow() outside the Yes arm
-//   (:851, :924), so answering either way puts you back in
-//   the world. Kept.
+// - the DELETE confirmation pops the BOX, not the book. This entry
+//   used to read "both confirmations CLOSE THE BOOK ... Kept", off
+//   the CloseWindow() that sits outside the Yes arm (:851). AUDIT-39r
+//   read the call through: it is the non-virtual
+//   UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+//   RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+//   TopWindow, and TopWindow is the YesNo box mb.Show() pushed -
+//   DaggerfallMessageBox.ActivateButton (:479-484) raises the event
+//   and never pops itself. So the box goes and the book stays, which
+//   is the only reading under which that arm's own
+//   RefreshSpellsList(true) and UpdateSelection() do any work; the
+//   same law is written out in nativeTrade's _confirm.
+//   SortSpellsConfirm (:924) is the identical construct and still
+//   closes the book here - one audit's scope, not two.
 // - SORT is alphabetical, and only if that changed nothing does it
 //   sort by point cost (:911-921).
 // - the swap buttons move the spell AND the selection, then force
@@ -472,18 +482,28 @@ export class SpellbookWindow {
     this.top = 'delete';
   }
 
-  /** DeleteSpellConfirm_OnButtonClick (:839-852) - note the
-   *  CloseWindow() OUTSIDE the Yes arm (:851): either answer closes. */
+  /** DeleteSpellConfirm_OnButtonClick (:839-852).
+   *
+   *  AUDIT-39r: the trailing `CloseWindow()` (:851) reads as "either
+   *  answer closes the book" and is not. It is the non-virtual
+   *  UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+   *  RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+   *  TopWindow - and TopWindow is the YesNo box `mb.Show()` pushed,
+   *  because ActivateButton (DaggerfallMessageBox.cs:479-484) only
+   *  raises the event and never pops itself. So the box goes and the
+   *  BOOK STAYS, which is the only reading under which this arm's own
+   *  `RefreshSpellsList(true); UpdateSelection();` do any work. This
+   *  port already writes that law out in nativeTrade's _confirm; the
+   *  book had been reading it backwards since U42. */
   confirmDelete(yes) {
     if (yes && this.deleteSpellIndex !== -1) {
       const list = this.deps.spells?.() ?? [];
       list.splice(this.deleteSpellIndex, 1);
-      this.deleteSpellIndex = -1;
-      this.refreshSpellsList(true);
+      this.refreshSpellsList(true);   // UpdateSelection rides along: the clamp is in here
       this._edit();
     }
+    this.deleteSpellIndex = -1;
     this.top = null;
-    this._close();
   }
 
   /** SwapButton_OnMouseClick (:872-897), both arms including the
