@@ -24,7 +24,7 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets, pickQuestFoe } from '../player/activate.js';   // QG1: the foe-click door
+import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb } from '../player/activate.js';   // QG1: the foe-click door
 import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -97,7 +97,10 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
-import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../systems/talk.js';
+import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk.js';
+// PlayerActivate.ActivateBulletinBoard (:706-739) - the town sign's arm
+import { BULLETIN_BOARD_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT, bulletinBoardRows } from '../systems/bulletinBoard.js';
+import { tokenRows } from '../ui/messageBox.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, NO_POTION_INGREDIENTS } from '../systems/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
@@ -308,7 +311,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, boardTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration - the modal frames' own axes
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
@@ -1516,6 +1519,37 @@ export function createWorldModes(host) {
    *  (:882 shelves, :907 the owned latch, :911 house containers), so
    *  it is spelled once here and not three times below. */
   const stockedToday = () => createStockedDate(gameDate());
+  /** ActivateBulletinBoard (PlayerActivate.cs:706-739), verbatim: the
+   *  reach gate first, then the mill's SIGN face, then the box.
+   *
+   *  The rumour comes back as TOKENS already macro-expanded by
+   *  GetNewsOrRumorsForBulletinBoard (:1378-1380), and DFU heads them
+   *  with the location's name - so the sign reads as a town notice
+   *  rather than a floating sentence. A town whose mill has nothing
+   *  fit for a sign STILL opens the box (:727 only guards the second
+   *  half): the name alone, which is the sign standing empty. */
+  function activateBulletinBoard(aabb, eye, dir) {
+    if (!aabb) return;
+    // :709-713 - `hit.distance > MobileNPCActivationDistance` speaks
+    // the mid-screen refusal and returns. The pick reached to
+    // RayDistance, so this is the board's own second test.
+    const d = rayAabb(eye, dir, aabb);
+    if (d === null || d > BULLETIN_BOARD_ACTIVATION_DISTANCE) {
+      townTalk?.say?.(TOO_FAR_AWAY_TEXT);
+      return;
+    }
+    // PlayerGPS.CurrentLocalizedLocationName (:721). Standing in the
+    // wilderness there is no directory and no name - the head row is
+    // then empty, which is what C#'s own empty CurrentLocationName
+    // would give (no board stands out there to click regardless).
+    const locationName = buildingDirectory?.()?.locationName ?? '';
+    // DaggerfallUI.MessageBox(tokens) (:738) - the composition, the
+    // token->row law and the starter-label drop all live in
+    // systems/bulletinBoard.js; this end owns only the window.
+    const rows = bulletinBoardRows(locationName, bulletinBoardNews?.() ?? null, tokenRows);
+    townTalk?.showOverlay?.(new ChoiceWindow({ lines: rows.map((r) => r.text) }));
+  }
+
 
   function activateStaticNpc(pn) {
     if (!pn) return;
@@ -2999,12 +3033,27 @@ export function createWorldModes(host) {
       if (!pn.width) return;
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
+    // THE BULLETIN BOARDS, in the SAME ray as the doors and the street
+    // NPCs - PlayerActivate casts one ray and routes by what it hit
+    // (:314, :393-398), so a board and a door compete by distance.
+    // Their reach here is the RAY's, not the board's: DFU's hit test
+    // is the raycast (RayDistance), and the board's own
+    // MobileNPCActivationDistance is a SECOND test inside
+    // ActivateBulletinBoard (:709-713) whose failure speaks the
+    // refusal instead of falling through. A board the player can see
+    // but not reach therefore consumes the click, exactly as C# does.
+    const boards = boardTargets?.() ?? [];
+    boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE }));
     const key = pickActivatable(eye, dir, targets, baseCollider());
     if (key === null) return false;
     // ...and the NPC arm ENDS the activation, exactly as the interior
     // ray's does: an NPC under the ray is not a door.
     if (typeof key === 'string' && key.startsWith('person:')) {
       activateStaticNpc(npcs[Number(key.split(':')[1])]);
+      return true;
+    }
+    if (typeof key === 'string' && key.startsWith('board:')) {
+      activateBulletinBoard(boards[Number(key.split(':')[1])], eye, dir);
       return true;
     }
     const hit = entries[key];

@@ -28,6 +28,7 @@ import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: 
 import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
@@ -560,6 +561,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
     const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
     const pixelNpcFlats = []; // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs, pixel-local
+    const pixelBoards = [];   // the block's BULLETIN BOARDS (model 41739), pixel-local boxes
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
       scaledBillboardSize(light210.getSize(record), light210.getScale(record));
@@ -633,6 +635,14 @@ export async function bootWorld(canvas, renderer, params, status) {
           models.push({ gpu, local, _box: box, _order: placed.modelIdNum });   // EV6: sort key
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
+          // THE BULLETIN BOARDS. RMBLayout stands model 41739
+          // STANDALONE rather than combining it (:857, :935) for the
+          // sole purpose of hanging DaggerfallBulletinBoard off it
+          // (:966-970), which is the component PlayerActivate's ray
+          // looks for (:393-398). This port has no components, so the
+          // pixel keeps the boards it stood - pixel-local, like its
+          // NPCs and lights - and the activation ray reads that list.
+          if (isBulletinBoard(placed.modelIdNum)) pixelBoards.push({ box });
           // Building models expose their static doors for E-transitions.
           if (cpu.doors && cpu.doors.length) {
             // StaticDoor.blockIndex must be TRUTHFUL (RMBLayout.cs:848
@@ -785,6 +795,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
+      boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
       locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
@@ -3962,14 +3973,16 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  (TeleportPc.cs:120-135) - scene space per the mounted mode. */
     setPlayerScenePosition: (p) => { if (p) modes?.setPlayerScenePosition?.(p); },
   };
-  // TK-i: THE RUMOR MILL beside the bridge. The mill's own consumers
-  // (Any news?, bulletin boards, the questor-post greeting) mount
-  // with TK-v; the classic-rumor import waits on a RUMOR.DAT fetch
-  // (game data, loaded when present); ExpandRandomTextRecord's full
-  // macro pass is TK-iii's - the interim joins the record's rows
-  // plainly, recorded. AddNonQuestRumor's PRODUCER (the regional
-  // faction sim, PlayerEntity.RegionPowerAndConditionsUpdate) pends
-  // the Systems lane, and THE REFRESH CULL rides with it.
+  // TK-i: THE RUMOR MILL beside the bridge. Its three consumers are
+  // all mounted now: "Any news?" and the questor-post greeting came in
+  // with TK-v, and the BULLETIN BOARD's sign face reads through
+  // `bulletinBoardNews` below (PlayerActivate.cs:706-739 - the arm
+  // worldModes' exterior ray runs). The classic-rumor import runs off
+  // the RUMOR.DAT the classic-save loader parses, in the one place DFU
+  // reads that file (SaveGames.OpenSave :251-260). AddNonQuestRumor's
+  // PRODUCER (the regional faction sim, PlayerEntity.
+  // RegionPowerAndConditionsUpdate) pends the Systems lane, and THE
+  // REFRESH CULL rides with it.
   /** ExpandQuestMessage(quest, ref tokens, true) then TokensToString -
    *  the SAME pass both quest-token consumers in TalkManager run:
    *  the rumor mill's (:1425-1431) and GetAnswerFromTokensArray's
@@ -4768,6 +4781,28 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return out;
     },
+    // THE BULLETIN BOARDS, through the same LIVE floating-origin
+    // translation the street NPCs ride - DFU's own hit is a world-space
+    // raycast (PlayerActivate.cs:314, :393-398), so the box has to be
+    // in the frame the ray is cast in. pickActivatable takes
+    // {min,max}; the pixel keeps the 6-array the culling box uses.
+    boardTargets: () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.boards?.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (const b of p.boards) {
+          out.push({
+            min: [b.box[0] + t[0], b.box[1] + t[1], b.box[2] + t[2]],
+            max: [b.box[3] + t[0], b.box[4] + t[1], b.box[5] + t[2]],
+          });
+        }
+      }
+      return out;
+    },
+    // ActivateBulletinBoard's news (:716) - the mill's SIGN face,
+    // ported at TK-i and until now called by nothing.
+    bulletinBoardNews: () => rumorMill.getNewsOrRumorsForBulletinBoard(),
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity. Door
     // positions resolve in the pixel's LOCATION frame (the raw

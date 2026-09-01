@@ -68,6 +68,7 @@
 // box off the screen the way this file used to.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { bitmapToColor32 } from './hud.js';
 import { drawText, measureText } from './text.js';
 import { shadowText } from './nativePanel.js';
@@ -140,6 +141,38 @@ function buttonTex(record) {
 }
 
 const roundUpSlice = (v) => (v > MIN_BOX_SIDE ? Math.ceil(v / SLICE) * SLICE : MIN_BOX_SIDE);
+
+/** MultiFormatTextLabel.LayoutTextElements (:316-378) over a TOKEN
+ *  array - linesById's row law, but starting from tokens a caller
+ *  already holds rather than from record bytes. TEXT tokens APPEND to
+ *  the row being built (AddTextLabel advances cursorX, :247); NewLine
+ *  (0x00, which is also NewLineOffset) and JustifyLeft (0xfc) close
+ *  the row; JustifyCenter (0xfd) closes it AND centres it, because it
+ *  reaches back and stamps HorizontalAlignment.Center on `lastLabel`
+ *  (:342-344) - the row it has just finished. Everything else
+ *  (PositionPrefix's tab, FontPrefix, the cursor positioner, the
+ *  record terminator) moves no row, exactly as the switch's remaining
+ *  arms do not.
+ *
+ *  No trimming: linesById drops trailing empties because a record's
+ *  bytes always end in break bytes, and a caller composing its own
+ *  token list (PlayerActivate's bulletin board, :709-736) means every
+ *  row it wrote. */
+export function tokenRows(tokens) {
+  const rows = [];
+  let cur = '';
+  for (const token of tokens ?? []) {
+    const f = token?.formatting;
+    if (f === RSC.NewLine || f === RSC.JustifyLeft || f === RSC.JustifyCenter) {
+      rows.push({ text: cur, center: f === RSC.JustifyCenter });
+      cur = '';
+      continue;
+    }
+    if (f === TOKEN_TEXT) cur += token.text ?? '';
+  }
+  if (cur) rows.push({ text: cur, center: false });
+  return rows;
+}
 
 /** Rows may arrive as plain strings or as TextRsc.linesById's
  *  { text, center } records. AUDIT 17g F2: a plain string CENTRES,

@@ -43,6 +43,7 @@ import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, 
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
@@ -333,6 +334,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const flatGroups = new Map(); // "archive_record" -> [centers]
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
   const exteriorNpcFlats = [];  // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs
+  const bulletinBoards = [];    // the blocks' BULLETIN BOARDS (model 41739), world-frame boxes
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   for (const b of loc.blocks) {
@@ -347,6 +349,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       const cpu = cpuModels.get(placed.modelIdNum);
       drawList.push({ mesh, matrix, order: placed.modelIdNum, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) });   // EV3; EV6: sort key
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
+      // THE BULLETIN BOARDS. RMBLayout stands model 41739 STANDALONE
+      // (:857, :935) so it can carry DaggerfallBulletinBoard (:966-970)
+      // - the component PlayerActivate's ray looks for (:393-398).
+      // World-frame here, like this host's doors and its street NPCs.
+      if (isBulletinBoard(placed.modelIdNum)) {
+        const b3 = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix);
+        bulletinBoards.push({ min: [b3[0], b3[1], b3[2]], max: [b3[3], b3[4], b3[5]] });
+      }
       colliderTris += cpu.indices.length / 3;
       // Building models expose their static doors for E-transitions
       // (P7: the world's registry shape; matrices are already
@@ -1451,6 +1461,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the same list the activation ray reads for a building's people,
     // one mode up (PlayerActivate.ActivateStaticNPC :741-767).
     npcTargets: () => exteriorNpcs,
+    // ...and the town signs, in the same ray (PlayerActivate.cs:314,
+    // :393-398). This probe host runs no rumor mill, so it hands over
+    // no `bulletinBoardNews` and the board opens on the location name
+    // alone - which is the arm C# itself takes when the mill has
+    // nothing fit for a sign (:727 guards only the second half).
+    boardTargets: () => bulletinBoards,
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity (the T3c
     // pool merge) + the directory name by buildingKey.
