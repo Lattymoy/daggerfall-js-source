@@ -2101,6 +2101,61 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .charcol .wornrow .tile { width: 34px; height: 34px; }
 .pack-shell .charcol .transport .tplaque { min-height: 44px; padding: 6px 12px; }
 .pack-shell .charcol .transport { margin-top: 10px; }
+/* PX31 (Mac: the inventory is hidden at the bottom and gets no
+   breathing room): AT DESKTOP WIDTHS THE DOCK IS A COLUMN, not a
+   dock. Measured on the shipped screen before this rule at three
+   desktop viewports, all identical because the window is capped at
+   660: title 62, character region 400, tab strip 38, and the item
+   list left with A 116px VIEWPORT - 17.6% of the window, two tiles
+   deep and 1036 wide. The region is fixed to its content (the worn
+   map is 298 tall and does not shrink), so every pixel the window
+   does not have comes out of the list, and the list was the only
+   thing in the window that scrolls.
+   The window is WIDE and the layout was stacked, so the fix is
+   horizontal: the region keeps the width it actually uses (the map
+   is width min(960px,100%) and its flanks are 1fr, so it narrows
+   without a rewrite) and the list takes the rest at FULL HEIGHT.
+   Nothing about the window's height changes - raising the 660 cap
+   is what swallowed the game behind the window on 2026-08-31 and
+   was reverted whole.
+   THE PHONE IS NOT THIS PROBLEM and is not touched: a Pixel 5
+   measured a 250px list showing seven rows, because there the
+   window is 94dvh and the region is the same 400. The breakpoint is
+   min-width, so the stacked layout stays the default and this is
+   the wide-screen departure from it. */
+@media (min-width: 1000px) {
+  .pack-shell .pack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    flex-direction: row; min-height: 0; }
+  .pack-shell .pack-main { min-width: 0; min-height: 0; }
+  /* the border moves with the wall: it was the top of a dock and it
+     is the side of a column. */
+  .pack-shell .pack-dock { min-height: 0; border-top: 0;
+    border-left: 2px solid rgba(125,116,96,0.35); }
+  /* THE TAB STRIP IS A 2x2, DELIBERATELY. The four tabs need about
+     550px on one line and no column here is that wide, so the strip
+     WRAPPED - which cost the same 76px this grid costs and looked
+     like an accident, the counts flung to the right of two ragged
+     rows by their own margin-left:auto. TABS is imported from
+     nativeInventory and is DFU's four, always, so two by two is a
+     shape rather than a guess. */
+  .pack-shell .pack-dock .packcats .packtabs { display: grid;
+    grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  /* THE MAP FILLS THE COLUMN IT WAS GIVEN. Stacked, the region was
+     its content's height and the map was flex 0 0 auto so it would
+     not steal from the list below it. Beside the list it steals
+     nothing, and left at content height it drew 180px of dead glass
+     under the transport strip. Filling is not just tidier: the doll
+     is height-driven at aspect-ratio 110/184, so a taller map is a
+     BIGGER SPRITE, which is what PX20a asked for and what the
+     stacked layout could not afford.
+     THE GROWING ELEMENT IS THE WRAPPER, not the map. .charcol holds
+     .equipped and .transport; the map is a child of .equipped, whose
+     own flex:1 (line ~2194) was correct all along and had nothing to
+     fill because .equipped defaults to flex 0 1 auto. Two rules that
+     both look like the fix and only one of them is it. */
+  .pack-shell .charcol .equipped { flex: 1 1 auto; min-height: 0; }
+  .pack-shell .charcol .wornmap { grid-template-rows: repeat(6, minmax(44px, 1fr)); }
+}
 /* .packtip.packdetail outranks the base .packdetail column rules
    (same-specificity, later-in-sheet was the trap: the tip computed
    RELATIVE, joined the flex column and folded the whole window -

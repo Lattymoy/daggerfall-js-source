@@ -8574,3 +8574,82 @@ Round 110, Kite 111, Tower 112 - so armour-plus-shields is ONE
 predicate; the classic window's `TABS`/`filterByTab` must keep DFU's
 four whatever the pack does; and `itemRow`'s click has to be shared
 rather than copied if a cell ever runs it.
+
+## PX31 - THE INVENTORY GETS A COLUMN (2026-08-31)
+
+Mac: "the inventory itself. Its hidden at the bottom and doesnt get
+much breathing room."
+
+MEASURED FIRST, because the reverted 2026-08-31 attempt picked 74px
+and 820px against a fixture page and both were wrong in play. On the
+shipped screen at 1440x900, 1920x1080 and 1280x720 - all three
+IDENTICAL, since `.pack-win` is `min(660px, 94dvh)` and the cap binds
+on every desktop:
+
+| region | px |
+|---|---|
+| window | 1040 x 660 |
+| title bar | 62 |
+| character region | 400 (full 1036 width) |
+| tab strip | 38 |
+| **item list viewport** | **116** |
+
+The list had 17.6% of the window, two tiles deep and 1036 wide. The
+character region is `flex: 0 0 auto` - its own content's height, and
+the worn map inside it is 298 and does not shrink - so every pixel the
+window does not have came out of the list, and the list was the only
+thing in the window that scrolls. A wide window paying for a stacked
+layout vertically.
+
+So the dock becomes a COLUMN at `min-width: 1000px`: the region keeps
+the width it actually uses (the map is `width: min(960px, 100%)` with
+`minmax(0, 1fr)` flanks, so it narrows without a rewrite) and the list
+takes the rest at full height. **List viewport 116 -> 483, three rows
+of tiles -> nine.** The window's height is untouched; raising the 660
+cap is what swallowed the game behind the window and was reverted.
+
+THE PHONE IS NOT THIS PROBLEM and is not touched - a Pixel 5 measures
+a 250px list showing seven rows, because there `94dvh` wins and the
+region is the same 400. The breakpoint is min-width, so stacked stays
+the default and this is the wide-screen departure from it.
+
+**Two things the measurements could not see and the screenshot did:**
+
+1. THE TAB STRIP WRAPPED. `.packtabs` carries `flex-wrap: wrap` from
+   its base rule, latent until the strip was narrow. The four tabs
+   need about 550px on one line and no column here is that wide, so it
+   is a deliberate 2x2 now - same 76px the ragged wrap cost, and
+   `TABS` comes from `nativeInventory` and is DFU's four, always, so
+   two by two is a shape rather than a guess.
+2. 180px OF DEAD GLASS under the transport strip. The region now has
+   height it does not need.
+
+**Three drafts of that second fix, and the lesson is in the last two.**
+The first put `flex: 1` on `.wornmap` in a block sitting ABOVE the
+`.charcol .wornmap` rule it tied with at (0,3,0) - later-in-sheet wins
+a tie, the trap this file already records for `.packtip.packdetail`;
+the block moved rather than growing a specificity hack. The second
+still did nothing, because THE GROWING ELEMENT IS THE WRAPPER: the
+map is a child of `.equipped`, whose own `flex: 1` was correct all
+along and had nothing to fill, since `.equipped` defaults to
+`flex: 0 1 auto`. The third did nothing EITHER, and that one was
+self-inflicted - a second comment paragraph appended after a comment
+that had already closed, so prose sat raw in the stylesheet and the
+parser discarded the rules behind it. Computed styles read off the
+live element found it in one call; three CSS guesses had not. Read the
+element, not the rule you think applies to it.
+
+The map fills now (304 -> 455) and that is more than tidiness: the
+doll is height-driven at `aspect-ratio: 110/184`, so a taller map is a
+BIGGER SPRITE, which is what PX20a asked for and the stacked layout
+could not afford.
+
+**FLAGGED, and it needs Mac's eyes on real data:** this container has
+no ARENA2, so the doll rendered as the `.noart` placeholder, which is
+not aspect-locked. With art the doll cell is `455 * 110/184 = 272`
+wide against `298 * 110/184 = 178` before, which takes the worn flanks
+from 379 to about 157 each. 157 still carries a 34px tile, the family
+word and the name, but it is a real narrowing that only shows with the
+sprite present. If the flanks read cramped in play, the map wants a
+max-height rather than the region wanting width - the dock's 380 is
+what buys the nine rows.
