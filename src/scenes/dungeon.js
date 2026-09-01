@@ -31,7 +31,7 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive } from './shared.js';
+import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
@@ -391,6 +391,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT 39 (#160): a full-screen video owns the canvas for its
+    // lifetime (DFU pauses the game for it). The loop WAITS - it
+    // neither simulates nor draws - and the clock does not accrue.
+    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the

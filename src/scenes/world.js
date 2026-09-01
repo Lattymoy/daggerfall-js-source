@@ -135,7 +135,7 @@ import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -4667,6 +4667,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT 39 (#160): a full-screen video owns the canvas for its
+    // lifetime (DFU pauses the game for it). The loop WAITS - it
+    // neither simulates nor draws - and the clock does not accrue.
+    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the

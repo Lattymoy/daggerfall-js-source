@@ -3507,6 +3507,12 @@ export function createWorldModes(host) {
           // restored-Symbol duplicate quirk sceneMount records.
           questBridge, talkSave,
           onQuestRestored: () => { onQuestRestored?.(); mountQuestResources(); },
+          // AUDIT 39 (#41): PlayerDeath.cs reads the camera's LIVE local
+          // y and the controller's LIVE height at the moment of death,
+          // so a crouched death sinks from the crouched eye. dungeon.js
+          // has always passed this; without it the world-hosted dungeon
+          // death fell to the standing defaults.
+          motorState: () => ({ eyeLevel: player.eye[1] - player.pos[1], capsule: player.height }),
           // AUDIT 26 F222/F223/F101: the host's half of the pose -
           // this mode machine owns the modal player and camera; the
           // context owns the weapon and folds weaponDrawn in itself.

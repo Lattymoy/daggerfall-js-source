@@ -1136,7 +1136,11 @@ export async function endRunToTitleMenu(renderer) {
  * every path out.
  */
 export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {
-  setInfectionHost({
+  // AUDIT 39 (#37): answers the host it replaced. A context that mounts
+  // over an outer one (the dungeon over worldModes) hands this back on
+  // teardown - the leaner set it registers has no FACTION.TXT and no
+  // cemetery, and above ground those are not optional.
+  return setInfectionHost({
     // V2e: DeployFullBlownVampirism's cemetery transfer (:164-175).
     // Only the WORLD host can arrive at another location (the same
     // single-location reality that makes travel's V world-host only),
@@ -1147,6 +1151,15 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       // Off the tick's own frame: playVideo OWNS the frame loop for
       // its lifetime, and pushing it from inside a frame body is the
       // re-entrancy DaggerfallUI avoids by pushing a WINDOW.
+      //
+      // AUDIT 39 (#160): and OWNING it means the host stops. The
+      // microtask defers past this frame's body, but the host has
+      // already re-armed itself, so without the hold the world walked,
+      // fought and could die under an unskippable full-screen video.
+      // DFU's vid window pauses the game outright (pauseWhileOpened);
+      // the hold is that pause, and unlike claimFrame it gives the
+      // world back.
+      const releaseFrame = holdFrame();
       Promise.resolve().then(async () => {
         try {
           const { playVideo } = await import('../ui/videoPlayer.js');
@@ -1161,6 +1174,11 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
           if (typeof window !== 'undefined') (window.__infectionVideos ??= []).push({ name, played });
         } catch (e) {
           console.warn(`[infection] ${name} unavailable - skipping the video:`, e?.message ?? e);
+        } finally {
+          // The world is running again BEFORE the lifecycle moves: the
+          // close carries the turn, whose popup lands in a host slot
+          // that only a live loop draws.
+          releaseFrame();
         }
         onClose();
       });
@@ -1223,6 +1241,23 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
 let _frameGeneration = 0;
 export function claimFrame() { return ++_frameGeneration; }
 export const frameAlive = (token) => token === _frameGeneration;
+
+// AUDIT 39 (#160): THE HOLD - claimFrame's other half. A full-screen
+// VID is DFU's DaggerfallVidPlayerWindow, and its inherited
+// pauseWhileOpened stops the game for the window's lifetime
+// (UserInterfaceManager.AddWindow -> PauseGame(true)). claimFrame ENDS
+// a loop, which is right for the two unwinds and wrong for a video the
+// world is meant to survive: the host must neither simulate nor draw
+// while the video owns the canvas, and must still be there afterwards.
+// So the hold is a counter, taken by the seam and released on every
+// path out, and the hosts wait on it instead of dying.
+let _frameHold = 0;
+export function holdFrame() {
+  _frameHold++;
+  let released = false;   // release once, however many paths call it
+  return () => { if (released) return; released = true; _frameHold = Math.max(0, _frameHold - 1); };
+}
+export const frameHeld = () => _frameHold > 0;
 
 export function exitToTitleMenu() {
   claimFrame();   // P0: the old loop dies before the navigation

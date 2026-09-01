@@ -100,7 +100,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -1571,6 +1571,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT 39 (#160): a full-screen video owns the canvas for its
+    // lifetime (DFU pauses the game for it). The loop WAITS - it
+    // neither simulates nor draws - and the clock does not accrue.
+    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
