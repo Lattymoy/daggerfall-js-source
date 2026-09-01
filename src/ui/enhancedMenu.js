@@ -92,7 +92,8 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
+import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';
+import { mwActorBodyStats } from '../characters/mwActorBody.js';   // NPC1: the shared-body tally   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -841,10 +842,17 @@ function paneEnhanced(body) {
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
   // same uiPrefs shelf as roads.
-  live.append(prefRow('proceduralSky', 'Procedural sky',
-    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
-    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
-    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
+  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, because the sky is
+  // now one part of the thing it switches. The prose says what the
+  // switch actually covers - a row that names less than it does is the
+  // same fault RA1 fixed here when this said "not built".
+  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors, as one system: a procedural sky with the sun, both moons on their '
+    + 'real phases, stars and weather clouds; ground lit by that sky, with real surface detail; '
+    + 'three-dimensional grass that bends in the wind; rain and snow that fall through the world '
+    + 'rather than across the screen; and puddles and snow that gather, deform underfoot and melt '
+    + 'back. Off returns Daggerfall\u2019s painted sky and flat ground. Takes effect when the '
+    + 'world next loads.'));
   body.append(live);
 
   // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -927,6 +935,15 @@ function paneEnhanced(body) {
       : armState.active ? 'none - empty hands' : '-'],
     // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
     // game to see it, and when the wheel refuses, this line is why.
+    // NPC1: the shared humanoid bodies - how many distinct outfits
+    // have been built, and what that cost. A town of thirty guards in
+    // one uniform must read as ONE build here; if this line ever
+    // tracks the actor count, the cache key has stopped sharing.
+    ['NPC bodies', (() => {
+      const st = mwActorBodyStats();
+      return st.builds ? `${st.cached} outfit${st.cached === 1 ? '' : 's'} shared, ${st.builds} build${st.builds === 1 ? '' : 's'}`
+        : 'none built yet';
+    })()],
     // IG6b: the CURRENT arms mode, stated where a state belongs - on
     // the stats block, not on the button that changes it.
     ['Arms mode', fpArm.followCamera()
@@ -987,6 +1004,27 @@ function paneEnhanced(body) {
   // rig's defining behaviour and is the one outcome forbidden here.
   if (armState.notes && armState.notes.length) {
     mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
+  }
+  // MW-D45: WHERE THE ROUND HUNG, said out loud. getArrowBone has two
+  // branches and they place the arrow in completely different places -
+  // OpenMW issue 5642, which added the first one: "By default, OpenMW
+  // attaches arrow to the ArrowBone node from bow mesh... I suggest to
+  // check if 'Bip01 Arrow' bone exists in actors skeleton, if it is
+  // not, attach arrow to the ArrowBone as fallback." The skeleton bone
+  // is a MODDER'S opt-in for quiver-style fetching; vanilla has no such
+  // bone and always takes the bow mesh.
+  //
+  // The port recorded which branch won in arrowInfo.viaWeaponMesh from
+  // the day it was written and NOTHING EVER READ IT. Four rounds of
+  // "the arrow is in the wrong place" were spent guessing at a fact the
+  // rig already knew, because the only place it existed was a field on
+  // an object nobody printed. A value computed and never surfaced is
+  // not diagnostics, it is a comment.
+  if (armState.arrow) {
+    const a = armState.arrow;
+    mw.append(el('p', 'meta', `Arrow: ${a.name} on "${a.bone}" - ${a.viaWeaponMesh
+      ? 'the bow mesh\'s ArrowBone (vanilla)'
+      : 'this skeleton\'s own bone (the modded quiver branch)'}`));
   }
   // MW-D33: WHAT YOU ARE WEARING, AND WHETHER THE RIG AGREES. One line
   // per equipped piece - the parts it dressed, or the reason it kept

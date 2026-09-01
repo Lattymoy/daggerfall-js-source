@@ -6283,3 +6283,349 @@ incremental swap of the weapon part alone rather than a rebuild, which
 is a real piece of work and is NOT started here: what is recorded is
 the diagnosis and the correction of the false one, so the next session
 does not begin by trusting a sentence I got wrong.
+
+MW-D44 CORRECTS MW-D34, which read half the reference and stopped one
+level too high. Mac: "I genuinely think the arrow placement in the hand
+is not 1:1 as you claim." He was right, and the claim was mine.
+
+attachArrow IS a bare getInstance(model, parent) - it never goes
+through SceneUtil::attach, so the ARROW mesh's own "BoneOffset" node is
+never searched for and never applied. MW-D34 stands on that and is
+MW-D44's control. But `parent` is getArrowBone(), and that is the
+ArrowBone node INSIDE the weapon's live scene graph. The weapon reached
+that graph through SceneUtil::attach, which applied the WEAPON's
+BoneOffset one level above ArrowBone. Everything below inherits it, the
+arrow included.
+
+The port gave the arrow its preTransform - the weapon NIF's own
+root-to-ArrowBone chain - and boneOffset: null, so the round sat
+displaced from the hand by exactly the weapon's offset. MW-D34's own
+comment already stated the correct rule, "what the arrow DOES inherit
+is its parent chain"; the code stopped short of the parent's offset.
+
+ONLY ON THE SECOND BRANCH. preTransform is set exactly when
+getArrowBone falls back to the weapon's mesh. When the ACTOR's skeleton
+carries the attach bone the parent is that bone and the weapon is not
+in the chain at all, so inheriting its offset there would be the same
+error mirrored.
+
+WHAT IS STILL OWED: a bow fixture carrying BOTH an ArrowBone and a
+BoneOffset. generate.py has neither in one mesh - boneoffset.nif is
+ammunition - so MW-D44 is pinned at SOURCE while MW-D34 holds the
+behavioural half. Named here rather than left to be rediscovered.
+
+MW-D45: WHICH BRANCH THE ARROW TOOK, SAID OUT LOUD. Mac, after four
+rounds on arrow placement: "when shooting, the arrow isnt held in the
+hand, it spawns on the body."
+
+THE RESEARCH THAT SETTLES WHAT THE TWO BRANCHES MEAN. OpenMW issue
+5642, which is the change that added the first one: "By default, OpenMW
+attaches arrow to the ArrowBone node from bow mesh, so arrow fetching
+animation is baked into bow mesh... I suggest to check if 'Bip01 Arrow'
+bone exists in actors skeleton, if it is not, attach arrow to the
+ArrowBone as fallback." The modding docs say the same from the other
+side: a "Bip01 Arrow" bone may be ADDED to actor skeletons, and then
+arrows attach there instead, which exists so beast races can carry
+quivers at their own angle.
+
+SO THE SKELETON BRANCH IS A MODDER'S OPT-IN AND VANILLA NEVER TAKES IT.
+That reframes the symptom: an arrow "on the body" is the quiver branch
+winning, which on vanilla data it cannot. Either the skeleton in play
+genuinely carries the bone, or something upstream says it does.
+
+AND THE PORT ALREADY KNEW WHICH BRANCH IT TOOK. arrowInfo.viaWeaponMesh
+has been set since the day MW-D16 was written and NOTHING EVER READ IT
+- not the card, not a note, not a probe. Four rounds of "the arrow is
+in the wrong place" were spent guessing at a fact the rig had already
+computed, because the only place it existed was a field on an object
+nobody printed. A value computed and never surfaced is not diagnostics,
+it is a comment. The arm card prints it now, with the bone it hung on.
+
+THE STANDING LESSON, and it is the session's: this port is read by
+someone who can run it and written by someone who cannot. Every fact
+the rig computes about DATA IT LOADED belongs on the card, because the
+card is the only wire between those two.
+
+MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS FOR. Mac, four
+rounds into arrow placement: "the placement is still not correct. It
+still spawns in the character."
+
+OpenMW issue 5642 is the change that added getArrowBone's first branch,
+and it says what the branch is FOR: modded skeletons that fetch arrows
+from a quiver, "allows to implement better shooting animations". The
+bone and the clips that move it ship together - a modder adds both.
+
+A skeleton carrying "Bip01 Arrow" against animations that never touch
+it is the one combination the feature cannot survive: the round hangs
+at the quiver and stays there for the whole shot, ON THE BODY, which is
+the symptom exactly. The port takes that branch on the bone alone, so
+any skeleton with the node - a replacer, a mod's xbase_anim - moved
+every arrow onto the body while the vanilla path the bow mesh already
+carries sat unused.
+
+The branch now asks BOTH questions. A .kf stores node names as plain
+ASCII, so "does any loaded clip drive this bone" is a byte scan, not a
+parse, and a name absent from every clip cannot be animated by one. No
+driver, no quiver: the round goes down the bow-mesh path.
+
+NOT A DEPARTURE FROM THE REFERENCE SO MUCH AS THE NEVER-TRAPS LAW
+APPLIED TO IT - a feature whose driving data is absent degrades to the
+default rather than deleting the picture. A wrong answer from the scan
+can only ever cost the VANILLA placement, which is the one that works.
+
+MW-D16's two branch pins now state the law instead of relying on the
+fixtures to imply it: they pass quiverDriven explicitly, because the
+fixture skeleton has the bone and the fixture clip does not drive it -
+precisely the combination this refuses.
+
+EE5b: THE BLACK SCREEN, AND THE PIN NOBODY HAD. Mac: "the game black
+screens on opening."
+
+TERRAIN_FS used uShadowAmt, uCloudCover, uCloudSoft, uCloudTime,
+uCloudWind and tfbm, and declared none of them - the block lived only
+in the world FS. A shader that will not compile throws inside the
+Renderer constructor, main.js's catch replaces document.body with the
+message, and nothing draws at all.
+
+Rooted rather than patched: the uniforms and the sky's hash/fbm are one
+interpolated chunk (CLOUD_SHADOW_GLSL) that both shaders read. Two
+copies of a uniform list is the same bug waiting for the next uniform,
+and copying the block into TERRAIN_FS would have been exactly that.
+
+THE PART WORTH KEEPING is what did not catch it. Suite green, build
+green, lint green - because node never compiles GLSL and the build
+never runs the page. Five thousand pins, and not one asked whether the
+game STARTS. tools/bootProbe.mjs asks it now, on both skins, in about
+five seconds, and needs no ARENA2 because the boot door draws before
+any game data is touched. Run it before a push that goes near a shader.
+
+MW-D46b: EVERY DOOR ASKS, NOT JUST THE FIRST ONE. Mac, after MW-D46:
+"Arrows are still not correctly attached to the hand and bow."
+
+MW-D46 wired the quiver check into the FIRST-PERSON build alone, and
+resolveWeaponParts has FOUR callers - both builds and both halves of
+the live weapon swap. The three I did not visit kept the parameter's
+default, which means the old behaviour, so the third-person body went
+on taking the quiver branch. And that is the rig whose skeleton
+actually carries "Bip01 Arrow": the full xbase_anim, not the
+first-person arms. It is the one that put the round in the torso.
+
+THIS ALSO EXPLAINS THE WHOLE HISTORY OF THE REPORT, which never fit one
+branch. First person has no "Bip01 Arrow", falls back, and wants an
+ArrowBone in the bow mesh - when the mesh has none it refuses and the
+bow draws empty. Third person HAS the bone, takes the quiver branch,
+and parks the round on the body. One symptom in Mac's words, two
+branches, two views - which is why every single-branch theory failed
+against half his evidence.
+
+The swap now READS the build's answer instead of re-deciding it: a body
+that resolved one way and swaps the other way mid-session is two
+answers to one question about one skeleton.
+
+THE SHAPE TO REMEMBER, and it is the third time this session: MW-D43
+fixed one of two pixelize passes, MW-D42 held the hit in one of two
+views, MW-D46 asked at one of four doors. A default that means "old
+behaviour" hides every caller you did not visit, and the port's own
+four-hosts rule exists for exactly this. Name every caller before
+shipping the parameter.
+
+MW-D47: THE BOW MESH IS ASKED FIRST. A DELIBERATE DIVERGENCE FROM
+getArrowBone's ORDER, recorded as one.
+
+Mac, six reports in: "the arrow isnt held in the hand, it spawns on the
+body." Every one of those reports was the SAME placement. "Through the
+face" in first person and "in the character" in third are one bone seen
+from two camera positions - the first-person camera sits at the head,
+so a round on a body bone renders through it. I read them as two
+symptoms and spent six rounds choosing which half of the evidence to
+believe.
+
+THE REFERENCE'S ORDER IS RIGHT FOR THE REFERENCE. OpenMW tries the
+actor's "Bip01 Arrow" first because the modder who adds that bone also
+ships the clips that CARRY the round from the quiver to the string -
+issue 5642's stated purpose, "better shooting animations". THIS PORT
+DOES NOT RUN THOSE CLIPS. It drives Daggerfall's own weapon machine, so
+a round placed at the quiver has nothing to move it and stays in the
+actor's chest for the whole shot.
+
+MW-D46 tried to gate the branch on whether a clip mentions the bone.
+That was the right instinct and too weak a test: an animation replacer
+that names the bone without carrying the arrow passes it. The order is
+the honest fix. The bow's own ArrowBone wins wherever the mesh has one,
+which is every vanilla bow; the quiver bone is what is left for a mesh
+that carries none, and still needs a clip that drives it.
+
+MW-D46's gate is kept for exactly that fallback, so both conditions
+guard the branch that can strand a round in a torso.
+
+WHAT WOULD MAKE THE REFERENCE ORDER CORRECT HERE: an arrow-fetching
+animation the port actually plays. Until that exists, the quiver branch
+has no way to end with the arrow on the string, and a first branch that
+cannot finish is not a first branch.
+---
+
+# THE NPC ARC (NPC1-NPC5, 2026-08-31 / 2026-09-01)
+
+Mac's scope, in his words: "If we're doing humanoids only, can we also
+do a comprehensive NPC replacement", "I really want to be maticulous
+with this. This will only be for the enhanced version of the game",
+and, on what a citizen wears, "just give them a random assortment of
+clothing depending on what they are."
+
+## What the reference gives, and what it does not
+
+OpenMW ships the whole MECHANISM and NO ROSTER. Proved rather than
+assumed: `mwmechanics/summoning.cpp:59-98` turns a summon effect into
+a GMST *name* and reads the creature ID out of the loaded ESM, and a
+whole-tree grep for a creature table finds only incidental matches. So
+every Daggerfall-to-Morrowind mapping in this port is the PORT'S OWN
+and is declared as such - `mwCreatureMap.js` names 23 matches and 15
+DECLARED MISSES with printable reasons, because Morrowind ships no
+bat, spider, scorpion, centaur, gargoyle or dragon and a cliff racer
+standing in for one would be a lie the player could see.
+
+## The split the reference itself makes
+
+`mwrender/objects.cpp:95-111` + `mwrender/creatureanimation.cpp:20-35`:
+one shared resource, per-actor animation state; a creature is a
+different animation class from an NPC (CreatureAnimation, and
+CreatureWeaponAnimation only when the Weapon flag is set), and a
+BIPEDAL creature takes the human base set FIRST and its own after.
+The port keeps that split exactly: `mwActorBody.js` owns the expensive
+half (one built body per outfit, cached), `mwActorRig.js` owns the
+cheap half (a playhead - which group, how far through).
+
+## THE ONE REAL HAZARD, and how it is measured
+
+`poseAssembly` writes into the SHARED assembly's own buffers. The body
+is therefore a SCRATCH SURFACE reused within a frame: pose actor A,
+upload, draw; pose actor B, upload, draw. The pose only has to survive
+until its own draw, which is the very next statement. What it must
+never do is pose every actor first and draw afterwards - then every
+actor in the frame wears the last one's pose.
+
+The suite pins the shape; `npm run mwarm`'s L8 layer MEASURES it
+through the real composite, and finding a shot that could actually
+see the failure took two attempts. "Each half of a two-actor frame
+matches that actor's own solo shot" does NOT catch a pose that arrives
+one draw late (upload before pose): a uniform one-draw stagger is
+self-consistent across separate frames, and that mutant survived. The
+shot that kills it is ORDER INDEPENDENCE - the same actor drawn once
+after a differently-posed actor and once after itself must be the same
+picture. Whose pose was in the assembly a moment ago is not an input.
+
+## What is invented, and it says so
+
+A Daggerfall citizen carries NO EQUIPMENT: their clothes are painted
+into the sprite. A Morrowind body is skin plus what it wears, so
+without a wardrobe every townsperson renders nude. `mwWardrobe.js` is
+therefore the port's own clothing and is declared an invention.
+
+What is NOT invented is "what they are": FACTION.TXT's own sgroup
+(Commoners, Merchants, Scholars, Nobility, Underworld). Nor their race
+and sex - `PERSON_TEXTURES` (mobilePerson.js) IS Daggerfall's real
+people-archive race-and-sex table, which is exactly the table
+`raceOfArchive`'s own comment says is missing "until that table is
+wired"; it was wired all along, one module over. A static NPC's race,
+sex and seed come from StaticNPC.Data - the one SetLayoutData law -
+so the body is the same person the talk window names.
+
+"Random" means STABLE, not rolled: the pick hashes `nameSeed` and
+NEVER draws from DFU's srand/rand, because that is one stream shared
+with names, loot and quests and a draw spent on a shirt would shift
+every later roll in the game.
+
+## Two people the lane refuses, deliberately
+
+VAMPIRES (`enemyMwBody.js`): a Morrowind vampire is a body plus
+vampire HEAD parts this port does not resolve, so they keep their
+sprite rather than wearing a wrong face.
+
+CHILDREN (`staticMwBody.js`, IsChildNPCData :342-350): every Morrowind
+NPC mesh is an adult, and dressing a child record in one would stand a
+grown man where the game put a kid.
+
+A refusal is an ANSWER and is remembered - `undefined` means not asked,
+`null` is settled - or a refused actor re-derives its identity on every
+frame for the rest of the session.
+
+## NPC4b: THE LESSON THAT COST THREE SLICES
+
+NPC2b, NPC3a and NPC3b each landed their seam in `exterior.js` - which
+is the `?exterior` DEV route - and in `dungeonContext.js`. `main.js`
+sends real play to `bootWorld`. So for three slices the wandering
+crowd and the city watch were still sprites in every session anyone
+actually played, and the above-ground encounter pool had never been
+seamed at all.
+
+The suite was green throughout. Nothing in it asked "does this reach
+the host the game boots", so nothing failed.
+
+The gate is `test/mwlivehosts.test.js`, and its shape is the point: it
+ENUMERATES every file that draws living actors and demands the seam of
+each, so a new host has to be added to the list before its pin can
+pass. A slice is not finished when its seam exists; it is finished
+when its seam is on the path the player takes.
+
+MW-D48: WHAT THE ARROW'S MISPLACEMENT IS *NOT*. Mac: "the arrow has
+always been there. It's just not positioned correct" - which retires
+every branch theory at once. The round has been resolving and drawing
+the whole time; only its PLACE is wrong. MW-D46, D46b and D47 were
+answering a question nobody asked.
+
+ELIMINATED BY EXECUTION, not by reading - reading two of these side by
+side is how one got called a bug and nearly shipped as a fix:
+
+  - mulAffine composes parent x child correctly, rotation and
+    translation both.
+  - applyPre applies that affine to vertices correctly.
+  - placeAtBone is bone x (offset + mirror(v)), which IS osg's
+    T(position) x R(attitude) x S(scale) on one
+    PositionAttitudeTransform - the order the reference gets from OSG
+    rather than chooses.
+  - nodeTransformOf (affineOf folds scale INTO the 3x3) and flattenNif's
+    composeTransform (scale as its own field, applied to the child's
+    translation) LOOK like two arithmetics for one job, and the arrow is
+    the only part that uses the first. Run over a chain with rotations
+    and scales they agree exactly. Pinned as MW-D48 so it is not
+    re-suspected, and so changing one without the other fails.
+
+STILL OPEN, and the one lead that survives execution: the two
+traversals differ in their FILTERS even though their arithmetic
+matches. flattenNif honours rule 58 (Bounding Box, RootCollisionNode)
+and the hidden flag; findNodeByName honours neither. That cannot move a
+transform, but it decides WHICH node answers to "ArrowBone" if a mesh
+carries more than one, or carries it under a subtree one walk enters
+and the other does not.
+
+ALSO UNVERIFIED: MW-D44 gave the arrow the weapon's BoneOffset. OpenMW
+issue 5937 says Morrowind.exe supports BoneOffset for LIGHTS only - "it
+didn't work for weapons and shields at least" - and that OpenMW applies
+a 90 DEGREE ROTATION to meshes carrying that node (attach.cpp:145),
+which placeAtBone does not replicate. On a vanilla bow the node is
+absent and MW-D44 is a no-op; on a mesh that has one, the port takes
+the translation and drops the rotation. Close that before trusting it.
+
+MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD. The lead
+MW-D48 left standing, closed.
+
+FindByNameVisitor is an osg::NodeVisitor and it walks the BUILT SCENE.
+By the time it runs, the loader has dropped Bounding Box subtrees and
+RootCollisionNode subtrees and masked hidden nodes - rule 58, which
+this port already implements in flattenNif. findNodeByName reads the
+RAW PARSED NIF, where every one of those is still present, so it could
+answer with a node the reference's search cannot see: an ArrowBone
+inside collision geometry, or under a subtree the loader drops.
+
+Same tree, or it is not the same search. The three filters are on it
+now, including the load-bearing oversight that a ROOT named "Bounding
+Box" is NOT skipped, because the reference's guard is
+`args.mRootNode && ...` and mRootNode is null on the first call.
+
+THIS IS THE PLACEMENT PATH. findNodeByName is what nodeTransformOf
+calls to find ArrowBone, and nodeTransformOf is what builds the arrow's
+preTransform. A different node answering the name is a different
+transform, which is an arrow in a different place - and unlike every
+branch theory before it, this moves the round WITHOUT changing which
+bone it hangs on, which is what Mac has been describing since the
+first report.

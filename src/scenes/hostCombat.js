@@ -97,6 +97,12 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   if (variant === null) return null;
   const eq = assignEnemyEquipment(entity, variant, playerLevel);
   entity.armorValues = eq.armorValues;
+  // NPC2: the enemy REMEMBERS what it put on, not merely what that
+  // armour is worth. The values alone cannot say which pieces they
+  // came from, and a Morrowind body has to wear the very pieces the
+  // damage maths already prices - otherwise the armour you see and the
+  // armour you hit are two different rolls.
+  entity.armorPieces = eq.armorPieces;
   entity.weapon = eq.rightHand;
   // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
   // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%)

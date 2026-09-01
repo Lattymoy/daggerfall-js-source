@@ -68,7 +68,10 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // and the intercept must sit ahead of the release, not after it
   assert.ok(dmg.indexOf('attemptSoulTrap') < dmg.indexOf('releaseFoeBatch(f)'),
     'a trap that refuses the death must not have freed the batch first');
-  assert.match(bodyOf(src, 'function batches()'), /if \(f\.dead \|\| !f\._mout\) continue/,
+  // NPC4b gave batches() the frame's render context, so the header
+  // reads `batches(mw = null, dt = 0)` now. The law under test is
+  // unchanged and so is the line it stands on.
+  assert.match(bodyOf(src, 'function batches(mw = null, dt = 0)'), /if \(f\.dead \|\| !f\._mout\) continue/,
     'and nothing draws a dead foe, which is what makes the release safe');
 });
 

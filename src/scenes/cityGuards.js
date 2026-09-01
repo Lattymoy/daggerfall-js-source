@@ -48,6 +48,9 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
+// NPC3a: the guards ride the same body service the dungeon's humanoids do.
+import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';
+import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
 import { applyDamageToNonPlayer } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
@@ -441,7 +444,32 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
 
   /** Per-frame drive; returns the live mobile batches (the host draws
    *  them on the flats' axis with the corpses). */
-  function update(dt, playerFeet, eye, senses = {}) {
+  /**
+   * NPC3a: `mw` is the frame's render context ({ canvas, proj, view }),
+   * and it is OPTIONAL. Given one, a guard whose Morrowind body has
+   * built draws as that body and its billboard is not pushed; without
+   * one - or before the body arrives - every guard is a sprite exactly
+   * as it always was.
+   */
+  // AUDIT A6: `dt` arrives ALREADY zeroed for a paralysed guard - the
+  // sprite path has honoured S19's FreezeAnims since wave 32 and the
+  // body must not be the one thing in the frame that keeps moving.
+  const _drawMwGuard = (g, dt, mw) => {
+    const body = requestMwBody(g, enemyMwBodyOpts(g.entity, g.mobileType, g.mobile?.gender), g.mobileType);
+    if (!body) return false;
+    return drawMwActor(renderer, mw.canvas, body, g._mwState, {
+      dt,
+      moving: !!g.ai.moving,
+      running: false,
+      feet: g.ai.feet,
+      yaw: g.ai.yaw,
+      proj: mw.proj,
+      view: mw.view,
+      eye: mw.eye,
+    });
+  };
+
+  function update(dt, playerFeet, eye, senses = {}, mw = null) {
     // EnemyEntity verbatim: the city watch DESPAWNS when the active
     // crime returns to None (court release, death, region exit).
     if (!playerEntity.crimeCommitted) {
@@ -616,6 +644,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);
       const sz = scaledBillboardSize(g.tex.getSize(o.record), g.tex.getScale(o.record));
+      // NPC3a: THE MORROWIND BODY TAKES THE FRAME. A city guard is
+      // mobileType 146 - a CLASS enemy with a real entity and rolled
+      // equipment - so it wears its own armour through the very same
+      // opts the dungeon's humanoids do. No new law, one more host.
+      if (mw && _drawMwGuard(g, _gParalyzed ? 0 : dt, mw)) continue;
       g.batch.record = rkey;
       g.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       g.batch.origin = g.ai.feet;

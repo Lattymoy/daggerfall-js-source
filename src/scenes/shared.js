@@ -158,7 +158,10 @@ export function createSkyController(gl, params) {
   // scene, so a flip takes effect when the world next loads. ONE
   // `renderer` field either way: the hosts read clearColor / set
   // fogMix and fogColor on it without knowing which pass it is.
-  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && getPref('proceduralSky')
+  // EE1: one switch for the whole outdoors. ?sky=classic remains the
+  // URL door and still forces the panorama, so every probe that rides
+  // it keeps working.
+  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && getPref('enhancedEnvironments')
     ? new EnhancedSkyRenderer(gl) : null;
   if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);

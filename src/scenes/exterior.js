@@ -44,7 +44,7 @@ import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda ri
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
-import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
+import { collectExteriorNpcs, exteriorNpcRecord, isExteriorNpcFlat } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -71,6 +71,9 @@ import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
+// NPC3b: the wandering crowd rides the same body service the guards do.
+import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';
+import { townMwBodyOpts } from '../characters/townMwBody.js';
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
@@ -111,7 +114,8 @@ import {
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM4c: and the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
+import { isEnhanced } from '../systems/uiSkin.js';
+import { getPref } from '../systems/uiPrefs.js';   // EE3: the ground half of the Enhanced Environments switch   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -423,6 +427,12 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     const blockFlats = collectBlockFlats(b.dfBlock, natureArchive);
     for (const flat of blockFlats) {
+      // NPC4c: a flat with a NON-ZERO FactionID is a street StaticNPC
+      // (RMBLayout.cs:366-378), and it gets a batch of its own below -
+      // a merged (archive, record) batch of centres cannot leave one
+      // person out, which is what the Morrowind body lane needs. Same
+      // split interiorContext makes for a building's people.
+      if (isExteriorNpcFlat(flat)) continue;
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
@@ -465,6 +475,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (let r = 0; r < groundTex.recordCount; r++) {
       layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
     }
+    // EE3: the ground's own half of the Enhanced Environments switch,
+    // set before the upload because the sampler state is chosen there
+    // and the array is cached afterwards.
+    renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
+    // AUDIT 46: ?ground=classic|tiles|drawn bisects the three states.
+    renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
     renderer.uploadTileArray(groundArchive, layers);
   }
   const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(locationTilemap), tilemapDim);
@@ -542,7 +558,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!t || flat.record >= t.recordCount) continue;
     const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
     const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-    exteriorNpcs.push({ ...pn, width: size.w, height: size.h });
+    // NPC4c: their own batch, since the shared groups no longer carry
+    // them. Animated exactly as the group would have animated it.
+    uploadRecord(flat.archive, flat.record);
+    const batch = renderer.createBillboardBatch(flat.archive, flat.record, size, [[flat.x, flat.y, flat.z]]);
+    batch._box = flatBatchAabb([[flat.x, flat.y, flat.z]], size);   // EV3: the cull reads it, body and sprite alike
+    armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
+    flatCount++;   // AUDIT-N: the diagnostic counts them - they are still flats, just no longer grouped
+    exteriorNpcs.push({ ...pn, width: size.w, height: size.h, batch });
   }
 
   // Camera.
@@ -920,6 +943,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
   const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex, onCourtScreen: () => cameraRecoiler.reset() });
+  // NPC3b: one counter, so every wandering person gets a stable number
+  // of their own without touching DFU's shared PRNG - that stream is
+  // named, looted and quested from, and a draw spent here would shift
+  // every later roll in the game.
+  let _mwTownSeed = 0;
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -1627,7 +1655,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
   console.log(
     `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
-    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ${cityLights.length} lights, ` +
+    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length + exteriorNpcs.length} batches, ${cityLights.length} lights, ` +
     `ground ${groundArchive}, climate ${climateBase}, season ${season}, ${texRemap.size} swaps, ${renderer.emissionTextures.size} window masks`
   );
 
@@ -2030,6 +2058,10 @@ export async function bootExterior(canvas, renderer, params, status) {
         canvas.clientWidth / canvas.clientHeight);
       renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
+    // EE4: the ground shadows under the SKY'S OWN deck - one field for
+    // the cloud and for the shadow it casts. Null when there is no
+    // enhanced sky, which is the classic skin and every interior.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) {
@@ -2144,6 +2176,37 @@ export async function bootExterior(canvas, renderer, params, status) {
       _visBatches.push(b);
     }
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
+    // NPC4c: THE PEOPLE STANDING IN THE STREET. RMBLayout stands a
+    // StaticNPC on any flat carrying a faction, and they are the same
+    // kind of person a building holds - so they take the same lane,
+    // through the mode machine's own derivation (one identity, shared
+    // with the click that talks to them). Body or sprite, never both;
+    // they stand still and face you, exactly as the billboard does.
+    //
+    // EV3's cull applies to their sprites too - they carry the same
+    // build-time box every other batch does - and to the BODY, which
+    // is a much more expensive thing to draw off-screen than a quad.
+    {
+      const _npcBatches = [];
+      for (const pn of exteriorNpcs) {
+        if (!pn.batch) continue;
+        if (cullOn && aabbOutside(_planes, pn.batch._box)) continue;
+        const _opts = modes?.staticNpcMwOpts?.(pn) ?? null;
+        const _body = _opts ? requestMwBody(pn, _opts, -1) : null;
+        if (_body && drawMwActor(renderer, canvas, _body, pn._mwState, {
+          dt: townTalk.overlayActive ? 0 : dt,
+          moving: false,
+          running: false,
+          feet: [pn.x, pn.y, pn.z],
+          yaw: Math.atan2(cam.pos[0] - pn.x, cam.pos[2] - pn.z),
+          proj,
+          view,
+          eye,
+        })) continue;
+        _npcBatches.push(pn.batch);
+      }
+      if (_npcBatches.length) renderer.drawBillboards(_npcBatches, camRight, UP_Y);
+    }
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
@@ -2151,6 +2214,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     // on the flats' axis. The gate's AreEnemiesNearby() term reads
     // this host's one live pool, the city watch - so a townsperson
     // keeps walking while a guard is on you.
+    const _drawMwTownsperson = (person, dt, proj, view, eye) => {
+      const body = requestMwBody(person, townMwBodyOpts(person.archive, person._mwSeed), -1);
+      if (!body) return false;
+      return drawMwActor(renderer, canvas, body, person._mwState, {
+        dt,
+        moving: person.state === 'move',
+        running: false,
+        feet: person.pos,
+        yaw: person.yaw ?? 0,
+        proj,
+        view,
+        eye,
+      });
+    };
     if (walkMode) {
       _playerStill = _lastPlayerPos !== null &&
         Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
@@ -2175,6 +2252,29 @@ export async function bootExterior(canvas, renderer, params, status) {
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
         const sz = scaledBillboardSize(t.getSize(out.record), t.getScale(out.record));
+        // NPC3b: THE TOWNSPERSON'S MORROWIND BODY takes the frame when
+        // one has built. Their race and sex come off the people
+        // archive - PERSON_TEXTURES is a real race-and-sex table - and
+        // their CLOTHES are the port's own wardrobe, because
+        // Daggerfall paints a citizen's clothes into the sprite and
+        // gives them no equipment at all. A person the spawn table
+        // cannot identify (a guard's own archive) keeps its sprite.
+        //
+        // The seed is assigned ONCE per person and never drawn from
+        // DFU's PRNG: that stream is shared with names, loot and
+        // quests. These people re-roll their identity per spawn
+        // anyway, so a per-spawn seed is the identity they already
+        // have.
+        // AUDIT-N F3: the seed follows the IDENTITY, not the slot. A
+        // walker is a pool entry whose archive, sex and name re-roll on
+        // every spawn (townPopulation.js:116), so `??=` gave a recycled
+        // walker the previous person's wardrobe seed - a Nord woman
+        // wearing the clothes rolled for the Redguard man she replaced.
+        if (person._mwArchive !== person.archive) {
+          person._mwArchive = person.archive;
+          person._mwSeed = (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        }
+        if (_drawMwTownsperson(person, popDt, proj, view, eye)) continue;
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
         batch.origin = [person.pos[0], person.pos[1], person.pos[2]];
@@ -2182,8 +2282,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       // G1: the guards drive + draw on the same flats' axis; the sim
       // freezes with the population under the talk overlay.
+      // NPC3a: the frame's render context rides along, so a guard whose
+      // Morrowind body has built draws as that body instead of pushing
+      // a billboard. Without it - and until the body arrives - every
+      // guard is the classic sprite exactly as before.
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
-        walkMode ? player.pos : cam.pos, eye, _foeSenses());
+        walkMode ? player.pos : cam.pos, eye, _foeSenses(),
+        { canvas, proj, view, eye });
       personBatches.push(...guardBatches);
       droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles

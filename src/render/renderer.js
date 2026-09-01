@@ -6,6 +6,25 @@
 //   - Indexed color means hard pixels: NEAREST filtering.
 //   - Alpha 0 texels are palette-index cutouts; the shader discards them.
 
+/** EE4/EE5: THE CLOUD-SHADOW BLOCK, ONE SOURCE. Both the world FS and
+ *  TERRAIN_FS sample the sky's cover to shadow the ground, so both need
+ *  these uniforms and the sky's own hash/fbm - and TERRAIN_FS carried
+ *  the USES without the DECLARATIONS. A shader that cannot compile is a
+ *  Renderer constructor that throws, which is the black screen on boot.
+ *  Interpolated into both rather than written twice: two copies of a
+ *  uniform list is the same bug waiting for the next uniform. */
+const CLOUD_SHADOW_GLSL = `
+uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
+uniform vec2 uCloudWind;
+// EE4: the sky's own hash and fbm, term for term - the same per-octave
+// offsets, so the ground reads the field the sky drew and not a
+// lookalike of it.
+float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
+float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
+`;
+
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNormal;
@@ -38,6 +57,7 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
+${CLOUD_SHADOW_GLSL}
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -363,6 +383,7 @@ const TERRAIN_FS = `#version 300 es
 precision highp float;
 precision highp usampler2D;
 precision highp sampler2DArray;
+${CLOUD_SHADOW_GLSL}
 in vec3 vNormal;
 in vec3 vWorldPos;
 in vec2 vLocalXZ;
@@ -415,7 +436,22 @@ void main() {
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
+  // EE4 (Enhanced Environments): CLOUD SHADOWS. The sky already draws a
+  // two-deck cloud field; this samples THE SAME FIELD, at the point
+  // where this ground's ray to the sun crosses the cloud plane, so the
+  // shadow and the cloud that casts it are one field rather than two
+  // that drift apart. The plane is high and the dome is far, so the
+  // parallax belongs to the WIND: shadows move with the weather, not
+  // with the player.
+  //
+  // uShadowAmt is 0 for the classic skin and indoors, so this whole
+  // term costs nothing there and cannot change what classic draws.
   float diff = max(dot(n, uLightDir), 0.0);
+  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
+    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
+    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
+    diff *= 1.0 - cov * uShadowAmt;
+  }
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
@@ -444,6 +480,7 @@ const EMISSION_WHITE = new Float32Array([1, 1, 1]);
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
 import { TextureFile } from '../formats/textureFile.js';
+import { buildEnhancedTiles } from './groundSurfaces.js';   // EE5: the drawn ground
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
 export const CHAR_PIXEL = 9;
@@ -660,6 +697,11 @@ export class Renderer {
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
+    this.tUShadowAmt = gl.getUniformLocation(this.terrainProgram, 'uShadowAmt');
+    this.tUCloudCover = gl.getUniformLocation(this.terrainProgram, 'uCloudCover');
+    this.tUCloudSoft = gl.getUniformLocation(this.terrainProgram, 'uCloudSoft');
+    this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
+    this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -676,6 +718,25 @@ export class Renderer {
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
+    /** EE3: set by the host from the Enhanced Environments switch. It
+     *  is read at UPLOAD time, and an archive's array is cached, so a
+     *  flip takes effect when the world next loads - the same law the
+     *  sky pass already follows. */
+    this.enhancedGround = false;
+    /** AUDIT 46: THE GROUND'S BISECT DOOR. A black world shipped and I
+     *  could not reproduce it - my GL gate passes on the broken code,
+     *  because SwiftShader accepts what a real driver may not. Rather
+     *  than guess a fourth time, the three states are selectable:
+     *    ?ground=classic  the original tiles, NEAREST      (pre-EE3)
+     *    ?ground=tiles    the original tiles, mipmapped    (EE3)
+     *    ?ground=drawn    our surfaces, mipmapped          (EE7)
+     *  Whichever one is black names the slice that broke it, in the
+     *  time it takes to reload. */
+    this.groundMode = null;
+    /** EE4: the cloud deck the ground shadows under, handed over by the
+     *  host from the SKY's own eased weather row. Null = no shadows,
+     *  which is the classic skin and every interior. */
+    this._cloudShadow = null;
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1780,27 +1841,121 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
   uploadTileArray(archive, layers) {
-    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
+    // AUDIT 44 F2: THE CACHE OUTLIVED THE SWITCH. This returned the
+    // stored array before it ever looked at enhancedGround, and the
+    // cache lives on the RENDERER, which survives a world load - so a
+    // player who flipped Enhanced Environments and loaded a new world
+    // got the sampler the array had been built with the first time,
+    // and the row's promise that it "takes effect when the world next
+    // loads" was false for the ground. Only a page reload would have
+    // done it, which nobody would guess. The mode is part of the key
+    // now: two modes, two arrays, and flipping picks the other one.
+    const key = `${archive}:${this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic')}`;
+    if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
+    // EE5: THE DRAWN SURFACES. The enhanced ground keeps Daggerfall's
+    // tile SHAPES and replaces what is inside them - the four bases are
+    // ours and procedural, and the fifty-two blends are DERIVED by
+    // masking those bases through each original tile's own
+    // classification. Built here, on the machine that has the game,
+    // and stored nowhere: doctrine forbids a raster of game data in
+    // the repo, and it is right to.
+    //
+    // 128px, four times the original's pixels. 256 was measured at
+    // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
+    // two-second stall on entering the world is worse than the detail
+    // is good. Moving this to a worker is the way to 256 and is its
+    // own slice.
+    // EE7: WIRED. EE5 built these and left them out because they
+    // carried a seam - the noise wraps on its integer lattice, and
+    // every surface scaled its frequency by a fraction, so u = 0 and
+    // u = 1 landed on different corners. Frequencies are WHOLE CYCLES
+    // PER TILE now, per axis, and the worst join across all five
+    // surfaces measures 0.0000 of 255. The seam is closed by
+    // construction rather than by care.
+    //
+    // 128px, four times the original's pixels. 256 was measured at
+    // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
+    // two-second stall on entering the world is worse than the detail
+    // is good. A worker is the way to 256 and is its own slice.
+    const mode = this.groundMode
+      ?? (this.enhancedGround ? 'drawn' : 'classic');
+    const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
-    const w = layers[0].width;
-    const h = layers[0].height;
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    for (let i = 0; i < layers.length; i++) {
-      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
+    const w = src[0].width;
+    const h = src[0].height;
+    // EE8: A SIZED INTERNAL FORMAT, and this is what made the ground a
+    // void. generateMipmap requires the texture to be colour-renderable
+    // and filterable, which an UNSIZED gl.RGBA on a 2D array is not - so
+    // the call failed, no mips existed, and EE3's LINEAR_MIPMAP_LINEAR
+    // left the sampler MIPMAP-INCOMPLETE. An incomplete sampler returns
+    // BLACK, for every tile, everywhere: the empty void. The upload had
+    // worked for years under NEAREST because NEAREST needs no mips.
+    // RGBA8 is the same eight bits per channel, spelled the way WebGL2
+    // requires when mips are wanted.
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (let i = 0; i < src.length; i++) {
+      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(src[i].colors.buffer, src[i].colors.byteOffset, w * h * 4));
     }
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // EE3 (Enhanced Environments): MIPMAPS AND ANISOTROPY, on the
+    // enhanced skin only.
+    //
+    // A 64px tile sampled NEAREST is Daggerfall's own look and the
+    // classic skin keeps it exactly. But that sampling is also why the
+    // ground BOILS at distance: a tile covers 6.4 world units, so a
+    // pixel a hundred metres out spans dozens of texels and NEAREST
+    // picks one of them per frame, at random as the camera moves. Mips
+    // are what stop that, and anisotropy is what keeps the ground from
+    // going to mush at grazing angles - which is the angle almost all
+    // ground is seen at.
+    //
+    // It is also a PREREQUISITE, not just a polish: a higher-resolution
+    // tile without mips shimmers WORSE than the 64px one, because it
+    // has more texels to alias between. Nothing else in this arc can
+    // land until this does.
+    //
+    // Per-layer, so tiles never bleed into each other: WebGL2's
+    // generateMipmap on a 2D array filters each layer independently.
+    if (mode !== 'classic') {
+      // ...and if it fails anyway, FALL BACK rather than draw black. A
+      // sampler that cannot be completed must not be asked for mips:
+      // the ground looking like the classic ground is a disappointment,
+      // and the ground looking like a void is a broken game.
+      while (gl.getError() !== gl.NO_ERROR) { /* drain, so the next read is ours */ }
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      if (gl.getError() !== gl.NO_ERROR) {
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        this.tileArrays.set(key, tex);
+        return tex;
+      }
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+      if (aniso) {
+        gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT,
+          Math.min(16, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+      }
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.tileArrays.set(archive, tex);
+    this.tileArrays.set(key, tex);
     return tex;
   }
 
   /** Draw one terrain surface with its tilemap + tile array. */
+  /** EE4: the deck the terrain shadows under. {cover, soft, wind, time,
+   *  amount}; null clears it. */
+  setCloudShadow(d) { this._cloudShadow = d ?? null; }
+
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
     this._use(this.terrainProgram);
@@ -1808,6 +1963,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
+    // EE4: the deck, or nothing at all
+    const cs = this._cloudShadow;
+    gl.uniform1f(this.tUShadowAmt, cs ? cs.amount : 0);
+    gl.uniform1f(this.tUCloudCover, cs ? cs.cover : 0);
+    gl.uniform1f(this.tUCloudSoft, cs ? cs.soft : 1);
+    gl.uniform1f(this.tUCloudTime, cs ? cs.time : 0);
+    gl.uniform2f(this.tUCloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
     this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);

@@ -23,6 +23,9 @@ import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
+// NPC2: the enhanced humanoid body - shared per outfit, drawn per actor.
+import { mwActorState, drawMwActor, requestMwBody } from '../characters/mwActorRig.js';
+import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
@@ -2727,6 +2730,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       showLootHover(key, key ? api.lootContents(key) : null,
         key?.startsWith('corpse:') ? 'Remains' : 'Loot');
     }
+    // ── NPC2: THE MORROWIND BODY, PER FOE ────────────────────────
+    // Enhanced only, humanoids only, and NEVER blocking: the body is
+    // asked for once and arrives when it arrives. Until then - and
+    // forever, for anyone the data cannot dress - the classic sprite
+    // draws exactly as it always has, which is the fallback this
+    // whole lane is built to keep.
+    // NPC3a: the three-state dance (not asked / in flight / settled)
+    // is requestMwBody's, shared with every other host that draws
+    // actors - the street's guards ask it the same way.
+    const _mwBodyFor = (f) => requestMwBody(
+      f, f.entity && enemyMwBodyOpts(f.entity, f.mobileType, f.mobile?.gender), f.mobileType);
+    const _drawMwFoe = (f, dt, proj, view, eye, paralyzed) => drawMwActor(renderer, canvas, f._mwBody, f._mwState, {
+      dt: paralyzed ? 0 : dt,   // S19 FreezeAnims: a held foe holds its frame
+      moving: !!f.ai.moving,
+      running: false,
+      feet: f.ai.feet,
+      yaw: f.ai.yaw,
+      proj,
+      view,
+      eye,
+    });
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     // B1: QuestResourceBehaviour.Update every frame the object lives
@@ -3148,6 +3172,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // C17: the texture-475 female casting records read too small
         // from the files - DFU post-scales 20-24 by 1.35 (OrientEnemy).
         if (f.mobileArchive === 475 && out.record >= 20 && out.record <= 24) { sz.w *= 1.35; sz.h *= 1.35; }
+        // NPC2: THE MORROWIND BODY TAKES THE FRAME, when there is one.
+        // The sprite work above still runs - it costs one texture
+        // lookup and it is what we fall back to on the very next frame
+        // if the body is not ready - but a humanoid with a built body
+        // draws as that body instead of pushing its quad.
+        //
+        // The body is asked for ONCE per foe (a build is seconds; the
+        // service shares it by outfit) and drawn immediately, because
+        // the assembly is a scratch surface: pose, upload and draw are
+        // one call for exactly that reason (mwActorRig's header).
+        if (_mwBodyFor(f) && _drawMwFoe(f, dt, proj, view, eye, _fParalyzed)) continue;
         f.batch.record = rkey;
         f.batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };   // negative width = FlipLeftRight (UVs ride the corners)
         f.batch.origin = f.ai.feet;   // the billboard shader bottom-anchors

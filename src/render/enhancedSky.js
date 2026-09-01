@@ -53,8 +53,21 @@ export const SKY_KEYS = Object.freeze([
   { elev: -18, zenith: '#060914', horizon: '#0f131f', sun: '#000000', glow: '#1a1420', glowAmount: 0.0, stars: 1.0 },
   { elev: -9,  zenith: '#0c1330', horizon: '#2b2238', sun: '#000000', glow: '#6a3a3a', glowAmount: 0.30, stars: 0.85 },
   { elev: -4,  zenith: '#1a2a5a', horizon: '#4e4258', sun: '#000000', glow: '#d6693a', glowAmount: 0.75, stars: 0.45 },
+  // EE6 (parity with the Enhanced Environments lab): THE SUNSET BAND.
+  // The ramp stepped -4 -> 0 -> 4 and the WHOLE of a sunrise or a
+  // sunset happens inside those eight degrees, so the most-looked-at
+  // sky in the game was three keys wide and everything between them
+  // was a straight line. Four keys where there were two: the horizon
+  // goes ember, then peach; the zenith takes the violet that exists
+  // for a few minutes either side of the horizon; and the glow swings
+  // warm and then cools as the sun clears the haze, which is what a
+  // real one does. The interpolation is unchanged - only the rungs
+  // it walks are closer together where the eye is looking.
+  { elev: -2,  zenith: '#233674', horizon: '#8e6062', sun: '#e06a2c', glow: '#f07c3c', glowAmount: 0.92, stars: 0.24 },
   { elev: 0,   zenith: '#2c4d8e', horizon: '#c4a49a', sun: '#ffa64e', glow: '#ff9a4c', glowAmount: 1.0, stars: 0.10 },
+  { elev: 2,   zenith: '#335ca4', horizon: '#e0b49c', sun: '#ffb96a', glow: '#ffac60', glowAmount: 0.84, stars: 0.03 },
   { elev: 4,   zenith: '#3a68b4', horizon: '#d9c6b4', sun: '#ffd39a', glow: '#ffbd7a', glowAmount: 0.6, stars: 0.0 },
+  { elev: 7,   zenith: '#3c70c0', horizon: '#d2cfc8', sun: '#ffe0b8', glow: '#ffcf9c', glowAmount: 0.42, stars: 0.0 },
   { elev: 12,  zenith: '#3f77cc', horizon: '#c9dcf0', sun: '#ffefd2', glow: '#ffe1b8', glowAmount: 0.28, stars: 0.0 },
   { elev: 30,  zenith: '#336bc6', horizon: '#b6d0ec', sun: '#fff7e6', glow: '#fff0d8', glowAmount: 0.14, stars: 0.0 },
   { elev: 90,  zenith: '#2a5ab8', horizon: '#a8c8ea', sun: '#ffffff', glow: '#ffffff', glowAmount: 0.08, stars: 0.0 },
@@ -195,7 +208,12 @@ export function sunOcclusion(state) {
   // light off the ground as off the disc the player can still see, and
   // those are the hours the palette is built around.
   const near = smoothstep(0.28, 0, d[1]);
-  return cov * (1 - near) + cov * state.cloudCover * near;
+  // EE6 F2: the CPU occlusion follows the shader's thinning EXACTLY -
+  // that is the whole point of this function, and a divergence here
+  // would put a shadow under a cloud that is no longer there. The
+  // shader now thins by mix(cover, 1, 0.75); so does this.
+  const thin = state.cloudCover + (1 - state.cloudCover) * 0.75;
+  return cov * (1 - near) + cov * thin * near;
 }
 
 /** How much of the sun a full cover takes off the WORLD. Not 1: even
@@ -487,7 +505,15 @@ float fbm(vec2 p) {
 // which is what lights the deck. Returns cover (x) and the noise the
 // colour is chosen by (y).
 vec2 deck(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias) {
-  vec2 p = dir.xz / (dir.y + 0.18) * scale + wind * uTime;
+  // EE2 F1 (found in the Enhanced Environments lab): THE DECK STOPPED
+  // AT THE HORIZON. This projection runs away as the ray flattens - at
+  // the horizon the lookup reaches the tens of thousands, a float32
+  // loses its fraction, and the noise returns a CONSTANT, so the last
+  // band of sky carried no cloud at all whatever the cover said. It is
+  // the largest part of the sky and the part a player looks at most.
+  // Capping the projection keeps the coordinates in a range the noise
+  // can still resolve, and the deck runs all the way down.
+  vec2 p = dir.xz * min(1.0 / (dir.y + 0.18), 9.0) * scale + wind * uTime;
   float n = fbm(p) + bias;
   float cov = smoothstep(1.0 - cover, 1.0 - cover + soft, n);
   return vec2(cov, n);
@@ -531,9 +557,23 @@ float stars(vec3 dir, float amount) {
     // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
     float scale = layer == 0 ? 127.0 : 236.0;
 
-    vec2 sc2;
-    cubeSnap(d, scale, sc2);
-    vec2 g = sc2 + float(layer) * 31.7;
+    // EE2 F2 (found in the lab, and it is THIS shader's bug): THE STARS
+    // WERE RULED INTO ROWS. cubeSnap returns the cell's INTEGER id, so
+    // fract() of it is a CONSTANT - every star sat at the same offset
+    // inside its cell, and a field of stars all at the same sub-cell
+    // position is a grid of lines, which is what the night sky looked
+    // like. The id and the position have to come from ONE number: the
+    // face is chosen once, its equi-angular coordinate computed once,
+    // and the cell is that number's floor while the position is its
+    // fract. They cannot disagree because there is nothing left to
+    // disagree about.
+    vec3 ad2 = abs(d);
+    float md2 = max(ad2.x, max(ad2.y, ad2.z));
+    vec2 raw2; float face2;
+    if (ad2.x >= md2) { raw2 = d.zy / ad2.x; face2 = d.x > 0.0 ? 0.0 : 1.0; }
+    else if (ad2.y >= md2) { raw2 = d.xz / ad2.y; face2 = d.y > 0.0 ? 2.0 : 3.0; }
+    else { raw2 = d.xy / ad2.z; face2 = d.z > 0.0 ? 4.0 : 5.0; }
+    vec2 g = atan(raw2) * 1.27323954 * scale + vec2(face2 * 977.0 + float(layer) * 31.7);
     vec2 cell = floor(g), f = fract(g);
     float h = hash21(cell + 7.3 * float(layer));
     float thresh = layer == 0 ? 0.955 : 0.985;
@@ -613,7 +653,13 @@ void main() {
     // high deck shows through the gaps.
     float covHi = hi.x * (1.0 - lo.x) * 0.7;
     float cov = lo.x + covHi;
-    cloud = mix(cov, cov * uCloudCover, near);
+    // EE6 F2 (the lab's declared divergence, brought over): the deck
+    // was thinned toward the horizon by multiplying cover BY cover -
+    // at half cover that is a QUARTER of the cloud where the sky is
+    // largest, so an overcast day kept a clear rim all the way round.
+    // The haze stays, because a deck does go pale with distance; the
+    // thinning goes, because cover should mean cover to the horizon.
+    cloud = mix(cov, cov * mix(uCloudCover, 1.0, 0.75), near);
     float n = mix(hi.y, lo.y, lo.x);                       // the deck in front decides the colour
     float sunAz = max(dot(dir, uSunDir), 0.0);
     // The rim: strongest at the thin edges of a bank, and only near the sun.
@@ -705,6 +751,19 @@ export class EnhancedSkyRenderer {
     this.state = state;
     this.clearColor = new Float32Array(state.clearColor);
     this.fillColor = new Float32Array(state.fillColor);
+    // EE4: the deck the GROUND shadows under, published from the same
+    // state the dome is drawn from - so the shadow on the land and the
+    // cloud overhead are one field, and a host cannot feed them
+    // different numbers by accident. The scale matches the low deck's
+    // (1.9), and the amount is held below one because a cloud dims the
+    // sun rather than extinguishing it.
+    this.cloudShadow = {
+      cover: state.cloudCover ?? 0,
+      soft: Math.max(1e-3, state.cloudSoft ?? 0.25),
+      wind: state.wind ?? [0, 0],
+      time: state.seconds ?? 0,
+      amount: 0.62,
+    };
   }
 
   draw(yaw, pitch, fovY, aspect) {

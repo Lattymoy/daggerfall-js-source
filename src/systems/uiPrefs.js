@@ -34,7 +34,22 @@ export const PREF_DEFAULTS = Object.freeze({
   // own painted SKY*.DAT panorama under the same enhanced skin.
   // ?sky=classic stays the URL door and forces the panorama either
   // way (probe pins ride it).
-  proceduralSky: true,
+  // EE1 (Mac, 2026-09-01): ENHANCED ENVIRONMENTS. The prototype's whole
+  // surface - the lit ground, the 3D grass, the surface state field
+  // (puddles, snow, deformation, melt), the weather particles AND the
+  // sky - lands as one switch, because they are one system: the sky
+  // lights the ground, the ground holds the weather's water, and the
+  // grass stands in what the field says is there. Splitting them into
+  // separate toggles would let a player build a state none of them was
+  // written for - lit grass under a painted panorama, snow with no sky
+  // to fall from.
+  //
+  // It REPLACES `proceduralSky`, whose job it now contains. The old key
+  // is migrated rather than dropped: a player who turned the sky off
+  // gets environments off, because that is the choice they made about
+  // the only part of this that existed when they made it.
+  enhancedEnvironments: true,
+  proceduralSky: true,   // LEGACY: read only by the migration below
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
   open: {},            // "video:stored" -> true
@@ -49,7 +64,16 @@ export function loadPrefs() {
     const raw = storage()?.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      if (p && typeof p === 'object') _prefs = { ...PREF_DEFAULTS, ...p, open: { ...(p.open ?? {}) } };
+      if (p && typeof p === 'object') {
+        _prefs = { ...PREF_DEFAULTS, ...p, open: { ...(p.open ?? {}) } };
+        // EE1: a shelf written before Enhanced Environments existed
+        // carries only `proceduralSky`. Its answer becomes the new
+        // key's, once - a player who switched the sky off is not
+        // surprised by a lit world the next time they load.
+        if (p.enhancedEnvironments === undefined && p.proceduralSky !== undefined) {
+          _prefs.enhancedEnvironments = !!p.proceduralSky;
+        }
+      }
     }
   } catch (e) {
     console.warn('[uiPrefs] stored screen preferences unreadable; using defaults', e);

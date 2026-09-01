@@ -176,6 +176,26 @@ export async function bootInterior(canvas, renderer, params, status) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
+    // AUDIT-N F2: THE PEOPLE, who are no longer in that array.
+    //
+    // NPC4 pulled a building's people OUT of the shared flat groups so
+    // the Morrowind body lane could leave one person out of the sprite
+    // pass - and this host, which draws `billboardBatches` and nothing
+    // else, silently stopped drawing anybody at all. Every shopkeeper
+    // and tavern patron in ?interior vanished.
+    //
+    // No body seam here: this host mounts no mode machine, so it has
+    // no static-NPC identity to derive one from (worldModes publishes
+    // staticNpcMwOpts, and there is none here). Sprites, which is what
+    // this host drew before NPC4 and what it should draw now.
+    {
+      const _people = [];
+      for (const pn of ctx.people) {
+        if (!pn.active || !pn.batch) continue;   // SetActive(false): the away copy does not draw
+        _people.push(pn.batch);
+      }
+      if (_people.length) renderer.drawBillboards(_people, camRight, UP_Y);
+    }
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

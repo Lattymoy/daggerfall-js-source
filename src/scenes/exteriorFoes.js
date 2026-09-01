@@ -18,6 +18,8 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
+import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';   // NPC4b: the shared-body / per-actor split
+import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';   // NPC2: which enemies are humanoid, and what they wear
 import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
@@ -511,7 +513,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
-      // A5 - DaedraSeducerMobileBehaviour.Update (the dungeon pool's
+// A5 - DaedraSeducerMobileBehaviour.Update (the dungeon pool's
       // law, one spelling): a MonoBehaviour Update that runs BEFORE
       // the anim step consumes the state it raises, keyed on
       // `enemySenses.Target == PlayerEntityBehaviour`.
@@ -519,7 +521,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // EnemyMotor.CanFly (:837-845) reads mobile.Enemy.Behaviour LIVE
       // - "This can change in the case of a transformed Seducer".
       if (f.seducer) f.ai.flies = f.mobile.basics.behaviour === 'Flying' || f.mobile.basics.behaviour === 'Spectral';
-      f._mout = f.mobile.update(dt, {
+      // NPC4b / S19 FreezeAnims: a paralysed foe HOLDS ITS FRAME - the
+      // dungeon pool's law, and the MW body reads the same gate in
+      // batches() below, so the two agree about motion.
+      f._mout = f.mobile.update(_fParalyzed ? 0 : dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,
         rangedStriking: strikeEdge && !!f.attack.firedRanged,
@@ -703,20 +708,50 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return takeCorpseLoot(foes[Number(key.split(':')[1])], playerEntity, say2);
   }
 
+  /** NPC4b: the same body seam the dungeon's foes and the city watch
+   *  ride, in the pool that serves ABOVE GROUND and INSIDE BUILDINGS.
+   *  NPC2/NPC2b wired dungeonContext and nothing else, so an encounter
+   *  in a street or a shop was the one fight in the game still made of
+   *  sprites. `mw` is the frame's render context and is OPTIONAL: with
+   *  no context, or before a body arrives, every foe is a sprite
+   *  exactly as it always was.
+   *
+   *  AUDIT A6's law rides along: a paralysed foe holds its frame, so
+   *  the body takes dt 0 when the sprite would freeze. */
+  const _drawMwFoe = (f, dt, mw) => {
+    const body = requestMwBody(
+      f, f.entity && enemyMwBodyOpts(f.entity, f.mobileType, f.mobile?.gender), f.mobileType);
+    if (!body) return false;
+    return drawMwActor(renderer, mw.canvas, body, f._mwState, {
+      dt,
+      moving: !!f.ai.moving,
+      running: false,
+      feet: f.ai.feet,
+      yaw: f.ai.yaw,
+      proj: mw.proj,
+      view: mw.view,
+      eye: mw.eye,
+    });
+  };
+
   /** Live sprite + corpse batches for the draw - the guard shape:
-   *  record/size/origin mutate per frame, frames upload lazily. */
-  function batches() {
+   *  record/size/origin mutate per frame, frames upload lazily.
+   *
+   *  NPC4b: `mw` optional. A foe whose Morrowind body has built draws
+   *  HERE and does not push a batch; the corpses always do - a dead
+   *  foe is the classic death sprite in every lane.
+   *  `dt` is the frame's, needed only to advance a body's playhead;
+   *  without it a body would stand in one pose. */
+  function batches(mw = null, dt = 0) {
     const out = [];
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
-      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
-      // (:36-43, :56-62): "Handles magical concealment for entities
-      // other than player". A non-player entity whose
-      // IsMagicallyConcealed is true has its renderer DISABLED - any
-      // of the six flags, normal or true power. The entity keeps
-      // acting, it simply is not drawn. (The player's own concealment
-      // has no visual: DFU never disables the first-person view.)
+// A5 - EntityConcealmentBehaviour.Update/MakeConcealed
+      // (:36-43, :56-62): a concealed non-player entity has its
+      // renderer DISABLED - sprite AND Morrowind body alike, so the
+      // skip stands ABOVE the MW draw.
       if (isMagicallyConcealed(f.entity)) continue;
+      if (mw && _drawMwFoe(f, entityIsParalyzed(f.entity) ? 0 : dt, mw)) continue;
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
