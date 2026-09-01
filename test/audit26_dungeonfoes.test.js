@@ -476,7 +476,13 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // stand at the head of the core too, because a fast travel is where
   // the calendar jumps weeks and the destination must not be skinned
   // for the month the player left.
-  const core = WORLD.slice(t, t + 2100);
+  // PIN MOVED (ROAD-Ar, R1/R0), 2100 -> 2600: that straightening now
+  // reads the ARRIVAL clock the caller passes (performFastTravel
+  // raises time only AFTER TeleportToCoordinates, :333/:344, so the
+  // one clock still read the departure date here), and the core also
+  // drops the season re-skin's motor hold on its way past. Both notes
+  // sit above these needles; the needles themselves are unchanged.
+  const core = WORLD.slice(t, t + 2600);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

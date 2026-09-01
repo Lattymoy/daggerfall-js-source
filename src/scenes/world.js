@@ -902,13 +902,18 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  MOVED, so the caller can decide what to do about geometry that
    *  already stands - a teleport is about to rebuild the world anyway
    *  and only wants the cache straight BEFORE its pixels build.
+   *  @param {number} [atMinutes] the clock to read. The frame reads the
+   *   LIVE one; a fast travel reads the minute it is ABOUT to arrive
+   *   at, because performFastTravel raises time only after
+   *   TeleportToCoordinates (DaggerfallTravelPopUp.cs:333, :344) and
+   *   the destination must not build in the departure month.
    *  @returns {boolean} */
-  function refreshSeason() {
+  function refreshSeason(atMinutes = worldMinutes()) {
     if (seasonPin !== null) return false;   // ?season pins the world for a shot
-    const day = Math.floor(worldMinutes() / MINUTES_PER_DAY);
+    const day = Math.floor(atMinutes / MINUTES_PER_DAY);
     if (day === _seasonDay) return false;
     _seasonDay = day;
-    const want = climateSeasonFromMinutes(worldMinutes());
+    const want = climateSeasonFromMinutes(atMinutes);
     if (want === season) return false;
     season = want;
     // SetSunlightScale (WeatherManager.cs:309-319) reads the same
@@ -917,6 +922,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
   let _reskinPending = false;
+  // ROAD-Ar (R0): the re-skin's MOTOR HOLD - the key of the pixel the
+  // player stood on when the flip tore the world down, null when
+  // nothing is held. DaggerfallLocation re-skins standing geometry in
+  // place (:118-130 -> ApplyTimeAndSpace -> ApplyClimateSettings), so
+  // the reference has no outage to survive; this host bakes its swaps
+  // into GL uploads and has to rebuild the pixel, and destroyPixel
+  // takes the collider bucket AND the terrain floor with it (heightAt
+  // answers -Infinity for a key that has left `built`, and
+  // Collider's `feet[1] < floor + SKIN` can never fire against that).
+  // A live motor therefore free-falls through the whole rebuild - a
+  // COLD one, because the flip is the first time the winter archives
+  // are fetched - and AcrobatMotor bills the entire drop the moment
+  // the ground returns. Every other full teardown in this host ends
+  // in player.spawn; this one holds instead, which is nearer the
+  // reference still: the player does not move at all.
+  let _seasonHoldKey = null;
   function tickSeason() {
     if (refreshSeason()) _reskinPending = true;
     // A pixel whose textures are still crossing must PUBLISH before its
@@ -928,6 +949,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!_reskinPending || building) return;
     _reskinPending = false;
     const keys = [...built.keys()];
+    // ...and the hold is armed BEFORE the ground goes, on the pixel
+    // the streamer says the player is standing on (the same pixel the
+    // nearest-first rebuild below puts back first).
+    if (walkMode && playerSpawned) _seasonHoldKey = `${state.current.x},${state.current.y}`;
     for (const key of keys) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by, { collectLoose: false });
@@ -2375,7 +2400,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  every built pixel, re-origin the streamer (its own verbatim
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
-  async function _teleportToPixel(px, py, localPos = null, { grounded = false } = {}) {
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -2384,10 +2409,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // A1: a fast travel is where the calendar jumps WEEKS - straighten
     // the season BEFORE the destination pixel builds, or the arrival
     // is skinned for the month the player left and the frame loop
-    // rebuilds it a moment later. No re-skin sweep here: the teardown
-    // below is a real unload (CollectLooseObjects and all).
-    refreshSeason();
+    // rebuilds it a moment later. ROAD-Ar (R1): off the ARRIVAL clock,
+    // which the caller passes - performFastTravel raises time AFTER
+    // TeleportToCoordinates (:333, :344) and the port keeps that order,
+    // so the one clock still reads the departure date here and reading
+    // it straightened nothing. No re-skin sweep either way: the
+    // teardown below is a real unload (CollectLooseObjects and all).
+    refreshSeason(arriveMinutes ?? worldMinutes());
     _reskinPending = false;   // ...and the frame's own re-skin has nothing left to re-skin
+    _seasonHoldKey = null;    // ...nor a held motor: the spawn below re-anchors it anyway
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
     // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
     // on SaveLoadManager_OnStartLoad) - "remove loose enemies,
@@ -2629,16 +2659,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       pixel,
       nativeX: wc ? wc.x : corner.x,
       nativeZ: wc ? wc.z : corner.z,
+      // ROAD-Ar (R2): the height goes in COMPENSATION-FREE, and
+      // anchorLanding re-adds the live compensation on the way out.
+      // That encoding IS this port's RestoreWorldCompensationHeight
+      // (:137-143): DFU stores the raw Unity height and must put the
+      // streaming world back to the offset it was measured against
+      // before InitWorld, while an anchor stated in the compensation-
+      // free frame survives any recenter between the set and the cast.
+      // So there is no restore call here and no compensation on the
+      // anchor - see makeAnchor's note, which is where the law lives.
       y: pf[1] - state.compensation[1],
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
       buildingKey: inside.buildingKey,
       interior: inside.interior,
-      // "restore world compensation height early before initworld ...
-      // Ensures exterior world level is aligned with building height
-      // at time of anchor" (:137-141) - the anchor carries the
-      // compensation it was set under.
-      worldCompensationY: state.compensation[1],
     });
   }
 
@@ -2876,7 +2910,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       // credit - "Taverns only accept gold pieces".
       deductGoldPieces(playerEntity, computed.piecesCost ?? 0);
       deductGold(playerEntity, computed.totalCost - (computed.piecesCost ?? 0));
-      await _teleportToPixel(pick.pixel.x, pick.pixel.y);
+      // ROAD-Ar (R1): the ARRIVAL minute rides the teleport. RaiseTime
+      // is below, exactly where performFastTravel puts it (:344, after
+      // TeleportToCoordinates at :333) - so the core is handed the
+      // minute the clock is about to reach and straightens the season
+      // from THAT, instead of skinning the destination for the month
+      // the player left and having the next frame's tickSeason tear
+      // the whole just-built grid down again.
+      await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
+        { arriveMinutes: worldMinutes() + computed.minutes });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -5333,6 +5375,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     player.paralyzed = paralyzed;
 
     if (walkMode) {
+      // ROAD-Ar (R0): the season re-skin's hold, released the moment
+      // the player's own pixel is BUILT again - the same shape as the
+      // boot gate right below, which holds the motor until the start
+      // pixel stands. The `!building && !queue.length` arm is the
+      // dead-man's release: a pixel that never comes back must not
+      // freeze the game for ever, and re-anchoring there is what keeps
+      // the outage off the fall ledger. player.spawn IS the re-anchor
+      // (fallStart = y, falling cleared) - _teleportToPixel's own tail.
+      if (_seasonHoldKey !== null && (built.has(_seasonHoldKey) || (!building && !queue.length))) {
+        player.spawn(player.pos[0], player.pos[1], player.pos[2]);
+        _seasonHoldKey = null;
+      }
+      const _seasonHeld = _seasonHoldKey !== null;
       if (!playerSpawned && built.has(startKey)) {
         // Stand on the terrain once the start pixel's collider is up -
         // FixStanding from 2u above it, not a drop from there.
@@ -5382,7 +5437,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and nothing else. Dropping run/sneak/autoRun/back from this bag read
         // as a RELEASE to the motor's press-edge latches, so a key held
         // through the paralysis fired a synthetic press on the frame it lifted.
-        if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
+        // ROAD-Ar (R0): ...and the season hold stops the motor dead,
+        // because there is no floor under it while the re-skin runs.
+        if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
           forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
@@ -5425,7 +5482,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // costs HP, an over-eager one makes every fall free. Death at
         // 0 rides the shared entity; the exterior death screen pends
         // with the world-mode UI arc.
-        applyFallLanding(playerEntity, player.landedFallDistance, {
+        // ROAD-Ar (R0): a held motor reports no landing - landedFallDistance
+        // is only cleared by update(), so billing it on a frame the motor
+        // never ran would charge the same fall once per held frame.
+        if (!_seasonHeld) applyFallLanding(playerEntity, player.landedFallDistance, {
           sound: (id) => audio.playOneShot(id),
           inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),
         });

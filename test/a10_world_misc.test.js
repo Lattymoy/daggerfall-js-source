@@ -197,20 +197,24 @@ test('A10: SetAnchor carries the CONTEXT and, in a building, the way back in (:1
   const shop = anchorAt({
     worldContext: WORLD_CONTEXT.Interior, buildingKey: 65794,
     interior: { door: { blockIndex: 1, recordIndex: 2, doorIndex: 3, buildingKey: 65794 }, building: { buildingKey: 65794 } },
-    worldCompensationY: 12,
   });
   assert.equal(shop.insideBuilding, true);
   assert.equal(shop.buildingKey, 65794);
   assert.ok(shop.interior?.door, 'exteriorDoors ride the anchor (:110) - without them it can only land you outside');
-  assert.equal(shop.worldCompensationY, 12, 'the compensation height the anchor was set under (:141)');
   assert.equal(shop.mode, 'interior');
 
-  const crypt = anchorAt({ worldContext: WORLD_CONTEXT.Dungeon, local: [1, 2, 3], buildingKey: 77, interior: { door: {} }, worldCompensationY: 9 });
+  const crypt = anchorAt({ worldContext: WORLD_CONTEXT.Dungeon, local: [1, 2, 3], buildingKey: 77, interior: { door: {} } });
   assert.equal(crypt.insideDungeon, true);
   assert.equal(crypt.interior, null, 'a dungeon anchor carries no building record');
   assert.equal(crypt.buildingKey, 0);
-  assert.equal(crypt.worldCompensationY, 0, 'only the INTERIOR arm restores a compensation (:140-143)');
   assert.deepEqual(crypt.local, [1, 2, 3]);
+  // PIN MOVED (ROAD-Ar, R2): this used to assert that makeAnchor stored
+  // `worldCompensationY` off the interior arm. It did - and nothing in
+  // the port ever read it back, so the pin passed while the law it
+  // named (RestoreWorldCompensationHeight, :137-143) had no port at
+  // all. The record now carries no such field, and the test below
+  // pins the encoding that stands in for the restore.
+  for (const a of [out, shop, crypt]) assert.equal('worldCompensationY' in a, false);
 });
 
 test('A10: a pre-A10 anchor reads as EXTERIOR rather than falling down a dungeon arm', () => {
@@ -270,12 +274,37 @@ test('A10: "cache scene before departing" is the three-way arm (:145-151)', () =
   assert.equal(dungeon.dungeonExitImmediate, true, 'TransitionDungeonExteriorImmediate instead (:151)');
 });
 
-test('A10: the compensation restore is the INTERIOR anchor\'s alone (:137-143)', () => {
-  const shop = anchorAt({ worldContext: WORLD_CONTEXT.Interior, buildingKey: 7, worldCompensationY: 31 });
-  assert.equal(teleportPlan(shop, outside).worldCompensationY, 31);
-  assert.equal(teleportPlan(anchorAt(), outside).worldCompensationY, 0, 'else RestoreWorldCompensationHeight(0) (:143)');
-  const crypt = anchorAt({ worldContext: WORLD_CONTEXT.Dungeon, local: [0, 0, 0] });
-  assert.equal(teleportPlan(crypt, outside).worldCompensationY, 0);
+test('ROAD-Ar (R2): the compensation restore is an ENCODING here, not a plan field (:137-143)', () => {
+  // PIN MOVED (ROAD-Ar, R2). What stood here asserted
+  // `teleportPlan(shop, outside).worldCompensationY === 31` - the
+  // payload of RestoreWorldCompensationHeight on the plan object. The
+  // plan is consumed by exactly one host (recallToAnchor, the only
+  // importer of teleportPlan), and that host never read the field, so
+  // the named law had NO port and the pin could not tell. What the
+  // port actually does instead is store the anchor's height
+  // compensation-FREE and re-add the LIVE compensation on arrival,
+  // which needs no restore at all because it survives any recenter
+  // between the set and the cast. That is what this pins now.
+  for (const a of [
+    anchorAt({ worldContext: WORLD_CONTEXT.Interior, buildingKey: 7 }),
+    anchorAt(),
+    anchorAt({ worldContext: WORLD_CONTEXT.Dungeon, local: [0, 0, 0] }),
+  ]) {
+    const plan = teleportPlan(a, outside);
+    assert.equal('worldCompensationY' in plan, false,
+      'a field no host reads is the payload of a law with no port');
+  }
+  // The host half: setRecallAnchor takes the compensation OUT and
+  // anchorLanding puts the live one back, so the two are inverse.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /y: pf\[1\] - state\.compensation\[1\],/,
+    'the anchor height must be stored compensation-free');
+  assert.match(world, /return \[lx, \(a\.y \?\? 2\) \+ state\.compensation\[1\], lz\];/,
+    'and anchorLanding must re-add the LIVE compensation');
+  assert.equal(world.includes('worldCompensationY'), false,
+    'no half-plumbed restore payload survives in the host');
+  assert.equal(read('src/systems/teleportAnchor.js').includes('worldCompensationY:'), false,
+    'nor in the law module');
 });
 
 test('A10: where the plan LANDS, and who owns the arrival restore (:622-655, :246-252)', () => {

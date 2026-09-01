@@ -92,13 +92,21 @@ export const ANCHOR_MUST_BE_SET = 4001;
  * @param {object|null} p.interior - the exteriorDoors +
  *   buildingDiscoveryData pair (:110-111), null outside a building.
  * @param {number} p.buildingKey - buildingDiscoveryData.buildingKey.
- * @param {number} p.worldCompensationY - the interior arm's own
- *   height (:141); 0 everywhere else.
+ *
+ * There is deliberately NO `worldCompensation` field, and so no port
+ * of RestoreWorldCompensationHeight (:139-143). DFU stores the
+ * anchor's RAW Unity height and has to put the streaming world back
+ * to the vertical offset that height was measured against before
+ * InitWorld, or the arrival misses the building it was set in. This
+ * port stores `y` COMPENSATION-FREE instead (the host writes
+ * `pf[1] - compensation[1]` and anchorLanding re-adds the LIVE
+ * compensation), so an anchor is already stated in a frame no
+ * recenter can move: there is nothing left to restore, and carrying
+ * the number would only have been a field no host reads.
  */
 export function makeAnchor({
   worldContext = WORLD_CONTEXT.Exterior, pixel, nativeX, nativeZ, y = 0,
   local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0,
-  worldCompensationY = 0,
 } = {}) {
   const insideBuilding = worldContext === WORLD_CONTEXT.Interior;
   const insideDungeon = worldContext === WORLD_CONTEXT.Dungeon;
@@ -114,7 +122,6 @@ export function makeAnchor({
     insideBuilding, insideDungeon,
     buildingKey: insideBuilding ? buildingKey : 0,
     interior: insideBuilding ? interior : null,
-    worldCompensationY: insideBuilding ? worldCompensationY : 0,
   };
 }
 
@@ -170,7 +177,7 @@ export function isSameInterior(anchor, here = {}) {
  *            teleportedIntoDungeon:boolean}}
  *   Just move the player (:129-134).
  * @returns {{kind:'cross', cacheScene:'exterior'|'building'|null,
- *            dungeonExitImmediate:boolean, worldCompensationY:number,
+ *            dungeonExitImmediate:boolean,
  *            arrive:'exterior'|'building'|'dungeon', anchor,
  *            teleportedIntoDungeon:boolean}}
  *   The whole cross-context flow.
@@ -205,11 +212,12 @@ export function teleportPlan(anchor, here = {}) {
     // TransitionDungeonExteriorImmediate instead.
     cacheScene: here.insideDungeon ? null : here.insideBuilding ? 'building' : 'exterior',
     dungeonExitImmediate: !!here.insideDungeon,
-    // "restore world compensation height early before initworld"
-    // (:137-143): an INTERIOR anchor's own, zero for anything else -
-    // "Ensures exterior world level is aligned with building height
-    // at time of anchor".
-    worldCompensationY: ctx === WORLD_CONTEXT.Interior ? (anchor.worldCompensationY ?? 0) : 0,
+    // ...and no `worldCompensationY` beside it. RestoreWorldCompensationHeight
+    // (:137-143) exists to put the streaming world back to the vertical
+    // offset the anchor's RAW height was measured against; makeAnchor's
+    // note above is why this port has no raw height to realign. Carrying
+    // the number here shipped the payload of a law with no port, under a
+    // pin that passed on the plan object alone - the seam this deleted.
     arrive,
     anchor,
     // "Set 'teleported into dungeon' flag when anchor is inside a

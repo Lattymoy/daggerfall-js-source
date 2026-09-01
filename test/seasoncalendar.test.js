@@ -33,6 +33,8 @@ import {
   SEASONS, MINUTES_PER_DAY, DAYS_PER_MONTH, CLASSIC_GAME_START_TIME,
   dateToClassicMinutes, dateFromClassicMinutes, seasonValue,
 } from '../src/systems/gameDate.js';
+import { PlayerMotor, FALL_DAMAGE_THRESHOLD } from '../src/player/motor.js';
+import { Collider } from '../src/player/collider.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -150,7 +152,14 @@ test('A1: both hosts take the season from the clock, with ?season demoted to a p
       `${host}: the winter sun lost its term`);
     // The poll is on the frame, beside the weather drain, and it only
     // builds a date when the DAY turns over.
-    assert.match(text, /const day = Math\.floor\(worldMinutes\(\) \/ MINUTES_PER_DAY\);\s*\n\s*if \(day === _seasonDay\) return/,
+    // PIN MOVED (ROAD-Ar, R1): the streaming host's refreshSeason now
+    // takes the clock to READ, because a fast travel has to straighten
+    // from the arrival minute - performFastTravel raises time only
+    // after TeleportToCoordinates (:333, :344) and the port keeps that
+    // order. So the needle is the day-grained SHAPE rather than the
+    // literal `worldMinutes()` both hosts used to inline; `atMinutes`
+    // defaults to that same clock for every other caller.
+    assert.match(text, /const day = Math\.floor\((?:worldMinutes\(\)|atMinutes) \/ MINUTES_PER_DAY\);\s*\n\s*if \(day === _seasonDay\) return/,
       `${host}: the season poll must be day-grained, not per-minute`);
     assert.match(text, /if \(seasonPin !== null\) return/,
       `${host}: a pinned ?season must not be walked over by the clock`);
@@ -188,8 +197,146 @@ test('A1: the streaming host re-skins what already stands, without unloading it'
   // season BEFORE the destination pixel builds, and take the quiet
   // path - the teleport's own teardown is a real unload.
   const tp = world.slice(world.indexOf('async function _teleportToPixel'));
-  const refresh = tp.indexOf('refreshSeason();');
+  const refresh = tp.indexOf('refreshSeason(arriveMinutes ?? worldMinutes());');
   const teardown = tp.indexOf('for (const key of [...built.keys()])');
   assert.ok(refresh > 0 && refresh < teardown,
     'the teleport must re-read the season before it rebuilds the world');
+});
+
+// =====================================================================
+// ROAD-Ar R0 - the re-skin must not delete the ground under a live
+// player. DaggerfallLocation.Update (:118-130) -> ApplyTimeAndSpace
+// (:133-148) -> ApplyClimateSettings is an IN-PLACE material swap on
+// standing geometry: the reference never removes terrain for a season
+// change, so it has no outage and no fall exposure at all. This host
+// bakes its swaps into GL uploads and has to destroy and rebuild the
+// pixel, which takes the collider bucket and the terrain floor with
+// it - so the port owes the equivalent of "the player never left the
+// ground", and the way to owe it is to hold the motor.
+// =====================================================================
+
+const STILL = { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false };
+const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+const QUAD = (y) => new Float32Array([-20, y, -20, 20, y, -20, 20, y, 20, -20, y, 20]);
+const QUAD_IX = new Uint32Array([0, 1, 2, 0, 2, 3]);
+/** The pixel the player stands on: a building roof at 110 in its own
+ *  collider bucket, over terrain at 100. destroyPixel takes BOTH
+ *  (removeBucket, and `built.delete` which turns heightAt into
+ *  -Infinity), so this is the outage in miniature. */
+function reskinRig() {
+  let floor = 100;
+  const col = new Collider(() => floor);
+  const add = () => col.addMesh('7,7', QUAD(110), QUAD_IX, IDENTITY);
+  add();
+  const motor = new PlayerMotor(col);
+  motor.spawn(0, 110, 0);
+  motor.update(1 / 60, STILL, 0, 0);
+  return {
+    motor,
+    tearDown() { col.removeBucket('7,7'); floor = -Infinity; },
+    rebuild() { add(); floor = 100; },
+  };
+}
+
+test('ROAD-Ar R0: a torn-down pixel is NO FLOOR, and a motor left running is billed the roof it was standing on', () => {
+  const rig = reskinRig();
+  assert.equal(rig.motor.grounded, true, 'the player starts standing on the pixel');
+  const stood = rig.motor.pos[1];
+  rig.tearDown();
+  // heightAt answers -Infinity for a key that has left `built`, and
+  // Collider's last-resort clamp is `feet[1] < floor + SKIN`, which
+  // can never fire against it: nothing holds the player up at all.
+  for (let i = 0; i < 60; i++) rig.motor.update(1 / 60, STILL, 0, 0);
+  assert.equal(rig.motor.grounded, false, 'one second of outage, in free fall');
+  assert.ok(rig.motor.pos[1] < stood - FALL_DAMAGE_THRESHOLD, 'and well past the threshold');
+  // ...and the ledger is settled against fallStart the moment the
+  // rebuilt pixel returns (AcrobatMotor's grounded branch): the floor
+  // clamp catches him on the TERRAIN, ten metres under the roof he
+  // never stepped off.
+  rig.rebuild();
+  rig.motor.update(1 / 60, STILL, 0, 0);   // the collider catches him...
+  assert.equal(rig.motor.grounded, true, 'the rebuilt pixel is ground again');
+  rig.motor.update(1 / 60, STILL, 0, 0);   // ...and FixedUpdate's next pass settles the ledger
+  assert.ok(rig.motor.landedFallDistance > FALL_DAMAGE_THRESHOLD,
+    'the re-skin arrives as fall damage - the defect this fix exists for');
+});
+
+test('ROAD-Ar R0: a HELD motor crosses the same outage unmoved and unbilled', () => {
+  // The fix's law: not calling update() at all is this port's nearest
+  // thing to ApplyClimateSettings, because the player does not move -
+  // no gravity is integrated, so position, fallStart and `falling`
+  // are exactly what they were when the ground went away.
+  const rig = reskinRig();
+  const stood = rig.motor.pos[1];
+  rig.tearDown();
+  for (let i = 0; i < 60; i++) { /* the host runs no update while _seasonHeld */ }
+  assert.equal(rig.motor.pos[1], stood, 'a held motor does not fall');
+  rig.rebuild();
+  // The release re-anchors the fall the way _teleportToPixel's landing
+  // does - spawn() clears `falling` and puts fallStart at the feet.
+  rig.motor.spawn(rig.motor.pos[0], rig.motor.pos[1], rig.motor.pos[2]);
+  assert.equal(rig.motor.fallStart, stood);
+  assert.equal(rig.motor.falling, false);
+  rig.motor.update(1 / 60, STILL, 0, 0);
+  rig.motor.update(1 / 60, STILL, 0, 0);
+  assert.equal(rig.motor.grounded, true, 'and he is standing where he stood');
+  assert.equal(rig.motor.pos[1], stood);
+  assert.ok(rig.motor.landedFallDistance <= FALL_DAMAGE_THRESHOLD,
+    'nothing is billed for the outage');
+});
+
+test('ROAD-Ar R0: the streaming host arms the hold before the teardown and releases it on the rebuilt pixel', () => {
+  // Host wiring, so it is pinned at its source like the rest of this
+  // file. The three halves that have to stay joined: the arm (before
+  // the ground goes), the release (on the player's own pixel, with
+  // the re-anchoring spawn), and the gate on the motor itself.
+  const world = read('src/scenes/world.js');
+  const tick = world.slice(world.indexOf('function tickSeason()'));
+  const arm = tick.indexOf('_seasonHoldKey = `${state.current.x},${state.current.y}`');
+  const teardown = tick.indexOf('destroyPixel(bx, by, { collectLoose: false });');
+  assert.ok(arm > 0 && arm < teardown,
+    'the hold must be armed while the player still has a pixel to name');
+  assert.match(world, /if \(_seasonHoldKey !== null && \(built\.has\(_seasonHoldKey\) \|\| \(!building && !queue\.length\)\)\) \{\s*\n\s*player\.spawn\(player\.pos\[0\], player\.pos\[1\], player\.pos\[2\]\);\s*\n\s*_seasonHoldKey = null;/,
+    'the release must wait for the pixel and re-anchor the fall (and never wedge)');
+  assert.match(world, /const _seasonHeld = _seasonHoldKey !== null;/);
+  assert.match(world, /if \(!_overlayHeld && !_seasonHeld\) player\.update\(dt,/,
+    'the motor must not integrate gravity while the ground is being rebuilt');
+  assert.match(world, /if \(!_seasonHeld\) applyFallLanding\(playerEntity, player\.landedFallDistance,/,
+    'and a frame the motor never ran reports no landing');
+  // The teleport core owns its own landing (player.spawn), so it drops
+  // any hold on the way through rather than testing a stale key
+  // against a brand-new origin.
+  const tp = world.slice(world.indexOf('async function _teleportToPixel'));
+  assert.ok(tp.indexOf('_seasonHoldKey = null;') > 0
+    && tp.indexOf('_seasonHoldKey = null;') < tp.indexOf('for (const key of [...built.keys()])'),
+    'the teleport clears the hold before it re-origins the streamer');
+});
+
+// =====================================================================
+// ROAD-Ar R1 - the straightening must read the ARRIVAL clock.
+// =====================================================================
+
+test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to arrive at', () => {
+  // performFastTravel calls TeleportToCoordinates (:333) and only then
+  // RaiseTime (:344), and this port keeps that order - so the one
+  // clock still reads the DEPARTURE date inside _teleportToPixel, and
+  // reading it there straightened nothing on exactly the trip the
+  // straightening exists for. The reference-faithful half of the fix
+  // is to pass the arrival minute rather than to move RaiseTime.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null \} = \{\}\)/,
+    'the core takes the arrival clock');
+  assert.match(world, /refreshSeason\(arriveMinutes \?\? worldMinutes\(\)\);/,
+    'and straightens from it, falling back to the live clock for every other caller');
+  assert.match(world, /function refreshSeason\(atMinutes = worldMinutes\(\)\) \{[\s\S]{0,400}?Math\.floor\(atMinutes \/ MINUTES_PER_DAY\)[\s\S]{0,200}?climateSeasonFromMinutes\(atMinutes\)/,
+    'refreshSeason must read the minute it was given, both times');
+  // The CALLER order, which the old pin could not see: the teleport
+  // is handed worldMinutes() + the journey, and RaiseTime still runs
+  // after it, exactly where DaggerfallTravelPopUp puts it.
+  const i = world.indexOf('async function fastTravelTo');
+  const fn = world.slice(i, world.indexOf('const toggleTravelMap', i));
+  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: worldMinutes() + computed.minutes });');
+  const raise = fn.indexOf('playerTicker.advance(computed.minutes)');
+  assert.ok(teleport > 0, 'the arrival minute rides the teleport');
+  assert.ok(raise > teleport, 'and RaiseTime still comes after it (:333 then :344)');
 });
