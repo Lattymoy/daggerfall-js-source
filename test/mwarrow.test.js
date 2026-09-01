@@ -465,3 +465,54 @@ test('MW-D46b: every resolveWeaponParts caller answers the quiver question', () 
   assert.match(src, /quiverDriven: token\.quiverDriven \?\? false/);
   assert.match(src, /quiverDriven: t\.quiverDriven \?\? false/);
 });
+
+// MW-D48: THE TWO COMPOSITIONS AGREE, PROVEN BY EXECUTION. The arrow is
+// the ONLY part whose placement goes through nodeTransformOf/mulAffine
+// (affineOf folds scale into the 3x3); every other part is placed by
+// flattenNif's composeTransform, which carries scale as its own field
+// and applies it to the child's translation separately. Two different
+// shapes of arithmetic for the same job, and the arrow is the one that
+// is mispositioned - so it reads like the fault and it is NOT. Pinned
+// by RUNNING both over a chain with rotations AND scales, because
+// reading them side by side is exactly how this was called a bug once
+// already. If someone ever changes one, this says the other must move
+// with it.
+test('MW-D48: nodeTransformOf composes the same chain flattenNif does', async () => {
+  const { nodeTransformOf } = await import('../src/formats/mwCharacter.js');
+  // A hand-built NIF shape: root (rule 34 zeroes it), a scaled+rotated
+  // parent, then the named node - the shape of a real weapon chain.
+  const R = [0, -1, 0, 1, 0, 0, 0, 0, 1];
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const nif = {
+    roots: [0],
+    records: [
+      { type: 'NiNode', name: 'root', rotation: I3, translation: [0, 0, 0], scale: 1, children: [1] },
+      { type: 'NiNode', name: 'mid', rotation: R, translation: [3, 1, 0], scale: 2, children: [2] },
+      { type: 'NiNode', name: 'ArrowBone', rotation: R, translation: [10, 4, 2], scale: 1.5, children: [] },
+    ],
+  };
+  const pre = nodeTransformOf(nif, 'ArrowBone');
+  assert.ok(pre, 'the node resolves');
+  // composeTransform's arithmetic, written out: translation accumulates
+  // through the PARENT's rotation with the PARENT's scale applied to the
+  // child's translation, and scale multiplies down the chain.
+  const m33 = (A, B) => { const o = new Array(9);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c];
+    return o; };
+  const ap = (m, x, y, z) => [m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z];
+  let w = { rotation: I3, translation: [0, 0, 0], scale: 1 };
+  for (const n of nif.records) {
+    const t = ap(w.rotation, n.translation[0] * w.scale, n.translation[1] * w.scale, n.translation[2] * w.scale);
+    w = { rotation: m33(w.rotation, n.rotation),
+      translation: [w.translation[0] + t[0], w.translation[1] + t[1], w.translation[2] + t[2]],
+      scale: w.scale * n.scale };
+  }
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(pre.t[i] - w.translation[i]) < 1e-6,
+      `translation ${i}: ${pre.t[i]} vs ${w.translation[i]} - the arrow would land off the string by the difference`);
+  }
+  // And the folded scale is the chain's product, so applyPre scales the
+  // arrow's vertices by exactly what flattenNif scales the bow's by.
+  const folded = Math.hypot(pre.a[0], pre.a[3], pre.a[6]);
+  assert.ok(Math.abs(folded - w.scale) < 1e-6, `${folded} vs ${w.scale}`);
+});
