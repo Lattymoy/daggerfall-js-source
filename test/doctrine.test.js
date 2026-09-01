@@ -264,11 +264,13 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
 test('EE0: the world render gate boots the real exterior and judges real pixels', () => {
   const g = readFileSync('tools/worldRenderGate.mjs', 'utf8');
   // it boots the GAME, against data, into the exterior
-  assert.match(g, /\/play\/\?exterior&shot&novideo&nofoes/);
+  // EE7: the gate can boot either host - ?exterior by default, ?world
+  // with --world, where the grass lives
+  assert.match(g, /\/play\/\?\$\{WORLD \? 'world' : 'exterior'\}&shot&novideo&nofoes/);
   assert.match(g, /window\.__frame/, 'it must wait for frames, not for load');
   // it judges the COMPOSITOR'S frame: a readPixels outside the game's
   // rAF returns a cleared buffer, which reads as "everything is black"
-  assert.match(g, /canvas\.screenshot\(\{ type: 'png' \}\)/);
+  assert.match(g, /canvas\.screenshot\(\{ type: 'png'/);
   assert.ok(!/readPixels\(/.test(g), 'a read-back of the default framebuffer lies here');
   // and it fails on the three things a black world has
   // EE3 sharpened these: the lower half is judged, and then the TERRAIN

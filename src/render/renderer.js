@@ -376,6 +376,84 @@ float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
 float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
 `;
 
+// EE7: THE GRASS. The renderer's first INSTANCED draw: one blade -
+// three stacked quads so it bends instead of shearing - drawn N times,
+// with a per-instance attribute carrying each blade's root, height,
+// phase, lean and tint. Placement is the host's (placeGrass, keyed to
+// the terrain piece's own tilemap and heightmap); this is only the
+// draw. Lit by the SAME uniforms the terrain is - the sun, the ambient,
+// the cloud deck - so a blade at dusk is the colour of dusk and a blade
+// under a cloud is in its shadow, and fogged by the SAME fog function,
+// so it fades with the ground it stands on rather than in front of it.
+const GRASS_VS = `#version 300 es
+precision highp float;
+layout(location=0) in vec2 aCorner;      // 0..1 across, 0..1 up the blade
+layout(location=1) in vec4 aInst;        // root x, y, z (piece-local), height
+layout(location=2) in vec4 aInst2;       // phase, leanX, leanZ, tint
+uniform mat4 uProj, uView, uModel;
+uniform float uTime, uWind, uRange;
+uniform vec2 uWindDir;
+uniform vec3 uCamPos;
+out float vT; out float vTint; out float vLam; out vec3 vWorldPos;
+void main() {
+  vec3 root = (uModel * vec4(aInst.xyz, 1.0)).xyz;
+  float d = distance(root.xz, uCamPos.xz);
+  // the fade THINS the field rather than shrinking the blades: a hashed
+  // threshold drops whole blades with distance, so the count falls away
+  // and every blade that remains is its true size
+  float fade = 1.0 - smoothstep(uRange * 0.55, uRange, d);
+  if (fade <= 0.001 || fract(aInst2.x * 91.7) > fade * 1.15) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vT = aCorner.y;
+  // the tip travels and the root does not: the sway is weighted by
+  // height along the blade, squared, which is what a stalk does
+  float sway = sin(uTime * 1.7 + aInst2.x + root.x * 0.08 + root.z * 0.05);
+  vec2 lean = aInst2.yz + uWindDir * sway * uWind * 0.0055;
+  vec3 p = root;
+  p.xz += lean * (vT * vT) * aInst.w;
+  p.xz += vec2(aCorner.x - 0.5) * 0.09 * (1.0 - vT * 0.75);
+  p.y += vT * aInst.w;
+  // a blade's normal is its lean crossed with up: a leaning blade
+  // catches a low sun on one side and goes dark on the other
+  vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
+  vLam = max(dot(nrm, normalize(uLightDirW)), 0.0);
+  vTint = aInst2.w;
+  vWorldPos = p;
+  gl_Position = uProj * uView * vec4(p, 1.0);
+}`.replace('uniform vec3 uCamPos;', 'uniform vec3 uCamPos;\nuniform vec3 uLightDirW;');
+const GRASS_FS = `#version 300 es
+precision highp float;
+in float vT; in float vTint; in float vLam; in vec3 vWorldPos;
+uniform vec3 uAmbient, uSunColor, uLightDir;
+uniform float uSunScale;
+uniform vec3 uFogColor; uniform int uFogMode; uniform float uFogDensity; uniform vec2 uFogRange; uniform vec3 uCamPos;
+${CLOUD_SHADOW_GLSL}
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  return exp(-uFogDensity * d);
+}
+void main() {
+  // olive, not emerald - a Daggerfall field, not a golf course; dark at
+  // the root where the sward shades it, brighter toward the tip
+  vec3 root = vec3(0.10, 0.14, 0.06);
+  vec3 mid  = vec3(0.21, 0.29, 0.11);
+  vec3 tip  = vec3(0.36, 0.44, 0.19);
+  vec3 c = mix(root, mid, smoothstep(0.0, 0.55, vT));
+  c = mix(c, tip, smoothstep(0.5, 1.0, vT));
+  c *= 0.80 + vTint * 0.42;
+  float lam = vLam;
+  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
+    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
+    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
+    lam *= 1.0 - cov * uShadowAmt;
+  }
+  vec3 lit = c * (uAmbient * (0.55 + 0.45 * vT) + uSunColor * (uSunScale * lam));
+  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
+}`;
+
+
 const TERRAIN_FS = `#version 300 es
 precision highp float;
 precision highp usampler2D;
@@ -712,6 +790,30 @@ export class Renderer {
 
     this.bbProgram = this._buildProgram(BB_VS, BB_FS);
     this.terrainProgram = this._buildProgram(TERRAIN_VS, TERRAIN_FS);
+    // EE7: the grass program and its locations. Fog and camera ride the
+    // same _uploadFog every other pass uses; light and deck are set per
+    // draw from the same renderer state the terrain reads.
+    this.grassProgram = this._buildProgram(GRASS_VS, GRASS_FS);
+    {
+      const gp = this.grassProgram; const L = (n) => gl.getUniformLocation(gp, n);
+      this._grassU = {
+        proj: L('uProj'), view: L('uView'), model: L('uModel'), time: L('uTime'), wind: L('uWind'), range: L('uRange'),
+        windDir: L('uWindDir'), lightDirW: L('uLightDirW'), ambient: L('uAmbient'), sunColor: L('uSunColor'),
+        lightDir: L('uLightDir'), sunScale: L('uSunScale'),
+        fogColor: L('uFogColor'), fogMode: L('uFogMode'), fogDensity: L('uFogDensity'), fogRange: L('uFogRange'), camPos: L('uCamPos'),
+        shadowAmt: L('uShadowAmt'), cloudCover: L('uCloudCover'), cloudSoft: L('uCloudSoft'), cloudTime: L('uCloudTime'), cloudWind: L('uCloudWind'),
+      };
+      // the blade: three stacked quads, shared by every instance
+      const corners = [];
+      for (let seg = 0; seg < 3; seg++) {
+        const a = seg / 3; const b = (seg + 1) / 3;
+        corners.push(0, a, 1, a, 1, b, 0, a, 1, b, 0, b);
+      }
+      this._grassBlade = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this._grassBlade);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(corners), gl.STATIC_DRAW);
+      this._grassBladeVerts = corners.length / 2;
+    }
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
@@ -740,6 +842,7 @@ export class Renderer {
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive:mode -> TEXTURE_2D_ARRAY
     this.tileNormals = new Map(); // EE6: archive:mode -> the tiles' normal array (drawn mode only)
+    this.tileGrass = new Map();   // EE7: archive:mode -> per-record grass fraction (drawn mode only)
     /** EE3: the ground's half of the Enhanced Environments switch, set
      *  by the host from the skin AND the pref before each upload. OFF by
      *  default, so the classic skin cannot inherit it. */
@@ -1866,6 +1969,74 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return this.tileArrays.get(`${archive}:${mode}`);
   }
 
+  /** EE7: per-record grass fractions for an archive in the current mode,
+   *  or null when the mode places no grass. */
+  tileGrassFor(archive) {
+    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
+    return this.tileGrass.get(`${archive}:${mode}`) ?? null;
+  }
+
+  /** EE7: a grass buffer for one terrain piece. `data` is placeGrass's
+   *  8 floats a blade. Creates and fills; draws nothing; leaves no
+   *  binding behind but the VAO it releases through _bindVao. */
+  createGrass(data, count) {
+    if (!count) return null;
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._grassBlade);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const inst = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, inst);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribDivisor(1, 1);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 32, 16);
+    gl.vertexAttribDivisor(2, 1);
+    this._bindVao(null);
+    return { vao, inst, count };
+  }
+
+  destroyGrass(grass) {
+    if (!grass) return;
+    const gl = this.gl;
+    if (this._lastVao === grass.vao) this._bindVao(null);
+    gl.deleteBuffer(grass.inst);
+    gl.deleteVertexArray(grass.vao);
+  }
+
+  /** EE7: draw one piece's grass. Same model matrix as its terrain, same
+   *  light, same deck, same fog. `wind` is {dir:[x,z], speed}. */
+  drawGrass(grass, modelMatrix, timeSeconds, wind = null, range = 120) {
+    if (!grass || !grass.count) return;
+    const gl = this.gl;
+    const u = this._grassU;
+    this._use(this.grassProgram);
+    gl.uniformMatrix4fv(u.proj, false, this._proj);
+    gl.uniformMatrix4fv(u.view, false, this._view);
+    gl.uniformMatrix4fv(u.model, false, modelMatrix);
+    gl.uniform1f(u.time, timeSeconds);
+    gl.uniform1f(u.wind, wind ? wind.speed : 40);
+    gl.uniform2f(u.windDir, wind ? wind.dir[0] : 1, wind ? wind.dir[1] : 0.2);
+    gl.uniform1f(u.range, range);
+    gl.uniform3fv(u.lightDirW, this._lightDir);
+    gl.uniform3fv(u.lightDir, this._lightDir);
+    gl.uniform3fv(u.ambient, this._ambient);
+    gl.uniform3fv(u.sunColor, this._sunColor);
+    gl.uniform1f(u.sunScale, this._sunScale);
+    this._uploadFog(u);
+    const cs = this._cloudShadow;
+    gl.uniform1f(u.shadowAmt, cs ? cs.amount : 0);
+    gl.uniform1f(u.cloudCover, cs ? cs.cover : 0);
+    gl.uniform1f(u.cloudSoft, cs ? cs.soft : 1);
+    gl.uniform1f(u.cloudTime, cs ? cs.time : 0);
+    gl.uniform2f(u.cloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
+    this._bindVao(grass.vao);
+    // AUDIT 39 F50's law: every draw in this file reports
+    this.stats.draws++;
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, this._grassBladeVerts, grass.count);
+  }
+
   /** EE6: the normal array for an archive in the current mode, or null
    *  when the mode carries none. Same door discipline as tileArrayFor. */
   tileNormalFor(archive) {
@@ -1909,6 +2080,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // a climate's 56 tiles, and a two-second stall entering the world
     // is worse than the detail is good.
     const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
+    // EE7: the records' grass fractions, kept for the placer. Only the
+    // drawn build knows them; the other modes place no grass.
+    this.tileGrass.set(key, mode === 'drawn' ? src.map((t) => t.grass ?? 0) : null);
     // EE6: the tiles' NORMALS, from the surfaces' own height, as a second
     // array beside the colours. Only the drawn tiles carry a height, so
     // only the drawn mode has normals; the other modes leave the slot

@@ -15,7 +15,8 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
+import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
+import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -573,6 +574,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     };
     const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
+    // EE7: the pixel's grass, placed on its own tilemap and heightmap, on
+    // the records the drawn build says are grass. Nothing when the mode
+    // places none, or when ?grass=off - the kill switch.
+    // Grass rides the NEAR RING only (EV4's stride-1 class): a pixel two
+    // rings out draws its blades to a thinning threshold nobody can see
+    // past, for a vertex cost that is very much seen. Built here when
+    // the pixel is born near, and by restrideTerrain when it comes near
+    // later; dropped when it recedes. tilemapBytes and samples stay on
+    // the record for that.
+    const grass = stride === 1 ? buildGrassFor(px, py, groundArchive, tilemapBytes, samples) : null;
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -809,6 +820,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      grass, tilemapBytes,   // EE7: the pixel's blades, drawn with its terrain and destroyed with it; the bytes stay so the near ring can place them later
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
@@ -837,11 +849,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   // re-builds from the pixel's own cached samples (blended, so a
   // location's flattening survives the round trip); the culling box is
   // already deep enough for either class (the skirt drop at build).
+  /** EE7: place and upload one pixel's grass, or null when the mode
+   *  places none or ?grass=off. */
+  function buildGrassFor(px, py, groundArchive, tilemapBytes, samples) {
+    const grassOf = renderer.tileGrassFor(groundArchive);
+    // ?grass=off is the kill switch; ?grass=<n> sets blades per tile,
+    // which the world render gate uses to ask for a density a software
+    // rasteriser can screenshot inside its timeout
+    const door = new URLSearchParams(globalThis.location?.search ?? '').get('grass');
+    if (!grassOf || door === 'off') return null;
+    const perTile = door && Number.isFinite(Number(door)) ? Math.max(0.1, Number(door)) : 4;
+    const placed = placeGrass({
+      tilemap: tilemapBytes, grassOf, heights: samples, tileDim: TERRAIN_TILE_DIM, tileSize: 6.4,
+      heightScale: MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE, seed: (px * 73856093) ^ (py * 19349663), perTile,
+    });
+    return renderer.createGrass(placed.data, placed.count);
+  }
+
   function restrideTerrain(p, stride) {
     const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
     renderer.destroyMesh(p.terrain);
     p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
+    // EE7: the grass follows the ring - born when the pixel comes near,
+    // gone when it recedes
+    if (stride === 1 && !p.grass) p.grass = buildGrassFor(p.px, p.py, p.groundArchive, p.tilemapBytes, p.samples);
+    else if (stride !== 1 && p.grass) { renderer.destroyGrass(p.grass); p.grass = null; }
     p._stride = stride;
   }
 
@@ -855,6 +888,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const p = built.get(key);
     if (!p) return;
     renderer.destroyMesh(p.terrain);
+    renderer.destroyGrass(p.grass);   // EE7
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
@@ -3891,6 +3925,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { pos: wc.map((v) => +v.toFixed(2)), n: [+(wn[0] / l).toFixed(3), 0, +(wn[2] / l).toFixed(3)] };
     }));
     window.__frame = 0;
+    // EE7: the renderer's own counters and the grass census, for the gate.
+    // A probe cannot see a blade; it CAN see that the grass draws report
+    // and that pixels carry blades. Read-only.
+    window.__renderStats = () => ({ ...renderer.stats });
+    window.__grassCensus = () => {
+      let pixels = 0; let blades = 0;
+      for (const p of built.values()) if (p.grass) { pixels++; blades += p.grass.count; }
+      return { pixels, blades, built: built.size };
+    };
     window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
   }
 
@@ -6038,6 +6081,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
         renderer.drawTerrain(p.terrain, pixelMatrix,
           renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive) /* EE6 */);
+        // EE7: the pixel's grass, after its terrain and inside the same
+        // cull - a pixel that is not drawn has no grass drawn either
+        if (p.grass) renderer.drawGrass(p.grass, pixelMatrix, performance.now() / 1000, sky?.cloudShadow ? { dir: sky.cloudShadow.wind[0] || sky.cloudShadow.wind[1] ? [sky.cloudShadow.wind[0], sky.cloudShadow.wind[1]] : [1, 0.2], speed: 40 } : null);
         for (const m of p.models) {
           if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
           if (m._worldGen !== p._worldGen || !m._world) {

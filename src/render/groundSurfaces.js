@@ -452,10 +452,67 @@ export function buildEnhancedTiles(layers, { size = 128, surfaces = null, seed =
         heights[y * size + x] = tot > 0 ? hv / tot : 0;
       }
     }
-    out.push({ width: size, height: size, colors, heights });
+    // EE7: how much of this record is GRASS - the fraction of its texels
+    // that classified to a base (or a residual) of the grass family.
+    // The grass placer reads it per tilemap cell, so blades stand on the
+    // lawn and the meadow and not on the street or the pond.
+    let grassTexels = 0;
+    const resFam = rn > 0 ? identifySurface([rr / rn, rg / rn, rb / rn]) : null;
+    for (let k = 0; k < w * h; k++) {
+      const c = cls[k];
+      if ((c < 4 && family[c] === 'grass') || (c === 4 && resFam === 'grass')) grassTexels++;
+    }
+    out.push({ width: size, height: size, colors, heights, grass: grassTexels / (w * h) });
   }
   out.families = family;
   return out;
+}
+
+/**
+ * EE7: GRASS PLACEMENT for one terrain piece. Pure, so it is pinned
+ * without a GPU.
+ *
+ * A piece is TILE_DIM x TILE_DIM tiles of `tileSize` world units, with a
+ * heightmap of (TILE_DIM + 1)^2 samples at the tile corners (x-major,
+ * scaled by `heightScale`). `tilemap` is the piece's bytes, one per
+ * tile, layer << 2 | rotation. `grassOf[layer]` is the record's grass
+ * fraction from the builder.
+ *
+ * Blades go into every tile whose record is more than half grass, on a
+ * HASHED, DETERMINISTIC scatter - the same rule the nature pass uses for
+ * its billboards - so a blade is where it was last frame and where it
+ * will be after a reload. The count per tile scales with the fraction.
+ * Each blade's root height is the bilinear height of its own spot, so
+ * it stands ON the ground and not in it.
+ *
+ * Returns a Float32Array of 8 floats per blade: x, y, z (piece-local),
+ * height, phase, leanX, leanZ, tint - and the count.
+ */
+export function placeGrass({ tilemap, grassOf, heights, tileDim = 128, tileSize = 6.4, heightScale = 1, perTile = 6, seed = 0x2f6e2b1 }) {
+  let s = (seed >>> 0) || 1;
+  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  const hDim = tileDim + 1;
+  const hAt = (x, z) => heights[Math.max(0, Math.min(hDim - 1, x)) * hDim + Math.max(0, Math.min(hDim - 1, z))] * heightScale;
+  const heightAt = (lx, lz) => {
+    const fx = lx / tileSize; const fz = lz / tileSize;
+    const x0 = Math.floor(fx); const z0 = Math.floor(fz);
+    const tx = fx - x0; const tz = fz - z0;
+    return (hAt(x0, z0) * (1 - tx) + hAt(x0 + 1, z0) * tx) * (1 - tz) + (hAt(x0, z0 + 1) * (1 - tx) + hAt(x0 + 1, z0 + 1) * tx) * tz;
+  };
+  const out = [];
+  for (let tz = 0; tz < tileDim; tz++) {
+    for (let tx = 0; tx < tileDim; tx++) {
+      const layer = tilemap[tz * tileDim + tx] >> 2;
+      const g = grassOf[layer] ?? 0;
+      if (g <= 0.5) continue;
+      const n = Math.floor(perTile * g + rnd());   // fractional densities round stochastically, so 0.25 a tile is one blade in four
+      for (let i = 0; i < n; i++) {
+        const lx = (tx + rnd()) * tileSize; const lz = (tz + rnd()) * tileSize;
+        out.push(lx, heightAt(lx, lz), lz, 0.55 + rnd() * 0.9, rnd() * 6.2832, (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.5, rnd());
+      }
+    }
+  }
+  return { data: new Float32Array(out), count: out.length / 8 };
 }
 
 /**

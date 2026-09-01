@@ -40,6 +40,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getTerrainGroundArchive, getNatureArchive, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
+import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
@@ -476,7 +477,23 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     renderer.uploadTileArray(groundArchive, layers);
   }
-  const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(locationTilemap), tilemapDim);
+  const tilemapBytes = convertTilemap(locationTilemap);
+  const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, tilemapDim);
+  // EE7: the location's grass on its own tilemap. The exterior ground is
+  // one flat quad, so the heightmap is flat too - every corner at the
+  // ground's own height - and the tile size is the quad's side over the
+  // tilemap's dimension. Nothing when the mode places none, or ?grass=off.
+  const grass = (() => {
+    const grassOf = renderer.tileGrassFor(groundArchive);
+    if (!grassOf || new URLSearchParams(globalThis.location?.search ?? '').get('grass') === 'off') return null;
+    const gy = GROUND_OFFSET * 0.025;
+    const flat = new Float32Array((tilemapDim + 1) * (tilemapDim + 1)).fill(gy);
+    const placed = placeGrass({
+      tilemap: tilemapBytes, grassOf, heights: flat, tileDim: tilemapDim,
+      tileSize: (loc.width * RMB_SIDE) / tilemapDim, heightScale: 1, seed: 0x5eed,
+    });
+    return renderer.createGrass(placed.data, placed.count);
+  })();
   const groundSurface = (() => {
     const gy = GROUND_OFFSET * 0.025;
     const gw = loc.width * RMB_SIDE;
@@ -2100,6 +2117,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrayFor(groundArchive), tilemapTex, 6.4, renderer.tileNormalFor(groundArchive) /* EE6 */);
+    // EE7: the grass after its ground, same matrix, same light, same deck
+    if (grass) renderer.drawGrass(grass, identityMatrix, performance.now() / 1000, null);
     for (const d of drawList) {
       if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
       renderer.drawMesh(d.mesh, d.matrix, texRemap);

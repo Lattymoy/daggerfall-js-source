@@ -187,3 +187,66 @@ test('ROADS 4: record 46\u2019s residual is drawn as ROAD, not as whatever its c
   // The road tiles carry height like every other tile, so EE6 lights them.
   assert.ok(out[46].heights instanceof Float32Array);
 });
+
+// ═══ EE7: the grass - the renderer's first instanced draw ═══════════
+test('EE7: the placer is deterministic, stands blades on grass records only, and reads the height under each', async () => {
+  const { placeGrass } = await import('../src/render/groundSurfaces.js');
+  const dim = 8; const tm = new Uint8Array(dim * dim);
+  for (let k = 0; k < dim * dim; k++) tm[k] = (k % 2 ? 2 : 1) << 2;      // alternate records 1 and 2
+  const heights = new Float32Array((dim + 1) * (dim + 1));
+  for (let x = 0; x <= dim; x++) for (let z = 0; z <= dim; z++) heights[x * (dim + 1) + z] = x;   // a ramp in x
+  const g = placeGrass({ tilemap: tm, grassOf: [0, 0, 1, 0], heights, tileDim: dim, tileSize: 6.4, heightScale: 2 });
+  assert.equal(g.count, 32 * 6, 'six blades on each of the 32 grass tiles, none on the others');
+  for (let i = 0; i < g.count; i++) {
+    const x = g.data[i * 8], y = g.data[i * 8 + 1];
+    const tx = Math.floor(x / 6.4); const tz = Math.floor(g.data[i * 8 + 2] / 6.4);
+    assert.equal(tm[tz * dim + tx] >> 2, 2, 'a blade stands on a grass record');
+    assert.ok(Math.abs(y - (x / 6.4) * 2) < 0.02, `a blade's root is the ground's own height (${y} at x=${x})`);
+  }
+  const g2 = placeGrass({ tilemap: tm, grassOf: [0, 0, 1, 0], heights, tileDim: dim, tileSize: 6.4, heightScale: 2 });
+  assert.ok(g.data.every((v, i) => v === g2.data[i]), 'deterministic: a blade is where it was');
+  // half-grass records get half the blades; a record under half gets none
+  const g3 = placeGrass({ tilemap: tm, grassOf: [0, 0, 0.5, 0], heights, tileDim: dim, tileSize: 6.4 });
+  assert.equal(g3.count, 0, 'half is not enough - blades want a lawn, not an edge');
+});
+
+test('EE7: the draw goes through every door the renderer has, and reports', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const gi = r.indexOf('  drawGrass(grass, modelMatrix'); const body = r.slice(gi, r.indexOf('\n  }\n', gi) + 4);
+  assert.match(body, /this\._use\(this\.grassProgram\);/, 'EV6: one door for useProgram');
+  assert.match(body, /this\._bindVao\(grass\.vao\);/, 'EV6: one door for bindVertexArray');
+  assert.match(body, /this\.stats\.draws\+\+;\s*\n\s*gl\.drawArraysInstanced\(gl\.TRIANGLES, 0, this\._grassBladeVerts, grass\.count\);/, 'F50: every draw reports');
+  assert.match(body, /this\._uploadFog\(u\);/, 'the same fog as everything else');
+  assert.match(body, /gl\.uniform3fv\(u\.lightDir, this\._lightDir\);/, 'the same sun as the terrain');
+  assert.match(body, /gl\.uniform1f\(u\.shadowAmt, cs \? cs\.amount : 0\);/, 'the same cloud deck as the terrain');
+  // the shader shares the cloud block, fades by the frame's fog, and
+  // thins with distance rather than shrinking
+  const fs = r.slice(r.indexOf('const GRASS_FS = `'), r.indexOf('`;', r.indexOf('const GRASS_FS = `')));
+  assert.match(fs, /\$\{CLOUD_SHADOW_GLSL\}/);
+  assert.match(fs, /outColor = vec4\(mix\(uFogColor, lit, fogFactorAt\(vWorldPos\)\), 1\.0\);/);
+  const vs = r.slice(r.indexOf('const GRASS_VS = `'), r.indexOf('`;', r.indexOf('const GRASS_VS = `')));
+  assert.match(vs, /fract\(aInst2\.x \* 91\.7\) > fade \* 1\.15/, 'the fade thins the field, it does not shrink the blades');
+  // create binds only what it builds and releases the VAO through the door
+  const ci = r.indexOf('  createGrass(data, count) {'); const cb = r.slice(ci, r.indexOf('\n  }\n', ci) + 4);
+  assert.match(cb, /this\._bindVao\(vao\);[\s\S]*this\._bindVao\(null\);/);
+  assert.ok(!/drawArrays|bindFramebuffer|gl\.clear\(/.test(cb), 'the upload law holds for a buffer too');
+  // the host: placed from the pixel's own tilemap and heightmap, drawn
+  // after its terrain inside the same cull, destroyed with it, and killed by ?grass=off
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  // the host: placed by ONE function from the pixel's own tilemap and
+  // heightmap, on the NEAR ring only (stride 1 - grass on a far LOD
+  // pixel is a vertex cost that is never seen), following the ring as
+  // the pixel comes near and recedes; drawn after its terrain inside
+  // the same cull; destroyed with it; killed by ?grass=off; and
+  // ?grass=<n> sets the density so a software rasteriser can be gated
+  assert.match(w, /function buildGrassFor\(px, py, groundArchive, tilemapBytes, samples\) \{/);
+  assert.match(w, /if \(!grassOf \|\| door === 'off'\) return null;/, 'the kill switch');
+  assert.match(w, /tilemap: tilemapBytes, grassOf, heights: samples, tileDim: TERRAIN_TILE_DIM, tileSize: 6\.4,/);
+  assert.match(w, /heightScale: MAX_TERRAIN_HEIGHT \* DEFAULT_TERRAIN_SCALE/, 'the same height scale the terrain grid uses');
+  assert.match(w, /const grass = stride === 1 \? buildGrassFor\(px, py, groundArchive, tilemapBytes, samples\) : null;/, 'near ring only');
+  assert.match(w, /if \(stride === 1 && !p\.grass\) p\.grass = buildGrassFor\(/, 'born when the pixel comes near');
+  assert.match(w, /else if \(stride !== 1 && p\.grass\) \{ renderer\.destroyGrass\(p\.grass\); p\.grass = null; \}/, 'gone when it recedes');
+  assert.match(w, /renderer\.destroyGrass\(p\.grass\);   \/\/ EE7/, 'and gone with the pixel');
+  assert.match(w, /renderer\.tileNormalFor\(p\.groundArchive\) \/\* EE6 \*\/\);\n[\s\S]{0,400}if \(p\.grass\) renderer\.drawGrass\(p\.grass, pixelMatrix,/, 'drawn right after its terrain');
+  assert.match(w, /window\.__grassCensus = \(\) => \{/, 'the census the probe reads');
+});

@@ -172,7 +172,9 @@ test('audit39r R17: emission CANCELS the lighting it replaces, it does not ride 
 // ---------------------------------------------------------------
 test('audit39 F50: every draw in the file reports, not drawMesh alone', () => {
   const s = src('src/render/renderer.js');
-  const drawCalls = (s.match(/gl\.draw(Elements|Arrays)\(/g) || []).length;
+  // EE7: drawArraysInstanced is a draw too - the grass is the file's
+  // first instanced call, and it reports like every other
+  const drawCalls = (s.match(/gl\.draw(Elements|Arrays|ArraysInstanced)\(/g) || []).length;
   const counted = (s.match(/this\.stats\.draws\+\+/g) || []).length;
   assert.equal(counted, drawCalls,
     `${drawCalls} gl.draw* sites, ${counted} counted - a draw the counter cannot see makes the terrain culling EV3 measures invisible`);

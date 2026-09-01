@@ -31,7 +31,10 @@ const MINUTES = Number(arg('minutes', 720));        // noon by default: the sun 
 const MODE = arg('mode', 'enhanced');
 const GROUND = arg('ground', null);          // EE3: ?ground=classic|tiles|drawn, the kill switch
 const WEATHER = arg('weather', null);        // EE5: ?weather=<type>, the probe door
-const PORT = 5223;
+const WORLD = process.argv.includes('--world');   // EE7: the WORLD host (?world), where the grass lives
+const GRASS = arg('grass', null);            // EE7: ?grass=off, the kill switch
+const SEASON = arg('season', null);          // EE7: ?season=summer, the existing pin - grass needs a lawn to stand on
+const PORT = Number(process.env.GATE_PORT ?? 5223);   // a stuck server on one port must not block the next run
 
 const fails = [];
 const check = (name, ok, detail = '') => {
@@ -45,7 +48,12 @@ const browser = await chromium.launch({
   headless: true,
   args: ['--use-gl=angle', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'],
 });
-const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
+// EE7: --small halves the frame for the WORLD host, whose grass is a
+// software rasteriser's whole afternoon at full size; the checks are
+// ratios of the frame and do not care.
+const SMALL = process.argv.includes('--small');
+const page = await browser.newPage({ viewport: SMALL ? { width: 480, height: 300 } : { width: 960, height: 600 } });
+page.setDefaultTimeout(300000);   // EE7: the world host under a software rasteriser is slow, and slow is not wrong
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 
@@ -53,8 +61,8 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 // changes. ?sky=classic is NOT set, so the enhanced sky draws when the
 // pref allows it.
 const skin = MODE === 'classic' ? '&classic' : '';
-const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '');
-await page.goto(`http://localhost:${PORT}/play/?exterior&shot&novideo&nofoes${skin}${ground}`);
+const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '') + (GRASS ? `&grass=${GRASS}` : '') + (SEASON ? `&season=${SEASON}` : '');
+await page.goto(`http://localhost:${PORT}/play/?${WORLD ? 'world' : 'exterior'}&shot&novideo&nofoes${skin}${ground}`);
 
 // wait for the world to actually render frames
 const until = Date.now() + 240000;
@@ -79,7 +87,7 @@ if (MINUTES !== null) {
 // false "everything is black" this gate's first run reported. The
 // compositor's copy is what the player sees, and it is what we judge.
 const canvas = await page.$('canvas');
-const png = await canvas.screenshot({ type: 'png' });
+const png = await canvas.screenshot({ type: 'png', timeout: 180000 });   // EE7: a frame with grass in it takes a software rasteriser seconds
 const { PNG } = await import('pngjs');
 const img = PNG.sync.read(png);
 const { width: w, height: h, data: px } = img;
