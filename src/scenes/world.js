@@ -75,7 +75,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: Finaliz
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
-import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
+import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
 import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
@@ -161,9 +161,9 @@ import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted } from '../system
 import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
-import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships } from '../systems/guilds.js';   // V2e: the per-read vampire book pick
+import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
-import { freeShipTravel, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
+import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
@@ -2207,6 +2207,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
   }
+  /** TravelTimeCalculator.GetPlayerTravelPosition (:47-56) - PlayerGPS's
+   *  live pixel unless the player is standing on their own ship, in
+   *  which case every travel reckoning starts from where they BOARDED.
+   *  Distinct from playerTravelPixel above, which is PlayerGPS itself
+   *  and stays the live read its two dozen callers want.
+   *
+   *  A DECLARATION, not a const, for the same reason its neighbour
+   *  gives: the dep bag below captures it by name. */
+  function playerTravelOrigin() {
+    return playerTravelPosition(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel());
+  }
   /** FS1 (2026-08-28) - THE TILE UNDER THE PLAYER, which this host has
    *  wanted since the FS-slice: the footstep block's own comment says
    *  "the path/water tile arms ride the tile-under-player flag", and
@@ -2787,7 +2798,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   function buildTravelMapWindow(extra = {}) {
     return createTravelMapWindow({
       maps, mapDict, woods,
-      getPlayerPixel: playerTravelPixel,
+      // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
+      // map reads it for the crosshair (:864), the player's region
+      // (:1611) and the journey itself, and aboard a ship all three
+      // answer the boarding point.
+      getPlayerPixel: playerTravelOrigin,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       // TP1: the popup's GuildManager.FastTravel fold reads the
       // player's guild memberships off the entity.
@@ -2814,6 +2829,23 @@ export async function bootWorld(canvas, renderer, params, status) {
         const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
         const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
         return !!order && freeShipTravel(order, km);
+      },
+      // TravelTimeCalculator.cs:163 - `GetGuild(KnightlyOrder)
+      // .FreeTavernRooms()`, read inside CalculateTripCost, so the inn
+      // nights of a fare are waived for the same knight the tavern
+      // window already houses free. The order is recovered from the
+      // membership exactly as hasShip above does; the region is
+      // PlayerGPS.CurrentLocation.RegionIndex, which is 0 in open
+      // wilderness because CurrentLocation is a default struct there.
+      freeTavernRooms: () => {
+        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
+        const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
+        if (!order) return false;
+        const px = playerTravelPixel();
+        return freeTavernRooms(order, km, {
+          regionIndex: locationIndex.get(`${px.x},${px.y}`)?.regionIndex ?? 0,
+          orderRegion: townTalk.factionDict?.get(order.factionId)?.region ?? null,
+        });
       },
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
@@ -3530,7 +3562,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
     currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
     isPlayerInLocationRect: () => _musicInLocationRect(),
-    playerPixel: () => playerTravelPixel(),
+    // F114: the bridge declares this hook as GetPlayerTravelPosition
+    // "incl. its on-ship arm" (machine.js's ctx doc) and its one
+    // consumer is the quest clock's travel arm, so it answers the
+    // origin rule rather than PlayerGPS's raw pixel.
+    playerPixel: () => playerTravelOrigin(),
     playerInside: () => {
       // B2: the DUNGEON arm - PcAt / IsPlayerHere / ConfigureFrom-
       // PlayerLocation never saw the player as inside one, which is
@@ -4031,7 +4067,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quest-end sweep off the tombstone's OnQuestEnded.
     addFace: (r) => addEscortFace(r),
     dropFace: (r) => dropEscortFace(r),
-    onQuestEnded: (q) => escortQuestEnded(q),
+    onQuestEnded: (q) => {
+      // F96: GuildManager's ctor-registered listener (:45-47, :53-67),
+      // which is the ONLY way into the Thieves Guild or the Dark
+      // Brotherhood - their initiation quests carry no join action and
+      // neither guild has a walk-in. FIRST, because GuildManager is
+      // constructed long before the HUD; and SILENT, because
+      // AddMembership pushes no welcome window the way the walk-in join
+      // does.
+      guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
+        !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes));
+      escortQuestEnded(q);
+    },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
     // methods, 1:1)
     addQuestRumor: (uid, m) => rumorMill.addQuestRumorToRumorMill(uid, m),

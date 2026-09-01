@@ -146,6 +146,11 @@ export class TravelPopUpWindow {
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
+  /** GuildManager.GetGuild(KnightlyOrder).FreeTavernRooms() - a host
+   *  that answers nothing pays like everyone else, which is the base
+   *  Guild.FreeTavernRooms (false). */
+  freeTavernRooms() { return !!this.deps.freeTavernRooms?.(); }
+
   /** Refresh -> UpdateTogglePanels + UpdateLabels (:254-258). The
    *  toggle panels are positional state, so only the labels compute. */
   refresh() {
@@ -169,6 +174,11 @@ export class TravelPopUpWindow {
       sleepModeInn: this.sleepModeInn,
       hasShip: this.hasShip,
       travelShip: this.travelShip,
+      // TravelTimeCalculator.cs:163 consults the Knightly Order's
+      // FreeTavernRooms right here. Read LIVE, not at OnPush like the
+      // transport trio above: DFU asks GuildManager inside the
+      // formula, so it re-answers on every toggle.
+      freeTavernRooms: this.freeTavernRooms(),
     });
     this.trip = { ...t, ...c };
     this.countdownValueTravelTimeDays = travelDays(this.travelTimeTotalMins);

@@ -894,6 +894,9 @@ export class TravelMapWindow {
       hasHorse: this.deps.hasHorse,
       hasCart: this.deps.hasCart,
       hasShip: this.deps.hasShip,
+      // TravelTimeCalculator.cs:163's Knightly Order consult, passed
+      // through for the same reason FastTravel's entity is.
+      freeTavernRooms: this.deps.freeTavernRooms,
       diseaseCount: this.deps.diseaseCount,
       poisonCount: this.deps.poisonCount,
       textRsc: _art?.textRsc ?? null,

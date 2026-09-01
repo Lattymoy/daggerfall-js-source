@@ -328,7 +328,12 @@ test('U61: the world host builds through the door, once, and gates on it', () =>
   // the lesson is the reason this reads as membership.)
   const bag = src.slice(src.indexOf('createTravelMapWindow({'));
   assert.match(bag, /\bwoods,/, 'the relief rides the one dep bag');
-  assert.match(bag, /getPlayerPixel: playerTravelPixel/, '...and so does the player pixel');
+  // AUDIT 39 F114 moved this pin: the dep is still the one bag's, but
+  // its VALUE is now playerTravelOrigin - TravelTimeCalculator's
+  // GetPlayerTravelPosition (:47-56), which answers the BOARDING pixel
+  // while the player is aboard their own ship. playerTravelPixel stays
+  // PlayerGPS's raw read for the two dozen callers that want it.
+  assert.match(bag, /getPlayerPixel: playerTravelOrigin/, '...and so does the player pixel');
 });
 
 test('U61: the other three hosts still refuse the map, by name', () => {

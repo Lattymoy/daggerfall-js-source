@@ -607,6 +607,9 @@ export class OverworldMapWindow {
     });
     const cost = calculateTripCost(time.minutes, time.oceanPixels, {
       sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,
+      // TravelTimeCalculator.cs:163 - the same Knightly Order consult
+      // the native popup makes; the enhanced skin bills the same fare.
+      freeTavernRooms: !!this.deps.freeTavernRooms?.(),
     });
     st.trip = { ...time, ...cost, days: travelDays(time.minutes) };
     st.notice = null;
