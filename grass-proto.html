@@ -1114,6 +1114,34 @@ vec3 moon(vec3 dir, vec4 m, vec3 col, float vis) {
   return col * (0.05 + 0.95 * lit) * limb * disc * vis;
 }
 
+// PROTO-15 (Mac: the stars are still stripes in a lot of places).
+// The sub-cell position was fixed in PROTO-14 and the field STILL
+// banded, because the fault is one level down: hash21 is a
+// float-multiply-and-fract hash, and the star field feeds it CELL IDS
+// - integers, and large ones, since cubeSnap folds the face in as
+// +977 per face and the scale is 127 or 236. Feeding a weak float
+// hash a lattice of large integers is the textbook way to get
+// correlated output: fract(n * 123.34) walks in near-constant steps
+// as n increments, so neighbouring cells get neighbouring values, the
+// threshold test cuts them in bands, and the sky comes out ruled.
+//
+// A star field needs an INTEGER hash. This is a 32-bit avalanche - two
+// multiply-xor-shift rounds over the cell coordinates - which
+// decorrelates adjacent integers by construction. The same hash gives
+// the threshold, the sub-cell position and the brightness, so all
+// three are independent of the lattice instead of drawn on it.
+uint uhash(uvec2 v) {
+  uint h = v.x * 1597334677u ^ v.y * 3812015801u;
+  h ^= h >> 15; h *= 2246822519u;
+  h ^= h >> 13; h *= 3266489917u;
+  h ^= h >> 16;
+  return h;
+}
+float ihash(vec2 cell, float salt) {
+  uvec2 u = uvec2(ivec2(floor(cell)) + ivec2(4096));
+  return float(uhash(u + uvec2(uint(salt * 71.0), uint(salt * 131.0)))) * (1.0 / 4294967296.0);
+}
+
 float stars(vec3 dir, float amount) {
   if (amount <= 0.0 || dir.y < 0.0) return 0.0;
   float s = 0.0;
@@ -1151,10 +1179,10 @@ float stars(vec3 dir, float amount) {
     vec3 ad = abs(d); float md = max(ad.x, max(ad.y, ad.z));
     vec2 rawf = ad.x >= md ? d.zy / ad.x : (ad.y >= md ? d.xz / ad.y : d.xy / ad.z);
     vec2 f = fract(atan(rawf) * 1.27323954 * scale);
-    float h = hash21(cell + 7.3 * float(layer));
+    float h = ihash(cell, 7.3 + float(layer) * 3.0);
     float thresh = layer == 0 ? 0.955 : 0.985;
     if (h > thresh) {
-      vec2 star = vec2(hash21(cell + 1.1), hash21(cell + 2.2)) * 0.7 + 0.15;
+      vec2 star = vec2(ihash(cell, 1.1 + float(layer)), ihash(cell, 2.2 + float(layer))) * 0.7 + 0.15;
       float d = length(f - star);
       float b = 0.35 + 0.65 * (h - thresh) / (1.0 - thresh);
       s += b * (layer == 0 ? 1.4 : 0.8) * exp(-d * d * 60.0);
