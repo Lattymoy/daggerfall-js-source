@@ -1582,23 +1582,13 @@ test('AUDIT 29 F1: the derivation is WIRED - beast defaults to the data, the opt
   // proof needs a RACE-bearing fixture esm the harness does not own.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /beast = null, faceIndex/, 'the option no longer defaults to unresolved');
-  // NPC1: the DERIVATION moved to the one catalog with the walks it
-  // reads (formats/mwActorCatalog.js, catalogRace) - many actors now
-  // ask the same question of the same data. The law is unchanged and
-  // is swept at its new home: an explicit override wins, otherwise the
-  // RACE record's own RADT bit decides, off the memoised walk.
-  const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
-  assert.match(cat, /export function catalogRace\(catalog, race, female, beastOverride = null\)/,
-    'the derivation has no home');
-  assert.match(cat, /memoWalk\(catalog\.gen, e, 'races', raceRecords\)\.get\(raceKey\)/,
-    'the RACE records are not consulted');
-  assert.match(cat, /if \(beastOverride === null\) beast = rrec\.beast;/, 'the RADT rule is gone');
-  assert.match(cat, /let beast = beastOverride === null \? false : beastOverride;/,
-    'an explicit beast no longer overrides the data');
-  // ...and the arm still ASKS it, before it picks a skeleton: the
-  // skeleton must resolve AFTER the answer exists (AUDIT MW-A F1).
-  assert.match(arm, /const race_ = catalogRace\(cat, race, female, beast\);/, 'the arm does not ask');
-  const gate = arm.indexOf('const race_ = catalogRace(cat, race, female, beast);');
+  assert.match(arm, /if \(beast === null\) \{/, 'the derivation gate is gone');
+  // IG2 routed the race scan through the esm walk memo; the rule is
+  // raceBeastFlag's own, read off the memoised map.
+  assert.match(arm, /walk\(e, 'races', raceRecords\)\.get\(raceKey\)/, 'the RACE records are not consulted');
+  assert.match(arm, /if \(rrec && rrec\.radt\) beast = rrec\.beast;/, 'the RADT rule is gone');
+  // and the skeleton must resolve AFTER the answer exists.
+  const gate = arm.indexOf('if (beast === null) {');
   const skel = arm.indexOf('settingsSkeleton = fpSkeletonPath({ female, beast })');
   assert.ok(gate > 0 && skel > gate, 'the skeleton is chosen before the data can say beast');
 });
@@ -1706,15 +1696,9 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, beast, colourOf \}\)/);
-  // NPC1: the ARMO and CLOT walks moved to the one catalog with the
-  // rest of the records - the arm receives them, and every other
-  // actor build reads the same walk off the same memo.
-  const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
-  assert.match(cat, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
-  assert.match(cat, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
-  assert.match(arm, /const \{ archives, esmNames, gen, find, parts, armors, clothes, sneakDelta \} = cat;/,
-    'the arm does not receive the catalog\u2019s records');
+  assert.match(arm, /composeWornArmor\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf \}\)/);
+  assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
+  assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,
   // the third person receives verdicts, the fp build filters and
   // shadows from the same result.
@@ -2442,16 +2426,7 @@ test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quan
   assert.match(fig, /uploadThirdMesh\(t\);/, 'the figure does not upload through the one helper');
   // one upload for both consumers: the wheel's update path uses the same helper.
   assert.equal((arm.match(/uploadThirdMesh\(t\);/g) || []).length, 2, 'the upload has two callers and one body');
-  // NPC2: the law is STRONGER now - there is one place that creates a
-  // body mesh AT ALL (uploadMwBodyMesh), and uploadThirdMesh is one of
-  // its callers. The pattern had been written inline three times in
-  // this file before the NPC lane would have made a fourth.
-  assert.match(arm, /export function uploadMwBodyMesh\(renderer, holder, arm, textures\) \{/,
-    'the one upload law has no home');
-  assert.equal((arm.match(/renderer\.createCharacterMesh\(holder\.packed\.packed/g) || []).length, 1,
-    'a second body-mesh upload is growing');
-  assert.match(arm, /const holder = \{ mesh: thirdMesh, packed: thirdPacked \};/,
-    'the third-person mesh no longer rides the one upload');
+  assert.equal((arm.match(/renderer\.createCharacterMesh\(thirdPacked\.packed/g) || []).length, 1, 'a second third-mesh upload is growing');
   // F2: the pack quantises the yaw before it asks.
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
   assert.match(pack, /const yaw = Math\.round\(_figureYaw \/ 0\.1\) \* 0\.1;/);
@@ -2543,26 +2518,10 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
   // The memos stand DOWN without a real generation: a test\'s fixtures
   // can share a name and a byte length while differing in content -
   // the mSpeed pin proved it the day the weapon walk joined the memo.
-  // NPC1: the walk memo moved to the catalog with the walks it serves;
-  // the GATE is the law and it travelled unchanged.
-  const cat = readFileSync('src/formats/mwActorCatalog.js', 'utf8');
-  assert.match(cat, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
-  assert.ok(!/const ESM_WALK_CACHE = new Map\(\);/.test(arm), 'the arm keeps a second memo');
+  assert.match(arm, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
   assert.match(arm, /if \(gen === null \|\| gen === undefined\) return clipReport\(/, 'the kf parse memo is gated');
-  assert.match(cat, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
+  assert.match(arm, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
     'and only the real store\'s stamp turns them on');
-  // NPC1: the catalog is cached on that same stamp, a null one never
-  // is, and - the NPC1 audit's own finding - the new set REPLACES the
-  // old rather than accumulating beside it. A Map keyed by generation
-  // leaked a whole data set's .esm bytes per re-attach; dataSource
-  // bounds its archive cache with one replaced slot for exactly that
-  // reason (IG2's residency law) and this follows it.
-  assert.match(cat, /if \(gen !== null\) _catalog = \{ gen, value: out \};/,
-    'the catalog is not cached per generation');
-  assert.match(cat, /if \(gen !== null && _catalog && _catalog\.gen === gen\) return _catalog\.value;/,
-    'a stale generation is served');
-  assert.ok(!/const CATALOG_CACHE = new Map\(\)/.test(cat),
-    'the catalog accumulates one entry per generation again - that is the leak');
 });
 
 test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call, the classic sprite\'s behaviour', () => {
@@ -3174,110 +3133,4 @@ test('PX33: a weapon swap notifies the panel, like every other settlement', asyn
   assert.ok(fin > 0, 'the swap still ends in a finally');
   assert.match(body.slice(fin), /for \(const fn of listeners\)/,
     'and notifies the panel there, so a throw still repaints');
-});
-
-test('AUDIT-N F1: the first-person target has ONE size, and the probe reads the shipped one', () => {
-  // MW-D43 moved the arm's pixel dial (CHAR_PIXEL 9 -> MW_ARM_PIXEL 3)
-  // and the RT (512 -> 1024) in fpArm's draw, and the probe kept its
-  // own `clientWidth / 9` against a 512 clamp. It then read a 107x80
-  // crop of a 320x240 picture and reported EIGHT failures - clip
-  // variety, arm width, x-symmetry, the look-down draw, the quarter
-  // lag - none of them real. The arms in the game were fine the whole
-  // time; the instrument had drifted off the thing it measures.
-  const arm = rd('src/combat/fpArm.js');
-  const probe = rd('tools/mwArmProbe.mjs');
-  assert.match(arm, /export function fpViewportSize\(canvas\) \{/, 'the one home is gone');
-  assert.match(arm, /const \{ pw, ph \} = fpViewportSize\(canvas\);/, 'the draw stopped using it');
-  // ONE computation. A second `clientWidth / MW_ARM_PIXEL` anywhere is
-  // the drift coming back.
-  assert.equal((arm.match(/clientWidth \/ MW_ARM_PIXEL/g) ?? []).length, 1,
-    'the viewport arithmetic has a second home again');
-  // ...and the probe must not carry a copy of the dial AT ALL - not the
-  // constant, not the clamp. COMMENT-STRIPPED FIRST: the note at that
-  // seam explains the old `clientWidth / 9`, and the first run of this
-  // very pin matched its own prose - MW-D23's failure, and NPC3b's,
-  // for the third time in this file's history.
-  assert.match(probe, /window\.__vp = window\.__fpViewport\(window\.__cv\);/,
-    'the probe computes the read viewport itself again');
-  const probeCode = probe.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
-  assert.ok(!/clientWidth \/ 9\b/.test(probeCode), 'the probe still hardcodes the old sprite dial');
-  assert.ok(!/\b512 \/ want[WH]/.test(probeCode), 'the probe still hardcodes the old RT clamp');
-  assert.match(probe, /window\.__fpViewport = fp\.fpViewportSize;/,
-    'the probe never receives the shipped helper');
-});
-
-test('AUDIT-N F5: a beast race cannot wear a full helm or boots (clothing.cpp:212-227)', () => {
-  // The reference refuses the EQUIP, and the refusal is a test on the
-  // ITEM'S OWN PART LIST rather than on its slot: a garment supplying
-  // PRT_Head (0), PRT_RFoot (15) or PRT_LFoot (16) cannot go on a
-  // Khajiit or an Argonian. mwclass/armor.cpp:364-378 runs the
-  // identical test, so both arms of the composer take it.
-  //
-  // The port has no equip step for a townsperson's clothes - they are
-  // the port's own invention (mwWardrobe.js) - so the composition is
-  // where the equip would have been. NPC4's wardrobe put shoes on
-  // every shopkeeper, and a static NPC's race comes off their faction,
-  // which really does answer Khajiit (FactionRaces 1) and Argonian (4).
-  const armors = [
-    { id: 'iron_helm', model: 'h.nif', name: '', enchanted: false, parts: [{ part: 0, male: 'b_hd', female: null }] },
-    { id: 'iron_boots', model: 'b.nif', name: '', enchanted: false,
-      parts: [{ part: 15, male: 'b_rf', female: null }, { part: 16, male: 'b_lf', female: null }] },
-    { id: 'iron_cuirass', model: 'c.nif', name: '', enchanted: false, parts: [{ part: 3, male: 'b_cu', female: null }] },
-  ];
-  const bodyPool = [
-    { id: 'b_hd', model: 'm/hd.nif' }, { id: 'b_rf', model: 'm/rf.nif' },
-    { id: 'b_lf', model: 'm/lf.nif' }, { id: 'b_cu', model: 'm/cu.nif' },
-  ];
-  const pieces = [
-    { templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Iron },
-    { templateIndex: ARMOR_ENUM.Boots, material: ARMOR_MATERIAL.Iron },
-    { templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
-  ];
-  // A MAN wears all three.
-  const man = composeWornArmor({ pieces, armors, bodyPool, female: false, beast: false });
-  assert.deepEqual(man.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_hd', 'b_lf', 'b_rf']);
-
-  // A BEAST wears the cuirass and nothing else - and the refusal is
-  // NAMED, because a silent drop is indistinguishable from a missing
-  // record.
-  const beast = composeWornArmor({ pieces, armors, bodyPool, female: false, beast: true });
-  assert.deepEqual(beast.adds.map((a) => a.recordId), ['b_cu'], 'a Khajiit is wearing human boots');
-  assert.equal(beast.notes.filter((n) => /beast race cannot wear/.test(n)).length, 2,
-    'the refusals are silent - the card cannot say why the boots are missing');
-  assert.ok(beast.notes.some((n) => /a head piece/.test(n)));
-  assert.ok(beast.notes.some((n) => /a right foot piece|a left foot piece/.test(n)));
-
-  // ...and the test is PER PART REFERENCE, not per slot: a garment
-  // carrying one foot and nothing else is refused just the same.
-  const oneFoot = [{ id: 'x', model: 'x.nif', name: '', enchanted: false, parts: [{ part: 16, male: 'b_lf', female: null }] }];
-  const half = composeWornArmor({
-    pieces: [{ templateIndex: ARMOR_ENUM.Boots, material: ARMOR_MATERIAL.Iron }],
-    armors: oneFoot, bodyPool, female: false, beast: true,
-  });
-  assert.equal(half.adds.length, 0, 'a one-footed garment slipped past a slot-shaped test');
-
-  // The default is NOT beast - every existing caller keeps its
-  // behaviour, and a caller that forgets to say wears its boots.
-  const dflt = composeWornArmor({ pieces, armors, bodyPool, female: false });
-  assert.equal(dflt.adds.length, 4);
-
-  // THE CLOTHING ARM TAKES THE SAME TEST (clothing.cpp is where the
-  // reference states it; armor.cpp copies it). A mutant that removed
-  // the refusal from this arm alone survived the armor cases above -
-  // and the clothing arm is the one the WARDROBE walks, so it is the
-  // arm that actually dresses a Khajiit shopkeeper.
-  const clothes = [
-    { id: 'c_shoes', type: 1, enchanted: false, parts: [{ part: 15, male: 'b_rf', female: null }, { part: 16, male: 'b_lf', female: null }] },
-    { id: 'c_shirt', type: 2, enchanted: false, parts: [{ part: 3, male: 'b_cu', female: null }] },
-  ];
-  const garments = [
-    { kind: 'clothing', name: 'Shoes', templateIndex: 147, dye: 0 },
-    { kind: 'clothing', name: 'Short Shirt', templateIndex: 165, dye: 0 },
-  ];
-  const dressedMan = composeWornArmor({ pieces: garments, armors: [], clothes, bodyPool, female: false, beast: false });
-  assert.deepEqual(dressedMan.adds.map((a) => a.recordId).sort(), ['b_cu', 'b_lf', 'b_rf']);
-  const dressedBeast = composeWornArmor({ pieces: garments, armors: [], clothes, bodyPool, female: false, beast: true });
-  assert.deepEqual(dressedBeast.adds.map((a) => a.recordId), ['b_cu'],
-    'the wardrobe still puts human shoes on a Khajiit');
-  assert.ok(dressedBeast.notes.some((n) => /beast race cannot wear/.test(n)), 'and does it silently');
 });

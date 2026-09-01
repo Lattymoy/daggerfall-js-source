@@ -208,8 +208,6 @@ import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js'
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
-import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';   // NPC4: the shared-body / per-actor split
-import { staticMwBodyOpts } from '../characters/staticMwBody.js';   // NPC4: a static NPC's identity -> body opts
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
@@ -1492,32 +1490,6 @@ export function createWorldModes(host) {
     Promise.resolve(townTalk?.ensureFactions?.()).then(() => openStaticNpc(pn)).catch(() => {});
   }
 
-  /** NPC4: the scene context SetLayoutData is derived under, in ONE
-   *  place. The click has always built it inline; the Morrowind body
-   *  lane needs the identical record (a shopkeeper's clothes are
-   *  seeded by the nameSeed their NAME comes from), and two inline
-   *  copies of `{...questSceneCtx(), buildingKey, context}` is how the
-   *  two would drift apart. */
-  function staticNpcSceneCtx(pn) {
-    return {
-      ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
-      ...(pn?.context != null ? { context: pn.context } : {}),
-    };
-  }
-
-  /** NPC4: this person's Morrowind body opts, derived ONCE and cached
-   *  on the record. Undefined means "not asked yet"; null is a settled
-   *  refusal (a child, an unresolved race) and stops the re-derivation
-   *  - the answer cannot change while the player stands in the room,
-   *  because every input to it is layout data. */
-  function staticNpcMwOpts(pn) {
-    if (pn._mwOpts !== undefined) return pn._mwOpts;
-    const lookups = questBridge?.npcRaceLookups?.() ?? {};
-    const data = staticNpcData(pn, { ...staticNpcSceneCtx(pn), ...lookups });
-    pn._mwOpts = staticMwBodyOpts(data, lookups);
-    return pn._mwOpts;
-  }
-
   function openStaticNpc(pn, { forceTalk = false } = {}) {
     // Q4-v: PlayerActivate's questor half - EVERY static-NPC click
     // stamps LastNPCClicked before the routing decides what opens (the
@@ -1535,7 +1507,10 @@ export function createWorldModes(host) {
     // entered building, so the key below is already 0. The record the
     // exterior host stood carries its own context; a building person
     // has none and takes staticNpcData's Building default.
-    const npcSceneCtx = staticNpcSceneCtx(pn);
+    const npcSceneCtx = {
+      ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
+      ...(pn?.context != null ? { context: pn.context } : {}),
+    };
     const npcData = questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
     // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
     // port never had. A clicked NPC whose GameObject carries a
@@ -4173,44 +4148,6 @@ export function createWorldModes(host) {
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, UP_Y);
-    // NPC4: THE PEOPLE STANDING IN THE ROOM.
-    //
-    // Their batches are per person (interiorContext), so this loop
-    // decides one at a time: a body that has built draws instead of
-    // the sprite, and everyone else - a child, an unresolved race, a
-    // build still in flight, the classic skin, no Morrowind data -
-    // pushes the billboard exactly as before.
-    //
-    // They FACE THE PLAYER, because that is what the sprite they
-    // replace does: a Daggerfall static NPC is a billboard, and it
-    // turns. There is no facing in the block record to be faithful to.
-    //
-    // They never walk: DFU gives a building's people no motion at all
-    // (AddPeople stands them and stops), so `moving` is false and the
-    // body plays its idle.
-    {
-      const _pplBatches = [];
-      for (const pn of interiorCtx.people) {
-        // SetActive(false): the away copy does not draw - the check
-        // that used to sit in interiorContext's flat-batch loop, moved
-        // here with the batch that loop no longer builds.
-        if (!pn.active || !pn.batch) continue;
-        const _opts = staticNpcMwOpts(pn);
-        const _body = _opts ? requestMwBody(pn, _opts, -1) : null;
-        if (_body && drawMwActor(renderer, canvas, _body, pn._mwState, {
-          dt: interiorOverlay ? 0 : dt,
-          moving: false,
-          running: false,
-          feet: [pn.x, pn.y, pn.z],
-          yaw: Math.atan2(cam.pos[0] - pn.x, cam.pos[2] - pn.z),
-          proj,
-          view,
-          eye: mwv.eye,
-        })) continue;
-        _pplBatches.push(pn.batch);
-      }
-      if (_pplBatches.length) renderer.drawBillboards(_pplBatches, camRight, UP_Y);
-    }
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.
     interiorHitEffects.tick(dt);
@@ -4228,12 +4165,7 @@ export function createWorldModes(host) {
     // IF: the pool's own billboards ride the same axis, the same call
     // the exterior host makes for its foes.
     if (interiorFoes) {
-      // NPC4b: the frame's render context rides along, so an encounter
-      // foe inside a building draws as its Morrowind body when one has
-      // built - the same seam the dungeon's foes and the street's
-      // watch already take. Without it every foe is a sprite, exactly
-      // as before.
-      const _foeBatches = interiorFoes.batches({ canvas, proj, view, eye: mwv.eye }, dt);
+      const _foeBatches = interiorFoes.batches();
       if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, UP_Y);
     }
     if (magic) {
@@ -5298,12 +5230,6 @@ export function createWorldModes(host) {
   }
 
   return {
-    /** NPC4c: a static NPC's Morrowind body opts, derived through THIS
-     *  machine's own scene context - the same one openStaticNpc uses.
-     *  The street NPCs are drawn by the exterior hosts but CLICKED
-     *  through here, so publishing the derivation is what keeps a
-     *  street person's body and their dialogue the same person. */
-    staticNpcMwOpts,
     get mode() { return mode; },
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the

@@ -157,12 +157,7 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
     'the interior\'s active-enemy database is the pool itself');
   assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, sensesContext\(/,
     'through the ONE senses builder');
-  // NPC4b handed batches() the frame's render context and dt, so an
-  // encounter foe inside a building can draw as its Morrowind body
-  // instead of a sprite. The law under test - the pool's billboards
-  // ride the host's own draw - is unchanged.
-  assert.match(WM, /const _foeBatches = interiorFoes\.batches\(\{ canvas, proj, view, eye: mwv\.eye \}, dt\);/,
-    'and its billboards ride the host\'s draw');
+  assert.match(WM, /const _foeBatches = interiorFoes\.batches\(\);/, 'and its billboards ride the host\'s draw');
 });
 
 test('IF: quest foes stand from BUILDING MARKERS too - DFU\'s second path into an interior', () => {

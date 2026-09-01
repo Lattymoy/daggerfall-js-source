@@ -10,16 +10,9 @@
 
 import { exteriorNpcFlags, NPC_CONTEXT } from './staticNpc.js';
 
-/** RMBLayout's own test, as ONE predicate. NPC4c needs the exact same
- *  question at the BATCH loop - a street NPC's flat is pulled out of
- *  the shared (archive, record) groups so the Morrowind body lane can
- *  leave one person out of the sprite pass - and two spellings of "is
- *  this a person" is how the two lists would drift apart. */
-export const isExteriorNpcFlat = (f) => f.factionID !== 0 && f.factionID !== undefined;
-
 /** @param flats - output of collectBlockFlats (C2 passthrough fields) */
 export function collectExteriorNpcs(flats) {
-  return flats.filter(isExteriorNpcFlat);
+  return flats.filter((f) => f.factionID !== 0 && f.factionID !== undefined);
 }
 
 /**

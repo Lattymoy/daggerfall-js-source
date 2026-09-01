@@ -147,77 +147,15 @@ function decodeNpc(rec) {
   return out;
 }
 
-/** CREA's own flag bits (loadcrea.hpp Creature::Flags). The reference
- *  masks the FLAG word to its low byte - `mFlags = flags & 0xFF`
- *  (loadcrea.cpp) - so the high bits are not ours to read. */
-export const CREATURE_FLAGS = Object.freeze({
-  Bipedal: 0x01, Respawn: 0x02, Weapon: 0x04, Base: 0x08,
-  Swims: 0x10, Flies: 0x20, Walks: 0x40, Essential: 0x80,
-});
-
 function decodeCreature(rec) {
-  // NPC2b: the FLAGS and the SCALE join the model, because the
-  // reference's creature loader branches on both. Bipedal decides
-  // whether a creature ALSO gets the human base animations
-  // (creatureanimation.cpp:30-31), Weapon decides which of the two
-  // animation classes it is (objects.cpp:108-111), and XSCL is the
-  // creature's own size, which nothing else can supply.
-  const out = { id: null, name: null, model: null, flags: 0, scale: 1 };
+  const out = { id: null, name: null, model: null };
   for (const sub of subrecords(rec.data)) {
     if (sub.type === 'NAME') out.id = subString(sub.data).toLowerCase();
     else if (sub.type === 'FNAM') out.name = subString(sub.data);
     else if (sub.type === 'MODL') out.model = subString(sub.data);
-    else if (sub.type === 'FLAG') {
-      if (sub.data.byteLength < 4) continue;   // truncated tail, not a throw
-      out.flags = new EsmStream(sub.data).u32() & 0xFF;
-    } else if (sub.type === 'XSCL') {
-      if (sub.data.byteLength < 4) continue;
-      out.scale = new EsmStream(sub.data).f32();
-    }
   }
   return out;
 }
-
-/**
- * NPC2b: EVERY CREATURE RECORD, from raw bytes, in ONE pass.
- *
- * The build side needs creatures the way it needs armour and clothing
- * - off the memoised esm walk, per data set - and it must NOT be a
- * second reader of the same record. decodeCreature is the one home
- * (this file is the leaf: mwFirstPerson imports from here, so a
- * creature reader over there could never be shared back). parseEsm
- * decodes four record kinds; this decodes the one, for callers that
- * want creatures and not a whole file's worth of maps.
- */
-export function creatureRecords(bytes) {
-  if (!(bytes instanceof Uint8Array)) throw new TypeError('creatureRecords expects a Uint8Array');
-  const s = new EsmStream(bytes);
-  const out = [];
-  while (s.pos + 16 <= bytes.byteLength) {
-    const type = s.tag();
-    const size = s.u32();
-    s.u32();   // unknown
-    s.u32();   // flags
-    if (s.pos + size > bytes.byteLength) break;   // truncated tail, not a throw
-    const data = bytes.subarray(s.pos, s.pos + size);
-    s.pos += size;
-    if (type !== 'CREA') continue;
-    const c = decodeCreature({ data });
-    // A creature with no model cannot be drawn, and one with no id
-    // cannot be matched - either way it is not a candidate.
-    if (c.id && c.model) {
-      c.model = c.model.replace(/\\/g, '/').toLowerCase();
-      out.push(c);
-    }
-  }
-  return out;
-}
-
-/** Does this creature carry a weapon and shield? The reference reads
- *  the same bit to choose CreatureWeaponAnimation over the plain one. */
-export const creatureHasWeapon = (c) => !!(c && (c.flags & CREATURE_FLAGS.Weapon));
-/** Bipedal creatures ALSO take the human base animation set. */
-export const creatureIsBipedal = (c) => !!(c && (c.flags & CREATURE_FLAGS.Bipedal));
 
 const DECODERS = { BODY: decodeBody, RACE: decodeRace, NPC_: decodeNpc, CREA: decodeCreature };
 

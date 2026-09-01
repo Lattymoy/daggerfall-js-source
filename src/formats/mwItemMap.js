@@ -455,7 +455,7 @@ export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
  * missing record, an unknown INDX, a ref with no id for this sex -
  * each is a note, the skin stands, the law is never-traps.
  */
-export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, beast = false, colourOf = null }) {
+export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, colourOf = null }) {
   const notes = [];
   const bodyById = new Map((bodyPool ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
   // ── THE PRIORITY LAW (Audit 30's recording, now consumed) ────────
@@ -484,8 +484,6 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
       const name = piece.name ?? CLOTHING_NAME[piece.templateIndex];
       const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf });
       if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
-      const noC = beast ? beastRefusesRecord(res.record) : null;
-      if (noC) { notes.push(`${name ?? piece.templateIndex}: a beast race cannot wear a ${noC} piece`); continue; }
       const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
       const prio = ((base + 1) << 1) + 0;
       composeRefs(res.record, prio, female, bodyById, claim, notes, piece);
@@ -494,8 +492,6 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     }
     const res = mwArmorRecords(armors, piece.templateIndex, piece.material);
     if (!res.records.length) { notes.push(`armor ${piece.templateIndex}: ${res.note}`); continue; }
-    const noA = beast ? res.records.map(beastRefusesRecord).find(Boolean) : null;
-    if (noA) { notes.push(`armor ${piece.templateIndex}: a beast race cannot wear a ${noA} piece`); continue; }
     const prio = ((0 + 1) << 1) + 1;
     // AUDIT 30 F1: A HELMET HIDES THE HAIR - an engine rule, not a
     // part reference (npcanimation.cpp:615), prior to the refs.
@@ -536,35 +532,6 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     if (key) shadows.add(key);
   }
   return { adds, shadows: [...shadows], notes };
-}
-
-/**
- * AUDIT-N F5: A BEAST RACE CANNOT WEAR IT (mwclass/clothing.cpp
- * :212-227, and mwclass/armor.cpp:364-378 verbatim the same test).
- *
- * The reference refuses the EQUIP, not the render, and the refusal is
- * a test on the ITEM'S OWN PART LIST rather than on its slot: a
- * garment supplying PRT_Head, PRT_LFoot or PRT_RFoot cannot go on a
- * Khajiit or an Argonian - digitigrade feet and a muzzle have no
- * human boot or full helm to wear.
- *
- * The port has no equip step for a townsperson's clothes (they are
- * the port's own invention - mwWardrobe.js), so the composition is
- * where the equip would have been, and this is that refusal standing
- * in the only place it can. NPC4's wardrobe put shoes on every
- * shopkeeper, and a static NPC's race comes off their faction, which
- * really can answer Khajiit (FactionRaces 1) or Argonian (4).
- *
- * Head and BOTH feet, exactly as the C# lists them - not "footwear",
- * because the test is per part reference and a garment can carry one
- * foot without the other.
- */
-const BEAST_FORBIDDEN_PARTS = Object.freeze([0, 15, 16]);   // PRT_Head, PRT_RFoot, PRT_LFoot
-export function beastRefusesRecord(rec) {
-  for (const ref of rec?.parts ?? []) {
-    if (BEAST_FORBIDDEN_PARTS.includes(ref.part)) return ARMO_PART[ref.part].name;
-  }
-  return null;
 }
 
 /** IG3: PRT_Shield's row index in ARMO_PART (the sided 27-enum). */

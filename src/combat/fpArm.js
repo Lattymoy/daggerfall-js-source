@@ -56,15 +56,13 @@ import {
   firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
-  sneakOffset,
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS,
+  gmstValue, GMST_SNEAK_DELTA, sneakOffset,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   jumpAnimState,
   sourcesKeyTime, sourcesVelocity, sourceVelocityOf,
 } from '../formats/mwFirstPerson.js';
-// NPC1: the records every actor build reads, walked once per data set.
-import { mwActorCatalog, catalogRace } from '../formats/mwActorCatalog.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
@@ -76,7 +74,6 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
-import { creatureIsBipedal } from '../formats/mwEsmFile.js';   // NPC2b: the flag that lends a biped the human anims
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
@@ -496,8 +493,9 @@ function skeletonHasBone(skeletonBytes, name) {
  */
 /** MW-D32: the worn list as one comparable key - kind, template,
  *  material, in the readout's own order. */
-/** NPC1: the ESM walk memo moved to formats/mwActorCatalog.js with the
- *  walks it serves - the records belong to the DATA, not to the arm. */
+/** MW-D32: see the walk memo in buildFpArm. Bounded by the handful of
+ *  esm files a data set carries, times three record kinds. */
+const ESM_WALK_CACHE = new Map();
 // IG2: the .kf ANIMATION-SOURCE parse memo. clipReport parses a whole
 // keyframe file and matches its tracks by NAME; for one skeleton path
 // in one data generation the answer cannot change, and with the body
@@ -533,7 +531,7 @@ const CLOT_COLOUR_CACHE = new Map();
  *  Now one record is measured when the resolver asks for it (the
  *  resolver only asks about its own type's pool), memoised per data
  *  generation, and the same function serves the build and the icon. */
-export function clothingColourOf(rec, parts, archives, gen) {
+function clothingColourOf(rec, parts, archives, gen) {
   const key = `${gen}:${rec.id}`;
   if (CLOT_COLOUR_CACHE.has(key)) return CLOT_COLOUR_CACHE.get(key);
   let rgb = null;
@@ -838,11 +836,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  * A body that refuses does NOT refuse the arm: the player keeps first
  * person and the card names the reason the wheel cannot leave it.
  */
-// NPC1: EXPORTED. The third-person body build is no longer the
-// player's alone - every enhanced humanoid NPC is the same assembly
-// from the same records, and characters/mwActorBody.js orchestrates
-// them against one catalog. Nothing about the build changed.
-export async function buildTpBody({
+async function buildTpBody({
   race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
@@ -977,25 +971,85 @@ export async function buildFpArm({
   let settingsSkeleton = null;
   let skeletonPath = null;
   try {
-    // NPC1: THE RECORDS COME FROM THE ONE CATALOG. The preamble that
-    // stood here - open the archives, read every .esm in load order,
-    // walk it five ways - is formats/mwActorCatalog.js now, because
-    // the enhanced NPC lane builds MANY actors against the same data
-    // and two copies of that walk is the shape MW7 died of. Every law
-    // travelled with it and none was rewritten: all .esm files in load
-    // order, the walk memo's null-generation gate, RADT's beast flag
-    // (AUDIT MW-A F1) and adjustScale's per-gender scale (MW-D34).
-    const cat = await mwActorCatalog(d);
-    if (!cat.ok) return cat;
-    const { archives, esmNames, gen, find, parts, armors, clothes, sneakDelta } = cat;
-    // The weapon records are the catalog's too - they were walked
-    // eighty lines below this before, off the same memo.
-    const allWeapons = cat.weapons;
-    // An explicit `beast` still overrides the data, which is what the
-    // fixtures use; null means ask the RACE record.
-    const race_ = catalogRace(cat, race, female, beast);
-    beast = race_.beast;
-    const raceScale = race_.raceScale;
+    const archives = await d.loadMorrowindArchives();
+    if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
+
+    // EVERY .esm, not the first one.
+    //
+    // THE DEFECT THIS REPLACES, reported by Mac with three archives
+    // attached: `.find()` took whichever .esm the store listed first. An
+    // expansion carries no base-race BODY records, so if Tribunal.esm or
+    // Bloodmoon.esm sorted ahead of Morrowind.esm every arm slot came
+    // back "no record for this actor" and the card had nothing more to
+    // say. loadMorrowindArchives (dataSource.js) already RANKS the .bsa
+    // files by name for exactly this reason; the .esm door simply never
+    // got the same treatment.
+    //
+    // Reading all of them is also what the engine does - later masters
+    // add to and override earlier ones - so this is the load order
+    // rather than a workaround for it.
+    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\.esm$/i.test(n));
+    if (!esmNames.length) {
+      return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the body records live there, not in the .bsa' };
+    }
+    const esmBytes = [];
+    for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
+    // MW-D32 / IG2: the ESM WALK MEMO, hoisted above every record scan
+    // so ALL of them ride it - the records do not change between two
+    // rebuilds of the same data, only the pieces do. Keyed on the
+    // store's generation stamp, so a re-attached archive is a fresh
+    // walk and never a stale one. IG2 routed the race, GMST and weapon
+    // scans through it too: with the body following the equip table,
+    // every swap re-walked tens of megabytes of .esm five ways.
+    // A test's deps carry no generation: gen stays NULL there and the
+    // clip/texture memos stand down (the walk memo below keys on the
+    // byte length too, so it is collision-safe either way). Only the
+    // real store's monotonic stamp turns the swap caches on.
+    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
+    const walk = (e, kind, fn) => {
+      // No generation (a test's deps) = no memo: two fixtures of the
+      // same name AND length but different bytes are an everyday test
+      // arrangement, and the byteLength fingerprint cannot tell them
+      // apart - the mSpeed pin proved it the day the weapon walk
+      // joined this memo.
+      if (gen === null) return fn(e.bytes);
+      const key = `${gen}:${e.name}:${e.bytes.byteLength}:${kind}`;
+      let hit = ESM_WALK_CACHE.get(key);
+      if (hit === undefined) { hit = fn(e.bytes); ESM_WALK_CACHE.set(key, hit); }
+      return hit;
+    };
+    const raceKey = String(race || '').toLowerCase();
+    // AUDIT MW-A F1: BEAST COMES FROM THE DATA. The skeleton switch
+    // and the tail row both read this flag, and no production caller
+    // ever set it - an Argonian player built on the human skeleton
+    // with the tail silently skipped. The RACE record's own RADT bit
+    // decides now, last esm wins (load order); an explicit option
+    // still overrides, which is what the fixtures use.
+    if (beast === null) {
+      beast = false;
+      for (const e of esmBytes) {
+        const rrec = walk(e, 'races', raceRecords).get(raceKey);
+        if (rrec && rrec.radt) beast = rrec.beast;   // raceBeastFlag's own rule, off the memo
+      }
+    }
+    // MW-D34: Npc::adjustScale (npc.cpp:1102-1136) - the race record's
+    // RADT carries per-gender height and weight, and the rendered body
+    // scales x,y by WEIGHT and z by HEIGHT (:1124-1135). The player's
+    // own FIRST-person meshes take uniform HEIGHT only - "Race weight
+    // should not affect 1st-person meshes, otherwise it will change
+    // hand proportions and can break aiming" (:1112-1121); in this
+    // port's FP composition (rule 54: camera and rig share one space)
+    // a uniform scale of both cancels exactly, so the carve-out is the
+    // no-op the reference's comment wants. Collision never scales
+    // (:1104-1106) - the classic motor's collider is untouched. Last
+    // .esm wins, the load order as everywhere else.
+    let raceScale = { weight: 1, height: 1 };
+    for (const e of esmBytes) {
+      const rrec = walk(e, 'races', raceRecords).get(raceKey);
+      if (rrec && rrec.radt) {
+        raceScale = { weight: rrec.weight[female ? 1 : 0], height: rrec.height[female ? 1 : 0] };
+      }
+    }
     // MW-D14 / RULE 18: the settings name is not the final name. The
     // x-form is used only when its .kf is in the archive, which for a
     // male is never (the entry is already x-form, so the insert yields
@@ -1004,6 +1058,25 @@ export async function buildFpArm({
     // HERE and not before the data (AUDIT MW-A F1).
     settingsSkeleton = fpSkeletonPath({ female, beast });
     skeletonPath = correctActorModelPath(settingsSkeleton, (p) => archives.some((a) => a.has(p)));
+    // bodyParts(), not loadMorrowindEsm(). The store's parseEsm door
+    // returns mwEsmFile's body shape; armReport wants bodyParts' shape;
+    // there is no adapter and writing one by guess inside this slice is
+    // exactly how MW7 died. Raw bytes through the pinned path instead.
+    const parts = esmBytes.flatMap((e) => walk(e, 'parts', bodyParts));
+    // MW-D29: the ARMO records ride the same esm walk, load order and
+    // all - the composer resolves DF pieces against them by token.
+    const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
+    const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
+    // RULE 32(a)'s GMST, read from the player's own data. Later masters
+    // override earlier ones, so the LAST .esm that carries it wins -
+    // which is the load order, not a preference.
+    let sneakDelta = null;
+    for (const e of esmBytes) {
+      const g = walk(e, 'gmst-sneak', (b) => ({ v: gmstValue(b, GMST_SNEAK_DELTA) }));
+      if (typeof g.v === 'number') sneakDelta = g.v;
+    }
+
+    const find = (p) => archives.find((a) => a.has(p));
     const skelArc = find(skeletonPath);
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
@@ -1014,10 +1087,7 @@ export async function buildFpArm({
     // MW-D37: the garments' measured colours, so the dye can choose -
     // lazily, one candidate at a time (AUDIT 34 F1).
     const colourOf = (c) => clothingColourOf(c, parts, archives, gen);
-    // AUDIT-N F5: `beast` rides in, so a Khajiit or Argonian PLAYER
-    // gets the reference's own equip refusal too (clothing.cpp
-    // :212-227) - the classic game will happily hand them boots.
-    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, beast, colourOf });
+    const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
     // AUDIT 32 F2: memoised per identity per data generation - a
@@ -1084,9 +1154,7 @@ export async function buildFpArm({
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
-    // NPC1: `allWeapons` is the CATALOG's (one ESM walk for the whole
-    // actor lane, above) - the local re-walk this line used to do is
-    // the second home mwActorCatalog exists to retire.
+    const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
     const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
     const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
 
@@ -1441,224 +1509,23 @@ function readFollowCamera() {
 }
 
 /**
- * AUDIT A2: GIVE A BODY'S MESH BACK TO THE GPU.
- *
- * The NPC lane evicts bodies (the cap) and drops them all on a
- * re-attach, and until this existed every one of those leaked its
- * VAO, its buffers and one texture per piece - the same leak shape
- * MW-D11 called out when the arm learned to release its own.
- * Idempotent, and safe on a body that was never drawn.
- */
-export function releaseMwBodyMesh(holder) {
-  const m = holder && holder.mesh;
-  const renderer = holder && holder.meshOwner;
-  if (!m || !renderer || !renderer.gl) { if (holder) { holder.mesh = null; holder.packed = null; } return false; }
-  const gl = renderer.gl;
-  gl.deleteVertexArray(m.vao);
-  for (const b of m.buffers || []) gl.deleteBuffer(b);
-  for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
-  holder.mesh = null;
-  holder.packed = null;
-  holder.meshOwner = null;
-  return true;
-}
-
-/**
- * NPC2b: A MORROWIND CREATURE, BUILT.
- *
- * The reference's own creature path, which is far shorter than the
- * NPC one (creatureanimation.cpp:20-35, objects.cpp:95-111):
- *
- *   animationMesh = correctActorModelPath(model)          // rule 18
- *   animated = (animationMesh != model)                   // the x-form decides
- *   setObjectRoot(animationMesh)                          // the model IS the root
- *   if (flags & Bipedal) addAnimSource(xbase_anim, model) // bipeds borrow the human set
- *   if (animated)        addAnimSource(model, model)      // and its OWN animations
- *
- * There is no body-part assembly and no worn layering: a creature is
- * one file carrying its own skeleton and its own geometry. MEASURED
- * before this was written - a self-contained animated .nif binds
- * through the SAME assembleFirstPersonArm door with an empty bone
- * list (bindPartsInto iterates [null], skinned batches find their own
- * bones and rigid ones land at the root), so this slice adds no
- * assembly code at all.
- */
-export async function buildMwCreature({ record, archives, find, gen = null }) {
-  const modelPath = `meshes/${String(record.model || '').replace(/\\/g, '/').toLowerCase()}`;
-  const exists = (p) => archives.some((a) => a.has(p));
-  // Rule 18's x-swap, and it is the reference's own animated test: an
-  // x-form that EXISTS is the animated model; one that does not means
-  // this creature is a static mesh.
-  const animPath = correctActorModelPath(modelPath, exists);
-  const animated = animPath !== modelPath;
-  const arc = find(animPath);
-  if (!arc) return { ok: false, stage: 'model', error: `${animPath} is not in your archives` };
-  const bytes = arc.get(animPath).slice();
-
-  const arm = await assembleFirstPersonArm({
-    skeletonBytes: bytes,
-    // ONE FILE, BOTH ROLES: the creature's own nif is the skeleton and
-    // the geometry. An empty bone list is what makes bindPartsInto
-    // bind the file's own shapes rather than hunt an attach bone.
-    parts: [{ slot: 'creature', bones: [], bytes }],
-  });
-  if (!arm.ok) {
-    return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: arm.notes || [] };
-  }
-  const textures = collectArmTextures(arm.pieces, archives, gen);
-
-  // The animation sources, in the reference's own order: the human
-  // base set FIRST for a bipedal creature, then the creature's own.
-  const notes = [];
-  const sourcePaths = [];
-  if (creatureIsBipedal(record)) {
-    const baseKf = animSourceName(TP_BASE_MODEL);
-    if (exists(baseKf)) sourcePaths.push(baseKf);
-  }
-  if (animated) {
-    const ownKf = animSourceName(animPath);
-    if (exists(ownKf)) sourcePaths.push(ownKf);
-    else notes.push(`${record.id}: ${ownKf} is not in your archives - this creature cannot move`);
-  } else {
-    notes.push(`${record.id}: no x-form model, so Morrowind draws it static too`);
-  }
-  if (!sourcePaths.length) {
-    return { ok: false, stage: 'clip', error: `no animation file for ${record.id}`, notes };
-  }
-  const sources = [];
-  for (const p of sourcePaths) {
-    const one = await cachedClipReport(gen, animPath, p, () => find(p).get(p).slice(), arm.skeleton);
-    if (!one.ok) return { ok: false, stage: 'clip', error: `${p}: ${one.error}`, notes };
-    sources.push({
-      name: p, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups),
-      trackMap: one.trackMap, binding: one.binding,
-      wouldAccumRoot: accumRootRef(arm.skeleton, one.trackMap),
-    });
-  }
-  const groupSet = new Set(sources.flatMap((so) => so.groups));
-  const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
-  for (const so of sources) so.accumRoot = accumRoot;
-
-  return {
-    ok: true,
-    arm,
-    sources,
-    sourcePaths,
-    groupSet,
-    accumRoot,
-    textures,
-    // A creature has no race and no equipment - its size is its OWN
-    // (CREA's XSCL), and it rides the same uniform field the body's
-    // race scale does so one draw law serves both.
-    raceScale: { weight: record.scale ?? 1, height: record.scale ?? 1 },
-    // AUDIT A1: NONE, not zero. Zero is ShortBladeOneHand, so a
-    // creature declaring 0 was asking for a one-handed stance; the
-    // bare-group fallback hid it. A creature carries no weapon type at
-    // all and the ladder must be told so in the enum's own spelling.
-    mwType: MW_WEAPON_TYPE.None,
-    creature: { id: record.id, name: record.name, model: animPath, animated },
-    notes: [...notes, ...(arm.notes || [])],
-    pieces: armPieceRows(arm.pieces).length,
-  };
-}
-
-/**
- * NPC2: PACK, UPLOAD AND DRESS a Morrowind body's mesh - one home for
- * a pattern this file already carried three times and the NPC lane
- * would have made a fourth.
- *
- * `holder` owns the two things that must persist together: the packed
- * float buffer (reused in place - the frame path must not allocate)
- * and the GPU mesh the ranges and textures hang on. MW-D11's law:
- * textures resolve ONCE onto the ranges, and the per-frame path
- * re-uploads vertices and touches nothing else.
- */
-export function uploadMwBodyMesh(renderer, holder, arm, textures) {
-  holder.packed = packFpArm(arm.pieces, holder.packed);
-  if (!holder.mesh) {
-    // AUDIT A2: the mesh remembers WHO made it, because whoever drops
-    // the body later (a cache eviction, a re-attach) holds no renderer
-    // and would otherwise leak a VAO, its buffers and every texture.
-    holder.meshOwner = renderer;
-    holder.mesh = renderer.createCharacterMesh(holder.packed.packed, { uv: true });
-    holder.mesh.ranges = holder.packed.ranges;
-    for (const r of holder.mesh.ranges) {
-      if (!r.textureFile) continue;
-      const entry = textures && textures.get(r.textureFile);
-      if (!entry) continue;
-      const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
-      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
-      // NiAlphaProperty's own threshold, 0-255 in the file.
-      r.alphaCut = r.piece.material && r.piece.material.alphaTest
-        ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-    }
-  } else {
-    renderer.updateCharacterMesh(holder.mesh, holder.packed.packed);
-  }
-  return holder.mesh;
-}
-
-/**
- * NPC2: WHERE A MORROWIND BODY STANDS IN THE WORLD, and how big the
- * sprite box around it is. One home, because the player's third-person
- * body and every enhanced NPC ask the identical question and a second
- * copy of adjustScale's axes would drift from the first.
- *
- * MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135) - x,y
- * take the race's WEIGHT, z its HEIGHT. In this frame the local x/z
- * pair is the MW horizontal (side/forward through Rx(-90)) and local y
- * is the MW vertical.
- *
- * The box the sprite law needs is measured off the POSED pieces in MW
- * axes and mapped: MW z is world up, MW x/y are the horizontal pair.
- * The azimuth-safe half-width holds under yaw for free, exactly as the
- * voxel rigs' does.
- */
-export function drawMwBodyAt(renderer, canvas, mesh, arm, raceScale, { feet, yaw = 0, proj, view, eye }) {
-  if (!renderer || !canvas || !mesh || !arm || !feet) return false;
-  const u = 1 / MW_UNITS_PER_METER;
-  const yawDeg = (yaw * 180 / Math.PI) + 180;
-  const rs = raceScale || { weight: 1, height: 1 };
-  const model = multiply(
-    trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
-    NIF_TO_PASS,
-  );
-  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-  for (const r of armPieceRows(arm.pieces)) {
-    const b = r.bounds;
-    if (!b) continue;
-    if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
-    if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
-    if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
-  }
-  if (!(maxX > minX)) return false;
-  const halfH = ((maxZ - minZ) * u * rs.height) / 2;
-  const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
-  const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
-  // MW-D43b (folded into the ONE home at the NPC1 merge): a Morrowind
-  // body is a MESH, so it takes the arm's pixel dial, not the sprite
-  // standard - and every enhanced NPC takes it with the player's own
-  // third-person body, because there is only one place that decides.
-  drawRigSpriteBox(renderer, canvas, mesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
-  return true;
-}
-
-/**
- * AUDIT-N F1: HOW BIG THE FIRST-PERSON TARGET IS, IN ONE PLACE.
+ * HOW BIG THE FIRST-PERSON TARGET IS, IN ONE PLACE.
  *
  * The arm renders into a pw x ph corner of the shared character-sprite
- * RT, and ANYONE who reads that target back has to read exactly that
+ * RT, and anyone who reads that target back has to read exactly that
  * corner. There were two copies of this arithmetic - the draw's, and
  * the probe's own `canvas.clientWidth / 9` against a 512 clamp - and
  * MW-D43 changed the dial (CHAR_PIXEL 9 -> MW_ARM_PIXEL 3) and the RT
  * (512 -> 1024) in the first without touching the second.
  *
- * The probe then read a 107x80 crop of a 320x240 picture - the bottom
- * corner of the arm - and reported EIGHT failures about clip variety,
- * arm width, x-symmetry and the look-down draw, none of which were
- * real. A measuring instrument that keeps its own copy of the thing it
- * measures will eventually measure something else; this is the copy,
- * removed.
+ * The probe then read a 107x80 crop of a 320x240 picture and reported
+ * EIGHT failures about clip variety, arm width, x-symmetry and the
+ * look-down draw, none of which were real. A measuring instrument that
+ * keeps its own copy of the thing it measures will eventually measure
+ * something else; this is the copy, removed.
+ *
+ * KEPT ACROSS THE NPC-ARC REVERT: this repairs MW-D43's own drift and
+ * has nothing to do with the NPC lane.
  */
 export function fpViewportSize(canvas) {
   const wantW = canvas.clientWidth / MW_ARM_PIXEL;
@@ -1898,11 +1765,22 @@ export function createFpArm() {
    *  doll and the model never appeared. The body's pieces are posed at
    *  build regardless of view; only the upload was view-gated. */
   function uploadThirdMesh(t) {
-    // NPC2: through the one upload law - the holder carries the packed
-    // buffer and the mesh together, exactly as it did inline here.
-    const holder = { mesh: thirdMesh, packed: thirdPacked };
-    uploadMwBodyMesh(renderer, holder, t.arm, t.textures);
-    thirdMesh = holder.mesh; thirdPacked = holder.packed;
+    thirdPacked = packFpArm(t.arm.pieces, thirdPacked);
+    if (!thirdMesh) {
+      thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
+      thirdMesh.ranges = thirdPacked.ranges;
+      for (const r of thirdMesh.ranges) {
+        if (!r.textureFile) continue;
+        const entry = t.textures.get(r.textureFile);
+        if (!entry) continue;
+        const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
+        r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
+        r.alphaCut = r.piece.material && r.piece.material.alphaTest
+          ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
+      }
+    } else {
+      renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
+    }
     return thirdMesh;
   }
 
@@ -3003,9 +2881,6 @@ export function createFpArm() {
       if (!active() || !canvas) return false;
       const cam = camera();
       if (!cam) return false;
-      // MW-D43: the ARM's dial, not the sprite pass's - fpViewportSize
-      // decides, in ONE place, for the draw and for whoever reads the
-      // target back. See AUDIT-N F1 in that function's own note.
       const { pw, ph } = fpViewportSize(canvas);
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
@@ -3162,12 +3037,42 @@ export function createFpArm() {
      */
     drawThird(canvas, { proj, view, eye, feet, yaw }) {
       if (!thirdActive() || !canvas || !feet) return false;
-      // NPC2: the placement and the box are drawMwBodyAt's now - the
-      // player's body and every enhanced NPC stand in the world by ONE
-      // law. Two copies of adjustScale's axes and the sprite box is
-      // exactly the drift MW7 died of.
-      return drawMwBodyAt(renderer, canvas, thirdMesh, thirdBuilt.arm,
-        (built && built.raceScale) || null, { feet, yaw, proj, view, eye });
+      const t = thirdBuilt;
+      const u = 1 / MW_UNITS_PER_METER;
+      const yawDeg = (yaw * 180 / Math.PI) + 180;
+      // MW-D34: adjustScale on the rendered body (npc.cpp:1124-1135):
+      // x,y take the race's WEIGHT, z its HEIGHT. In this frame the
+      // local x/z pair is the MW horizontal (side/forward through
+      // Rx(-90)) and local y is the MW vertical.
+      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+      const model = multiply(
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
+        NIF_TO_PASS,
+      );
+      // The box the sprite law needs, measured off the POSED pieces in
+      // MW axes and mapped: MW z is world up, MW x/y are the horizontal
+      // pair. The azimuth-safe half-width holds under yaw for free,
+      // exactly as the voxel rigs' does.
+      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      for (const r of armPieceRows(t.arm.pieces)) {
+        const b = r.bounds;
+        if (!b) continue;
+        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+      }
+      if (!(maxX > minX)) return false;
+      const halfH = ((maxZ - minZ) * u * rs.height) / 2;
+      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
+      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
+      // dial, not the sprite standard - the same fix MW-D43 made for
+      // the first-person pass and missed here. (Restored by hand at the
+      // NPC-arc revert: the arc had folded this call into a shared
+      // placement helper, and backing the arc out took MW-D43b's
+      // argument with it.)
+      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
+      return true;
     },
 
     /** MW-D38: THE ITEM ICON - a Daggerfall item's Morrowind GROUND

@@ -130,16 +130,10 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
     'the host wires SetActive to the person');
   // SetActive(false) on a GameObject takes the renderer AND the
   // collider: the away copy must not draw and must not be clickable.
-  // BOTH draw paths, or the away copy still stands in one of them -
-  // and NPC4 moved one of the two. The classic sprite is no longer
-  // batched inside interiorContext (people get a batch each, so the
-  // Morrowind lane can leave one person out), so the check that used
-  // to guard the flat-batch loop now guards the host's per-person
-  // draw. The law is unchanged and the gate follows it.
-  assert.equal(ic.match(/if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\): the away copy does not draw/g)?.length, 1,
-    "?voxelfolk's rig skips an inactive person");
-  assert.match(wm, /\/\/ SetActive\(false\): the away copy does not draw[\s\S]{0,200}?if \(!pn\.active \|\| !pn\.batch\) continue;/,
-    'and the host\'s per-person billboard draw skips one too');
+  // BOTH draw paths - the classic billboard batch and ?voxelfolk's rig -
+  // or the away copy still stands in one of them.
+  assert.equal(ic.match(/if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\): the away copy does not draw/g)?.length, 2,
+    'the flat batch AND the voxelfolk rig both skip an inactive person');
   assert.match(ic, /if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\) takes the BoxCollider with it/);
   assert.match(wm, /if \(!pn\.width \|\| pn\.active === false\) return;/,
     'and the activation ray skips it');

@@ -28,7 +28,7 @@ import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: 
 import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
-import { collectExteriorNpcs, exteriorNpcRecord, isExteriorNpcFlat } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
+import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
@@ -211,8 +211,6 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
-import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';   // NPC4b: the shared-body / per-actor split
-import { townMwBodyOpts } from '../characters/townMwBody.js';   // NPC3b: a wandering citizen's identity and wardrobe
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -654,11 +652,6 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
         }
         for (const flat of blockFlats) {
-          // NPC4c: a flat with a non-zero FactionID is a street
-          // StaticNPC and gets a batch of its own below - a merged
-          // (archive, record) group cannot leave one person out of the
-          // sprite pass, which is what the Morrowind body lane needs.
-          if (isExteriorNpcFlat(flat)) continue;
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
           // A4: every archive-201 town animal is an audio source
@@ -757,21 +750,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so destroyPixel takes it away with everything else.
     await pipeline.loadFlats();
     const pixelNpcs = [];
-    const pixelNpcBatches = [];
     for (const flat of pixelNpcFlats) {
       const t = await getTexture(flat.archive);
       if (!t || flat.record >= t.recordCount) continue;
       const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
       const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-      // NPC4c: their own batch, PIXEL-LOCAL like every other batch this
-      // host builds - the frame stamps `origin` with the pixel's
-      // translation, so a street NPC recenters with their town.
-      uploadRecord(flat.archive, flat.record);
-      const batch = renderer.createBillboardBatch(flat.archive, flat.record, size, [[flat.x, flat.y, flat.z]]);
-      batch._box = flatBatchAabb([[flat.x, flat.y, flat.z]], size);   // EV3: pixel-local, like every batch this host builds
-      armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
-      pixelNpcBatches.push(batch);
-      pixelNpcs.push({ ...pn, width: size.w, height: size.h, batch });
+      pixelNpcs.push({ ...pn, width: size.w, height: size.h });
     }
 
     // EV6: the pixel's models sort by MESH at build - one archetype's
@@ -784,7 +768,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
-      npcBatches: pixelNpcBatches,   // NPC4c: one per person, freed with the pixel
       locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
@@ -825,7 +808,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
-    for (const b of p.npcBatches ?? []) renderer.destroyBatch(b);   // NPC4c: the street NPCs' own batches
     collider.removeBucket(key);
     // T3d fix: the pixel's doors leave with it - they accumulated
     // across every rebuild (duplicate E-targets + unbounded growth
@@ -4752,12 +4734,6 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
-  // NPC3b/NPC4b: the townsfolk wardrobe seed, an accumulating
-  // golden-ratio step assigned once per person. It is NOT drawn from
-  // DFU's srand/rand: that is one stream shared with names, loot and
-  // quests, and spending a draw on a shirt would shift every later
-  // roll in the game.
-  let _mwTownSeed = 0;
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
   // ?sky=classic shape - a wrong bound in the field is a URL away from
@@ -5367,36 +5343,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         b.origin = t;
         allBatches.push(b);
       }
-      // NPC4c: THE PEOPLE STANDING IN THE STREET. RMBLayout stands a
-      // StaticNPC on any flat carrying a faction, and they are the
-      // same kind of person a building holds, so they take the same
-      // lane - through the mode machine's own derivation, which is
-      // the identity the click that talks to them uses too.
-      //
-      // Body or sprite, never both. Their FEET fold in the pixel
-      // translation the sprite gets through `origin`, so a street
-      // person recenters with their town instead of drifting away
-      // from it.
-      for (const pn of p.npcs ?? []) {
-        if (!pn.batch) continue;
-        // EV3's cull applies to them too - and to the BODY, which is a
-        // much more expensive thing to draw off-screen than a quad.
-        if (!pixelVisible || (cullOn && aabbOutside(_planes, pn.batch._box, t[0], t[1], t[2]))) continue;
-        const _opts = modes?.staticNpcMwOpts?.(pn) ?? null;
-        const _body = _opts ? requestMwBody(pn, _opts, -1) : null;
-        if (_body && drawMwActor(renderer, canvas, _body, pn._mwState, {
-          dt: townTalk.overlayActive ? 0 : dt,
-          moving: false,
-          running: false,
-          feet: [pn.x + t[0], pn.y + t[1], pn.z + t[2]],
-          yaw: Math.atan2(cam.pos[0] - (pn.x + t[0]), cam.pos[2] - (pn.z + t[2])),
-          proj,
-          view,
-          eye: mwv.eye,
-        })) continue;
-        pn.batch.origin = t;
-        allBatches.push(pn.batch);
-      }
     }
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
@@ -5466,68 +5412,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           person.pos[2] + p.locOrigin[2] + t[2],
         ];
         _livePersons.push({ person, pos: batch.origin });   // T3b: world-space activation target
-        // NPC3b/NPC4b: THE TOWNSPERSON'S MORROWIND BODY, in the host
-        // the game actually boots. NPC3b wired this seam into
-        // exterior.js, which is the ?exterior dev route; main.js sends
-        // real play to bootWorld, so the whole lane was invisible to
-        // the player until this call existed.
-        //
-        // Their race and sex come off the people archive
-        // (PERSON_TEXTURES is a real race-and-sex table); their
-        // clothes are the port's own wardrobe, because Daggerfall
-        // paints a citizen's clothes into the sprite. A person the
-        // spawn table cannot identify keeps their sprite.
-        //
-        // The FEET are the batch's world-space origin, not
-        // `person.pos`: this host streams, so a person's own position
-        // is local to their pixel and the pixel's translation moves
-        // under them every time the world recenters.
-        //
-        // The seed is assigned ONCE per person and never drawn from
-        // DFU's PRNG - that stream is shared with names, loot and
-        // quests.
-        // AUDIT-N F3: the seed follows the IDENTITY, not the slot. A
-        // walker is a pool entry whose archive, sex and name re-roll on
-        // every spawn (townPopulation.js:116), so `??=` gave a recycled
-        // walker the previous person's wardrobe seed - a Nord woman
-        // wearing the clothes rolled for the Redguard man she replaced.
-        if (person._mwArchive !== person.archive) {
-          person._mwArchive = person.archive;
-          person._mwSeed = (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
-        }
-        const _mwBody = requestMwBody(person, townMwBodyOpts(person.archive, person._mwSeed), -1);
-        if (_mwBody && drawMwActor(renderer, canvas, _mwBody, person._mwState, {
-          dt: townTalk.overlayActive ? 0 : dt,
-          moving: person.state === 'move',
-          running: false,
-          feet: batch.origin,
-          yaw: person.yaw ?? 0,
-          proj,
-          view,
-          eye: mwv.eye,
-        })) continue;
         livePersonBatches.push(batch);
       }
     }
     // G1: the guards drive + draw on the same flats' axis; the sim
     // freezes with the population under the talk overlay.
-    // NPC3a/NPC4b: ...and the watch, with the same render context. A
-    // guard whose Morrowind body has built draws as that body instead
-    // of pushing a billboard; without it, and until the body arrives,
-    // every guard is the classic sprite exactly as before.
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
-      walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses(),
-      { canvas, proj, view, eye: mwv.eye }));
+      walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses()));
     // X-slice: the encounter pool drives + draws beside the watch;
     // the cadence loop rolls the elapsed minutes (exterior mode only).
     if ((modes?.mode ?? 'exterior') === 'exterior') {
       const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
       if (!townTalk.overlayActive) runEncounterTick(_pf);
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
-      // NPC2/NPC2b/NPC4b: the above-ground encounter pool takes the
-      // body seam too - it was the one fight in the game still made
-      // entirely of sprites.
-      livePersonBatches.push(...exteriorFoes.batches({ canvas, proj, view, eye: mwv.eye }, dt));
+      livePersonBatches.push(...exteriorFoes.batches());
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
