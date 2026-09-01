@@ -57,7 +57,13 @@ test('IF: the pool lives exactly as long as the interior, and hands its batches 
   // session - so nothing ever had to free its batches. An interior
   // pool is minted per building, so without a teardown every door you
   // left leaked a batch per foe plus every corpse on the floor.
-  assert.match(XF, /function destroy\(\) \{\n\s+for \(const f of foes\) releaseFoeBatch\(f\);/);
+  // AUDIT-39r: the pin MOVED, deliberately. destroy() gained one line
+  // AHEAD of the frees - the spawn/corpse-mint epoch it bumps, so work
+  // still crossing an await (a spawn between its two, a corpse marker
+  // waiting on its texture) is cancelled instead of landing in the
+  // pool this just emptied. What the pin is FOR is unchanged and still
+  // checked below: every batch is handed back and both lists end empty.
+  assert.match(XF, /function destroy\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+epoch\+\+;\n\s+for \(const f of foes\) releaseFoeBatch\(f\);/);
   assert.match(XF, /for \(const c of corpseBatches\) renderer\.destroyBillboardBatch\(c\.batch\);/);
   assert.match(XF, /corpseBatches\.length = 0;\n\s+foes\.length = 0;/, 'and the lists empty, so a stale handle draws nothing');
   assert.match(XF, /restoreWorld, destroy,/, 'exported');

@@ -217,6 +217,38 @@ test('hostMagic missiles: the lifespan retires a flier that hits nothing', () =>
   assert.ok(MISSILE_SPEED > 0);
 });
 
+test('AUDIT-39r: clearMissiles is the load/teleport sweep - the flights go, the engine stays', async () => {
+  // CleanupUntrackedObjects (StreamingWorld.cs:1620-1644, on
+  // SaveLoadManager_OnStartLoad): "remove loose enemies, missiles, etc.
+  // on load or new game", and the same sweep a teleport reaches through
+  // ClearStreamingWorld. A missile in the air when a fast travel or a
+  // quickload lands must not arrive with the player. This seam shipped
+  // held by nothing but a source-text grep of world.js - deleting the
+  // whole method left the suite green while the one call site became a
+  // TypeError inside an async teleport.
+  const { magic, world } = rig();
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 1, 0]), true, 'straight up - nothing to hit');
+  assert.equal(magic.missileCount(), 1, 'one flight in the air');
+  magic.update(0.05, null);                     // the flight asks for its art
+  await new Promise((r) => setTimeout(r, 0));   // the archive warms and the billboard exists
+  assert.ok(world.batchesMade > 0, 'the flight has a billboard');
+
+  magic.clearMissiles();
+  assert.equal(magic.missileCount(), 0, 'the sweep takes it');
+  assert.equal(world.batchesFreed, world.batchesMade, 'and hands its billboard back');
+  magic.update(0.05, [0, 0, 0]);   // nothing swept is walked again
+  assert.equal(magic.missileCount(), 0);
+
+  // destroy() is the TERMINAL teardown and takes the candle and the
+  // impact batches with it; the engine outlives a teleport, so this
+  // frees the flights alone and must leave a castable engine behind.
+  magic.clearMissiles();   // idempotent
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 1, 0]), true);
+  assert.equal(magic.missileCount(), 1, 'the engine still casts after the sweep');
+});
+
 test('hostMagic click seam: interceptAttack consumes the armed click; firePending casts ONCE', () => {
   const { magic, world } = rig({ foes: [] });
   magic.readySpell(spellOf(2, [damageEffect()]));

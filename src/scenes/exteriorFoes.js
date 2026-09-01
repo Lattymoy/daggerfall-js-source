@@ -81,6 +81,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // array as soon as there is one, because EnemyAI COPIES the position
   // it is handed.
   const spawning = [];    // { feet }
+  // AUDIT-39r: THE SWEEP'S EPOCH. clearLive below is
+  // CleanupUntrackedObjects, but emptying an array cannot reach work
+  // that is still crossing an await - a spawn or a corpse mint in
+  // flight when a fast travel or a quickload sweeps resolves
+  // AFTERWARDS and pushes a record built for the world that just went
+  // away, at its departure coordinates. DFU instantiates enemies and
+  // corpse markers synchronously, so it has no such window and needs
+  // no token; the port does. Everything that lands late compares the
+  // epoch it started in against this and hands its GL objects back
+  // instead of joining the new world.
+  let epoch = 0;
 
   const activeCount = () => foes.filter((f) => !f.dead).length;
 
@@ -99,6 +110,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!basics || !basics.maleTexture) return null;
     const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands
     spawning.push(pending);
+    const gen = epoch;   // AUDIT-39r: the world this foe is being built for
     try {
       const isClass = mobileType >= 128;
       const career = isClass
@@ -120,7 +132,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // injectable roll), humans only; monsters read the male texture.
       const gender = MobileUnit.resolveGender(forcedGender ?? 'unspecified', basics);
       const behaviour = basics.behaviour ?? 'General';
-const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
+      const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
@@ -130,7 +142,7 @@ const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
         hasBowAttack: hasBowAttack(basics),
         canCastRangedSpell: () => hasRangedSpell(entity),
       });
-pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
+      pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
       const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // X2-slice: the arrow seam exists (the host's onArrow) - bow
       // foes read the SAME ranged-flags law the dungeon build does,
@@ -145,6 +157,12 @@ pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
       const caster = entity.spells?.length ? new EnemyCaster(entity, rolls) : null;
       const archive = gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const tex = await getTexture(archive);
+      // AUDIT-39r: a sweep crossed this spawn - the world it was built
+      // for is gone, and pushing it now would land a departure-point
+      // foe in the destination pixel beside restoreWorld's copies.
+      // Nothing is allocated yet, so dropping the record is the whole
+      // cancel; the caller already reads null as "no foe stood".
+      if (gen !== epoch) return null;
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
@@ -297,6 +315,7 @@ pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
       // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
       // pixel is read at the death, not when the texture lands.
       const _corpsePixel = currentPixelKey();
+      const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
       mintCorpseMarker({
         renderer, getTexture, uploadRecordFrame, collider,
         corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
@@ -305,6 +324,12 @@ pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
         stillDead: () => f.dead,
       }).then((c) => {
         if (!c) return;
+        // AUDIT-39r: the sweep took this pool's world while the marker
+        // was still loading its art. Its pixelKey would be the
+        // departure pixel, which the teleport has already torn down -
+        // so collectPixel could never reach the batch again and it
+        // would draw at the departure position for the session.
+        if (_corpseGen !== epoch) { renderer.destroyBillboardBatch(c.batch); return; }
         f.corpseMarker = c;   // the loot seam reads the GROUND position from here
         // TrackLooseObject's stamp: the streamer's pixel at the death,
         // not the corpse's own position.
@@ -711,6 +736,10 @@ pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
    * freed GL objects.
    */
   function destroy() {
+    // AUDIT-39r: the epoch turns FIRST, so anything already in flight
+    // (a spawn between its two awaits, a corpse marker waiting on its
+    // texture) resolves into a world it can see it does not belong to.
+    epoch++;
     for (const f of foes) releaseFoeBatch(f);
     for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
     corpseBatches.length = 0;

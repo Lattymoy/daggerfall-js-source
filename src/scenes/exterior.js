@@ -2021,7 +2021,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       foeTargets: cityGuards.guards.filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
       onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
         playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
-        dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos),
+        dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos, m.dir),   // AUDIT-39r: WeaponManager's KnockbackDirection, the missile's forward
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
       }),

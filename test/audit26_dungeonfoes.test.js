@@ -361,6 +361,33 @@ test('AUDIT 39: a recenter DURING a spawn moves the foe that is still being buil
   assert.deepEqual([f.ai.feet[0], f.ai.feet[2]], [10 - 819.2, 10], 'and it took the recenter with everything else');
 });
 
+test('AUDIT-39r: and the WATCH, whose spawn crosses the same two awaits', async () => {
+  // The pending-feet list went to one of the two pools world.js
+  // recenters on the same frame (its cityGuards.offsetAll /
+  // exteriorFoes.offsetAll pair), and spawnGuardAt has the identical
+  // shape: CLASS18.CFG, then a cold texture archive, then the push. A
+  // guard summoned by a crime across a map-pixel crossing marched to
+  // where the crime USED to be, 819.2 units out.
+  const freed = { n: 0 };
+  let land;
+  const pool = createCityGuards({
+    ...poolDeps(freed),
+    fetchBytes: () => new Promise((res) => { land = () => res(new Uint8Array(74)); }),   // CLASS18.CFG, parked
+    getTexture: async () => ({ ...stubTex, getFrameCount: () => 1 }),
+  });
+  // restoreWorld is the pool's own door onto spawnGuardAt
+  pool.restoreWorld([{ nativeX: 10, nativeZ: 10, y: 0, yaw: 0, health: 10, maxHealth: 10 }], (x, z) => [x, z]);
+  await settle();
+  assert.equal(pool.guards.length, 0, 'the record has not landed yet');
+  pool.offsetAll([-819.2, 0, 0]);
+  land();
+  await settle();
+  await settle();
+  assert.equal(pool.guards.length, 1, 'the guard stood');
+  assert.deepEqual([pool.guards[0].ai.feet[0], pool.guards[0].ai.feet[2]], [10 - 819.2, 10],
+    'and it took the recenter with everything else');
+});
+
 test('F212: the city watch\'s corpses are the same loose objects, on the same law', async () => {
   const freed = { n: 0 };
   const pool = createCityGuards({ ...poolDeps(freed), currentPixelKey: () => '3,4' });

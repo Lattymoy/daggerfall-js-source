@@ -3569,6 +3569,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
+      // AUDIT-39r: CleanupUntrackedObjects' MISSILE half. Its trigger
+      // is SaveLoadManager_OnStartLoad - a LOAD, in every host - and
+      // DFU reaches a dungeon's flights the other way round: the load
+      // runs RespawnPlayer, whose first act is Destroy(dungeon)
+      // (PlayerEnterExit.cs:453-457, :622-630), and the missiles are
+      // parented to that dungeon. This context is REUSED across its own
+      // quickload, so nothing tears the flights down - a missile in the
+      // air when F12 landed kept flying at the restored player. The
+      // world host's teleport already sweeps its own (world.js).
+      magic.clearMissiles();
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // B4: quest after entity, conversation after quest (the C#'s own

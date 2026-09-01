@@ -162,6 +162,147 @@ test('AUDIT 39 #158: the city watch sweeps on the same law', async () => {
 });
 
 // ---------------------------------------------------------------------
+// AUDIT-39r - the sweep reaches the work that is still in flight
+//
+// #158's sweep frees the two arrays, but both pools spawn ACROSS two
+// real awaits (a career file, a cold texture archive) and mint their
+// corpse markers across a third. DFU instantiates enemies and corpse
+// markers synchronously, so CleanupUntrackedObjects has nothing to
+// cancel; the port's async art warm opens a window the C# has no
+// analogue for, and a spawn or a mint crossing a fast travel or a
+// quickload resolved AFTERWARDS - landing a departure-point record in
+// the destination world beside restoreWorld's copies, at pre-teleport
+// coordinates. The pools now carry an epoch the sweep bumps.
+// ---------------------------------------------------------------------
+
+// the parked-fetchBytes harness of audit26_dungeonfoes.test.js:336 -
+// one 74-byte CLASS*.CFG record, held until the pin lets it land
+const parkedCareer = () => {
+  let land;
+  const fetchBytes = () => new Promise((res) => { land = () => res(new Uint8Array(74)); });
+  return { fetchBytes, land: () => land() };
+};
+const warmTex = async () => ({ ...stubTex, getFrameCount: () => 1 });
+
+test('AUDIT-39r: an encounter spawn in flight when the sweep runs never joins the new world', async () => {
+  const freed = { n: 0 };
+  const career = parkedCareer();
+  const pool = createExteriorFoes({ ...poolDeps(freed), fetchBytes: career.fetchBytes, getTexture: warmTex });
+  const inFlight = pool.spawnFoe(GUARD_MOBILE_TYPE, [10, 0, 10]);   // >= 128, so the career is a real CFG read
+  await settle();
+  assert.equal(pool.foes.length, 0, 'the record has not landed yet - this is the window');
+
+  pool.clearLive();   // the fast travel / quickload sweep
+  career.land();
+  assert.equal(await inFlight, null, 'the spawn is cancelled, not completed');
+  await settle();
+  assert.equal(pool.foes.length, 0, 'and no departure-point foe stands in the destination pixel');
+  assert.equal(pool.batches().length, 0, 'nothing of it draws');
+});
+
+test('AUDIT-39r: the same for the watch, whose spawn crosses the same two awaits', async () => {
+  const freed = { n: 0 };
+  const career = parkedCareer();
+  const pool = createCityGuards({ ...poolDeps(freed), fetchBytes: career.fetchBytes, getTexture: warmTex });
+  // restoreWorld is the pool's own fire-and-forget door onto spawnGuardAt
+  pool.restoreWorld([{ nativeX: 0, nativeZ: 0, y: 0, yaw: 0, health: 10, maxHealth: 10 }], (x, z) => [x, z]);
+  await settle();
+  assert.equal(pool.guards.length, 0, 'still crossing CLASS18.CFG');
+
+  pool.clearLive();
+  career.land();
+  await settle();
+  await settle();
+  assert.equal(pool.guards.length, 0, 'the watchman posted to the town we left does not arrive in the new one');
+});
+
+test('AUDIT-39r: a corpse marker still loading its art when the sweep runs is not re-added', async () => {
+  // The mint's own guard is `stillDead`, which stays TRUE across a
+  // sweep - the body is still a body. The batch it would push carries
+  // the DEPARTURE pixel's key, and that pixel is torn down by the same
+  // teleport, so collectPixel could never reach it again: it would
+  // draw at the old position for the rest of the session.
+  for (const which of ['guards', 'foes']) {
+    const freed = { n: 0 };
+    let landTex;
+    const deps = {
+      ...poolDeps(freed), currentPixelKey: () => '3,4',
+      getTexture: () => new Promise((res) => { landTex = () => res({ ...stubTex, getFrameCount: () => 1 }); }),
+    };
+    const guardPool = which === 'guards';
+    const pool = guardPool ? createCityGuards(deps) : createExteriorFoes(deps);
+    const rec = standFoe(GUARD_MOBILE_TYPE, [5, 0, 5]);
+    (guardPool ? pool.guards : pool.foes).push(rec);
+    if (guardPool) pool.hurtGuard(rec, 99, [0, 0, 0]);
+    else pool.damageFoe(rec, 99, [0, 0, 0], null);
+    await settle();
+    assert.ok(landTex, `${which}: the mint is parked on its corpse texture`);
+
+    pool.clearLive();
+    const before = freed.n;
+    landTex();
+    await settle();
+    const drawn = guardPool ? pool.update(0, [0, 0, 0], [0, 1.7, 0], {}).length : pool.batches().length;
+    assert.equal(drawn, 0, `${which}: no body from the world we left draws in this one`);
+    assert.equal(pool.lootTargets().length, 0, `${which}: and it is not a loot target either`);
+    assert.equal(freed.n, before + 1, `${which}: the late batch is handed back, not stranded on a torn-down pixel`);
+  }
+});
+
+test('AUDIT-39r: a player ARROW knocks a watchman back - WeaponManager sets KnockbackDirection for every EnemyClass hit', () => {
+  // WeaponManager.cs:576-595 writes KnockbackSpeed AND
+  // KnockbackDirection = direction inside `if (damage > 0)`, and
+  // DaggerfallMissile.cs:681-687 hands the arrow's forward in as that
+  // direction; Knight_CityWatch is EnemyClass, so the first arm of the
+  // gate fires. hurtGuard was written for the SPELL caller and hard-
+  // coded knockDir null, and C15's whole block is gated on it - so the
+  // one arm that carried no direction was the player's shaft, while
+  // the melee swing, an enemy's arrow and the same shaft on an
+  // encounter foe all shoved.
+  const freed = { n: 0 };
+  const pool = createCityGuards({ ...poolDeps(freed), currentPixelKey: () => '3,4' });
+  const g = standFoe(GUARD_MOBILE_TYPE, [5, 0, 5]);
+  g.ai.knockbackSpeed = 0;   // no shove decaying - the gate's first arm is open
+  pool.guards.push(g);
+  pool.hurtGuard(g, 5, [0, 0, 0], [1, 0, 0]);
+  assert.deepEqual(g.ai.knockbackDir, [1, 0, 0], 'the shaft carries its direction into the watchman');
+  assert.ok(g.ai.knockbackSpeed > 0, 'and the shove has a speed');
+  // the spell caller still passes none, and nothing is invented for it
+  const g2 = standFoe(GUARD_MOBILE_TYPE, [6, 0, 6]);
+  g2.ai.knockbackSpeed = 0;
+  pool.guards.push(g2);
+  pool.hurtGuard(g2, 5, [0, 0, 0]);
+  assert.equal(g2.ai.knockbackDir, undefined, 'a directionless caster shoves nobody');
+  // and both above-ground hosts hand the missile's direction over
+  for (const [name, s] of HOSTS) {
+    assert.match(s, /cityGuards\.hurtGuard\(f, d, player\.pos, m\.dir\)/,
+      `${name}: the guard arm of onPlayerArrowHitFoe carries m.dir, like the foe arm beside it`);
+  }
+});
+
+test('AUDIT-39r: the dungeon host runs the missile sweep at its OWN load door', () => {
+  // clearMissiles' trigger is SaveLoadManager_OnStartLoad - a LOAD, in
+  // every host - and the port wired it into world.js's teleport alone.
+  // DFU reaches a dungeon's flights from the other side: a missile cast
+  // underground is parented to the dungeon (GameObjectHelper
+  // .GetBestParent :405-427), and the load runs RespawnPlayer, whose
+  // first act is Destroy(dungeon) (PlayerEnterExit.cs:453-457,
+  // :622-630). dungeonContext is REUSED across its own quickLoad, so
+  // nothing tore the flights down and a missile in the air when F12
+  // landed kept flying at the restored player. (The world-HOSTED
+  // dungeon needs nothing: worldQuickLoad forces the exit first, and
+  // that destroys the context and its engine with it. exterior.js has
+  // no load door at all.)
+  const ctx = src('src/scenes/dungeonContext.js');
+  const at = ctx.indexOf('quickLoad(setPlayerPos, key = null) {');
+  assert.ok(at > 0, 'the dungeon host owns a load door');
+  const body = ctx.slice(at, at + 2500);
+  assert.match(body, /magic\.clearMissiles\(\);/, 'which sweeps its own flights');
+  assert.ok(body.indexOf('magic.clearMissiles();') < body.indexOf('applyWorld(extras.world)'),
+    'ahead of the world restore, as OnStartLoad is');
+});
+
+// ---------------------------------------------------------------------
 // #159 - AreEnemiesNearby at the travel map's door
 // ---------------------------------------------------------------------
 

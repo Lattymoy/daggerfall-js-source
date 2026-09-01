@@ -5466,7 +5466,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
         playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
         dealDamage: (f, d) => (cityGuards.guards.includes(f)
-          ? cityGuards.hurtGuard(f, d, player.pos)
+          ? cityGuards.hurtGuard(f, d, player.pos, m.dir)   // AUDIT-39r: the shaft shoves the watch too (WeaponManager.cs:576-595)
           : exteriorFoes.damageFoe(f, d, player.pos, m.dir)),
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
