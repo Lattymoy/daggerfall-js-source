@@ -23,7 +23,7 @@ import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
 // NPC2: the enhanced humanoid body - shared per outfit, drawn per actor.
-import { mwActorBody } from '../characters/mwActorBody.js';
+import { mwActorBody, mwCreatureBody } from '../characters/mwActorBody.js';
 import { mwActorState, drawMwActor } from '../characters/mwActorRig.js';
 import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
@@ -2647,10 +2647,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _mwBodyFor = (f) => {
       if (f._mwBody !== undefined) return f._mwBody;      // built, or a settled null
       if (f._mwPending) return null;                      // in flight; sprite this frame
+      // NPC2 humanoids wear a dressed body; NPC2b beasts ARE a model.
+      // One seam, two builders - a rat is not a skeleton in clothes.
       const opts = f.entity && enemyMwBodyOpts(f.entity, f.mobileType, f.mobile?.gender);
-      if (!opts) { f._mwBody = null; return null; }       // not a humanoid: settled, never re-asked
+      const want = opts ? mwActorBody(opts) : mwCreatureBody(f.mobileType);
       f._mwPending = true;
-      mwActorBody(opts)
+      want
         .then((body) => { f._mwBody = body; f._mwState = mwActorState(); })
         .catch(() => { f._mwBody = null; })
         .finally(() => { f._mwPending = false; });

@@ -1,5 +1,13 @@
-// NPC1: THE HUMANOID BODY SERVICE - one Morrowind body per OUTFIT,
-// shared by every actor wearing it.
+// NPC1/NPC2b: THE ACTOR BODY SERVICE - one Morrowind body per
+// IDENTITY, shared by every actor wearing it.
+//
+// Two kinds of actor, one cache. A humanoid is a SKELETON dressed in
+// body parts and equipment (NpcAnimation's world); a creature is a
+// self-contained model with its own skeleton and its own animations
+// (CreatureAnimation's). OpenMW splits them into two classes and so
+// does this file - but the caching, the gate, the generation and the
+// cap are one law each, because the audit that found three defects in
+// the first cut found all three IN that law.
 //
 // ENHANCED ONLY, and the gate is the one every enhanced door already
 // rides (uiSkin's isEnhanced). The classic lane keeps its own rigged
@@ -24,9 +32,10 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mwActorCatalog, catalogRace } from '../formats/mwActorCatalog.js';
 import {
-  buildTpBody, clothingColourOf, wornEquipKeyOf, fpWeaponKey,
+  buildTpBody, clothingColourOf, wornEquipKeyOf, fpWeaponKey, buildMwCreature,
 } from '../combat/fpArm.js';
 import { composeWornArmor } from '../formats/mwItemMap.js';
+import { pickMwCreature } from './mwCreatureMap.js';
 
 /** key -> Promise<body>. The PROMISE is cached, not the result: two
  *  actors asking for the same outfit in one frame must share one
@@ -100,7 +109,7 @@ export async function mwActorBody(opts = {}, deps = null) {
   const { race, female = false, faceIndex = 0, weapon = null, hasAmmo = false } = opts;
   const armor = opts.worn ?? [];
   const { beast, raceScale } = catalogRace(cat, race, female, opts.beast ?? null);
-  const key = mwBodyKey({ race, female, beast, faceIndex, worn: armor, weapon, hasAmmo });
+  const key = `npc/${mwBodyKey({ race, female, beast, faceIndex, worn: armor, weapon, hasAmmo })}`;
   const hit = BODIES.get(key);
   // A hit is the most recently worn outfit now, not the oldest.
   if (hit) { BODIES.delete(key); BODIES.set(key, hit); return hit; }
@@ -145,6 +154,51 @@ export async function mwActorBody(opts = {}, deps = null) {
   // and re-running a refused build every frame is the stutter this
   // service exists to prevent. A re-attach drops it with everything
   // else.
+  return pending;
+}
+
+/**
+ * NPC2b: THE CREATURE BODY - a beast's Morrowind model, built once per
+ * creature and shared by every one of them in the dungeon.
+ *
+ * The identity is just the creature: twenty rats are one model. There
+ * is no outfit, no sex and no race here - a creature carries its own
+ * skeleton, its own animations and its own scale, which is exactly
+ * why the reference gives it a different animation class.
+ *
+ * Answers null - and the REASON on the returned miss - when the
+ * enhanced skin is off, when no data is attached, when this beast has
+ * no Morrowind counterpart at all, or when the player's own archives
+ * carry none. Every null means "keep the classic sprite".
+ */
+export async function mwCreatureBody(mobileType, deps = null) {
+  if (!isEnhanced()) return null;
+  const cat = await mwActorCatalog(deps);
+  if (!cat.ok) return null;
+  if (cat.gen !== _gen) { BODIES.clear(); _gen = cat.gen; }
+
+  // Namespaced, because one cache serves both kinds and a creature id
+  // must never collide with an outfit key.
+  const key = `crea/${mobileType}`;
+  const hit = BODIES.get(key);
+  if (hit) { BODIES.delete(key); BODIES.set(key, hit); return hit; }
+
+  const pending = (async () => {
+    _builds++;
+    const picked = pickMwCreature(mobileType, cat.creatures);
+    if (!picked.record) return null;
+    const body = await buildMwCreature({
+      record: picked.record, archives: cat.archives, find: cat.find, gen: cat.gen,
+    });
+    if (!body || !body.ok) return null;
+    body.substitution = picked.why ?? null;
+    return body;
+  })();
+
+  if (cat.gen !== null) {
+    BODIES.set(key, pending);
+    while (BODIES.size > MAX_BODIES) BODIES.delete(BODIES.keys().next().value);
+  }
   return pending;
 }
 

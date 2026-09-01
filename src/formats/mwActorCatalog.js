@@ -23,6 +23,9 @@ import {
   bodyParts, weaponRecords, gmstValue, GMST_SNEAK_DELTA,
   raceRecords, armorRecords, clothingRecords,
 } from './mwFirstPerson.js';
+// NPC2b: creatures are read from the leaf that owns the CREA record,
+// so the build side and the inspector never grow two readers of it.
+import { creatureRecords } from './mwEsmFile.js';
 
 /**
  * THE ESM WALK MEMO, moved here with the walks it serves (IG2).
@@ -70,7 +73,7 @@ export function memoWalk(gen, e, kind, fn) {
  * door was shut.
  *
  * @returns {Promise<{ok:true, gen, archives, esmBytes, esmNames, find,
- *   parts, armors, clothes, weapons, sneakDelta}
+ *   parts, armors, clothes, weapons, creatures, sneakDelta}
  *   | {ok:false, stage:string, error:string}>}
  */
 export async function mwActorCatalog(deps = null) {
@@ -103,6 +106,8 @@ export async function mwActorCatalog(deps = null) {
   const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
   const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
   const weapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
+  // NPC2b: and the creature roster the beast map resolves against.
+  const creatures = esmBytes.flatMap((e) => walk(e, 'creatures', creatureRecords));
   // RULE 32(a)'s GMST, read from the player's own data. Later masters
   // override earlier ones, so the LAST .esm that carries it wins -
   // which is the load order, not a preference.
@@ -115,7 +120,7 @@ export async function mwActorCatalog(deps = null) {
   const out = {
     ok: true, gen, archives, esmBytes, esmNames,
     find: (p) => archives.find((a) => a.has(p)),
-    parts, armors, clothes, weapons, sneakDelta,
+    parts, armors, clothes, weapons, creatures, sneakDelta,
   };
   // The new set REPLACES the old one - never accumulates beside it.
   if (gen !== null) _catalog = { gen, value: out };

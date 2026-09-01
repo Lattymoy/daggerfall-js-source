@@ -199,7 +199,11 @@ test('NPC2: the enemy remembers its worn pieces, and the foe pass falls back to 
   // Never blocking: the build is asked for once and the frame carries
   // on - a seconds-long build must never stall a frame.
   assert.match(ctx, /if \(f\._mwPending\) return null;/, 'a build in flight blocks the frame');
-  assert.match(ctx, /if \(!opts\) \{ f\._mwBody = null; return null; \}/, 'a non-humanoid is re-asked every frame');
+  assert.match(ctx, /if \(f\._mwBody !== undefined\) return f\._mwBody;/, 'a settled answer is re-derived every frame');
+  // NPC2b: ONE seam, TWO builders - a humanoid wears a dressed body,
+  // a beast IS a model. A rat is not a skeleton in clothes.
+  assert.match(ctx, /const want = opts \? mwActorBody\(opts\) : mwCreatureBody\(f\.mobileType\);/,
+    'beasts do not reach the creature builder');
   // A held foe holds its frame (S19 FreezeAnims) - the body obeys the
   // same rule the sprite does.
   assert.match(ctx, /dt: paralyzed \? 0 : dt,/, 'a paralysed foe keeps animating');

@@ -129,8 +129,11 @@ test('NPC1: the service reuses the ONE build and the ONE catalog - it re-impleme
   // (mwActorCatalog) each have one home; a second port of either is
   // how two callers of one rule drift apart.
   const svc = readFileSync('src/characters/mwActorBody.js', 'utf8');
-  assert.match(svc, /import \{\s*buildTpBody, clothingColourOf, wornEquipKeyOf, fpWeaponKey,\s*\} from '\.\.\/combat\/fpArm\.js';/,
-    'the service must ride the arm’s own build and key helpers');
+  assert.match(svc, /buildTpBody, clothingColourOf, wornEquipKeyOf, fpWeaponKey, buildMwCreature,/,
+    'the service must ride the arm’s own builds and key helpers');
+  // NPC2b: the creature build is the arm's too, and the beast MAP is
+  // the one home for "which creature stands in for which enemy".
+  assert.match(svc, /import \{ pickMwCreature \} from '\.\/mwCreatureMap\.js';/, 'the beast map is re-minted');
   assert.match(svc, /import \{ mwActorCatalog, catalogRace \} from '\.\.\/formats\/mwActorCatalog\.js';/,
     'and the one catalog');
   assert.match(svc, /import \{ isEnhanced \} from '\.\.\/systems\/uiSkin\.js';/, 'and the one skin gate');

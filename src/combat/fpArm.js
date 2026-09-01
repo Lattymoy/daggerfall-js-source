@@ -75,6 +75,7 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
+import { creatureIsBipedal } from '../formats/mwEsmFile.js';   // NPC2b: the flag that lends a biped the human anims
 import { diffuseAt } from '../formats/mwNifMesh.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
@@ -1298,6 +1299,103 @@ const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
 function readFollowCamera() {
   try { return (appStorage()?.getItem(FOLLOW_CAMERA_KEY) ?? 'true') !== 'false'; }
   catch { return true; }
+}
+
+/**
+ * NPC2b: A MORROWIND CREATURE, BUILT.
+ *
+ * The reference's own creature path, which is far shorter than the
+ * NPC one (creatureanimation.cpp:20-35, objects.cpp:95-111):
+ *
+ *   animationMesh = correctActorModelPath(model)          // rule 18
+ *   animated = (animationMesh != model)                   // the x-form decides
+ *   setObjectRoot(animationMesh)                          // the model IS the root
+ *   if (flags & Bipedal) addAnimSource(xbase_anim, model) // bipeds borrow the human set
+ *   if (animated)        addAnimSource(model, model)      // and its OWN animations
+ *
+ * There is no body-part assembly and no worn layering: a creature is
+ * one file carrying its own skeleton and its own geometry. MEASURED
+ * before this was written - a self-contained animated .nif binds
+ * through the SAME assembleFirstPersonArm door with an empty bone
+ * list (bindPartsInto iterates [null], skinned batches find their own
+ * bones and rigid ones land at the root), so this slice adds no
+ * assembly code at all.
+ */
+export async function buildMwCreature({ record, archives, find, gen = null }) {
+  const modelPath = `meshes/${String(record.model || '').replace(/\\/g, '/').toLowerCase()}`;
+  const exists = (p) => archives.some((a) => a.has(p));
+  // Rule 18's x-swap, and it is the reference's own animated test: an
+  // x-form that EXISTS is the animated model; one that does not means
+  // this creature is a static mesh.
+  const animPath = correctActorModelPath(modelPath, exists);
+  const animated = animPath !== modelPath;
+  const arc = find(animPath);
+  if (!arc) return { ok: false, stage: 'model', error: `${animPath} is not in your archives` };
+  const bytes = arc.get(animPath).slice();
+
+  const arm = await assembleFirstPersonArm({
+    skeletonBytes: bytes,
+    // ONE FILE, BOTH ROLES: the creature's own nif is the skeleton and
+    // the geometry. An empty bone list is what makes bindPartsInto
+    // bind the file's own shapes rather than hunt an attach bone.
+    parts: [{ slot: 'creature', bones: [], bytes }],
+  });
+  if (!arm.ok) {
+    return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: arm.notes || [] };
+  }
+  const textures = collectArmTextures(arm.pieces, archives, gen);
+
+  // The animation sources, in the reference's own order: the human
+  // base set FIRST for a bipedal creature, then the creature's own.
+  const notes = [];
+  const sourcePaths = [];
+  if (creatureIsBipedal(record)) {
+    const baseKf = animSourceName(TP_BASE_MODEL);
+    if (exists(baseKf)) sourcePaths.push(baseKf);
+  }
+  if (animated) {
+    const ownKf = animSourceName(animPath);
+    if (exists(ownKf)) sourcePaths.push(ownKf);
+    else notes.push(`${record.id}: ${ownKf} is not in your archives - this creature cannot move`);
+  } else {
+    notes.push(`${record.id}: no x-form model, so Morrowind draws it static too`);
+  }
+  if (!sourcePaths.length) {
+    return { ok: false, stage: 'clip', error: `no animation file for ${record.id}`, notes };
+  }
+  const sources = [];
+  for (const p of sourcePaths) {
+    const one = await cachedClipReport(gen, animPath, p, () => find(p).get(p).slice(), arm.skeleton);
+    if (!one.ok) return { ok: false, stage: 'clip', error: `${p}: ${one.error}`, notes };
+    sources.push({
+      name: p, keys: one.keys, groups: one.groups, groupSet: new Set(one.groups),
+      trackMap: one.trackMap, binding: one.binding,
+      wouldAccumRoot: accumRootRef(arm.skeleton, one.trackMap),
+    });
+  }
+  const groupSet = new Set(sources.flatMap((so) => so.groups));
+  const accumRoot = sources.reduce((acc, so) => (acc ?? so.wouldAccumRoot), null) ?? null;
+  for (const so of sources) so.accumRoot = accumRoot;
+
+  return {
+    ok: true,
+    arm,
+    sources,
+    sourcePaths,
+    groupSet,
+    accumRoot,
+    textures,
+    // A creature has no race and no equipment - its size is its OWN
+    // (CREA's XSCL), and it rides the same uniform field the body's
+    // race scale does so one draw law serves both.
+    raceScale: { weight: record.scale ?? 1, height: record.scale ?? 1 },
+    // No weapon type: the stance ladder answers the bare group, which
+    // is what a creature's own .kf carries.
+    mwType: 0,
+    creature: { id: record.id, name: record.name, model: animPath, animated },
+    notes: [...notes, ...(arm.notes || [])],
+    pieces: armPieceRows(arm.pieces).length,
+  };
 }
 
 /**
