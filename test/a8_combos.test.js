@@ -9,9 +9,10 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  createBindings, resetDefaults, setBinding, getBinding, actionForCode,
+  createBindings, resetDefaults, setBinding, clearBinding, loadKeyBinds,
+  getBinding, actionForCode,
   comboCode, isCombo, getCombo, comboString, parseComboString,
-  comboModifiers, isBoundCode,
+  comboModifiers, pairedCodes, isPairedCode,
 } from '../src/systems/inputActions.js';
 import {
   getDuplicates, checkDuplicates, createUnsavedKeybinds, setUnsavedBinding,
@@ -48,8 +49,23 @@ test('A8: a combo is ONE dictionary entry - every existing reader still works', 
   assert.equal(getBinding(b, 'Jump'), 'ShiftLeft+KeyK');
   assert.equal(actionForCode(b, 'ShiftLeft+KeyK'), 'Jump');
   assert.equal(actionForCode(b, 'Space'), null, 'SetBinding cleared Jump\'s old code');
-  assert.equal(isBoundCode(b, 'ShiftLeft+KeyK'), true);
-  assert.equal(isBoundCode(b, 'ShiftLeft'), true, 'Run still holds it');
+  // ROAD-Ar R9: this pin USED to read `isBoundCode(b, 'ShiftLeft+KeyK')
+  // === true` and call it primarySecondaryKeybindDict's membership test.
+  // It is not one: MapSecondaryBindings only ADDS through
+  // `if (primKey != None && secKey != None)` (:1381-1384), so a code is
+  // a key of that dict when its action is DOUBLE-bound and not before.
+  // Jump holds the combo in the PRIMARY dict alone, so it pairs nothing.
+  assert.equal(isPairedCode(b, 'ShiftLeft+KeyK'), false, 'single-bound - no pair');
+  assert.equal(isPairedCode(b, 'ShiftLeft'), false, 'Run holds it in ONE dict');
+  assert.equal(pairedCodes(b).size, 0, 'a defaults-only store pairs nothing at all');
+  // give Jump a SECOND home and the pair appears, both ways round
+  setBinding(b, 'KeyJ', 'Jump', false);
+  assert.equal(pairedCodes(b).get('ShiftLeft+KeyK'), 'KeyJ', 'SetSecondaryBinding :1372');
+  assert.equal(pairedCodes(b).get('KeyJ'), 'ShiftLeft+KeyK', ':1373 - the other way too');
+  assert.equal(isPairedCode(b, 'ShiftLeft'), false, 'Run is still single-bound');
+  // and dropping the second home detaches the pair entirely
+  clearBinding(b, 'Jump', false);
+  assert.equal(pairedCodes(b).size, 0, 'single-bound again');
   // modifierHeldFirstDict's key set, over BOTH dicts
   assert.deepEqual([...comboModifiers(b)], ['ShiftLeft']);
   setBinding(b, comboCode('AltLeft', 'KeyP'), 'AutoMap', false);
@@ -57,6 +73,46 @@ test('A8: a combo is ONE dictionary entry - every existing reader still works', 
   // and the cache tracks the writes rather than going stale
   setBinding(b, 'KeyP', 'AutoMap', false);
   assert.deepEqual([...comboModifiers(b)], ['ShiftLeft']);
+});
+
+test('ROAD-Ar R9: a SINGLE-bound combo suppresses no plain key - DFU\'s own inventory/jump case', () => {
+  // GetUnaryKey's comment names this exact setup (:1681-1682): "space is
+  // jump, LeftShift+Space opens inventory". But the suppression it
+  // guards is `primarySecondaryKeybindDict.ContainsKey(...)`, and that
+  // dict only ever gains a code through MapSecondaryBindings' both-arm
+  // (:1381-1384) - so with Inventory bound ONLY in the primary dict,
+  // ContainsKey is false, `hit = true`, and Jump still fires.
+  const b = freshStore();
+  setBinding(b, comboCode('ShiftLeft', 'Space'), 'Inventory');
+  setBindings(b);
+  assert.equal(getBinding(b, 'Jump'), 'Space', 'Jump keeps its default');
+  assert.equal(isPairedCode(b, 'ShiftLeft+Space'), false);
+  assert.equal(held(new Set(['ShiftLeft', 'Space']), 'Jump'), true,
+    'DFU jumps here - the port used to kill this key');
+  assert.equal(held(new Set(['ShiftLeft', 'Space']), 'Inventory'), true, 'and opens the window');
+  // Give Inventory a second home and the combo code becomes a dict KEY,
+  // which is the state DFU's comment is actually describing.
+  setBinding(b, 'F6', 'Inventory', false);
+  assert.equal(isPairedCode(b, 'ShiftLeft+Space'), true);
+  assert.equal(held(new Set(['ShiftLeft', 'Space']), 'Jump'), false, 'NOW the jump is ignored');
+});
+
+test('ROAD-Ar R9: MapSecondaryBindings\' else arm - the detach keeps the key and drops its partner', () => {
+  // A hand-edited KeyBindings.txt is the one way a code lands in BOTH
+  // dicts under different actions (loadActionKeybinds is a raw map-set,
+  // as DFU's LoadActionKeybinds is). Then the enum walk hits Jump first
+  // (pairing Space<->KeyJ) and Crouch second, whose else arm blanks
+  // KeyJ (:1392) and REMOVES the Space it was detached from (:1395).
+  const b = createBindings();
+  loadKeyBinds(b, {
+    actionKeyBinds: { Space: 'Jump', KeyJ: 'Crouch' },
+    secondaryActionKeyBinds: { KeyJ: 'Jump' },
+  });
+  const m = pairedCodes(b);
+  assert.equal(m.has('KeyJ'), true, 'the surviving key stays, mapped to None (:1392)');
+  assert.equal(m.get('KeyJ'), null);
+  assert.equal(m.has('Space'), false, 'and its old partner is removed (:1395)');
+  assert.equal(isPairedCode(b, 'KeyJ'), true, 'ContainsKey, not a non-None test');
 });
 
 test('A8: the autofill pass will not steal a code serving as a combo modifier (:1416-1418)', () => {
@@ -149,13 +205,24 @@ test('A8: the runtime read - a combo walks, and its plain half does not', () => 
   // K alone does nothing; Shift+K jumps
   assert.equal(held(new Set(['KeyK']), 'Jump'), false);
   assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Jump'), true);
-  // GetUnaryKey's SUPPRESSION (:1683-1685): bind K to something of its
-  // own and the combo's modifier being down silences it
+  // GetUnaryKey's SUPPRESSION (:1683-1685). ROAD-Ar R9: the second
+  // half of that test is `primarySecondaryKeybindDict.ContainsKey`, and
+  // that dict pairs a PRIMARY with a SECONDARY - so a combo living in
+  // one dict alone suppresses NOTHING, and this pin used to assert the
+  // opposite (`held(Shift+K, 'Crouch') === false` off a single-bound
+  // Shift+K), which is the port killing a plain key DFU still fires.
   setBinding(b, 'KeyK', 'Crouch');
   assert.equal(held(new Set(['KeyK']), 'Crouch'), true);
+  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), true,
+    'Shift+K is bound in the PRIMARY dict only - it pairs nothing, so K still crouches');
+  // double-bind Jump and the pair appears - NOW the suppression bites
+  setBinding(b, 'KeyJ', 'Jump', false);
+  assert.equal(isPairedCode(b, 'ShiftLeft+KeyK'), true);
   assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), false,
-    'the modifier is down and Shift+K is bound - K alone must not fire');
-  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Jump'), true, 'the combo does');
+    'the modifier is down and Shift+K is PAIRED - K alone must not fire');
+  clearBinding(b, 'Jump', false);
+  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), true, 'and back again');
+  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Jump'), true, 'the combo fires throughout');
   // ModifierOnlyHeld's second clause: another combo modifier down kills it
   setBinding(b, comboCode('ControlLeft', 'KeyM'), 'AutoMap');
   assert.equal(held(new Set(['ShiftLeft', 'ControlLeft', 'KeyK']), 'Jump'), false);

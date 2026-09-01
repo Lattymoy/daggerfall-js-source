@@ -7,8 +7,8 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createActivateGate, activateFrame } from '../src/systems/activateGate.js';
-import { held, setBindings } from '../src/ui/input.js';
-import { createBindings, resetDefaults } from '../src/systems/inputActions.js';
+import { held, setBindings, mouseCode } from '../src/ui/input.js';
+import { createBindings, resetDefaults, actionForCode } from '../src/systems/inputActions.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -119,4 +119,47 @@ test('A8: every host reads the one gate, and its FLAG is retired', () => {
   // context now answers
   const ctx = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
   assert.match(ctx, /spellArmed: \(\) => magic\.spellArmed\(\),\s+\/\/ A8/);
+});
+
+test('ROAD-Ar R10: the swing departure on record is the ROUTING, not the button', () => {
+  // The sentence these blocks used to carry - "Mouse2 still swings
+  // (DFU's SwingWeapon is Mouse1)" - described a mismatch that does not
+  // exist. Every host swings on DOM button 2, MOUSE_CODES calls that
+  // 'Mouse1', and 'Mouse1' is SwingWeapon's DFU default
+  // (InputManager.cs:1010). The button is parity.
+  assert.equal(mouseCode(2), 'Mouse1', 'DOM right -> Unity Mouse1');
+  const b = createBindings();
+  resetDefaults(b);
+  setBindings(b);
+  assert.equal(actionForCode(b, mouseCode(2)), 'SwingWeapon',
+    'the button the hosts swing on IS the SwingWeapon default');
+  assert.equal(held(new Set([mouseCode(2)]), 'SwingWeapon'), true);
+
+  // What DOES depart: the swing is spelled raw at every site and the
+  // action has no consumer, so a rebind cannot move it. Pin both halves
+  // - the fact, and the comment that now records it.
+  const swingers = [
+    'src/scenes/world.js', 'src/scenes/exterior.js',
+    'src/scenes/worldModes.js', 'src/scenes/dungeon.js',
+  ];
+  // the comments below SAY held(keys, 'SwingWeapon'), so the "no
+  // consumer" half has to be asked of the CODE only
+  const codeOnly = (s) => s.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  for (const h of swingers) {
+    const s = readFileSync(join(root, h), 'utf8');
+    assert.match(s, /e\.button === 2/, `${h} swings on the raw button`);
+    assert.ok(!/held\(keys, 'SwingWeapon'\)/.test(codeOnly(s)),
+      `${h} does not route the swing through the binding - if it now does, retire this pin`);
+    assert.ok(!/Mouse2 st(ill|ays)/.test(s), `${h} no longer records the phantom departure`);
+    assert.match(s, /SwingWeapon rebind[\s\S]{0,24}inert/,
+      `${h} records the departure that actually stands`);
+  }
+  // and the two law modules whose headers regenerate into the
+  // departures list
+  for (const f of ['src/ui/input.js', 'src/systems/activateGate.js']) {
+    const s = readFileSync(join(root, f), 'utf8');
+    assert.ok(!/Mouse2 st(ill|ays)/.test(s), `${f}'s phantom departure is gone`);
+    assert.match(s, /SwingWeapon/, `${f} names the action the swing does not read`);
+    assert.match(s, /inert/i, `${f} says what the departure costs`);
+  }
 });

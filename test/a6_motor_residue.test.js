@@ -38,6 +38,34 @@ import {
 import { TRANSPORT_MODES } from '../src/systems/transport.js';
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
+
+// ROAD-Ar R16. Every pin below that names a DFU number asserts the
+// LITERAL, never the port's own constant. Asserting the constant lets a
+// mutation of it move the expectation with it - the vacuous-pin failure
+// mode this project already recorded against factionrep's MIN_POWER,
+// and eight of these numbers (the swim capsule, the freeze, the head
+// probes) could all be wrong at once with the whole suite green. The
+// constants stay imported for the CODE PATH and for this one table.
+test('A6: the constants ARE the C# numbers - the table every pin below stands on', () => {
+  // PlayerHeightChanger.cs
+  assert.equal(SWIM_HEIGHT, 0.30, ':57 controllerSwimHeight');
+  assert.equal(SWIM_HORSE_DISPLACEMENT, 0.30, ':58 controllerSwimHorseDisplacement');
+  assert.equal(HEIGHT_TIMER_SLOW, 0.4, ':72 timerSlow');
+  // The two swim EYE levels are the port's own law, not DFU literals -
+  // DFU derives camSwimLevel from controllerSwimHeight/2 - eyeHeight
+  // (:110), the port sits 0.1 below the capsule top like its crouch and
+  // stand levels. Pinned as the port's arithmetic over DFU's numbers.
+  assert.equal(SWIM_EYE_HEIGHT, 0.20, 'controllerSwimHeight 0.30, less the port\'s 0.1');
+  assert.equal(SWIM_RIDE_EYE_HEIGHT, 0.50, '0.30 + 0.30, less the port\'s 0.1');
+  // FrictionMotor.HeadDipHandling
+  assert.equal(HEAD_DIP_RAY_DISTANCE, 0.5, ':121 raySampleDistance');
+  assert.equal(HEAD_DIP_CLEARANCE, -0.28, ':122 clearanceAdjustment');
+  assert.equal(HEAD_DIP_TOP_MARGIN, 0.25, ':128 - the head ray origin\'s + 0.25f');
+  // PlayerMoveScanner.Start / DaggerfallAction.Teleport
+  assert.equal(HEAD_HIT_RADIUS_FACTOR, 0.85, 'PlayerMoveScanner.cs:114 radius * 0.85f');
+  assert.equal(TELEPORT_FREEZE_S, 0.5, 'DaggerfallAction.cs:594 FreezeMotor = 0.5f');
+});
+
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const DT = FIXED_DT;
 const still = (over = {}) => ({ forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, ...over });
@@ -77,13 +105,13 @@ test('A6 head dip: top of head blocked + eyes clear + static geometry dips the s
   const col = floored();
   addSlab(col);                      // a lintel 1.85 up, 0.3 ahead
   const m = stood(col);              // facing +z, standing under it
-  assert.equal(m.standingHeightAdjustment, HEAD_DIP_CLEARANCE, 'clearanceAdjustment (:122)');
-  assert.ok(near(m.height, CAPSULE_HEIGHT + HEAD_DIP_CLEARANCE),
+  assert.equal(m.standingHeightAdjustment, -0.28, 'clearanceAdjustment (:122)');
+  assert.ok(near(m.height, CAPSULE_HEIGHT - 0.28),
     'CurrentControllerStandingHeight = 1.8 + adjustment (:87-90)');
   // ControllerHeightChange keeps the feet and drops the transform by
   // half the change (:477-478); the camera's LOCAL height is untouched,
   // so the eye falls exactly half the dip.
-  assert.ok(near(m.eye[1] - m.pos[1], EYE_HEIGHT + HEAD_DIP_CLEARANCE / 2),
+  assert.ok(near(m.eye[1] - m.pos[1], EYE_HEIGHT - 0.28 / 2),
     'the eye takes half the dip, the capsule top all of it');
 });
 
@@ -96,8 +124,8 @@ test('A6 head dip: the dip HOLDS while the obstacle is there - the head sample r
   const m = stood(col);
   for (let f = 0; f < 12; f++) {
     m.update(DT, still(), 0);   // held under the frame, not walked through it
-    assert.equal(m.standingHeightAdjustment, HEAD_DIP_CLEARANCE, `frame ${f} stays dipped`);
-    assert.ok(near(m.height, CAPSULE_HEIGHT + HEAD_DIP_CLEARANCE));
+    assert.equal(m.standingHeightAdjustment, -0.28, `frame ${f} stays dipped`);
+    assert.ok(near(m.height, CAPSULE_HEIGHT - 0.28));
   }
 });
 
@@ -138,12 +166,12 @@ test('A6 head dip: crouched and paralysed both refuse the probe', () => {
     const col = floored();
     addSlab(col);
     const m = stood(col);
-    assert.equal(m.standingHeightAdjustment, HEAD_DIP_CLEARANCE);
+    assert.equal(m.standingHeightAdjustment, -0.28);
     // `if (!IsParalyzed) HeadDipHandling();` (:90-93): the dip is not
     // re-evaluated at all, so it HOLDS rather than clearing.
     m.paralyzed = true;
     m.update(DT, still(), 0);
-    assert.equal(m.standingHeightAdjustment, HEAD_DIP_CLEARANCE, 'held, not cleared');
+    assert.equal(m.standingHeightAdjustment, -0.28, 'held, not cleared');
   }
 });
 
@@ -152,7 +180,7 @@ test('A6 head dip: a crouch and a stand both clear the adjustment (DoCrouch :256
   addSlab(col);
   const m = stood(col);
   m.update(DT, still({ forward: 1 }), 0);
-  assert.equal(m.standingHeightAdjustment, HEAD_DIP_CLEARANCE);
+  assert.equal(m.standingHeightAdjustment, -0.28);
   // Crouch: the press arms it, the clock finishes it, and the flip
   // zeroes the adjustment with the height.
   m.update(DT, still({ crouch: true }), 0);
@@ -178,13 +206,13 @@ test('A6 head dip: the geometry of the two samples is DFU\'s, not an approximati
   m._headDipHandling(0, 1);   // yaw 0 -> forward (0, 0, 1)
   const head = rays.find((r) => r.kind === 'head');
   const eye = rays.find((r) => r.kind === 'eye');
-  assert.ok(near(head.o[1], CAPSULE_HEIGHT / 2 + CAPSULE_HEIGHT / 2 + HEAD_DIP_TOP_MARGIN),
+  assert.ok(near(head.o[1], CAPSULE_HEIGHT / 2 + CAPSULE_HEIGHT / 2 + 0.25),
     'headRay from centre + FixedControllerStandingHeight/2 + 0.25 (:128)');
   assert.ok(near(eye.o[1], EYE_HEIGHT), 'eyeRay from the camera (:129)');
   assert.deepEqual(head.d, [0, 0, 1], 'myTransform.forward - the BODY carries yaw only');
   assert.deepEqual(eye.d, [0, 0, 1]);
-  assert.equal(head.max, HEAD_DIP_RAY_DISTANCE);
-  assert.equal(eye.max, HEAD_DIP_RAY_DISTANCE);
+  assert.equal(head.max, 0.5, 'raySampleDistance (:121)');
+  assert.equal(eye.max, 0.5);
 });
 
 // ── 2. PlayerMoveScanner ──────────────────────────────────────────
@@ -233,7 +261,7 @@ test('A6 scanner: FindHeadHit casts radius * 0.85 upward for 2, and leaves the d
   const col = floored();
   col.addMesh('ceil', [-4, 2.5, -4, 4, 2.5, -4, 4, 2.5, 4, -4, 2.5, 4], [0, 1, 2, 0, 2, 3], I);
   const s = new PlayerMoveScanner(col);
-  assert.ok(near(s.headHitRadius, CAPSULE_RADIUS * HEAD_HIT_RADIUS_FACTOR), 'HeadHitRadius (:114)');
+  assert.ok(near(s.headHitRadius, CAPSULE_RADIUS * 0.85), 'HeadHitRadius (:114)');
   assert.equal(HEAD_PROBE_RANGE, 2);
 
   assert.equal(s.findHeadHit([0, 0.9, 0]), true);
@@ -320,15 +348,15 @@ test('A6 swim: OnExteriorWater sinks the capsule to 0.30 at once and lerps the e
   m.update(DT, still(), 0);
   assert.equal(m.sunk, true, 'controllerSink (:420)');
   assert.equal(m.heightAction, 'sink');
-  assert.ok(near(m.height, SWIM_HEIGHT), 'controllerSwimHeight 0.30 (:57), applied on the arming frame');
+  assert.ok(near(m.height, 0.30), 'controllerSwimHeight 0.30 (:57), applied on the arming frame');
   // The camera is the half that takes time: prevCamLevel -> the swim
   // level across camTimer / timerSlow.
-  const t = DT / HEIGHT_TIMER_SLOW;
-  assert.ok(near(m.eye[1] - m.pos[1], EYE_HEIGHT + (SWIM_EYE_HEIGHT - EYE_HEIGHT) * t, 1e-9));
+  const t = DT / 0.4;   // timerSlow (:72)
+  assert.ok(near(m.eye[1] - m.pos[1], EYE_HEIGHT + (0.20 - EYE_HEIGHT) * t, 1e-9));
 
   for (let f = 0; f < 30; f++) m.update(DT, still(), 0);
   assert.equal(m.heightAction, null, 'timerResetAction ends it past timerSlow');
-  assert.ok(near(m.eye[1] - m.pos[1], SWIM_EYE_HEIGHT), '0.30 - 0.1, the port\'s own eye law');
+  assert.ok(near(m.eye[1] - m.pos[1], 0.20), '0.30 - 0.1, the port\'s own eye law');
 });
 
 test('A6 swim: leaving the water unsinks, and the two clocks are the SLOW one', () => {
@@ -341,7 +369,7 @@ test('A6 swim: leaving the water unsinks, and the two clocks are the SLOW one', 
   m.update(DT, still(), 0);
   assert.equal(m.sunk, false, 'DoUnsinking (:374)');
   assert.equal(m.heightAction, 'unsink');
-  assert.equal(m.heightTimerMax, HEIGHT_TIMER_SLOW, 'timerSlow on BOTH edges (:149, :155)');
+  assert.equal(m.heightTimerMax, 0.4, 'timerSlow on BOTH edges (:149, :155)');
   assert.ok(near(m.height, CAPSULE_HEIGHT), 'CurrentControllerStandingHeight is back at once');
   for (let f = 0; f < 30; f++) m.update(DT, still(), 0);
   assert.ok(near(m.eye[1] - m.pos[1], EYE_HEIGHT));
@@ -355,9 +383,9 @@ test('A6 swim: a MOUNTED swimmer carries the horse displacement, capsule and eye
 
   m.onExteriorWater = true;
   m.update(DT, still(), 0);
-  assert.ok(near(m.height, SWIM_HEIGHT + SWIM_HORSE_DISPLACEMENT), 'controllerSwimHorseDisplacement (:58, :296)');
+  assert.ok(near(m.height, 0.30 + 0.30), 'controllerSwimHorseDisplacement (:58, :296)');
   for (let f = 0; f < 30; f++) m.update(DT, still(), 0);
-  assert.ok(near(m.eye[1] - m.pos[1], SWIM_RIDE_EYE_HEIGHT));
+  assert.ok(near(m.eye[1] - m.pos[1], 0.50), '0.60 - 0.1');
 });
 
 test('A6 swim: the sink CLEARS the crouch, and while sunk the crouch key is refused', () => {
@@ -375,7 +403,7 @@ test('A6 swim: the sink CLEARS the crouch, and while sunk the crouch key is refu
   m.update(DT, still({ crouch: true }), 0);
   for (let f = 0; f < 12; f++) m.update(DT, still(), 0);
   assert.equal(m.crouching, false, 'no crouch toggle over exterior water');
-  assert.ok(near(m.height, SWIM_HEIGHT));
+  assert.ok(near(m.height, 0.30));
 });
 
 test('A6 swim: LEVITATION forces onWater false (:144), so floating up unsinks the capsule', () => {
@@ -397,7 +425,7 @@ test('A6 swim: the collider clamps a below-2r capsule to a SPHERE instead of inv
   // the lower one, so the sunk swimmer probed under his own feet.
   const col = floored();
   const feet = [0, 5, 0];
-  const r = col.move(feet, 0, -6, 0, SWIM_HEIGHT);
+  const r = col.move(feet, 0, -6, 0, 0.30);   // the literal, not the constant
   assert.equal(r.grounded, true);
   assert.ok(near(feet[1], 0, 1e-3), `a sunk capsule lands ON the floor, got ${feet[1]}`);
   assert.ok(feet[1] > -0.01, 'and never below it');
@@ -417,7 +445,7 @@ test('A6 freeze: an armed FreezeMotor stops the motor dead, then raises CancelMo
   assert.ok(m.freezeMotor > 0, '20 steps is a third of a second');
 
   // Run the rest of the clock out.
-  const steps = Math.ceil(TELEPORT_FREEZE_S / DT) - 20 + 1;
+  const steps = Math.ceil(0.5 / DT) - 20 + 1;   // FreezeMotor 0.5f (:594)
   for (let f = 0; f < steps; f++) m.update(DT, still(), 0);
   assert.equal(m.freezeMotor, 0);
   assert.ok(near(m.pos[1], y), 'the tick that ends the freeze raises CancelMovement, which costs one more step');

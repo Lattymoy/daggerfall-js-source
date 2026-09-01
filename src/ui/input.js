@@ -19,12 +19,26 @@
 //
 // TWO DEPARTURES STAND, both deliberate and neither a missing slice:
 // the port's E still activates beside Mouse0 (DFU binds E to
-// AbortSpell) and Mouse2 still swings (DFU's SwingWeapon is Mouse1).
+// AbortSpell), and the SWING is still read off the raw right button.
+//
+// ROAD-Ar R10 rewrote that second sentence. It used to read "Mouse2
+// still swings (DFU's SwingWeapon is Mouse1)" and recorded a mismatch
+// that does not exist: MOUSE_CODES below maps DOM button 2 - the RIGHT
+// button, the one every host swings on - to the code 'Mouse1', which is
+// DFU's own SwingWeapon default (InputManager.cs:1010, and
+// inputActions.js's DEFAULT_BINDINGS row). The physical button is
+// parity. What actually departs is the ROUTING: the four hosts swing on
+// a hardcoded `e.button === 2` and nothing in src/ ever reads
+// `held(keys, 'SwingWeapon')`, so rebinding SwingWeapon in the controls
+// window is INERT - unlike the Mouse0 activate, which A8 deliberately
+// routed through `held(keys, 'ActivateCenterObject')` and which does
+// follow a rebind. The seam when that is closed is held(), same as A8's.
+//
 // AbortSpell and RecastSpell have no consumer here yet - the actions
 // are in the registry and the ladder simply does not answer them.
 import {
   loadOrCreateBindings, actionForCode,
-  getCombo, comboCode, comboModifiers, isBoundCode,
+  getCombo, comboCode, comboModifiers, isPairedCode,
 } from '../systems/inputActions.js';
 
 // The registry singleton - built on first read, so the module can be
@@ -39,14 +53,25 @@ export function setBindings(b) { _bindings = b; }
  * Set. One code, one answer:
  *  - a COMBO code hits when both halves are down and no OTHER combo
  *    modifier is (ModifierOnlyHeld's second clause, :1636-1638);
- *  - a PLAIN code is SUPPRESSED when a combo (heldModifier, code) is
- *    bound and that modifier is down (:1683-1685) - "space is jump,
- *    LeftShift+Space opens inventory: we want to ignore jumping".
+ *  - a PLAIN code is SUPPRESSED when the combo (heldModifier, code) is
+ *    a KEY of primarySecondaryKeybindDict and that modifier is down
+ *    (:1683-1685) - "space is jump, LeftShift+Space opens inventory:
+ *    we want to ignore jumping".
+ *
+ * ROAD-Ar R9: that second test is isPairedCode, NOT "bound anywhere".
+ * primarySecondaryKeybindDict is the primary<->secondary pairing map,
+ * so the suppression bites only when the combo'd action is DOUBLE-
+ * bound; a combo held in one dict alone leaves the plain key firing,
+ * exactly as DFU leaves it. The port used a union membership test and
+ * killed the plain key in cases DFU never does.
  *
  * THE ORDER HALF IS NOT HERE, and cannot be from a Set: DFU keeps an
  * ordered heldKeys ring so that pressing K and THEN Shift does not
  * fire Shift+K. The port's hosts keep an unordered Set, so a combo
  * fires on either order. Named in inputActions.js's flag, not hidden.
+ * ModifierOnlyHeld's OTHER clause (:1636 - a held key that is PAIRED
+ * with this modifier also disqualifies it) is likewise unported; the
+ * loop below is its :1637 half only.
  */
 function codeDown(store, keys, code) {
   const c = getCombo(code);
@@ -58,7 +83,7 @@ function codeDown(store, keys, code) {
   }
   if (!keys.has(code)) return false;
   for (const m of comboModifiers(store)) {
-    if (keys.has(m) && isBoundCode(store, comboCode(m, code))) return false;
+    if (keys.has(m) && isPairedCode(store, comboCode(m, code))) return false;
   }
   return true;
 }

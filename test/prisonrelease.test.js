@@ -35,6 +35,7 @@ import {
 } from '../src/ui/prisonScreen.js';
 import { createArrestFlow, RELEASE_MINUTES } from '../src/scenes/arrestFlow.js';
 import { CRIMES } from '../src/systems/court.js';
+import { FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { intermittentEnemySpawn } from '../src/systems/encounters.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { maxFatigue } from '../src/systems/statMods.js';
@@ -212,9 +213,24 @@ function mkConvict() {
   };
 }
 
-function driveToSentence(over = {}) {
+/** ROAD-Ar R17. The People faction of region 17, the one record
+ *  GetPeopleOfCurrentRegion looks for (type 15 / Commoners /
+ *  GeneralPopulace). A root with no children, allies or enemies, so
+ *  ChangeReputation's propagate walk lands the whole amount on it and
+ *  nowhere else - which keeps this pin off the FACTION.TXT data files
+ *  that gate court.test.js's own faction arm. */
+const PEOPLE_ID = 900;
+const mkPeopleStore = () => ({
+  dict: new Map([[PEOPLE_ID, {
+    id: PEOPLE_ID, name: 'People of Region 17', parent: 0, children: null,
+    type: FACTION_TYPES.People, sgroup: SOCIAL_GROUPS.Commoners,
+    ggroup: GUILD_GROUPS.GeneralPopulace, region: 17, rep: 0,
+  }]]),
+});
+
+function driveToSentence(over = {}, playerOver = {}) {
   const townTalk = mkTalk();
-  const player = mkConvict();
+  const player = Object.assign(mkConvict(), playerOver);
   const log = { days: [], minutes: [], cleared: 0, repositioned: 0 };
   const flow = createArrestFlow({
     townTalk, playerEntity: player, regionIndex: 17,
@@ -226,12 +242,19 @@ function driveToSentence(over = {}) {
     ...over,
   });
   flow.startCourtFlow();
+  // ROAD-Ar R17: the reputation as the VERDICT finds it. State 3's
+  // credit is a delta on top of the arrest's own debit, so only the
+  // change across this one keypress is the law being pinned.
+  const before = {
+    legal: player.legalRep?.[17] ?? 0,
+    people: player.factionRep?.dict.get(PEOPLE_ID)?.rep ?? 0,
+  };
   townTalk.slot.win.input('KeyG');    // Guilty - halve, pay, serve
-  return { townTalk, player, log, flow };
+  return { townTalk, player, log, flow, before };
 }
 
 test('flow: the guilty verdict opens the PRISON SCREEN and moves nothing yet', () => {
-  const { townTalk, player, log } = driveToSentence();
+  const { townTalk, player, log, before } = driveToSentence({}, { factionRep: mkPeopleStore() });
   const win = townTalk.slot.win;
   assert.ok(win instanceof PrisonScreenWindow, 'state 3 switches the panel, it does not print a line');
   assert.ok(win.daysInPrison > 0);
@@ -243,6 +266,18 @@ test('flow: the guilty verdict opens the PRISON SCREEN and moves nothing yet', (
   assert.equal(log.cleared, 0);
   assert.equal(log.repositioned, 0);
   assert.equal(player.health, 1, 'and the surrender\'s 1 HP stands until the term ends');
+  // ROAD-Ar R17: ...and the REPUTATION half of that sentence, which the
+  // comment above named and nothing asserted - deleting
+  // raiseRepForSentence from arrestFlow's prison arm left the whole
+  // suite green. RaiseReputationForDoingSentence (PlayerEntity.cs:
+  // 2301-2311) off halfOfLegalRepPlayerLostFromCrime (:2342 -
+  // reputationLossPerCrime[crime] / 2). Murder is crime 5,
+  // reputationLossPerCrime[5] = 0x14 = 20, so half = 10: the DFU
+  // LITERALS, not court.js's own table.
+  assert.equal(player.crimeCommitted, CRIMES.Murder, 'the convict\'s crime, unchanged by the verdict');
+  assert.equal(player.legalRep[17] - before.legal, 9, ':2304 - LegalRep += half - 1');
+  assert.equal(player.factionRep.dict.get(PEOPLE_ID).rep - before.people, 4,
+    ':2310 - the region People faction by (half - 1) / 2, truncating');
 });
 
 test('flow: the countdown\'s ZERO raises the clock behind BOTH prevent flags, then releases', () => {

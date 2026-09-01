@@ -1851,6 +1851,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       // open window (:486-503) and carries RemoveWindow's 0.3 s click
       // delay with it; `hudBlocked` is PlayerActivate.cs:230-236;
       // `touchSpell` is its stated exception at :250-258.
+      // a recorded departure). ROAD-Ar R10: the swing below is the raw
+      // right button - DFU's own 'Mouse1' (InputManager.cs:1010) - but
+      // never read through held(), so a SwingWeapon rebind is inert.
+
       const _act = activateFrame((latch.activate ??= createActivateGate()), {
         down: held(keys, 'ActivateCenterObject'),
         hasReadySpell: magic.spellArmed(),

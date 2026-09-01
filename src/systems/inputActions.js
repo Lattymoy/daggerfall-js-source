@@ -156,10 +156,57 @@ export function comboModifiers(store) {
   return out;
 }
 
-/** primarySecondaryKeybindDict's membership test (:1684, :1637): is
- *  this code bound in EITHER dict? */
-export function isBoundCode(store, code) {
-  return code != null && (store.primary.has(code) || store.secondary.has(code));
+/** primarySecondaryKeybindDict (:1345-1347, :1370-1396). ROAD-Ar R9:
+ *  this is NOT a "bound in either dict" membership set, which is what
+ *  the port read it as. It is a PRIMARY<->SECONDARY PAIRING map:
+ *  SetupActionKeyDict clears it (:1345) and rebuilds it by running
+ *  MapSecondaryBindings over the Actions enum (:1346-1347), and the
+ *  only ADDITIVE arm there is `if (primKey != None && secKey != None)
+ *  SetSecondaryBinding(primKey, secKey)` (:1381-1384), which writes the
+ *  two codes at each other. The else arm (:1386-1395) only DETACHES.
+ *
+ *  So a code is a KEY of this dict exactly when its action is DOUBLE-
+ *  bound, and that is what GetUnaryKey's plain-key suppression
+ *  (:1683-1685) and ModifierOnlyHeld's first clause (:1636-1637)
+ *  actually ask. Bind OpenInventory to LeftShift+Space with no
+ *  secondary and leave Jump on Space: DFU still jumps, because the
+ *  combo code was never paired. The union test suppressed it.
+ *
+ *  The else arm is ported too, quirk and all - it can leave a code
+ *  PRESENT mapped to None (:1392) while removing the code it was
+ *  detached from (:1395) - so the walk is over ACTIONS in
+ *  Enum.GetValues order (:1329, :1346), not a two-dict sweep. Cached
+ *  on `rev` like comboModifiers: the frame loop reads it every poll. */
+export function pairedCodes(store) {
+  const rev = store.rev ?? 0;
+  if (store._pairRev === rev && store._paired) return store._paired;
+  const map = new Map();
+  for (const action of ACTIONS) {
+    // FirstOrDefault(x => x.Value == a).Key, whose miss is KeyCode.None
+    // (:1378-1379) - getBinding's null.
+    const primKey = getBinding(store, action, true);
+    const secKey = getBinding(store, action, false);
+    if (primKey != null && secKey != null) {
+      map.set(primKey, secKey);          // SetSecondaryBinding :1372-1373
+      map.set(secKey, primKey);
+    } else {
+      const existingKey = primKey ?? secKey;
+      let detached = null;
+      if (existingKey != null && map.has(existingKey)) {
+        detached = map.get(existingKey);
+        map.set(existingKey, null);      // :1392 - the KEY stays, the pair goes
+      }
+      if (detached != null) map.delete(detached);   // :1395
+    }
+  }
+  store._pairRev = rev;
+  store._paired = map;
+  return map;
+}
+
+/** primarySecondaryKeybindDict.ContainsKey (:1684, :1637). */
+export function isPairedCode(store, code) {
+  return code != null && pairedCodes(store).has(code);
 }
 
 /** Every binding write goes through here so comboModifiers can tell

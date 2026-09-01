@@ -27,7 +27,12 @@
 //    through into an activation.
 //
 // The port's E key stays live beside this as the port's own activate
-// (DFU binds E to AbortSpell). Mouse2 stays the swing. Both are
+// (DFU binds E to AbortSpell). The right-button swing stays raw:
+// ROAD-Ar R10 - the BUTTON is already DFU's (ui/input.js's MOUSE_CODES
+// maps DOM button 2 to the code 'Mouse1', SwingWeapon's default at
+// InputManager.cs:1010), but the hosts read `e.button === 2` directly
+// and never `held(keys, 'SwingWeapon')`, so a SwingWeapon rebind is
+// inert where this module's Mouse0 activate follows one. Both are
 // recorded departures, and neither is touched here - this module adds
 // the DFU button rather than replacing the port's.
 

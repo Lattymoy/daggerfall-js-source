@@ -579,8 +579,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
       ctx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
-      // ROAD-Ar: the gate itself ran at :459, above the overlay guard.
-      // This is only where its answer is CONSUMED.
+// ROAD-Ar: the gate itself ran at :459, above the overlay guard.
+      // This is only where its answer is CONSUMED. R10: the swing below
+      // is the raw right button - DFU's own 'Mouse1'
+      // (InputManager.cs:1010) - but never read through held(), so a
+      // SwingWeapon rebind is inert (recorded departure).
       if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
       const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
       const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)

@@ -4119,10 +4119,10 @@ export function createWorldModes(host) {
     // non-touch spell blocking the activation outright. The whole
     // of that law - castPending included - is in
     // systems/activateGate.js so all four hosts read one copy.
-    // The port's E stays live BESIDE it (DFU binds E to
-    // AbortSpell; a recorded departure, not a gap this slice
-    // closes) and Mouse2 stays the swing, so nothing a player
-    // already does stops working.
+    // The port's E stays live BESIDE it (DFU binds E to AbortSpell; a
+    // recorded departure). ROAD-Ar R10: the swing below is the raw
+    // right button - DFU's own 'Mouse1' (InputManager.cs:1010) - but
+    // never read through held(), so a SwingWeapon rebind is inert.
     // ...and the engine is the MODE's, exactly as the attack routing
     // below it is (:4812): a dungeon visit mints its own cast engine on
     // the context, so reading the exterior host's HasReadySpell here
