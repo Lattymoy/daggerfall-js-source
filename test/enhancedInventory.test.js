@@ -1278,3 +1278,30 @@ test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - t
   const classic = readFileSync('src/ui/questJournal.js', 'utf8');
   assert.ok(!/questTitleOf|QUEST_KIND_LABEL/.test(classic), 'the classic journal must not strip');
 });
+
+// ═══ EE1: Enhanced Environments replaces the procedural sky switch ═══
+test('EE1: one switch for the whole outdoors, and the old answer is migrated', async () => {
+  const prefs = readFileSync('src/systems/uiPrefs.js', 'utf8');
+  // the new key exists and defaults on
+  assert.match(prefs, /enhancedEnvironments: true,/);
+  // the old key stays ONLY so the migration can read it
+  assert.match(prefs, /proceduralSky: true,\s+\/\/ LEGACY: read only by the migration below/);
+  // and the migration runs once, on a shelf that predates the key
+  assert.match(prefs, /if \(p\.enhancedEnvironments === undefined && p\.proceduralSky !== undefined\) \{\s*\n\s*_prefs\.enhancedEnvironments = !!p\.proceduralSky;/,
+    'a player who switched the sky off must not be surprised by a lit world');
+  // the menu row is the new key, and says what it covers
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /prefRow\('enhancedEnvironments', 'Enhanced environments',/);
+  assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
+  for (const word of ['sky', 'grass', 'puddles', 'snow']) {
+    assert.ok(menu.includes(word), `the row must name ${word} - it switches it`);
+  }
+  // the scene reads the new key, and the URL door still works
+  const shared = readFileSync('src/scenes/shared.js', 'utf8');
+  assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
+  assert.ok(!/getPref\('proceduralSky'\)/.test(shared));
+  // nothing anywhere still reads the retired key at runtime
+  const { execSync } = await import('node:child_process');
+  const hits = execSync("grep -rl \"getPref('proceduralSky')\" src/ || true", { encoding: 'utf8' }).trim();
+  assert.equal(hits, '', `these still read the retired pref: ${hits}`);
+});

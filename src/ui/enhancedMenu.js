@@ -841,10 +841,17 @@ function paneEnhanced(body) {
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
   // same uiPrefs shelf as roads.
-  live.append(prefRow('proceduralSky', 'Procedural sky',
-    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
-    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
-    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
+  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, because the sky is
+  // now one part of the thing it switches. The prose says what the
+  // switch actually covers - a row that names less than it does is the
+  // same fault RA1 fixed here when this said "not built".
+  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors, as one system: a procedural sky with the sun, both moons on their '
+    + 'real phases, stars and weather clouds; ground lit by that sky, with real surface detail; '
+    + 'three-dimensional grass that bends in the wind; rain and snow that fall through the world '
+    + 'rather than across the screen; and puddles and snow that gather, deform underfoot and melt '
+    + 'back. Off returns Daggerfall\u2019s painted sky and flat ground. Takes effect when the '
+    + 'world next loads.'));
   body.append(live);
 
   // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S

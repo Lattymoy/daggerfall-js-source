@@ -209,7 +209,7 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   // hatch AND the Enhanced pane's own switch (uiPrefs proceduralSky,
   // default on) - the pane row said "not built" while this line had
   // been building it for a day.
-  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('proceduralSky'\)\s*\n?\s*\? new EnhancedSkyRenderer\(gl\) : null;/,
+  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)\s*\n?\s*\? new EnhancedSkyRenderer\(gl\) : null;/,
     'the enhanced sky is the skin\'s, behind the URL hatch and the player\'s own switch');
   assert.match(shared, /renderer: enhancedSky \?\? sky,/, 'ONE renderer field: the hosts do not know which pass they hold');
   assert.match(shared, /\(enhancedSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\)/);
