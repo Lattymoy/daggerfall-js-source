@@ -723,6 +723,164 @@ ok(Math.abs(fixBobUp.cy - fixBobRest.cy) < 0.005,
   `and the bob does not slide them against the view (cy ${fixBobRest.cy.toFixed(3)} -> ${fixBobUp.cy.toFixed(3)})`);
 
 
+// ── L8: TWO ACTORS, ONE SHARED BODY - THE NPC LANE, COMPOSITED ──────
+// NPC1-NPC4c. The suite pins the service and the seams; this is the
+// only place the ACTOR question is asked through the real composite,
+// and there are three of them:
+//
+//   FEET ARE HONOURED. An actor is drawn where the host says, not
+//   where the player is - the whole lane is worthless if every
+//   shopkeeper renders at the camera.
+//   YAW TURNS THEM. drawMwBodyAt folds yaw+180 into the model; the
+//   witness is the sword, seated on Weapon Bone (+X, the actor's
+//   right), because the fixture body is x-symmetric and ink alone is
+//   mirror-blind (MW-D9's lesson, L5b's method).
+//   THE SHARED BODY IS NOT A SHARED POSE. mwActorRig's one real
+//   hazard: poseAssembly writes into the shared assembly, so pose,
+//   upload and draw must be ONE call per actor. Batch the posing and
+//   every actor in the frame wears the LAST one's pose. Measured by
+//   drawing each actor alone, then both together, and requiring each
+//   half of the two-actor frame to match that actor's own solo shape.
+const npcShot = await page.evaluate(async ({ bsa, esm }) => {
+  const bytes = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const [{ MwBsaFile }, body, rig, { perspective, lookAt, mirrorProjectionX },
+    { MW_UNITS_PER_METER, armPieceRows }] = await Promise.all([
+    import('/src/formats/mwBsaFile.js'),
+    import('/src/characters/mwActorBody.js'),
+    import('/src/characters/mwActorRig.js'),
+    import('/src/world/mat4.js'),
+    import('/src/formats/mwFirstPerson.js'),
+  ]);
+  const archive = new MwBsaFile(bytes(bsa));
+  const deps = {
+    loadMorrowindArchives: async () => [archive],
+    storedMorrowindNames: async () => ['Morrowind.esm'],
+    loadMorrowindFile: async () => bytes(esm),
+  };
+  // The SHIPPED service, through its own deps seam - not a hand-built
+  // body. A cached null here would be a probe measuring nothing.
+  body._resetActorBodiesForTests?.();
+  const shared = await body.mwActorBody(
+    { race: 'nord', female: false, faceIndex: 0, worn: [], weapon: { templateIndex: 120 }, hasAmmo: false }, deps);
+  if (!shared || !shared.ok) return { built: false };
+
+  const r = window.__r, cv = window.__cv, gl = r.gl;
+  const u = 1 / MW_UNITS_PER_METER;
+  let mnZ = Infinity, mxZ = -Infinity, mnX = Infinity, mxX = -Infinity, mnY = Infinity, mxY = -Infinity;
+  for (const row of armPieceRows(shared.arm.pieces)) {
+    const b = row.bounds; if (!b) continue;
+    mnZ = Math.min(mnZ, b.minZ); mxZ = Math.max(mxZ, b.maxZ);
+    mnX = Math.min(mnX, b.minX); mxX = Math.max(mxX, b.maxX);
+    mnY = Math.min(mnY, b.minY); mxY = Math.max(mxY, b.maxY);
+  }
+  const midH = ((mnZ + mxZ) / 2) * u;
+  const size = Math.max(mxZ - mnZ, mxX - mnX, mxY - mnY) * u;
+  const dist = Math.max(size * 6, 0.04);
+  const gap = size * 1.2;   // far enough that the two never overlap
+  const proj = mirrorProjectionX(perspective(Math.PI / 3, cv.clientWidth / cv.clientHeight, dist / 50, 800));
+  const eye = [0, midH, -dist];
+  const view = lookAt(eye, [0, midH, 0], [0, 1, 0]);
+  const mul = (m, v) => [
+    m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3],
+    m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3],
+    m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3],
+    m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3],
+  ];
+  const clipX = mul(proj, mul(view, [dist, midH, 0, 1]));
+  const anchorNdcX = clipX[0] / clipX[3];   // the motor's +X, on screen
+
+  /** One frame; `draws` is a list of [state, feet, yaw, dt]. Answers
+   *  the lit-pixel counts in each screen half. */
+  const frameOf = (draws) => {
+    gl.clearColor(1, 0, 1, 1);
+    r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
+    let drew = 0;
+    for (const [state, feet, yaw, dt] of draws) {
+      if (rig.drawMwActor(r, cv, shared, state, { dt, moving: false, running: false, feet, yaw, proj, view, eye })) drew++;
+    }
+    const w = cv.width, h = cv.height;
+    const px = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    let left = 0, right = 0;
+    for (let i = 0; i < w * h; i++) {
+      const o = i * 4;
+      if (Math.abs(px[o] - 255) + px[o + 1] + Math.abs(px[o + 2] - 255) > 24) {
+        if ((i % w) < w / 2) left++; else right++;
+      }
+    }
+    return { drew, left, right };
+  };
+
+  // A and B share the body and differ ONLY in their playhead: B is run
+  // a long way further into the clip, so the two poses are different
+  // shapes and a swapped pose is visible as a changed pixel count.
+  const A = rig.mwActorState();
+  const B = rig.mwActorState();
+  frameOf([[B, [0, 0, 0], 0, 0]]);
+  for (let i = 0; i < 40; i++) frameOf([[B, [0, 0, 0], 0, 0.05]]);
+  const soloA = frameOf([[A, [-gap, 0, 0], 0, 0]]);
+  const soloB = frameOf([[B, [gap, 0, 0], 0, 0]]);
+  // ...and A is drawn FIRST here, so a batched pose would leave A
+  // wearing B's.
+  const both = frameOf([[A, [-gap, 0, 0], 0, 0], [B, [gap, 0, 0], 0, 0]]);
+  // ...and the SAME actor, drawn once after B and once after itself.
+  // The two pictures must be identical: whose pose was in the shared
+  // assembly a moment ago is not an input to this actor's picture.
+  // This is what catches a pose arriving ONE DRAW LATE (upload before
+  // pose) - a mutant the "each half matches its own solo" test cannot
+  // see, because a uniform one-draw stagger is self-consistent across
+  // separate frames. MEASURED: it survived until this shot existed.
+  frameOf([[B, [gap, 0, 0], 0, 0]]);
+  const aAfterB = frameOf([[A, [-gap, 0, 0], 0, 0]]);
+  const aAfterA = frameOf([[A, [-gap, 0, 0], 0, 0]]);
+
+  // The sword, as the chirality witness: yaw 0 versus turned around.
+  const yaw0 = frameOf([[A, [0, 0, 0], 0, 0]]);
+  const yawPi = frameOf([[A, [0, 0, 0], Math.PI, 0]]);
+  return {
+    built: true, anchorNdcX, soloA, soloB, both, aAfterB, aAfterA, yaw0, yawPi,
+    stats: body.mwActorBodyStats(),
+  };
+}, { bsa: FIX.thirdBsa, esm: FIX.thirdEsm });
+
+ok(npcShot.built === true, 'an ACTOR body builds through the shipped service, off the same archives');
+if (npcShot.built) {
+  ok(npcShot.soloA.drew === 1 && npcShot.soloA.left + npcShot.soloA.right > 50,
+    `and drawMwActor COMPOSITES into a world frame (${npcShot.soloA.left + npcShot.soloA.right} lit px)`);
+  // FEET. The actor at -gap must land on the side OPPOSITE the motor's
+  // +X anchor, and the one at +gap on the same side as it.
+  const leftIsPlusX = npcShot.anchorNdcX < 0;
+  const aOnAnchorSide = leftIsPlusX ? npcShot.soloA.left > npcShot.soloA.right : npcShot.soloA.right > npcShot.soloA.left;
+  const bOnAnchorSide = leftIsPlusX ? npcShot.soloB.left > npcShot.soloB.right : npcShot.soloB.right > npcShot.soloB.left;
+  ok(!aOnAnchorSide && bOnAnchorSide,
+    `an actor stands at the FEET it is given, on the world's own x axis (-gap ${npcShot.soloA.left}/${npcShot.soloA.right}, +gap ${npcShot.soloB.left}/${npcShot.soloB.right}, +X anchor ndc ${npcShot.anchorNdcX.toFixed(3)})`);
+  // THE HAZARD. Each half of the two-actor frame must carry that
+  // actor's OWN solo shape. Batching the posing swaps them.
+  const halfA = leftIsPlusX ? npcShot.both.right : npcShot.both.left;
+  const halfB = leftIsPlusX ? npcShot.both.left : npcShot.both.right;
+  const ownA = leftIsPlusX ? npcShot.soloA.right : npcShot.soloA.left;
+  const ownB = leftIsPlusX ? npcShot.soloB.left : npcShot.soloB.right;
+  ok(npcShot.both.drew === 2, 'two actors share one body and BOTH draw');
+  ok(halfA === ownA && halfB === ownB,
+    `and each wears its OWN pose, not the last actor's (A ${halfA} vs ${ownA}, B ${halfB} vs ${ownB})`);
+  ok(halfA !== halfB,
+    `two playheads really are two pictures, so the test above can tell them apart (${halfA} vs ${halfB})`);
+  ok(npcShot.aAfterB.left === npcShot.aAfterA.left && npcShot.aAfterB.right === npcShot.aAfterA.right,
+    `and an actor's picture does not depend on WHO WAS DRAWN BEFORE IT (after B ${npcShot.aAfterB.left}/${npcShot.aAfterB.right}, after itself ${npcShot.aAfterA.left}/${npcShot.aAfterA.right}, against a ${Math.abs(ownA - ownB)} pose difference)`);
+  // ONE BUILD, TWO ACTORS - the split NPC1 exists for. (The map is
+  // empty because these fixture archives carry no generation stamp and
+  // the cache stands down without one, which is its own law and the
+  // suite's to pin; what this layer measures is that a second actor
+  // costs no second build.)
+  ok(npcShot.stats.builds === 1,
+    `and the two of them cost ONE build (${npcShot.stats.builds} builds, ${npcShot.stats.cached} cached)`);
+  // YAW. Turning the actor around moves the sword across the body, so
+  // the ink is not the same picture.
+  ok(npcShot.yawPi.left !== npcShot.yaw0.left || npcShot.yawPi.right !== npcShot.yaw0.right,
+    `yaw turns an actor (${npcShot.yaw0.left}/${npcShot.yaw0.right} -> ${npcShot.yawPi.left}/${npcShot.yawPi.right})`);
+}
+
+
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
 // A .kf keyed to bones this skeleton lacks poses NOTHING: poseSkeleton
 // answers every bone with node.rest and draws a clean, static, entirely

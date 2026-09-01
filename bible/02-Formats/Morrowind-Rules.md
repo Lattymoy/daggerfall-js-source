@@ -6103,3 +6103,108 @@ arms pass at all (neckPitch 0, lens pitch 0), and a picture whose
 inputs do not include the look cannot move with it, on any data, by
 construction. The reference's law path is untouched and still measured
 by the probe's law layers.
+
+---
+
+# THE NPC ARC (NPC1-NPC5, 2026-08-31 / 2026-09-01)
+
+Mac's scope, in his words: "If we're doing humanoids only, can we also
+do a comprehensive NPC replacement", "I really want to be maticulous
+with this. This will only be for the enhanced version of the game",
+and, on what a citizen wears, "just give them a random assortment of
+clothing depending on what they are."
+
+## What the reference gives, and what it does not
+
+OpenMW ships the whole MECHANISM and NO ROSTER. Proved rather than
+assumed: `mwmechanics/summoning.cpp:59-98` turns a summon effect into
+a GMST *name* and reads the creature ID out of the loaded ESM, and a
+whole-tree grep for a creature table finds only incidental matches. So
+every Daggerfall-to-Morrowind mapping in this port is the PORT'S OWN
+and is declared as such - `mwCreatureMap.js` names 23 matches and 15
+DECLARED MISSES with printable reasons, because Morrowind ships no
+bat, spider, scorpion, centaur, gargoyle or dragon and a cliff racer
+standing in for one would be a lie the player could see.
+
+## The split the reference itself makes
+
+`mwrender/objects.cpp:95-111` + `mwrender/creatureanimation.cpp:20-35`:
+one shared resource, per-actor animation state; a creature is a
+different animation class from an NPC (CreatureAnimation, and
+CreatureWeaponAnimation only when the Weapon flag is set), and a
+BIPEDAL creature takes the human base set FIRST and its own after.
+The port keeps that split exactly: `mwActorBody.js` owns the expensive
+half (one built body per outfit, cached), `mwActorRig.js` owns the
+cheap half (a playhead - which group, how far through).
+
+## THE ONE REAL HAZARD, and how it is measured
+
+`poseAssembly` writes into the SHARED assembly's own buffers. The body
+is therefore a SCRATCH SURFACE reused within a frame: pose actor A,
+upload, draw; pose actor B, upload, draw. The pose only has to survive
+until its own draw, which is the very next statement. What it must
+never do is pose every actor first and draw afterwards - then every
+actor in the frame wears the last one's pose.
+
+The suite pins the shape; `npm run mwarm`'s L8 layer MEASURES it
+through the real composite, and finding a shot that could actually
+see the failure took two attempts. "Each half of a two-actor frame
+matches that actor's own solo shot" does NOT catch a pose that arrives
+one draw late (upload before pose): a uniform one-draw stagger is
+self-consistent across separate frames, and that mutant survived. The
+shot that kills it is ORDER INDEPENDENCE - the same actor drawn once
+after a differently-posed actor and once after itself must be the same
+picture. Whose pose was in the assembly a moment ago is not an input.
+
+## What is invented, and it says so
+
+A Daggerfall citizen carries NO EQUIPMENT: their clothes are painted
+into the sprite. A Morrowind body is skin plus what it wears, so
+without a wardrobe every townsperson renders nude. `mwWardrobe.js` is
+therefore the port's own clothing and is declared an invention.
+
+What is NOT invented is "what they are": FACTION.TXT's own sgroup
+(Commoners, Merchants, Scholars, Nobility, Underworld). Nor their race
+and sex - `PERSON_TEXTURES` (mobilePerson.js) IS Daggerfall's real
+people-archive race-and-sex table, which is exactly the table
+`raceOfArchive`'s own comment says is missing "until that table is
+wired"; it was wired all along, one module over. A static NPC's race,
+sex and seed come from StaticNPC.Data - the one SetLayoutData law -
+so the body is the same person the talk window names.
+
+"Random" means STABLE, not rolled: the pick hashes `nameSeed` and
+NEVER draws from DFU's srand/rand, because that is one stream shared
+with names, loot and quests and a draw spent on a shirt would shift
+every later roll in the game.
+
+## Two people the lane refuses, deliberately
+
+VAMPIRES (`enemyMwBody.js`): a Morrowind vampire is a body plus
+vampire HEAD parts this port does not resolve, so they keep their
+sprite rather than wearing a wrong face.
+
+CHILDREN (`staticMwBody.js`, IsChildNPCData :342-350): every Morrowind
+NPC mesh is an adult, and dressing a child record in one would stand a
+grown man where the game put a kid.
+
+A refusal is an ANSWER and is remembered - `undefined` means not asked,
+`null` is settled - or a refused actor re-derives its identity on every
+frame for the rest of the session.
+
+## NPC4b: THE LESSON THAT COST THREE SLICES
+
+NPC2b, NPC3a and NPC3b each landed their seam in `exterior.js` - which
+is the `?exterior` DEV route - and in `dungeonContext.js`. `main.js`
+sends real play to `bootWorld`. So for three slices the wandering
+crowd and the city watch were still sprites in every session anyone
+actually played, and the above-ground encounter pool had never been
+seamed at all.
+
+The suite was green throughout. Nothing in it asked "does this reach
+the host the game boots", so nothing failed.
+
+The gate is `test/mwlivehosts.test.js`, and its shape is the point: it
+ENUMERATES every file that draws living actors and demands the seam of
+each, so a new host has to be added to the list before its pin can
+pass. A slice is not finished when its seam exists; it is finished
+when its seam is on the path the player takes.
