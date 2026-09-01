@@ -28,6 +28,7 @@ import {
 } from '../systems/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { hotkeyHit } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -222,7 +223,13 @@ export class RestWindow {
     }
   }
 
-  input(action) {
+  input(action, e = null) {
+    // A8: the window's four buttons carry their DFU Hotkey
+    // (DaggerfallRestWindow.cs:149/152/155/173 - RestForAWhile,
+    // RestUntilHealed, RestLoiter, RestStop), and the table decides
+    // the letter, not this file. The digit row below it is the port's
+    // own accelerator, kept: DFU offers no digit here.
+    const hot = (b) => hotkeyHit(b, action, e);
     if (this.state === 'refused') { this._close(); return; }
     // F144: the over-cap box is click-anywhere; dismissing lands on
     // the selection page, NOT back in a prompt - the prompt is gone.
@@ -231,8 +238,9 @@ export class RestWindow {
       // ConfirmIllegalRest*_OnButtonClick (:659-666, :684-691): the box
       // closes either way, and only Yes carries on - No leaves the
       // rest window standing on its selection page.
-      if (action === 'char:y' || action === 'char:Y' || action === 'confirm') { const w = this._pending; this._pending = null; this._restButton(w, true); }
-      else if (action === 'char:n' || action === 'char:N' || action === 'back') { this._pending = null; this.state = 'selection'; }
+      // A8: the box's own two buttons are DaggerfallShortcut's Yes/No.
+      if (hot('Yes') || action === 'confirm') { const w = this._pending; this._pending = null; this._restButton(w, true); }
+      else if (hot('No') || action === 'back') { this._pending = null; this.state = 'selection'; }
       return;
     }
     if (this.state === 'ended') {
@@ -247,16 +255,16 @@ export class RestWindow {
       // ButtonClick every other button plays. (Its keyboard twin,
       // :714-726, defers the close to KeyUp; the port's overlay seam
       // has no key-down/key-up split, so that half is structural.)
-      if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._end(this.session.endEarly()); }
+      if (action === 'back' || hot('RestStop')) { audio.playOneShot(SOUND.ButtonClick, 1); this._end(this.session.endEarly()); }
       return;
     }
     if (this.state === 'selection') {
       if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return; }
       // every button assigns ButtonClick: While :644, Healed :670,
       // Loiter :695, Stop :711
-      if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
-      else if (action === 'char:2' || action === 'char:h') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('healed', false); }
-      else if (action === 'char:3' || action === 'char:l') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = PROMPT_INITIAL; this.notice = null; }
+      if (action === 'char:1' || hot('RestForAWhile')) { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
+      else if (action === 'char:2' || hot('RestUntilHealed')) { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('healed', false); }
+      else if (action === 'char:3' || hot('RestLoiter')) { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = PROMPT_INITIAL; this.notice = null; }
       return;
     }
     // hours entry: digits, backspace, confirm

@@ -51,6 +51,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
+import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
@@ -3979,7 +3980,30 @@ export function createWorldModes(host) {
     // slot and the one write below never saw it.
     if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;
     if (mode === 'dungeon') cam.pos[1] -= dungeonCtx?.deathDrop ?? 0;
-    const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+    // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
+    // DFU's ActivateCenterObject: the readied spell fires on its
+    // PRESS (EntityEffectManager.cs:250) and the world activation
+    // runs on its RELEASE (PlayerActivate.cs:279), with a readied
+    // non-touch spell blocking the activation outright. The whole
+    // of that law - castPending included - is in
+    // systems/activateGate.js so all four hosts read one copy.
+    // The port's E stays live BESIDE it (DFU binds E to
+    // AbortSpell; a recorded departure, not a gap this slice
+    // closes) and Mouse2 stays the swing, so nothing a player
+    // already does stops working.
+    // ...and the engine is the MODE's, exactly as the attack routing
+    // below it is (:4812): a dungeon visit mints its own cast engine on
+    // the context, so reading the exterior host's HasReadySpell here
+    // would arm the gate off the wrong spell.
+    const _act = activateFrame((latch.activate ??= createActivateGate()), {
+      down: held(keys, 'ActivateCenterObject'),
+      hasReadySpell: (mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) ?? false,
+    });
+    if (_act.cast) {   // the frame's firePending sends it down the live look
+      if (mode === 'dungeon') dungeonCtx?.playerAttackInput?.(0, 0, true);
+      else magic?.interceptAttack(true);
+    }
+    const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
     const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
     // C9: per-mode routing (the old unconditional dungeonCtx read
     // CRASHED on Z inside a building - dungeonCtx is null there).
@@ -3988,7 +4012,7 @@ export function createWorldModes(host) {
       else interiorWeapon.toggleSheath();
     }
     zPrev = zNow;
-    if (useHeld && !latch.use && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
+    if ((_act.activate || (useHeld && !latch.use)) && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
     // A successful exit destroyed the modal context and flipped the
     // mode - the render below must NOT run against it. This frame is

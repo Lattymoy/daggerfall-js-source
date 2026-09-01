@@ -33,6 +33,7 @@ import {
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
+import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
@@ -179,6 +180,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   };
   let prevCrouch = false;   // P12: the crouch-toggle key edge (jump is HELD - P14)
   let prevUse = false;
+  const activateGate = createActivateGate();   // A8: this host's ActivateCenterObject frame state
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
   let zPrev = false;   // ReadyWeapon (Z) edge state
   const tryActivate = () => {
@@ -541,11 +543,27 @@ export async function bootDungeon(canvas, renderer, params, status) {
       ctx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
-      const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+      // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
+      // DFU's ActivateCenterObject: the readied spell fires on its
+      // PRESS (EntityEffectManager.cs:250) and the world activation
+      // runs on its RELEASE (PlayerActivate.cs:279), with a readied
+      // non-touch spell blocking the activation outright. The whole
+      // of that law - castPending included - is in
+      // systems/activateGate.js so all four hosts read one copy.
+      // The port's E stays live BESIDE it (DFU binds E to
+      // AbortSpell; a recorded departure, not a gap this slice
+      // closes) and Mouse2 stays the swing, so nothing a player
+      // already does stops working.
+      const _act = activateFrame(activateGate, {
+        down: held(keys, 'ActivateCenterObject'),
+        hasReadySpell: ctx.spellArmed?.() ?? false,
+      });
+      if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
+      const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
       const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
       if (zNow && !zPrev) ctx.toggleSheath?.();
       zPrev = zNow;
-      if (useHeld && !prevUse) tryActivate();
+      if (_act.activate || (useHeld && !prevUse)) tryActivate();
       prevUse = useHeld;
       // `held` here USED to be this frame's local overlay boolean; it was
       // renamed overlayHeld (:353) and the name then resolved to the

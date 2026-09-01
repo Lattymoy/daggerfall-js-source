@@ -46,6 +46,15 @@ import { isSummoned } from '../systems/inventory.js';   // TransferItem's summon
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
 import { questTransferRefused, SMALL_CART_TEMPLATE } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+
+/** A8: the mode action button's Hotkey is chosen by the WINDOW MODE
+ *  (:325-344) - one button, four letters. Inventory mode assigns none
+ *  ("Shouldn't happen"), and Sell and SellMagic share TradeSell. */
+const MODE_ACTION_BUTTON = Object.freeze({
+  Buy: 'TradeBuy', Identify: 'TradeIdentify', Repair: 'TradeRepair',
+  Sell: 'TradeSell', SellMagic: 'TradeSell',
+});
 
 // re-exported so the composed window keeps one import surface
 export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
@@ -364,7 +373,7 @@ export class NativeTradeWindow {
     if (b?.buttons === 'YesNo' && button === MB_BUTTONS.Yes) b.onYes?.();
   }
 
-  input(code) {
+  input(code, e = null) {
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
@@ -372,13 +381,23 @@ export class NativeTradeWindow {
       } else this._dismissBox();
       return;
     }
-    if (code === 'Escape' || code === 'KeyE') { this.done = true; return; }
-    // The port's own accelerators (Ledger A - DFU reads DaggerfallShortcut):
-    // Enter commits the deal rather than closing, which is what the
-    // mode-action button is for and what a keyboard player expects.
+    if (code === 'Escape') { this.done = true; return; }
+    // Enter commits the deal rather than closing - the port's own
+    // accelerator, kept; DFU has no Return arm on this screen.
     if (code === 'Enter') { this._modeAction(); return; }
-    if (code === 'KeyC') { this._clear(); return; }
-    const d = /^Digit([1-4])$/.exec(code);   // digits stage the visible remote slots
+    // A8: the rest are DaggerfallShortcut's, read from the table
+    // (DaggerfallTradeWindow.cs:249 exit, :323-345 the mode action -
+    // whose LETTER is the window mode's, :348 clear). The four
+    // action-panel buttons this port consumes as no-ops (wagon, info,
+    // select, steal) carry no key here for the same reason they carry
+    // no click: each waits on its own slice, and a live key onto a
+    // dead button is worse than a quiet one.
+    const action = MODE_ACTION_BUTTON[this.mode] ?? null;   // Inventory mode assigns none ("Shouldn't happen")
+    const hit = firstHotkey(['TradeExit', ...(action ? [action] : []), 'TradeClear'], code, e);
+    if (hit === 'TradeExit') { this.done = true; return; }
+    if (hit === 'TradeClear') { this._clear(); return; }
+    if (hit) { this._modeAction(); return; }
+    const d = /^Digit([1-4])$/.exec(code);   // digits stage the visible remote slots (the port's own)
     if (d) this._pickRemote(Number(d[1]) - 1);
     // AUDIT 18: KeyN had no upper clamp, so the keyboard alone could
     // drive the shelf list past its end into a blank panel. Route both

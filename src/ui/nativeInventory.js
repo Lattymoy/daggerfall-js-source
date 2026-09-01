@@ -74,6 +74,7 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -164,6 +165,24 @@ export {
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
+/** A8: the Hotkey assignments this screen makes, in DFU's own setup
+ *  order - exit first (:319), then the four tabs (:478-490), then the
+ *  six action buttons (:497-517). Panel.ProcessHotkeySequences returns
+ *  on the first hit, so the order is part of the law. */
+const INVENTORY_BUTTONS = Object.freeze([
+  'InventoryExit',
+  'InventoryWeapons', 'InventoryMagic', 'InventoryClothing', 'InventoryIngredients',
+  'InventoryWagon', 'InventoryInfo', 'InventoryEquip', 'InventoryRemove',
+  'InventoryUse', 'InventoryGold',
+]);
+const TAB_BUTTONS = Object.freeze({
+  InventoryWeapons: 'weapons', InventoryMagic: 'magic',
+  InventoryClothing: 'clothing', InventoryIngredients: 'ingredients',
+});
+const MODE_BUTTONS = Object.freeze({
+  InventoryInfo: 'info', InventoryEquip: 'equip',
+  InventoryRemove: 'remove', InventoryUse: 'use',
+});
 const SPELLBOOK_TEMPLATE = 132;    // MiscItems.Spellbook
 
 // DFU ItemTemplates.txt isIngredient - exactly indices 0..77
@@ -663,12 +682,28 @@ export class NativeInventoryWindow {
       this._dismissBox();
       return;
     }
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE' || code === 'F6') { this._close(); return; }
+    // F6 is the TOGGLE binding closing its own window (the port's
+    // toggleClosedBinding arm); Escape and Enter are the overlay
+    // seam's. Everything else on this screen is DaggerfallShortcut's,
+    // and A8 retired the interim letters that stood here: E used to
+    // close, which is InventoryEquip's letter in DFU, and the tabs
+    // answered to digits 1-4 where DFU gives them F1-F4.
+    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
-    if (code === 'KeyI') this.mode = 'info';
-    const t = /^Digit([1-4])$/.exec(code);   // digits jump tabs (interim accelerator)
-    if (t) this._setTab(TABS[Number(t[1]) - 1]);
+    // DaggerfallInventoryWindow.cs's own Hotkey assignments, in its
+    // setup order (:319, :478-517).
+    const hit = firstHotkey(INVENTORY_BUTTONS, code, e);
+    if (!hit) return;
+    if (hit === 'InventoryExit') { this._close(); return; }
+    const tab = TAB_BUTTONS[hit];
+    if (tab) { this._setTab(tab); return; }
+    // U25's law again, from the keyboard: WAGON and GOLD ACT, the
+    // other four SELECT a mode (:1234-1285).
+    audio.playOneShot(SOUND.ButtonClick, 1);   // every action button clicks (:1242-1272)
+    if (hit === 'InventoryWagon') { this._wagon(); return; }
+    if (hit === 'InventoryGold') { this._dropGold(); return; }
+    this.mode = MODE_BUTTONS[hit];
   }
 
   /** Which accessory BUTTON a point falls in, as an equip slot, or

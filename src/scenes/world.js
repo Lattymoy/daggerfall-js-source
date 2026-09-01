@@ -213,6 +213,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 
@@ -5182,8 +5183,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         // fresh array from player.eye makes this per-frame, never
         // cumulative). The player does not move; only the camera dies.
         if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
-        const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
-        if (useHeld && !latch.use && !modes.transitioning) {
+        // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
+        // DFU's ActivateCenterObject: the readied spell fires on its
+        // PRESS (EntityEffectManager.cs:250) and the world activation
+        // runs on its RELEASE (PlayerActivate.cs:279), with a readied
+        // non-touch spell blocking the activation outright. The whole
+        // of that law - castPending included - is in
+        // systems/activateGate.js so all four hosts read one copy.
+        // The port's E stays live BESIDE it (DFU binds E to
+        // AbortSpell; a recorded departure, not a gap this slice
+        // closes) and Mouse2 stays the swing, so nothing a player
+        // already does stops working.
+        const _act = activateFrame((latch.activate ??= createActivateGate()), {
+          down: held(keys, 'ActivateCenterObject'),
+          hasReadySpell: magic.spellArmed(),
+        });
+        if (_act.cast) magic.interceptAttack(true);   // the frame's firePending sends it down the live look
+        const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
+        if ((_act.activate || (useHeld && !latch.use)) && !modes.transitioning) {
           // T3b: a townsperson under the ray wins the activation (the
           // PlayerActivate nearest-hit order); G3: a guard corpse next
           // (loot pickup on the dungeon's S2 shape); doors otherwise.

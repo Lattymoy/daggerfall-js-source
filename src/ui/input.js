@@ -8,13 +8,24 @@
 // I2 RETIRED the C-cast departure this header used to carry: DFU has
 // no cast key - CastSpell (Backspace) OPENS THE SPELLBOOK
 // (GameManager.cs:550-553), and a readied spell fires on the attack
-// click (hostMagic.interceptAttack, live in all four hosts). What
-// still pends the pointer-parity slice: DFU casts and activates on
-// Mouse0 (ActivateCenterObject - EntityEffectManager.cs:250,
-// PlayerActivate.cs:280) where the port clicks Mouse2 and holds E,
-// and E's DFU meaning (AbortSpell) with Q's (RecastSpell) - FLAGGED
-// at the E sites in the hosts.
-import { loadOrCreateBindings, actionForCode } from '../systems/inputActions.js';
+// click (hostMagic.interceptAttack, live in all four hosts).
+//
+// A8 RETIRED THE POINTER-PARITY FLAG that stood here and at the four E
+// sites in the hosts. Mouse0 IS ActivateCenterObject now, on DFU's own
+// edges - cast on the press (EntityEffectManager.cs:250), activate on
+// the release (PlayerActivate.cs:279), castPending and the readied-
+// spell block included; the law is systems/activateGate.js and all
+// four hosts read that one copy.
+//
+// TWO DEPARTURES STAND, both deliberate and neither a missing slice:
+// the port's E still activates beside Mouse0 (DFU binds E to
+// AbortSpell) and Mouse2 still swings (DFU's SwingWeapon is Mouse1).
+// AbortSpell and RecastSpell have no consumer here yet - the actions
+// are in the registry and the ladder simply does not answer them.
+import {
+  loadOrCreateBindings, actionForCode,
+  getCombo, comboCode, comboModifiers, isBoundCode,
+} from '../systems/inputActions.js';
 
 // The registry singleton - built on first read, so the module can be
 // imported by tests without touching storage until asked.
@@ -23,17 +34,62 @@ export function bindings() { return (_bindings ??= loadOrCreateBindings()); }
 /** Tests (and the I3 controls window) swap the live store. */
 export function setBindings(b) { _bindings = b; }
 
-/** The action a key event means under the live bindings, or null. */
-export function actionOf(e) { return actionForCode(bindings(), e.code); }
+/**
+ * A8 - GetUnaryKey's COMBO ARM (:1670-1712) over the port's held-keys
+ * Set. One code, one answer:
+ *  - a COMBO code hits when both halves are down and no OTHER combo
+ *    modifier is (ModifierOnlyHeld's second clause, :1636-1638);
+ *  - a PLAIN code is SUPPRESSED when a combo (heldModifier, code) is
+ *    bound and that modifier is down (:1683-1685) - "space is jump,
+ *    LeftShift+Space opens inventory: we want to ignore jumping".
+ *
+ * THE ORDER HALF IS NOT HERE, and cannot be from a Set: DFU keeps an
+ * ordered heldKeys ring so that pressing K and THEN Shift does not
+ * fire Shift+K. The port's hosts keep an unordered Set, so a combo
+ * fires on either order. Named in inputActions.js's flag, not hidden.
+ */
+function codeDown(store, keys, code) {
+  const c = getCombo(code);
+  if (c) {
+    const [mod, key] = c;
+    if (!keys.has(mod) || !keys.has(key)) return false;
+    for (const m of comboModifiers(store)) if (m !== mod && keys.has(m)) return false;
+    return true;
+  }
+  if (!keys.has(code)) return false;
+  for (const m of comboModifiers(store)) {
+    if (keys.has(m) && isBoundCode(store, comboCode(m, code))) return false;
+  }
+  return true;
+}
+
+/** The action a key event means under the live bindings, or null.
+ *  Hand in the host's held-keys Set and combos resolve too: a keydown
+ *  on the combo'd key with its modifier already down answers the
+ *  COMBO's action, and the plain binding on that key is suppressed. */
+export function actionOf(e, keys = null) {
+  const b = bindings();
+  if (keys) {
+    for (const m of comboModifiers(b)) {
+      if (!keys.has(m)) continue;
+      const a = actionForCode(b, comboCode(m, e.code));
+      if (a) return a;
+    }
+    if (!codeDown(b, new Set([...keys, e.code]), e.code)) return null;
+  }
+  return actionForCode(b, e.code);
+}
 
 /** Held-state read for the hosts' per-frame polls: is ANY key bound
  *  to the action (primary or secondary) in the host's held-keys set?
  *  This is InputManager.GetKey's dual-dict fallthrough (:1084) over
- *  the port's `keys` Set idiom. */
+ *  the port's `keys` Set idiom - and since A8, through the combo arm
+ *  above, so a rebound "Shift + W" walks and a bare W under a held
+ *  Shift does not. */
 export function held(keys, action) {
   const b = bindings();
-  for (const [code, a] of b.primary) if (a === action && keys.has(code)) return true;
-  for (const [code, a] of b.secondary) if (a === action && keys.has(code)) return true;
+  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code)) return true;
+  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code)) return true;
   return false;
 }
 
@@ -90,7 +146,7 @@ export function typedChar(code, e = null) {
 /** Route one keydown against a dungeon context. Returns true when
  *  consumed (the host preventDefaults and stops). Cases carry DFU's
  *  action names; each cites its DFU consumer. */
-export function routeKey(e, ctx, setPlayerPos = null) {
+export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   if (ctx.uiOverlayActive) {
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
     // seam has since G2 - the action map ('back'/'confirm'/'up') is
@@ -113,7 +169,7 @@ export function routeKey(e, ctx, setPlayerPos = null) {
   // classic skin (the opener's own gate), answers false and Tab keeps
   // its default, so classic behaviour is byte-for-byte untouched.
   if (e.code === 'Tab') { return ctx.toggleDial?.() === true; }
-  const act = actionOf(e);
+  const act = actionOf(e, keys);
   if (POLLED_ACTIONS.has(act)) return false;
   return routeAction(act, ctx, setPlayerPos);
 }
