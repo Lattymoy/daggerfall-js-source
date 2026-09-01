@@ -1785,7 +1785,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
   uploadTileArray(archive, layers) {
-    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
+    // AUDIT 44 F2: THE CACHE OUTLIVED THE SWITCH. This returned the
+    // stored array before it ever looked at enhancedGround, and the
+    // cache lives on the RENDERER, which survives a world load - so a
+    // player who flipped Enhanced Environments and loaded a new world
+    // got the sampler the array had been built with the first time,
+    // and the row's promise that it "takes effect when the world next
+    // loads" was false for the ground. Only a page reload would have
+    // done it, which nobody would guess. The mode is part of the key
+    // now: two modes, two arrays, and flipping picks the other one.
+    const key = `${archive}:${this.enhancedGround ? 'e' : 'c'}`;
+    if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
@@ -1831,7 +1841,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.tileArrays.set(archive, tex);
+    this.tileArrays.set(key, tex);
     return tex;
   }
 

@@ -482,3 +482,20 @@ test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', 
       `${host} must set the flag immediately before the upload`);
   }
 });
+
+test('AUDIT 44: the tile array cache is keyed by MODE, and the probe drives the real row', () => {
+  const r = read('src/render/renderer.js');
+  // F2: the cache lives on the renderer, which survives a world load,
+  // so keying it by archive alone made the switch a page-reload-only
+  // setting while the row promised "when the world next loads".
+  assert.match(r, /const key = `\$\{archive\}:\$\{this\.enhancedGround \? 'e' : 'c'\}`;/);
+  assert.match(r, /if \(this\.tileArrays\.has\(key\)\) return this\.tileArrays\.get\(key\);/);
+  assert.match(r, /this\.tileArrays\.set\(key, tex\);/);
+  assert.ok(!/tileArrays\.(has|get|set)\(archive/.test(r), 'the archive alone must not key the cache');
+  // F1: the menu probe drove a row that no longer exists, so it would
+  // have failed on a row it could not find rather than on a fault.
+  const probe = read('tools/enhancedMenuProbe.mjs');
+  assert.ok(!/proceduralSky|Procedural sky/.test(probe), 'the probe must drive the switch that exists');
+  assert.match(probe, /hasText: 'Enhanced environments'/);
+  assert.match(probe, /m\.getPref\('enhancedEnvironments'\)/);
+});
