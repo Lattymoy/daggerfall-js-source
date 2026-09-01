@@ -1634,7 +1634,18 @@ function scrollField(di, dj) {
       const si = i + di;
       const dst = (j * FIELD_N + i) * 4;
       if (si < 0 || si >= FIELD_N || sj < 0 || sj >= FIELD_N) {
-        field[dst] = 0; field[dst + 1] = 0; field[dst + 2] = 0; field[dst + 3] = 0;
+        // PROTO-17 (Mac: the grass is STILL popping out when moving).
+        // HERE is the pop, and my last fix could not have reached it:
+        // the strip of ground that scrolls INTO the window was cleared
+        // to ZERO. Unseen ground is not BARE ground - it has been
+        // snowing on it the whole time - so every blade the window
+        // caught up with found no snow at that instant and stood
+        // straight up, in a line, four metres at a time. New cells
+        // inherit the world's own mean instead: what the fallback
+        // outside the window already said was there, so crossing the
+        // boundary changes nothing at all.
+        field[dst] = fieldMeanWater; field[dst + 1] = fieldMeanSnow;
+        field[dst + 2] = 0; field[dst + 3] = 0;
         continue;
       }
       const src = (sj * FIELD_N + si) * 4;
@@ -1651,6 +1662,7 @@ let fieldDirty = true;   // a stamp or a scroll owes an upload
  *  rather than invented, and a blade beyond the edge is dressed like
  *  its neighbours instead of standing bare. */
 let fieldMeanSnow = 0;
+let fieldMeanWater = 0;
 function tickField(dt, eye, rainRate, snowRate, warmth) {
   if (!poolValid) rebuildPooling();
   const n = FIELD_N * FIELD_N;
@@ -1704,10 +1716,12 @@ function tickField(dt, eye, rainRate, snowRate, warmth) {
       if (w < 0.35) field[o + 1] = Math.min(1, field[o + 1] + (1 - w) * 0.05);   // the rim
     });
   }
-  // the mean the world outside the window wears
-  let sum = 0;
-  for (let k = 0; k < n; k++) sum += field[k * 4 + 1];
-  fieldMeanSnow = sum / n;
+  // the mean the world outside the window wears - computed BEFORE the
+  // early return, because a scroll on a dry frame still inherits it
+  let sumS = 0, sumW = 0;
+  for (let k = 0; k < n; k++) { sumS += field[k * 4 + 1]; sumW += field[k * 4]; }
+  fieldMeanSnow = sumS / n;
+  fieldMeanWater = sumW / n;
   // and the UPLOAD only when the field has anything to say: a dry
   // sunny field with nobody walking is 256KB a frame for nothing.
   if (rainRate <= 0 && snowRate <= 0 && warmth <= 0 && !fieldDirty) return;
