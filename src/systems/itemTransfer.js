@@ -40,7 +40,7 @@
 
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
-  GOLD_PIECE_WEIGHT_KG,
+  splitStack, GOLD_PIECE_WEIGHT_KG,
 } from './inventory.js';
 import { isMap, isLightSource } from './useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
@@ -288,13 +288,36 @@ export function clearLightSourceOnLeave(item, entity, fromLocal) {
   if (fromLocal && entity && isLightSource(item) && entity.lightSource === item) entity.lightSource = null;
 }
 
-export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false } = {}) {
+export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, rolls = Math.random } = {}) {
   clearLightSourceOnLeave(item, entity, fromLocal);
-  return _applyTransfer(item, plan, from, to);
+  return _applyTransfer(item, plan, from, to, rolls);
 }
-function _applyTransfer(item, plan, from, to) {
+function _applyTransfer(item, plan, from, to, rolls = Math.random) {
   const stack = item.stackCount ?? 1;
   if (plan.amount < stack) {
+    // ROAD-Ar R5: DFU has no partial transfer that skips SplitStack.
+    // TransferItem (:1515-1540) routes every `maxAmount < stackCount`
+    // move into the split popup, whose handler is
+    // `stackFrom.SplitStack(stackItem, count)` (:1554) BEFORE
+    // DoTransferItem - so the half that travels is a fresh template
+    // item (ItemCollection.cs:267 -> ItemBuilder.CreateItem -> SetItem:
+    // material, variant, flags, message and potionRecipeKey zeroed,
+    // value back to basePrice, condition back to hitPoints), not a copy
+    // of the record. inventory.splitStack is that member's ONE home;
+    // this used to re-spell it as `{ ...item, stackCount }`, which
+    // carried condition, enchantments (by reference), message and
+    // recipe into the moved half. splitStack pushes the new record into
+    // the SOURCE collection, which is DFU's order exactly - SplitStack
+    // adds to stackFrom, TransferItem then moves it.
+    const minted = splitStack(from, item, plan.amount, { rolls });
+    if (minted && minted !== item) {
+      const at = from.indexOf(minted);
+      if (at >= 0) from.splice(at, 1);
+      addItem(to, minted);
+      return minted;
+    }
+    // splitStack refuses what DFU's popup never offers (a 1-stack, an
+    // item not in `from`); the old spelling stays as that fallback.
     item.stackCount = stack - plan.amount;
     const taken = { ...item, stackCount: plan.amount };
     addItem(to, taken);

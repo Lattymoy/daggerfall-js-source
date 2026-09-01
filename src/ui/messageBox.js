@@ -99,11 +99,25 @@ export const SCROLL_PANEL_PAD = 9;
 export const SCROLL_BAR_W = 8;
 /** ScrollingPanel_OnMouseScrollUp/Down (:675-682) - SIX pixels. */
 export const SCROLL_WHEEL_STEP = 6;
-/** DaggerfallInventoryWindow's painting arm (:1622-1623) puts the
- *  ImagePanel at VerticalAlignment.None, Position (0,5) - so five
- *  pixels below the panel's top MARGIN, horizontally centred by the
- *  alignment Setup gave it (:249-250). */
-export const IMAGE_PANEL_Y = 5;
+/** ROAD-Ar R14 - THE IMAGE PANEL SITS AT THE TOP MARGIN, AND THE
+ *  WINDOW'S Position (0,5) IS DEAD BY DRAW TIME.
+ *
+ *  DaggerfallInventoryWindow's painting arm (:1622-1625) does set
+ *  `ImagePanel.VerticalAlignment = None; Position = (0,5)` - but it
+ *  sets BackgroundTexture at :1625 and then calls Show() at :1627, and
+ *  Show (DaggerfallMessageBox.cs:295-301) runs UpdatePanelSizes()
+ *  before PushWindow. That method's image arm (:528-534) fires on
+ *  `BackgroundTexture != null` and reassigns
+ *  `imagePanel.VerticalAlignment = VerticalAlignment.Top` (the same
+ *  value Setup :249-250 gave it); nothing restores None. Under Top,
+ *  BaseScreenComponent's rectangle getter ASSIGNS
+ *  `rectangle.y = parentRect.yMin + Parent.TopMargin * parentScale.y`
+ *  (:1228-1230) over the earlier `rectangle.y += position.y` (:1200),
+ *  so Position.y is discarded - only the `None` arm (:1225-1227) ever
+ *  adds it. TopMargin is 10 (DaggerfallUI.cs:931 SetMargins(All, 10)),
+ *  which is this file's MARGIN. So the painting's y is `y + MARGIN`
+ *  flat, and the 5 the port carried pushed it into the first text row
+ *  whenever the 22-px slice rounding left under five pixels of slack. */
 
 let _art = null;   // { slices: tex[9], buttons: Map<record, tex> }
 
@@ -276,9 +290,11 @@ export function layoutMessageBox(font, lines, buttons = [], {
     };
     scroll.thumb = thumbSpan(scrollPanelH, total, scrollPanelH, index);
   }
-  // The ImagePanel's rect (:1622-1625 over Setup's Center alignment).
+  // The ImagePanel's rect: Setup's Center horizontal alignment over
+  // UpdatePanelSizes' VerticalAlignment.Top, i.e. the top MARGIN. See
+  // the R14 note above for why the window's Position (0,5) is not here.
   const imageRect = imageH
-    ? [x + Math.round((w - imageW) / 2), y + MARGIN + IMAGE_PANEL_Y, imageW, imageH]
+    ? [x + Math.round((w - imageW) / 2), y + MARGIN, imageW, imageH]
     : null;
   return {
     x, y, w, h, textY, textW, textH, rowH, rows, buttons: rects,

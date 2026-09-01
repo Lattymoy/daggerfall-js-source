@@ -136,6 +136,39 @@ test('a11: the mastery is PRIMARY-only, EXACTLY 100, and once', () => {
   assert.ok(played.includes(SOUND.ArenaFanfareLevelUp));
 });
 
+// ROAD-Ar R12. RaiseSkills pops skillImprove (:1388) and builds the
+// mastery box (:1396-1404) INSIDE the skill loop, and only after the
+// loop does `if (CheckForLevelUp()) PostMessage(dfuiOpenCharacterSheet
+// Window)` (:1413). DFU's stack keeps both, sheet on top. The port
+// presents into ONE overlay slot on every host but dungeonContext, so
+// the ORDER decides which window survives - and it used to batch the
+// box into a post-loop pass, landing it on top of a CharSheet that had
+// already committed the Level++ and cleared readyToLevelUp but had not
+// yet written its `working` stats back. The level's attribute points
+// went with it, permanently.
+test('ROAD-Ar R12: the mastery box is presented BEFORE the level-up sheet', () => {
+  const p = mkPlayer(SKILLS.Axe, { owed: true });
+  p.skills[SKILLS.Axe] = 99;              // this pass BOTH masters and levels
+  const order = [];
+  let slot = null;                        // the single overlay slot: mount replaces
+  const clock0 = worldMinutes();
+  setWorldMinutes(CLASSIC_GAME_START_TIME + 400);
+  capturePlays(() => raisePlayerSkills(p, {
+    rolls: () => 0.5,
+    say: () => order.push('say'),
+    lines: () => [{ text: 'You are now a master.', center: false }],
+    box: () => { order.push('box'); slot = 'box'; },
+    onLevelUp: () => { order.push('sheet'); slot = 'sheet'; },
+  }));
+  setWorldMinutes(clock0);
+
+  assert.equal(p.skills[SKILLS.Axe], 100, 'fixture: the pass really masters Axe');
+  assert.deepEqual(order, ['say', 'box', 'sheet'],
+    'RaiseSkills: skillImprove and the box in the loop, the sheet after it');
+  assert.equal(slot, 'sheet',
+    'the box must not replace the char sheet - that is where the level is paid');
+});
+
 test('a11: every host that can rest hands the mastery box a presenter', () => {
   // THE FOUR HOSTS RULE. createRestDeps forwards `box` and reuses the
   // host's own endLines for the rows, so a host that forgets the

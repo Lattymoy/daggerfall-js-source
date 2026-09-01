@@ -22,7 +22,7 @@ import {
   applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed,
   applySpell, tickActiveEffects,
 } from '../src/systems/effects.js';
-import { EnemyAI, blockedByIllusionEffect } from '../src/characters/enemyMotor.js';
+import { EnemyAI, blockedByIllusionEffect, MOBILE_SLAUGHTERFISH_ID } from '../src/characters/enemyMotor.js';
 import { GRAVITY } from '../src/player/motor.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -125,6 +125,48 @@ test('a5: the levitating arms of the senses/pursuit path are live, not dead', ()
   ai._findDetour([0, 0, 1], () => 0.1);
   assert.notEqual(ai.detourDestination, before);
   assert.notEqual(ai.detourDestination?.[1] ?? 0, ai.feet[1], 'the +/-0.3 vertical dodge, not a flat sweep');
+});
+
+// ROAD-Ar R4. GetDestination (EnemyMotor.cs:542-544):
+//   if (flies || IsLevitating || (swims && ID == Slaughterfish))
+//       destination.y += targetController.height * 0.5f;
+// DFU's destination is the target's CENTRE, so the add lands it at the
+// target's TOP. The port works in feet-space, so a face-aimer must gain
+// the WHOLE target height and everyone else in the arm (a plain
+// swimmer) exactly half. `levitating` is a live effect flag and the foe
+// pools rewrite `ai.flies` for a transformed Seducer, so the split has
+// to be decided per call - a birth-time constant aimed a levitating
+// walker at the target's waist.
+test('a5: the face aim reads the LIVE levitating/flies flags, not a birth constant', () => {
+  const at = (ai) => { ai._getDestination([0, 0, 10]); return ai.destination[1]; };
+  const H = 1.8;   // CAPSULE_HEIGHT - the unarmed target height
+
+  const walker = new EnemyAI(floorCollider(), [0, 0, 0], 0, { liveSpeed: 50 });
+  assert.equal(at(walker), 0, 'a ground foe takes the arm not at all');
+
+  const flyer = new EnemyAI(floorCollider(), [0, 0, 0], 0, { liveSpeed: 50, behaviour: 'Flying' });
+  assert.equal(at(flyer), H, 'a flyer aims at the target TOP (feet + h = centre + h/2)');
+
+  // The defect: same foe, levitate lands on it mid-flight.
+  const lev = new EnemyAI(floorCollider(), [0, 0, 0], 0, { liveSpeed: 50 });
+  applyEnemyMotorEffectFlags(lev, { activeEffects: [eff('levitate')] });
+  assert.equal(lev.levitating, true);
+  assert.equal(at(lev), H, 'IsLevitating aims at the FACE exactly like flies');
+  // ...and the effect expiring puts the aim back on the ground arm.
+  applyEnemyMotorEffectFlags(lev, { activeEffects: [] });
+  assert.equal(at(lev), 0, 'the flag is live in both directions');
+
+  // The swimmer split: only the slaughterfish joins the face-aimers;
+  // any other swimmer gets DFU's no-add case, which in feet-space is
+  // the target's centre.
+  const fish = new EnemyAI(floorCollider(), [0, 0, 0], 0, { liveSpeed: 50, behaviour: 'Aquatic', mobileId: MOBILE_SLAUGHTERFISH_ID });
+  assert.equal(at(fish), H, 'swims && Slaughterfish - the face');
+  const otherFish = new EnemyAI(floorCollider(), [0, 0, 0], 0, { liveSpeed: 50, behaviour: 'Aquatic', mobileId: MOBILE_SLAUGHTERFISH_ID + 1 });
+  assert.equal(at(otherFish), H / 2, 'any other swimmer stays at the centre');
+  // A transformed Seducer (the pools rewrite ai.flies per frame) must
+  // follow its new shape too, not the one it was constructed with.
+  otherFish.flies = true;
+  assert.equal(at(otherFish), H, 'a rewritten `flies` moves the aim with it');
 });
 
 test('a5: ConcealmentEffect is entity-blind - concealmentFlags reads a FOE the same way', () => {

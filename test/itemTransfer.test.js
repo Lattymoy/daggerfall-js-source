@@ -17,7 +17,7 @@ import {
   WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT,
 } from '../src/systems/itemTransfer.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../src/systems/createItem.js';
-import { totalWeight } from '../src/systems/inventory.js';
+import { totalWeight, goldStack } from '../src/systems/inventory.js';
 
 const book = (n = 1) => ({ group: 'Books', templateIndex: 277, name: 'Book', stackCount: n });
 const cart = () => ({ group: 'Transportation', templateIndex: 93, name: 'Small Cart' });
@@ -164,6 +164,75 @@ test('U56 applyTransfer: the split leaves a remainder, the whole move keeps its 
   const keep = from3[0];
   applyTransfer(book(3), { amount: 3 }, from3, []);
   assert.deepEqual(from3, [keep], 'splice(-1, 1) ate the wrong item');
+});
+
+// ROAD-Ar R5. DFU has no partial transfer that skips SplitStack:
+// TransferItem (:1515-1540) sends every `maxAmount < item.stackCount`
+// move into the split popup, whose handler is
+// `stackFrom.SplitStack(stackItem, count)` (:1554) before
+// DoTransferItem. ItemCollection.cs:267 mints
+// `ItemBuilder.CreateItem(group, templateIndex)`, and SetItem
+// (DaggerfallUnityItem.cs:558-572) zeroes nativeMaterialValue,
+// currentVariant, flags, message and the recipe carrier, resets value
+// to basePrice and condition to hitPoints. So the half that travels is
+// a TEMPLATE, not a copy. The ladder used to re-spell the member as
+// `{ ...item, stackCount }`, which is the fourth re-spelling a2 set out
+// to remove and the only one on the main path.
+test('ROAD-Ar R5: a partial move is a SplitStack MINT, not a copy of the record', () => {
+  const shared = [{ type: 1, param: 3 }];
+  const potion = {
+    group: 'UselessItems1', templateIndex: 83, name: 'Potion of Healing',
+    stackCount: 3, condition: 4, material: 2, variant: 5, flags: 8,
+    message: 41, potionRecipeKey: 8765, value: 999, enchantments: shared,
+  };
+  const from = [potion];
+  const to = [];
+  const taken = applyTransfer(potion, { amount: 1 }, from, to);
+
+  assert.equal(potion.stackCount, 2, 'the remainder stays behind');
+  assert.equal(to.length, 1);
+  assert.equal(taken, to[0]);
+  assert.equal(taken.stackCount, 1);
+  assert.equal(taken.group, potion.group, 'the mint keeps the group...');
+  assert.equal(taken.templateIndex, potion.templateIndex, '...and the template index');
+  // ...and nothing else. These five are exactly SetItem's zeroing.
+  assert.equal(taken.material, 0, 'nativeMaterialValue = 0');
+  assert.equal(taken.variant, 0, 'currentVariant = 0');
+  assert.equal(taken.flags, 0);
+  assert.equal(taken.message, 0);
+  assert.equal(taken.potionRecipeKey ?? 0, 0, 'the recipe does not ride along');
+  assert.notEqual(taken.value, 999, 'value is reset to the template basePrice');
+  assert.notEqual(taken.condition, 4, 'condition is reset to hitPoints, not inherited');
+  assert.notEqual(taken.enchantments, shared,
+    'the split half shared the source enchantment ARRAY by reference');
+
+  // The observable consequence: DFU's stored half will NOT re-stack
+  // with the remainder, because stacksWith reads message and recipe.
+  assert.equal(to.length, 1);
+  applyTransfer(potion, { amount: 2 }, from, to);
+  assert.equal(to.length, 2, 'a template and a keyed potion are not one stack');
+
+  // ...but a split that carries no identity terms MUST still re-merge
+  // where DFU merges. FindExistingStack (ItemCollection.cs:708-713)
+  // compares group, index, message, recipe and expiry - not material -
+  // and SetItem writes nativeMaterialValue = 0, which is what an item
+  // carrying no material field means everywhere else in the port. The
+  // gold stack is the case that proves it: goldStack() mints without
+  // the field, the split mints with a 0.
+  const purse = [goldStack(100)];
+  const pile = [goldStack(300)];
+  applyTransfer(pile[0], { amount: 100 }, pile, purse);
+  assert.equal(purse.length, 1, 'the split gold did not merge into the purse');
+  assert.equal(purse[0].stackCount, 200);
+  assert.equal(pile[0].stackCount, 200);
+
+  // The whole-move arm is untouched: identity still travels.
+  const one = { group: 'UselessItems1', templateIndex: 83, stackCount: 1, potionRecipeKey: 8765 };
+  const src = [one];
+  const dst = [];
+  assert.equal(applyTransfer(one, { amount: 1 }, src, dst), one,
+    'a whole move is not a split - DFU moves the record itself');
+  assert.equal(dst[0].potionRecipeKey, 8765);
 });
 
 // ── AUDIT 26's QUEST ARM, ON THE LADDER ──────────────────────────

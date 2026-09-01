@@ -202,7 +202,18 @@ export class TextRsc {
    *  established matters, so neither existing reader could do it. */
   variantLinesById(id, pick = Math.random) {
     const n = this.variantCount(id);
-    if (n <= 1) return this.linesById(id);
+    if (n <= 1) {
+      // ROAD-Ar R13: TextProvider.cs:225 completes the final stream
+      // unconditionally, so Count is at least 1 and :228's draw has NO
+      // Count guard - a single-subrecord record still burns one value.
+      // Short-circuiting before `pick` was free while `pick` was
+      // Math.random; with a7's stream-consuming dfRandPick it left the
+      // port's DFRandom one draw BEHIND classic, which is the desync
+      // the painting reads exist to close. The row content still comes
+      // from variant 0; only the draw is restored.
+      if (n === 1) variantIndex(pick, 1);
+      return this.linesById(id);
+    }
     const want = variantIndex(pick, n);
     // AUDIT 23 (FTD-1) - TextProvider.cs:231: a record ending 0xFF 0xFE
     // mints an empty trailing stream; DFU steps back one variant when
@@ -240,7 +251,11 @@ export class TextRsc {
     if (!raw) return [];
     const ranges = variantRanges(raw);
     const n = ranges.length;
-    const want = n <= 1 ? 0 : variantIndex(pick, n);
+    // ROAD-Ar R13, same law as variantLinesById: :228 draws whatever
+    // Count is, so a one-stream record consumes its LCG value too.
+    let want = 0;
+    if (n > 1) want = variantIndex(pick, n);
+    else if (n === 1) variantIndex(pick, 1);
     // readTokens answers NULL on an empty stream (the 0xFF 0xFE tail
     // variant) - exactly the case the FTD-1 step-back exists for
     let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord) ?? [];

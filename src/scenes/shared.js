@@ -869,19 +869,32 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // presenter. A host that hands neither still gets the fanfare, the
   // way DFU plays it outside the `tokens != null` gate.
   lines = null, box = null } = {}) {
-  const mastered = [];
-  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp, (id) => mastered.push(id)) ?? [];
-  for (const id of raised) {
-    say(`Your ${SKILL_NAMES[id]} skill has improved.`);
-    // Interleaved, not batched: DFU pops the skillImprove message and
-    // then, for that same skill, the master box - so a pass that
-    // raises two skills reads in the source's order.
-    if (!mastered.includes(id)) continue;
-    const rows = plainLines(lines?.(MASTERY_TEXT_ID));
-    if (rows?.length) box?.(rows);
-    audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
-  }
-  return raised;
+  // ROAD-Ar R12 - THE PRESENTATION RUNS IN THE LOOP, NOT AFTER IT.
+  // RaiseSkills (:1371-1414) pops skillImprove and builds the mastery
+  // box inside the skill loop and posts dfuiOpenCharacterSheetWindow
+  // AFTER it, so DFU's sheet arrives on top of the box and both live.
+  // This used to batch both into a post-loop pass over `raised`, which
+  // put the box after `onLevelUp` - and every host but dungeonContext
+  // presents into ONE overlay slot (the b1-window-stack narrowing), so
+  // the box replaced the freshly-mounted CharSheet. The sheet had
+  // already committed the Level++ and cleared readyToLevelUp in its
+  // constructor but writes `working` back to entity.stats only when it
+  // closes, and it has no dispose - so the level's 4-6 attribute
+  // points were dropped on the floor and never re-offered. Firing in
+  // DFU's order fixes that at the cost the narrowing already records:
+  // on a pass that both masters a skill and levels the player, the box
+  // is the window the single slot loses, not the sheet.
+  //
+  // Interleaved, not batched: DFU pops the skillImprove message and
+  // then, for that same skill, the master box - so a pass that raises
+  // two skills reads in the source's order.
+  return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
+    () => {
+      const rows = plainLines(lines?.(MASTERY_TEXT_ID));
+      if (rows?.length) box?.(rows);
+      audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
+    },
+    (id) => say(`Your ${SKILL_NAMES[id]} skill has improved.`)) ?? [];
 }
 
 /**

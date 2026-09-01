@@ -416,11 +416,16 @@ export class EnemyAI {
     this.canCastRangedSpell = canCastRangedSpell ?? (() => false);
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
-    // Flyers (and the slaughterfish) aim for the target FACE
+    // Flyers, LEVITATORS and the slaughterfish aim for the target FACE
     // (PredictedTargetPos + targetHeight/2 above the center = feet +
     // height); other swimmers aim at the center (no ground flatten).
-    this._aimY = this.flies || (this.swims && mobileId === MOBILE_SLAUGHTERFISH_ID)
-      ? CAPSULE_HEIGHT : CAPSULE_HEIGHT / 2;
+    // ROAD-Ar R4: the who-aims-where split is decided PER CALL in
+    // _getDestination, not frozen here - `levitating` is a live effect
+    // flag (effects.applyEnemyMotorEffectFlags) and the foe pools
+    // rewrite `ai.flies` for a transformed Seducer, so a birth-time
+    // constant answered for a shape the foe no longer has. Only the
+    // slaughterfish test is immutable, so only it is cached.
+    this.isFaceAimingSwimmer = this.swims && mobileId === MOBILE_SLAUGHTERFISH_ID;
     this.waterSurfaceY = waterSurfaceY;
     this.velY = 0;
     this.detected = false;
@@ -1006,10 +1011,17 @@ export class EnemyAI {
       const d = [predicted[0], predicted[1], predicted[2]];
       // Flyers, levitators and the slaughterfish aim for the target FACE
       // (:543-544) - `targetController.height * 0.5f`, the TARGET's
-      // capsule. _aimY carries the port's who-aims-where split (a
-      // flyer at the face, a swimmer at the centre); the HEIGHT it
-      // scales is the target's, which only MT-ii made variable.
-      if (this.flies || this.levitating || this.swims) d[1] += this._aimY * (tHeight / CAPSULE_HEIGHT);
+      // capsule, on top of a destination DFU takes at the target's
+      // CENTRE. `d` is feet-space here, so the port folds the two
+      // cases together: the face-aimers get the whole target height
+      // (feet + h = centre + h/2 = top), a plain swimmer gets half
+      // (feet + h/2 = centre, DFU's no-add case). The predicate is
+      // DFU's own `flies || IsLevitating || (swims && Slaughterfish)`
+      // and is read LIVE - `levitating` changes with the effect.
+      if (this.flies || this.levitating || this.swims) {
+        d[1] += (this.flies || this.levitating || this.isFaceAimingSwimmer)
+          ? tHeight : tHeight / 2;
+      }
       this.destination = d;
       this.searchMult = 0;
     } else {
@@ -1497,7 +1509,7 @@ export class EnemyAI {
    *  whatever it was handed. GetDestination is where DFU puts it
    *  (:542-545), and once that was ported the flyer got it twice - it
    *  aimed 1.8 above the target's head and stopped 3.6 short instead of
-   *  at melee range. One home: _getDestination applies _aimY, this
+   *  at melee range. One home: _getDestination applies the aim bump, this
    *  returns the direction to the point it is given. */
   _dir3(point) {
     const dx = point[0] - this.feet[0];

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {
   layoutMessageBox, messageBoxWheel, MB_BUTTONS,
   MARGIN, BUTTON_H, BUTTON_TEXT_DISTANCE, SLICE, MIN_BOX_SIDE,
-  SCROLL_PANEL_PAD, SCROLL_BAR_W, SCROLL_WHEEL_STEP, IMAGE_PANEL_Y,
+  SCROLL_PANEL_PAD, SCROLL_BAR_W, SCROLL_WHEEL_STEP,
 } from '../src/ui/messageBox.js';
 import { TextRsc, dfRandPick, RSC } from '../src/formats/textRsc.js';
 import { srand, rand } from '../src/formats/dfRandom.js';
@@ -91,10 +91,26 @@ test('ROAD-A7: an image makes the box taller and moves the label to the BOTTOM',
   // VerticalAlignment.Bottom: yMax - BottomMargin - labelH
   const labelH = 18 + BUTTON_TEXT_DISTANCE;
   assert.equal(withImg.textY, withImg.y + withImg.h - MARGIN - labelH);
-  // the panel is Center horizontally, Position.y 5 under the top margin
+  // ROAD-Ar R14 - PIN MOVED, DELIBERATELY. This used to read
+  // `withImg.y + MARGIN + IMAGE_PANEL_Y` and assert IMAGE_PANEL_Y === 5,
+  // taking DaggerfallInventoryWindow.cs:1622-1623's
+  // `VerticalAlignment = None; Position = (0,5)` as final. It is not:
+  // the same arm sets BackgroundTexture at :1625 and calls Show() at
+  // :1627, and Show (DaggerfallMessageBox.cs:295-301) runs
+  // UpdatePanelSizes() first, whose image arm (:528-534) reassigns
+  // `imagePanel.VerticalAlignment = VerticalAlignment.Top`. Under Top,
+  // BaseScreenComponent's getter ASSIGNS rectangle.y from
+  // parentRect.yMin + TopMargin (:1228-1230), discarding Position.y -
+  // only the `None` arm (:1225-1227) adds it. TopMargin is 10
+  // (DaggerfallUI.cs:931), which is MARGIN. So the panel is Center
+  // horizontally and flush with the TOP MARGIN, and the constant is
+  // gone rather than corrected: there is no five anywhere in the law.
   assert.deepEqual(withImg.image,
-    [withImg.x + Math.round((withImg.w - 80) / 2), withImg.y + MARGIN + IMAGE_PANEL_Y, 80, 44]);
-  assert.equal(IMAGE_PANEL_Y, 5);
+    [withImg.x + Math.round((withImg.w - 80) / 2), withImg.y + MARGIN, 80, 44]);
+  // and the picture must clear the bottom-aligned label - the 5 used
+  // to eat the slice slack and overlap the first text row.
+  assert.ok(withImg.image[1] + withImg.image[3] <= withImg.textY,
+    'the image ran into the label');
   assert.equal(plain.image, null);
 });
 
@@ -157,6 +173,47 @@ test('ROAD-A7: dfRandPick is DFRandom.rand() % count, and it CONSUMES a draw', (
   // the uniform default is untouched
   assert.equal(rsc.variantLinesById(250, () => 0)[0].text, 'AAA');
   assert.equal(rsc.variantLinesById(250, () => 0.999)[0].text, 'DDD', 'Range\'s exclusive top');
+});
+
+// ROAD-Ar R13. TextProvider.cs:225 completes the final stream
+// unconditionally ("Complete final stream", tokenStreams.Add), so
+// Count >= 1 always, and :228's draw has NO Count guard:
+//   int index = dfRand ? (int)(DFRandom.rand() % tokenStreams.Count) : ...
+// A record with no SubrecordSeparator therefore still burns one LCG
+// value. Both port readers used to return before ever calling `pick`
+// when n <= 1 - free while `pick` was Math.random, one draw BEHIND
+// classic once a7 made it stream-consuming. Every painting read routes
+// through this seam and paintingMacros walks the same stream right
+// after, so a skipped draw shifts the subject, both prefixes, the
+// adjective and the artist.
+test('ROAD-Ar R13: a SINGLE-variant record still consumes its dfRand draw', () => {
+  const one = rscWithVariants(250, ['ONLY']);
+  assert.equal(one.variantCount(250), 1);
+
+  srand(4242);
+  assert.equal(one.variantLinesById(250, dfRandPick)[0].text, 'ONLY',
+    'the row content is still variant 0 - only the draw is restored');
+  const after = rand();
+  srand(4242);
+  rand();                       // the pick TextProvider.cs:228 always takes
+  assert.equal(rand(), after, 'the single-variant read spent exactly one value');
+
+  // the token reader answers the same law
+  const tok = rscWithVariants(6100, ['SOLO']);
+  srand(4242);
+  assert.equal(tok.variantTokensById(6100, dfRandPick)[0].text, 'SOLO');
+  const afterTok = rand();
+  srand(4242);
+  rand();
+  assert.equal(rand(), afterTok, 'variantTokensById skipped its draw too');
+
+  // a MISSING record is not a one-stream record: GetRSCTokens would
+  // have answered null and there is nothing to draw over.
+  srand(4242);
+  const untouched = rand();
+  srand(4242);
+  assert.deepEqual(one.variantLinesById(9999, dfRandPick), []);
+  assert.equal(rand(), untouched, 'a record that does not exist draws nothing');
 });
 
 test('ROAD-A7: the token reader takes the same dfRand draw', () => {

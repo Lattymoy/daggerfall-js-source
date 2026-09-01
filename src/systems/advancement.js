@@ -90,8 +90,18 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
  * lives here via entity.lastSkillCheckTime). Returns the raised
  * skill ids. The headless level-up applies immediately (INTERIM,
  * loud - DFU routes through the char sheet).
+ *
+ * ROAD-Ar R12 - THE HOOKS FIRE IN DFU'S ORDER, WHICH IS THE WHOLE
+ * POINT OF HAVING THEM. RaiseSkills does the skillImprove popup
+ * (:1388) and the mastery box (:1396-1404) INSIDE the skill loop and
+ * only then, outside it, posts dfuiOpenCharacterSheetWindow (:1413).
+ * A host that presents the raises AFTER raiseSkills returns has
+ * inverted that, and on a single-overlay host the mastery box then
+ * lands on top of the level-up sheet. So `onRaise` exists for the same
+ * reason `onMastery` does: to give the host DFU's moment rather than
+ * a batch after the fact.
  */
-export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onLevelUp = null, onMastery = null) {
+export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onLevelUp = null, onMastery = null, onRaise = null) {
   if (!entity.chargenDone) return [];
   if ((classicTimeMinutes - (entity.lastSkillCheckTime ?? 0)) <= SKILL_RAISE_CHECK_INTERVAL) return [];
   entity.lastSkillCheckTime = classicTimeMinutes;
@@ -114,6 +124,9 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
 
       setSkillRecentlyIncreased(entity, i);
       raised.push(i);
+      // PopupMessage("skillImprove") (:1388) - in the loop, ahead of
+      // the mastery box for that same skill and ahead of the sheet.
+      onRaise?.(i);
       // RaiseSkills :1390-1407, verbatim shape: a PRIMARY skill that
       // has just landed on exactly 100 is the mastery. The box's text
       // and the fanfare are presentation, so they ride the host's

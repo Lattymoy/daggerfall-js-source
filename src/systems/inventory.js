@@ -151,7 +151,20 @@ export function isStackable(item) {
 export function stacksWith(a, b) {
   return isStackable(a) && isStackable(b) &&
     a.group === b.group && a.templateIndex === b.templateIndex &&
-    (a.material ?? null) === (b.material ?? null) &&
+    // ROAD-Ar R5 (fallout): an ABSENT material is material 0, which is
+    // how the whole rest of the port reads the field (paperDoll :126,
+    // itemTemplates :61/:63, equip :345, weaponRig :162 - all
+    // `material ?? 0`) and what DFU's int nativeMaterialValue is when
+    // nothing sets it. The `?? null` sentinel here made undefined and 0
+    // different things, so a SplitStack mint - which writes
+    // nativeMaterialValue = 0 verbatim (DaggerfallUnityItem.cs:558) -
+    // could not re-merge into a source stack that carried no material
+    // field at all, e.g. the gold stack goldStack() mints. FLAGGED:
+    // FindExistingStack (:708-713) does not compare material AT ALL;
+    // the port's extra term is a pre-existing narrowing this line does
+    // not widen, it only stops the term firing on a spelling
+    // difference.
+    (a.material ?? 0) === (b.material ?? 0) &&
     (a.message ?? 0) === (b.message ?? 0) &&
     (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
@@ -203,6 +216,17 @@ export function addItem(list, item) {
  * The two mint terms the port keeps one home for - condition
  * (mintCondition) and the Paintings message (rollPaintingMessage) -
  * are called by name rather than respelled.
+ *
+ * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
+ * inline re-spellings of this member (equip.js:230 and
+ * potionMakerWindow.js:163, both on paths where nothing stackable is
+ * equippable) and missed a THIRD, which was the one on the main path:
+ * itemTransfer._applyTransfer's partial arm, reached by every
+ * pack<->wagon/loot and shelf->basket move that the wagon or carry
+ * gate clamps below stackCount. That one now calls this member, so the
+ * two spellings can no longer disagree about what a split produces.
+ * The recorded remainder is therefore equip.js and potionMakerWindow.js
+ * ONLY - if a third appears, it is new.
  */
 export function splitStack(list, stack, numberToPick, { rolls = Math.random } = {}) {
   const count = stack?.stackCount ?? 1;
