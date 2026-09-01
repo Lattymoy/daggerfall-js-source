@@ -62,6 +62,7 @@
   </select></label>
   <label><input id="retro" type="checkbox"> retro sky (the game's ?sky= pass)</label>
   <label>warmth <input id="warmth" type="range" min="0" max="100" step="1" value="35"><span class="v" id="vwarmth"></span></label>
+  <label>front s <input id="frontS" type="range" min="2" max="90" step="1" value="9"><span class="v" id="vfrontS"></span></label>
   <label>surface <select id="surf">
     <option>grass</option><option>dirt</option><option>stone</option><option>sand</option>
   </select></label>
@@ -78,8 +79,8 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, windDir: 20, warmth: 35, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
-for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun', 'warmth']) {
+const state = { density: 160000, height: 34, wind: 70, windDir: 20, warmth: 35, frontS: 9, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
+for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun', 'warmth', 'frontS']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
   el.addEventListener('input', sync); sync();
@@ -911,7 +912,17 @@ const SKY_KEYS = [
 //     starts when the sky already looks like rain, not with it;
 //   - and the wind picks up before the rain and drops after it, which
 //     is the part everyone has felt and nobody draws.
-const FRONT_SECONDS = 26;         // a full change, in the lab's own time
+// AUDIT 43 F1: THE LAB COULD NOT BE OBSERVED. A front took 26 seconds
+// and the particles only begin at 45% of it, so nothing fell for the
+// first twelve seconds after choosing a weather and the ground took
+// twenty more to whiten. Measuring the field's own texture found
+// maxSnow = 0 twice in a row, and the third read never landed before
+// the harness gave out - which is not a bug in the system, it is a bug
+// in how long the system makes you wait to see it. A lab that cannot
+// be watched inside one run cannot be tuned. The pace is a SLIDER now,
+// and it starts fast; the game's own front is minutes, not seconds,
+// and the slider is what maps between the two.
+let FRONT_SECONDS = 9;
 const SNOW_TINT = [0.92, 0.95, 1.02];   // snow light is cold; rain light is not
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerp3 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
@@ -920,7 +931,7 @@ const front = {
   from: 'sunny', to: 'sunny', t: 1,
   /** ask for a change; the sky takes its own time about it */
   set(name) { if (name === this.to) return; this.from = this.sample().key; this.to = name; this.t = 0; },
-  tick(dt) { this.t = Math.min(1, this.t + dt / FRONT_SECONDS); },
+  tick(dt) { this.t = Math.min(1, this.t + dt / Math.max(0.5, FRONT_SECONDS)); },
   /** the sky RIGHT NOW: the two states eased together, with the front
    *  running ahead of the ease so the deck arrives before its weather */
   sample() {
@@ -1709,6 +1720,7 @@ function frame(now) {
     wet: lerp(wxF.wet, wxT.wet, ft),
     sky: lerp3(wxF.sky, wxT.sky, ft),
   };
+  FRONT_SECONDS = state.frontS;
   front.tick(dt);
   const wsky = front.sample();
   // PROTO-14 (1): ONE WIND. The grass swayed on one number, the rain
