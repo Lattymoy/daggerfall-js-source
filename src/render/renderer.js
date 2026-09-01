@@ -394,6 +394,8 @@ uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
 ${CLOUD_SHADOW_GLSL}
+uniform sampler2DArray uTileNrm;   // EE6: the drawn tiles' normals
+uniform float uNormalAmt;          // EE6: 0 outside the drawn mode
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -433,6 +435,27 @@ void main() {
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
+  // EE6: THE GROUND IS LIT, NOT PAINTED. The drawn tiles carry a normal
+  // per texel, from their surfaces' own height - a blade's tip stands
+  // higher than its root, a pebble higher than the soil - so every
+  // blade and pebble gets a lit side and a shaded side, and they move
+  // with the sun. The tile's tangent frame is the tile's own axes: the
+  // same rotation that placed its colours places its normal, so a
+  // rotated tile is lit as a rotated surface and not as the unrotated
+  // one. uNormalAmt is 0 outside the drawn mode, and the term costs
+  // nothing there.
+  if (uNormalAmt > 0.0) {
+    vec3 tn = texture(uTileNrm, vec3(tuv, float(layer))).xyz * 2.0 - 1.0;
+    vec2 tr = ROT[t] * tn.xy;                       // the tile's rotation, applied to its normal
+    vec3 perturbed = normalize(vec3(tr.x, tn.z, tr.y));   // tangent (x, y-up, z) -> world on flat ground
+    n = normalize(mix(n, perturbed, uNormalAmt));
+    // DETAIL TILING: a low-frequency read over WORLD position modulates
+    // the albedo, so the tile's 6.4m period does not resolve into a
+    // grid on open ground. The same fbm the shadows use, at a tenth the
+    // rate: damp ground deeper, worn ground lighter.
+    float low = tfbm(vWorldPos.xz * 0.011);
+    tex *= 0.86 + 0.28 * low;
+  }
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
   // crosses the cloud plane - so a bank overhead drags its shadow across
@@ -475,7 +498,7 @@ const EMISSION_WHITE = new Float32Array([1, 1, 1]);
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
 import { TextureFile } from '../formats/textureFile.js';
-import { buildEnhancedTiles } from './groundSurfaces.js';   // EE4: the drawn ground
+import { buildEnhancedTiles, buildTileNormals } from './groundSurfaces.js';   // EE4: the drawn ground; EE6: its normals
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
 export const CHAR_PIXEL = 9;
@@ -699,6 +722,8 @@ export class Renderer {
     this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
     this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
+    this.tUTileNrm = gl.getUniformLocation(this.terrainProgram, 'uTileNrm');     // EE6
+    this.tUNormalAmt = gl.getUniformLocation(this.terrainProgram, 'uNormalAmt'); // EE6
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
     this.tULightDir = gl.getUniformLocation(this.terrainProgram, 'uLightDir');
@@ -714,6 +739,7 @@ export class Renderer {
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive:mode -> TEXTURE_2D_ARRAY
+    this.tileNormals = new Map(); // EE6: archive:mode -> the tiles' normal array (drawn mode only)
     /** EE3: the ground's half of the Enhanced Environments switch, set
      *  by the host from the skin AND the pref before each upload. OFF by
      *  default, so the classic skin cannot inherit it. */
@@ -1840,6 +1866,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return this.tileArrays.get(`${archive}:${mode}`);
   }
 
+  /** EE6: the normal array for an archive in the current mode, or null
+   *  when the mode carries none. Same door discipline as tileArrayFor. */
+  tileNormalFor(archive) {
+    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
+    return this.tileNormals.get(`${archive}:${mode}`) ?? null;
+  }
+
   uploadTileArray(archive, layers) {
     // EE3: THE GROUND'S SAMPLING, behind the Enhanced Environments
     // switch. Two modes, and a URL door between them:
@@ -1876,6 +1909,27 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // a climate's 56 tiles, and a two-second stall entering the world
     // is worse than the detail is good.
     const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
+    // EE6: the tiles' NORMALS, from the surfaces' own height, as a second
+    // array beside the colours. Only the drawn tiles carry a height, so
+    // only the drawn mode has normals; the other modes leave the slot
+    // null and the shader's normal term is 0.
+    if (mode === 'drawn') {
+      const nrm = buildTileNormals(src);
+      const ntex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, ntex);
+      gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, nrm[0].width, nrm[0].height, nrm.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      for (let i = 0; i < nrm.length; i++) {
+        gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, nrm[i].width, nrm[i].height, 1, gl.RGBA, gl.UNSIGNED_BYTE, nrm[i].colors);
+      }
+      while (gl.getError() !== gl.NO_ERROR) { /* drain */ }
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      const ok = gl.getError() === gl.NO_ERROR;
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, ok ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.tileNormals.set(key, ntex);
+    }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
     const w = src[0].width;
@@ -1932,7 +1986,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   setCloudShadow(d) { this._cloudShadow = d ?? null; }
 
   /** Draw one terrain surface with its tilemap + tile array. */
-  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
+  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize, normalTex = null) {
     const gl = this.gl;
     this._use(this.terrainProgram);
     gl.uniformMatrix4fv(this.tUProj, false, this._proj);
@@ -1966,6 +2020,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(this.tUTilemap, 2);
+    // EE6: the normals ride unit 3, drawn mode only; the sampler must
+    // still be bound to SOMETHING valid when the amount is 0, or a
+    // driver may treat the unit as incomplete, so the colour array
+    // stands in.
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, normalTex ?? arrayTex);
+    gl.uniform1i(this.tUTileNrm, 3);
+    gl.uniform1f(this.tUNormalAmt, normalTex ? 1.0 : 0.0);
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);

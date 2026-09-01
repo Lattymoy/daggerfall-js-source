@@ -135,6 +135,17 @@ pass already does. GATE: check + worldRenderGate under rain.
 **EE9 - the surface field.** Last, because it must feed the chunker's
 own vertices. Design first, as its own doc, before any code.
 
+Mac's direction, recorded here so it shapes EE9 and is not lost: WINTER
+IS NOT A TEXTURE. The lab retired the snow tile in favour of snow that
+ACCUMULATES on whatever ground is there, deforms underfoot, and melts.
+So in the game the winter archives (x03) should not drive a "snow"
+surface at all: the ground keeps its summer materials - grass, dirt,
+stone - and the FIELD lays snow on them, with a per-climate warmth
+function deciding how much stays and how fast it melts (a desert
+winter holds none, a mountain winter holds it all). EE4's snow
+identification is the bridge until then: it makes today's winter look
+right, and EE9 replaces it rather than building on it.
+
 ## Not in this arc
 
 Pixel-art blades (removed from the lab at Mac's direction). The lab's

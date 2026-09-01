@@ -421,3 +421,37 @@ export function buildEnhancedTiles(layers, { size = 128, surfaces = null, seed =
   out.families = family;
   return out;
 }
+
+/**
+ * EE6: NORMALS FROM THE SURFACES' OWN HEIGHT. Every drawn tile carries
+ * the height its surface reported - a blade stands, a pebble stands, a
+ * rut sinks - and a Sobel pass turns that into a tangent-space normal
+ * per texel. This is the single term that separates a picture of
+ * ground from ground: every blade and pebble gets a lit side and a
+ * shaded side, and they move with the sun. Wrapping reads, so a tile's
+ * normals are seamless with its neighbours as its colours are.
+ *
+ * Returns RGBA layers (xyz encoded 0..255, z up) matching the tiles'
+ * size and order, ready for the same upload path.
+ */
+export function buildTileNormals(tiles, { strength = 3.2 } = {}) {
+  const out = [];
+  for (const t of tiles) {
+    const w = t.width; const h = t.height; const hh = t.heights;
+    const px = new Uint8Array(w * h * 4);
+    if (!hh) { for (let k = 0; k < w * h; k++) { px[k * 4] = 128; px[k * 4 + 1] = 128; px[k * 4 + 2] = 255; px[k * 4 + 3] = 255; } out.push({ width: w, height: h, colors: px }); continue; }
+    const at = (x, y) => hh[(((y % h) + h) % h) * w + (((x % w) + w) % w)];
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = (at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1)) - (at(x - 1, y - 1) + 2 * at(x - 1, y) + at(x - 1, y + 1));
+        const dy = (at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1)) - (at(x - 1, y - 1) + 2 * at(x, y - 1) + at(x + 1, y - 1));
+        let nx = -dx * strength; let ny = -dy * strength; let nz = 1;
+        const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
+        const o = (y * w + x) * 4;
+        px[o] = (nx * 0.5 + 0.5) * 255; px[o + 1] = (ny * 0.5 + 0.5) * 255; px[o + 2] = (nz * 0.5 + 0.5) * 255; px[o + 3] = 255;
+      }
+    }
+    out.push({ width: w, height: h, colors: px });
+  }
+  return out;
+}

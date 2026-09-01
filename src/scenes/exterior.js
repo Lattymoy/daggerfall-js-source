@@ -2099,7 +2099,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // sky, which is the classic skin and every interior.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
-      renderer.tileArrayFor(groundArchive), tilemapTex, 6.4);
+      renderer.tileArrayFor(groundArchive), tilemapTex, 6.4, renderer.tileNormalFor(groundArchive) /* EE6 */);
     for (const d of drawList) {
       if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
       renderer.drawMesh(d.mesh, d.matrix, texRemap);

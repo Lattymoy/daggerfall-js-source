@@ -6031,7 +6031,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // sky, which is the classic skin and every interior.
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
         renderer.drawTerrain(p.terrain, pixelMatrix,
-          renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4);
+          renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive) /* EE6 */);
         for (const m of p.models) {
           if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
           if (m._worldGen !== p._worldGen || !m._world) {

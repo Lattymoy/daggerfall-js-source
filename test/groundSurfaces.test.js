@@ -103,3 +103,51 @@ test('EE4: wired as the enhanced default, built before any GL call, and the uplo
   assert.ok(!/drawArrays|drawElements|bindFramebuffer|gl\.clear\(|viewport\(/.test(up), 'the upload law');
   assert.ok(!/prototype\/ground|\.png'/.test(r), 'no raster of game data may be fetched');
 });
+
+// ═══ EE6: the ground is lit, not painted ════════════════════════════
+test('EE6: normals from the surfaces\u2019 own height, seamless, and read inside the terrain shader', async () => {
+  const { buildTileNormals } = await import('../src/render/groundSurfaces.js');
+  const S = makeSurfaces();
+  const size = 32;
+  const heights = new Float32Array(size * size); const colors = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) heights[y * size + x] = S.dirt(x / size, y / size).h;
+  const [n] = buildTileNormals([{ width: size, height: size, colors, heights }]);
+  assert.equal(n.width, size);
+  // a normal is a unit vector encoded 0..255, z up: the mean points up
+  let sz = 0; for (let k = 0; k < size * size; k++) sz += n.colors[k * 4 + 2];
+  assert.ok(sz / (size * size) > 160, 'normals lean up, not sideways');
+  // and it WRAPS: the Sobel at column 0 reads column 31 as its
+  // neighbour. Proven directly: a height field that is a ramp across
+  // the tile has a CLIFF at the wrap edge, and a wrapping Sobel sees
+  // that cliff at columns 0 and 31 while a clamping one sees nothing.
+  const ramp = new Float32Array(size * size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) ramp[y * size + x] = x / size;
+  const [rn] = buildTileNormals([{ width: size, height: size, colors, heights: ramp }]);
+  const nx = (x) => rn.colors[(5 * size + x) * 4];
+  // the interior leans one way (the ramp); the two edge columns lean the
+  // OTHER way (the cliff). A clamping Sobel gives the edges the ramp's
+  // own lean, and this fails.
+  assert.ok(nx(10) < 100, `the interior leans with the ramp (got ${nx(10)})`);
+  assert.ok(nx(0) > 200, `column 0 must see the wrap cliff (got ${nx(0)})`);
+  assert.ok(nx(size - 1) > 200, `column ${size - 1} must see the wrap cliff (got ${nx(size - 1)})`);
+  // a tile with no height gets the flat normal, so the other modes are safe
+  const [flat] = buildTileNormals([{ width: 2, height: 2, colors: new Uint8Array(16) }]);
+  assert.deepEqual([...flat.colors.slice(0, 4)], [128, 128, 255, 255]);
+
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const ti = r.indexOf('const TERRAIN_FS = `'); const tj = r.indexOf('`;', ti); const terrain = r.slice(ti, tj);
+  assert.match(terrain, /uniform sampler2DArray uTileNrm;/, 'declared INSIDE the shader that uses it');
+  assert.match(terrain, /if \(uNormalAmt > 0\.0\) \{/, 'free outside the drawn mode');
+  assert.match(terrain, /vec2 tr = ROT\[t\] \* tn\.xy;/, 'the tile\u2019s rotation places its normal as it placed its colours');
+  assert.match(terrain, /float low = tfbm\(vWorldPos\.xz \* 0\.011\);/, 'the detail read is over WORLD position');
+  // the draw binds a valid array on the normal unit even when the amount is 0
+  assert.match(r, /gl\.bindTexture\(gl\.TEXTURE_2D_ARRAY, normalTex \?\? arrayTex\);\s*\n\s*gl\.uniform1i\(this\.tUTileNrm, 3\);\s*\n\s*gl\.uniform1f\(this\.tUNormalAmt, normalTex \? 1\.0 : 0\.0\);/);
+  // the upload: a second array, built and uploaded under the same law
+  const start = r.indexOf('uploadTileArray(archive, layers) {'); const up = r.slice(start, r.indexOf('\n  }\n', start) + 4);
+  assert.match(up, /const nrm = buildTileNormals\(src\);/);
+  assert.ok(!/drawArrays|drawElements|bindFramebuffer|gl\.clear\(|viewport\(/.test(up), 'the upload law, still');
+  assert.match(r, /tileNormalFor\(archive\) \{/, 'one door for the normals too');
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(readFileSync(host, 'utf8'), /renderer\.tileNormalFor\((p\.)?groundArchive\) \/\* EE6 \*\/\)/, host);
+  }
+});

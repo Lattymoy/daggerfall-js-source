@@ -505,7 +505,7 @@ test('EE3: a sized format, two modes keyed in the cache, NEAREST for classic byt
     // about the mode the upload will use
     assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);\n\s*renderer\.groundMode = new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('ground'\);\n\s*if \(!renderer\.tileArrayFor\(groundArchive\)/,
       `${host}: flag, door, THEN the guard`);
-    assert.match(h, /renderer\.tileArrayFor\((p\.)?groundArchive\), (p\.)?tilemapTex, 6\.4\)/, `${host} draws through the door`);
+    assert.match(h, /renderer\.tileArrayFor\((p\.)?groundArchive\), (p\.)?tilemapTex, 6\.4/, `${host} draws through the door`);   // EE6 adds the normals after 6.4
   }
   // and the world gate judges the TERRAIN by a median band, because a
   // lit building beside a void ground passed the lower-half check
