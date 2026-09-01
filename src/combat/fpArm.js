@@ -432,27 +432,6 @@ parseNifOnce.cache = new WeakMap();
 
 /** getArrowBone's FIRST branch: does the ACTOR's own skeleton carry the
  *  ammo type's attach bone? */
-/** MW-D46: the bone OpenMW issue 5642 added the quiver branch for. */
-const QUIVER_BONE = 'Bip01 Arrow';
-
-/** MW-D46: is this name present in these bytes at all? A .kf stores node
- *  names as plain ASCII, so a clip that animates a bone necessarily
- *  contains its name - and one that does not, cannot. A scan rather than
- *  a parse: the question is existence, not structure, and a wrong answer
- *  only ever costs the VANILLA placement, which is the one that works. */
-function bytesHaveName(bytes, name) {
-  if (!bytes || !bytes.length) return false;
-  const want = [];
-  for (let i = 0; i < name.length; i++) want.push(name.charCodeAt(i));
-  const last = bytes.length - want.length;
-  for (let i = 0; i <= last; i++) {
-    let hit = true;
-    for (let j = 0; j < want.length; j++) { if (bytes[i + j] !== want[j]) { hit = false; break; } }
-    if (hit) return true;
-  }
-  return false;
-}
-
 function skeletonHasBone(skeletonBytes, name) {
   try {
     const skel = buildSkeleton(parseNifOnce(skeletonBytes));
@@ -709,7 +688,7 @@ export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
 }
 
-export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes, quiverDriven = true }) {
+export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
   const notes = [];
   const parts = [];
   let weaponInfo = null;
@@ -758,47 +737,16 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
               // the WEAPON's mesh - which brings the weapon's whole
               // transform chain, and its MIRROR, along with it.
               const skelBone = arrowAttachBone(mwType);
-              // MW-D46: THE QUIVER BRANCH NEEDS THE ANIMATION IT EXISTS
-              // FOR. OpenMW issue 5642 added it so modded skeletons
-              // could fetch arrows from a quiver - "allows to implement
-              // better shooting animations" - and a skeleton carrying
-              // "Bip01 Arrow" with no clip that MOVES it parks the
-              // round on the body for the whole shot, which is what Mac
-              // has been looking at. `quiverDriven` is the caller's
-              // answer to "does any loaded clip drive that bone"; false
-              // sends the round down the vanilla path the bow mesh
-              // already carries. Defaults true, so every existing
-              // caller and pin is unchanged.
-              // MW-D47: THE BOW MESH IS ASKED FIRST. This inverts
-              // getArrowBone's order and it is a DELIBERATE DIVERGENCE,
-              // recorded as one.
-              //
-              // The reference tries the actor's quiver bone first and
-              // falls back to the bow. That order is right for OpenMW
-              // because the modder who adds "Bip01 Arrow" also ships
-              // the clips that CARRY the round from the quiver to the
-              // string - issue 5642's whole purpose, "better shooting
-              // animations". This port does not run those clips. It
-              // drives Daggerfall's own weapon machine, so a round
-              // placed at the quiver has nothing to move it and stays
-              // in the actor's chest for the entire shot. Six rounds of
-              // Mac's play reports are that one sentence: through the
-              // face in first person, in the character in third - the
-              // same bone, seen from two camera positions.
-              //
-              // So the bow's own ArrowBone wins wherever the mesh has
-              // one, which is every vanilla bow, and the quiver bone is
-              // what is left for a mesh that carries none. `pre` is set
-              // exactly when the bow branch won, which is what MW-D44's
-              // weapon-offset inheritance keys off, so that stays true.
-              const pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
-              let arrowBone = pre ? bone : null;
-              if (!arrowBone && quiverDriven && skelBone && skeletonHasBone(skeletonBytes, skelBone)) {
-                arrowBone = skelBone;
+              const onActor = skelBone && skeletonHasBone(skeletonBytes, skelBone);
+              let pre = null;
+              let arrowBone = skelBone;
+              if (!onActor) {
+                pre = nodeTransformOf(parseNifOnce(weaponBytes), ARROW_FALLBACK_NODE);
+                arrowBone = pre ? bone : null;
               }
               if (!arrowBone) {
-                notes.push(`arrow: no "${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} `
-                  + `and no usable "${skelBone}" bone on this skeleton - nowhere to put it`);
+                notes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
+                  + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
               } else {
                 parts.push({
                   // MW-D34: `ammo` marks the one part attachArrow
@@ -809,7 +757,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                 });
                 arrowInfo = {
                   id: ammoRec.id, name: ammoRec.name, model: ammoRec.model, type: ammoType,
-                  bone: arrowBone, viaWeaponMesh: !!pre,
+                  bone: arrowBone, viaWeaponMesh: !onActor,
                 };
               }
             }
@@ -876,22 +824,7 @@ async function buildTpBody({
     // Rule 8 on THIS skeleton: the third-person rig carries its own
     // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
     // record hangs off the same column with no new law.
-    // MW-D46b: THE SAME QUESTION, AT THE SAME DOOR. MW-D46 asked "does
-    // any loaded clip drive the quiver bone" in the FIRST-PERSON build
-    // only, and the third-person body resolves through its own call
-    // site - so the quiver branch went on winning here, and this is the
-    // rig whose skeleton is most likely to carry the bone. That split
-    // is the whole history of the report: first person falls back and
-    // wants an ArrowBone in the bow mesh, third person takes the body
-    // bone and parks the round in the torso. One symptom, two branches,
-    // two views.
-    const quiverDriven = tpAnimSources(skeletonPath, exists).some((cp) => {
-      const a = find(cp);
-      return !!a && bytesHaveName(a.get(cp), QUIVER_BONE);
-    });
-    const resolvedWeapon = resolveWeaponParts({
-      weapon, hasAmmo, allWeapons, find, skeletonBytes, quiverDriven,
-    });
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
     partBytes.push(...resolvedWeapon.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
@@ -940,7 +873,6 @@ async function buildTpBody({
       keys: idlePick.source.keys,
       sources,
       sourcePaths,
-      quiverDriven,   // MW-D46b: the swap reads it rather than re-deciding
       clip: idlePick.state,
       groups: [...groupSet].sort(),
       groupSet,
@@ -964,8 +896,6 @@ async function buildTpBody({
 
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
-  // MW-D46: the pins' override - see the use site below.
-  quiverDriven: quiverDrivenOpt = null,
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -1155,22 +1085,7 @@ export async function buildFpArm({
     // gave it so a live weapon swap resolves through the very same door
     // as the build.
     const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
-    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
-    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
-
-    // MW-D46: DOES ANY LOADED CLIP DRIVE THE QUIVER BONE? Asked here,
-    // before the weapon resolves, because the answer decides which of
-    // getArrowBone's two branches the round is allowed to take.
-    // The override exists for the PINS: MW-D16's two branch tests drive
-    // a fixture skeleton that carries the bone against a fixture clip
-    // that does not animate it, which is precisely the combination
-    // MW-D46 now refuses - so they state the branch law by asserting
-    // the answer rather than by accident of the fixtures.
-    const quiverDriven = quiverDrivenOpt
-      ?? sourceBytes.some((x) => bytesHaveName(x.bytes, QUIVER_BONE));
-    const resolvedWeapon = resolveWeaponParts({
-      weapon, hasAmmo, allWeapons, find, skeletonBytes, quiverDriven,
-    });
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
     const weaponInfo = resolvedWeapon.weaponInfo;
@@ -1179,6 +1094,8 @@ export async function buildFpArm({
 
     // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
     // as addSingleAnimSource filters it.
+    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
+    const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
 
     if (!partBytes.length) {
       // "no record for this actor" is a dead end for whoever reads it.
@@ -1351,7 +1268,6 @@ export async function buildFpArm({
       // whose tracks must pose it.
       sources,
       sourcePaths,
-      quiverDriven,   // MW-D46b: the swap reads it rather than re-deciding
       clip: c,
       // MW-D12: the file's own answer to "does this animation exist",
       // which rules 9 and 10 both consult. A Set, because
@@ -1506,32 +1422,6 @@ const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
 function readFollowCamera() {
   try { return (appStorage()?.getItem(FOLLOW_CAMERA_KEY) ?? 'true') !== 'false'; }
   catch { return true; }
-}
-
-/**
- * HOW BIG THE FIRST-PERSON TARGET IS, IN ONE PLACE.
- *
- * The arm renders into a pw x ph corner of the shared character-sprite
- * RT, and anyone who reads that target back has to read exactly that
- * corner. There were two copies of this arithmetic - the draw's, and
- * the probe's own `canvas.clientWidth / 9` against a 512 clamp - and
- * MW-D43 changed the dial (CHAR_PIXEL 9 -> MW_ARM_PIXEL 3) and the RT
- * (512 -> 1024) in the first without touching the second.
- *
- * The probe then read a 107x80 crop of a 320x240 picture and reported
- * EIGHT failures about clip variety, arm width, x-symmetry and the
- * look-down draw, none of which were real. A measuring instrument that
- * keeps its own copy of the thing it measures will eventually measure
- * something else; this is the copy, removed.
- *
- * KEPT ACROSS THE NPC-ARC REVERT: this repairs MW-D43's own drift and
- * has nothing to do with the NPC lane.
- */
-export function fpViewportSize(canvas) {
-  const wantW = canvas.clientWidth / MW_ARM_PIXEL;
-  const wantH = canvas.clientHeight / MW_ARM_PIXEL;
-  const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
-  return { pw: Math.max(2, Math.round(wantW * s)), ph: Math.max(2, Math.round(wantH * s)) };
 }
 
 /**
@@ -2437,9 +2327,6 @@ export function createFpArm() {
           const resolved = resolveWeaponParts({
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
             skeletonBytes: token.skeletonBytes,
-            // MW-D46b: the build already asked the clips; a swap must
-            // not silently answer differently from the body it edits.
-            quiverDriven: token.quiverDriven ?? false,
           });
           const arm = token.arm;
           arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
@@ -2479,7 +2366,6 @@ export function createFpArm() {
             const tResolved = resolveWeaponParts({
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
               skeletonBytes: t.skeletonBytes,
-              quiverDriven: t.quiverDriven ?? false,   // MW-D46b
             });
             t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
             bindPartsInto(t.arm, tResolved.parts);
@@ -2881,7 +2767,12 @@ export function createFpArm() {
       if (!active() || !canvas) return false;
       const cam = camera();
       if (!cam) return false;
-      const { pw, ph } = fpViewportSize(canvas);
+      // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
+      const wantW = canvas.clientWidth / MW_ARM_PIXEL;
+      const wantH = canvas.clientHeight / MW_ARM_PIXEL;
+      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+      const pw = Math.max(2, Math.round(wantW * s));
+      const ph = Math.max(2, Math.round(wantH * s));
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //
@@ -3067,10 +2958,7 @@ export function createFpArm() {
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
       // dial, not the sprite standard - the same fix MW-D43 made for
-      // the first-person pass and missed here. (Restored by hand at the
-      // NPC-arc revert: the arc had folded this call into a shared
-      // placement helper, and backing the arc out took MW-D43b's
-      // argument with it.)
+      // the first-person pass and missed here.
       drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
       return true;
     },

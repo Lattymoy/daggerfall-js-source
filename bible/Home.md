@@ -196,6 +196,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
 - `01-Overview/Audit-UI.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE AUDIT. Twelve sweeps over the PX arc's 54 slices, nine modules and 7,130 lines - and LIVE, not static, because a sheet this size answers grep questions with grep answers. Two findings, both fixed: the 44px touch rule hung off a SCREEN WIDTH and failed on the device the proxy stands in for (measured on an iPad in landscape: skin switch 28px, steppers 34px, value buttons 38px), and the reason the fix at first did not take - three controls sized INLINE in JavaScript, which no media query can reach. Eight sweeps came back clean, including the class-collision shape that has bitten this file four times.
 - `01-Overview/Audit-UI-2.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE, SECOND PASS. 38 PX slices on from the first, and shaped by what actually went wrong since - six faults, every one of which passed its own pins, because they verified the thing built and not the PATH a player takes to it. Six sweeps: every surface at desktop/tablet/phone (12 combinations, clean), and the two recurring faults turned into PINS - no part styled for one shell and left bare in another (four occurrences), and every enhanced window reachable from a host following DYNAMIC imports (PX24's unhung door). Both mutation-tested against the real historical faults.
+- `01-Overview/Audit-44.md` - CLOSED 2026-09-01: THE COMPREHENSIVE PARITY/BUG AUDIT, fleets end to end - a 32-lane finder sweep with 2-3 adversarial refuters per finding (528 agents), a 21-group fix wave in isolated worktrees, an 8-lane review of the fixes, and a 7-group review round. 183 findings judged, 172 confirmed, 166 canonical after dupes - ALL FIXED: the trade window's repeat-pay gold duplication, loot minted with no value, the bow that resolved nothing above ground, Levitate billing the fall it broke, the crime region frozen at boot, the dungeon keeping the death presenter, TG/DB unjoinable, the default skin's crash doors and dead HUD laws, the save envelope's dropped features and the quickload foe pile-up, and the talk surface's five empty macro reads. The review round then caught 39 defects IN the fixes (a merge collision cemented by its own pin, the third host's paralysis arm, in-flight spawns surviving the teleport sweep, an emission sign error vs DFU's shaders) and fixed those too. Port status measured whole: `Port-Status-2026-09.md`, which supersedes Port-Completion-Analysis for volume figures. The standing lesson: 26 of 32 lanes found the caller-does-not-deliver seam class - the law layer is near-verbatim, the wiring is where the bugs live, and the audit39_* tests now pin seams, not just laws.
 - `01-Overview/Audit-43.md` - CLOSED 2026-08-31: THE LAB AFTER PROTO-14 - Audit 42's measure-the-running-page method re-run after the PROTO-14 slice; every active uniform of every program probed at four states.
 - `01-Overview/Audit-42.md` - CLOSED 2026-08-31: THE LAB, MEASURED - the enhanced lab audited by probing the LIVE page (uniforms read off the running programs) instead of re-reading the code; the black-sky class caught by measurement.
 - `01-Overview/Audit-41.md` - CLOSED 2026-08-31: THE SURFACE STATE FIELD - the puddle/snow/deformation field's laws traced from world coordinates to the pixel, the numbers checked against each other.
@@ -289,11 +290,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1510` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3403` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/dungeonContext.js:3514` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:697` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:703` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:957` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1209` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1585` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:696` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:702` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:956` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1208` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1584` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:351` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:368` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:535` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -386,8 +387,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/enhancedMenu.js:1743` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1914` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/enhancedMenu.js:1722` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1893` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
