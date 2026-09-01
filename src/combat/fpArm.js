@@ -40,7 +40,7 @@
 // takes the player's pitch through the neck the reference rotates.
 
 import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
-import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
+import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
 } from '../formats/mwAnim.js';
@@ -2768,8 +2768,9 @@ export function createFpArm() {
       if (!active() || !canvas) return false;
       const cam = camera();
       if (!cam) return false;
-      const wantW = canvas.clientWidth / CHAR_PIXEL;
-      const wantH = canvas.clientHeight / CHAR_PIXEL;
+      // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
+      const wantW = canvas.clientWidth / MW_ARM_PIXEL;
+      const wantH = canvas.clientHeight / MW_ARM_PIXEL;
       const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
