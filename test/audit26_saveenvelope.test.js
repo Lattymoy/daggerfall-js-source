@@ -56,7 +56,10 @@ test('audit26 F222: the pose bag rides the envelope and comes back', () => {
 test('audit26 F222: both hosts write the pose and land it on load', () => {
   const w = rd('src/scenes/world.js');
   // MW-D30 widened the pose with the Morrowind camera's persisted pair.
-  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: !weaponRig\.playerWeapon\.sheathed, camera: mwCamera\.state\(\) \}/);
+  // AUDIT 39 moved the tail of this pin: the TRANSPORT MODE joined the
+  // bag (SerializablePlayer.cs:179, the line beside the weapon), so the
+  // camera is no longer the last field.
+  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: !weaponRig\.playerWeapon\.sheathed, camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
   // SAV3 moved the landing into the ONE pose-apply (quickload + the
   // classic import share it) - the inversion law lives there now.
   assert.match(w, /if \(pose\.weaponDrawn != null\) weaponRig\.playerWeapon\.sheathed = !pose\.weaponDrawn;/,

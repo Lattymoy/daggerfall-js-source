@@ -2526,7 +2526,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // reference saves the first/third flag in its own REC_CAM_ record
       // (worldimp.cpp:425-427) and the zoom distance through the camera
       // script's onSave (camera.lua:350-352).
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state() },
+      // AUDIT 39: and the TRANSPORT MODE, SerializablePlayer.cs:179's
+      // own line beside the weapon and the boarding memory the port
+      // already took (:180 -> snap.boardShipPosition). The mode lives
+      // on the motor, host-owned like the weapon, so it rides the pose
+      // bag rather than the entity envelope.
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state(), transport: player.transportMode },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -2645,6 +2650,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
     if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+    // AUDIT 39 (SerializablePlayer.cs:423): the mount comes back
+    // through the ONE builder, so the riding sprite, the hoof loop,
+    // the ride bob and the no-climbing-from-a-saddle rule re-arm with
+    // it. A pose without the field (an older save, the classic import)
+    // leaves the live mode standing.
+    if (pose.transport != null) setTransportModeHere(pose.transport);
     // MW-D30: the saved camera is FORCED, exactly as the reference
     // applies its REC_CAM_ flag on load (statemanagerimp.cpp:617-618
     // togglePOV when the live view differs). A pose without one (an

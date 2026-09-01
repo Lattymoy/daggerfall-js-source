@@ -108,7 +108,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -128,7 +128,16 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // - opaque here like `world`; the world host composes and consumes
   // it. Null everywhere but interior mode, and a pre-IS1 save
   // restores null (the additive-field shape, version held at 1).
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior };
+  // AUDIT 39: travelMap (SaveLoadManager.cs:871), escortingFaces
+  // (:869) and smallerDungeonsState (PlayerPositionData_v1 :224) are
+  // named here because both hosts already PASS them - composeSessionState
+  // spreads the first two in and the dungeon host adds the third - and
+  // an unnamed option is dropped in silence. Without them every load
+  // took the null arm: the escort portraits of a live quest were
+  // cleared, the travel map's filters and popup choices reset to the
+  // struct defaults, and the SmallerDungeons start-marker warp could
+  // never fire.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, travelMap, escortingFaces, smallerDungeonsState };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -228,9 +237,12 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   //
   // DEPARTURE from DFU's FactionData_v2, which serialises the whole
   // dictionary: the port re-reads FACTION.TXT to build the store, so
-  // only the MUTABLE columns need to travel. Three parallel arrays
-  // beside a sorted id list - lossless, and a few KB rather than 366
-  // whole records. Same shape of decision as legalRep above.
+  // only the MUTABLE columns need to travel. Parallel arrays beside a
+  // sorted id list - a few KB rather than 366 whole records. Same
+  // shape of decision as legalRep above. AUDIT 39: "lossless" holds
+  // only while the column list holds EVERY field play writes; it said
+  // three columns and the region sim had grown nine more. Anything
+  // that mutates a faction record belongs in the list below.
   // AUDIT 22 F7: THE LIT LIGHT SOURCE. DFU writes lightSourceUID and
   // relinks through Items.GetItem(uid) on load (SerializablePlayer.cs
   // :151, :320). The port's entity carried a live OBJECT REFERENCE
@@ -284,15 +296,34 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   return snap;
 }
 
+/** AUDIT 39: rep/flags/power were not the whole mutable set. The
+ *  region simulation rewrites the RELATIONS and the RULER too -
+ *  start/endFactionAllies and start/endFactionEnemies move ally1-3 and
+ *  enemy1-3 (factionRelations.js), setNewRulerData writes
+ *  rulerPowerBonus and rulerNameSeed, setRulerType writes ruler - and
+ *  bootstrapRegionPower runs the conditions body twelve times at
+ *  chargen, so they have already moved before the first save. Dropping
+ *  them reset every relation to FACTION.TXT on load while
+ *  regionConditions restored, which can leave a war flag lit with no
+ *  enemy to end it, and sank every faction's power walk (the shipped
+ *  file's rulerPowerBonus is 0 by construction). */
+export const FACTION_RELATION_COLUMNS = Object.freeze([
+  'ally1', 'ally2', 'ally3', 'enemy1', 'enemy2', 'enemy3',
+  'ruler', 'rulerPowerBonus', 'rulerNameSeed',
+]);
+
 /** The store's mutable columns, id-sorted so the arrays line up. */
 export function snapshotFactionRep(store) {
   const ids = [...store.dict.keys()].sort((a, b) => a - b);
   const rep = [], flags = [], power = [];
+  const out = { ids, rep, flags, power };
+  for (const k of FACTION_RELATION_COLUMNS) out[k] = [];
   for (const id of ids) {
     const f = store.dict.get(id);
     rep.push(f.rep); flags.push(f.flags); power.push(f.power);
+    for (const k of FACTION_RELATION_COLUMNS) out[k].push(f[k]);
   }
-  return { ids, rep, flags, power };
+  return out;
 }
 
 /** Write a snapshot back into a LIVE store. The store is rebuilt from
@@ -304,6 +335,10 @@ export function restoreFactionRep(store, snap) {
     const f = store.dict.get(snap.ids[i]);
     if (!f) continue;
     f.rep = snap.rep[i]; f.flags = snap.flags[i]; f.power = snap.power[i];
+    // AUDIT 39: presence is tested per COLUMN, so a save written before
+    // the relations travelled leaves the FACTION.TXT values standing -
+    // the additive-field shape the rest of the envelope uses.
+    for (const k of FACTION_RELATION_COLUMNS) if (snap[k]) f[k] = snap[k][i];
   }
   return true;
 }
@@ -498,7 +533,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // expiring restored buffs on the spot and bursting a restored
   // continuous-damage effect over a window the saved game never lived.
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null };
+  // AUDIT 39: the three extras above ride back out too - a save from
+  // before they were carried reads the same null/0 they used to.
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving
