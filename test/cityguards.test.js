@@ -173,6 +173,60 @@ test('guards G3: killed guards are loot targets, walk-aways are not, loot takes 
   assert.equal(g.lootTargets().length, 0);
 });
 
+// AUDIT 39r R32 ADDED THIS PIN, AND IT IS DELIBERATELY UN-GATED.
+// AUDIT 39 moved the corpse's loot key from the array index to a minted
+// `g.id` and added the walk-away splice, and every pin of the mint was
+// either ARENA2-gated (G3 above, which CI never runs - Testing.md's own
+// header calls those half-blind) or handed its own id in by a fixture.
+// Mutation-checked: deleting `id: _nextGuardId++` from the spawned
+// record failed nothing, and without it every corpse keys
+// `guardCorpse:undefined`, `Number('undefined')` is NaN, and
+// `guards.find((g) => g.id === id)` matches nothing - the watch's dead
+// become unlootable. The only real-data dependency in the spawn is
+// CLASS18.CFG, so the career is synthesised here and the pin runs
+// everywhere.
+//
+// The 74-byte CLASS*.CFG record ClassFile.load walks: zero but for the
+// hit-points-per-level (offset 52) and the eight u16 stats (58..73), so
+// the spawned Knight_CityWatch is a live entity with health.
+function stubClassCfg() {
+  const b = new Uint8Array(80);
+  const v = new DataView(b.buffer);
+  v.setUint16(52, 10, true);
+  for (let i = 0; i < 8; i++) v.setUint16(58 + i * 2, 50, true);
+  return b;
+}
+
+test('guards G3 (un-gated): the id is MINTED at the spawn, and the loot key survives the prune', async () => {
+  const player = { level: 1, reflexes: 2, skills: 30, items: [], stats: { strength: 50, agility: 50, luck: 50 }, crimeCommitted: 5 };
+  const deps = { ...makeDeps(() => 0.9), fetchBytes: async () => stubClassCfg(), playerEntity: player };
+  const g = createCityGuards(deps);
+  const pool = () => [{ pos: [5, 0, 5], fwdYaw: 0, guard: true, disable: () => {} }];
+  await g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: pool() });
+  await g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: pool() });
+  assert.deepEqual(g.guards.map((x) => x.id), [0, 1], 'two spawns, two distinct numeric ids');
+  assert.ok(g.guards.every((x) => x.entity.health > 0), 'live entities off the synthetic career');
+
+  // kill the SECOND, then let the crime clear so the first walks away
+  g.guards[1].entity.items = [
+    { name: 'Gold', group: 'Currency', stackCount: 7 },
+    { name: 'Longsword', group: 'Weapons' },
+  ];
+  g._damage(1, 9999);
+  player.crimeCommitted = 0;
+  g.update(0, [0, 0, 0], [0, 1.7, 0]);
+  assert.deepEqual(g.guards.map((x) => x.id), [1],
+    'the walk-away is spliced (EnemyEntity.cs:184-191); the killed body stays with its corpse');
+
+  // THE WHOLE POINT: its INDEX is now 0 and its key is still its id.
+  assert.deepEqual(g.lootTargets().map((t) => t.key), ['guardCorpse:1']);
+  let said = null;
+  assert.equal(g.takeLoot('guardCorpse:1', (l) => { said = l; }), 2, 'and takeLoot resolves the same name');
+  assert.equal(said, 'You take 2 items.');
+  assert.ok(player.items.some((it) => it.group === 'Currency' && it.stackCount === 7),
+    'the purse that moved is the one that was on THAT body');
+});
+
 test('guards G4: civilian strike = one-hit Murder; wandering guard = Assault + conversion; guard kill = Murder', { skip: skipReal }, async () => {
   const deps = makeDeps(() => 0.9);
   const g = createCityGuards(deps);

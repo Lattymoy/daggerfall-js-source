@@ -476,3 +476,104 @@ test('AUDIT 39: Home.md names every audit record under bible/01-Overview/', () =
   const dead = [...new Set(named)].filter((f) => !records.includes(f));
   assert.deepEqual(dead, [], `the index names audit records that are gone:\n${dead.join('\n')}`);
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 39r: the five passages the fix wave outdated and did not correct.
+//
+// AUDIT 39 rewrote source and moved pins under five bible passages without
+// touching the prose, so each page went on teaching the law its own suite had
+// just reversed - the exact failure mode AUDIT 17m named, where a confident
+// doc hides a live defect from the person checking whether it is known. Each
+// pin below is TWO-WAY in this file's own idiom: it fails if the prose
+// correction is reverted, AND it fails if the source it mirrors moves back.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 39r: three pages teach the move-sound RE-ARM, not the resume', () => {
+  // LycanthropyEffect.cs calls InitMoveSoundTimer at THREE sites - :67
+  // (curse), :209 (post-fire) and :521, inside MorphSelf's transform
+  // branch - so a partial wait is replaced at every morph, never resumed.
+  assert.match(read('src/systems/lycanthropy.js'), /the third call site[\s\S]{0,200}entry\.moveSoundTimer = initMoveSoundTimer\(rolls\);/,
+    'the port lost the morph-side re-arm the three pages now teach');
+
+  const testing = read('bible/09-Testing/Testing.md');
+  assert.ok(!testing.includes('morphing back mid-wait RESUMES rather than restarting'),
+    'Testing.md is teaching the resume again');
+  assert.ok(!testing.includes('THE TIMER IS ARMED AT THE CURSE, in Start (:67), not at the first transform'),
+    'Testing.md is billing the curse as the only arming site again');
+  assert.match(testing, /THE TIMER IS ARMED AT THREE PLACES/);
+
+  const arc = read('bible/06-Systems/Systems-Arc.md').replace(/\s+/g, ' ');
+  assert.ok(!arc.includes('returning later **resumes** it'), 'Systems-Arc LM1 is teaching the resume again');
+  assert.match(arc, /The timer is armed at three places/);
+
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /every morph INTO beast form \(:521/,
+    "the ledger's vampirism row dropped the third call site again");
+});
+
+test('AUDIT 39r: the three re-read Testing.md rows agree with the suites they describe', () => {
+  const testing = read('bible/09-Testing/Testing.md');
+
+  // bss: ReadImageData short-reads rather than throwing (BssFile.cs:210-222)
+  assert.ok(!testing.includes('a truncated body is a load failure that leaves no record behind'),
+    'the bss row is refusing files the reference loads again');
+  assert.match(read('test/bss.test.js'), /'a truncated body still loads'/);
+
+  // the guard corpse's key is a minted id, and the walk-away is spliced
+  assert.ok(!testing.includes('the `guards` array stays index-stable because lootTargets keys corpses by index'),
+    'the lifetimes row is teaching index-stability again');
+  const cg = read('src/scenes/cityGuards.js');
+  assert.match(cg, /idOf: \(g\) => g\.id,/);
+  assert.match(cg, /guards\.splice\(i, 1\);/);
+
+  // ImprovesTalents(0) writes the enchantment fold both readers read
+  assert.ok(!testing.includes('x1.5 only with the unported ImprovedAcuteHearing'),
+    'the careerflags row is calling a shipped enchantment a routed gap again');
+  assert.match(read('src/characters/enemySounds.js'), /entityImprovedAcuteHearing\(playerEntity\) \? 1\.5 : 1\.25/);
+});
+
+test('AUDIT 39r: Rendering-Arc\'s sky orientation is skyRenderer\'s, and the save/restore is gone from both', () => {
+  const doc = read('bible/07-Rendering/Rendering-Arc.md').replace(/\s+/g, ' ');
+  assert.ok(!doc.includes('azimuth 0 (+X, map east)'),
+    'the arc is back to a 90-degree-wrong reference point (F56)');
+  assert.match(doc, /azimuth 0 \(\+Z, map north\) starts the east half/);
+  assert.ok(!doc.includes('program/state saved and restored around the pass'),
+    'the arc is advertising the save/restore EV6 retired');
+  const sky = read('src/render/skyRenderer.js');
+  assert.match(sky, /Azimuth 0 \(\+Z, map north\) starts the east half/);
+  assert.match(sky, /no program save\/restore/);
+});
+
+test('AUDIT 39r: the foreign-pass count is the real call-site count', () => {
+  // F55 took overworldRenderer's getParameter/useProgram pair and moved
+  // the seam onto the host, making the overworld map the FOURTH pass.
+  assert.ok(!read('src/render/overworldRenderer.js').includes('CURRENT_PROGRAM'),
+    'the overworld pass restores its own program again - it is not a foreign seam then');
+  const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/ui/overworldMap.js']
+    .reduce((n, f) => n + read(f).split('renderer.markForeignPass();').length - 1, 0);
+  assert.equal(hosts, 5, 'five host call sites across the four passes');
+  const ev = read('bible/07-Rendering/Enhanced-Visuals-Arc.md').replace(/\s+/g, ' ');
+  assert.ok(!ev.includes('three passes change programs behind the renderer\'s back'),
+    'the EV arc is counting three passes again');
+  assert.match(ev, /four passes change programs behind the renderer's back/);
+  assert.match(read('src/render/renderer.js').replace(/\s+/g, ' '),
+    /the four passes \/\/ that change programs behind the renderer's back/);
+});
+
+test('AUDIT 39r: three arc pages stop advertising work the wave closed or disproved', () => {
+  // the 64 is a real bound, not a pre-sizing detail
+  assert.ok(!read('bible/02-Formats/Readers-Arc.md').includes('Structural-only simplification'),
+    'Readers-Arc is calling the record bound structural-only again');
+  assert.match(read('src/formats/cifRciFile.js'), /const MAX_WEAPON_RECORDS = 64;/);
+
+  // the two shopStock pend clauses shipped (F129/F130)
+  const sys = read('bible/06-Systems/Systems-Arc.md');
+  assert.ok(!sys.includes('MagicItems stock SKIPPED'), 'the shopStock pend list names closed work again');
+  assert.ok(!sys.includes("Alchemist's 25% potion recipe pends recipes"));
+  assert.match(read('src/systems/shopStock.js'), /two clauses were struck from this list/);
+
+  // ImprovesTalents(0)/(2) both decode into the fold their readers read
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /AUDIT 39 RETIRED THAT CLAUSE TOO/);
+  const ench = read('src/systems/enchantments.js');
+  assert.match(ench, /export const entityImprovedAcuteHearing =/);
+  assert.match(ench, /export const entityImprovedAdrenalineRush =/);
+});

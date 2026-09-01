@@ -881,10 +881,14 @@ buy/sell windows are E2.
   too) - the daily UpdateRegionalPrices drift is FLAGGED to the
   calendar/economy sim.
 
-INTERIM loud: MagicItems stock SKIPPED (the loot MI interim); the
-Alchemist's 25% potion recipe pends recipes; books carry the
-template price (classic prices each BOOK FILE); restocking pends
-the shared calendar.
+INTERIM loud: books carry the template price (classic prices each
+BOOK FILE); restocking pends the shared calendar. (AUDIT 39 F106
+struck two clauses from this list because they had SHIPPED and the
+list still swore they had not - the MagicItems stock, F130, and the
+Alchemist's 25% recipe roll, F129. A pend list that names closed work
+is worse than no list: Home.md pins these lines mechanically, so the
+false clause was certified, and it is what kept the ungated MagicItems
+arm from being read as the bug it was.)
 
 Suite 448/98 (shopstock.test.js x3: the table + enum-mapping +
 material-value pins, the stock law incl. the rarity gate / gender
@@ -4784,11 +4788,14 @@ the wereclaws (V5) and nothing in between.
 
 Three details are load-bearing and each has its own mutant:
 
-- **The timer is armed at the CURSE**, in `Start` (`:67`), not at the
-  first transform and not lazily on the first frame. A lazy arm burns a
-  frame and makes the first howl after a morph a fresh 4-20s instead of
-  the remainder of a wait already running. The first cut did exactly
-  that and the campaign's expectation caught it.
+- **The timer is armed at three places, and never lazily on the first
+  frame.** `InitMoveSoundTimer` is called at the curse in `Start`
+  (`:67`), after every fire (`:209`), and inside `MorphSelf`'s own
+  `if (!isTransformed)` transform branch (`:521`), right after the
+  compound-race name swap. So a morph into beast form starts a **fresh**
+  4-20s. AUDIT 39 corrected this bullet: it used to name the curse as
+  the only arming site, on the strength of a note in `lycanthropy.js`
+  that read the C# as re-arming only there.
 - **The wait is real time**, `Time.deltaTime` inside ConstantEffect, so
   a rested night queues no howls and time-scaled travel does not
   either.
@@ -4798,8 +4805,10 @@ Three details are load-bearing and each has its own mutant:
   and my own expectation was wrong about it before the code was.
 
 The whole block sits inside DFU's `if (isTransformed)`, so an
-untransformed lycanthrope does not tick the timer down at all -
-morphing back mid-wait and returning later **resumes** it. Ticked by
+untransformed lycanthrope does not tick the timer down at all: the wait
+**pauses** while the beast is away. But returning is a `MorphSelf`, and
+that re-arms (`:521`) - so the paused remainder is **replaced**, never
+resumed. Ticked by
 all four hosts; in `worldModes` the arm sits deliberately outside the
 `if (magic)` block, because the beast makes its noise whether or not a
 cast engine was built.

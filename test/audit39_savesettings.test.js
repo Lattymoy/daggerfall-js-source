@@ -62,12 +62,31 @@ test('AUDIT 39 #121: a save from before them restores the null/0 the arms alread
   assert.equal(extras.smallerDungeonsState, 0, 'QuestSmallerDungeonsState.NotSet - never warps');
 });
 
-test('AUDIT 39 #121: both hosts really pass all three (the options were never the problem)', () => {
+// AUDIT 39r R11 REWROTE THIS PIN. It read the CALLER side only -
+// composeSessionState's two lines and dungeonContext's third - and all
+// three of those predate the wave, so it passed with the fix reverted:
+// a vacuous pin sitting beside two good ones. The seam that MOVED is
+// snapshotPlayer's own signature, where an unnamed option is dropped in
+// silence, and its `snap` literal. Its title also claimed "both hosts
+// pass all three", which is false and stays corrected below.
+test('AUDIT 39 #121: snapshotPlayer NAMES the three, and the hosts that own them pass them', () => {
   const s = read('src/systems/save.js');
+  // the callee half - the line the fix changed
+  assert.match(s, /interior = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 \} = \{\}\)/,
+    'the destructured options name all three, or they are dropped in silence');
+  assert.match(s, /const snap = \{[^\n]*travelMap, escortingFaces, smallerDungeonsState \}/,
+    'and the envelope literal carries them out');
+  // the caller half, which was always right
   assert.match(s, /travelMap: travelMapSaveData\(\),/, 'composeSessionState composes the travel map');
   assert.match(s, /escortingFaces: getEscortFacesSaveData\(\),/);
+  // smallerDungeonsState has ONE host, not two: SerializablePlayer.cs
+  // :462-463 gates the read on `positionData.worldContext ==
+  // WorldContext.Dungeon`, so the exterior host has nothing to say
+  // here and world.js correctly passes none.
   assert.match(read('src/scenes/dungeonContext.js'),
     /smallerDungeonsState: getBool\('Experimental', 'SmallerDungeons'\) \? 2 : 1,/);
+  assert.ok(!read('src/scenes/world.js').includes('smallerDungeonsState'),
+    'the exterior save has no dungeon warp to describe (worldContext gate)');
 });
 
 // ── #97: the faction record's other mutable columns ───────────────

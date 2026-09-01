@@ -201,6 +201,72 @@ test('AUDIT39 #64: the impact recovers the arrow whatever the damage, and never 
   assert.equal(playerArrowHitFoe({ pos: [0, 0, 0], dir: [0, 0, 1] }, { dead: true }, {}), 0);
 });
 
+// AUDIT 39r R13 ADDED THE POSITIVE-DAMAGE HALF. Every #64 pin above is
+// either a stub callback or a shot engineered to return 0 at
+// CalculateAttackDamage's material gate (FormulaHelper.cs:576-583),
+// which returns BEFORE damageMod/toHitMod/backstabChance are read - so
+// the module's actual claim was unpinned and those three arguments
+// could be deleted with the suite green. DaggerfallMissile.cs:678-688
+// routes a player arrow into WeaponManager.WeaponDamage(LastBowUsed,
+// true, ...), the SAME CalculateAttackDamage a melee swing runs, so
+// the swing modifiers and the backstab chance apply to a shot.
+//
+// The roll stream is the one backstab.test.js measured: [struck,
+// crit(fail), hitRoll, damageRoll, backstabRoll], cycling.
+const seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
+const shotFoe = () => ({
+  entity: {
+    minMetalToHit: -1, armorValues: [0, 0, 0, 0, 0, 0, 0], items: [],
+    basics: { bloodIndex: 2 }, isClass: false, careerIndex: 0, skills: 0,
+    maxHealth: 30, health: 30, stats: { strength: 50, agility: 50, luck: 50 },
+  },
+  ai: { feet: [0, 0, 0], yaw: 0 },
+});
+const SHOOTER = () => ({ isPlayer: true, level: 1, skills: 30, skillUses: [], stats: { strength: 50, agility: 50, luck: 50 } });
+const LONG_BOW = () => ({ templateIndex: 130, material: 0, poisonType: -1 });
+/** One shot; returns [damage, the ordered payload log]. */
+const shoot = (opts, rolls) => {
+  const foe = shotFoe(); const log = [];
+  const dmg = playerArrowHitFoe({ weapon: LONG_BOW(), pos: [1, 2, 3], dir: [0, 0, 1] }, foe, {
+    playerEntity: SHOOTER(),
+    dealDamage: (f, d) => log.push(['deal', d]),
+    audio: { play3d: () => log.push('sound') },
+    hitEffects: { showBloodSplash: (b) => log.push(['blood', b]) },
+    say: () => {},
+    rolls, ...opts,
+  });
+  return [dmg, log];
+};
+
+test('AUDIT39 #64: a LANDED arrow runs the melee ladder - the swing mods and the backstab ride it', () => {
+  // the plain shot, facing the foe, no screen weapon out
+  const [plain, log] = shoot({ playerFeet: [0, 0, 5] }, seq(0, 0.99, 0.05, 0.999, 0.99));
+  assert.equal(plain, 17, 'Long Bow max, str bonus, iron: the weapon ladder ran');
+  // and the payload rings in DFU's order - sound and splash BEFORE the
+  // pool's damage door, which is the only thing that writes health
+  assert.deepEqual(log, ['sound', ['blood', 2], ['deal', 17]],
+    'hit sound, then the splash, then dealDamage - and nothing else touches health');
+
+  // SWING_MODS[playerWeapon.machine.state], read live at impact:
+  // StrikeUp is damage -4 / toHit +10, StrikeDown is +4 / -10. The
+  // damage half moves the number; the to-hit half moves the HIT.
+  assert.equal(shoot({ playerFeet: [0, 0, 5], playerWeapon: { machine: { state: 'StrikeUp' } } },
+    seq(0, 0.99, 0.05, 0.999, 0.99))[0], 13, 'StrikeUp\'s -4 damageMod');
+  assert.deepEqual(shoot({ playerFeet: [0, 0, 5], playerWeapon: { machine: { state: 'StrikeDown' } } },
+    seq(0, 0.99, 0.05, 0.999, 0.99)), [0, []],
+    'StrikeDown\'s -10 toHitMod turns the same roll into a MISS - no sound, no splash, no damage');
+
+  // backstabChanceOf(playerEntity, isBackFacing(...)): the foe faces
+  // +Z, so a shooter at -Z is behind it. The x3 rides the post-calc
+  // roll (.10 against a Backstabbing skill of 30).
+  assert.equal(shoot({ playerFeet: [0, 0, -5] }, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 51,
+    'shot in the back: 17 x3');
+  assert.equal(shoot({ playerFeet: [0, 0, 5] }, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 17,
+    'the same roll from the FRONT never triples - backstabChance is 0 there');
+  assert.equal(shoot({}, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 17,
+    'and a host that hands in no playerFeet cannot backstab at all');
+});
+
 test('AUDIT39 #64: all three non-dungeon hosts mark the shaft and resolve it', () => {
   for (const [f, fire] of [
     ['src/scenes/world.js', 'arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon })'],
@@ -210,6 +276,15 @@ test('AUDIT39 #64: all three non-dungeon hosts mark the shaft and resolve it', (
     const s = src(f);
     assert.ok(s.includes(fire), `${f} rides LastBowUsed on the shaft`);
     assert.match(s, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(m, t, \{/, `${f} resolves it`);
+    // AUDIT 39r R13: the pin used to stop at that opening brace and
+    // inspect none of the keys, so a host that quietly stopped passing
+    // the screen weapon, the feet or the damage door still matched.
+    // Bound the window by the call's own close and name them.
+    const i = s.indexOf('onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {');
+    const opts = s.slice(i, s.indexOf('\n      }),', i));
+    assert.match(opts, /playerWeapon: \w+\.playerWeapon,/, `${f} hands in the LIVE screen weapon (SWING_MODS)`);
+    assert.match(opts, /playerFeet: player\.pos,/, `${f} hands in the feet the backstab arc is measured from`);
+    assert.match(opts, /\n\s+dealDamage: \(f, d\) =>/, `${f} hands in its own pool's damage door`);
     assert.match(s, /foeTargets:/, `${f} hands the flight its live targets`);
   }
   // the module's stale premise is retired where it stood - the header
