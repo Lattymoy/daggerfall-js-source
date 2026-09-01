@@ -24,7 +24,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
@@ -153,15 +153,29 @@ export async function bootDungeon(canvas, renderer, params, status) {
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
-  // (DFU DaggerfallAction.Teleport). spawn() zeroes velY and drops
-  // the grounded flag, so the motor re-grounds on the destination
-  // floor next step (the FreezeMotor 0.5s carry-suppression is a
-  // no-op in our motor - velocity is per-frame input, not held).
+  // (DFU DaggerfallAction.Teleport :576-599). spawn() zeroes velY and
+  // drops the grounded flag, so the motor re-grounds on the
+  // destination floor next step.
+  //
+  // A6, the two halves the interim note here got wrong:
+  //  - THE FREEZE IS REAL. `FreezeMotor = 0.5f` (:594) is set before
+  //    the move and FixedUpdate (:296-307) then does NOTHING for half
+  //    a second - no gravity, no input, no probe - and raises
+  //    CancelMovement on the way out. The motor carries it now.
+  //  - THE FACING DOES NOT CHANGE. DFU's next line copies the
+  //    destination's full rotation onto the player, and
+  //    PlayerMouseLook.Update overwrites it the very next frame from
+  //    its own stored Yaw (`characterBody.transform.localEulerAngles =
+  //    new Vector3(0, Yaw, 0)`, :256-259) - so the copy is dead on
+  //    arrival and a teleported player keeps the heading they walked
+  //    in with. Writing the marker's yaw here was the port's own
+  //    departure; the destination's yawDeg stays on the seam (the
+  //    resolvePosition contract) and nothing spends it.
   ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+    player.freezeMotor = TELEPORT_FREEZE_S;
     player.spawn(pos[0], pos[1], pos[2]);
     cam.pos = [...player.eye];
-    cam.yaw = yawDeg * Math.PI / 180;
-    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
+    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] (marker yaw ${yawDeg.toFixed(1)}, not applied - PlayerMouseLook owns the heading)`);
   };
   let prevCrouch = false;   // P12: the crouch-toggle key edge (jump is HELD - P14)
   let prevUse = false;
@@ -474,6 +488,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // P12 crouch: toggled on the Crouch edge (DFU's default C -
       // I2 retired the port's X-crouch/C-cast departure).
       const paralyzed = ctx.playerParalyzed?.() ?? false;
+      // A6: FrictionMotor.GroundedMovement's head-dip guard reads
+      // IsParalyzed itself (:90-93) - the zeroed input bag below is
+      // the movement half of the same law, not this one.
+      player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
       const axes = moveAxes.update(dt, mv);   // AUDIT 28 W8: one Update of the axes per frame the motor runs

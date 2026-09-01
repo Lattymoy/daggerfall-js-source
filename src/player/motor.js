@@ -123,6 +123,58 @@ export const RIDE_EYE_HEIGHT = 2.51;
 // every frame for 0.10 s and is only then forgotten.
 export const HEIGHT_TIMER_FAST = 0.10;
 export const HEIGHT_TIMER_MEDIUM = 0.25;   // AUDIT 23 (motor-2): the forced swim-crouch clock (PlayerHeightChanger.cs:71)
+export const HEIGHT_TIMER_SLOW = 0.4;      // A6: timerSlow (:72) - the sink/unsink clock, the only user of the slow budget
+
+/** A6 - THE DOORWAY HEAD DIP (FrictionMotor.HeadDipHandling,
+ *  :119-156, "Smoothly dips and undips height of player capsule, like
+ *  a very tall person ducking through a low doorway"). Two forward
+ *  samples over 0.5: one from the very top of the head (the FIXED
+ *  standing half-height plus 0.25 above the controller centre - so it
+ *  rides the capsule's true top even while already dipped) and one
+ *  from the camera. Top blocked + eyes clear + STATIC geometry dips
+ *  the standing height by 0.28; anything else undips at once. DFU's
+ *  own note says the undip is deliberate ("the player will stand up
+ *  again within a frame or two ... it is only required to clear the
+ *  initial obstacle"). */
+export const HEAD_DIP_RAY_DISTANCE = 0.5;
+export const HEAD_DIP_CLEARANCE = -0.28;
+export const HEAD_DIP_TOP_MARGIN = 0.25;
+
+/** PlayerHeightChanger.controllerSwimHeight (:57) and its horse
+ *  displacement (:58) - the capsule a swimmer on EXTERIOR water sinks
+ *  to (DoSinking, :390-434). The eye keeps the port's own
+ *  0.1-below-the-top presentation law, exactly as the crouch height
+ *  above it does: 0.30 - 0.1 = 0.20 above the feet, and 0.60 - 0.1 =
+ *  0.50 in the saddle. */
+export const SWIM_HEIGHT = 0.30;
+export const SWIM_HORSE_DISPLACEMENT = 0.30;
+export const SWIM_EYE_HEIGHT = 0.20;
+export const SWIM_RIDE_EYE_HEIGHT = 0.50;
+
+/** DaggerfallAction.Teleport (:594) - the ONE classic writer of
+ *  PlayerMotor.FreezeMotor. (ClimbingMotor.RestoreClimbingState :882
+ *  writes 1f, but its whole block is `if (AdvancedClimbing &&
+ *  data.isClimbing)` - Ledger A, off-road.) */
+export const TELEPORT_FREEZE_S = 0.5;
+
+/** AcrobatMotor.ApplyGravity's antiBumpFactor (:181). */
+export const ANTI_BUMP_FACTOR = 20.75;
+
+/** GameObjectHelper.IsStaticGeometry (:438-446): DFU tags COMBINED
+ *  block geometry with staticGeometryTag (RMBLayout.cs:532,
+ *  GameObjectHelper.cs:211/:308 under `makeStatic`) and leaves action
+ *  models and action doors untagged. The port's collider says the
+ *  same thing with its BUCKET KEYS - actionSystem registers every
+ *  action record and door under `act:`/`door:` (addAction :493,
+ *  addDoor :428), every block/interior/streamed mesh under a plain
+ *  world/dungeon/interior/pixel key - so the tag test is a key test.
+ *  A missing key (a ray that hit nothing, or the heightAt floor,
+ *  which is in no bucket) is not static geometry. */
+export function isStaticGeometryKey(key) {
+  if (key == null) return false;
+  const k = String(key);
+  return !k.startsWith('act:') && !k.startsWith('door:');
+}
 
 // M3 CLIMBING: the check machine + formulas live in climbing.js; the
 // motor owns the capsule work (the wall probe + ClimbMovement's
@@ -130,6 +182,11 @@ export const HEIGHT_TIMER_MEDIUM = 0.25;   // AUDIT 23 (motor-2): the forced swi
 // import - both are runtime-only references, which ESM live bindings
 // resolve.
 import { ClimbingState, climbingSpeed } from './climbing.js';
+// A6: PlayerMoveScanner is a component on the player object in DFU
+// (PlayerMotor.Start :265 GetComponent), so the motor owns one. Same
+// runtime-only cycle shape as climbing.js above - moveScanner.js reads
+// CAPSULE_RADIUS inside its constructor, never at module level.
+import { PlayerMoveScanner } from './moveScanner.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
 import { TRANSPORT_MODES, isRiding, rideBaseFor, canRunUnlessRiding } from '../systems/transport.js';   // TR1: the mount's speed, run and climb laws
 
@@ -252,6 +309,10 @@ export class PlayerMotor {
       waterForgiven: () => this.waterSurfaceY != null && this.pos[1] - 0.25 < this.waterSurfaceY,
     }) : null;
     this._climbWallDir = null;   // myLedgeDirection (latched while a wall is in reach)
+    // A6: the step/head probes (PlayerMoveScanner). Always mounted, as
+    // the component always is; it backs off on a collider with no
+    // sweep API rather than crashing the step.
+    this.scanner = new PlayerMoveScanner(collider);
     this.pos = new Float32Array(3); // FEET position
     // EV1: the previous PHYSICS STEP's feet, for render-time
     // interpolation. Captured immediately before each _step (not per
@@ -292,6 +353,32 @@ export class PlayerMotor {
     // where DFU decides and applies it.
     this.heightAction = null;
     this.heightTimer = 0;
+    // A6 (PlayerHeightChanger.standingHeightAdjustment, :95-100):
+    // "Allows for temporary dips in controller standing height to help
+    // player clear low doorways ... Does nothing if player is crouched,
+    // and crouching/uncrouching will clear this adjustment." The ONE
+    // writer is FrictionMotor.HeadDipHandling below.
+    this.standingHeightAdjustment = 0;
+    // A6 (PlayerHeightChanger.controllerSink, :78): the sunk capsule.
+    // toggleSink (:76) is the EDGE tracker DecideHeightAction reads;
+    // both are this one flag because the port applies the height at
+    // the action's start exactly as ControllerHeightChange does.
+    this.sunk = false;
+    // PlayerMotor.OnExteriorWater == OnExteriorWaterMethod.Swimming -
+    // the sink's ONE trigger (:127). Wave B's exterior-water slice
+    // owns the model that raises it; until then it stays false and no
+    // host sinks, which is the port's behaviour before this line.
+    this.onExteriorWater = false;
+    this._camFrom = EYE_HEIGHT;   // PlayerHeightChanger.prevCamLevel / targetCamLevel
+    this._camTo = EYE_HEIGHT;
+    // PlayerEntity.IsParalyzed, as FrictionMotor.GroundedMovement
+    // reads it (:78-93): the hosts already zero the movement INPUT,
+    // but the head dip is guarded by the flag itself and holds its
+    // last adjustment while paralysed rather than re-probing.
+    this.paralyzed = false;
+    // PlayerMotor.freezeMotor (:64) - the physics-settle countdown a
+    // Teleport action arms; FixedUpdate's block below spends it.
+    this.freezeMotor = 0;
     // P15 (PlayerSpeedChanger): the run/sneak STATES - latched from
     // held input only while grounded; airborne keeps the takeoff
     // state (the swim quirk rides it too: waterWalking's Speed read).
@@ -322,6 +409,9 @@ export class PlayerMotor {
     // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
     // sneak condition, recomputed each update from the frame's input.
     this.movingLessThanHalfSpeed = true;
+    // A6: AcrobatMotor.ApplyGravity's anti-bump GATE, recomputed each
+    // step from the scanner (see the note at the site).
+    this.antiBumpInRange = false;
     // PlayerMotor.speed (the `speed` FIELD, not a recomputation):
     // UpdateSpeed writes it, and the swim/levitate early return sits
     // ABOVE UpdateSpeed, so while swimming/levitating it keeps its
@@ -424,20 +514,45 @@ export class PlayerMotor {
    *  prev/target fields there, which is the same scaffolding. */
   _eyeLevel() {
     const t = Math.min(this.heightTimer / (this.heightTimerMax ?? HEIGHT_TIMER_FAST), 1);
+    // A6: DoSinking/DoUnsinking (:352-434) are height actions of their
+    // own too, and unlike the crouch pair their ENDS depend on the
+    // stance they left (crouched, standing or mounted), so the pair of
+    // rest eyes is latched at the action's start - which is where DFU
+    // latches prevCamLevel/targetCamLevel as well.
+    if (this.heightAction === 'sink' || this.heightAction === 'unsink') {
+      return this._camFrom + (this._camTo - this._camFrom) * t;
+    }
+    if (this.sunk) return this.riding ? SWIM_RIDE_EYE_HEIGHT : SWIM_EYE_HEIGHT;
     // F-E3: DoMount/DoDismount are height actions of their own.
     if (this.heightAction === 'mount') return EYE_HEIGHT + (RIDE_EYE_HEIGHT - EYE_HEIGHT) * t;
     if (this.heightAction === 'dismount') return RIDE_EYE_HEIGHT + (EYE_HEIGHT - RIDE_EYE_HEIGHT) * t;
     if (this.riding) return RIDE_EYE_HEIGHT;
     if (this.heightAction === 'crouch') return EYE_HEIGHT + (CROUCH_EYE_HEIGHT - EYE_HEIGHT) * t;
     if (this.heightAction === 'stand' && !this.crouching) return CROUCH_EYE_HEIGHT + (EYE_HEIGHT - CROUCH_EYE_HEIGHT) * t;
-    return this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
+    if (this.crouching) return CROUCH_EYE_HEIGHT;
+    // A6 - the head dip's half of the eye. ChangeStandingHeightAdjustment
+    // (:235-244) spends the adjustment through ControllerHeightChange,
+    // which shrinks the capsule AND drops the controller transform by
+    // half the change (:477-478) - the feet stay planted and the top
+    // falls the full 0.28. The camera is a CHILD of that transform with
+    // its own local height untouched (UpdateCameraPosition runs only
+    // inside the Do* actions), so the eye falls HALF the dip: DFU's
+    // standing eye goes 1.71 -> 1.57 above the feet, ours 1.70 -> 1.56.
+    return EYE_HEIGHT + this.standingHeightAdjustment / 2;
   }
 
   get height() {
+    // A6: controllerSwimHeight (:57) - the sunk capsule wins over
+    // every other stance (DoSinking clears IsCrouching, :422), and a
+    // mounted swimmer carries the horse displacement (:296, :370).
+    if (this.sunk) return SWIM_HEIGHT + (this.riding ? SWIM_HORSE_DISPLACEMENT : 0);
     // controllerRideHeight (:56) - a rider's capsule is a horse tall,
     // so what he clears and bumps is the horse's, not his own.
     if (this.riding) return RIDE_HEIGHT;
-    return this.crouching ? CROUCH_HEIGHT : CAPSULE_HEIGHT;
+    // CurrentControllerStandingHeight (:87-90) = controllerStandingHeight
+    // + StandingHeightAdjustment; the crouch height takes no adjustment
+    // (HeadDipHandling returns while crouched, DoCrouch zeroes it).
+    return this.crouching ? CROUCH_HEIGHT : CAPSULE_HEIGHT + this.standingHeightAdjustment;
   }
 
   /** TransportManager's UpdateMode tells the motor; the height changer
@@ -547,10 +662,27 @@ export class PlayerMotor {
     // crouch/climb/swim block below is gated `!riding && !onWater &&
     // !levitating` (:171), so a levitating player cannot toggle the
     // 0.9 capsule in mid-air and fit through gaps DFU forbids.
-    // (onWater has no port model yet - the water-surface arm - so its
-    // half of that gate is unexpressed.)
-    if (this.levitating) {
-      if (this.crouching) this.heightAction = 'stand';   // timerMax is NOT set here, DFU keeps its last
+    //
+    // A6: onWater is `OnExteriorWater == Swimming` (:127) and
+    // LEVITATION FORCES IT FALSE (:144) before the sink arms read it -
+    // so floating up off deep water unsinks the capsule. The port
+    // carries the flag now; the model that raises it is Wave B's.
+    const onWater = !!this.onExteriorWater && !this.levitating;
+    if (this.levitating && this.crouching) {
+      // (:139-143) the crouched levitator is stood and the method
+      // RETURNS - no sink arm, no crouch block.
+      this.heightAction = 'stand';   // timerMax is NOT set here, DFU keeps its last
+    } else if (onWater && !this.sunk) {
+      // DoSinking (:147-152, :390-434) on the SLOW clock.
+      this._beginSink();
+    } else if (!onWater && this.sunk) {
+      // DoUnsinking (:153-158, :352-388), same clock.
+      this._beginUnsink();
+    } else if (this.levitating || onWater) {
+      // The levitating fall-through (nothing left to decide) and
+      // :171's `!onWater` half - a swimmer on exterior water cannot
+      // toggle the crouch or take the forced-swim arms; the sink owns
+      // the capsule until they leave the water.
     } else if (this.riding) {
       // :171's `!riding` half, the other side of the mount. A rider
       // cannot toggle the crouch at all - which is what makes
@@ -581,18 +713,53 @@ export class PlayerMotor {
     if (!this.heightAction) return;
     this.heightTimer += dt;   // timerTick (:442-447): every pending action runs the one clock
     const max = this.heightTimerMax ?? HEIGHT_TIMER_FAST;
-    if (this.heightAction === 'crouch') {
+    if (this.heightAction === 'sink' || this.heightAction === 'unsink') {
+      // Update's FIRST two arms (:219-222). Both actions did all of
+      // their capsule work on the frame they were armed (DFU's
+      // `if (!controllerSink)` / `if (controllerSink)` blocks); what
+      // is left is the camera clock, and timerResetAction ends it.
+      if (this.heightTimer >= max) this._heightReset();
+    } else if (this.heightAction === 'crouch') {
       if (this.heightTimer >= max) {
+        this.standingHeightAdjustment = 0;   // DoCrouch :256 - the crouch clears any head dip
         this.crouching = true;   // the flip IS the end of DoCrouch
         this._heightReset();
       }
     } else if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) {
       // CanStand: the STANDING capsule must fit at the current feet.
+      if (this.crouching) this.standingHeightAdjustment = 0;   // DoStand :271, inside its own `if (IsCrouching)`
       this.crouching = false;    // DoStand flips at the START; the eye keeps lerping
       if (this.heightTimer >= max) this._heightReset();
     } else if (this.heightTimer >= max) {
       this._heightReset();       // the blocked request is forgotten past the budget
     }
+  }
+
+  /** DoSinking's arming block (:390-424): the capsule drops to the
+   *  swim height AT ONCE (ControllerHeightChange keeps the feet and
+   *  takes the top down), the crouch is cleared, and the camera lerps
+   *  from the stance's rest eye to the swim eye over timerSlow. DFU's
+   *  IsInWaterTile / PlayerEnterExit.IsPlayerSwimming writes are the
+   *  host's half of the same edge. */
+  _beginSink() {
+    this._camFrom = this.crouching ? CROUCH_EYE_HEIGHT : (this.riding ? RIDE_EYE_HEIGHT : EYE_HEIGHT);
+    this.crouching = false;      // :422
+    this.sunk = true;            // controllerSink = true (:420) - `height` answers the swim capsule from here
+    this._camTo = this.riding ? SWIM_RIDE_EYE_HEIGHT : SWIM_EYE_HEIGHT;
+    this.heightAction = 'sink';
+    this.heightTimerMax = HEIGHT_TIMER_SLOW;   // camTimer is NOT reset here - only timerResetAction (:451-455) does that
+  }
+
+  /** DoUnsinking's arming block (:352-378), the mirror: the capsule
+   *  regains CurrentControllerStandingHeight (or the ride height) and
+   *  the camera climbs back from the swim eye. */
+  _beginUnsink() {
+    this._camFrom = this.riding ? SWIM_RIDE_EYE_HEIGHT : SWIM_EYE_HEIGHT;
+    this.sunk = false;
+    this.crouching = false;      // :376
+    this._camTo = this.riding ? RIDE_EYE_HEIGHT : EYE_HEIGHT + this.standingHeightAdjustment / 2;
+    this.heightAction = 'unsink';
+    this.heightTimerMax = HEIGHT_TIMER_SLOW;
   }
 
   /** timerResetAction (:451-455). */
@@ -777,6 +944,41 @@ export class PlayerMotor {
     return true;
   }
 
+  /** A6 - FrictionMotor.HeadDipHandling (:119-156), verbatim.
+   *
+   *  Two forward samples over raySampleDistance 0.5, both along the
+   *  BODY's forward (myTransform is the player, which carries yaw
+   *  only - PlayerMouseLook :258-259 parks the pitch on the camera):
+   *
+   *    headRay - myTransform.position + FixedControllerStandingHeight
+   *              / 2 + 0.25. FIXED, not Current: the sample stays 0.25
+   *              above where an undipped head would be even while the
+   *              capsule is already dipped, which is what lets the
+   *              probe notice the obstacle is gone.
+   *    eyeRay  - the main camera's own position.
+   *
+   *  Top blocked, eyes clear, and the thing struck is STATIC geometry
+   *  (a doorframe, not a swinging door or a moving platform) dips the
+   *  standing height by 0.28. Every other combination undips at once;
+   *  DFU's comment block at :144-151 defends that bluntness at length
+   *  ("the most simple one still yielded the best results").
+   *
+   *  A collider without the ray API (a facade in a headless test)
+   *  never dips, the same guard the climb probe takes. */
+  _headDipHandling(sin, cos) {
+    // `if (!heightChanger || playerMotor.IsCrouching) return;` (:124)
+    if (this.crouching || !this.collider?.raycastHit) return;
+    const dir = [sin, 0, cos];
+    const centreY = this.pos[1] + this.height / 2;
+    const head = this.collider.raycastHit(
+      [this.pos[0], centreY + CAPSULE_HEIGHT / 2 + HEAD_DIP_TOP_MARGIN, this.pos[2]],
+      dir, HEAD_DIP_RAY_DISTANCE);
+    const eyeRayHit = Number.isFinite(this.collider.raycast(this.eye, dir, HEAD_DIP_RAY_DISTANCE));
+    const headRayHit = Number.isFinite(head.dist);
+    this.standingHeightAdjustment =
+      (headRayHit && !eyeRayHit && isStaticGeometryKey(head.key)) ? HEAD_DIP_CLEARANCE : 0;
+  }
+
   _step(dt, input, yaw, pitch = 0) {
     // PlayerMotor.FixedUpdate: time the grounded state FIRST, every
     // frame (the swim/levitate early-return comes after in DFU too).
@@ -797,6 +999,40 @@ export class PlayerMotor {
       this.fallStart = this.pos[1];
       return;
     }
+    // A6 - THE FREEZE (PlayerMotor.FixedUpdate :296-307, verbatim and
+    // in DFU's own order, directly below the cancel block and above
+    // every probe and motor call). A Teleport action arms 0.5 s in
+    // which the motor does NOTHING - no gravity, no input, no scan -
+    // so the destination's collision settles before the player is let
+    // loose in it; the tick that runs the clock out raises
+    // CancelMovement, which the block above spends on the NEXT step.
+    if (this.freezeMotor > 0) {
+      this.freezeMotor -= dt;
+      if (this.freezeMotor <= 0) {
+        this.freezeMotor = 0;
+        this.cancelMovement = true;
+      }
+      return;
+    }
+    // A6 - PlayerMoveScanner's OTHER TWO probes belong HERE (:308-309:
+    // `playerScanner.FindHeadHit(new Ray(controller.transform.position,
+    // Vector3.up)); playerScanner.SetHitSomethingInFront();`), on every
+    // FixedUpdate that is neither cancelled nor frozen and above the
+    // climb/swim returns. Neither is spent, and both reasons are the
+    // ledger's, not an omission:
+    //   FindHeadHit - its ONE classic consumer is PlayerCrush.cs (the
+    //     crushing-hazard forced crouch and death). That component is
+    //     unported and RECORDED; it needs ModelDescription plumbed from
+    //     the RDB reader and a per-host mount, which is another slice's
+    //     blast radius. `scanner.findHeadHit(centre)` is the whole call
+    //     the day it lands.
+    //   SetHitSomethingInFront - BOTH of its consumers are
+    //     AdvancedClimbing (ClimbingMotor :357's
+    //     ClimbQuitMoveUnderToHang and the :679 advanced block), which
+    //     is Ledger A and deliberately off-road.
+    // Spending nine DDA rays a step on a field nothing reads is the
+    // one thing worse than not having them, so the methods are ported,
+    // tested against the law, and called by their consumers.
     // M3 CLIMBING: the check + (while climbing) the movement - before
     // the swim/levitate branch, exactly DFU's order (:319-326; the
     // climb wins the step when active).
@@ -967,6 +1203,12 @@ export class PlayerMotor {
     if (this.grounded) {
       vx = (sin * input.forward + cos * input.strafe) * factor * speed;
       vz = (cos * input.forward - sin * input.strafe) * factor * speed;
+      // A6 - THE DOORWAY HEAD DIP. GroundedMovement's recompute arm
+      // ENDS with `if (!IsParalyzed) HeadDipHandling();` (:89-93), and
+      // that arm is the only one classic ever takes: the slide arm
+      // above it needs slideWhenOverSlopeLimit or slideOnTaggedObjects
+      // and BOTH ship false (:15-18).
+      if (!this.paralyzed) this._headDipHandling(sin, cos);
     } else {
       vx = this._airVelX;
       vz = this._airVelZ;
@@ -1012,6 +1254,13 @@ export class PlayerMotor {
     this._airVelX = vx;
     this._airVelZ = vz;
 
+    // A6 - FindStep (PlayerMoveScanner :151-169), called from
+    // FixedUpdate :355 with the finished moveDirection: after the
+    // grounded/airborne branch AND after HandleJumpInput, so a jump's
+    // own frame already has Jumping raised and the probe answers 0.
+    this.scanner?.findStep(
+      [this.pos[0], this.pos[1] + this.height / 2, this.pos[2]], [vx, 0, vz], this.height, this.jumping);
+
     // ApplyGravity: slowfall is a CONSTANT 2.1 m/s fall speed with
     // fallStart re-anchored every tick (expiry mid-fall only bills
     // the rest of the drop); otherwise integrate normally.
@@ -1023,6 +1272,41 @@ export class PlayerMotor {
         this.velY -= GRAVITY * dt;
       }
     } else this.velY = Math.min(this.velY, 0);
+    // A6 - ANTI-BUMP, the step probe's one classic consumer
+    // (AcrobatMotor.ApplyGravity :180-194): `if (!IsClimbing &&
+    // StepHitDistance > minRange && StepHitDistance < maxRange)
+    // moveDirection.y -= antiBumpFactor`, minRange = height/2 - 0.15,
+    // maxRange = minRange + 1.10. The GATE is ported verbatim and the
+    // flag is live; the 20.75 VELOCITY SPIKE is not spent, and this is
+    // deliberate.
+    //
+    // What the spike is for: Unity's CharacterController BOUNCES off
+    // step edges and slope crests, and DFU presses it back down a flat
+    // 20.75 (0.42 of travel per Unity step) whenever the probe says
+    // ground is within arm's reach. Our collider (engine-side, like
+    // the renderer - see this file's header) already answers that with
+    // its own two mechanisms: the ground snap, which pulls a
+    // descending capsule onto steps and slopes over the same
+    // stepOffset reach and is withheld only mid-jump, and the step-up
+    // LADDER, which is a multi-FRAME ratchet - it raises the capsule
+    // in front of a riser and, in its own words, "the raised height is
+    // kept this frame and the snap below settles it onto the tread as
+    // forward progress clears the edge" (collider.js _moveStep).
+    //
+    // Those two are the same law by another road, and the third one on
+    // top breaks the second: 0.35 of forced descent per step wipes the
+    // ratchet's lift every frame before it can ever clear an edge.
+    // Measured on the P14 harness, a 0.3-riser classic staircase went
+    // from summited to stopped dead at the first riser (y 0.000, z
+    // 1.655, forever). Recorded, not silently dropped: if the collider
+    // is ever given Unity's single-Move step semantics, this flag is
+    // where the spike goes back.
+    this.antiBumpInRange = false;
+    if (!this.climb?.isClimbing && this.scanner) {
+      const minRange = this.height / 2 - 0.15;
+      this.antiBumpInRange = this.scanner.stepHitDistance > minRange
+        && this.scanner.stepHitDistance < minRange + 1.10;
+    }
     const dy = this.velY * dt;
 
     // Snap is withheld while `jumping` (AcrobatMotor's Jumping: set at

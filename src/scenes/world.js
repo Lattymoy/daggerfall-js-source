@@ -5056,6 +5056,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // was inert here. Declared above `walkMode` because the motor and
     // the weapon rig are two sibling blocks.
     const paralyzed = entityIsParalyzed(playerEntity);
+    // A6: FrictionMotor.GroundedMovement's head-dip guard reads
+    // IsParalyzed itself (:90-93) - the zeroed input bag below is
+    // the movement half of the same law, not this one.
+    player.paralyzed = paralyzed;
 
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {

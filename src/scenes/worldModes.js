@@ -22,7 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
-import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
+import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets, pickQuestFoe } from '../player/activate.js';   // QG1: the foe-click door
 import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
@@ -3543,10 +3543,16 @@ export function createWorldModes(host) {
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and
       // no-opped): Teleport actions move the modal player.
-      ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+      // A6: the FreezeMotor 0.5 s settle (DaggerfallAction.Teleport
+      // :594 + PlayerMotor.FixedUpdate :296-307), and NOT the marker's
+      // yaw - DFU's rotation copy is overwritten by PlayerMouseLook on
+      // the next frame (:256-259), so the heading survives a teleport.
+      // Same law as the standalone host's handler; the comment block
+      // there carries the full reading.
+      ctx.actions.onTeleport = ({ pos }) => {
+        player.freezeMotor = TELEPORT_FREEZE_S;
         player.spawn(pos[0], pos[1], pos[2]);
         cam.pos = [...player.eye];
-        cam.yaw = yawDeg * Math.PI / 180;
       };
       // Classic water tile: the location climate's ground archive,
       // record 0 (R11) - uploaded here since the exterior ground path
@@ -3807,6 +3813,10 @@ export function createWorldModes(host) {
     // :235-239), which is the fold world.js and exterior.js took; the
     // dungeon arm keeps its context read, the same answer one seam over.
     const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);
+    // A6: FrictionMotor.GroundedMovement's head-dip guard reads
+    // IsParalyzed itself (:90-93) - the zeroed input bag below is
+    // the movement half of the same law, not this one.
+    player.paralyzed = paralyzed;
     // E2: the shop overlay holds the motor like every other window
     // (typing digits must not walk the player).
     // AUDIT 18 HOST GAP: the dungeon overlay was absent from this

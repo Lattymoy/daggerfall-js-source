@@ -1704,6 +1704,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // takes no swing. Declared above `walkMode` because the motor and
     // the weapon rig are two sibling blocks.
     const paralyzed = entityIsParalyzed(playerEntity);
+    // A6: FrictionMotor.GroundedMovement's head-dip guard reads
+    // IsParalyzed itself (:90-93) - the zeroed input bag below is
+    // the movement half of the same law, not this one.
+    player.paralyzed = paralyzed;
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
       const jumpHeld = held(keys, 'Jump');
