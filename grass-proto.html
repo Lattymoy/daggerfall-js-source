@@ -518,6 +518,14 @@ void main(){
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
 in vec2 vUV; in vec3 vPos; in vec2 vFieldUV; in vec4 vField;
+// PROTO-21: the constant is declared in EVERY stage that uses it. It
+// was put in the ground's VERTEX shader and used in the ground's
+// FRAGMENT shader, which is a separate compilation unit - the
+// fragment stage failed to compile, the program threw at link, the
+// module died on load, and the page came up grey. GLSL stages do not
+// share declarations; a vertex-shader const is invisible to the
+// fragment shader that follows it.
+const float SNOW_DEPTH_M = 1.35;
 float hash21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
 uniform sampler2D uTex, uNrm, uLow, uField2;
 uniform float uFieldM2;
