@@ -286,12 +286,19 @@ test('MW-D42: the bow\'s hit is held for the arm\'s release, and never swallowed
     const r = bowRig();
     const early = shoot(r, 40);
     assert.ok(!early.includes('hit'), 'the classic frame-5 hit is HELD, not fired on the click');
-    assert.ok(early.includes('bowSound'), 'and the rest of the bow clock is untouched');
+    // MW-D42d: AND SO IS ITS SOUND. bowSound is frame 4 and the hit is
+    // frame 5 - one 0.0625 tick apart, the same instant to an ear.
+    // MW-D42 held the hit and let the sound through, so the string was
+    // heard before the arrow left by the whole length of the draw.
+    assert.ok(!early.includes('bowSound'), 'the loose SOUND is held with the loose');
     // ...and it lands the moment the arm looses.
     released = true;
     const evs = [];
     for (const e of r.frame(1 / 60)) evs.push(e);
     assert.ok(evs.includes('hit'), 'the arm\'s "shoot release" lets the hit go');
+    assert.ok(evs.includes('bowSound'), 'and the sound goes with it, not before it');
+    assert.ok(evs.indexOf('bowSound') < evs.indexOf('hit'),
+      'sound then hit - the machine\'s own frame 4 / frame 5 order, preserved');
     // ONCE. takeShootRelease consumes, so a held flag cannot fire twice.
     const after = [];
     for (let i = 0; i < 20; i++) for (const e of r.frame(1 / 60)) after.push(e);

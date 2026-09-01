@@ -166,6 +166,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // real release lands near 0.44s and always beats this.
   const HELD_HIT_MAX_S = 1.2;
   let _heldHit = false;
+  // MW-D42d: the loose SOUND, held with the loose it belongs to.
+  let _heldSound = false;
   let _heldHitAge = 0;
   let _lastShown = false;
   function shown() {
@@ -358,11 +360,22 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // The classic sprite path is untouched, and so is every melee
         // weapon on every path.
         if (_heldHit) _heldHit = false;
+        _heldSound = false;
         return evs;
       }
       const out = [];
       for (const ev of evs) {
         if (ev === 'hit') { _heldHit = true; _heldHitAge = 0; continue; }
+        // MW-D42d (Mac: "the sound affect plays before the arrow is
+        // fired"): THE LOOSE SOUND RIDES WITH THE LOOSE. The machine
+        // puts bowSound on frame 4 and the hit on frame 5 - one 0.0625
+        // tick apart, which is the same instant to an ear. MW-D42 moved
+        // the HIT to the arm's release key and let the sound through
+        // untouched, so the two came apart by the whole length of the
+        // draw and the string was heard before the arrow left. Holding
+        // the arrow and not its sound is not half a fix, it is a new
+        // defect, and it was mine.
+        if (ev === 'bowSound') { _heldSound = true; continue; }
         out.push(ev);
       }
       if (_heldHit) {
@@ -375,6 +388,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is seven frames at a 0.0625 tick, about 0.44s.
         if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
           _heldHit = false;
+          // SOUND FIRST, then the hit - the machine's own order across
+          // frames 4 and 5, preserved rather than reinvented.
+          if (_heldSound) { _heldSound = false; out.push('bowSound'); }
           out.push('hit');
         }
       }
