@@ -49,11 +49,11 @@
 <canvas id="c"></canvas>
 <div class="hud">
   <h1>Ground + 3D grass</h1>
-  <label>blades <input id="density" type="range" min="20000" max="400000" step="10000" value="160000"><span class="v" id="vdensity"></span></label>
-  <label>height <input id="height" type="range" min="10" max="80" step="1" value="34"><span class="v" id="vheight"></span></label>
+  <label>blades <input id="density" type="range" min="20000" max="1200000" step="10000" value="1200000"><span class="v" id="vdensity"></span></label>
+  <label>height <input id="height" type="range" min="10" max="120" step="1" value="120"><span class="v" id="vheight"></span></label>
   <label>wind <input id="wind" type="range" min="0" max="200" step="1" value="70"><span class="v" id="vwind"></span></label>
   <label>wind dir <input id="windDir" type="range" min="0" max="359" step="1" value="20"><span class="v" id="vwindDir"></span></label>
-  <label>range <input id="range" type="range" min="10" max="140" step="1" value="90"><span class="v" id="vrange"></span></label>
+  <label>range <input id="range" type="range" min="10" max="200" step="1" value="200"><span class="v" id="vrange"></span></label>
   <label>tile m <input id="tile" type="range" min="1" max="8" step="1" value="2"><span class="v" id="vtile"></span></label>
   <label>sun&deg; <input id="sun" type="range" min="-20" max="90" step="1" value="34"><span class="v" id="vsun"></span></label>
   <label>weather <select id="wx">
@@ -79,7 +79,7 @@ const R = (id) => document.getElementById(id);
 // slider sync fires during setup and reached `gr` in its dead zone.
 let gr = { vao: null, count: 0, verts: 0 };
 let ready = false;   // the GL objects exist only after the programs link
-const state = { density: 160000, height: 34, wind: 70, windDir: 20, warmth: 35, frontS: 9, range: 90, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
+const state = { density: 1200000, height: 120, wind: 70, windDir: 20, warmth: 35, frontS: 9, range: 200, tile: 2, sun: 34, surface: 'grass', weather: 'sunny', retro: false, grass: true, newGround: true };
 for (const k of ['density', 'height', 'wind', 'windDir', 'range', 'tile', 'sun', 'warmth', 'frontS']) {
   const el = R(k); const out = R(`v${k}`);
   const sync = () => { state[k] = +el.value; out.textContent = el.value; if (k === 'density' && ready) build(); };
@@ -491,13 +491,17 @@ const groundProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aXZ;
 uniform mat4 uVP; uniform float uTilePx;
 uniform sampler2D uField; uniform vec2 uFieldOrigin; uniform float uFieldM;
+uniform float uSnowGlobal2;
 uniform vec2 uLocalOff;   // AUDIT 41 F2: 0 for the wide plane, the field's origin for the near patch
 out vec2 vUV; out vec3 vPos; out vec2 vFieldUV; out vec4 vField;
 void main(){
   vec2 xz = aXZ + uLocalOff;
   vec3 p = vec3(xz.x, terrain(xz), xz.y);
   vFieldUV = (xz - uFieldOrigin) / uFieldM;
-  vField = texture(uField, vFieldUV);
+  vec4 fRaw = texture(uField, clamp(vFieldUV, 0.0, 1.0));
+  vec2 fe = min(vFieldUV, 1.0 - vFieldUV);
+  float inWin = smoothstep(0.0, 0.05, min(fe.x, fe.y));
+  vField = mix(vec4(0.0, uSnowGlobal2, 0.0, 0.0), fRaw, inWin);
   // LAW 3: SNOW IS A HEIGHT. The land rises as it falls, and a packed
   // print is a real dent in that height - not a dark decal on a flat
   // plane. Packed snow sits lower than fresh, which is what makes a
@@ -672,7 +676,7 @@ layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
 uniform vec2 uWindDir;
-uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM; uniform vec2 uWindV;
+uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
 void main(){
   vec2 root = aInst.xy;
@@ -685,7 +689,21 @@ void main(){
   // the height, and what is left is bent over and pale; water DROWNS
   // them; and a footfall PUSHES them over, because the field already
   // records where a foot went.
-  vec4 fld = texture(uGField, (root - uGFieldOrigin) / uGFieldM);
+  // PROTO-16 (1, Mac: the grass pops out of the snow when moving).
+  // The field is 64m across and the grass is drawn to 90m and beyond,
+  // so most blades stand OUTSIDE the window. Their UV clamped to the
+  // edge texel, and when the window jumped its 4m block the blades at
+  // the boundary flipped between buried and bare in one frame - the
+  // pop. Two things fix it, and both are needed: blades outside the
+  // window fall back to the GLOBAL snow depth, because snow falls on
+  // the whole world and not only on the part being simulated; and the
+  // handover is FADED over the last few metres, so no blade changes
+  // state in a single step.
+  vec2 fuv = (root - uGFieldOrigin) / uGFieldM;
+  vec4 fld = texture(uGField, clamp(fuv, 0.0, 1.0));
+  vec2 edge = min(fuv, 1.0 - fuv);
+  float inWin = smoothstep(0.0, 0.06, min(edge.x, edge.y));
+  fld = mix(vec4(0.0, uSnowGlobal, 0.0, 0.0), fld, inWin);
   float snowD = fld.g * (1.0 - fld.b * 0.55);
   float drown = smoothstep(0.10, 0.40, fld.r);
   vSnow = smoothstep(0.02, 0.22, snowD);
@@ -800,7 +818,7 @@ function build() {
   // pass already uses, so a blade is where it was last frame
   let s = 0x2f6e2b1;
   const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-  const SPAN = 90;
+  const SPAN = 210;   // PROTO-16: the placement span follows the draw range
   for (let i = 0; i < N; i++) {
     // clustered placement: a tuft centre plus a tight jitter, so the
     // sward reads as clumps rather than an even scatter
@@ -1628,6 +1646,11 @@ function scrollField(di, dj) {
 
 let lastStep = [0, 0], stepPhase = 0;
 let fieldDirty = true;   // a stamp or a scroll owes an upload
+/** PROTO-16: what the world OUTSIDE the simulated window is wearing.
+ *  The mean of the field's own snow, so the fallback is measured
+ *  rather than invented, and a blade beyond the edge is dressed like
+ *  its neighbours instead of standing bare. */
+let fieldMeanSnow = 0;
 function tickField(dt, eye, rainRate, snowRate, warmth) {
   if (!poolValid) rebuildPooling();
   const n = FIELD_N * FIELD_N;
@@ -1681,6 +1704,10 @@ function tickField(dt, eye, rainRate, snowRate, warmth) {
       if (w < 0.35) field[o + 1] = Math.min(1, field[o + 1] + (1 - w) * 0.05);   // the rim
     });
   }
+  // the mean the world outside the window wears
+  let sum = 0;
+  for (let k = 0; k < n; k++) sum += field[k * 4 + 1];
+  fieldMeanSnow = sum / n;
   // and the UPLOAD only when the field has anything to say: a dry
   // sunny field with nobody walking is 256KB a frame for nothing.
   if (rainRate <= 0 && snowRate <= 0 && warmth <= 0 && !fieldDirty) return;
@@ -2034,6 +2061,7 @@ function frame(now) {
     WIND.dir[1] * (0.0016 + WIND.speed * 0.00006)]));
   gl.uniform2fv(gl.getUniformLocation(groundProg, 'uFieldOrigin'), new Float32Array(fieldOrigin));
   gl.uniform1f(gl.getUniformLocation(groundProg, 'uFieldM'), FIELD_M);
+  gl.uniform1f(gl.getUniformLocation(groundProg, 'uSnowGlobal2'), safe1(fieldMeanSnow));
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uField'), 3);
   gl.uniform1i(gl.getUniformLocation(groundProg, 'uField2'), 3);
@@ -2070,6 +2098,7 @@ function frame(now) {
     gl.uniform2fv(gl.getUniformLocation(grassProg, 'uWindDir'), safeN(WIND.dir));
     gl.uniform2fv(gl.getUniformLocation(grassProg, 'uGFieldOrigin'), safeN(fieldOrigin));
     gl.uniform1f(gl.getUniformLocation(grassProg, 'uGFieldM'), FIELD_M);
+    gl.uniform1f(gl.getUniformLocation(grassProg, 'uSnowGlobal'), safe1(fieldMeanSnow));
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, fieldTex);
     gl.uniform1i(gl.getUniformLocation(grassProg, 'uGField'), 3);
     gl.activeTexture(gl.TEXTURE0);
