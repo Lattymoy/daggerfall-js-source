@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 5582 tests across 562 files.
+Node 22). Suite: 5673 tests across 570 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -93,6 +93,14 @@ because the suite has never had non-English data.
 | bulletinboard.test.js | 12 | ROAD A9 - ActivateBulletinBoard verbatim: the reach gate, the location-name head row, the mill's sign face through GetNewsOrRumorsForBulletinBoard, and an empty mill still opening the box |
 | prisonrelease.test.js | 16 | ROAD A3 - the prison sequence: serving time passes classic days, release runs RaiseReputationForDoingSentence + FillVitalSigns, the player repositions at the location entrance, and preventEnemySpawns holds the catch-up spawn loop across the skip |
 | roada_activate_gate.test.js | 11 | ROAD-Ar - the activate gate made whole: touchSpell passed at all four hosts, PlayerActivate's clickDelay ported with the window-pop caller, the hudBlocked input, and the CRITICAL overlay gate - a click on an open window activates nothing behind it |
+| roadb_castle.test.js | 18 | ROAD-B B4 - isPlayerInsideCastle live in both flavors, the Castle Daggerfall magic-doors hack (loadIDs 29331574/29331622, every term of the conjunction refusing alone), IsPlayerInsideTavern/Residence latches |
+| roadb_door_bash.test.js | 9 | ROAD-B B2 - the exterior static-door bash arms with the castle-hostility tail (DaggerfallActionDoor.AttemptBash), byPlayer gates, SPECIAL doors refused |
+| roadb_exterior_water.test.js | 20 | ROAD-B B3 - the exterior submersion model: deep-water detection off the terrain, breath and drowning above ground, the OnExteriorWater/StaticGeometry motor methods feeding the footstep arms, underwater fog in both hosts |
+| roadb_guard_conversion.test.js | 4 | ROAD-B B2 - MakeNPCGuardsIntoEnemiesIfGuardsSpawned: wandering guards convert while enemy watchmen are up |
+| roadb_hostility.test.js | 12 | ROAD-B B2 - MakeEnemiesHostile as a location state the pools read, the DoorText trespass sink, MakeEnemyHostileToAttacker |
+| roadb_indoor_watch.test.js | 10 | ROAD-B B2+B4 - the indoor watch: 2-5 guards minted at the interior lowest outer door through the mode machine own pool; the street pool gated by the enter-exit flags returns and never comes through the wall |
+| roadb_window_stack.test.js | 11 | ROAD-B B1 - UserInterfaceManager ported whole: TopWindow, Push/Pop with OnPush/OnPop/OnReturn, the PauseWhileOpen latch, WindowCount, the message queue, BuildParamDict |
+| roadb_window_stack_hosts.test.js | 7 | ROAD-B B1 - the hosts adopt the stack: the FLAGGED single-slot refusal retired, a rest suspends under a message box and resumes with its session, teardowns drain and dispose the WHOLE stack |
 | road_a4_saveimport.test.js | 12 | ROAD A4 - the envelope stragglers round-trip (resistances, skillsRecentlyRaised, minMetalToHit, previousVampireClan, timeToBecomeVampireOrWerebeast) with old-save null arms, and the classic import's building-level MAPSAVE, native bank record and LegacyArtifactIndexBitfieldCheck |
 | road_a5_ai_residue.test.js | 9 | ROAD A5 - enemy levitation and invisibility/Shade as LIVE effect sources for the ported motor/senses gates, and fall damage billed to exterior foes and guards by the dungeon pool's own law |
 | road_a5_seducer.test.js | 9 | ROAD A5 - the Seducer transform pair: the billboard state switch, the stat change, and the combat trigger, with the FLAGGED mobileUnit arm closed |

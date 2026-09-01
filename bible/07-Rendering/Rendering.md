@@ -33,6 +33,7 @@ directory by `test/audit18_bible_docs.test.js`:
   enhanced travel map (self-contained, save/restore, mirrorProjectionX
   on its camera like every world pass - see `src/ui/overworldMap.js`
   for the window that drives it).
+- `underwaterFog.js` - ROAD-B B3: UnderwaterFog.UpdateFog, the submerged fog/tint law shared by the dungeon and exterior hosts
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning.
 - `flatAnimation.js` - FA1 the ANIMATED FLATS: DaggerfallBillboard's
