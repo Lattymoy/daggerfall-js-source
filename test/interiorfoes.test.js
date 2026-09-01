@@ -123,7 +123,10 @@ test('IF: an interior swing can now MEET an enemy - the tally and the no-enemy s
   // with no interior pool ("trains nothing, which is what DFU does on
   // a miss") and wrong the moment one exists: a quest foe standing in
   // a building is not a miss.
-  const swing = WM.slice(WM.indexOf('for (const ev of interiorWeapon.frame(dt))'));
+  // AUDIT 39 (#34) MOVED THIS ANCHOR: the rig's machine is gated on
+  // overlayHeld now (a swing in flight must not land its hit frame
+  // under an open window), so the loop header carries the gate.
+  const swing = WM.slice(WM.indexOf('for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt)))'));
   const body = swing.slice(0, swing.indexOf('interiorWeapon.draw();'));
   assert.match(body, /interiorFoes\?\.resolvePlayerHit\(interiorWeapon\.playerWeapon/, 'the pool is asked FIRST');
   assert.match(body, /tallySwingSkills\(playerEntity, interiorWeapon\.playerWeapon\.weapon\);\n\s+continue;/,

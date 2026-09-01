@@ -20,7 +20,8 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // t
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
-import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
+import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
+import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64): a poisoned shaft doses its mark
 import { spendArrow, totalWeight } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
@@ -1959,7 +1960,21 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // C13: exterior arrows fly with the scene meshes (lost on
     // geometry, as DFU misses are).
-    arrows.update(dt);
+    // AUDIT 39 (#64): the player's shaft LANDS. It used to fly, spend
+    // its Arrow and tally Archery against a live watchman and inflict
+    // nothing - the module's foe arm was gated on `m.enemy` and this
+    // host resolved no player arrow at all. cityGuards owns the damage
+    // door, so a killed watchman still runs the crime and the corpse.
+    // (No enemy arm here: this host mounts no bow-armed pool.)
+    arrows.update(dt, {
+      foeTargets: cityGuards.guards.filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
+        playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
+        dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos),
+        audio, hitEffects, say: (l) => townTalk.say(l),
+        onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+      }),
+    });
     arrows.draw(renderer, texRemap);
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
     // EV3: per-batch skip off the build-time boxes; the clocks above
@@ -2049,7 +2064,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             // CriticalStrike) - this arm tallied Archery alone, free.
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
-            arrows.fire(eye, fwd);
+            arrows.fire(eye, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon });   // #64: LastBowUsed rides the shaft - the impact prices off it
           }
           continue;
         }
