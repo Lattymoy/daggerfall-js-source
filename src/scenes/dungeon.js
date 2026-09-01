@@ -237,7 +237,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // ROAD-C c2/S4: the POINTER seam runs first and always - the
       // automap chrome is press-HOLD and drag driven, so `down` must
       // reach it whether or not the click seam consumes the event.
-      if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button);
+      // c2/S8: the DOWN route carries the modifiers with it - DFU's
+      // double-click and debug-teleport handlers poll Input.GetKey at
+      // the click, and this seam is the port's only reader of that.
+      if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
       if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
       return;   // a window is up: never grab the pointer behind it
     }
@@ -384,6 +387,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__overlayWindow = () => ctx.overlayWindow?.() ?? null;   // U37 probe surface: the live window itself
     window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
     window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
+    // ROAD-C c2/S8: AutoMapConsoleCommands' three verbs - map_revealall,
+    // map_hideall, map_teleportmode. DFU registers them with the
+    // ConsoleCommandsDatabase; the port has no console, so they mount
+    // here beside every other developer verb, under their own names.
+    window.__automapCommand = (name) => ctx.automapCommand?.(name) ?? 'Automap instance not found';
     window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };
     window.__piles = () => JSON.stringify(ctx.dropped?.().map((p) => ({ n: p.items.length, flat: !!p.batch })) ?? []);
     // The fist repro (2026-08-18): the entity + the rig's two combat

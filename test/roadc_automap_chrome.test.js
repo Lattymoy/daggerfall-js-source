@@ -314,8 +314,11 @@ test('c2/S4 releaseAll clears every latch, and the compass reads the MAP camera 
 
 test('c2/S4 SOURCE PINS: ALL FOUR HOSTS route down, move AND up - a missing up latches the drag forever', () => {
   const ctx = src('src/scenes/dungeonContext.js');
-  assert.match(ctx, /overlayPointer\(phase, vx, vy, button = 0\)/, 'the seam exists beside click/hover/wheel');
-  assert.match(ctx, /activeOverlay\?\.pointer\?\.\(phase, vx, vy, button\)/);
+  // c2/S8 widened the seam by one optional argument - the modifiers the
+  // DOWN route carries, because two of DFU's mouse handlers poll
+  // Input.GetKey at the click rather than through a binding.
+  assert.match(ctx, /overlayPointer\(phase, vx, vy, button = 0, mods = null\)/, 'the seam exists beside click/hover/wheel');
+  assert.match(ctx, /activeOverlay\?\.pointer\?\.\(phase, vx, vy, button, mods\)/);
   for (const seam of ['overlayClick(', 'overlayHover(', 'overlayWheel(', 'overlayPointer(']) {
     assert.ok(ctx.includes(seam), `${seam} is on the context`);
   }

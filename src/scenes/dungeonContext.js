@@ -12,7 +12,7 @@ import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
-import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, revealAllAutomap, hideAllAutomap, toggleAutomapDebugTeleportMode, automapDebugTeleportMode } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
@@ -3436,6 +3436,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // return runs DFU's layout guard (:2385-2386) over it.
   const automapModel = buildRevealIndex(automapEntries);
   bindAutomapLayout(automapRec, automapModel);
+  // ROAD-C c2/S8: THE AUTOMAP'S TELEPORT LISTENER. DFU subscribes
+  // Automap.OnTeleportAction to the static DaggerfallAction event at
+  // :924, so a portal the player walks through is recorded on the map
+  // whichever host is driving. The port installs it HERE, on the context
+  // that owns both the action system and the automap record, so BOTH
+  // dungeon hosts get it without either of them knowing: each overwrites
+  // `actions.onTeleport` with its own motor warp and neither touches
+  // this seam. It is installed AFTER bindAutomapLayout, because the bind
+  // is what may empty a stale record's portals.
+  actions.onTeleportPortal = (from, to) => { recordTeleporterConnection(automapRec, from, to); };
   let automapScanT = SCAN_INTERVAL_S;   // the first tick probes at once (Automap.cs:993-1002's lazy-init scan)
   let _automapEye = null;
   // The player marker arrow, Daggerfall mesh 99900 (Automap.cs:1355).
@@ -3627,8 +3637,35 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // one, so the reset arm's default render mode is TRANSPARENT.
         // The interior arm that flips it is c2/S9's.
         insideBuilding: false,
+        // ROAD-C c2/S8: the Ctrl+Shift debug-teleport click
+        // (TryTeleportPlayerToDungeonSegmentAtScreenPosition, :858-870).
+        // It goes through the SAME `onTeleport` door the Teleport action
+        // uses, which each host has already installed with its own motor
+        // warp - so the window never learns what a motor is.
+        debugTeleport: (pos) => actions.onTeleport?.({ pos, yawDeg: 0 }),
       });
     },
+    /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688). The
+     *  port has no in-game console; the standalone host mounts these on
+     *  its probe surface, which is where every other developer verb in
+     *  this port lives. The RETURN STRINGS are DFU's own. */
+    automapCommand(name) {
+      if (name === 'map_revealall') {
+        revealAllAutomap(automapRec, automapModel);
+        return 'dungeon has been completely revealed on the automap';
+      }
+      if (name === 'map_hideall') {
+        hideAllAutomap(automapRec);
+        return 'hide complete on automap';
+      }
+      if (name === 'map_teleportmode') {
+        return toggleAutomapDebugTeleportMode()
+          ? 'debug teleport mode has been enabled'
+          : 'debug teleport mode has been disabled';
+      }
+      return `unknown command ${name}`;
+    },
+    automapDebugTeleportMode,
     enemies,
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
@@ -4060,8 +4097,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      * `done` drain here - but a window that ends itself from a
      * pointer up would still be reconciled by the next tickOverlay.
      */
-    overlayPointer(phase, vx, vy, button = 0) {
-      activeOverlay?.pointer?.(phase, vx, vy, button);
+    /** ROAD-C c2/S8: `mods` is the KEYBOARD STATE AT THE PRESS, and it
+     *  exists because two of DFU's mouse handlers read the keyboard
+     *  directly at the moment of the click rather than through a
+     *  binding: the left panel double-click passes
+     *  `!Input.GetKey(LeftControl)` as "open the note editor too"
+     *  (window :1878), and the debug teleport wants Ctrl AND Shift
+     *  (:723-728). The port has no per-frame keyboard poll behind the
+     *  overlay seam, so the DOWN route carries the modifiers the DOM
+     *  event already holds; every other phase leaves it null. */
+    overlayPointer(phase, vx, vy, button = 0, mods = null) {
+      activeOverlay?.pointer?.(phase, vx, vy, button, mods);
     },
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering

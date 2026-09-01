@@ -268,6 +268,11 @@ export function pickAutomap({ ray, model, rec, markers = null, stats = null }) {
     if (best && t >= best.distance) continue;
     best = {
       kind: 'marker', name: mk.name, portal: mk.portal ?? null, id: mk.id ?? null,
+      // c2/S8: a user note answers the NOTE ITSELF, and a portal is
+      // resolved back to its dictionary key - DFU reads both off the
+      // GameObject's NAME (:565-567, :646-661); the port carries them as
+      // fields on the proxy, so nothing parses a string back apart.
+      note: mk.note ?? null, teleporterKey: mk.teleporterKey ?? null,
       key: null, distance: t,
       point: [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t],
       normal: aabbNormalAt(box, [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t]),

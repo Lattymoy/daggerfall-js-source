@@ -53,6 +53,10 @@ export const AUTOMAP_STRINGS = Object.freeze({
   automapPlayerMarker: "player marker",
   automapTeleporterEntrance: "teleporter (entrance)",
   automapTeleporterExit: "teleporter (exit)",
+  // c2/S8 - Internal_Strings.csv:1057, the note editor's prompt
+  // (EditUserNote's SetTextBoxLabel, Automap.cs:1596). The trailing
+  // space is in the CSV.
+  youNote: "You note: ",
 });
 
 /**

@@ -292,7 +292,13 @@ export class AutomapChrome {
         if (verb) { out.verbs.push(verb); out.sound = true; }
       }
     }
-    if (this.held[side].size) {
+    // ROAD-C c2/S8 FIX: `held` has a LEFT and a RIGHT set and no middle
+    // one, because no button in either table has a middle-hold verb -
+    // but the render panel's MIDDLE drag is a real gesture (the slice
+    // level, DaggerfallAutomapWindow.cs:925-927), so a middle RELEASE
+    // reaches here and `this.held.middle` is undefined. It threw. Found
+    // by the first pin that ever routed a middle-button up.
+    if (this.held[side]?.size) {
       for (const heldName of this.held[side]) {
         const guard = side === 'right' ? RIGHT_DOWN_GUARD[heldName] : 'left';
         this.alreadyIn[guard] = false;

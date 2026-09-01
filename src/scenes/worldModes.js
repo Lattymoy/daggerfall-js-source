@@ -5668,7 +5668,10 @@ export function createWorldModes(host) {
       const vd = pointToNative(nativeMetrics(canvas), px, py);
       // ROAD-C c2/S4: the pointer seam first and always (the automap
       // chrome is press-HOLD and drag driven), then the click seam.
-      if (vd) dungeonCtx.overlayPointer?.('down', vd[0], vd[1], e.button);
+      // c2/S8: the DOWN route carries the modifiers with it - DFU's
+      // double-click and debug-teleport handlers poll Input.GetKey at
+      // the click, and this seam is the port's only reader of that.
+      if (vd) dungeonCtx.overlayPointer?.('down', vd[0], vd[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
       if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2);
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }

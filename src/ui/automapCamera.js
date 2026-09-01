@@ -266,6 +266,41 @@ export const actionResetRotationPivotAxis = (s, playerPos) => (s.viewMode === VI
   ? { ...s, pivot2D: [...playerPos] }
   : { ...s, pivot3D: [...playerPos] });
 
+// ── ROAD-C c2/S8: the three verbs the panel's double clicks run ──────
+
+/** TrySetRotationPivotAxisToDungeonSegmentAtScreenPosition (:843-856)
+ *  plus the window's own store (:1894-1904): the pivot goes to the hit
+ *  point raised by `yOffset = +1.0f`, and lands in the ACTIVE mode's
+ *  slot alone - the other mode keeps the pivot the player left it. */
+export const PIVOT_CLICK_Y_OFFSET = 1.0;
+export function setRotationPivotAxisToPoint(s, point) {
+  const p = [point[0], point[1] + PIVOT_CLICK_Y_OFFSET, point[2]];
+  return s.viewMode === VIEW_2D ? { ...s, pivot2D: p } : { ...s, pivot3D: p };
+}
+
+/**
+ * TryCenterAutomapCameraOnDungeonSegmentAtScreenPosition (:825-840):
+ * the camera keeps its DISTANCE TO THE PLAYER - measured before it
+ * moves - and is then placed at the hit point and pulled back along its
+ * own forward by that distance. The rotation is untouched, so the map
+ * swings onto the clicked spot without turning.
+ */
+export function centerCameraOnPoint(s, point, playerPos) {
+  const d = Math.hypot(s.pos[0] - playerPos[0], s.pos[1] - playerPos[1], s.pos[2] - playerPos[2]);
+  return {
+    ...s,
+    pos: [
+      point[0] - s.fwd[0] * d,
+      point[1] - s.fwd[1] * d,
+      point[2] - s.fwd[2] * d,
+    ],
+  };
+}
+
+/** iTween's MoveTo on the camera GameObject (:707-716, :727-736) moves
+ *  its POSITION and nothing else. */
+export const setCameraPosition = (s, pos) => ({ ...s, pos: [...pos] });
+
 /**
  * ActionChangeAutomapGridMode (:1738-1769). The mode advances and
  * WRAPS; on the way out the OUTGOING mode's transform is saved and

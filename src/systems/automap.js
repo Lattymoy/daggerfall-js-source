@@ -81,9 +81,30 @@
 // beacon focus cycling; c2/S6 added the shader's above-slice half
 // (transparent and wireframe, the water tint, Cutout as the absence of
 // the second pass); c2/S7 the beacons, the marker meshes and the hover
-// picker. So what is FLAGGED here is now: user note markers, teleporter
-// portals, the interior-BUILDING automap arm, and the exterior window's
-// own native chrome.
+// picker. c2/S8 the USER-DATA HALF - note markers, teleporter
+// connections and the click verbs that mint them. So what is FLAGGED
+// here is now: the interior-BUILDING automap arm, and the exterior
+// window's own native chrome.
+//
+// ── ROAD-C c2/S8: NOTES AND TELEPORTERS ──────────────────────────────
+// AutomapDungeonState carries two more collections (Automap.cs:93-94):
+// `SortedList<int, NoteMarker> listUserNoteMarkers` and
+// `Dictionary<string, TeleporterConnection> dictTeleporterConnections`.
+// Both ride the per-dungeon record here, both ride the existing save
+// envelope, and both are therefore subject to the SAME LRU prune - a
+// player who set notes in a dungeon not visited in AutomapNumberOf-
+// Dungeons dungeons loses them, exactly as DFU's own eviction does.
+// That reads as data loss and IS the original's behaviour.
+//
+// THE TELEPORTER KEY IS THE SAVE KEY, and it is a C# ToString
+// (:130-137): `"position: " + teleporterEntrance.position + ", rotation:
+// " + teleporterExit.rotation` - the ENTRANCE position (already carrying
+// its +up*1.0 offset, because TeleporterTransform applies the offset in
+// its constructor) mixed with the EXIT rotation. It is both the runtime
+// identity (AddTeleporterMarkerOnMap names its GameObjects with it and
+// the hover/jump handlers parse it back out) and the dictionary key that
+// is serialized. The port mints a byte-stable equivalent below and
+// records the one thing it cannot reproduce.
 
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
@@ -121,6 +142,11 @@ export function enterDungeonAutomap(key, nowMinutes, { fromLoad = false } = {}) 
     rec = {
       revealed: new Set(), visitedThisRun: new Set(), entranceDiscovered: false, lastVisited: 0,
       blockNames: null,   // c2/S1: the layout the discovery was recorded against (the restore guard's input)
+      // c2/S8: AutomapDungeonState's two user-data collections (:93-94).
+      // The SortedList is a Map kept in ASCENDING KEY ORDER - AddNext
+      // reads Keys[i] positionally, so the order is part of the law.
+      notes: new Map(),        // id -> { position:[x,y,z], note }
+      teleporters: new Map(),  // dictKey -> { entrance:{pos,yawDeg}, exit:{pos,yawDeg} }
     };
     _dungeons.set(key, rec);
   }
@@ -198,6 +224,16 @@ export function snapshotAutomap(nowMinutes = null) {
       // keeps the same field for the same purpose; it is OPTIONAL on
       // the way back in, so an A1/A2 envelope still restores.
       ...(rec.blockNames ? { blockNames: [...rec.blockNames] } : {}),
+      // c2/S8: :2199 / :2202 - the two user collections are COPIED into
+      // the state on every save. Sorted-list order is the law for the
+      // notes (AddNext reads Keys positionally), insertion order for the
+      // dictionary, and both travel as [key, value] pairs so the shape
+      // is JSON-clean and byte-stable across a round trip.
+      notes: [...(rec.notes ?? new Map())].map(([id, n]) => [id, { position: [...n.position], note: n.note ?? '' }]),
+      teleporters: [...(rec.teleporters ?? new Map())].map(([k, c]) => [k, {
+        entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg },
+        exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg },
+      }]),
     };
   }
   return out;
@@ -218,6 +254,14 @@ export function restoreAutomap(snap) {
       entranceDiscovered: rec.entranceDiscovered ?? false,
       lastVisited: rec.lastVisited ?? 0,
       blockNames: Array.isArray(rec.blockNames) ? [...rec.blockNames] : null,
+      // c2/S8's DISCIPLINE ARM, one level down from the shipped
+      // missing-field law and DFU's own (:2408-2422): both collections
+      // are read `if (loaded != null)`, so a state written BEFORE this
+      // stage - which carries neither field - restores with EMPTY
+      // collections and never wipes or throws away the record it came
+      // with. Ascending key order is rebuilt, not trusted.
+      notes: sortedNoteMap(rec.notes),
+      teleporters: new Map(Array.isArray(rec.teleporters) ? rec.teleporters : []),
     });
   }
 }
@@ -247,6 +291,15 @@ export function bindAutomapLayout(rec, model) {
     rec.revealed = new Set();
     rec.visitedThisRun = new Set();
     rec.entranceDiscovered = false;
+    // c2/S8: RestoreStateAutomapDungeon clears BOTH user collections
+    // (DestroyUserMarkerNotes + DestroyTeleporterMarkers, :2356-2359)
+    // BEFORE it reads the saved state, and every abort arm - a missing
+    // dictionary entry (:2373), a location-name mismatch (:2378) and a
+    // block-name mismatch (:2385) - `return`s before the load at
+    // :2408-2422. So a layout that no longer matches loses the notes and
+    // the portals with the discovery, and does not keep half of each.
+    rec.notes = new Map();
+    rec.teleporters = new Map();
     rec.blockNames = [...model.blockNames];
     return false;
   }
@@ -388,3 +441,272 @@ export const slicingPositionY = (playerY, eyeHeight, biasY) => playerY + eyeHeig
 
 /** The stale-visit clock, for probes: minutes -> days old. */
 export const automapDaysSinceVisit = (rec, nowMinutes) => (nowMinutes - (rec?.lastVisited ?? 0)) / MINUTES_PER_DAY;
+
+// ── ROAD-C c2/S8: USER NOTE MARKERS ──────────────────────────────────
+
+export const NOTE_SPAWN_NORMAL_OFFSET = 0.7;   // hit.point + hit.normal * 0.7f (:773)
+export const NOTE_MIN_DISTANCE = 1.0;          // Vector3.Distance(...) < 1.0f (:780)
+export const NOTE_MAX_CHARACTERS = 50;         // messageboxUserNote.TextBox.MaxCharacters (:1603)
+export const NOTE_WIDTH_OVERRIDE = 306;        // ...TextBox.WidthOverride (:1604)
+
+/** NameGameobjectUserNoteMarkerSubStringStart + id (:164, :1580), read
+ *  back the way every one of DFU's five handlers reads it -
+ *  `Convert.ToInt32(name.Replace(prefix, ""))`. */
+export const USER_NOTE_MARKER_PREFIX = 'UserNoteMarker_';
+export function userNoteIdFromName(name) {
+  if (typeof name !== 'string' || !name.startsWith(USER_NOTE_MARKER_PREFIX)) return null;
+  const id = Number(name.slice(USER_NOTE_MARKER_PREFIX.length));
+  return Number.isInteger(id) ? id : null;
+}
+
+/** The SortedList's ascending-key order, rebuilt. DFU's
+ *  SortedList<int,T> IS ordered by key and AddNext reads `Keys[counter]`
+ *  POSITIONALLY, so a Map that merely happened to be in insertion order
+ *  would answer a different id. Restores and snapshots both pass here. */
+function sortedNoteMap(rows) {
+  const out = new Map();
+  if (!Array.isArray(rows)) return out;
+  const pairs = rows
+    .map(([id, n]) => [Number(id), { position: [...(n?.position ?? [0, 0, 0])], note: n?.note ?? '' }])
+    .filter(([id]) => Number.isFinite(id))
+    .sort((a, b) => a[0] - b[0]);
+  for (const [id, n] of pairs) out.set(id, n);
+  return out;
+}
+
+/**
+ * SortedListExtensions.AddNext (:2704-2729), the loop VERBATIM - "we
+ * want to reuse id's if list items have been deleted from the list and
+ * thus the id is free". The keys are walked in ascending order and the
+ * scan stops at the first gap:
+ *
+ *   key = 0; counter = 0;
+ *   do {
+ *     if (count == 0) break;
+ *     next = Keys[counter++];
+ *     if (key != next) break;              // the gap is HERE, at `key`
+ *     key = next + 1;
+ *     if (count == 1 || counter == count) break;
+ *     if (key != Keys[counter]) break;     // the gap is one further on
+ *   } while (true);
+ *
+ * Answers the minted key; the caller supplies the value. Written as the
+ * C# loop rather than as "the lowest free integer" on purpose: the two
+ * agree over every sequence DFU's add/delete cycle produces, and a pin
+ * on the loop is a pin on what DFU runs.
+ */
+export function sortedListAddNext(map, value) {
+  const keys = [...map.keys()].sort((a, b) => a - b);
+  const count = keys.length;
+  let key = 0;
+  let counter = 0;
+  for (;;) {
+    if (count === 0) break;
+    const next = keys[counter++];
+    if (key !== next) break;
+    key = next + 1;
+    if (count === 1 || counter === count) break;
+    if (key !== keys[counter]) break;
+  }
+  map.set(key, value);
+  // the SortedList stays sorted, so re-mint the Map in key order - the
+  // next AddNext reads Keys[] positionally, exactly as the C# does
+  const sorted = sortedNoteMap([...map]);
+  map.clear();
+  for (const [k, v] of sorted) map.set(k, v);
+  return key;
+}
+
+/**
+ * TryToAddOrEditUserNoteMarkerOnDungeonSegmentAtScreenPosition
+ * (:763-799) with the raycast already done - `hit` is the picker's
+ * answer, its `name` naming a marker (`UserNoteMarker_<id>`) or not.
+ *
+ * Three outcomes, all DFU's:
+ *  - the hit IS a note marker  -> 'edit' that marker's note;
+ *  - the hit is anything else and NO existing marker sits within 1.0
+ *    unit of `hit.point + hit.normal * 0.7` -> 'add', with the id from
+ *    AddNext's lowest-free-key reuse;
+ *  - the hit is anything else and a marker IS within 1.0 -> 'none', and
+ *    NO id is minted (the early `return` at :781 is before AddNext).
+ *
+ * Note which comparison DFU makes: the distance is measured against the
+ * SPAWNING position, not against the hit point, so the 0.7 normal
+ * offset is inside the test. And it is a STRICT `<`, so a marker at
+ * exactly 1.0 does not refuse.
+ *
+ * `editOnCreation` is DFU's `!Input.GetKey(LeftControl)` (window :1878)
+ * and rides out on the answer rather than being decided here. A miss (no
+ * hit at all) answers 'none' - the whole body is inside
+ * `if (nearestHit.HasValue)`.
+ */
+export function tryAddOrEditUserNote(rec, hit, { editOnCreation = true } = {}) {
+  if (!rec || !hit) return { action: 'none', id: null, edit: false };
+  const existingId = userNoteIdFromName(hit.name);
+  if (existingId != null) return { action: 'edit', id: existingId, edit: true };
+  const n = hit.normal ?? [0, 1, 0];
+  const p = hit.point ?? [0, 0, 0];
+  const at = [
+    p[0] + n[0] * NOTE_SPAWN_NORMAL_OFFSET,
+    p[1] + n[1] * NOTE_SPAWN_NORMAL_OFFSET,
+    p[2] + n[2] * NOTE_SPAWN_NORMAL_OFFSET,
+  ];
+  for (const marker of rec.notes.values()) {
+    const q = marker.position;
+    if (Math.hypot(at[0] - q[0], at[1] - q[1], at[2] - q[2]) < NOTE_MIN_DISTANCE) {
+      return { action: 'none', id: null, edit: false };   // :781 - no marker, and no id burned
+    }
+  }
+  const id = sortedListAddNext(rec.notes, { position: at, note: '' });
+  return { action: 'add', id, edit: !!editOnCreation };
+}
+
+/** TryToRemoveUserNoteMarkerOnDungeonSegmentAtScreenPosition
+ *  (:806-820): true ONLY when the hit was a marker, which is what the
+ *  window's right double-click reads to decide whether to fall through
+ *  to the rotation pivot. */
+export function tryRemoveUserNote(rec, hit) {
+  if (!rec || !hit) return false;
+  const id = userNoteIdFromName(hit.name);
+  if (id == null) return false;
+  rec.notes.delete(id);   // `if (ContainsKey(id)) Remove(id)`, then Destroy - the object goes either way
+  return true;
+}
+
+/** UserNote_OnGotUserInput (:1608-1614) writes the note back by id.
+ *  MaxCharacters 50 is the TEXT BOX's limit, so it is applied where the
+ *  text arrives rather than trusted from the caller. */
+export function setUserNote(rec, id, text) {
+  const marker = rec?.notes?.get(id);
+  if (!marker) return false;
+  marker.note = String(text ?? '').slice(0, NOTE_MAX_CHARACTERS);
+  return true;
+}
+
+// ── ROAD-C c2/S8: TELEPORTER CONNECTIONS ─────────────────────────────
+
+/** TeleporterTransform's two position offsets, applied IN THE
+ *  CONSTRUCTOR and therefore already baked into the string key
+ *  (OnTeleportAction :2565-2572). */
+export const TELEPORTER_ENTRANCE_OFFSET = Object.freeze([0, 1.0, 0]);   // Vector3.up * 1.0f
+export const TELEPORTER_EXIT_OFFSET = Object.freeze([0, 0.2, 0]);       // Vector3.up * 0.2f
+
+const addOffset = (p, o) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]];
+
+/**
+ * .NET's "F1" numeric format: one decimal, rounded HALF AWAY FROM ZERO,
+ * with the sign kept even when the magnitude rounds to zero
+ * (`(-0.04).ToString("F1")` is `"-0.0"`). JS `toFixed` differs on exact
+ * negative ties - it takes the larger n, so -1.25 prints "-1.2" where
+ * .NET prints "-1.3" - so the rounding is done on the magnitude.
+ */
+export function formatF1(v) {
+  if (!Number.isFinite(v)) return 'NaN';
+  const mag = Math.round(Math.abs(v) * 10) / 10;
+  return (v < 0 ? '-' : '') + mag.toFixed(1);
+}
+
+/** Unity 2019.4's Vector3.ToString() / Quaternion.ToString():
+ *  `"({0:F1}, {1:F1}, {2:F1})"` and the same with a fourth slot. */
+export const vector3String = (v) => `(${formatF1(v[0])}, ${formatF1(v[1])}, ${formatF1(v[2])})`;
+export const quaternionString = (q) => `(${formatF1(q[0])}, ${formatF1(q[1])}, ${formatF1(q[2])}, ${formatF1(q[3])})`;
+
+/** Quaternion.Euler(0, yaw, 0) - the port's action objects carry a YAW
+ *  and nothing else, so this is the whole rotation they can have. */
+export function yawQuaternion(yawDeg) {
+  const h = (yawDeg ?? 0) * Math.PI / 360;   // half of yaw, in radians
+  return [0, Math.sin(h), 0, Math.cos(h)];
+}
+
+/**
+ * TeleporterConnection.ToString (:130-137) - THE DICTIONARY KEY, and
+ * therefore also the SAVE key and the marker GameObjects' names:
+ *
+ *   "position: " + teleporterEntrance.position + ", rotation: " + teleporterExit.rotation
+ *
+ * It mixes the ENTRANCE position with the EXIT rotation. That is not a
+ * transcription slip - read it twice; it is what the C# says, and both
+ * halves are load-bearing (two portals sharing an entrance tile but
+ * pointing at differently-turned exits are different connections).
+ *
+ * DEPARTURE, rowed in the Ledger: the ROTATION component. DFU's exit is
+ * a Unity Transform carrying a full quaternion; the port's action
+ * objects carry a YAW ALONE (dungeonLayout's `objectPositions` records
+ * `yawDeg`), so the port formats Quaternion.Euler(0, yaw, 0) into the
+ * same four F1 slots. For every teleporter Daggerfall actually ships -
+ * RDB action objects, which are yaw-only - the two agree; a hypothetical
+ * pitched exit would key differently. The FORMAT is byte-identical, and
+ * that is what matters here, because this string is written into saves:
+ * it must round-trip and it must not drift, so both halves are derived
+ * from the block's static layout data (never from an accumulated runtime
+ * transform) and are quantised to one decimal before they are compared.
+ */
+export function teleporterDictKey(entrance, exit) {
+  return `position: ${vector3String(entrance.pos)}, rotation: ${quaternionString(yawQuaternion(exit.yawDeg))}`;
+}
+
+/**
+ * OnTeleportAction (:2565-2572). `entrance` / `exit` are the RAW action
+ * transforms `{ pos, yawDeg }`; the two offsets are applied here because
+ * TeleporterTransform's constructor applies them before ToString ever
+ * reads the position. A key already in the dictionary is NOT re-added -
+ * walking the same portal twice records it once.
+ *
+ * Answers the key (whether or not it was new) so the caller can name the
+ * marker objects with it, and `added` for the pins.
+ */
+export function recordTeleporterConnection(rec, entrance, exit) {
+  if (!rec || !entrance || !exit) return null;
+  const conn = {
+    entrance: { pos: addOffset(entrance.pos, TELEPORTER_ENTRANCE_OFFSET), yawDeg: entrance.yawDeg ?? 0 },
+    exit: { pos: addOffset(exit.pos, TELEPORTER_EXIT_OFFSET), yawDeg: exit.yawDeg ?? 0 },
+  };
+  const key = teleporterDictKey(conn.entrance, conn.exit);
+  if (rec.teleporters.has(key)) return { key, added: false };
+  rec.teleporters.set(key, conn);
+  return { key, added: true };
+}
+
+// ── ROAD-C c2/S8: THE THREE CONSOLE COMMANDS ─────────────────────────
+// AutoMapConsoleCommands (:2596-2688). The port has no in-game console,
+// so these are exported as functions and mounted on the standalone
+// dungeon host's probe surface (`window.__automapCommand`) - the same
+// place every other developer verb in this port lives. The LAWS below
+// are DFU's; only the door differs.
+
+/** RevealAll (:2426-2445): every model's MeshRenderer enabled AND its
+ *  RENDER_IN_GRAYSCALE keyword disabled - so a revealed-by-command
+ *  dungeon draws in COLOUR, not as prior-run geometry - plus the
+ *  entrance beacon set active. */
+export function revealAllAutomap(rec, model) {
+  if (!rec || !model) return false;
+  for (const row of model.rows ?? []) {
+    rec.revealed.add(row.key);
+    rec.visitedThisRun.add(row.key);
+  }
+  rec.entranceDiscovered = true;
+  return true;
+}
+
+/** HideAll (:2450-2464): every MeshRenderer DISABLED and the entrance
+ *  beacon deactivated - and note what it does NOT touch: the grayscale
+ *  keyword is left exactly as it was, so `visitedThisRun` survives here
+ *  the way DFU's materials do. `revealed` ALONE is the draw gate,
+ *  because `MeshRenderer.enabled` alone is DFU's. */
+export function hideAllAutomap(rec) {
+  if (!rec) return false;
+  rec.revealed = new Set();
+  rec.entranceDiscovered = false;
+  return true;
+}
+
+/** DebugTeleportMode (:2665-2687): a bare toggle on the Automap
+ *  component, so it lives at module scope beside the store the same
+ *  component owns. Ctrl+Shift+LeftClick on a dungeon segment while it
+ *  holds teleports the player there (window :715-731). */
+let _debugTeleportMode = false;
+export const automapDebugTeleportMode = () => _debugTeleportMode;
+export function toggleAutomapDebugTeleportMode() {
+  _debugTeleportMode = !_debugTeleportMode;
+  return _debugTeleportMode;
+}

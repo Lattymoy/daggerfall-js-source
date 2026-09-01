@@ -251,6 +251,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     //     (teleport destinations - actionless objects live only in
     //     the layout's position index, not this graph)
     //   onTeleport({ pos, yawDeg })  - warp the player
+    //   onTeleportPortal(from, to)   - ROAD-C c2/S8:
+    //     DaggerfallAction.OnTeleportAction (:897-903), the static event
+    //     whose ONE listener in DFU is Automap.OnTeleportAction. Both
+    //     endpoints are `{ pos, yawDeg }` rows off the layout index and
+    //     it fires BEFORE the warp, exactly as :596 does.
     //   onLockedDoor(door)           - the classic look-at-lock text
     //   onActionSound(o)             - Play's soundIndex (Index > 0)
     //   onShowText(textId) / onShowTextInput(textId, submit)
@@ -260,6 +265,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     //   onDoorState(o, opening) / onDoorBash(o) - the A1 audio seams
     this.resolvePosition = null;
     this.onTeleport = null;
+    this.onTeleportPortal = null;
     this.onLockedDoor = null;
     this.onActionSound = null;
     this.onShowText = null;
@@ -365,6 +371,15 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // null next logs and returns, verbatim.
       const dest = this.resolvePosition?.(o.ns, o.nextKey) ?? null;
       if (!dest) { console.warn('[action] Teleport next object null - can\'t teleport'); return; }
+      // ROAD-C c2/S8: RaiseOnTeleportActionEvent(thisAction.gameObject,
+      // thisAction.NextObject) fires HERE (:596), one line BEFORE the
+      // player transform is assigned - the automap's OnTeleportAction is
+      // its only listener and it records the pair as a discovered portal.
+      // The two endpoints are the same static layout rows the warp
+      // itself resolves through, which is what keeps the automap's
+      // string key byte-stable across saves.
+      const from = this.resolvePosition?.(o.ns, o.positionKey) ?? (o.origin ? { pos: o.origin, yawDeg: 0 } : null);
+      if (from) this.onTeleportPortal?.(from, dest);
       this.onTeleport?.(dest);
       return;
     }
@@ -435,6 +450,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     const o = {
       key,
       ns,
+      // ROAD-C c2/S8: the object's OWN block-local position byte. The
+      // key already carries it, but a consumer should not have to parse
+      // a key apart to ask the layout index where this object stands -
+      // which is what the Teleport relay's automap report needs.
+      positionKey,
       kind: 'relay',
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,

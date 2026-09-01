@@ -167,8 +167,13 @@ test('c2/S7 the entrance pair is hidden until discovered, and the set is DFU\'s 
 
 test('c2/S7 the beacon models are meshReader-shaped and name 1x1 solids in the amap archive', () => {
   const models = markerModels();
-  assert.deepEqual(Object.keys(models).sort(),
-    ['cubeEntrance', 'curvedArrow', 'cylinderEntrance', 'cylinderPivot', 'cylinderPlayer']);
+  // RE-BASELINED at ROAD-C c2/S8, which added four more on the same
+  // path: the note diamond and the three teleporter cylinders.
+  assert.deepEqual(Object.keys(models).sort(), [
+    'cubeEntrance', 'curvedArrow', 'cylinderConnection', 'cylinderEntrance',
+    'cylinderPivot', 'cylinderPlayer', 'cylinderPortalEntrance', 'cylinderPortalExit',
+    'diamondNote',
+  ]);
   for (const [name, m] of Object.entries(models)) {
     assert.ok(m.positions instanceof Float32Array, `${name} positions`);
     assert.ok(m.indices instanceof Uint32Array, `${name} indices`);
@@ -517,13 +522,17 @@ test('c2/S7 the beacons ride drawMesh with 1x1 amap solids - no new renderer ent
     assert.ok(log.some((c) => c[0] === 'drawBillboards'), 'the arrow fell back to its quad');
     // the three solids really are 1x1 and really are the beacon colours
     const ups = log.filter((c) => c[0] === 'uploadTexture' && MARKER_TEXELS[c[2]] !== undefined);
-    assert.equal(ups.length, 3);
+    // RE-BASELINED at c2/S8: seven solids now - the three beacon
+    // colours plus the note orange, the two portal violets and the
+    // connection's. Every one of them still goes back on dispose, which
+    // is what the loop below the teardown checks.
+    assert.equal(ups.length, 7);
     for (const [, archive, record, texel] of ups) {
       assert.equal(archive, 'amap');
       assert.equal(texel, MARKER_TEXELS[record]);
     }
     w.dispose();
-    assert.deepEqual(log.filter((c) => c[0] === 'destroyMesh').length, 5, 'every bundle goes back');
+    assert.deepEqual(log.filter((c) => c[0] === 'destroyMesh').length, 9, 'every bundle goes back');
     for (const record of Object.values(MARKER_TEX)) {
       assert.ok(log.some((c) => c[0] === 'releaseTexture' && c[2] === record), `${record} released`);
     }

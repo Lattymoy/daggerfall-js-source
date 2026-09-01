@@ -207,7 +207,14 @@ test('A2 grayscale pins: the shader law and the two-tier dungeon pass (Daggerfal
   // draw groups are still issued colour-then-grayscale, and the
   // prior-run predicate is still "revealed but not visited this run".
   assert.match(aw, /AUTOMAP_MODE\.BELOW_COLOUR\);[\s\S]{0,400}AUTOMAP_MODE\.BELOW_GRAY\);/, 'visited draws colour, prior-run grayscale');
-  assert.match(aw, /run\.has\(key\) \? visited : rec\.revealed\.has\(key\) \? prior : null/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
+  // RE-BASELINED at ROAD-C c2/S8: DFU's two bits are INDEPENDENT -
+  // MeshRenderer.enabled says drawn, RENDER_IN_GRAYSCALE says which
+  // tier - and HideAll (Automap.cs:2450-2464) clears the first without
+  // touching the second, so `revealed` had to become the gate and the
+  // tier a choice made inside it. Both halves are pinned, because
+  // collapsing them back into one conditional is exactly the mistake.
+  assert.match(aw, /if \(!rec\.revealed\.has\(key\)\) return;/, 'revealed IS the draw gate (MeshRenderer.enabled)');
+  assert.match(aw, /const row = run\.has\(key\) \? visited : prior;/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
   assert.match(aw, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);/, 'beacons ride neither the slice nor the tint');
   // PIN MOVED, ROAD-C c2/S2: the automap mode is one of the globals
   // renderer.panelFrame saves and returns in its own finally, so the
