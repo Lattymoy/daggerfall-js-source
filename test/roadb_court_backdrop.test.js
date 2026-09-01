@@ -128,7 +128,13 @@ test('B5: the prison screen is laid at the courtroom\'s own level, and both go',
   assert.equal(log.days.length, 1, 'ONE RaiseTime of the whole sentence (:475)');
 
   townTalk.closeOverlay();
-  assert.deepEqual(log.minutes, [RELEASE_MINUTES], ':485 - RaiseTime(240 * 60), through the SURVIVING callback');
+  // ROAD review-p: ':485 - RaiseTime(240 * 60)', and NOT a guard on
+  // the successor restore. The plea box's KeyG option calls finish()
+  // straight out of the keydown, so `() => release()` is installed by
+  // showOverlay on an ordinary press and never travels dropOverlay's
+  // successor branch - reverting that guard leaves this green. The
+  // test below is the one that holds it.
+  assert.deepEqual(log.minutes, [RELEASE_MINUTES], ':485 - RaiseTime(240 * 60)');
   assert.equal(log.repositioned, 1, ':488');
   assert.equal(log.cleared, 1, ':489');
   assert.equal(player.crimeCommitted, 0);
@@ -163,6 +169,30 @@ test('B5: the successor a close callback opens keeps its OWN close callback', ()
   assert.deepEqual(seen, ['over']);
   host2.closeOverlay();
   assert.deepEqual(seen, ['over', 'under'], 'the covered window\'s callback came back with it');
+
+  // ROAD review-p: AND THE SUCCESSOR MAY ARRIVE THROUGH THE OTHER
+  // DOOR. When the close callback PUSHES instead of replacing, the
+  // push finds an empty slot, so its reconcile pops the closing window
+  // first - one level out, one level in, nothing newly suspended. The
+  // guard above returns early either way, so a push that also filed a
+  // suspended entry left the list deeper than the stack and the next
+  // close popped that stray entry instead of the callback of the
+  // window actually underneath.
+  const host3 = talkHost();
+  const heard = [];
+  host3.showOverlay({ name: 'under' }, () => heard.push('under'));
+  host3.pushOverlay({ name: 'over' }, () => {
+    heard.push('over');
+    host3.pushOverlay({ name: 'successor' }, () => heard.push('successor'));
+  });
+  host3.closeOverlay();
+  assert.equal(host3.overlay?.name, 'successor', 'the callback pushed a successor');
+  host3.closeOverlay();
+  assert.deepEqual(heard, ['over', 'successor'], 'the successor kept its own callback');
+  assert.equal(host3.overlay?.name, 'under', 'and the window underneath came back');
+  host3.closeOverlay();
+  assert.deepEqual(heard, ['over', 'successor', 'under'],
+    'with ITS callback - not a null filed by a push that covered nobody');
 });
 
 test('B5: CORT01I0 mints its OWN palette - the 2026-09-01 incident, one file over', async () => {

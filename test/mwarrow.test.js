@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseNif } from '../src/formats/mwNifFile.js';
-import { nodeTransformOf, findNodeByName } from '../src/formats/mwCharacter.js';
+import { nodeTransformOf, findNodeByName, boneOffsetOf } from '../src/formats/mwCharacter.js';
+import { flattenNif } from '../src/formats/mwNifMesh.js';   // MW-D48: the OTHER composition, run rather than transcribed
 import {
   MW_WEAPON_TYPE, WEAPON_AMMO_TYPE, ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE,
   assembleFirstPersonArm,
@@ -478,10 +479,11 @@ test('MW-D44: only the WEAPON lends it, and only on the weapon-mesh branch', asy
 // and applies it to the child's translation separately. Two different
 // shapes of arithmetic for the same job, and the arrow is the one that
 // is mispositioned - so it reads like the fault and it is NOT. Pinned
-// by RUNNING both over a chain with rotations AND scales, because
-// reading them side by side is exactly how this was called a bug once
-// already. If someone ever changes one, this says the other must move
-// with it.
+// by RUNNING both over a chain with rotations AND scales - literally
+// both, since ROAD review-p: flattenNif is CALLED over the same chain
+// rather than copied into this file, because reading them side by side
+// is exactly how this was called a bug once already. If someone ever
+// changes one, this says the other must move with it.
 test('MW-D48: nodeTransformOf composes the same chain flattenNif does', () => {
   // A hand-built NIF shape: root (rule 34 zeroes it), a scaled+rotated
   // parent, then the named node - the shape of a real weapon chain.
@@ -497,55 +499,91 @@ test('MW-D48: nodeTransformOf composes the same chain flattenNif does', () => {
   };
   const pre = nodeTransformOf(nif, 'ArrowBone');
   assert.ok(pre, 'the node resolves');
-  // composeTransform's arithmetic, written out: translation accumulates
-  // through the PARENT's rotation with the PARENT's scale applied to the
-  // child's translation, and scale multiplies down the chain.
-  const m33 = (A, B) => {
-    const o = new Array(9);
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 3; c++) o[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c];
-    }
-    return o;
+
+  // THE OTHER SIDE, RUN AND NOT TRANSCRIBED (ROAD review-p). The
+  // header used to say "proven by execution" over a hand copy of
+  // composeTransform's arithmetic written into this file, so changing
+  // the real one could not fail this test - the coupling the pin
+  // exists to enforce was the one thing it did not hold. Instead:
+  // hang a shape off the SAME ArrowBone node and let flattenNif bake
+  // the chain into its vertices, which is exactly what it does for
+  // every non-arrow part. A vertex at the local origin comes out at
+  // the composed translation; the three unit vertices come out at the
+  // composed 3x3's columns, scale folded in - the whole affine, read
+  // off the drawable.
+  const probe = {
+    roots: [0],
+    records: [
+      ...nif.records.map((r) => ({ ...r })),
+      { type: 'NiTriShape', name: 'probe', rotation: I3, translation: [0, 0, 0], scale: 1, data: 4, skin: -1 },
+      {
+        type: 'NiTriShapeData', numVertices: 4, uvSets: [],
+        vertices: Float32Array.from([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]),
+        triangles: Uint16Array.from([0, 1, 2]),
+      },
+    ],
   };
-  const ap = (m, x, y, z) => [
-    m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z,
-  ];
-  let w = { rotation: I3, translation: [0, 0, 0], scale: 1 };
-  for (const nd of nif.records) {
-    const t = ap(w.rotation, nd.translation[0] * w.scale, nd.translation[1] * w.scale, nd.translation[2] * w.scale);
-    w = {
-      rotation: m33(w.rotation, nd.rotation),
-      translation: [w.translation[0] + t[0], w.translation[1] + t[1], w.translation[2] + t[2]],
-      scale: w.scale * nd.scale,
-    };
-  }
+  probe.records[2] = { ...probe.records[2], children: [3] };
+  const [batch] = flattenNif(probe);
+  assert.ok(batch, 'flattenNif emitted the probe shape');
+  const at = (i) => [batch.positions[i * 3], batch.positions[i * 3 + 1], batch.positions[i * 3 + 2]];
+  const origin = at(0);
   for (let i = 0; i < 3; i++) {
-    assert.ok(Math.abs(pre.t[i] - w.translation[i]) < 1e-6,
-      `translation ${i}: ${pre.t[i]} vs ${w.translation[i]} - the round would land off the string by the difference`);
+    assert.ok(Math.abs(pre.t[i] - origin[i]) < 1e-5,
+      `translation ${i}: ${pre.t[i]} vs ${origin[i]} - the round would land off the string by the difference`);
   }
-  // And the folded scale is the chain's product, so applyPre scales the
-  // arrow's vertices by exactly what flattenNif scales the bow's by.
+  // The columns, which carry the rotation AND the folded scale: the
+  // arrow's vertices are scaled and turned by exactly what flattenNif
+  // scales and turns the bow's by.
+  for (let c = 0; c < 3; c++) {
+    const col = at(c + 1);
+    for (let r = 0; r < 3; r++) {
+      const mine = pre.a[r * 3 + c];
+      assert.ok(Math.abs(mine - (col[r] - origin[r])) < 1e-5,
+        `a[${r}][${c}]: ${mine} vs ${col[r] - origin[r]}`);
+    }
+  }
   const folded = Math.hypot(pre.a[0], pre.a[3], pre.a[6]);
-  assert.ok(Math.abs(folded - w.scale) < 1e-6, `${folded} vs ${w.scale}`);
+  assert.ok(Math.abs(folded - 3) < 1e-6, `the chain's scale product, folded: ${folded}`);
 });
 
-// MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD.
-// FindByNameVisitor is an osg::NodeVisitor (visitor.cpp:38-49) walking
-// the BUILT SCENE, and by then the loader has dropped Bounding Box
-// subtrees and RootCollisionNode subtrees and masked hidden nodes.
-// findNodeByName reads the RAW PARSED NIF, where all of it is still
-// there - so without rule 58's filters it can answer with a node the
-// reference's search cannot see. flattenNif has applied these three all
-// along; the search that places the ARROW had none of them, and a
+// MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD - AND
+// THE LOADER BUILDS ALMOST ALL OF IT. FindByNameVisitor is an
+// osg::NodeVisitor (visitor.cpp:36-48) walking the BUILT SCENE, so the
+// only thing it cannot answer with is a subtree handleNode never made,
+// and handleNode drops exactly ONE: `if (args.mRootNode &&
+// ciEqual(nifNode->mName, "Bounding Box")) return nullptr;`
+// (nifloader.cpp:710). findNodeByName reads the RAW PARSED NIF, where
+// that subtree is still there, so it takes that cut and no other - a
 // different node answering to "ArrowBone" is a different preTransform,
 // which is the round in a different place while it stays on the same
 // bone.
+//
+// CORRECTED AT ROAD review-p. MW-D49 landed two filters more than the
+// reference has, on the reading that a RootCollisionNode and a hidden
+// node are "stripped". They are not: both are KEPT and merely masked -
+// "Hide collision shapes, but don't skip the subgraph"
+// (nifloader.cpp:806-812) and "skip child meshes, but still create the
+// child node hierarchy" (:817-831), with the child loop recursing
+// unconditionally (:933-937). getHiddenNodeMask() is Mask_UpdateVisitor
+// = 0x1 (vismask.hpp:24), non-zero, and the visitor is a default
+// `osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)` with no node-mask override
+// (visitor.hpp:18-36) - so it sees them. The port's extra filters made
+// this search NARROWER than the reference's, which is the same defect
+// MW-D49 was landed to close, pointing the other way; and because
+// findNodeByName is also rule 14's search (boneOffsetOf, mirroring
+// attach.cpp:147-159), every rigid attach whose BoneOffset was hidden
+// or nested under collision silently lost its
+// PositionAttitudeTransform. flattenNif's identical returns are a
+// DRAWABLES rule (mwNifMesh.js:472-480) and do not transfer to a
+// function that returns a node.
 test('MW-D49: findNodeByName honours rule 58, like the scene the reference searches', () => {
   const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
   const n = (name, extra = {}) => ({
     type: 'NiNode', name, rotation: I3, translation: [0, 0, 0], scale: 1, children: [], flags: 0, ...extra,
   });
-  // A decoy ArrowBone inside collision, and the real one outside it.
+  // Nested under a RootCollisionNode - which the loader hides but
+  // keeps, so the reference's search walks straight into it.
   const nif = {
     roots: [0],
     records: [
@@ -556,11 +594,12 @@ test('MW-D49: findNodeByName honours rule 58, like the scene the reference searc
     ],
   };
   const hit = findNodeByName(nif, 'ArrowBone');
-  assert.ok(hit, 'the real one is found');
-  assert.deepEqual([...hit.rec.translation], [1, 2, 3],
-    'the collision subtree is not searched - the reference never sees it');
+  assert.ok(hit, 'found');
+  assert.deepEqual([...hit.rec.translation], [999, 999, 999],
+    'pre-order, and the collision subtree IS in the built scene (:806-812)');
 
-  // A "Bounding Box" subtree is dropped by the loader too.
+  // A "Bounding Box" subtree, on the other hand, is the one the loader
+  // really does drop.
   const bb = {
     roots: [0],
     records: [
@@ -573,12 +612,53 @@ test('MW-D49: findNodeByName honours rule 58, like the scene the reference searc
   assert.deepEqual([...findNodeByName(bb, 'ArrowBone').rec.translation], [7, 8, 9],
     'a Bounding Box subtree is not searched either');
 
-  // A hidden node is masked out of the built scene, so it cannot answer.
+  // A hidden node is MASKED, not removed (:817-831), and the mask is
+  // 0x1 while the visitor's traversal mask is the default 0xffffffff.
   const hidden = {
     roots: [0],
-    records: [{ ...n('root'), children: [1] }, { ...n('ArrowBone'), flags: 0x0001 }],
+    records: [{ ...n('root'), children: [1] }, { ...n('ArrowBone'), flags: 0x0001, translation: [2, 4, 6] }],
   };
-  assert.equal(findNodeByName(hidden, 'ArrowBone'), null, 'a hidden node is not in the scene');
+  assert.deepEqual([...findNodeByName(hidden, 'ArrowBone').rec.translation], [2, 4, 6],
+    'a hidden node is in the scene and answers by name');
+
+  // RULE 14'S SEARCH IS THIS SEARCH (boneOffsetOf -> attach.cpp:147),
+  // and it runs for EVERY rigid weapon and shield, not just the arrow.
+  // Both shapes cost the part its whole PositionAttitudeTransform.
+  const hiddenOffset = {
+    roots: [0],
+    records: [{ ...n('root'), children: [1] }, { ...n('BoneOffset'), flags: 0x0001, translation: [3, -4, 5] }],
+  };
+  assert.deepEqual(boneOffsetOf(hiddenOffset), [3, -4, 5], 'a hidden BoneOffset still places the part');
+  const collidedOffset = {
+    roots: [0],
+    records: [
+      { ...n('root'), children: [1] },
+      { ...n('collision'), type: 'RootCollisionNode', children: [2] },
+      { ...n('BoneOffset'), translation: [1, 2, 3] },
+    ],
+  };
+  assert.deepEqual(boneOffsetOf(collidedOffset), [1, 2, 3], 'and so does one under collision');
+
+  // THE ONE NARROWING THAT STAYS, and it stays RECORDED: the geometry
+  // record. `apply(osg::Geometry&) {}` (visitor.cpp:48) stops the
+  // DRAWABLE, but handleNode has already built the NIF geometry node
+  // itself as a named MatrixTransform (nifloader.cpp:694-698,
+  // :715-718), which apply(osg::MatrixTransform&) matches - so the
+  // reference WOULD answer with a NiTriShape named ArrowBone and this
+  // does not. Moving it moves rule 14's answer on every mesh that
+  // names a shape BoneOffset (test/mwmaterial.test.js's fixture is
+  // exactly that), so it is written down rather than flipped here.
+  const shapeNamed = {
+    roots: [0],
+    records: [
+      { ...n('root'), children: [1] },
+      { type: 'NiTriShape', name: 'ArrowBone', rotation: I3, translation: [8, 9, 10], scale: 1, flags: 0 },
+    ],
+  };
+  assert.equal(findNodeByName(shapeNamed, 'ArrowBone'), null, 'the port skips the geometry RECORD - a delta');
+  assert.match(readFileSync(new URL('../src/formats/mwCharacter.js', import.meta.url), 'utf8'),
+    /DELTA \(recorded at ROAD review-p\)[\s\S]{0,1400}NiTriShape/,
+    'and says so where it does it, rather than calling it the reference\'s rule');
 
   // But a ROOT named "Bounding Box" is NOT skipped - the reference's
   // guard is `args.mRootNode && ...` and mRootNode is null on the first

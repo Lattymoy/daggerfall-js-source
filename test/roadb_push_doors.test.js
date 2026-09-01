@@ -13,9 +13,12 @@
 // C# is a MessageBox is a push, and the ones that are not are the ones
 // that stay:
 //
-//   CONVERTED (7):
+//   CONVERTED (9):
 //     the exhaustion box, in all THREE hosts that can collapse
-//     the infection popup, in BOTH hosts that can turn
+//     the infection popup, in all FOUR hosts that wire it (the two
+//       streaming hosts joined at ROAD review-p: they had no refusal
+//       guard, so the walk passed them by, but a bare showOverlay is a
+//       replace-and-dispose and MessageBox is not)
 //     DaggerfallAction's ShowText and ShowTextWithInput (dungeon)
 //     the rest mastery box (dungeon - the interior twin was already one)
 //   LEFT, with the reason on each: the key-dispatch gates (DFU's own
@@ -75,10 +78,19 @@ test('B5: the EXHAUSTION box pushes in all three hosts that can collapse', () =>
 
   // ...and the RE-ENTRANCY latch beside it stays, because that one is
   // real: the hour the safe collapse passes drains fatigue again.
-  assert.match(src('src/scenes/worldModes.js'), /if \(_inExhaustion\) return;/);
+  // ROAD review-p: in ALL THREE hosts, not just the one whose door was
+  // already a push. The other two are the hosts this batch took the
+  // `if (!townTalk.overlay)` refusal off, and while that refusal only
+  // ever suppressed the duplicate BOX, the latch is now the whole of
+  // what stands between a collapse whose own advance(60) re-raises
+  // OnExhausted and an unbounded stack of pushed message boxes -
+  // unpinned in both until here.
+  for (const f of ['src/scenes/worldModes.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /if \(_inExhaustion\) return;/, `${f}: the re-entrancy latch`);
+  }
 });
 
-test('B5: the INFECTION popup pushes in both hosts that can turn', () => {
+test('B5: the INFECTION popup pushes in all FOUR hosts that wire it', () => {
   // VampirismInfection / LycanthropyInfection speak through
   // DaggerfallUI.MessageBox; a player who turns with a trade window or
   // an automap open was simply never told.
@@ -88,6 +100,17 @@ test('B5: the INFECTION popup pushes in both hosts that can turn', () => {
     /showText: \(lines\) => pushDungeonWindow\(new ActionTextBox\(lines\)\),/);
   assert.equal(/showText: \(lines\) => \{ if \(!activeOverlay\)/.test(src('src/scenes/dungeonContext.js')), false);
   assert.equal(/showText: \(lines\) => \{ if \(!interiorOverlay\)/.test(src('src/scenes/worldModes.js')), false);
+  // ROAD review-p: and the two STREAMING hosts, which wire the same
+  // seam (world.js / exterior.js each call wireInfectionVideos) and
+  // were left replacing-and-disposing while the exhaustion box a
+  // hundred lines away in the same file was being converted. One
+  // event, one C#, four hosts, one door.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /showText: \(lines\) => townTalk\.pushOverlay\(new ChoiceWindow\(\{ lines \}\)\),/,
+      `${f}: the turn lands OVER what is open`);
+    assert.equal(/showText: \(lines\) => townTalk\.showOverlay\(new ChoiceWindow/.test(src(f)), false,
+      `${f}: and no longer disposes it`);
+  }
 });
 
 test('B5: DaggerfallAction ShowText and ShowTextWithInput push', () => {

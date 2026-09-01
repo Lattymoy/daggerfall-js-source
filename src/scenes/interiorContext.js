@@ -62,6 +62,53 @@ export function attachInteriorDoorSounds(actions, sfx = audio) {
 }
 
 /**
+ * ROAD review-p: THE INTERIOR PERSON'S HOST, and the reason it is not a
+ * bare flag write.
+ *
+ * DFU's people are GameObjects, so `npcTransform.gameObject
+ * .SetActive(true)` (DaggerfallInterior.cs:355-357) is a LIVE act - the
+ * billboard starts drawing and its BoxCollider starts answering rays
+ * the moment it runs. Two callers reach it: the quest machine's away
+ * arm, which fires DURING AddPeople (:1224, before anything has been
+ * drawn), and UpdateNpcPresence (:344-360), which fires from
+ * DaggerfallRestWindow.OnPop (:277-280) LONG after - the shop you
+ * entered shut, opening while you slept.
+ *
+ * The build below reads `pn.active` exactly once per loop, so a flag
+ * write is the whole story for the first caller and NONE of it for the
+ * second: it would move a boolean and leave the shopkeeper with no
+ * billboard, no draw and no activation extent. So the flip is routed:
+ * before the build finishes (`built()` false) it is the flag alone,
+ * the loops downstream do the standing; afterwards the host stands or
+ * unstands the person for real, the way the quest-flat host next door
+ * does it (worldModes.js standQuestFlatIn - a batch pushed into and
+ * spliced out of the live billboardBatches array).
+ *
+ * @param pn - one collectInteriorPeople person
+ * @param hooks.built - has the interior finished building?
+ * @param hooks.stand / hooks.unstand - the late half, per person
+ */
+export function makeInteriorPersonHost(pn, hooks = {}) {
+  const live = () => hooks.built?.() === true;
+  return {
+    staticNpcFactionId: pn.factionID,   // DoClick's individual broadcast reads this
+    setActive(active) {
+      active = !!active;
+      const was = !!pn.active;
+      pn.active = active;
+      if (was === active || !live()) return;
+      if (active) hooks.stand?.(pn);
+      else hooks.unstand?.(pn);
+    },
+    destroy() {
+      const was = !!pn.active;
+      pn.active = false;
+      if (was && live()) hooks.unstand?.(pn);
+    },
+  };
+}
+
+/**
  * @param deps {{
  *   renderer, getGpuMesh: async (id) => gpu, cpuModels: Map,
  *   getTexture: async (archive) => TextureFile, uploadRecord,
@@ -249,12 +296,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // had moved somewhere else went on standing at home beside their own
   // copy. The hook runs HERE, at DFU's own moment, so the away arm's
   // SetActive(false) can still take the person out of the batch.
+  let peopleBuilt = false;   // ROAD review-p: see makeInteriorPersonHost
   for (const pn of people) {
-    pn.host = {
-      staticNpcFactionId: pn.factionID,   // DoClick's individual broadcast reads this
-      setActive(active) { pn.active = !!active; },
-      destroy() { pn.active = false; },
-    };
+    pn.host = makeInteriorPersonHost(pn, {
+      built: () => peopleBuilt,
+      stand: (p) => standPerson(p),
+      unstand: (p) => unstandPerson(p),
+    });
     // P1: the quest hook is DFU's ELSE branch (:1224) - a person the
     // visibility gate took out is NOT handed to the quest machine.
     // Wiring a hidden individual would put a clickable quest NPC
@@ -271,6 +319,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // slice. Flag off = the C1 classic billboards, untouched.
   const charDraws = [];
   let _raceMeshes = null;   // AUDIT 23 (hosts-16)
+  let _rigFor = null;   // ROAD review-p: the late stand needs the same rig cache
   let animateChars = null; // set when the voxel body builds
   const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
@@ -298,6 +347,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const raceMeshes = new Map();
     _raceMeshes = raceMeshes;   // AUDIT 23 (hosts-16): destroy() frees these
     const rigFor = (race) => { let rg = raceMeshes.get(race); if (!rg) { rg = createCharacterRig(renderer, buildRaceCharacter(race, ramps)); raceMeshes.set(race, rg); } return rg; };
+    _rigFor = rigFor;
     for (const pn of people) {
       if (!pn.active) continue;   // SetActive(false): the away copy does not draw
       const rg = rigFor(raceOfArchive(pn.textureArchive));
@@ -366,6 +416,62 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     pn.width = size.w;
     pn.height = size.h;
   }
+
+  // ROAD review-p: THE LATE HALF of SetActive. Everything above reads
+  // `pn.active` once and never again - the voxel draw list, the flat
+  // groups whose batches are frozen into billboardBatches, and the
+  // extent loop right here. A person stood AFTER this point (the
+  // OnPop re-roll of DaggerfallInterior.UpdateNpcPresence, above all)
+  // therefore has to be given what those loops would have given them:
+  // an extent, so the activation ray has a target at all
+  // (worldModes' picker refuses `!pn.width`), and a draw of their own.
+  // It is a per-person batch rather than a seat in the shared
+  // (archive, record) batch because those are built with their centers
+  // baked in; the quest-flat host does the same thing for the same
+  // reason.
+  const standPerson = (pn) => {
+    if (pn.lateStood) return;
+    pn.lateStood = true;
+    if (_rigFor) {
+      const rg = _rigFor(raceOfArchive(pn.textureArchive));
+      pn.lateDraw = { mesh: rg.mesh, rig: rg, at: [pn.x, pn.y, pn.z], matrix: trs(pn.x, pn.y - rg.liveFootY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) };
+      charDraws.push(pn.lateDraw);
+    }
+    (async () => {
+      const t = await getTexture(pn.textureArchive);
+      if (!t || pn.textureRecord >= t.recordCount) return;
+      const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+      pn.width = size.w;
+      pn.height = size.h;
+      // Flipped back (or destroyed) while the archive was loading, or
+      // drawn as a voxel body already: no billboard.
+      if (_rigFor || !pn.lateStood || pn.lateBatch) return;
+      uploadRecord(pn.textureArchive, pn.textureRecord);
+      pn.lateBatch = renderer.createBillboardBatch(pn.textureArchive, pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
+      armFlatAnim(pn.lateBatch, t, pn.textureArchive, pn.textureRecord, flatAnims, uploadRecordFrame);
+      billboardBatches.push(pn.lateBatch);
+    })().catch((e) => console.error('[interior] late stand failed:', e));
+  };
+  // The mirror. Only a LATE stand can be taken back: a person the
+  // build stood shares an (archive, record) batch with everyone else
+  // on that record, and DFU never removes one either - its
+  // UpdateNpcPresence walk is SetActive(true) and nothing else.
+  const unstandPerson = (pn) => {
+    if (!pn.lateStood) return;
+    pn.lateStood = false;
+    if (pn.lateBatch) {
+      const i = billboardBatches.indexOf(pn.lateBatch);
+      if (i >= 0) billboardBatches.splice(i, 1);
+      renderer.destroyBatch(pn.lateBatch);
+      pn.lateBatch = null;
+    }
+    if (pn.lateDraw) {
+      const i = charDraws.indexOf(pn.lateDraw);
+      if (i >= 0) charDraws.splice(i, 1);
+      pn.lateDraw = null;
+    }
+  };
+  peopleBuilt = true;
 
   const t210 = await getTexture(210);
   const lights = (t210 ? collectInteriorLights(interior.flats, (record) =>

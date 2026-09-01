@@ -753,7 +753,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // lifecycle still runs and the player just never sees the dream.
   wireInfectionVideos(renderer, {
     textAt: (id) => townTalk.lines(id),
-    showText: (lines) => townTalk.showOverlay(new ChoiceWindow({ lines })),
+    // ROAD review-p: a PUSH, like the two interior hosts - see the
+    // world host's copy of this seam. VampirismInfection.cs:186-188 is
+    // DaggerfallUI.MessageBox + Show(), i.e. PushWindow
+    // (DaggerfallUI.cs:1352-1358), and a replacement here would
+    // dispose whatever the player had open when they turned.
+    showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })),
     factionDict: () => townTalk.factionDict ?? null,
   });
   if (!playerEntity.chargenDone && params.has('class')) {
@@ -937,7 +942,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
-      preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
+      // ROAD-B B5: the gate's third arm has a producer now. ROAD
+      // review-p: the PRODUCER, not a poll - :667-669 fetches it
+      // inside the third `else`, after the other two arms have
+      // returned.
+      preventedMessage: getPreventedRestMessage,
       racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {

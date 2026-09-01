@@ -32,6 +32,7 @@ import { RestWindow } from '../src/ui/restWindow.js';
 import { createRestDeps } from '../src/scenes/shared.js';
 import { makeWindowStack } from '../src/ui/windowStack.js';
 import { updateNpcPresence } from '../src/characters/interiorPeople.js';
+import { makeInteriorPersonHost } from '../src/scenes/interiorContext.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { createBindings, setBinding } from '../src/systems/inputActions.js';
@@ -94,13 +95,35 @@ test('B5: RegisterPreventRestCondition / GetPreventedRestMessage, and the null -
 test('B5: the OPEN gate finally has a producer - all four hosts read the registry', () => {
   // restDecision's third arm has existed since U48 and nothing in src/
   // could ever hand it a message. The four dispatch sites now do.
+  // PIN MOVED (ROAD review-p): the hosts hand over the PRODUCER, not
+  // its answer. DFU fetches the registry inside the third `else`
+  // (DaggerfallUI.cs:667-669), so a press the enemy arm or the
+  // swimming/grounded arm answers never runs a registered condition -
+  // and the conditions are arbitrary caller-supplied Func<bool>s, so
+  // when they run is part of what was registered.
   for (const host of ['world', 'exterior', 'worldModes', 'dungeonContext']) {
-    assert.match(src(`src/scenes/${host}.js`), /preventedMessage: getPreventedRestMessage\(\),/,
+    assert.match(src(`src/scenes/${host}.js`), /preventedMessage: getPreventedRestMessage,/,
       `${host}.js feeds the open gate from the registry`);
   }
   // ...and the law it lands in is unchanged: "" falls back to 355.
   assert.deepEqual(restDecision({ preventedMessage: '' }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
   assert.equal(restDecision({ preventedMessage: 'no' }).kind, 'prevented');
+  assert.deepEqual(restDecision({ preventedMessage: () => '' }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
+  assert.equal(restDecision({ preventedMessage: () => 'no' }).kind, 'prevented');
+});
+
+test('B5: the registry is asked in the third arm ONLY - never under the two above it', () => {
+  // The handlers are the caller's, so an eager poll runs someone
+  // else's code on a press DFU answers without ever reaching them.
+  let asked = 0;
+  const registry = () => { asked++; return 'The ritual is not finished.'; };
+  assert.equal(restDecision({ enemiesNearby: true, preventedMessage: registry }).kind, 'enemies');
+  assert.equal(asked, 0, 'the enemy arm returns first (:652-660)');
+  assert.equal(restDecision({ swimming: true, preventedMessage: registry }).kind, 'cannot');
+  assert.equal(restDecision({ grounded: false, preventedMessage: registry }).kind, 'cannot');
+  assert.equal(asked, 0, 'and so does the swimming/grounded arm (:661-666)');
+  assert.equal(restDecision({ preventedMessage: registry }).kind, 'prevented');
+  assert.equal(asked, 1, 'the third else is where GetPreventedRestMessage is called (:667-669)');
 });
 
 // ---------------------------------------------------------------------
@@ -224,14 +247,40 @@ test('B5: a quest popup pushed BY the rest\'s own sub-tick suspends it mid-hour'
   // B1's hosts tick the top window only, which covers the FIRST test
   // (:364) - but a box pushed from inside tickQuests lands halfway
   // through the frame the rest is already running.
+  //
+  // PIN CORRECTED (ROAD review-p): this fixture used to raise its
+  // popup at `d.minutes >= 60` - the one sub-tick where the hour turns
+  // and control has already left the sub-hour arm - so the return it
+  // asserted came from the SECOND test below and the mid-hour arm in
+  // the title was never run at all. Deleting that arm failed nothing.
+  // The trigger is now genuinely mid-hour, and the on-the-hour case is
+  // the test after this one, so the two `_covered()` sites stay
+  // independently killable.
   let covered = false;
   const d = deps({
-    tickQuests() { if (d.minutes >= 60) covered = true; },   // the machine raises a popup on the hour
+    tickQuests() { if (d.minutes >= 20) covered = true; },   // the machine raises a popup two sub-ticks in
   });
   const s = new RestSession('timed', 9, d, -1, () => !covered);
   const r = s.tick(REST_WAIT_PER_HOUR * 3);   // three hours of dt in one frame
 
   assert.equal(r, null, 'TickRest returned FALSE - the rest is suspended, not ended');
+  assert.equal(d.minutes, 20, 'the rest of the dt did NOT run out under the box');
+  assert.equal(s.totalHours, 0, 'the hour had not turned, so none was counted');
+  assert.equal(s.hoursRemaining, 9, 'nor was one deducted');
+  assert.equal(d.vitalTicks, 0);
+});
+
+test('B5: ...and the SECOND test catches the popup that lands exactly ON the hour', () => {
+  // The other `_covered()` site (:396-399), whose quirk is that
+  // totalHours has already been counted (:394): the covered hour still
+  // reaches OnSleepEnd's six-hour test, and a timed rest loses no hour
+  // off its counter for it.
+  let covered = false;
+  const d = deps({
+    tickQuests() { if (d.minutes >= 60) covered = true; },
+  });
+  const s = new RestSession('timed', 9, d, -1, () => !covered);
+  assert.equal(s.tick(REST_WAIT_PER_HOUR * 3), null, 'suspended, not ended');
   assert.equal(s.totalHours, 1, 'the hour was counted (:394) before the test');
   assert.equal(d.vitalTicks, 0, 'and the covered hour heals nothing');
   assert.equal(s.hoursRemaining, 9, 'nor is it deducted');
@@ -352,6 +401,50 @@ test('B5: the interior host wires OnPop to its live people list and its own cloc
     'and the window calls it from its ONE close door');
   // The FLAG this closes must not survive the thing it flagged.
   assert.equal(/The port has no\s+\/\/\s+NPC-presence pass at all/.test(src('src/ui/restWindow.js')), false);
+});
+
+// ROAD review-p: and the walk has to LAND. DFU's people are
+// GameObjects, so SetActive(true) (DaggerfallInterior.cs:355-357) draws
+// the billboard and arms its BoxCollider on the spot. The port's host
+// was `setActive(active) { pn.active = !!active; }`, and every reader
+// of that flag runs once, while the interior is being built - so the
+// re-roll moved a boolean and the shop the player slept through the
+// opening of still had no shopkeeper, no draw and no activation
+// target.
+test('B5: SetActive on a person the build hid stands them for real, not just the flag', () => {
+  let built = false;
+  const stood = [];
+  const gone = [];
+  const pn = { factionID: 512, active: true };
+  const host = makeInteriorPersonHost(pn, {
+    built: () => built, stand: (p) => stood.push(p), unstand: (p) => gone.push(p),
+  });
+  assert.equal(host.staticNpcFactionId, 512, 'DoClick\'s individual broadcast still reads this');
+  // The quest away arm fires DURING AddPeople (:1224), before anything
+  // has been drawn: the flag alone, because the build loops read it.
+  host.setActive(false);
+  assert.equal(pn.active, false);
+  assert.deepEqual([stood.length, gone.length], [0, 0], 'the build loops below do this one');
+  built = true;
+  // OnPop's walk, long after.
+  host.setActive(true);
+  assert.equal(pn.active, true);
+  assert.deepEqual(stood, [pn], 'the shopkeeper is given a draw and an extent');
+  host.setActive(true);
+  assert.equal(stood.length, 1, 'SetActive(true) on someone already standing is not a second billboard');
+  host.destroy();
+  assert.equal(pn.active, false);
+  assert.deepEqual(gone, [pn], 'and the late stand can be taken back out');
+});
+
+test('B5: the interior build uses that host, and its late half touches the live draw lists', () => {
+  const ic = src('src/scenes/interiorContext.js');
+  assert.match(ic, /pn\.host = makeInteriorPersonHost\(pn, \{/, 'the build wires the routed host');
+  assert.match(ic, /built: \(\) => peopleBuilt/, 'with the build-time/after-the-build seam');
+  assert.match(ic, /billboardBatches\.push\(pn\.lateBatch\)/,
+    'a late stand pushes its own batch into the LIVE array the host draws from');
+  assert.match(ic, /pn\.width = size\.w;[\s\S]{0,60}pn\.height = size\.h;[\s\S]{0,400}uploadRecord\(/,
+    'and resolves the extent U23\'s activation ray refuses to aim without');
 });
 
 // ---------------------------------------------------------------------

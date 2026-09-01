@@ -393,9 +393,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // with the court music playing. A pre-B1 dropOverlay had no restore
     // at all and did not have this.
     //
-    // The successor is simply "the slot is already full BEFORE the
-    // pop": nothing else can have filled it, since it was nulled at
-    // the top of this function.
+    // The successor is "the slot is already full BEFORE the pop" - it
+    // was nulled at the top of this function, so only the dispose or
+    // the callback can have filled it. Either door may have: a
+    // showOverlay replaces at this level and owes no entry, and a
+    // pushOverlay reached from here pops this window first and so owes
+    // none either (see pushOverlay - it is the one that decides).
     const successor = overlay;
     windows.reconcile(overlay);
     if (successor) return true;
@@ -410,9 +413,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  callback rather than disposed. Returns true when it went up. */
   function pushOverlay(win, onClosed = null) {
     if (!win) return false;
+    // ROAD review-p: WHAT THIS PUSH COVERS, read before reconcile can
+    // move the stack. A full slot is a live window, and its callback
+    // rides down with it. An EMPTY slot is one of two things - nothing
+    // is open, or dropOverlay is running and the window that was here
+    // is about to be popped by the reconcile below - and neither owes
+    // a suspended entry. Pushing one unconditionally (which is what
+    // this did) left the list one deeper than the stack whenever a
+    // close callback pushed rather than replaced, so the NEXT close
+    // popped a stray null and threw the uncovered window's real
+    // callback away: the very loss B5's successor guard closed, moved
+    // one window along.
+    const covered = overlay;
     windows.reconcile(overlay);
     if (windows.containsWindow(win)) return true;
-    _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
+    if (covered) _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
     windows.pushWindow(win);                      // `onTop` puts it in the slot
     _onOverlayClosed = onClosed;
     return true;

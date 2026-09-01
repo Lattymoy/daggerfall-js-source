@@ -5584,7 +5584,11 @@ export function createWorldModes(host) {
         enemiesNearby: interiorEnemiesNearby({ resting: true }),   // IF: rest asks the pool now
         swimming: false,        // nor water
         grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
-        preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
+        // ROAD-B B5: the gate's third arm has a producer now. ROAD
+        // review-p: the PRODUCER, not a poll - :667-669 fetches it
+        // inside the third `else`, after the other two arms have
+        // returned.
+        preventedMessage: getPreventedRestMessage,
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {

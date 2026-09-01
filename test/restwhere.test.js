@@ -272,7 +272,12 @@ test('rest: the grounded check has ONE home, and every rest host feeds the dispa
     // still DFU's ladder read top to bottom.
     assert.deepEqual(d.keys, ['enemiesNearby', 'swimming', 'grounded', 'preventedMessage', 'racialOverrideBlocks'],
       `${h} asks DFU's five questions and asks nothing about the scene`);
-    assert.match(d.value('preventedMessage'), /getPreventedRestMessage\(\)/,
+    // PIN MOVED (ROAD review-p): the registry is handed over as the
+    // PRODUCER. DFU reads it inside the third `else` (:667-669), after
+    // the enemy and swimming/grounded arms have returned, so a host
+    // that polls it eagerly runs the caller's conditions on presses
+    // DFU never brings them into.
+    assert.match(d.value('preventedMessage'), /getPreventedRestMessage(?!\()/,
       `${h} reads the ONE registry rather than inventing a condition`);
     assert.match(d.value('grounded'), /startRestGroundedCheck\(/,
       `${h} must feed the dispatch through the one home, not the raw flag`);

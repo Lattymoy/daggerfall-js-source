@@ -3711,7 +3711,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         enemiesNearby: _restDeps.enemiesNearby(),
         swimming: _activity.swimming,
         grounded: startRestGroundedCheck(_grounded, lastPlayerFeet, collider),
-        preventedMessage: getPreventedRestMessage(),   // ROAD-B B5: the gate's third arm has a producer now
+        // ROAD-B B5: the gate's third arm has a producer now. ROAD
+        // review-p: the PRODUCER, not a poll - :667-669 fetches it
+        // inside the third `else`, after the other two arms have
+        // returned.
+        preventedMessage: getPreventedRestMessage,
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {

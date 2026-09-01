@@ -51,8 +51,13 @@ import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
  *     match (`if (!mFoundNode && !checkGroup(group)) traverse(group)`),
  *     and once found nothing further is examined;
  *  3. `apply(osg::Geometry&)` is an EMPTY override, so a DRAWABLE named
- *     BoneOffset is neither matched nor descended into - only groups and
- *     transforms can be the offset node;
+ *     BoneOffset is neither matched nor descended into. READ WITH CARE
+ *     (ROAD review-p): that stops the osg::Geometry, and NOT the NIF
+ *     geometry node above it, which handleNode has already built as a
+ *     named MatrixTransform (nifloader.cpp:694-698, :715-718) and
+ *     which apply(osg::MatrixTransform&) does match. This port skips
+ *     the geometry RECORD, which is narrower - a recorded delta, at
+ *     findNodeByName;
  *  4. it is the node's OWN LOCAL translation (`getMatrix().getTrans()`),
  *     not its accumulated world position.
  *
@@ -83,26 +88,67 @@ export function findNodeByName(nif, name) {
     if (found) return;
     const rec = deref(nif, ref);
     if (!rec) return;
-    // apply(osg::Geometry&) {} - a drawable is neither matched nor
-    // descended into.
+    // DELTA (recorded at ROAD review-p), and it is a NARROWING, not
+    // the reference's rule. The comment here used to read
+    // "apply(osg::Geometry&) {} - a drawable is neither matched nor
+    // descended into", which is true of the DRAWABLE and false of the
+    // NIF geometry node above it. handleNode runs for every
+    // NiAVObject, geometry included: createNode makes it a
+    // NifOsg::MatrixTransform (nifloader.cpp:694-698 - anything with a
+    // parent is one), `node->setName(nifNode->mName)` names it and
+    // `parentNode->addChild(node)` adds it (:715-718), and only THEN
+    // does handleNiGeometry hang the osg::Geometry beneath it
+    // (:1758-1759). So in the built scene a NiTriShape named
+    // "ArrowBone" is a named MatrixTransform, `apply(osg::MatrixTransform&)`
+    // runs checkGroup on it (visitor.cpp:41-46) and the reference
+    // MATCHES it; the empty apply(osg::Geometry&) (:48) stops the
+    // drawable child alone.
+    //
+    // This port answers null there instead. It is left standing rather
+    // than corrected blind: the change would move rule 14's answer on
+    // every mesh that names a shape BoneOffset (the boneoffset.nif
+    // fixture is exactly that shape), and that is a placement law to
+    // move with its fixtures in hand, not a filter to flip. Written
+    // down here so the next reader corrects it deliberately instead of
+    // rediscovering it as fidelity.
     if (rec.type === 'NiTriShape' || rec.type === 'NiTriStrips') return;
-    // MW-D49: RULE 58's FILTERS BELONG HERE TOO. FindByNameVisitor is an
-    // osg::NodeVisitor (visitor.cpp:38-49) and it walks the BUILT SCENE
-    // - a graph the loader has already stripped of Bounding Box
-    // subtrees and RootCollisionNode subtrees, and in which hidden nodes
-    // carry the hidden mask. This walk reads the RAW PARSED NIF, where
-    // all of that is still present, so it could answer with a node the
-    // reference's search cannot see - a second "ArrowBone" inside
-    // collision geometry, say, or one under a subtree the loader drops.
-    // Same tree, or it is not the same search. And this search is on the
-    // ARROW'S PLACEMENT PATH: nodeTransformOf calls it to find
-    // ArrowBone, and a different node answering the name is a different
-    // preTransform, which is the arrow in a different place while it
-    // stays on the same bone. flattenNif applies exactly these three
-    // (mwNifMesh.js:469-482) and is the other half of this pair.
+    // MW-D49: THE ONE CUT THE LOADER ACTUALLY MAKES. FindByNameVisitor
+    // is an osg::NodeVisitor (visitor.cpp:36-48) walking the BUILT
+    // SCENE, so the only nodes it cannot answer with are the ones
+    // handleNode never built - and handleNode drops exactly one
+    // subtree: `if (args.mRootNode && ciEqual(nifNode->mName,
+    // "Bounding Box")) return nullptr;` (nifloader.cpp:710). This walk
+    // reads the RAW PARSED NIF, where that subtree is still present,
+    // so it takes the same cut. Same tree, or it is not the same
+    // search - and this search is on the ARROW'S PLACEMENT PATH
+    // (nodeTransformOf finds ArrowBone with it) and on rule 14's
+    // (boneOffsetOf, attach.cpp:147-159), so a node answering the name
+    // that the reference would not have answered with is a part in the
+    // wrong place.
     if (!isRoot && String(rec.name || '').toLowerCase() === 'bounding box') return;
-    if (rec.type === 'RootCollisionNode') return;
-    if ((rec.flags & 0x0001) !== 0) return;
+    // AND NOTHING ELSE IS CUT. Corrected at ROAD review-p: MW-D49
+    // landed two filters MORE than the reference has, and a filter too
+    // many is the same defect as a filter too few, pointing the other
+    // way. A RootCollisionNode is KEPT - "Hide collision shapes, but
+    // don't skip the subgraph" (nifloader.cpp:806-812): the node is
+    // created, added to its parent, and merely given
+    // `Loader::getHiddenNodeMask()`. A hidden node likewise: "skip
+    // child meshes, but still create the child node hierarchy"
+    // (:817-831). The child loop recurses unconditionally either way
+    // (:933-937). That mask is Mask_UpdateVisitor = 0x1
+    // (vismask.hpp:24) - NON-ZERO - and FindByNameVisitor is a plain
+    // `osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)` with no node-mask
+    // override (visitor.hpp:18-36), so it visits both classes and
+    // checkGroup matches them by name. Pruning them here cost rule 14
+    // every rigid part whose BoneOffset is hidden or sits under
+    // collision: no offset found, no PositionAttitudeTransform, the
+    // part back at the bone's bare origin - which is exactly what
+    // MW-D44 was landed to fix. flattenNif's identical early returns
+    // are NOT this rule: they are justified there by "this flattener
+    // produces DRAWABLES, and a hidden subgraph contributes none"
+    // (mwNifMesh.js:472-480), and carry an `includeHidden` escape
+    // hatch besides. This function produces a NODE.
+    //
     if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }
     if (!rec.children) return;
     const chain = [...parents, rec];

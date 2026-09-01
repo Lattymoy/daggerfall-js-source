@@ -146,7 +146,16 @@ export function clearPreventRestConditions() { preventRestConditions.clear(); }
  * 2. Swimming or airborne is 355. StartRestGroundedCheck is the
  *    grounded half and lives in player/motor.js, its DFU home.
  * 3. THE PREVENTED-REST REGISTRY (GameManager.GetPreventedRestMessage,
- *    :641-653) and its EMPTY STRING, which is deliberate:
+ *    :641-653), ASKED ONLY HERE - it is fetched inside the third
+ *    `else` (:667-669), so DFU never runs a registered condition on a
+ *    press the enemy or the swimming/grounded arm answered. The
+ *    registry's handlers are arbitrary caller-supplied `Func<bool>`s
+ *    (:660-666), so "when they run" is part of the contract and not
+ *    an optimisation; pass this as a FUNCTION and the arm calls it,
+ *    the way shared.js hands TickRest the producer rather than a
+ *    polled value. A plain string or null still works, for the
+ *    callers that already have the answer.
+ *    ...and its EMPTY STRING, which is deliberate:
  *    RegisterPreventRestCondition turns a null message into "" so a
  *    caller can block rest without wording it, and the dispatch falls
  *    back to 355 rather than showing a blank box. null is NOT "".
@@ -164,8 +173,10 @@ export function restDecision({
 } = {}) {
   if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };
   if (swimming || !grounded) return { kind: 'cannot', textId: REST_TEXT.cannotRestNow };
-  if (preventedMessage !== null && preventedMessage !== undefined) {
-    return preventedMessage === ''
+  // The third `else` (:667-669) - and the first line of it that runs.
+  const prevented = typeof preventedMessage === 'function' ? preventedMessage() : preventedMessage;
+  if (prevented !== null && prevented !== undefined) {
+    return prevented === ''
       ? { kind: 'cannot', textId: REST_TEXT.cannotRestNow }
       : { kind: 'prevented', message: preventedMessage };
   }
