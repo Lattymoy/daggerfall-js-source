@@ -8653,3 +8653,63 @@ word and the name, but it is a real narrowing that only shows with the
 sprite present. If the flanks read cramped in play, the map wants a
 max-height rather than the region wanting width - the dock's 380 is
 what buys the nine rows.
+
+### PX31 addendum - the pin, and the nine probes that could not reach it
+
+PX31 is a MEDIA QUERY and node cannot see one, so its pin is a browser
+probe: `tools/enhancedPackLayoutProbe.mjs`, 13 checks over two desktop
+sizes and a Pixel 5. The checks are GEOMETRIC on purpose - they ask
+where the dock IS and how much the list GOT, not what a rule says, so
+they die when the breakpoint dies rather than when a selector is
+renamed.
+
+**Five mutations, four dead, one argued:**
+
+| # | mutation | result |
+|---|---|---|
+| M1 | breakpoint disabled (1000px -> 10000px) | 6 checks fail |
+| M2 | `.equipped` back to `flex: 0 1 auto` | dead glass 16px -> 167px, fails |
+| M3 | the 2x2 tab grid removed | **SURVIVED FIRST** - see below |
+| M4 | dock column 380 -> 200 | tabs escape their box, fails |
+| M5 | dock keeps `border-top` instead of `border-left` | survives, argued |
+
+M3 IS THE ONE WORTH READING. The first draft asserted four tabs in two
+rows, and removing the grid changed nothing it could see, because
+`flex-wrap` also lands two rows at 380px - the check was pinning the
+WRAP and calling it the grid. Columns are what tell them apart: a grid
+puts every tab on two x positions, a wrap packs them to ragged ones. So
+`tabCols === 2` joined it and the mutant reads 2x3 and dies. A pin
+asserting the thing you already had is the vacuous-pin shape this bible
+keeps catching, and it took a mutation run to see it here too.
+
+M5 is a RECORDED EQUIVALENT with its proof: a border swap has no
+geometric signature by construction, and no measurement probe can see
+it. Its verifier is the screenshot, which is where it was chosen.
+
+**AND THE PROBE FLEET WAS ALREADY DEAD.** Writing the pin meant running
+`enhancedPackProbe.mjs`, which timed out at its FRONT DOOR: it waits on
+`#enhanced-menu .railbtn`, and `railbtn` is the shell rail's class,
+which the boot door has not carried since PX1 replaced it with the
+pixel home. Nine probes had the same line. Every one had been
+unreachable since 2026-08-27 and no gate noticed, because a probe is
+not a gate - AUDIT 17f F4's shape, at fleet scale.
+
+Rooted rather than patched: the door's buttons carry `doorbtn
+door-<id>` now and the probes select on that. Matching on the visible
+words was the obvious fix and is the same bug waiting on a relabel.
+
+Opening the door then showed the rot goes DEEPER in at least two of
+them - `enhancedPackProbe` and `enhancedDollProbe` still assert the U53
+slot map (`.node`, `.node.filled`) that PX19d and PX20a replaced with
+the worn map, so they now reach their checks and fail on a screen that
+no longer exists. **That repair is NOT done and is not PX31's**; it is
+recorded here so the next reader finds it named rather than discovering
+it the way this slice did.
+
+**One measurement corrected, and it is worth knowing.** The phone check
+was first floored at 200px because an early reading said 250 - taken at
+a 393x851 viewport. A real Pixel 5 is 727 tall and the list measures
+126px, two rows. PX31 does not change that number in either direction
+(the breakpoint cannot match at 393px wide), but it means THE PHONE HAS
+A MILDER VERSION OF THE SAME COMPLAINT: the character region is the
+same fixed 400 on a shorter window. Its own slice, when Mac wants it.

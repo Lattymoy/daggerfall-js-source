@@ -35,8 +35,8 @@ for (const [label, opts] of [
   const errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`${BASE}/play/`, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 30000 });
-  await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).click();
+  await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 30000 });
+  await page.locator('#enhanced-menu .doorbtn.door-new').click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
 
   const mounted = await page.waitForSelector('#enhanced-chargen .prov', { timeout: 180000 })

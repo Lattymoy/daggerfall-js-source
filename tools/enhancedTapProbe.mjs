@@ -74,17 +74,17 @@ for (const [label, opts] of [
     check(`${label}: pixel home`, bad.length === 0, JSON.stringify(bad));
   }
   await page.locator('#enhanced-menu .px-menu button', { hasText: 'Load Game' }).click();
-  await page.waitForSelector('#enhanced-menu .railbtn');
+  await page.waitForSelector('#enhanced-menu .doorbtn');
 
   // every pane, because a target that only exists under Settings is
   // still a target
   for (const pane of ['Continue', 'New Game', 'Load Game', 'Mods', 'About']) {
-    await page.locator('#enhanced-menu .railbtn', { hasText: pane }).click();
+    await page.locator('#enhanced-menu .doorbtn', { hasText: pane }).click();
     const bad = await page.evaluate(MEASURE, FLOOR);
     check(`${label}: ${pane}`, bad.length === 0, JSON.stringify(bad));
   }
 
-  await page.locator('#enhanced-menu .railbtn', { hasText: 'Settings' }).click();
+  await page.locator('#enhanced-menu .doorbtn', { hasText: 'Settings' }).click();
   await page.waitForSelector('#enhanced-menu .row');
   // every CATEGORY, because the widget kinds differ between them - a
   // colour swatch, a stepper and a switch are three different rows

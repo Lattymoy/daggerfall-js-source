@@ -608,6 +608,27 @@ needs game data and about twenty-five minutes of SwiftShader. Run it when a
 host, a window or the boot path changes - `tools/nativeTradeProbe.mjs` sat
 red for months because nothing did.
 
+PX31 (2026-08-31) found the same rot ACROSS THE FLEET, and one line up
+from any assertion: NINE probes waited on `#enhanced-menu .railbtn` at
+their front door. `railbtn` is the SHELL rail's class and the boot door
+has not carried one since PX1 replaced it with the pixel home, whose
+buttons were classless - so every one of them timed out before its
+first check, and had since 2026-08-27. The fix is a hook rather than
+nine text selectors: the door's buttons carry `doorbtn door-<id>` and
+the probes select on that, because matching on the visible words would
+be the same bug waiting on a relabel. Opening the door then showed the
+rot goes deeper in at least two of them - `enhancedPackProbe` and
+`enhancedDollProbe` still assert the U53 slot map (`.node`,
+`.node.filled`) that PX19d and PX20a replaced with the worn map. Those
+bodies are a repair of their own and are NOT done, which is why PX31's
+own pin is a new file (`tools/enhancedPackLayoutProbe.mjs`) rather than
+more checks bolted to a probe that cannot reach them.
+
+THE STANDING LESSON IS SHARPER THAN "RUN THE PROBES": a probe that
+cannot reach its first check fails identically to a probe nobody ran,
+and neither shows up anywhere. A red probe is evidence; an unreachable
+one is silence wearing evidence's clothes.
+
 Pre-push gate: `npm run check` (test + build).
 
 Drift guard: `test/manifest.test.js` pins the total line and every row of

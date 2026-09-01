@@ -112,7 +112,7 @@ try {
     const out = {
       docs,
       gone: [...new Set(gone)],
-      mounted: await page.locator('#enhanced-menu .railbtn').count(),
+      mounted: await page.locator('#enhanced-menu .doorbtn').count(),
       body: (await page.evaluate(() => document.body.textContent)).trim(),
     };
     await ctx.close();
