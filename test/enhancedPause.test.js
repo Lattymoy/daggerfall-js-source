@@ -629,6 +629,34 @@ test('AUDIT UI 2: no part is styled for one shell and left bare in another', () 
     'a part one window styles and another draws unstyled renders as bare text');
 });
 
+// AUDIT 39 widened the sweep above by the one case it is blind to. It
+// compares one shell against another, so a part styled in NO shell has
+// nothing to compare and reports clean - which is why it found the
+// three ANNOTATION classes acceptable while they drew at body's 15px
+// full-bone, LARGER and brighter than the 14px .row-name each of them
+// hangs beneath. That is the very "bare running text" fault the pin
+// was written for, arriving by the door it does not watch.
+test('AUDIT 39: an annotation drawn by an enhanced view has a rule of its own', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  const body = css.slice(css.indexOf('export const ENHANCED_CSS = `'));
+  // The classes that ANNOTATE a label rather than being one. Each must
+  // read as a note; without a rule each inherits the body font and
+  // outweighs the thing it explains.
+  const annotations = ['row-note', 'row-sub', 'note'];
+  const drawnBy = ['src/ui/enhancedMenu.js', 'src/ui/enhancedChargen.js']
+    .map((f) => read(f)).join('\n');
+  for (const cls of annotations) {
+    assert.ok(new RegExp(`el\\('\\w+', '${cls}'`).test(drawnBy), `nothing draws .${cls} any more`);
+    assert.ok(new RegExp(`(^|[\\s,])\\.${cls}[\\s,{:]`, 'm').test(body),
+      `.${cls} is drawn and styled nowhere - it renders as bare running text`);
+  }
+  // ...and each is DIMMER and SMALLER than the label above it, which
+  // is the whole point of the rule rather than merely having one.
+  assert.match(body, /\.row-note, \.row-sub \{ color: var\(--dim\); font-size: 12\.5px;/);
+  assert.match(body, /^\.note \{ color: var\(--dim\); font-size: 13px;/m);
+  assert.match(body, /\.row-name \{ font-size: 14px; \}/, 'the label they must not outweigh');
+});
+
 test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   // PX24's fault, as a law: the chronicle's door and window were built,
   // pinned and browser-verified, and NOTHING called the door. Every pin

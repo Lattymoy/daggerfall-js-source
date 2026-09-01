@@ -4249,7 +4249,7 @@ export function createWorldModes(host) {
           // now the arrow count) could draw indoors while DFU draws
           // the one HUD everywhere. townTalk owns the host's FONT0003.
           font: townTalk?.font ?? null,
-          // AUDIT 39 (#132): the flag the other three hosts pass and
+// AUDIT 39 (#132): the flag the other three hosts pass and
           // this one never did, so with a window up indoors the HUD
           // was never told the pointer was free - the enhanced strip
           // stayed painted over the window, the crosshair drew, the
@@ -4257,6 +4257,9 @@ export function createWorldModes(host) {
           // not appear. This frame ends `return true`, so world.js's
           // own drawHud (which does pass it) never runs in here.
           cursorActive: overlayHeld,
+          // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
+          readied: magic?.readied?.() ?? null,
+          weapon: interiorWeapon.playerWeapon.weapon ?? null,
           weaponSheathed: !!interiorWeapon.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U45
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and

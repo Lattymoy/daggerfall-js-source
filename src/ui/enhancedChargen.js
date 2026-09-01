@@ -48,6 +48,9 @@ import { bitmapCanvas } from './bitmapCanvas.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { overlayAction } from './input.js';
 import { SKILL_NAMES } from '../systems/skills.js';
+import { QUESTION_COUNT } from '../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
+import { HELP_TOPICS } from '../systems/customClass.js';              // AUDIT 39: the builder's help picker
+import { labelFor } from '../systems/specialAdvantages.js';           // AUDIT 39: DFU's own words for an advantage key
 import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -306,6 +309,64 @@ function classMethodStage() {
   return pane;
 }
 
+// ── THE TEN QUESTIONS ────────────────────────────────────────────
+// WizardStages.ClassQuestions (CreateCharClassQuestions), behind the
+// method screen's quiz button. AUDIT 39: the state was REACHABLE from
+// that button and had no renderer at all, so pressing it landed the
+// player on an empty pane that only the A/B/C keys could drive.
+//
+// The classic screen paints the question onto a scrolling parchment
+// and reads the ROW under the click to decide which of a), b) and c)
+// was pressed; displayQuestion already hands the view where each
+// answer starts (aIndex/bIndex/cIndex), so here they are three
+// buttons and the scroll has nothing left to do.
+//
+// The constellation animation is CEL art and this view loads none -
+// startConstellationAnim returns 0 seconds without it - so no answer
+// here is ever locked behind one.
+function classQuestionsStage() {
+  const pane = el('div', 'stagebody solo');
+  // EndQuestions' description box (:_endClassQuestions) is a Yes/No
+  // over the questions, exactly as the class list's is over the list.
+  if (flow.qConfirm) {
+    const wrap = el('div', 'choose');
+    const named = flow.classRowName(flow.qClassIndex);
+    wrap.append(el('h2', null, `The answers make you a ${named}`));
+    const card = el('div', 'card repbox');
+    for (const line of flow.qConfirm) {
+      const text = typeof line === 'string' ? line : line.text;
+      if (text?.trim()) card.append(el('p', null, text));
+    }
+    const a = el('div', 'acts');
+    const yes = el('button', 'act primary', `Play as a ${named}`);
+    yes.onclick = () => { flow.applyHit({ confirmQClass: true }); paint(); };
+    const no = el('button', 'act', 'Choose again');
+    no.onclick = () => { flow.applyHit({ cancelQClass: true }); paint(); };
+    a.append(yes, no);
+    card.append(a);
+    wrap.append(card);
+    pane.append(wrap);
+    return pane;
+  }
+  if (!flow.qDisplay) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  const { lines, aIndex, bIndex, cIndex } = flow.qDisplay;
+  const join = (from, to) => lines.slice(from, to).join(' ').trim();
+  const wrap = el('div', 'question');
+  wrap.append(el('div', 'qcount', `Question ${Math.min(flow.qAnswered + 1, QUESTION_COUNT)} of ${QUESTION_COUNT}`));
+  wrap.append(el('h2', null, join(0, aIndex)));
+  const answers = el('div', 'answers');
+  // The a)/b)/c) markers stay in the text: the words are TEXT.RSC
+  // 9000's own and the screen prints them, it does not rewrite them.
+  [[aIndex, bIndex], [bIndex, cIndex], [cIndex, lines.length]].forEach(([from, to], i) => {
+    const b = el('button', 'answer', join(from, to));
+    b.onclick = () => { flow.applyHit({ answerClass: i }); paint(); };
+    answers.append(b);
+  });
+  wrap.append(answers);
+  pane.append(wrap);
+  return pane;
+}
+
 // ── THE CLASS LIST ───────────────────────────────────────────────
 // A ListBox with two gestures, which U17 landed after Mac reported
 // double-tap not working: MouseClick SELECTS, MouseDoubleClick USES,
@@ -365,6 +426,223 @@ function classStage() {
   }
   detail.append(d);
   pane.append(detail);
+  return pane;
+}
+
+// ── BUILD A CLASS OF YOUR OWN ────────────────────────────────────
+// WizardStages.CustomClassBuilder (CreateCharCustomClass), behind the
+// class list's last row. AUDIT 39: that row was drawn and pressable
+// and the state it opened had no renderer, so "Build it" landed on an
+// empty pane - and the keyboard could reach it too, so hiding the row
+// would not have closed the door.
+//
+// EVERY LAW HERE IS THE FLOW'S. The twelve slots and their picker, the
+// 4..30 hit points, the freeEdit stat ledger with its zero-sum pool,
+// the two special-advantage windows and the four exit refusals all
+// live in ui/chargen.js and are pinned there; this reads `flow.custom`
+// and presses the same applyHit doors the classic screen's rects do.
+//
+// ONE CLASSIC WINDOW IS NOT DRAWN, recorded rather than dropped
+// quietly: the REPUTATION bars (CreateCharReputationWindow). Its only
+// door is `repClick(lx, ly)` - a pixel-coordinate hit on a 168x189
+// panel - and there is no other way into the flow's reps, so it wants
+// a control shaped for a thumb rather than a coordinate faked from
+// one. An untouched ledger is DFU's own default (every group at 0) and
+// the builder's exit gates never check it, so a class built here is a
+// legal one; the window belongs to the slice that gives it a control.
+const CUSTOM_SKILL_GROUPS = Object.freeze([
+  ['Primary', 0, 3], ['Major', 3, 6], ['Minor', 6, 12],
+]);
+
+/** The ONE picker, three sources - the twelve skill slots, the two
+ *  special lists and the help topics. The flow's own usePickRow
+ *  answers all three, and a tap is enough: a list on a phone does not
+ *  need a double tap to mean something different from a single one
+ *  (the class list's own argument). */
+function customPickerPane(c) {
+  const rows = c.pickList
+    ? c.pickList.map((k) => labelFor(k) || k)
+    : c.sub === 'help'
+      ? HELP_TOPICS.map(([name]) => name)
+      : (c.pickItems ?? []).map((id) => SKILL_NAMES[id] ?? `Skill ${id}`);
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  wrap.append(el('h2', null, c.pickList
+    ? (c.pickPrimary ? `${labelFor(c.pickPrimary)} of what?` : 'Which one?')
+    : c.sub === 'help' ? 'What do you want to know?' : 'Which skill?'));
+  const list = el('div', 'list');
+  rows.forEach((name, i) => {
+    const row = el('div', `row${i === c.pickCursor ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', name));
+    main.onclick = () => { flow.usePickRow(i); paint(); };
+    row.append(main);
+    list.append(row);
+  });
+  wrap.append(list);
+  pane.append(wrap);
+  return pane;
+}
+
+/** A refusal or a help topic: ClickAnywhereToClose in DFU, one button
+ *  here, through the flow's own arm. */
+function customBoxPane(c) {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  const card = el('div', 'card repbox');
+  for (const row of c.box) {
+    const text = typeof row === 'string' ? row : row.text;
+    if (text?.trim()) card.append(el('p', null, text));
+  }
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'Go on');
+  ok.onclick = () => { flow.applyHit({ customBox: true }); paint(); };
+  a.append(ok);
+  card.append(a);
+  wrap.append(card);
+  pane.append(wrap);
+  return pane;
+}
+
+/** CreateCharSpecialAdvantageWindow, both halves - the picks it holds
+ *  and the two buttons that edit them. A press on a ROW removes it,
+ *  which is AdvantageLabel_OnMouseClick's own law (:436-460) and the
+ *  only removal there is, so the row says so. */
+function customAdvPane(c) {
+  const list = c.sub === 'advantage' ? c.advantages : c.disadvantages;
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  wrap.append(el('h2', null, c.sub === 'advantage' ? 'Special advantages' : 'Special disadvantages'));
+  const rows = el('div', 'list');
+  list.forEach((item, i) => {
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', labelFor(item.primary) || item.primary));
+    if (item.secondary) main.append(el('div', 'row-sub', labelFor(item.secondary) || item.secondary));
+    main.append(el('div', 'row-note', 'Press to remove'));
+    main.onclick = () => { flow.applyHit({ advRemove: i }); paint(); };
+    row.append(main);
+    rows.append(row);
+  });
+  if (!list.length) rows.append(el('p', 'mapnote', 'None taken.'));
+  wrap.append(rows);
+  const a = el('div', 'acts');
+  const add = el('button', 'act primary', 'Add one');
+  add.onclick = () => { flow.applyHit({ advAdd: true }); paint(); };
+  const done = el('button', 'act', 'Done');
+  done.onclick = () => { flow.applyHit({ advExit: true }); paint(); };
+  a.append(add, done);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
+function customClassStage() {
+  const c = flow.custom;
+  if (!c) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  // Every popup is MODAL over the builder, in the flow's own order.
+  if (c.box) return customBoxPane(c);
+  if (c.pickList || c.sub === 'skillPick' || c.sub === 'help') return customPickerPane(c);
+  if (c.sub === 'advantage' || c.sub === 'disadvantage') return customAdvPane(c);
+
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+
+  // THE NAME. The FLOW owns the text, as the name screen's box does -
+  // its cap is the TextBox default the flow enforces, not this input's.
+  const box = el('input', 'namebox');
+  box.type = 'text';
+  box.value = c.className;
+  box.maxLength = NAME_MAX;
+  box.autocomplete = 'off';
+  box.spellcheck = false;
+  box.setAttribute('aria-label', 'What is this class called?');
+  box.placeholder = 'What is this class called?';
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.custom.className.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.custom.className;
+  };
+  wrap.append(box);
+
+  // THE TWELVE SLOTS, in the three groups the builder writes them to.
+  for (const [label, from, to] of CUSTOM_SKILL_GROUPS) {
+    const sec = el('div', 'skillgroup');
+    const head = el('div', 'skillhead');
+    head.append(el('span', 'skillk', label));
+    sec.append(head);
+    for (let slot = from; slot < to; slot++) {
+      const id = c.skills[slot];
+      const row = el('div', 'row');
+      const main = el('button', 'row-main');
+      main.append(el('div', 'row-name', id == null ? 'Choose a skill' : (SKILL_NAMES[id] ?? `Skill ${id}`)));
+      main.onclick = () => { flow.applyHit({ customSkill: slot }); paint(); };
+      row.append(main);
+      sec.append(row);
+    }
+    wrap.append(sec);
+  }
+
+  // THE FREE-EDIT LEDGER. StatsRollout's spinners clamp 10..75 and the
+  // POOL is free to go negative - the exit gate is what demands the
+  // balance, so the pool is shown rather than the buttons disabled.
+  const stats = el('div', 'skillgroup');
+  const statHead = el('div', 'skillhead');
+  statHead.append(el('span', 'skillk', 'Attributes'));
+  statHead.append(el('span', 'skillpool', c.statPool === 0 ? 'balanced' : `${c.statPool} in hand`));
+  stats.append(statHead);
+  STAT_KEYS_ORDER.forEach((key, i) => {
+    const row = el('div', `row${i === c.statCursor ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', key[0].toUpperCase() + key.slice(1)));
+    main.onclick = () => { flow.applyHit({ customStatCursor: i }); paint(); };
+    row.append(main);
+    row.append(stepper(c.stats[key], (dir) => {
+      flow.applyHit({ customStatCursor: i });
+      flow.applyHit({ customStatStep: dir });
+      paint();
+    }));
+    stats.append(row);
+  });
+  wrap.append(stats);
+
+  // THE SHAPE OF THE CLASS: hit points, what it is good and bad at,
+  // and the dagger's tally - which is difficultyPoints over the hit
+  // points AND both special adjustments, so it moves as you spend.
+  const shape = el('div', 'skillgroup');
+  const shapeHead = el('div', 'skillhead');
+  shapeHead.append(el('span', 'skillk', 'The class itself'));
+  shape.append(shapeHead);
+  const hp = el('div', 'row');
+  const hpMain = el('div', 'row-main');
+  hpMain.append(el('div', 'row-name', 'Hit points per level'));
+  hp.append(hpMain);
+  hp.append(stepper(c.hp, (dir) => { flow.applyHit({ customHp: dir }); paint(); }));
+  shape.append(hp);
+  for (const [label, count, hit] of [
+    ['Special advantages', c.advantages.length, { customAdvantage: true }],
+    ['Special disadvantages', c.disadvantages.length, { customDisadvantage: true }],
+  ]) {
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', label));
+    main.append(el('div', 'row-note', count ? `${count} taken` : 'none taken'));
+    main.onclick = () => { flow.applyHit(hit); paint(); };
+    row.append(main);
+    shape.append(row);
+  }
+  shape.append(poolBar('Difficulty', flow.customDifficulty()));
+  wrap.append(shape);
+
+  const a = el('div', 'acts');
+  const make = el('button', 'act primary', 'Create this class');
+  make.onclick = () => { flow.applyHit({ customExit: true }); paint(); };
+  const help = el('button', 'act', 'What do these mean?');
+  help.onclick = () => { flow.applyHit({ customHelp: true }); paint(); };
+  a.append(make, help);
+  wrap.append(a);
+  pane.append(wrap);
   return pane;
 }
 
@@ -856,14 +1134,20 @@ function reviewRow(label, value, step) {
   return row;
 }
 
-// ── THE STAGES NOT YET REDESIGNED ────────────────────────────────
-// Named, with the classic screen that still owns them. An empty pane
-// would read as a bug and a half-built one would read as the design.
+// ── A STAGE WITH NOTHING TO SHOW ─────────────────────────────────
+// AUDIT 39 corrected the words this pane used to carry. It named a
+// classic screen as the stage's real owner, and no classic screen is
+// behind it: systems/chargenSession.js mounts THIS view for enhanced
+// and nothing else, so a pane naming a screen the player cannot reach
+// was a drawn door onto nothing. Every state the flow can be in has a
+// renderer now, and this is what one of them draws when the DATA it
+// needs did not arrive - a biography with no question, a builder with
+// no document.
 function pendingStage(stage) {
   const pane = el('div', 'stagebody solo');
   const e = el('div', 'empty');
-  e.append(el('h3', null, `${stage?.label ?? 'This stage'} is still the classic screen`));
-  e.append(el('p', null, 'The wizard runs on one flow, so this stage works - it has just not been redesigned yet. They land one at a time.'));
+  e.append(el('h3', null, `${stage?.label ?? 'This stage'} has nothing to show`));
+  e.append(el('p', null, 'The wizard runs on one flow and this stage could not read what it needed. Go back and choose again.'));
   pane.append(e);
   return pane;
 }
@@ -937,9 +1221,15 @@ function paintInto() {
   side.append(foot);
 
   const pane = el('main', 'pane');
+  // EVERY STATE ui/chargen.js's STATES can hold, 'done' apart, has a
+  // renderer here. AUDIT 39: two of them did not - the ten class
+  // questions and the custom-class builder - and both are reached from
+  // THIS screen's own buttons, so the fallback pane below was a door
+  // drawn onto nothing rather than a stage waiting its turn.
   const STAGES = {
     race: raceStage, gender: genderStage,
-    classMethod: classMethodStage, class: classStage,
+    classMethod: classMethodStage, classQuestions: classQuestionsStage,
+    class: classStage, customClass: customClassStage,
     bioMethod: bioMethodStage, biography: biographyStage, name: nameStage,
     face: faceStage, stats: statsStage, skills: skillsStage,
     reflexes: reflexStage, summary: summaryStage,

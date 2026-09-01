@@ -134,6 +134,33 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   assert.match(src, /if \(last\.weapon !== weaponName\) \{/);
 });
 
+test('AUDIT 39: every host that draws a HUD fills the two hands', () => {
+  // "A host that knows neither passes neither" was true of all FOUR of
+  // them: PX30b built the plaques, hud.js forwarded the keys, and no
+  // drawHud call site ever supplied one - so both were permanently
+  // display:none in the played game, which is a drawn door with a
+  // stylesheet block behind it. Every host had both values one
+  // argument over from the weaponSheathed it already passed.
+  const hosts = {
+    'src/scenes/world.js': 'weaponRig.playerWeapon.weapon',
+    'src/scenes/exterior.js': 'weaponRig.playerWeapon.weapon',
+    'src/scenes/worldModes.js': 'interiorWeapon.playerWeapon.weapon',
+    'src/scenes/dungeonContext.js': 'playerWeapon.weapon',
+  };
+  for (const [f, rig] of Object.entries(hosts)) {
+    const src = read(f);
+    const at = src.indexOf('drawHud(renderer, canvas, hudArt');
+    assert.ok(at > 0, `${f} draws no HUD`);
+    // the bag ends at the call's own closing brace
+    const bag = src.slice(at, src.indexOf('});', at));
+    assert.match(bag, /readied: magic[?.]*\.readied[?.]*\(\) \?\? null,/, `${f} hands over no readied spell`);
+    assert.ok(bag.includes(`weapon: ${rig} ?? null,`), `${f} hands over no held weapon`);
+    // and the rig it reads is the SAME one weaponSheathed comes off,
+    // which is what stops a host reading two different weapons.
+    assert.ok(bag.includes(`${rig.replace(/\.weapon$/, '')}.sheathed`), `${f} reads two rigs`);
+  }
+});
+
 test('PX30c: the HUD scales from a SETTING, and the percentage lives in the bar', () => {
   const src = read('src/ui/enhancedHud.js');
   const css = read('src/ui/enhancedStyle.js');

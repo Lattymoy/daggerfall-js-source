@@ -2168,6 +2168,9 @@ export async function bootExterior(canvas, renderer, params, status) {
         { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
           detected: _detected, playerXZ: [_dFeet[0], _dFeet[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
+          // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
+          readied: magic?.readied?.() ?? null,
+          weapon: weaponRig.playerWeapon.weapon ?? null,
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything

@@ -3141,6 +3141,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       { font: hudFont, cursorActive: !!activeOverlay,
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
         largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
+        // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
+        readied: magic.readied() ?? null,
+        weapon: playerWeapon.weapon ?? null,
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));

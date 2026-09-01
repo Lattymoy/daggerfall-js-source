@@ -12,6 +12,8 @@ import { join } from 'node:path';
 
 import { traceProvinces, PROVINCE_NAMES, INERT_REGION, MAP_W, MAP_H } from '../src/ui/provinceMap.js';
 import { STAGE_RAIL } from '../src/ui/enhancedChargen.js';
+import { ChargenFlow } from '../src/ui/chargen.js';
+import { STAT_KEYS_ORDER } from '../src/systems/chargen.js';
 import { RACE_TEMPLATES } from '../src/systems/races.js';
 
 const arena2 = process.env.ARENA2_PATH;
@@ -157,6 +159,138 @@ test('every wizard state belongs to exactly one rail stage', () => {
   for (const s of listed) {
     assert.ok(states.includes(s), `the rail names ${s}, which is not a wizard state`);
   }
+});
+
+// ── AND NEITHER CAN THE STAGES ───────────────────────────────────
+// AUDIT 39. The rail agreed with the flow (above) while the RENDERERS
+// did not: STAGES had twelve keys against fourteen states, so the ten
+// class questions and the custom-class builder - BOTH reached from
+// this screen's own buttons - fell through to a pane that drew
+// nothing and claimed a classic screen owned it. The rail pin could
+// not see it, because the rail folds both into 'Class'.
+test('AUDIT 39: every wizard state has a renderer, not a fallback pane', () => {
+  const flowSrc = readFileSync(new URL('../src/ui/chargen.js', import.meta.url), 'utf8');
+  const view = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  const states = [...flowSrc.match(/const STATES = \[([^\]]+)\]/)[1].matchAll(/'([a-zA-Z]+)'/g)]
+    .map((x) => x[1]).filter((s) => s !== 'done');
+  const map = view.slice(view.indexOf('const STAGES = {'), view.indexOf('};', view.indexOf('const STAGES = {')));
+  for (const state of states) {
+    assert.match(map, new RegExp(`\\b${state}:\\s*\\w+Stage`), `${state} has no renderer in STAGES`);
+  }
+});
+
+test('AUDIT 39: the two new stages speak through the flow\'s own doors', () => {
+  const view = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  // THE QUESTIONS. displayQuestion already says where each answer
+  // starts, so a) b) c) are three buttons rather than a scroll to hunt
+  // in - and the answer goes through applyHit, not a second law.
+  assert.match(view, /flow\.applyHit\(\{ answerClass: i \}\)/);
+  assert.match(view, /\[\[aIndex, bIndex\], \[bIndex, cIndex\], \[cIndex, lines\.length\]\]/);
+  assert.match(view, /import \{ QUESTION_COUNT \} from '\.\.\/systems\/classQuestions\.js'/,
+    'the count is the quiz\'s own, not a ten typed here');
+  assert.match(view, /flow\.applyHit\(\{ confirmQClass: true \}\)/);
+  assert.match(view, /flow\.applyHit\(\{ cancelQClass: true \}\)/);
+  // THE BUILDER. Every control is one of the flow's hits; nothing here
+  // writes flow.custom itself, or the two screens would keep two
+  // different builders.
+  for (const hit of ['customSkill: slot', 'customHp: dir', 'customStatStep: dir',
+    'customAdvantage: true', 'customDisadvantage: true', 'customExit: true', 'customBox: true']) {
+    assert.ok(view.includes(hit), `the builder does not press ${hit}`);
+  }
+  const builder = view.slice(view.indexOf('function customClassStage()'), view.indexOf('// ── HOW YOUR HISTORY'));
+  assert.doesNotMatch(builder, /c\.(skills|stats|hp|advantages|disadvantages)\s*(\[[^\]]*\])?\s*=[^=]/,
+    'the view must not write the builder - the laws are ui/chargen.js\'s');
+  // The words for an advantage are DFU's recovered HardStrings, and
+  // the ones for a skill are the skill table's.
+  assert.match(view, /import \{ labelFor \} from '\.\.\/systems\/specialAdvantages\.js'/);
+  // AND THE FALLBACK PANE NO LONGER LIES: nothing classic is mounted
+  // behind the enhanced skin (chargenSession mounts this view alone).
+  assert.doesNotMatch(view, /is still the classic screen/);
+  const pending = view.slice(view.indexOf('function pendingStage(stage)'), view.indexOf('// ── SHELL'));
+  assert.match(pending, /has nothing to show/);
+});
+
+// The source sweeps above hold that the two views exist and press the
+// flow's doors; these hold that the doors they press are REAL, which a
+// text pin cannot. Both states are entered the way the enhanced screen
+// enters them - the method screen's quiz button and the class list's
+// last row - because that reachability is the whole finding.
+const QUIZ_LIBRARY = Array.from({ length: 40 }, (_, i) =>
+  `${i + 1}.  question ${i + 1} text\n a) alpha\n b) beta\n c) gamma`);
+
+function quizClassesData() {
+  const data = new Uint8Array(216);
+  data.set([17, 16, 15, 14, 202, 199, 203, 201, 32, 35, 229, 36, 77, 76, 230, 200, 34, 33], 0);
+  data.set([10, 0, 0], 18);
+  return data;
+}
+
+const wizard = () => {
+  const careers = Array.from({ length: 18 }, (_, i) => ({ name: `C${i}`, career: { name: `C${i}` } }));
+  const f = new ChargenFlow(careers, () => 0);
+  f.questionLibrary = QUIZ_LIBRARY;
+  f.classesData = quizClassesData();
+  f.describeClass = () => null;
+  f.describeText = (id) => [{ text: `TEXT.RSC ${id}`, center: true }];
+  return f;
+};
+
+test('AUDIT 39: the quiz button reaches a question the view can draw, and A/B/C answer it', () => {
+  const f = wizard();
+  f.state = 'classMethod';
+  f.applyHit({ classMethod: 'questions' });   // the enhanced quiz button
+  assert.equal(f.state, 'classQuestions');
+  // The three slices the view cuts are the three answers, and none of
+  // them is empty - which is what makes them three buttons.
+  const { lines, aIndex, bIndex, cIndex } = f.qDisplay;
+  const join = (from, to) => lines.slice(from, to).join(' ').trim();
+  assert.ok(join(0, aIndex).length, 'the question itself');
+  assert.deepEqual([join(aIndex, bIndex), join(bIndex, cIndex), join(cIndex, lines.length)],
+    ['a) alpha', 'b) beta', 'c) gamma']);
+  const first = f.qDisplay;
+  assert.equal(f.applyHit({ answerClass: 0 }), true, 'the view\'s answer door');
+  assert.equal(f.qAnswered, 1);
+  assert.notEqual(f.qDisplay, first, 'and the next question is on screen');
+});
+
+test('AUDIT 39: the class list\'s last row reaches a builder the view can drive', () => {
+  const f = wizard();
+  f.state = 'class';
+  f.classListIndex = f.careers.length;   // the Custom row - what "Build it" presses
+  f.useClass();
+  assert.equal(f.state, 'customClass');
+  const c = f.custom;
+  // the twelve slots and their picker
+  f.applyHit({ customSkill: 0 });
+  assert.equal(c.sub, 'skillPick');
+  assert.ok(c.pickItems.length > 0);
+  const wanted = c.pickItems[0];
+  f.usePickRow(0);
+  assert.equal(c.skills[0], wanted);
+  assert.equal(c.sub, null, 'the picker closes on the pick');
+  // hit points, and the freeEdit ledger's zero sum
+  const hp = c.hp;
+  f.applyHit({ customHp: 1 });
+  assert.equal(c.hp, hp + 1);
+  f.applyHit({ customStatCursor: 2 });
+  const before = c.stats[STAT_KEYS_ORDER[2]];
+  f.applyHit({ customStatStep: 1 });
+  assert.equal(c.stats[STAT_KEYS_ORDER[2]], before + 1);
+  assert.equal(c.statPool, -1, 'the pool is a ledger, and the exit gate is what demands the balance');
+  // the two special windows
+  f.applyHit({ customAdvantage: true });
+  assert.equal(c.sub, 'advantage');
+  f.applyHit({ advAdd: true });
+  assert.ok(c.pickList?.length, 'the picker the view lists');
+  f.applyHit({ advExit: true });
+  assert.equal(c.sub, null);
+  // and the exit refusal, which is the only thing that ever fills the
+  // box pane - here it is TEXT.RSC 301, the unnamed class
+  f.applyHit({ customExit: true });
+  assert.equal(f.state, 'customClass', 'a refused exit stays');
+  assert.match(c.box[0].text, /301/);
+  f.applyHit({ customBox: true });
+  assert.equal(c.box, null);
 });
 
 // ── THE KEYBOARD ─────────────────────────────────────────────────

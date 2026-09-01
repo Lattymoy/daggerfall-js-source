@@ -20,7 +20,8 @@
 // this window reads none.
 //
 // WHAT IT DOES, and does not: READY a spell (the one thing a
-// spellbook is for), and DELETE one with the classic's own refusals.
+// spellbook is for), and DELETE one behind the classic's own YesNo
+// with the classic's own refusals.
 // Sorting is the classic's SortSpellsPointCost and its list is the
 // same array, so the enhanced book shows it sorted the moment the
 // classic sorts it - but it offers no sort button of its own, because
@@ -31,7 +32,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { overlayAction } from './input.js';
 import {
   spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
-  CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE,
+  CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE, DELETE_SPELL_PROMPT,
   VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG,
 } from './spellbookWindow.js';
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
@@ -50,6 +51,7 @@ let onExit = () => {};
 let picked = 0;
 let notice = null;
 let renaming = null;   // PX23b: the name being edited, kept across renders
+let deleting = null;   // AUDIT 39: DeleteButton's deleteSpellIndex - the row the YesNo is asking about
 
 /**
  * PX23b: AN EFFECT CARRIES NUMBERS, and the first draft read none.
@@ -169,7 +171,7 @@ function render() {
     const b = el('button', `px-qrow sb-row${r.i === picked ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(r.name));
     b.append(el('span', 'sb-cost', String(r.cost)));
-    b.onclick = () => { picked = r.i; notice = null; render(); };
+    b.onclick = () => { picked = r.i; notice = null; deleting = null; render(); };
     rail.append(b);
   }
   wrap.append(rail);
@@ -231,17 +233,45 @@ function render() {
   const rename = el('button', 'act', 'Rename');
   rename.onclick = () => { renaming = renaming === null ? sel.name : null; notice = null; render(); };
   acts.append(rename);
+  // DELETE IS TWO PRESSES, and the second one is the classic's.
+  // DeleteButton_OnMouseClick (:811-838) ends by parking the row in
+  // `deleteSpellIndex` and raising a YesNo box on "deleteSpell"; only
+  // DeleteSpellConfirm_OnButtonClick's Yes arm (:840-852) deletes.
+  // AUDIT 39: this book spliced the player's OWN spell array on the
+  // single press - `deps.spells()` is `entity.spells` by reference -
+  // so the two skins disagreed about a destructive, unrecoverable act
+  // while the port's classic window (spellbookWindow.deleteButton /
+  // confirmDelete) carried the whole law.
   const del = el('button', 'act', 'Delete');
   del.onclick = () => {
     if (sel.undeletable) { notice = sel.undeletable; render(); return; }
-    const list = deps.spells?.() ?? [];
-    list.splice(sel.i, 1);
-    picked = Math.max(0, Math.min(picked, list.length - 1));
+    deleting = sel.i;
     notice = null;
     render();
   };
   acts.append(del);
   detail.append(acts);
+  if (deleting !== null) {
+    const ask = el('div', 'card');
+    ask.append(el('p', 'px-note', DELETE_SPELL_PROMPT));
+    const a = el('div', 'sb-acts');
+    const yes = el('button', 'act primary', 'Yes');
+    yes.onclick = () => {
+      const list = deps.spells?.() ?? [];
+      list.splice(deleting, 1);
+      deleting = null;
+      picked = Math.max(0, Math.min(picked, list.length - 1));
+      // The CloseWindow() sits OUTSIDE the Yes arm (:851): either
+      // answer ends the book, which is what the port's classic window
+      // does through its own confirmDelete.
+      onExit();
+    };
+    const no = el('button', 'act', 'No');
+    no.onclick = () => { deleting = null; onExit(); };
+    a.append(yes, no);
+    ask.append(a);
+    detail.append(ask);
+  }
   if (renaming !== null) {
     const form = el('form', 'sb-rename');
     const input = el('input');
@@ -275,6 +305,17 @@ function onKey(e) {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   const rows = deps.spells?.() ?? [];
+  // THE DELETE BOX IS MODAL, as DFU's DaggerfallMessageBox is: the
+  // rail's arrows are dead under it and Escape is the No button
+  // (the classic window's own `top === 'delete'` arm, :647-651).
+  if (deleting !== null) {
+    if (overlayAction(e) !== 'back') return;
+    e.preventDefault();
+    e.stopPropagation();
+    deleting = null;
+    onExit();
+    return;
+  }
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
     if (!rows.length) return;
     e.preventDefault(); e.stopPropagation();
@@ -300,13 +341,14 @@ export function mountEnhancedSpellbook(hostEl, d = {}) {
   picked = 0;
   notice = null;
   renaming = null;
+  deleting = null;
   render();
   window.addEventListener('keydown', onKey, true);
   return {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
-      host = null; deps = {}; picked = 0; notice = null; renaming = null;
+      host = null; deps = {}; picked = 0; notice = null; renaming = null; deleting = null;
     },
   };
 }

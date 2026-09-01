@@ -77,6 +77,44 @@ test('PX23 book: it borrows every law and invents none', () => {
   assert.doesNotMatch(book, /tag === 'lycanthrope'|tag === 'vampire'/, 'the tags are constants, never typed');
 });
 
+test('AUDIT 39: DELETE is two presses in BOTH books, and the words are the classic\'s', () => {
+  // The enhanced book spliced `deps.spells()` - which spellbookDoor
+  // hands over as `entity.spells` BY REFERENCE - on a single click,
+  // while DFU's DeleteButton_OnMouseClick (:811-838) ends by parking
+  // the row in deleteSpellIndex and raising a YesNo box on
+  // "deleteSpell", and only DeleteSpellConfirm_OnButtonClick's Yes arm
+  // (:840-852) deletes. The port's CLASSIC window carries all of that,
+  // so the two skins disagreed about an unrecoverable act.
+  const src = read('src/ui/enhancedSpellbook.js');
+  assert.match(src, /DELETE_SPELL_PROMPT/, 'the prompt is the classic\'s own string, imported');
+  assert.doesNotMatch(src, /'Do you want to delete this spell\?'/, 'and never retyped');
+  assert.match(src, /^let deleting = null;/m, 'deleteSpellIndex, by another name');
+  // THE PRESS ARMS, IT DOES NOT DELETE.
+  const del = src.slice(src.indexOf("const del = el('button', 'act', 'Delete');"));
+  const arm = del.slice(0, del.indexOf('acts.append(del);'));
+  assert.match(arm, /deleting = sel\.i;/);
+  assert.doesNotMatch(arm, /splice/, 'the Delete button must not touch the array');
+  // ...and the two refusals still answer FIRST, as they do in DFU.
+  assert.ok(arm.indexOf('sel.undeletable') < arm.indexOf('deleting = sel.i;'));
+  // ONLY YES SPLICES, and the close is OUTSIDE the Yes arm (:851) -
+  // which is what the port's classic confirmDelete does too.
+  const card = del.slice(del.indexOf('if (deleting !== null) {'));
+  const yes = card.slice(card.indexOf('yes.onclick'), card.indexOf('const no ='));
+  assert.match(yes, /list\.splice\(deleting, 1\);/);
+  assert.match(yes, /onExit\(\);/);
+  assert.match(card, /no\.onclick = \(\) => \{ deleting = null; onExit\(\); \};/,
+    'No deletes nothing and still closes');
+  assert.equal((card.match(/splice/g) ?? []).length, 1, 'exactly one splice, on Yes');
+  // The box is MODAL: Escape is its No, and the rail is dead under it.
+  const onKey = src.slice(src.indexOf('function onKey(e)'));
+  assert.ok(onKey.indexOf('if (deleting !== null) {') < onKey.indexOf("e.key === 'ArrowDown'"),
+    'the arrows must not walk the rail while the box is up');
+  // and the classic window it is now level with has not moved.
+  const classic = read('src/ui/spellbookWindow.js');
+  assert.match(classic, /this\.deleteSpellIndex = this\.selectedIndex;\n\s*this\.top = 'delete';/);
+  assert.match(classic, /confirmDelete\(yes\) \{\n\s*if \(yes && this\.deleteSpellIndex !== -1\)/);
+});
+
 test('PX23 book: the pixel family\'s own bones, and no invented furniture', () => {
   const book = read('src/ui/enhancedSpellbook.js');
   const css = read('src/ui/enhancedStyle.js');

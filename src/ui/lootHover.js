@@ -18,6 +18,7 @@
 // the crosshair changes, so looking at the same pile for ten seconds
 // costs nothing after the first frame.
 import { injectEnhancedStyle } from './enhancedStyle.js';
+import { isEnhanced } from '../systems/uiSkin.js';
 
 /** How many lines before the plaque says "and N more" instead. A pile
  *  is a glance, not a list to read; DFU's own loot windows scroll. */
@@ -53,6 +54,14 @@ export function hoverLines(items, max = HOVER_MAX) {
  * nothing after the first.
  */
 export function showLootHover(key, items, title = 'Loot') {
+  // THE SKIN GATE IS HERE, ABOVE ensure(). AUDIT 39: the hosts call
+  // this every tick whatever the skin - dungeonContext gates only the
+  // PICK - so a classic-skin dungeon reached ensure() with a null key
+  // on its first tick and injectEnhancedStyle() put the enhanced
+  // sheet's UNSCOPED head rules (`*`, `html, body`, `body`, `button`,
+  // `#app`) onto the classic page. A player who chose classic never
+  // loads a byte of that, which is this module's own doctrine.
+  if (!isEnhanced()) return;
   const n = ensure();
   if (!n) return;
   if (key === shownKey) return;

@@ -229,40 +229,32 @@ test('PX27: the child-push machinery went WITH the overlay, and nothing needs it
   assert.match(read('src/ui/enhancedCharSheet.js'), /export function sheetModel/);
 });
 
-// ── THE SCREEN'S OWN INPUT ───────────────────────────────────────
+// ── THE RETIRED VIEW ─────────────────────────────────────────────
 
-test('U52: Escape and F5 close it, and F5 is claimed', () => {
+// AUDIT 39. THE PINS THAT MOVED, and why: this file used to hold
+// three assertions about the view's own input - the F5/Escape arm, the
+// unmount that removes its capture-phase keydown, and the nav that
+// draws a button only where the host handed a factory. PX27 retired
+// that view's CALL SITE and left the view itself exported with no
+// caller anywhere in src/, tools/ or the pages, so those three pins
+// were guarding ~200 lines nothing could reach - and the dead listener
+// they described claimed F5, which is the exact hazard they named. The
+// view is gone; the pins go with it, replaced by the law that put them
+// out of work.
+test('AUDIT 39: the module is the MODEL and nothing else - the view left with its caller', () => {
   const src = read('src/ui/enhancedCharSheet.js');
-  const onKey = src.slice(src.indexOf('function onKey(e)'), src.indexOf('/** The pointer lock'));
-  assert.match(onKey, /overlayAction\(e\) !== 'back' && e\.key !== 'F5'/,
-    'the shared table for Escape, the event for F5 - which is a host BINDING, not overlay vocabulary');
-  const claimAt = onKey.indexOf('e.preventDefault()');
-  const testAt = onKey.indexOf("e.key !== 'F5'");
-  assert.ok(testAt > 0, 'the F5 arm is gone');
-  assert.ok(claimAt > testAt,
-    'the screen decides it used the key BEFORE it claims it - and an F5 this screen '
-    + 'does use, left unclaimed, is a browser reload that destroys the session');
-  assert.match(onKey, /e\.stopPropagation\(\)/,
-    'the host walks the player on the keys underneath a modal overlay');
-});
-
-test('U52: every listener has an owner', () => {
-  const src = read('src/ui/enhancedCharSheet.js');
-  const unmount = src.slice(src.indexOf('    unmount() {'));
-  assert.match(unmount, /removeEventListener\('keydown', keyHandler, \{ capture: true \}\)/);
-  assert.match(unmount, /removeEventListener\('pointerlockchange', lockHandler\)/);
-  // and here the leak has a specific cost worth naming: this listener
-  // claims F5, so an orphan eats the key that OPENS the sheet.
-  assert.match(src, /eats the key that opens it/);
-});
-
-test('U52: a button is drawn only where the host handed a factory', () => {
-  const src = read('src/ui/enhancedCharSheet.js');
-  const nav = src.slice(src.indexOf('function nav()'), src.indexOf('function render()'));
-  assert.match(nav, /if \(typeof hooks\[which\] !== 'function'\) continue;/,
-    'the classic sheet answers the press with a notice because its rects are painted '
-    + 'into the art; this one can remove the button, so it does');
-  assert.match(nav, /if \(!openChild\(which\)\)/, 'and a hook that returns null still gets a notice');
+  for (const gone of ['export function mountEnhancedCharSheet', 'addEventListener',
+    'document.createElement', 'globalThis.__sheet']) {
+    assert.ok(!src.includes(gone), `${gone} retired with the view that owned it`);
+  }
+  // A module with no DOM in it cannot leak a listener, which is what
+  // the three retired pins were for.
+  assert.doesNotMatch(src, /export function (?!sheetModel)/,
+    'sheetModel is the file\'s only exported function');
+  // ...and the surface the live sheet actually reads is still here.
+  assert.match(src, /export function sheetModel/);
+  assert.match(src, /export const SKILL_GROUPS/);
+  assert.match(read('src/ui/enhancedMenu.js'), /import \{ sheetModel \} from '\.\/enhancedCharSheet\.js';/);
 });
 
 test('U52: it draws no paperdoll, and the reason is written down', () => {
