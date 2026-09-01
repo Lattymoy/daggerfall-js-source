@@ -682,7 +682,10 @@ void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
   vFade = 1.0 - smoothstep(uRange*0.55, uRange, d);
-  if (vFade <= 0.001) { gl_Position = vec4(2,2,2,1); return; }   // culled
+  // PROTO-18: the fade thins the FIELD, it does not shrink the blades.
+  // A hashed threshold drops whole blades with distance, so the count
+  // falls away and every blade that remains is its true size.
+  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }
   // PROTO-14 (3): THE GRASS KNOWS ABOUT THE GROUND IT STANDS IN.
   // Blades stood up through snow that was supposedly burying them and
   // stayed green in standing water. Snow BURIES them - the depth eats
@@ -708,7 +711,26 @@ void main(){
   float drown = smoothstep(0.10, 0.40, fld.r);
   vSnow = smoothstep(0.02, 0.22, snowD);
   vWet = smoothstep(0.0, 0.35, fld.r) + fld.a * 0.5;
-  float h = aInst.z * (0.55 + 0.45*vFade) * (1.0 - vSnow * 0.86) * (1.0 - drown * 0.9);
+  // PROTO-18 (Mac: grass pops THROUGH THE SNOW during movement, and
+  // the snow itself is fine).
+  //
+  // THE HEIGHT WAS SCALED BY THE DISTANCE FADE. A blade far off stood
+  // at 55% of its height and grew to 100% as you approached - which is
+  // invisible on bare ground, and on snow is the whole bug: the snow
+  // surface is a FIXED line, so a blade that was under it grows up
+  // through it as you walk toward it. Every blade in the field does it,
+  // continuously, which is exactly "popping through when moving".
+  //
+  // BURIAL IS GEOMETRIC NOW, not a multiplier. The snow has a real
+  // surface height; a blade's true height is fixed and never changes
+  // with distance; what shows is simply the part standing ABOVE that
+  // surface, and the root is planted ON the snow rather than under it.
+  // A blade shorter than the snow is gone because it is buried, not
+  // because a factor shrank it - and walking toward it changes
+  // nothing, because nothing in this depends on the camera any more.
+  float snowSurf = snowD * 0.45;                 // the same 0.45 the ground displaces by
+  float trueH = aInst.z * (1.0 - drown * 0.9);
+  float h = max(0.0, trueH - snowSurf);
   vT = aCorner.y;
   // the tip travels, the root does not: the offset is weighted by
   // height along the blade, squared, which is what a stalk does
@@ -728,7 +750,9 @@ void main(){
   vec3 p;
   p.xz = root + lean * (vT*vT) * h;
   p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
-  p.y = terrain(root) + vT * h;
+  // planted on the snow's own surface, so the burial line is the one
+  // the ground draws and not an approximation of it
+  p.y = terrain(root) + snowSurf + vT * h;
   vTint = aInst2.z;
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
