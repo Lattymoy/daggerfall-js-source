@@ -69,9 +69,27 @@ test('EE5: nothing is shipped, and the classic path is untouched', () => {
     'EE7 wired them: the seam is closed, so they go in');
   assert.ok(!/prototype\/ground|\.png'/.test(r), 'no raster of game data may be fetched');
   // and the classic skin gets its own layers, byte for byte
-  assert.match(r, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA, w, h, src\.length/);
+  assert.match(r, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8, w, h, src\.length/);   // EE8: sized, or no mips
   assert.deepEqual(BASE_ORDER, ['water', 'dirt', 'grass', 'stone'], 'the archive\u2019s own order');
   // the noise wraps, which is what makes the whole thing seamless
   const n = makeNoise(7);
   assert.ok(Math.abs(n(0.3, 0.4, 8) - n(8.3, 0.4, 8)) < 1e-9, 'the lattice must wrap at the period');
+});
+
+test('EE8: the tile array is SIZED, and a failed mipmap falls back instead of drawing black', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  // generateMipmap needs a colour-renderable, filterable format. An
+  // UNSIZED gl.RGBA on a 2D array is not one, so the call failed, no
+  // mips existed, and LINEAR_MIPMAP_LINEAR left the sampler
+  // MIPMAP-INCOMPLETE - which samples BLACK, everywhere. That was the
+  // void. It had worked for years under NEAREST because NEAREST needs
+  // no mips at all.
+  assert.match(r, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8, w, h, src\.length, 0, gl\.RGBA, gl\.UNSIGNED_BYTE, null\);/,
+    'the array must be allocated with a SIZED internal format');
+  assert.ok(!/texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA,/.test(r), 'the unsized form must be gone');
+  // and if it fails anyway, the ground must degrade to classic rather
+  // than to nothing
+  assert.match(r, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);\n\s*if \(gl\.getError\(\) !== gl\.NO_ERROR\) \{/);
+  assert.match(r, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MAG_FILTER, gl\.NEAREST\);/);
+  assert.match(r, /while \(gl\.getError\(\) !== gl\.NO_ERROR\) \{/, 'the error queue must be drained first, or the read is someone else\u2019s');
 });

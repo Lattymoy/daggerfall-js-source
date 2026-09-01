@@ -1873,7 +1873,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
     const w = src[0].width;
     const h = src[0].height;
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    // EE8: A SIZED INTERNAL FORMAT, and this is what made the ground a
+    // void. generateMipmap requires the texture to be colour-renderable
+    // and filterable, which an UNSIZED gl.RGBA on a 2D array is not - so
+    // the call failed, no mips existed, and EE3's LINEAR_MIPMAP_LINEAR
+    // left the sampler MIPMAP-INCOMPLETE. An incomplete sampler returns
+    // BLACK, for every tile, everywhere: the empty void. The upload had
+    // worked for years under NEAREST because NEAREST needs no mips.
+    // RGBA8 is the same eight bits per channel, spelled the way WebGL2
+    // requires when mips are wanted.
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     for (let i = 0; i < src.length; i++) {
       gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(src[i].colors.buffer, src[i].colors.byteOffset, w * h * 4));
     }
@@ -1897,7 +1906,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // Per-layer, so tiles never bleed into each other: WebGL2's
     // generateMipmap on a 2D array filters each layer independently.
     if (this.enhancedGround) {
+      // ...and if it fails anyway, FALL BACK rather than draw black. A
+      // sampler that cannot be completed must not be asked for mips:
+      // the ground looking like the classic ground is a disappointment,
+      // and the ground looking like a void is a broken game.
+      while (gl.getError() !== gl.NO_ERROR) { /* drain, so the next read is ours */ }
       gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      if (gl.getError() !== gl.NO_ERROR) {
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        this.tileArrays.set(key, tex);
+        return tex;
+      }
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       const aniso = gl.getExtension('EXT_texture_filter_anisotropic');

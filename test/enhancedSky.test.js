@@ -474,7 +474,10 @@ test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', 
   // and the enhanced ground gets the mip chain, which is what stops
   // the boiling at distance - and is a PREREQUISITE for any higher
   // resolution tile, since more texels alias worse without it.
-  assert.match(r, /if \(this\.enhancedGround\) \{\s*\n\s*gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);/);
+  // EE8: the error queue is drained before the mipmap, so the check
+  // that follows reads OUR error and not someone else's.
+  assert.match(r, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);/);
+  assert.match(r, /if \(this\.enhancedGround\) \{/);
   assert.match(r, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
   assert.match(r, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/, 'ground is seen at grazing angles almost always');
   assert.match(r, /this\.enhancedGround = false;/, 'and it defaults OFF, so classic cannot inherit it');
