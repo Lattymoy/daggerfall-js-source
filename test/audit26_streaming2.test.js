@@ -248,6 +248,10 @@ test('audit26 F030: a levitating player GAINS height on FloatUp, and the path fo
   const p = new PlayerMotor(rec);
   p.spawn(0, 0, 0);
   p.levitating = true;
+  // AUDIT 39 (#57): the levitate EDGE raises CancelMovement and
+  // FixedUpdate spends one step on the cancel block (:286-294); it
+  // records no move, so the moves[] indices below are unchanged.
+  p.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
 
   // Vector3.up on Jump/FloatUp (:82-83), at levitateMoveSpeed 4.0
   const y0 = p.pos[1];
@@ -273,6 +277,7 @@ test('audit26 F030: a levitating player GAINS height on FloatUp, and the path fo
     const q = new PlayerMotor(r2);
     q.spawn(0, 0, 0);
     q.levitating = true;
+    q.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);   // the cancel step (AUDIT 39 #57)
     q.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, pitch);
     approx(r2.moves[0][1], Math.sin(pitch) * LEVITATE_MOVE_SPEED * DT, 1e-9);
     approx(Math.hypot(r2.moves[0][0], r2.moves[0][2]), Math.abs(Math.cos(pitch)) * LEVITATE_MOVE_SPEED * DT, 1e-9);
@@ -283,6 +288,7 @@ test('audit26 F030: a levitating player GAINS height on FloatUp, and the path fo
   const q = new PlayerMotor(r3);
   q.spawn(0, 0, 0);
   q.levitating = true;
+  q.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);   // the cancel step (AUDIT 39 #57)
   q.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
   approx(r3.moves[0][1], 0, 1e-9);
 });

@@ -1440,14 +1440,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // defaults advanceDays to the real clock, so there is no argument left for a
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
-  // AUDIT 39 (#21): a GETTER, not startLoc's number. LowerRepForCrime
+// AUDIT 39 (#21): a GETTER, not startLoc's number. LowerRepForCrime
   // (PlayerEntity.cs:2286-2299), SurrenderToCityGuards (:2313) and
   // RaiseReputationForDoingSentence (:2301-2303) all read
   // PlayerGPS.CurrentRegionIndex at the MOMENT of the crime, and this
   // host fast-travels - a boot-time value filed every later crime's
   // legal-rep loss, fine and banishment under the province the session
   // started in. Same read, same reason, as townTalk's above.
-  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: () => _questRegionIndex() });
+  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: () => _questRegionIndex(), onCourtScreen: () => cameraRecoiler.reset() });
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -2239,6 +2239,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
   async function _teleportToPixel(px, py, localPos = null) {
+    // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
+    // can be moved by one system or another with swaying active" -
+    // the sway does not ride a fast travel, a teleport or a load's
+    // landing to the new place.
+    cameraRecoiler.reset();
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
     // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
     // on SaveLoadManager_OnStartLoad) - "remove loose enemies,
@@ -2552,6 +2557,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const extras = restorePlayer(playerEntity, snap, spellsByIndex);
     if (!extras) { townTalk.say('Save version mismatch.'); return; }
     _loading = true;
+    // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
+    // incoming character does not inherit the old one's reel.
+    cameraRecoiler.reset();
     try {
       // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
       // destroys the standing interior first (PlayerEnterExit
@@ -4824,6 +4832,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
+          // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+          // press flips ToggleRun; MoveBackwards is its cancel key.
+          autoRun: held(keys, 'AutoRun'),
+          back: mv.backwards,
           sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
           jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
           // LevitateMotor.Update (:71-91) reads Jump/FloatUp for up and

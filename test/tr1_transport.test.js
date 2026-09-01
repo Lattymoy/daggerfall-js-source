@@ -130,7 +130,11 @@ test('TR1: the motor rides - the mount\'s speed, no sprint, no climb, and the cr
 test('TR1: the wiring - the climb gate, the Horse bob style, and no Running tally from a saddle', () => {
   const motor = read('src/player/motor.js');
   assert.match(motor, /riding: isRiding\(this\.transportMode\),   \/\/ TR1: ClimbingMotor :398/);
-  assert.match(motor, /this\.isRunning = !!input\.run && canRunUnlessRiding\(this\.transportMode\);/);
+  // AUDIT 39 (#63) moved this pin: the run LATCH now reads the run
+  // MODE (CaptureInputSpeedAdjustment :72-75 + the AutoRun latch),
+  // not the raw held key. The riding gate is what this test guards
+  // and it is unchanged.
+  assert.match(motor, /this\.isRunning = this\._runMode && canRunUnlessRiding\(this\.transportMode\);/);
   assert.match(motor, /get riding\(\) \{ return isRiding\(this\.transportMode\); \}/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     assert.match(read(host), /riding: !!player\.riding, levitating:/, `${host}: the Horse bob style (HeadBobber :107)`);

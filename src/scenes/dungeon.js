@@ -131,6 +131,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
+  // incoming character does not inherit the outgoing one's reel, and
+  // the reposition the load ends in is OnInitWorld's half of the same
+  // clear. The context owns this host's ONE load door (F12, the pause
+  // menu and the boot ?load arm all reach it), so the hook rides it.
+  const _ctxQuickLoad = ctx.quickLoad;
+  if (typeof _ctxQuickLoad === 'function') {
+    ctx.quickLoad = (...args) => { cameraRecoiler.reset(); return _ctxQuickLoad.apply(ctx, args); };
+  }
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
@@ -470,6 +479,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
+        // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+        // press flips ToggleRun; MoveBackwards is its cancel key.
+        autoRun: held(keys, 'AutoRun'),
+        back: mv.backwards,
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
         up: jumpHeld || held(keys, 'FloatUp'),

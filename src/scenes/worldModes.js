@@ -3839,6 +3839,10 @@ export function createWorldModes(host) {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
+        // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+        // press flips ToggleRun; MoveBackwards is its cancel key.
+        autoRun: held(keys, 'AutoRun'),
+        back: mv.backwards,
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         up: jumpHeld || held(keys, 'FloatUp'),

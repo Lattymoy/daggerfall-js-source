@@ -50,6 +50,10 @@ export function createArrestFlow({
   advanceDays = (days) => advanceWorldMinutes(days * MINUTES_PER_DAY),
   advanceMinutes = (m) => advanceWorldMinutes(m),
   rolls = Math.random,
+  // DaggerfallCourtWindow.OnCourtScreen, whose one subscriber is
+  // CameraRecoiler (:193-197) - the sway is cleared when the court
+  // screen opens. Hosts that own a camera pass their recoiler's reset.
+  onCourtScreen = () => {},
   // CR1: GuildManager.GetGuild(factionId).IsMember()/Rank for the
   // rescue arms - the member's rank, or null for a non-member. The
   // default is the same guildOfFaction/membershipOf read the quest
@@ -144,6 +148,7 @@ export function createArrestFlow({
     // entirely, so the court has its own song. The flag existed nowhere in
     // the port, which left CourtSongs unreachable.
     playerEntity.arrested = true;
+onCourtScreen();
     const court = startCourt(playerEntity, region(), crimeId(), { rolls });
     // CR1: the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
     // BEFORE the plead box - a rescued player never pleads. The exit

@@ -874,7 +874,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // defaults advanceDays to the real clock, so there is no argument left for a
   // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
   // full refill, neither of which is a calendar.
-  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex });
+  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex, onCourtScreen: () => cameraRecoiler.reset() });
   const weaponRig = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -1709,6 +1709,10 @@ export async function bootExterior(canvas, renderer, params, status) {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
+        // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+        // press flips ToggleRun; MoveBackwards is its cancel key.
+        autoRun: held(keys, 'AutoRun'),
+        back: mv.backwards,
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         // LevitateMotor.Update (:71-91) reads Jump/FloatUp for up and
