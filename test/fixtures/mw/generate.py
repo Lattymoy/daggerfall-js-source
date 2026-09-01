@@ -1490,13 +1490,17 @@ def make_extras():
         ("NiPalette",
          struct.pack("<BI", 1, 4) + bytes((1, 2, 3, 4, 5, 6, 7, 8,
                                            9, 10, 11, 12, 13, 14, 15, 16))),
-        # NiBoolData: a KeyGroup whose values are single bytes. Nothing in
-        # a 4.0.0.2 file REFERENCES one (its readers are interpolators,
-        # ver1 10.1.0.106), so it is written standalone - the reader walks
-        # the record list in order and does not care who points at what.
+        # NiBoolData: a KeyGroup whose values are FOUR-BYTE bools. AUDIT 39
+        # widened this from the byte it used to write: BoolKeyMap samples
+        # NIFStream::get<bool>, and a bool below 4.1.0.0 is an int32
+        # (nifstream.cpp:171-177) - NiVisData's byte is the exception, not
+        # the rule. Nothing in a 4.0.0.2 file REFERENCES a NiBoolData (its
+        # readers are interpolators, ver1 10.1.0.106), so it is written
+        # standalone - the reader walks the record list in order and does
+        # not care who points at what.
         ("NiBoolData",
-         struct.pack("<II", 2, 1) + struct.pack("<fB", 0.0, 1)
-         + struct.pack("<fB", 1.5, 0)),
+         struct.pack("<II", 2, 1) + struct.pack("<fI", 0.0, 1)
+         + struct.pack("<fI", 1.5, 0)),
         ("NiNode", node("Marker", -1, [], (7.0, 8.0, 9.0))),
     ]
     out = b"NetImmerse File Format, Version 4.0.0.2\n"

@@ -9,8 +9,10 @@
 //   - WEAPON*.CIF: a standard "wielding" IMG record first (except
 //     WEAPON09.CIF, the bow), then animation records with a 31-slot frame
 //     offset list where non-zero entries define the frame count.
-// Structural simplification only: DFU pre-sizes a fixed 64-record array
-// (503 for TFAC00I0.RCI); we grow a plain array, behaviour identical.
+// Structural simplification: DFU pre-sizes a fixed 64-record array
+// (503 for TFAC00I0.RCI); we grow a plain array. The 64 is load-bearing
+// for WEAPON*.CIF - see MAX_WEAPON_RECORDS below - because the weapon
+// loop's only stride is a file-supplied TotalSize.
 
 import { BaseImageFile, COMPRESSION_FORMATS, emptyBitmap } from './baseImageFile.js';
 
@@ -18,6 +20,13 @@ const RECORD_TYPES = Object.freeze({
   MultiImage: 0,
   WeaponAnim: 1,
 });
+
+// CifRciFile.cs:33 `private Record[] records = new Record[64];`. The weapon
+// loop advances by the file's own TotalSize, so a TotalSize of 0 never moves
+// the read head: DFU's 65th write throws IndexOutOfRangeException, Read()'s
+// catch swallows it and Load returns false. Without the bound this loop spins
+// forever.
+const MAX_WEAPON_RECORDS = 64;
 
 // Fixed dimensions for RCI-style files.
 function rciDimensions(filename) {
@@ -78,6 +87,10 @@ export class CifRciFile extends BaseImageFile {
     try {
       this._readRecords();
     } catch (e) {
+      // Read()'s catch leaves `totalRecords` at its 0 (CifRciFile.cs:38,
+      // :266-278), so a failed load answers no records at all - never the
+      // half-filled array the walk got to.
+      this._records.length = 0;
       return false;
     }
 
@@ -200,6 +213,7 @@ export class CifRciFile extends BaseImageFile {
     }
 
     do {
+      if (this._records.length >= MAX_WEAPON_RECORDS) throw new Error('CifRciFile: record overflow');
       const animHeader = {
         position: pos,
         width: v.getUint16(pos, true),

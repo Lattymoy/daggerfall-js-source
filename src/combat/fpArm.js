@@ -814,7 +814,9 @@ async function buildTpBody({
       const path = `meshes/${row.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${row.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: row.slot, bones: row.bones, bytes: arc.get(path).slice() });
+      // partName rides along: a worn add's slot is a label carrying its
+      // record id, and the binder's part rules key on the part itself.
+      partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: arc.get(path).slice() });
     }
     if (!partBytes.length) {
       return { ok: false, stage: 'parts', error: `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
@@ -1077,7 +1079,7 @@ export async function buildFpArm({
       const path = `meshes/${add.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: add.slot, bones: add.bones, bytes: arc.get(path).slice() });
+      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice() });
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door

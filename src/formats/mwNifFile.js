@@ -517,8 +517,12 @@ const READERS = {
       rec.fileName = s.string();
       rec.pixelData = -1;
     } else {
-      rec.unknownByte = s.u8();
-      rec.pixelData = s.ref();
+      // texture.cpp:13-21: below 10.0.1.4 that byte IS `hasData`, and the
+      // internal pixel-data ref follows ONLY when it is non-zero. Reading it
+      // unconditionally over-reads four bytes, and a 4.0.0.2 stream carries
+      // no record sizes to resynchronize from.
+      rec.hasData = s.u8() !== 0;
+      rec.pixelData = rec.hasData ? s.ref() : -1;
       rec.fileName = null;
     }
     rec.pixelLayout = s.u32();
@@ -880,8 +884,12 @@ const READERS = {
     rec.data = readKeyGroup(s, 4);
   },
 
+  // BoolKeyMap samples NIFStream::get<bool>, and a bool below 4.1.0.0 is a
+  // FOUR-byte int (nifstream.cpp:171-177) - unlike NiVisData below, whose
+  // reference reader really is get<uint8_t>. The two widths differ; this one
+  // is the wide one.
   NiBoolData(s, rec) {
-    rec.data = readKeyGroupOf(s, () => s.u8());
+    rec.data = readKeyGroupOf(s, () => (s.bool() ? 1 : 0));
   },
 
   NiUVData(s, rec) {

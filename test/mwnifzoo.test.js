@@ -453,7 +453,12 @@ test('mwnifzoo: NiLightRadiusController is the time-controller base and nothing 
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
   ]);
 
-  // A byte-valued key group: no float value, no interpolation surprises.
+  // AUDIT 39 re-pinned this: a NiBoolData key value is a FOUR-BYTE bool
+  // (BoolKeyMap samples get<bool>, and a bool below 4.1.0.0 is an int32 -
+  // nifstream.cpp:171-177), where the fixture and the reader agreed on a
+  // byte. NiVisData's byte-wide value, below, is the genuine exception.
+  // The Marker node that follows is what proves the width: read a byte per
+  // value and the reader is six bytes out by the time it gets there.
   assert.deepEqual(nif.records[9].data, {
     type: 1,
     keys: [{ time: 0, value: 1 }, { time: 1.5, value: 0 }],

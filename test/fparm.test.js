@@ -3015,17 +3015,25 @@ test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', 
   // ever holds. An attack extends it forward and a bow draw pulls it
   // back, and either can leave a box measured on a resting hand; the
   // far plane then cuts the swing off mid-arm.
-  const keys = new Map([
-    ['idle1h: start', 0], ['idle1h: stop', 2],
-    ['weapononehand: chop start', 5], ['weapononehand: chop stop', 6.5],
-    ['bowandarrow: shoot start', 10], ['bowandarrow: shoot stop', 12],
-  ]);
+  // AUDIT 39 moved this fixture off a Map. A source's `keys` is
+  // normalizeTextKeys' ARRAY of {time,text} (mwAnim.js:411), which is what
+  // clipReport hands fpArm; read with Map semantics the callback took
+  // (element, index), no key ever carried ": ", and every sweep fell back
+  // to the idle span - the very failure PX27 landed to fix.
+  const keys = [
+    { time: 0, text: 'idle1h: start' }, { time: 2, text: 'idle1h: stop' },
+    { time: 5, text: 'weapononehand: chop start' }, { time: 6.5, text: 'weapononehand: chop stop' },
+    { time: 10, text: 'bowandarrow: shoot start' }, { time: 12, text: 'bowandarrow: shoot stop' },
+  ];
   const t = clipSweepTimes([{ keys }], { startTime: 0, stopTime: 2 });
   assert.ok(t.some((x) => x >= 5 && x <= 6.5), 'the swing is never sampled');
   assert.ok(t.some((x) => x >= 10 && x <= 12), 'the bow draw is never sampled');
   assert.ok(t.some((x) => x >= 0 && x <= 2), 'the idle is still sampled');
+  assert.ok(!t.some((x) => x > 2 && x < 5), 'and only the spans, not the gaps between clips');
   // a stop before its start is not a span; a stop with no start is not a span
-  const bad = clipSweepTimes([{ keys: new Map([['g: chop stop', 1], ['g: slash start', 9], ['g: slash stop', 3]]) }], { startTime: 0, stopTime: 1 });
+  const bad = clipSweepTimes([{ keys: [
+    { time: 1, text: 'g: chop stop' }, { time: 9, text: 'g: slash start' }, { time: 3, text: 'g: slash stop' },
+  ] }], { startTime: 0, stopTime: 1 });
   assert.equal(bad.length, 25, 'an unreadable source falls back to the idle span, no worse than before');
   // no sources at all: the idle span, exactly as it was
   assert.equal(clipSweepTimes([], { startTime: 0, stopTime: 2 }).length, 25);

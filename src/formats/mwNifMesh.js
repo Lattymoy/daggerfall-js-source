@@ -18,13 +18,47 @@
 
 import { deref, TEX_SLOT } from './mwNifFile.js';
 
+// EVERY NiNode-derived record is recursed into: nifloader.cpp:932-937 walks
+// `ninode->mChildren` for anything that casts to Nif::NiNode, and the switch
+// and LOD classes get their own osg wrapper first (:907-924) rather than a
+// pruned subtree. Four of these were parsed and then dropped on the floor.
 const NODE_TYPES = new Set([
   'NiNode',
   'NiBSAnimationNode',
   'NiBSParticleNode',
   'NiBillboardNode',
   'AvoidNode',
+  'NiSwitchNode',
+  'NiLODNode',
+  'NiSortAdjustNode',
+  'NiCollisionSwitch',
 ]);
+
+/** The geometry classes this flattener draws. NiLines is parsed and is NOT
+ *  here: the reference gives it a LINES primitive set (nifloader.cpp:1624-
+ *  1631) and a batch here is a triangle list by contract, so a line shape
+ *  has no honest home downstream - it is dropped rather than drawn as
+ *  triangles. */
+const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);
+
+/** nifloader.cpp:1609-1621: one TRIANGLE_STRIP primitive per strip, strips
+ *  shorter than 3 skipped, and a shape whose strips are ALL short draws
+ *  nothing. Unrolled to the triangle list this module emits, with GL's own
+ *  winding flip on odd triangles and the degenerate joins (a repeated index,
+ *  which GL drops) left out. */
+function stripsToTriangles(data) {
+  const out = [];
+  for (const strip of data.strips ?? []) {
+    if (!strip || strip.length < 3) continue;
+    for (let i = 0; i + 2 < strip.length; i++) {
+      const a = strip[i], b = strip[i + 1], c = strip[i + 2];
+      if (a === b || b === c || a === c) continue;
+      if (i & 1) out.push(b, a, c);
+      else out.push(a, b, c);
+    }
+  }
+  return Uint16Array.from(out);
+}
 
 /** Row-major 3x3 multiply: out = a*b. */
 function mat33Mul(a, b) {
@@ -298,6 +332,13 @@ export function flattenNif(nif, opts = {}) {
   function emit(shape, world, props) {
     const data = deref(nif, shape.data);
     if (!data || !data.vertices) return;
+    let indices;
+    if (shape.type === 'NiTriStrips') {
+      indices = stripsToTriangles(data);
+      if (!indices.length) return;   // no strip of 3: the reference draws none
+    } else {
+      indices = Uint16Array.from(data.triangles);
+    }
     const skinned = shape.skin >= 0;
     const n = data.numVertices;
     const positions = new Float32Array(n * 3);
@@ -382,7 +423,7 @@ export function flattenNif(nif, opts = {}) {
       normals,
       uvs: data.uvSets.length ? Float32Array.from(data.uvSets[0]) : null,
       colors: data.colors ? Float32Array.from(data.colors) : null,
-      indices: Uint16Array.from(data.triangles),
+      indices,
       material: resolveMaterial(nif, props, !!data.colors),
     });
   }
@@ -421,7 +462,7 @@ export function flattenNif(nif, opts = {}) {
         if (prop) nextProps.push(prop);
       }
     }
-    if (rec.type === 'NiTriShape') {
+    if (GEOMETRY_TYPES.has(rec.type)) {
       // Rule 59's skip list, applied where the reference applies it: at
       // the GEOMETRY, by NAME, after the transforms and properties have
       // been composed. The node is still walked - it simply emits
