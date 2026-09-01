@@ -106,6 +106,25 @@ and a failure draws a world without roads and says so on the console.
 On a synthetic map the build is ~30ms; the real one is logged. Caching
 is deferred until the number says it is needed.
 
+## ROADS 4 - the road is a surface (2026-09-01)
+
+Enhanced Environments draws the INSIDE of Daggerfall's tiles as
+procedural surfaces and keeps their shapes and colours (EE4). Its
+residual path identifies a record's own material by colour - grey
+cobbles read as stone, brown ruts as dirt - and a road is neither. So
+`groundSurfaces.js` gains a seventh surface, `road`: packed earth,
+darker and smoother than dirt, flat-worn stones larger and sparser than
+dirt's pebbles, a faint camber. Orientation-free on purpose, because the
+tilemap rotates and flips road tiles by bits 6/7 and a rut with a
+direction would run the wrong way on half of them - the road's
+direction is the archive's shape, the surface only fills it. Records
+46/47/55 - the painter's three - take it BY INDEX (ROAD_RECORDS) and
+stay colour-matched to the archive's mean, so a winter road is pale and
+a desert road sandy while both are unmistakably road. Seam law holds
+(the camber is symmetric about the tile centre). Pinned: the same grey
+on record 45 and record 46 draws two different surfaces. Classic still
+draws tile 46 from ARENA2, exactly as the original mod does.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
@@ -115,9 +134,6 @@ cleared by the line that clears them. Four low findings recorded there.
 
 ## Open
 
-- ROADS 4: the enhanced skin's own road SURFACE from the ground proto's
-  pixel-art ramp, beside grass and stone. Classic draws tile 46 from
-  the player's ARENA2, which is exactly what the original draws.
 - ROADS 5: the travel-map overlay.
 - Rivers and streams: the same painter with water tiles, off by default
   as the original ships them. Their data would also be ours to derive.

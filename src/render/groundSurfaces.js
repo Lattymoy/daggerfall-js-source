@@ -266,7 +266,33 @@ export function makeSurfaces(seed = 0x51ed) {
     return { rgb: c, h: cl(h, 0, 1) };
   };
 
-  return { water, dirt, grass, stone, sand, snow };
+  // ROADS 4 (Mac: "use textures we've developed in the grass proto"):
+  // THE ROAD. Packed earth, darker and smoother than dirt, with a
+  // scatter of embedded stones worn flat and a faint low-frequency
+  // camber - the surface a thousand carts make. Orientation-free on
+  // purpose: the tilemap rotates and flips road tiles by bits 6/7, so a
+  // rut with a direction would run the wrong way on half of them; the
+  // road's DIRECTION is the archive's shape, this is only what fills it.
+  const road = (u, v) => {
+    const tone = F(u, v, 5, 5, 4);
+    const grain = F(u, v, 180, 180, 3);
+    let c = mix3([88, 70, 50], [122, 100, 72], cl((tone - 0.3) * 1.8, 0, 1));
+    c = sh(c, 0.88 + grain * 0.22);
+    let h = 0.30 + grain * 0.06 + tone * 0.05;
+    // a camber: the middle of the tile sits a touch higher and lighter
+    const camber = 1 - Math.min(1, Math.hypot(u - 0.5, v - 0.5) * 1.4);
+    c = sh(c, 1 + camber * 0.06); h += camber * 0.08;
+    // flat-worn stones, larger and sparser than dirt's pebbles
+    for (const [cells, seed2, size, tint] of [[22, 31, 0.26, [140, 132, 120]], [40, 97, 0.17, [118, 110, 98]]]) {
+      const w = W(u, v, cells, seed2);
+      const st = cl((size - w.f1) * (1 / size) * 1.9, 0, 1);
+      if (st > 0.01) { c = mix3(c, tint, st * 0.72); h += st * 0.22; }
+      const sha = cl((size * 1.5 - w.f1) * (1 / size), 0, 1) - st;
+      if (sha > 0.01) c = sh(c, 1 - sha * 0.14);
+    }
+    return { rgb: c, h };
+  };
+  return { water, dirt, grass, stone, sand, snow, road };
 }
 
 /**
@@ -302,6 +328,10 @@ export function identifySurface([r, g, b]) {
  * Pure: no GL, no DOM, so it is pinned without a browser and runs
  * against the real archive in a node test.
  */
+/** ROADS 4: the tileset's road records - 46 the surface, 47 and 55 its
+ *  dirt and grass edges. The same three the painter writes. */
+export const ROAD_RECORDS = Object.freeze(new Set([46, 47, 55]));
+
 export function buildEnhancedTiles(layers, { size = 128, surfaces = null, seed = 0x51ed } = {}) {
   if (!layers || layers.length < 4) return layers;
   const S = surfaces ?? makeSurfaces(seed);
@@ -375,7 +405,13 @@ export function buildEnhancedTiles(layers, { size = 128, surfaces = null, seed =
     let fifth = null;
     if (rn > 0) {
       const mean = [rr / rn, rg / rn, rb / rn];
-      const fam = identifySurface(mean);
+      // ROADS 4: a road record's own material IS the road, whatever its
+      // colour would have been called - grey cobbles read as stone and
+      // brown ruts as dirt, and both are a road. Keyed by the tileset's
+      // own record numbers (46 road, 47 its dirt edge, 55 its grass
+      // edge), still colour-matched to the archive's mean, so a snowy
+      // climate's road is a pale road and a desert's a sandy one.
+      const fam = ROAD_RECORDS.has(rec) ? 'road' : identifySurface(mean);
       const ck = `${fam}:${mean.map((v) => Math.round(v / 8)).join(',')}`;
       if (!residualCache.has(ck)) residualCache.set(ck, drawBase(fam, mean));
       fifth = residualCache.get(ck);

@@ -13,7 +13,8 @@ const flat = (r, g, b) => {
 
 test('EE4: every surface tiles - the seam is closed BY CONSTRUCTION, in colour and in height', () => {
   const S = makeSurfaces();
-  assert.deepEqual(Object.keys(S).sort(), ['dirt', 'grass', 'sand', 'snow', 'stone', 'water']);
+  // ROADS 4 added the road; every surface here must still tile, the road included.
+  assert.deepEqual(Object.keys(S).sort(), ['dirt', 'grass', 'road', 'sand', 'snow', 'stone', 'water']);
   for (const [name, fn] of Object.entries(S)) {
     for (const t of [0.13, 0.37, 0.61, 0.88]) {
       const a = fn(0, t); const b = fn(1, t); const c = fn(t, 0); const d = fn(t, 1);
@@ -150,4 +151,39 @@ test('EE6: normals from the surfaces\u2019 own height, seamless, and read inside
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(readFileSync(host, 'utf8'), /renderer\.tileNormalFor\((p\.)?groundArchive\) \/\* EE6 \*\/\)/, host);
   }
+});
+
+// ROADS 4 (2026-09-01, Mac: the enhanced skin's road from "textures we've
+// developed in the grass proto"): THE ROAD IS A SURFACE, KEYED BY RECORD.
+// EE4's residual path identifies a record's own material by its COLOUR -
+// grey cobbles read as stone, brown ruts as dirt - and a road is neither,
+// it is a road. Records 46/47/55 (the tileset's road and its two edges,
+// the same three the painter writes) take the road surface by INDEX and
+// stay colour-matched to the archive's mean, so a winter road is pale and
+// a desert road is sandy while both are unmistakably road.
+test('ROADS 4: record 46\u2019s residual is drawn as ROAD, not as whatever its colour is called', async () => {
+  const { makeSurfaces, ROAD_RECORDS } = await import('../src/render/groundSurfaces.js');
+  assert.deepEqual([...ROAD_RECORDS].sort((a, b) => a - b), [46, 47, 55], 'the painter\u2019s three records');
+  assert.equal(typeof makeSurfaces().road, 'function', 'the road is a surface in the set');
+  // A 56-record set: four bases, then blends, with record 46 carrying a
+  // GREY residual - the colour EE4 would call stone.
+  const water = flat(53, 94, 143), dirt = flat(134, 100, 65), grass = flat(52, 76, 42), stone = flat(200, 120, 60);
+  const layers = [water, dirt, grass, stone];
+  for (let i = 4; i < 56; i++) layers.push(flat(52, 76, 42));
+  layers[46] = flat(110, 108, 106);   // grey cobbles, far from every base
+  layers[45] = flat(110, 108, 106);   // the SAME grey on a non-road record
+  const out = buildEnhancedTiles(layers, { size: 64 });
+  const mean = (i) => { let r = 0, g = 0, b = 0; const px = out[i].colors; const n = 64 * 64;
+    for (let k = 0; k < n; k++) { r += px[k * 4]; g += px[k * 4 + 1]; b += px[k * 4 + 2]; } return [r / n, g / n, b / n]; };
+  // Both are colour-matched to the same grey (law 2 holds for the road)...
+  const m46 = mean(46), m45 = mean(45);
+  for (let c = 0; c < 3; c++) assert.ok(Math.abs(m46[c] - 110) < 10, `road mean stays the archive\u2019s: ${m46.map(Math.round)}`);
+  // ...but they are DIFFERENT SURFACES: the same grey on record 45 is
+  // drawn by colour (stone) and on record 46 by index (road), so the two
+  // tiles cannot be pixel-identical.
+  let diff = 0; const a = out[46].colors, b = out[45].colors;
+  for (let k = 0; k < a.length; k += 4) if (a[k] !== b[k] || a[k + 1] !== b[k + 1] || a[k + 2] !== b[k + 2]) diff++;
+  assert.ok(diff > 64 * 64 * 0.5, `record 46 is not record 45 in grey (${diff} texels differ of ${64 * 64})`);
+  // The road tiles carry height like every other tile, so EE6 lights them.
+  assert.ok(out[46].heights instanceof Float32Array);
 });
