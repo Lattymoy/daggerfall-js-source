@@ -48,8 +48,12 @@ test('ES1 palette: a table in the sun\'s elevation, interpolated, and the shader
   }
   // A row is returned verbatim at its own elevation, and between two
   // rows every channel is the linear blend - the whole interpolation.
-  const p0 = paletteAt(0), pMid = paletteAt(2), p4 = paletteAt(4);
-  const row0 = SKY_KEYS.find((k) => k.elev === 0), row4 = SKY_KEYS.find((k) => k.elev === 4);
+  // EE6: elev 2 is a REAL key now, so it is no longer the midpoint of
+  // 0 and 4. The law being pinned - that paletteAt interpolates
+  // linearly between the two keys an elevation falls between - is
+  // unchanged; it is checked on a gap that still has no key in it.
+  const p0 = paletteAt(4), pMid = paletteAt(5.5), p4 = paletteAt(7);
+  const row0 = SKY_KEYS.find((k) => k.elev === 4), row4 = SKY_KEYS.find((k) => k.elev === 7);
   assert.ok(near(p0.glowAmount, row0.glowAmount) && near(p4.glowAmount, row4.glowAmount));
   assert.ok(near(pMid.glowAmount, (row0.glowAmount + row4.glowAmount) / 2), 'halfway is half');
   for (let c = 0; c < 3; c++) assert.ok(near(pMid.zenith[c], (p0.zenith[c] + p4.zenith[c]) / 2, 1e-6));
@@ -526,4 +530,30 @@ test('EE4: cloud shadows are ONE field with the cloud that casts them', () => {
     assert.match(h, /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n\s*renderer\.drawTerrain\(/,
       `${host} must set the deck immediately before the terrain draw`);
   }
+});
+
+// ═══ EE6: parity with the Enhanced Environments lab ═════════════════
+test('EE6: the sunset band is four keys wide, and the deck reaches the horizon', async () => {
+  const { paletteAt, SKY_KEYS } = await import('../src/render/enhancedSky.js');
+  // the whole of a sunrise happens between -4 and +4 degrees, and the
+  // ramp used to step -4 -> 0 -> 4: three rungs for the most-looked-at
+  // sky in the game.
+  const band = SKY_KEYS.filter((k) => k.elev >= -4 && k.elev <= 7).map((k) => k.elev);
+  assert.deepEqual(band, [-4, -2, 0, 2, 4, 7], 'the sunset band lost its rungs');
+  // the horizon walks ember -> peach through the band rather than in
+  // one straight line, so the red channel leads and then settles
+  const at = (e) => paletteAt(e);
+  const h = [-2, 0, 2].map((e) => at(e).horizon);
+  assert.ok(h[0][0] > h[0][1] * 1.3, 'at -2 the horizon must be EMBER - red well over green');
+  assert.ok(h[1][0] > h[1][1] && h[1][1] > h[1][2], 'at 0 it is peach');
+  assert.ok(h[2][1] > h[0][1], 'and it warms toward day rather than jumping');
+  // the zenith takes the violet that only exists near the horizon
+  const z = at(-2).zenith;
+  assert.ok(z[2] > z[1] && z[1] > z[0], 'at -2 the zenith must be deep blue-violet: blue over green over red');
+  // and the glow swings warm then cools as the sun clears the haze
+  assert.ok(at(0).glowAmount > at(-2).glowAmount && at(2).glowAmount < at(0).glowAmount);
+  // F2: cover means cover to the horizon
+  const fs = read('src/render/enhancedSky.js');
+  assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/,
+    'the deck must not be thinned to a quarter where the sky is largest');
 });
