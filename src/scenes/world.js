@@ -2709,7 +2709,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // after it, which is the respawner's RestorePosition (:242).
         landed = !!(await modes?.startInDungeon?.());
         if (landed) {
-          modes.setPlayerLocalPosition(anchorLanding(a));
+          // `landed` implies modes existed, but the wave-37 law is the
+          // GUARD ON THE OBJECT above its declaration - hold the shape.
+          modes?.setPlayerLocalPosition(anchorLanding(a));
         } else {
           // No entrance at the anchor's pixel: DFU's "all else fails"
           // exterior landing (:645-655), the same fallback the quest

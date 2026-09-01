@@ -93,7 +93,8 @@ export function playerMeleeCanHit(dist, inView, losClear) {
 // here - so binding that ONE field to the used hand carries them all.
 
 /** WeaponManager.cs:45 - the switch-delay divisor, a float. */
-export const BOW_SWITCH_DIVISOR = 1.7;
+import { BOW_SWITCH_DIVISOR } from '../characters/weaponStates.js';   // ONE home (WeaponManager.cs:45); a12's switch law reads it here
+export { BOW_SWITCH_DIVISOR };
 
 /** Internal_Strings.csv: usingRightHand / usingLeftHand - the two
  *  PopupMessage lines ToggleHand raises (:709, :711). */

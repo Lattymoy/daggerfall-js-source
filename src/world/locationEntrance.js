@@ -42,7 +42,8 @@ export const EXTRA_DISTANCE = RMB_SIDE * 0.1;
  *  (MaterialReader.GetEditorFlatType, :994-1005 - record 8 is Enter,
  *  record 10 is Start). DaggerfallLocation.EnumerateStartMarkers
  *  (:289-301) is exactly this filter over the location's billboards. */
-export const EDITOR_FLATS_ARCHIVE = 199;
+import { EDITOR_FLATS_ARCHIVE } from './rmbFlats.js';
+export { EDITOR_FLATS_ARCHIVE };   // ONE home for archive 199 (rmbFlats), re-exported for the a3 pins
 export const START_MARKER_RECORD = 10;
 
 /** The four sides in Random.Range(0, 4) order, with the facing DFU's
