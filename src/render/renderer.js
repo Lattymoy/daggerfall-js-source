@@ -38,6 +38,15 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
+uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
+uniform vec2 uCloudWind;
+// EE4: the sky's own hash and fbm, term for term - the same per-octave
+// offsets, so the ground reads the field the sky drew and not a
+// lookalike of it.
+float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
+float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -415,7 +424,22 @@ void main() {
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
+  // EE4 (Enhanced Environments): CLOUD SHADOWS. The sky already draws a
+  // two-deck cloud field; this samples THE SAME FIELD, at the point
+  // where this ground's ray to the sun crosses the cloud plane, so the
+  // shadow and the cloud that casts it are one field rather than two
+  // that drift apart. The plane is high and the dome is far, so the
+  // parallax belongs to the WIND: shadows move with the weather, not
+  // with the player.
+  //
+  // uShadowAmt is 0 for the classic skin and indoors, so this whole
+  // term costs nothing there and cannot change what classic draws.
   float diff = max(dot(n, uLightDir), 0.0);
+  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
+    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
+    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
+    diff *= 1.0 - cov * uShadowAmt;
+  }
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
@@ -660,6 +684,11 @@ export class Renderer {
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
+    this.tUShadowAmt = gl.getUniformLocation(this.terrainProgram, 'uShadowAmt');
+    this.tUCloudCover = gl.getUniformLocation(this.terrainProgram, 'uCloudCover');
+    this.tUCloudSoft = gl.getUniformLocation(this.terrainProgram, 'uCloudSoft');
+    this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
+    this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -681,6 +710,10 @@ export class Renderer {
      *  flip takes effect when the world next loads - the same law the
      *  sky pass already follows. */
     this.enhancedGround = false;
+    /** EE4: the cloud deck the ground shadows under, handed over by the
+     *  host from the SKY's own eased weather row. Null = no shadows,
+     *  which is the classic skin and every interior. */
+    this._cloudShadow = null;
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1846,6 +1879,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** Draw one terrain surface with its tilemap + tile array. */
+  /** EE4: the deck the terrain shadows under. {cover, soft, wind, time,
+   *  amount}; null clears it. */
+  setCloudShadow(d) { this._cloudShadow = d ?? null; }
+
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
     this._use(this.terrainProgram);
@@ -1853,6 +1890,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
+    // EE4: the deck, or nothing at all
+    const cs = this._cloudShadow;
+    gl.uniform1f(this.tUShadowAmt, cs ? cs.amount : 0);
+    gl.uniform1f(this.tUCloudCover, cs ? cs.cover : 0);
+    gl.uniform1f(this.tUCloudSoft, cs ? cs.soft : 1);
+    gl.uniform1f(this.tUCloudTime, cs ? cs.time : 0);
+    gl.uniform2f(this.tUCloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
     this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);

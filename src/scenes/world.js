@@ -5294,6 +5294,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // all run for a pixel behind the camera.
       const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
       if (pixelVisible) {
+        // EE4: the ground shadows under the SKY'S OWN deck - one field for
+        // the cloud and for the shadow it casts. Null when there is no
+        // enhanced sky, which is the classic skin and every interior.
+        renderer.setCloudShadow(sky?.cloudShadow ?? null);
         renderer.drawTerrain(p.terrain, pixelMatrix,
           renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
         for (const m of p.models) {

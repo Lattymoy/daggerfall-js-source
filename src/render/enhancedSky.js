@@ -727,6 +727,19 @@ export class EnhancedSkyRenderer {
     this.state = state;
     this.clearColor = new Float32Array(state.clearColor);
     this.fillColor = new Float32Array(state.fillColor);
+    // EE4: the deck the GROUND shadows under, published from the same
+    // state the dome is drawn from - so the shadow on the land and the
+    // cloud overhead are one field, and a host cannot feed them
+    // different numbers by accident. The scale matches the low deck's
+    // (1.9), and the amount is held below one because a cloud dims the
+    // sun rather than extinguishing it.
+    this.cloudShadow = {
+      cover: state.cloudCover ?? 0,
+      soft: Math.max(1e-3, state.cloudSoft ?? 0.25),
+      wind: state.wind ?? [0, 0],
+      time: state.seconds ?? 0,
+      amount: 0.62,
+    };
   }
 
   draw(yaw, pitch, fovY, aspect) {

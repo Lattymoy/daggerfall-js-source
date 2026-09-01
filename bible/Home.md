@@ -308,7 +308,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3426` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:4343` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:4444` - FLAGGED: DFU's INDOOR arm spawns 2-5 guards at the interior's
-- `src/scenes/world.js:5494` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:5498` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1220` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1238` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1450` - is the quest machine's, FLAGGED with it.

@@ -499,3 +499,31 @@ test('AUDIT 44: the tile array cache is keyed by MODE, and the probe drives the 
   assert.match(probe, /hasText: 'Enhanced environments'/);
   assert.match(probe, /m\.getPref\('enhancedEnvironments'\)/);
 });
+
+// ═══ EE4: the ground shadows under the sky's own deck ═══════════════
+test('EE4: cloud shadows are ONE field with the cloud that casts them', () => {
+  const r = read('src/render/renderer.js');
+  // the terrain reads the sky's own hash and fbm, offsets and all - a
+  // lookalike field would drift from the cloud overhead
+  assert.match(r, /float tfbm\(vec2 p\)\{ float v=0\.0,a=0\.5; for\(int i=0;i<5;i\+\+\)\{ v\+=a\*tvn\(p\); p=p\*2\.03\+vec2\(17\.1,9\.7\); a\*=0\.5; \} return v; \}/);
+  // and it is the sun's own ray that picks the point on the deck
+  assert.match(r, /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudWind \* uCloudTime;/);
+  assert.match(r, /diff \*= 1\.0 - cov \* uShadowAmt;/, 'a cloud dims the sun, it does not touch the ambient');
+  // OFF is free and cannot change classic: no deck, no term
+  assert.match(r, /if \(uShadowAmt > 0\.0 && uLightDir\.y > 0\.02\)/);
+  assert.match(r, /gl\.uniform1f\(this\.tUShadowAmt, cs \? cs\.amount : 0\);/);
+  assert.match(r, /this\._cloudShadow = null;/);
+  // the deck is PUBLISHED from the sky's own state, so a host cannot
+  // feed the dome and the ground different numbers
+  const sky = read('src/render/enhancedSky.js');
+  assert.match(sky, /this\.cloudShadow = \{\s*\n\s*cover: state\.cloudCover \?\? 0,/);
+  assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
+  assert.match(sky, /time: state\.seconds \?\? 0,/);
+  // both hosts hand it over, and hand over NOTHING when there is no
+  // enhanced sky - which is the classic skin and every interior
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n\s*renderer\.drawTerrain\(/,
+      `${host} must set the deck immediately before the terrain draw`);
+  }
+});
