@@ -1319,6 +1319,17 @@ test('SAV2: classicSaveToSnapshot - the whole envelope, at SAVE_VERSION', () => 
   assert.equal(snap.timeForDarkBrotherhoodLetter, 888888);
   assert.equal(snap.darkBrotherhoodRequirementTally, 3);
   assert.equal(snap.thievesGuildRequirementTally, 4);
+  // A4 (Road to 1:1): the last three AssignCharacter members
+  // (PlayerEntity.cs:851-856). timeToBecomeVampireOrWerebeast is the
+  // ONLY way classic's three-days stamp reaches a character at all -
+  // the temple's Cure Disease counts it as one more disease and clears
+  // it - minMetalToHit is the weapon-material floor
+  // CalculateAttackDamage reads on the target, and the two
+  // SkillsRaisedThisLevel words land word for word in
+  // skillsRecentlyRaised, which the character sheet highlights.
+  assert.equal(snap.timeToBecomeVampireOrWerebeast, 333333);
+  assert.equal(snap.minMetalToHit, 2, 'WeaponMaterialTypes.Silver, verbatim from 0x42');
+  assert.deepEqual(snap.skillsRecentlyRaised, [0xa1b2c3d4, 7]);
 
   assert.deepEqual(snap.sGroupReputations.slice(0, 5), [10, -20, 30, -40, 50]);
   assert.equal(snap.sGroupReputations.length, 11);

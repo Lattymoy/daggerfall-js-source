@@ -206,8 +206,15 @@ test('AUDIT 39 F106: shopStock\'s INTERIM header names only live pends', () => {
   const header = s.slice(0, s.indexOf('\nimport '));
   assert.doesNotMatch(header, /MagicItems stock is SKIPPED/, 'the MagicItems clause shipped at F130');
   assert.doesNotMatch(header, /potion recipe pends/, 'the Alchemist\'s 25% roll shipped at F129');
-  assert.match(header, /INTERIM \(loud\): book items carry the template price/, 'the book-file price is still open');
-  assert.match(header, /shelf restocking rides\s+\/\/ CreateStockedDate/, 'and so is CreateStockedDate');
+  // PIN MOVED at A2 (ROAD TO 1:1): the header's last two open clauses
+  // SHIPPED, and F106's whole point is that a pend list naming closed
+  // work is worse than no list - so the pin flips to the same shape
+  // the other two carry. The book price is books.createRandomBook's
+  // `value = bookFile.Price`; the restock is createStockedDate below.
+  assert.doesNotMatch(header, /book items carry the template price/, 'the book-file price shipped at A2');
+  assert.doesNotMatch(header, /INTERIM \(loud\)/, 'and with it the last INTERIM clause in this header');
+  const s2 = rd('src/systems/shopStock.js');
+  assert.match(s2, /export const createStockedDate =/, 'CreateStockedDate is the member, not a pend');
 });
 
 // ---------------------------------------------------------------

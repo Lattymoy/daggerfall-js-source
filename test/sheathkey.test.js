@@ -43,7 +43,14 @@ test('SHEATH: the large HUD panel still reaches the door through routeAction', (
   assert.equal(routeAction('ReadyWeapon', ctx), true);
   assert.equal(ctx.sheathed, false, 'the panel toggled it once');
   assert.ok(POLLED_ACTIONS.has('ReadyWeapon'));
-  assert.equal(POLLED_ACTIONS.size, 1, 'one polled action today; a second joins here, not in a host');
+  // a12 MOVED THIS PIN, deliberately: SwitchHand is the second polled
+  // action the comment invited. WeaponManager.Update reads it at :272,
+  // one line above the equip-countdown block and two below ReadyWeapon
+  // - the same frame, the same "not GameManager's chain" - and no
+  // routeAction arm answers it, so routeKey must decline it too.
+  assert.ok(POLLED_ACTIONS.has('SwitchHand'));
+  assert.equal(POLLED_ACTIONS.size, 2, 'two polled actions; a third joins here, not in a host');
+  assert.equal(routeAction('SwitchHand', ctx), false, 'no panel door - the frame poll is the only one');
 });
 
 test('SHEATH: every host polls ReadyWeapon on an edge, and the dungeon hosts route keys through routeKey', () => {
@@ -53,9 +60,15 @@ test('SHEATH: every host polls ReadyWeapon on an edge, and the dungeon hosts rou
   // decline in routeKey is what keeps them from adding up.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
     assert.match(read(f), /held\(keys, 'ReadyWeapon'\)/, `${f} polls ReadyWeapon`);
+    // a12: and SwitchHand beside it, on the INVERTED latch -
+    // ActionComplete is the release (InputManager.cs:634-637), where
+    // ReadyWeapon's ActionStarted is the press.
+    assert.match(read(f), /held\(keys, 'SwitchHand'\)/, `${f} polls SwitchHand`);
+    assert.match(read(f), /if \(!hNow[W]? && hPrev[W]?\)/, `${f} switches the hand on the RELEASE edge`);
   }
   assert.match(read('src/scenes/worldModes.js'), /routeKey\(e, dungeonCtx/);
   assert.match(read('src/scenes/dungeon.js'), /routeKey\(e, ctx/);
   assert.match(read('src/scenes/dungeonContext.js'), /toggleSheath: weaponRig\.toggleSheath/, 'the dungeon ctx carries the door (for the panel)');
+  assert.match(read('src/scenes/dungeonContext.js'), /switchHand: weaponRig\.switchHand/, 'a12: and the hand door, for the two dungeon hosts');
   assert.match(read('src/ui/input.js'), /if \(POLLED_ACTIONS\.has\(act\)\) return false;/, 'and routeKey declines it');
 });

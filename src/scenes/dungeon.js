@@ -18,13 +18,13 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
@@ -33,8 +33,9 @@ import {
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
+import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
-import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
+import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -153,20 +154,36 @@ export async function bootDungeon(canvas, renderer, params, status) {
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
-  // (DFU DaggerfallAction.Teleport). spawn() zeroes velY and drops
-  // the grounded flag, so the motor re-grounds on the destination
-  // floor next step (the FreezeMotor 0.5s carry-suppression is a
-  // no-op in our motor - velocity is per-frame input, not held).
+  // (DFU DaggerfallAction.Teleport :576-599). spawn() zeroes velY and
+  // drops the grounded flag, so the motor re-grounds on the
+  // destination floor next step.
+  //
+  // A6, the two halves the interim note here got wrong:
+  //  - THE FREEZE IS REAL. `FreezeMotor = 0.5f` (:594) is set before
+  //    the move and FixedUpdate (:296-307) then does NOTHING for half
+  //    a second - no gravity, no input, no probe - and raises
+  //    CancelMovement on the way out. The motor carries it now.
+  //  - THE FACING DOES NOT CHANGE. DFU's next line copies the
+  //    destination's full rotation onto the player, and
+  //    PlayerMouseLook.Update overwrites it the very next frame from
+  //    its own stored Yaw (`characterBody.transform.localEulerAngles =
+  //    new Vector3(0, Yaw, 0)`, :256-259) - so the copy is dead on
+  //    arrival and a teleported player keeps the heading they walked
+  //    in with. Writing the marker's yaw here was the port's own
+  //    departure; the destination's yawDeg stays on the seam (the
+  //    resolvePosition contract) and nothing spends it.
   ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+    player.freezeMotor = TELEPORT_FREEZE_S;
     player.spawn(pos[0], pos[1], pos[2]);
     cam.pos = [...player.eye];
-    cam.yaw = yawDeg * Math.PI / 180;
-    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
+    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] (marker yaw ${yawDeg.toFixed(1)}, not applied - PlayerMouseLook owns the heading)`);
   };
   let prevCrouch = false;   // P12: the crouch-toggle key edge (jump is HELD - P14)
   let prevUse = false;
+  const activateGate = createActivateGate();   // A8: this host's ActivateCenterObject frame state
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   const tryActivate = () => {
     const dir = [
       Math.sin(cam.yaw) * Math.cos(cam.pitch),
@@ -224,6 +241,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // ctx it routes into is the SAME one routeKey uses, which is the
     // whole point of pulling routeAction out of it.
     if (routeLargeHudClick(px, py, e.button, ctx, { windowUp: ctx.uiOverlayActive })) return;
+    // ROAD-Ar: the click that GRABS the pointer back is a UI gesture,
+    // not a world click, and it presses and releases Mouse0 into the
+    // gate exactly as a window's close button does - so it takes
+    // SetClickDelay too (PlayerActivate.cs:1050-1054). ONLY on a real
+    // acquisition: with the pointer already locked this click IS the
+    // world's.
+    if (document.pointerLockElement !== canvas) setClickDelay(activateGate);
     requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
   });
   // U-scroll: the wheel reaches an open window (question scroll, list
@@ -275,12 +299,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // U37: a window frees the mouse, so an open overlay gets the HOVER
     // (native coords) instead of the look delta.
     trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, before the overlay return
+    trackLargeHudPointer(canvas, e);   // ROAD-Ar: HUDLarge's MouseEnter/MouseLeave (:361-372), for the activate gate's HUD guard
     if (ctx.uiOverlayActive) {
       const r = canvas.getBoundingClientRect();
       const v = pointToNative(nativeMetrics(canvas),
         (e.clientX - r.left) * (canvas.width / r.width),
         (e.clientY - r.top) * (canvas.height / r.height));
-      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e);   // ROAD-A7: e.buttons is the scroll-bar drag's held-button poll
       return;
     }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
@@ -440,6 +465,31 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
     const overlayHeld = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
     lookGate(overlayHeld);   // a window up frees the cursor; closing re-locks
+    // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
+    // DFU's ActivateCenterObject: the readied spell fires on its
+    // PRESS (EntityEffectManager.cs:250) and the world activation
+    // runs on its RELEASE (PlayerActivate.cs:279), with a readied
+    // non-touch spell blocking the activation outright. The whole
+    // of that law - castPending included - is in
+    // systems/activateGate.js so all four hosts read one copy.
+    // The port's E stays live BESIDE it (DFU binds E to
+    // AbortSpell; a recorded departure, not a gap this slice closes).
+    // ROAD-Ar: the gate ticks EVERY frame, walk branch or not, because
+    // the paused arm is where it learns a window is up and where it
+    // arms RemoveWindow's click delay (:206/:214) for the frame that
+    // window pops. Only the CONSUMERS below stay in the walk branch -
+    // running the gate inside `!overlayHeld` was what left the click
+    // that dismissed a window free to activate the world behind it.
+    const _act = activateFrame(activateGate, {
+      down: held(keys, 'ActivateCenterObject'),
+      hasReadySpell: ctx.spellArmed?.() ?? false,
+      // PlayerActivate.cs:250-258's stated exception: a readied TOUCH
+      // spell leaves doors reachable. rangeType 1 is ByTouch
+      // (spellcast.js:197 ClassicTargetIndexToTargetType).
+      touchSpell: (ctx.readiedSpell?.() ?? null)?.rangeType === 1,
+      hudBlocked: activeMouseOverLargeHUD(),   // PlayerActivate.cs:230-236 - the bar's own click is not the world's
+      paused: overlayHeld,                     // InputManager.cs:486-503 - a window holds the action itself
+    });
     if (!overlayHeld) ctx.actions.update(dt);
     if (!overlayHeld) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
     if (walkMode && !overlayHeld) {
@@ -474,6 +524,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // P12 crouch: toggled on the Crouch edge (DFU's default C -
       // I2 retired the port's X-crouch/C-cast departure).
       const paralyzed = ctx.playerParalyzed?.() ?? false;
+      // A6: FrictionMotor.GroundedMovement's head-dip guard reads
+      // IsParalyzed itself (:90-93) - the zeroed input bag below is
+      // the movement half of the same law, not this one.
+      player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
       const axes = moveAxes.update(dt, mv);   // AUDIT 28 W8: one Update of the axes per frame the motor runs
@@ -523,11 +577,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
       ctx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
-      const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+// ROAD-Ar: the gate itself ran at :459, above the overlay guard.
+      // This is only where its answer is CONSUMED. R10: the swing below
+      // is the raw right button - DFU's own 'Mouse1'
+      // (InputManager.cs:1010) - but never read through held(), so a
+      // SwingWeapon rebind is inert (recorded departure).
+      if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
+      const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
       const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
       if (zNow && !zPrev) ctx.toggleSheath?.();
       zPrev = zNow;
-      if (useHeld && !prevUse) tryActivate();
+// a12: SwitchHand (H) - ActionComplete's RELEASE edge
+      // (WeaponManager.cs:272), so the latch is inverted against Z's.
+      const hNow = held(keys, 'SwitchHand');
+      if (!hNow && hPrev) ctx.switchHand?.();
+      hPrev = hNow;
+      if (_act.activate || (useHeld && !prevUse)) tryActivate();
       prevUse = useHeld;
       // `held` here USED to be this frame's local overlay boolean; it was
       // renamed overlayHeld (:353) and the name then resolved to the
@@ -569,7 +634,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // boundary the way the load-time write never could.
     renderer.setLighting(new Float32Array(ctx.ambient), 0);
     renderer.setPointLights(
-      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
+      // A10: DungeonLightHandler's XZ block range culls first, the
+      // 16-slot shader cap picks from what survives (dungeonLights.js
+      // carries the composition and why that order).
+      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);

@@ -39,7 +39,7 @@ import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
-import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
+import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too
@@ -215,6 +215,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // = false`: a monster's blow is not the player's, so it levies
         // no Murder (DaggerfallEntityBehaviour.cs:203).
         hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false }) };   // AUDIT 24 (wave 41)
+      // A5: the CONCEALMENT closure the illusion gate has read since
+      // MT-i and nothing ever built (the encounter pool's law, one
+      // spelling). BlockedByIllusionEffect (EnemySenses.cs:658-683)
+      // reads the TARGET's IsInvisible/IsBlending/IsAShade whether
+      // that target is the player or another enemy, and
+      // ConcealmentEffect writes the flag entity-blind (:63) - so a
+      // concealed watchman is concealed from the foe fighting it.
+      Object.defineProperty(g, 'concealment', { value: () => concealmentFlags(g.entity), enumerable: false });
       guards.push(g);
       return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
     } finally {
@@ -497,6 +505,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // (:55-57) - a city guard is an ordinary EnemyClass entity with no
       // exemption from either.
       const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
+      applyEnemyMotorEffectFlags(g.ai, g.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
       g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);
       const _tgt = _targetFeet(g, playerFeet);   // MT-ii: whatever it SELECTED
       // AUDIT 24 (wave 36): EnemySenses.cs:531-535 - ANY enemy that is
@@ -626,6 +635,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const v = enemyAttackVoice(g);
         if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16 });
       }
+      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
+      // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
+      // true has its renderer disabled. The watchman keeps acting; it
+      // is simply not drawn.
+      if (isMagicallyConcealed(g.entity)) continue;
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);

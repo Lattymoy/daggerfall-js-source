@@ -22,7 +22,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
+import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 // NPC2: the enhanced humanoid body - shared per outfit, drawn per actor.
 import { mwActorState, drawMwActor, requestMwBody } from '../characters/mwActorRig.js';
 import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';
@@ -103,7 +103,7 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
-import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
+import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
@@ -551,14 +551,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  mid-quest. Non-enumerable, so the save/snapshot walks that
    *  iterate a record are untouched. */
   function asCandidate(rec) {
+    // A5 adds `concealment`: the closure the illusion gate has read
+    // since MT-i and nothing ever built (exteriorFoes' law, one
+    // spelling). BlockedByIllusionEffect (EnemySenses.cs:658-683)
+    // reads the TARGET's IsInvisible/IsBlending/IsAShade whether that
+    // target is the player or another enemy, and ConcealmentEffect
+    // writes the flag entity-blind (:63).
     Object.defineProperties(rec, {
       isQuestFoe: { get: () => !!rec.questBehaviour, enumerable: false },
       questAttackable: { get: () => !!rec.questBehaviour?.isAttackableByAI, enumerable: false },
+      concealment: { value: () => concealmentFlags(rec.entity), enumerable: false },
     });
     // the cross-pool damage door another enemy's blow lands through.
     // `fromPlayer: false` - a monster's blow is not the player's
     // (DaggerfallEntityBehaviour.cs:203).
     rec.hurtFromFoe = (dmg, dir) => damageFoe(rec, dmg, null, dir ?? null, { fromPlayer: false });
+    // A5 - SetupDemoEnemy.cs:191-195: "Add special behaviour for Daedra
+    // Seducer mobiles", gated on the mobile ID and nothing else. The
+    // component is added at SETUP, so every seducer carries its
+    // eight-second transform clock from the frame it stands.
+    if (rec.mobile && rec.mobileType === MOBILE_DAEDRA_SEDUCER) {
+      rec.seducer = new SeducerTransformBehaviour(rec.mobile, rec.entity);
+    }
     return rec;
   }
 
@@ -987,7 +1001,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
-      rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2
+      // ROAD-A7: the reader takes a PICK now. The painting arm of the
+      // info panel asks for GetRandomTokens' dfRand draw (TextProvider
+      // .cs:228); everything else keeps Random.Range's default.
+      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 22 F2
       // U42: USING the Spellbook item opens the book
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
@@ -1112,9 +1129,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _restFullyHealed = () => restFullyHealed(playerEntity);
   // U3: the level-up screen replaces the headless auto-apply (shared
   // by the rest-end raise and any future travel arm).
+  // AUDIT 44 (a11): dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -
+  // the SHEET is what classic opens, and the rollout mounts onto it.
+  // `api.toggleCharSheet` is this host's ONE sheet construction (its
+  // own free-slot guard included); calling it here rather than
+  // building a second bag is the same rule U43 wrote for F5.
   const _onLevelUp = () => {
     hudText.add('You have gained a level!');
-    if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+    api.toggleCharSheet();
   };
   // E-slice: a rest-interruption ENCOUNTER - one foe minted through
   // the same chain as the load loop, at the classic minimum distance
@@ -1242,6 +1264,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // too - three more hosts ask it, and two were asking a much coarser
   // question before this slice.
   const _restDeps = createRestDeps(playerEntity, {
+    // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
+    box: (rows) => { if (!activeOverlay) activeOverlay = new ActionTextBox(rows); },
     advanceMinutes: (n) => _restAdvance(n),
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED. This host holds the bridge as
@@ -1431,13 +1455,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and the spell still flies.
       weaponRig.castSpellAnim(sp?.rangeType);
     },
+    // A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
+    // saying the anchor machinery lived in the streaming host - true of
+    // the machinery, false as a refusal: this context is the one the
+    // STREAMING host mounts for dungeon mode too, so the line meant a
+    // Recall cast underground did nothing at all, anchor or teleport.
+    // The prompt is the outer host's (it owns the pixel teleport, the
+    // mode teardown and the dungeon mount the plan needs); the
+    // standalone ?dungeon probe passes none and keeps the honest
+    // refusal, which is the AUDIT 24 seam shape done deliberately.
+    //
     // hudText.add, not `say?.()`. There is no `say` in this scope — the
     // optional-call syntax made an undefined identifier look like a
     // guarded one, so it read as safe and was a ReferenceError waiting
     // for the first Recall cast in a standalone dungeon. Every other
     // line in this file speaks through hudText, including the one four
     // below it.
-    onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    onTeleport: () => {
+      if (opts.onTeleport) { opts.onTeleport(); return; }
+      hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)');
+    },
     // X9: the creature dispel. This host is where undead and daedra
     // actually live, so it is the one that matters. removeFoe IS
     // GameObject.Destroy - no corpse, no loot, no death - and
@@ -1793,7 +1830,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // publishing GPU batches onto a torn-down scene.
   let _ctxDead = false;
   async function spawnCorpse(f) {
-    const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
+    // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`, the
+    // per-mobile STRUCT COPY, not the static row. That only matters for
+    // one enemy in the game: SetSpecialTransformationCompleted swaps
+    // the seducer's unwinged corpse (400/6) for the winged one (400/5),
+    // and the static table cannot carry both. A rig foe has no mobile
+    // and falls back to the row, which is where it always read.
+    const ct = f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture;
     // C12: a flyer dies mid-air - the corpse lands on the floor
     // below (AlignBillboardToGround semantics for every corpse).
     const p = floorLanding(collider, [f.ai.feet[0], f.ai.feet[1] + 0.1, f.ai.feet[2]]);
@@ -2895,6 +2938,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C12: paralysis now flows THROUGH the motor (DFU CanAct=false +
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
+      applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
       f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
       const _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
       // CH3 (characters-8): a past-threshold landing bills the
@@ -3063,6 +3107,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // frame. What stops the blow is EnemyAttack's early return, which
         // is the consume-and-clear below.
         {
+          // A5 - DaedraSeducerMobileBehaviour.Update, a MonoBehaviour
+          // Update that runs BEFORE the anim step consumes the state
+          // it raises. Its one input is `enemySenses.Target ==
+          // PlayerEntityBehaviour`, spelled here exactly as the alert
+          // arm below spells it (an unarmed host targets the player).
+          f.seducer?.update(dt, !foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target));
+          // EnemyMotor.CanFly (:837-845) reads `mobile.Enemy.Behaviour`
+          // LIVE - "This can change in the case of a transformed
+          // Seducer" - where the port's motor captured it at spawn.
+          // The transform rewrites that field twice (Flying while
+          // crouched, General while standing) and once more for good
+          // at SetSpecialTransformationCompleted, so the read is folded
+          // here, on the one mobile whose behaviour is not a constant.
+          if (f.seducer) f.ai.flies = f.mobile.basics.behaviour === 'Flying' || f.mobile.basics.behaviour === 'Spectral';
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
             striking: _strikeEdge && !f.attack.firedRanged,   // the START edge (paralysis eats it - the attack machine above is gated, so ChangeEnemyState never fires: EnemyAttack.Update's early return, NOT FreezeAnims - wave 33)
@@ -3099,6 +3157,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
         }
+        // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
+        // (:36-43, :56-62): "Handles magical concealment for entities
+        // other than player". A non-player entity whose
+        // IsMagicallyConcealed is true has its renderer DISABLED -
+        // any of the six flags, normal or true power. The animation
+        // above still ran (DFU's Update on the mobile is untouched by
+        // this component); only the draw is dropped.
+        if (isMagicallyConcealed(f.entity)) continue;
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
@@ -3398,7 +3464,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
     drawFoes,
     playerAttackInput,
+    spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
+    readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
+    switchHand: weaponRig.switchHand,   // a12: SwitchHand (H) - the same one door as the sheathe toggle
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the
     // foe-cast and missile-impact sites call).
@@ -3777,7 +3846,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering
      *  never closes anything. */
-    overlayHover(vx, vy) { activeOverlay?.hover?.(vx, vy); },
+    // ROAD-A7: the DOM mousemove rides along. VerticalScrollBar.Update
+    // (:105) polls InputManager.GetMouseButton(0) every frame, and
+    // `e.buttons` is the port's only read of that - without it the
+    // list picker's thumb could latch but never move.
+    overlayHover(vx, vy, e = null) { activeOverlay?.hover?.(vx, vy, e); },
     /** U26: ui/input.js asks this before mapping a key to an action -
      *  a native window keys off raw codes. */
     get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },
@@ -3806,6 +3879,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         else if (activeOverlay instanceof LevelUpScreen) {
           console.warn('[levelup] FONT art unavailable; applying headlessly');
           applyLevelUp(playerEntity, (st, pool) => spendPoolLowest(st, Object.keys(st), pool));
+          surfacePlayer();
+        }
+        // AUDIT 44 (a11): the classic lane levels ON THE SHEET now, so
+        // the font-less escape has to know that shape too - the sheet
+        // has already taken the Level++ and the health roll at mount
+        // and holds an UNSPENT pool. Dropping it silently would eat
+        // the points, which is the defect this arm exists to prevent.
+        else if (activeOverlay?.leveling) {
+          console.warn('[levelup] FONT art unavailable; applying headlessly');
+          spendPoolLowest(activeOverlay.working, Object.keys(activeOverlay.working), activeOverlay.pool);
+          activeOverlay.pool = 0;
+          activeOverlay.input('confirm');   // CheckIfDoneLeveling writes the working stats home
           surfacePlayer();
         }
         activeOverlay = null;

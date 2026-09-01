@@ -148,7 +148,14 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
   // `true` - and the prison arm's own comment described the missing
   // line in as many words ("not harmless now that it is [ported]").
   const arrest = read('src/scenes/arrestFlow.js');
-  assert.match(arrest, /playerEntity\.preventNormalizingReputations = true;\s*\n\s*advanceDays\(result\.days\)/,
+  // PIN MOVED (Road to 1:1, a3): the day skip left the verdict. DFU
+  // raises the clock from UpdatePrisonScreen's ZERO (:475), at the end
+  // of the 0.3s-per-day countdown, not at the moment of the sentence -
+  // so the flag now sits inside the prison screen's onEndPrisonTime
+  // beside its TWIN, PreventEnemySpawns (:473), which had no port at
+  // all. The finding is unweakened and stricter: BOTH flags, in DFU's
+  // order, immediately before the one RaiseTime.
+  assert.match(arrest, /playerEntity\.preventEnemySpawns = true;\s*\n\s*playerEntity\.preventNormalizingReputations = true;\s*\n\s*advanceDays\(days\);/,
     'set BEFORE the day skip, as UpdatePrisonScreen sets it before RaiseTime');
   const tick = read('src/systems/worldTick.js');
   assert.match(tick, /if \(entity\.preventNormalizingReputations\) entity\.preventNormalizingReputations = false;/,

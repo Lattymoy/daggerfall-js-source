@@ -18,7 +18,18 @@
 // - the rigs' bow path owns it).
 // C16: the -1 frame IS the damage moment (doMeleeDamage -> the scene's
 // MeleeDamage resolution; the machine's hit frame stays the RIGS'
-// clock). DEFERRED (FLAGGED): the Seducer transform pair.
+// clock).
+//
+// A5 (ROAD TO 1:1): the SEDUCER TRANSFORM PAIR, which stood flagged
+// here since C16, is live. Daedra Seducer (29) is the one mobile with
+// special states: SeducerTransform1 (record 23, crouch and grow wings)
+// runs as a one-shot into SeducerTransform2 (record 22, stand and
+// spread wings), whose end calls SetSpecialTransformationCompleted -
+// and from that moment the winged form has its OWN four tables
+// (records 20/21, player-facing only, no orientation) and a rewritten
+// MobileEnemy: Flying behaviour, corpse 400/5, no idle, a spell
+// animation of frames 0-3. The trigger is DaedraSeducerMobileBehaviour
+// (8 seconds targeting the player, or the first wound), ported below.
 //
 // AUDIT 24 (wave 33): these two are LATCHES, not per-frame edges, and
 // the names are DFU's for that reason. AnimateEnemy sets
@@ -108,29 +119,58 @@ export const FEMALE_THIEF_IDLE_ANIMS = Object.freeze([
   A(19, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, true), A(17, IDLE_ANIM_SPEED, true), A(11, IDLE_ANIM_SPEED, true),
 ]);
 
+// A5: the Seducer's four special tables (EnemyBasics.cs:167-212).
+// Every one is EIGHT COPIES OF ONE ROW - the source's own comment says
+// "has player-facing orientation only", so the orientation index picks
+// the same record and the same (false) flip whichever way the foe
+// stands. All four run at MoveAnimSpeed, the transforms included.
+const SEDUCER_ROW = (record) => Object.freeze(new Array(8).fill(null).map(() => A(record, MOVE_ANIM_SPEED, false)));
+export const SEDUCER_TRANSFORM1_ANIMS = SEDUCER_ROW(23);   // crouch and grow wings
+export const SEDUCER_TRANSFORM2_ANIMS = SEDUCER_ROW(22);   // stand and spread wings
+export const SEDUCER_IDLE_MOVE_ANIMS = SEDUCER_ROW(21);    // the winged form's move, idle AND hurt
+export const SEDUCER_ATTACK_ANIMS = SEDUCER_ROW(20);       // the winged form's attack AND spell
+
 export const MOBILE_RAT = 0;
 export const MOBILE_SLAUGHTERFISH = 11;
 export const MOBILE_GHOST = 18;
 export const MOBILE_GIANT_SCORPION = 20;
 export const MOBILE_WRAITH = 23;
+export const MOBILE_DAEDRA_SEDUCER = 29;
 
-/** GetStateAnims, verbatim branch order (the Seducer/FemaleThief
- *  branches N/A: monsters only, no transformed seducer yet).
- *  hasSpellAnimation routes the SPELL state to records 20-24; every
- *  other caster casts over the primary attack records - and note the
- *  Spell branch has NO ghost/wraith special (verbatim: they cast on
- *  PrimaryAttackAnims, not their own attack table). */
-export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false, femaleThief = false, hasRangedAttack1 = true, hasRangedAttack2 = false) {
+/** GetStateAnims, verbatim branch order (DaggerfallMobileUnit.cs:
+ *  787-858). hasSpellAnimation routes the SPELL state to records 20-24;
+ *  every other caster casts over the primary attack records - and note
+ *  the Spell branch has NO ghost/wraith special (verbatim: they cast on
+ *  PrimaryAttackAnims, not their own attack table).
+ *
+ *  A5: the Seducer branches are live. A DaedraSeducer with
+ *  `specialTransformationCompleted` reads its winged tables in FIVE
+ *  states - Move, PrimaryAttack, Hurt, Idle and Spell - each at the
+ *  exact place C# puts it: SECOND in Move/PrimaryAttack/Idle (after
+ *  the ghost/wraith arm, BEFORE the slaughterfish, the female thief
+ *  and the rat), FIRST in Hurt and FIRST in Spell (ahead of the
+ *  HasSpellAnimation ternary). The two transform states answer null
+ *  when the mobile does not carry the flag, which is DFU's
+ *  LogMobileError path - the caller falls back to Idle. */
+export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false, femaleThief = false, hasRangedAttack1 = true, hasRangedAttack2 = false, seducerTransformed = false, hasSeducerTransform1 = false, hasSeducerTransform2 = false) {
+  const wingedSeducer = mobileType === MOBILE_DAEDRA_SEDUCER && seducerTransformed;
+  if (state === 'transform1') return hasSeducerTransform1 ? SEDUCER_TRANSFORM1_ANIMS : null;
+  if (state === 'transform2') return hasSeducerTransform2 ? SEDUCER_TRANSFORM2_ANIMS : null;
   if (state === 'move') {
     if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
+    if (wingedSeducer) return SEDUCER_IDLE_MOVE_ANIMS;
     if (mobileType === MOBILE_SLAUGHTERFISH) return SLAUGHTERFISH_MOVE_ANIMS;
     return MOVE_ANIMS;
   }
   if (state === 'attack') {
     if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_ATTACK_ANIMS;
+    if (wingedSeducer) return SEDUCER_ATTACK_ANIMS;
     return PRIMARY_ATTACK_ANIMS;
   }
-  if (state === 'spell') return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
+  if (state === 'spell') {
+    if (wingedSeducer) return SEDUCER_ATTACK_ANIMS;   // :845 - ahead of the HasSpellAnimation ternary
+    return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
+  }
   if (state === 'ranged') {
     // AUDIT 26 F009 - EnemyMotor.cs:594-597: RangedAttack1 only when
     // `HasRangedAttack1 && !HasRangedAttack2`, else RangedAttack2
@@ -140,10 +180,14 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
     // for bow shots.
     return (hasRangedAttack1 && !hasRangedAttack2) ? RANGED_ATTACK1_ANIMS : RANGED_ATTACK2_ANIMS;
   }
-  if (state === 'hurt') return HURT_ANIMS;
-  // idle (branch order verbatim: ghost/wraith, seducer N/A, the
+  if (state === 'hurt') {
+    if (wingedSeducer) return SEDUCER_IDLE_MOVE_ANIMS;   // :813-816 - the winged form has no hurt table of its own
+    return HURT_ANIMS;
+  }
+  // idle (branch order verbatim: ghost/wraith, the winged seducer, the
   // female thief 483, rat, slaughterfish, !hasIdle, idle)
   if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
+  if (wingedSeducer) return SEDUCER_IDLE_MOVE_ANIMS;
   if (femaleThief) return FEMALE_THIEF_IDLE_ANIMS;
   if (mobileType === MOBILE_RAT) return RAT_IDLE_ANIMS;
   if (mobileType === MOBILE_SLAUGHTERFISH) return SLAUGHTERFISH_MOVE_ANIMS;
@@ -221,11 +265,92 @@ export class MobileUnit {
     this._iter = 0;
     this.doMeleeDamage = false;   // LATCHED on the -1 marker; the consumer clears it (C16)
     this.shootArrow = false;      // C17: the ranged -1
+    /** A5 - MobileUnit.SpecialTransformationCompleted (Base/MobileUnit
+     *  .cs:50, DaggerfallMobileUnit.cs:121-124). Raised by
+     *  setSpecialTransformationCompleted at the END of the second
+     *  Seducer transform state, and by a save restore that finds the
+     *  flag already raised ("Called when restoring save game if unit
+     *  has raised transformation completed flag", :203-206). */
+    this.specialTransformationCompleted = false;
+    this._basicsOwned = false;
+  }
+
+  /** DFU's `summary.Enemy` is a STRUCT - a per-mobile COPY made at
+   *  setup, which is why SetSpecialTransformationCompleted can write
+   *  Behaviour/CorpseTexture/HasIdle straight onto it without touching
+   *  the static EnemyBasics row (`MobileEnemy enemy = Enemy; ...;
+   *  Enemy = enemy;`, :212-219). The port's rows are shared and frozen,
+   *  so the copy is made the first time anything writes - lazily, so a
+   *  caller holding `mobile.basics === ENEMY_BASICS[id]` keeps that
+   *  identity until the mobile really does diverge. */
+  _ownBasics() {
+    if (!this._basicsOwned) { this.basics = { ...this.basics }; this._basicsOwned = true; }
+    return this.basics;
+  }
+
+  /**
+   * MobileUnit.SetSpecialTransformationCompleted (Base/MobileUnit.cs:
+   * 208-224), verbatim: for the Daedra Seducer the winged form gets a
+   * REWRITTEN MobileEnemy - Flying behaviour (which EnemyMotor.CanFly
+   * reads live, :837-845 "This can change in the case of a transformed
+   * Seducer"), the winged corpse 400/5 where the unwinged row carries
+   * 400/6, no idle table, and a spell animation of frames 0-3. Then the
+   * flag itself, which is raised for EVERY mobile type - the switch
+   * only decides what else changes.
+   */
+  setSpecialTransformationCompleted() {
+    if (this.mobileType === MOBILE_DAEDRA_SEDUCER) {
+      const e = this._ownBasics();
+      e.behaviour = 'Flying';
+      e.corpseTexture = { archive: 400, record: 5 };
+      e.hasIdle = false;
+      e.hasSpellAnimation = true;
+      e.spellAnimFrames = [0, 1, 2, 3];
+    }
+    this.specialTransformationCompleted = true;
+  }
+
+  /** MobileUnit.IsPlayingOneShot (Base/MobileUnit.cs:153-168) - Hurt,
+   *  PrimaryAttack, the two RangedAttacks, Spell and the two Seducer
+   *  transforms. */
+  isPlayingOneShot() {
+    return this.state === 'hurt' || this.state === 'attack' || this.state === 'ranged'
+      || this.state === 'spell' || this.state === 'transform1' || this.state === 'transform2';
+  }
+
+  /** MobileUnit.OneShotPauseActionsWhilePlaying (:174-184) - the two
+   *  transform states ALONE: "Seducer should not move and attack while
+   *  transforming". Consumed by EnemyMotor.TakeAction (:465-466) and
+   *  EnemyAttack.FixedUpdate (:60-61). */
+  oneShotPauseActionsWhilePlaying() {
+    return this.state === 'transform1' || this.state === 'transform2';
+  }
+
+  /** MobileUnit.IsAttacking (:190-201) - the three attack states. */
+  isAttacking() {
+    return this.state === 'attack' || this.state === 'ranged';
+  }
+
+  /** DaedraSeducerMobileBehaviour.StartTransformation (:87-92) -
+   *  ChangeEnemyState(SeducerTransform1). Public because the trigger
+   *  below re-raises it every frame until it takes. */
+  startTransformation() {
+    this._change('transform1');
+  }
+
+  /** AnimateEnemy's NextStateAfterCurrentOneShot (:594-610): the two
+   *  transform states chain (1 -> 2 -> completed -> idle); everything
+   *  else falls back to Idle. */
+  _nextStateAfterOneShot() {
+    if (this.state === 'transform1') return 'transform2';
+    if (this.state === 'transform2') { this.setSpecialTransformationCompleted(); return 'idle'; }
+    return 'idle';
   }
 
   _anims() {
     const femaleThief = this.basics.femaleTexture === 483 && this.gender === 'female';
-    return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false, femaleThief, this.basics.hasRangedAttack1 ?? true, this.basics.hasRangedAttack2 ?? false);
+    return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false, femaleThief, this.basics.hasRangedAttack1 ?? true, this.basics.hasRangedAttack2 ?? false,
+      this.specialTransformationCompleted, this.basics.hasSeducerTransform1 ?? false, this.basics.hasSeducerTransform2 ?? false);
   }
 
   _change(state) {
@@ -267,6 +392,30 @@ export class MobileUnit {
       this.frame = Math.max(0, this._attackFrames[0]);
       this._iter = 1;
     }
+    // A5: ApplyEnemyState's two Seducer arms (DaggerfallMobileUnit.cs:
+    // 268-288). Each SWITCHES THE SPRITE ALIGNMENT before seeding -
+    // transform1 goes Flying "while crouched and growing wings",
+    // transform2 back to General "while standing and spreading wings" -
+    // and then seeds StateAnimFrames from the row's own sequence,
+    // exactly as the Spell arm above does. Neither is a
+    // doingAttackAnimation state, so the iterator is never consumed and
+    // the run is a plain +1 walk that exits through the one-shot chain.
+    if (state === 'transform1' || state === 'transform2') {
+      this._ownBasics().behaviour = state === 'transform1' ? 'Flying' : 'General';
+      this._attackFrames = (state === 'transform1'
+        ? this.basics.seducerTransform1Frames : this.basics.seducerTransform2Frames) ?? [0];
+      this.frame = Math.max(0, this._attackFrames[0]);
+      this._iter = 1;
+      this._reversed = false;
+    }
+    // ApplyEnemyState's null-table guard (:290-298): "Enemy does not
+    // have animation for {state} state. Defaulting to Idle state." A
+    // mobile asked for a transform it does not carry lands in Idle.
+    if (this._anims() == null) {
+      this.state = 'idle';
+      this.frame = 0;
+      this._reversed = false;
+    }
   }
 
   /**
@@ -284,7 +433,19 @@ export class MobileUnit {
     // (EnemyMotor gates on state != PrimaryAttack ONLY - so hurt CAN
     // interrupt a Spell mid-cast, verbatim). C14: casting is an edge
     // like striking (the cast decision fires ChangeEnemyState once).
-    if (striking && this.state !== 'attack') this._change('attack');
+    //
+    // A5: ...unless a one-shot that PAUSES ACTIONS is playing. DFU
+    // spends OneShotPauseActionsWhilePlaying at three sites and all
+    // three feed this one block: EnemyMotor.TakeAction returns before
+    // any state decision (:465-466), EnemyAttack.FixedUpdate returns
+    // before the melee timer and MeleeAnimation (:60-61), and
+    // KnockbackMovement returns before its ChangeEnemyState(Hurt)
+    // (:267-269). So a transforming Seducer holds its sequence against
+    // strike, cast and hurt alike - "prevent stunlocking transforming
+    // Seducers" - and the clock below keeps stepping it.
+    if (this.isPlayingOneShot() && this.oneShotPauseActionsWhilePlaying()) {
+      // no intent this frame
+    } else if (striking && this.state !== 'attack') this._change('attack');
     else if (rangedStriking && this.state !== 'ranged' && this.state !== 'attack') this._change('ranged');
     else if (casting && this.state !== 'spell' && this.state !== 'attack') this._change('spell');
     else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
@@ -349,10 +510,17 @@ export class MobileUnit {
     }
     this.frame = this._reversed ? this.frame - 1 : this.frame + 1;
     if (this.frame >= n || (this._reversed && this.frame <= 0)) {
-      // IsPlayingOneShot() -> NextStateAfterCurrentOneShot() (default
-      // Idle). The one-shots that reach this plain-run branch are Hurt
-      // and Spell (the attack states exit through the iterator above).
-      if (this.state === 'hurt' || this.state === 'spell') { this._change('idle'); return; }
+      // IsPlayingOneShot() -> NextStateAfterCurrentOneShot(). The
+      // one-shots that reach this plain-run branch are Hurt, Spell and
+      // (A5) the two Seducer transforms - the attack states exit
+      // through the iterator above. The chain is the source's:
+      // transform1 -> transform2 -> SetSpecialTransformationCompleted
+      // -> idle, everything else straight to idle.
+      if (this.state === 'hurt' || this.state === 'spell'
+        || this.state === 'transform1' || this.state === 'transform2') {
+        this._change(this._nextStateAfterOneShot());
+        return;
+      }
       if (a.bounce && !this._reversed) {
         this.frame = Math.max(0, n - 2);
         this._reversed = true;
@@ -360,6 +528,73 @@ export class MobileUnit {
         this.frame = 0;
         this._reversed = false;
       }
+    }
+  }
+}
+
+/** DaedraSeducerMobileBehaviour.secondsToTransform (:23) - the source's
+ *  own note: "0.0 will disable transform completely". */
+export const SECONDS_TO_TRANSFORM = 8.0;
+
+/**
+ * A5 - DaedraSeducerMobileBehaviour (Internal/DaedraSeducerMobile-
+ * Behaviour.cs), verbatim. DFU hangs this component on the seducer's
+ * mobile at setup (SetupDemoEnemy.cs:191-195, gated on the mobile ID)
+ * and its Update is the whole trigger:
+ *
+ *   1. once the transformation is COMPLETE, raise SuppressInfighting
+ *      and do nothing else forever - "A transformed Seducer is excluded
+ *      from infighting due to sprite limitations (has player facing
+ *      sprites only)". Raised on every frame rather than once, which is
+ *      how a save restored past the transform gets the flag back;
+ *   2. once the transformation has STARTED, keep re-raising
+ *      SeducerTransform1 on any frame that is in some other state -
+ *      "This prevents some other state (e.g. hurt) breaking switch to
+ *      transformation";
+ *   3. otherwise, while the seducer is TARGETING THE PLAYER and the
+ *      countdown still has time on it, spend the countdown and
+ *      transform the moment it is hurt or the eight seconds run out.
+ *      The player-target gate is there so the player is close enough to
+ *      witness it; the countdown so a winged form can reach a player
+ *      the humanoid form cannot (the source names Direnni Tower).
+ *
+ * `targetIsPlayer` is the port's spelling of `enemySenses.Target ==
+ * GameManager.Instance.PlayerEntityBehaviour` - the host reads its own
+ * candidate machine and answers.
+ */
+export class SeducerTransformBehaviour {
+  constructor(mobile, entity) {
+    this.mobile = mobile;
+    this.entity = entity;
+    this.transformCountdown = SECONDS_TO_TRANSFORM;
+    this.transformStarted = false;
+  }
+
+  /** DFU's StartTransformation (:87-92): zero the countdown, raise the
+   *  first state, and latch `transformStarted` so arm 2 keeps trying. */
+  startTransformation() {
+    this.transformCountdown = 0;
+    this.mobile.startTransformation();
+    this.transformStarted = true;
+  }
+
+  update(dt, targetIsPlayer = false) {
+    const m = this.mobile;
+    if (!m || !this.entity) return;   // the :48-49 reference guard
+    if (m.specialTransformationCompleted) {
+      this.entity.suppressInfighting = true;
+      return;
+    }
+    if (this.transformStarted && m.state !== 'transform1' && m.state !== 'transform2') {
+      this.startTransformation();
+      return;
+    }
+    if (targetIsPlayer && this.transformCountdown > 0) {
+      // "Check if if hurt" (:74-75) - CurrentHealth < MaxHealth, any
+      // wound at all, not a threshold.
+      const isHurt = (this.entity.health ?? 0) < (this.entity.maxHealth ?? 0);
+      this.transformCountdown -= dt;   // spent BEFORE the test, as C# spends it
+      if (isHurt || this.transformCountdown <= 0) this.startTransformation();
     }
   }
 }

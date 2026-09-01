@@ -135,7 +135,12 @@ test('AUDIT 39 (#21): the streaming host hands the getter, not startLoc', () => 
   // INTEGRATION MOVED THIS PIN: #62 (player-motor) hung onCourtScreen -
   // the CameraRecoiler reset - off the same bag in the same wave, so the
   // call carries both keys. The law pinned here is the GETTER.
-  assert.match(w, /createArrestFlow\(\{ townTalk, playerEntity, regionIndex: \(\) => _questRegionIndex\(\), onCourtScreen: \(\) => cameraRecoiler\.reset\(\) \}\)/);
+  // PIN MOVED AGAIN (Road to 1:1, a3): the bag took ReleaseFromPrison's
+  // last two lines - clearEnemies and positionPlayerAtLocationEntrance
+  // (DaggerfallCourtWindow.cs:488-489) - so the call is no longer one
+  // line. The law pinned here is still the GETTER.
+  assert.match(w, /createArrestFlow\(\{\s*\n\s*townTalk, playerEntity, regionIndex: \(\) => _questRegionIndex\(\),/);
+  assert.match(w, /onCourtScreen: \(\) => cameraRecoiler\.reset\(\),/);
   assert.doesNotMatch(w, /regionIndex: startLoc\.regionIndex/,
     'the boot number filed every later crime under the province the session started in');
 });
