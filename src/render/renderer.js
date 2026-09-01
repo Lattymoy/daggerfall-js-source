@@ -418,6 +418,8 @@ void main() {
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
+// MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
+const EMISSION_WHITE = new Float32Array([1, 1, 1]);
 
 /** THE CHARACTER PIXELIZE STANDARD (Mac): characters and everything
  *  character-side render at this pixel size; the WORLD is excluded.
@@ -517,6 +519,15 @@ export class Renderer {
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
     this.emissionTextures = new Map(); // "archive_record" -> window mask
+    // AUDIT 39 F49: keys whose emission map is the AUTO-EMISSIVE albedo
+    // (MaterialReader.cs:448-453 - EmissionColor = Color.white), not a
+    // window mask wearing the active window style. The billboard shader
+    // already reads its mask untinted, which IS white; the mesh path
+    // multiplies by uEmissionColor, so it needs the distinction.
+    this.emissionWhite = new Set();
+    // The value last uploaded to the solid program's uEmissionColor
+    // (uniforms are program state, so this survives a program switch).
+    this._emissionColorUp = null;
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
     // mint a `${archive}_${record}` string per sub-mesh per frame -
     // thousands of short-lived strings a frame, the render loop's
@@ -530,6 +541,11 @@ export class Renderer {
     // increments only - cheap enough to keep on always, so probes and
     // the __renderer surface can measure a real frame (the EV arc's
     // "land wins against numbers" doctrine).
+    // AUDIT 39 F50: EVERY pass counts, not drawMesh alone - the terrain,
+    // water, billboard, character, sprite-quad and screen-quad draws
+    // were invisible here, which made the counter blind to exactly the
+    // terrain culling it exists to measure. texBinds counts the binds a
+    // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
@@ -891,12 +907,14 @@ export class Renderer {
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
         gl.drawArrays(gl.TRIANGLES, r.first, r.count);
+        this.stats.texBinds++; this.stats.draws++;
       }
     } else {
       gl.uniform1f(c.useTex, 0);
       gl.uniform1f(c.alphaCut, 0);
       gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
       gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+      this.stats.texBinds++; this.stats.draws++;
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.uniform1f(c.useTex, 0);
@@ -971,10 +989,22 @@ export class Renderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.SCISSOR_TEST);
     gl.viewport(0, 0, pw, ph);
-    const sp = this._proj, sv = this._view;
-    this._proj = proj; this._view = view;
+    // AUDIT 39 F47/F48: THE FOG IS BORROWED OFF, the same borrow-and-
+    // return shape as the clear colour and the studio light. Two things
+    // make an offscreen fog wrong. The composite quad
+    // (drawCharacterSpriteQuad) fogs the finished sprite at the rig's
+    // own world point, so fogging inside the RT too darkened a
+    // character as f^2 while the wall behind it went as f. And _camPos
+    // is the WORLD camera - beginFrame is its only producer - while
+    // this pass takes a private camera: the callers that draw at the
+    // origin in a lens-local space (the FP viewmodel, the inventory
+    // figure, the item icons) were fogged by the player's absolute
+    // distance from the world origin, and the icon read-back baked that
+    // darkness into its cache.
+    const sp = this._proj, sv = this._view, sf = this._fogMode;
+    this._proj = proj; this._view = view; this._fogMode = 0;
     this.drawCharacter(mesh, modelMatrix);
-    this._proj = sp; this._view = sv;
+    this._proj = sp; this._view = sv; this._fogMode = sf;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     const cc = this._clearColor;
@@ -1106,6 +1136,7 @@ void main() {
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
     gl.disable(gl.CULL_FACE);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
     gl.enable(gl.CULL_FACE);
     this._bindVao(null);
   }
@@ -1220,7 +1251,7 @@ void main() {
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
     gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); }
+    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); this.stats.texBinds++; }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
     // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
@@ -1233,6 +1264,7 @@ void main() {
     const blend = screenQuadBlends(tex, color, opts);
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    this.stats.draws++;
     if (blend) gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -1277,6 +1309,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.disable(gl.CULL_FACE);
     this._bindVao(this._overlayVAO);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
     this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -1345,6 +1378,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this.textures.delete(key);
       freed = true;
     }
+    // AUDIT 39 F51: the EV2 generation covers BOTH directions of the
+    // map. A sub-mesh stamps its resolved texture and re-reads it while
+    // the generation holds, so a delete that did not bump left it
+    // binding a deleted WebGLTexture (INVALID_OPERATION, incomplete
+    // black) until some unrelated upload happened to bump.
+    if (freed) this._texGen++;
     return freed;
   }
 
@@ -1418,6 +1457,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
+    this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -1541,9 +1581,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._indirectColor = scaledColor;
   }
 
-  /** Upload a getWindowColors32 mask for a window (archive, record). */
-  uploadEmissionTexture(archive, record, color32) {
+  /** Upload an emission mask for (archive, record): a getWindowColors32
+   *  window mask, a spectral glow, or - with { white: true } - the
+   *  ALBEDO of an auto-emissive record, which wears no window tint
+   *  (MaterialReader.cs:448-453, EmissionColor = Color.white). */
+  uploadEmissionTexture(archive, record, color32, opts = {}) {
     const key = `${archive}_${record}`;
+    if (opts.white) this.emissionWhite.add(key);
     if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -1755,6 +1799,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    this.stats.texBinds += 2; this.stats.draws++;
     this._bindVao(null);
   }
 
@@ -1781,9 +1826,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     this._bindVao(this.waterVao);
+    this.stats.texBinds++;
     for (const q of quads) {
       gl.uniform4f(this.waterURect, q.x, q.z, q.size, q.y);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+      this.stats.draws++;
     }
     this._bindVao(null);
     gl.depthMask(true);
@@ -1845,6 +1892,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
+      this.stats.texBinds += 2; this.stats.draws++;
     };
     gl.uniform1i(this.bbUSpectral, 0);
     for (const b of batches) if (!isSpectralArchive(b.archive)) drawOne(b);
@@ -1928,17 +1976,31 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (sm._evGen === this._texGen && sm._evRemap === texRemap) {
         tex = sm._evTex;
       } else {
-        const key = `${sm.textureArchive}_${sm.textureRecord}`;
+        // AUDIT 39 F52: the key is minted ONCE per sub-mesh and kept.
+        // The stamp validates the remap by IDENTITY, and the streaming
+        // world mints a fresh texRemap per map pixel over GPU meshes
+        // shared by every pixel - so an archetype standing in N loaded
+        // pixels misses N times a frame, and the string EV2 killed was
+        // being re-minted on every one of those misses.
+        const key = sm._evKey ?? (sm._evKey = `${sm.textureArchive}_${sm.textureRecord}`);
         const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
         tex = this.textures.get(resolved);
         if (tex) {
           sm._evTex = tex;
           sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;
+          sm._evEmisWhite = this.emissionWhite.has(resolved);
           sm._evGen = this._texGen;
           sm._evRemap = texRemap;
         }
       }
       if (!tex) continue;
+      // F49: an auto-emissive record's mask is its own albedo and wears
+      // Color.white; only a window mask wears the window style.
+      const emisColor = sm._evEmisWhite ? EMISSION_WHITE : this._windowEmission;
+      if (this._emissionColorUp !== emisColor) {
+        gl.uniform3fv(this.uEmissionColor, emisColor);
+        this._emissionColorUp = emisColor;
+      }
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, sm._evEmis);
       gl.activeTexture(gl.TEXTURE0);

@@ -583,10 +583,19 @@ test('U61: the no-op host arms say why they are empty', () => {
   }
 });
 
-test('U61: the overworld pass restores what it touches', () => {
+// AUDIT 39 F55 MOVED THIS PIN. It read "saves the previous program and
+// restores it", citing the SkyRenderer/PrecipitationRenderer shape -
+// which both of those modules retired in EV6, leaving this pass the
+// last synchronous gl.getParameter(CURRENT_PROGRAM) round-trip in the
+// port, once per travel-map frame, for a program the host rebinds
+// anyway. The law is now the seam law the skies keep: no query, no
+// restore, and the HOST marks the seam.
+test('U61/EV6: the overworld pass brackets its state and marks a foreign seam instead of restoring', () => {
   const src = read('src/render/overworldRenderer.js');
-  assert.match(src, /getParameter\(gl\.CURRENT_PROGRAM\)/, 'saves the previous program');
-  assert.match(src, /gl\.useProgram\(prev\)/, 'and restores it');
+  assert.ok(!src.includes('CURRENT_PROGRAM'), 'the per-frame driver query is gone');
+  assert.ok(!src.includes('gl.useProgram(prev)'), 'and the restore with it');
+  assert.match(read('src/ui/overworldMap.js'), /renderer\.markForeignPass\(\);/,
+    'the host marks the seam, so the renderer\'s shadows rebind after the pass');
   assert.match(src, /disable\(gl\.CULL_FACE\)/, 'brackets the cull the mirrored world passes need');
   assert.match(src, /enable\(gl\.CULL_FACE\)/, 'both ways');
   assert.match(src, /dispose\(\)/, 'every allocation has an owner');

@@ -333,6 +333,10 @@ export class OverworldMapWindow {
           markerScale: clamp(220 / this._cam.dist, 0.35, 2.4),
           rings: this._rings(),
         });
+        // EV6 seam: the pass changed programs behind the renderer's
+        // back and no longer restores (AUDIT 39 F55) - the veil quad
+        // below draws on the renderer's own program and must rebind.
+        renderer.markForeignPass();
         this._proj = proj; this._view = view; this._vw = w; this._vh = h;
       }
       if (this._veil > 0.001) {

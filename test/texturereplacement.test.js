@@ -148,10 +148,17 @@ test('texture: the pipeline decodes AHEAD and overrides SYNCHRONOUSLY', () => {
   assert.ok(p.indexOf('await preloadTextureArchive') < p.indexOf('textureFiles.set(archive, t)'),
     'decoded before the archive is published, or a draw could beat it');
   // both upload paths override, and the FRAME one keys by frame
+  // AUDIT 39 F49 MOVED THESE TWO PINS: the override still decides the
+  // pixels, but the chosen colour32 is now NAMED, because the
+  // auto-emissive arm reuses that same albedo as its emission map
+  // (TextureReader.cs:301-308) - a pack's replacement must light the
+  // lantern it replaces, not the classic art beside it.
   assert.match(p, /const swap = decodedTexture\(archive, record, 0\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, record, swap \?\? t\.getColor32\(bitmap, 0\)\);/);
+  assert.match(p, /const color32 = swap \?\? t\.getColor32\(bitmap, 0\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, record, color32\);/);
   assert.match(p, /const swapFrame = decodedTexture\(archive, record, frame\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, key, swapFrame \?\? t\.getColor32\(bitmap, 0\)\);/);
+  assert.match(p, /const color32 = swapFrame \?\? t\.getColor32\(bitmap, 0\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, key, color32\);/);
   // BELOW the spectral arm: that path builds albedo AND an emission
   // mask from one remap, and replacing half would light a ghost by a
   // texture it no longer wears

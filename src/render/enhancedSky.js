@@ -188,7 +188,14 @@ export function sunOcclusion(state) {
   const d = state.sunDir, w = state.wind, t = state.seconds;
   const hi = deckCover(d, 0.95, [w[0] * 0.55, w[1] * 0.55], state.cloudCover * 0.75, state.cloudSoft * 1.5, t);
   const lo = deckCover(d, 1.9, w, state.cloudCover, state.cloudSoft, t);
-  return clamp01(lo + hi * (1 - lo) * 0.7);
+  const cov = clamp01(lo + hi * (1 - lo) * 0.7);
+  // AUDIT 39 F54: the HORIZON term the shader applies to the same cover
+  // before it dims the disc (`cloud = mix(cov, cov * uCloudCover, near)`)
+  // - without it, a sun below ~16 degrees took up to half again as much
+  // light off the ground as off the disc the player can still see, and
+  // those are the hours the palette is built around.
+  const near = smoothstep(0.28, 0, d[1]);
+  return cov * (1 - near) + cov * state.cloudCover * near;
 }
 
 /** How much of the sun a full cover takes off the WORLD. Not 1: even
@@ -441,7 +448,14 @@ vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
   vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
   vec2 cell = floor(uv * n);
   vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
-  cellOut = cell + face * 977.0;                    // a face's cells are its own
+  // AUDIT 39 F53: cellOut is CONTINUOUS - the cell id is floor(cellOut),
+  // and its fraction is where the fragment sits INSIDE the cell, which
+  // is what the star field draws a star at. Handing back the floored id
+  // made fract() of it exactly zero, so the bright first star layer
+  // could not produce a lit pixel anywhere on the sphere. Callers floor
+  // it for the id; the face offset is integral, so flooring here or
+  // there names the same cell.
+  cellOut = uv * n + face * 977.0;                  // a face's cells are its own
   if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
   if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
   return normalize(vec3(t.x, t.y, sign(dir.z)));
@@ -549,6 +563,7 @@ void main() {
   // n = (PI/2)/step is 256 a face, 512 across 180 degrees - SKY??.DAT.
   vec2 cell = vec2(0.0);
   if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
+  cell = floor(cell);                               // F53: bayer4 indexes the CELL, not its interior
 
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);
