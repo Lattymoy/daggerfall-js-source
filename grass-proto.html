@@ -1163,22 +1163,24 @@ float stars(vec3 dir, float amount) {
     // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
     float scale = layer == 0 ? 127.0 : 236.0;
 
-    vec2 sc2;
-    cubeSnap(d, scale, sc2);
-    vec2 g = sc2 + float(layer) * 31.7;
-    // PROTO-14 (6, Mac: the starry sky is straight lines, not a night
-    // sky). cubeSnap returns the cell's INTEGER id, so fract(g) was a
-    // CONSTANT - every star sat at the same offset inside its cell and
-    // the field came out ruled into rows. The sub-cell position has to
-    // come from the DIRECTION, not from the id: the snapped direction
-    // is projected back onto the face and its fractional part is the
-    // real position within the cell. This is a fault in the game's own
-    // shader, not only the lab's copy.
-    vec2 cell = floor(g);
-    vec2 sc3; vec3 snapped = cubeSnap(d, scale, sc3);
-    vec3 ad = abs(d); float md = max(ad.x, max(ad.y, ad.z));
-    vec2 rawf = ad.x >= md ? d.zy / ad.x : (ad.y >= md ? d.xz / ad.y : d.xy / ad.z);
-    vec2 f = fract(atan(rawf) * 1.27323954 * scale);
+    // PROTO-15 (Mac: stars are STILL stripes in a lot of places). The
+    // first fix kept cubeSnap's integer cell id as the key and derived
+    // the sub-cell offset SEPARATELY - two computations of the same
+    // thing, and any disagreement between them puts every star in a
+    // cell on one line. cubeSnap is not consulted here at all now: the
+    // face coordinate is computed ONCE, and the cell id and the
+    // position inside it are the floor and the fract OF THE SAME
+    // NUMBER. They cannot disagree, because there is nothing left to
+    // disagree about.
+    vec3 ad = abs(d);
+    float md = max(ad.x, max(ad.y, ad.z));
+    vec2 raw; float face;
+    if (ad.x >= md) { raw = d.zy / ad.x; face = d.x > 0.0 ? 0.0 : 1.0; }
+    else if (ad.y >= md) { raw = d.xz / ad.y; face = d.y > 0.0 ? 2.0 : 3.0; }
+    else { raw = d.xy / ad.z; face = d.z > 0.0 ? 4.0 : 5.0; }
+    vec2 uvf = atan(raw) * 1.27323954;          // equi-angular: one cell, one angle
+    vec2 g = uvf * scale + vec2(face * 977.0 + float(layer) * 31.7);
+    vec2 cell = floor(g), f = fract(g);
     float h = ihash(cell, 7.3 + float(layer) * 3.0);
     float thresh = layer == 0 ? 0.955 : 0.985;
     if (h > thresh) {
