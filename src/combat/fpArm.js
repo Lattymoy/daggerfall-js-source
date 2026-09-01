@@ -856,7 +856,22 @@ async function buildTpBody({
     // Rule 8 on THIS skeleton: the third-person rig carries its own
     // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
     // record hangs off the same column with no new law.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    // MW-D46b: THE SAME QUESTION, AT THE SAME DOOR. MW-D46 asked "does
+    // any loaded clip drive the quiver bone" in the FIRST-PERSON build
+    // only, and the third-person body resolves through its own call
+    // site - so the quiver branch went on winning here, and this is the
+    // rig whose skeleton is most likely to carry the bone. That split
+    // is the whole history of the report: first person falls back and
+    // wants an ArrowBone in the bow mesh, third person takes the body
+    // bone and parks the round in the torso. One symptom, two branches,
+    // two views.
+    const quiverDriven = tpAnimSources(skeletonPath, exists).some((cp) => {
+      const a = find(cp);
+      return !!a && bytesHaveName(a.get(cp), QUIVER_BONE);
+    });
+    const resolvedWeapon = resolveWeaponParts({
+      weapon, hasAmmo, allWeapons, find, skeletonBytes, quiverDriven,
+    });
     partBytes.push(...resolvedWeapon.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
@@ -905,6 +920,7 @@ async function buildTpBody({
       keys: idlePick.source.keys,
       sources,
       sourcePaths,
+      quiverDriven,   // MW-D46b: the swap reads it rather than re-deciding
       clip: idlePick.state,
       groups: [...groupSet].sort(),
       groupSet,
@@ -1315,6 +1331,7 @@ export async function buildFpArm({
       // whose tracks must pose it.
       sources,
       sourcePaths,
+      quiverDriven,   // MW-D46b: the swap reads it rather than re-deciding
       clip: c,
       // MW-D12: the file's own answer to "does this animation exist",
       // which rules 9 and 10 both consult. A Set, because
@@ -2374,6 +2391,9 @@ export function createFpArm() {
           const resolved = resolveWeaponParts({
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
             skeletonBytes: token.skeletonBytes,
+            // MW-D46b: the build already asked the clips; a swap must
+            // not silently answer differently from the body it edits.
+            quiverDriven: token.quiverDriven ?? false,
           });
           const arm = token.arm;
           arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
@@ -2413,6 +2433,7 @@ export function createFpArm() {
             const tResolved = resolveWeaponParts({
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
               skeletonBytes: t.skeletonBytes,
+              quiverDriven: t.quiverDriven ?? false,   // MW-D46b
             });
             t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
             bindPartsInto(t.arm, tResolved.parts);

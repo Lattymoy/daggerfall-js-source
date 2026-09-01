@@ -408,3 +408,35 @@ test('MW-D46: a quiver bone with no clip to drive it falls back to the bow mesh'
     'no clip drives the quiver bone, so the round takes the vanilla bow-mesh branch');
   assert.notEqual(res.arrow.bone, 'Bip01 Arrow', 'and not the body bone it would have sat on');
 });
+
+// MW-D46b: EVERY DOOR ASKS, NOT JUST THE FIRST ONE (Mac: "Dude. Please
+// just get this right"). MW-D46 wired the quiver check into the
+// FIRST-PERSON build alone, and resolveWeaponParts has FOUR callers:
+// both builds and both halves of the live weapon swap. The third-person
+// body went on taking the quiver branch - and that is the rig whose
+// skeleton actually carries "Bip01 Arrow", so it is the one that put
+// the round in the torso. Same shape as MW-D43 fixing one of two
+// pixelize passes: a default that means "old behaviour" hides every
+// caller you did not visit.
+//
+// Source-pinned because three of the four doors need a built body or a
+// live swap to drive, and the fixtures reach the first-person build
+// only - the fourth is pinned behaviourally above.
+test('MW-D46b: every resolveWeaponParts caller answers the quiver question', () => {
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  // The DEFINITION matches the same text, and its default is the thing
+  // under test - so it is excluded by that default rather than by
+  // position, which would rot the moment the file is reordered.
+  const calls = src.split('resolveWeaponParts({').slice(1)
+    .filter((c) => !c.slice(0, c.indexOf('})')).includes('= true'));
+  assert.equal(calls.length, 4, 'four callers: both builds, both halves of the swap');
+  for (const [i, c] of calls.entries()) {
+    const args = c.slice(0, c.indexOf('})'));
+    assert.match(args, /quiverDriven/, `caller ${i + 1} decides the branch by default instead of asking`);
+  }
+  // The swap READS the build's answer rather than re-deciding it: a
+  // body that resolved one way and then swaps the other way mid-session
+  // is two answers to one question about the same skeleton.
+  assert.match(src, /quiverDriven: token\.quiverDriven \?\? false/);
+  assert.match(src, /quiverDriven: t\.quiverDriven \?\? false/);
+});

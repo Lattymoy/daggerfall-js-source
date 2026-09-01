@@ -6398,3 +6398,33 @@ never runs the page. Five thousand pins, and not one asked whether the
 game STARTS. tools/bootProbe.mjs asks it now, on both skins, in about
 five seconds, and needs no ARENA2 because the boot door draws before
 any game data is touched. Run it before a push that goes near a shader.
+
+MW-D46b: EVERY DOOR ASKS, NOT JUST THE FIRST ONE. Mac, after MW-D46:
+"Arrows are still not correctly attached to the hand and bow."
+
+MW-D46 wired the quiver check into the FIRST-PERSON build alone, and
+resolveWeaponParts has FOUR callers - both builds and both halves of
+the live weapon swap. The three I did not visit kept the parameter's
+default, which means the old behaviour, so the third-person body went
+on taking the quiver branch. And that is the rig whose skeleton
+actually carries "Bip01 Arrow": the full xbase_anim, not the
+first-person arms. It is the one that put the round in the torso.
+
+THIS ALSO EXPLAINS THE WHOLE HISTORY OF THE REPORT, which never fit one
+branch. First person has no "Bip01 Arrow", falls back, and wants an
+ArrowBone in the bow mesh - when the mesh has none it refuses and the
+bow draws empty. Third person HAS the bone, takes the quiver branch,
+and parks the round on the body. One symptom in Mac's words, two
+branches, two views - which is why every single-branch theory failed
+against half his evidence.
+
+The swap now READS the build's answer instead of re-deciding it: a body
+that resolved one way and swaps the other way mid-session is two
+answers to one question about one skeleton.
+
+THE SHAPE TO REMEMBER, and it is the third time this session: MW-D43
+fixed one of two pixelize passes, MW-D42 held the hit in one of two
+views, MW-D46 asked at one of four doors. A default that means "old
+behaviour" hides every caller you did not visit, and the port's own
+four-hosts rule exists for exactly this. Name every caller before
+shipping the parameter.
