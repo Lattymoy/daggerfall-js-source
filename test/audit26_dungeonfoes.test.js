@@ -362,8 +362,15 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // ClearStreamingWorld's CollectLooseObjects(true) is the teleport core
   // walking every built pixel through that same function.
   const t = WORLD.indexOf('async function _teleportToPixel(px, py, localPos = null)');
-  assert.ok(WORLD.slice(t, t + 400).includes('destroyPixel(bx, by);'),
+  // AUDIT 39 (#158): the window widened from 400 - CleanupUntrackedObjects'
+  // own half (clearLive on both pools, the missiles, the arrows) now stands
+  // at the head of the core, above this loop. Corpses ride the pixel;
+  // the LIVE records are swept by name, which is the finding this moved for.
+  const core = WORLD.slice(t, t + 1600);
+  assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
+  assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),
+    'and the live pools with them (StreamingWorld.cs:1624-1635)');
   // and the stamp is the same key shape the pile seam already used
   assert.equal((WORLD.match(/currentPixelKey: \(\) => `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`/g) ?? []).length, 2,
     'both pools are stamped, with the streamer\'s current pixel (TrackLooseObject :462-476)');

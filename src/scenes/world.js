@@ -122,7 +122,7 @@ import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
-import { isInvisible } from '../systems/effects.js';
+import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
@@ -222,6 +222,11 @@ const REVEAL_NOTE_TEXT = Object.freeze({
   readMapTG: 'The Thieves Guild have revealed the closely-guarded whereabouts of a treasure trove called %map.',
   readMapDB: 'The Dark Brotherhood revealed the secret of some treasure-laden crypts located somewhere called %map.',
 });
+
+/** AUDIT 39: Internal_Strings.csv :221, the line DaggerfallUI.cs:608
+ *  puts in a MessageBox when the travel map is asked for with enemies
+ *  about. Verbatim - it is the refusal, not a paraphrase of it. */
+const CANNOT_TRAVEL_ENEMIES_TEXT = 'You cannot travel with enemies nearby.';
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
@@ -2235,6 +2240,20 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  player - at the pixel centre, or at an exact local position. */
   async function _teleportToPixel(px, py, localPos = null) {
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
+    // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
+    // on SaveLoadManager_OnStartLoad) - "remove loose enemies,
+    // missiles, etc. on load or new game" - and the same sweep a
+    // teleport reaches through ClearStreamingWorld (:993-998). The
+    // destroyPixel loop below is NOT it: its pool hook is
+    // collectPixel, which frees corpse batches and clears corpse
+    // flags and never touches the live records, so a quickload
+    // mid-fight left the fight standing and restoreWorld spawned the
+    // save's copies on top of it. The distance cull spares anything
+    // that has detected you, so nothing else was going to.
+    exteriorFoes.clearLive();
+    cityGuards.clearLive();
+    magic.clearMissiles();
+    arrows.arrows.length = 0;   // the flights own no GL objects - the mesh is the host's cache
     for (const key of [...built.keys()]) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by);
@@ -2714,6 +2733,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // law: a missing IMG closes a door, never the game); the enhanced
     // overworld reads no art at all.
     if (!travelMapDoorReady()) { townTalk.say('(the travel map art is unavailable)'); return; }
+    // AUDIT 39: the refusal that sits ten lines ABOVE CheckFastTravel
+    // in the same switch arm (DaggerfallUI.cs:604-609) - IsPlayerInside
+    // first (the keydown ladder's `mode === 'exterior'` is that gate),
+    // then AreEnemiesNearby, and only then GiveOffer, the sun-damage
+    // box and the racial override. Ordered here as DFU orders it: no
+    // walking out of a wilderness ambush by map. Same pool the rest
+    // gate reads, and the STRICT variant - resting's slack distance is
+    // the sleep rule, not this one.
+    if (areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) {
+      townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT);
+      return;
+    }
     // V2b: CheckFastTravel at the map's own door, where DFU calls it
     // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
     // travel by day, and the refusal is the override's own line.
@@ -4728,6 +4759,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SaveLoadManager.LoadInProgress - no popups mid-restore).
     if (!townTalk.overlayActive && !_loading) questBridge.tick(dt);
 
+    // AUDIT 39 (S19 host gap): PARALYSIS, above ground. Every DFU gate
+    // reads PlayerEntity.IsParalyzed with no interior/exterior test -
+    // FrictionMotor.GroundedMovement (:75-81) and
+    // AcrobatMotor.CheckAirControl (:135-141) zero the movement input,
+    // HandleJumpInput (:64-70) and LevitateMotor.Update (:67-69)
+    // return, WeaponManager (:235-239) does ShowWeapons(false) and
+    // takes no swing. Only the dungeon hosts carried it, and a spider
+    // or scorpion out of the wilderness encounter tables casts Spider
+    // Touch (exteriorFoes.js castParalyze), so the landed paralysis
+    // was inert here. Declared above `walkMode` because the motor and
+    // the weapon rig are two sibling blocks.
+    const paralyzed = entityIsParalyzed(playerEntity);
 
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {
@@ -4770,7 +4813,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        if (!_overlayHeld) player.update(dt, {
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
+        // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
+        // gates movement and the jump only (DecideHeightAction has no check).
+        if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
           forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
@@ -4814,7 +4860,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _p = playerTravelPixel();
           const _step = footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-            standingStill: !anyMove(mv),
+            standingStill: !moving,
             halfSpeed: player.movingLessThanHalfSpeed,
           }, pickFootstepSet({
             inside: false,
@@ -5354,7 +5400,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
-      for (const ev of weaponRig.frame(dt)) {
+      for (const ev of weaponRig.frame(dt, { paralyzed })) {
         // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
@@ -5394,7 +5440,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw();
+      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -5408,7 +5454,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // vitals, heading01) - so this is the art loaded once and drawn last,
     // over the viewmodel, exactly as dungeonContext draws it. Under the talk
     // layer, because a talk window is a modal above the vitals.
-    if (hudArt) {
+    // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
+    // flash and the enhanced DOM HUD ABOVE its own `!art` return
+    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // HUD art failed to load still has vitals". Wrapping the whole
+    // call in `if (hudArt)` inverted that: hudArt starts null and is
+    // filled by a fire-and-forget load whose failure leaves it null
+    // forever, so the enhanced skin had no vitals for the first
+    // frames and none at all when MAIN/HUD could not be read.
+    {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the
       // guards plus the encounter foes - the same list the spell
@@ -5419,7 +5473,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // TR2/TR3: the mount's own frame and audio, then its sprite -
       // OnGUI draws at depth 2, under the HUD's own elements, so it
       // goes in before drawHud.
-      {
+      // The classic-art guard stays HERE, where it stood before AUDIT
+      // 39 hoisted drawHud out of it: the mount is the classic skin's
+      // business and this fix owns the HUD call, nothing else.
+      if (hudArt) {
         const ridePaused = townTalk.overlayActive || (modes?.overlayHeld ?? false);
         const r = ridingAnimator.update(dt, {
           mode: player.transportMode,

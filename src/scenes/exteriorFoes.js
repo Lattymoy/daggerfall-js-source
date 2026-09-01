@@ -784,5 +784,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   }
 
   return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
+    /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
+     *  :1624-1635), which a teleport reaches too through
+     *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -
+     *  loose enemies survive neither a load nor a fast travel.
+     *  collectPixel frees only CORPSES, so a quickload used to spawn
+     *  the save's copies on top of the live fight. The teardown above
+     *  is exactly that destroy and it is idempotent and reusable; this
+     *  is the name the world host's teleport asks for it by. */
+    clearLive: destroy,
     collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe };
 }

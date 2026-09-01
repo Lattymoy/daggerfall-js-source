@@ -578,6 +578,15 @@ export function createPlayerMagic({
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;
     },
+    /** AUDIT 39: CleanupUntrackedObjects' MISSILE half
+     *  (StreamingWorld.cs:1633-1636) - "Destroy loose missiles" on a
+     *  load or a teleport. destroy() above is terminal and takes the
+     *  candle and the impact batches with it; the engine outlives a
+     *  fast travel, so this frees the flights alone. */
+    clearMissiles() {
+      for (const m of missiles) retireMissile(m);
+      missiles.length = 0;
+    },
     /** X11: the candle's point light, in nearestLights' own vec4 shape,
      *  or null. Each host prepends it to the array it hands the
      *  renderer - the candle is 1.4 units away, so it is always the

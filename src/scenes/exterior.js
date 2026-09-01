@@ -94,7 +94,7 @@ import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
-import { isInvisible } from '../systems/effects.js';
+import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup's box
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
@@ -1059,10 +1059,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // WORLD CAMERA MODES (slice 6): first person (default) / third
   // person. In third person the rig RIDES the player - position from
   // the motor's feet, facing from cam.yaw, gait from live input - and
-  // the camera pulls back along the view ray. V toggles at runtime
-  // (lazy rig build); ?tp starts in third person. ?rig keeps its
-  // fixed-park probe semantics when not riding.
-  let tpMode = params.has('tp');
+  // the camera pulls back along the view ray. ?tp is BOOT-ONLY: I2
+  // retired the runtime V toggle (V is DFU's TravelMap default, see
+  // the note at the keydown ladder), so tpMode is never reassigned and
+  // the rig is built once, here. ?rig keeps its fixed-park probe
+  // semantics when not riding.
+  const tpMode = params.has('tp');
   const buildRig = async () => {
     const [{ createEngineRig, deriveClassicRamps }, { ImgFile }] = await Promise.all([
       import('../characters/engineRig.js'),
@@ -1328,7 +1330,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
-    attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
+    // AUDIT 39: the tap is an attack entry like the other three, so it
+    // takes the M2 gate they take - an armed cast eats the click
+    // (WeaponManager.cs:244-263 defers to HasReadySpell before it
+    // handles any attack). This was the one door in the host without
+    // it, and touch.js:98 already promises the tap casts.
+    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 
@@ -1646,6 +1653,15 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
+    // AUDIT 39 (S19 host gap): PARALYSIS, above ground. Every DFU gate
+    // reads PlayerEntity.IsParalyzed with no interior/exterior test -
+    // FrictionMotor.GroundedMovement (:75-81) and
+    // AcrobatMotor.CheckAirControl (:135-141) zero the movement input,
+    // HandleJumpInput (:64-70) and LevitateMotor.Update (:67-69)
+    // return, WeaponManager (:235-239) does ShowWeapons(false) and
+    // takes no swing. Declared above `walkMode` because the motor and
+    // the weapon rig are two sibling blocks.
+    const paralyzed = entityIsParalyzed(playerEntity);
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
       const jumpHeld = held(keys, 'Jump');
@@ -1682,7 +1698,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
       // held overlay is DFU's timeScale 0 - no climb, no friction).
       const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-      if (!_overlayHeld) player.update(dt, {
+      const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
+      // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
+      // gates movement and the jump only (DecideHeightAction has no check).
+      if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
         run: held(keys, 'Run'),
@@ -1718,7 +1737,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       {
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !anyMove(mv),
+          standingStill: !moving,
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
@@ -2065,7 +2084,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
-      for (const ev of weaponRig.frame(dt)) {
+      for (const ev of weaponRig.frame(dt, { paralyzed })) {
         // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
@@ -2107,7 +2126,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw();
+      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -2121,7 +2140,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // vitals, heading01) - so this is the art loaded once and drawn last,
     // over the viewmodel, exactly as dungeonContext draws it. Under the talk
     // layer, because a talk window is a modal above the vitals.
-    if (hudArt) {
+    // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
+    // flash and the enhanced DOM HUD ABOVE its own `!art` return
+    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // HUD art failed to load still has vitals". Wrapping the whole
+    // call in `if (hudArt)` inverted that: hudArt starts null and is
+    // filled by a fire-and-forget load whose failure leaves it null
+    // forever.
+    {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. This host's nearby pool is the city
       // guards - the only entities it spawns - and, since FX1 (F207),

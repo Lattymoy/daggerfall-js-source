@@ -4205,7 +4205,14 @@ export function createWorldModes(host) {
     // whole classic status bar vanished the moment you stepped through a door
     // and came back when you stepped out. Same call, same place in the order:
     // last, over the viewmodel, under the overlay.
-    if (hudArt) {
+    // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
+    // flash and the enhanced DOM HUD ABOVE its own `!art` return
+    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // HUD art failed to load still has vitals". Wrapping the whole
+    // call in `if (hudArt)` inverted that: hudArt starts null and is
+    // filled by a fire-and-forget load whose failure leaves it null
+    // forever.
+    {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers, interior arm. THE FOUR HOSTS RULE
       // mounted the feed here before this host had anything to put in

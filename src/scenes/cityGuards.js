@@ -712,6 +712,22 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
   }
 
+  /** AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1624-1635),
+   *  which a teleport reaches too through ClearStreamingWorld ->
+   *  CollectLooseObjects(true) (:993-998) - loose enemies survive
+   *  neither a load nor a fast travel. collectPixel above frees only
+   *  CORPSES, so a quickload mid-pursuit re-minted the save's watch on
+   *  top of the live one and the player was hunted by two of it.
+   *  Emptying `guards` is safe HERE where a splice is not: the index
+   *  keys lootTargets hands out are read back the same frame, and
+   *  nothing survives the teleport to read a stale one. */
+  function clearLive() {
+    for (const g of guards) releaseGuardBatch(g);
+    for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
+    corpseBatches.length = 0;
+    guards.length = 0;
+  }
+
   /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters
    *  the floating origin by shifting the camera and player, but live
    *  guards, their corpse billboards and the corpse loot AABBs are
@@ -771,7 +787,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }).catch((e) => console.error('[guards] restore failed:', e?.message ?? e));
     }
   }
-  return { guards, spawnCityGuards, update, offsetAll, collectPixel, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
+  return { guards, spawnCityGuards, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.
