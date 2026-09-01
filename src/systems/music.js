@@ -15,7 +15,7 @@
 // MIDI.BSA is 1.2MB and already survives the ingest diet (the .BSA arm),
 // so there is nothing to add to KEEP for this.
 
-import { audio } from './audio.js';
+import { audio, decodableCopy } from './audio.js';   // AUDIT 39: one decode door, one slice law
 import { MidiBsaFile } from '../formats/hmiFile.js';
 import { selectSong } from './songManager.js';
 import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
@@ -204,7 +204,7 @@ export class MusicService {
       // no longer what the game wants, so drop it rather than talking
       // over the song that replaced it.
       if (this._current !== name) return;
-      if (bytes) buffer = await audio.ctx.decodeAudioData(bytes.buffer ? bytes.buffer.slice(0) : bytes);
+      if (bytes) buffer = await audio.ctx.decodeAudioData(decodableCopy(bytes));
     } catch (e) {
       console.warn(`[music] replacement for ${name} would not decode:`, e?.message ?? e);
     }

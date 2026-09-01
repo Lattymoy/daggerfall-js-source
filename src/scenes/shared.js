@@ -945,9 +945,9 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  drains through exactly these doors, exhaustion presenter and
      *  all, and a pool that built its own would miss the collapse. */
     get sinks() { return sinks; },
-    tick(dt, activity = { running: false, swimming: false }) {
+    tick(dt, activity = { running: false, swimming: false }, realSeconds = dt) {
       const r = tickPlayerMinutes({
-        entity, classicMinutes: worldMinutes(), dt, sinks, activity,
+        entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
         say, inside: isInside(),
       });
@@ -972,7 +972,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  worth of fatigue charge it explicitly. */
     advance(minutes) {
       if (!(minutes > 0)) return null;
-      return this.tick(minutes / CLASSIC_MINUTES_PER_SECOND);
+      // T1 (AUDIT 39): the dt below is FABRICATED game time - a jump
+      // costs no REAL seconds, because DFU's RaiseTime does not advance
+      // Time.deltaTime. The third argument is what the two real-time
+      // timers inside the tick (the torch's 20-second burn, refreshMods'
+      // 0.2s) are fed, and a rested night must burn neither.
+      return this.tick(minutes / CLASSIC_MINUTES_PER_SECOND, undefined, 0);
     },
   };
 }

@@ -193,7 +193,13 @@ test('T1 wiring: the tick rides the REAL clock, and every draw path carries the 
   const close = band.indexOf('\n  }');
   assert.ok(band.indexOf('tickPlayerTorch') > close,
     'the torch tick is inside the per-minute block - it must ride dt');
-  assert.ok(/tickPlayerTorch\(entity, dt,/.test(wt), 'and it must be fed REAL seconds');
+  // AUDIT 39: the pin moved from `dt` to `realSeconds` with the law. dt
+  // is the tick's GAME-time budget, and a clock jump fabricates it
+  // (minutes / CLASSIC_MINUTES_PER_SECOND) - real seconds are what a
+  // 20-second wall-clock timer is owed, and a jump has none.
+  assert.ok(/tickPlayerTorch\(entity, realSeconds,/.test(wt), 'and it must be fed REAL seconds');
+  assert.ok(/killIfAnyLiveStatZero\(entity, sinks, realSeconds\);/.test(wt),
+    'refreshMods\' 0.2s timer is the same wall clock');
   // THE FOUR HOSTS RULE: every host that draws a scene prepends it
   const sites = {
     'src/scenes/worldModes.js': 2,   // the ?world dungeon and interior branches
@@ -207,6 +213,35 @@ test('T1 wiring: the tick rides the REAL clock, and every draw path carries the 
   }
   // and the setting names its REAL consumer now
   assert.equal(LIVE['Enhancements/PlayerTorchFromItems'], 'src/systems/playerTorch.js');
+});
+
+test('AUDIT 39: a clock JUMP burns no torch - RaiseTime does not advance Time.deltaTime', async () => {
+  // DaggerfallRestWindow.TickRest advances the world with RaiseTime under
+  // a paused frame, and EnablePlayerTorch.Update accumulates
+  // Time.deltaTime alone - so 8 rested hours (about 3.6 REAL seconds at
+  // restWaitTimePerHour 0.75 / 10) burn none of a Torch's 50 hit points.
+  // The port reaches the tick through a fabricated dt of
+  // minutes / CLASSIC_MINUTES_PER_SECOND, which handed the 20-second
+  // timer six 50-"second" frames per rested hour: 48 points gone in a
+  // night's sleep.
+  const { createPlayerTicker } = await import('../src/scenes/shared.js');
+  const { worldMinutes, setWorldMinutes } = await import('../src/systems/worldTick.js');
+  const saved = worldMinutes();
+  setValue('Enhancements', 'PlayerTorchFromItems', 'True');
+  try {
+    const t = light(TORCH, 50);
+    const e = player({ lightSource: t, items: [t], fatigue: 1e9, activeEffects: [] });
+    const ticker = createPlayerTicker(e, {});
+    for (let h = 0; h < 8; h++) ticker.advance(60);      // a night's rest, hour by hour
+    assert.equal(t.currentCondition, 50, 'a rested night is no wall-clock time at all');
+    assert.ok(worldMinutes() >= saved + 480, 'the world clock still moved the full eight hours');
+    // ...and REAL seconds still burn it, one point per 20.
+    ticker.tick(21, { running: false, swimming: false });
+    assert.equal(t.currentCondition, 49, 'a real frame burns as it always did');
+  } finally {
+    setValue('Enhancements', 'PlayerTorchFromItems', 'False');
+    setWorldMinutes(saved);
+  }
 });
 
 test('T1 end to end: use a torch, walk, and watch it burn down and die', () => {

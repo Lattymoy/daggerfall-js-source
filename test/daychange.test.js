@@ -526,6 +526,58 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
   }
 });
 
+test('AUDIT 39: the collapse\'s RaiseTime(1 hour) survives the tick\'s write-back', async () => {
+  // DFU's PlayerEntity.Update only READS the clock (:367); the hour its
+  // exhaustion handler adds at :2429 therefore stands. The port's tick
+  // fixes its `next` at entry and every host writes that back OVER the
+  // live clock, so the hour the collapse added from inside the tick's own
+  // drainFatigue was ERASED - the player recovered the vitals of a rested
+  // hour without spending it - and the backward clock move then
+  // re-anchored the broker marker, so that hour's magic rounds ran a
+  // second time on the next frame.
+  //
+  // This drives the REAL host ticker, because the write-back is the
+  // load-bearing half.
+  const { createPlayerTicker } = await import('../src/scenes/shared.js');
+  const saved = worldMinutes();
+  resetWeatherSim();
+  try {
+    const start = 100 * MINUTES_PER_DAY + 600;   // mid-morning: the hour crosses no day boundary
+    setWorldMinutes(start);
+    const e = {
+      raceId: 0, health: 20, maxHealth: 20, fatigue: 5, stats: {},
+      skills: [30], skillUses: [], items: [], activeEffects: [],
+      regionPrices: { 0: 1000 }, factionRep: { dict: dict() }, legalRep: {},
+      lastGameMinutes: Math.floor(start),
+    };
+    let collapses = 0;
+    let ticker;
+    const onExhausted = () => {                    // the hosts' _inExhaustion latch
+      if (onExhausted.busy) return;
+      onExhausted.busy = true;
+      try { collapses++; ticker.advance(60); e.fatigue = 1e9; }
+      finally { onExhausted.busy = false; }
+    };
+    ticker = createPlayerTicker(e, { onExhausted });
+
+    ticker.tick(5.1, { running: false, swimming: false });   // one minute passes, the 11-point drain empties the pool
+    assert.equal(collapses, 1, 'the fixture collapsed exactly once');
+    assert.ok(worldMinutes() >= start + 60,
+      `the hour must STAND, not be overwritten - moved ${worldMinutes() - start}`);
+
+    // ...and the broker marker went with it: the next frame claims the
+    // minutes AFTER the hour, rather than re-anchoring backwards and
+    // running all sixty of them a second time.
+    const r = ticker.tick(5.1, { running: false, swimming: false });
+    assert.ok(r.magicRoundWindow.from >= Math.floor(start + 60),
+      `the hour must not be re-claimed - window from ${r.magicRoundWindow.from}`);
+    assert.ok(r.rounds <= 2, `and it must not re-run its rounds - got ${r.rounds}`);
+  } finally {
+    setWorldMinutes(saved);
+    resetWeatherSim();
+  }
+});
+
 // ── the day block runs BEFORE the normalise loop, as DFU's does ────
 
 test('S41 order: a loan default on a 112-day boundary is decayed in the SAME tick, not before it lands', () => {
