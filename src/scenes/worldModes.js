@@ -4034,7 +4034,12 @@ export function createWorldModes(host) {
     // IF: the pool's own billboards ride the same axis, the same call
     // the exterior host makes for its foes.
     if (interiorFoes) {
-      const _foeBatches = interiorFoes.batches();
+      // NPC4b: the frame's render context rides along, so an encounter
+      // foe inside a building draws as its Morrowind body when one has
+      // built - the same seam the dungeon's foes and the street's
+      // watch already take. Without it every foe is a sprite, exactly
+      // as before.
+      const _foeBatches = interiorFoes.batches({ canvas, proj, view, eye: mwv.eye }, dt);
       if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, new Float32Array([0, 1, 0]));
     }
     if (magic) {

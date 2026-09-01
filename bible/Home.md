@@ -292,11 +292,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:328` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:495` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:900` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:906` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:3062` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3857` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4841` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:902` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:908` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:3064` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3859` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4889` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1193` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1208` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1417` - is the quest machine's, FLAGGED with it.
@@ -313,9 +313,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2937` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2949` - FLAGGED, and narrowed to what is actually missing: the two BASH
 - `src/scenes/worldModes.js:3011` - the FLAGGED note above), so it starts false.
-- `src/scenes/worldModes.js:4266` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4365` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4703` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4271` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4370` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4708` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:

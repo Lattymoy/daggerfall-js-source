@@ -198,6 +198,8 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
+import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';   // NPC4b: the shared-body / per-actor split
+import { townMwBodyOpts } from '../characters/townMwBody.js';   // NPC3b: a wandering citizen's identity and wardrobe
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -4232,6 +4234,12 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
+  // NPC3b/NPC4b: the townsfolk wardrobe seed, an accumulating
+  // golden-ratio step assigned once per person. It is NOT drawn from
+  // DFU's srand/rand: that is one stream shared with names, loot and
+  // quests, and spending a draw on a shirt would shift every later
+  // roll in the game.
+  let _mwTownSeed = 0;
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -4768,20 +4776,60 @@ export async function bootWorld(canvas, renderer, params, status) {
           person.pos[2] + p.locOrigin[2] + t[2],
         ];
         _livePersons.push({ person, pos: batch.origin });   // T3b: world-space activation target
+        // NPC3b/NPC4b: THE TOWNSPERSON'S MORROWIND BODY, in the host
+        // the game actually boots. NPC3b wired this seam into
+        // exterior.js, which is the ?exterior dev route; main.js sends
+        // real play to bootWorld, so the whole lane was invisible to
+        // the player until this call existed.
+        //
+        // Their race and sex come off the people archive
+        // (PERSON_TEXTURES is a real race-and-sex table); their
+        // clothes are the port's own wardrobe, because Daggerfall
+        // paints a citizen's clothes into the sprite. A person the
+        // spawn table cannot identify keeps their sprite.
+        //
+        // The FEET are the batch's world-space origin, not
+        // `person.pos`: this host streams, so a person's own position
+        // is local to their pixel and the pixel's translation moves
+        // under them every time the world recenters.
+        //
+        // The seed is assigned ONCE per person and never drawn from
+        // DFU's PRNG - that stream is shared with names, loot and
+        // quests.
+        person._mwSeed ??= (_mwTownSeed = (_mwTownSeed + 0x9e3779b9) | 0);
+        const _mwBody = requestMwBody(person, townMwBodyOpts(person.archive, person._mwSeed), -1);
+        if (_mwBody && drawMwActor(renderer, canvas, _mwBody, person._mwState, {
+          dt: townTalk.overlayActive ? 0 : dt,
+          moving: person.state === 'move',
+          running: false,
+          feet: batch.origin,
+          yaw: person.yaw ?? 0,
+          proj,
+          view,
+          eye: mwv.eye,
+        })) continue;
         livePersonBatches.push(batch);
       }
     }
     // G1: the guards drive + draw on the same flats' axis; the sim
     // freezes with the population under the talk overlay.
+    // NPC3a/NPC4b: ...and the watch, with the same render context. A
+    // guard whose Morrowind body has built draws as that body instead
+    // of pushing a billboard; without it, and until the body arrives,
+    // every guard is the classic sprite exactly as before.
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
-      walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses()));
+      walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses(),
+      { canvas, proj, view, eye: mwv.eye }));
     // X-slice: the encounter pool drives + draws beside the watch;
     // the cadence loop rolls the elapsed minutes (exterior mode only).
     if ((modes?.mode ?? 'exterior') === 'exterior') {
       const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
       if (!townTalk.overlayActive) runEncounterTick(_pf);
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
-      livePersonBatches.push(...exteriorFoes.batches());
+      // NPC2/NPC2b/NPC4b: the above-ground encounter pool takes the
+      // body seam too - it was the one fight in the game still made
+      // entirely of sprites.
+      livePersonBatches.push(...exteriorFoes.batches({ canvas, proj, view, eye: mwv.eye }, dt));
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles

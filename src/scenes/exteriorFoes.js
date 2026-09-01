@@ -18,6 +18,8 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
+import { drawMwActor, requestMwBody } from '../characters/mwActorRig.js';   // NPC4b: the shared-body / per-actor split
+import { enemyMwBodyOpts } from '../characters/enemyMwBody.js';   // NPC2: which enemies are humanoid, and what they wear
 import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
@@ -451,7 +453,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
-      f._mout = f.mobile.update(dt, {
+      // NPC4b / S19 FreezeAnims: a paralysed foe HOLDS ITS FRAME. The
+      // dungeon pool has honoured this since wave 32 and this pool -
+      // the same factory, serving above ground and inside buildings -
+      // never did, so a held foe went on swinging in the street. The
+      // Morrowind body reads the same gate in batches() below, and the
+      // two must not disagree about whether the actor is moving.
+      f._mout = f.mobile.update(_fParalyzed ? 0 : dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,
         rangedStriking: strikeEdge && !!f.attack.firedRanged,
@@ -635,12 +643,45 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return takeCorpseLoot(foes[Number(key.split(':')[1])], playerEntity, say2);
   }
 
+  /** NPC4b: the same body seam the dungeon's foes and the city watch
+   *  ride, in the pool that serves ABOVE GROUND and INSIDE BUILDINGS.
+   *  NPC2/NPC2b wired dungeonContext and nothing else, so an encounter
+   *  in a street or a shop was the one fight in the game still made of
+   *  sprites. `mw` is the frame's render context and is OPTIONAL: with
+   *  no context, or before a body arrives, every foe is a sprite
+   *  exactly as it always was.
+   *
+   *  AUDIT A6's law rides along: a paralysed foe holds its frame, so
+   *  the body takes dt 0 when the sprite would freeze. */
+  const _drawMwFoe = (f, dt, mw) => {
+    const body = requestMwBody(
+      f, f.entity && enemyMwBodyOpts(f.entity, f.mobileType, f.mobile?.gender), f.mobileType);
+    if (!body) return false;
+    return drawMwActor(renderer, mw.canvas, body, f._mwState, {
+      dt,
+      moving: !!f.ai.moving,
+      running: false,
+      feet: f.ai.feet,
+      yaw: f.ai.yaw,
+      proj: mw.proj,
+      view: mw.view,
+      eye: mw.eye,
+    });
+  };
+
   /** Live sprite + corpse batches for the draw - the guard shape:
-   *  record/size/origin mutate per frame, frames upload lazily. */
-  function batches() {
+   *  record/size/origin mutate per frame, frames upload lazily.
+   *
+   *  NPC4b: `mw` optional. A foe whose Morrowind body has built draws
+   *  HERE and does not push a batch; the corpses always do - a dead
+   *  foe is the classic death sprite in every lane.
+   *  `dt` is the frame's, needed only to advance a body's playhead;
+   *  without it a body would stand in one pose. */
+  function batches(mw = null, dt = 0) {
     const out = [];
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
+      if (mw && _drawMwFoe(f, entityIsParalyzed(f.entity) ? 0 : dt, mw)) continue;
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
