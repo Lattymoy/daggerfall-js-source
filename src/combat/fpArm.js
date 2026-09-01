@@ -745,33 +745,9 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
                 arrowBone = pre ? bone : null;
               }
               if (!arrowBone) {
-                // MW-D42b (Mac: "the arrow isn't physically seen being
-                // drawn ON the bow during the animation"): THIS BRANCH
-                // USED TO GIVE UP. Refusing was defensible when the
-                // note was the whole story - it said so on the card and
-                // the bow drew empty - but the note is a diagnostic and
-                // the player is looking at the bow, and an arrow that
-                // is roughly right beats an arrow that is absent.
-                //
-                // The reference's own placement is a node inside the
-                // weapon mesh, which brings the weapon's transform
-                // chain and its mirror along (rule 13). When that node
-                // is missing we cannot reconstruct the chain, so the
-                // arrow rides the WEAPON'S OWN BONE bare: it sits at
-                // the bow's origin, near the grip, at the right
-                // orientation and inside the same mirrored subtree
-                // because it hangs off the same bone. Approximately
-                // placed and visible, which is the never-traps law -
-                // a missing asset degrades, it does not delete the
-                // feature. The note still fires, because "this is not
-                // where the data would have put it" is worth saying.
-                arrowBone = bone;
-                pre = null;
                 notes.push(`arrow: neither this skeleton's "${skelBone}" bone nor an `
-                  + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - hung on `
-                  + `"${bone}" instead, so it sits at the weapon's origin`);
-              }
-              {
+                  + `"${ARROW_FALLBACK_NODE}" node in ${weaponInfo.model} - nowhere to put it`);
+              } else {
                 parts.push({
                   // MW-D34: `ammo` marks the one part attachArrow
                   // instances BARE - no BoneOffset of its own
