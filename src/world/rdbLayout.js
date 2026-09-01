@@ -42,6 +42,13 @@
 //   - Action links key on obj.position; model links carry
 //     next/previousObjectOffset, flat links next only (prev -1). Editor
 //     flats always join the link dict; other flats only when they act.
+//   - ROAD-B B4: every serialized action object carries a LoadID, minted
+//     as `(ulong)(blockData.Position + rdbObj.Position)` - the block's
+//     BSA record offset plus the object's own offset inside the block
+//     (RDBLayout.cs:240-242 for action doors, :893-895/:940-942 for
+//     action models). "Based on unique position in gamedata and always
+//     the same" (DaggerfallAction.cs:259), which is exactly why the
+//     Castle Daggerfall foyer hack can name two doors by number.
 // Not built here (routed): enemies fixed/random (Characters arc), treasure
 // piles/loot (Systems arc), torch/animal audio (Audio arc), point-light and
 // water rendering (Rendering arc), door/action behavior (Player arc).
@@ -288,9 +295,17 @@ function* rdbObjects(rdb) {
  * @returns {{placements:Array,actionDoors:Array,flats:Array,markers:Array,
  *   startMarkers:Array,enterMarkers:Array,exitDoors:Array,
  *   actionLinks:Map,waterLevel:number,castleBlock:boolean}}
+ *   Each actionDoors entry carries `loadID` (ROAD-B B4).
  */
 export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
   const rdb = dfBlock.rdbBlock;
+  // ROAD-B B4: the LoadID base. RDBLayout.cs:240-242 mints an action
+  // door's id as `(ulong)(blockData.Position + obj.Position)` - the
+  // BSA record offset of the block plus the object's offset inside it.
+  // blocksFile records the former as dfBlock.position (the same
+  // bsaFile.GetRecordPosition DFU stores at BlocksFile.cs:323), and
+  // obj.position is already the chain key every action rides.
+  const blockPosition = dfBlock.position ?? 0;
   const placements = [];
   const actionDoors = [];
   const flats = [];
@@ -334,6 +349,8 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           // nextKey/prevKey against those same keys - so doors join the
           // chain graph (Lock/Unlock/Open/Close ride the door's own action).
           position: obj.position,
+          // ROAD-B B4: RDBLayout.cs:242 - the door's serialized identity.
+          loadID: blockPosition + obj.position,
           startingLockValue: LOCK_VALUES[mr.triggerFlagStartingLock >> 4],
           action,
         });

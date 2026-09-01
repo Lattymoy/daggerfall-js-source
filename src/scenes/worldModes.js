@@ -123,7 +123,7 @@ import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../u
 import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
-import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
+import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
@@ -710,6 +710,20 @@ export function createWorldModes(host) {
   }
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
+  /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideTavern / IsPlayerInsideResidence
+   *  (PlayerEnterExit.cs:160-170). Plain auto-properties, "set upon entry"
+   *  by PlayerActivate.TransitionInterior (:1121-1122) - NOT live reads of
+   *  the current building, which is why they live beside the mode's own
+   *  state rather than being derived at every call.
+   *
+   *  VERBATIM QUIRK, preserved: DFU clears IsPlayerInsideTavern at BOTH
+   *  exits (:874 on the exterior transition, :1112 on the dungeon one) and
+   *  never clears IsPlayerInsideResidence at either - the residence latch
+   *  is only ever overwritten by the next TransitionInterior. It is benign
+   *  in DFU because its one consumer (PlayerEntity.cs:630) is gated on
+   *  IsPlayerInside first, but it is the behaviour, so it is the port. */
+  let _insideTavern = false;
+  let _insideResidence = false;
   // IS1: the entered exterior door - SetExteriorDoors (PlayerEnterExit
   // .cs:469) latches it through RespawnPlayer and TransitionInterior
   // so the save can carry the way back in (SerializablePlayer
@@ -3468,6 +3482,30 @@ export function createWorldModes(host) {
         // so a shop broken into after hours still sold at full price.
         if (interiorBuilding) interiorBuilding.insideOpenShop = insideOpenShop;
       }
+      // ROAD-B B4: the OTHER TWO latches PlayerActivate.TransitionInterior
+      // sets in the same breath as insideOpenShop -
+      //   playerEnterExit.IsPlayerInsideTavern    = RMBLayout.IsTavern(db.buildingType);
+      //   playerEnterExit.IsPlayerInsideResidence = RMBLayout.IsResidence(db.buildingType);
+      // (PlayerActivate.cs:1121-1122). Both were MISSING outright, so
+      // SpawnCityGuards' indoor arm (PlayerEntity.cs:628-641) could never
+      // recognise a tavern or a house and fell through to the exterior
+      // street pool. Like insideOpenShop they are "set upon entry" flags
+      // (PlayerEnterExit.cs:162-170) rather than live reads, and they
+      // ride the building record for the same reason its sibling does -
+      // SerializablePlayer.cs:220-221/:398-399 round-trips all three
+      // together, restoring rather than recomputing.
+      //
+      // The restore arm may recompute here without disagreeing with the
+      // save: unlike insideOpenShop, whose IsBuildingOpen term is a
+      // function of the HOUR at entry, IsTavern and IsResidence are pure
+      // functions of buildingType, and the restored record carries that
+      // buildingType. Same value either way.
+      _insideTavern = isTavern(interiorBuilding?.buildingType ?? BUILDING_TYPES.None);
+      _insideResidence = isResidence(interiorBuilding?.buildingType ?? BUILDING_TYPES.None);
+      if (interiorBuilding) {
+        interiorBuilding.insideTavern = _insideTavern;
+        interiorBuilding.insideResidence = _insideResidence;
+      }
       const _dict = townTalk?.factionDict ?? null;
       const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
         hour: _hour,
@@ -3758,10 +3796,11 @@ export function createWorldModes(host) {
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     exteriorDoor = null;       // IS1: ...and the way back in with them
-    // ROAD-B B1: the whole stack leaves with the interior, not just its
+// ROAD-B B1: the whole stack leaves with the interior, not just its
     // top - a rest suspended under a message box is a real occupant.
     interiorWindows.reconcile(interiorOverlay);
     interiorWindows.clear((w) => w.dispose?.());
+    _insideTavern = false;     // ROAD-B B4: PlayerEnterExit.cs:874 - the tavern latch alone (the residence latch is NOT cleared there; see its declaration)
     interiorOverlay = null;
     player.collider = baseCollider();
     // RepositionPlayer(Offset): the door centre is where DFU puts the
@@ -3897,6 +3936,7 @@ export function createWorldModes(host) {
         return false;
       }
       mode = 'dungeon';
+      _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:1112 - the dungeon transition clears the tavern latch too (and, verbatim, not the residence one)
       dungeonLoc = dfLocation;
       player.collider = ctx.collider;
       player.spawn(spawn[0], spawn[1], spawn[2]);
@@ -5962,6 +6002,7 @@ export function createWorldModes(host) {
         interiorWindows.reconcile(interiorOverlay);
         interiorWindows.clear((w) => w.dispose?.());
         interiorCtx = null; interiorBuilding = null; interiorOverlay = null; exteriorDoor = null;
+        _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
       }
       if (dungeonCtx) {
         teardownDungeonQuestFlats();
@@ -6019,6 +6060,36 @@ export function createWorldModes(host) {
     // lock under the window that is about to be painted again.
     get overlayHeld() { return (mode === 'interior' && (!!interiorOverlay || interiorWindows.depth() > 0)) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
     get transitioning() { return transitioning; },
+    /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideDungeonCastle (:136-139),
+     *  which GameManager.IsPlayerInsideCastle (GameManager.cs:420-423) is
+     *  a bare pass-through of. The flag is written in exactly one place -
+     *  PlayerEnterExit.Update :338 `isPlayerInsideDungeonCastle =
+     *  playerDungeonBlockData.CastleBlock` - and cleared with the dungeon
+     *  (:344 off-block, :488 and :1194 on the exterior transition), so it
+     *  is per-BLOCK and it is false everywhere outside a dungeon. That is
+     *  the whole law: there is no building-side castle check anywhere in
+     *  DFU (a palace INTERIOR reaches TalkManager through buildingType
+     *  Palace, not through this flag).
+     *
+     *  The mode host is where the two halves meet - the dungeon context
+     *  answers which block the player stands in, the mode answers whether
+     *  a dungeon stands at all - so it publishes the flag once and the
+     *  world host's talk/quest mounts read it instead of hardcoding false. */
+    get insideDungeonCastle() { return mode === 'dungeon' ? (dungeonCtx?.inCastle ?? false) : false; },
+    /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideTavern (:162-164) and
+     *  IsPlayerInsideResidence (:168-170), latched at the door by
+     *  PlayerActivate.TransitionInterior (:1121-1122). Published raw -
+     *  the consumer (SpawnCityGuards, PlayerEntity.cs:628-641) ANDs them
+     *  with IsPlayerInside itself, and the residence latch outlives its
+     *  interior by DFU's own omission, so a getter that quietly folded
+     *  in `mode === 'interior'` would not be the flag. */
+    get insideTavern() { return _insideTavern; },
+    get insideResidence() { return _insideResidence; },
+    /** PlayerEnterExit.IsPlayerInsideOpenShop (:152-157), the third of
+     *  the trio - already latched onto the building record at AUDIT 26
+     *  F066; published here so the guard gate can read all three the way
+     *  PlayerEntity.cs:630 does. */
+    get insideOpenShop() { return !!interiorBuilding?.insideOpenShop; },
     get interiorCtx() { return interiorCtx; },
     get dungeonCtx() { return dungeonCtx; },
     // Q4-v: the world seam's playerInside half + the machine's

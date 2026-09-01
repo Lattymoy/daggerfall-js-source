@@ -1451,6 +1451,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
+    // ROAD-B B4: PlayerEnterExit's three entry latches, for SpawnCityGuards'
+    // indoor gate (PlayerEntity.cs:628-641). The mode host owns all three
+    // (it is the one that runs TransitionInterior); this host owns the
+    // exterior pool the gate decides against.
+    enterExitFlags: () => ({
+      isPlayerInside: (modes?.mode ?? 'exterior') !== 'exterior',
+      insideOpenShop: modes?.insideOpenShop ?? false,
+      insideTavern: modes?.insideTavern ?? false,
+      insideResidence: modes?.insideResidence ?? false,
+    }),
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
@@ -4420,7 +4430,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentMapId: () => _questLoc()?.mapTableData?.mapId ?? 0,
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     isPlayerInsideBuilding: () => (modes?.mode ?? 'exterior') === 'interior',
-    isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
+    isPlayerInsideCastle: () => modes?.insideDungeonCastle ?? false,   // ROAD-B B4: GameManager.IsPlayerInsideCastle, LIVE (see the note on the pipeline mount below)
     currentBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? -1,
     getBuildingList: () => townTalk.directory,
     exteriorBuildings: () => _questLoc()?.exterior?.buildings ?? null,
@@ -4458,7 +4468,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (8076/8077) named nobody while still spending the seeded roll.
     fullName: (nameBank, gender) => nameHelperFullName(nameBank, gender),
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
-    isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
+    isPlayerInsideCastle: () => modes?.insideDungeonCastle ?? false,   // ROAD-B B4: GameManager.IsPlayerInsideCastle, LIVE (see the note on the pipeline mount below)
     guildMemberships: () => Object.entries(activeMemberships(playerEntity))
       .map(([factionId]) => ({ factionId: Number(factionId) })),
     guildOfBuildingFaction: () => null,   // TK-v wires the guild MCP
@@ -4570,7 +4580,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     expandQuestTokens,
     getNewsOrRumors: (session) => rumorMill.getNewsOrRumors(session),
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
-    isPlayerInsideCastle: () => false,
+    /** ROAD-B B4: GameManager.IsPlayerInsideCastle (GameManager.cs:420-423)
+     *  is PlayerEnterExit.IsPlayerInsideDungeonCastle and nothing else, and
+     *  that flag is `playerDungeonBlockData.CastleBlock` for the block the
+     *  player is standing in (PlayerEnterExit.cs:338). All four talk/quest
+     *  mounts in this host hardcoded `false`, so every arm that forks on it
+     *  took its outside-a-castle branch forever:
+     *    - GetAnswerWhereAmI's dungeon arm (TalkManager.cs:1539) - the
+     *      Castle Daggerfall throne room answered as if it were a street;
+     *    - the castle QUESTOR door (TalkManager.cs:2558) and its two
+     *      `Work`-topic forks (:3161-3164, :3451-3453);
+     *    - DaggerfallQuestOfferWindow's two castle carve-outs (:34, :86),
+     *      which reach here through the bridge's offer flow.
+     *  The mode host publishes it (worldModes.insideDungeonCastle); the
+     *  dungeon context has computed the block flag since AUDIT 21. */
+    isPlayerInsideCastle: () => modes?.insideDungeonCastle ?? false,
     isPlayerInsideDungeon: () => (modes?.mode ?? 'exterior') === 'dungeon',
     currentLocationName: () => _questLoc()?.name ?? '',
     currentRegionName: () => questWorld.currentRegionName(),
@@ -4912,9 +4936,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { guildGroup: g.guildGroup, rank: m?.rank ?? 0, power: _questStore()?.dict.get(g.factionId)?.power ?? 0, isNonMember: !m };
     },
     regionPriceAdjustment: () => regionPriceAdjustment(playerEntity, _questLoc()?.regionIndex ?? 0),
-    // the offer flow's own seams: this host never stands inside a
-    // castle interior (FLAGGED with the palace blocks).
-    isPlayerInsideCastle: () => false,
+    // ROAD-B B4: the offer flow's own seam. The FLAG that stood here
+    // ("this host never stands inside a castle interior") named the
+    // wrong question - IsPlayerInsideCastle is not a building-side
+    // check at all, it is the DUNGEON block's CastleBlock flag
+    // (GameManager.cs:420-423 -> PlayerEnterExit.cs:136-139/:338), and
+    // this host mounts the dungeon. Hardcoded false, GetQuest's castle
+    // arm (DaggerfallQuestOfferWindow.cs:34) removed the questor from
+    // every castle NPC it offered from, and the failed-get-quest
+    // message (:86, "do not appear inside castles in classic") printed
+    // in the throne room.
+    isPlayerInsideCastle: () => modes?.insideDungeonCastle ?? false,
     getGuildFactionId: (g) => guildFactionIdOfGroup(g),
     // the notebook's headers (DaggerfallDateTime's two shapes, the
     // gameDate laws; CityName is the current location's name with the
@@ -5033,6 +5065,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so the interior pool asks through here instead of building a
     // second copy. Answers TRUE when the surrender box took the blow.
     onGuardHit: (dmg, apply) => arrestFlow.onGuardHit(dmg, apply),
+
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     // S40: IsPlayerInTown() with BOTH flags at their defaults - the

@@ -209,6 +209,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     setGlobalVar: (index, value) => { opts.questBridge?.machine?.globalVars?.set(index, value); },
     playerLevel: () => playerEntity.level,
     lockpickSkill: () => skillValue(playerEntity, SKILLS.Lockpicking),   // R1: GetLiveSkillValue at attempt time
+    // ROAD-B B4: CastleDaggerfallMagicDoorsSpecialOpenHack's three
+    // ambient reads (DaggerfallAction.cs:261-263). This host IS the
+    // dungeon, so IsPlayerInsideDungeon is true by construction; the
+    // teleport latch is the entity field TeleportAnchor writes
+    // (PlayerEnterExit.PlayerTeleportedIntoDungeon), and the map id is
+    // the location's own MapTableData.MapId.
+    magicDoorsContext: () => ({
+      playerTeleportedIntoDungeon: !!playerEntity.playerTeleportedIntoDungeon,
+      isPlayerInsideDungeon: true,
+      currentMapId: dfLocation?.mapTableData?.mapId ?? 0,
+    }),
   });
   // A1: sound. DAGGER.SND loads through the data seam; the context
   // starts on the first gesture (mobile discipline). Dungeon doors
@@ -372,6 +383,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // reads currentLockValue).
       const o = actions.addDoor(cpu, matrix, {
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
+        loadID: d.loadID,   // ROAD-B B4: RDBLayout.cs:242 - the Castle Daggerfall foyer hack names its two doors by this
       });
       dynamicDraws.push({ gpu, object: o });
       automapEntries.push({ key: o.key, aabb: worldAabb(cpu.positions, matrix) });   // A1: doors reveal at their CLOSED bounds

@@ -200,8 +200,21 @@ export const TYPE_12_ANSWERS = Object.freeze({
 const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704: 7705 });
 const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 
+// ---- ROAD-B B4: CastleDaggerfallMagicDoorsSpecialOpenHack ----
+// DaggerfallAction.cs:256-273, verbatim. The two magically-held foyer
+// doors of Castle Daggerfall are named by LoadID ("based on unique
+// position in gamedata and always the same"), and DFU's own comment
+// says why the check sits inside Receive: "there's no really satisfying
+// way to intercept and change action behaviour directly on these doors".
+// The purpose is narrow - a player TELEPORTED into the dungeon (the
+// recall/anchor arm, not the front door) can land behind the held doors
+// and be shut in; classic leaves you talking to the guard through the
+// crack. So: still show the "magically held" line, but open anyway.
+export const CASTLE_DAGGERFALL_MAP_ID = 1291010263;              // PlayerGPS.CurrentLocation.MapTableData.MapId
+export const CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS = Object.freeze([29331574, 29331622]);
+
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random, insideDungeonCastle = () => false } = {}) {
+constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random, insideDungeonCastle = () => false, magicDoorsContext = null } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
@@ -218,13 +231,21 @@ export class ActionSystem {
     this._playerLevel = playerLevel;
     this._lockpickSkill = lockpickSkill;   // R1: GetLiveSkillValue(Lockpicking), the scene's live read
     this._rolls = rolls;
-    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, read by
+// ROAD-B (b2): PlayerEnterExit.IsPlayerInsideDungeonCastle, read by
     // AttemptBash's tail (DaggerfallActionDoor.cs:220-221) and by
-    // nothing else in this file. DFU reads the ambient
-    // GameManager.Instance; the port hands it in beside the other
-    // scene reads. Absent (an interior host, a bare pin) it answers
-    // false, which is what a building interior IS.
+    // nothing else in this file. Absent (an interior host, a bare pin)
+    // it answers false, which is what a building interior IS.
     this._insideDungeonCastle = insideDungeonCastle;
+    // ROAD-B B4: the three ambient reads
+    // CastleDaggerfallMagicDoorsSpecialOpenHack makes off the singletons
+    // (DaggerfallAction.cs:261-263): PlayerEnterExit
+    // .PlayerTeleportedIntoDungeon, PlayerEnterExit.IsPlayerInsideDungeon
+    // and PlayerGPS.CurrentLocation.MapTableData.MapId. Handed in as one
+    // thunk -> { playerTeleportedIntoDungeon, isPlayerInsideDungeon,
+    // currentMapId }, the damage/magicka-sink shape. Unset (an interior
+    // host, a bare pin) the hack cannot fire - which is correct on both:
+    // an interior is not a dungeon, so DFU's second term is false there.
+    this._magicDoorsContext = magicDoorsContext;
     // Scene seams (P10/U6/A2):
     //   resolvePosition(ns, positionKey) -> { pos: [x,y,z], yawDeg }
     //     (teleport destinations - actionless objects live only in
@@ -435,7 +456,8 @@ export class ActionSystem {
    *  reaches it; action is the door's OWN record (fires on player
    *  toggle through the Door trigger gate, verbatim
    *  ExecuteActionOnToggle); startingLockValue seeds
-   *  currentLockValue (P10). */
+   *  currentLockValue (P10); loadID is the serialized identity
+   *  (ROAD-B B4, RDBLayout.cs:242). */
   addDoor(cpu, baseMatrix, opts = {}) {
     const ns = opts.ns ?? 0;
     const key = opts.positionKey != null ? `act:${ns}:${opts.positionKey}` : `door:${this._doorCount++}`;
@@ -471,6 +493,12 @@ export class ActionSystem {
       triggerFlag: a ? (a.triggerFlag ?? TRIGGER_FLAGS.None) : TRIGGER_FLAGS.None,
       startingLockValue: opts.startingLockValue ?? 0,
       currentLockValue: opts.startingLockValue ?? 0,
+      // ROAD-B B4: DaggerfallActionDoor.LoadID / DaggerfallAction.LoadID -
+      // blockData.Position + obj.Position, minted by rdbLayout. Both DFU
+      // components carry the SAME value (RDBLayout.cs:1179 and :967 off
+      // the one `loadID` local), so one field answers for both here. 0 is
+      // DFU's own not-serialized default (interior doors, bare pins).
+      loadID: opts.loadID ?? 0,
       // R1: AttemptLockpicking's retry gate (DaggerfallActionDoor.cs:36
       // FailedSkillLevel) - the skill the player FAILED at; a retry
       // waits for the live skill to differ. DFU's own field comment
@@ -543,12 +571,51 @@ export class ActionSystem {
    *  trigger type must be accepted by the object's TriggerFlag. */
   receive(o, triggerType = 'ActionObject') {
     if (this._isPlaying(o)) return;
+    // ROAD-B B4: DaggerfallAction.cs:183 - the hack runs AFTER the
+    // IsPlaying gate and BEFORE the trigger-flag switch, so it fires
+    // even for a trigger type this object's TriggerFlag would refuse.
+    this._castleDaggerfallMagicDoorsSpecialOpenHack(o);
     if (triggerType !== 'ActionObject') {
       const allowed = TRIGGER_GATE[o.triggerFlag ?? TRIGGER_FLAGS.None];
       if (!allowed || !allowed.includes(triggerType)) return;
     }
     o.activationCount = (o.activationCount ?? 0) + 1;   // verbatim: Receive increments, then Plays
     this._play(o);
+  }
+
+  /** ROAD-B B4: DaggerfallAction.CastleDaggerfallMagicDoorsSpecialOpenHack
+   *  (DaggerfallAction.cs:256-273), verbatim and in DFU's own order:
+   *
+   *    if (PlayerEnterExit.PlayerTeleportedIntoDungeon &&
+   *        PlayerEnterExit.IsPlayerInsideDungeon &&
+   *        PlayerGPS.CurrentLocation.MapTableData.MapId == 1291010263 &&
+   *        (loadID == 29331574 || loadID == 29331622))
+   *    {
+   *        DaggerfallActionDoor door = GetComponent<DaggerfallActionDoor>();
+   *        if (door && door.IsLocked && door.IsClosed)
+   *        { door.CurrentLockValue = 0; door.ToggleDoor(); }
+   *    }
+   *
+   *  The numeric tests come first and the component lookup last, which
+   *  is DFU's stated reason for putting the check on this path at all
+   *  ("very fast and doesn't require any scene searches"). `o.kind ===
+   *  'door'` IS the GetComponent - only addDoor mints a hinge-swinging
+   *  object with currentLockValue/state. IsLocked is currentLockValue >
+   *  0 and IsClosed is the SWING state 'start' (DaggerfallActionDoor.cs
+   *  :71-84), not the record's Move state. ToggleDoor() is called with
+   *  its default activatedByPlayer = false, so the unlocked door opens
+   *  without re-running the DoorText hold or the locked-door refusal. */
+  _castleDaggerfallMagicDoorsSpecialOpenHack(o) {
+    const ctx = this._magicDoorsContext?.();
+    if (!ctx) return;
+    if (!ctx.playerTeleportedIntoDungeon) return;
+    if (!ctx.isPlayerInsideDungeon) return;
+    if (ctx.currentMapId !== CASTLE_DAGGERFALL_MAP_ID) return;
+    if (!CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS.includes(o.loadID)) return;
+    if (o.kind !== 'door') return;                        // GetComponent<DaggerfallActionDoor>()
+    if (!(o.currentLockValue > 0 && o.state === 'start')) return;   // IsLocked && IsClosed
+    o.currentLockValue = 0;
+    this.toggleDoor(o);
   }
 
   /** @param selfToggle - true only on the ExecuteActionOnToggle path

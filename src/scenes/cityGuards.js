@@ -106,6 +106,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // carries the same dep and the same default: a host with no streamed
   // pixels never collects, which is a pixel that never leaves range.
   currentPixelKey = () => null,
+  // ROAD-B B4: PlayerEnterExit's three entry latches, for SpawnCityGuards'
+  // INDOOR arm (PlayerEntity.cs:628-641). Handed in raw -
+  // { isPlayerInside, insideOpenShop, insideTavern, insideResidence } - so
+  // the conjunction stays in this file with the rest of the law. A host
+  // with no interiors (the standalone exterior) answers null, which is
+  // that host's flags all false.
+  enterExitFlags = () => null,
   playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
@@ -259,6 +266,18 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // the indoor arm is the same either way, and the RETURN is
     // unconditional - a building whose door query fails spawns
     // nothing and still does NOT fall through to the street.
+    // ROAD-B (b2+b4 composed): PlayerEntity.cs:628-641's arm has two
+    // halves and each pool carries the one it can state exactly. A pool
+    // WITH interior-door reach (the mode machine's watch) spawns 2-5 at
+    // the lowest outer door; the STREET pool, told by enterExitFlags
+    // that the player is inside an open shop, tavern or residence,
+    // returns and spawns nobody - the C# return is unconditional, and
+    // the watch never comes through the wall.
+    const _ee = enterExitFlags?.();
+    if (!interior?.eligible && _ee && _ee.isPlayerInside
+        && (_ee.insideOpenShop || _ee.insideTavern || _ee.insideResidence)) {
+      return;
+    }
     if (interior?.eligible) {
       const door = findLowestOuterInteriorDoor(interior.doors, interior.origin);
       if (door) {
