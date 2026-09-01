@@ -511,7 +511,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
-// A5 - DaedraSeducerMobileBehaviour.Update (the dungeon pool's
+      // A5 - DaedraSeducerMobileBehaviour.Update (the dungeon pool's
       // law, one spelling): a MonoBehaviour Update that runs BEFORE
       // the anim step consumes the state it raises, keyed on
       // `enemySenses.Target == PlayerEntityBehaviour`.
@@ -519,10 +519,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // EnemyMotor.CanFly (:837-845) reads mobile.Enemy.Behaviour LIVE
       // - "This can change in the case of a transformed Seducer".
       if (f.seducer) f.ai.flies = f.mobile.basics.behaviour === 'Flying' || f.mobile.basics.behaviour === 'Spectral';
-      // S19 FreezeAnims: a paralysed foe HOLDS ITS FRAME - the dungeon
-      // pool's law, one spelling, in the pool that serves above ground
-      // and inside buildings.
-      f._mout = f.mobile.update(_fParalyzed ? 0 : dt, {
+      f._mout = f.mobile.update(dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,
         rangedStriking: strikeEdge && !!f.attack.firedRanged,
@@ -712,10 +709,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const out = [];
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
-// A5 - EntityConcealmentBehaviour.Update/MakeConcealed
-      // (:36-43, :56-62): a concealed non-player entity has its
-      // renderer DISABLED - sprite and all, so nothing of
-      // them reaches the frame.
+      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
+      // (:36-43, :56-62): "Handles magical concealment for entities
+      // other than player". A non-player entity whose
+      // IsMagicallyConcealed is true has its renderer DISABLED - any
+      // of the six flags, normal or true power. The entity keeps
+      // acting, it simply is not drawn. (The player's own concealment
+      // has no visual: DFU never disables the first-person view.)
       if (isMagicallyConcealed(f.entity)) continue;
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;

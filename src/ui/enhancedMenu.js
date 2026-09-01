@@ -988,27 +988,6 @@ function paneEnhanced(body) {
   if (armState.notes && armState.notes.length) {
     mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
   }
-  // MW-D45: WHERE THE ROUND HUNG, said out loud. getArrowBone has two
-  // branches and they place the arrow in completely different places -
-  // OpenMW issue 5642, which added the first one: "By default, OpenMW
-  // attaches arrow to the ArrowBone node from bow mesh... I suggest to
-  // check if 'Bip01 Arrow' bone exists in actors skeleton, if it is
-  // not, attach arrow to the ArrowBone as fallback." The skeleton bone
-  // is a MODDER'S opt-in for quiver-style fetching; vanilla has no such
-  // bone and always takes the bow mesh.
-  //
-  // The port recorded which branch won in arrowInfo.viaWeaponMesh from
-  // the day it was written and NOTHING EVER READ IT. Four rounds of
-  // "the arrow is in the wrong place" were spent guessing at a fact the
-  // rig already knew, because the only place it existed was a field on
-  // an object nobody printed. A value computed and never surfaced is
-  // not diagnostics, it is a comment.
-  if (armState.arrow) {
-    const a = armState.arrow;
-    mw.append(el('p', 'meta', `Arrow: ${a.name} on "${a.bone}" - ${a.viaWeaponMesh
-      ? 'the bow mesh\'s ArrowBone (vanilla)'
-      : 'this skeleton\'s own bone (the modded quiver branch)'}`));
-  }
   // MW-D33: WHAT YOU ARE WEARING, AND WHETHER THE RIG AGREES. One line
   // per equipped piece - the parts it dressed, or the reason it kept
   // its sprite - because "it doesn't show" must never again arrive

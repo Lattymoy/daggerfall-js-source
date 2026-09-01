@@ -201,7 +201,6 @@ async function boot(bsaB64, { esm = FIX.esm, weapon = null } = {}) {
     window.__arm = arm;
     window.__armRaw = built.ok ? built.arm : null;
     window.__cv = cv;
-    window.__fpViewport = fp.fpViewportSize;   // the target's size, from the module that draws it
     window.__frame = () => {
       // A neutral frame so drawCharacter's light caches are populated.
       const I = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
@@ -220,7 +219,9 @@ async function shoot(t) {
     window.__frame();
     arm.update(time.dt);
     const drew = arm.draw(window.__cv);
-    window.__vp = window.__fpViewport(window.__cv);
+    const wantW = window.__cv.clientWidth / 9; const wantH = window.__cv.clientHeight / 9;
+    const sc = Math.min(1, 512 / wantW, 512 / wantH);
+    window.__vp = { pw: Math.max(2, Math.round(wantW * sc)), ph: Math.max(2, Math.round(wantH * sc)) };
     const gl = window.__r.gl;
     const cs = window.__r._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);

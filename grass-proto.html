@@ -758,22 +758,7 @@ void main(){
   // nothing, because nothing in this depends on the camera any more.
   float snowSurf = snowD * uSnowFull;             // the SAME line the ground displaces to
   float trueH = aInst.z * (1.0 - drown * 0.9);
-  float h = trueH - snowSurf;
-  // PROTO-23 (Mac: the BLADES peek out of the snow, and have through
-  // every one of my last four attempts).
-  //
-  // HERE IT IS. Clamping the height to zero does NOT remove a buried
-  // blade - it FLATTENS it. Every vertex collapses onto the snow
-  // surface, but the blade's WIDTH offset is still applied, so what is
-  // left is a horizontal green sliver lying exactly coplanar with the
-  // ground, z-fighting the snow it is supposed to be under. A million
-  // of those is a green speckle across the whole field, and no amount
-  // of moving the snow line could ever have fixed it - I was making
-  // MORE blades flat, not fewer blades visible.
-  //
-  // A buried blade is GONE. It is culled outright, before it can
-  // contribute a single fragment.
-  if (h <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  float h = max(0.0, trueH - snowSurf);
   vT = aCorner.y;
   // the tip travels, the root does not: the offset is weighted by
   // height along the blade, squared, which is what a stalk does

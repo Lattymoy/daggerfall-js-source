@@ -79,37 +79,20 @@ import { skeletonSpaceMatrices, GRAPH_ROOT } from './mwSkin.js';
 export function findNodeByName(nif, name) {
   const want = String(name).toLowerCase();
   let found = null;
-  const walk = (ref, parents, isRoot = false) => {
+  const walk = (ref, parents) => {
     if (found) return;
     const rec = deref(nif, ref);
     if (!rec) return;
     // apply(osg::Geometry&) {} - a drawable is neither matched nor
     // descended into.
     if (rec.type === 'NiTriShape' || rec.type === 'NiTriStrips') return;
-    // MW-D49: RULE 58's FILTERS BELONG HERE TOO. FindByNameVisitor is an
-    // osg::NodeVisitor and it walks the BUILT SCENE - a graph the loader
-    // has already stripped of Bounding Box subtrees and RootCollisionNode
-    // subtrees, and in which hidden nodes carry the hidden mask. This
-    // walk reads the RAW PARSED NIF, where all of that is still present,
-    // so it could answer with a node the reference's search cannot see -
-    // a second "ArrowBone" inside collision geometry, say, or one under
-    // a subtree the loader drops. Same tree, or it is not the same
-    // search. flattenNif applies exactly these three (mwNifMesh.js
-    // :475-481) and is the other half of this pair.
-    if (!isRoot && String(rec.name || '').toLowerCase() === 'bounding box') return;
-    if (rec.type === 'RootCollisionNode') return;
-    if ((rec.flags & 0x0001) !== 0) return;
     if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }
     if (!rec.children) return;
     const chain = [...parents, rec];
     for (const child of rec.children) if (child >= 0) walk(child, chain);
   };
   for (const root of nif.roots ?? []) {
-    // RULE 58 (1) again: the guard is `args.mRootNode && ...` and
-    // mRootNode is null on the first call, so a NIF whose ROOT is named
-    // "Bounding Box" is NOT skipped - the same load-bearing oversight
-    // flattenNif reproduces.
-    if (root >= 0) walk(root, [], true);
+    if (root >= 0) walk(root, []);
     if (found) break;
   }
   return found;
