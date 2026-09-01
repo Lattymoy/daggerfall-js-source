@@ -1445,13 +1445,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and the spell still flies.
       weaponRig.castSpellAnim(sp?.rangeType);
     },
+    // A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
+    // saying the anchor machinery lived in the streaming host - true of
+    // the machinery, false as a refusal: this context is the one the
+    // STREAMING host mounts for dungeon mode too, so the line meant a
+    // Recall cast underground did nothing at all, anchor or teleport.
+    // The prompt is the outer host's (it owns the pixel teleport, the
+    // mode teardown and the dungeon mount the plan needs); the
+    // standalone ?dungeon probe passes none and keeps the honest
+    // refusal, which is the AUDIT 24 seam shape done deliberately.
+    //
     // hudText.add, not `say?.()`. There is no `say` in this scope — the
     // optional-call syntax made an undefined identifier look like a
     // guarded one, so it read as safe and was a ReferenceError waiting
     // for the first Recall cast in a standalone dungeon. Every other
     // line in this file speaks through hudText, including the one four
     // below it.
-    onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    onTeleport: () => {
+      if (opts.onTeleport) { opts.onTeleport(); return; }
+      hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)');
+    },
     // X9: the creature dispel. This host is where undead and daedra
     // actually live, so it is the one that matters. removeFoe IS
     // GameObject.Destroy - no corpse, no loot, no death - and

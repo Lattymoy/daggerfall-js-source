@@ -56,7 +56,11 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // that opens one, and CanRest's whole town half.
 import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
 import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
-import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
+import {
+  clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
+  createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
+} from '../systems/sceneCache.js';
+import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
@@ -1702,37 +1706,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         townTalk.say('You cannot concentrate on that right now.');
       }
     },
-    onTeleport: () => {
-      townTalk.showOverlay(new ChoiceWindow({
-        lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours
-        options: [
-          { code: 'KeyA', label: 'A - set anchor', action: () => {
-            const pf = walkMode && playerSpawned ? player.pos : cam.pos;
-            const wc = state.worldCoords(pf);
-            playerEntity.anchorPosition = {
-              mode: 'world-exterior', pixel: playerTravelPixel(),
-              nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
-            };
-          } },
-          { code: 'KeyT', label: 'T - teleport', action: () => {
-            const a = playerEntity.anchorPosition;
-            if (!a) { townTalk.say('You must set an anchor first.'); return; }   // key achorMustBeSet (4001), prose ours
-            if (a.mode !== 'world-exterior') { townTalk.say('(the anchor was set in another host - cross-host recall pends)'); return; }
-            (async () => {
-              if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior();
-              await _teleportToPixel(a.pixel.x, a.pixel.y);
-              const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
-              const ly = (a.y ?? 2) + state.compensation[1];
-              if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
-              cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
-              playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms
-              surfacePlayer();
-            })();
-          } },
-          { code: 'Escape', label: 'Esc - cancel', action: () => {} },
-        ],
-      }));
-    },
+    onTeleport: () => teleportPrompt(),
   });
   // E2: THE ENCHANTCTX MOUNT - the one place this host answers the
   // enchantment system's seams (setDefaultEnchantCtx folds under every
@@ -2531,6 +2505,38 @@ export async function bootWorld(canvas, renderer, params, status) {
    * run is tickWeather, because no time passed to tick.
    */
   let _teleporting = false;
+  /** A10 - THE EXTERIOR SCENE, cached and restored by name.
+   *
+   *  SaveLoadManager.CacheScene(StreamingWorld.SceneName) and its
+   *  partner RestoreCachedScene: the pair the ship arm wraps its
+   *  teleport in (TransportManager.cs:382-398) and the pair the
+   *  Teleport effect takes on the outside arms of its own
+   *  cross-context flow (Teleport.cs:147, :250). One definition, so
+   *  the two callers cannot key the same scene two different ways.
+   *
+   *  The port's exterior scene state is the loose piles, carried as
+   *  DFU carries them - LootContainerData_v1 entries stamped
+   *  LootContainerTypes.DroppedLoot (:558-566) - in NATIVE
+   *  coordinates, because a pile that came back in local ones would
+   *  land wherever the floating origin happened to be. Without the
+   *  pair, _teleportToPixel's teardown takes every pile with the
+   *  pixel and only a save could bring one back. */
+  const _sceneCache = () => (playerEntity.sceneCache ??= createSceneCache());
+  function cacheExteriorScene(pixel) {
+    cacheScene(_sceneCache(), worldSceneName(pixel.x, pixel.y), {
+      lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
+        .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: sp.y - state.compensation[1] })),
+    });
+  }
+  /** A scene never cached answers null and the arrival stands as the
+   *  streamer built it - which is every first visit. */
+  function restoreExteriorScene(pixel) {
+    const arrived = restoreCachedScene(_sceneCache(), worldSceneName(pixel.x, pixel.y));
+    if (!arrived) return false;
+    droppedLoot.restoreWorld(arrived.lootContainers,
+      (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+    return true;
+  }
   /** TR4: TransportManager's ship arm (:360-402). The decision is
    *  systems/ship.js; this is the host half - the teleport, the
    *  remembered position, and the fade DFU smashes to black. */
@@ -2551,10 +2557,219 @@ export async function bootWorld(canvas, renderer, params, status) {
     // landing stands in for it - FLAGGED for the first session with
     // ARENA2: confirm map pixels (2,2) and (5,5) carry no location.
     const localPos = t.reposition === REPOSITION.None ? t.restore.pos : null;
+    // A10 - THE SCENE CACHE ROUND THE TELEPORT (:382-388, :393-398).
+    // BOTH arms of the ship do the same three things in the same
+    // order: CacheScene(world.SceneName) with SceneName still naming
+    // the pixel you are LEAVING, the teleport, then
+    // RestoreCachedScene(world.SceneName) with SceneName now naming
+    // the pixel you have ARRIVED at. DFU's own comment says why the
+    // pair is safe here - "ship is special case, cache will not be
+    // cleared" - and the port already carries that half at the
+    // map-pixel seam below (the to/from-ship exception on
+    // clearSceneCache).
+    //
+    // Without it the port DECIDED but never CACHED: _teleportToPixel
+    // destroys every built pixel and collectPixel takes the loose
+    // piles with it, so a chest dropped on the dock was gone the
+    // moment you boarded and gone again when you came back. The pair
+    // makes the two pixels a hand-off - the departure's piles wait in
+    // the cache until the return, and the ship's own deck likewise.
+    //
+    // The port's exterior scene state is the loose piles, carried as
+    // DFU carries them: LootContainerData_v1 entries with
+    // LootContainerTypes.DroppedLoot (:558-566). NATIVE coordinates,
+    // because a pile that came back in local ones would land wherever
+    // the floating origin happened to be.
+    cacheExteriorScene(here);
     await _teleportToPixel(t.go.x, t.go.y, localPos);
+    restoreExteriorScene(t.go);
     if (t.restore) cam.yaw = t.restore.yaw;
     playerEntity.boardShipPosition = t.boardShipPosition;
     setTransportModeHere(t.mode);
+  }
+
+  // ---- A10 - THE RECALL ANCHOR, ACROSS CONTEXTS.
+  //
+  // Teleport.cs whole. The TP slice shipped the prompt, the anchor on
+  // the entity and the consume, and refused anything the player set
+  // anywhere but outdoors with a line saying cross-host recall
+  // pended. That refusal was most of the spell: Recall exists to
+  // bookmark the room you cleared out and come back to it.
+  //
+  // The law is systems/teleportAnchor.js - the anchor's shape,
+  // IsSameInterior, and the plan. This is the HOST half, and it is
+  // the only place in the port that can do it: every arm of the plan
+  // is a door this host already owns (the mode teardown, the pixel
+  // teleport, the interior re-entry the quickload uses, the dungeon
+  // mount the quest respawner uses), and none of them exist in the
+  // mounted modes.
+  /** SetAnchor (:100-117): the outer host's world half, the mounted
+   *  mode's inside half, one record. */
+  function setRecallAnchor() {
+    const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
+    const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+    // A DUNGEON's local frame is its own, so its world coordinates
+    // come from the streamer's pixel rather than the player's feet -
+    // "only one dungeon per map pixel allowed" (:211) makes the pixel
+    // the whole identity. Outside and inside a BUILDING the frame is
+    // the exterior's (P8's unified frame), so the feet answer.
+    const inDungeon = inside.worldContext === WORLD_CONTEXT.Dungeon;
+    const wc = inDungeon ? null : state.worldCoords(pf);
+    const pixel = inDungeon ? { x: state.current.x, y: state.current.y } : playerTravelPixel();
+    const corner = mapPixelToWorldCoords(pixel.x, pixel.y);
+    playerEntity.anchorPosition = makeAnchor({
+      worldContext: inside.worldContext,
+      pixel,
+      nativeX: wc ? wc.x : corner.x,
+      nativeZ: wc ? wc.z : corner.z,
+      y: pf[1] - state.compensation[1],
+      local: inside.local,
+      yaw: cam.yaw, pitch: cam.pitch,
+      buildingKey: inside.buildingKey,
+      interior: inside.interior,
+      // "restore world compensation height early before initworld ...
+      // Ensures exterior world level is aligned with building height
+      // at time of anchor" (:137-141) - the anchor carries the
+      // compensation it was set under.
+      worldCompensationY: state.compensation[1],
+    });
+  }
+
+  /** RestorePosition's landing, in the frame the arrival speaks.
+   *
+   *  A DUNGEON anchor's `local` IS the landing: a dungeon's frame is
+   *  its own, built at the same origin every mount, so the transform
+   *  written at anchor time is still valid at recall time.
+   *
+   *  EVERYTHING ELSE - outside and inside a building alike, because
+   *  P8's unified frame makes an interior position a plain world
+   *  position - lands off the NATIVE coordinates through the arrival
+   *  origin, which is the quickload's own law and the only shape that
+   *  survives a floating-origin recenter between the anchor and the
+   *  cast. */
+  const anchorLanding = (a) => {
+    if (a.insideDungeon && a.local) return [...a.local];
+    const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
+    return [lx, (a.y ?? 2) + state.compensation[1], lz];
+  };
+
+  let _recalling = false;
+  /** TeleportPlayer (:119-164) + the respawner's tail (:228-256). */
+  async function recallToAnchor() {
+    if (_recalling) return;
+    const anchor = playerEntity.anchorPosition;
+    const plan = teleportPlan(anchor, {
+      ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
+      pixel: playerTravelPixel(),
+    });
+    // "Anchor must be set" - the 4001 box (:268-275). The cast is
+    // spent either way; DFU refunds nothing.
+    if (!plan) { townTalk.say('You must set an anchor first.'); return; }
+    _recalling = true;
+    try {
+      if (plan.kind === 'same-interior') {
+        // ":129-134 - Just need to move player." Nothing is torn down
+        // and nothing is loaded: the room you are standing in IS the
+        // anchor's room.
+        modes?.setPlayerLocalPosition?.(anchorLanding(anchor));
+        cam.yaw = plan.yaw; cam.pitch = plan.pitch;
+        playerEntity.playerTeleportedIntoDungeon = plan.teleportedIntoDungeon;   // :216, the dungeon arm alone
+        playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms (:133)
+        surfacePlayer();
+        return;
+      }
+      // "Cache scene before departing" (:145-151), the three-way arm.
+      // Outside: the streaming scene by name. Inside a building:
+      // the interior, which forceExitToExterior's own cacheScene arm
+      // writes (PlayerEnterExit.cs:860, the same write the real door
+      // makes). Inside a dungeon: NOTHING, because DFU takes
+      // TransitionDungeonExteriorImmediate there and dungeons are not
+      // scene-cached at all.
+      if (plan.cacheScene === 'exterior') cacheExteriorScene(playerTravelPixel());
+      if ((modes?.mode ?? 'exterior') !== 'exterior') {
+        modes?.forceExitToExterior({ cacheScene: plan.cacheScene === 'building' });
+      }
+      const a = plan.anchor;
+      await _teleportToPixel(a.pixel.x, a.pixel.y);
+      // RestorePositionHelper's three arms (PlayerEnterExit.cs
+      // :622-655), in its own order: dungeon first, then building
+      // with doors, then outside.
+      let landed = false;
+      if (plan.arrive === 'dungeon') {
+        // The dungeon mount - StartDungeonInterior through the ONE
+        // door the quest respawner uses (:626-630 RespawnPlayer with
+        // insideDungeon true). The anchor's local transform lands
+        // after it, which is the respawner's RestorePosition (:242).
+        landed = !!(await modes?.startInDungeon?.());
+        if (landed) {
+          modes.setPlayerLocalPosition(anchorLanding(a));
+        } else {
+          // No entrance at the anchor's pixel: DFU's "all else fails"
+          // exterior landing (:645-655), the same fallback the quest
+          // respawner takes.
+          townTalk.say('The way underground is closed. Repositioning player.');
+        }
+      } else if (plan.arrive === 'building') {
+        // ":632-643 - Start in building", off the anchor's own
+        // exteriorDoors, through the identical seam the quickload
+        // re-entry uses. A door that cannot be found is DFU's
+        // reposition arm (:615-620) - say the line and keep the
+        // teleport's landing, never the inside position on the
+        // outside collider.
+        landed = !!(await modes?.restoreInterior?.(a.interior, anchorLanding(a)));
+        if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
+      }
+      if (landed) {
+        cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+      } else if (plan.arrive !== 'dungeon') {
+        // The exterior landing: the anchor's native coordinates back
+        // through the arrival origin, the quickload's own shape.
+        const [lx, ly, lz] = anchorLanding(a);
+        if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+        cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+      }
+      // A dungeon anchor whose entrance could not be found keeps
+      // _teleportToPixel's own landing: its stored height is in the
+      // DUNGEON's frame and means nothing on the terrain, so writing
+      // it here would drop the player through the world. DFU's
+      // "all else fails" arm respawns at the world coordinates and
+      // FixStanding snaps it; the pixel teleport already did both.
+      // "Restore final position and unwire event" (:242) - the pose
+      // rides the transform, exactly as RestorePosition sets it.
+      cam.yaw = a.yaw ?? cam.yaw; cam.pitch = a.pitch ?? cam.pitch;
+      // ":246 - Set 'teleported into dungeon' flag when anchor is
+      // inside a dungeon." The flag lives on the entity beside the
+      // anchor; its save-envelope field is the import lane's.
+      playerEntity.playerTeleportedIntoDungeon = plan.teleportedIntoDungeon;
+      // "Restore scene cache on arrival" (:248-252). The condition is
+      // the LANDING, not the anchor - `if
+      // (!playerEnterExit.IsPlayerInside)` - so a building or dungeon
+      // arm that repositioned outside restores the exterior scene
+      // too, which is right: that is where the player ended up. That
+      // is also why teleportPlan carries no field for it; only this
+      // side knows. The building arm needs nothing here anyway:
+      // restoreInterior runs RestoreCachedScene itself, at the moment
+      // the building's key is known (PlayerEnterExit.cs:804).
+      if (!landed) restoreExteriorScene(a.pixel);
+      playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms
+      surfacePlayer();
+    } finally {
+      _recalling = false;
+    }
+  }
+
+  /** PromptPlayer (:81-98): the 4000 anchor/teleport box, with
+   *  AllowCancel - DFU's own QoL, and its own comment says the cast
+   *  is not refunded. Every host routes its Recall arrival here. */
+  function teleportPrompt() {
+    townTalk.showOverlay(new ChoiceWindow({
+      lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours
+      options: [
+        { code: 'KeyA', label: 'A - set anchor', action: () => setRecallAnchor() },
+        { code: 'KeyT', label: 'T - teleport', action: () => { recallToAnchor(); } },
+        { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+      ],
+    }));
   }
 
   async function teleportTo(pick) {
@@ -4609,6 +4824,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // V2e: worldModes re-registers the infection host on entry, so the
     // cemetery arm rides the bag or it dies at that re-registration.
     transferToCemetery: transferToCemeteryArm,
+    // A10: the Recall prompt, handed DOWN so the dungeon context this
+    // host mounts raises the same 4000 box (Teleport.cs:81-98) rather
+    // than its standalone refusal. The cast engine in THIS host
+    // already routes to it; dungeon mode runs the context's own.
+    onTeleport: () => teleportPrompt(),
     canvas, renderer, player, cam, keys, latch, blocks,
     // V5: PlayerGPS, for CanRest. Only this host knows what kind of
     // place the player is standing in, and the rest law's first two

@@ -35,7 +35,7 @@ import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } 
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
@@ -190,6 +190,7 @@ import {
   createSceneCache, cacheScene, restoreCachedScene,
   interiorSceneName, worldSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene, removePermanentScene,
 } from '../systems/sceneCache.js';
+import { WORLD_CONTEXT } from '../systems/teleportAnchor.js';   // A10: SetAnchor's world context, one enum for the three hosts
 // S40: resting where the player has a claim - the rented-room finder
 // the tavern rents through, and FightersGuild.CanRest.
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
@@ -1922,6 +1923,22 @@ export function createWorldModes(host) {
     return { lootContainers, actionDoors, droppedPiles };
   }
 
+  /** IS1's two fields - SetExteriorDoors' door identity and the
+   *  building discovery record - hoisted (A10) because the SAVE
+   *  writes the live scene beside them and the ANCHOR must not
+   *  (Teleport.cs:107-112 reads the pair alone). */
+  function interiorIdentity() {
+    return {
+      door: {
+        blockIndex: exteriorDoor.blockIndex,
+        recordIndex: exteriorDoor.recordIndex,
+        doorIndex: exteriorDoor.doorIndex,
+        buildingKey: interiorBuilding?.buildingKey ?? 0,
+      },
+      building: interiorBuilding ? { ...interiorBuilding } : null,
+    };
+  }
+
   /** CacheScene on the way OUT (PlayerEnterExit.cs:860). */
   function cacheInteriorScene() {
     const name = currentInteriorScene();
@@ -3601,6 +3618,13 @@ export function createWorldModes(host) {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
         dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject'), useMagicItem: (item) => host.useMagicItem?.(item),
+          // A10: the Recall prompt (Teleport.cs:81-98). The outer host
+          // owns it - the plan's arms are its pixel teleport, its mode
+          // teardown and its dungeon mount - so a cast underground in
+          // the STREAMING host raises the same 4000 box as one cast in
+          // the street. The standalone ?dungeon probe passes none and
+          // the context keeps its own refusal.
+          onTeleport: host.onTeleport ? () => host.onTeleport() : null,
           foes: host.foes, playerClass: host.playerClass,
           playerSpell: host.playerSpell, playerWeapon: host.playerWeapon,
           // AUDIT 24 (the seven-slice sweep): THE OUTER HOST OWNS
@@ -4179,7 +4203,10 @@ export function createWorldModes(host) {
       renderer.setWindowEmission(windowEmissionRGB('day'));
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
       renderer.setPointLights(
-        withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges),
+        // A10: DungeonLightHandler's XZ block range culls first, the
+        // 16-slot shader cap picks from what survives (dungeonLights.js
+        // carries the composition and why that order).
+        withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 the Light effect's candle; T1 the torch
         new Float32Array(DUNGEON_LIGHT_COLOR));
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
@@ -5587,6 +5614,18 @@ export function createWorldModes(host) {
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     },
+    /** A10: RestorePosition's inside arm - `transform.position = the
+     *  saved value`, RAW. Distinct from setPlayerScenePosition above,
+     *  which parents a MARKER's block-local point into the mounted
+     *  frame: a Recall anchor was taken from `player.pos`, so it is
+     *  already in that frame and parenting it a second time would
+     *  land the player one building offset away from where they set
+     *  it. Same distinction the interior save half draws (IS1's
+     *  `restore.pos` lands raw over the door landing). */
+    setPlayerLocalPosition(p) {
+      player.spawn(p[0], p[1], p[2]);
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+    },
     /** TP-slice: the Teleport effect leaves ANY mode - the exit
      *  cores of the door flows minus the landing (the caller owns
      *  the spawn; DFU's cross-scene arm transitions immediately,
@@ -5748,14 +5787,54 @@ export function createWorldModes(host) {
     interiorSaveData() {
       if (mode !== 'interior' || !exteriorDoor) return null;
       cacheInteriorScene();
-      return {
-        door: {
-          blockIndex: exteriorDoor.blockIndex,
-          recordIndex: exteriorDoor.recordIndex,
-          doorIndex: exteriorDoor.doorIndex,
+      return interiorIdentity();
+    },
+    /** A10: the SAME two fields, with NO scene write. SetAnchor
+     *  (Teleport.cs:107-112) reads ExteriorDoors and
+     *  BuildingDiscoveryData and nothing else - it is not a save, it
+     *  is a bookmark, and caching the live scene at the moment you
+     *  drop one would hand the next real exit a stale entry to
+     *  restore. Null anywhere but interior mode. */
+    interiorAnchorData() {
+      return mode === 'interior' && exteriorDoor ? interiorIdentity() : null;
+    },
+    /** A10 - SetAnchor's inside half (Teleport.cs:100-117), whichever
+     *  mode is mounted. The OUTER host owns the exterior arm and the
+     *  world coordinates; this answers the two things only the mounted
+     *  mode knows - which context the player stands in, and where they
+     *  stand inside it (the scene-local transform RestorePosition
+     *  writes back raw on the way home).
+     *
+     *  A DUNGEON's local frame is ITS OWN and never moves, so `local`
+     *  is the whole landing there. A BUILDING's is the exterior's
+     *  (P8's unified frame), which the floating origin shifts under
+     *  the player - so an interior anchor carries NO local position
+     *  and lands off its native world coordinates like every other
+     *  above-ground record in this port. Storing the live `player.pos`
+     *  there would land the player wherever the origin happened to be
+     *  at anchor time. */
+    anchorContext() {
+      if (mode === 'interior') {
+        return {
+          worldContext: WORLD_CONTEXT.Interior,
+          local: null,
           buildingKey: interiorBuilding?.buildingKey ?? 0,
-        },
-        building: interiorBuilding ? { ...interiorBuilding } : null,
+          interior: interiorIdentity(),
+        };
+      }
+      if (mode === 'dungeon') {
+        return { worldContext: WORLD_CONTEXT.Dungeon, local: [...player.pos], buildingKey: 0, interior: null };
+      }
+      return { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
+    },
+    /** A10: PlayerEnterExit's two live flags (IsPlayerInsideBuilding /
+     *  IsPlayerInsideDungeon), which IsSameInterior asks for by name
+     *  (:193, :197, :209). The outer host holds the map pixel. */
+    insideContext() {
+      return {
+        insideBuilding: mode === 'interior',
+        insideDungeon: mode === 'dungeon',
+        buildingKey: mode === 'interior' ? (interiorBuilding?.buildingKey ?? 0) : 0,
       };
     },
     /** IS1 - the load re-entry (the Respawner's building arm,

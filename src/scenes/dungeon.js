@@ -18,7 +18,7 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
@@ -611,7 +611,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // boundary the way the load-time write never could.
     renderer.setLighting(new Float32Array(ctx.ambient), 0);
     renderer.setPointLights(
-      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
+      // A10: DungeonLightHandler's XZ block range culls first, the
+      // 16-slot shader cap picks from what survives (dungeonLights.js
+      // carries the composition and why that order).
+      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
