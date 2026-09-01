@@ -2013,13 +2013,15 @@ void main(){ o = vec4(texture(uArr, vec3(vUV, 0.0)).rgb, 1.0); }`;
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         const vao = gl.createVertexArray();
-        gl.bindVertexArray(vao);
+        // EV6's law: every VAO bind in this file goes through _bindVao,
+        // or the shadow it keeps stops matching the driver's state.
+        this._bindVao(vao);
         const buf = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buf);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
         gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-        gl.bindVertexArray(null);
+        this._bindVao(null);
         this._tileProbe = { prog, fbo, rt, vao, loc: gl.getUniformLocation(prog, 'uArr') };
       }
       const p2 = this._tileProbe;
@@ -2035,11 +2037,16 @@ void main(){ o = vec4(texture(uArr, vec3(vUV, 0.0)).rgb, 1.0); }`;
       gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
       gl.clearColor(1, 0, 1, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(p2.prog);
+      this._use(p2.prog);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
       gl.uniform1i(p2.loc, 0);
       this._bindVao(p2.vao);
+      // AUDIT 39 F50's law: every draw in this file reports. This one is
+      // a LOAD-TIME probe rather than a frame's work, so it counts and
+      // is named - a draw the counter cannot see makes EV3's culling
+      // measurements a lie, and an uncounted probe is still a draw.
+      this.stats.draws++;
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       const px = new Uint8Array(4);
       gl.readPixels(2, 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
