@@ -149,6 +149,7 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
 import { pickActivatable } from '../player/activate.js';   // PX21c: the hover runs the take's own pick
 import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
 import { isEnhanced } from '../systems/uiSkin.js';
+import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 
 
 
@@ -2635,6 +2636,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return null;
   }
+  /** ROAD-B (b3): UnderwaterFog wants blockWaterLevel RAW - the RDB
+   *  short PlayerEnterExit.cs:337 stores and passes to UpdateFog
+   *  (:351), not the world Y above. 10000 is DFU's "no water in this
+   *  block" sentinel (:343) and is passed through unchanged, because
+   *  UpdateFog's own arithmetic turns it into a threshold 250 units
+   *  under the deepest floor and answers "dry" without a special case.
+   *
+   *  Off every block DFU reports playerBlockIndex == -1 and simply
+   *  does not call UpdateFog that frame (:349-352); null says so. */
+  function blockWaterLevelAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return b.layout.waterLevel;
+      }
+    }
+    return null;
+  }
+  // ROAD-B (b3): the green murk. UnderwaterFog is a per-PlayerEnterExit
+  // instance in DFU (constructed once at Start, :322) because its
+  // backup/restore is stateful - so it is constructed once here, per
+  // dungeon context, and both dungeon hosts share it.
+  const _underwaterFog = new UnderwaterFog();
+  /** UnderwaterFog.UpdateFog's call site (PlayerEnterExit.cs:349-352):
+   *  every frame the player is inside a dungeon and over a block.
+   *  `base` is the fog the host would otherwise draw with (DFU's
+   *  RenderSettings at the moment of the call), and the return is what
+   *  it should draw with instead - null when there is no block under
+   *  the player, which is the frame DFU skips. */
+  function underwaterFogSettings(camY, playerFeet, base) {
+    const level = blockWaterLevelAt(playerFeet[0], playerFeet[2]);
+    if (level == null) return null;
+    return _underwaterFog.updateFog(level, camY, base);
+  }
   /** AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle.
    *
    *      isPlayerInsideDungeonCastle = playerDungeonBlockData.CastleBlock;
@@ -3603,6 +3637,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
     waterSurfaceYAt,
+    // ROAD-B (b3): UnderwaterFog.UpdateFog, hosted. Hosts call it with
+    // the camera Y, the player's feet and the fog they were about to
+    // set, and apply what comes back.
+    underwaterFogSettings,
     // P11: the motor-mode effect consumers (Levitate 14,255; the S8
     // waterWalking flag lands its swimmer).
     playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),

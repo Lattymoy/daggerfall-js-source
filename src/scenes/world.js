@@ -148,6 +148,8 @@ import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, c
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
+import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
+import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
@@ -2438,6 +2440,36 @@ export async function bootWorld(canvas, renderer, params, status) {
     return built_.tilemap[tx + ty * TERRAIN_TILE_DIM];
   };
   const footsteps = new FootstepMachine();   // FS-slice
+  /** ROAD-B (b3): PlayerMotor.Update's three exterior surface reads,
+   *  run together the way DFU runs them (:367-369) - one downward
+   *  raycast from the controller centre plus one PlayerTileMapIndex.
+   *
+   *  The raycast is what stops a ship, a bridge or a levitating player
+   *  from swimming while merely ABOVE water (:501-503), and the port's
+   *  two surfaces map onto Unity's two straight across: the terrain is
+   *  this host's `heightAt` floor (DaggerfallTerrain, no triangles),
+   *  and every building and model is a collider mesh bucket (the
+   *  StaticGeometry tag, GameObjectHelper.cs:430-435).
+   *
+   *  playerGroundTile above is the tilemap half and already carries
+   *  the floating origin; it answers null off a built pixel, which
+   *  playerTileMapIndex reads as DFU's -1. */
+  const _SURFACE_DOWN = [0, -1, 0];
+  const exteriorSurfaceNow = () => {
+    const cy = player.pos[1] + player.height / 2;   // transform.position on a CharacterController
+    const rayDistance = rayDistanceFor(isOnFoot(player.transportMode));
+    return exteriorSurfaces({
+      inside: false,
+      rawTile: playerGroundTile(),
+      waterWalking: !!player.waterWalking,   // PlayerEntity.IsWaterWalking (:590)
+      probe: downProbe({
+        centreY: cy,
+        terrainY: heightAt(player.pos[0], player.pos[2]),
+        meshDist: collider.raycast([player.pos[0], cy, player.pos[2]], _SURFACE_DOWN, rayDistance * 2),
+        rayDistance,
+      }),
+    });
+  };
   /** The teleport core fast travel and the quickload share: destroy
    *  every built pixel, re-origin the streamer (its own verbatim
    *  ResetStreamingWorld), build the destination pixel, and land the
@@ -5563,23 +5595,47 @@ export async function bootWorld(canvas, renderer, params, status) {
           sound: (id) => audio.playOneShot(id),
           inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),
         });
+        // ROAD-B (b3): the exterior surface model, recomputed every
+        // frame exactly where PlayerMotor.Update recomputes it
+        // (:367-369) and BEFORE the consumers below read it.
+        const _surf = exteriorSurfaceNow();
+        // PlayerHeightChanger reads `OnExteriorWater == Swimming` and
+        // only that (:127, :294, :326, :550) - WaterWalking never sinks
+        // the capsule. A6 declared the flag and left it false with
+        // "Wave B's exterior-water slice owns the model that raises
+        // it"; this is that raise.
+        player.onExteriorWater = _surf.water === ON_EXTERIOR_WATER.Swimming;
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
-        // season + CLIMATE.PAK; the path/water tile arms ride the
-        // tile-under-player flag above).
+        // season + CLIMATE.PAK; the path/water/static-geometry arms
+        // ride the surface model above).
         {
           const _p = playerTravelPixel();
+          // PlayerFootsteps.cs:116 - "Play splash footsteps whether
+          // player is walking on or swimming in exterior water", so
+          // BOTH non-None methods feed this one boolean.
+          const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
           const _step = footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
             standingStill: !moving,
             halfSpeed: player.movingLessThanHalfSpeed,
+            // :221-227 - a mount silences the stride UNLESS the player
+            // is in exterior water, which is the one arm that needs
+            // the method rather than the boolean.
+            onFoot: isOnFoot(player.transportMode),
+            onExteriorWater: _onWater,
           }, pickFootstepSet({
             inside: false,
             winter: season === SEASON.Winter,
             climateIndex: maps.getClimateIndex(_p.x, _p.y),
-            // FS1's onExteriorPath arm has nothing to feed it again:
-            // the road system it was wired to is gone, and classic
-            // Daggerfall has no path underfoot to read.
-            onExteriorPath: false,
+            onExteriorWater: _onWater,
+            // PlayerMotor.OnPathTile (:568-574) is tile records 46, 47
+            // and 55 - real terrain data, read through the same
+            // tilemap byte the water arm reads. The old note here
+            // ("the road system it was wired to is gone") was about a
+            // separate roads mod; the CLASSIC path tiles were always
+            // in the tilemap and are what DFU actually consults.
+            onExteriorPath: _surf.path,
+            onStaticGeometry: _surf.staticGeometry,
           }));
           if (_step) audio.playOneShot(_step.clip, _step.volume);
         }

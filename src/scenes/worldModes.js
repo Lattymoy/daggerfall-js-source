@@ -54,6 +54,7 @@ import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '
 import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { calculateAttackDamage, dice100 } from '../combat/formulas.js';   // AUDIT 39 (#64/#65): the interior arrow's damage, both ways   // ROAD-B: the two exterior-door bash rolls
@@ -4387,7 +4388,13 @@ export function createWorldModes(host) {
       // non-exterior host simply inherited whatever the exterior last
       // wrote, so a dungeon entered at night glowed amber.
       renderer.setWindowEmission(windowEmissionRGB('day'));
-      renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
+      // ROAD-B (b3): UnderwaterFog.UpdateFog (UnderwaterFog.cs:39-81),
+      // called where PlayerEnterExit.Update calls it - every frame the
+      // player is inside a dungeon and over a block (:349-352). The
+      // DungeonFogSettings this host used to write inline is now the
+      // BASE it hands the fog, which backs it up on the dry frames and
+      // restores it on surfacing.
+      applyFog(renderer, dungeonCtx.underwaterFogSettings?.(cam.pos[1], player.pos, DUNGEON_FOG) ?? DUNGEON_FOG);
       renderer.setPointLights(
         // A10: DungeonLightHandler's XZ block range culls first, the
         // 16-slot shader cap picks from what survives (dungeonLights.js

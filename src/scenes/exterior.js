@@ -17,6 +17,8 @@ import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsP
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
+import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
+import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
@@ -502,6 +504,33 @@ export async function bootExterior(canvas, renderer, params, status) {
     return locationTilemap[tx + ty * tilemapDim];
   };
 
+  /** ROAD-B (b3): PlayerMotor.Update's three exterior surface reads
+   *  (:367-369), this host's twin of world.js's - one downward
+   *  raycast from the controller centre plus the tilemap byte above.
+   *
+   *  The raycast's job is the ship/levitation case its own doc comment
+   *  names (:501-503): being ABOVE water is not being IN it. The two
+   *  surfaces split the same way here as in the streaming host - the
+   *  flat GROUND_OFFSET floor is the terrain (DaggerfallTerrain) and
+   *  every placed model is a collider mesh (the StaticGeometry tag) -
+   *  so a player on a building roof reports static geometry and no
+   *  water, whatever tile is painted under the building. */
+  const _SURFACE_DOWN = [0, -1, 0];
+  const exteriorSurfaceNow = () => {
+    const cy = player.pos[1] + player.height / 2;   // transform.position on a CharacterController
+    const rayDistance = rayDistanceFor(isOnFoot(player.transportMode));
+    return exteriorSurfaces({
+      inside: false,
+      rawTile: playerGroundTileRaw(),
+      waterWalking: !!player.waterWalking,   // PlayerEntity.IsWaterWalking (:590)
+      probe: downProbe({
+        centreY: cy,
+        terrainY: collider.heightAt(player.pos[0], player.pos[2]),
+        meshDist: collider.raycast([player.pos[0], cy, player.pos[2]], _SURFACE_DOWN, rayDistance * 2),
+        rayDistance,
+      }),
+    });
+  };
 
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.
@@ -1832,13 +1861,32 @@ export async function bootExterior(canvas, renderer, params, status) {
         sound: (id) => audio.playOneShot(id),
         inOutdoorWater: isOutdoorWaterTile(playerGroundTileRaw()),
       });
+      // ROAD-B (b3): the exterior surface model, recomputed where
+      // PlayerMotor.Update recomputes it (:367-369) and before the
+      // consumers below read it.
+      const _surf = exteriorSurfaceNow();
+      // PlayerHeightChanger's sink reads `OnExteriorWater == Swimming`
+      // alone (:127, :294, :326, :550) - WaterWalking splashes but
+      // never sinks the capsule. A6 left this flag false pending
+      // "Wave B's exterior-water slice"; this is that slice.
+      player.onExteriorWater = _surf.water === ON_EXTERIOR_WATER.Swimming;
       // FS-slice: PlayerFootsteps - the exterior stride.
       {
+        // PlayerFootsteps.cs:116 - "Play splash footsteps whether
+        // player is walking on or swimming in exterior water".
+        const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
           standingStill: !moving,
           halfSpeed: player.movingLessThanHalfSpeed,
-        }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex }));
+          onFoot: isOnFoot(player.transportMode),   // :221-227, the mounted gate's water exception
+          onExteriorWater: _onWater,
+        }, pickFootstepSet({
+          inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex,
+          onExteriorWater: _onWater,
+          onExteriorPath: _surf.path,               // OnPathTile: records 46, 47, 55
+          onStaticGeometry: _surf.staticGeometry,
+        }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye

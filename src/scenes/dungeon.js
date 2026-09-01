@@ -11,6 +11,7 @@
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
@@ -633,6 +634,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // so it has to follow them across a castle or special-area
     // boundary the way the load-time write never could.
     renderer.setLighting(new Float32Array(ctx.ambient), 0);
+    // ROAD-B (b3): UnderwaterFog.UpdateFog, at PlayerEnterExit.Update's
+    // own cadence (:349-352). The load-time setFog at :331 stays as the
+    // dry state; this is the per-frame one, and DUNGEON_FOG is the same
+    // DungeonFogSettings written there (WeatherManager.cs:77).
+    applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, DUNGEON_FOG) ?? DUNGEON_FOG);
     renderer.setPointLights(
       // A10: DungeonLightHandler's XZ block range culls first, the
       // 16-slot shader cap picks from what survives (dungeonLights.js
