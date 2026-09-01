@@ -847,8 +847,9 @@ function paneEnhanced(body) {
   // fixed here in the other direction.
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
     'The enhanced outdoors as one system. Today: a procedural sky with the sun, both moons on '
-    + 'their real phases, stars, and clouds that follow the weather. Off returns '
-    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
+    + 'their real phases, a star field, a finely stepped sunrise and sunset, and clouds that '
+    + 'follow the weather to the horizon. Off returns Daggerfall\u2019s SKY*.DAT panorama. '
+    + 'Takes effect when the world next loads.'));
   body.append(live);
 
   // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S

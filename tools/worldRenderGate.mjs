@@ -96,7 +96,18 @@ const stats = (y0, y1) => {
 const sample = { sky: stats(0, Math.floor(h * 0.4)), ground: stats(Math.floor(h * 0.55), h) };
 check(`the ground is lit (mean ${sample.ground.mean.toFixed(1)} > 20)`, sample.ground.mean > 20);
 check(`the ground has detail (${sample.ground.colours} colours > 8)`, sample.ground.colours > 8);
-check(`the sky is drawn (mean ${sample.sky.mean.toFixed(1)} > 20)`, sample.sky.mean > 20);
+// EE2: the sky's expectation follows the hour. By day it is bright;
+// at night it is DARK BUT NOT EMPTY - a mean well under day's, with
+// stars and a moon as bright specks. A night sky that read like day
+// would be the palette ignoring the clock; a night sky of pure zero
+// would be the dome not drawing at all. Both are faults.
+const NIGHT = MINUTES < 300 || MINUTES > 1260;
+if (NIGHT) {
+  check(`the night sky is dark (mean ${sample.sky.mean.toFixed(1)} < 70)`, sample.sky.mean < 70);
+  check(`...but drawn, with lights in it (${sample.sky.colours} colours > 3)`, sample.sky.colours > 3);
+} else {
+  check(`the sky is drawn (mean ${sample.sky.mean.toFixed(1)} > 20)`, sample.sky.mean > 20);
+}
 if (process.argv.includes('--save')) {
   const { writeFileSync } = await import('node:fs');
   writeFileSync('/tmp/worldGate.png', png);

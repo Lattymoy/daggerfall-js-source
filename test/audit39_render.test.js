@@ -285,9 +285,14 @@ test('audit39 F54: sunOcclusion applies the shader\'s horizon term, so the groun
   const fs = src('src/render/enhancedSky.js');
   // The shader line the twin now mirrors, and the mirror itself.
   assert.match(fs, /float near = smoothstep\(0\.28, 0\.0, dir\.y\);/);
-  assert.match(fs, /cloud = mix\(cov, cov \* uCloudCover, near\);/);
+  // EE2 F4: the deck is no longer thinned to a quarter at the horizon.
+  // The law this pin holds - the ground's occlusion applies the SAME
+  // horizon term the shader does - is unchanged and asserted on both
+  // sides of the new thinning.
+  assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/);
   assert.match(fs, /const near = smoothstep\(0\.28, 0, d\[1\]\);/);
-  assert.match(fs, /return cov \* \(1 - near\) \+ cov \* state\.cloudCover \* near;/);
+  assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/, 'the CPU occlusion must thin exactly as the shader does');
+  assert.match(fs, /return cov \* \(1 - near\) \+ cov \* thin \* near;/);
   // A LOW sun is the case that moved: below ~16.3 degrees the shader
   // thins the cover before it hides the disc, and the key light must
   // thin with it or the ground darkens under a sun that is still out.

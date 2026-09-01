@@ -48,8 +48,11 @@ test('ES1 palette: a table in the sun\'s elevation, interpolated, and the shader
   }
   // A row is returned verbatim at its own elevation, and between two
   // rows every channel is the linear blend - the whole interpolation.
-  const p0 = paletteAt(0), pMid = paletteAt(2), p4 = paletteAt(4);
-  const row0 = SKY_KEYS.find((k) => k.elev === 0), row4 = SKY_KEYS.find((k) => k.elev === 4);
+  // EE2 F3: elevation 2 is a REAL key now, so it is no longer the
+  // midpoint of 0 and 4. The law - linear between the two keys an
+  // elevation falls between - is checked on a gap that still has none.
+  const p0 = paletteAt(4), pMid = paletteAt(5.5), p4 = paletteAt(7);
+  const row0 = SKY_KEYS.find((k) => k.elev === 4), row4 = SKY_KEYS.find((k) => k.elev === 7);
   assert.ok(near(p0.glowAmount, row0.glowAmount) && near(p4.glowAmount, row4.glowAmount));
   assert.ok(near(pMid.glowAmount, (row0.glowAmount + row4.glowAmount) / 2), 'halfway is half');
   for (let c = 0; c < 3; c++) assert.ok(near(pMid.zenith[c], (p0.zenith[c] + p4.zenith[c]) / 2, 1e-6));
@@ -281,7 +284,13 @@ test('ES1c stars: the field wheels about a pole, one turn a day, on the same clo
   const fs = read('src/render/enhancedSky.js');
   assert.match(fs, /float ca = cos\(uStarAngle\), sa = sin\(uStarAngle\);/, 'the turn is the CLOCK\'s angle - a constant here is a field that stands still');
   assert.match(fs, /vec3 d = dir \* ca \+ cross\(axis, dir\) \* sa \+ axis \* dot\(axis, dir\) \* \(1\.0 - ca\);/, 'Rodrigues about the pole');
-  assert.match(fs, /cubeSnap\(d, scale, sc2\);/, 'the field is sampled in the TURNED frame (d, not dir) - ES1f casts it on the cube');
+  // EE2 F2: cubeSnap is no longer called for the STARS - its integer
+  // cell made fract() a constant and ruled the field into rows. The
+  // laws this pin holds are unchanged: sampled in the TURNED frame
+  // (d, not dir), cast on the cube's equi-angular faces.
+  assert.match(fs, /if \(ad2\.x >= md2\) \{ raw2 = d\.zy \/ ad2\.x;/, 'the field is sampled in the TURNED frame (d, not dir)');
+  assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale/, 'equi-angular: one cell is one angle everywhere on a face');
+  assert.match(fs, /vec2 cell = floor\(g\), f = fract\(g\);/, 'the cell and the position are the floor and fract of ONE number');
   assert.match(fs, /smoothstep\(0\.0, 0\.08, dir\.y\)/, '...but a star sets where the REAL horizon is');
 });
 
@@ -423,6 +432,34 @@ test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole
   // The star field rides the same cube, so it has no pinwheel and no
   // density pile-up at a pole - and its scales were raised to keep the
   // count, because a cube covers the sphere with far fewer cells.
-  assert.match(fs, /cubeSnap\(d, scale, sc2\);/);
+  // EE2 F2: the RETRO snap still uses cubeSnap on the turned frame - a
+  // cell id is exactly what IT wants. The stars no longer do.
+  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/);
   assert.match(fs, /float scale = layer == 0 \? 127\.0 : 236\.0;/);
+});
+
+// ═══ EE2: the sky's four fixes, from the Enhanced Environments lab ═══
+test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has its band', async () => {
+  const { paletteAt, SKY_KEYS } = await import('../src/render/enhancedSky.js');
+  const fs = read('src/render/enhancedSky.js');
+  // F1: the projection is capped, or the horizon has no cloud
+  assert.match(fs, /vec2 p = dir\.xz \* min\(1\.0 \/ \(dir\.y \+ 0\.18\), 9\.0\) \* scale \+ wind \* uTime;/);
+  // F2: the star field takes no position from a cell id
+  const stars = fs.slice(fs.indexOf('float stars('), fs.indexOf('float stars(') + 3200)
+    .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.ok(!/cubeSnap/.test(stars), 'the stars must not take their position from an integer cell');
+  assert.match(stars, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/);
+  // F3: the band is four keys wide where it was two
+  const band = SKY_KEYS.filter((k) => k.elev >= -4 && k.elev <= 7).map((k) => k.elev);
+  assert.deepEqual(band, [-4, -2, 0, 2, 4, 7]);
+  const h = [-2, 0, 2].map((e) => paletteAt(e).horizon);
+  assert.ok(h[0][0] > h[0][1] * 1.3, 'at -2 the horizon is EMBER: red well over green');
+  assert.ok(h[1][0] > h[1][1] && h[1][1] > h[1][2], 'at 0 it is peach');
+  const z = paletteAt(-2).zenith;
+  assert.ok(z[2] > z[1] && z[1] > z[0], 'at -2 the zenith is deep blue-violet');
+  assert.ok(paletteAt(0).glowAmount > paletteAt(-2).glowAmount && paletteAt(2).glowAmount < paletteAt(0).glowAmount,
+    'the glow swings warm then cools as the sun clears the haze');
+  // F4: cover means cover to the horizon, on both sides
+  assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/);
+  assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/);
 });
