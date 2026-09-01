@@ -285,43 +285,43 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/dungeonContext.js:272` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:826` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1461` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1498` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
-- `src/scenes/dungeonContext.js:1553` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3494` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3605` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:725` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:731` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:990` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1242` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1622` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/shared.js:351` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:368` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:535` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/dungeonContext.js:1496` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1533` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
+- `src/scenes/dungeonContext.js:1588` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3529` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3640` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/exterior.js:734` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:740` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:1012` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1264` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1652` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/shared.js:352` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:369` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:536` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1225` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1231` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1636` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2678` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:3994` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5054` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6220` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1340` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1358` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1570` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1575` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1820` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:2110` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:2142` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2364` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2486` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2761` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2806` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2825` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2930` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:3186` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:4862` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4961` - *  FLAGGED null this slice closed. */
+- `src/scenes/world.js:1236` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1242` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1647` - *  through the `if`. This host's FLAGGED note (below, at the mode
+- `src/scenes/world.js:2699` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:4023` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:5083` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+- `src/scenes/world.js:6249` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/worldModes.js:1352` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1370` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1582` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1587` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1832` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:2122` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:2154` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2376` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2498` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2773` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2818` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2837` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2942` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:3198` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:4874` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4973` - *  FLAGGED null this slice closed. */
 - `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
@@ -403,11 +403,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/pixelDial.js:36` - FLAGGED (THE FOUR HOSTS RULE): no host is wired yet — world.js,
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
-- `src/ui/prisonScreen.js:29` - FLAGGED, and honestly: the trial's own message boxes still stand on
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
-- `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
-- `src/ui/restWindow.js:141` - FLAGGED, all three from OnPop/Update and all three belonging to
-- `src/ui/restWindow.js:422` - where classic counts DOWN. The backgrounds are still FLAGGED
+- `src/ui/restWindow.js:172` - FLAGGED, both from OnPop/Update and both belonging to other arcs
+- `src/ui/restWindow.js:514` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:114` - FLAGGED, idling loudly: the effect popup's body
 - `src/ui/spellbookWindow.js:951` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:

@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 5677 tests across 571 files.
+Node 22). Suite: 5715 tests across 574 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -99,6 +99,9 @@ because the suite has never had non-English data.
 | roadb_guard_conversion.test.js | 4 | ROAD-B B2 - MakeNPCGuardsIntoEnemiesIfGuardsSpawned: wandering guards convert while enemy watchmen are up |
 | roadb_hostility.test.js | 12 | ROAD-B B2 - MakeEnemiesHostile as a location state the pools read, the DoorText trespass sink, MakeEnemyHostileToAttacker |
 | roadb_indoor_watch.test.js | 10 | ROAD-B B2+B4 - the indoor watch: 2-5 guards minted at the interior lowest outer door through the mode machine own pool; the street pool gated by the enter-exit flags returns and never comes through the wall |
+| roadb_court_backdrop.test.js | 9 | ROAD-B B5 - the courtroom backdrop two deep on the window stack (CORT01I0 through the own-palette door), the prison held-Back accelerator |
+| roadb_push_doors.test.js | 9 | ROAD-B B5 - B1's refusal-guard walk: seven single-slot refusals converted to stack pushes, four kept as true re-entrancy guards on containsWindow, and the townTalk.dropOverlay successor-callback regression fixed |
+| roadb_rest_residue.test.js | 20 | ROAD-B B5 - the prevent-rest registry (register/unregister/get with the null->"" law), TickRest's two poll positions and its SECOND top-window test, UpdateNpcPresence on pop with its four differences from AddPeople, the toggle-binding close |
 | roadb_window_stack.test.js | 11 | ROAD-B B1 - UserInterfaceManager ported whole: TopWindow, Push/Pop with OnPush/OnPop/OnReturn, the PauseWhileOpen latch, WindowCount, the message queue, BuildParamDict |
 | roadb_window_stack_hosts.test.js | 7 | ROAD-B B1 - the hosts adopt the stack: the FLAGGED single-slot refusal retired, a rest suspends under a message box and resumes with its session, teardowns drain and dispose the WHOLE stack |
 | road_a4_saveimport.test.js | 12 | ROAD A4 - the envelope stragglers round-trip (resistances, skillsRecentlyRaised, minMetalToHit, previousVampireClan, timeToBecomeVampireOrWerebeast) with old-save null arms, and the classic import's building-level MAPSAVE, native bank record and LegacyArtifactIndexBitfieldCheck |
