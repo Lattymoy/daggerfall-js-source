@@ -3818,6 +3818,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     requestLook(canvas);
   });   // U8b/U8c: native windows own the pointer
   canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e) || mwViewWheel(e.deltaY)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel; MW-D25: otherwise the Morrowind camera zoom
+  // ROAD-C c2/S4: THE OTHER TWO PHASES. This host already routed
+  // `pointerdown` into the mode machine; the automap's chrome is
+  // press-HOLD and drag driven, so a host that delivers `down` alone
+  // latches a drag that spins the map forever - and nothing errors.
+  // The listeners are on the WINDOW, not the canvas, because a release
+  // outside the canvas must still end the drag.
+  addEventListener('pointermove', (e) => { modes?.pointermove?.(e); });
+  addEventListener('pointerup', (e) => { modes?.pointerup?.(e); });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());

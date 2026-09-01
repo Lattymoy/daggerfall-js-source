@@ -24,15 +24,38 @@
 //   - probe 3 the FLOOR MARCH: 1-unit steps from the eye toward the
 //     view hit, casting DOWN 3.0 at each step (:1176-1190) - the
 //     floor path between you and the wall you look at
-// SUBSTITUTION (recorded): DFU resolves WHICH mesh a probe hit by
-// raycasting the duplicate geometry with three parallel rays and a
-// 0.01 distance agreement (:1021-1144 - machinery that guards Unity
-// collider gaps). The port's collider answers one distance for the
-// whole dungeon bucket, so identity resolves by the HIT POINT: every
-// entry whose world AABB contains the probe's hit point (grown by a
-// small tolerance) reveals. Adjacent models sharing the hit corner
-// reveal together where DFU reveals the one mesh - a strictly
-// bounded over-reveal of the same wall junction, recorded.
+// THE THREE-RAY SCAN (ScanWithRaycastInDirectionAndUpdateMeshes-
+// AndMaterials, :1021-1144) - restored in full by ROAD-C c2/S1. A1
+// shipped a single-ray substitution and recorded it; the machinery it
+// dropped is not defensive noise. DFU casts THREE parallel rays (the
+// main one, one at `offsetSecondProtectionRaycast`, one at
+// `cross(normalize(dir), normalize(offset2)) * |offset2|`), demands
+// all three hit the SAME collider, and demands each ray's hit on the
+// TRUE level geometry agree with its hit on the automap copy to
+// within 0.01. That last test is the one that matters: the automap
+// copy has NO ACTION DOORS (RDBLayout.cs:625-627 filters them and
+// AddActionDoors is never called on the automap run), so when a
+// closed door stands between you and a hall, the true-geometry ray
+// stops at the door and the automap ray flies on to the far wall -
+// the distances disagree and NOTHING reveals. Without it a closed
+// door reveals the room behind it.
+// THE PORT'S EQUIVALENT (a substitution, recorded): there is one
+// collider, so there is no true-vs-copy pair to compare. Instead the
+// three rays must agree pairwise within the same 0.01 (which is what
+// DFU's per-ray agreement buys across the trio), they must resolve
+// the same MODEL ROW (the stand-in for `hit.collider ==`), and a
+// nearest hit whose collider BUCKET is an action door reveals
+// nothing. The port gets the door discrimination for free and
+// exactly, because action doors are their own collider buckets keyed
+// by the action object (world/actionSystem.js addDoor) while dungeon
+// geometry is the single 'dungeon' bucket. That is cheaper than
+// DFU's second scene AND sharper - but it DEPENDS on action doors
+// staying distinct buckets: merge them into the dungeon bucket and
+// the door discrimination silently reverts to over-reveal. The pin
+// on bucket distinctness is the guard.
+// Row identity itself resolves by HIT POINT against the model's AABBs
+// (systems/automapModel.js resolveAt - the tightest enclosing box
+// wins), because the port's collider answers a bucket, not a mesh.
 //
 // ENTRANCE DISCOVERY (:1197-1274): while undiscovered, the entrance
 // marker looks for a clear line of sight TO THE PLAYER within 100
@@ -59,13 +82,15 @@
 
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
+import { buildAutomapModel, restoreMatchesLayout, AABB_TOLERANCE } from './automapModel.js';
 
 export const SCAN_INTERVAL_S = 1 / 5;              // scanRateGeometryDiscoveryInHertz = 5 (:172)
 export const RAYCAST_DISTANCE_DOWN = 3.0;          // :168
 export const RAYCAST_DISTANCE_VIEW = 30.0;         // :169
 export const RAYCAST_DISTANCE_ENTRANCE = 100.0;    // :170
 export const FLOOR_MARCH_STEP = 1.0;               // :1180
-const HIT_POINT_TOLERANCE = 0.05;                  // the identity-resolution skin (the substitution's own)
+export const PROTECTION_RAYCAST_OFFSET = 0.1;      // "slight offset of 10cm" (:1160, :1172)
+export const HIT_DISTANCE_AGREEMENT = 0.01;        // Math.Abs(...) < 0.01f (:1121-1123)
 
 // ---- the per-dungeon store (module singleton - one player) ---------
 
@@ -88,7 +113,10 @@ export const automapDungeonKey = (regionIndex, name) => `${regionIndex}/${name}`
 export function enterDungeonAutomap(key, nowMinutes, { fromLoad = false } = {}) {
   let rec = _dungeons.get(key);
   if (!rec) {
-    rec = { revealed: new Set(), visitedThisRun: new Set(), entranceDiscovered: false, lastVisited: 0 };
+    rec = {
+      revealed: new Set(), visitedThisRun: new Set(), entranceDiscovered: false, lastVisited: 0,
+      blockNames: null,   // c2/S1: the layout the discovery was recorded against (the restore guard's input)
+    };
     _dungeons.set(key, rec);
   }
   _inside = true;
@@ -159,6 +187,12 @@ export function snapshotAutomap(nowMinutes = null) {
       visitedThisRun: [...rec.visitedThisRun],
       entranceDiscovered: rec.entranceDiscovered,
       lastVisited: rec.lastVisited,
+      // c2/S1: DFU's own record carries `blockName` per block
+      // (Automap.cs:78) for exactly one purpose - the restore walk
+      // aborts when the live layout disagrees (:2385-2386). The port
+      // keeps the same field for the same purpose; it is OPTIONAL on
+      // the way back in, so an A1/A2 envelope still restores.
+      ...(rec.blockNames ? { blockNames: [...rec.blockNames] } : {}),
     };
   }
   return out;
@@ -178,6 +212,7 @@ export function restoreAutomap(snap) {
       visitedThisRun: new Set(rec.visitedThisRun ?? []),
       entranceDiscovered: rec.entranceDiscovered ?? false,
       lastVisited: rec.lastVisited ?? 0,
+      blockNames: Array.isArray(rec.blockNames) ? [...rec.blockNames] : null,
     });
   }
 }
@@ -185,52 +220,145 @@ export function resetAutomapStore() { _dungeons = new Map(); _inside = false; _l
 
 // ---- the reveal index + the probe law ------------------------------
 
-/** Build the reveal index over the dungeon's draw entries:
- *  [{ key, aabb: [minX,minY,minZ,maxX,maxY,maxZ] }]. The caller
- *  supplies world AABBs (the entries' cpu extents through their
- *  matrices - dungeonContext owns that walk). */
-export function buildRevealIndex(entries) {
-  return entries.filter((e) => e.key != null && e.aabb != null);
+/** Build the reveal model over the dungeon's draw entries. The caller
+ *  supplies world AABBs plus DFU's block/element/model identity
+ *  (dungeonContext owns that walk); the model is also the picker's
+ *  broadphase and the map pass's partition. Kept under the A1 name so
+ *  no host changes shape to get the repair. */
+export const buildRevealIndex = (entries) => buildAutomapModel(entries);
+
+/**
+ * Bind a freshly built model to a record. Two jobs, both DFU's:
+ *  - stamp the layout the discovery is recorded against (:78's
+ *    blockName, per block) when the record does not carry one yet;
+ *  - run the restore guard (:2385-2386) when it does, and on a
+ *    DISAGREEMENT drop the discovery entirely rather than paint the
+ *    wrong models (the departure is argued in automapModel.js).
+ * Answers true when the record survived.
+ */
+export function bindAutomapLayout(rec, model) {
+  if (!rec || !model) return false;
+  if (!restoreMatchesLayout(model, rec.blockNames)) {
+    rec.revealed = new Set();
+    rec.visitedThisRun = new Set();
+    rec.entranceDiscovered = false;
+    rec.blockNames = [...model.blockNames];
+    return false;
+  }
+  rec.blockNames = [...model.blockNames];
+  return true;
 }
 
-const pointInAabb = (p, a, tol) =>
-  p[0] >= a[0] - tol && p[0] <= a[3] + tol
-  && p[1] >= a[1] - tol && p[1] <= a[4] + tol
-  && p[2] >= a[2] - tol && p[2] <= a[5] + tol;
+// ---- vector helpers, Unity's semantics ------------------------------
+const _cross = (a, b) => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
+/** Vector3.Normalize: Unity answers the ZERO VECTOR for a zero input
+ *  rather than NaN, and the automap leans on that - see the march. */
+const _norm = (v) => {
+  const l = Math.hypot(v[0], v[1], v[2]);
+  return l > 1e-9 ? [v[0] / l, v[1] / l, v[2] / l] : [0, 0, 0];
+};
+const _scale = (v, s) => [v[0] * s, v[1] * s, v[2] * s];
+const _add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
-/** One probe: cast, and mark every entry whose AABB holds the hit
- *  point (the identity substitution). Answers true if the ray hit. */
-function probe(origin, dir, maxDist, collider, index, rec) {
-  const dist = collider.raycast(origin, dir, maxDist);
-  if (!Number.isFinite(dist) || dist > maxDist) return null;
-  const hit = [origin[0] + dir[0] * dist, origin[1] + dir[1] * dist, origin[2] + dir[2] * dist];
-  for (const e of index) {
-    if (!pointInAabb(hit, e.aabb, HIT_POINT_TOLERANCE)) continue;
-    rec.revealed.add(e.key);
-    rec.visitedThisRun.add(e.key);   // DisableKeyword("RENDER_IN_GRAYSCALE") (:1137)
+/**
+ * ScanWithRaycastInDirectionAndUpdateMeshesAndMaterials (:1021-1144).
+ * Three parallel rays; all three must resolve the SAME model row and
+ * agree pairwise within 0.01, and no ray may be stopped by an action
+ * door. On success the row reveals AND marks visited-this-run
+ * (DisableKeyword("RENDER_IN_GRAYSCALE"), :1135) and the hit distance
+ * comes back - the floor march reads it. On any failure: null, and
+ * NOTHING reveals.
+ */
+function scanWithRaycast(rayStart, rayDir, rayDistance, offsetSecond, ctx, rec) {
+  const { collider, model, isDoorBucket, bucketFilter } = ctx;
+  // ":1032" - the third offset is the second turned about the ray
+  const offsetThird = _scale(
+    _cross(_norm(rayDir), _norm(offsetSecond)),
+    Math.hypot(offsetSecond[0], offsetSecond[1], offsetSecond[2]),
+  );
+  const origins = [rayStart, _add(rayStart, offsetSecond), _add(rayStart, offsetThird)];
+  const dists = [];
+  let key;
+  let haveKey = false;
+  for (const o of origins) {
+    const hit = collider.raycastHit(o, rayDir, rayDistance, bucketFilter);
+    ctx.rays++;
+    if (!hit || !Number.isFinite(hit.dist) || hit.dist > rayDistance) return null;
+    // The port's stand-in for DFU's true-vs-copy distance test: the
+    // automap copy has no action doors, so a door hit reveals nothing.
+    if (isDoorBucket && hit.key != null && isDoorBucket(hit.key)) return null;
+    const p = [o[0] + rayDir[0] * hit.dist, o[1] + rayDir[1] * hit.dist, o[2] + rayDir[2] * hit.dist];
+    const row = model.resolveAt(p, AABB_TOLERANCE);
+    if (!row) return null;
+    if (!haveKey) { key = row.key; haveKey = true; } else if (row.key !== key) return null;   // "hits must have same collider" (:1116-1117)
+    dists.push(hit.dist);
   }
-  return dist;
+  for (let i = 0; i < dists.length; i++) {
+    for (let j = i + 1; j < dists.length; j++) {
+      if (Math.abs(dists[i] - dists[j]) >= HIT_DISTANCE_AGREEMENT) return null;
+    }
+  }
+  rec.revealed.add(key);          // hitMeshRenderer.enabled = true (:1129)
+  rec.visitedThisRun.add(key);    // DisableKeyword("RENDER_IN_GRAYSCALE") (:1135)
+  return dists[0];
+}
+
+/** The camera's own DOWN, from a roll-free forward - DFU reads
+ *  `Camera.main.transform.rotation * Vector3.down` and the port's
+ *  camera has no roll, so the basis rebuilds exactly. */
+function cameraDownFrom(fwd) {
+  let right = _norm(_cross(fwd, [0, 1, 0]));
+  if (right[0] === 0 && right[1] === 0 && right[2] === 0) right = [1, 0, 0];   // straight up/down
+  const up = _norm(_cross(right, fwd));
+  return [-up[0], -up[1], -up[2]];
 }
 
 /**
- * CheckForNewlyDiscoveredMeshes (:1149-1194), the port's shape: the
- * DOWN probe from the eye, the VIEW probe, and the floor march
- * between them. Call at the 5 Hz cadence with the live eye + forward.
+ * CheckForNewlyDiscoveredMeshes (:1149-1194): the DOWN scan from the
+ * eye, the VIEW scan, and - only when the VIEW scan SUCCEEDED, which
+ * is DFU's `hitForward.HasValue` and not merely "the ray hit
+ * something" - the floor march between them. Call at the 5 Hz cadence
+ * with the live eye + forward.
+ *
+ * `isDoorBucket(bucketKey)` names an action door's collider bucket;
+ * `bucketFilter` rides through to raycastHit untouched.
+ * Answers `{ rays }` - the tick's true ray count, which the budget
+ * pin bounds at 3 x (1 + 1 + march steps).
  */
-export function automapRevealTick(rec, { eye, fwd, collider, index }) {
-  if (!rec) return;
-  // (a) DOWN from the head - "3 meters should be enough" (:168)
-  probe(eye, [0, -1, 0], RAYCAST_DISTANCE_DOWN, collider, index, rec);
-  // (b) the VIEW direction (:1168)
-  const viewDist = probe(eye, fwd, RAYCAST_DISTANCE_VIEW, collider, index, rec);
-  // (c) the FLOOR MARCH: 1-unit steps toward the view hit, casting
-  // down at each (:1176-1190) - paints the floor path
+export function automapRevealTick(rec, { eye, fwd, collider, model, index, isDoorBucket = null, bucketFilter = null }) {
+  const m = model ?? index;
+  if (!rec || !m) return { rays: 0 };
+  const ctx = { collider, model: m, isDoorBucket, bucketFilter, rays: 0 };
+  const camDown = cameraDownFrom(fwd);
+
+  // (a) DOWN from the head - "3 meters should be enough" (:168). The
+  // protection offset is Vector3.left * 0.1 - a WORLD axis, not the
+  // camera's (:1160).
+  scanWithRaycast(eye, [0, -1, 0], RAYCAST_DISTANCE_DOWN, [-PROTECTION_RAYCAST_OFFSET, 0, 0], ctx, rec);
+
+  // (b) the VIEW direction (:1166-1171)
+  const offsetView = _scale(_norm(_cross(camDown, fwd)), PROTECTION_RAYCAST_OFFSET);
+  const viewDist = scanWithRaycast(eye, fwd, RAYCAST_DISTANCE_VIEW, offsetView, ctx, rec);
+
+  // (c) the FLOOR MARCH: 1-unit steps from the EYE toward the view
+  // hit, casting down at each (:1176-1190) - paints the floor path.
+  // QUIRK, verbatim: the march's protection offset is
+  // normalize(cross(camera-down, WORLD-down)) * 0.1, which is the ZERO
+  // VECTOR whenever the camera is level (Unity normalizes 0 to 0), so
+  // a level look casts three coincident rays that agree trivially.
+  // That is DFU's behaviour and the port keeps it.
   if (viewDist != null) {
+    const offsetMarch = _scale(_norm(_cross(camDown, [0, -1, 0])), PROTECTION_RAYCAST_OFFSET);
     for (let step = FLOOR_MARCH_STEP; step < viewDist; step += FLOOR_MARCH_STEP) {
       const at = [eye[0] + fwd[0] * step, eye[1] + fwd[1] * step, eye[2] + fwd[2] * step];
-      probe(at, [0, -1, 0], RAYCAST_DISTANCE_DOWN, collider, index, rec);
+      scanWithRaycast(at, [0, -1, 0], RAYCAST_DISTANCE_DOWN, offsetMarch, ctx, rec);
     }
   }
+  return { rays: ctx.rays };
 }
 
 /** The entrance beacon's own discovery (:1197-1274): while

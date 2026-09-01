@@ -59,22 +59,24 @@ test('H4: the host pass - scissor brackets beginFrame\'s clear, viewport follows
   const i = wm.indexOf('function drawBankModelPreview(');
   assert.ok(i > 0, 'worldModes implements the door');
   const fn = wm.slice(i, wm.indexOf('\n  }\n', i));
-  // order: scissor on -> beginFrame (its CLEAR is what the scissor
-  // exists for) -> viewport (beginFrame sets the full one) -> draw ->
-  // restore both
-  const scissorOn = fn.indexOf('gl.enable(gl.SCISSOR_TEST);');
-  const begin = fn.indexOf('renderer.beginFrame(');
-  const viewport = fn.indexOf('gl.viewport(rect.x');
-  const draw = fn.indexOf('renderer.drawMesh(gpu, trs(0, 0, 0, 0, yawDeg, 0));');
-  const scissorOff = fn.indexOf('gl.disable(gl.SCISSOR_TEST);');
-  const viewportBack = fn.indexOf('gl.viewport(0, 0, renderer.canvas.width');
-  assert.ok(scissorOn > 0 && begin > scissorOn, 'scissor BEFORE beginFrame - the clear must not wipe the window');
-  assert.ok(viewport > begin, 'viewport AFTER beginFrame, which sets the full one');
-  assert.ok(draw > viewport && scissorOff > draw && viewportBack > scissorOff, 'and both are restored');
+  // PIN MOVED, ROAD-C c2/S2. This pass was the tree's THIRD hand-rolled
+  // copy of the panel bracket. It got the two hard parts right -
+  // scissor BEFORE beginFrame (SCISSOR_TEST gates gl.clear) and
+  // viewport AFTER it (beginFrame sets the full one) - and still
+  // leaked fog and lighting, and paid a synchronous
+  // gl.getParameter(COLOR_CLEAR_VALUE) every frame. The whole
+  // sequence now lives ONCE, in renderer.beginPanelFrame, where its
+  // ordering is pinned as observed GL calls rather than as source
+  // order in a consumer (test/roadc_panelframe.test.js), and its
+  // return runs in a finally that a throwing body cannot skip.
+  assert.ok(fn.includes('renderer.panelFrame({'), 'the pass runs inside the renderer\'s bracket');
+  assert.ok(!fn.includes('gl.enable(gl.SCISSOR_TEST)') && !fn.includes('gl.viewport('),
+    'and holds no scissor/viewport sequence of its own');
+  assert.ok(!fn.includes('gl.getParameter('), 'no per-frame synchronous driver query survives');
+  assert.ok(fn.includes('renderer.drawMesh(gpu, trs(0, 0, 0, 0, yawDeg, 0))'), 'the model still draws, spun by the window\'s yaw');
+  assert.ok(fn.includes('clear: [0, 0, 0, 1]'), 'this camera\'s SolidColor clear is opaque black, and says so');
   assert.ok(fn.includes('mirrorProjectionX(perspective(60 * (Math.PI / 180)'),
     'the ONE mirror rides the projection (mat4\'s law - this pass culls); Unity\'s default 60-degree lens');
-  assert.ok(fn.includes('const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);') && fn.includes('gl.clearColor(prevClear[0]'),
-    'the clear color is borrowed and returned');
   assert.ok(fn.includes('getGpuMesh(modelIdNum).then('), 'the mesh loads through the pipeline\'s own async door');
   assert.ok(wm.includes('drawModelPreview: drawBankModelPreview'), 'and the window is handed the door');
 });

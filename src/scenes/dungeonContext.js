@@ -12,7 +12,8 @@ import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
-import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
+import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
@@ -300,6 +301,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    // ROAD-C c2/S1: DFU's automap discovery record is POSITIONAL -
+    // block -> blockElement -> model (Automap.cs:66-79). The two
+    // elements are RDBLayout's "Models" and "Action Models" nodes, in
+    // that creation order (:165-168), and a model lands in one by
+    // `(hasAction) ? actionModelsParent : modelsParent` (:644). The
+    // port keeps its own stable `${bi}:${position}` key as the SAVE
+    // key and carries this address as metadata beside it.
+    const amapModelCount = [0, 0];
+    const amapWater = automapWaterLevel(b.layout.waterLevel);
+    const amapRow = (key, aabb, hasAction) => {
+      const elementIndex = hasAction ? 1 : 0;
+      return {
+        key,
+        aabb,
+        blockIndex: bi,
+        blockName: b.name,
+        elementIndex,
+        elementName: ELEMENT_NAMES[elementIndex],
+        modelIndex: amapModelCount[elementIndex]++,
+        waterLevel: amapWater,
+      };
+    };
     for (const [pos, e] of b.layout.objectPositions) {
       positionIndex.set(`${bi}:${pos}`, { pos: [e.x + b.originX, e.y, e.z + b.originZ], yawDeg: e.yawDeg });
     }
@@ -327,7 +350,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           o.aabb = aabb;
           o.restOnlyTrigger = true;
           dynamicDraws.push({ gpu, object: o });
-          automapEntries.push({ key: o.key, aabb });   // A1: revealed at the AT-REST bounds (a moved platform's probe misses - recorded)
+          automapEntries.push(amapRow(o.key, aabb, true));   // A1: revealed at the AT-REST bounds (a moved platform's probe misses - recorded)
           continue;
         }
         if (cls === 'specialDoor') {
@@ -336,7 +359,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // own bucket, swings on the chain or the player's hand.
           const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
           dynamicDraws.push({ gpu, object: o });
-          automapEntries.push({ key: o.key, aabb });   // A1
+          automapEntries.push(amapRow(o.key, aabb, true));   // A1
           continue;
         }
         if (cls === 'effect') {
@@ -358,7 +381,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // can filter the LIVE list by the revealed set - no duplicate
       // geometry (Automap.cs duplicates the whole level instead).
       drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });
-      automapEntries.push({ key: `${bi}:${p.position}`, aabb });
+      automapEntries.push(amapRow(`${bi}:${p.position}`, aabb, !!p.action));
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
     }
@@ -386,7 +409,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         loadID: d.loadID,   // ROAD-B B4: RDBLayout.cs:242 - the Castle Daggerfall foyer hack names its two doors by this
       });
       dynamicDraws.push({ gpu, object: o });
-      automapEntries.push({ key: o.key, aabb: worldAabb(cpu.positions, matrix) });   // A1: doors reveal at their CLOSED bounds
+      // ROAD-C c2/S1: ACTION DOORS ARE NOT ON THE AUTOMAP. DFU's
+      // automap copy has none - AddModels skips them outright
+      // ("Filter action door models / These must be added by
+      // AddActionDoors()", RDBLayout.cs:625-627) and AddActionDoors is
+      // never called on the automap run. A1 pushed them here, which
+      // both drew doors the classic map never draws and made a closed
+      // door a revealable surface. The door still matters to the map:
+      // it is the BLOCKER the three-ray scan reads off its own
+      // collider bucket (systems/automap.js).
     }
     for (const f of b.layout.flats) {
       const key = `${f.archive}_${f.record}`;
@@ -3390,7 +3421,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // and M opens the window through toggleAutomap.
   const automapKey = automapDungeonKey(dfLocation?.regionIndex ?? -1, dfLocation?.name ?? _locationKey);
   let automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value);
-  const automapIndex = buildRevealIndex(automapEntries);
+  // ROAD-C c2/S1: the reveal MODEL (rows in DFU's block/element/model
+  // walk order, the point-query hash grid, the draw partition). Bind
+  // it to the record: a first visit stamps the block-name list, a
+  // return runs DFU's layout guard (:2385-2386) over it.
+  const automapModel = buildRevealIndex(automapEntries);
+  bindAutomapLayout(automapRec, automapModel);
   let automapScanT = SCAN_INTERVAL_S;   // the first tick probes at once (Automap.cs:993-1002's lazy-init scan)
   let _automapEye = null;
   // The player marker arrow, Daggerfall mesh 99900 (Automap.cs:1355).
@@ -3455,7 +3491,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       automapScanT += dt;
       if (automapScanT < SCAN_INTERVAL_S) return;
       automapScanT = 0;
-      automapRevealTick(automapRec, { eye, fwd, collider, index: automapIndex });
+      automapRevealTick(automapRec, {
+        eye, fwd, collider, model: automapModel,
+        // The three-ray scan's door blocker: an action door is its own
+        // collider bucket, keyed by the action object (actionSystem
+        // addDoor). THIS is what stops a closed door revealing the
+        // hall behind it - see automap.js's scan.
+        isDoorBucket: (k) => actions.objects.get(k)?.kind === 'door',
+      });
       // the entrance beacon sits on the START marker (Automap.cs:1447)
       const sm = dungeon.startMarker;
       automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
@@ -3550,7 +3593,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         blocks: dungeon.blocks.map((b) => ({ x: Math.round(b.originX / RDB_SIDE), z: Math.round(b.originZ / RDB_SIDE), name: b.name })),
         arrowMesh: automapArrow,
         dungeonName: dfLocation?.name ?? 'Dungeon',
-        indexSize: automapIndex.length,
+        indexSize: automapModel.length,
+        model: automapModel,   // c2/S1: the window's partition + explored-percentage source
       });
     },
     enemies,
@@ -3962,6 +4006,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** The wheel seam (U-scroll): scroll never closes a window, so no
      *  done check. */
     overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
+    /**
+     * ROAD-C c2/S4: THE POINTER SEAM, beside the click/hover/wheel
+     * triple rather than folded into them. DFU's automap windows are
+     * driven by press-HOLD (OnMouseDown raises a flag, Update() polls
+     * it every frame) and by DRAGS on the render panel, neither of
+     * which a click-only seam can carry.
+     *
+     * THE DOMINANT DEFECT CLASS HERE is a correct law whose caller
+     * does not deliver it: a host that routes `down` but not `up`
+     * latches a drag that spins the map forever, and nothing errors.
+     * So the contract is all three phases or none, and the source
+     * pins in test/roadc_automap_chrome.test.js COUNT the routes in
+     * every host rather than trusting four edits.
+     *
+     * Hovering and dragging never close a window, so there is no
+     * `done` drain here - but a window that ends itself from a
+     * pointer up would still be reconciled by the next tickOverlay.
+     */
+    overlayPointer(phase, vx, vy, button = 0) {
+      activeOverlay?.pointer?.(phase, vx, vy, button);
+    },
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering
      *  never closes anything. */

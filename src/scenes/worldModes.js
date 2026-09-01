@@ -1913,19 +1913,23 @@ export function createWorldModes(host) {
     .map((h) => ({ ...h, meshRadius: houseMeshRadius(h) }));
 
   // H4 - THE PURCHASE PREVIEW'S SECOND CAMERA PASS. The window owns
-  // the rotation clock and the camera law; this host owns the GL:
-  // scissor to the display rect so beginFrame's CLEAR touches only
-  // it (the automap's second-frame precedent, cut down to a panel),
-  // viewport to the same rect AFTER beginFrame (which sets the full
-  // one), the ONE mirror on the projection (mat4's law - this pass
-  // culls), and the model spun by the window's yaw. The mesh loads
-  // through the pipeline's own getGpuMesh (async - the panel stays
-  // empty for the frames the load takes, DFU's first-frame gap).
+  // the rotation clock and the camera law; the RENDERER owns the GL.
+  // ROAD-C c2/S2: this was the third hand-rolled copy of the panel
+  // bracket in the tree. It got the two hard parts right (scissor
+  // BEFORE beginFrame so its clear is confined, viewport AFTER it
+  // because beginFrame sets the full one) and still leaked - a
+  // synchronous gl.getParameter(COLOR_CLEAR_VALUE) every frame when
+  // _clearColor is already shadowed, and fog and lighting left
+  // overridden on the way out, self-healing only because every mode's
+  // frame body happens to re-set both. All of it now goes through
+  // renderer.panelFrame, whose return runs in a finally.
+  // Unchanged here: the ONE mirror on the projection (mat4's law -
+  // this pass culls), the model spun by the window's yaw, and the
+  // async mesh load through the pipeline's own getGpuMesh (the panel
+  // stays empty for the frames it takes, DFU's first-frame gap).
   // RECORDED: DFU climate-swaps the preview's textures and lights it
   // with a 0.4 directional + hard shadows; the port draws the base
   // textures under the collapsed-ambient idiom the automap records.
-  // Fog/lighting overrides self-heal: every mode's frame body re-sets
-  // both before its own beginFrame.
   const _previewMeshes = new Map();   // modelIdNum -> gpu | null(loading/failed)
   function drawBankModelPreview(modelIdNum, rect, yawDeg, camera) {
     let gpu = _previewMeshes.get(modelIdNum);
@@ -1935,22 +1939,19 @@ export function createWorldModes(host) {
       return;
     }
     if (!gpu) return;
-    const gl = renderer.gl;
-    const ch = renderer.canvas.height;
-    const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);
-    gl.enable(gl.SCISSOR_TEST);
-    gl.scissor(rect.x, ch - (rect.y + rect.h), rect.w, rect.h);
-    gl.clearColor(0, 0, 0, 1);   // the camera's SolidColor clear, black as the automap paints
-    renderer.setFog('off');
-    renderer.setLighting(new Float32Array([0.75, 0.75, 0.75]), 0);
     const proj = mirrorProjectionX(perspective(60 * (Math.PI / 180), rect.w / Math.max(1, rect.h), 0.7, 100));   // Unity's default 60-degree lens, near/far :212-213
     const view = lookAt([0, camera.y, camera.z], [0, camera.y, camera.z + 1], [0, 1, 0]);   // identity rotation: straight down +z
-    renderer.beginFrame(proj, view, new Float32Array([0, 0.707, -0.707]));
-    gl.viewport(rect.x, ch - (rect.y + rect.h), rect.w, rect.h);
-    renderer.drawMesh(gpu, trs(0, 0, 0, 0, yawDeg, 0));
-    gl.disable(gl.SCISSOR_TEST);
-    gl.viewport(0, 0, renderer.canvas.width, ch);
-    gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);
+    renderer.panelFrame({
+      proj,
+      view,
+      lightDir: new Float32Array([0, 0.707, -0.707]),
+      rect,
+      clear: [0, 0, 0, 1],   // this camera's SolidColor clear IS opaque black (alpha 1 draws the quad unblended)
+      setup: () => {
+        renderer.setFog('off');
+        renderer.setLighting(new Float32Array([0.75, 0.75, 0.75]), 0);
+      },
+    }, () => renderer.drawMesh(gpu, trs(0, 0, 0, 0, yawDeg, 0)));
   }
 
   /** The side effects AllocateHouseToPlayer carries besides the slot:
@@ -5661,6 +5662,9 @@ export function createWorldModes(host) {
     // shape that has bitten this flow four times.
     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
       const vd = pointToNative(nativeMetrics(canvas), px, py);
+      // ROAD-C c2/S4: the pointer seam first and always (the automap
+      // chrome is press-HOLD and drag driven), then the click seam.
+      if (vd) dungeonCtx.overlayPointer?.('down', vd[0], vd[1], e.button);
       if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2);
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }
@@ -5693,6 +5697,31 @@ export function createWorldModes(host) {
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (interiorOverlay?.done) interiorOverlay = null;
     interiorWindows.reconcile(interiorOverlay);   // ROAD-B B1: the click's drain is PopWindow too
+    return true;
+  }
+
+  /** ROAD-C c2/S4: the other TWO THIRDS of the pointer seam. THE FOUR
+   *  HOSTS RULE again, and this time with teeth: a host that routes
+   *  `down` but not `up` latches an automap drag that spins the map
+   *  forever and nothing errors. These are exported beside
+   *  `pointerdown` so world.js and exterior.js - which own the DOM
+   *  listeners for this host - deliver all three phases or none. */
+  function pointerNative(e) {
+    const r = canvas.getBoundingClientRect();
+    return pointToNative(nativeMetrics(canvas),
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height));
+  }
+  function pointermove(e) {
+    if (mode !== 'dungeon' || !dungeonCtx?.uiOverlayActive) return false;
+    const v = pointerNative(e);
+    if (v) dungeonCtx.overlayPointer?.('move', v[0], v[1], 0);
+    return true;
+  }
+  function pointerup(e) {
+    if (mode !== 'dungeon' || !dungeonCtx?.uiOverlayActive) return false;
+    const v = pointerNative(e);
+    dungeonCtx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
     return true;
   }
 
@@ -6092,6 +6121,8 @@ export function createWorldModes(host) {
       return null;                       // exterior: the host's own context stands
     },
     pointerdown,
+    pointermove,   // ROAD-C c2/S4 - all three phases, or the drag latches
+    pointerup,
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

@@ -521,6 +521,27 @@ export function screenQuadBlends(tex, color, opts = {}) {
   return (!tex && color[3] < 1) || Boolean(tex && opts.blend);
 }
 
+/** setFog takes a STRING mode and shadows an int; the panel bracket
+ *  has to spell the round trip. */
+const FOG_MODE_NAMES = ['off', 'linear', 'exp'];
+
+/**
+ * ROAD-C c2/S2: Unity's DEFAULT camera background, which is what
+ * `cameraAutomap` clears to - `clearFlags = SolidColor`
+ * (Automap.cs:2012) with `backgroundColor` never assigned anywhere in
+ * the file. (49, 77, 121, 5) / 255. The ALPHA IS THE POINT: at 5/255
+ * the automap's render texture is ~98% transparent over empty map
+ * space, which is how AMAP00I0's map-area art and the three
+ * alternative backgrounds show through. Clear this to opaque black
+ * and that whole feature disappears with no error anywhere.
+ */
+export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 / 255]);
+
+/** The automap render panel, DFU's own rect on the 320x200 native
+ *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
+ *  ExteriorAutomap's panelRenderAutomap: 1, 1, 318, 169). */
+export const AUTOMAP_PANEL_NATIVE_RECT = Object.freeze({ x: 1, y: 1, w: 318, h: 169 });
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -1505,6 +1526,148 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
+  }
+
+  /**
+   * ROAD-C c2/S2 - THE PANEL BRACKET. A second camera frame confined
+   * to a rectangle of the real canvas, opened and CLOSED by the
+   * renderer itself. EV6's law is that the renderer owns GL state, so
+   * this lives here and not in a ui/ module holding its own
+   * save/restore list one import away from a second copy: three such
+   * copies already existed (both automap windows and the bank's model
+   * preview) and every one of them leaked something.
+   *
+   * THE ORDER IS NOT FREE, and both halves of it are load-bearing:
+   *  - the SCISSOR goes on BEFORE beginFrame, because SCISSOR_TEST
+   *    also gates gl.clear (setScreenScissor's own warning) - the
+   *    clear beginFrame issues must not escape the panel;
+   *  - the VIEWPORT goes on AFTER it, because beginFrame's own
+   *    gl.viewport is full-canvas (and beginFrame may resize the
+   *    canvas first, which is also why the scissor is re-armed after).
+   *
+   * THE CLEAR IS DFU'S, not black. cameraAutomap.clearFlags is
+   * SolidColor (Automap.cs:2012) and backgroundColor is never
+   * assigned, so it is Unity's default (49,77,121,5)/255 - alpha
+   * 5/255, TWO PERCENT - and the render texture is alpha-blended over
+   * the panel. That near-transparent clear is exactly what lets
+   * AMAP00I0's map-area art and the three alternative backgrounds
+   * show through empty map space; an opaque black clear silently
+   * deletes the feature. The port draws DIRECTLY over the background
+   * already on the canvas, so the "clear" is a DEPTH-ONLY clear
+   * (colorMask off across beginFrame's clear) plus a BLENDED
+   * full-panel quad at that colour.
+   *
+   * `rect` is real canvas pixels, top-left origin - drawScreenQuad's
+   * space, with the letterbox offset already applied by the caller.
+   */
+  beginPanelFrame(proj, view, lightDir, rect, clearRGBA = PANEL_CLEAR_RGBA, setup = null) {
+    if (this._panelSaved) throw new Error('beginPanelFrame: already inside a panel frame');
+    const gl = this.gl;
+    // EVERY global this pass can touch, saved by name. A thirteenth
+    // one added to the renderer later must be added HERE - the source
+    // pin in test/roadc_panelframe.test.js is what enforces it.
+    this._panelSaved = {
+      screenOffset: this._screenOffset ? [...this._screenOffset] : [0, 0],
+      clipY: this._clipY,
+      automapMode: this._automapMode,
+      fogMode: this._fogMode,
+      fogDensity: this._fogDensity,
+      fogRange: [this._fogRange[0], this._fogRange[1]],
+      fogColor: this._fogColor,
+      ambient: this._ambient,
+      sunScale: this._sunScale,
+      sunColor: this._sunColor,
+      clockLit: this._clockLit,
+      moonScale: this._moonScale,
+      moonDir: [...this._moonDir],
+      moonColor: [...this._moonColor],
+      windowEmission: this._windowEmission,
+      pointLights: this._pointLights,
+      pointColor: this._pointColor,
+      pointColors: this._pointColors,
+      indirect: [this._indirect[0], this._indirect[1], this._indirect[2], this._indirect[3]],
+      indirectColor: this._indirectColor,
+      clearColor: [this._clearColor[0], this._clearColor[1], this._clearColor[2], this._clearColor[3]],
+      proj: this._proj,
+      view: this._view,
+      lightDir: this._lightDir,
+      camPos: [this._camPos[0], this._camPos[1], this._camPos[2]],
+      rect,
+    };
+    this.setScreenOffset(0, 0);
+    // `setup` runs AFTER the save and BEFORE beginFrame, which is the
+    // only window in which a pass can choose its own fog/lighting:
+    // those setters merely shadow, and beginFrame is what uploads
+    // them. A caller that sets them before entering the bracket would
+    // have its own overrides saved as the "entry" state and restored
+    // on the way out - the leak this bracket exists to end.
+    if (setup) setup();
+    this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);   // BEFORE beginFrame - SCISSOR_TEST gates gl.clear
+    gl.colorMask(false, false, false, false);                // ...and the colour half of that clear must not land
+    this.beginFrame(proj, view, lightDir);
+    gl.colorMask(true, true, true, true);
+    // beginFrame may have resized the canvas; re-arm the scissor and
+    // take the viewport it just set to full-canvas.
+    this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);
+    gl.viewport(
+      Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)),
+      Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)),
+    );
+    // the DFU clear, blended over whatever the panel already shows
+    if (clearRGBA) {
+      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,
+        [clearRGBA[0], clearRGBA[1], clearRGBA[2], clearRGBA[3]]);
+      gl.viewport(
+        Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)),
+        Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)),
+      );
+    }
+  }
+
+  /** Close the bracket: every global back to its entry value, the
+   *  viewport and scissor back to the host's, the draw state back to
+   *  the renderer's baseline, and ONE markForeignPass - the pass ran
+   *  its own programs and the shadows must not be trusted. */
+  endPanelFrame() {
+    const s = this._panelSaved;
+    if (!s) return;
+    this._panelSaved = null;
+    const gl = this.gl;
+    this.setClipY(s.clipY);
+    this.setAutomapMode(s.automapMode);
+    this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
+    this.setLighting(s.ambient, s.sunScale, s.sunColor);
+    this._clockLit = s.clockLit;
+    this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
+    this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];
+    this._moonColor[0] = s.moonColor[0]; this._moonColor[1] = s.moonColor[1]; this._moonColor[2] = s.moonColor[2];
+    this.setWindowEmission(s.windowEmission);
+    this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
+    this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
+    this._proj = s.proj; this._view = s.view; this._lightDir = s.lightDir;
+    this._camPos[0] = s.camPos[0]; this._camPos[1] = s.camPos[1]; this._camPos[2] = s.camPos[2];
+    this._clearColor[0] = s.clearColor[0]; this._clearColor[1] = s.clearColor[1];
+    this._clearColor[2] = s.clearColor[2]; this._clearColor[3] = s.clearColor[3];
+    gl.clearColor(s.clearColor[0], s.clearColor[1], s.clearColor[2], s.clearColor[3]);
+    // the draw-state baseline every entry point in this file assumes
+    gl.colorMask(true, true, true, true);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    this.clearScreenScissor();
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.setScreenOffset(s.screenOffset[0], s.screenOffset[1]);
+    this.markForeignPass();
+  }
+
+  /** The ONLY sanctioned way to run a panel pass: the return happens
+   *  in a `finally`, so a throw inside the body cannot leave the
+   *  session's one shared renderer holding a scissor (which silently
+   *  blanks the next host frame's clear rather than erroring). */
+  panelFrame({ proj, view, lightDir, rect, clear = PANEL_CLEAR_RGBA, setup = null }, body) {
+    this.beginPanelFrame(proj, view, lightDir, rect, clear, setup);
+    try { return body(); } finally { this.endPanelFrame(); }
   }
 
   /** Active window style emission (windowEmissionRGB output). */

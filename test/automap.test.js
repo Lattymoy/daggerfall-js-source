@@ -141,6 +141,12 @@ test('A1 LRU prune: the newest AutomapNumberOfDungeons survive; N=0 keeps the li
 });
 
 test('A1 reveal law: DOWN + VIEW + the floor march paint the path, by hit point against entry AABBs', () => {
+  // ROAD-C c2/S1 rewrote the LAW under this pin: the single ray became
+  // DFU's three (ScanWithRaycastInDirectionAndUpdateMeshesAndMaterials
+  // :1021-1144) and the index became the model. The probe SET and the
+  // paths it paints - which is what this pin has always been about -
+  // are unchanged, so the assertions below stand as written. The new
+  // law's own pins live in test/roadc_automap_model.test.js.
   resetAutomapStore();
   try {
     const rec = enterDungeonAutomap('0/probe', 0);
@@ -149,17 +155,19 @@ test('A1 reveal law: DOWN + VIEW + the floor march paint the path, by hit point 
       { key: 'floorB', aabb: [0, -0.5, 10, 10, 0.1, 20] },
       { key: 'wall', aabb: [0, 0, 19.9, 10, 4, 20.5] },
       { key: 'far', aabb: [50, 0, 50, 60, 4, 60] },
-      { key: 'noAabb' },   // filtered out by buildRevealIndex
+      { key: 'noAabb' },   // filtered out by the model builder
     ]);
     assert.equal(index.length, 4, 'entries without an AABB never index');
-    // floor at y=0, one wall at z=20; anything else misses
+    // floor at y=0, one wall at z=20; anything else misses. The answer
+    // is origin-independent, so the three parallel rays agree exactly.
     const collider = {
-      raycast: (o, d) => {
-        if (d[1] === -1) return o[1];                 // straight down -> the floor
-        if (d[2] === 1) return 20 - o[2];             // north -> the wall
-        return Infinity;
+      raycastHit: (o, d) => {
+        if (d[1] === -1) return { dist: o[1], key: 'dungeon', normal: null };       // straight down -> the floor
+        if (d[2] === 1) return { dist: 20 - o[2], key: 'dungeon', normal: null };   // north -> the wall
+        return { dist: Infinity, key: null, normal: null };
       },
     };
+    collider.raycast = (o, d, m) => collider.raycastHit(o, d, m).dist;
     automapRevealTick(rec, { eye: [5, 2, 5], fwd: [0, 0, 1], collider, index });
     assert.equal(rec.revealed.has('floorA'), true, 'the DOWN probe (:1161-1164)');
     assert.equal(rec.revealed.has('wall'), true, 'the VIEW probe (:1168-1170)');
@@ -290,7 +298,7 @@ test('A1 window: stepped controls - pan/rotate/zoom/slice/reset, M and Escape cl
 test('A1 wiring pins: entry identity at the push sites, the 5 Hz tick in BOTH dungeon hosts, the load re-entry', () => {
   const ctx = src('src/scenes/dungeonContext.js');
   assert.match(ctx, /drawList\.push\(\{ mesh: gpu, matrix, key: `\$\{bi\}:\$\{p\.position\}`, aabb \}\)/, 'static entries carry the action-key identity');
-  assert.match(ctx, /automapEntries\.push\(\{ key: o\.key, aabb/, 'dynamic entries key by the live action object');
+  assert.match(ctx, /automapEntries\.push\(amapRow\(o\.key, aabb, true\)\)/, 'dynamic entries key by the live action object (c2/S1: through the identity row builder)');
   assert.match(ctx, /enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: true \}\)/, 'quickLoad re-enters on the LOAD arm');
   assert.match(src('src/scenes/dungeon.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the standalone host ticks');
   assert.match(src('src/scenes/worldModes.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the streaming host ticks');
@@ -312,7 +320,16 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // the handedness law) and hands lighting/fog/slice back after
   const w = src('src/ui/automapWindow.js');
   assert.match(w, /mirrorProjectionX\(perspective\(FIELD_OF_VIEW_2D/, 'HANDEDNESS: the culling pass mirrors');
-  assert.match(w, /finally \{[\s\S]{0,400}setClipY\(null\)[\s\S]{0,400}setFog\('exp', 0\.005/, 'the dungeon fog returns even if the pass throws');
+  // PIN MOVED, ROAD-C c2/S2: the window no longer holds its own
+  // save/restore list at all - `renderer.panelFrame` saves the whole
+  // global surface before the pass and returns it in a finally
+  // (EV6: the renderer owns GL state). The LAW is unchanged and is
+  // now pinned as behaviour, on a throwing body, in
+  // test/roadc_panelframe.test.js. What this pin holds here is that
+  // the window really goes through the bracket and keeps nothing of
+  // its own.
+  assert.match(w, /renderer\.panelFrame\(\{/, 'the pass runs inside the renderer\'s bracket');
+  assert.equal(/renderer\.setFog\('exp'/.test(w), false, 'and restores nothing by hand');
   // A1 review: beacons are never sliced (DFU injects the slicing
   // shader into the GEOMETRY only, Automap.cs:1906 vs :1355-1362) -
   // the slice lifts before the arrow/marker draws

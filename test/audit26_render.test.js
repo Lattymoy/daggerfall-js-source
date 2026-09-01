@@ -175,9 +175,19 @@ test('audit26 F034: renderCharacterSprite borrows the clear colour and returns i
   // the shadow is born beside the one constructor clearColor it mirrors
   assert.match(s, /gl\.clearColor\(0\.53, 0\.7, 0\.92, 1\.0\);[^]{0,400}this\._clearColor = new Float32Array\(\[0\.53, 0\.7, 0\.92, 1\.0\]\);/,
     'the shadow and the real clear colour are set together');
-  // the automap preview keeps its own borrow idiom (it borrows from
-  // OUTSIDE the renderer, where no shadow exists)
-  assert.match(src('src/scenes/worldModes.js'), /const prevClear = gl\.getParameter\(gl\.COLOR_CLEAR_VALUE\);/);
+  // PIN MOVED, ROAD-C c2/S2. The bank model preview used to keep its
+  // OWN borrow idiom out in worldModes.js, and it borrowed with a
+  // synchronous gl.getParameter(COLOR_CLEAR_VALUE) every frame -
+  // exactly the driver-query class EV2 killed in precipitation, done
+  // outside the renderer where the shadow was "not visible". It now
+  // rides renderer.panelFrame, which reads the shadow like every
+  // other borrower and returns it in a finally. The law this pin
+  // guards - a borrowed clear colour is always returned - is now
+  // pinned as BEHAVIOUR in test/roadc_panelframe.test.js rather than
+  // as the text of a second copy.
+  assert.equal(/getParameter\(gl\.COLOR_CLEAR_VALUE\)/.test(src('src/scenes/worldModes.js')), false,
+    'the second copy of the borrow idiom is gone - it goes through the renderer now');
+  assert.match(src('src/scenes/worldModes.js'), /renderer\.panelFrame\(\{/);
   // beginFrame still sets NO colour, which is why the restore is the
   // fix rather than a defensive set there.
   const begin = s.slice(s.indexOf('beginFrame('), s.indexOf('beginFrame(') + 900);

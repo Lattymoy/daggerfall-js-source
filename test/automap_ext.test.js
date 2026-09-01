@@ -205,5 +205,12 @@ test('A2 grayscale pins: the shader law and the two-tier dungeon pass (Daggerfal
   assert.match(aw, /setAutomapMode\(1\);[\s\S]{0,400}setAutomapMode\(2\);/, 'visited draws colour, prior-run grayscale');
   assert.match(aw, /rec\.revealed\.has\(d\.key\) && !run\.has\(d\.key\)/, 'the prior-run predicate (RENDER_IN_GRAYSCALE)');
   assert.match(aw, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(0\);/, 'beacons ride neither the slice nor the tint');
-  assert.match(aw, /finally \{[\s\S]{0,500}setAutomapMode\(0\)/, 'the mode restores even if the pass throws');
+  // PIN MOVED, ROAD-C c2/S2: the automap mode is one of the globals
+  // renderer.panelFrame saves and returns in its own finally, so the
+  // window's hand-rolled restore list is gone. The throwing-body
+  // proof lives in test/roadc_panelframe.test.js, where it runs
+  // against the bracket instead of against this file's text.
+  assert.match(aw, /renderer\.panelFrame\(\{/, 'the pass runs inside the renderer\'s bracket');
+  assert.match(src('src/render/renderer.js'), /automapMode: this\._automapMode,/, 'and the bracket saves the mode by name');
+  assert.match(src('src/render/renderer.js'), /this\.setAutomapMode\(s\.automapMode\);/, 'and hands it back');
 });

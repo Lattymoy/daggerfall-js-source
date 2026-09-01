@@ -21,26 +21,38 @@
 // brought the grayscale prior-run presentation here.
 //
 // THE PASS. The host draws overlays after its own world pass, so this
-// window opens a SECOND camera frame: beginFrame with the top-down
-// lens (mirrorProjectionX - the mesh pass culls, so it must ride the
-// mirrored projection, mat4's law), a black ground quad (the automap
-// camera clears SolidColor; the port's clear color is the Iliac sky),
-// the revealed-filtered mesh pass under setClipY, then markers and
-// chrome. Fog off (DFU's NoFogCamera) and a bright flat ambient (the
-// three automap directional lights collapse to ambient - the mesh
-// shader has one light; recorded) - both restored to the dungeon
-// hosts' own values in a finally, alongside the slice plane.
+// window opens a SECOND camera frame - and since ROAD-C c2/S2 that
+// frame is the RENDERER's bracket, `renderer.panelFrame`, not a
+// save/restore block kept here: the renderer owns GL state (EV6), the
+// bracket owns the scissor-before/viewport-after ordering that
+// beginFrame's own full-canvas viewport and clear demand, and its
+// return runs in a finally. What this file still owns is the LENS
+// (the top-down mirrorProjectionX - the mesh pass culls, mat4's law),
+// the pass's fog/lighting choice (handed to the bracket as `setup`,
+// which runs after the save and before beginFrame), the slice plane,
+// the revealed-only filter and the markers.
+// The 3D lands in DFU's own render panel - native (1,1,318,169),
+// DaggerfallAutomapWindow.cs:358-360 - not the whole canvas; and the
+// black ground quad is gone, replaced by the bracket's DFU-faithful
+// clear (Unity's default camera background at 2% alpha, which is what
+// lets the map-area art show through empty space).
 
 import { drawText } from './text.js';
 import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4.js';
 import { getBool, getString } from '../systems/settings.js';
 import { slicingPositionY, DEFAULT_SLICING_BIAS_Y } from '../systems/automap.js';
-import { DUNGEON_AMBIENT } from '../world/dungeonLights.js';
 import { RDB_SIDE } from '../world/dungeonLayout.js';
+import { FIELD_OF_VIEW_2D, CAMERA_HEIGHT_VIEW_FROM_TOP } from './automapCamera.js';
+import { AUTOMAP_PANEL_NATIVE_RECT } from '../render/renderer.js';   // c2/S2: the bracket's rect
+import { nativeMetrics } from './nativePanel.js';
 
 const DEG = Math.PI / 180;
-export const FIELD_OF_VIEW_2D = 15.0;             // fieldOfViewCameraMode2D (DaggerfallAutomapWindow.cs:43)
-export const CAMERA_HEIGHT_VIEW_FROM_TOP = 150.0; // cameraHeightViewFromTop (:53)
+// ONE HOME (the audit24 ratchet), ROAD-C c2/S4: fieldOfViewCameraMode2D
+// (:43) and cameraHeightViewFromTop (:53) are two of the ~30 control
+// constants ui/automapCamera.js now owns as a set. They are re-exported
+// here for this window's existing importers, so the VALUES exist in one
+// module only.
+export { FIELD_OF_VIEW_2D, CAMERA_HEIGHT_VIEW_FROM_TOP } from './automapCamera.js';
 const NEAR_CLIP = 0.7;                            // the automap camera's own planes (Automap.cs:2012-2013);
 const FAR_CLIP = 5000.0;                          // NOT the 2D mode's 100 - the shader slice does that job here
 // Stepped stand-ins for DFU's held-key per-second speeds (recorded
@@ -202,25 +214,40 @@ export class AutomapWindow {
     const rec = this.deps.record?.() ?? null;
     const p = this.deps.player?.() ?? null;
     this._ensureMarkers(renderer);
-    // ---- the second camera pass (real canvas, no letterbox offset) ----
-    const off = renderer.screenOffset;
-    renderer.setScreenOffset(0, 0);
+    // ---- the second camera pass, INSIDE THE RENDERER'S BRACKET ----
+    // c2/S2: the hand-rolled save/restore block that used to stand
+    // here is gone. renderer.panelFrame owns the scissor/viewport
+    // ordering, the DFU clear and the return of every global - see
+    // render/renderer.js beginPanelFrame. The 3D now lands in DFU's
+    // own 318x169 render panel instead of the whole canvas.
+    const m = nativeMetrics(renderer.canvas);
+    const R = AUTOMAP_PANEL_NATIVE_RECT;
+    const rect = { x: m.ox + R.x * m.s, y: m.oy + R.y * m.s, w: R.w * m.s, h: R.h * m.s };
+    this._panelRect = rect;
     const sliceMaxed = getBool('Map', 'AutomapAlwaysMaxOutSliceLevel');   // float.MaxValue arm (Automap.cs:1299-1302)
-    renderer.setClipY(sliceMaxed ? null : slicingPositionY(p?.eye?.[1] ?? this.refY, 0, this.biasY));
-    renderer.setFog('off');                                      // NoFogCamera (:2017)
-    renderer.setLighting(new Float32Array([0.9, 0.9, 0.9]), 0);  // key/fill/back 0.9/0.7/0.5 collapsed to ambient (:2073-2075, recorded)
-    renderer.setMoonlight(null);   // AUDIT EV F-R1: a map pass takes no stale exterior moon (the beacons are _clockLit billboards)
-    try {
-      const yaw = this.yawDeg * DEG;
-      const upv = [Math.sin(yaw), 0, Math.cos(yaw)];
-      const aspect = (renderer.canvas.clientWidth || 1) / (renderer.canvas.clientHeight || 1);
-      const proj = mirrorProjectionX(perspective(FIELD_OF_VIEW_2D * DEG, aspect, NEAR_CLIP, FAR_CLIP));   // HANDEDNESS (mat4's law): this pass culls
-      const view = lookAt([this.center[0], this.refY + this.height, this.center[1]], [this.center[0], this.refY, this.center[1]], upv);
-      renderer.beginFrame(proj, view, UP_Y);
-      // SolidColor clear: the port's clear color is the Iliac sky, so
-      // paint the map's black ground (depth untouched - drawScreenQuad
-      // runs with the depth test off).
-      renderer.drawScreenQuad(null, { x: 0, y: 0, w: renderer.canvas.width, h: renderer.canvas.height }, undefined, [0, 0, 0, 1]);
+    const yaw = this.yawDeg * DEG;
+    const upv = [Math.sin(yaw), 0, Math.cos(yaw)];
+    const aspect = rect.w / Math.max(1, rect.h);
+    const proj = mirrorProjectionX(perspective(FIELD_OF_VIEW_2D * DEG, aspect, NEAR_CLIP, FAR_CLIP));   // HANDEDNESS (mat4's law): this pass culls
+    const view = lookAt([this.center[0], this.refY + this.height, this.center[1]], [this.center[0], this.refY, this.center[1]], upv);
+    renderer.panelFrame({
+      proj,
+      view,
+      lightDir: UP_Y,
+      rect,
+      // REMAINDER (c2/S6): the automap GEOMETRY is UNLIT - Daggerfall
+      // Automap.shader's frag is `outColor.rgb = albedo.rgb` with no
+      // light term, so the true pass runs at ambient (1,1,1) with
+      // every other term off. The 0.9 stand-in below is A1's and is
+      // kept unchanged here on purpose: S2 moves the bracket, it does
+      // not re-light the pass.
+      setup: () => {
+        renderer.setClipY(sliceMaxed ? null : slicingPositionY(p?.eye?.[1] ?? this.refY, 0, this.biasY));
+        renderer.setFog('off');                                      // NoFogCamera (:2017)
+        renderer.setLighting(new Float32Array([0.9, 0.9, 0.9]), 0);  // key/fill/back 0.9/0.7/0.5 collapsed to ambient (:2073-2075, recorded)
+        renderer.setMoonlight(null);   // AUDIT EV F-R1: a map pass takes no stale exterior moon (the beacons are _clockLit billboards)
+      },
+    }, () => {
       // the revealed-only pass - MeshRenderer.enabled = discovered,
       // as a filter over the LIVE draw lists (systems/automap.js).
       // A2: two tiers, DFU's RENDER_IN_GRAYSCALE law - visited this
@@ -266,15 +293,7 @@ export class AutomapWindow {
         batches.push(this._markers.player);
       }
       if (batches.length) renderer.drawBillboards(batches, camR, camU);
-    } finally {
-      // hand the state back exactly as the dungeon hosts set it
-      // (dungeon.js:221-223 / worldModes.js:1662-1663)
-      renderer.setClipY(null);
-      renderer.setAutomapMode(0);
-      renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
-      renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
-      renderer.setScreenOffset(off[0], off[1]);
-    }
+    });
     // ---- chrome, on the virtual screen the host letterboxed ----
     this._drawMicroMap(renderer, p, s);
     renderer.drawScreenQuad(null, { x: 0, y: canvas.height - 22 * s, w: canvas.width, h: 22 * s }, undefined, [0.04, 0.03, 0.02, 0.85]);
