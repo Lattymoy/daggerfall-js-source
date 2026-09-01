@@ -1,5 +1,10 @@
 # Port Completion Analysis - what a full 1:1 port of DFU still needs
 
+> SUPERSEDED for volume figures and per-area status by
+> `Port-Status-2026-09.md` (AUDIT 39's measurement: 164,220 loc across
+> 477 modules). This page's method notes and its routed-gap history
+> remain the record of how the earlier estimate was built.
+
 Snapshot taken 2026-08-22 against Daggerfall Unity `81e89e90` (master,
 2026-06-30), by cross-referencing the whole DFU C# tree against `src/`.
 
