@@ -13,8 +13,9 @@
 //   - moveSpeed = (LiveSpeed + dfWalkBase 150) * GlobalScale - "Monster
 //     speed of movement follows the same formula as for when the
 //     player walks"
-//   - classic stop distance vs the player = MeleeDistance 2.25
-//     (vs other AI 1.5); "Classic always moves in for attack", never
+//   - classic stop distance vs the player = MeleeDistance 2.25, vs
+//     other AI = ClassicMeleeDistanceVsAI 1.5, picked per pass in
+//     TakeAction; "Classic always moves in for attack", never
 //     strafes or backs away
 // Departures (documented): eye height = feet + height * 5/6 (DFU:
 // transform.position + controller.center + height/3 under Unity CC
@@ -322,7 +323,7 @@ export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null } = {}) {
     this.collider = collider;
     /** ObstacleCheck's DaggerfallActionDoor arm (:1167-1176). The AI
      *  cannot resolve a collider bucket key to an action object - the
@@ -347,7 +348,12 @@ export class EnemyAI {
     this.lastGroundedY = feet[1];
     this.landedFall = 0;   // > 0 for ONE host frame after a damaging landing
     this._airborne = false;
-    this.speed = enemyMoveSpeed(liveSpeed);
+    // AUDIT 39: TakeAction re-derives `moveSpeed` from
+    // `entity.Stats.LiveSpeed` EVERY FixedUpdate (:432), so a Drain or
+    // Fortify Speed on a foe moves it. A number captured at spawn
+    // cannot; callers that own the entity pass a THUNK over
+    // liveStat(entity, 'speed') and the read happens per step.
+    this._liveSpeed = typeof liveSpeed === 'function' ? liveSpeed : () => liveSpeed;
     this.seesThroughInvisibility = seesThroughInvisibility;
     // MobileUnit.ClassicSpawnDistanceType (the marker's SoundIndex) and
     // PlayerEnterExit.IsPlayerInside - both feed the spawn-band recompute.
@@ -413,7 +419,16 @@ export class EnemyAI {
     this.velY = 0;
     this.detected = false;
     this.inSight = false;
-    this.isHostile = true;        // EnemyMotor.IsHostile - pacification (C-slice) clears it; damage restores it
+    // EnemyMotor.Start:122 `IsHostile = mobile.Enemy.Reactions == Hostile`
+    // - a dungeon marker whose action byte is 99 stands down until it is
+    // struck (RDBLayout.AddEnemy :1519-1521). Pacification (C-slice)
+    // clears it too; damage restores it.
+    this.isHostile = isHostile;
+    // TakeAction:443-449 sets stopDistance BEFORE GetDestination, and
+    // both the approach test (:487) and the search ramp (:552) read it.
+    // Seeded here so a caller that drives _getDestination directly has
+    // the player value.
+    this.stopDistance = MELEE_DISTANCE;
     this.justEncountered = false; // the first-detection EDGE (EnemySenses:504) - the host's pacify check consumes it
     this.moving = false;
     this._classicTimer = 0;
@@ -428,6 +443,11 @@ export class EnemyAI {
     this._blocked = false;               // blockedByIllusionEffect, rolled per classic tick
     this._lastStealthMinute = -1;        // timeOfLastStealthCheck (per foe)
   }
+
+  /** TakeAction:432 - `(entity.Stats.LiveSpeed + dfWalkBase) *
+   *  GlobalScale`, re-derived on every pass rather than captured. A
+   *  READ, not a field, so nothing can freeze it back. */
+  get speed() { return enemyMoveSpeed(this._liveSpeed()); }
 
   /** CH4 (the senses verify pass): the CLASSIC-gated senses halves.
    *  DFU's FixedUpdate runs the spawn-band recompute (:260-310) and
@@ -1000,7 +1020,7 @@ export class EnemyAI {
         base[2] + n[2] * this.searchMult,
       ];
       const sd = Math.hypot(search[0] - c[0], search[1] - c[1], search[2] - c[2]);
-      if (this.searchMult <= SEARCH_MULT_MAX && sd <= MELEE_DISTANCE) this.searchMult++;
+      if (this.searchMult <= SEARCH_MULT_MAX && sd <= this.stopDistance) this.searchMult++;
       this.destination = search;
     }
     // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
@@ -1068,6 +1088,18 @@ export class EnemyAI {
     // of HandleNoAction (AUDIT 26 F012) - it fires on ALL THREE arms
     // in _step, not just this one.
     if (this.predictedTargetPos === null) { this.moving = false; return; }
+    // MT-iii (AUDIT 39) - TakeAction:443-449, the FIRST thing the
+    // classic path does, ahead of GetDestination because the search
+    // ramp reads it too (:552):
+    //   if (senses.Target == PlayerEntityBehaviour) stopDistance = MeleeDistance;
+    //   else stopDistance = ClassicMeleeDistanceVsAI;
+    // "Classic AI moves only as close as melee range. It uses a
+    // different range for the player and for other AI." The port held
+    // the 2.25 literal at both sites, so two infighting foes each
+    // halted 0.75 outside the 1.5 swing gate enemyAttack.js:154-155
+    // already honours - a stand-off that never resolved.
+    this.stopDistance = (this._armedTargeting && this.target && !this.target.isPlayer)
+      ? CLASSIC_MELEE_DISTANCE_VS_AI : MELEE_DISTANCE;
     // GetDestination (:528-565), all three arms since wave 35.
     const detouring = this.avoidObstaclesTimer > 0;
     this._getDestination(playerFeet);
@@ -1105,11 +1137,11 @@ export class EnemyAI {
     const distance = (this.avoidObstaclesTimer <= 0 && this.inSight)
       ? this._dist
       : Math.hypot(dx, this.destination[1] - this.feet[1], dz);
-    // classic stop: MeleeDistance vs the player; always moves in for
+    // classic stop: the stopDistance set above; always moves in for
     // attack. CH4: the STOPPED turn rides the 22.5 "just look at
     // target" gate (EnemyMotor.cs:514), NOT AttemptMove's 5.625 -
     // a melee foe stands up to 22.5deg off-face.
-    if (distance <= MELEE_DISTANCE) {
+    if (distance <= this.stopDistance) {
       this.moving = false;
       if (!withinYaw(this.yaw, dx, dz, STOP_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
       return;
@@ -1163,7 +1195,16 @@ export class EnemyAI {
     // hit-stun stops shooting and casting exactly as DFU's does.
     // (The MELEE decision is CanAct-independent in DFU - EnemyAttack
     // .FixedUpdate rolls it regardless - and stays ungated.)
-    this.canAct = !paralyzed && !knocked && this.isHostile;
+    // MT-iii (AUDIT 39): the hostility term is HandleNoAction's
+    // `senses.Target == null` (:359), not a CanAct term of its own -
+    // `grep IsHostile EnemyMotor.cs` finds writes at :122/:206 and no
+    // read. A pacified foe stops because EnemySenses:321-327 drops the
+    // PLAYER as its target; a FOE target survives that drop (this
+    // file's own _senses exception), and DFU's motor then pursues and
+    // turns towards it. The port ANDed IsHostile in flat, so a
+    // pacified foe another enemy was mauling stood rooted.
+    const foeTarget = this._armedTargeting && this.target != null && !this.target.isPlayer;
+    this.canAct = !paralyzed && !knocked && (this.isHostile || foeTarget);
     // EnemyMotor.UpdateTimers runs every FixedUpdate, after
     // HandleParalysis and KnockbackMovement have settled CanAct, and
     // BEFORE TakeAction reads avoidObstaclesTimer (:166-172).
@@ -1232,12 +1273,12 @@ export class EnemyAI {
     if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
     for (let i = 0; i < classicTicks; i++) {
       if (!this.detected && this.giveUpTimer > 0) this.giveUpTimer--;
-      // C-slice: a pacified foe (IsHostile false) keeps its senses
-      // but takes no action - DFU's motor only pursues hostiles
-      // (its senses hold no Target, so HandleNoAction drops CanAct).
+      // C-slice: a pacified foe with NO foe target keeps its senses
+      // but takes no action - its senses hold no Target, so
+      // HandleNoAction drops CanAct. One with a foe target still acts.
       if (this.canAct) this._classicTick(targetFeet ?? playerFeet);   // MT-i: pursuit aims at the TARGET
     }
-    if (paralyzed || !this.isHostile) this.moving = false;
+    if (paralyzed || !(this.isHostile || foeTarget)) this.moving = false;
 
     // C15 KnockbackMovement, verbatim: runs INSTEAD of pursuit (and
     // regardless of paralysis - DFU calls it before the CanAct

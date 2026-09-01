@@ -110,7 +110,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const gender = MobileUnit.resolveGender(forcedGender ?? 'unspecified', basics);
       const behaviour = basics.behaviour ?? 'General';
       const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw ?? rolls() * Math.PI * 2, {
-        liveSpeed: entity.liveSpeed,
+        liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
         playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
@@ -119,7 +119,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         hasBowAttack: hasBowAttack(basics),
         canCastRangedSpell: () => hasRangedSpell(entity),
       });
-      const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // X2-slice: the arrow seam exists (the host's onArrow) - bow
       // foes read the SAME ranged-flags law the dungeon build does,
       // and the C-slice 6..51.2 band drives them above ground.

@@ -140,7 +140,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
     addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
     const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
-      liveSpeed: entity.liveSpeed,
+      liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
       seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
       playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
       // wave 35: DoRangedAttack's band. Knight_CityWatch has
@@ -156,7 +156,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
     // crime-responding guard pursues without having seen the player.
     ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
-    const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });
+    const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
     // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
     // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
     // HasRangedAttack1 = false / CastsMagic = false - so DFU's

@@ -616,7 +616,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
-        liveSpeed: entity.liveSpeed,
+        // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
+        // Stats.LiveSpeed every FixedUpdate (EnemyMotor.cs:432).
+        liveSpeed: () => liveStat(entity, 'speed'),
+        // AUDIT 39: RDBLayout.AddEnemy :1519-1521 -> EnemyMotor.cs:122.
+        // The marker's Passive action byte (99) was minted by
+        // collectDungeonEnemies and dropped here, so a castle guard
+        // charged on sight instead of standing down until struck.
+        isHostile: e.reaction !== 'passive',
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7): EnemySenses.cs:231 - the marker's band row
         isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
@@ -626,7 +633,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hasBowAttack: hasBowAttack(basics),
         canCastRangedSpell: () => foeDeps.hasRangedSpell(entity),
       });
-      const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
       // FLAGS, with zero inventory involvement (AUDIT 18 - minting
       // this from an equipped bow meant no enemy could ever fire one,
@@ -684,7 +691,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
-        liveSpeed: entity.liveSpeed,
+        liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads it per FixedUpdate
+        isHostile: e.reaction !== 'passive',          // AUDIT 39: RDBLayout.AddEnemy :1519-1521 -> EnemyMotor.cs:122
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7)
@@ -695,7 +703,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hasBowAttack: hasBowAttack(basics),
         canCastRangedSpell: () => foeDeps.hasRangedSpell(entity),
       });
-      const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // The same EnemyMotor.cs:131-137 flag test the class branch
       // runs - false for all 43 monsters today, but it must not stay
       // undefined (the archer draw/loose path reads it every frame).

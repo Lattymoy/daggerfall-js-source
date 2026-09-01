@@ -1,7 +1,10 @@
 // THE DAEDRA — Frost, Fire, Daedroth, Lord, Seducer.
 //
-// All five are minMetalToHit 5: daedric weapons or nothing, which is
-// what marks them as a class in the game's own terms rather than ours.
+// All five are minMetalToHit 5 — WeaponMaterialTypes.Mithril, so
+// mithril or better connects (Daedric is 9); AUDIT 39 corrected the
+// gloss "daedric weapons or nothing" that stood here and in
+// daedra.js's header. That threshold is what marks them as a class in
+// the game's own terms rather than ours.
 //
 // THE POINT OF THIS FILE IS HOW LITTLE IT COST. A Daedroth is the
 // werewolf's design exactly — collapse the skull, put a beast head on
