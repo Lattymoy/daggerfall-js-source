@@ -36,7 +36,10 @@ const P = () => ({
 const beast = (type = LYCANTHROPY_TYPES.Werewolf, { transformed = true } = {}) => {
   const e = P();
   createLycanthropyCurse(e, type, { now: 0, rolls: () => 0 });   // armed at the 4s minimum
-  if (transformed) morphSelf(e, { force: true, nowMinutes: 0 });
+  // AUDIT 39: the morph RE-ARMS the timer (LycanthropyEffect.cs:521),
+  // so every morphSelf in this file feeds it the roll it should draw -
+  // an unfed one takes Math.random and the countdown stops being a pin.
+  if (transformed) morphSelf(e, { force: true, nowMinutes: 0, rolls: () => 0 });
   return e;
 };
 /** Drive the loop and collect what it played over `seconds` of frames. */
@@ -76,47 +79,52 @@ test('LM1: the wait is Random.Range(4, 20) and RE-ARMS every time', () => {
   const q = [0, 1, 0.5];
   let i = 0;
   const rolls = () => q[Math.min(i++, q.length - 1)];
-  // the SAME queue arms the curse and every re-arm - Start's draw is
-  // the first one, so a helper that armed with its own roll would
-  // shift the whole sequence by one
+  // the SAME queue arms the curse, the MORPH and every re-arm - Start's
+  // draw is the first one, so a helper that armed with its own roll
+  // would shift the whole sequence by one
   const e = P();
   createLycanthropyCurse(e, LYCANTHROPY_TYPES.Werewolf, { now: 0, rolls });
-  morphSelf(e, { force: true, nowMinutes: 0 });
+  morphSelf(e, { force: true, nowMinutes: 0, rolls });
   const fired = run(e, 40, 0.5, rolls);
-  // armed at 4 (roll 0): fires on the first frame PAST it, 4.5
-  // re-armed to 20 (roll 1): 24.5
-  // re-armed to 12 (roll 0.5): 36.5
-  // Armed at 4 (roll 0) -> the 9th frame leaves -0.5, so 4.5.
-  // Re-armed to 20 (roll 1) at 4.5 -> at 24.5 the timer is EXACTLY 0,
-  // and DFU's test is `moveSoundTimer < 0`, not <= - so it waits one
-  // more frame and fires at 25. Same again for the 12 (roll 0.5) at
-  // 25: exactly 0 at 37, fires at 37.5.
-  assert.deepEqual(fired, [4.5, 25, 37.5],
+  // AUDIT 39 moved this pin: MorphSelf's transform branch draws too
+  // (LycanthropyEffect.cs:521), so the curse's 4 (roll 0) is thrown
+  // away at the change and the countdown starts from the morph's 20
+  // (roll 1). At 20.0 the timer is EXACTLY 0 and DFU's test is
+  // `moveSoundTimer < 0`, not <=, so it waits one more frame: 20.5.
+  // Re-armed to 12 (roll 0.5) there -> exactly 0 at 32.5, fires at 33.
+  // The next 12 (the queue's last value repeats) would land at 45.5,
+  // past the 40 seconds walked.
+  assert.deepEqual(fired, [20.5, 33],
     'each wait is a fresh draw across the whole band, not a fixed cadence');
 });
 
 test('LM1: a timer landing EXACTLY on zero waits one more frame (`< 0`, not `<= 0`)', () => {
   const e = P();
   createLycanthropyCurse(e, LYCANTHROPY_TYPES.Werewolf, { now: 0, rolls: () => 0 });   // armed at 4
-  morphSelf(e, { force: true, nowMinutes: 0 });
+  morphSelf(e, { force: true, nowMinutes: 0, rolls: () => 0 });   // re-armed at 4 (:521)
   assert.equal(lycanthropeMoveSound(e, 4, () => 0), null, '4 seconds leaves the timer at 0, which is not yet');
   assert.equal(lycanthropeMoveSound(e, 0.001, () => 0), SOUND.EnemyWerewolfMove, 'and any further frame fires it');
 });
 
-test('LM1: an UNTRANSFORMED lycanthrope does not tick, and resumes where it left off', () => {
-  const e = beast(LYCANTHROPY_TYPES.Werewolf);
-  lycanthropeMoveSound(e, 0, () => 0);            // arm at 4s
+// AUDIT 39 MOVED THIS PIN. It read "resumes where it left off", on the
+// strength of a note in lycanthropy.js claiming DFU re-arms only at the
+// curse. It does not: LycanthropyEffect.cs:519-521 calls
+// InitMoveSoundTimer inside MorphSelf's `if (!isTransformed)` branch,
+// right after the compound-race name swap - a third call site beside
+// the constructor (:67) and the post-fire re-arm (:209). So a partial
+// wait is never resumed across a change; every morph into beast form
+// starts a fresh 4-20s.
+test('LM1/AUDIT 39: an UNTRANSFORMED lycanthrope does not tick, and the morph RE-ARMS the wait', () => {
+  const e = beast(LYCANTHROPY_TYPES.Werewolf);    // armed at 4 by the curse, re-armed at 4 by the morph
   assert.equal(lycanthropeMoveSound(e, 3, () => 0), null, '3s in, not yet');
-  morphSelf(e, { force: true, nowMinutes: 0 });   // back to human
+  morphSelf(e, { force: true, nowMinutes: 0, rolls: () => 0 });   // back to human (no re-arm on that arm)
   // a minute of frames as a human moves the timer not at all
   for (let t = 0; t < 60; t += 0.5) {
     assert.equal(lycanthropeMoveSound(e, 0.5, () => 0), null, 'a human lycanthrope is silent');
   }
-  morphSelf(e, { force: true, nowMinutes: 2000 });   // beast again
-  // the remaining 1s of the ORIGINAL wait is what is left - not a
-  // fresh 4-20s, because DFU never re-arms on the transform
-  assert.equal(lycanthropeMoveSound(e, 0.9, () => 0), null, '0.9 of the remaining 1s');
-  assert.equal(lycanthropeMoveSound(e, 0.2, () => 0), SOUND.EnemyWerewolfMove, 'and it resumes');
+  morphSelf(e, { force: true, nowMinutes: 2000, rolls: () => 0.5 });   // beast again: a FRESH 12s draw
+  assert.equal(lycanthropeMoveSound(e, 1.5, () => 0), null, 'the old wait had 1s left; this one has 12');
+  assert.equal(lycanthropeMoveSound(e, 11, () => 0), SOUND.EnemyWerewolfMove, 'and it fires 12s after the change');
 });
 
 test('LM1: a non-lycanthrope is never asked for a sound', () => {

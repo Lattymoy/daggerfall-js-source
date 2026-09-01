@@ -623,7 +623,10 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0)) {
     damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, weapon, {
       entity: attacker, target, damage,
-      nowMinutes: enchantCtx?.nowMinutes ?? 0, ctx: enchantCtx,
+      // AUDIT 39: null, not 0 - no caller passes an enchantCtx here, and
+      // a literal 0 stamped HealthLeech's use clock at the epoch. The
+      // dispatcher falls back to the HOST's classic minute.
+      nowMinutes: enchantCtx?.nowMinutes ?? null, ctx: enchantCtx,
     });
   }
   // V2a/V2b: RacialOverrideEffect.OnWeaponHitEntity, at the same tail

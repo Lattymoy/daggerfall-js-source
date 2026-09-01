@@ -38,7 +38,7 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { CharSheet, charSheetArtLoaded } from './charsheet.js';
+import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 
 export { charSheetArtLoaded };
@@ -57,6 +57,16 @@ export function charSheetDoorReady() {
  * button, on either skin.
  */
 export function createCharSheetWindow(deps = {}) {
+  // AUDIT 39: THE SHEET IS WHERE DFU LEVELS YOU UP. UpdatePlayerValues
+  // (DaggerfallCharacterSheetWindow.cs:369-394) mounts the stats
+  // rollout on the sheet itself whenever ReadyToLevelUp is set - there
+  // is no separate window in DFU - and the Oghma Infinium's only push
+  // is that sheet (OghmaInfiniumEffect posts
+  // dfuiOpenCharacterSheetWindow after setting both flags). The port
+  // splits the rollout out as LevelUpScreen, so the door mounts THAT
+  // while a level-up is owed; the book was otherwise consumed for a
+  // read-only sheet that never read either flag.
+  if (deps.entity?.readyToLevelUp) return new LevelUpScreen(deps.entity);
   const hooks = charSheetHooks(deps);
   // `document` for the reason chargenSession's and pauseDoor's forks
   // give: node drives these hosts headless and keeps the canvas window

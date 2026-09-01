@@ -1762,6 +1762,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
+      // AUDIT 39: HealthLeech.cs:86-89 bills the WEARER on every strike
+      // (8) and every use (16) of a WheneverUsed leech, not only on the
+      // magic round - and worldTick's per-round ctx was the only mount
+      // in the tree that carried hurtSelf, so the -4000-point drawback
+      // cost the player nothing at the two doors that spend it.
+      hurtSelf: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
       say: (l) => townTalk.say(l),
       // S40: CastWhenHeld.cs:135 - a held enchantment degrades at 60
       // per round while the player is resting and 4 otherwise, and the

@@ -12,6 +12,7 @@
 // travel-on-load. Versioned envelope; a mismatch refuses loudly.
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
+import { defineLiveMaxMagicka } from './chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
@@ -351,6 +352,13 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     console.warn(`[save] version mismatch (got ${snap?.v}, want ${SAVE_VERSION}); refusing`);
     return null;
   }
+  // AUDIT 39: MaxMagicka is a getter for the life of the entity
+  // (DaggerfallEntity.cs:264) - it cannot be lost on load. The
+  // accessor has to exist BEFORE the ENTITY_FIELDS copy, or
+  // 'maxMagicka' lands as a plain data property and the load path
+  // (which never walks chargen) freezes the ceiling at the saved
+  // number, orphaning every maxMagickaModifier producer. Idempotent.
+  defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
   entity.stats = { ...snap.stats };
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =

@@ -164,11 +164,11 @@ export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls =
     raceNameOverride: null,
     statMods: {},
     skillMods: {},
-    // LM1: InitMoveSoundTimer runs in Start (:67) - at the CURSE, not
-    // at the first transform and not on the first frame. So the first
-    // howl after a morph is already part-way through its wait rather
-    // than a fresh 4-20s from the change, and no frame is burned
-    // arming it.
+    // LM1: InitMoveSoundTimer runs in Start (:67) - at the CURSE, and
+    // no frame is burned arming it. AUDIT 39: it runs at the MORPH
+    // too (:521, inside MorphSelf's transform-into-beast branch), so
+    // every change into beast form starts a fresh 4-20s wait - the
+    // note that stood here said the opposite about the reference.
     moveSoundTimer: initMoveSoundTimer(rolls),
   };
   endOldLifeEffects(entity);
@@ -193,7 +193,10 @@ export function grantLycanthropySpell(entity) {
   if (!record) { console.warn('[lycanthropy] SPELLS.STD 92 unavailable - the free spell is not granted'); return false; }
   const name = String(record.name ?? record.spellName ?? 'Lycanthropy').replace(/^!/, '');
   entity.spells = entity.spells || [];
-  entity.spells.push({ ...record, name, tag: LYCANTHROPY_SPELL_TAG, custom: true });
+  // AUDIT 39: MinimumCastingCost (PlayerEntity.cs:1162) - the morph is
+  // a flat 5 spell points, not the 48-84 its MorphSelf effect prices
+  // out at through the no-active-components fudge.
+  entity.spells.push({ ...record, name, tag: LYCANTHROPY_SPELL_TAG, custom: true, minimumCastingCost: true });
   return true;
 }
 
@@ -281,7 +284,7 @@ export const currentMaxHealth = (entity) =>
  * heal to the LIMITED max either way, and the cast stamp. Answers
  * { ok } or { refused } with the classic line.
  */
-export function morphSelf(entity, { force = false, nowMinutes = 0, refreshHead = null, say = null } = {}) {
+export function morphSelf(entity, { force = false, nowMinutes = 0, refreshHead = null, say = null, rolls = Math.random } = {}) {
   const entry = liveLycanthropy(entity);
   if (!entry) return { ok: false, refused: 'not a lycanthrope' };
   if (!entry.isTransformed) {
@@ -295,6 +298,10 @@ export function morphSelf(entity, { force = false, nowMinutes = 0, refreshHead =
     unequipSlot(entity, EQUIP_SLOTS.RightHand);
     unequipSlot(entity, EQUIP_SLOTS.LeftHand);
     entry.raceNameOverride = entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? 'Wereboar' : 'Werewolf';
+    // "// Initialise move sound timer" (:519-521), the third call site
+    // - the wait restarts at every change INTO beast form, never
+    // resumes where the last form left it.
+    entry.moveSoundTimer = initMoveSoundTimer(rolls);
   } else {
     entry.isTransformed = false;
     entry.raceNameOverride = null;
@@ -400,8 +407,9 @@ export function lycanthropeAttackVoice(entity, rolls = Math.random) {
 export function lycanthropeMoveSound(entity, dt, rolls = Math.random) {
   const entry = liveLycanthropy(entity);
   // The whole block sits inside `if (isTransformed)`: an untransformed
-  // lycanthrope does not tick the timer down, so morphing back mid-wait
-  // and returning later resumes it rather than restarting.
+  // lycanthrope does not tick the timer down. Morphing back mid-wait
+  // does not resume it either - MorphSelf re-arms on the way IN
+  // (:521), so a partial wait is only ever the curse's own first one.
   if (!entry?.isTransformed) return null;
   // A curse restored from a save written before LM1 carries no timer.
   // Arm it and take this frame as the arming one - the alternative is
