@@ -6259,3 +6259,33 @@ assert the state BEFORE any update() steps the playhead to the key,
 because that is the only place a fixture-shaped blind spot can be seen
 from. Worth remembering the next time a Morrowind rule is pinned only
 against generate.py.
+
+MW-D42b: GETARROWBONE'S REFUSAL BECOMES A DEGRADE. Mac again, after
+MW-D42 landed: "the arrow isn't physically seen being drawn ON the bow
+during the animation. Yes, it shoots out, but there's no arrow during
+the animation." The shot leaving is Daggerfall's own 99800 missile and
+says nothing about the Morrowind part, which is why the two halves of
+his report were never one bug.
+
+Everything else checks out and was checked: hasDaggerfallArrows and
+spendArrow are both template 131 and spendArrow is the STRICTER of the
+two, so a bow that can fire has hasAmmo true and the part builds. The
+first-person mesh honours the arrow slot exactly as the third-person
+and portrait meshes do. What was left is getArrowBone's two branches
+both missing - no "Bip01 Arrow" on the skeleton, no ArrowBone node in
+the weapon mesh - where the port pushed a note and gave up.
+
+Refusing was defensible while the note was the whole story. It is not:
+the note is a diagnostic on a card and the player is looking at the
+bow. The arrow now hangs off the WEAPON'S OWN bone. It sits at the
+bow's origin rather than the nocking point, which is approximate, but
+it is correctly oriented and inside the same mirrored subtree, because
+it is the same bone rule 13 already negated. The note still fires and
+now says the placement is approximate.
+
+THE BRANCH WAS PINNED NOWHERE. A branch that deletes a visible feature
+lived untested in a suite of five thousand, because every fixture
+carries the node the branch exists to survive without. Same shape as
+MW-D42's: the fixtures are too well-formed to reach the code that
+handles malformed data. When a rule is about what happens when data is
+MISSING, the fixture has to be missing it.

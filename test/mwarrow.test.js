@@ -30,13 +30,15 @@ const wpdt = (id, model, type) => {
 };
 
 const LONG_BOW = { templateIndex: 130 };
-function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif' } = {}) {
+function bowDeps({ skeleton = 'armfp.nif', ammo = true, esm = null, ammoFixture = 'arrow.nif', bowFixture = 'bowmesh.nif' } = {}) {
   const files = new Map([
     [fpSkeletonPath({}), f(skeleton)],
     [FP_CLIP_PATH, f('armfpweapon.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
     ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
-    ['meshes/w/bowmesh.nif', f('bowmesh.nif')],
+    // MW-D42b: swappable, so a bow mesh WITHOUT rule 24's ArrowBone
+    //          node can be driven - the branch that used to refuse.
+    ['meshes/w/bowmesh.nif', f(bowFixture)],
     ['textures/tx_fixture.dds', f('fixture.dds')],
   ]);
   if (ammo) files.set('meshes/w/arrow.nif', f(ammoFixture));
@@ -338,4 +340,29 @@ test('MW-D42: an empty quiver still draws an EMPTY bow', async () => {
   for (let i = 0; i < 80 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
   arm.attack('StrikeDown');
   assert.equal(arm.status().arrowShown, false, 'the draw cannot nock what was never built');
+});
+
+// MW-D42b: THE ARROW IS PLACED APPROXIMATELY RATHER THAN NOT AT ALL
+// (Mac: "the arrow isn't physically seen being drawn ON the bow during
+// the animation"). getArrowBone's two branches can both miss - a
+// skeleton without "Bip01 Arrow" and a bow mesh without the ArrowBone
+// node - and this branch USED TO GIVE UP and draw an empty bow. It was
+// pinned NOWHERE, which is how a branch that deletes a visible feature
+// survives a suite this size. It degrades now: the arrow hangs off the
+// WEAPON'S OWN bone, so it sits at the bow's origin near the grip, at
+// the right orientation, and inside the same mirrored subtree because
+// it is the same bone rule 13 negated. The note still fires, because
+// "not where the data would have put it" is worth saying.
+test('MW-D42b: no ArrowBone anywhere still puts an arrow on the bow', async () => {
+  // armfphand.nif is a plain mesh - no ArrowBone node in it.
+  const res = await buildFpArm({
+    race: 'fprace', weapon: LONG_BOW, hasAmmo: true,
+    deps: bowDeps({ bowFixture: 'armfphand.nif' }),
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  assert.ok(res.arrow, 'the arrow resolves rather than being refused');
+  assert.equal(res.arrow.bone, res.weapon.bone,
+    'it hangs off the weapon\'s own bone, which is where the mirror already is');
+  assert.ok(res.notes.some((n) => n.startsWith('arrow:') && n.includes('sits at the weapon')),
+    'and it SAYS the placement is approximate - a degrade is not a silent one');
 });
