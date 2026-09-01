@@ -246,8 +246,18 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
   assert.match(modes, /if \(mode === 'dungeon' && dungeonCtx\?\.showOverlay\) return dungeonCtx\.showOverlay\(win\);/,
     'showQuestOverlay has a dungeon arm');
   const dc = src('scenes/dungeonContext.js');
-  assert.match(dc, /showOverlay\(win\) \{\n {6}if \(!win \|\| activeOverlay\) return false;/,
-    'and the dungeon slot REFUSES rather than clobbering a live window');
+  // ROAD-B B1 MOVED THIS PIN. It used to read `if (!win ||
+  // activeOverlay) return false;` - "the dungeon slot REFUSES rather
+  // than clobbering a live window", which was the only safe thing a
+  // single slot could do and cost the dungeon the quest text outright:
+  // a _TUTOR__ message arriving while the automap or a rest window was
+  // up simply never appeared. The slot is the top of a real stack now
+  // (ui/windowStack.js), so the popup does what DFU does - PushWindow
+  // (UserInterfaceManager.cs:79-91) - and the window it covers is
+  // suspended, not clobbered and not lost.
+  assert.match(dc, /showOverlay\(win\) \{\n {6}if \(!win\) return false;\n {6}dungeonWindows\.reconcile\(activeOverlay\);/,
+    'and the dungeon slot PUSHES onto the stack rather than refusing');
+  assert.match(dc, /dungeonWindows\.pushWindow\(win\);\n {6}return true;/);
   // ...and the host stops warning, because the fall-through is gone
   assert.equal(/popup in dungeon mode pends/.test(src('scenes/world.js')), false,
     "world.js's dungeon-popup warning is retired, not silenced");

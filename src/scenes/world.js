@@ -3944,7 +3944,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // CLASSIC START runs _TUTOR__ and _BRISIEN inside Privateer's
     // Hold - so the first ten minutes of a new game were silent.
     if (modes?.showQuestOverlay?.(win)) return;
-    townTalk.showOverlay(win);
+    // ROAD-B B1: PUSH, not replace. A quest popup is DFU's PushWindow -
+    // it lands over whatever is open and hands the screen back when it
+    // closes (UserInterfaceManager.cs:79-91) - and this fall-through is
+    // the OUTDOOR slot, where a rest window lives too. Replacing meant
+    // a _BRISIEN message arriving mid-rest threw the rest away; the
+    // rest is suspended under the box now, and resumes on its close,
+    // which is exactly what DaggerfallRestWindow's `TopWindow != this`
+    // (:364/:399) is written for.
+    townTalk.pushOverlay(win);
   };
   /** A window is only still "the top of the stack" while the overlay
    *  slot it went into is still showing it - the player may have

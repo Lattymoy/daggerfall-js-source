@@ -51,6 +51,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
+import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
@@ -662,6 +663,16 @@ export function createWorldModes(host) {
     interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? -1);
 
   let interiorOverlay = null;
+  /** ROAD-B B1: ...and the DEPTH under it. `interiorOverlay` stays the
+   *  live slot every draw, click and drain in this file already reads;
+   *  the stack (UserInterfaceManager.cs, ported in ui/windowStack.js)
+   *  carries what is SUSPENDED beneath it and writes the slot back
+   *  through `onTop` whenever the top changes. mountInterior pushes,
+   *  the ~30 `interiorOverlay = null` close paths keep working
+   *  untouched, and `interiorWindows.reconcile` reads the slot back
+   *  once a frame and turns "the slot went empty" into PopWindow - so
+   *  the window the box was laid over comes back. */
+  const interiorWindows = makeWindowStack({ onTop: (w) => { interiorOverlay = w; } });
   // V2c: THE SUNLIGHT SEAM (THE FOUR HOSTS RULE). This host owns the
   // mode machine for BOTH town pages - world.js and exterior.js each
   // build it at boot - so the one registration here answers
@@ -3591,6 +3602,10 @@ export function createWorldModes(host) {
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     exteriorDoor = null;       // IS1: ...and the way back in with them
+    // ROAD-B B1: the whole stack leaves with the interior, not just its
+    // top - a rest suspended under a message box is a real occupant.
+    interiorWindows.reconcile(interiorOverlay);
+    interiorWindows.clear((w) => w.dispose?.());
     interiorOverlay = null;
     player.collider = baseCollider();
     // RepositionPlayer(Offset): the door centre is where DFU puts the
@@ -3966,6 +3981,11 @@ export function createWorldModes(host) {
     // player stands in a shop, and world.js runs the classic-start
     // chargen wizard there with the player already inside Privateer's
     // Hold. The keydown chain already conceded the point below.
+    // ROAD-B B1: the stack catches up with the slot BEFORE anything
+    // reads it, so a window that closed between frames uncovers the one
+    // beneath it in the same frame it closed - the motor never sees the
+    // gap, and the restored window is what this frame ticks and draws.
+    if (mode === 'interior') interiorWindows.reconcile(interiorOverlay);
     const overlayHeld = !!townTalk?.overlayActive ||
       (mode === 'interior' && !!interiorOverlay) ||
       (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive);
@@ -4517,6 +4537,12 @@ export function createWorldModes(host) {
       // endLines - and until now only overlayInput cleared this slot,
       // so such a window stayed painted over the world.
       if (w.done) { w.dispose?.(); if (interiorOverlay === w) interiorOverlay = null; }
+      // ROAD-B B1: the drain above is PopWindow. Reconcile HERE, not
+      // just at the top of the frame, so the window it uncovers is the
+      // one this frame paints - a message box that finishes inside its
+      // own tick hands the screen straight back to the rest window
+      // under it, with no blank frame between.
+      interiorWindows.reconcile(interiorOverlay);
       // ...and DRAW whatever is in the slot NOW, not the capture. The
       // tick may have emptied it (the drain above) or handed it on to
       // a successor - this module's windows do dispatch to one another
@@ -5040,27 +5066,35 @@ export function createWorldModes(host) {
    *  world host's ONE composer (GameManager.cs:570-586 dispatches the
    *  quick keys scene-free; the interior was the one mode still
    *  answering nothing). */
-  /** Mount a window in this host's ONE overlay slot, disposing whatever
-   *  it replaces - the shape townTalk.showOverlay has always had
-   *  (:243-247) and this seam did not.
+  /** PUSH a window onto this host's stack - UserInterfaceManager
+   *  .PushWindow (:79-91) through its AddWindow (:179-186).
    *
-   *  It matters now that a rest window is mountable here. DFU pauses a
-   *  rest while another window is on top (TickRest :362-365, and again
-   *  at :397-400 because "quest tick above can perfectly align with
-   *  rest ending") and resumes it after. A single overlay slot cannot
-   *  stack, so the port cannot pause - the incoming window REPLACES
-   *  the rest. Without a dispose that replacement was silent AND
-   *  leaky: the rest simply stopped with no wake text, and because
-   *  `_close()` never ran, `IsResting` stayed raised for the rest of
-   *  the session - no per-minute fatigue drain ever again, and held
-   *  enchantments eating their items at 60 a round instead of 4.
-   *  FLAGGED: pause-and-resume is the DFU behaviour and a
-   *  single-slot host cannot have it; ending cleanly is the honest
-   *  approximation, not a claim to have ported it. */
+   *  ROAD-B B1 RETIRED THE FLAG THAT STOOD HERE. It read: "pause-and-
+   *  resume is the DFU behaviour and a single-slot host cannot have
+   *  it; ending cleanly is the honest approximation, not a claim to
+   *  have ported it." The single slot is now the TOP of a real stack
+   *  (ui/windowStack.js), so the honest approximation is retired with
+   *  it and the behaviour is the ported one:
+   *
+   *  DFU pauses a rest while another window is on top - TickRest's
+   *  `uiManager.TopWindow != this` at :364, and again at :399 because
+   *  "quest tick above can perfectly align with rest ending" - and
+   *  RESUMES it when that window pops. Here the pushed box becomes the
+   *  slot, so the frame's one tick reaches the box and not the rest
+   *  (the rest is not top, so it does not advance); when the box
+   *  drains, `reconcile` pops and the rest is back in the slot with its
+   *  session, its hours and its IsResting intact.
+   *
+   *  What the old replace-and-dispose bought - a rest that could not
+   *  leave `IsResting` raised for the session - the stack keeps for
+   *  free: the rest is never abandoned, so there is nothing to leak.
+   *  Nothing is disposed on the way IN any more; a window is disposed
+   *  when it actually closes, on the drain paths that already do it. */
   const mountInterior = (w) => {
     if (!w) return;
-    if (interiorOverlay && interiorOverlay !== w) interiorOverlay.dispose?.();
-    interiorOverlay = w;
+    interiorWindows.reconcile(interiorOverlay);   // whatever the slot holds NOW is the top
+    if (interiorWindows.containsWindow(w)) return;   // re-mounting the open window is not a push
+    interiorWindows.pushWindow(w);
   };
 
   // CanRest's argument bag for INSIDE A BUILDING. `inTownOutside`
@@ -5181,6 +5215,10 @@ export function createWorldModes(host) {
       if (!w) return;
       w.input(code, e);
       if (w.done && interiorOverlay === w) interiorOverlay = null;
+      // ROAD-B B1: that drain is PopWindow - reconciled in the same
+      // event, so a key that closes the top window hands the screen
+      // straight back to the one beneath it.
+      interiorWindows.reconcile(interiorOverlay);
     },
     // PX26 (Mac: "the north option should be the new journal we
     // developed" / "the skill ui opens on the lefthand side when it
@@ -5394,6 +5432,7 @@ export function createWorldModes(host) {
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (interiorOverlay?.done) interiorOverlay = null;
+    interiorWindows.reconcile(interiorOverlay);   // ROAD-B B1: the click's drain is PopWindow too
     return true;
   }
 
@@ -5682,15 +5721,22 @@ export function createWorldModes(host) {
         // RAW skips it, and RestWindow raises IsResting on open and
         // clears it in OnPop alone - so a quest teleport taken mid-rest
         // left the player permanently "resting": no per-minute fatigue
-        // drain and held enchantments eating their items 15x. The other
-        // door that can take this slot (mountInterior) already disposes.
-        interiorOverlay?.dispose?.();
+        // drain and held enchantments eating their items 15x.
+        //
+        // ROAD-B B1: and now EVERY window on the stack, not just the
+        // top one - the door that mounts (mountInterior) pushes rather
+        // than replacing, so a suspended rest under a message box is a
+        // real thing to drop. The clear() below carries the dispose.
         teardownQuestFlats();
         interiorCtx.destroy();
         interiorFoes?.destroy?.();
         interiorFoes = null;
         interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
         interiorHitEffects.clear();   // HE1: the same
+        // ...and the OnPop the comment above is about, on every window
+        // the stack holds (ROAD-B B1).
+        interiorWindows.reconcile(interiorOverlay);
+        interiorWindows.clear((w) => w.dispose?.());
         interiorCtx = null; interiorBuilding = null; interiorOverlay = null; exteriorDoor = null;
       }
       if (dungeonCtx) {
@@ -5741,7 +5787,13 @@ export function createWorldModes(host) {
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this
      *  alongside townTalk.overlayActive). */
-    get overlayHeld() { return (mode === 'interior' && !!interiorOverlay) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
+    // ROAD-B B1: `|| depth` because this getter is read from the outer
+    // hosts' EVENT handlers, which run between frames - a window that
+    // closed itself since the last reconcile leaves the slot empty with
+    // another still suspended under it, and answering "no window" for
+    // those few milliseconds would free the cursor and re-grab pointer
+    // lock under the window that is about to be painted again.
+    get overlayHeld() { return (mode === 'interior' && (!!interiorOverlay || interiorWindows.depth() > 0)) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
     get transitioning() { return transitioning; },
     get interiorCtx() { return interiorCtx; },
     get dungeonCtx() { return dungeonCtx; },
@@ -5760,12 +5812,14 @@ export function createWorldModes(host) {
      *  context has had an overlay slot since U14; nothing exported a
      *  way in. */
     showQuestOverlay(win) {
-      // Through mountInterior, so the window this REPLACES is disposed.
-      // A quest popup is the one thing that can take the slot from a
-      // running rest - the rest sub-tick calls QuestMachine.Tick, which
-      // is exactly what DFU's second `TopWindow != this` check
-      // (:397-400) exists for - and a raw assignment left the rest
-      // window's IsResting raised for the rest of the session.
+      // Through mountInterior, which is PushWindow (ROAD-B B1). A quest
+      // popup is the one thing that can take the slot from a running
+      // rest - the rest sub-tick calls QuestMachine.Tick, which is
+      // exactly what DFU's second `TopWindow != this` check (:397-400)
+      // exists for - and it is now the two-deep case it is in DFU: the
+      // box goes ON TOP, the rest stops advancing because it is no
+      // longer the top window, and closing the box hands the rest back
+      // its slot, its hours and its IsResting.
       if (mode === 'interior') { mountInterior(win); return true; }
       if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
       return false;

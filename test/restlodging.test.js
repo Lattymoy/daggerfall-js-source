@@ -27,6 +27,7 @@ import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
 import { createPlayerTicker } from '../src/scenes/shared.js';
 import { setWorldMinutes } from '../src/systems/worldTick.js';
+import { makeWindowStack } from '../src/ui/windowStack.js';   // ROAD-B B1: the stack the interior door now pushes onto
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -1718,7 +1719,7 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
 });
 
 
-test('S40/merge: a rest REPLACED in the slot still clears its flags', () => {
+test('S40/merge -> ROAD-B B1: a rest under a pushed box is SUSPENDED, not replaced', () => {
   // DFU PAUSES a rest while another window is on top - TickRest
   // :362-365, and again at :397-400 with its own comment, "Checking
   // for second time as quest tick above can perfectly align with rest
@@ -1726,32 +1727,54 @@ test('S40/merge: a rest REPLACED in the slot still clears its flags', () => {
   // QuestMachine.Tick, which this merge finally ported - so a quest
   // popup landing mid-rest became reachable in the same change.
   //
-  // A single overlay slot cannot stack, so the port cannot pause: the
-  // incoming window REPLACES the rest. What it must not do is replace
-  // it silently, because `_close()` would never run and `IsResting`
-  // would stay raised for the rest of the session - no per-minute
-  // fatigue drain ever again, and held enchantments eating their items
-  // at 60 a round instead of 4.
+  // THIS PIN MOVED, DELIBERATELY, AT ROAD-B B1. It used to read "a
+  // rest REPLACED in the slot still clears its flags", and it was
+  // honest about why: a single overlay slot cannot stack, so the port
+  // could not pause - the incoming window REPLACED the rest, and the
+  // most it could ask for was that the replacement not be SILENT
+  // (`_close()` never running would leave `IsResting` raised for the
+  // session: no per-minute fatigue drain ever again, and held
+  // enchantments eating their items at 60 a round instead of 4).
+  //
+  // mountInterior is PushWindow now (ui/windowStack.js), so the law it
+  // approximated is the law it keeps: the box goes ON TOP, the rest is
+  // suspended WITH its flag and its session, and popping the box hands
+  // it all back. Nothing is abandoned, so there is nothing to leak.
   const e = {
     isPlayer: true, level: 1, health: 5, maxHealth: 10, magicka: 0, maxMagicka: 8,
     fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 20,
     career: {}, skillUses: { [SKILLS.Medical]: 0 },
   };
   let slot = null;
+  const stack = makeWindowStack({ onTop: (w) => { slot = w; } });
   const mount = (w) => {           // worldModes' mountInterior, verbatim shape
     if (!w) return;
-    if (slot && slot !== w) slot.dispose?.();
-    slot = w;
+    stack.reconcile(slot);
+    if (stack.containsWindow(w)) return;
+    stack.pushWindow(w);
   };
   mount(new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] })));
+  const rest = slot;
   slot.input('char:1'); slot.input('confirm');
   assert.equal(e.isResting, true, 'a running rest holds the flag');
-  mount({ isQuestBox: true });     // a quest popup takes the slot
-  assert.equal(e.isResting, false, 'and the replaced window clears it');
+  mount({ isQuestBox: true });     // a quest popup lands on top
+  assert.equal(slot.isQuestBox, true, 'the box is the top window');
+  assert.equal(e.isResting, true, 'and the rest underneath is only PAUSED - DFU never ends it');
+  slot = null;                     // the box closes
+  stack.reconcile(slot);
+  assert.equal(slot, rest, 'the rest window is back');
+  assert.equal(e.isResting, true);
+  // ...and it is still a LIVE rest, not a husk: it ends the way it
+  // would have, through its own session.
+  slot.input('back');              // StopButton_OnMouseClick -> EndRest
+  slot.input('confirm');           // ...and the finished popup closes
+  assert.equal(e.isResting, false, 'and clears the flag when it really closes');
 
-  // The two seams that can do the replacing both dispose.
+  // The seam the quest box goes through is still the door, not a raw
+  // assignment, and the door is a PUSH.
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /const mountInterior = \(w\) => \{\n\s+if \(!w\) return;\n\s+if \(interiorOverlay && interiorOverlay !== w\) interiorOverlay\.dispose\?\.\(\);/);
+  assert.match(wm, /const mountInterior = \(w\) => \{\n\s+if \(!w\) return;\n\s+interiorWindows\.reconcile\(interiorOverlay\);/);
+  assert.match(wm, /interiorWindows\.pushWindow\(w\);/);
   assert.match(wm, /if \(mode === 'interior'\) \{ mountInterior\(win\); return true; \}/,
     'the quest box goes through it, not a raw assignment');
   // townTalk is where the interior seam came from, and it still frees

@@ -131,10 +131,22 @@ test('AUDIT 26 F211 + F064: the forced exit caches the interior and disposes the
     'a recall out of a building discarded every change made inside it');
   assert.ok(force.indexOf('cacheInteriorScene();') < force.indexOf('interiorCtx.destroy()'),
     'the cache is written while the shelves and action objects are still alive');
-  // OnPop: the slot is DISPOSED, never dropped raw
-  assert.match(force, /interiorOverlay\?\.dispose\?\.\(\);/,
-    'the interior slot was nulled raw - a rest window there left isResting raised for the session');
-  assert.ok(force.indexOf('interiorOverlay?.dispose?.();') < force.indexOf('interiorOverlay = null'),
+  // OnPop: the slot is DISPOSED, never dropped raw.
+  //
+  // ROAD-B B1 MOVED THIS PIN one level out, deliberately. The interior
+  // host holds a real window STACK now (ui/windowStack.js), so "the
+  // window it drops" is no longer only the top one: a rest suspended
+  // under a pushed message box is a live occupant with IsResting
+  // raised, and a teardown that disposed the top alone would strand it
+  // with exactly the defect F064 recorded. UserInterfaceManager
+  // .cs:189-196 runs OnPop on every window RemoveWindow removes, and
+  // ChangeWindow (:125-126) removes them all - so the teardown drains
+  // the stack and disposes each one on the way out.
+  assert.match(force, /interiorWindows\.clear\(\(w\) => w\.dispose\?\.\(\)\);/,
+    'the interior stack was dropped raw - a rest window on it left isResting raised for the session');
+  assert.ok(force.indexOf('interiorWindows.reconcile(interiorOverlay);') < force.indexOf('interiorWindows.clear('),
+    'the live slot is read back into the stack first, or the top window is not on it to be disposed');
+  assert.ok(force.indexOf('interiorWindows.clear(') < force.indexOf('interiorOverlay = null'),
     'dispose before the slot is cleared, or _close never runs');
   assert.match(force, /dungeonCtx\.overlayWindow\?\.\(\)\?\.dispose\?\.\(\);/,
     'the dungeon context is destroyed without popping its own window');

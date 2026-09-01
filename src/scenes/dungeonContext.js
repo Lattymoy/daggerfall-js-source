@@ -30,6 +30,7 @@ import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
+import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
@@ -870,6 +871,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   let chargenFlow = null;
   let activeOverlay = null;
+  /** ROAD-B B1: the DEPTH under this context's one slot, exactly as
+   *  worldModes' interior half took it. `activeOverlay` stays the live
+   *  slot every read in this file already uses; the stack
+   *  (UserInterfaceManager.cs, ported in ui/windowStack.js) carries
+   *  what is suspended beneath it and writes the slot back through
+   *  `onTop`. showOverlay pushes; tickOverlay reconciles, so the ~15
+   *  hand-written `activeOverlay = null` close paths read as
+   *  PopWindow and uncover the window they were laid over. */
+  const dungeonWindows = makeWindowStack({ onTop: (w) => { activeOverlay = w; } });
   // V1: the infection's host seam - the dream/death videos, the
   // fortnight clock raise and the popup (THE FOUR HOSTS RULE). The
   // dungeon has no FACTION.TXT of its own, so a player turned
@@ -3717,7 +3727,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
-    get uiOverlayActive() { return !!activeOverlay; },
+    // ROAD-B B1: `|| depth` for the same reason worldModes' overlayHeld
+    // carries it - this is read from the hosts' event handlers, between
+    // frames, and a window that closed itself since the last reconcile
+    // still has one suspended under it that is about to be painted.
+    get uiOverlayActive() { return !!activeOverlay || dungeonWindows.depth() > 0; },
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
@@ -3730,13 +3744,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  Privateer's Hold, so a new game's opening text was among the
      *  things that never reached a screen.
      *
-     *  It REFUSES rather than clobbers: a window already up owns the
-     *  slot, exactly as townTalk.showOverlay's callers check
-     *  overlayActive first, and the caller reads the false to keep
-     *  its own reference clean. */
+     *  It used to REFUSE rather than clobber - a window already up
+     *  owned the slot, and the caller read the false to keep its own
+     *  reference clean. ROAD-B B1 made it PushWindow
+     *  (UserInterfaceManager.cs:79-91), which is what DFU does with a
+     *  quest popup and what the refusal was standing in for: the box
+     *  goes ON TOP, the window under it is suspended rather than lost,
+     *  and the drain in tickOverlay hands the slot back when the box
+     *  closes. The refusal cost the dungeon the quest text outright -
+     *  a _TUTOR__ message that arrived while the automap or a rest
+     *  window was up simply never appeared. */
     showOverlay(win) {
-      if (!win || activeOverlay) return false;
-      activeOverlay = win;
+      if (!win) return false;
+      dungeonWindows.reconcile(activeOverlay);   // whatever the slot holds NOW is the top
+      if (dungeonWindows.containsWindow(win)) return true;
+      dungeonWindows.pushWindow(win);
       return true;
     },
     dropped: () => droppedLoot._piles,
@@ -3760,6 +3782,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay?.isRestWindow) activeOverlay.abortForEnemySpawn?.();
     },
     tickOverlay(dt) {
+      // ROAD-B B1: the stack catches up with the slot FIRST. A window
+      // that closed itself between frames (the ~15 `activeOverlay =
+      // null` close paths) is a PopWindow, and the window it uncovers
+      // is the one this frame ticks and draws - a rest resumes under a
+      // dismissed quest box with no blank frame in between.
+      dungeonWindows.reconcile(activeOverlay);
       if (!activeOverlay) return;
       // D1: the death sequence's clock - and, since the rest lanes,
       // the rest window's too. RestWindow.tick IS its Update, so the
@@ -3780,6 +3808,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         surfacePlayer();
         activeOverlay = null;
       }
+      // ...and that drain is PopWindow too, reconciled in the same
+      // frame so the uncovered window is what gets painted (ROAD-B B1).
+      dungeonWindows.reconcile(activeOverlay);
     },
     chargenFlow: () => chargenFlow,   // AUDIT 17i probe surface
     /** U14: the POINTER half of the overlay seam. This host routed
@@ -3803,6 +3834,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         surfacePlayer();
         activeOverlay = null;
       }
+      // ROAD-B B1: that drain is PopWindow - reconcile now, so the
+      // window it uncovers is already in the slot for the next event
+      // and not only from the next frame's tickOverlay.
+      dungeonWindows.reconcile(activeOverlay);
       return true;
     },
     /** The wheel seam (U-scroll): scroll never closes a window, so no
@@ -3833,6 +3868,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         surfacePlayer();
         activeOverlay = null;
       }
+      // ROAD-B B1: PopWindow, reconciled in the same event - a key
+      // that closes the top window hands the screen straight back to
+      // the one beneath it.
+      dungeonWindows.reconcile(activeOverlay);
     },
     drawOverlay(canvas) {
       if (!activeOverlay) { _exhaustedShowing = false; return; }   // S20: the popup guard clears with the box (OnClose)
@@ -4071,6 +4110,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
       exitDungeonAutomap();
+      // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
+      // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them
+      // all (:125-126). The outer host disposes the TOP before calling
+      // here; with a stack there can be windows under it - a rest
+      // suspended beneath a quest box still holds IsResting - so the
+      // whole stack drains with the context. dispose() is idempotent
+      // (A2), which is what makes the outer host's call harmless.
+      dungeonWindows.reconcile(activeOverlay);
+      dungeonWindows.clear((w) => w.dispose?.());
       // B1: OnDestroy for every quest foe standing in this dungeon -
       // the resource uncouples exactly as Unity's scene teardown does.
       for (const f of foes) f.questBehaviour?.notifyDestroyed();

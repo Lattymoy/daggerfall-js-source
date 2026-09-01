@@ -30,6 +30,7 @@ import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { overlayAction } from '../ui/input.js';
+import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
@@ -110,6 +111,25 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return people;
   };
   let overlay = null;
+  /** ROAD-B B1: the DEPTH under this host's one slot. `overlay` is the
+   *  live top - every draw, key, click and drain in this file already
+   *  reads it - and the stack (UserInterfaceManager.cs, ported in
+   *  ui/windowStack.js) carries what is suspended beneath.
+   *
+   *  showOverlay stays a REPLACEMENT, deliberately: this host's windows
+   *  dispatch to one another (a talk window hands over to a choice
+   *  window, the arrest flow walks a chain of boxes) and DFU's own
+   *  dispatch is `CloseWindow(); PushWindow(next);` - a pop and a push
+   *  that net to a replacement, not to depth. pushOverlay is the other
+   *  door: a genuine PushWindow, for a box that lands OVER whatever is
+   *  open and must hand the screen back when it closes. That is the
+   *  quest popup's case, and the reason a rest taken in the street can
+   *  now be paused and resumed like DFU's. */
+  const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
+  /** The close callbacks of the windows currently SUSPENDED, deepest
+   *  first - `_onOverlayClosed` belongs to the top window alone, and a
+   *  push must not clobber the covered window's. */
+  const _suspendedCallbacks = [];
   let loaded = false, loading = null;
   let directory = [];   // T3c: the location's named buildings
   // T3f: the talk tone (persists across sessions, as DFU's window
@@ -341,6 +361,34 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _onOverlayClosed = null;
     win.dispose?.();   // A2: a window holding GL resources frees them (idempotent)
     if (fireCallback) cb?.();
+    // ROAD-B B1: this is PopWindow (UserInterfaceManager.cs:99-104),
+    // and it happens LAST, after the window has been told - the whole
+    // point of the ordering above is that the slot is empty while the
+    // outgoing window runs, so a re-entrant close finds nothing to
+    // dispose twice. Only then does the window it was laid over come
+    // back, with its own close callback.
+    //
+    // If the dispose or the callback opened a SUCCESSOR instead, the
+    // slot is not empty and reconcile reads that as a one-level
+    // replacement - the successor sits over the same suspended window,
+    // which is what a dispatch mid-chain means.
+    windows.reconcile(overlay);
+    if (overlay) _onOverlayClosed = _suspendedCallbacks.pop() ?? null;
+    else _suspendedCallbacks.length = 0;
+    return true;
+  }
+  /** PushWindow (UserInterfaceManager.cs:79-91) - the OTHER door.
+   *  showOverlay replaces because this host's windows dispatch; a box
+   *  that is genuinely laid OVER an open window (the quest popup) comes
+   *  through here, and the window beneath is suspended with its
+   *  callback rather than disposed. Returns true when it went up. */
+  function pushOverlay(win, onClosed = null) {
+    if (!win) return false;
+    windows.reconcile(overlay);
+    if (windows.containsWindow(win)) return true;
+    _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
+    windows.pushWindow(win);                      // `onTop` puts it in the slot
+    _onOverlayClosed = onClosed;
     return true;
   }
   // A2 (the A1 death-presenter lesson, applied to THIS slot): every
@@ -356,6 +404,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const outgoing = (overlay && overlay !== win) ? overlay : null;
     overlay = win;
     _onOverlayClosed = onClosed;
+    // ROAD-B B1: ...and the stack follows the slot. With nothing
+    // suspended this is just "the stack now holds this one window";
+    // with a window suspended under the outgoing one it is a ONE-LEVEL
+    // replacement (DFU's CloseWindow-then-Push), so the depth beneath
+    // survives the dispatch and still returns when the chain ends.
+    windows.reconcile(overlay);
     outgoing?.dispose?.();
   }
 
@@ -820,7 +874,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, setTopics, pointerdown, wheel, hover,   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's
+    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a
