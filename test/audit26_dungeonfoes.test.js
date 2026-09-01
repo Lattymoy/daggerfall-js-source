@@ -447,10 +447,17 @@ test('AUDIT 39: dead guards do not accumulate - the walk-away is pruned, the cor
 });
 
 test('F212: the world host collects both pools with the pixel, which is also what the teleport tears down', () => {
-  const i = WORLD.indexOf('function destroyPixel(px, py)');
+  // A1 MOVED THIS PIN. destroyPixel took a `{ collectLoose = true }`
+  // option: a SEASON re-skin (DaggerfallLocation.Update :118-130) tears
+  // a pixel down and builds it again, and the reference never unloads
+  // terrain for a season change, so the loose-object sweep must sit out
+  // that one caller. F212's law is unweakened - the default is still
+  // "collect", and every real unload takes both pools with it - so the
+  // pin follows the signature and now also pins the DEFAULT.
+  const i = WORLD.indexOf('function destroyPixel(px, py, { collectLoose = true } = {})');
   const fn = WORLD.slice(i, WORLD.indexOf('\n  }\n', i));
   assert.ok(i > 0);
-  assert.ok(fn.includes('droppedLoot.collectPixel(key);'), 'the pile half, which the port already had');
+  assert.ok(fn.includes('if (collectLoose) droppedLoot.collectPixel(key);'), 'the pile half, which the port already had');
   assert.ok(fn.includes('cityGuards.collectPixel(key);'), 'the watch\'s corpses');
   assert.ok(fn.includes('exteriorFoes.collectPixel(key);'), 'and the encounter pool\'s');
   // ClearStreamingWorld's CollectLooseObjects(true) is the teleport core
@@ -460,7 +467,11 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // own half (clearLive on both pools, the missiles, the arrows) now stands
   // at the head of the core, above this loop. Corpses ride the pixel;
   // the LIVE records are swept by name, which is the finding this moved for.
-  const core = WORLD.slice(t, t + 1600);
+  // A1 widened it again, 1600 -> 2100: refreshSeason() and its note now
+  // stand at the head of the core too, because a fast travel is where
+  // the calendar jumps weeks and the destination must not be skinned
+  // for the month the player left.
+  const core = WORLD.slice(t, t + 2100);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

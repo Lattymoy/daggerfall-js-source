@@ -36,7 +36,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
+import { applyClimate, getGroundArchive, getNatureArchive, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
@@ -100,7 +100,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -167,7 +167,33 @@ export async function bootExterior(canvas, renderer, params, status) {
   // Climate + season: swap every submesh archive exactly as DFU's
   // MaterialReader.ChangeClimate does - pixels from the swapped archive,
   // UVs from the original (the SetDungeonTextures pattern).
-  const season = parseSeason(params);
+  // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
+  // DaggerfallLocation.ApplyTimeAndSpace (:135-139) reads
+  // DaggerfallUnity.WorldTime.Now.SeasonValue and answers Winter or
+  // Summer; ?season demotes to a debug PIN (the ?cull=off shape).
+  // `let` because two consumers below poll the clock the way the
+  // reference does - PlayerFootsteps (:107, :122-133) and
+  // SetSunlightScale (WeatherManager.cs:316-319). What this host
+  // BUILDS is skinned once: it assembles the whole location up front
+  // and has no per-pixel teardown to rebuild it through, so
+  // DaggerfallLocation.Update's in-place re-skin lives in the
+  // streaming host (world.js tickSeason).
+  const seasonPin = seasonOverride(params);
+  let season = seasonPin ?? climateSeasonFromMinutes(worldMinutes());
+  let _seasonDay = Math.floor(worldMinutes() / MINUTES_PER_DAY);
+  /** The season poll both live consumers ride. SeasonValue can only
+   *  move on a day boundary (GetSeasonValue reads Month), so a frame
+   *  inside the same day costs one division. */
+  function refreshSeason() {
+    if (seasonPin !== null) return;   // ?season pins the world for a shot
+    const day = Math.floor(worldMinutes() / MINUTES_PER_DAY);
+    if (day === _seasonDay) return;
+    _seasonDay = day;
+    const want = climateSeasonFromMinutes(worldMinutes());
+    if (want === season) return;
+    season = want;
+    weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);   // SetSunlightScale's winter arm
+  }
   const climateBase = dfLocation.climate.climateType;
   // FS-slice: the location's raw CLIMATE.PAK index (the snow gate reads it)
   const _locPixel = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
@@ -302,7 +328,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
   let colliderTris = 0;
-  const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season, dfLocation, group}
+  const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season (A1: INTERIOR_SEASON), dfLocation, group}
   const flatGroups = new Map(); // "archive_record" -> [centers]
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
   const exteriorNpcFlats = [];  // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs
@@ -332,7 +358,10 @@ export async function bootExterior(canvas, renderer, params, status) {
         for (const door of getStaticDoors(cpu, b.dfBlock.index, placed.recordIndex, matrix)) {
           buildingDoors.push({
             door, dfBlock: b.dfBlock, recordIndex: placed.recordIndex,
-            climateBase, season, dfLocation, group: 'loc',
+            // A1: DaggerfallInterior.cs:51 declares `climateSeason =
+            // ClimateSeason.Summer` and never assigns it - a reference
+            // interior is summer-skinned in the depths of Evening Star.
+            climateBase, season: INTERIOR_SEASON, dfLocation, group: 'loc',
           });
         }
       }
@@ -1844,6 +1873,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
     const minute = minuteNow();
+    // A1: the season poll, DaggerfallLocation.Update's own place on
+    // the frame - beside the weather drain, and ungated by ?weather.
+    refreshSeason();
     // W1/S41: the DRAIN ticks on the exterior frame (this host is one
     // location - locClimateIndex is the player's climate); the ROLL is
     // the entity tick's day block. A pinned ?weather never ticks.

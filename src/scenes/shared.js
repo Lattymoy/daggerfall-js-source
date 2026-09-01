@@ -106,11 +106,20 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   return { spellsByIndex, magicItemTemplates, paintFile };
 }
 
-export function parseSeason(params) {
-  const s = (params.get('season') || 'summer').toLowerCase();
+/** A1: ?season IS A DEBUG OVERRIDE NOW, NOT THE SOURCE.
+ *  The texture season is the calendar's (climateSeasonFromMinutes,
+ *  world/climateSwaps.js - the reference's own one-line test at
+ *  ClimateSwaps.cs:382-386 and friends). This reads the URL and
+ *  answers null when nothing pinned it, the ?cull=off shape: a shot or
+ *  a probe can still nail winter in Second Seed, and a real session
+ *  gets winter when Evening Star arrives and not before.
+ *  @returns {number|null} a SEASON value, or null for "ask the clock". */
+export function seasonOverride(params) {
+  const s = (params.get('season') || '').toLowerCase();
   if (s === 'winter') return SEASON.Winter;
   if (s === 'rain') return SEASON.Rain;
-  return SEASON.Summer;
+  if (s === 'summer') return SEASON.Summer;
+  return null;
 }
 
 // U54: ONE HOME - it moved to formats/textureFile.js, beside the

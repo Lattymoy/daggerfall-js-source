@@ -19,7 +19,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../world/climateSwaps.js';
+import { applyClimate, getGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
@@ -78,7 +78,7 @@ import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAM
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
-import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
+import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -135,7 +135,7 @@ import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -237,7 +237,17 @@ const CANNOT_TRAVEL_ENEMIES_TEXT = 'You cannot travel with enemies nearby.';
 export async function bootWorld(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
-  const season = parseSeason(params);
+  // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
+  // Every production site in the reference reads the world clock -
+  // ClimateSwaps.cs:382-386, DaggerfallLocation.ApplyTimeAndSpace
+  // (:135-139), StreamingWorld.cs:812 - and answers Winter or Summer
+  // off DaggerfallDateTime.SeasonValue. ?season demotes to a debug
+  // PIN (the ?cull=off shape) so a shot can still nail winter in
+  // Second Seed. `let`, because the season turns under a standing
+  // world: tickSeason below is DaggerfallLocation.Update's lastSeason
+  // test, and applyWeather/weatherSun read this binding live.
+  const seasonPin = seasonOverride(params);
+  let season = seasonPin ?? climateSeasonFromMinutes(worldMinutes());
 
   audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
   status('loading data');
@@ -313,9 +323,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the sim (systems/weatherSim.js: the Chronicles pg. 47 table, the
   // six-zone daily re-roll, the respawn re-roll) drives; applyWeather
   // re-derives every presentation half when the sim's answer changes.
-  // The winter term stays the TEXTURE season (?season) - the world
-  // that LOOKS wintry dims wintry; the calendar's own winter arrives
-  // when the texture season goes live with it.
+  // A1: the winter term IS the calendar's winter now - one season,
+  // read at SetSunlightScale (WeatherManager.cs:316-319) exactly as
+  // the climate swaps read it, so the world that looks wintry dims
+  // wintry because it IS Evening Star.
   const weatherOverride = WEATHER_TYPES.includes(params.get('weather'))
     ? params.get('weather') : null;
   if (weatherOverride) setWeather(weatherOverride);
@@ -443,7 +454,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Building doors (P3): registered pixel-local at build, activated
   // against the live translation; each carries what the transition
   // needs (its block + building record + sibling exterior doors).
-  const buildingDoors = []; // {door, pixelKey, dfBlock, recordIndex, climateBase, season}
+  const buildingDoors = []; // {door, pixelKey, dfBlock, recordIndex, climateBase, season (A1: INTERIOR_SEASON)}
   const TERRAIN_INDICES = buildTerrainIndices();
   // EV4: the far ring's strided twin - 33x33 plus its crack skirt, a
   // 16x triangle cut per pixel. Enhanced only: the 1:1 lane keeps full
@@ -627,7 +638,14 @@ export async function bootWorld(canvas, renderer, params, status) {
             for (const door of staticDoors) {
               buildingDoors.push({
                 door, pixelKey: key, dfBlock: b.dfBlock,
-                recordIndex: placed.recordIndex, climateBase, season,
+                // A1: the season a door carries INSIDE is the
+                // interior's own constant, never the world's.
+                // DaggerfallInterior.cs:51 declares climateSeason =
+                // ClimateSeason.Summer and never assigns it, so a
+                // reference interior is summer-skinned in the depths
+                // of Evening Star; the exterior season stopping at the
+                // threshold is the whole of that law.
+                recordIndex: placed.recordIndex, climateBase, season: INTERIOR_SEASON,
               });
             }
           }
@@ -793,7 +811,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     p._stride = stride;
   }
 
-  function destroyPixel(px, py) {
+  /** @param {{collectLoose?:boolean}} [opts] - A1: a season re-skin
+   *  tears the pixel down and builds it again, but the reference never
+   *  UNLOADS terrain for a season change (DaggerfallLocation re-skins
+   *  what already stands), so the loose-object sweep below - which is
+   *  the unload's CollectLooseObjects and nothing else - sits out. */
+  function destroyPixel(px, py, { collectLoose = true } = {}) {
     const key = `${px},${py}`;
     const p = built.get(key);
     if (!p) return;
@@ -812,7 +835,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
     // reference's mid-session collection sweep (CollectLooseObjects);
     // only the F9 envelope brings one back.
-    droppedLoot.collectPixel(key);
+    if (collectLoose) droppedLoot.collectPixel(key);
     // ...and so does an exterior CORPSE, which is the same kind of
     // loose object (GameObjectHelper.cs:836-839 tracks the marker) and
     // was the half of :1040-1052 the port never wired: nothing removed
@@ -820,8 +843,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ever. The teleport core tears down every built pixel through
     // this function, which is exactly ClearStreamingWorld's
     // CollectLooseObjects(true).
-    cityGuards.collectPixel(key);
-    exteriorFoes.collectPixel(key);
+    if (collectLoose) { cityGuards.collectPixel(key); exteriorFoes.collectPixel(key); }
     built.delete(key);
   }
 
@@ -836,6 +858,75 @@ export async function bootWorld(canvas, renderer, params, status) {
   const state = new StreamingWorldState(getInt('Experimental', 'TerrainDistance', 1, 4));
   const queue = state.init(startPixel.x, startPixel.y);
   let building = false;
+
+  // A1: THE SEASON TURNS UNDER A STANDING WORLD.
+  // DaggerfallLocation.Update (:118-130) polls the world clock EVERY
+  // FRAME - "Only process if climate, season, day/night, or weather
+  // changed" - and on a SeasonValue that differs from lastSeason runs
+  // ApplyTimeAndSpace (:133-148) -> ApplyClimateSettings: what already
+  // stands is RE-SKINNED, never reloaded. This host bakes its climate
+  // swaps into GL uploads at build time, so the equivalent here is to
+  // rebuild the streamed pixels - the same destroyPixel-and-requeue
+  // the streamer already runs on a crossing, and it fires at most
+  // twice a game year (into winter at Evening Star, out at First
+  // Seed). The rebuild is NOT an unload: the pixels stay in
+  // state.loaded, which means "built or building" - releasing them
+  // would let the next crossing list them a second time - and the
+  // loose-object sweep sits out, because the reference's terrain is
+  // still there and its piles and corpses with it.
+  // SeasonValue can only move on a DAY boundary (GetSeasonValue reads
+  // Month), so the poll compares days and builds a date only when one
+  // turns over - a frame in the same day costs one division.
+  let _seasonDay = Math.floor(worldMinutes() / MINUTES_PER_DAY);
+  /** Re-read the cached season off the one clock. Answers true when it
+   *  MOVED, so the caller can decide what to do about geometry that
+   *  already stands - a teleport is about to rebuild the world anyway
+   *  and only wants the cache straight BEFORE its pixels build.
+   *  @returns {boolean} */
+  function refreshSeason() {
+    if (seasonPin !== null) return false;   // ?season pins the world for a shot
+    const day = Math.floor(worldMinutes() / MINUTES_PER_DAY);
+    if (day === _seasonDay) return false;
+    _seasonDay = day;
+    const want = climateSeasonFromMinutes(worldMinutes());
+    if (want === season) return false;
+    season = want;
+    // SetSunlightScale (WeatherManager.cs:309-319) reads the same
+    // SeasonValue, and its winter arm is the FIRST thing it applies.
+    weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
+    return true;
+  }
+  let _reskinPending = false;
+  function tickSeason() {
+    if (refreshSeason()) _reskinPending = true;
+    // A pixel whose textures are still crossing must PUBLISH before its
+    // key can be torn down - the same hazard pump re-checks for after
+    // its await (buildPixel publishes only at its very end, so a
+    // teardown against a key that has no entry yet frees nothing and
+    // the finished build orphans everything it made). The flip waits a
+    // frame; the season turns twice a game year.
+    if (!_reskinPending || building) return;
+    _reskinPending = false;
+    const keys = [...built.keys()];
+    for (const key of keys) {
+      const [bx, by] = key.split(',').map(Number);
+      destroyPixel(bx, by, { collectLoose: false });
+    }
+    // Nearest-first, the load list's own order (StreamingWorldState
+    // ._loadList): the pixel under the player comes back first.
+    const rebuild = keys.map((key) => {
+      const [px, py] = key.split(',').map(Number);
+      return { px, py };
+    }).sort((p, q) => {
+      const ca = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+      const cb = Math.max(Math.abs(q.px - state.current.x), Math.abs(q.py - state.current.y));
+      if (ca !== cb) return ca - cb;
+      return ((p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2)
+        - ((q.px - state.current.x) ** 2 + (q.py - state.current.y) ** 2);
+    });
+    queue.push(...rebuild);
+    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${rebuild.length} pixels`);
+  }
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
   const first = queue.shift();
@@ -2264,6 +2355,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the sway does not ride a fast travel, a teleport or a load's
     // landing to the new place.
     cameraRecoiler.reset();
+    // A1: a fast travel is where the calendar jumps WEEKS - straighten
+    // the season BEFORE the destination pixel builds, or the arrival
+    // is skinned for the month the player left and the frame loop
+    // rebuilds it a moment later. No re-skin sweep here: the teardown
+    // below is a real unload (CollectLooseObjects and all).
+    refreshSeason();
+    _reskinPending = false;   // ...and the frame's own re-skin has nothing left to re-skin
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
     // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
     // on SaveLoadManager_OnStartLoad) - "remove loose enemies,
@@ -5124,6 +5222,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
+    // A1: DaggerfallLocation.Update's season poll (:118-130), on the
+    // exterior frame with the weather drain - the reference runs it in
+    // the location's own Update, which is the same place.
+    tickSeason();
     // W1/S41: the DRAIN ticks on the exterior frame, which is
     // WeatherManager.Update's own shape - it returns while the player
     // is inside, so a sky rolled by a day spent indoors or underground

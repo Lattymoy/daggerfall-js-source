@@ -17,7 +17,8 @@ import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { fetchBytes, parseSeason, ensureAudio } from './shared.js';
+import { fetchBytes, seasonOverride, ensureAudio } from './shared.js';
+import { INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: DaggerfallInterior.cs:51 - an interior is summer-skinned, always
 import { createDataPipeline } from './dataPipeline.js';
 import { audio } from '../systems/audio.js';   // WM4c
 import { buildInteriorContext } from './interiorContext.js';
@@ -34,10 +35,14 @@ export async function bootInterior(canvas, renderer, params, status) {
   // DFU interiors climate-swap their models (SetClimate with
   // WindowStyle.Disabled - emission stays dark here by default). A
   // standalone block has no location, so ClimateBases.Temperate is the
-  // verbatim field default; ?climate= overrides, ?season= applies.
+  // verbatim field default; ?climate= overrides.
+  // A1: the season is NOT the calendar's here - DaggerfallInterior.cs
+  // :51 declares `climateSeason = ClimateSeason.Summer` and never
+  // assigns it, so every interior in the reference is summer-skinned
+  // whatever the date outside. ?season= is the probe's override.
   const CLIMATE_PARAM = { desert: 0, mountain: 100, temperate: 300, swamp: 400 };
   const climateBase = CLIMATE_PARAM[(params.get('climate') || 'temperate').toLowerCase()] ?? 300;
-  const season = parseSeason(params);
+  const season = seasonOverride(params) ?? INTERIOR_SEASON;
 
   status('loading data');
   const [palBytes, blocksBytes, archBytes] = await Promise.all([
