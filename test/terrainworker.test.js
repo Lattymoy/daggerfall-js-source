@@ -234,8 +234,12 @@ test('EV7 AUDIT F-DOC1: the REAL shell executes - both error arms answer through
 test('EV7: the worker shell imports only pure modules and spells the Worker URL the Vite way', () => {
   const shell = readFileSync('src/world/terrainGenWorker.js', 'utf8');
   const imports = [...shell.matchAll(/from '([^']+)'/g)].map((m) => m[1]).sort();
-  assert.deepEqual(imports, ['../formats/woodsFile.js', './terrainGen.js'],
-    'the import graph is exactly the reader and the kernel');
+  // AUDIT ROADS F2: the road producer joins the graph so the network is
+  // BUILT in the worker rather than shipped to it. It is pure - the
+  // generator, the map's lon/lat law and the sampler's constants, no DOM
+  // anywhere in its closure - which is the law this list enforces.
+  assert.deepEqual(imports, ['../formats/woodsFile.js', './roadsProducer.js', './terrainGen.js'],
+    'the import graph is exactly the reader, the road producer and the kernel');
   const code = shell.replace(/\/\/[^\n]*/g, '').replace(/\/\*[^]*?\*\//g, '');
   assert.ok(!/\bdocument\b/.test(code) && !/new Worker/.test(code), 'no DOM, no nested workers');
   assert.ok(shell.includes('globalThis.onmessage = (ev) =>'), 'the message loop is the module');

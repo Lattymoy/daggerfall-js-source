@@ -17,7 +17,7 @@ test('ROADS 1: every road-grade town is reachable - the spanning tree strands no
     { x: 200, y: 100, type: LT.TownCity }, { x: 260, y: 120, type: LT.TownHamlet },
     { x: 400, y: 300, type: LT.TownCity },   // far from the others: only the tree reaches it
     { x: 210, y: 130, type: LT.TownVillage }, // a track node
-    { x: 205, y: 105, type: LT.DungeonLabyrinth }, // gets nothing
+    { x: 150, y: 300, type: LT.DungeonLabyrinth }, // gets nothing - and sits OFF every line, since a road passing a dungeon is fine; a path TO one is not
   ];
   const { roads, tracks, stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
   assert.equal(stats.roadNodes, 3); assert.equal(stats.trackNodes, 1); assert.equal(stats.unrouted, 0);
@@ -25,7 +25,7 @@ test('ROADS 1: every road-grade town is reachable - the spanning tree strands no
     assert.ok(roads[l.y * MAP_W + l.x] !== 0, `town at ${l.x},${l.y} has a road`);
   }
   assert.ok(tracks[130 * MAP_W + 210] !== 0, 'the village has a track');
-  assert.equal(roads[105 * MAP_W + 205] | tracks[105 * MAP_W + 205], 0, 'the dungeon gets no path');
+  assert.equal(roads[300 * MAP_W + 150] | tracks[300 * MAP_W + 150], 0, 'the dungeon gets no path');
   // Every bit set has its partner: a step's two ends point at each other.
   let steps = 0;
   for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
@@ -193,11 +193,70 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   assert.match(worker, /m\.t === 'roads'/, 'the worker accepts the network');
   assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'and hands it to the kernel on every job');
   const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
-  assert.match(client, /setRoads\(net\)/, 'the client has the door');
+  assert.match(client, /setRoads\(settlements, onStats = null\)/, 'the client has the door');
   assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 3,
-    'every same-thread path - direct, post-death drain, and dying-worker fallback - carries it');
-  assert.match(client, /\.slice\(\)/, 'the worker gets a COPY (the RA1 law)');
+    'every same-thread path - direct, worker-error, and dying-worker drain - carries it');
+  // AUDIT ROADS F2: the worker BUILDS; this thread builds only on a
+  // fallback path, and every one of the three calls _roadsFallback first.
+  assert.equal((client.match(/this\._roadsFallback\(\);/g) || []).length, 4,
+    'setRoads-with-no-worker plus all three same-thread paths rebuild lazily');
+  assert.match(worker, /buildRoadsFromSettlements\(m\.settlements, woods\)/, 'the worker builds with its own woods');
   const host = fs.readFileSync('src/scenes/world.js', 'utf8');
-  assert.match(host, /buildRoadsFromArchives\(maps, woods\)/, 'the host builds it from the archives');
-  assert.match(host, /terrainGen\.setRoads\(net\)/, 'and hands it over');
+  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\)/, 'the host enumerates and hands the LIST over - the build never touches the frame');
+});
+
+// AUDIT ROADS (2026-09-01): the fixes, each pinned - the sweep found all
+// three fixes UNPINNED, which is the vacuous shape this bible keeps
+// catching, so the audit's first product is these.
+test('AUDIT ROADS F1: a farm gets no track - it sits in the fields it works', async () => {
+  const { TRACK_TYPES, ROAD_TYPES } = await import('../src/world/roadNetwork.js');
+  assert.ok(!TRACK_TYPES.has(LT.HomeFarms), 'HomeFarms is the most numerous location type on the map');
+  assert.ok(!TRACK_TYPES.has(LT.HomeWealthy), 'an estate is off the road');
+  assert.ok(!TRACK_TYPES.has(LT.DungeonLabyrinth) && !ROAD_TYPES.has(LT.DungeonLabyrinth));
+  // And the behaviour: a farm beside a town gets nothing, a village does.
+  const locations = [
+    { x: 200, y: 100, type: LT.TownCity }, { x: 260, y: 120, type: LT.TownHamlet },
+    { x: 210, y: 140, type: LT.HomeFarms }, { x: 250, y: 90, type: LT.TownVillage },
+  ];
+  const { tracks } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
+  assert.equal(tracks[140 * MAP_W + 210], 0, 'the farm has no track');
+  assert.ok(tracks[90 * MAP_W + 250] !== 0, 'the village does');
+});
+
+test('AUDIT ROADS F6: two villages a mile apart share the last mile', () => {
+  // Two villages south of one town, side by side: the second track
+  // must JOIN the first rather than run a parallel rut to the town.
+  const locations = [
+    { x: 200, y: 100, type: LT.TownCity }, { x: 300, y: 100, type: LT.TownHamlet },
+    { x: 200, y: 130, type: LT.TownVillage }, { x: 203, y: 130, type: LT.TownVillage },
+  ];
+  const { tracks } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
+  // Count track pixels on the rows between the villages and the town.
+  let cells = 0;
+  for (let y = 101; y < 130; y++) for (let x = 190; x < 215; x++) if (tracks[y * MAP_W + x]) cells++;
+  // Two independent 29-step tracks would be ~58 cells; a shared last
+  // mile is well under that. The bound has slack for the join itself.
+  assert.ok(cells <= 40, `the second village joined the first's track (${cells} track cells, not ~58)`);
+});
+
+test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still finds the merge', async () => {
+  const { route } = await import('../src/world/roadNetwork.js');
+  // An existing road runs E-W across y=120. A new route from (250,100)
+  // to (250,140) crosses it; a route from (250,100) to (290,120)
+  // should RIDE it - the discounted steps along the road are cheaper
+  // than the diagonal, but only an admissible heuristic lets A* see
+  // that, because Euclidean h over-estimates a half-price step.
+  const roads = new Uint8Array(MAP_W * MAP_H);
+  const line = []; for (let x = 200; x <= 300; x++) line.push({ x, y: 120 });
+  stamp(roads, line);
+  const path = route({ x: 250, y: 100 }, { x: 290, y: 120 }, { heightAt: flat, isWater: () => false, existing: roads, d: D });
+  const onRoad = path.filter((p) => roads[p.y * MAP_W + p.x] !== 0).length;
+  assert.ok(onRoad >= 20, `the route rides the existing road for most of its length (${onRoad} of ${path.length} steps on it)`);
+  // RECORDED: an inadmissible heuristic MAY miss the optimum; it does not
+  // always, and on this fixture it does not - both h find the same 41
+  // steps. So the behaviour above is a regression guard, not the proof.
+  // The guarantee is pinned at the source: h carries the discount.
+  const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
+  assert.match(src, /Math\.hypot\(x - to\.x, y - to\.y\) \* d\.roadDiscount/,
+    'h is scaled by the cheapest step, which is what admissibility requires');
 });

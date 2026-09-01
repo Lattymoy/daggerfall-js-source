@@ -15,6 +15,7 @@
 
 import { WoodsFile } from '../formats/woodsFile.js';
 import { generatePixelTerrain } from './terrainGen.js';
+import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 
 let woods = null;
 
@@ -30,7 +31,19 @@ globalThis.onmessage = (ev) => {
     }
     // ROADS 3: the network arrives ONCE, after init, and rides every job
     // from then on. null clears it (a new game with a different archive).
-    if (m.t === 'roads') { roads = m.roads ? { roads: m.roads.roads, tracks: m.roads.tracks } : null; return; }
+    // AUDIT ROADS F2: the network is BUILT HERE, not shipped here. The
+    // settlement list is a few thousand small objects; the build is
+    // thousands of A* runs, which is exactly what the worker exists to
+    // keep off the frame. The stats go back so the host can log them.
+    if (m.t === 'roads') {
+      roads = null;
+      if (m.settlements && woods) {
+        const net = buildRoadsFromSettlements(m.settlements, woods);
+        roads = net ? { roads: net.roads, tracks: net.tracks } : null;
+        globalThis.postMessage({ t: 'roads', stats: net ? net.stats : null });
+      }
+      return;
+    }
     if (m.t !== 'job') return;
     if (!woods) throw new Error('terrain worker got a job before init');
     // AUDIT EV F-DOC1: the job crosses WHOLE - a spread, not a

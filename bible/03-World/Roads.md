@@ -106,6 +106,13 @@ and a failure draws a world without roads and says so on the console.
 On a synthetic map the build is ~30ms; the real one is logged. Caching
 is deferred until the number says it is needed.
 
+## Audit 45 (2026-09-01)
+
+The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
+set (farms out), F2 the build moved into the terrain worker, F3 the
+heuristic made admissible, F6 tracks merge with tracks. Three suspects
+cleared by the line that clears them. Four low findings recorded there.
+
 ## Open
 
 - ROADS 4: the enhanced skin's own road SURFACE from the ground proto's

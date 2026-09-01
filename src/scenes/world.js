@@ -13,7 +13,7 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
-import { buildRoadsFromArchives } from '../world/roadsProducer.js';   // ROADS 3
+import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -290,11 +290,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ROADS 3: OUR network, from the player's own map. Built once here,
   // handed to both terrain kernels; a failure draws a world without
   // roads and says so, never no world.
-  {
-    const net = buildRoadsFromArchives(maps, woods);
-    terrainGen.setRoads(net);
-    if (net) console.log(`[roads] ${net.stats.roadNodes} towns, ${net.stats.roadEdges} roads, ${net.stats.trackEdges} tracks, ${net.stats.unrouted} unrouted, ${net.stats.ms}ms`);
-  }
+  terrainGen.setRoads(settlementsOf(maps), (st) => console.log(
+    `[roads] ${st.roadNodes} towns, ${st.roadEdges} roads, ${st.trackEdges} tracks, ${st.unrouted} unrouted, ${st.ms}ms`));
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
   // in the frame loop, where the live player pixel exists.

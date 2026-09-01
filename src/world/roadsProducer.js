@@ -40,8 +40,20 @@ export function settlementsOf(maps) {
  */
 export function buildRoadsFromArchives(maps, woods, dials = {}) {
   try {
+    return buildRoadsFromSettlements(settlementsOf(maps), woods, dials);
+  } catch (e) {
+    console.warn('[roads] no network - the world draws without roads:', e?.message ?? e);
+    return null;
+  }
+}
+
+/** AUDIT ROADS F2: the half that needs only the small heightmap and a
+ *  settlement list, so the terrain WORKER can run it with its own
+ *  woods - the list crosses the wire, the build does not touch the
+ *  frame. buildRoadsFromArchives is the same-thread composition. */
+export function buildRoadsFromSettlements(locations, woods, dials = {}) {
+  try {
     const t0 = (globalThis.performance ?? Date).now();
-    const locations = settlementsOf(maps);
     const heightAt = (x, y) => woods.getHeightMapValue(x, y);
     const isWater = (x, y) => woods.getHeightMapValue(x, y) <= WATER_BYTE;
     const net = buildRoadNetwork({ locations, heightAt, isWater, dials });

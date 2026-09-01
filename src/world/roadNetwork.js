@@ -63,9 +63,16 @@ export const ROAD_TYPES = Object.freeze(new Set([
   LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet,
 ]));
 export const TRACK_TYPES = Object.freeze(new Set([
-  LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms, LOCATION_TYPES.Tavern,
-  LOCATION_TYPES.ReligionTemple, LOCATION_TYPES.HomeWealthy,
+  LOCATION_TYPES.TownVillage, LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple,
 ]));
+// AUDIT ROADS F1: HomeFarms and HomeWealthy were track-grade in the
+// first draft. Farms are the single most numerous location type on the
+// map - thousands of them - and a dirt track to every one blankets the
+// countryside and costs a thousand A* runs at boot. A farm sits in the
+// fields it works; the track stops at the village. Wealthy homes are
+// estates off the road, likewise. Both are deliberately NOT here and
+// this comment is the reason, so the next reader does not "complete"
+// the set.
 
 /** THE DIALS. All of them, in one place, because "the roads climb that
  *  mountain" is a cost-function complaint and the answer should be one
@@ -124,12 +131,17 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // TRACKS: each track node to its nearest road NODE within reach (not
   // the nearest road pixel - a track that joins mid-road is fine, but
   // aiming at a town keeps tracks reading as "the way to town").
+  // AUDIT ROADS F6: a track stops on ANY path, road or track, and gets
+  // the merge discount on both - two villages a mile apart share the
+  // last mile instead of wearing parallel ruts. `paths` is the union,
+  // kept in step as each track lands.
+  const paths = new Uint8Array(roads);
   for (const t of trackNodes) {
     let best = null; let bd = Infinity;
     for (const r of roadNodes) { const dd = dist(t, r); if (dd < bd) { bd = dd; best = r; } }
     if (!best || bd > d.trackReach) continue;
-    const path = route(t, best, { heightAt, isWater, existing: roads, d, stopOn: roads });
-    if (path) { stamp(tracks, path); stats.trackEdges++; } else stats.unrouted++;
+    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths });
+    if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else stats.unrouted++;
   }
   return { roads, tracks, stats };
 }
@@ -189,7 +201,11 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null },
   const g = new Float64Array(bw * bh).fill(Infinity);
   const came = new Int32Array(bw * bh).fill(-1);
   const closed = new Uint8Array(bw * bh);
-  const h = (x, y) => Math.hypot(x - to.x, y - to.y);
+  // AUDIT ROADS F3: the cheapest step is a discounted one onto an
+  // existing path, so the heuristic is scaled by the discount to stay
+  // admissible - an overestimating h makes A* skip the merge it exists
+  // to find, and the routes stop converging on shared roads.
+  const h = (x, y) => Math.hypot(x - to.x, y - to.y) * d.roadDiscount;
   const open = new MinHeap();
   const s = idx(from.x, from.y);
   g[s] = 0; open.push(h(from.x, from.y), s);
