@@ -65,7 +65,7 @@ test('EE5: nothing is shipped, and the classic path is untouched', () => {
   const r = readFileSync('src/render/renderer.js', 'utf8');
   // BUILT at upload and never read from disk - doctrine forbids a
   // raster of game data in the repo, and these are derived from one
-  assert.match(r, /const src = this\.enhancedGround \? buildEnhancedTiles\(layers, \{ size: 128 \}\) : layers;/,
+  assert.match(r, /const src = mode === 'drawn' \? buildEnhancedTiles\(layers, \{ size: 128 \}\) : layers;/,
     'EE7 wired them: the seam is closed, so they go in');
   assert.ok(!/prototype\/ground|\.png'/.test(r), 'no raster of game data may be fetched');
   // and the classic skin gets its own layers, byte for byte
@@ -92,4 +92,22 @@ test('EE8: the tile array is SIZED, and a failed mipmap falls back instead of dr
   assert.match(r, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);\n\s*if \(gl\.getError\(\) !== gl\.NO_ERROR\) \{/);
   assert.match(r, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MAG_FILTER, gl\.NEAREST\);/);
   assert.match(r, /while \(gl\.getError\(\) !== gl\.NO_ERROR\) \{/, 'the error queue must be drained first, or the read is someone else\u2019s');
+});
+
+test('AUDIT 46: the ground has a bisect door, and the GL gate exists even though it did not catch this', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  // three states, selectable without a rebuild, because I could not
+  // reproduce the black world and guessing a fourth time is not a plan
+  assert.match(r, /this\.groundMode = null;/);
+  assert.match(r, /const mode = this\.groundMode\s*\n\s*\?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);/);
+  assert.match(r, /const src = mode === 'drawn' \? buildEnhancedTiles\(layers, \{ size: 128 \}\) : layers;/);
+  assert.match(r, /if \(mode !== 'classic'\) \{/, "'tiles' must mipmap the ORIGINAL tiles - that is the middle state");
+  // and the cache key follows the mode, or a bisect would hand back
+  // the array built for the previous one
+  assert.match(r, /const key = `\$\{archive\}:\$\{this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\)\}`;/);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = readFileSync(host, 'utf8');
+    assert.match(h, /renderer\.groundMode = new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('ground'\);/,
+      `${host} must offer the door`);
+  }
 });

@@ -477,7 +477,9 @@ test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', 
   // EE8: the error queue is drained before the mipmap, so the check
   // that follows reads OUR error and not someone else's.
   assert.match(r, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);/);
-  assert.match(r, /if \(this\.enhancedGround\) \{/);
+  // AUDIT 46: the branch is on the MODE now, because the bisect door
+  // added a middle state - the original tiles, mipmapped.
+  assert.match(r, /if \(mode !== 'classic'\) \{/);
   assert.match(r, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
   assert.match(r, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/, 'ground is seen at grazing angles almost always');
   assert.match(r, /this\.enhancedGround = false;/, 'and it defaults OFF, so classic cannot inherit it');
@@ -485,8 +487,12 @@ test('EE3: mipmaps and anisotropy on the enhanced ground, NEAREST for classic', 
   // chosen there and the array is cached afterwards
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);\n\s*renderer\.uploadTileArray\(/,
-      `${host} must set the flag immediately before the upload`);
+    // AUDIT 46: the bisect door sits between them now; both must still
+    // be set before the upload chooses its sampler.
+    assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);/,
+      `${host} must set the flag before the upload`);
+    assert.match(h, /renderer\.groundMode = new URLSearchParams[^\n]*\n\s*renderer\.uploadTileArray\(/,
+      `${host} must set the mode immediately before the upload`);
   }
 });
 
@@ -495,7 +501,8 @@ test('AUDIT 44: the tile array cache is keyed by MODE, and the probe drives the 
   // F2: the cache lives on the renderer, which survives a world load,
   // so keying it by archive alone made the switch a page-reload-only
   // setting while the row promised "when the world next loads".
-  assert.match(r, /const key = `\$\{archive\}:\$\{this\.enhancedGround \? 'e' : 'c'\}`;/);
+  assert.match(r, /const key = `\$\{archive\}:\$\{this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\)\}`;/,
+    'the cache key must follow the MODE, or a bisect is answered by the previous one');
   assert.match(r, /if \(this\.tileArrays\.has\(key\)\) return this\.tileArrays\.get\(key\);/);
   assert.match(r, /this\.tileArrays\.set\(key, tex\);/);
   assert.ok(!/tileArrays\.(has|get|set)\(archive/.test(r), 'the archive alone must not key the cache');

@@ -723,6 +723,16 @@ export class Renderer {
      *  flip takes effect when the world next loads - the same law the
      *  sky pass already follows. */
     this.enhancedGround = false;
+    /** AUDIT 46: THE GROUND'S BISECT DOOR. A black world shipped and I
+     *  could not reproduce it - my GL gate passes on the broken code,
+     *  because SwiftShader accepts what a real driver may not. Rather
+     *  than guess a fourth time, the three states are selectable:
+     *    ?ground=classic  the original tiles, NEAREST      (pre-EE3)
+     *    ?ground=tiles    the original tiles, mipmapped    (EE3)
+     *    ?ground=drawn    our surfaces, mipmapped          (EE7)
+     *  Whichever one is black names the slice that broke it, in the
+     *  time it takes to reload. */
+    this.groundMode = null;
     /** EE4: the cloud deck the ground shadows under, handed over by the
      *  host from the SKY's own eased weather row. Null = no shadows,
      *  which is the classic skin and every interior. */
@@ -1840,7 +1850,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // loads" was false for the ground. Only a page reload would have
     // done it, which nobody would guess. The mode is part of the key
     // now: two modes, two arrays, and flipping picks the other one.
-    const key = `${archive}:${this.enhancedGround ? 'e' : 'c'}`;
+    const key = `${archive}:${this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic')}`;
     if (this.tileArrays.has(key)) return this.tileArrays.get(key);
     const gl = this.gl;
     // EE5: THE DRAWN SURFACES. The enhanced ground keeps Daggerfall's
@@ -1868,7 +1878,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // 2.27s for a climate's 56 tiles against 0.74s at 128, and a
     // two-second stall on entering the world is worse than the detail
     // is good. A worker is the way to 256 and is its own slice.
-    const src = this.enhancedGround ? buildEnhancedTiles(layers, { size: 128 }) : layers;
+    const mode = this.groundMode
+      ?? (this.enhancedGround ? 'drawn' : 'classic');
+    const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
     const w = src[0].width;
@@ -1905,7 +1917,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     //
     // Per-layer, so tiles never bleed into each other: WebGL2's
     // generateMipmap on a 2D array filters each layer independently.
-    if (this.enhancedGround) {
+    if (mode !== 'classic') {
       // ...and if it fails anyway, FALL BACK rather than draw black. A
       // sampler that cannot be completed must not be asked for mips:
       // the ground looking like the classic ground is a disappointment,

@@ -525,6 +525,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // set before the upload because the sampler state is chosen there
       // and the array is cached afterwards.
       renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
+      // AUDIT 46: ?ground=classic|tiles|drawn bisects the three states.
+      renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
       renderer.uploadTileArray(groundArchive, layers);
     }
     const terrain = renderer.createTerrainSurface(positions, normals,
