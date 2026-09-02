@@ -344,7 +344,14 @@ test('c2/S4 SOURCE PINS: ALL FOUR HOSTS route down, move AND up - a missing up l
     const body = src(f);
     assert.match(body, /modes\?\.pointerdown\?\.\(e\)/, `${f} routes down`);
     assert.match(body, /addEventListener\('pointermove', \(e\) => \{ modes\?\.pointermove\?\.\(e\); \}\)/, `${f} routes move`);
-    assert.match(body, /addEventListener\('pointerup', \(e\) => \{ modes\?\.pointerup\?\.\(e\); \}\)/, `${f} routes up`);
+    // c2/S10 hung townTalk's own release on the SAME listener (its slot
+    // holds the town map, whose chrome is this same machine), so the
+    // pin reads the listener's BODY rather than its exact spelling -
+    // what matters is that a release reaches the mode machine.
+    const up = body.match(/addEventListener\('pointerup', \(e\) => \{([^}]*)\}\)/);
+    assert.ok(up && /modes\?\.pointerup\?\.\(e\)/.test(up[1]), `${f} routes up`);
+    assert.ok(/townTalk\.pointer\('up', e\)/.test(up[1]),
+      `${f} routes up into townTalk's slot too - the town map drags there`);
   }
 
   // THE COUNT, not the spelling: three phases in each of the four hosts
