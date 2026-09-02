@@ -23,10 +23,13 @@ export function settlementsOf(maps) {
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region || !region.mapTable) continue;
+    const regionStart = out.length;
     for (const row of region.mapTable) {
       if (!row) continue;
       const p = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
-      out.push({ x: p.x, y: p.y, type: row.locationType, region: r });
+      // ROADS 8: the name rides the row so a stranded town can be NAMED
+      // in the log rather than pointed at by pixel.
+      out.push({ x: p.x, y: p.y, type: row.locationType, region: r, name: region.mapNames?.[out.length - regionStart] ?? null });
     }
   }
   return out;

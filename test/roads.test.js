@@ -388,3 +388,28 @@ test('ROADS 7: a road vertex on the relief is tinted, a track fainter, water nev
   const host = fs.readFileSync('src/scenes/world.js', 'utf8');
   assert.match(host, /roads: \(\) => terrainGen\.roads\(\)/, 'the host hands the accessor through the door');
 });
+
+// ROADS 8 (Audit 45 F7, finished): A STRANDED TOWN IS NAMED. The other
+// half landed the pairs with pixels and region; this half puts the
+// town's own name on the row and on the pair, so the log reads
+// "no route: Daggerfall (207,213) Daggerfall -> ..." and is a place to
+// go and look.
+test('ROADS 8: settlements carry their names, and an unrouted pair carries both', async () => {
+  const { settlementsOf } = await import('../src/world/roadsProducer.js');
+  const maps = { regionCount: 1, getRegion: () => ({
+    mapNames: ['Daggerfall', 'Ilessan Hills'],
+    mapTable: [
+      { longitude: 207 * 128, latitude: (499 - 213) * 128, locationType: LT.TownCity },
+      { longitude: 700 * 128, latitude: (499 - 213) * 128, locationType: LT.TownCity },
+    ],
+  }) };
+  const rows = settlementsOf(maps);
+  assert.deepEqual(rows.map((r) => r.name), ['Daggerfall', 'Ilessan Hills'], 'the name rides the row, by index');
+  // An island: the second town is ringed by water, so no route exists.
+  const island = (x, y) => Math.hypot(x - 700, y - 213) > 3 && Math.hypot(x - 700, y - 213) < 8;
+  const { stats } = buildRoadNetwork({ locations: rows, heightAt: flat, isWater: island, dials: { roadReach: 600 } });
+  assert.equal(stats.unrouted, 1);
+  assert.deepEqual(stats.unroutedPairs[0].map((l) => l.name).sort(), ['Daggerfall', 'Ilessan Hills'], 'the pair is named at both ends');
+  const host = (await import('node:fs')).readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(host, /\$\{l\.name \?\? '\?'\}/, 'and the log prints the name');
+});

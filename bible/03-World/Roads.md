@@ -189,6 +189,12 @@ grid built before the network landed is rebuilt the first time the map
 opens with it. The classic 2D region map (travelMapWindow.js) does not
 yet draw them - its own slice.
 
+## ROADS 8 - the stranded are named (2026-09-01)
+
+Audit 45's F7, finished: the settlement row carries the town's name off
+the region's own map-names table, an unrouted pair carries both names,
+and the boot log prints each one as a place to go and look.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

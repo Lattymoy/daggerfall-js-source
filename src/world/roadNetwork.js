@@ -140,7 +140,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // no road rather than how many do. `stats.unrouted` stays a count for
   // the log line; `stats.unroutedPairs` carries the names.
   const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [] };
-  const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region }, { x: b.x, y: b.y, region: b.region }]); };
+  const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region, name: a.name ?? null }, { x: b.x, y: b.y, region: b.region, name: b.name ?? null }]); };
   for (const [i, j] of routed) {
     const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied });
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);

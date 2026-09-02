@@ -295,7 +295,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     console.log(`[roads] ${st.roadNodes} towns, ${st.roadEdges} roads, ${st.trackEdges} tracks, ${st.unrouted} unrouted, ${st.ms}ms`);
     // AUDIT 45 F7: an unrouted pair is a finding, and it is named.
     for (const [a, b] of st.unroutedPairs ?? []) {
-      console.warn(`[roads] no route: (${a.x},${a.y}) ${maps.getRegionName(a.region)} -> (${b.x},${b.y}) ${maps.getRegionName(b.region)}`);
+      // ROADS 8: the TOWN'S name first, the region as its address.
+      const nm = (l) => `${l.name ?? '?'} (${l.x},${l.y}) ${maps.getRegionName(l.region)}`;
+      console.warn(`[roads] no route: ${nm(a)} -> ${nm(b)}`);
     }
   });
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
