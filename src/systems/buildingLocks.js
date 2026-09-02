@@ -57,7 +57,16 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *                                   guild layer (Guild.HallAccessAnytime
  *                                   / IsMember)
  *   ownsShip                      - DaggerfallBankManager.OwnsShip
- *                                   (FLAGGED with banking)
+ *                                   (D6 WIRED IT: banking.js:274 over
+ *                                   playerEntity.ownedShip, handed in
+ *                                   at scenes/worldModes.js's
+ *                                   buildingIsUnlocked call. The key
+ *                                   had been omitted there, so it
+ *                                   defaulted false and the Ship arm
+ *                                   below - PlayerActivate.cs:1307-1308
+ *                                   - could never fire; the bank's
+ *                                   shipyard now sells the ship whose
+ *                                   door it opens)
  */
 export function buildingIsUnlocked(building, {
   hour = 12, holidayId = -1,

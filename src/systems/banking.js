@@ -279,6 +279,10 @@ export const ownsShip = (player) => ownedShipType(player) !== SHIP_TYPES.None;
 export const shipCoords = (player) => (ownsShip(player) ? SHIP_COORDS[ownedShipType(player)] : null);
 /** GetShipModelId (:122) - guarded by `ship >= 0`, so None is 0. */
 export const shipModelId = (ship) => (ship >= 0 ? SHIP_MODEL_IDS[ship] : 0);
+/** GetShipCameraDist (:124) - the same `ship >= 0` guard, and the same
+ *  0 for None. D6 gave it a caller: the purchase window's ships arm
+ *  frames each hull from (0, 12, this). */
+export const shipCameraDist = (ship) => (ship >= 0 ? SHIP_CAMERA_DIST[ship] : 0);
 
 /**
  * AssignShipToPlayer (:488-497): set the ship and add BOTH of its
@@ -658,11 +662,14 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
 //    BankAccount record at classicSave.js:755 and mounted by SAV3
 //    (ui/loadClassicWindow.js -> scenes/menu.js -> world.js's
 //    classicLoadBoot).
-//  - FLAGGED, alone now: PurchaseShip (:467-486) has no caller. The
-//    scenes seam it was said to wait on is here - SHIP_COORDS,
-//    SHIP_INTERIOR_MAP_IDS and assignShipToPlayer are consumed by the
-//    live SELL path (worldModes.js:2198-2201) - so what is actually
-//    out is the purchase window's SHIPS ARM: bankPurchaseWindow.js is
-//    a houses list, and its ship camera distances (SHIP_CAMERA_DIST)
-//    are carried unused for the day that list exists. Until it does,
-//    BUY SHIP answers NOT_PORT_TOWN even in a port (bankWindow.js:212).
+//  - D6 CLOSED THE SHIP HALF, and it needed no new scenes seam: the
+//    one thing out was the purchase window's SHIPS ARM, which is
+//    DFU's own null-house-list branch of the SAME popup
+//    (DaggerfallBankingWindow.cs:463 pushes BankPurchasePopup with
+//    `null`; DaggerfallBankPurchasePopUp.cs:181-185 reads that null as
+//    "the two ShipTypes at their flat prices"). ui/bankPurchaseWindow.js
+//    is now both shops off that one discriminator, SHIP_CAMERA_DIST
+//    has its caller (shipCameraDist above, the preview's (0,12,z)
+//    camera), and scenes/worldModes.js openShipPurchase runs
+//    PurchaseShip - so BUY SHIP in a port opens the list instead of
+//    answering NOT_PORT_TOWN.

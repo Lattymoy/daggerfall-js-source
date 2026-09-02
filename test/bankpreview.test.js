@@ -11,8 +11,12 @@ import { readFileSync } from 'node:fs';
 import {
   BankPurchaseWindow, PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y,
   PREVIEW_ROT_SPEED, PREVIEW_HOUSE_CAMERA, PREVIEW_NEAR, PREVIEW_FAR,
+  previewShipCamera, SHIP_LIST, priceRow,
 } from '../src/ui/bankPurchaseWindow.js';
-import { SHIP_MODEL_IDS, SHIP_CAMERA_DIST } from '../src/systems/banking.js';
+import {
+  SHIP_MODEL_IDS, SHIP_CAMERA_DIST, SHIP_TYPES, shipPrice, shipModelId, shipCameraDist,
+  TRANSACTION_RESULT,
+} from '../src/systems/banking.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -47,11 +51,62 @@ test('H4: the window fires the door only with a SELECTION and no result box, aft
   const chrome = body.indexOf('drawImg(renderer, _art, m, PURCHASE_PANEL_X, PURCHASE_PANEL_Y);');
   const door = body.indexOf('this.hooks.drawModelPreview?.(');
   assert.ok(chrome > 0 && door > chrome, 'the pass paints INSIDE the display rect over the chrome, so it runs after');
-  assert.ok(body.includes("sel?.modelIdNum != null"),
+  assert.ok(body.includes('if (modelIdNum != null) {'),
     'SelectNone shows an empty panel (:298); F138 removed the window-local result box entirely');
   assert.ok(body.includes('x: m.ox + (PURCHASE_PANEL_X + dx) * m.s'),
     'the rect travels in CANVAS pixels - the scissor\'s frame, not native units');
-  assert.ok(body.includes('}, this.yawDeg, PREVIEW_HOUSE_CAMERA);'), 'the window\'s clock and camera law ride the call');
+  assert.ok(body.includes('}, this.yawDeg, this.isShips ? previewShipCamera(sel) : PREVIEW_HOUSE_CAMERA);'),
+    'the window\'s clock and BOTH camera laws ride the call (D6: :243-244 is the ships arm)');
+});
+
+test('D6: a NULL house list IS the shipyard (:181-185) - two ShipTypes at flat prices', () => {
+  // DFU has ONE popup and its discriminator is the list it was
+  // constructed with: BuyShipButton pushes it with `null` (:463) and
+  // PopulatePriceList reads that as `for (int i = 0; i < 2; i++)`.
+  let bought = 'untouched', shown = null;
+  const w = new BankPurchaseWindow({
+    buy: (ship) => { bought = ship; return { result: TRANSACTION_RESULT.PURCHASED_SHIP, amount: shipPrice(ship) }; },
+    showResult: (result, amount) => { shown = { result, amount }; },
+    onClose: () => {},
+  });
+  assert.equal(w.isShips, true, 'no houses hook is DFU\'s null list');
+  assert.deepEqual([...SHIP_LIST], [SHIP_TYPES.Small, SHIP_TYPES.Large], 'the list IS ShipType order');
+  assert.deepEqual(w.rows().map((r) => r.text), [priceRow(100000), priceRow(200000)],
+    'the ship price is a FLAT table read, where a house is measured off its own mesh');
+  assert.equal(w.canScrollDown(), false, 'two rows never scroll a ten-row list');
+  assert.equal(w.canScrollUp(), false);
+  // SelectNone, then the FIRST row - which is ShipType.Small, and
+  // ShipType.Small is 0
+  assert.equal(w.selected, -1);
+  w.input('Enter');
+  assert.equal(bought, 'untouched', 'BUY with no selection is DFU\'s `if (SelectedIndex < 0) return;`');
+  w.input('ArrowDown');
+  assert.equal(w.selected, SHIP_TYPES.Small);
+  w.input('Enter');
+  assert.equal(bought, SHIP_TYPES.Small, 'a truthiness guard makes the small ship the one row that cannot be bought');
+  assert.equal(w.done, true, 'CloseWindow runs before the outcome is known (F138)');
+  assert.equal(shown.result, TRANSACTION_RESULT.PURCHASED_SHIP);
+  assert.equal(shown.amount, 100000);
+  // ...and a houses hook still means houses
+  const h = new BankPurchaseWindow({ houses: () => [{ buildingKey: 1, meshRadius: 10 }] });
+  assert.equal(h.isShips, false);
+  assert.equal(h.rows().length, 1);
+});
+
+test('D6: the shipyard frames each hull from (0, 12, GetShipCameraDist) with its own model (:243-244)', () => {
+  assert.deepEqual(previewShipCamera(SHIP_TYPES.Small), { y: 12, z: -30 });
+  assert.deepEqual(previewShipCamera(SHIP_TYPES.Large), { y: 12, z: -50 });
+  // GetShipCameraDist carries the same `ship >= 0` guard as every
+  // other table read (:118-124), so None indexes nothing
+  assert.equal(shipCameraDist(SHIP_TYPES.None), 0);
+  assert.deepEqual(previewShipCamera(SHIP_TYPES.None), { y: 12, z: 0 });
+  assert.equal(shipModelId(SHIP_TYPES.Small), 910);
+  assert.equal(shipModelId(SHIP_TYPES.Large), 909);
+  // the draw arm picks the model off the ShipType, not off a record
+  // that a ShipType does not have
+  const src = read('src/ui/bankPurchaseWindow.js');
+  assert.ok(src.includes('this.isShips ? shipModelId(sel) : sel.modelIdNum ?? null'),
+    'a ShipType has no modelIdNum, so the shipyard would preview nothing');
 });
 
 test('H4: the host pass - scissor brackets beginFrame\'s clear, viewport follows it, the one mirror, both restored', () => {

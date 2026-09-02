@@ -25,9 +25,14 @@
 //
 // H2 opened the HOUSE half of this: BUY HOUSE reaches
 // ui/bankPurchaseWindow.js now, and the refusals above it are the
-// law's. The SHIP popup is still FLAGGED - it needs the two fixed
-// ship scenes at map pixels (2,2) and (5,5), which is a streaming-
-// world seam and not a banking one. DFU binds each button to a
+// law's. D6 opened the SHIP half against the same window: the two
+// fixed ship scenes at map pixels (2,2) and (5,5) were never the
+// blocker - banking.js has carried SHIP_COORDS and
+// SHIP_INTERIOR_MAP_IDS since H3 and the SELL path already adds and
+// drops both - what was missing was DFU's else arm at :463, which
+// pushes BankPurchasePopup with a NULL house list. So BUY SHIP in a
+// port town now opens the shipyard instead of answering NOT_PORT_TOWN
+// on the one case that should succeed. DFU binds each button to a
 // DaggerfallShortcut hotkey; the accelerators here are the port's own
 // (Ledger A).
 
@@ -208,7 +213,13 @@ export class BankWindow {
     }
     if (name === 'buyShip') {
       const d = buyShipDecision({ ownsShip: this.hooks.ownsShip?.(), isPortTown: this.hooks.isPortTown?.() });
-      this._popup(d.kind === 'refuse' ? d.result : TRANSACTION_RESULT.NOT_PORT_TOWN);
+      // D6: BuyShipButton_OnMouseClick (:455-464). The two refusals
+      // are the law's, and the else arm has NO fallback popup of its
+      // own - unlike BUY HOUSE, which answers NO_HOUSES_FOR_SALE for
+      // a missing directory (:433-434), the ships list is a fixed pair
+      // that cannot be empty, so DFU pushes unconditionally.
+      if (d.kind === 'refuse') { this._popup(d.result); return; }
+      this.hooks.openShipPurchase?.();
       return;
     }
     if (name === 'sellHouse') {

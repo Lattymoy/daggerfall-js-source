@@ -2111,6 +2111,24 @@ export function createWorldModes(host) {
     const b = interiorBuilding;
     const bankRegion = () => b?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0;
     let win = null;
+    // D6: ONE mount for BOTH arms of DaggerfallBankPurchasePopUp -
+    // there is only one popup class in DFU and the arms differ only in
+    // the list it is constructed with, so the preview door, the
+    // result route (F138 - the list has already closed, so the box is
+    // the BANKING window's GeneratePopup) and the PushWindow/PopWindow
+    // restore are shared rather than written twice.
+    const openBankMarket = (arms) => {
+      if (!purchaseArtLoaded() || !_shopFont) return false;
+      let pw = null;
+      pw = new BankPurchaseWindow({
+        ...arms,
+        drawModelPreview: drawBankModelPreview,   // H4: the live 3D panel
+        showResult: (result, amount) => win._popup(result, amount),
+        onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
+      });
+      interiorOverlay = pw;
+      return true;
+    };
     win = new BankWindow({
       accounts: () => playerEntity.bankAccounts,
       // H3: ONE region for the whole window. The bank building's own
@@ -2129,9 +2147,10 @@ export function createWorldModes(host) {
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
       dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
-      // H1: house ownership is live. SHIP ownership still needs the two
-      // fixed ship scenes and stays FLAGGED, so those buttons keep
-      // refusing through the law's own decisions.
+      // H1: house ownership is live. D6: so is SHIP ownership - the
+      // two fixed ship scenes were never the blocker (H3 wired both,
+      // and the SELL path has been adding and dropping them since),
+      // only the shipyard list was, and openShipPurchase below is it.
       ownsHouse: () => ownsHouse(playerEntity.houses ?? [], bankRegion()),
       housesForSale: () => currentHousesForSale().length,
       // H2: BUY HOUSE reaches the purchase window. The U24 identity
@@ -2139,29 +2158,39 @@ export function createWorldModes(host) {
       // nulled by its OWN onClose - and the bank is restored when the
       // purchase window closes, which is DFU's PushWindow/PopWindow.
       openPurchase: () => {
-        if (!purchaseArtLoaded() || !_shopFont) return false;
         const dir = buildingDirectory?.();
         const region = b?.regionIndex ?? 0;
-        let pw = null;
-        pw = new BankPurchaseWindow({
+        return openBankMarket({
           houses: () => pricedHousesForSale(),
-          drawModelPreview: drawBankModelPreview,   // H4: the live 3D panel
-
           buy: (h) => purchaseHouse(playerEntity.bankAccounts, playerEntity.houses, region, h, bankPurse(), {
             meshRadius: h.meshRadius ?? 0,
             mapId: dir?.mapId ?? 0,
             location: dir?.locationName ?? '',
             sideEffects: { ...houseSideEffects(), playerName: playerEntity.name ?? '', regionName: dir?.regionName ?? '' },
           }),
-          // F138: GeneratePurchaseHousePopup is the BANKING window's
-          // (:234-237) - the purchase list has already closed by the
-          // time the result shows, so the box is win's GeneratePopup.
-          showResult: (result, amount) => win._popup(result, amount),
-          onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
         });
-        interiorOverlay = pw;
-        return true;
       },
+      // D6: BUY SHIP, the SAME window with NO house list - which is
+      // DFU's own switch (DaggerfallBankingWindow.cs:463 pushes the
+      // popup with `null`). PurchaseShip has had no caller since H3;
+      // this is it. AssignShipToPlayer (:488-497) makes BOTH of the
+      // ship's scenes permanent, the exact pair sellShip drops below.
+      openShipPurchase: () => openBankMarket({
+        buy: (ship) => {
+          const r = purchaseShip(playerEntity.bankAccounts, bankRegion(), ship, playerEntity, bankPurse(), {
+            addPermanentScene: (s) => {
+              addPermanentScene(sceneCache(), worldSceneName(SHIP_COORDS[s].x, SHIP_COORDS[s].y));
+              addPermanentScene(sceneCache(), interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
+            },
+          });
+          // the price rides along the way the houses arm's does. DFU's
+          // GeneratePurchaseShipPopup passes only the result, so its
+          // `amount` macro field is 0 here - inert either way, because
+          // the port's rows come from the text record with no macro
+          // amount fed in at all.
+          return { result: r.result, amount: r.price ?? 0 };
+        },
+      }),
       // H3 CLOSED the sell price, which had stubbed at zero because it
       // needs the OWNED building's mesh radius and nothing resolved a
       // model behind a buildingKey. Nothing new had to be built:
@@ -3277,6 +3306,12 @@ export function createWorldModes(host) {
           // The hook has been in that law's contract since R1 with
           // nothing able to answer it.
           isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, key),
+          // D6: and your own SHIP is not locked against you either
+          // (buildingLocks.js's last arm - PlayerActivate.cs:1307-1308).
+          // The key was simply absent here, so it defaulted false and
+          // that arm could never fire; now that the shipyard can sell
+          // one, the door it opens has to answer.
+          ownsShip: ownsShip(playerEntity),
         });
         // X3: HandleOpenEffectOnExteriorDoor (:519-520). An armed OPEN
         // spell is tried on a locked building BEFORE the mode ladder,
