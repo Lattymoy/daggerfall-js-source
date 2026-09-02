@@ -13,7 +13,7 @@ the method and the old one is named as corrected.*
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
 closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **19 open flags** (13 after Wave E's six
+three lists at the bottom: the **19 open flags** (12 after Wave E's seven
 closures - list 1 marks them) with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
 routed and not struck**, and the **deliberate departures that are not on
@@ -31,7 +31,7 @@ class AUDIT 44 named - and what remains is no longer a list of defects
 but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
-Wave E then worked that list down to **thirteen sites and seven rows**,
+Wave E then worked that list down to **twelve sites and six rows**,
 which is what lists 1 and 2 now record; the paragraph above is the
 measurement as taken, kept because the two lists are read against it.
 
@@ -45,7 +45,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **13** | `node tools/regenOpenFlags.mjs --check` answers 13 ("13 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **12** | `node tools/regenOpenFlags.mjs --check` answers 12 ("12 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -359,7 +359,7 @@ became Wave D's 42 slices.
 
 # What remains
 
-## 1. The nineteen open flags this was measured over - THIRTEEN STAND
+## 1. The nineteen open flags this was measured over - TWELVE STAND
 
 The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 `tools/regenOpenFlags.mjs` and pinned both ways by
@@ -537,7 +537,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
 when this was measured, over the 19 the list then held. **As of Wave E
-`node tools/regenOpenFlags.mjs --check` answers 13**, and no count in
+`node tools/regenOpenFlags.mjs --check` answers 12**, and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
 it. The E-group retired SIX flags, not two - one per lane, and no lane
@@ -553,7 +553,7 @@ could see the others' closures until the squash, which is how "leaving
 - `ui/exteriorAutomapWindow.js:96` (the two console verbs) - **E1**
   narrowed the header and **E3** built the console host they needed.
 
-Five of the thirteen survivors only MOVED, and `Home.md` was
+Five of the twelve survivors only MOVED, and `Home.md` was
 regenerated onto the new sites: `exterior.js:1073` -> `:1089`,
 `exterior.js:1325` -> `:1344`, `world.js:2819` -> `:2932`,
 `worldModes.js:1659` -> `:1687`, `pauseWindow.js:58` -> `:61`. The
@@ -593,7 +593,7 @@ section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
 Section C's table is **247 rows** between `Port-Ledger.md:451` and
-`:697` (`awk '/^\|/ && !/^\|---/'`). **224 are struck.** Of the 23 that
+`:697` (`awk '/^\|/ && !/^\|---/'`). **225 are struck.** Of the 22 that
 are not, four are VidFile quirks filed under the wrong section
 (ported-as-is, no route), three carry a **Kept** verdict (the climate
 swap dimensions, the secondary picker's cancel path, the rep window's
@@ -605,7 +605,7 @@ taxonomy), two are audit preambles, one is RESERVED by the owner
 their own text that they are closed (`RegionPowerAndConditionsUpdate`,
 vampirism/lycanthropy).
 
-That accounts for 17 of the 23, leaving **6 unstruck rows that carry a
+That accounts for 17 of the 22, leaving **5 unstruck rows that carry a
 route** - plus `:568`, struck at its head but carrying a live PENDING
 clause in its tail, for **seven rows that still owe work: items 1-7
 below.** The measurement this section was first written over read 246
@@ -631,7 +631,7 @@ ships, which is the warning the section's own preamble opens with.
    widening the measurement was taken against was never a committed
    patch. It is one now (`tools/parity/patches/FaceUVTool.cs.patch`).
    The 1,803 itself still needs ARENA2 plus mono to re-measure.
-2. **`:499` the custom builder's hidden `ResetBonusPool` control** ->
+2. **`:499` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
    the row says "the port has no keybinding registry to hang it on", and
    `systems/dialogShortcuts.js:194`/`:311` carries `ResetBonusPool` with

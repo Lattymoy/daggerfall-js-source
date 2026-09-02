@@ -194,7 +194,7 @@ the record), all fixed.
 
 What remains after Wave D and the closeout tail (the spell-hand port,
 `paused()` adopted by every host, six section C rows struck) was the 19
-flags of `Home.md`. Wave E retired SIX of them - one lane apiece, each
+flags of `Home.md`. Wave E retired SEVEN of them (E2, landing last, took the chargen picker's scroll-bar hit) - one lane apiece, each
 blind to the others until the squash: E6 took the spell hands' release
 frame (`combat/fpsSpellCasting.js:178`) and the clear-path term
 (`characters/enemyCasting.js:91`), closing section C's `playSound` row
@@ -203,7 +203,7 @@ E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:268`);
 E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
-were waiting on. That leaves **13** open flags as
+were waiting on. That leaves **12** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch
