@@ -1890,7 +1890,14 @@ export function runEnhancedMenu(doc = document) {
   return new Promise((resolve) => {
     const menu = mountEnhancedMenu(host, {
       onAction: (action) => {
-        if (action === 'delete') return;   // FLAGGED: no save manager yet
+        // SAV4 shipped the save manager (systems/saveSlots.js:276
+        // deleteSave), and this file deletes through it at :387 behind
+        // an ask() confirm. Nothing routes 'delete' out here - every
+        // onAction call site names its own verb and RAIL_ACTS (:162) is
+        // `{ resume: 'resume' }` - so this belt is vacuous, kept only
+        // so a future rail entry cannot resolve the boot promise with a
+        // verb the caller has no window for.
+        if (action === 'delete') return;
         menu.unmount();
         host.remove();
         resolve(action);

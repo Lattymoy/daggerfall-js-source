@@ -35,8 +35,10 @@
 // settings screen that offers a toggle which changes nothing is a
 // lie. So every key carries a tier and the launcher reads it:
 //   live         a consumer exists; flipping it changes play
-//   stored       round-trips faithfully, no consumer yet (the port's
-//                INTERIM doctrine - named, not silently ignored)
+//   stored       round-trips faithfully, no consumer yet - named on
+//                the surface, never silently ignored. Not an open
+//                site: the tier IS the record, and the launcher
+//                reads it, so there is nothing here to close.
 //   unavailable  meaningless here (resolution, controllers, mod
 //                paths) or the port implements ONE side of the branch
 //                (EnhancedCombatAI, AdvancedClimbing - see the Ledger)

@@ -36,15 +36,23 @@
 // taken item is equipped too (RemoteItemListScroller_OnItemClick's
 // TransferItem equip:true - shipped in U8g). Closing with
 // session-dropped items hands them to hooks.onDrop - the host mints
-// the ground pile flat. Info mode pops an interim item panel
-// (name/weight/value - DFU's 1016 info text PENDS).
-// AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: this header
-// still said Equip and equip-after-transfer were FLAGGED after U8g
-// shipped both. The WAGON shipped at the W-slice (ShowWagon as the
-// computed remote target, the 750kg gates, the dungeon exit rule);
-// STILL OPEN here: letter-of-credit. Use mode, the real 1016 info
-// text and the IsLightSource equip branch shipped at U25 (AUDIT 23
-// trimmed the stale list).
+// the ground pile flat. Info mode pops the item panel on the REAL
+// 1016 record (systems/itemInfo.js, shipped at U25).
+// AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: every clause
+// this header once carried as open has shipped. Equip and
+// equip-after-transfer went at U8g; the WAGON at the W-slice (ShowWagon
+// as the computed remote target, the 750kg gates, the dungeon exit
+// rule); Use mode, the 1016 info text and the IsLightSource equip
+// branch at U25 (AUDIT 23 trimmed that list). The LETTER OF CREDIT
+// went last and whole: minted at systems/inventory.js:67
+// (DaggerfallTradeWindow.cs:1044-1048), summed by creditAmount at
+// systems/court.js:208 (ItemCollection.GetCreditAmount, ItemCollection
+// .cs:108-118), spent letters-before-coins with the shortfall returned
+// by deductGold at court.js:250 (DeductGoldAmount, PlayerEntity.cs
+// :1324-1354), banked at systems/banking.js:463/:476, and described by
+// the 1007 text at systems/itemInfo.js:101. Nothing was ever owed at
+// THIS surface anyway - DaggerfallInventoryWindow.cs has no
+// letter-of-credit arm at all.
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
@@ -386,11 +394,14 @@ export class NativeInventoryWindow {
 
   /** S23: the career equip gate (DaggerfallInventoryWindow :1343-1381).
    *  DFU refuses the equip and pops TEXT.RSC 1068 on a
-   *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-   *  info panel below is: this surface has no TEXT.RSC source and no
-   *  parchment frame of its own yet, so the refusal shows on the same
-   *  interim popup. The REFUSAL ITSELF is verbatim - the item does not
-   *  equip, which is the half that changes play. */
+   *  ClickAnywhereToClose message box, and U25 shipped that box whole:
+   *  the record comes off the host's TEXT.RSC seam (:408-411, with the
+   *  BROKEN gate's own record at :399-402) and draws on the U11
+   *  parchment through layoutMessageBox/drawMessageBox (:979-982),
+   *  while click() dismisses any non-field box at :795-797 - which IS
+   *  ClickAnywhereToClose. The REFUSAL ITSELF was verbatim from the
+   *  start - the item does not equip, which is the half that changes
+   *  play. */
   _refuseForbidden(it) {
     // AUDIT 24 (wave 29): the BROKEN gate runs first
     // (DaggerfallInventoryWindow.cs:1330-1341) - before the

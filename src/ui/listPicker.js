@@ -19,7 +19,7 @@
 //   243,239,44 and the SELECTED 162,36,12 - a dark red, not a
 //   brighter yellow, which is the one people guess wrong.
 //
-// ROAD-A7 closes this file's FLAGGED note. The bar is now a real
+// ROAD-A7 closed this file's scroll-bar note. The bar is now a real
 // VerticalScrollBar (ui/verticalScrollBar.js): DFU's three thumb art
 // slices, the trough paging off thumbRect, and Update's DRAG - which
 // Update (:103-119) feeds back the other way, `listBox.ScrollIndex =

@@ -124,9 +124,9 @@ export const IDENTIFY_COST_MULTIPLIER = 25;
  *  accepted a rusty dagger and charged (25 * value) >> 8 to identify
  *  it, and the mode-action button would have lit up over a pack with
  *  no magic in it at all. It was never seen because the Identify
- *  destination has been a FLAGGED null, so the mode could not be
- *  opened; this lane opens it, so the derivation has to be right
- *  first. */
+ *  destination was a null and the mode could not be opened; X7 opened
+ *  it, so the derivation had to be right first. Both paths run at
+ *  worldModes.js:1458-1490 now - the paid service and the spell. */
 export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
 
 /** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
@@ -399,13 +399,17 @@ export function localClickDecision(mode, item, {
 /** "doesntNeedIdentify" - Internal_Strings, recovered. */
 export const DOESNT_NEED_IDENTIFY = 'This item does not need to be identified.';
 
-// FLAGGED, with the slices they wait on:
-//  - the IDENTIFY SPELL arm (:956-996): DoModeAction has a whole
-//    second path where the Identify spell pays in MAGICKA and rolls
-//    per item, telling the player "N of M identified". It needs the
-//    Identify effect wired to a window entry point, which the magic
-//    arc owns.
-//  - the LETTER OF CREDIT is minted here as a decision and the item
-//    itself waits on banking (there is nowhere to cash one yet).
-//  - SellMagic's "fencing base price" TODO is DFU's own and stays open
-//    in both codebases.
+// The three clauses that stood here are all closed:
+//  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
+//    (:161) feeds worldModes.js:1463-1481, which spends the magicka
+//    ONCE for the whole list whatever the outcome and tells the player
+//    "N of M identified"; the window opens from openIdentifyWindow
+//    (worldModes.js:5951), the entry point the magic arc owed.
+//  - the LETTER OF CREDIT is tender and bankable: minted at systems/
+//    inventory.js:67, summed by creditAmount at systems/court.js:208,
+//    spent letters-before-coins by deductGold at court.js:250, and
+//    moved at systems/banking.js:463 depositAllLetters / :476
+//    withdrawLetter.
+//  - SellMagic's "fencing base price" TODO is DFU's own
+//    (DaggerfallTradeWindow.cs:464 carries it verbatim), so it is
+//    parity by construction, never a port gap.

@@ -307,9 +307,14 @@ export class NativeTalkWindow {
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
     if (inRect(R.topicList, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
-    // B5-6: the four pages that were INTERIM no-ops. Each falls back
-    // to consuming the click when its hook is absent (the pre-engine
-    // host), so an art-only session never half-opens a page.
+    // B5-6: the four pages are live at :313-327 - tellMeAbout, then
+    // people/things/work behind the whereIs gate - with three of the
+    // hooks supplied at scenes/townTalk.js:612-614 and Work's OKAY
+    // question shipped alongside them (_askWork :293, ButtonOkay's
+    // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
+    // still falls back to consuming the click when its hook is absent
+    // (the pre-engine host), so an art-only session never half-opens
+    // a page.
     if (inRect(R.tellMeAbout, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'tellMeAbout'; this._openFlat(this.hooks.tellMeAboutTopics?.()); return true; }
     // The three remaining CATEGORY buttons, behind the same gate as
     // Location above - the sound sits inside it, as C# has it.
