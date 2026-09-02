@@ -266,3 +266,41 @@ cleared by the line that clears them. Four low findings recorded there.
 
 - Rivers and streams: the same painter with water tiles, off by default
   as the original ships them. Their data would also be ours to derive.
+
+## ROADS 14 - calibrated against the answer key (2026-09-02)
+
+Mac: "Use his data as a resource to perfect our design." The hand-drawn
+network is what "as close as we can" means, and its bytes cannot ship;
+its JUDGEMENT can be measured and turned into the dials. So
+`tools/roadsCalibrate.mjs` reads the mod's arrays (from the author's
+public repo, read not shipped) and prints, for roads and tracks: the
+share of through-pixels that bend, what angle those bends are, the
+diagonal share of steps, dead ends, junctions - and, with ARENA2
+present, the same numbers for OUR network on the same map, side by
+side, with the dials on the command line.
+
+THE ANSWER KEY'S NUMBERS, recorded as the targets:
+
+| | pixels | bend | right-angle | hairpin | diagonal | dead-end | junction |
+|---|---|---|---|---|---|---|---|
+| his roads | 21,554 | 30% | 1.7% | 0.0% | 34% | 0.3% | 4.4% |
+| his tracks | 30,472 | 39% | 2.4% | 0.0% | 36% | 7.1% | 6.9% |
+
+WHAT THAT SAID, AND WHAT CHANGED: a road turns ONE COMPASS POINT AT A
+TIME. Of 6,076 road bends, 5,975 are 45-degree heading changes and
+101 are right angles; none double back. A linear turn cost priced a
+right angle at exactly two 45s, so A* was indifferent. The cost is now
+squared in compass points - a right angle four 45s, a hairpin nine -
+and the search lays two single-point bends where it laid a corner.
+Pinned at the source; on open ground the fixtures cannot distinguish
+the two (a chamfer is always shorter than a corner), and the real-map
+run is where the share is read.
+
+WHAT IT CANNOT SAY WITHOUT THE HEIGHTMAP: the 30% bend rate is the
+terrain speaking - valleys, coasts, passes - and any generator draws
+straight on flat ground. Bend rate, climb, and track reach are tuned on
+Mac's machine: `ARENA2_PATH=... node tools/roadsCalibrate.mjs --bytes
+<dir> --turnCost 0.7 --climbCost 40` prints ours beside his; turn a
+dial, run again. That loop is the design being perfected against the
+resource, and every number it lands on goes into ROAD_DIALS with the
+run that chose it.

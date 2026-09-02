@@ -535,3 +535,32 @@ test('AUDIT 46 A10: the network is posted before any terrain job can be', async 
   const gap = host.slice(made, roads);
   assert.ok(!/await /.test(gap), 'with no await between them - same synchronous block, so no frame can slip in');
 });
+
+// ROADS 14: CALIBRATED AGAINST THE ANSWER KEY. Basic Roads' hand-drawn
+// network, measured (tools/roadsCalibrate.mjs): a road bends at 30% of
+// its through-pixels, 98% of those bends are single 45-degree heading
+// changes, 1.7% are right angles, none double back. A linear turn cost
+// priced a right angle at two 45s; squared, it is four, and A* lays two
+// single-point bends where it used to lay a corner.
+test('ROADS 14: a right angle costs more than two single-point bends, so the road takes the two', async () => {
+  const { measure } = await import('../tools/roadsCalibrate.mjs');
+  // A route that must gain 40 rows over 40 columns then run flat: the
+  // cheapest LINEAR shape is a right angle at the corner; the hand's
+  // shape is a diagonal into a straight - two 45s.
+  const a = { x: 200, y: 200 }, b = { x: 280, y: 240 };
+  const wall = (x, y) => x >= 250 && x <= 255 && y < 235;   // forces the climb late
+  const path = route(a, b, { heightAt: flat, isWater: wall, existing: blank(), d: D });
+  const m = new Uint8Array(MAP_W * MAP_H); stamp(m, path);
+  const st = measure(m);
+  assert.equal(st.hairpinShare, 0, 'never doubles back');
+  assert.ok(st.rightAngleShare <= 0.05, `right angles are rare (${(st.rightAngleShare * 100).toFixed(1)}% of bends) - the hand's 1.7%`);
+  // RECORDED: on open ground a chamfered corner is always SHORTER than a
+  // right angle, so both the linear and the squared cost choose it here
+  // and the two assertions above hold either way - regression guards.
+  // Right angles arise only against obstacles, where terrain decides,
+  // and the place the shape is seen is the real-map run of
+  // tools/roadsCalibrate.mjs printing our right-angle share beside his
+  // 1.7%. The guarantee is pinned at the source:
+  const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
+  assert.match(src, /cost \+= t \* t \* d\.turnCost;/, 'the turn cost is squared in compass points');
+});

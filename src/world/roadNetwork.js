@@ -280,7 +280,15 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, b
       cost *= 1 + (rise > 0 ? rise * d.climbCost : -rise * d.descentCost) * 0.01;
       if (hn > d.highAbove) cost *= 1 + (hn - d.highAbove) * d.highCost;
       if (existing[ny * MAP_WIDTH + nx]) cost *= d.roadDiscount;
-      if (!atStart) cost += turnOf(heading, k) * d.turnCost;
+      // ROADS 14 (calibrated against the hand-drawn network): A ROAD
+      // TURNS ONE COMPASS POINT AT A TIME. Of 6,076 bends in Basic
+      // Roads' road data, 5,975 are 45-degree heading changes, 101 are
+      // right angles (1.7%), and none double back; tracks are the same
+      // shape. A linear turn cost prices a right angle at exactly two
+      // 45s, which is why ours took them; squaring the step count makes
+      // a right angle four 45s and a hairpin nine, and A* lays two
+      // single-point bends instead - the hand's own habit.
+      if (!atStart) { const t = turnOf(heading, k); cost += t * t * d.turnCost; }
       const ng = g[cur] + cost;
       if (ng < g[ni]) { g[ni] = ng; came[ni] = cur; open.push(ng + h(nx, ny), ni); }
     }
