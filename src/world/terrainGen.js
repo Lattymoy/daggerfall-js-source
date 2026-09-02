@@ -25,7 +25,7 @@ import { generateSamples, ghostSampler } from './terrainSampler.js';
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
-import { paintRoads, smoothRoadHeights } from './roadPainter.js';
+import { paintRoads, smoothRoadHeights, pathCorners } from './roadPainter.js';
 import { MAP_W } from './roadNetwork.js';
 
 /**
@@ -64,12 +64,18 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const tileData = generateTileData(samples, px, py);
   if (roads) {
     const i = py * MAP_W + px;
-    paintRoads(tileData, tilemap, roads.roads[i], roads.tracks[i], hasLocation ? locationRect : null);
+    // ROADS 23: the mod's corners - a neighbour's diagonal brushes this
+    // pixel's corner tile - and its water, off unless the network says.
+    const c = (m) => (m ? pathCorners(m, px, py, MAP_W) : 0);
+    paintRoads(tileData, tilemap, roads.roads[i], roads.tracks[i], hasLocation ? locationRect : null, 129, {
+      river: roads.rivers ? roads.rivers[i] : 0, stream: roads.streams ? roads.streams[i] : 0, water: !!roads.water,
+      corners: { road: c(roads.roads), track: c(roads.tracks), river: c(roads.rivers), stream: c(roads.streams) },
+    });
     // ROADS 10: the ground under the road is smoothed - after the paint,
     // before the grid is built from the samples. The network carries the
     // switch (`smooth`, default on, the design's SmoothRoads) so the
     // worker needs no settings access.
-    if (roads.smooth !== false) smoothRoadHeights(samples, tilemap);
+    if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
   }
   assignTiles(tileData, tilemap, true);
   const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));

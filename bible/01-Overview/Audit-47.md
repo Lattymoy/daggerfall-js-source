@@ -66,9 +66,9 @@ built for.
 | weather volume, integrated wind, streak, head | yes | EE8 |
 | surface field: base + storm + melt + prints | yes | EE9 |
 | winter ground = summer materials under the field | yes | EE9 |
-| rain ripples on standing water | NO | polish |
+| rain ripples on standing water | yes | EE17 |
 | puddle Fresnel reflection | yes - the audit's own table had this wrong; it landed inside EE9's fragment terms | EE9 |
-| one wind shared by grass, rain and deck | PARTLY - rain and deck share the sky's wind; the grass sways on the deck's direction but its own gust | polish |
+| one wind shared by grass, rain and deck | yes - the grass's strength is the wind's speed and its gust the rain's integrated travel | EE17 |
 | the lab's front (eased weather) | not ported, by design - the game has its own | - |
 | the lab's ray convention fix | not ported, by design - it was a lab bug | - |
 

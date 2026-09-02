@@ -46,6 +46,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // the sky off gets environments off, because that is the choice they
   // made about the only part of this that existed when they made it.
   enhancedEnvironments: true,
+  // ENHANCED AI (2026-09-02, Mac): the navmesh-driven enemy motor. OFF
+  // by default and it stays off by default: DFU's classic motor is the
+  // 1:1 law, and this is the port's departure from it, opt-in exactly
+  // as EnhancedCombatAI is DFU's own opt-in departure from classic.
+  enhancedAI: false,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',

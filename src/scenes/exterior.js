@@ -40,7 +40,6 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getTerrainGroundArchive, getNatureArchive, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation, hasCustomLocationPosition } from '../world/locationLayout.js';
-import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
@@ -116,7 +115,6 @@ import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundP
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced } from '../systems/uiSkin.js';
-import { getPref } from '../systems/uiPrefs.js';   // EE3: the ground half of the Enhanced Environments switch   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -467,13 +465,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // R9 ground GL: cached tile array per archive, the location tilemap,
   // and a flat 2x2 surface at GroundOffset spanning the exact extent
   // (winding matches buildTerrainIndices' quad diagonal).
-  // EE3: the ground's half of the Enhanced Environments switch and its
-  // URL door, set BEFORE the cache is asked - the guard below must ask
-  // about the mode the upload will use, or a flipped switch skips the
-  // upload for the new mode and draws the terrain with no texture.
-  renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
-  renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
-  if (!renderer.tileArrayFor(groundArchive)   /* EE3 */) {
+  if (!renderer.tileArrays.has(groundArchive)) {
     const groundTex = textureFiles.get(groundArchive);
     const layers = [];
     for (let r = 0; r < groundTex.recordCount; r++) {
@@ -483,21 +475,6 @@ export async function bootExterior(canvas, renderer, params, status) {
   }
   const tilemapBytes = convertTilemap(locationTilemap);
   const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, tilemapDim);
-  // EE7: the location's grass on its own tilemap. The exterior ground is
-  // one flat quad, so the heightmap is flat too - every corner at the
-  // ground's own height - and the tile size is the quad's side over the
-  // tilemap's dimension. Nothing when the mode places none, or ?grass=off.
-  const grass = (() => {
-    const grassOf = renderer.tileGrassFor(groundArchive);
-    if (!grassOf || new URLSearchParams(globalThis.location?.search ?? '').get('grass') === 'off') return null;
-    const gy = GROUND_OFFSET * 0.025;
-    const flat = new Float32Array((tilemapDim + 1) * (tilemapDim + 1)).fill(gy);
-    const placed = placeGrass({
-      tilemap: tilemapBytes, grassOf, heights: flat, tileDim: tilemapDim,
-      tileSize: (loc.width * RMB_SIDE) / tilemapDim, heightScale: 1, seed: 0x5eed,
-    });
-    return renderer.createGrass(placed.data, placed.count);
-  })();
   const groundSurface = (() => {
     const gy = GROUND_OFFSET * 0.025;
     const gw = loc.width * RMB_SIDE;
@@ -2283,9 +2260,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // sky, which is the classic skin and every interior.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
-      renderer.tileArrayFor(groundArchive), tilemapTex, 6.4, renderer.tileNormalFor(groundArchive) /* EE6 */);
-    // EE7: the grass after its ground, same matrix, same light, same deck
-    if (grass) renderer.drawGrass(grass, identityMatrix, performance.now() / 1000, null);
+      renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) {
       if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
       renderer.drawMesh(d.mesh, d.matrix, texRemap);
@@ -2454,10 +2429,23 @@ export async function bootExterior(canvas, renderer, params, status) {
       precip.enhanced = !!sky?.cloudShadow;
       precip.countCap = Number(new URLSearchParams(globalThis.location?.search ?? '').get('rain')) || null;
       if (precip.enhanced) {
+        // WX1: THE LAB'S WIND LAW, term for term. The sky's eased row gives
+        // a direction and a speed (its wind vector, in the deck's units,
+        // times 260 for the lab's slider units); a slow three-sine GUST
+        // rides on the speed; the rate handed to the shader is
+        // speed * 0.16 (the lab's metres a second) WITHOUT the gust, and
+        // the travel integrated on the CPU is speed * gust * 0.16 * dt,
+        // exactly as grass-proto.html's frame() does it.
         const w = sky.cloudShadow.wind;
+        const tsec = now / 1000;
+        const gust = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
+        const mag = Math.hypot(w[0], w[1]);
+        const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
+        const slider = mag * 260;
         const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
-        precip.windOff[0] += (2.5 + w[0] * 260) * dtp;
-        precip.windOff[1] += (1.2 + w[1] * 260) * dtp;
+        precip.windV[0] = dir[0] * slider * 0.16; precip.windV[1] = dir[1] * slider * 0.16;
+        precip.windOff[0] += dir[0] * slider * gust * 0.16 * dtp;
+        precip.windOff[1] += dir[1] * slider * gust * 0.16 * dtp;
       }
       precip._lastNow = now;
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);

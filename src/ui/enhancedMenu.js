@@ -121,6 +121,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
+import { MOD_SETTINGS, modSetting, setModSetting } from '../systems/modSettings.js';   // ROADS 24
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -845,18 +846,21 @@ function paneEnhanced(body) {
   // The prose names what the switch covers TODAY and grows as slices
   // land - a row that claims more than the tree has is the fault RA1
   // fixed here in the other direction.
+  // ENHANCED AI 1: the switch is here from the first slice so the arc's
+  // door exists; the motor only reads it once the bake is proven on a
+  // real dungeon (ENHANCED AI 3). Until then it says so.
+  live.append(prefRow('enhancedAI', 'Enhanced AI',
+    'Enemies find their way: a navmesh baked from each dungeon, town and interior, so they path around '
+    + 'pillars, through doors and down corridors instead of walking into walls the way classic Daggerfall\'s '
+    + 'do. Senses, decisions and attacks stay classic; only the way an enemy moves changes. '
+    + 'Off keeps the 1:1 classic motor. (Landing slice by slice; not yet driving the motor.)'));
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
-    'The enhanced outdoors as one system. Today: a procedural sky with the sun, both moons on '
-    + 'their real phases, a star field, a finely stepped sunrise and sunset, and clouds that '
-    + 'follow the weather to the horizon and cast their shadows on the land; and ground drawn at four times the detail in '
-    + 'Daggerfall\u2019s own tile shapes and colours, lit by the sun so every blade and pebble '
-    + 'has a bright side and a shaded side, holding still at distance instead of shimmering; and '
-    + 'three-dimensional grass standing in the meadows, bending in the wind; and rain and snow '
-    + 'that fall through the world around you, driven by the wind, rather than across the screen; '
-    + 'and snow that gathers on the ground through a storm, takes your footprints, and melts away '
-    + 'as the season warms, while the roads stay walked and wet-shining in the rain. '
-    + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own 64-pixel ground. '
-    + 'Takes effect when the world next loads.'));
+    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
+    + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
+    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
+    + 'driven by the wind, rather than across the screen; and the prototype\u2019s grass, a million '
+    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
+    + 'panorama and its own weather. Takes effect when the world next loads.'));
 
   // EE13 (Mac: a season test option that spawns you somewhere random, so
   // the outdoors can be checked without a walk to a season). A season, a
@@ -870,9 +874,9 @@ function paneEnhanced(body) {
   testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
   const testCtl = el('div', 'ctl');
   const seasonSel = el('select', 'act');
-  // EE14: Daggerfall has three ARCHIVE seasons (winter, rain, summer),
+  // Daggerfall has three ARCHIVE seasons (winter, rain, summer),
   // and the field has a CALENDAR. A season here is both: the archive
-  // the world dresses in, and the day of the year the field warms to.
+  // the world dresses in; the day is sent for any test that wants it.
   const SEASONS = [['winter', 'winter', 0], ['spring', 'rain', 90], ['summer', 'summer', 180], ['fall', 'summer', 300]];
   for (const [label, , day] of SEASONS) { const o = el('option', '', label); o.value = String(day); seasonSel.append(o); }
   const weatherSel = el('select', 'act');
@@ -1076,7 +1080,30 @@ function paneEnhanced(body) {
 }
 
 function paneMods(body) {
-  body.append(empty('No add-ons installed', 'This port has no mod system, so there is no loader for a mod to load into.'));
+  // ROADS 24: a vendored mod's OWN switches, under the mod's own name,
+  // with the mod's own descriptions - where DFU's modsettings puts them.
+  // The row is a switch like DFU's, writing through modSettings.js.
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    const mc = el('div', 'card');
+    mc.append(el('h3', null, mod.title));
+    for (const [key, def] of Object.entries(mod.keys)) {
+      const row = el('div', 'row');
+      const main = el('div', 'row-main');
+      main.append(el('div', 'row-name', key.replace(/([a-z])([A-Z])/g, '$1 $2')));
+      main.append(el('div', 'meta', def.description));
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      const on = modSetting(vendor, key);
+      const b = el('button', 'act rowact', on ? 'On' : 'Off');
+      if (on) b.classList.add('primary');
+      b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+      ctl.append(b);
+      row.append(ctl);
+      mc.append(row);
+    }
+    mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
+    body.append(mc);
+  }
   const c = el('div', 'card');
   c.append(el('h3', null, "DFU's mod switches"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',

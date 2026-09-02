@@ -88,6 +88,8 @@ export const TRACK_TYPES = Object.freeze(new Set([
 export const ROAD_DIALS = Object.freeze({
   neighbours: 2,          // ROADS 16: 3 made junctions at 14% of road pixels; his are 4.4%. 2 gives 9%
   roadReach: 70,          // max pixel distance for a road edge
+  trackLink: 24,          // ROADS 21: a track node links to neighbours this close (his tracks average 14 px a run)
+  trackNeighbours: 2,     // ROADS 21: how many
   trackReach: 20,         // ROADS 15/16: his track ends sit within 9 px of a road at the 95th percentile,
                           // but his tracks average 14 px and web together; 14 gave stubs, 20 gives 23k px to his 30k
   climbCost: 80,          // ROADS 16: his roads follow the ground harder than 40 made ours
@@ -95,6 +97,8 @@ export const ROAD_DIALS = Object.freeze({
   highCost: 0.08,         // per unit of height above `highAbove`, per step
   highAbove: 40,          // small-heightmap value where terrain starts to cost
   roadDiscount: 0.5,      // stepping onto an existing road costs half - roads merge
+  mergeNear: 3,           // ROADS 17: a road reaching an existing road this close to its town joins it
+  joinAngle: 3,           // ROADS 18: compass points a new road must sit from a town's existing ones - 3 (135 degrees); 2 gave 9.9% right angles, his 1.7
   turnCost: 0.4,          // ROADS 16: squared per 45 degrees (ROADS 14); 0.7 held bends at 18%, his are 30%
 });
 
@@ -125,8 +129,31 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // a route may still start or end on one. A* then arcs around a town
   // by itself, and a town on the line between two others gets the arc
   // plus its own two spurs, which IS the ring.
+  // ROADS 18 CORRECTS ROADS 6, on the real map. His roads go THROUGH the
+  // towns: 92% of his 1,610 city and hamlet pixels carry road bits -
+  // 55% two bits (half of those straight through), 29% junctions AT the
+  // town - and only 122 are empty. The 890 "arcs" ROADS 6 measured were
+  // around empty pixels that were not towns at all; his map holds three
+  // ringed towns in total. So a ROAD-GRADE town is a waypoint a route
+  // may pass through and junction at. Everything else - villages,
+  // dungeons, farms, temples - stays blocked: villages sit at the
+  // baseline for roads (39% within a pixel, chance) and dungeons below
+  // it (avoided).
   const occupied = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
-  for (const l of locations) if (inMap(l)) occupied[l.y * MAP_WIDTH + l.x] = 1;
+  for (const l of locations) if (inMap(l) && !ROAD_TYPES.has(l.type)) occupied[l.y * MAP_WIDTH + l.x] = 1;
+
+  // AUDIT 49 A1: AN ISLAND IS NOT A ROUTE THAT FAILED, IT IS A ROUTE
+  // THAT WAS NEVER THERE. On the real map 44 pairs were unrouted, all
+  // but one with water between them, and each paid all three A* boxes
+  // - the 120-pixel one at eight headings - before giving up: 3.5 of
+  // the build's 7.3 seconds spent proving the sea is wet. Land is
+  // flood-filled once into components (4-connected, the conservative
+  // match for a router that will not cut a water corner), and a pair on
+  // different components is named unrouted without a search.
+  const component = landComponents(isWater);
+  const sameLand = (a, b) => component[a.y * MAP_WIDTH + a.x] === component[b.y * MAP_WIDTH + b.x];
+  const towns = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
+  for (const l of roadNodes) towns[l.y * MAP_WIDTH + l.x] = 1;
 
   // THE ROAD GRAPH: k-nearest within reach, then a spanning tree over
   // ALL road nodes so nothing is stranded - the tree may add long
@@ -148,10 +175,11 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // each end as {x, y, region}, so the boot log can say WHICH town has
   // no road rather than how many do. `stats.unrouted` stays a count for
   // the log line; `stats.unroutedPairs` carries the names.
-  const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [] };
+  const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [], islands: 0, trackLinks: 0 };
   const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region, name: a.name ?? null }, { x: b.x, y: b.y, region: b.region, name: b.name ?? null }]); };
   for (const [i, j] of routed) {
-    const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied });
+    if (!sameLand(roadNodes[i], roadNodes[j])) { stats.islands++; miss(roadNodes[i], roadNodes[j]); continue; }
+    const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied, mergeNear: d.mergeNear, towns });
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
   }
 
@@ -163,6 +191,43 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // last mile instead of wearing parallel ruts. `paths` is the union,
   // kept in step as each track lands.
   const paths = new Uint8Array(roads);
+  // ROADS 21: THE TRACKS ARE A WEB, NOT A FIELD OF STUBS. Measured on
+  // his map: 84% of villages sit ON a track, his tracks average 14 px
+  // per dead-end and junction at 6.9%, ours were 3.6 px stubs at 29%
+  // dead-ends. His tracks pass THROUGH the places they serve, chaining
+  // village to village to road. So: a track may cross a track-grade
+  // pixel (a road may not), and each track node also links to its
+  // nearest track neighbours within reach, routed shortest-first so the
+  // web grows outward from the roads and every later link lands on an
+  // earlier one.
+  const trackBlocked = new Uint8Array(occupied);
+  for (const t of trackNodes) trackBlocked[t.y * MAP_WIDTH + t.x] = 0;
+  // ROADS 21: the web's "towns" for the wide-join rule are its nodes -
+  // a village is entered wide or not at all, as a town is (ROADS 18).
+  const trackTowns = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
+  for (const t of trackNodes) trackTowns[t.y * MAP_WIDTH + t.x] = 1;
+  const links = [];
+  for (let i = 0; i < trackNodes.length; i++) {
+    const near = trackNodes.map((n, j) => ({ j, dd: dist(trackNodes[i], n) }))
+      .filter((o) => o.j !== i && o.dd <= d.trackLink).sort((a, b) => a.dd - b.dd).slice(0, d.trackNeighbours);
+    for (const o of near) links.push([Math.min(i, o.j), Math.max(i, o.j), o.dd]);
+  }
+  const seen = new Set();
+  links.sort((a, b) => a[2] - b[2]);
+  for (const [i, j] of links) {
+    const key = i * trackNodes.length + j; if (seen.has(key)) continue; seen.add(key);
+    // A link commits to B's side: it may end on any path that is closer
+    // to B than to A, never on A's own track at step one.
+    const A = trackNodes[i], B = trackNodes[j];
+    // ...and only where the join is WIDE (ROADS 18's rule, for tracks):
+    // arriving with heading h, the bit stamped on the existing pixel is
+    // the way back, and every bit already there must sit joinAngle
+    // compass points from it. A sharp join is walked past.
+    const path = route(A, B, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns,
+      stopIf: (x, y, h) => Math.hypot(x - B.x, y - B.y) < Math.hypot(x - A.x, y - A.y)
+        && wideEnough(paths[y * MAP_WIDTH + x], DIR_DELTA[(h + 4) % 8][0], d) });
+    if (path) { stamp(tracks, path); stamp(paths, path); stats.trackLinks++; }
+  }
   for (const t of trackNodes) {
     // ROADS 15: A TRACK JOINS THE ROAD WHERE THE ROAD PASSES, not at the
     // next town. Measured on the hand-drawn network, a track dead-end
@@ -175,10 +240,48 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
     // any path, so the join lands wherever the terrain says.
     const best = nearestPath(paths, t, d.trackReach);
     if (!best) continue;
-    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: occupied });
+    if (paths[t.y * MAP_WIDTH + t.x]) continue;   // ROADS 21: already on the web
+    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns });
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, { ...best, region: t.region, name: null });
   }
   return { roads, tracks, stats };
+}
+
+/** ROADS 17/18: may a new bit join an existing mask without a hairpin
+ *  or a right angle? A bit already present is fine (riding the road);
+ *  otherwise every existing bit must be at least three compass points
+ *  away. His towns: 55% two bits, 29% three - junctions, but wide ones. */
+function wideEnough(have, bit, d) {
+  if (!have || (have & bit)) return true;
+  const bi = DIR_DELTA.findIndex(([b]) => b === bit);
+  for (let j = 0; j < 8; j++) {
+    if (!(have & DIR_DELTA[j][0])) continue;
+    const dd = Math.abs(j - bi); if (Math.min(dd, 8 - dd) < d.joinAngle) return false;
+  }
+  return true;
+}
+
+/** AUDIT 49 A1: label every land pixel with its 4-connected component.
+ *  One pass over the map; water is 0, land gets 1, 2, 3... */
+export function landComponents(isWater) {
+  const comp = new Int32Array(MAP_WIDTH * MAP_HEIGHT);
+  const stack = new Int32Array(MAP_WIDTH * MAP_HEIGHT);
+  let next = 0;
+  for (let start = 0; start < comp.length; start++) {
+    if (comp[start] || isWater(start % MAP_WIDTH, (start / MAP_WIDTH) | 0)) continue;
+    next++; let sp = 0; stack[sp++] = start; comp[start] = next;
+    while (sp) {
+      const i = stack[--sp]; const x = i % MAP_WIDTH, y = (i / MAP_WIDTH) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= MAP_WIDTH || ny >= MAP_HEIGHT) continue;
+        const j = ny * MAP_WIDTH + nx;
+        if (comp[j] || isWater(nx, ny)) continue;
+        comp[j] = next; stack[sp++] = j;
+      }
+    }
+  }
+  return comp;
 }
 
 /** The nearest set pixel of a mask within `reach` of (x, y), or null. */
@@ -242,6 +345,11 @@ export function route(from, to, opts) {
     const p = routeInBox(from, to, opts, margin);
     if (p) return p;
   }
+  // ROADS 17: a town that can be neither entered nor joined outside
+  // (its only road runs off the wrong way and nothing of it lies within
+  // reach) is still a town that needs its road - the through rule gives
+  // way rather than stranding it.
+  if (opts.mergeNear || opts.d.joinAngle) return route(from, to, { ...opts, mergeNear: 0, d: { ...opts.d, joinAngle: 0 } });
   return null;
 }
 
@@ -257,7 +365,7 @@ export function route(from, to, opts) {
  * turn happens. The result prefers "E for a while, then NE for a while"
  * to alternating, which is the same length and far fewer corners.
  */
-function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, blocked = null }, margin) {
+function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, stopIf = null, blocked = null, mergeNear = 0, towns = null }, margin) {
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin), x1 = Math.min(MAP_WIDTH - 1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(0, Math.min(from.y, to.y) - margin), y1 = Math.min(MAP_HEIGHT - 1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
@@ -285,7 +393,15 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, b
     closed[cur] = 1;
     const cell = (cur / 8) | 0, heading = cur % 8;
     const cx = x0 + (cell % bw), cy = y0 + Math.floor(cell / bw);
-    if (cell === goal || (stopOn && cell !== sc && stopOn[cy * MAP_WIDTH + cx] !== 0)) { end = cur; break; }
+    if (cell === goal || (stopOn && cell !== sc && stopOn[cy * MAP_WIDTH + cx] !== 0 && (!stopIf || stopIf(cx, cy, heading)))) { end = cur; break; }
+    // ROADS 17: A TOWN IS ENTERED ONCE. Measured on the real map, every
+    // hairpin in our network was a town pixel with two spurs arriving
+    // from adjacent directions; his towns are entered by one road that
+    // passes through. So a route that reaches an EXISTING road within
+    // mergeNear pixels of its destination stops there and shares that
+    // road's last stretch, instead of laying a second spur beside it.
+    if (mergeNear && cell !== sc && existing[cy * MAP_WIDTH + cx] !== 0
+      && Math.hypot(cx - to.x, cy - to.y) <= mergeNear) { end = cur; break; }
     const hc = heightAt(cx, cy);
     const atStart = cell === sc;
     for (let k = 0; k < 8; k++) {
@@ -294,6 +410,29 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, b
       if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
       const ni = idx(nx, ny) * 8 + k;
       if (closed[ni] || isWater(nx, ny)) continue;
+      // ROADS 17: THE THROUGH-ROAD RULE. Once a town has a road, a later
+      // road may enter it only from the direction that CONTINUES that
+      // road - the town's one existing bit must be the very direction
+      // we are heading, so the town ends up with opposite bits, a road
+      // passing through. Seventy percent of his town pixels are that.
+      // From any other direction the route cannot enter and must end
+      // on the existing road outside the town (the mergeNear stop), so
+      // the junction sits outside the walls rather than in them.
+      // The bit this step would put on the goal points back at us; on
+      // the start it points the way we go. Either must sit at least 135
+      // degrees from every bit already there: straight through and a
+      // wide T pass, a hairpin or a right angle into town does not.
+      // ROADS 18: AT EVERY TOWN THE ROUTE TOUCHES, not only its two ends.
+      // A route riding one road and passing THROUGH a town onto another
+      // stamps that town's bits like any step, and a first draft checked
+      // only the goal and the start - the through-route put a right
+      // angle on the crossroads town in the fixture and on 20 of 266 on
+      // the real map. Entering a town: the bit it would get must sit
+      // wide of what it has. Leaving one: likewise for the bit we take.
+      if (d.joinAngle && towns) {
+        if (towns[ny * MAP_WIDTH + nx] && !wideEnough(existing[ny * MAP_WIDTH + nx], OPPOSITE[DIR_DELTA[k][0]], d)) continue;
+        if (towns[cy * MAP_WIDTH + cx] && !wideEnough(existing[cy * MAP_WIDTH + cx], DIR_DELTA[k][0], d)) continue;
+      }
       // ROADS 6: an occupied pixel is passable only as the destination
       const isBlockedAt = (bx, by) => (blocked && blocked[by * MAP_WIDTH + bx]) || isWater(bx, by);
       if (blocked && blocked[ny * MAP_WIDTH + nx] && idx(nx, ny) !== goal) continue;

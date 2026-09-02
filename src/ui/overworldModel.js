@@ -137,6 +137,9 @@ export function overworldTint(climate, byte) {
  *  it. Colours are ours, like the rest of this table (:33). */
 export const OVERWORLD_ROAD = [118, 92, 62];
 export const OVERWORLD_TRACK = [150, 128, 96];
+/** ROADS 24: water on the relief - a river's blue, a stream fainter. */
+export const OVERWORLD_RIVER = [58, 96, 150];
+export const OVERWORLD_STREAM = [96, 128, 166];
 
 export function buildOverworldGrid({ heightBytes, width, height, climateAt, pathAt = null }) {
   const positions = new Float32Array(width * height * 3);
@@ -168,10 +171,12 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt, path
         const slope = (cl(px + 1, py + 1) - cl(px - 1, py - 1)) * BASE_HEIGHT_SCALE;
         const shade = Math.min(1.18, Math.max(0.55, 0.9 + slope * 0.004));
         r *= shade; g *= shade; b *= shade;
-        // ROADS 7: the thread. 2 = road, 1 = track, 0 = nothing.
+        // ROADS 7/24: the thread. 2 = road, 1 = track, 4 = river, 3 = stream, 0 = nothing.
         const path = pathAt ? pathAt(px, py) : 0;
         if (path === 2) { [r, g, b] = lerp3([r, g, b], OVERWORLD_ROAD, 0.85); }
         else if (path === 1) { [r, g, b] = lerp3([r, g, b], OVERWORLD_TRACK, 0.55); }
+        else if (path === 4) { [r, g, b] = lerp3([r, g, b], OVERWORLD_RIVER, 0.85); }
+        else if (path === 3) { [r, g, b] = lerp3([r, g, b], OVERWORLD_STREAM, 0.6); }
       }
       colors[i * 3] = Math.min(255, r | 0);
       colors[i * 3 + 1] = Math.min(255, g | 0);
@@ -303,7 +308,119 @@ export function reliefPoint(px, py, { heightBytes, width, height }, lift = 0) {
  * because the reason for a lift is the ground, not its neighbours: a
  * line at zero z-fights the surface it is drawn on.
  */
-export const RELIEF_LIFT = Object.freeze({ route: 0.35 });
+/** ROADS 25 (Mac: "use the first iteration's design instead of the
+ *  smeared dirt look"): the FIRST road drawing on this map - R1-RH1,
+ *  removed whole in RX - drew the network as LINES lifted over the
+ *  relief, one chain per run between junctions, simplified so the grid
+ *  stairs go and rounded so the corners do. Restored here for four
+ *  classes and fed with Basic Roads' own arrays. The ORDER is the law
+ *  and the numbers are skin: ground < stream < river < track < trunk <
+ *  route. Equal lifts z-fight where two classes share a pixel, which
+ *  they do at every junction. */
+export const RELIEF_LIFT = Object.freeze({ stream: 0.08, river: 0.11, track: 0.14, trunk: 0.20, route: 0.35 });
+
+/** RZ1 - Ramer-Douglas-Peucker, run BEFORE the corner cut. A traced
+ *  chain walks map pixels, so a road running east-north-east is a
+ *  staircase whose steps are an artifact of the grid, not of the road.
+ *  Simplifying first drops those: a 24-pixel staircase collapses to a
+ *  straight line, while a road that genuinely turns keeps its corner
+ *  and sheds the pixels along its legs. The tolerance is just under one
+ *  pixel: a diagonal step sits at most ~0.71 off its line. */
+export const SIMPLIFY_EPSILON = 0.9;
+export function simplifyChain(line, eps = SIMPLIFY_EPSILON) {
+  if (line.length < 3) return line.slice();
+  const a = line[0], b = line[line.length - 1];
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  let idx = -1, dmax = 0;
+  for (let i = 1; i < line.length - 1; i++) {
+    const p = line[i];
+    const d = len === 0 ? Math.hypot(p.x - a.x, p.y - a.y) : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len;
+    if (d > dmax) { dmax = d; idx = i; }
+  }
+  if (dmax <= eps) return [a, b];
+  return [...simplifyChain(line.slice(0, idx + 1), eps).slice(0, -1), ...simplifyChain(line.slice(idx), eps)];
+}
+
+/** RR1 - Chaikin's corner cut, two passes: every corner becomes two
+ *  points a quarter of the way along each leg, and the line rounds. */
+export function chaikin(line, passes = 2) {
+  let pts = line;
+  for (let n = 0; n < passes; n++) {
+    if (pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      out.push({ x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 });
+      out.push({ x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 });
+    }
+    out.push(pts[pts.length - 1]);
+    pts = out;
+  }
+  return pts;
+}
+
+/** ROADS 25: THE TRACER. Basic Roads' arrays are one byte per pixel, an
+ *  8-direction mask of the edges a path leaves through; a drawable
+ *  chain is a run of pixels between two NODES (a junction, a dead end,
+ *  or a bend - anything whose degree is not two). Every edge is walked
+ *  once; a pure loop with no node is walked from any pixel on it. The
+ *  mask layout is the painter's (N=128 clockwise to NW=1). */
+const DIRS = [[128, 0, -1], [64, 1, -1], [32, 1, 0], [16, 1, 1], [8, 0, 1], [4, -1, 1], [2, -1, 0], [1, -1, -1]];
+export function traceChains(mask, width, height) {
+  const degree = (i) => { let n = 0; for (const [b] of DIRS) if (mask[i] & b) n++; return n; };
+  const seen = new Set();   // "i:bit" edges walked
+  const chains = [];
+  const walk = (start, bit) => {
+    const chain = [{ x: start % width, y: (start / width) | 0 }];
+    let i = start; let b = bit;
+    for (;;) {
+      const [, dx, dy] = DIRS.find(([bb]) => bb === b);
+      const key = `${i}:${b}`; if (seen.has(key)) break; seen.add(key);
+      const x = (i % width) + dx, y = ((i / width) | 0) + dy;
+      if (x < 0 || y < 0 || x >= width || y >= height) break;
+      const j = y * width + x;
+      const back = DIRS[(DIRS.findIndex(([bb]) => bb === b) + 4) % 8][0];
+      seen.add(`${j}:${back}`);
+      chain.push({ x, y });
+      if (degree(j) !== 2) break;
+      const next = DIRS.find(([bb]) => (mask[j] & bb) && bb !== back);
+      if (!next) break;
+      i = j; b = next[0];
+    }
+    if (chain.length > 1) chains.push(chain);
+  };
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i] || degree(i) === 2) continue;
+    for (const [b] of DIRS) if ((mask[i] & b) && !seen.has(`${i}:${b}`)) walk(i, b);
+  }
+  for (let i = 0; i < mask.length; i++) {   // pure loops
+    if (!mask[i]) continue;
+    for (const [b] of DIRS) if ((mask[i] & b) && !seen.has(`${i}:${b}`)) walk(i, b);
+  }
+  return chains;
+}
+
+/** Each chain: simplified, rounded, lifted onto the relief. */
+export function roadPoints(lines, ctx, lift) {
+  return lines.map((line) => {
+    const smooth = chaikin(simplifyChain(line));
+    const pts = new Float32Array(smooth.length * 3);
+    smooth.forEach((p, i) => { const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift); pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z; });
+    return pts;
+  });
+}
+
+/** Four classes at their own lifts, ready for the renderer. Any class
+ *  may be absent. */
+export function roadModel({ trunk = [], track = [], river = [], stream = [] }, ctx) {
+  return {
+    stream: roadPoints(stream, ctx, RELIEF_LIFT.stream),
+    river: roadPoints(river, ctx, RELIEF_LIFT.river),
+    track: roadPoints(track, ctx, RELIEF_LIFT.track),
+    trunk: roadPoints(trunk, ctx, RELIEF_LIFT.trunk),
+  };
+}
 
 /**
  * The route line's points over the relief: the law's own pixel walk

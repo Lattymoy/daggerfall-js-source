@@ -111,8 +111,10 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
   }
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = readFileSync(host, 'utf8');
-    assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, 2,
-      `${host} marks both foreign seams (the sky and the rain)`);
+    // GR1: the world host has a third seam, the lab's grass
+    const want = host === 'src/scenes/world.js' ? 3 : 2;
+    assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
+      `${host} marks its foreign seams (the sky, the rain${want === 3 ? ', and the grass' : ''})`);
   }
 });
 
@@ -131,6 +133,22 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   // template - does not count, because it hides from this reader as it
   // hid from the last one (AUDIT 47 F1).
   const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js'];
+  // AUDIT 49: labGrass.js composes its stages as HEAD + FIELD + body, so
+  // the reader composes them the same way before it looks
+  {
+    const src = readFileSync('src/render/labGrass.js', 'utf8');
+    const tpl = (name) => { const i = src.indexOf(`export const ${name} = \``); return src.slice(i + `export const ${name} = \``.length, src.indexOf('`;', i)); };
+    const vs = tpl('LAB_GRASS_HEAD') + tpl('GAME_GRASS_FIELD') + tpl('LAB_GRASS_VS');
+    const fs = tpl('LAB_GRASS_HEAD') + tpl('LAB_GRASS_FS');
+    for (const [label, body] of [['labGrass VS', vs], ['labGrass FS', fs]]) {
+      const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)].flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
+      const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
+      const missing = [...used].filter((u) => !declared.has(u));
+      assert.deepEqual(missing, [], `${label} uses undeclared: ${missing.join(', ')}`);
+      assert.ok(/terrain\(/.test(body) === (label === 'labGrass VS'), `${label}: terrain() belongs to the vertex stage`);
+    }
+    assert.ok(/float terrain\(vec2 p\)\{ return aRootY; \}/.test(vs), 'the game’s terrain() is the baked root height');
+  }
   for (const file of files) {
     const s = readFileSync(file, 'utf8');
     assert.ok(!/`\.replace\('uniform /.test(s), `${file}: a uniform must be declared in the template, not injected after it`);

@@ -92,7 +92,7 @@
 // offers the find dialog and the host hands the place here.
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
-import { OVERWORLD_ROAD, OVERWORLD_TRACK } from './overworldModel.js';   // ROADS 13: the same two colours as the relief
+import { OVERWORLD_ROAD, OVERWORLD_TRACK, OVERWORLD_RIVER, OVERWORLD_STREAM } from './overworldModel.js';   // ROADS 13/24: the relief's colours
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
@@ -506,19 +506,23 @@ export class TravelMapWindow {
     const net = this.deps.roads?.() ?? null;
     if (net) {
       const showRoads = !this.filters.roads, showTracks = !this.filters.tracks;
+      const showRivers = !!net.water && !this.filters.rivers, showStreams = !!net.water && !this.filters.streams;   // ROADS 24
       const roadPx = packRGBA(OVERWORLD_ROAD[0], OVERWORLD_ROAD[1], OVERWORLD_ROAD[2], 255);
       const trackPx = packRGBA(OVERWORLD_TRACK[0], OVERWORLD_TRACK[1], OVERWORLD_TRACK[2], 255);
-      for (let y = 0; y < height && (showRoads || showTracks); y++) {
+      const riverPx = packRGBA(OVERWORLD_RIVER[0], OVERWORLD_RIVER[1], OVERWORLD_RIVER[2], 255);
+      const streamPx = packRGBA(OVERWORLD_STREAM[0], OVERWORLD_STREAM[1], OVERWORLD_STREAM[2], 255);
+      for (let y = 0; y < height && (showRoads || showTracks || showRivers || showStreams); y++) {
         for (let x = 0; x < width; x++) {
           const px = originX + x, py = originY + y;
           if (px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) continue;
           const i = py * MAP_WIDTH + px;
-          const kind = (showRoads && net.roads[i]) ? 2 : ((showTracks && net.tracks[i]) ? 1 : 0);
+          const kind = (showRoads && net.roads[i]) ? 2 : ((showTracks && net.tracks[i]) ? 1
+            : ((showRivers && net.rivers?.[i]) ? 4 : ((showStreams && net.streams?.[i]) ? 3 : 0)));   // ROADS 24
           if (!kind) continue;
           const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
           if (offset >= width * height) continue;
           if (maps.getPoliticIndex(px, py) - 128 !== this.selectedRegion) continue;
-          this._dotsBuf[offset] = kind === 2 ? roadPx : trackPx;
+          this._dotsBuf[offset] = kind === 2 ? roadPx : kind === 1 ? trackPx : kind === 4 ? riverPx : streamPx;
         }
       }
     }

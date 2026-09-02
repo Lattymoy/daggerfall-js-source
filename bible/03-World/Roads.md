@@ -4,6 +4,18 @@ Mac, 2026-09-01, on Hazelnut's Basic Roads for Daggerfall Unity:
 "recreate it using it as a resource and avoiding the legal stuff
 altogether... be as faithful as possible without crossing the line."
 
+## The line - and then permission
+
+The line below was the law from ROADS 1 to ROADS 21: the design learned
+from, the data never shipped. On 2026-09-02 Hazelnut gave Mac
+permission to integrate Basic Roads 1:1, and the line is gone: the four
+arrays are vendored in `vendor/roads-hazelnut/` with attribution and
+credited on the About screen beside the windmills. Everything below
+about deriving our own network is still true and still runs - as the
+FALLBACK for a map where his data cannot load - and the fourteen slices
+that calibrated it against his data are how the fallback got good.
+ROADS 22 is the integration.
+
 ## The line
 
 Basic Roads is two things. Its CODE is MIT (every source file carries
@@ -255,6 +267,107 @@ network that lands after the panel was opened plots on its next region
 select, which in practice is never - the worker finishes in the first
 second of boot.
 
+## ROADS 20 - the width is the mod's (2026-09-02)
+
+Mac: "ensure road width matches what the mod has." Read from the mod's
+painter: cardinal outer is `null` for roads and tracks - two tiles of
+46 and nothing beside them, the 47/55 edges flanking the diagonal
+only. Ours had painted an edge column each side of every cardinal arm
+since ROADS 2: four tiles across to his two. Fixed, with the track's
+diagonal inner (51/52) and inside corner (10/25) read from the same
+table. Audit 50 has the detail and names the painter's ring road as the
+one remaining departure from the mod.
+
+## ROADS 21 - the tracks are a web (2026-09-02)
+
+The larger of ROADS 16's two structural gaps. His villages sit ON
+tracks (84%), his tracks average 14 px per dead-end and junction at
+6.9%; ours were 3.6 px stubs at 29% dead-ends. His tracks pass THROUGH
+the places they serve, chaining village to village to road. Three
+rules: a track may cross a track-grade pixel where a road may not; each
+track node links to its two nearest neighbours within 24 px, routed
+shortest-first so the web grows outward from the roads, and a link
+commits to B's side of the web (it may end on any path closer to B than
+to A, never on A's own track at step one); and a village is entered
+WIDE - ROADS 18's rule with the web's nodes as its towns. The first two
+alone gave a web with sharp joins (right angles 14.8%, hairpins 5.3%);
+the third took them to 1.9% and 0.0%.
+
+| | pixels | bend | right-angle | hairpin | dead-end | junction |
+|---|---|---|---|---|---|---|
+| his tracks | 30,472 | 39% | 2.4% | 0.0% | 7.1% | 6.9% |
+| ours before | 22,907 | 30% | 9.2% | 0.0% | 29.4% | 4.9% |
+| ours now | 26,944 | 40% | 1.9% | 0.0% | 12.7% | 8.1% |
+
+Found on the way: `stopIf` had been designed for ROADS 17 and never
+plumbed through the other instance's rewrite of routeInBox; a link that
+could stop on ANY path stopped on its own at step one and the web was
+stubs and hairpins. It carries the heading now, so a stop can be judged
+wide.
+
+## ROADS 22 - his network, 1:1 (2026-09-02)
+
+With Hazelnut's permission: `vendor/roads-hazelnut/` carries the four
+arrays byte-exact (a 500 KB file gzips to 28 KB; GitHub Pages serves
+gzip), `roadsProducer.loadModRoads` reads them as Vite assets by
+`new URL(import.meta.url)` and refuses a wrong length, the worker takes
+the arrays ready-made with no build and no cache, the map draws them
+through the door it already had, and the About screen credits him as
+it credits Kamer. The generator is the fallback: a failed load logs
+and builds ours. The painter's ring road - Audit 50's one departure -
+is removed; the mod paints none, and an arm now stops at the rect as
+his does. Rivers and streams are loaded and unpainted, off by default
+as the mod ships them; their painter branch is the next slice.
+
+## ROADS 23 - the painter is a port (2026-09-02)
+
+With permission, the painter is BasicRoadsTexturing.cs's PaintPath
+ported table-driven as he wrote it: six tile slots per path type
+(cardinal inner and outer, diagonal inner, outer and gap, the inside
+corner), his exact conditions, his paint order - roads, then rivers and
+streams if water is on, then tracks, the first to paint a tile winning.
+The earlier readings-from-a-description are gone with their
+approximations, and every pin they had written still passes against
+the port, which is the best check a rewrite can get.
+
+Three things the readings never had. PIXEL CORNERS: a diagonal leaving
+a neighbouring pixel brushes this pixel's corner tile, and the mod
+paints a diagonal-outer there so the road does not gap at the seam;
+the corner byte is the east neighbour's SW|NW bits and the west's
+NE|SE, as he derives it. RIVERS: water in the centre - stored as 0xff
+so the pipeline reads it as set, the location tiles' own trick - with
+a BANK (a cardinal outer of 6/21/31, the one path type that has one),
+a diagonal gap ring, and centre and corner joins where a stream meets
+them. STREAMS: the bank tile as a narrow centre, no outer. Both behind
+`water` on the network object, OFF by default as the mod ships them.
+The smoother's tile set includes the water tiles, as his does.
+
+## ROADS 25 - the map draws lines, the first iteration's design (2026-09-02)
+
+Mac: "in my first ever iteration of roads we used a certain design for
+the roads... I want to use it instead of the smeared dirt look." The
+first road drawing on this map - R1 through RH1, removed whole in RX
+before the ROADS arc began - drew the network as LINES lifted over the
+relief: one chain per run between junctions, Ramer-Douglas-Peucker to
+drop the grid stairs (a diagonal step sits at most 0.71 px off its
+line; the tolerance is 0.9), Chaikin twice to round the corners, each
+class at its own lift so nothing z-fights at a junction. ROADS 7's
+vertex tint - a colour lerped into one vertex per 819 m and smeared
+across the triangles - is gone; the relief no longer knows about roads
+at all. Restored from 01121b9b for four classes and fed with Basic
+Roads' own arrays through a tracer that walks the compass masks into
+chains (his data: 1,508 road chains, 4,289 track). The chips choose
+layers at draw time, so a toggle re-uploads nothing. Lift order, which
+is draw order: stream < river < track < trunk < route.
+
+## Audit 51 (2026-09-02) - parity by oracle
+
+`01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte
+for byte over 651 cases; the smoother is SmoothRoadsJob but for a
+corrected transpose; the arrays are his to the byte. ROADS 22's claim
+that the mod paints no ring is corrected there: it paves the rect's
+padding, roads only.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
@@ -384,3 +497,36 @@ the next slice:
 Everything above is measured, not felt, and the tool re-reads it in
 one command. 44 unrouted pairs on the real map at these dials - names
 in the boot log (ROADS 8) - most of them islands and the far north.
+
+## ROADS 17/18 - a town is entered once, and a join is wide (2026-09-02)
+
+The first structural gap ROADS 16 named, closed and measured. Every
+hairpin in our roads was a town pixel with two spurs arriving from
+adjacent directions, and our right angles were the same convergence a
+step out. Two rules: a road reaching an existing road within
+`mergeNear` (3 px) of its destination town JOINS it there rather than
+laying a second spur - the through-road rule, a town is entered once;
+and a new bit may only join an existing mask if every bit already there
+is at least `joinAngle` compass points away, so a junction is wide the
+way his are (his towns: 55% two bits, 29% three). Measured on the real
+map: right angles 8.1% -> 0.9% (his 1.7%), hairpins 3.2% -> 0.0% (his
+0.0%), junctions 9.2% -> 6.5% (his 4.4%). Road pixels 15.3k -> 14.0k:
+the second spurs were a thousand pixels of duplicate road. The remaining
+gaps are the track webs (dead-ends 29% vs 7%) and road length.
+
+## ROADS 19 - built once per map (2026-09-02)
+
+Item 8, un-parked by Audit 49's number: 4.4 seconds of routing before
+the first terrain chunk, every boot, for a result that is the same
+whenever its inputs are. The worker builds through `roadsCache.js`:
+IndexedDB, keyed on everything that shapes the network - a generator
+version bumped by hand when the logic changes shape, the dials
+serialised (so a turned dial invalidates without a bump), the
+settlement list's fingerprint (its length and a sum over pixels and
+types - MAPS.BSA's content as far as roads are concerned), and the
+heightmap's length. A hit skips the build; a miss pays it once and
+stores it; a store that cannot open is a miss, never an error. The
+store is injectable, which is what lets the law be pinned in node. A
+job that arrives during the lookup queues behind it, as it queued
+behind the synchronous build, so no chunk is ever roadless. The boot
+log's stats carry `cached: true` on a hit.

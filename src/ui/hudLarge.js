@@ -112,7 +112,7 @@
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:6190 and scenes/exterior.js:2112, the only two
+// scenes/world.js:6070 and scenes/exterior.js:2089, the only two
 // hosts that carry the call, each over a useFwd built from cam.yaw
 // and cam.pitch one line above it), not a pixel unprojected through
 // the projection matrix, so a reduced viewport would not move a

@@ -41,6 +41,9 @@ test('ROADS 1: every road-grade town is reachable - the spanning tree strands no
 
 const D = { climbCost: 40, descentCost: 10, highCost: 0.08, highAbove: 40, roadDiscount: 0.5 };
 const blank = () => new Uint8Array(MAP_W * MAP_H);
+const ORDER8 = [DIR.N, DIR.NE, DIR.E, DIR.SE, DIR.S, DIR.SW, DIR.W, DIR.NW];
+// every pair of compass indices at least three points (135 degrees) apart
+const wide = (idxs) => idxs.every((a, i) => idxs.every((b, j) => i === j || Math.min(Math.abs(a - b), 8 - Math.abs(a - b)) >= 3));
 
 test('ROADS 1: routes refuse water - a lake ON the line is walked around', () => {
   const a = { x: 150, y: 250 }, b = { x: 350, y: 250 };
@@ -78,7 +81,7 @@ test('ROADS 1: a track stops the moment it touches the road', () => {
   assert.ok(path.length <= 11, 'and did not walk along it into town');
 });
 
-test('ROADS 2: a straight N-S road is two tiles wide down the centre, with edges', () => {
+test('ROADS 2/20: a straight N-S road is two tiles wide down the centre, and only two', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
   const n = paintRoads(tileData, tilemap, DIR.N | DIR.S, 0);
@@ -86,9 +89,11 @@ test('ROADS 2: a straight N-S road is two tiles wide down the centre, with edges
   for (let y = 0; y < 128; y++) {
     assert.equal(tilemap[y * 128 + 63] & 0x3f, TILE.road, `row ${y} col 63 is road`);
     assert.equal(tilemap[y * 128 + 64] & 0x3f, TILE.road, `row ${y} col 64 is road`);
-    assert.equal(tilemap[y * 128 + 62] & 0x3f, TILE.roadGrass, `row ${y} col 62 is the grass edge`);
-    assert.equal(tilemap[y * 128 + 65] & 0x3f, TILE.roadGrass, `row ${y} col 65 is the grass edge`);
-    assert.equal(tilemap[y * 128 + 61], 0, 'and col 61 is untouched');
+    // ROADS 20: two tiles and NOTHING beside them - the mod's cardinal
+    // outer is null. The first draft painted 47/55 here and read four
+    // tiles across where his read two; Mac saw the difference.
+    assert.equal(tilemap[y * 128 + 62], 0, `row ${y} col 62 is untouched - no cardinal edge`);
+    assert.equal(tilemap[y * 128 + 65], 0, `row ${y} col 65 is untouched`);
   }
   // col 64 carries the FLIP bit so the two halves mirror into one surface.
   assert.ok(tilemap[10 * 128 + 64] & TILE.FLIP);
@@ -108,7 +113,7 @@ test('ROADS 2: N alone paints only the northern half - row 127 is north', () => 
   assert.equal(tilemap[0 * 128 + 63], 0, 'the south edge is bare');
 });
 
-test('ROADS 2: a diagonal is one tile wide on the diagonal, and the location rect is left alone', () => {
+test('ROADS 2/AUDIT 51: a diagonal is one tile wide on the diagonal, and a road pixel paves the rect', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
   // The rect is setLocationTiles' inclusive {xMin,xMax,yMin,yMax}. The
@@ -118,15 +123,20 @@ test('ROADS 2: a diagonal is one tile wide on the diagonal, and the location rec
   assert.equal(tilemap[100 * 128 + 100] & 0x3f, TILE.road, 'on x==y');
   assert.equal(tilemap[100 * 128 + 101] & 0x3f, TILE.roadGrass, 'flanked');
   assert.equal(tilemap[100 * 128 + 102], 0, 'one tile wide');
-  assert.equal(tilemap[64 * 128 + 64], 0, 'the location rect is untouched');
-  assert.equal(tilemap[67 * 128 + 67], 0, 'to its inclusive far corner');
+  // AUDIT 51: the mod paints THROUGH the rect's padding and a road pixel
+  // fills what is left of it (the oracle overruled 'untouched').
+  assert.equal(tilemap[64 * 128 + 64] & 0x3f, TILE.road, 'the rect\u2019s padding is paved by a road pixel');
+  assert.equal(tilemap[67 * 128 + 67] & 0x3f, TILE.road, 'the far corner is on the diagonal, and paved either way');
   assert.equal(tilemap[50 * 128 + 50], 0, 'the SW half is bare - NE alone');
 });
 
 test('ROADS 2: water is never paved, and a track shows dirt through grass only', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.water);
   const tilemap = new Uint8Array(128 * 128);
-  assert.equal(paintRoads(tileData, tilemap, DIR.N | DIR.S, 0), 0, 'a road bit over water paints nothing');
+  // AUDIT 51: the mod's road table paves water (46 in column 0); his data
+  // never routes a road across it, but the columns are his.
+  assert.ok(paintRoads(tileData, tilemap, DIR.N | DIR.S, 0) > 0, 'the mod\u2019s table paves water');
+  assert.equal(tilemap[10 * 128 + 63] & 0x3f, TILE.road);
   const grass = new Uint8Array(129 * 129).fill(TILE.grass);
   const t = new Uint8Array(128 * 128);
   paintRoads(grass, t, 0, DIR.E | DIR.W);
@@ -140,8 +150,9 @@ test('ROADS 2: classify - the centre of any arm wins over the edge of another', 
   // A crossroads: tile (63,64) is centre of both N and E arms.
   const c = classify(63, 64, DIR.N | DIR.E);
   assert.equal(c.centre, true, 'and F4\'s cap does not steal it - the E arm\'s cap position IS this tile');
-  // (62,64) is the N arm's west edge - and NOT on the E arm.
-  assert.equal(classify(62, 64, DIR.N | DIR.E).centre, false);
+  // (62,64) is beside the N arm - and since ROADS 20 a cardinal has no
+  // edge column, so it is nothing at all.
+  assert.equal(classify(62, 64, DIR.N | DIR.E), null);
   assert.equal(classify(10, 10, DIR.N), null, 'far from any arm');
 });
 
@@ -200,7 +211,7 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   assert.match(worker, /m\.t === 'roads'/, 'the worker accepts the network');
   assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'and hands it to the kernel on every job');
   const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
-  assert.match(client, /setRoads\(settlements, onStats = null\)/, 'the client has the door');
+  assert.match(client, /setRoads\(settlements, onStats = null, switches = null\)/, 'the client has the door (ROADS 24: the switches ride it)');
   assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 3,
     'every same-thread path - direct, worker-error, and dying-worker drain - carries it');
   // AUDIT ROADS F2: the worker BUILDS; this thread builds only on a
@@ -272,28 +283,29 @@ test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still 
     'h is scaled by the cheapest step, which is what admissibility requires');
 });
 
-test('ROADS 5: a town is RINGED, and the arm joins the ring instead of ending in a field', () => {
+// ROADS 22: THE PAINTER DRAWS NO RING. The mod paints none - its towns
+// are ringed by the data (ROADS 6: five-neighbour arcs, never a loop)
+// and inside a pixel a road stops at the location rect. The ring that
+// ROADS 5 added was the painter's one piece that was ours (Audit 50
+// A2); with Hazelnut's data in play, 1:1 has no room for it. This pin
+// replaces ROADS 5's: an arm reaches the rect and STOPS.
+test('ROADS 22/AUDIT 51: a road pixel paves the rect\u2019s padding, the streets stand, nothing outside', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
-  const rect = { xMin: 56, xMax: 71, yMin: 56, yMax: 71 };
-  paintRoads(tileData, tilemap, DIR.N, 0, rect);
-  // inside the rect: nothing
-  assert.equal(tilemap[64 * 128 + 64], 0, 'the streets are left alone');
-  assert.equal(tilemap[70 * 128 + 58], 0, 'the clearance band too');
-  // the ring: two tiles of road just outside, on every side
-  for (const [x, y] of [[54, 64], [55, 64], [72, 64], [73, 64], [64, 54], [64, 55], [64, 72], [64, 73], [54, 54], [73, 73]]) {
-    assert.equal(tilemap[y * 128 + x] & 0x3f, TILE.road, `ring at ${x},${y}`);
-  }
-  // an edge tile one further out
-  assert.equal(tilemap[64 * 128 + 53] & 0x3f, TILE.roadGrass, 'the ring has an edge');
-  assert.equal(tilemap[64 * 128 + 52], 0, 'and stops');
-  // the N arm runs from the ring to the north edge, not from the centre
-  assert.equal(tilemap[100 * 128 + 63] & 0x3f, TILE.road, 'the arm');
-  assert.equal(tilemap[74 * 128 + 63] & 0x3f, TILE.road, 'meets the ring');
-  // and a rect that runs off the tile grid rings on the sides that fit
-  const t2 = new Uint8Array(128 * 128);
-  paintRoads(tileData, t2, DIR.S, 0, { xMin: -4, xMax: 20, yMin: 100, yMax: 130 });
-  assert.equal(t2[98 * 128 + 10] & 0x3f, TILE.road, 'the south side rings');
+  const rect = { x: 56, y: 56, w: 16, h: 16, xMin: 56, xMax: 71, yMin: 56, yMax: 71 };
+  // the location's own tiles are non-zero (seeded by setLocationTiles);
+  // here a 4x4 block of "streets" in the middle of the rect
+  for (let y = 62; y < 66; y++) for (let x = 62; x < 66; x++) tilemap[y * 128 + x] = 0xff;
+  paintRoads(tileData, tilemap, DIR.S, 0, rect);
+  assert.equal(tilemap[10 * 128 + 63] & 0x3f, TILE.road, 'the arm');
+  assert.equal(tilemap[55 * 128 + 63] & 0x3f, TILE.road, 'reaches the rect');
+  // AUDIT 51, by oracle: the mod paints THROUGH the padding and a road
+  // pixel fills what is left of it - that band is how his towns ring.
+  assert.equal(tilemap[58 * 128 + 63] & 0x3f, TILE.road, 'the arm continues through the padding');
+  assert.equal(tilemap[70 * 128 + 58] & 0x3f, TILE.road, 'and the rest of the padding is paved');
+  assert.equal(tilemap[63 * 128 + 63], 0xff, 'the streets themselves are untouched');
+  // nothing OUTSIDE the rect but the arm: no edge annulus
+  for (const [x, y] of [[54, 64], [73, 64], [64, 73], [53, 53], [74, 74]]) assert.equal(tilemap[y * 128 + x], 0, `nothing outside the rect at ${x},${y}`);
 });
 
 // ROADS 5 (2026-09-01, Mac's first real-data look: "the roads are
@@ -325,72 +337,64 @@ test('ROADS 5: the turn cost turns a staircase into stretches', () => {
   assert.ok(legacy && legacy.length === paid.length, 'a missing dial defaults rather than poisoning the cost');
 });
 
-// ROADS 6 (2026-09-01): ROADS RING THE TOWNS THEY PASS. Measured on the
-// hand-drawn network: five-neighbour ARCS around a location are
-// everywhere (890) and full eight-pixel loops essentially never (none).
-// A ring is a through-road detouring around a town on one side, and it
-// falls out of one rule - a settlement's pixel is never an intermediate
-// step. The town on the line between two others gets the arc plus its
-// own two spurs, which IS the ring; and a village on the line between
-// two cities is walked around rather than cut through.
-test('ROADS 6: a town between two others is ringed, and a village in the way is not cut through', () => {
+// ROADS 6, CORRECTED BY ROADS 18 on the real map: HIS ROADS GO THROUGH
+// THE TOWNS. 92% of his 1,610 city and hamlet pixels carry road bits -
+// 55% two bits, 29% junctions AT the town - and only 122 are empty. The
+// 890 "arcs" ROADS 6 measured were around empty pixels that were not
+// towns; his map holds three ringed towns in total. So a ROAD-GRADE
+// town is a waypoint: a road passes through it and junctions at it.
+// What ROADS 6 got right stands: everything else - a village on the
+// line between two cities - is walked around, never painted through,
+// and no corner is cut past it.
+test('ROADS 6/18: a town between two others is passed THROUGH, a village in the way is walked around', () => {
   const A = { x: 200, y: 200, type: LT.TownCity }, B = { x: 230, y: 200, type: LT.TownHamlet }, C = { x: 260, y: 200, type: LT.TownCity };
   const V = { x: 245, y: 200, type: LT.TownVillage };   // on the B-C line
   const { roads } = buildRoadNetwork({ locations: [A, B, C, V], heightAt: flat, isWater: () => false, dials: { neighbours: 3, roadReach: 100 } });
   const at = (x, y) => roads[y * MAP_W + x];
-  // B carries only its own spurs: the A-C through-road did not pass across it.
   const bitsB = at(B.x, B.y);
-  assert.ok(bitsB !== 0, 'B is on the network');
-  // the pixels around B: an arc of road neighbours, five or more
-  let ringB = 0;
-  for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]) if (at(B.x + dx, B.y + dy)) ringB++;
-  // Four is the arc: the side the road came in on, the corner, the far
-  // side, the other corner. The hand-drawn data's fifth is the habit of
-  // returning to the original line after the bypass, which A* has no
-  // reason to do when the destination already sits on the new line.
-  assert.ok(ringB >= 4, `B is ringed by an arc (${ringB} of 8 neighbours carry road)`);
-  // NO CORNER CUTTING: the road did not squeeze diagonally past B - the
-  // arc goes THROUGH a corner pixel (SW or NW) rather than skipping it.
-  assert.ok(at(B.x - 1, B.y + 1) || at(B.x - 1, B.y - 1), 'the bypass passes through a corner pixel, not across it');
-  // the village: a road passes it but never THROUGH it as an intermediate -
-  // its pixel carries at most the bits of its own track (or none).
+  const idxs = ORDER8.filter((b) => bitsB & b).map((b) => ORDER8.indexOf(b));
+  assert.ok(idxs.length >= 2, `B is passed through, not a spur (${idxs.length} bits)`);
+  assert.ok(wide(idxs), 'every pair of B\'s bits is at least 135 degrees apart - through, or a gentle bend, never a corner');
   const bitsV = at(V.x, V.y);
-  const throughV = (bitsV & DIR.E) && (bitsV & DIR.W);
-  assert.ok(!throughV, 'the B-C road did not cut across the village pixel');
+  assert.ok(!((bitsV & DIR.E) && (bitsV & DIR.W)), 'the B-C road did not cut across the village pixel');
   assert.ok(at(V.x, V.y - 1) || at(V.x, V.y + 1), 'it went around instead');
+  assert.ok(at(V.x - 1, V.y + 1) || at(V.x - 1, V.y - 1) || at(V.x + 1, V.y + 1) || at(V.x + 1, V.y - 1), 'through a corner pixel, no corner cut');
 });
 
-// ROADS 7 (2026-09-01, Mac: "always on"): THE MAP DRAWS THE NETWORK. The
-// enhanced travel map is the overworld relief, one vertex per map pixel,
-// so a road is a tinted vertex and the triangles between neighbours
-// draw it as a thread. The arrays live in the worker after Audit 45 F2,
-// so they come back ONCE for the map and the window rebuilds its grid
-// the first time it opens with them.
-test('ROADS 7: a road vertex on the relief is tinted, a track fainter, water never', async () => {
-  const { buildOverworldGrid, OVERWORLD_ROAD, OVERWORLD_TRACK, overworldTint } = await import('../src/ui/overworldModel.js');
-  const W = 8, H = 4;
-  const bytes = new Uint8Array(W * H).fill(40);
-  bytes[1 * W + 6] = 0;   // a water pixel
-  const path = new Uint8Array(W * H);
-  path[1 * W + 2] = 2; path[1 * W + 3] = 1; path[1 * W + 6] = 2;   // road, track, and a road bit on water
-  const grid = buildOverworldGrid({ heightBytes: bytes, width: W, height: H, climateAt: () => 227, pathAt: (x, y) => path[y * W + x] });
-  const rgb = (x, y) => [0, 1, 2].map((c) => grid.colors[(y * W + x) * 3 + c]);
-  const plain = rgb(1, 1), road = rgb(2, 1), track = rgb(3, 1), water = rgb(6, 1);
-  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-  assert.ok(dist(road, OVERWORLD_ROAD) < dist(plain, OVERWORLD_ROAD), 'the road vertex leans hard toward the road colour');
-  assert.ok(dist(track, OVERWORLD_TRACK) < dist(plain, OVERWORLD_TRACK), 'the track vertex leans toward the track colour');
-  assert.ok(dist(road, OVERWORLD_ROAD) < dist(track, OVERWORLD_ROAD), 'and the track is the fainter of the two');
-  assert.deepEqual(water, overworldTint(227, 0).map((v) => Math.min(255, v | 0)), 'a road bit on water tints nothing - the map shows the terrain');
-
+// ROADS 25 replaced ROADS 7's vertex tint with the first iteration's
+// design: the network is LINES over the relief. The relief itself no
+// longer knows about roads; the map traces the arrays into chains once
+// per network and hands the renderer one set per chain.
+test('ROADS 25: the network is traced into chains, simplified, rounded and lifted - not tinted', async () => {
+  const { traceChains, simplifyChain, chaikin, roadModel, RELIEF_LIFT, buildOverworldGrid } = await import('../src/ui/overworldModel.js');
+  // a straight road of five pixels with a spur: two chains, split at the junction
+  const m = new Uint8Array(MAP_W * MAP_H);
+  stamp(m, [{ x: 10, y: 10 }, { x: 11, y: 10 }, { x: 12, y: 10 }, { x: 13, y: 10 }, { x: 14, y: 10 }]);
+  stamp(m, [{ x: 12, y: 10 }, { x: 12, y: 11 }, { x: 12, y: 12 }]);
+  const chains = traceChains(m, MAP_W, MAP_H);
+  assert.equal(chains.length, 3, 'three runs meet at the junction');
+  assert.ok(chains.every((c) => c.length >= 2));
+  // a staircase simplifies to its two ends; a real corner keeps its point
+  const stairs = []; for (let i = 0; i < 24; i++) stairs.push({ x: i, y: Math.floor(i / 3) });
+  assert.equal(simplifyChain(stairs).length, 2, 'the grid stairs are an artifact and go');
+  const corner = [{ x: 0, y: 0 }, { x: 5, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 5 }, { x: 10, y: 10 }];
+  assert.equal(simplifyChain(corner).length, 3, 'a genuine corner stays');
+  assert.ok(chaikin(corner).length > corner.length, 'and is rounded');
+  // the model lifts each class in order: stream < river < track < trunk < route
+  assert.ok(RELIEF_LIFT.stream < RELIEF_LIFT.river && RELIEF_LIFT.river < RELIEF_LIFT.track && RELIEF_LIFT.track < RELIEF_LIFT.trunk && RELIEF_LIFT.trunk < RELIEF_LIFT.route);
+  const ctx = { heightBytes: new Uint8Array(MAP_W * MAP_H).fill(40), width: MAP_W, height: MAP_H };
+  const model = roadModel({ trunk: chains }, ctx);
+  assert.equal(model.trunk.length, 3); assert.equal(model.track.length, 0);
+  assert.ok(model.trunk[0] instanceof Float32Array && model.trunk[0].length % 3 === 0);
+  // the relief no longer tints roads
+  const grid = buildOverworldGrid({ heightBytes: ctx.heightBytes, width: 8, height: 4, climateAt: () => 227 });
+  assert.ok(grid.colors.length === 8 * 4 * 3, 'a plain relief');
   const fs = await import('node:fs');
-  const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
-  assert.match(worker, /net: back/, 'the worker posts the arrays back for the map');
-  const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
-  assert.match(client, /roads\(\) \{ return this\._roads; \}/, 'and the client exposes them');
   const map = fs.readFileSync('src/ui/overworldMap.js', 'utf8');
-  assert.match(map, /grid\.roadsRef !== net/, 'a grid drawn before the network landed is rebuilt with it');
-  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
-  assert.match(host, /roads: \(\) => terrainGen\.roads\(\)/, 'the host hands the accessor through the door');
+  assert.match(map, /this\._ov\.setRoads\(roadModel\(chains, ctx\)\)/, 'the map hands the renderer the chains');
+  assert.match(map, /roadLayers: this\._roadLayers/, 'and the chips choose the layers at draw time');
+  const r = fs.readFileSync('src/render/overworldRenderer.js', 'utf8');
+  assert.match(r, /for \(const \[kind, fallback\] of \[\s*\['stream'/, 'water under the tracks, tracks under the trunk');
 });
 
 // ROADS 8 (Audit 45 F7, finished): A STRANDED TOWN IS NAMED. The other
@@ -469,7 +473,7 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   assert.deepEqual(plain, copy);
   // the switch rides the network object, default on
   const src = (await import('node:fs')).readFileSync('src/world/terrainGen.js', 'utf8');
-  assert.match(src, /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap\);/, 'default on, off only when the network says so');
+  assert.match(src, /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap, 129, hasLocation \? locationRect : null\);/, 'default on, off only when the network says so, and the rect skipped as the mod skips it');
 });
 
 // ROADS 11 (Audit 45 F5, corrected, and F8): the sweep holds one region
@@ -510,16 +514,14 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   resetTravelMapState();
   const src = (await import('node:fs')).readFileSync('src/ui/overworldMap.js', 'utf8');
   assert.match(src, /'dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks'/, 'six chips');
-  assert.match(src, /if \(key === 'roads' \|\| key === 'tracks'\) this\._ensureTerrain\(\);/, 'a road chip re-runs the terrain step');
-  assert.match(src, /grid\.roadsKey !== roadsKey/, 'the grid is keyed on the flags');
-  assert.match(src, /const i = y \* MAP_WIDTH \+ x;/, 'AUDIT 46 A1: the mask is indexed at the WORLD\'s stride, not the window\'s');
-  assert.match(src, /\(showRoads && net\.roads\[i\]\)/, 'and a hidden layer is not drawn');
+  assert.match(src, /if \(key === 'roads' \|\| key === 'tracks' \|\| key === 'rivers' \|\| key === 'streams'\) this\._ensureTerrain\(\);/, 'a road or water chip re-runs the terrain step');
   // AUDIT 47 A1: the two flags must be READ from the store. The line
   // above proves a hidden layer is not drawn IF showRoads is false; it
   // said nothing about where showRoads comes from, and a mutant that
   // set both to `true` passed every pin with the chips toggling nothing.
-  assert.match(src, /const showRoads = !this\.filters\.roads, showTracks = !this\.filters\.tracks;/,
-    'showRoads and showTracks are the classic inversion of the live store, not constants');
+  // ROADS 25: the flags pick LAYERS at draw time; the relief is not keyed on them.
+  assert.match(src, /const showRoads = !this\.filters\.roads, showTracks = !this\.filters\.tracks;/, 'the classic inversion of the live store');
+  assert.match(src, /this\._roadLayers = \{ trunk: showRoads, track: showTracks/, 'and they choose the layers');
 });
 
 // AUDIT 46 A10: NO CHUNK IS EVER BUILT WITHOUT THE NETWORK. The worker
@@ -584,4 +586,228 @@ test('ROADS 15: track reach is the answer key\'s, and a far village gets no trac
   assert.ok(tracks[208 * MAP_W + 230] !== 0, 'the near village gets a spur');
   assert.equal(tracks[240 * MAP_W + 230], 0, 'the far one does not');
   assert.equal(stats.trackEdges, 1);
+});
+
+// ROADS 17/18: THE JOIN RULE. On the real map every hairpin and 244 of
+// 266 right angles were town pixels where two of our roads arrived
+// from different sides. A road may enter (or leave) a town only at
+// least 135 degrees from every road already there - straight through
+// and a wide T pass, a hairpin or a right angle into town does not, and
+// the turned-away road joins the existing one outside instead. Real
+// map: hairpins 2.9% -> 0.0% (his 0.0), right angles 8.2% -> 1.0%
+// (his 1.7). A 90-degree rule was tried and rejected: 9.9% right angles.
+test('ROADS 17: a road may not enter a town at a right angle to the road already there', () => {
+  const A = { x: 200, y: 200, type: LT.TownCity }, B = { x: 240, y: 200, type: LT.TownCity }, C = { x: 280, y: 200, type: LT.TownCity };
+  const Dn = { x: 240, y: 170, type: LT.TownCity };   // due north of B: a right angle into B if it entered
+  const { roads, stats } = buildRoadNetwork({ locations: [A, B, C, Dn], heightAt: flat, isWater: () => false, dials: { neighbours: 3, roadReach: 100 } });
+  const at = (x, y) => roads[y * MAP_W + x];
+  const bitsB = at(B.x, B.y);
+  const idxs = ORDER8.filter((b) => bitsB & b).map((b) => ORDER8.indexOf(b));
+  assert.ok(idxs.length >= 2, 'B is passed through');
+  assert.ok(wide(idxs), 'no two roads meet at B closer than 135 degrees - D\'s road joined outside rather than entering at a right angle');
+  assert.ok(at(Dn.x, Dn.y) !== 0 && stats.unrouted === 0, 'D is on the network all the same');
+  // The rule gives way rather than stranding a town that can be neither
+  // entered nor joined.
+  const lone = buildRoadNetwork({ locations: [A, { x: 200, y: 260, type: LT.TownCity }], heightAt: flat, isWater: () => false });
+  assert.equal(lone.stats.unrouted, 0);
+});
+
+// AUDIT 49: the island skip and the merge, each pinned as what it is.
+test('AUDIT 49 A1: a pair on different landmasses is named unrouted without a search', async () => {
+  const { landComponents } = await import('../src/world/roadNetwork.js');
+  const strait = (x) => x === 300;   // a one-pixel channel splits the map
+  const comp = landComponents(strait);
+  assert.ok(comp[100 * MAP_W + 200] !== comp[100 * MAP_W + 400], 'two components');
+  assert.equal(comp[100 * MAP_W + 300], 0, 'water is 0');
+  const locations = [{ x: 200, y: 100, type: LT.TownCity, name: 'West' }, { x: 400, y: 100, type: LT.TownCity, name: 'East' }];
+  const t0 = Date.now();
+  const { stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: strait, dials: { roadReach: 300 } });
+  assert.equal(stats.unrouted, 1);
+  assert.deepEqual(stats.unroutedPairs[0].map((l) => l.name), ['West', 'East'], 'named');
+  assert.equal(stats.islands, 1, 'skipped as an island - counted, not clocked, because a fast failure looks like a skip to a clock');
+  assert.ok(Date.now() - t0 < 1500);
+});
+
+test('AUDIT 49 A2: the through-road merge is pinned at the source - no fixture can see it', async () => {
+  // RECORDED: on every flat fixture tried, the wide-join rule steers an
+  // approach on its own and a route that rides the existing road into
+  // town leaves the same pixels whether it stops 3 px early or not. On
+  // the REAL map the merge is measurable and small: junctions 7.0% ->
+  // 6.5%, 118 duplicate spur pixels removed. The hairpin and right-angle
+  // win was the wide join's. The law stays, at the source.
+  const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
+  assert.match(src, /if \(mergeNear && cell !== sc && existing\[cy \* MAP_WIDTH \+ cx\] !== 0/, 'a road joins the road it meets within mergeNear of its town');
+});
+
+// ROADS 19: THE NETWORK IS BUILT ONCE PER MAP. The cache's law, pinned
+// against an in-memory store since node has no IndexedDB: the same
+// inputs hit, any change to what shapes the network misses, and a store
+// that cannot open is a miss rather than an error.
+test('ROADS 19: the cache key covers everything that shapes the network, and a miss builds once', async () => {
+  const { roadsCacheKey, cachedNetwork, GENERATOR_VERSION, idbStore } = await import('../src/world/roadsCache.js');
+  const S = [{ x: 200, y: 100, type: LT.TownCity }, { x: 260, y: 120, type: LT.TownHamlet }];
+  const k = roadsCacheKey({ settlements: S, woodsLength: 500 });
+  assert.equal(k, roadsCacheKey({ settlements: S, woodsLength: 500 }), 'same inputs, same key');
+  assert.notEqual(k, roadsCacheKey({ settlements: S, woodsLength: 501 }), 'a different heightmap');
+  assert.notEqual(k, roadsCacheKey({ settlements: [...S, { x: 1, y: 1, type: LT.Tavern }], woodsLength: 500 }), 'a different map');
+  assert.notEqual(k, roadsCacheKey({ settlements: [{ ...S[0], x: 201 }, S[1]], woodsLength: 500 }), 'a town one pixel over');
+  assert.notEqual(k, roadsCacheKey({ settlements: S, woodsLength: 500, dials: { turnCost: 0.5 } }), 'a turned dial');
+  assert.match(k, new RegExp(`^roads:v${GENERATOR_VERSION}:`), 'the generator version leads the key');
+  // build-through: one build, then hits
+  const mem = new Map(); const store = { async get(x) { return mem.get(x) ?? null; }, async set(x, v) { mem.set(x, v); } };
+  let builds = 0;
+  const build = () => { builds++; return buildRoadNetwork({ locations: S, heightAt: flat, isWater: () => false }); };
+  const a = await cachedNetwork({ key: k, build, store });
+  const b = await cachedNetwork({ key: k, build, store });
+  assert.equal(builds, 1, 'built once');
+  assert.equal(a.cached, false); assert.equal(b.cached, true);
+  assert.deepEqual(Array.from(b.roads), Array.from(a.roads), 'the hit is the build');
+  // no store at all: always builds, never throws
+  const c = await cachedNetwork({ key: k, build, store: null });
+  assert.equal(builds, 2); assert.equal(c.cached, false);
+  assert.equal(idbStore(undefined), null, 'no IndexedDB is a null store, not an error');
+});
+
+test('ROADS 19: a job that arrives during the cache lookup waits for it - no chunk is ever roadless', async () => {
+  const src = (await import('node:fs')).readFileSync('src/world/terrainGenWorker.js', 'utf8');
+  assert.match(src, /if \(m\.t === 'job' && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/,
+    'a job behind the lookup queues on it, exactly as it queued behind the synchronous build');
+  assert.match(src, /roadsCacheKey\(\{ settlements: m\.settlements, woodsLength: woods\._bytes\?\.byteLength \?\? 0 \}\)/, 'the worker keys on the list and the heightmap');
+});
+
+// ROADS 20: THE TABLES ARE THE MOD'S. A track's diagonal inner is 51/52
+// (not the cardinal's 11/26), and a track's inside 90-degree corner
+// takes 10/25 at the inner elbow where a road takes nothing.
+test('ROADS 20: a track\u2019s diagonal is 51/52, its inside corner 10/25, and a road has no corner tile', () => {
+  const grass = () => new Uint8Array(129 * 129).fill(TILE.grass);
+  const t = new Uint8Array(128 * 128);
+  paintRoads(grass(), t, 0, DIR.NE);
+  assert.equal(t[100 * 128 + 100] & 0x3f, 51, 'the diagonal inner is 51 on grass');
+  assert.equal(t[100 * 128 + 101] & 0x3f, 12, 'its flank is 12');
+  const c = new Uint8Array(128 * 128);
+  paintRoads(grass(), c, 0, DIR.N | DIR.W);
+  assert.equal(c[64 * 128 + 63] & 0x3f, 10, 'N+W: the inner elbow (63,64) is the corner tile');
+  assert.equal(c[64 * 128 + 63] & (TILE.ROTATE | TILE.FLIP), 0, 'unturned, unmirrored');
+  const e = new Uint8Array(128 * 128);
+  paintRoads(grass(), e, 0, DIR.N | DIR.E);
+  assert.ok(e[64 * 128 + 64] & TILE.ROTATE && e[64 * 128 + 64] & TILE.FLIP, 'N+E: turned and mirrored at (64,64)');
+  const r = new Uint8Array(128 * 128);
+  paintRoads(grass(), r, DIR.N | DIR.W, 0);
+  assert.equal(r[64 * 128 + 63] & 0x3f, TILE.road, 'a road\u2019s elbow stays road - no corner tile');
+  // a stone track corner is 25
+  const st = new Uint8Array(129 * 129).fill(TILE.stone), s2 = new Uint8Array(128 * 128);
+  paintRoads(st, s2, 0, DIR.S | DIR.E);
+  assert.equal(s2[63 * 128 + 64] & 0x3f, 25);
+});
+
+// ROADS 21: THE TRACKS ARE A WEB. His villages sit ON tracks (84%) and
+// his tracks pass through the places they serve, chaining village to
+// village to road - 14 px per dead-end, not 3.6 px stubs. Three rules:
+// a track may cross a track-grade pixel where a road may not; each
+// track node links to its nearest neighbours, shortest-first, and a
+// link commits to B's side of the web; and a village is entered wide.
+test('ROADS 21: a row of villages chains into one track, and most of them are passed through', async () => {
+  const { measure } = await import('../tools/roadsCalibrate.mjs');
+  const locations = [{ x: 200, y: 200, type: LT.TownCity }, { x: 300, y: 200, type: LT.TownHamlet }];
+  for (let i = 0; i < 6; i++) locations.push({ x: 210 + i * 14, y: 230, type: LT.TownVillage });   // a row, 14 px apart
+  const { tracks, stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
+  assert.ok(stats.trackLinks >= 5, `the villages linked to each other (${stats.trackLinks} links)`);
+  const m = measure(tracks);
+  assert.ok(m.deadEndRate < 0.2, `a web, not stubs: dead-ends ${(m.deadEndRate * 100).toFixed(0)}% of track pixels`);
+  assert.equal(m.hairpinShare, 0, 'no village is left with two links from adjacent directions');
+  // the middle villages are passed THROUGH: two bits, not one
+  let through = 0;
+  for (let i = 1; i < 5; i++) { const v = tracks[230 * MAP_W + 210 + i * 14]; if (v && (v & (v - 1))) through++; }
+  assert.ok(through >= 3, `the inner villages sit on the track rather than at the end of one (${through} of 4)`);
+});
+
+test('ROADS 21: the web\u2019s two real-map rules, pinned at the source with their readings', async () => {
+  // RECORDED: on a straight row of villages every join is collinear and
+  // no link needs to cross a village, so neither rule can be seen on a
+  // fixture. On the real map, entering villages WIDE took the web's
+  // hairpins from 5.3% to 0.0% and its right angles from 12.9% to 1.9%
+  // (his 0.0% and 2.4%); letting tracks CROSS track-grade pixels is what
+  // lets a chain pass through a village at all (his: 84% of villages on
+  // a track).
+  const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
+  assert.match(src, /for \(const t of trackNodes\) trackBlocked\[t\.y \* MAP_WIDTH \+ t\.x\] = 0;/, 'a track may cross a track-grade pixel');
+  assert.match(src, /for \(const t of trackNodes\) trackTowns\[t\.y \* MAP_WIDTH \+ t\.x\] = 1;/, 'and a village is one of the web\u2019s towns');
+  assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side');
+});
+
+// ROADS 22: HIS NETWORK, 1:1. The four arrays load byte-exact from the
+// vendor folder; the wrong length is no file; a failed fetch is a null
+// and the generator takes over. The worker takes the arrays ready-made.
+test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls back on failure', async () => {
+  const { loadModRoads, MOD_ROADS } = await import('../src/world/roadsProducer.js');
+  const fs = await import('node:fs');
+  const real = (k) => new Uint8Array(fs.readFileSync(`vendor/roads-hazelnut/${k}Data.bytes`));
+  const FILE = { roads: 'road', tracks: 'track', rivers: 'river', streams: 'stream' };
+  const fetchOk = async (url) => {
+    const key = Object.keys(MOD_ROADS).find((k) => MOD_ROADS[k] === url);
+    return { ok: true, arrayBuffer: async () => real(FILE[key]).buffer };
+  };
+  const net = await loadModRoads(fetchOk);
+  assert.ok(net, 'loaded');
+  assert.equal(net.roads.length, MAP_W * MAP_H); assert.equal(net.tracks.length, MAP_W * MAP_H);
+  let n = 0; for (const v of net.roads) if (v) n++;
+  assert.equal(n, 21554, 'his 21,554 road pixels, byte-exact');
+  assert.equal(net.stats.source, 'basic-roads');
+  const fetchShort = async () => ({ ok: true, arrayBuffer: async () => new Uint8Array(10).buffer });
+  assert.equal(await loadModRoads(fetchShort), null, 'the wrong length is no file');
+  const fetch404 = async () => ({ ok: false });
+  assert.equal(await loadModRoads(fetch404), null, 'a failed fetch is a null');
+  assert.equal(await loadModRoads(undefined), null, 'no fetch at all is a null');
+  const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
+  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water \};/, 'the worker takes his arrays ready-made, water included');
+  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'his first, with the switches');
+  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'ours as the fallback, with the switches');
+});
+
+// ROADS 23: THE PAINTER IS A PORT - PaintPath table-driven, his slots,
+// his conditions, his order. Three things the old readings never had.
+test('ROADS 23: a neighbour\u2019s diagonal paints this pixel\u2019s corner tile', async () => {
+  const { pathCorners } = await import('../src/world/roadPainter.js');
+  // pixel P at (10,10); its EAST neighbour carries a NW diagonal - the
+  // line runs from E to N past P's north-east corner (127,127).
+  const m = new Uint8Array(MAP_W * MAP_H);
+  m[10 * MAP_W + 11] = DIR.NW;
+  assert.equal(pathCorners(m, 10, 10, MAP_W), DIR.NW, 'the east neighbour\u2019s NW bit is P\u2019s NW corner byte');
+  const tileData = new Uint8Array(129 * 129).fill(TILE.grass), t = new Uint8Array(128 * 128);
+  const n = paintRoads(tileData, t, 0, 0, null, 129, { corners: { road: DIR.NW } });
+  assert.equal(n, 1, 'exactly one tile - the corner');
+  assert.equal(t[127 * 128 + 127] & 0x3f, TILE.roadGrass, 'P\u2019s (127,127) is the diagonal outer tile');
+  assert.ok(t[127 * 128 + 127] & TILE.ROTATE, 'turned, as the mod turns it');
+  // the WEST neighbour's SE brushes (0,0), turned and mirrored
+  const u = new Uint8Array(128 * 128);
+  paintRoads(tileData, u, 0, 0, null, 129, { corners: { road: DIR.SE } });
+  assert.equal(u[0] & 0x3f, TILE.roadGrass); assert.ok((u[0] & TILE.ROTATE) && (u[0] & TILE.FLIP));
+});
+
+test('ROADS 23: rivers paint water with a bank and streams narrow, only when water is on', () => {
+  const grass = () => new Uint8Array(129 * 129).fill(TILE.grass);
+  const off = new Uint8Array(128 * 128);
+  assert.equal(paintRoads(grass(), off, 0, 0, null, 129, { river: DIR.N | DIR.S, stream: DIR.E | DIR.W, water: false }), 0, 'off by default, as the mod ships it');
+  // ...and off INSIDE the loop too: a road makes the loop run, and the
+  // river beside it still paints nothing.
+  const withRoad = new Uint8Array(128 * 128);
+  paintRoads(grass(), withRoad, DIR.N | DIR.S, 0, null, 129, { river: DIR.E | DIR.W, water: false });
+  assert.equal(withRoad[63 * 128 + 10], 0, 'the E-W river is not painted while water is off');
+  assert.equal(withRoad[10 * 128 + 63] & 0x3f, TILE.road, 'the road is');
+  const r = new Uint8Array(128 * 128);
+  paintRoads(grass(), r, 0, 0, null, 129, { river: DIR.N | DIR.S, water: true });
+  assert.equal(r[10 * 128 + 63], 0xff, 'the river\u2019s centre is water, stored as 0xff so the pipeline reads it as set');
+  assert.equal(r[10 * 128 + 64], 128, 'the east column is FLIPPED water: the bits go on before the zero check, as the mod does it');
+  assert.equal(r[10 * 128 + 62] & 0x3f, 21, 'a river HAS a cardinal outer - its bank, 21 on grass');
+  assert.equal(r[10 * 128 + 65] & 0x3f, 21);
+  assert.equal(r[10 * 128 + 61], 0, 'and stops there');
+  const st = new Uint8Array(128 * 128);
+  paintRoads(grass(), st, 0, 0, null, 129, { stream: DIR.E | DIR.W, water: true });
+  assert.equal(st[63 * 128 + 10] & 0x3f, 21, 'a stream\u2019s centre is the bank tile - a narrow watercourse');
+  assert.equal(st[62 * 128 + 10], 0, 'with no outer');
+  // a road beats water on the same tile: the mod's paint order
+  const both = new Uint8Array(128 * 128);
+  paintRoads(grass(), both, DIR.N | DIR.S, 0, null, 129, { river: DIR.N | DIR.S, water: true });
+  assert.equal(both[10 * 128 + 63] & 0x3f, TILE.road, 'roads first');
 });

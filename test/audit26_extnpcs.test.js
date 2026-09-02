@@ -248,7 +248,7 @@ test('E3: the wiring - world.js runs the pass at layout and stands only the ACTI
     'world.js never asks the quest machine about its street NPCs');
   assert.ok(w.includes('await standPixelNpcs(entry);'), 'the pass is never reached from the pixel build');
   const from = w.indexOf('async function standPixelNpcs(');
-  const to = w.indexOf('function buildFieldFor(');
+  const to = w.indexOf('function restrideTerrain(');   // the next function after the pass (buildFieldFor left with the EE ground revert)
   assert.ok(from > 0 && to > from, 'standPixelNpcs changed shape');
   const stand = w.slice(from, to);
   assert.ok(/if \(!pn\.active\) continue;/.test(stand),

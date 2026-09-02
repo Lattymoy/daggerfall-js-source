@@ -349,7 +349,7 @@ modelIdNum, the streamed pixels' models likewise), so one archetype's
 placements draw back to back and the shadow makes the repeats free.
 The shadows reset at beginFrame and at markForeignPass - the R9 law's
 other half: an entry point may only trust a binding it can account
-for, and four passes change programs behind the renderer's back.
+for, and five passes change programs behind the renderer's back (GR1: the lab's grass is the fifth).
 Those four (both skies, precipitation, and - since F55 - the OVERWORLD
 MAP's own pass) now all follow the same law: the getParameter
 (CURRENT_PROGRAM) save/restore is RETIRED (two synchronous driver

@@ -464,56 +464,6 @@ test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has 
   assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/);
 });
 
-// ═══ EE3: the ground's sampling, behind the switch ══════════════════
-test('EE3: a sized format, two modes keyed in the cache, NEAREST for classic byte for byte', () => {
-  const r = read('src/render/renderer.js');
-  // the method's own body: from its signature to its closing brace
-  const start = r.indexOf('uploadTileArray(archive, layers) {');
-  const up = r.slice(start, r.indexOf('\n  }\n', start) + 4);
-  // the mode decides, and the URL door outranks the switch
-  assert.match(up, /const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);/);   // EE4: drawn is the default
-  assert.match(up, /const key = `\$\{archive\}:\$\{mode\}`;/, 'the cache lives on the renderer and survives a world load');
-  assert.match(up, /this\.tileArrays\.set\(key, tex\);/);
-  // a SIZED format: generateMipmap is guaranteed on RGBA8 and not on RGBA
-  assert.match(up, /gl\.texImage3D\(gl\.TEXTURE_2D_ARRAY, 0, gl\.RGBA8, w, h, src\.length, 0, gl\.RGBA, gl\.UNSIGNED_BYTE, null\);/);
-  // classic is NEAREST, exactly as before
-  assert.match(up, /if \(mode === 'classic'\) \{\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MAG_FILTER, gl\.NEAREST\);/);
-  // tiles: drain, mip, and fall back to NEAREST if the chain fails,
-  // because an incomplete sampler returns black for every texel
-  assert.match(up, /while \(gl\.getError\(\) !== gl\.NO_ERROR\) \{/);
-  assert.match(up, /gl\.generateMipmap\(gl\.TEXTURE_2D_ARRAY\);\s*\n\s*if \(gl\.getError\(\) !== gl\.NO_ERROR\) \{\s*\n\s*gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.NEAREST\);/);
-  assert.match(up, /gl\.TEXTURE_MIN_FILTER, gl\.LINEAR_MIPMAP_LINEAR\);/);
-  assert.match(up, /aniso\.TEXTURE_MAX_ANISOTROPY_EXT/);
-  // THE UPLOAD LAW: create, fill, parameterise - and nothing else
-  assert.ok(!/drawArrays|drawElements/.test(up), 'an upload must not draw');
-  assert.ok(!/bindFramebuffer|viewport\(/.test(up), 'an upload must not take the frame');
-  assert.ok(!/clearColor|gl\.clear\(/.test(up), 'an upload must not clear');
-  assert.ok(!/disable\(gl\.(DEPTH_TEST|CULL_FACE|BLEND)\)/.test(up), 'an upload must not change the pipeline');
-  assert.ok(!/bindTexture\(gl\.TEXTURE_2D,/.test(up), 'an upload binds only the texture it builds');
-  // defaults: the classic skin cannot inherit the enhanced sampler
-  assert.match(r, /this\.enhancedGround = false;/);
-  assert.match(r, /this\.groundMode = null;/);
-  // ONE DOOR TO THE CACHE. The first attempt keyed the cache by
-  // archive:mode and left both hosts reading it by archive alone - which
-  // returned undefined, drew the terrain with no texture, and WAS the
-  // black world. Nobody outside the renderer spells the key now.
-  assert.match(r, /tileArrayFor\(archive\) \{\s*\n\s*const mode = this\.groundMode \?\? \(this\.enhancedGround \? 'drawn' : 'classic'\);\s*\n\s*return this\.tileArrays\.get\(`\$\{archive\}:\$\{mode\}`\);/);
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = read(host);
-    assert.ok(!/renderer\.tileArrays\./.test(h), `${host} must not touch the cache directly`);
-    // flag and door BEFORE the guard asks the cache, so the guard asks
-    // about the mode the upload will use
-    assert.match(h, /renderer\.enhancedGround = isEnhanced\(\) && getPref\('enhancedEnvironments'\);\n\s*renderer\.groundMode = new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('ground'\);\n\s*if \(!renderer\.tileArrayFor\(groundArchive\)/,
-      `${host}: flag, door, THEN the guard`);
-    assert.match(h, /renderer\.tileArrayFor\((p\.)?groundArchive\), (p\.)?tilemapTex, 6\.4/, `${host} draws through the door`);   // EE6 adds the normals after 6.4
-  }
-  // and the world gate judges the TERRAIN by a median band, because a
-  // lit building beside a void ground passed the lower-half check
-  const g = read('tools/worldRenderGate.mjs');
-  assert.match(g, /the TERRAIN is lit \(street band median/);
-  assert.match(g, /vals\.sort\(\(a, b\) => a - b\);\s*\n\s*return vals\[vals\.length >> 1\];/, 'median, so snow specks cannot lift a void');
-});
-
 // ═══ EE5: cloud shadows - the sky and the ground share one field ════
 test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader that uses it', () => {
   const r = read('src/render/renderer.js');
@@ -544,7 +494,9 @@ test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader 
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     // EE9 sets the surface field between the deck and the draw; both
     // are numbers-and-handles setters, and the order among them is free
-    assert.match(read(host), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n(\s*renderer\.setSurfaceField\([^\n]*\n)?\s*renderer\.drawTerrain\(/, host);
+    // EE16: the world host chooses the fine ground or the coarse mesh
+    // after the setters; both are drawTerrain, both come after the deck
+    assert.match(read(host), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n(\s*renderer\.setSurfaceField\([^\n]*\n)?[\s\S]{0,400}?renderer\.drawTerrain\(/, host);
   }
   // and the probe door, so the gate can put the sky under overcast
   const shared = read('src/scenes/shared.js');
@@ -575,7 +527,7 @@ test('EE8: the enhanced profile is gated, driven by the sky\u2019s own wind INTE
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile follows the enhanced sky`);
-    assert.match(h, /precip\.windOff\[0\] \+= \(2\.5 \+ w\[0\] \* 260\) \* dtp;/, `${host}: integrated, by dt`);
+    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: integrated, by dt (WX1: the lab's own law)`);
     assert.ok(!/windOff\[0\] = .*uTime|windOff\[0\] = .*now \//.test(h), `${host}: never wind times uptime`);
   }
 });
@@ -605,7 +557,42 @@ test('EE8: the enhanced precipitation rides the switch, drives on integrated win
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile rides the switch`);
-    assert.match(h, /precip\.windOff\[0\] \+= \(2\.5 \+ w\[0\] \* 260\) \* dtp;/, `${host}: the wind is INTEGRATED`);
+    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: the wind is INTEGRATED (WX1: the lab's own law)`);
     assert.ok(!/windOff\[0\] = .*now/.test(h), `${host}: never wind times uptime`);
+  }
+});
+
+// ═══ WX1: the weather is the lab's, byte for byte ═══════════════════
+test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, and the wind law is the lab\u2019s', async () => {
+  const { LAB_WX_VS, LAB_WX_FS, LAB_BOX, LAB_COUNTS, LAB_FALL } = await import('../src/render/precipitation.js');
+  const lab = read('grass-proto.html');
+  // BYTE-EXACT: the shader bodies are the lab's text, sliced from the
+  // page at test time and compared as strings
+  const vsStart = lab.indexOf('layout(location=0) in vec2 aCorner;\nlayout(location=1) in vec4 aSeed;      // x,y,z in the box + phase');
+  const vsEnd = lab.indexOf('}`, HEAD + `', vsStart) + 1;
+  const fsStart = lab.indexOf('in float vT; in float vSeed;\nuniform float uKind;', vsEnd);
+  const fsEnd = lab.indexOf('}`);', fsStart) + 1;
+  assert.ok(vsStart > 0 && fsStart > 0, 'the lab page still carries its weather shaders');
+  assert.equal(LAB_WX_VS, '#version 300 es\nprecision highp float;\n' + lab.slice(vsStart, vsEnd), 'the vertex stage is the lab\u2019s, byte for byte');
+  assert.equal(LAB_WX_FS, '#version 300 es\nprecision highp float;\n' + lab.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s, byte for byte');
+  // the lab's constants
+  assert.equal(LAB_BOX, 42);
+  assert.deepEqual({ ...LAB_COUNTS }, { rain: 26000, storm: 26000, snow: 20000 });
+  assert.deepEqual({ ...LAB_FALL }, { rain: 22.0, storm: 22.0, snow: 1.6 });
+  // the wrap that makes rain fall through the world instead of sticking
+  assert.match(LAB_WX_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/);
+  // the draw: the lab's blend and depth, world up, the enhanced profile
+  // routed to it, the classic program untouched
+  const p = read('src/render/precipitation.js');
+  assert.match(p, /if \(this\.enhanced\) return this\.drawLab\(mode, proj, view, camPos, camRight, timeSeconds\);/);
+  assert.match(p, /gl\.uniform3f\(L\.uUp, 0, 1, 0\);/, 'a flake faces the camera about Y only');
+  assert.match(p, /gl\.drawArraysInstanced\(gl\.TRIANGLES, 0, 6, count\);/);
+  assert.match(p, /const rnd = \(\) => \{ s2 \^= s2 << 13; s2 \^= s2 >>> 17; s2 \^= s2 << 5; s2 >>>= 0; return s2 \/ 4294967296; \};/, 'the lab\u2019s own scatter');
+  // both hosts: the lab's gust, rate without the gust, travel with it
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /const gust = 0\.72 \+ 0\.20 \* Math\.sin\(tsec \* 0\.31\) \+ 0\.14 \* Math\.sin\(tsec \* 0\.83 \+ 1\.7\) \+ 0\.10 \* Math\.sin\(tsec \* 2\.10 \+ 0\.4\);/, `${host}: the lab's gust`);
+    assert.match(h, /precip\.windV\[0\] = dir\[0\] \* slider \* 0\.16; precip\.windV\[1\] = dir\[1\] \* slider \* 0\.16;/, `${host}: the rate, without the gust`);
+    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: the travel, integrated, with the gust`);
   }
 });

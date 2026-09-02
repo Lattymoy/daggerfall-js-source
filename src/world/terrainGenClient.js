@@ -97,7 +97,7 @@ export class TerrainGenClient {
    *  COPY (the RA1 law: the arrays this thread keeps are the fallback's)
    *  and this thread keeps its own for the same-thread path. null
    *  clears both. */
-  setRoads(settlements, onStats = null) {
+  setRoads(settlements, onStats = null, switches = null) {   // ROADS 24: the mod's switches ride the fallback too
     // AUDIT ROADS F2: the worker BUILDS from the list with its own woods;
     // this thread builds only if it has to - lazily, on the fallback
     // path, from the list it kept. A build is never paid twice and never
@@ -105,17 +105,31 @@ export class TerrainGenClient {
     this._settlements = settlements ?? null;
     this._roads = null;
     this._roadsStats = onStats;
-    if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements });
+    this._switches = switches;
+    if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements, switches });
     else if (!this._worker) this._roadsFallback();
   }
 
   /** ROADS 7: the network for whoever draws it - null until built. */
   roads() { return this._roads; }
 
+  /** ROADS 22: a ready-made network (his) - kept here for the map and
+   *  the fallback, a copy posted to the worker. No build anywhere. */
+  setRoadsData(net, onStats = null) {
+    this._settlements = null;
+    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water };
+    this._roadsStats = onStats;
+    if (this._worker) {
+      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water };
+      const xfer = [copy.roads.buffer, copy.tracks.buffer]; if (copy.rivers) xfer.push(copy.rivers.buffer); if (copy.streams) xfer.push(copy.streams.buffer);
+      this._worker.postMessage({ t: 'roads', net: copy, stats: net.stats ?? null }, xfer);
+    } else if (onStats) onStats(net.stats ?? { source: 'basic-roads' });
+  }
+
   _roadsFallback() {
     if (this._roads || !this._settlements) return;
     const net = buildRoadsFromSettlements(this._settlements, this._woods);
-    this._roads = net ? { roads: net.roads, tracks: net.tracks } : null;
+    this._roads = net ? { roads: net.roads, tracks: net.tracks, ...(this._switches ?? {}) } : null;
     if (net && this._roadsStats) this._roadsStats(net.stats);
   }
 

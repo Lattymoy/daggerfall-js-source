@@ -435,7 +435,7 @@ test('EE1: one switch for the whole outdoors, migrated once from the old sky ans
   const menu = read('src/ui/enhancedMenu.js');
   assert.match(menu, /prefRow\('enhancedEnvironments', 'Enhanced environments',/);
   assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
-  assert.match(menu, /Today: a procedural sky/, 'the row must claim only what the tree has today');
+  assert.match(menu, /a procedural sky with the sun, both moons/, 'the row claims what the tree has: the sky and the weather');
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
   // nothing outside uiPrefs reads the retired key at runtime - src AND tools
