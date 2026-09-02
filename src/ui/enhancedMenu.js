@@ -858,7 +858,8 @@ function paneEnhanced(body) {
     'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
     + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
     + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
-    + 'driven by the wind, rather than across the screen. Off returns Daggerfall\u2019s SKY*.DAT '
+    + 'driven by the wind, rather than across the screen; and the prototype\u2019s grass, a million '
+    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
     + 'panorama and its own weather. Takes effect when the world next loads.'));
 
   // EE13 (Mac: a season test option that spawns you somewhere random, so

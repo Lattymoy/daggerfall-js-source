@@ -21,6 +21,9 @@ directory by `test/audit18_bible_docs.test.js`:
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
+  verbatim, its placer law, and a renderer of its own beside the world's,
+  drawn on grass records of the near ring outside winter.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing

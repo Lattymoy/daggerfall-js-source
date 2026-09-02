@@ -111,8 +111,10 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
   }
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = readFileSync(host, 'utf8');
-    assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, 2,
-      `${host} marks both foreign seams (the sky and the rain)`);
+    // GR1: the world host has a third seam, the lab's grass
+    const want = host === 'src/scenes/world.js' ? 3 : 2;
+    assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
+      `${host} marks its foreign seams (the sky, the rain${want === 3 ? ', and the grass' : ''})`);
   }
 });
 

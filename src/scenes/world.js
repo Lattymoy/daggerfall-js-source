@@ -80,6 +80,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
+import { LabGrassRenderer, placeLabGrass, grassRecordsOf, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
@@ -138,7 +139,7 @@ import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUD
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, ghostSampler } from '../world/terrainSampler.js';   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The court release's RandomStartMarker arm (StreamingWorld's
 // PositionPlayerToLocation), the law and its two location-type reads.
@@ -394,6 +395,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
+  // 420m window around the eye, kept where the tiles are grass, rebuilt when
+  // the eye leaves the window's middle. Enhanced skin and switch only.
+  const grassRecords = new Map();   // archive -> Set of grass records
+  const labGrass = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
+    ? new LabGrassRenderer(renderer.gl) : null;
+  let labGrassCentre = null;   // world xz the current scatter was placed around
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   function applyWeather(w) {
@@ -586,6 +594,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       }
       renderer.uploadTileArray(groundArchive, layers);
+      // GR1: which of this archive's records are GRASS, from its own
+      // texels - roads excluded by record, and a winter archive has no
+      // green base so it yields none
+      grassRecords.set(groundArchive, grassRecordsOf(layers));
     }
     const terrain = renderer.createTerrainSurface(positions, normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
@@ -838,6 +850,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
@@ -6343,6 +6356,48 @@ export async function bootWorld(canvas, renderer, params, status) {
       precip._lastNow = now;
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
       renderer.markForeignPass();   // EV6: so did the rain
+    }
+    // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
+    // over a 420m square around the eye, kept where they land on a GRASS
+    // tile of a near-ring pixel - never on a road record, never on water
+    // (a water record, or under the sea plane), never in winter - each
+    // rooted at the real ground under it. Rebuilt when the eye is more
+    // than 60m from the scatter's centre. Drawn with the lab's own draw:
+    // the game's sun, ambient and colour in the lab's uniforms, the same
+    // integrated wind the rain reads, and the lab's weather dim.
+    if (labGrass) {
+      const ex = cam.pos[0]; const ez = cam.pos[2];
+      if (!labGrassCentre || Math.hypot(ex - labGrassCentre[0], ez - labGrassCentre[1]) > 60) {
+        const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
+        const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+        const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
+        const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
+        const keep = (x, z) => {
+          for (const { p, t, grass } of pieces) {
+            const lx = x - t[0]; const lz = z - t[2];
+            if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+            const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
+            const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+            if (rec === 0 || !grass || !grass.has(rec)) return null;
+            const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
+            const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
+            const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
+            if (h <= sea) return null;
+            return h + t[1];
+          }
+          return null;
+        };
+        labGrass.set(placeLabGrass({ centre: [ex, ez], keep }));
+        window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, centre: labGrassCentre });   // GR1: for the gate
+        labGrassCentre = [ex, ez];
+      }
+      const w = sky?.cloudShadow?.wind ?? [0, 0];
+      const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
+      const slider = mag * 260;
+      labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
+        { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: LAB_DIM[weather] ?? 1 },
+        { dir, speed: slider, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
+      renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
