@@ -547,7 +547,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack }] = await Promise.all([
+      { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack },
+      { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -558,11 +559,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // enemyTargets imports enemyMotor. A static import here would
       // defeat that gate.
       import('../characters/enemyTargets.js'),
+      import('../ai/enhancedMotor.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
+
 
     foeDeps = {
       REACTIONS, sampleClip,
@@ -580,7 +583,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
-      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
+      buildRaceCharacter, floorLanding, EnemyAI, EnhancedEnemyAI, makeNavWorld, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
       castEnemySpell: castShared,   // X3: the ONE cast executor (characters/enemyCasting.js)
       hasMagickaToCast,   // D9: GetDestination's `entity.CurrentMagicka > 0` (the stand-off band reads the caster's SelectedSpell instead)
       // MT-iv: the target machine. Every consumer below the lazy block
@@ -730,7 +733,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // branch and the city watch run the same chain.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
       addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
-      const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
+      const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
+        nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
         // Stats.LiveSpeed every FixedUpdate (EnemyMotor.cs:432).
         liveSpeed: () => liveStat(entity, 'speed'),
@@ -806,7 +810,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
-      const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
+      const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
+        nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads it per FixedUpdate
         isHostile: e.reaction !== 'passive',          // AUDIT 39: RDBLayout.AddEnemy :1519-1521 -> EnemyMotor.cs:122
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
@@ -1277,7 +1282,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // ActionSystem's own dep (above); this is the sink.
   actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null;
-  const enhancedNav = { requested: false, client: null, chf: null };   // ENHANCED AI 3b
+  // ENHANCED AI 3b, + 4's `world`: the routes' per-frame findPath budget
+  // and the nav epoch, one per host, every foe reading the same one.
+  // Made HERE and not in the lazy block above it, because that block
+  // runs first: V4's sweep caught the first draft reading `enhancedNav`
+  // 700 lines before this declaration - a real ReferenceError, not a
+  // style point. foeDeps is assigned by then and carries makeNavWorld.
+  const enhancedNav = { requested: false, client: null, chf: null, world: foeDeps.makeNavWorld() };
   let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
@@ -3227,6 +3238,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         else audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
       }
     }
+    // ENHANCED AI 4: his enemy.js:404 - the findPath budget is refilled
+    // once a frame, so a room's worth of foes spreads its pathfinds
+    // over frames instead of spiking one. Created lazily: the world
+    // object outlives the bake and every foe reads the same one.
+    if (enhancedNav.world) enhancedNav.world.pathBudget = enhancedNav.world.budgetPerFrame;
     for (const f of foes) {
       if (f.dead) continue;
       // S19: a paralyzed foe freezes - EnemyMotor (CanAct = false,

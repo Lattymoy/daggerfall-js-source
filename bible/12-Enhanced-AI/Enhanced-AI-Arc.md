@@ -101,17 +101,8 @@ the player's feet are known - the feet are the anchor - and exposes
 the bake on `api.enhancedNav` for the motor.
 
 ## The slices ahead
- Feed the Collider's buckets
-  through triRaster at load, in a worker, anchored at the player's
-  entry; cache with bakeNavData in IndexedDB keyed on the location. The
-  budget/coarsen rule sizes the cells (a twenty-block dungeon is ~800k
-  columns at 0.25 m; expect ~0.5 m). First ARENA2-gated pin: Privateer's
-  Hold, path queries between known rooms.
-- **ENHANCED AI 4 - the motor reads the switch.** In TakeAction's
-  pursuit: findPath to the target, follow waypoints, repath on his
-  cadence with his per-frame budget and stuck watchdog; classic
-  steering when there is no path (never-traps). Doors as obstacles via
-  the action system; other enemies via syncNavObstacles and RVO.
+- **ENHANCED AI 4b - doors and the crowd.** Action doors as obstacles;
+  other foes via syncNavObstacles and his RVO avoidHeading.
 - **ENHANCED AI 5 - exteriors and interiors.** The streamed world's
   pixel-local buckets and the terrain floor; RMB interiors.
 - **ENHANCED AI 6 - the debug faces.** His navDebugFaces/pathDebugFaces
@@ -130,3 +121,67 @@ recovered from history (52 the roads calibration, 53 the road-to-1:1
 campaign; 49 stays with the grass audit that holds the file now). The
 law: before filing an audit, `ls bible/01-Overview/Audit-*.md` and take
 the next free number; never write an audit file that already exists.
+
+## ENHANCED AI 4 - the motor reads the switch (2026-09-02)
+
+`src/ai/enhancedMotor.js`: `EnhancedEnemyAI extends EnemyAI`. Decision
+#1 to the letter - `enemyMotor.js` is byte-for-byte untouched, pinned.
+The classic tick calls `this._getDestination` by dynamic dispatch and
+everything below it keys off `this.destination` (the 5.625° gate, the
+obstacle probe, the fall check, gravity, speed), so the subclass
+answers one question differently: where is this foe walking to right
+now. Its answer is the next corner of a `findPath` to the classic
+destination's own target (`predictedTargetPos`); the classic answer
+whenever there is no bake, no route, or the classic detour is running.
+
+The follow laws are project-final's at 8ba9100 - enemyShared.js
+`repathToward` and `stuckWatch` re-homed on `this`, enemyMelee.js
+htClose's `WP_REACH` advance, main.js:236 `navWalkable`, enemy.js:402
+`PATH_BUDGET_PER_FRAME` - constants and comments verbatim, pinned.
+The host chooses the motor by the pref at both construction sites,
+hands it the bake as a THUNK (a foe built before the bake lands is
+classic until it does) and the host's one `navWorld`, and refills the
+budget each frame (his enemy.js:404).
+
+**Two adaptations, both forced by the port's shape, neither touching how
+a route is chosen or held.** (1) His chase measures its stop against
+the player and steers at the waypoint; the classic tick has ONE
+destination doing both, and out of sight - the common case with a
+route - it measures the stop against the destination. A corner inside
+2.25 m would halt the foe at every corner. The corner is projected
+along its own direction to stopDistance+0.05: the yaw gate reads
+direction alone, so steering is byte-identical, and the stop cannot
+fire on a corner; the goal is never projected, so the foe stops there
+as classic stops at its LKP. (2) His nudge writes e.x/e.z; the port's
+feet move only through the collider, so the nudge is his vector, his
+side, his walkable gate, resolved by `collider.move`.
+
+**Proven on a room, not a claim.** A real Collider room with a divider
+and a gap at one end, baked by AI 3's own `bakeNavFromCollider`: the
+enhanced motor goes round the gap and closes to melee; the classic
+motor, driven through the same room as the control, is stopped by the
+wall; an enhanced motor with no bake walks exactly where the classic
+one walks.
+
+**Found on the way.** V4's TDZ sweep caught the host's first draft
+reading `enhancedNav` seven hundred lines before its declaration - the
+lazy import block runs first - a real ReferenceError. The round-the-
+wall pin passed alone and failed in the suite: the classic control's
+detour hand came off `Math.random`; rolls pinned. Three pins were
+wrong and were rewritten rather than loosened: the fail back-off tested
+an off-map TARGET, but the goal is the foe's belief and it correctly
+paths to where it last saw you; the watchdog pin ran out of steps while
+the foe was still turning in place; the fault pin used a mesh-less chf,
+which `findPath` answers with null - that is never-traps working - and
+needed a Proxy that throws.
+
+Pins: 14 in `test/enhancedAI4.test.js`. Campaign: 20 mutants, 20
+killed against a green baseline; two survived the first pass (a stale
+route steering one tick after the bake vanished; a route surviving
+non-pursuit) and are pinned.
+
+**Not in this slice, stated:** doors as obstacles through the action
+system; other foes via `syncNavObstacles` and his RVO `avoidHeading`;
+cityGuards and exteriorFoes (AI 5). Nothing here has been seen in a
+real dungeon - the ARENA2-gated Privateer's Hold bake is still Mac's
+to run.
