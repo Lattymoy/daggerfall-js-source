@@ -57,8 +57,8 @@ box.
 uses for a worn track; they are Daggerfall's own tiles, but no fixture
 here draws them and their look is Mac's to confirm.
 
-**A11 - LOW, RECORDED. The classic window carries two flags it never
-shows.** filterRoads/filterTracks ride the shared store and the save
+**A11 - CLOSED (ROADS 13). The classic window now draws by those two
+flags.** Original text: filterRoads/filterTracks ride the shared store and the save
 envelope for both skins; the classic 2D map has no road chips and
 draws no roads (the ROADS 7 gap). Harmless, and the gap is the thing.
 

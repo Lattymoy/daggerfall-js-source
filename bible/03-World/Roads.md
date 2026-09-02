@@ -186,8 +186,7 @@ neighbours draw them as threads. Never on water. The arrays live in
 the terrain worker after Audit 45 F2 and come back once for the map;
 the window keys its grid cache on the network it was drawn with, so a
 grid built before the network landed is rebuilt the first time the map
-opens with it. The classic 2D region map (travelMapWindow.js) does not
-yet draw them - its own slice.
+opens with it. The classic 2D region map draws them too as of ROADS 13.
 
 ## ROADS 8 - the stranded are named (2026-09-01)
 
@@ -241,6 +240,20 @@ relief and a toggle back finds the cache stale again.
 Everything so far: `01-Overview/Audit-46.md`. 21 mutants, 21 dead. A1
 fixed (the map's stride), A10 cleared and pinned (message order keeps
 every chunk built with the network), four low notes recorded.
+
+## ROADS 13 - the classic map (2026-09-02)
+
+The ROADS 7 gap, named in three audits, closed. The classic region
+panel plots the network in the same pass as its location dots - the
+same texel-to-pixel law (originX + x, originY + y), the same "this
+region only" rule DFU's dots follow, written UNDER the dots so a town's
+marker sits on top of the road that reaches it - in the relief's two
+colours. The flags are the shared store's, flipped by the enhanced
+map's chips and carried in the save; the classic panel has no native
+art for two more buttons, so a classic-only player sees both on. A
+network that lands after the panel was opened plots on its next region
+select, which in practice is never - the worker finishes in the first
+second of boot.
 
 ## Audit 45 (2026-09-01)
 

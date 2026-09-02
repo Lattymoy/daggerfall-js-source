@@ -1033,3 +1033,41 @@ test('G5: the teleport box is its OWN field, so the save envelope never reads it
     assert.ok(tele.telePopUp, 'a hover over a teleport box is simply nothing');
   } finally { _setTravelMapArtForTests(null); }
 });
+
+// ROADS 13 (2026-09-02): THE CLASSIC MAP DRAWS THE NETWORK. Same loop
+// as the dots, same texel-to-pixel law, same "this region only" rule,
+// written UNDER the dots, gated by the shared flags the enhanced map's
+// chips flip. A road pixel across the region border is not drawn - DFU
+// shows the current region alone, and the network follows that.
+test('ROADS 13: roads and tracks plot on the region panel, under the dots, by the shared flags', async () => {
+  const { MAP_WIDTH } = await import('../src/formats/woodsFile.js');
+  restoreDiscovery(null);
+  _resetForTests();
+  mountArt();
+  try {
+    const { deps } = mkWorld();
+    const roads = new Uint8Array(MAP_WIDTH * 500), tracks = new Uint8Array(MAP_WIDTH * 500);
+    roads[125 * MAP_WIDTH + 55] = 34;      // a road pixel inside the region
+    roads[130 * MAP_WIDTH + 60] = 34;      // a road pixel in the OTHER region (politic 23)
+    tracks[126 * MAP_WIDTH + 57] = 34;     // a track pixel inside
+    roads[120 * MAP_WIDTH + 50] = 34;      // a road on the city's own pixel
+    deps.roads = () => ({ roads, tracks });
+    const w = new TravelMapWindow(deps);
+    w._openRegionPanel(DAGGERFALL);
+    const at = (mx, my) => w._dotsBuf[((REGION_H - (my - ORIGIN[1]) - 1) * REGION_W) + (mx - ORIGIN[0])];
+    const road = at(55, 125), track = at(57, 126);
+    assert.notEqual(road, 0, 'the road pixel plots');
+    assert.notEqual(track, 0, 'the track pixel plots');
+    assert.notEqual(road, track, 'in different colours');
+    assert.equal(at(60, 130), 0, 'a road in another region does not plot on this panel');
+    assert.notEqual(at(50, 120), road, 'the city\u2019s dot sits ON TOP of the road that reaches it');
+    // the shared flags: hide roads, the road texel clears, the track stays
+    w.filters.roads = true;
+    w._updateMapLocationDotsTexture();
+    assert.equal(at(55, 125), 0, 'roads off');
+    assert.notEqual(at(57, 126), 0, 'tracks still on');
+    w.filters.roads = false; w.filters.tracks = true;
+    w._updateMapLocationDotsTexture();
+    assert.notEqual(at(55, 125), 0); assert.equal(at(57, 126), 0, 'tracks off');
+  } finally { _setTravelMapArtForTests(null); restoreDiscovery(null); _resetForTests(); }
+});
