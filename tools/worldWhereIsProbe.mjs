@@ -35,7 +35,7 @@ const waitFrames = async (n) => {
 const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
 const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
 
-// The drain. `overlay` is townTalk's live slot (townTalk.js:1134), so
+// The drain. `overlay` is townTalk's live slot (townTalk.js:1144), so
 // this asks the host what is up rather than guessing at names.
 let drained = 0;
 for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {

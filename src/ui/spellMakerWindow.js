@@ -65,11 +65,12 @@
 // and the boxes.
 //
 // RECORDED DEPARTURES, both the house idiom rather than this window's:
-//   - the NAME strip pops the port's inline input box (the automap
-//     note / travel-map find idiom) where DFU pops a
-//     DaggerfallInputMessageBox. Same 31-character cap (TextBox's own
-//     default, which RenameItem never narrows), same prompt string.
-//     Ledger A carries the widget row already (Port-Ledger.md:686).
+//   - the NAME strip types into the box THIS WINDOW DRAWS (the automap
+//     note / travel-map find idiom) where DFU pushes a
+//     DaggerfallInputMessageBox onto the stack (:911-918). Same
+//     31-character cap (TextBox.cs:26's default, which DFU never
+//     narrows here), same prompt record. Ledger A row TB1 carries it,
+//     cited BY NAME because the line this first cited rotted at once.
 //   - a message box whose TEXT.RSC record cannot be read (no ARENA2)
 //     falls back to the English of the record, as the rest of the
 //     port's windows do. NEVER TRAPS: DFU throws when an effect has

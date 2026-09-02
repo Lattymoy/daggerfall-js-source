@@ -51,8 +51,9 @@
 // are DaggerfallSpellBookWindow.cs:149 and DaggerfallSpellMakerWindow
 // .cs:194. The RENAME half is a widget departure, not a hole: DFU pops
 // a DaggerfallInputMessageBox (NameItemButon_OnMouseClick, :799-811)
-// where this window types into an inline strip, recorded at
-// Port-Ledger.md:686 - and that row's one real defect, the character
+// where this window types into an inline strip, recorded as Ledger A
+// row TB1 (by NAME - the line number this used to cite rotted) - and
+// the F171 NIT row's one real defect, the character
 // cap, is fixed (MAX_ITEM_NAME = 31, the TextBox default at
 // TextBox.cs:26, which RenameItem itself never narrows).
 

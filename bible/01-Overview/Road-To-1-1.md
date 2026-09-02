@@ -194,10 +194,19 @@ the record), all fixed.
 
 What remains after Wave D and the closeout tail (the spell-hand port,
 `paused()` adopted by every host, six section C rows struck) was the 19
-flags of `Home.md`; Wave E's E6 group took two of them the same day
-(the spell hands' release frame and `enemyCasting`'s clear-path term)
-and closed section C's `playSound` row with them, leaving 17, each with
-its blocker named at the site: no asset in the repo (the PlayerTorch
+flags of `Home.md`. Wave E retired SIX of them - one lane apiece, each
+blind to the others until the squash: E6 took the spell hands' release
+frame (`combat/fpsSpellCasting.js:178`) and the clear-path term
+(`characters/enemyCasting.js:91`), closing section C's `playSound` row
+with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:48`);
+E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:268`);
+E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
+narrowed while E3 closed the two console verbs
+(`ui/exteriorAutomapWindow.js:96`) by building the console host they
+were waiting on. That leaves **13** open flags as
+of this wave - the count `node tools/regenOpenFlags.mjs --check`
+answers, and the only count this page may state - each with its
+blocker named at the site: no asset in the repo (the PlayerTorch
 prefab, the two ship pixels), a DFU original that does not exist (the
 standalone dungeon host's windows, the enhanced menu's keyboard), or
 the owner's call (the gamepad layer, the pause dropdown's mod rows).

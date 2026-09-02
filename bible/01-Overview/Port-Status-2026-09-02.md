@@ -13,7 +13,8 @@ the method and the old one is named as corrected.*
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
 closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **19 open flags** with the blocker the
+three lists at the bottom: the **19 open flags** (13 after Wave E's six
+closures - list 1 marks them) with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
 routed and not struck**, and the **deliberate departures that are not on
 the road**. Everything above those lists is the measurement that makes
@@ -30,6 +31,9 @@ class AUDIT 44 named - and what remains is no longer a list of defects
 but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
+Wave E then worked that list down to **thirteen sites and seven rows**,
+which is what lists 1 and 2 now record; the paragraph above is the
+measurement as taken, kept because the two lists are read against it.
 
 ---
 
@@ -41,7 +45,7 @@ ran past them - and a set of departures that were never on the road.**
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **19** | `node tools/regenOpenFlags.mjs --check` -> "19 entries, up to date" (17 at `c3c12ee`; the closeout tail's spell-hand port added two, listed below); the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **13** | `node tools/regenOpenFlags.mjs --check` answers 13 ("13 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -355,7 +359,7 @@ became Wave D's 42 slices.
 
 # What remains
 
-## 1. The nineteen open flags, each with its blocker
+## 1. The nineteen open flags this was measured over - THIRTEEN STAND
 
 The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 `tools/regenOpenFlags.mjs` and pinned both ways by
@@ -487,8 +491,10 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   change - it needs a scroll-index hit result threaded through
   `ui/chargen.js`'s flow for all three pickers plus a held-button frame
   the chargen host never polls.*
-- **`src/ui/exteriorAutomapWindow.js:96`** - `map_revealbuildings` /
-  `map_hidebuildings`. *Narrowed to exactly itself.
+- ~~**`src/ui/exteriorAutomapWindow.js:96`** - `map_revealbuildings` /
+  `map_hidebuildings`.~~ **CLOSED (E-group, 2026-09-02: E1 narrowed the
+  header and moved the site, E3 built the console host and REGISTERED
+  both verbs on it).** *Narrowed to exactly itself.
   `ExteriorAutomap.cs:1796-1830` registers these as CONSOLE commands
   and the port has no console host. The flag they set,
   `revealUndiscoveredBuildings`, is live and pinned in both states by
@@ -497,8 +503,11 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `map_reveallocations`. D5 shipped the other two thirds of this
   header - the residence-with-active-quest plates and the eight button
   tooltips.*
-- **`src/ui/hudLarge.js:75`** - the docked bar occludes, it does not
-  shrink. *Multi-host and the largest of the six.
+- ~~**`src/ui/hudLarge.js:75`** - the docked bar occludes, it does not
+  shrink.~~ **SHIPPED (E-group, 2026-09-02, E5): the docked bar SHRINKS
+  the world pass now - `ViewportChanger.cs:52-67`'s camera rect and
+  `HUDCrosshair.cs:43-52`'s re-centring both landed.** *Multi-host and
+  the largest of the six.
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
@@ -527,10 +536,29 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   rather than to a live flag.*
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
-when this was measured. The E-group closed two of them the same day -
-`enemyCasting.js:91`'s clear-path term and the spell-hand release below
-- so `regenOpenFlags --check` now answers 17 over a list two entries
-shorter and two entries longer at the sites the closures moved.
+when this was measured, over the 19 the list then held. **As of Wave E
+`node tools/regenOpenFlags.mjs --check` answers 13**, and no count in
+this file or in `Road-To-1-1.md` may state another figure: the tool is
+the measurement, and `test/citedrift.test.js` holds both documents to
+it. The E-group retired SIX flags, not two - one per lane, and no lane
+could see the others' closures until the squash, which is how "leaving
+17" came to be written three times over a tree that answers 13:
+
+- `combat/fpsSpellCasting.js:178` (the release is not the spell) and
+  `characters/enemyCasting.js:91` (the clear-path term) - **E6**, which
+  closed section C's `playSound` row with them;
+- `systems/inventory.js:48` (gold as a bag stack) - **E4**;
+- `systems/talkMacros.js:268` (`GetValue`'s empty-string arm) - **E7**;
+- `ui/hudLarge.js:75` (the docked bar occludes) - **E5**;
+- `ui/exteriorAutomapWindow.js:96` (the two console verbs) - **E1**
+  narrowed the header and **E3** built the console host they needed.
+
+Five of the thirteen survivors only MOVED, and `Home.md` was
+regenerated onto the new sites: `exterior.js:1073` -> `:1089`,
+`exterior.js:1325` -> `:1344`, `world.js:2819` -> `:2932`,
+`worldModes.js:1659` -> `:1687`, `pauseWindow.js:58` -> `:61`. The
+entries in the two lists above still quote the line numbers of the
+measurement, which is older still; `Home.md` is the live list.
 
 **Recorded by the closeout tail - the spell-hand port.**
 
@@ -559,8 +587,13 @@ shorter and two entries longer at the sites the closures moved.
 
 ## 2. Port-Ledger section C rows still routed and not struck
 
-Section C's table is **246 rows** between `Port-Ledger.md:449` and
-`:695` (`awk '/^\|/ && !/^\|---/'`). **216 are struck.** Of the 30 that
+Row numbers below are resolved against `Port-Ledger.md` AT THIS SHA and
+held there by `test/citedrift.test.js` - the wave that wrote this
+section moved every one of them by inserting rows above section C, and
+a line number nobody re-resolves is a pointer at a stranger.
+
+Section C's table is **247 rows** between `Port-Ledger.md:451` and
+`:697` (`awk '/^\|/ && !/^\|---/'`). **224 are struck.** Of the 23 that
 are not, four are VidFile quirks filed under the wrong section
 (ported-as-is, no route), three carry a **Kept** verdict (the climate
 swap dimensions, the secondary picker's cancel path, the rep window's
@@ -572,17 +605,20 @@ taxonomy), two are audit preambles, one is RESERVED by the owner
 their own text that they are closed (`RegionPowerAndConditionsUpdate`,
 vampirism/lycanthropy).
 
-That accounts for 17 of the 30, leaving **13 unstruck rows that carry a
-route** - plus `:565`, struck at its head but carrying a live PENDING
-clause in its tail, for **fourteen rows that still owe work. Six of the
-fourteen have gone stale under the campaign that ran past them.** A
-stale row here is worse than a missing one: it sends the next slice to
-build what already ships, which is the warning the section's own
-preamble opens with.
+That accounts for 17 of the 23, leaving **6 unstruck rows that carry a
+route** - plus `:568`, struck at its head but carrying a live PENDING
+clause in its tail, for **seven rows that still owe work: items 1-7
+below.** The measurement this section was first written over read 246
+rows, 216 struck and fourteen still owing; what closed the gap is the
+work the entries themselves argued for - the closeout tail struck the
+six STALE rows (items 9-14), E8 struck item 8, and E4 added one new
+section-C row of its own, already struck. A stale row here is worse
+than a missing one: it sends the next slice to build what already
+ships, which is the warning the section's own preamble opens with.
 
 *Genuinely open:*
 
-1. **`:483` FaceUVTool's 1,803-UV residual at matched precision** ->
+1. **`:486` FaceUVTool's 1,803-UV residual at matched precision** ->
    Readers arc. **NARROWED (E-group, 2026-09-02), not closed.** The
    surface is fenced from DFU's own sources: `API/Vector3.cs` is double
    throughout, so the whole basis walk was already matched and cannot
@@ -595,36 +631,36 @@ preamble opens with.
    widening the measurement was taken against was never a committed
    patch. It is one now (`tools/parity/patches/FaceUVTool.cs.patch`).
    The 1,803 itself still needs ARENA2 plus mono to re-measure.
-2. **`:496` the custom builder's hidden `ResetBonusPool` control** ->
+2. **`:499` the custom builder's hidden `ResetBonusPool` control** ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
    the row says "the port has no keybinding registry to hang it on", and
    `systems/dialogShortcuts.js:194`/`:311` carries `ResetBonusPool` with
    its `Ctrl-U` default since A8. Nothing in `ui/chargen.js`,
    `ui/chargenArt.js` or `systems/customClass.js` consumes it. This is
    the smallest open row in the section.
-3. **`:466` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
+3. **`:469` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
    the thumb drag and the picker's double-click law; the port has no
    overlay mouse-up seam, so the latch drops on the first hover after
    the button comes up (`ListPickerWindow.release()`,
    `ui/listPicker.js:263`, exists and is unwired). The spellbook's own
    drag stays the F159/F170/F180 departure; the closeout narrowed its
    superseded REASON without removing the departure.
-4. ~~**`:509` the quest machine** -> `playSound`'s busy-skip, the one
+4. ~~**`:512` the quest machine** -> `playSound`'s busy-skip, the one
    recorded delta, because the port's one-shot engine has no busy
    state.~~ **CLOSED (E-group, 2026-09-02):** `systems/audio.js` grew
    the `QuestAudioSource` DFU's QuestMachine carries, IsPlaying reading
    the end time of the clip `playOneShot` already reported, and the
    world host's hook is PlaySound.cs:110-116 line for line.
-5. **`:562` the classic `.SAV` reader** -> the phone path: no zip arm in
+5. **`:565` the classic `.SAV` reader** -> the phone path: no zip arm in
    the saves picker, a desktop-first charter call.
-6. **`:565` (struck, with a live clause) the keybinding registry** ->
+6. **`:568` (struck, with a live clause) the keybinding registry** ->
    the mouse/advanced and joystick sub-windows, the two of DFU's 65
    game windows the port does not cite.
-7. **`:574` the standalone dungeon host has no trade window** -> a
+7. **`:577` the standalone dungeon host has no trade window** -> a
    dungeon-host lane. **Adjudicated by the closeout as BLOCKED** (see
    list 1): there is no DFU original for a standalone dungeon scene, so
    this is an owner decision about a dev route, not a routed gap.
-8. ~~**`:575` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
+8. ~~**`:578` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
    `tools/shopProbe.mjs` is RETIRED - it drove the keyed browse window
    U8c/U40 replaced, and its subject is covered twice over by
    `tradeModeProbe`/`nativeTradeProbe`. `tools/toneProbe.mjs` and
@@ -638,7 +674,7 @@ preamble opens with.
 
 *Stale - the row is a claim the tree has outrun:*
 
-9. **`:462` UseItem's unbuilt destinations.** Every arm the row names is
+9. **`:464` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
    (`ui/nativeInventory.js:570`, `:607`, `scenes/world.js:2083`), the
@@ -646,7 +682,7 @@ preamble opens with.
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
    is now `LayoutBookLabels` in each label's own face.
-10. **`:511` fast-travel residue.** Its three named survivors are spent:
+10. **`:514` fast-travel residue.** Its three named survivors are spent:
     the horse and cart mint on the general store's own shelf
     (`systems/shopStock.js:10`, "general stores always shelve a Horse
     and a Small Cart"), the ship purchase shipped at D6
@@ -654,9 +690,9 @@ preamble opens with.
     over the shared `openBankMarket` mount, with `purchaseShip` finally
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
     `scenes/world.js:1598` and `:1667`.
-11. **`:516` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
+11. **`:519` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
     `src/formats/mapsFile.js:52`, with the C# line range cited.
-12. **`:560` the magic crafting windows.** The row's FLAGGED residue is
+12. **`:563` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
     drawn (`ui/spellIcons.js`, imported at
     `ui/spellbookWindow.js:135-137`, drawn at `:921`), the icon picker
@@ -666,20 +702,20 @@ preamble opens with.
     window is a keyed text window here.~~ **THAT SHIPPED TOO (E-group,
     2026-09-02): the window is native, and the row's last unstruck
     clause goes with it.**
-13. **`:510` the talk manager.** The row's own tail already says both
+13. **`:513` the talk manager.** The row's own tail already says both
     named PENDING gaps closed at TK-vi; A9 then took the questor name
     bank behind `%pqn`, which the row's parent list still implies is
     owed. `AddNonQuestRumor`'s producer - the regional faction sim -
     shipped at S41-S44/RS1.
-14. **`:540` the small-residue trio** (biography GP arm, arrow roll
+14. **`:543` the small-residue trio** (biography GP arm, arrow roll
     notes, the faceUV zero-length guard) -> their arcs. The biography GP
     arm has a Ledger A row of its own and is inert on all 18 shipping
-    `BIOG*.TXT` files; the faceUV guard rides row `:483`.
+    `BIOG*.TXT` files; the faceUV guard rides row `:486`.
 
 ## 3. The deliberate departures, which are not on the road
 
 `Road-To-1-1.md` names these at its head so nobody re-opens them, and
-`Port-Ledger.md` section A carries **62 rows, 6 struck - 56 standing
+`Port-Ledger.md` section A carries **64 rows, 7 struck - 57 standing
 approved departures** plus the slot-0 reroll bullet and the
 houses-for-sale A-note. They are design choices, each internally
 faithful to whatever reference it does have, and none of them is a gap.
@@ -742,7 +778,7 @@ faithful to whatever reference it does have, and none of them is a gap.
   already double, so the basis walk is not part of this departure at
   all. Measured once against stock DFU over the whole ARCH3D corpus:
   52,505 of 1,917,087 UVs (2.74%) differ. The 1,803 that survive matched
-  precision are ledger row `:483`, narrowed at E8 and the only part of
+  precision are ledger row `:486`, narrowed at E8 and the only part of
   this that is still open work.
 - **Removed whole:** the road system (2026-08-29, ~5,200 lines), which
   retired the only departure that ever touched the travel law -
