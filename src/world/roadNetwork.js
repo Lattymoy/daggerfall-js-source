@@ -122,10 +122,15 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // ROUTE the road edges, shortest first, so later routes find and
   // merge into earlier ones through the discount.
   const routed = [...edges.values()].sort((a, b) => dist(roadNodes[a[0]], roadNodes[a[1]]) - dist(roadNodes[b[0]], roadNodes[b[1]]));
-  const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0 };
+  // AUDIT 45 F7: `unrouted` is a LIST of the pairs that found no path,
+  // each end as {x, y, region}, so the boot log can say WHICH town has
+  // no road rather than how many do. `stats.unrouted` stays a count for
+  // the log line; `stats.unroutedPairs` carries the names.
+  const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [] };
+  const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region }, { x: b.x, y: b.y, region: b.region }]); };
   for (const [i, j] of routed) {
     const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d });
-    if (path) stamp(roads, path); else stats.unrouted++;
+    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
   }
 
   // TRACKS: each track node to its nearest road NODE within reach (not
@@ -141,7 +146,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
     for (const r of roadNodes) { const dd = dist(t, r); if (dd < bd) { bd = dd; best = r; } }
     if (!best || bd > d.trackReach) continue;
     const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths });
-    if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else stats.unrouted++;
+    if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, best);
   }
   return { roads, tracks, stats };
 }

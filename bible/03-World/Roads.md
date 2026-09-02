@@ -125,6 +125,26 @@ a desert road sandy while both are unmistakably road. Seam law holds
 on record 45 and record 46 draws two different surfaces. Classic still
 draws tile 46 from ARENA2, exactly as the original mod does.
 
+## ROADS 5 - the ring, the cap, the names (2026-09-01)
+
+The open items. A pixel that carries a location and a road paints a
+two-tile RING just outside the rect with an edge tile beyond it, and
+every arm that reaches the town joins the ring instead of ending in a
+field - the original's roads circle a town because they never line up
+with its gates, and ours for the same reason. A lone cardinal arm
+takes a CAP one tile past the centre so a dead end rounds off rather
+than ending on a knife; decided after every centre has had its say,
+because at a junction one arm's cap position is another's centre. And
+`stats.unroutedPairs` names both ends of every pair that found no
+route, which world.js prints with the region's name.
+
+Found on the way and fixed: the painter read the location rect as
+{x, y, w, h} and the seam sends setLocationTiles' inclusive
+{xMin, xMax, yMin, yMax}, so the guard compared to undefined and was
+dead - the pre-seeded location tiles were all that kept roads out of
+the streets, and nothing kept them out of the clearance band. The pin
+that covered it sent the same wrong shape and passed.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
@@ -137,6 +157,4 @@ cleared by the line that clears them. Four low findings recorded there.
 - ROADS 5: the travel-map overlay.
 - Rivers and streams: the same painter with water tiles, off by default
   as the original ships them. Their data would also be ours to derive.
-- Ringing a location (the original's roads circle a town because they
-  never line up with its gates): a refinement once the network draws.
 - The heightmap smoothing pass under road tiles, behind a setting.

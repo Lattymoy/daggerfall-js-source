@@ -302,13 +302,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:374` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:541` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1271` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1277` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1682` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2724` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:4049` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5109` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6282` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1276` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1282` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1687` - *  through the `if`. This host's FLAGGED note (below, at the mode
+- `src/scenes/world.js:2729` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:4054` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:5114` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+- `src/scenes/world.js:6287` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1340` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1358` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1570` - is the quest machine's, FLAGGED with it.

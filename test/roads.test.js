@@ -101,18 +101,25 @@ test('ROADS 2: N alone paints only the northern half - row 127 is north', () => 
   paintRoads(tileData, tilemap, DIR.N, 0);
   assert.equal(tilemap[127 * 128 + 63] & 0x3f, TILE.road, 'reaches the north edge (row 127)');
   assert.equal(tilemap[64 * 128 + 63] & 0x3f, TILE.road, 'from the centre');
-  assert.equal(tilemap[63 * 128 + 63], 0, 'and stops there');
+  // AUDIT 45 F4: the row just past the centre takes the EDGE tile as a
+  // cap, so the road rounds off rather than ending on a knife edge...
+  assert.equal(tilemap[63 * 128 + 63] & 0x3f, TILE.roadGrass, 'the cap');
+  assert.equal(tilemap[62 * 128 + 63], 0, '...and stops there');
   assert.equal(tilemap[0 * 128 + 63], 0, 'the south edge is bare');
 });
 
 test('ROADS 2: a diagonal is one tile wide on the diagonal, and the location rect is left alone', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
-  paintRoads(tileData, tilemap, DIR.NE, 0, { x: 60, y: 60, w: 8, h: 8 });
+  // The rect is setLocationTiles' inclusive {xMin,xMax,yMin,yMax}. The
+  // first draft of this pin sent {x,y,w,h}, which the seam never does,
+  // and passed against a guard that compared to undefined (ROADS 5).
+  paintRoads(tileData, tilemap, DIR.NE, 0, { xMin: 60, xMax: 67, yMin: 60, yMax: 67 });
   assert.equal(tilemap[100 * 128 + 100] & 0x3f, TILE.road, 'on x==y');
   assert.equal(tilemap[100 * 128 + 101] & 0x3f, TILE.roadGrass, 'flanked');
   assert.equal(tilemap[100 * 128 + 102], 0, 'one tile wide');
   assert.equal(tilemap[64 * 128 + 64], 0, 'the location rect is untouched');
+  assert.equal(tilemap[67 * 128 + 67], 0, 'to its inclusive far corner');
   assert.equal(tilemap[50 * 128 + 50], 0, 'the SW half is bare - NE alone');
 });
 
@@ -132,7 +139,7 @@ test('ROADS 2: water is never paved, and a track shows dirt through grass only',
 test('ROADS 2: classify - the centre of any arm wins over the edge of another', () => {
   // A crossroads: tile (63,64) is centre of both N and E arms.
   const c = classify(63, 64, DIR.N | DIR.E);
-  assert.equal(c.centre, true);
+  assert.equal(c.centre, true, 'and F4\'s cap does not steal it - the E arm\'s cap position IS this tile');
   // (62,64) is the N arm's west edge - and NOT on the E arm.
   assert.equal(classify(62, 64, DIR.N | DIR.E).centre, false);
   assert.equal(classify(10, 10, DIR.N), null, 'far from any arm');
@@ -259,4 +266,28 @@ test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still 
   const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
   assert.match(src, /Math\.hypot\(x - to\.x, y - to\.y\) \* d\.roadDiscount/,
     'h is scaled by the cheapest step, which is what admissibility requires');
+});
+
+test('ROADS 5: a town is RINGED, and the arm joins the ring instead of ending in a field', () => {
+  const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
+  const tilemap = new Uint8Array(128 * 128);
+  const rect = { xMin: 56, xMax: 71, yMin: 56, yMax: 71 };
+  paintRoads(tileData, tilemap, DIR.N, 0, rect);
+  // inside the rect: nothing
+  assert.equal(tilemap[64 * 128 + 64], 0, 'the streets are left alone');
+  assert.equal(tilemap[70 * 128 + 58], 0, 'the clearance band too');
+  // the ring: two tiles of road just outside, on every side
+  for (const [x, y] of [[54, 64], [55, 64], [72, 64], [73, 64], [64, 54], [64, 55], [64, 72], [64, 73], [54, 54], [73, 73]]) {
+    assert.equal(tilemap[y * 128 + x] & 0x3f, TILE.road, `ring at ${x},${y}`);
+  }
+  // an edge tile one further out
+  assert.equal(tilemap[64 * 128 + 53] & 0x3f, TILE.roadGrass, 'the ring has an edge');
+  assert.equal(tilemap[64 * 128 + 52], 0, 'and stops');
+  // the N arm runs from the ring to the north edge, not from the centre
+  assert.equal(tilemap[100 * 128 + 63] & 0x3f, TILE.road, 'the arm');
+  assert.equal(tilemap[74 * 128 + 63] & 0x3f, TILE.road, 'meets the ring');
+  // and a rect that runs off the tile grid rings on the sides that fit
+  const t2 = new Uint8Array(128 * 128);
+  paintRoads(tileData, t2, DIR.S, 0, { xMin: -4, xMax: 20, yMin: 100, yMax: 130 });
+  assert.equal(t2[98 * 128 + 10] & 0x3f, TILE.road, 'the south side rings');
 });

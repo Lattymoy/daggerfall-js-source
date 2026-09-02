@@ -70,10 +70,59 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       if (t && write(tilemap, i, t, TRACK_CENTRE, TRACK_EDGE, ground)) painted++;
     }
   }
+  // ROADS 5: the ring AFTER the arms, so an arm crossing the ring's edge
+  // annulus keeps its road surface and the ring fills in around it.
+  if (locationRect) {
+    painted += roadMask
+      ? paintRing(tileData, tilemap, locationRect, ROAD_CENTRE, ROAD_EDGE, tdDim)
+      : paintRing(tileData, tilemap, locationRect, TRACK_CENTRE, TRACK_EDGE, tdDim);
+  }
   return painted;
 }
 
-function inRect(x, y, r) { return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }
+// ROADS 5: THE RECT IS setLocationTiles' OWN SHAPE - inclusive
+// {xMin, xMax, yMin, yMax} in tile space, already carrying the 2-3 tile
+// clearance the terrain blends around a town. The first draft read
+// {x, y, w, h}, which the seam never sends, so every test was
+// `undefined >= x` and the guard was dead - the pre-seeded location
+// tiles were the only thing keeping roads out of the streets, and
+// nothing kept them out of the CLEARANCE band. Found by writing the
+// ring, which had to know where the town ends.
+function inRect(x, y, r) { return x >= r.xMin && x <= r.xMax && y >= r.yMin && y <= r.yMax; }
+
+/** ROADS 5: THE RING ROAD. The original's roads circle a location
+ *  because they never line up with its gates, and ours stop at the
+ *  clearance edge for the same reason. So a pixel that carries a
+ *  location AND a road paints a two-tile ring just outside the rect,
+ *  with an edge tile beyond it, and every arm that reaches the town
+ *  joins the ring instead of ending in a field. A track-only pixel
+ *  rings in track. Clamped to the tile grid: a city whose clearance
+ *  reaches the pixel edge rings on the sides that fit. */
+function paintRing(tileData, tilemap, r, centreTable, edgeTable, tdDim) {
+  let n = 0;
+  const band = (x0, x1, y0, y1, table, isCentre) => {
+    for (let y = Math.max(0, y0); y <= Math.min(DIM - 1, y1); y++) {
+      for (let x = Math.max(0, x0); x <= Math.min(DIM - 1, x1); x++) {
+        if (inRect(x, y, r)) continue;
+        const i = y * DIM + x;
+        if (tilemap[i] !== 0) continue;
+        let ground = tileData[y * tdDim + x];
+        if (ground > TILE.stone) ground = TILE.grass;
+        // the ring's rotate follows the side it runs along; flip is the outer half
+        const onEW = y < r.yMin || y > r.yMax;
+        const outer = isCentre ? (x === x0 || x === x1 || y === y0 || y === y1) : false;
+        if (write(tilemap, i, { centre: isCentre, rotate: onEW, flip: outer }, centreTable, edgeTable, ground)) n++;
+      }
+    }
+  };
+  // The two-tile centre band FIRST, then the edge pass over the 3-deep
+  // annulus - the loop skips painted tiles, so the edge pass only finds
+  // the outermost ring left. The first draft had them the other way
+  // round and the edge filled everything before the centre arrived.
+  band(r.xMin - 2, r.xMax + 2, r.yMin - 2, r.yMax + 2, centreTable, true);
+  band(r.xMin - 3, r.xMax + 3, r.yMin - 3, r.yMax + 3, edgeTable, false);
+  return n;
+}
 
 function write(tilemap, i, c, centreTable, edgeTable, ground) {
   const tile = (c.centre ? centreTable : edgeTable)[ground];
@@ -97,6 +146,14 @@ function write(tilemap, i, c, centreTable, edgeTable, ground) {
 export function classify(x, y, mask) {
   let edge = null;
   const arm = (centre, rotate, flip) => ({ centre, rotate, flip });
+  // AUDIT 45 F4: A DEAD-END ARM GETS A CAP. An arm that arrives alone -
+  // N set, S not - would end square on the centre row; the tile just
+  // past the centre on the FAR side takes the edge tile instead, so the
+  // road rounds off where it stops rather than being cut with a knife.
+  // Only when the opposite arm is absent, because with both present the
+  // road runs straight through and there is nothing to cap.
+  // It is decided LAST - see the bottom - because at a junction the cap
+  // position of one arm is the centre of another, and the centre wins.
   // N: rows above the middle; S: rows below. Centre columns 63/64.
   if (mask & DIR.N && y >= MID_HI) {
     if (x === MID_LO || x === MID_HI) return arm(true, false, x === MID_HI);
@@ -123,5 +180,10 @@ export function classify(x, y, mask) {
   const onNWSE = xm === y, nearNWSE = Math.abs(xm - y) === 1;
   if (mask & DIR.NW && x <= MID_LO) { if (onNWSE) return arm(true, true, false); if (nearNWSE) edge = edge || arm(false, true, xm < y); }
   if (mask & DIR.SE && x >= MID_HI) { if (onNWSE) return arm(true, true, false); if (nearNWSE) edge = edge || arm(false, true, xm < y); }
+  // The cap, now that no arm has claimed this tile as its centre.
+  const capN = (mask & DIR.N) && !(mask & DIR.S), capS = (mask & DIR.S) && !(mask & DIR.N);
+  const capE = (mask & DIR.E) && !(mask & DIR.W), capW = (mask & DIR.W) && !(mask & DIR.E);
+  if ((x === MID_LO || x === MID_HI) && ((capN && y === MID_LO) || (capS && y === MID_HI))) return arm(false, false, x === MID_HI);
+  if ((y === MID_LO || y === MID_HI) && ((capE && x === MID_LO) || (capW && x === MID_HI))) return arm(false, true, y === MID_HI);
   return edge;
 }

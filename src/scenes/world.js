@@ -291,8 +291,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ROADS 3: OUR network, from the player's own map. Built once here,
   // handed to both terrain kernels; a failure draws a world without
   // roads and says so, never no world.
-  terrainGen.setRoads(settlementsOf(maps), (st) => console.log(
-    `[roads] ${st.roadNodes} towns, ${st.roadEdges} roads, ${st.trackEdges} tracks, ${st.unrouted} unrouted, ${st.ms}ms`));
+  terrainGen.setRoads(settlementsOf(maps), (st) => {
+    console.log(`[roads] ${st.roadNodes} towns, ${st.roadEdges} roads, ${st.trackEdges} tracks, ${st.unrouted} unrouted, ${st.ms}ms`);
+    // AUDIT 45 F7: an unrouted pair is a finding, and it is named.
+    for (const [a, b] of st.unroutedPairs ?? []) {
+      console.warn(`[roads] no route: (${a.x},${a.y}) ${maps.getRegionName(a.region)} -> (${b.x},${b.y}) ${maps.getRegionName(b.region)}`);
+    }
+  });
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
   // in the frame loop, where the live player pixel exists.
