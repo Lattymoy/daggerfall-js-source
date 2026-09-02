@@ -120,3 +120,32 @@ test('EV6: both exterior hosts sort their draw lists by mesh at build', () => {
   assert.ok(readFileSync('src/scenes/exterior.js', 'utf8').includes('drawList.sort((a, b) => a.order - b.order)'));
   assert.ok(readFileSync('src/scenes/world.js', 'utf8').includes('models.sort((a, b) => a._order - b._order)'));
 });
+
+// ═══ AUDIT 47: every shader declares what it uses, statically ═══════
+test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its own compilation unit', () => {
+  // The fault class that black-screened the first Enhanced Environments
+  // attempt: a use with no declaration, invisible to eslint, node and
+  // vite, fatal at link. Checked here on every template in the three
+  // shader files, with the shared block expanded the way the template
+  // expands it. An injected declaration - a string replace after the
+  // template - does not count, because it hides from this reader as it
+  // hid from the last one (AUDIT 47 F1).
+  const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js'];
+  for (const file of files) {
+    const s = readFileSync(file, 'utf8');
+    assert.ok(!/`\.replace\('uniform /.test(s), `${file}: a uniform must be declared in the template, not injected after it`);
+    const shared = (s.match(/const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];
+    const re = /const ([A-Z_]+) = `#version 300 es([\s\S]*?)`(?:;|\.)/g;
+    let m; let seen = 0;
+    while ((m = re.exec(s))) {
+      seen++;
+      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared);
+      const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)]
+        .flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
+      const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
+      const missing = [...used].filter((u) => !declared.has(u));
+      assert.deepEqual(missing, [], `${file} ${m[1]} uses undeclared: ${missing.join(', ')}`);
+    }
+    assert.ok(seen > 0, `${file}: no shader templates found - the reader is broken, not the shaders`);
+  }
+});

@@ -413,6 +413,7 @@ uniform vec2 uWindDir;
 uniform vec3 uCamPos;
 uniform sampler2D uField;                       // EE9: the surface field, piece-local
 uniform float uFieldSize, uFieldAmt, uSnowM;    // EE9
+uniform vec3 uLightDirW;   // AUDIT 47 F1: declared HERE, not injected by a string replace after the fact
 out float vT; out float vTint; out float vLam; out vec3 vWorldPos;
 void main() {
   vec3 local = aInst.xyz;
@@ -454,7 +455,7 @@ void main() {
   vTint = aInst2.w;
   vWorldPos = p;
   gl_Position = uProj * uView * vec4(p, 1.0);
-}`.replace('uniform vec3 uCamPos;', 'uniform vec3 uCamPos;\nuniform vec3 uLightDirW;');
+}`;
 const GRASS_FS = `#version 300 es
 precision highp float;
 in float vT; in float vTint; in float vLam; in vec3 vWorldPos;
