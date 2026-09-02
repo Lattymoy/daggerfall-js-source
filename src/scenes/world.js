@@ -6226,6 +6226,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     livePersonBatches.push(...hitEffects.batches());
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
+      // EE8: the enhanced profile rides the switch, and the wind that drives
+      // its rain is the SKY'S OWN - the deck's wind from the eased weather
+      // row - INTEGRATED here as travel, so a change in the wind moves what
+      // falls next and never what has already fallen.
+      precip.enhanced = !!sky?.cloudShadow;
+      precip.countCap = Number(new URLSearchParams(globalThis.location?.search ?? '').get('rain')) || null;
+      if (precip.enhanced) {
+        const w = sky.cloudShadow.wind;
+        const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
+        precip.windOff[0] += (2.5 + w[0] * 260) * dtp;
+        precip.windOff[1] += (1.2 + w[1] * 260) * dtp;
+      }
+      precip._lastNow = now;
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
       renderer.markForeignPass();   // EV6: so did the rain
     }

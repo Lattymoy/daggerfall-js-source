@@ -548,3 +548,62 @@ test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader 
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /const weatherName = params\.get\('weather'\) \?\? extra\?\.weather \?\? 'sunny';/);
 });
+
+// ═══ EE8: the weather particles - the lab's volume over the existing pass ═══
+test('EE8: the enhanced profile is gated, driven by the sky\u2019s own wind INTEGRATED, and classic is untouched', () => {
+  const p = read('src/render/precipitation.js');
+  // one shader, two profiles: every enhanced term is a mix(..., uEnh)
+  // so uEnh = 0 is byte-for-byte the classic pass
+  assert.match(p, /float gust = mix\(1\.0, 0\.75 \+ fract\(phase \* 0\.371\) \* 0\.5, uEnh\);/, 'a per-particle gust, gated');
+  assert.match(p, /vec2 travel = mix\(uTime \* uSlant, uWindOff \* gust, uEnh\);/, 'the travel is the INTEGRATED wind, gated');
+  assert.match(p, /vec3 fallDir = normalize\(vec3\(windRate\.x, -uFall \* gust, windRate\.y\)\);/, 'the streak lies along the true velocity');
+  assert.match(p, /float head = uSnow == 1 \? 1\.0 : smoothstep\(0\.0, 0\.35, vT\) \* 1\.15;/, 'a drop is bright at its head');
+  // the fault the world gate found: a uniform shared by two stages must
+  // carry one precision, or the program does not link and no frame draws
+  const fi = p.indexOf('const PRECIP_FS = `'); const fs = p.slice(fi, p.indexOf('`;', fi));
+  assert.match(fs, /precision highp int;/, 'uSnow is highp in the vertex stage and must be highp here');
+  // the profiles, the cap, and the buffer sized for the largest
+  assert.match(p, /export const PRECIP_ENHANCED_MAX = 26000;/);
+  assert.match(p, /const n = PRECIP_ENHANCED_MAX;/, 'one buffer, every profile a prefix of it');
+  assert.match(p, /const count = cap \? Math\.min\(cfg\.count, cap\) : cfg\.count;/, '?rain=<n> caps the enhanced volume for a gate');
+  assert.match(p, /gl\.drawElements\(gl\.TRIANGLES, count \* 6, gl\.UNSIGNED_INT, 0\);/);
+  assert.match(p, /this\.enhanced = false;/, 'classic by default');
+  // both hosts: the profile rides the switch, and the wind is the SKY's,
+  // integrated by dt - never speed multiplied by uptime
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile follows the enhanced sky`);
+    assert.match(h, /precip\.windOff\[0\] \+= \(2\.5 \+ w\[0\] \* 260\) \* dtp;/, `${host}: integrated, by dt`);
+    assert.ok(!/windOff\[0\] = .*uTime|windOff\[0\] = .*now \//.test(h), `${host}: never wind times uptime`);
+  }
+});
+
+// ═══ EE8: the weather's volume, on the pass the game already has ════
+test('EE8: the enhanced precipitation rides the switch, drives on integrated wind, and classic is byte for byte', () => {
+  const p = read('src/render/precipitation.js');
+  // the profile is a GATE, not a fork: every enhanced term is mixed by
+  // uEnh, and at 0 the pass is what it always was
+  assert.match(p, /uniform float uEnh;/);
+  assert.match(p, /float gust = mix\(1\.0, 0\.75 \+ fract\(phase \* 0\.371\) \* 0\.5, uEnh\);/, 'a per-particle gust, enhanced only');
+  assert.match(p, /vec2 travel = mix\(uTime \* uSlant, uWindOff \* gust, uEnh\);/, 'classic travels by time, enhanced by the INTEGRATED wind');
+  assert.match(p, /vec3 fallDir = normalize\(vec3\(windRate\.x, -uFall \* gust, windRate\.y\)\);/, 'the streak lies along the actual velocity');
+  assert.match(p, /float head = uSnow == 1 \? 1\.0 : smoothstep\(0\.0, 0\.35, vT\) \* 1\.15;/, 'a drop is bright at its head, so the eye reads it falling');
+  // THE BUG THE GATE FOUND: a uniform read by two stages must carry the
+  // same precision in both, or the program refuses to link and the
+  // exterior renders no frame under rain
+  const fsStart = p.indexOf('precision highp int;');
+  assert.ok(fsStart > 0 && p.indexOf('uniform int uSnow;', fsStart) > 0, 'uSnow is highp in the fragment stage as it is in the vertex stage');
+  // the profiles, and the buffer sized for the largest
+  assert.match(p, /export const PRECIP_ENHANCED_MAX = 26000;/);
+  assert.match(p, /const n = PRECIP_ENHANCED_MAX;/, 'one buffer, every profile a prefix of it');
+  assert.match(p, /this\.enhanced = false;/, 'OFF by default, so classic cannot inherit the volume');
+  assert.match(p, /this\.windOff = new Float32Array\(2\);/);
+  // both hosts: enhanced iff there is an enhanced sky, and the wind is
+  // the sky's own, integrated - never speed multiplied by uptime
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile rides the switch`);
+    assert.match(h, /precip\.windOff\[0\] \+= \(2\.5 \+ w\[0\] \* 260\) \* dtp;/, `${host}: the wind is INTEGRATED`);
+    assert.ok(!/windOff\[0\] = .*now/.test(h), `${host}: never wind times uptime`);
+  }
+});

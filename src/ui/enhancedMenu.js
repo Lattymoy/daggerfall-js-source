@@ -851,7 +851,8 @@ function paneEnhanced(body) {
     + 'follow the weather to the horizon and cast their shadows on the land; and ground drawn at four times the detail in '
     + 'Daggerfall\u2019s own tile shapes and colours, lit by the sun so every blade and pebble '
     + 'has a bright side and a shaded side, holding still at distance instead of shimmering; and '
-    + 'three-dimensional grass standing in the meadows, bending in the wind. '
+    + 'three-dimensional grass standing in the meadows, bending in the wind; and rain and snow '
+    + 'that fall through the world around you, driven by the wind, rather than across the screen. '
     + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own 64-pixel ground. '
     + 'Takes effect when the world next loads.'));
   body.append(live);

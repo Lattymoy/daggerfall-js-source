@@ -34,6 +34,7 @@ const WEATHER = arg('weather', null);        // EE5: ?weather=<type>, the probe 
 const WORLD = process.argv.includes('--world');   // EE7: the WORLD host (?world), where the grass lives
 const GRASS = arg('grass', null);            // EE7: ?grass=off, the kill switch
 const SEASON = arg('season', null);          // EE7: ?season=summer, the existing pin - grass needs a lawn to stand on
+const RAIN = arg('rain', null);              // EE8: ?rain=<n> caps the enhanced volume for the harness
 const PORT = Number(process.env.GATE_PORT ?? 5223);   // a stuck server on one port must not block the next run
 
 const fails = [];
@@ -61,11 +62,11 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 // changes. ?sky=classic is NOT set, so the enhanced sky draws when the
 // pref allows it.
 const skin = MODE === 'classic' ? '&classic' : '';
-const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '') + (GRASS ? `&grass=${GRASS}` : '') + (SEASON ? `&season=${SEASON}` : '');
+const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '') + (GRASS ? `&grass=${GRASS}` : '') + (SEASON ? `&season=${SEASON}` : '') + (RAIN ? `&rain=${RAIN}` : '');
 await page.goto(`http://localhost:${PORT}/play/?${WORLD ? 'world' : 'exterior'}&shot&novideo&nofoes${skin}${ground}`);
 
 // wait for the world to actually render frames
-const until = Date.now() + 240000;
+const until = Date.now() + 150000;   // EE8: the exterior boots in ~90s here; a shader that will not link never advances a frame, and the gate must say so inside a harness call
 let frames = 0;
 while (Date.now() < until) {
   frames = await page.evaluate(() => (typeof window.__frame === 'number' ? window.__frame : 0));

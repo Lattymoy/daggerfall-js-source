@@ -130,7 +130,7 @@ fall. Water is pushed out of the print.
 
 ## The seams, and the order
 
-1. `src/world/surfaceField.js` - the pure field: the arrays, the tick
+1. src/world/surfaceField.js (PLANNED - not yet in the tree) - the pure field: the arrays, the tick
    (rain / snow / melt / dry), the stamp, the base-depth and warmth
    functions. Node-testable, no GL. Pinned first.
 2. The renderer: a `setSurfaceField(pixelKey, tex, origin, size)` door,
