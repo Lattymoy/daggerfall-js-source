@@ -413,3 +413,29 @@ test('ROADS 8: settlements carry their names, and an unrouted pair carries both'
   const host = (await import('node:fs')).readFileSync('src/scenes/world.js', 'utf8');
   assert.match(host, /\$\{l\.name \?\? '\?'\}/, 'and the log prints the name');
 });
+
+// ROADS 9 (Audit 45 F4): THE CAP. A road that ends - N without S -
+// used to stop in a square stub. The two edge tiles on the row the arm
+// starts from now turn to meet in a point, and when the road turns
+// instead of ending, the same tiles are the outer corner.
+test('ROADS 9: a dead-end arm is capped, a through road is not, and a turn wears the corner', () => {
+  const grass = () => new Uint8Array(129 * 129).fill(TILE.grass);
+  const t = new Uint8Array(128 * 128);
+  paintRoads(grass(), t, DIR.N, 0);
+  // the cap: row 63, columns 63/64 - edge tiles, rotated on 63, flipped on 64
+  assert.equal(t[63 * 128 + 63] & 0x3f, TILE.roadGrass, 'the cap\u2019s left tile');
+  assert.equal(t[63 * 128 + 64] & 0x3f, TILE.roadGrass, 'the cap\u2019s right tile');
+  assert.ok(t[63 * 128 + 63] & TILE.ROTATE, 'turned on the left');
+  assert.ok(!(t[63 * 128 + 63] & TILE.FLIP));
+  assert.ok(t[63 * 128 + 64] & TILE.FLIP, 'mirrored on the right');
+  assert.equal(t[62 * 128 + 63], 0, 'and nothing below it - the road ends');
+  // a through road: those tiles are centre, not cap
+  const u = new Uint8Array(128 * 128);
+  paintRoads(grass(), u, DIR.N | DIR.S, 0);
+  assert.equal(u[63 * 128 + 63] & 0x3f, TILE.road, 'N|S: the same tile is road, not a cap');
+  // a turn: N|E - (64,63) is the E arm\u2019s centre, (63,63) the corner\u2019s outer edge
+  const v = new Uint8Array(128 * 128);
+  paintRoads(grass(), v, DIR.N | DIR.E, 0);
+  assert.equal(v[63 * 128 + 64] & 0x3f, TILE.road, 'the turn\u2019s inner tile is road');
+  assert.equal(v[63 * 128 + 63] & 0x3f, TILE.roadGrass, 'its outer tile is the corner edge');
+});

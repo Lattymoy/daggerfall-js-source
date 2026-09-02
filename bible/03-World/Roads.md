@@ -195,6 +195,17 @@ Audit 45's F7, finished: the settlement row carries the town's name off
 the region's own map-names table, an unrouted pair carries both names,
 and the boot log prints each one as a place to go and look.
 
+## ROADS 9 - the cap (2026-09-01)
+
+Audit 45's F4. A cardinal arm that ends left a square stub; the design
+closes it with the two edge tiles on the row the arm starts from,
+turned to meet in a point, and the same two tiles are the outer corner
+when the road turns instead of ending. The orientation is the design's
+own expression - rotate when x == y, mirror when x == midHi, for all
+four arms - kept exactly because it was tuned against the real tile art
+in the field and no fixture here can see that art; a symmetric flip, the
+first draft, would have turned one of every cap's two tiles wrong.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

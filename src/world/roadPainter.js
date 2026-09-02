@@ -183,7 +183,13 @@ export function classify(x, y, mask) {
   // The cap, now that no arm has claimed this tile as its centre.
   const capN = (mask & DIR.N) && !(mask & DIR.S), capS = (mask & DIR.S) && !(mask & DIR.N);
   const capE = (mask & DIR.E) && !(mask & DIR.W), capW = (mask & DIR.W) && !(mask & DIR.E);
-  if ((x === MID_LO || x === MID_HI) && ((capN && y === MID_LO) || (capS && y === MID_HI))) return arm(false, false, x === MID_HI);
-  if ((y === MID_LO || y === MID_HI) && ((capE && x === MID_LO) || (capW && x === MID_HI))) return arm(false, true, y === MID_HI);
+  // ROADS 9: the cap's ORIENTATION is the design's, not a guess. The
+  // edge tile turns when x == y and mirrors when x == midHi, the same
+  // expression for all four arms - tuned against the real tile art and
+  // seen in the field, which no fixture here can be. A first draft used
+  // a symmetric flip and would have oriented one of every cap's two
+  // tiles wrong on the art it cannot see.
+  if ((x === MID_LO || x === MID_HI) && ((capN && y === MID_LO) || (capS && y === MID_HI))) return arm(false, x === y, x === MID_HI);
+  if ((y === MID_LO || y === MID_HI) && ((capE && x === MID_LO) || (capW && x === MID_HI))) return arm(false, x === y, x === MID_HI);
   return edge;
 }
