@@ -361,37 +361,40 @@ test('ROADS 6/18: a town between two others is passed THROUGH, a village in the 
   assert.ok(at(V.x - 1, V.y + 1) || at(V.x - 1, V.y - 1) || at(V.x + 1, V.y + 1) || at(V.x + 1, V.y - 1), 'through a corner pixel, no corner cut');
 });
 
-// ROADS 7 (2026-09-01, Mac: "always on"): THE MAP DRAWS THE NETWORK. The
-// enhanced travel map is the overworld relief, one vertex per map pixel,
-// so a road is a tinted vertex and the triangles between neighbours
-// draw it as a thread. The arrays live in the worker after Audit 45 F2,
-// so they come back ONCE for the map and the window rebuilds its grid
-// the first time it opens with them.
-test('ROADS 7: a road vertex on the relief is tinted, a track fainter, water never', async () => {
-  const { buildOverworldGrid, OVERWORLD_ROAD, OVERWORLD_TRACK, overworldTint } = await import('../src/ui/overworldModel.js');
-  const W = 8, H = 4;
-  const bytes = new Uint8Array(W * H).fill(40);
-  bytes[1 * W + 6] = 0;   // a water pixel
-  const path = new Uint8Array(W * H);
-  path[1 * W + 2] = 2; path[1 * W + 3] = 1; path[1 * W + 6] = 2;   // road, track, and a road bit on water
-  const grid = buildOverworldGrid({ heightBytes: bytes, width: W, height: H, climateAt: () => 227, pathAt: (x, y) => path[y * W + x] });
-  const rgb = (x, y) => [0, 1, 2].map((c) => grid.colors[(y * W + x) * 3 + c]);
-  const plain = rgb(1, 1), road = rgb(2, 1), track = rgb(3, 1), water = rgb(6, 1);
-  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-  assert.ok(dist(road, OVERWORLD_ROAD) < dist(plain, OVERWORLD_ROAD), 'the road vertex leans hard toward the road colour');
-  assert.ok(dist(track, OVERWORLD_TRACK) < dist(plain, OVERWORLD_TRACK), 'the track vertex leans toward the track colour');
-  assert.ok(dist(road, OVERWORLD_ROAD) < dist(track, OVERWORLD_ROAD), 'and the track is the fainter of the two');
-  assert.deepEqual(water, overworldTint(227, 0).map((v) => Math.min(255, v | 0)), 'a road bit on water tints nothing - the map shows the terrain');
-
+// ROADS 25 replaced ROADS 7's vertex tint with the first iteration's
+// design: the network is LINES over the relief. The relief itself no
+// longer knows about roads; the map traces the arrays into chains once
+// per network and hands the renderer one set per chain.
+test('ROADS 25: the network is traced into chains, simplified, rounded and lifted - not tinted', async () => {
+  const { traceChains, simplifyChain, chaikin, roadModel, RELIEF_LIFT, buildOverworldGrid } = await import('../src/ui/overworldModel.js');
+  // a straight road of five pixels with a spur: two chains, split at the junction
+  const m = new Uint8Array(MAP_W * MAP_H);
+  stamp(m, [{ x: 10, y: 10 }, { x: 11, y: 10 }, { x: 12, y: 10 }, { x: 13, y: 10 }, { x: 14, y: 10 }]);
+  stamp(m, [{ x: 12, y: 10 }, { x: 12, y: 11 }, { x: 12, y: 12 }]);
+  const chains = traceChains(m, MAP_W, MAP_H);
+  assert.equal(chains.length, 3, 'three runs meet at the junction');
+  assert.ok(chains.every((c) => c.length >= 2));
+  // a staircase simplifies to its two ends; a real corner keeps its point
+  const stairs = []; for (let i = 0; i < 24; i++) stairs.push({ x: i, y: Math.floor(i / 3) });
+  assert.equal(simplifyChain(stairs).length, 2, 'the grid stairs are an artifact and go');
+  const corner = [{ x: 0, y: 0 }, { x: 5, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 5 }, { x: 10, y: 10 }];
+  assert.equal(simplifyChain(corner).length, 3, 'a genuine corner stays');
+  assert.ok(chaikin(corner).length > corner.length, 'and is rounded');
+  // the model lifts each class in order: stream < river < track < trunk < route
+  assert.ok(RELIEF_LIFT.stream < RELIEF_LIFT.river && RELIEF_LIFT.river < RELIEF_LIFT.track && RELIEF_LIFT.track < RELIEF_LIFT.trunk && RELIEF_LIFT.trunk < RELIEF_LIFT.route);
+  const ctx = { heightBytes: new Uint8Array(MAP_W * MAP_H).fill(40), width: MAP_W, height: MAP_H };
+  const model = roadModel({ trunk: chains }, ctx);
+  assert.equal(model.trunk.length, 3); assert.equal(model.track.length, 0);
+  assert.ok(model.trunk[0] instanceof Float32Array && model.trunk[0].length % 3 === 0);
+  // the relief no longer tints roads
+  const grid = buildOverworldGrid({ heightBytes: ctx.heightBytes, width: 8, height: 4, climateAt: () => 227 });
+  assert.ok(grid.colors.length === 8 * 4 * 3, 'a plain relief');
   const fs = await import('node:fs');
-  const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
-  assert.match(worker, /net: back/, 'the worker posts the arrays back for the map');
-  const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
-  assert.match(client, /roads\(\) \{ return this\._roads; \}/, 'and the client exposes them');
   const map = fs.readFileSync('src/ui/overworldMap.js', 'utf8');
-  assert.match(map, /grid\.roadsRef !== net/, 'a grid drawn before the network landed is rebuilt with it');
-  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
-  assert.match(host, /roads: \(\) => terrainGen\.roads\(\)/, 'the host hands the accessor through the door');
+  assert.match(map, /this\._ov\.setRoads\(roadModel\(chains, ctx\)\)/, 'the map hands the renderer the chains');
+  assert.match(map, /roadLayers: this\._roadLayers/, 'and the chips choose the layers at draw time');
+  const r = fs.readFileSync('src/render/overworldRenderer.js', 'utf8');
+  assert.match(r, /for \(const \[kind, fallback\] of \[\s*\['stream'/, 'water under the tracks, tracks under the trunk');
 });
 
 // ROADS 8 (Audit 45 F7, finished): A STRANDED TOWN IS NAMED. The other
@@ -512,15 +515,13 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   const src = (await import('node:fs')).readFileSync('src/ui/overworldMap.js', 'utf8');
   assert.match(src, /'dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks'/, 'six chips');
   assert.match(src, /if \(key === 'roads' \|\| key === 'tracks' \|\| key === 'rivers' \|\| key === 'streams'\) this\._ensureTerrain\(\);/, 'a road or water chip re-runs the terrain step');
-  assert.match(src, /grid\.roadsKey !== roadsKey/, 'the grid is keyed on the flags');
-  assert.match(src, /const i = y \* MAP_WIDTH \+ x;/, 'AUDIT 46 A1: the mask is indexed at the WORLD\'s stride, not the window\'s');
-  assert.match(src, /\(showRoads && net\.roads\[i\]\)/, 'and a hidden layer is not drawn');
   // AUDIT 47 A1: the two flags must be READ from the store. The line
   // above proves a hidden layer is not drawn IF showRoads is false; it
   // said nothing about where showRoads comes from, and a mutant that
   // set both to `true` passed every pin with the chips toggling nothing.
-  assert.match(src, /const showRoads = !this\.filters\.roads, showTracks = !this\.filters\.tracks;/,
-    'showRoads and showTracks are the classic inversion of the live store, not constants');
+  // ROADS 25: the flags pick LAYERS at draw time; the relief is not keyed on them.
+  assert.match(src, /const showRoads = !this\.filters\.roads, showTracks = !this\.filters\.tracks;/, 'the classic inversion of the live store');
+  assert.match(src, /this\._roadLayers = \{ trunk: showRoads, track: showTracks/, 'and they choose the layers');
 });
 
 // AUDIT 46 A10: NO CHUNK IS EVER BUILT WITHOUT THE NETWORK. The worker

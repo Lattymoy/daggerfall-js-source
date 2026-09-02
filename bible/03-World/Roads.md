@@ -342,6 +342,24 @@ them. STREAMS: the bank tile as a narrow centre, no outer. Both behind
 `water` on the network object, OFF by default as the mod ships them.
 The smoother's tile set includes the water tiles, as his does.
 
+## ROADS 25 - the map draws lines, the first iteration's design (2026-09-02)
+
+Mac: "in my first ever iteration of roads we used a certain design for
+the roads... I want to use it instead of the smeared dirt look." The
+first road drawing on this map - R1 through RH1, removed whole in RX
+before the ROADS arc began - drew the network as LINES lifted over the
+relief: one chain per run between junctions, Ramer-Douglas-Peucker to
+drop the grid stairs (a diagonal step sits at most 0.71 px off its
+line; the tolerance is 0.9), Chaikin twice to round the corners, each
+class at its own lift so nothing z-fights at a junction. ROADS 7's
+vertex tint - a colour lerped into one vertex per 819 m and smeared
+across the triangles - is gone; the relief no longer knows about roads
+at all. Restored from 01121b9b for four classes and fed with Basic
+Roads' own arrays through a tracer that walks the compass masks into
+chains (his data: 1,508 road chains, 4,289 track). The chips choose
+layers at draw time, so a toggle re-uploads nothing. Lift order, which
+is draw order: stream < river < track < trunk < route.
+
 ## Audit 51 (2026-09-02) - parity by oracle
 
 `01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte

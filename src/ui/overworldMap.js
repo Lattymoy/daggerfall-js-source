@@ -66,6 +66,7 @@ import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
   buildOverworldGrid, buildMarkerModel, routePoints, overworldHeight,
   OVERWORLD_DOT_COLORS, OVERWORLD_DOT_SIZES,
+  traceChains, roadModel,   // ROADS 25
 } from './overworldModel.js';
 import { OverworldRenderer } from '../render/overworldRenderer.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -328,6 +329,7 @@ export class OverworldMapWindow {
         const view = lookAt(eye, [this._cam.tx, this._groundY(), this._cam.tz], [0, 1, 0]);
         renderer.beginFrame(proj, view, [0, 1, 0]);
         this._ov.draw(proj, view, {
+          roadLayers: this._roadLayers ?? null,   // ROADS 25
           time: this._clock,
           cloudY: overworldHeight(0) + CLOUD_LIFT,
           cloudAlpha: this._cloudAlpha(),
@@ -1009,36 +1011,34 @@ export class OverworldMapWindow {
     // Hidden is TRUE, the classic inversion.
     const showRoads = !this.filters.roads, showTracks = !this.filters.tracks;
     const showRivers = !this.filters.rivers, showStreams = !this.filters.streams;   // ROADS 24
-    const roadsKey = `${showRoads ? 'r' : '-'}${showTracks ? 't' : '-'}${showRivers ? 'v' : '-'}${showStreams ? 's' : '-'}`;
     let grid = _gridCache.get(bytes);
-    if (!grid || grid.roadsRef !== net || grid.roadsKey !== roadsKey) {
-      // AUDIT 46 A1: the mask's stride is the WORLD's (MAP_WIDTH), not the
-      // window's - a window built at another mapSize (the tests do) would
-      // otherwise shear the network across the relief. Out of the world,
-      // no path.
-      const pathAt = net && (showRoads || showTracks || (net.water && (showRivers || showStreams)))
-        ? (x, y) => {
-          if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) return 0;
-          const i = y * MAP_WIDTH + x;
-          if (showRoads && net.roads[i]) return 2;
-          if (showTracks && net.tracks[i]) return 1;
-          // ROADS 24: water only when the switch is on and the arrays are there
-          if (net.water && showRivers && net.rivers && net.rivers[i]) return 4;
-          if (net.water && showStreams && net.streams && net.streams[i]) return 3;
-          return 0;
-        }
-        : null;
+    if (!grid) {
       grid = buildOverworldGrid({
         heightBytes: bytes,
         width: this._size.width,
         height: this._size.height,
         climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
-        pathAt,
       });
-      grid.roadsRef = net;
-      grid.roadsKey = roadsKey;
       _gridCache.set(bytes, grid);
     }
+    // ROADS 25 (Mac: the first iteration's design, not the smeared dirt):
+    // the network is LINES over the relief, not tinted vertices - traced
+    // into chains once per network, simplified, rounded, lifted, and
+    // handed to the renderer as one set per chain. The chips choose the
+    // layers at draw time (roadLayers), so a toggle costs nothing.
+    if (net && this._roadsRef !== net) {
+      const W = MAP_WIDTH, H = MAP_HEIGHT;
+      const ctx = { heightBytes: bytes, width: this._size.width, height: this._size.height };
+      const chains = {
+        trunk: traceChains(net.roads, W, H),
+        track: traceChains(net.tracks, W, H),
+        river: net.water && net.rivers ? traceChains(net.rivers, W, H) : [],
+        stream: net.water && net.streams ? traceChains(net.streams, W, H) : [],
+      };
+      this._ov.setRoads(roadModel(chains, ctx));
+      this._roadsRef = net;
+    }
+    this._roadLayers = { trunk: showRoads, track: showTracks, river: !!net?.water && showRivers, stream: !!net?.water && showStreams };
     if (this._grid !== grid) { this._grid = grid; this._ov.setTerrain(grid); }
   }
 

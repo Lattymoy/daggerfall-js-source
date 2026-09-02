@@ -181,6 +181,10 @@ export class OverworldRenderer {
     this._terrain = null;   // { vao, indexCount, buffers[] }
     this._markers = null;   // { vao, count, buffers[] }
     this._route = null;     // { vao, count, buffer }
+    // ROADS 25 (R3W restored): the road layer, ONE SET PER CHAIN, because
+    // roadPoints splits the network at junctions and a single LINE_STRIP
+    // across two unconnected chains would draw a road that is not there.
+    this._roads = { stream: [], river: [], track: [], trunk: [] };
     this._cloud = null;     // { vao, buffer }
     this._fsTri = null;     // backdrop fullscreen triangle
 
@@ -317,6 +321,37 @@ export class OverworldRenderer {
    *   sky {top, bottom} - backdrop gradient
    *   rings - [{ center:[x,y,z], size, color:[r,g,b,a], thickness }]
    */
+  /** ROADS 25: the network as drawable chains, or null to clear it.
+   *  Takes overworldModel.roadModel's output: {stream, river, track,
+   *  trunk}, each an array of Float32Array vertex runs. Kept across
+   *  frames; the map re-sets it when the network or the chips change. */
+  setRoads(model) {
+    const gl = this.gl;
+    this._freeRoads();
+    if (!model) return;
+    for (const kind of Object.keys(this._roads)) {
+      for (const points of model[kind] ?? []) {
+        if (!points || points.length < 6) continue;   // a lone vertex is a dot, not a road
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+        const b = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.bindVertexArray(null);
+        this._roads[kind].push({ vao, count: points.length / 3, buffers: [b] });
+      }
+    }
+  }
+
+  _freeRoads() {
+    for (const kind of Object.keys(this._roads)) {
+      for (const set of this._roads[kind]) this._freeSet(set);
+      this._roads[kind] = [];
+    }
+  }
+
   draw(proj, view, opts = {}) {
     const gl = this.gl;
     gl.disable(gl.CULL_FACE);
@@ -344,6 +379,29 @@ export class OverworldRenderer {
 
     // route + markers ride ON the picture, not in it: depth off
     gl.disable(gl.DEPTH_TEST);
+    // ROADS 25 (R3W restored): roads FIRST in the overlay group, so the
+    // flight route and the markers stay legible on top of them. Water
+    // under the tracks, tracks under the trunk - the lift order, drawn
+    // in the same order. A layer the map has switched off is skipped.
+    const layers = opts.roadLayers;
+    if (layers) {
+      gl.useProgram(this.pLine);
+      gl.uniformMatrix4fv(this.u.lProj, false, proj);
+      gl.uniformMatrix4fv(this.u.lView, false, view);
+      for (const [kind, fallback] of [
+        ['stream', [0.38, 0.50, 0.65, 0.85]],
+        ['river', [0.23, 0.38, 0.59, 1.0]],
+        ['track', [0.58, 0.49, 0.36, 0.85]],
+        ['trunk', [0.72, 0.62, 0.45, 1.0]],
+      ]) {
+        if (!layers[kind] || !this._roads[kind].length) continue;
+        gl.uniform4fv(this.u.lColor, opts.roadColors?.[kind] ?? fallback);
+        for (const set of this._roads[kind]) {
+          gl.bindVertexArray(set.vao);
+          gl.drawArrays(gl.LINE_STRIP, 0, set.count);
+        }
+      }
+    }
     if (this._route) {
       gl.useProgram(this.pLine);
       gl.uniformMatrix4fv(this.u.lProj, false, proj);
