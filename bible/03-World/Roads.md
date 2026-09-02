@@ -159,6 +159,24 @@ Pinned: 7 turns to 2 on the fixture slope. The dial is in ROAD_DIALS
 with the rest; a bigger number lays longer stretches at the cost of
 hugging the terrain less closely.
 
+## ROADS 6 - the ring (2026-09-01)
+
+Measured on the hand-drawn network rather than assumed: full
+eight-pixel loops around a location essentially never occur (none of
+eight, four of seven), five-neighbour ARCS are everywhere (890). A ring
+is a through-road detouring around a town on one side. Two rules
+produce it: a settlement's pixel - of any type, a village or a dungeon
+as much as a city - is never an intermediate step, only a start or an
+end; and NO CORNER CUTTING, a diagonal step may not pass between two
+pixels either of which is a town or water. The second is what turns a
+one-diagonal kiss of the town's corner into the arc through its corner
+pixel, and it keeps a road off a coast's diagonal seams too. A town on
+the line between two others gets the arc plus its own two spurs, which
+is the ring; a village in the way is walked around, not painted through.
+The hand's fifth neighbour is its habit of returning to the line after
+the bypass; A* has no reason to when the destination sits on the new
+line, and the pin holds the principle rather than the habit.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

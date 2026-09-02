@@ -320,3 +320,38 @@ test('ROADS 5: the turn cost turns a staircase into stretches', () => {
   const legacy = route(a, b, { heightAt: flat, isWater: () => false, existing: blank(), d: { climbCost: 40, descentCost: 10, highCost: 0.08, highAbove: 40, roadDiscount: 0.5 } });
   assert.ok(legacy && legacy.length === paid.length, 'a missing dial defaults rather than poisoning the cost');
 });
+
+// ROADS 6 (2026-09-01): ROADS RING THE TOWNS THEY PASS. Measured on the
+// hand-drawn network: five-neighbour ARCS around a location are
+// everywhere (890) and full eight-pixel loops essentially never (none).
+// A ring is a through-road detouring around a town on one side, and it
+// falls out of one rule - a settlement's pixel is never an intermediate
+// step. The town on the line between two others gets the arc plus its
+// own two spurs, which IS the ring; and a village on the line between
+// two cities is walked around rather than cut through.
+test('ROADS 6: a town between two others is ringed, and a village in the way is not cut through', () => {
+  const A = { x: 200, y: 200, type: LT.TownCity }, B = { x: 230, y: 200, type: LT.TownHamlet }, C = { x: 260, y: 200, type: LT.TownCity };
+  const V = { x: 245, y: 200, type: LT.TownVillage };   // on the B-C line
+  const { roads } = buildRoadNetwork({ locations: [A, B, C, V], heightAt: flat, isWater: () => false, dials: { neighbours: 3, roadReach: 100 } });
+  const at = (x, y) => roads[y * MAP_W + x];
+  // B carries only its own spurs: the A-C through-road did not pass across it.
+  const bitsB = at(B.x, B.y);
+  assert.ok(bitsB !== 0, 'B is on the network');
+  // the pixels around B: an arc of road neighbours, five or more
+  let ringB = 0;
+  for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]) if (at(B.x + dx, B.y + dy)) ringB++;
+  // Four is the arc: the side the road came in on, the corner, the far
+  // side, the other corner. The hand-drawn data's fifth is the habit of
+  // returning to the original line after the bypass, which A* has no
+  // reason to do when the destination already sits on the new line.
+  assert.ok(ringB >= 4, `B is ringed by an arc (${ringB} of 8 neighbours carry road)`);
+  // NO CORNER CUTTING: the road did not squeeze diagonally past B - the
+  // arc goes THROUGH a corner pixel (SW or NW) rather than skipping it.
+  assert.ok(at(B.x - 1, B.y + 1) || at(B.x - 1, B.y - 1), 'the bypass passes through a corner pixel, not across it');
+  // the village: a road passes it but never THROUGH it as an intermediate -
+  // its pixel carries at most the bits of its own track (or none).
+  const bitsV = at(V.x, V.y);
+  const throughV = (bitsV & DIR.E) && (bitsV & DIR.W);
+  assert.ok(!throughV, 'the B-C road did not cut across the village pixel');
+  assert.ok(at(V.x, V.y - 1) || at(V.x, V.y + 1), 'it went around instead');
+});

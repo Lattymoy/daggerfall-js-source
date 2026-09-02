@@ -107,6 +107,18 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   const roadNodes = locations.filter((l) => ROAD_TYPES.has(l.type) && inMap(l));
   const trackNodes = locations.filter((l) => TRACK_TYPES.has(l.type) && inMap(l));
 
+  // ROADS 6: A SETTLEMENT'S PIXEL IS NEVER A STEP ON THE WAY SOMEWHERE
+  // ELSE. The hand-drawn network rings the towns it passes - measured on
+  // it: five-neighbour ARCS around a location are everywhere (890) and
+  // full loops essentially never (none of eight) - and a through-road
+  // that cut across a village's pixel would paint through its fields.
+  // So every location, of every type, is blocked as an INTERMEDIATE;
+  // a route may still start or end on one. A* then arcs around a town
+  // by itself, and a town on the line between two others gets the arc
+  // plus its own two spurs, which IS the ring.
+  const occupied = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
+  for (const l of locations) if (inMap(l)) occupied[l.y * MAP_WIDTH + l.x] = 1;
+
   // THE ROAD GRAPH: k-nearest within reach, then a spanning tree over
   // ALL road nodes so nothing is stranded - the tree may add long
   // edges, and that is the point; a town with no road is a bug.
@@ -130,7 +142,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [] };
   const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region }, { x: b.x, y: b.y, region: b.region }]); };
   for (const [i, j] of routed) {
-    const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d });
+    const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied });
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
   }
 
@@ -146,7 +158,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
     let best = null; let bd = Infinity;
     for (const r of roadNodes) { const dd = dist(t, r); if (dd < bd) { bd = dd; best = r; } }
     if (!best || bd > d.trackReach) continue;
-    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths });
+    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: occupied });
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, best);
   }
   return { roads, tracks, stats };
@@ -215,7 +227,7 @@ export function route(from, to, opts) {
  * turn happens. The result prefers "E for a while, then NE for a while"
  * to alternating, which is the same length and far fewer corners.
  */
-function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null }, margin) {
+function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, blocked = null }, margin) {
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin), x1 = Math.min(MAP_WIDTH - 1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(0, Math.min(from.y, to.y) - margin), y1 = Math.min(MAP_HEIGHT - 1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
@@ -252,6 +264,16 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null },
       if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
       const ni = idx(nx, ny) * 8 + k;
       if (closed[ni] || isWater(nx, ny)) continue;
+      // ROADS 6: an occupied pixel is passable only as the destination
+      const isBlockedAt = (bx, by) => (blocked && blocked[by * MAP_WIDTH + bx]) || isWater(bx, by);
+      if (blocked && blocked[ny * MAP_WIDTH + nx] && idx(nx, ny) !== goal) continue;
+      // ROADS 6: NO CORNER CUTTING. A diagonal step passes between two
+      // pixels; if either is a town or water the road cannot squeeze
+      // through the gap. This is what makes a through-road ARC around a
+      // town - the hand-drawn five-neighbour shape - instead of kissing
+      // its corner in one diagonal, and it keeps a road off a coast's
+      // diagonal seams.
+      if (dx && dy && (isBlockedAt(cx + dx, cy) || isBlockedAt(cx, cy + dy))) continue;
       const hn = heightAt(nx, ny);
       const rise = hn - hc;
       let cost = (dx && dy) ? Math.SQRT2 : 1;
