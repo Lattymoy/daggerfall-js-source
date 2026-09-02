@@ -162,3 +162,41 @@ test('EE10: a walked road holds less snow than the field beside it, and sheets t
   const w = readFileSync('src/scenes/world.js', 'utf8');
   assert.match(w, /if \(tilemapBytes\) sim\.setHard\(tilemapBytes, ROAD_RECORDS\);/, 'the field\u2019s road is the tile\u2019s road');
 });
+
+// ═══ EE11: water holds nothing, NPCs tread, and snow is never flat ══
+test('EE11: no snow on water, no blade under the sea, NPCs stamp the field, and the snow has drifts', async () => {
+  const dim = 8; const hDim = dim + 1;
+  const heights = new Float32Array(hDim * hDim).fill(100);
+  for (let x = 0; x < hDim; x++) { heights[x * hDim] = 1; heights[x * hDim + 1] = 1; }   // the z=0 tile row lies under the sea
+  const tilemap = new Uint8Array(dim * dim); for (let k = 0; k < dim * dim; k++) tilemap[k] = 2 << 2;
+  tilemap[5 * dim + 5] = 0;                                                                // one water tile, by record
+  const f = new SurfaceField({ heights, tileDim: dim });
+  f.setWater(tilemap, new Set([0]), 5); f.setBase(1);
+  for (let i = 0; i < 60; i++) f.tick(60, { warmth: 0.1, snowRate: 0.5, rainRate: 0.3 });
+  const cellOf = (tx, tz) => ((tz * f.cells + 1) * f.dim + (tx * f.cells + 1)) * 4;
+  assert.ok(f.data[cellOf(4, 4) + 1] > 0.5, 'the lawn holds snow');
+  assert.equal(f.data[cellOf(5, 5) + 1], 0, 'a water tile holds none - it is water');
+  assert.equal(f.data[cellOf(5, 5)], 0, 'and pools no rain - it is rain already');
+  assert.equal(f.data[cellOf(4, 0) + 1], 0, 'a tile under the sea plane holds none either, whatever its record');
+  // the grass: no blade rooted below the water
+  const { placeGrass } = await import('../src/render/groundSurfaces.js');
+  const g = placeGrass({ tilemap, grassOf: [0, 0, 1, 0], heights, tileDim: dim, tileSize: 6.4, waterLevel: 5 });
+  for (let i = 0; i < g.count; i++) assert.ok(g.data[i * 8 + 1] > 5, 'a blade stands above the sea');
+  const gAll = placeGrass({ tilemap, grassOf: [0, 0, 1, 0], heights, tileDim: dim, tileSize: 6.4 });
+  assert.ok(gAll.count > g.count, 'the water level is what removed them');
+  // the host: the sea plane in the placer's own units, the field's water
+  // mask beside its roads, and the town's people stamping as they walk
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /waterLevel: SCALED_OCEAN_ELEVATION \* DEFAULT_TERRAIN_SCALE \+ 0\.5,/);
+  assert.match(w, /sim\.setWater\(tilemapBytes, new Set\(\[0\]\), SCALED_OCEAN_ELEVATION \* DEFAULT_TERRAIN_SCALE \+ 0\.5\);/);
+  assert.match(w, /for \(const it of p\.population\.pool\) \{\s*\n\s*if \(!it\.active \|\| !it\.visible \|\| !it\.person\?\.pos\) continue;/, 'active, visible people only');
+  assert.match(w, /it\.person\._fieldStep = \[nx, nz\];/, 'each person carries its own last footfall');
+  // the shader: drifts and sastrugi shape the NORMAL and the colour, and
+  // a trodden print is dark enough to read
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const ti = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(ti, r.indexOf('`;', ti));
+  assert.match(fs, /float drift = tfbm\(vLocalXZ \* 0\.045\);/);
+  assert.match(fs, /float sast = tfbm\(vLocalXZ \* vec2\(0\.42, 0\.11\) \+ 7\.0\);/, 'sastrugi are anisotropic - a comb, not a blob');
+  assert.match(fs, /vec3 driftN = normalize\(vec3\(-\(dGx \* 9\.0 \+ sGx \* 4\.0\), 1\.0, -\(dGz \* 9\.0\)\)\);/, 'a drift is a shape before it is a shade');
+  assert.match(fs, /vec3 packed2 = vec3\(0\.56, 0\.62, 0\.74\);/, 'a print is dark enough to see');
+});

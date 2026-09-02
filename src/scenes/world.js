@@ -134,7 +134,7 @@ import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUD
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, ghostSampler } from '../world/terrainSampler.js';   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // EE11: the sea plane, for the grass and the field   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The court release's RandomStartMarker arm (StreamingWorld's
 // PositionPlayerToLocation), the law and its two location-type reads.
@@ -893,6 +893,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // sheet the rain, and start trodden. Read off the same tilemap that
     // draws them, so the field's road is exactly the tile's road.
     if (tilemapBytes) sim.setHard(tilemapBytes, ROAD_RECORDS);
+    // EE11: and its WATER - a water tile by record, or any cell under the
+    // sea plane - holds no snow and pools no rain, because it is water
+    if (tilemapBytes) sim.setWater(tilemapBytes, new Set([0]), SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5);
     // the calendar's snow is THERE on the first frame, not built over an hour
     for (let i = 0; i < 40; i++) sim.tick(60, { warmth: warmthAt({ climateBase: climateType, dayOfYear: day, minuteOfDay: 240 }) });
     const tex = renderer.createFieldTexture(FIELD_DIM);
@@ -915,6 +918,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const placed = placeGrass({
       tilemap: tilemapBytes, grassOf, heights: samples, tileDim: TERRAIN_TILE_DIM, tileSize: 6.4,
       heightScale: MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE, seed: (px * 73856093) ^ (py * 19349663), perTile,
+      // EE11: no blade under the sea plane - the tiler's own ocean line,
+      // in the same units the placer's heights are in
+      waterLevel: SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5,
     });
     return renderer.createGrass(placed.data, placed.count);
   }
@@ -6578,6 +6584,24 @@ export async function bootWorld(canvas, renderer, params, status) {
                 const yaw = walkMode ? player.yaw : cam.yaw;
                 f.sim.stamp(lx + Math.cos(yaw) * side, lz - Math.sin(yaw) * side);
                 f.lastStep = [lx, lz];
+              }
+            }
+            // EE11 (Mac: NPCs need to deform the snow too). The town's
+            // wandering people stamp the field they walk on, by the same
+            // stride rule the player uses - each carries its own last
+            // footfall - so a busy street tramples itself into a path.
+            // Active, visible people only: a pool entry asleep in the
+            // recycle bin is not walking anywhere.
+            if (p.population?.pool) {
+              for (const it of p.population.pool) {
+                if (!it.active || !it.visible || !it.person?.pos) continue;
+                const nx = it.person.pos[0] - t[0]; const nz = it.person.pos[2] - t[2];
+                if (nx < 0 || nz < 0 || nx >= TERRAIN_SIZE || nz >= TERRAIN_SIZE) continue;
+                const last = it.person._fieldStep;
+                if (!last || Math.hypot(nx - last[0], nz - last[1]) > 0.75) {
+                  f.sim.stamp(nx, nz);
+                  it.person._fieldStep = [nx, nz];
+                }
               }
             }
             const span = f.sim.flush();

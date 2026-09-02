@@ -591,10 +591,29 @@ void main() {
     float sL = texture(uField, fuv - vec2(e, 0.0)).g, sR = texture(uField, fuv + vec2(e, 0.0)).g;
     float sD = texture(uField, fuv - vec2(0.0, e)).g, sU = texture(uField, fuv + vec2(0.0, e)).g;
     vec3 snowN = normalize(vec3((sL - sR) * 22.0 * uSnowM, 1.0, (sD - sU) * 22.0 * uSnowM));
-    n = normalize(mix(n, snowN, snowCov));
+    // EE11 (Mac: the snow looks too flat in towns). The field's cells are
+    // 1.6m, and between them a uniform depth is a uniform white. Snow is
+    // never flat: wind lays it in DRIFTS and combs SASTRUGI across them.
+    // Both are fields over the piece's own position - a low broad drift
+    // and a long thin comb - and both act on the NORMAL as well as the
+    // colour, because a drift is a shape before it is a shade. The
+    // tile's own relief (EE6) stays under THIN snow and fades under deep,
+    // so cobbles show through a dusting and vanish under a fall.
+    float drift = tfbm(vLocalXZ * 0.045);
+    float sast = tfbm(vLocalXZ * vec2(0.42, 0.11) + 7.0);
+    float dGx = tfbm((vLocalXZ + vec2(0.6, 0.0)) * 0.045) - drift;
+    float dGz = tfbm((vLocalXZ + vec2(0.0, 0.6)) * 0.045) - drift;
+    float sGx = tfbm((vLocalXZ + vec2(0.3, 0.0)) * vec2(0.42, 0.11) + 7.0) - sast;
+    vec3 driftN = normalize(vec3(-(dGx * 9.0 + sGx * 4.0), 1.0, -(dGz * 9.0)));
+    float deep = smoothstep(0.10, 0.45, snowD);
+    vec3 snowShape = normalize(mix(snowN, driftN, 0.55));
+    n = normalize(mix(n, snowShape, snowCov * (0.55 + 0.45 * deep)));
     vec3 fresh = vec3(0.86, 0.89, 0.95);
-    vec3 packed2 = vec3(0.66, 0.70, 0.79);
-    tex = mix(tex, mix(fresh, packed2, f.b), snowCov);
+    vec3 hollow = vec3(0.70, 0.78, 0.92);                                       // a hollow is sky-lit, and blue
+    vec3 packed2 = vec3(0.56, 0.62, 0.74);                                      // trodden snow is denser ice: duller, bluer - and now DARK enough to read as a print
+    vec3 snowC = mix(hollow, fresh, smoothstep(0.30, 0.70, drift * 0.7 + sast * 0.3));
+    snowC *= 0.94 + 0.10 * sast;                                                // the comb's crests catch light
+    tex = mix(tex, mix(snowC, packed2, f.b), snowCov);
     tex = mix(tex, tex * vec3(0.92, 0.94, 0.98), f.a * snowCov * 0.6);   // wear: the memory of a path
     pud = smoothstep(0.05, 0.28, f.r) * (1.0 - snowCov) * uFieldAmt;
     if (pud > 0.001) {

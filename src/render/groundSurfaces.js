@@ -488,7 +488,7 @@ export function buildEnhancedTiles(layers, { size = 128, surfaces = null, seed =
  * Returns a Float32Array of 8 floats per blade: x, y, z (piece-local),
  * height, phase, leanX, leanZ, tint - and the count.
  */
-export function placeGrass({ tilemap, grassOf, heights, tileDim = 128, tileSize = 6.4, heightScale = 1, perTile = 6, seed = 0x2f6e2b1 }) {
+export function placeGrass({ tilemap, grassOf, heights, tileDim = 128, tileSize = 6.4, heightScale = 1, perTile = 6, seed = 0x2f6e2b1, waterLevel = -Infinity }) {
   let s = (seed >>> 0) || 1;
   const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
   const hDim = tileDim + 1;
@@ -508,7 +508,13 @@ export function placeGrass({ tilemap, grassOf, heights, tileDim = 128, tileSize 
       const n = Math.floor(perTile * g + rnd());   // fractional densities round stochastically, so 0.25 a tile is one blade in four
       for (let i = 0; i < n; i++) {
         const lx = (tx + rnd()) * tileSize; const lz = (tz + rnd()) * tileSize;
-        out.push(lx, heightAt(lx, lz), lz, 0.55 + rnd() * 0.9, rnd() * 6.2832, (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.5, rnd());
+        const y = heightAt(lx, lz);
+        // EE11 (Mac: the ocean has grass on top): a coastal tile can be
+        // GRASS by record and still lie under the sea plane, and a blade
+        // rooted below the water pokes through it. No blade below the
+        // water level, whatever the record says.
+        if (y <= waterLevel) { rnd(); rnd(); rnd(); rnd(); rnd(); rnd(); continue; }   // burn the same draws, so the scatter stays deterministic
+        out.push(lx, y, lz, 0.55 + rnd() * 0.9, rnd() * 6.2832, (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.5, rnd());
       }
     }
   }

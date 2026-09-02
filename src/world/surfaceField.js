@@ -117,6 +117,7 @@ export class SurfaceField {
       const tx = fx - x0; const tz = fz - z0;
       return (at(x0, z0) * (1 - tx) + at(x0 + 1, z0) * tx) * (1 - tz) + (at(x0, z0 + 1) * (1 - tx) + at(x0 + 1, z0 + 1) * tx) * tz;
     };
+    this.heightAt = hAt;   // EE11: setWater reads the same terrain the pooling did
     const r = this.cellSize * 1.5;
     for (let j = 0; j < this.dim; j++) {
       for (let i = 0; i < this.dim; i++) {
@@ -140,6 +141,30 @@ export class SurfaceField {
    *  cell of a tile whose record is in `hardRecords` becomes hard; the
    *  edge cells of a hard tile are half-hard, so a road's verge is a
    *  gradient and not a cliff. Roads start PACKED, because they are. */
+  /** EE11 (Mac: water areas should not be covered with snow): mark the
+   *  WET cells - a water tile by record, or any cell at or under the sea
+   *  plane - and they hold no base, take no fall, and pool no rain,
+   *  because they are already water. Read off the same tilemap and the
+   *  same heights the field is built on. */
+  setWater(tilemap, waterRecords, waterLevel) {
+    const c = this.cells; const dim = this.dim;
+    if (!this.wet) this.wet = new Uint8Array(dim * dim);
+    this.wet.fill(0);
+    for (let tz = 0; tz < this.tileDim; tz++) {
+      for (let tx = 0; tx < this.tileDim; tx++) {
+        const byRecord = waterRecords.has(tilemap[tz * this.tileDim + tx] >> 2);
+        for (let dz = 0; dz < c; dz++) {
+          for (let dx = 0; dx < c; dx++) {
+            const k = (tz * c + dz) * dim + (tx * c + dx);
+            const under = this.heightAt((tx * c + dx + 0.5) * this.cellSize, (tz * c + dz + 0.5) * this.cellSize) <= waterLevel;
+            if (byRecord || under) { this.wet[k] = 1; this.data[k * 4 + 1] = 0; this.data[k * 4] = 0; }
+          }
+        }
+      }
+    }
+    this.dirtyRows.fill(1);
+  }
+
   setHard(tilemap, hardRecords) {
     const c = this.cells; const dim = this.dim;
     this.hard.fill(0);
@@ -177,6 +202,8 @@ export class SurfaceField {
       const w0 = water; const s0 = snow; const p0 = pack; const e0 = wear;
       // 1. rain fills, where water actually goes
       const hard = this.hard[k];
+      // EE11: a wet cell is water already - it holds nothing and pools nothing
+      if (this.wet && this.wet[k]) { d[o] = 0; d[o + 1] = 0; d[o + 2] = 0; d[o + 3] = 0; if (w0 || s0 || p0 || e0) this.dirtyRows[k / this.dim | 0] = 1; continue; }
       // EE10: rain SHEETS on a hard surface - nothing soaks in - so a road
       // wets faster than the ground beside it and pools in its dips
       if (rainRate > 0) water += rainRate * dt * (0.15 + pool[k] * 1.5 + hard * 0.9) * 0.02;
