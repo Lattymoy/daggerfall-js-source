@@ -279,11 +279,11 @@ combat line numbers below are refreshed with it.
 - `src/characters/enemyCasting.js:91` - * FLAGGED, and now exactly one term wide: HasClearPathToShootProjectile
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
 - `src/combat/fpsSpellCasting.js:178` - * FLAGGED: the release is not the spell. DFU raises OnReleaseFrame
-- `src/scenes/dungeonContext.js:1674` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/exterior.js:1031` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1283` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/world.js:2673` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/worldModes.js:1628` - FLAGGED, above ground only, each with the DFU line it owes.
+- `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/exterior.js:1049` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1301` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/world.js:2691` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/worldModes.js:1659` - FLAGGED, above ground only, each with the DFU line it owes.
 - `src/systems/inputActions.js:465` - STILL FLAGGED:
 - `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.

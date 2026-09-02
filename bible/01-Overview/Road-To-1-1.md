@@ -192,7 +192,9 @@ the record), all fixed.
   effect popups, the guild popup in both modes, the TFAC portrait; the
   docked bar's occlusion and the quest static-NPC arm stay flagged.
 
-What remains after Wave D is the 17 flags of `Home.md`, each with its
+What remains after Wave D and the closeout tail (the spell-hand port,
+`paused()` adopted by every host, six section C rows struck) is the 19
+flags of `Home.md`, each with its
 blocker named at the site: no asset in the repo (the PlayerTorch
 prefab, the two ship pixels), a DFU original that does not exist (the
 standalone dungeon host's windows, the enhanced menu's keyboard), or

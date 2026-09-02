@@ -1,6 +1,6 @@
 # Port Status 2026-09-02 - 1:1 against Daggerfall Unity, re-measured
 
-*The state of the tree at commit `c3c12ee`, after the Road-to-1:1
+*The state of the tree at the campaign's closing head (the commit that carries this page; the figures below were first taken at `c3c12ee` and re-taken at the close), after the Road-to-1:1
 campaign (`Road-To-1-1.md`; audited in `Audit-45.md`). Supersedes
 `Port-Status-2026-09.md`, which measured `6881171` - the tree AUDIT 44
 found, before its 166-defect fix wave and before the campaign. Every
@@ -13,7 +13,7 @@ the method and the old one is named as corrected.*
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
 closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **17 open flags** with the blocker the
+three lists at the bottom: the **19 open flags** with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
 routed and not struck**, and the **deliberate departures that are not on
 the road**. Everything above those lists is the measurement that makes
@@ -27,7 +27,7 @@ superseded for volume figures.
 The law is still the strongest thing in the tree and the campaign did
 not need to touch it; what the campaign moved was the **wiring** - the
 class AUDIT 44 named - and what remains is no longer a list of defects
-but a list of **seventeen sites with a named blocker, fourteen ledger
+but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
 
@@ -35,13 +35,13 @@ ran past them - and a set of departures that were never on the road.**
 
 ## The measurement
 
-| | at `6881171` (superseded page) | at `c3c12ee` (this page) | method |
+| | at `6881171` (superseded page) | at the close (this page) | method |
 |---|---|---|---|
-| `src/` modules | 477 | **500** | `git ls-tree -r <sha> --name-only \| grep -c '^src/.*\.js$'` |
-| `src/` lines | 164,220 | **185,899** | same list, concatenated through `wc -l` |
+| `src/` modules | 477 | **501** | `git ls-tree -r <sha> --name-only \| grep -c '^src/.*\.js$'` |
+| `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
-| suite | 5,110 tests | **6,017 tests, 5,810 pass, 0 fail, 207 data-gated skips, 84.8 s** | `node --test` at `c3c12ee` |
-| open flags | 151 | **17** | `node tools/regenOpenFlags.mjs --check` -> "17 entries, up to date"; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
+| open flags | 151 | **19** | `node tools/regenOpenFlags.mjs --check` -> "19 entries, up to date" (17 at `c3c12ee`; the closeout tail's spell-hand port added two, listed below); the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -333,7 +333,7 @@ superseded page's own closing list of what remained open:
 | `GetQuestorName`'s name bank | **built** - `systems/npcSession.js:588` (ROAD-A A9) |
 | the pause architecture | **narrowed** - a real window stack with a `PauseWhileOpen` latch; no host reads `paused()` |
 | the voxel rig is editor-only | **unchanged** - a departure, not on the road |
-| the 151 FLAGGED/INTERIM sites | **17** |
+| the 151 FLAGGED/INTERIM sites | **19** |
 | no parity oracle for the port-original render modules | **unchanged** - structural |
 
 The campaign's own arithmetic, from its machine records: Wave A 12
@@ -350,7 +350,7 @@ became Wave D's 42 slices.
 
 # What remains
 
-## 1. The seventeen open flags, each with its blocker
+## 1. The nineteen open flags, each with its blocker
 
 The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 `tools/regenOpenFlags.mjs` and pinned both ways by
@@ -358,7 +358,7 @@ The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 Ten carry a **blocked** verdict from the closeout triage
 (`closeout-audit.json`, `triage` rows with `verdict: "blocked"`); six
 are the **narrowed remainders** Wave D recorded rather than shipped
-(`wave-d-reports.json`, `recorded`); one is neither.
+(`wave-d-reports.json`, `recorded`); one is neither; two were recorded by the closeout tail's port of `FPSSpellCasting.cs` (the classic spell-hand animations, `src/combat/fpsSpellCasting.js`) and are listed last.
 
 **Blocked - no 1:1 target.**
 
@@ -511,6 +511,21 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17,
 which is `regenOpenFlags --check`'s answer exactly.
+
+**Recorded by the closeout tail - the spell-hand port.**
+
+- **`src/combat/fpsSpellCasting.js:178`** - THE RELEASE IS NOT THE
+  SPELL. DFU raises OnReleaseFrame five frames (0.2 s) into the hand
+  motion and spends/launches the spell there; this port's cast is
+  synchronous (`hostMagic.castInput` resolves the whole cast and then
+  raises the release moment), so the hands start ON the release rather
+  than 0.2 s before it. *Closable, one file in the magic lane: defer
+  hostMagic's cast to the animation's release frame.*
+- **`src/combat/fpsSpellCasting.js:101`** - TextureReplacement's
+  loose-file CIF override (`TryImportCifRci`) is not consulted, the same
+  gap `combat/fpsWeapon.js` has for WEAPON*.CIF: the replacement
+  registry covers archive textures only. *Mod infrastructure - a
+  departure not on the road (Ledger A), recorded here for the count.*
 
 ## 2. Port-Ledger section C rows still routed and not struck
 
