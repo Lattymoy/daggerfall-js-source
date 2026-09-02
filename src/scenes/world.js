@@ -6721,7 +6721,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           fieldLastTick = nowMs;
           const w = currentWeather();
           const rates = { rainRate: w === 'rain' ? 0.6 : w === 'thunder' ? 1 : 0, snowRate: w === 'snow' ? 0.8 : 0 };
-          const day = fieldDay();   // EE14: pinned by ?day= for a test const minute = worldMinutes() % 1440;
+          const day = fieldDay(); const minute = worldMinutes() % 1440;   // EE14: pinned by ?day= for a test
           const cover = sky?.cloudShadow?.cover ?? 0;
           const feet = walkMode ? player.pos : cam.pos;
           // EE9: ROUND-ROBIN. Nine near-ring fields of 262,144 cells each,
