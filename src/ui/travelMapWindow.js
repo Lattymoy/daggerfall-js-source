@@ -1005,6 +1005,26 @@ export class TravelMapWindow {
 
   // --- the host seam ---
 
+  /** D4: THE KEY-UP EDGE. A DFU Button with an OnKeyboardEvent handler
+   *  is raised on BOTH edges of its Hotkey (Button.cs:79-92), and this
+   *  window's travel popup is the one place in the port that needs the
+   *  release: EXIT plays its click on the press and pops on the
+   *  release (DaggerfallTravelPopUp.cs:482-495). Routed exactly like
+   *  `input` above - to whichever sub-window owns the keyboard - and
+   *  nothing else on this map reads a key-up, so the map's own arms
+   *  answer nothing rather than mirroring the ladder. */
+  keyup(code, e = null) {
+    if (this.telePopUp) {
+      this.telePopUp.keyup?.(code, e);
+      if (this.telePopUp?.done) this.telePopUp = null;
+      return;
+    }
+    if (this.popUp) {
+      this.popUp.keyup?.(code, e);
+      if (this.popUp?.done) this.popUp = null;
+    }
+  }
+
   input(code, e = null) {
     if (this.telePopUp) {
       this.telePopUp.input(code, e);

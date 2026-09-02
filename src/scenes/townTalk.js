@@ -31,6 +31,7 @@ import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { overlayAction } from '../ui/input.js';
 import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
+import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
@@ -325,6 +326,25 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return false;
   }
 
+  /** D4 - THE OVERLAY'S KEY-UP EDGE. Every host binds `keyup` on the
+   *  window already (it is how the movement key Set is drained) and
+   *  none of them forwarded it here, so an overlay could only ever see
+   *  a press. DFU's UI sees both: a Button with an OnKeyboardEvent
+   *  handler is raised on KeyDown AND KeyUp (Button.cs:79-92), and the
+   *  travel popup's EXIT is the deferral that needs the release
+   *  (DaggerfallTravelPopUp.cs:482-495). OPTIONAL by design - a window
+   *  that does not define `keyup` is a window whose buttons subscribe
+   *  no keyboard handler, which is nearly all of them. Answers whether
+   *  the overlay consumed it, the way `keydown` does; a host that
+   *  drains its own key Set on the same event does that first. */
+  function keyup(e) {
+    if (!overlay) return false;
+    if (typeof overlay.keyup !== 'function') return true;
+    overlay.keyup(e.code, e);
+    if (overlay?.done) dropOverlay();
+    return true;
+  }
+
   // G2: the arrest/court flows push their own windows through the
   // same overlay slot (one motor-holding seam).
   let _onOverlayClosed = null;
@@ -423,6 +443,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  callback rather than disposed. Returns true when it went up. */
   function pushOverlay(win, onClosed = null) {
     if (!win) return false;
+    if (hudFade.fadeInProgress) hudFade.clearFade();   // D4: UserInterfaceManager.PushWindow (:88-89), gate and all
     // ROAD review-p: WHAT THIS PUSH COVERS, read before reconcile can
     // move the stack. A full slot is a live window, and its callback
     // rides down with it. An EMPTY slot is one of two things - nothing
@@ -448,6 +469,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // uploadTexture memoizes forever, so a silent replace both leaks
   // and leaves a live cache key behind.
   function showOverlay(win, onClosed = null) {
+    // D4 - "Clear fade in progress when any UI window is pushed"
+    // (UserInterfaceManager.cs:86-89). Both doors into this slot are
+    // PushWindow, so both clear it: a half-finished fade under a window
+    // the player just opened would go on lerping the HUD's parent panel
+    // for the rest of its duration. THE GATE IS THE CALLER'S AND IT
+    // MATTERS: ClearFade itself sets the panel to clear
+    // unconditionally, so a push made while the screen is SMASHED to
+    // black - which raises no fadeInProgress - must not reach it, or
+    // the level-up box the fast-travel arrival raises would tear the
+    // black off a frame before performFastTravel fades it.
+    if (hudFade.fadeInProgress) hudFade.clearFade();
     // Same order as dropOverlay, for the same reason: the slot holds
     // the SUCCESSOR before the outgoing window is disposed, so an
     // outgoing window that closes this slot from inside its dispose
@@ -967,7 +999,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
+    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a

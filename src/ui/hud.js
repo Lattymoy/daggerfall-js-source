@@ -20,6 +20,7 @@ import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin 
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
+import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
 // VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
@@ -304,18 +305,36 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
  *  the colour it writes is the HUD's PARENT PANEL background - a tint
  *  under every element - so it draws here as a screen quad before the
  *  bars, with the detector's HealthLost the vitals rig just computed.
- *  The two fade gates have no reader in this HUD and answer false
- *  (recorded in Audit-28.md). */
+ *
+ *  D4: THE PANEL IS ui/fadeLayer.js's, and this is now the whole of
+ *  DaggerfallHUD's share of one Unity Panel that has TWO writers.
+ *  FadeBehaviour targets dfHUD.ParentPanel (DaggerfallUI.cs:409) and
+ *  HUDFlickerController is a component OF that panel
+ *  (DaggerfallHUD.cs:163) assigning `Parent.BackgroundColor`
+ *  (HUDFlickerController.cs:81-82). So the order here is DFU's own:
+ *  TickFade advances the fade, NextCycle may overwrite the colour -
+ *  unless one of its two gates says a fade owns the panel this frame
+ *  (:46-47) - and the panel then draws once. Both gates had no reader
+ *  until this slice and were answered false; they are read from the
+ *  fade now, which is what stops a healthy player's Normal arm from
+ *  clearing a smashed-to-black screen on the next frame.
+ *
+ *  `dt` is the caller's PAUSED dt for both: FadeBehaviour.OnGUI steps
+ *  on Time.deltaTime exactly as the flicker does, so a fade started
+ *  before a window opened holds still under it. */
 let _flicker = new HudFlickerController();
 export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
+  hudFade.tickFade(dt);
   const c = _flicker.nextCycle({
     health: cur.health, maxHealth: cur.maxHealth, healthLost: lastHealthLost(), dt,
     enabled: getBool('Enhancements', 'NearDeathWarning'),
+    fadeInProgress: hudFade.fadeInProgress,
+    parentAlpha: hudFade.backgroundColor[3],
   });
-  const color = c ?? _flicker.backColor;
-  if (!(color[3] > 0)) return false;
-  renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, color);
-  return true;
+  // `Parent.BackgroundColor = backColor` - the only write; a gated or
+  // Dead cycle answers null and the panel keeps what it holds.
+  if (c) hudFade.backgroundColor = c;
+  return hudFade.draw(renderer, canvas);
 }
 
 /** The bows, by template (ItemEnums.cs Weapons: Short_Bow 129,

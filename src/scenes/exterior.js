@@ -1399,7 +1399,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); });
+  // D4: the overlay's KEY-UP edge. This listener has drained the
+  // movement Set since the first host and never told the open window
+  // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
+  // travel popup's EXIT is the deferral that needs the release.
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); });
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD

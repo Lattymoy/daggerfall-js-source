@@ -13,11 +13,18 @@
 // the bars, the same quad the damage flash uses.
 //
 // Pure: the controller takes the frame's dt, the detector's HealthLost
-// and a roll, and answers the colour. Time.deltaTime is the argument,
-// Random.Range(0f, 1f) is `rolls()`, and the two gates that read the
-// fade system (FadeInProgress, the parent's alpha > 0.9) are the one
-// departure: the port's HUD has no fade behaviour to read, so they are
-// answered false and recorded.
+// and a roll, and answers the colour. Time.deltaTime is the argument
+// and Random.Range(0f, 1f) is `rolls()`.
+//
+// D4 CLOSED THE TWO FADE GATES. `fadeInProgress` and `parentAlpha`
+// were answered false from the day this file landed, because nothing
+// in the port produced a fade; ui/fadeLayer.js is FadeBehaviour.cs now
+// and ui/hud.js feeds both from it. They are not decoration: DFU's
+// FadeBehaviour targets the SAME panel this controller writes
+// (DaggerfallUI.cs:409 vs HUDFlickerController.cs:81-82), so without
+// them the Normal arm's `new Color()` would wipe a smashed-to-black
+// screen on the frame after the smash. The colour this controller
+// answers is written into that panel, not into a quad of its own.
 
 /** HUDFlickerController.cs:24-25. */
 export const INJURED_THRESHOLD = 0.4;

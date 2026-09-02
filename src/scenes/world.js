@@ -46,6 +46,7 @@ import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flig
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
+import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
@@ -2999,6 +3000,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (currentWeather() !== weather) applyWeather(currentWeather());
       }
       surfacePlayer();
+      // D4 - TeleportAway's last line (:150). The window smashed the
+      // screen to black before it handed the destination over
+      // (ui/teleportPopUp.js's `_yes`, :137), so the black has covered
+      // the streamer's whole rebuild; this lifts it. DFU raises the
+      // fade immediately after CloseWindow because
+      // TeleportToCoordinates has already returned - here the arrival
+      // is awaited, which is the same instant.
+      hudFade.fadeHUDFromBlack();
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _teleporting = false;
@@ -3140,6 +3149,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
         onLevelUp: () => townTalk.showOverlay(makeCharSheetWindow()),
       });
+      // D4 - performFastTravel's very last line before the event
+      // (:381). The popup smashed the screen to black on the frame the
+      // day counter emptied (ui/travelPopUp.js's tick, :242); this is
+      // the half-second lerp back to clear, and it runs AFTER
+      // RaiseSkills exactly as DFU orders them - so a level-up box
+      // raised by the arrival is pushed onto a screen that is still
+      // black, and the fade it clears is the one that has not started.
+      hudFade.fadeHUDFromBlack();
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -3880,7 +3897,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); });
+  // D4: the overlay's KEY-UP edge. This listener has drained the
+  // movement Set since the first host and never told the open window
+  // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
+  // travel popup's EXIT is the deferral that needs the release.
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); });
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.

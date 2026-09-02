@@ -170,8 +170,15 @@ and out, restarted by every new HealthLost), below 20% a slow throb
 colour is the HUD's PARENT PANEL background, so it draws as a screen
 quad under the bars in both HUD branches, off the detector's HealthLost
 the vitals rig just computed. Two gates read DFU's fade system
-(`FadeInProgress`, the parent's alpha > 0.9) and this HUD has no fade
-to read; they answer false, recorded. One equivalence proven rather
+(`FadeInProgress`, the parent's alpha > 0.9) and this HUD had no fade
+to read; they answered false, recorded - CLOSED by D4 (2026-09-02),
+which ported `FadeBehaviour.cs` into `ui/fadeLayer.js` and feeds both
+from it. They were never decoration: DFU's fade targets the very panel
+this controller writes (`DaggerfallUI.cs:409` vs
+`HUDFlickerController.cs:81-82`), so without them a healthy frame's
+`new Color()` would strip a smashed-to-black screen. The tint is
+written INTO that panel now rather than painted beside it. One
+equivalence proven rather
 than pinned: the `condition != Wounded` guard on the gain arm is
 overwritten by the Wounded arm every frame in DFU as here. 6 pins;
 6 mutants, 5 killed + 1 equivalent.
