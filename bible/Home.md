@@ -290,23 +290,23 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1536` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
 - `src/scenes/dungeonContext.js:1573` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
 - `src/scenes/dungeonContext.js:1628` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3613` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3622` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/exterior.js:736` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:742` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:1023` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1275` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1697` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1715` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:352` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:369` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:536` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1238` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1244` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1658` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2714` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:4090` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5150` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6316` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1257` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1263` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1679` - *  through the `if`. This host's FLAGGED note (below, at the mode
+- `src/scenes/world.js:2758` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:4134` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:5194` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+- `src/scenes/world.js:6360` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1356` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1374` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1586` - is the quest machine's, FLAGGED with it.
@@ -351,8 +351,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/inventory.js:162` - field at all, e.g. the gold stack goldStack() mints. FLAGGED:
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:98` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:183` - *  screen. FLAGGED as a group - they land with their own arcs.
+- `src/systems/itemInfo.js:105` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+- `src/systems/itemInfo.js:192` - *  screen. FLAGGED as a group - they land with their own arcs.
 - `src/systems/knightlyGifts.js:3` - remaining FLAGGED service destinations, and the only two that need
 - `src/systems/knightlyGifts.js:31` - FLAGGED, not ported: RestoreGuildData's legacy flag migration
 - `src/systems/knightlyGifts.js:100` - * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service

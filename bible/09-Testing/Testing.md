@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 0 tests across 0 files.
+Node 22). Suite: 5936 tests across 584 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -95,7 +95,7 @@ because the suite has never had non-English data.
 | roada_activate_gate.test.js | 11 | ROAD-Ar - the activate gate made whole: touchSpell passed at all four hosts, PlayerActivate's clickDelay ported with the window-pop caller, the hudBlocked input, and the CRITICAL overlay gate - a click on an open window activates nothing behind it |
 | roadb_castle.test.js | 19 | ROAD-B B4 - isPlayerInsideCastle live in both flavors, the Castle Daggerfall magic-doors hack (loadIDs 29331574/29331622, every term of the conjunction refusing alone), IsPlayerInsideTavern/Residence latches |
 | roadb_door_bash.test.js | 9 | ROAD-B B2 - the exterior static-door bash arms with the castle-hostility tail (DaggerfallActionDoor.AttemptBash), byPlayer gates, SPECIAL doors refused |
-| roadb_exterior_water.test.js | 21 | ROAD-B B3 - the exterior submersion model: deep-water detection off the terrain, breath and drowning above ground, the OnExteriorWater/StaticGeometry motor methods feeding the footstep arms, underwater fog in both hosts. ROAD-U pins the ray-distance comment against TransportManager.cs:55-58 - IsOnFoot is Foot ALONE, so a player aboard their ship takes the RIDING branch and its 4.0-deep cast |
+| roadb_exterior_water.test.js | 22 | ROAD-B B3 - the exterior submersion model: deep-water detection off the terrain, breath and drowning above ground, the OnExteriorWater/StaticGeometry motor methods feeding the footstep arms, underwater fog in both hosts. ROAD-U pins the ray-distance comment against TransportManager.cs:55-58 - IsOnFoot is Foot ALONE, so a player aboard their ship takes the RIDING branch and its 4.0-deep cast |
 | roadb_guard_conversion.test.js | 4 | ROAD-B B2 - MakeNPCGuardsIntoEnemiesIfGuardsSpawned: wandering guards convert while enemy watchmen are up |
 | roadb_hostility.test.js | 12 | ROAD-B B2 - MakeEnemiesHostile as a location state the pools read, the DoorText trespass sink, MakeEnemyHostileToAttacker |
 | roadb_indoor_watch.test.js | 10 | ROAD-B B2+B4 - the indoor watch: 2-5 guards minted at the interior lowest outer door through the mode machine own pool; the street pool gated by the enter-exit flags returns and never comes through the wall |
