@@ -272,15 +272,28 @@ export class NativeTalkWindow {
    *  "previous" row, which this port's flattened lists never carry
    *  (treeCategories drops them, townTalk.js:658) - and SelectIndex
    *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
-   *  label is filled before the player clicks anything. An EMPTY list
-   *  returns before that (`if (listTopic.Count <= 0) return;`), which
-   *  is why Things leaves the previous question standing. */
+   *  label is filled before the player clicks anything.
+   *
+   *  AN EMPTY LIST CLEARS BOTH, and the clearing does not happen
+   *  here. SetListboxTopics opens with `listboxTopic.ClearItems()`
+   *  (:858), which is Clear + scrollIndex 0 + SelectNone
+   *  (ListBox.cs:532-537, :773-776), so SelectedIndex is ALREADY -1
+   *  by the time `if (listTopic.Count <= 0) return;` (:892-893) skips
+   *  the SelectIndex below. Every caller then runs a TRAILING
+   *  `UpdateQuestion(listboxTopic.SelectedIndex)` - SetTalkModeTellMe
+   *  About :957, SetTalkCategoryLocation :1033, People :1054, Things
+   *  :1075 - and UpdateQuestion's out-of-range arm (:1232-1236) sets
+   *  `textlabelPlayerSays.Text = ""`. So opening the EMPTY Things
+   *  page blanks the player-says label and leaves nothing selected;
+   *  it does not leave the previous page's question standing. Both
+   *  halves fold in here because this port's four page-openers are
+   *  the one door SetListboxTopics is reached through. */
   _setListboxTopics(rows, mode) {
     this.topics = rows;
     this.topicMode = mode;
     this.scroll = 0;
-    if (!rows.length) return;
-    this.selected = -1;
+    this.selected = -1;                                // ClearItems -> SelectNone
+    if (!rows.length) { this._updateQuestion(-1); return; }   // the trailing UpdateQuestion(-1)
     this._selectIndex(0);
   }
 

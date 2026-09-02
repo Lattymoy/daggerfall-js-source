@@ -64,9 +64,17 @@ test('B5: People is the flat person list; Things opens EMPTY (classic never impl
   assert.ok(w.click(...at(TALK_RECTS.categoryPeople)));
   assert.equal(w.topics.length, 1);
   assert.equal(w.topics[0].label, 'Lord Bridwell');
+  assert.equal(w.selected, 0, 'a filled list SelectIndex(0)s itself (:895-900)');
+  assert.match(w.question, /Lord Bridwell/, 'and UpdateQuestion fills the player-says label');
   assert.ok(w.click(...at(TALK_RECTS.categoryThings)));
   assert.equal(w.topicMode, 'topics');
   assert.deepEqual(w.topics, []);
+  // ClearItems -> SelectNone (ListBox.cs:532-537, :773-776), then the
+  // setter's trailing UpdateQuestion(SelectedIndex) takes the
+  // out-of-range arm (:1232-1236) and BLANKS the label - the People
+  // question must not stay on screen over the empty Things page.
+  assert.equal(w.selected, -1, 'an empty list leaves nothing selected');
+  assert.equal(w.question, '', 'and the player-says label is cleared');
 });
 
 test('B6: Work clears the list, shows the question, and OKAY asks it (ButtonOkay :1534-1543)', () => {

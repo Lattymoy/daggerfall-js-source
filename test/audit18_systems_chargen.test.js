@@ -11,7 +11,10 @@ import { levelUpSkillSum, calculatePlayerLevel, raiseSkills } from '../src/syste
 import { applyBiographyEffect, generateBackstory } from '../src/systems/biography.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { RACE_TEMPLATES, raceByKey } from '../src/systems/races.js';
-import { jumpSpeedMultiplier, SKILLS, SKILL_COUNT } from '../src/systems/skills.js';
+import {
+  jumpSpeedMultiplier, SKILLS, SKILL_COUNT,
+  ATHLETICISM_MULTIPLIER, IMPROVED_ATHLETICISM_MULTIPLIER,
+} from '../src/systems/skills.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { ClassFile } from '../src/formats/classFile.js';
 import { TextRsc } from '../src/formats/textRsc.js';
@@ -237,6 +240,27 @@ test('AUDIT 18 F9: Athleticism adds exactly +0.1 to the jump multiplier', () => 
   assert.equal(jumpSpeedMultiplier(withAth), 1.3);          // + athleticismMultiplier
   assert.equal(
     Math.round((jumpSpeedMultiplier(withAth) - jumpSpeedMultiplier(without)) * 1e6) / 1e6, 0.1);
+});
+
+// AcrobatMotor.cs:95-101 NESTS improvedAthleticismMultiplier (:15)
+// inside the Athleticism branch: the enchantment's +0.1 rides on top
+// of the career's +0.1 and does nothing on its own.
+test('D9: ImprovedAthleticism is NESTED inside the Athleticism arm, +0.1 on top of +0.1', () => {
+  assert.equal(ATHLETICISM_MULTIPLIER, 0.1);            // AcrobatMotor.cs:14
+  assert.equal(IMPROVED_ATHLETICISM_MULTIPLIER, 0.1);   // AcrobatMotor.cs:15
+  const mk = (bits, mods) => ({
+    career: { abilityFlagsAndSpellPointsBitfield: bits },
+    skills: new Array(SKILL_COUNT).fill(0),
+    ...(mods ? { _enchantMods: mods } : {}),
+  });
+  const round = (n) => Math.round(n * 1e6) / 1e6;
+  const bare = mk(0x1406);                                     // athleticism, no item
+  const gifted = mk(0x1406, { improvedAthleticism: true });     // athleticism + item
+  const itemOnly = mk(0x1404, { improvedAthleticism: true });   // item, no athleticism
+  assert.equal(round(jumpSpeedMultiplier(bare)), 1.1, 'the career flag alone is +0.1');
+  assert.equal(round(jumpSpeedMultiplier(gifted)), 1.2, 'the enchantment adds a SECOND +0.1');
+  assert.equal(round(jumpSpeedMultiplier(itemOnly)), 1,
+    'and it is nested - without the career flag the item does nothing');
 });
 
 test('AUDIT 18 F9: the shipping Acrobat (CLASS09) carries the flag and jumps 10% higher', { skip: skipReal }, () => {

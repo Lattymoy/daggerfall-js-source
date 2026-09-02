@@ -17,6 +17,7 @@ import {
 } from '../src/systems/enchantments.js';
 import { applySpell, tickActiveEffects, removeItemPinnedEffects } from '../src/systems/effects.js';
 import { classicCastingCost } from '../src/systems/spellcost.js';
+import { SPELL_ABSORPTION } from '../src/systems/absorption.js';
 import { equipItem, unequipSlot } from '../src/systems/equip.js';
 import { useItem } from '../src/systems/useItem.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
@@ -290,4 +291,34 @@ test('D9 held: the re-fire pins nothing new and a plain cast still fires once', 
   for (let i = 0; i < 4; i++) tickActiveEffects(target, { hurt: (n) => { hit += n; } }, () => 0.5);
   assert.equal(hit, 6, 'a spell bundle is not fromEquippedItem - its instant fires once');
   assert.equal(target.activeEffects.length, 0, 'and its 0-round marker is gone after the first tick');
+});
+
+test('D9 held: a wearer who ABSORBS spells does not swallow their own held bundle', () => {
+  // EEM:509/:521/:525 repeat `BundleType == BundleTypes.Spell` on all
+  // three gates, and StartHeldItem mints a HeldMagicItem bundle
+  // (EEM:1052) - so a Sorcerer's Always absorption cannot eat the ring
+  // they are wearing. Dropping the `!heldItem` term from effects.js's
+  // caster block refunds them the bundle's cost instead of burning them.
+  const rec = damageHealthRecord();
+  const absorber = () => wearer([], {
+    career: { spellAbsorptionFlags: SPELL_ABSORPTION.Always },
+    maxMagicka: 200, magicka: 0,
+  });
+  const w = absorber();
+  const ring = item(T.CastWhenHeld, 7, { equipSlot: 9 });
+  let hurt = 0;
+  const sinks = { hurt: (n) => { hurt += n; } };
+  assignHeldSpell(rec, w, ring, { ctx: { sinks, rolls: () => 0.5 }, recast: true });
+  assert.equal(hurt, 6, 'the held bundle lands - a HeldMagicItem is never a Spell');
+  assert.equal(w.magicka, 0, 'and the wearer is refunded nothing for it');
+  assert.ok((w.activeEffects ?? []).some((a) => a.heldItem === ring),
+    'the item-pinned marker is there, so the effect really ran');
+
+  // the OTHER side of the `&&`: the same record cast AT the same
+  // absorber as a SPELL is swallowed - caster present, no heldItem.
+  const t = absorber();
+  let hit = 0;
+  const out = applySpell(rec, 5, t, { hurt: (n) => { hit += n; } }, () => 0.5, { entity: w }, {});
+  assert.equal(hit, 0, 'a Spell bundle takes the absorption gate');
+  assert.ok((out.absorbed ?? 0) > 0, 'and its cost is credited back as spell points');
 });

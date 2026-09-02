@@ -149,6 +149,8 @@ test('population audit pins: single tick, range gate, RandomiseNPC per spawn + g
     const rolls = seq(
       0.5, 0.5, 0.0, 0.0,             // spawn 1: guard (floor(0*32) === 0), face variant 0
       0.5, 0.5, 0.9, 0.9, 0.0, 0.5,   // spawn 2 (reuses the item): female table, variant 0, face variant 12
+      0.5, 0.5, 0.9, 0.0, 0.3, 0.0,   // spawn 3: male table, OUTFIT VARIANT 1, face variant 0
+      0.5, 0.5, 0.9, 0.0, 0.6, 0.0,   // spawn 4: male table, OUTFIT VARIANT 2, face variant 0
     );
     const pop = new TownPopulation(nav, {
       totalBlocks: 16, race: 'Breton', rand: rolls,
@@ -170,6 +172,22 @@ test('population audit pins: single tick, range gate, RandomiseNPC per spawn + g
     assert.equal(it.person.guard, false);
     // femaleBretonFaceRecordIndex[0] 72 + floor(0.5 * 24) 12 = 84
     assert.equal(it.person.personFaceRecordId, 84, 'the TFAC00I0.RCI record the talk window portraits her from');
+
+    // ROAD-D D10: the record is INDEXED BY personOutfitVariant
+    // (MobilePersonNPC.cs:220-221), so a non-zero variant must read a
+    // different table entry - maleBretonFaceRecordIndex is
+    // [192, 216, 288, 240], one per outfit texture [385, 386, 391, 394].
+    const respawn = () => {
+      it.person.release();
+      it.active = false; it.scheduleEnable = false; it.visible = false;
+      pop.update(0.1001, player, 0, player, true);
+    };
+    respawn();
+    assert.equal(it.person.archive, 386, 'Breton male OUTFIT VARIANT 1');
+    assert.equal(it.person.personFaceRecordId, 216, 'and its own face record, not variant 0\'s 192');
+    respawn();
+    assert.equal(it.person.archive, 391, 'Breton male OUTFIT VARIANT 2');
+    assert.equal(it.person.personFaceRecordId, 288, 'the table is not monotonic - 288 sits above variant 3\'s 240');
   }
 });
 
