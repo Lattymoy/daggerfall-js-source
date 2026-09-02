@@ -1613,7 +1613,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // leaves the hand - runs the spellcast group's release. An
       // animation, never a gate: a missing clip is a note on the card
       // and the spell still flies.
-      weaponRig.castSpellAnim(sp?.rangeType);
+      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
+      weaponRig.castSpellAnim(sp?.rangeType, sp?.element);
     },
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of

@@ -496,6 +496,16 @@ export function createWorldModes(host) {
   let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
   // own audited copy; the host rule wants the weapon in every mode).
+  //
+  // ROAD-tail, THE FOURTH HOST AND THE SPELLCASTING HANDS: this rig
+  // STEPS and DRAWS them (frame/draw below, like every other rig) but
+  // never STARTS one, and that is not a gap. The interior mode has no
+  // cast engine of its own - `magic` above is the parent host's
+  // (world.js / exterior.js), and that host's onCastReadySpell is
+  // where PlayOneShot is called, on the parent's rig. DFU has ONE
+  // FPSSpellCasting component on the player (GameManager.cs:322), so
+  // combat/fpsSpellCasting.js holds the animation as a singleton and
+  // whichever rig owns the frame draws it - which indoors is this one.
   const interiorWeapon = createWeaponRig({
     activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
     spellArmed: () => magic?.spellArmed() ?? false,   // M2

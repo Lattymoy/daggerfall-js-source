@@ -1801,7 +1801,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // MW-D39: the spell goes, and so does the arm - the same cast
       // moment the dungeon host uses, through the rig's one door. An
       // animation, never a gate.
-      weaponRig?.castSpellAnim?.(sp?.rangeType);
+      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
+      weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element);
+      // This host's rig is also the one INTERIOR mode's cast reaches:
+      // worldModes takes this same magic engine, so its own rig never
+      // sees a cast moment - the hands are a singleton for that reason
+      // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322).
     },
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too

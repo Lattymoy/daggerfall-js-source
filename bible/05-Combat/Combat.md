@@ -116,6 +116,90 @@ SIX findings, all rooted and pinned:
 6. The standing probe gained silver/steel dye-parity evidence shots
    (gallery: regenerate locally with tools/fpProbe.mjs; it is not committed).
 
+## ROAD-tail (2026-09-02): THE SPELLCASTING HANDS - SHIPPED
+
+The re-measurement found `FPSSpellCasting.cs` (Assets/Scripts/Game,
+324 lines) cited NOWHERE in `src/`. Half of it was already live under
+another name: its `OnReleaseFrame` event is the moment the spell
+actually leaves the caster, and `scenes/hostMagic.js` runs those
+semantics verbatim in `castInput` (the four range arms spend, tally,
+assign or launch, then raise `onCastReadySpell` - "DFU OnReleaseFrame:
+a cast consumes the ready" at :308, :329, :342, :352). The OTHER half
+- the five ELEMENT hand animations classic draws while that happens -
+had no port at all. `combat/fpArm.js` plays a spellcast stance in the
+MORROWIND lane (MW-D39), so the 1:1 skin cast every spell in the game
+with nothing on screen.
+
+`combat/fpsSpellCasting.js` is the port, and it is a separate module
+for the reason DFU's own header gives: spellcasting art "has different
+texture and layout requirements to weapons and [is] never mixed with
+weapons directly on screen at same time". Everything differs from
+`fpsWeapon.js` - a **300**-wide design surface where the weapon uses
+320 (`nativeScreenWidth`, :44 - the trap in this file), one frame per
+CIF record rather than a frame list, TWO hands per frame with the
+right one mirrored (`rightHandAnimRect = Rect(1, 0, -1, 1)`), and a
+`frameIndices` list that opens and closes on the same small frame.
+
+Ported whole: `GetMagicAnimFilename`'s five archives (WeaponBasics.cs
+:187-204 - FIRE/FRST/POIS/SHOK/MJIC00C6.CIF, re-indexed onto the
+port's classic element index, the ordering `missileArchive` 375..379
+already fixed), `PlayOneShot`'s one-shot refusal, `SetCurrentAnims`'
+per-element load and cache, the `AnimateSpellCast` coroutine (seven
+steps at `animSpeed` 0.04, `releaseFrame` 5), `UpdateSpellCast`'s
+small-frame rule (frames 0 and 5 always, fire's frame 4 as well) and
+`AlignLeftHand`/`AlignRightHand` verbatim, and `OnGUI`'s two draws
+under the large HUD's `weaponOffsetHeight` - which is FPSWeapon's own
+rule word for word (":86-95, Same logic as in FPSWeapon"), so it reads
+`ui/hudLarge.js` rather than restating the gate.
+
+THE ART rides the path the weapon sprite already rides: the user's own
+ARENA2 at runtime through `CifRciFile`, ART_PAL.COL, fpsWeapon's
+`frameToColor32` bake (index 0 transparent) and `renderer
+.uploadTexture`. No dye - a spell has no material, which is
+`GetWeaponTexture2D`'s steel arm.
+
+THE ANIMATION IS A SINGLETON, exactly as DFU's is: `FPSSpellCasting`
+is ONE component on the player (`GameManager.cs:322`). That is not
+tidiness, it is the four-hosts rule. `dungeonContext`, `world` and
+`exterior` each raise their own cast moment and each now hand
+`weaponRig.castSpellAnim` the spell's ELEMENT beside its range - but
+`worldModes`' INTERIOR rig has no cast engine of its own (it takes its
+parent host's `magic`), so a spell cast inside a building starts on
+the parent's rig and must draw on the interior's. A per-rig animation
+would have played in one and drawn in the other. All four STEP and
+DRAW it through the one rig surface they already mount.
+
+AND WeaponManager.cs:247's SECOND LEG FINALLY HAS SOMETHING TO READ.
+The show predicate is `HasReadySpell || PlayerSpellCasting
+.IsPlayingAnim`; the rig's comment has claimed both since C9 while the
+code tested only the first, because nothing in the port could answer
+the second. It does now, so the weapon is hidden for the whole cast
+rather than reappearing the instant the spell goes - which is DFU's
+own "never mixed on screen at same time", enforced.
+
+FLAGGED, at the sites: (1) THE RELEASE IS NOT THE SPELL. DFU raises
+`OnReleaseFrame` five frames (0.2s) into the motion and
+`EntityEffectManager.PlayerSpellCasting_OnReleaseFrame` (:2098-2143)
+is what spends and launches, so in the reference the hands are already
+moving when the spell leaves them. This port's cast is SYNCHRONOUS -
+`castInput` resolves everything and then raises the moment - so the
+hands start ON the release rather than 0.2s before it, and
+`SpellCastAnim.tick`'s return is deliberately wired to nothing (a
+second release would fire the cast twice). Closing it means deferring
+hostMagic's cast, which is a magic-lane change, not a render one.
+(2) `TextureReplacement.TryImportCifRci` (:179) is not consulted, the
+same gap `fpsWeapon.js` has for WEAPON*.CIF - the port's replacement
+registry covers archive textures only, so there is no CIF door yet.
+NOT flagged: the `handScale *= 1.01` non-point fudge (:212-217) is
+correctly absent for the reason the 2026-08-17 weapon audit already
+recorded - every image texture binds NEAREST.
+
+NOBODY HAS SEEN IT RUN: no GL and no ARENA2 in this container, so the
+corpus pin (five archives, six records, one frame each, fitting the
+fixed 320x200, and the small-frame claim checked against the ART) is
+`skipReal`-gated and the placement is arithmetic against DFU's own
+formulas. `test/fpsspellcasting.test.js`, 11 pins, 9 mutants, 9 dead.
+
 ## C9 (2026-08-16): the FP-weapon HOST ROLLOUT - SHIPPED
 
 The weapon audit's follow-up closes: the classic weapon was
