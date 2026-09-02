@@ -117,7 +117,13 @@ void main(){
   vec2 lean = aInst2.xy + wdir * push * 0.055;
   vec3 p;
   p.xz = root + lean * (vT*vT) * h;
-  p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
+  // GR2 (Mac: from the side the blades are completely flat). A blade's
+  // width ran along world X, so it was a full quad seen along Z and an
+  // edge seen along X. The width now runs ACROSS the line to the eye -
+  // a per-blade billboard about Y - so a blade is a blade from any side.
+  vec2 toEye = uEye.xz - root;
+  vec2 side = length(toEye) > 1e-4 ? normalize(vec2(-toEye.y, toEye.x)) : vec2(1.0, 0.0);
+  p.xz += side * (aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
   // planted on the snow's own surface, so the burial line is the one
   // the ground draws and not an approximation of it
   p.y = terrain(root) + snowSurf + vT * h;
@@ -140,9 +146,9 @@ void main(){
   // blades read as depth instead of a green haze.
   // PROTO-7 (Mac: reduce the bright colour): the sward is olive, not
   // emerald - a Daggerfall field, not a golf course.
-  vec3 root = vec3(0.10,0.14,0.06);
-  vec3 mid  = vec3(0.21,0.29,0.11);
-  vec3 tip  = vec3(0.36,0.44,0.19);
+  vec3 root = vec3(0.06,0.09,0.04);
+  vec3 mid  = vec3(0.13,0.20,0.07);
+  vec3 tip  = vec3(0.24,0.32,0.12);
   vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
   c = mix(c, tip, smoothstep(0.5,1.0,vT));
   c *= 0.80 + vTint*0.42;
@@ -159,6 +165,21 @@ void main(){
 }`;
 
 export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 200, span: 210, seed: 0x2f6e2b1 });
+
+/**
+ * GR2 (Mac: there is no wind movement). The lab's wind is a SLIDER,
+ * 0..200, default 70 - and the game had mapped the sky's row wind (a
+ * cloud-drift vector, 0.011 on a sunny day, 0.048 in a thunderstorm)
+ * times 260, which put a sunny day at 2.8 on that slider and a storm
+ * at 12: the sward barely stirred. ONE mapping now, for the grass and
+ * the rain alike: a sunny day lands at the lab's own default of 70,
+ * and the storm rows climb to the slider's top. The direction is the
+ * row's; only the magnitude is rescaled.
+ */
+export function labWindSlider(w) {
+  const mag = Math.hypot(w?.[0] ?? 0, w?.[1] ?? 0);
+  return Math.min(200, mag * 6500);
+}
 /** the lab's weather dim table, for uDim */
 export const LAB_DIM = Object.freeze({ sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80 });
 
@@ -168,7 +189,21 @@ export const LAB_DIM = Object.freeze({ sunny: 1.00, cloudy: 0.90, overcast: 0.72
  * which may stand. `keep(x, z)` answers with the ground height under a
  * candidate, or null if no blade may stand there.
  */
-export function placeLabGrass({ centre, keep, density = LAB_GRASS.density, height = LAB_GRASS.height, span = LAB_GRASS.span, seed = LAB_GRASS.seed }) {
+export function placeLabGrass(opts) {
+  const it = placeLabGrassSteps(opts);
+  let r = it.next();
+  while (!r.done) r = it.next();
+  return r.value;
+}
+
+/**
+ * GR2 (Mac: the game hitches when walking and they load in). The same
+ * scatter as a GENERATOR: it yields every `step` candidates, so the host
+ * can walk a few milliseconds' worth per frame and swap the finished
+ * scatter in when the walk is done. The law, the seed and the sequence
+ * are identical - only the clock is shared.
+ */
+export function* placeLabGrassSteps({ centre, keep, density = LAB_GRASS.density, height = LAB_GRASS.height, span = LAB_GRASS.span, seed = LAB_GRASS.seed, step = 60000 }) {
   const N = density | 0;
   const inst = new Float32Array(N * 4); const inst2 = new Float32Array(N * 4); const rootY = new Float32Array(N);
   let s = seed >>> 0;
@@ -184,11 +219,13 @@ export function placeLabGrass({ centre, keep, density = LAB_GRASS.density, heigh
     const tint = rnd();
     const w = 0.052 + rnd() * 0.055;
     const y = keep(x, z);
-    if (y === null || y === undefined) continue;
-    inst[n * 4] = x; inst[n * 4 + 1] = z; inst[n * 4 + 2] = h; inst[n * 4 + 3] = phase;
-    inst2[n * 4] = lx; inst2[n * 4 + 1] = lz; inst2[n * 4 + 2] = tint; inst2[n * 4 + 3] = w;
-    rootY[n] = y;
-    n++;
+    if (y !== null && y !== undefined) {
+      inst[n * 4] = x; inst[n * 4 + 1] = z; inst[n * 4 + 2] = h; inst[n * 4 + 3] = phase;
+      inst2[n * 4] = lx; inst2[n * 4 + 1] = lz; inst2[n * 4 + 2] = tint; inst2[n * 4 + 3] = w;
+      rootY[n] = y;
+      n++;
+    }
+    if ((i + 1) % step === 0) yield null;
   }
   return { inst: inst.subarray(0, n * 4), inst2: inst2.subarray(0, n * 4), rootY: rootY.subarray(0, n), count: n };
 }

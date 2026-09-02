@@ -115,6 +115,7 @@ import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundP
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced } from '../systems/uiSkin.js';
+import { labWindSlider } from '../render/labGrass.js';   // GR2: the sky's wind on the lab's slider
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -2441,7 +2442,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const gust = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
         const mag = Math.hypot(w[0], w[1]);
         const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
-        const slider = mag * 260;
+        const slider = labWindSlider(w);   // GR2: one mapping for the rain and the grass
         const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
         precip.windV[0] = dir[0] * slider * 0.16; precip.windV[1] = dir[1] * slider * 0.16;
         precip.windOff[0] += dir[0] * slider * gust * 0.16 * dtp;

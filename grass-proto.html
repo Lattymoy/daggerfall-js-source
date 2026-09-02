@@ -777,7 +777,13 @@ void main(){
   vec2 lean = aInst2.xy + wdir * push * 0.055;
   vec3 p;
   p.xz = root + lean * (vT*vT) * h;
-  p.xz += vec2(aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
+  // GR2 (Mac: from the side the blades are completely flat). A blade's
+  // width ran along world X, so it was a full quad seen along Z and an
+  // edge seen along X. The width now runs ACROSS the line to the eye -
+  // a per-blade billboard about Y - so a blade is a blade from any side.
+  vec2 toEye = uEye.xz - root;
+  vec2 side = length(toEye) > 1e-4 ? normalize(vec2(-toEye.y, toEye.x)) : vec2(1.0, 0.0);
+  p.xz += side * (aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);
   // planted on the snow's own surface, so the burial line is the one
   // the ground draws and not an approximation of it
   p.y = terrain(root) + snowSurf + vT * h;
@@ -800,9 +806,9 @@ void main(){
   // blades read as depth instead of a green haze.
   // PROTO-7 (Mac: reduce the bright colour): the sward is olive, not
   // emerald - a Daggerfall field, not a golf course.
-  vec3 root = vec3(0.10,0.14,0.06);
-  vec3 mid  = vec3(0.21,0.29,0.11);
-  vec3 tip  = vec3(0.36,0.44,0.19);
+  vec3 root = vec3(0.06,0.09,0.04);
+  vec3 mid  = vec3(0.13,0.20,0.07);
+  vec3 tip  = vec3(0.24,0.32,0.12);
   vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
   c = mix(c, tip, smoothstep(0.5,1.0,vT));
   c *= 0.80 + vTint*0.42;

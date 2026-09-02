@@ -87,7 +87,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
-import { LabGrassRenderer, placeLabGrass, grassRecordsOf, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
+import { LabGrassRenderer, placeLabGrassSteps, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
@@ -410,6 +410,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassCentre = null;   // world xz the current scatter was placed around
+  let labGrassWalk = null; let labGrassWalkCentre = null;   // GR2: the scatter being walked, a few ms a frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   function applyWeather(w) {
@@ -6130,7 +6131,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
-      labGrassCentre = null;   // AUDIT 49 F2: the scatter is baked in world coordinates and the world just moved - re-place it around the eye
+      labGrassCentre = null; labGrassWalk = null;   // AUDIT 49 F2: the scatter is baked in world coordinates and the world just moved - re-place it around the eye
       droppedLoot.offsetAll(r.offset);
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
@@ -6532,7 +6533,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const gust = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
         const mag = Math.hypot(w[0], w[1]);
         const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
-        const slider = mag * 260;
+        const slider = labWindSlider(w);   // GR2: one mapping for the rain and the grass
         const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
         precip.windV[0] = dir[0] * slider * 0.16; precip.windV[1] = dir[1] * slider * 0.16;
         precip.windOff[0] += dir[0] * slider * gust * 0.16 * dtp;
@@ -6552,7 +6553,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // integrated wind the rain reads, and the lab's weather dim.
     if (labGrass) {
       const ex = cam.pos[0]; const ez = cam.pos[2];
-      if (!labGrassCentre || Math.hypot(ex - labGrassCentre[0], ez - labGrassCentre[1]) > 60) {
+      // GR2: the walk is TIME-SLICED - four milliseconds a frame of the
+      // lab's 1,200,000 candidates, the finished scatter swapped in whole
+      // - so the hitch Mac felt every 60m is gone and the blades appear a
+      // few frames after the eye moves, never in one stall
+      if (labGrassWalk) {
+        const t0 = performance.now(); let r;
+        do { r = labGrassWalk.next(); } while (!r.done && performance.now() - t0 < 4);
+        if (r.done) { labGrass.set(r.value); labGrassWalk = null; labGrassCentre = labGrassWalkCentre; }
+      } else if (!labGrassCentre || Math.hypot(ex - labGrassCentre[0], ez - labGrassCentre[1]) > 60) {
         const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
         const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
         const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
@@ -6572,13 +6581,13 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           return null;
         };
-        labGrass.set(placeLabGrass({ centre: [ex, ez], keep }));
-        window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, centre: labGrassCentre });   // GR1: for the gate
-        labGrassCentre = [ex, ez];
+        labGrassWalk = placeLabGrassSteps({ centre: [ex, ez], keep });
+        labGrassWalkCentre = [ex, ez];
+        window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, centre: labGrassCentre, walking: !!labGrassWalk });   // GR1: for the gate
       }
       const w = sky?.cloudShadow?.wind ?? [0, 0];
       const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
-      const slider = mag * 260;
+      const slider = labWindSlider(w);   // GR2: the sky's row on the lab's slider - a sunny day is the lab's 70
       // AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the gust;
       // uWindV is the rate without it - the same pair the rain is fed
       const tsec = now / 1000;

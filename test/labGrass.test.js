@@ -84,3 +84,31 @@ test('AUDIT 49: the grass is double-sided, follows the origin, learns its record
   // F4: uWind carries the gust, as the lab's WIND.speed does; uWindV does not
   assert.match(w, /speed: slider \* gustG, windV: \[dir\[0\] \* slider \* 0\.16, dir\[1\] \* slider \* 0\.16\]/);
 });
+
+test('GR2: darker green and a billboard about Y in the lab and the game alike; one wind mapping; a time-sliced walk', async () => {
+  const { placeLabGrass, placeLabGrassSteps, labWindSlider, LAB_GRASS_FS, LAB_GRASS_VS } = await import('../src/render/labGrass.js');
+  // 1. darker green, in the lab's own text (the byte-exact pin above holds it in the game)
+  assert.match(LAB_GRASS_FS, /vec3 root = vec3\(0\.06,0\.09,0\.04\);\s*\n\s*vec3 mid {2}= vec3\(0\.13,0\.20,0\.07\);\s*\n\s*vec3 tip {2}= vec3\(0\.24,0\.32,0\.12\);/);
+  // 4. a blade's width runs ACROSS the line to the eye, not along world X
+  assert.match(LAB_GRASS_VS, /vec2 toEye = uEye\.xz - root;\s*\n\s*vec2 side = length\(toEye\) > 1e-4 \? normalize\(vec2\(-toEye\.y, toEye\.x\)\) : vec2\(1\.0, 0\.0\);\s*\n\s*p\.xz \+= side \* \(aCorner\.x-0\.5\) \* aInst2\.w \* \(1\.0 - vT\*0\.75\);/);
+  assert.ok(!/p\.xz \+= vec2\(aCorner\.x-0\.5\) \* aInst2\.w/.test(LAB_GRASS_VS), 'the flat-from-the-side form is gone');
+  // 2. the sky's row on the lab's slider: sunny is the lab's default, storms reach the top
+  assert.equal(Math.round(labWindSlider([0.010, 0.004])), 70, 'a sunny day is the lab\u2019s 70');
+  assert.equal(labWindSlider([0.045, 0.016]), 200, 'a thunderstorm is the slider\u2019s top');
+  assert.equal(labWindSlider([0, 0]), 0);
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.equal((w.match(/labWindSlider\(w\)/g) || []).length, 2, 'the grass and the rain share the one mapping');
+  assert.ok(!/mag \* 260/.test(w), 'the guessed scale is gone');
+  assert.match(readFileSync('src/scenes/exterior.js', 'utf8'), /labWindSlider\(w\)/, 'the exterior host too');
+  // 3. the walk is a generator that yields, and lands where the one-shot lands
+  const keep = (x) => (x > 0 ? 0 : null);
+  const whole = placeLabGrass({ centre: [3, 4], keep });
+  const it = placeLabGrassSteps({ centre: [3, 4], keep, step: 100000 }); let yields = 0; let r = it.next();
+  while (!r.done) { yields++; r = it.next(); }
+  assert.equal(yields, 12, 'twelve yields for 1.2M at 100k a step');
+  assert.equal(r.value.count, whole.count, 'the same blades');
+  for (let k = 0; k < 40; k++) assert.equal(r.value.inst[k], whole.inst[k], 'in the same order');
+  assert.match(w, /do \{ r = labGrassWalk\.next\(\); \} while \(!r\.done && performance\.now\(\) - t0 < 4\);/, 'four milliseconds a frame');
+  assert.match(w, /if \(r\.done\) \{ labGrass\.set\(r\.value\); labGrassWalk = null; labGrassCentre = labGrassWalkCentre; \}/, 'swapped in whole when done');
+  assert.match(w, /labGrassCentre = null; labGrassWalk = null;   \/\/ AUDIT 49 F2/, 'an origin shift abandons a walk in flight');
+});
