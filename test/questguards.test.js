@@ -349,13 +349,18 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
   const hm = readSrc('src/scenes/hostMagic.js');
   assert.match(hm, /onNewReadySpell\?\.\(sp\);\s+\/\/ :348/,
     'SetReadySpell raises NEW after the assignment');
-  assert.equal((hm.match(/onCastReadySpell\?\.\(sp\);/g) ?? []).length, 4,
-    'every release path raises CAST - self, touch, area, missile - before the ready clears');
+  // ROAD-E6: the four release arms share one tail (`done`), and every
+  // one of them goes through it - self, touch, area, missile - so CAST
+  // is raised once per release, still before the ready clears.
+  assert.match(hm, /const done = \(v\) => \{ onCastReadySpell\?\.\(sp\); readiedSpell = null; readiedFree = false; return v; \};/,
+    'every release path raises CAST before the ready clears');
+  assert.equal((hm.match(/return done\((?:true|false|v)\);/g) ?? []).length, 5,
+    'four range arms plus the unknown-range refusal all leave through it');
   const world = readSrc('src/scenes/world.js');
   assert.match(world, /onNewReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/);
-  // MW-D39: the cast moment now also runs the arm's spellcast release;
-  // the quest notify is still the FIRST thing it does.
-  assert.match(world, /onCastReadySpell: \(sp\) => \{\n\s+questBridge\?\.machine\?\.notifyCastReadySpell\?\.\(sp\);/);
+  // MW-D39/ROAD-E6: the arm's cast animation moved to startCastAnim
+  // (the spend), leaving the quest notify alone on the release moment.
+  assert.match(world, /onCastReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyCastReadySpell\?\.\(sp\),/);
   const dc = readSrc('src/scenes/dungeonContext.js');
   assert.match(dc, /onNewReadySpell: \(sp\) => opts\.questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/,
     'the dungeon host\'s own engine raises into the same machine');

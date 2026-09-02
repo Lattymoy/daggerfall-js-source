@@ -791,7 +791,11 @@ export class PromptMulti extends ActionTemplate {
  *  forever) / "play sound X N unknown" - a REPEATING action with no
  *  SetComplete; timesPlayed++ rides the interval check while only a
  *  real play (hook answers truthy; C# skips while the audio source is
- *  busy) re-stamps lastTimePlayed. Create resolves the sound through
+ *  busy) re-stamps lastTimePlayed. E6 SHIPPED the other half of that
+ *  skip: the host's door now HAS the busy state DFU reads - one
+ *  `QuestAudioSource` per machine (systems/audio.js, the
+ *  DaggerfallAudioSource the QuestMachine carries) keeping the end
+ *  time of the clip it last started. Create resolves the sound through
  *  Quests-Sounds inside the C#'s try/catch - an unknown name answers
  *  null and the line pends. DEPARTURE (recorded): C# also resolves
  *  SoundReader.GetSoundIndex/GetAudioClip at create and nulls on

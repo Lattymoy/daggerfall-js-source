@@ -157,7 +157,7 @@ import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the p
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
-import { audio } from '../systems/audio.js';
+import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
@@ -2054,18 +2054,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // contract since the Q arc; nothing raised them until now, so the
     // three corpus quests' `cast X spell do` triggers never fired).
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => {
-      questBridge?.machine?.notifyCastReadySpell?.(sp);
-      // MW-D39: the spell goes, and so does the arm - the same cast
-      // moment the dungeon host uses, through the rig's one door. An
-      // animation, never a gate.
-      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
-      weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element);
-      // This host's rig is also the one INTERIOR mode's cast reaches:
-      // worldModes takes this same magic engine, so its own rig never
-      // sees a cast moment - the hands are a singleton for that reason
-      // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322).
-    },
+    onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
+    // MW-D39: the spell goes, and so does the arm - the same cast
+    // moment the dungeon host uses, through the rig's one door.
+    // ROAD-E6: and it is CastReadySpell's PlayOneShot (:430-435), the
+    // moment the magicka is spent, not the release - the engine parks
+    // the resolution on the animation's frame 5.
+    // This host's rig is also the one INTERIOR mode's cast reaches:
+    // worldModes takes this same magic engine, so its own rig never
+    // starts a cast - the hands are a singleton for that reason
+    // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322), and
+    // whichever rig owns the frame is the one that steps them to the
+    // release.
+    startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks,
@@ -5079,6 +5080,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       && it.questUID === dfItem.questUID
       && it.questSymbol?.name === dfItem.questSymbol?.name);
   };
+  // E6: `QuestMachine.Instance.GetComponent<DaggerfallAudioSource>()`
+  // (PlaySound.cs:112) - ONE source for every PlaySound action in every
+  // running quest, which is what makes the busy-skip a shared gate
+  // rather than a per-action one.
+  const questAudioSource = new QuestAudioSource(audio);
   questBridge = createQuestBridge({
     data: questPack,
     world: questWorld,
@@ -5254,10 +5260,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
       });
     },
-    // DELTA (recorded): C# skips while the audio source is BUSY and
-    // only a real play re-stamps PlaySound's timer; the port's one-shot
-    // engine has no busy state, so every call reports played.
-    playSound: (id) => { audio.playOneShot(id); return true; },
+    // E6: THE BUSY SKIP, DFU's own. PlaySound.cs:110-116 is
+    // `if (source != null && !source.IsPlaying()) { source.PlayOneShot(
+    // ...); lastTimePlayed = gameSeconds; }` over the ONE
+    // DaggerfallAudioSource the QuestMachine carries - so a quest sound
+    // that comes due while the last one is still ringing is DROPPED,
+    // and because lastTimePlayed is only re-stamped by a real play the
+    // interval stays due and the action tries again on the next tick.
+    // (timesPlayed has already been spent by then, at PlaySound.cs:106
+    // - the count budget burns down whether or not a sound came out.
+    // That half is the action's, and it has always been verbatim.)
+    // The stamp is returned WHENEVER the source was idle, even if the
+    // clip itself failed to start: DFU stamps it beside PlayOneShot,
+    // which swallows a missing clip in silence.
+    playSound: (id) => {
+      if (questAudioSource.isPlaying()) return false;
+      questAudioSource.playOneShot(id);
+      return true;
+    },
     // PlaySong hands a MIDI.BSA record name; the SongFiles member was
     // resolved in the action (systems/songFiles.js), which is where
     // DaggerfallSongPlayer.Play does it. DFU's quest song plays ONCE

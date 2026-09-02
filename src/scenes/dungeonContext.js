@@ -1620,16 +1620,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // handed down by world.js/worldModes; the standalone ?dungeon
     // probe has none and the chain no-ops).
     onNewReadySpell: (sp) => opts.questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => {
-      opts.questBridge?.machine?.notifyCastReadySpell?.(sp);
-      // MW-D39: THE SPELL GOES, AND SO DOES THE ARM. The reference's
-      // own cast moment - RaiseOnCastReadySpell, the frame the spell
-      // leaves the hand - runs the spellcast group's release. An
-      // animation, never a gate: a missing clip is a note on the card
-      // and the spell still flies.
-      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
-      weaponRig.castSpellAnim(sp?.rangeType, sp?.element);
-    },
+    onCastReadySpell: (sp) => opts.questBridge?.machine?.notifyCastReadySpell?.(sp),
+    // MW-D39: THE SPELL GOES, AND SO DOES THE ARM.
+    // ROAD-E6: and it goes FIRST. This is CastReadySpell's PlayOneShot
+    // (:430-435) - the hands start as the magicka is spent, and the
+    // engine parks the spell's resolution on the animation's release
+    // frame five steps (0.2s) later. An animation, never a gate: a rig
+    // that refuses (no CIF for the element) answers false and the
+    // engine releases on the spot.
+    startCastAnim: (sp, onRelease) => weaponRig.castSpellAnim(sp?.rangeType, sp?.element, onRelease),
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the

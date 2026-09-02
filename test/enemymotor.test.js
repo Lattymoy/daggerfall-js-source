@@ -10,6 +10,8 @@ import {
 } from '../src/characters/enemyMotor.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { Collider } from '../src/player/collider.js';
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS } from '../src/systems/spellcast.js';
+import { ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
 
 const approx = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
 const seqRolls = (v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -436,4 +438,65 @@ test('AUDIT 24: the knockback caps, and the SWIMMER arm the campaign left alive'
   atCap.update(1 / 60, [0, 0, 10]);
   assert.ok(atCap.knockbackSpeed <= KB(KNOCKBACK_STORE_CAP),
     'exactly at the cap reads the same either way - the comparison is not observable there');
+});
+
+
+// ═══ E6: the shooting probe ═════════════════════════════════════════
+
+test('E6: HasClearPathToShootProjectile - the sentinel, the clear shot, the wall', () => {
+  // EnemyMotor.cs:698-741, asked with CanCastRangedSpell's own three
+  // constants (:786-788 - "All range spells are currently 25 speed and
+  // 0.45f radius", from DaggerfallMissile.ArmLength).
+  const shot = (ai) => ai.hasClearPathToShootProjectile(MISSILE_SPEED, ARROW_ARM_LENGTH, MISSILE_COLLIDER_RADIUS);
+  const floorOf = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+
+  // :702-703 - PredictNextTargetPos answers ResetPlayerPos while
+  // nothing has ever been seen, and the probe refuses on it.
+  const blind = new EnemyAI(floorOf(), [0, 0, 0], 0, { liveSpeed: 50 });
+  assert.equal(shot(blind), false, 'nothing remembered, nothing to shoot at');
+
+  // Open ground, the target remembered 12 ahead: the CheckSphere finds
+  // room at the arm's length and the SphereCast reaches nothing.
+  const open = new EnemyAI(floorOf(), [0, 0, 0], 0, { liveSpeed: 50 });
+  open.makeHostileToPlayer(200, [0, 0, 12]);
+  assert.equal(shot(open), true, 'a clear path');
+
+  // The same shot with a wall across it (:727-736 - "Something in the
+  // way"). Nothing about the memory changed: only the geometry did.
+  const walls = floorOf();
+  walls.addMesh('wall', new Float32Array([-5, 0, 6, 5, 0, 6, 5, 4, 6, -5, 4, 6]), quadIdx, I);
+  const blocked = new EnemyAI(walls, [0, 0, 0], 0, { liveSpeed: 50 });
+  blocked.makeHostileToPlayer(200, [0, 0, 12]);
+  assert.equal(shot(blocked), false, 'a wall between the caster and the target');
+
+  // :719-724 - no point-blank handling: a body wedged against the wall
+  // fails the CheckSphere at the cast origin, before the sweep runs.
+  const nose = new EnemyAI(walls, [0, 0, 5.4], 0, { liveSpeed: 50 });
+  nose.makeHostileToPlayer(200, [0, 0, 12]);
+  assert.equal(shot(nose), false, 'no space to spawn the projectile');
+});
+
+test('E6: PredictNextTargetPos leads a moving target and never through a wall', () => {
+  const c = new Collider(() => -100);
+  c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+  const ai = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
+  ai.makeHostileToPlayer(200, [0, 0, 20]);
+  // Standing still: the quadratic's minimal positive root is the pure
+  // time of flight and the lead term is zero, so the prediction is the
+  // remembered position lifted to the target's centre.
+  assert.deepEqual(ai.predictNextTargetPos(MISSILE_SPEED), [0, 0.9, 20]);
+  // Moving +x one interval's worth: v = diff / predictionInterval, and
+  // the prediction leads along it (:583-600).
+  ai.lastPositionDiff = [0.25, 0, 0];
+  const lead = ai.predictNextTargetPos(MISSILE_SPEED);
+  assert.ok(lead[0] > 0, 'the shot leads the target');
+  assert.equal(lead[2], 20);
+  // :605-609 - a wall between the remembered position and the lead
+  // collapses the prediction back onto the remembered position.
+  c.addMesh('screen', new Float32Array([0.05, 0, 15, 0.05, 0, 25, 0.05, 4, 25, 0.05, 4, 15]), quadIdx, I);
+  assert.deepEqual(ai.predictNextTargetPos(MISSILE_SPEED), [0, 0.9, 20]);
 });

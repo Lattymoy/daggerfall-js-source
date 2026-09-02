@@ -2,7 +2,8 @@
 // vs DFU SoundClips.cs, swing/hit selection verbatim.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pcm8ToFloat32 } from '../src/systems/audio.js';
+import { pcm8ToFloat32, QuestAudioSource } from '../src/systems/audio.js';
+import { readFileSync } from 'node:fs';
 import { SOUND, swingSoundFor, hitSoundFor } from '../src/systems/soundClips.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -137,4 +138,41 @@ test('audio: A2 the action Play sound seam - soundIndex > 0 fires from the objec
   const silent = a.addEffect(0, 3, { actionFlag: ACTION_FLAGS.Poison, index: 0, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 }, [0, 0, 0]);
   a.receive(silent);
   assert.deepEqual(played, [[12, [3, 4, 5]], [3, [7, 8, 9]]]);
+});
+
+
+// ═══ E6: the quest machine's own audio source ═══════════════════════
+
+test('E6: the quest DaggerfallAudioSource is BUSY until the clip it started ends', () => {
+  // DaggerfallAudioSource.IsPlaying (:244-247) is `audioSource
+  // .isPlaying`; a WebAudio one-shot has no such flag, so the source
+  // keeps the end time of the clip playOneShot reported.
+  let t = 0;
+  const played = [];
+  const engine = { playOneShot: (i) => { played.push(i); return i === 999 ? undefined : 0.5; } };
+  const src = new QuestAudioSource(engine, () => t);
+  assert.equal(src.isPlaying(), false, 'a source that has played nothing is idle');
+  assert.equal(src.playOneShot(386), 0.5, 'PlayOneShot answers the clip length');
+  assert.equal(src.isPlaying(), true, 'busy for exactly the clip');
+  t = 0.49;
+  assert.equal(src.isPlaying(), true);
+  t = 0.5;
+  assert.equal(src.isPlaying(), false, 'the clip ran out');
+  // A clip that never started leaves the source idle, exactly as Unity's
+  // does when SoundReader.GetAudioClip answers null (:192-197).
+  t = 1;
+  src.playOneShot(999);
+  assert.equal(src.isPlaying(), false);
+  assert.deepEqual(played, [386, 999]);
+});
+
+test('E6: the world host reads that busy state as PlaySound.cs:110-116 does', () => {
+  // The host cannot boot headless, so the wiring is source-pinned - the
+  // shape is `if (source.IsPlaying()) skip; else { PlayOneShot; stamp }`,
+  // over the ONE source the QuestMachine carries (PlaySound.cs:112).
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /const questAudioSource = new QuestAudioSource\(audio\);/,
+    'one source, minted beside the quest bridge');
+  assert.match(w, /playSound: \(id\) => \{\n\s+if \(questAudioSource\.isPlaying\(\)\) return false;\n\s+questAudioSource\.playOneShot\(id\);\n\s+return true;\n\s+\},/,
+    'busy skips without stamping; idle plays and stamps');
 });

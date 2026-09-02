@@ -72,6 +72,24 @@ export function createPlayerMagic({
   // which is precisely why the machine latches instead of polling.
   onNewReadySpell = null,
   onCastReadySpell = null,
+  // ROAD-E6: THE HANDS, AND THE RELEASE FRAME THEY OWN.
+  // EntityEffectManager.CastReadySpell (:430-435) does not resolve the
+  // spell - it spends the magicka, calls
+  // `PlayerSpellCasting.PlayOneShot(readySpell.Settings.ElementType)`
+  // and sets castInProgress; five frames (0.2s) later
+  // FPSSpellCasting's coroutine raises OnReleaseFrame and
+  // PlayerSpellCasting_OnReleaseFrame (:2098-2143) is what tallies,
+  // sounds, assigns/launches, raises OnCastReadySpell and clears the
+  // ready. This dep is that PlayOneShot: the host hands it to its
+  // weapon rig (`combat/weaponRig.js` castSpellAnim) and answers TRUE
+  // when the hands actually started, which is when the resolution
+  // parks on the release. A host with no rig - or an element with no
+  // animation archive - answers false and the cast resolves HERE, on
+  // the spot, which is DFU's own no-animation arm (CastNoAnimSpell
+  // :367-398 and the non-player EnemyCastReadySpell branch at :436-439
+  // both resolve inline, without ever touching FPSSpellCasting).
+  // @type {?(sp:object, onRelease:Function) => boolean}
+  startCastAnim = null,
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   // Classic click-to-cast: DFU's armed state IS the readied spell -
@@ -87,6 +105,20 @@ export function createPlayerMagic({
   // player cast, read by the absorption refund cap when the player's
   // own spell lands back on them (EntityEffectManager.cs:600-604).
   let lastCastCost = 0;
+  // ROAD-E6: castInProgress (EntityEffectManager.cs:59). True from the
+  // magicka spend until the animation's release frame - the gate
+  // SetReadySpell (:315) and CastReadySpell (:408) both refuse on, so
+  // the 0.2s of hand motion is a window in which nothing can be
+  // readied and nothing can be cast.
+  let castInProgress = false;
+  // ROAD-E6: the LIVE aim. DFU instantiates the missile at the release
+  // frame from the caster's transform AT THAT MOMENT (the missile's
+  // Start runs DoTouch/DoMissile on the frame it is spawned,
+  // DaggerfallMissile.cs:265-286), so a player who turns during the
+  // 0.2s fires along the new look. Every host already feeds this
+  // engine its live eye/dir once a frame through firePending, so the
+  // release reads that rather than the stale cast-time aim.
+  let lastAim = null;
   const missiles = [];
   const flatAnims = new FlatAnimator();   // FA1: the missile flats
   const batches = [];
@@ -271,8 +303,108 @@ export function createPlayerMagic({
     audio.playOneShot(SPELL_CAST_SOUND[sp.element] ?? SPELL_CAST_SOUND[4], 1);
   }
 
-  /** S5/S7/S9/S10: the cast itself - the four range arms, each
-   *  spending, recording the refund-cap cost, tallying, and firing. */
+  /** ByTouch's target pick - the 0.25-radius sphere-cast 3.0 ALONG THE
+   *  AIM with an LOS check (L2-slice magic-7). DFU runs it TWICE for
+   *  one cast: once as CastReadySpell's pre-spend gate
+   *  (GetEntityTargetInTouchRange, :411-421) and once for real when the
+   *  ByTouch missile's Start calls DoTouch on the release frame
+   *  (DaggerfallMissile.cs:273-275). Both reads live here. */
+  function pickTouch(eye, dir) {
+    if (!eye || !dir) return null;
+    return pickTouchTarget(eye, dir, foes(), (c, d) => {
+      const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
+      const hit = collider.raycast(eye, [dx, dy, dz], d);
+      return !Number.isFinite(hit) || hit >= d - 1e-3;
+    });
+  }
+
+  /**
+   * ROAD-E6: PlayerSpellCasting_OnReleaseFrame (:2098-2143) - the four
+   * range arms, each recording the refund-cap cost, tallying, and
+   * firing. THE SPEND IS NOT HERE: DecreaseMagicka runs at the cast
+   * (:423-425), five frames earlier.
+   *
+   * The `p` record carries the cost DFU keeps in readySpellCastingCost;
+   * the SPELL is re-read off `readiedSpell` because that is what DFU's
+   * handler reads (:2102), and it is the field an AbortReadySpell
+   * (:361-365) during the 0.2s nulls - a cancelled spell reaches the
+   * `return` and DFU's own comment at :2107 says so ("Cancelled spells
+   * do not reach this point"). The magicka is NOT refunded: it was
+   * spent at the cast and nothing gives it back.
+   *
+   * DEATH during the window is not a gate in DFU either. Update()
+   * returns early once IsPlayingGame() is false, but OnReleaseFrame is
+   * an event off FPSSpellCasting's own coroutine, so the spell still
+   * leaves the hands of a player who died mid-motion. A PAUSE does stop
+   * it: PauseGame zeroes Time.timeScale (GameManager.cs:606-607) and
+   * WaitForSeconds is scaled, so the coroutine holds - which this port
+   * gets for free, because a modal host returns before its rig's
+   * frame() and nothing steps the animation.
+   */
+  function releaseFrame(p) {
+    castInProgress = false;   // :2100, the handler's first line
+    const sp = readiedSpell;
+    if (!sp) return false;    // :2102-2104 "Must have a ready spell"
+    const cost = p.cost;
+    // The live aim (see lastAim); the cast-time aim is the fallback for
+    // an engine no host frame has fed yet.
+    const eye = lastAim ? lastAim.eye : p.eye;
+    const dir = lastAim ? lastAim.dir : p.dir;
+    // :2141 - readySpellDoesNotCostSpellPoints clears with the ready.
+    const done = (v) => { onCastReadySpell?.(sp); readiedSpell = null; readiedFree = false; return v; };
+    if (sp.rangeType === 0) {
+      // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
+      // missile; AssignBundle at :2117.
+      tallyCastSkills(sp);
+      const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
+      // AUDIT 24 scenes: PlayerSpellCasting_OnReleaseFrame assigns the
+      // CasterOnly bundle at :2117 and only stamps
+      // `lastReadySpellCastingCost = readySpellCastingCost` at :2138 -
+      // AFTER it. So AssignBundle's absorption cap (:603, gated on
+      // `lastReadySpellCastingCost > 0`) reads the PREVIOUS player
+      // cast's cost, not this one's; on the session's first self-cast
+      // the gate fails outright and nothing is capped.
+      lastCastCost = cost;
+      if (r.healed > 0) say(`You are healed ${r.healed} points.`);
+      surfacePlayer();
+      return done(true);
+    }
+    if (sp.rangeType === 1) {
+      // The ByTouch missile's own DoTouch, on the release frame.
+      const t = pickTouch(eye, dir);
+      lastCastCost = cost;
+      tallyCastSkills(sp);
+      surfacePlayer();
+      // Nothing in reach when the hands open: the spell is spent and
+      // gone, exactly as DFU's touch missile that finds no entity.
+      if (t) applySpellToFoe(sp, playerEntity.level, t, playerCaster());
+      return done(true);
+    }
+    if (sp.rangeType === 3) {
+      // AreaAroundCaster: every live foe within the explosion radius.
+      lastCastCost = cost;
+      tallyCastSkills(sp);
+      surfacePlayer();
+      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
+        applySpellToFoe(sp, playerEntity.level, t, playerCaster());
+      }
+      return done(true);
+    }
+    if (sp.rangeType !== 2 && sp.rangeType !== 4) return done(false);
+    lastCastCost = cost;
+    tallyCastSkills(sp);
+    surfacePlayer();
+    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
+    return done(true);
+  }
+
+  /**
+   * CastReadySpell (:400-439), verbatim ORDER: the silence gate, the
+   * ready/castInProgress gate, the touch-range gate, DecreaseMagicka,
+   * and then PlayOneShot - which is where the cast STOPS. What used to
+   * be the whole of this function is now releaseFrame() above, parked
+   * on the animation five frames (0.2s) later.
+   */
   function castInput(eye, dir) {
     const sp = readiedSpell;
     if (!sp) return false;
@@ -287,71 +419,29 @@ export function createPlayerMagic({
       say(SILENCED_TEXT);
       return false;
     }
+    // :408 - "a previous cast must not be in progress". The hands own
+    // the 0.2s and a second click inside it does nothing at all.
+    if (castInProgress) return false;
     const cost = readiedFree ? 0 : calculateCastCost(sp, playerEntity).sp;   // S10: the per-effect skill-scaled cost; free readies spend nothing
     if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
-    if (sp.rangeType === 0) {
-      // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
-      // missile; the cost spends here.
-      playerEntity.magicka -= cost;
-      tallyCastSkills(sp);
-      const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
-      // AUDIT 24 scenes: PlayerSpellCasting_OnReleaseFrame assigns the
-      // CasterOnly bundle at :2117 and only stamps
-      // `lastReadySpellCastingCost = readySpellCastingCost` at :2138 -
-      // AFTER it. So AssignBundle's absorption cap (:603, gated on
-      // `lastReadySpellCastingCost > 0`) reads the PREVIOUS player
-      // cast's cost, not this one's; on the session's first self-cast
-      // the gate fails outright and nothing is capped.
-      lastCastCost = cost;
-      if (r.healed > 0) say(`You are healed ${r.healed} points.`);
-      surfacePlayer();
-      onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
-      readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
-      return true;
-    }
     if (sp.rangeType === 1) {
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
-      // rule was wrong and died at its audit). L2-slice (magic-7):
-      // the pick is now the 0.25-radius sphere-cast 3.0 ALONG THE
-      // AIM, not a nearest-in-radius sweep.
-      const t = pickTouchTarget(eye, dir, foes(), (c, d) => {
-        const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
-        const hit = collider.raycast(eye, [dx, dy, dz], d);
-        return !Number.isFinite(hit) || hit >= d - 1e-3;
-      });
-      if (!t) return false;
-      playerEntity.magicka -= cost;
-      lastCastCost = cost;
-      tallyCastSkills(sp);
-      surfacePlayer();
-      applySpellToFoe(sp, playerEntity.level, t, playerCaster());
-      onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
-      readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
-      return true;
+      // rule was wrong and died at its audit).
+      if (!pickTouch(eye, dir)) return false;
     }
-    if (sp.rangeType === 3) {
-      // AreaAroundCaster: every live foe within the explosion radius.
-      playerEntity.magicka -= cost;
-      lastCastCost = cost;
-      tallyCastSkills(sp);
-      surfacePlayer();
-      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
-        applySpellToFoe(sp, playerEntity.level, t, playerCaster());
-      }
-      onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
-      readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
-      return true;
-    }
-    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;
+    // :423-425 DecreaseMagicka - the spend is at the CAST, before a
+    // single frame of hand motion has run.
     playerEntity.magicka -= cost;
-    lastCastCost = cost;
-    tallyCastSkills(sp);
-    surfacePlayer();
-    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
-    onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
-    readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
-    return true;
+    const parked = { cost, eye: eye ? [...eye] : null, dir: dir ? [...dir] : null };
+    // :430-435 - the player's arm plays the animation and blocks
+    // further casting until it releases.
+    if (startCastAnim && startCastAnim(sp, () => releaseFrame(parked))) {
+      castInProgress = true;
+      return true;
+    }
+    // :436-439 - no animation, so the release is now.
+    return releaseFrame(parked);
   }
 
   /** The spellbook's ready hook - DFU's SetReadySpell laws in order:
@@ -363,6 +453,11 @@ export function createPlayerMagic({
    *  (:315 gates SilenceCheck on !noSpellPointCost) and the cost. */
   function readySpell(sp, { free = false } = {}) {
     if (!free && silenceBlocksCast(playerEntity)) { readiedSpell = null; say(SILENCED_TEXT); return; }
+    // ROAD-E6: :315's second term - "Do nothing if silenced OR CAST
+    // ALREADY IN PROGRESS". Nothing can be readied while the hands are
+    // in motion, and unlike the silence arm this one does NOT clear the
+    // spell already readied: DFU returns false before touching a field.
+    if (castInProgress) return;
     if (!free && (playerEntity.magicka ?? 0) < calculateCastCost(sp, playerEntity).sp) {
       readiedSpell = null;
       say("You don't have the spell points.");   // youDontHaveTheSpellPoints
@@ -543,10 +638,19 @@ export function createPlayerMagic({
       return false;
     },
     firePending(eye, dir) {
+      // ROAD-E6: every host calls this once a frame with its LIVE
+      // eye/dir whether or not a click is pending, which makes it the
+      // engine's window onto the caster transform DFU's release-frame
+      // missile reads (see lastAim).
+      if (eye && dir) lastAim = { eye: [eye[0], eye[1], eye[2]], dir: [dir[0], dir[1], dir[2]] };
       if (!pendingClickCast) return false;
       pendingClickCast = false;
       return castInput(eye, dir);
     },
+    /** ROAD-E6: castInProgress (:59) - the 0.2s of hand motion between
+     *  the magicka spend and the release frame. Read by the probes and
+     *  by a host that wants DFU's own "cast in progress" answer. */
+    castInProgress: () => castInProgress,
     /** AUDIT 17e F23 / AUDIT 24 (the seven-slice sweep): the
      *  floating-origin recenter shifts every pool that holds a WORLD
      *  position, and the missiles were the one it never reached -

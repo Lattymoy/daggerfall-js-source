@@ -209,10 +209,11 @@ the citation sweep over that directory is **82/82**. The vendored pack
 is **265 quests** (`find vendor/dfu-quests/Quests -name '*.txt' | wc -l`).
 
 The superseded page's risk note - "the DFU-extension actions no
-vendored quest exercises" - has one survivor recorded rather than
-closed, and the Ledger row says so at its tail: `playSound`'s busy-skip
-is the one recorded delta, because the port's one-shot audio engine has
-no busy state.
+vendored quest exercises" - had one survivor recorded rather than
+closed, and the Ledger row said so at its tail: `playSound`'s busy-skip,
+because the port's one-shot audio engine had no busy state. The E-group
+gave it one (`systems/audio.js`'s `QuestAudioSource`, the
+DaggerfallAudioSource the QuestMachine carries) and struck the clause.
 
 ---
 
@@ -290,7 +291,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:3702` passes `voxelfolk`, `scenes/interiorContext.js:384` consumes it. |
 | **sys-entity** | Law byte-exact / three dead seams | **Verbatim** | ROAD-A A11 took the "master of" box (TEXT.RSC 4020) with `ArenaFanfareLevelUp`, `skillsRecentlyRaised` and the sheet's own leveling arm. |
 | **sys-magic** | Near-complete | **Verbatim** | 91 keys, 0 inert; `minimumCastingCost` live; ROAD-D D9 took the held-bundle instant re-fire and the caster block's `BundleType == Spell` test on all three gates. |
-| **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip is the one recorded delta. |
+| **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
 | **sys-guilds** | Law exact / two structural holes | **Verbatim** | ROAD-D D9 shipped `KnightlyOrder.RestoreGuildData`'s flag migration through the one load door. `SERVICE_DESTINATION` 20/20. |
 | **sys-items** | Law exact / live money bugs | **Verbatim** | ROAD-A A2 took the daily `stockedDate` restock, book prices off `BookFile`, condition-0 shelf arrows and `SplitStack`'s fresh mint; ROAD-D D7 took the live pack, native Repair, the recipe panel and item tooltips. |
 | **sys-talk** | Engines verbatim / six host seams unfilled | **Verbatim** | `getQuestorName()` is the seeded name bank (`systems/npcSession.js:588-595`) - the last of the superseded page's empty reads. ROAD-A A9 also mounted bulletin boards and the `GrammarManager.ProcessGrammar` pass. |
@@ -440,13 +441,22 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Narrowed by Wave D, recorded rather than shipped.**
 
-- **`src/characters/enemyCasting.js:91`** - now exactly one term wide:
-  `HasClearPathToShootProjectile`. *D9 shipped the other half - the
-  `EffectsAlreadyOnTarget` veto reaches the stand-off band, and the
-  ranged branch was reordered into DFU's own order so
-  `DoRangedAttack`'s band condition selects before the 1/40 roll fires,
-  where the port rolled first and picked second. Four call sites read
-  the new `canCastRangedSpell()`.*
+- ~~**`src/characters/enemyCasting.js:91`** - now exactly one term
+  wide: `HasClearPathToShootProjectile`.~~ **SHIPPED (E-group,
+  2026-09-02).** *EnemyMotor.HasClearPathToShootProjectile (:698-741)
+  is ported at `characters/enemyMotor.js` beside the collider it needs,
+  with EnemySenses.PredictNextTargetPos (:541-616) - the lead solved as
+  a cone/line intersection, its mid-interval divisor quirk included -
+  under it. The caster asks it as CanCastRangedSpell's last term
+  (:786-788, speed 25 / DaggerfallMissile.ArmLength / radius 0.45,
+  every constant reused from the home that already declared it), so a
+  blocked caster gets no selection and therefore neither casts nor
+  stands off. Both foe pools get it from the `ai` they already hand the
+  caster. D9 had shipped the other half - the `EffectsAlreadyOnTarget`
+  veto reaching the stand-off band, and the ranged branch reordered
+  into DFU's own order so `DoRangedAttack`'s band condition selects
+  before the 1/40 roll fires, where the port rolled first and picked
+  second.*
 - **`src/scenes/worldModes.js:1617`** - above ground only:
   `QuestMachine.SetupIndividualStaticNPC`. *Multi-host. The law is
   ported and idle at `systems/quest/machine.js:716` including the
@@ -512,18 +522,31 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   (`Home.md:116-119`) - is the fix, applied to a retirement record
   rather than to a live flag.*
 
-**The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17,
-which is `regenOpenFlags --check`'s answer exactly.
+**The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
+when this was measured. The E-group closed two of them the same day -
+`enemyCasting.js:91`'s clear-path term and the spell-hand release below
+- so `regenOpenFlags --check` now answers 17 over a list two entries
+shorter and two entries longer at the sites the closures moved.
 
 **Recorded by the closeout tail - the spell-hand port.**
 
-- **`src/combat/fpsSpellCasting.js:178`** - THE RELEASE IS NOT THE
-  SPELL. DFU raises OnReleaseFrame five frames (0.2 s) into the hand
-  motion and spends/launches the spell there; this port's cast is
-  synchronous (`hostMagic.castInput` resolves the whole cast and then
-  raises the release moment), so the hands start ON the release rather
-  than 0.2 s before it. *Closable, one file in the magic lane: defer
-  hostMagic's cast to the animation's release frame.*
+- ~~**`src/combat/fpsSpellCasting.js:178`** - THE RELEASE IS NOT THE
+  SPELL.~~ **SHIPPED (E-group, 2026-09-02).** *And the premise needed
+  one correction on the way in: DFU spends the magicka at the CAST, not
+  at the release - `DecreaseMagicka` is CastReadySpell.cs:423-425,
+  BEFORE `PlayOneShot` at :434. So the split shipped is DFU's own:
+  `hostMagic.castInput` runs the silence gate, the new `castInProgress`
+  gate (:408, and :315's twin on SetReadySpell - nothing can be readied
+  for the 0.2 s either), the touch-range gate and the spend, then
+  starts the hands through a new `startCastAnim` dep and parks the rest
+  on `SpellCastAnim`'s release frame, where
+  PlayerSpellCasting_OnReleaseFrame (:2098-2143) tallies, sounds,
+  assigns or launches, raises OnCastReadySpell and clears the ready. A
+  cast aborted inside the window reaches the `readySpell == null` return
+  and is not refunded; a host with no rig, or an element with no CIF
+  archive, takes DFU's no-animation arm and resolves on the spot. The
+  release reads the LIVE aim, because that is where DFU's missile
+  spawns.*
 - **`src/combat/fpsSpellCasting.js:101`** - TextureReplacement's
   loose-file CIF override (`TryImportCifRci`) is not consulted, the same
   gap `combat/fpsWeapon.js` has for WEAPON*.CIF: the replacement
@@ -574,8 +597,12 @@ preamble opens with.
    `ui/listPicker.js:263`, exists and is unwired). The spellbook's own
    drag stays the F159/F170/F180 departure; the closeout narrowed its
    superseded REASON without removing the departure.
-4. **`:509` the quest machine** -> `playSound`'s busy-skip, the one
-   recorded delta, because the port's one-shot engine has no busy state.
+4. ~~**`:509` the quest machine** -> `playSound`'s busy-skip, the one
+   recorded delta, because the port's one-shot engine has no busy
+   state.~~ **CLOSED (E-group, 2026-09-02):** `systems/audio.js` grew
+   the `QuestAudioSource` DFU's QuestMachine carries, IsPlaying reading
+   the end time of the clip `playOneShot` already reported, and the
+   world host's hook is PlaySound.cs:110-116 line for line.
 5. **`:562` the classic `.SAV` reader** -> the phone path: no zip arm in
    the saves picker, a desktop-first charter call.
 6. **`:565` (struck, with a live clause) the keybinding registry** ->

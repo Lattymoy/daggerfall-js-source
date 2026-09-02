@@ -405,6 +405,12 @@ export class EnemyAI {
     this.oldLastKnownTargetPos = null;
     this.predictedTargetPos = null;
     this.lastPositionDiff = [0, 0, 0];
+    // E6: EnemySenses.predictedTargetPosWithoutLead (:70) and
+    // targetPosPredictTimer (:71) - the two fields PredictNextTargetPos
+    // reads that nothing else did. null is the ResetPlayerPos sentinel
+    // again; the timer is the time since the last prediction pass.
+    this._predictedTargetPosWithoutLead = null;
+    this._targetPosPredictTimer = 0;
     this.awareOfTargetForLastPrediction = false;
     this.lastHadLOSTimer = 0;
     this.searchMult = 0;
@@ -751,6 +757,123 @@ export class EnemyAI {
    *  CharacterController, which every probe below is written from. The
    *  port stores FEET. */
   _centre() { return [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]]; }
+
+  /**
+   * EnemySenses.PredictNextTargetPos (:541-616), the position the two
+   * shooting probes aim at - a LEAD, solved as a cone/line
+   * intersection against the target's own movement.
+   *
+   * Answers a CENTRE-space point (the target's feet plus half its
+   * capsule, the same lift `_getDestination` takes), or null for DFU's
+   * ResetPlayerPos sentinel - "nothing has ever been seen", which
+   * HasClearPathToShootProjectile reads as a refusal (:702-703).
+   *
+   * :551-560's FIRST arm is the only one reachable here. Both callers
+   * of this method sit behind `senses.TargetInSight` (DoRangedAttack's
+   * band condition, EnemyMotor.cs:572), so `targetInSight ||...` is
+   * true every time and `assumedCurrentPosition` is always
+   * lastKnownTargetPos; the else-arm's remembered no-lead prediction
+   * belongs to the one caller this port does not have,
+   * DaggerfallMissile's mid-flight re-aim. The field it feeds
+   * (predictedTargetPosWithoutLead) is still written at :612, because
+   * that write is what the arm would read.
+   *
+   * :563-570 is DFU's arithmetic quirk, kept: targetPosPredictTimer is
+   * zero only on the frame the prediction pass itself ran, so every
+   * other call divides ONE prediction interval's worth of movement by
+   * the SHORTER time since that pass and overstates the target's
+   * speed. It also rewrites lastPositionDiff as a side effect, and so
+   * does this.
+   */
+  predictNextTargetPos(interceptSpeed) {
+    if (this.lastKnownTargetPos === null) return null;   // ResetPlayerPos
+    if (this._predictedTargetPosWithoutLead === null) {
+      this._predictedTargetPosWithoutLead = [...this.lastKnownTargetPos];
+    }
+    const assumed = this.lastKnownTargetPos;
+    let divisor = CLASSIC_UPDATE_INTERVAL;   // predictionInterval (:34) = 0.0625
+    let diff = this.lastPositionDiff;
+    if (this._targetPosPredictTimer !== 0) {
+      divisor = this._targetPosPredictTimer;
+      const old = this.oldLastKnownTargetPos ?? assumed;
+      diff = [assumed[0] - old[0], assumed[1] - old[1], assumed[2] - old[2]];
+      this.lastPositionDiff = diff;
+    }
+    // The quadratic is solved centre-to-centre, as DFU's transform
+    // positions are; `assumed` is feet-space like every other position
+    // on this class, so it lifts by half the TARGET's capsule.
+    const c = this._centre();
+    const lift = this._targetHeight() / 2;
+    const d = [assumed[0] - c[0], assumed[1] + lift - c[1], assumed[2] - c[2]];
+    const v = [diff[0] / divisor, diff[1] / divisor, diff[2] / divisor];
+    const a = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) - interceptSpeed * interceptSpeed;
+    const b = 2 * (d[0] * v[0] + d[1] * v[1] + d[2] * v[2]);
+    const cc = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+    const at = [assumed[0], assumed[1] + lift, assumed[2]];
+    let prediction = [at[0], at[1], at[2]];
+    let t = -1;
+    if (Math.abs(a) >= 1e-5) {
+      const disc = b * b - 4 * a * cc;
+      if (disc >= 0) {
+        // "find the minimal positive solution" (:586-591).
+        const discSqrt = Math.sqrt(disc) * Math.sign(a);
+        t = (-b - discSqrt) / (2 * a);
+        if (t < 0) t = (-b + discSqrt) / (2 * a);
+      }
+    } else if (Math.abs(b) >= 1e-5) {
+      t = -cc / b;   // the degenerate case (:597-598)
+    }
+    if (t >= 0) {
+      prediction = [at[0] + v[0] * t, at[1] + v[1] * t, at[2] + v[2] * t];
+      // :605-609 - "Don't predict target will move through obstacles".
+      let px = prediction[0] - at[0], py = prediction[1] - at[1], pz = prediction[2] - at[2];
+      const pl = Math.hypot(px, py, pz);
+      if (pl > 1e-9) {
+        px /= pl; py /= pl; pz /= pl;
+        if (Number.isFinite(this.collider.raycast(at, [px, py, pz], pl))) prediction = at;
+      }
+    }
+    // :612-613 - the no-lead prediction stored for the next pass, in
+    // this class's feet space.
+    this._predictedTargetPosWithoutLead = [assumed[0] + diff[0], assumed[1] + diff[1], assumed[2] + diff[2]];
+    return prediction;
+  }
+
+  /**
+   * EnemyMotor.HasClearPathToShootProjectile (:698-741), verbatim -
+   * the last term of CanCastRangedSpell (:788, speed 25,
+   * DaggerfallMissile.ArmLength, radius 0.45) and of CanShootBow
+   * (:753, speed 35, origin 0, radius 0.15).
+   *
+   * Two of DFU's lines have nothing to do here, for the reason this
+   * file's header already gives about the level collider: entities are
+   * not in it. So :710-716's "exclude enemy collider from CheckSphere"
+   * is free - this caster's own body is not in the probe to begin with
+   * - and :729-733's "the thing I hit IS my target, so the path is
+   * clear" can never fire, because a hit is always level geometry and
+   * therefore always :736's "Something in the way". A clear shot hits
+   * nothing at all and falls through to :740.
+   *
+   * :708's own note is kept as behaviour: there is no point-blank
+   * special case, so a caster with its nose against a wall fails the
+   * CheckSphere and favours melee or a touch spell instead.
+   */
+  hasClearPathToShootProjectile(speed, originDistance, radius) {
+    const target = this.predictNextTargetPos(speed);
+    if (target === null) return false;   // :702-703
+    const c = this._centre();
+    let dx = target[0] - c[0], dy = target[1] - c[1], dz = target[2] - c[2];
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist < 1e-9) return true;   // a zero direction sweeps nothing
+    dx /= dist; dy /= dist; dz /= dist;
+    // :718-724 - "Ensure there is space to spawn the projectile."
+    const origin = [c[0] + dx * originDistance, c[1] + dy * originDistance, c[2] + dz * originDistance];
+    if (this.collider.sphereOverlaps(origin, radius)) return false;
+    // :727 - the sweep runs from the shoot origin but over the distance
+    // measured from the BODY, so it overshoots by originDistance.
+    const hit = this.collider.sphereCast(origin, radius, [dx, dy, dz], dist);
+    return !Number.isFinite(hit.dist);
+  }
 
   /**
    * EnemyMotor.ObstacleCheck (:1140-1201), verbatim, with the two
@@ -1309,6 +1432,11 @@ export class EnemyAI {
     // the classic-update interval, independently phased. The port reads
     // "a classic tick happened this step" as the same thing, and says so.
     this._targetPosPredict = classicTicks > 0;
+    // E6: and the TIMER itself, which PredictNextTargetPos divides by
+    // (:566-570). DFU zeroes it on the pass frame and accumulates
+    // Time.deltaTime otherwise, so it reads "how long since the last
+    // prediction pass" - folded onto the classic tick like the flag.
+    this._targetPosPredictTimer = classicTicks > 0 ? 0 : this._targetPosPredictTimer + dt;
     // MT-i: the senses aim at the TARGET's live feet - the player's
     // when unarmed or the player is it, the foe candidate's when a
     // GetTargets pass picked one. No target reads BLIND (:410-414):

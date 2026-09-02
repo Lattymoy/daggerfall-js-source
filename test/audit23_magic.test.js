@@ -63,8 +63,13 @@ test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () 
   // AUDIT 24 scenes moved the CasterOnly arm's lastCastCost stamp below
   // its payload (EntityEffectManager.cs:2117 vs :2138), so the tally is
   // matched on its own - it is what this pin is about.
-  const spends = src.match(/playerEntity\.magicka -= cost;\n(?:\s*lastCastCost = cost;\n)?\s*tallyCastSkills\(sp\);/g) ?? [];
-  assert.equal(spends.length, 4, 'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
+  // ROAD-E6 split CastReadySpell from its release frame, so the four
+  // arms no longer each hold a spend: DecreaseMagicka (:423-425) is ONE
+  // line at the cast and the four tallies sit in the release handler.
+  assert.equal((src.match(/playerEntity\.magicka -= cost;/g) ?? []).length, 1,
+    'the spend is CastReadySpell\'s single DecreaseMagicka, five frames before the release');
+  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 4,
+    'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
   assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 4, 'and all four still record the cost');
   // the tally gates on the cost table (DFU's effect != null), not the
   // priced-as-Destruction default

@@ -193,9 +193,11 @@ the record), all fixed.
   docked bar's occlusion and the quest static-NPC arm stay flagged.
 
 What remains after Wave D and the closeout tail (the spell-hand port,
-`paused()` adopted by every host, six section C rows struck) is the 19
-flags of `Home.md`, each with its
-blocker named at the site: no asset in the repo (the PlayerTorch
+`paused()` adopted by every host, six section C rows struck) was the 19
+flags of `Home.md`; Wave E's E6 group took two of them the same day
+(the spell hands' release frame and `enemyCasting`'s clear-path term)
+and closed section C's `playSound` row with them, leaving 17, each with
+its blocker named at the site: no asset in the repo (the PlayerTorch
 prefab, the two ship pixels), a DFU original that does not exist (the
 standalone dungeon host's windows, the enhanced menu's keyboard), or
 the owner's call (the gamepad layer, the pause dropdown's mod rows).

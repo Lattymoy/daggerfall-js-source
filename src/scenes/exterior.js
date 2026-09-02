@@ -1135,7 +1135,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // this one - the standalone exterior page, which has its own magic
     // engine and its own rig - so a spell cast above ground played the
     // stance and never the cast. The same moment, the same one door.
-    onCastReadySpell: (sp) => { weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element); },   // ROAD-tail: the ELEMENT rides along (CastReadySpell :434)
+    // ROAD-E6: CastReadySpell's PlayOneShot (:430-435) - the same one
+    // door, now at the moment the magicka is spent rather than at the
+    // release the engine parks on frame 5.
+    startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
   });
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch (this host mints no encounter foes).
   // OnNewMagicRound is global and every EntityEffectManager handles it, so

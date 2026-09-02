@@ -72,65 +72,47 @@
 // all (`DaggerfallUI.Instance.DaggerfallHUD != null`), which is what
 // a null bar means in this port.
 //
-// THE DOCKED BAR SHRINKS THE WORLD PASS, it does not cover it -
-// SHIPPED (ROAD-E E5, 2026-09-02), and it was flagged here as AUDIT
-// 39 F135 for two waves before it was. DFU pairs the docked bar with
-// Utility/ViewportChanger.cs:52-67, which every frame sets the game
-// camera's rect to `new Rect(0, hudHeight, 1, 1 - hudHeight)` where
-// `hudHeight = largeHUD.ScreenHeight / Screen.height`, and with
-// HUDCrosshair.cs:43-52, which answers by re-centring the crosshair
-// into the reduced view. Both are here now:
-//   - largeHudViewportRect is that Rect, digit for digit. Unity's
-//     camera rect is normalized with a BOTTOM-LEFT origin, which is
-//     gl.viewport's own space, so it crosses over without a flip.
-//     The rect is renderer-owned FRAME state (Renderer
-//     .setWorldViewport, consumed by the next beginFrame exactly as
-//     ViewportChanger recomputes it every frame) and the 2D passes
-//     take the canvas back at the first drawScreenQuad - the port's
-//     one screen-space primitive - so no host has to remember it and
-//     no menu, video or map scene can inherit a world frame's strip.
-//   - largeHudWorldAspect is the other half, and it is NOT the
-//     renderer's: each host builds its own perspective(), and Unity
-//     derives a camera's aspect from its viewport, so a rect shrunk
-//     without its denominator would STRETCH the world into the strip
-//     instead of cropping the lens. The four hosts that draw the bar
-//     take it - scenes/world.js, scenes/exterior.js,
-//     scenes/worldModes.js (both modal arms) and scenes/dungeon.js -
-//     and the sky, which draws into the same rect, takes the same
-//     number. scenes/interior.js draws no HUD at all, so there is no
-//     surface there to carry.
-//   - the crosshair re-centre rides ui/hudCrosshair.js's
-//     crosshairCentreY: DFU's `(Screen.height - ScreenHeight -
-//     crosshairSize.y) / 2` is the reticle's TOP, so its CENTRE is
-//     `(Screen.height - ScreenHeight) / 2` with the component's size
-//     cancelled out - and this port draws its cross about a centre.
-//     It could not ship before the viewport did: on its own it would
-//     put the reticle somewhere the camera is not pointing, and a
-//     lying reticle is worse than a covered strip.
+// FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
+// SHRINK. DFU pairs the docked bar with Utility/ViewportChanger.cs:
+// 53-62, which every frame sets the camera rect to
+// `new Rect(0, hudHeight, 1, 1 - hudHeight)` - the world is rendered
+// into what the bar leaves, so nothing is hidden behind it - and
+// HUDCrosshair.cs:43-52 answers by re-centring the crosshair into the
+// reduced view (`y = (Screen.height - largeHUD.ScreenHeight -
+// crosshairSize.y) / 2`). This port draws the bar as an opaque quad
+// over a full-canvas 3D frame, so a docked bar costs the bottom
+// 46/320 of the view.
 //
 // ROAD-D D10 re-examined this and NARROWED it. One clause of the
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:6024 and scenes/exterior.js:2086, the only two
+// scenes/world.js:6043 and scenes/exterior.js:2088, the only two
 // hosts that carry the call, each over a useFwd built from cam.yaw
 // and cam.pitch one line above it), not a pixel unprojected through
 // the projection matrix, so a reduced viewport would not move a
 // single pick. (That cite pointed sixty-odd lines past the call, into
 // the AUDIT 18 arrow-streaming block, for a whole wave - a withdrawal
 // is only as good as its evidence, so test/hudlarge.test.js RESOLVES
-// the line numbers here rather than trusting them.) E5 shipped the
-// viewport it withdrew that clause about, and the withdrawal held:
-// not one activation site changed.
+// the line numbers here rather than trusting them.)
 //
-// WHAT E5 DID NOT TAKE, because DFU's own arm for it does not apply:
-// SetRetroAspectViewport (:98-146), the pillarboxed 4:3 / 16:10 rect
-// that reads the SAME hudHeight term. It is RetroModeAspectCorrection
-// - a render-to-texture presenter with a clearer camera behind it -
-// and this port has no retro rendering mode at all, so the branch has
-// nothing to be attached to. The docked-bar term inside it is the one
-// this file now carries; if a retro mode is ever built, it reads
-// dockedLargeHudHeight and there is no second copy to find.
+// WHAT REALLY REMAINS is still two halves that must land together:
+//   - the WORLD PASS's viewport. gl.viewport is set full-canvas in
+//     four places inside the renderer's own frame brackets
+//     (render/renderer.js:1188, :1206, :1688, :1863) and the 2D passes
+//     that follow need the full canvas back - so the reduced rect has
+//     to become renderer-owned frame state, not a call at one site.
+//   - the PROJECTION ASPECT, which is not the renderer's: each host
+//     builds its own `perspective(fieldOfView(), clientWidth /
+//     clientHeight, ...)` (scenes/world.js:5993, :6126 and the
+//     equivalents in the other three), so a reduced view that does not
+//     also reduce the aspect stretches the world instead of cropping
+//     it.
+// The crosshair re-centre (HUDCrosshair.cs:43-52) is a dozen lines and
+// rides along the moment those two are true; on its own it would put
+// the reticle somewhere the camera is not pointing, and a lying
+// reticle is worse than a covered strip. Recorded here rather than
+// half-ported.
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
@@ -490,69 +472,6 @@ export const largeHudUndockedOffsetWeapon = () => getBool('GUI', 'LargeHUDUndock
 export function horseOffsetHeight(bar = largeHudBar()) {
   if (!bar || !largeHudEnabled() || !largeHudOffsetHorse()) return 0;
   return Math.trunc(bar.h);
-}
-
-/**
- * ROAD-E E5 - THE DOCKED BAR'S OWN HEIGHT, the one term
- * ViewportChanger, the camera's aspect and HUDCrosshair all read.
- *
- * `LargeHUD.ScreenHeight` when `Settings.LargeHUD &&
- * Settings.LargeHUDDocked` (ViewportChanger.cs:56-62), 0 otherwise -
- * an UNDOCKED bar "is just an overlay of variable size and main
- * viewport does not change", DFU's own words at :57.
- *
- * The bar is the LAST DRAWN one, the same reading horseOffsetHeight
- * takes: a null bar is DFU's `DaggerfallHUD == null` early return
- * (:44-45), which is also this port's art-still-loading and
- * art-failed-to-load frames.
- */
-export function dockedLargeHudHeight(bar = largeHudBar()) {
-  if (!bar || !largeHudEnabled() || !largeHudDocked()) return 0;
-  return bar.h;
-}
-
-/** ViewportChanger's `standardViewportRect` (:26), verbatim. */
-export const STANDARD_VIEWPORT_RECT = Object.freeze({ x: 0, y: 0, w: 1, h: 1 });
-
-/**
- * ROAD-E E5 - the world camera's rect (ViewportChanger.cs:56-67):
- *
- *   float hudHeight = largeHUD.ScreenHeight / Screen.height;
- *   Rect rect = new Rect(0, hudHeight, 1, 1 - hudHeight);
- *
- * digit for digit. Unity's camera rect is normalized with its origin
- * at the BOTTOM-LEFT, which is `gl.viewport`'s own space, so the rect
- * crosses into this port without a flip - the world is rendered into
- * what the bar leaves and nothing is hidden behind it.
- *
- * Anything but a docked bar answers the standard rect, which is the
- * `else` arm at :64-66.
- *
- * NOT CLAMPED, because DFU does not clamp: on a screen so wide that
- * the bar is taller than it (about 7:1, since the docked bar is
- * width * 46/320), `1 - hudHeight` goes negative there as it does
- * here. The renderer floors the pixel height at 0 for GL's sake - a
- * viewport of no height draws nothing, which is what a bar taller
- * than the screen means.
- */
-export function largeHudViewportRect(canvasHeight, bar = largeHudBar()) {
-  const hud = dockedLargeHudHeight(bar);
-  if (!hud || !(canvasHeight > 0)) return STANDARD_VIEWPORT_RECT;
-  const hudHeight = hud / canvasHeight;
-  return { x: 0, y: hudHeight, w: 1, h: 1 - hudHeight };
-}
-
-/**
- * ROAD-E E5 - and the PROJECTION follows the rect. Unity derives a
- * camera's aspect from its viewport (Camera.aspect is
- * pixelWidth/pixelHeight, and camera.rect sets both), so shrinking
- * the rect without shrinking the denominator would STRETCH the world
- * into the smaller strip instead of cropping the lens the way DFU
- * does. Every host builds its own perspective(); this is the one
- * denominator they share.
- */
-export function largeHudWorldAspect(width, height, bar = largeHudBar()) {
-  return width / Math.max(1, height - dockedLargeHudHeight(bar));
 }
 
 /** ROAD-D D10 - weaponOffsetHeight (FPSWeapon.cs:146-155). Same
