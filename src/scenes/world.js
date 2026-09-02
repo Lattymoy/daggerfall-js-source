@@ -32,7 +32,14 @@ import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, H
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
-import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
+import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
+// E3: ...and the person HOST the quest machine's away arm writes through.
+// It is not interior law - it is the StaticNPC GameObject's one act,
+// SetActive - so the street's people take the same object the building's
+// people do rather than a second copy of it.
+import { makeInteriorPersonHost as makeStaticNpcHost } from './interiorContext.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
@@ -76,7 +83,7 @@ import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e:
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
-import { ExteriorAutomapWindow, stampResidenceQuestNames } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name
+import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -748,7 +755,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 26 (F019): ...and the same flats' STATIC NPCs
         // (RMBLayout.cs:366-378 / :442-454 - the non-zero FactionID
         // rule), pixel-local like everything else this host builds.
-        for (const npc of collectExteriorNpcs(blockFlats)) {
+        const npcFlats = collectExteriorNpcs(blockFlats);
+        const npcFlatSet = new Set(npcFlats);   // E3: identity, not coordinates - collectExteriorNpcs FILTERS the same objects
+        for (const npc of npcFlats) {
           pixelNpcFlats.push({
             ...npc,
             x: locLocal[0] + b.originX + npc.x,
@@ -757,16 +766,26 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
         }
         for (const flat of blockFlats) {
-          addFlat(flat.archive, flat.record,
-            locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
           // A4: every archive-201 town animal is an audio source
-          // (AddAnimalAudioSource on RMB flats, verbatim).
+          // (AddAnimalAudioSource on RMB flats, verbatim). It runs
+          // BEFORE DFU's faction test (:363-377), so it is not part of
+          // what the NPC pass takes over below.
           if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
             pixelAnimals.push({
               pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z],
               sound: ANIMAL_SOUND_BY_RECORD[flat.record],
             });
           }
+          // E3: an exterior StaticNPC's BILLBOARD is stood by
+          // standPixelNpcs, not batched here - RMBLayout hands the same
+          // GameObject to SetupIndividualStaticNPC (:377) and the away
+          // arm's SetActive(false) has to take it out of the draw AT
+          // LAYOUT, which a center already inside a built batch cannot
+          // leave. Their batches are appended to this pixel's list the
+          // moment the pass has answered for them.
+          if (npcFlatSet.has(flat)) continue;
+          addFlat(flat.archive, flat.record,
+            locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
           pixelLights.push([
@@ -860,7 +879,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!t || flat.record >= t.recordCount) continue;
       const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
       const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-      pixelNpcs.push({ ...pn, width: size.w, height: size.h });
+      // E3: `active` is the GameObject's own state (the away arm's
+      // SetActive(false)) and `questBehaviour` the component
+      // SetupIndividualStaticNPC attaches; both are what the interior
+      // host's people carry, so the click seam reads one shape.
+      pixelNpcs.push({ ...pn, width: size.w, height: size.h, active: true, questBehaviour: null, host: null });
+      // The extent still belongs to the pixel's culling box even though
+      // the billboard is batched later (a pixel whose only content near
+      // an edge is a street NPC must not cull itself away).
+      unionBox(flatBatchAabb([[flat.x, flat.y, flat.z]], size));
     }
 
     // EV6: the pixel's models sort by MESH at build - one archetype's
@@ -875,6 +902,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
+      npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
       locBlocks,   // T3d: the Where-is directory's block scan
 
@@ -890,7 +918,90 @@ export async function bootWorld(canvas, renderer, params, status) {
     // NEXT crossing (which a player who stops walking never makes).
     const wantStride = strideFor(px, py);
     if (wantStride !== entry._stride) restrideTerrain(entry, wantStride);
+    // E3: RMBLayout's THIRD act on an exterior StaticNPC, and the stand
+    // of its billboard, in that order (:372-377).
+    await standPixelNpcs(entry);
     return entry;
+  }
+
+  /** E3 - THE EXTERIOR QUEST STATIC-NPC PASS
+   *  (RMBLayout.cs:377 / :453, the block-flat and subrecord-flat sites).
+   *
+   *  DFU's layout does three things to a flat with a non-zero FactionID
+   *  and this is the third: `QuestMachine.Instance
+   *  .SetupIndividualStaticNPC(go, obj.FactionID)`, inline, at the
+   *  GameObject it has just stood. Two observable halves:
+   *    - the AWAY ARM. An individual a live quest has placed somewhere
+   *      else answers false and its home copy is `SetActive(false)` -
+   *      gone from the draw and gone from the ray, because a disabled
+   *      GameObject has no collider either. That is why the pass runs
+   *      HERE and not at click time: the billboard has to be missing
+   *      from the batch, and a center already inside a built batch
+   *      cannot leave one.
+   *    - the BOOTSTRAP BEHAVIOUR. Every other individual gets a
+   *      QuestResourceBehaviour whatever the quest state is, because
+   *      DoClick's individual broadcast (:243-248) is what lets a
+   *      questor hand out the FOLLOW-UP quest - it walks the live
+   *      quests at CLICK time, so a behaviour minted with no resource
+   *      is not inert.
+   *
+   *  The port's one difference from C# is WHEN a machine exists.
+   *  QuestMachine is a scene singleton, so DFU's layout can always ask;
+   *  this host builds its start pixel during scene init, before
+   *  `questBridge` is constructed. So the pass is idempotent and runs
+   *  again over the already-laid pixels the moment the bridge lands
+   *  (below, at the bridge's own construction) - and no frame is drawn
+   *  in between, both being init statements. It is not a "re-run when
+   *  quests change" seam and must not become one: DFU has no such
+   *  thing, and a quest that starts while you stand in the town leaves
+   *  the home copy standing there until the block is laid again.
+   *
+   *  A restore is already in DFU's order - SaveLoadManager.LoadGame
+   *  restores the quest machine (:1437) BEFORE it puts the player back
+   *  in the world (:1477), and `worldQuickLoad` likewise restores the
+   *  session before `_teleportToPixel` rebuilds every pixel.
+   */
+  async function standPixelNpcs(entry) {
+    if (!entry?.npcs?.length) return;
+    const machine = questBridge?.machine ?? null;
+    // The host is the interior person's, unchanged: above ground a
+    // StaticNPC is the same GameObject with the same one act on it
+    // (SetActive), and DFU's SECOND caller - UpdateNpcPresence - is
+    // DaggerfallInterior's alone, so nothing flips this one after
+    // layout and the hookless (flag-only) shape is the whole story.
+    if (!entry.npcQuestPass) {
+      entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, makeStaticNpcHost);
+    }
+    // The stand: one batch per archive/record over the ACTIVE NPCs,
+    // appended to the pixel's own list so the frame walk draws them,
+    // the culling test carries them and destroyPixel frees them with
+    // everything else.
+    for (const b of entry.npcBatches ?? []) {
+      const i = entry.batches.indexOf(b);
+      if (i >= 0) entry.batches.splice(i, 1);
+      entry.flatAnims.remove(b);
+      renderer.destroyBatch(b);
+    }
+    entry.npcBatches = [];
+    const npcGroups = new Map();
+    for (const pn of entry.npcs) {
+      if (!pn.active) continue;
+      const k = `${pn.textureArchive}_${pn.textureRecord}`;
+      if (!npcGroups.has(k)) npcGroups.set(k, []);
+      npcGroups.get(k).push([pn.x, pn.y, pn.z]);
+    }
+    for (const [k, centers] of npcGroups) {
+      const [archive, record] = k.split('_').map(Number);
+      const t = await getTexture(archive);
+      if (!t || record >= t.recordCount) continue;
+      uploadRecord(archive, record);
+      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      batch._box = flatBatchAabb(centers, size);   // EV3
+      armFlatAnim(batch, t, archive, record, entry.flatAnims, uploadRecordFrame);
+      entry.npcBatches.push(batch);
+      entry.batches.push(batch);
+    }
   }
 
   // EV4: a built pixel crosses between the full-res core and the far
@@ -5250,6 +5361,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
   });
+  // E3: the pixels this host laid BEFORE the bridge existed - the start
+  // pixel is built during init, above - get RMBLayout's third act now.
+  // QuestMachine is a scene singleton in DFU, so its layout never has
+  // this moment; the port's is one statement later than the first
+  // pixel and the pass is idempotent, so it is simply run again. No
+  // frame has been drawn in between (both are init statements) and no
+  // quest has started yet either, so this is the bootstrap behaviour
+  // arriving, not a billboard changing under a player's eye.
+  for (const p of built.values()) await standPixelNpcs(p);
   // AUDIT 24 (wave 22): PopupText.AddText's last line files the popup
   // in the notebook ring (:123), which is the journal's Messages page.
   // The notebook only exists once the bridge is built, so the sink is
@@ -5487,7 +5607,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const p of built.values()) {
         if (!p.npcs?.length) continue;
         const t = state.pixelTranslation(p.px, p.py);
-        for (const pn of p.npcs) out.push({ ...pn, x: pn.x + t[0], y: pn.y + t[1], z: pn.z + t[2] });
+        // E3: a person the quest machine's away arm deactivated is not
+        // a target - SetActive(false) takes the BoxCollider with the
+        // billboard, so DFU's ray meets nothing there either.
+        for (const pn of p.npcs) {
+          if (!pn.active) continue;
+          out.push({ ...pn, x: pn.x + t[0], y: pn.y + t[1], z: pn.z + t[2] });
+        }
       }
       return out;
     },
@@ -5570,6 +5696,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const entered = await modes.startInDungeon();
     if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
   }
+  // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
+  // DaggerfallTravelMapWindow's ctor (:229) each register their own
+  // console commands; both surfaces are THIS host's, so both
+  // registrations are its, once, at mount - the port's windows are
+  // per-open and its hosts are what persist. `isPlayerInside` is
+  // GameManager's, spelled here as it is at every other reader in this
+  // file, and `discoverLocation` is PlayerGPS's, the same throwing
+  // resolver questWorld hands the quest engine.
+  registerExteriorAutomapConsoleCommands({ isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior' });
+  registerTravelMapConsoleCommands({
+    isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
+    discoverLocation: (regionName, locationName) => questWorld.discoverLocation(regionName, locationName),
+  });
+  // ...and the door itself (the recorded departure: DFU's console
+  // WINDOW is the third-party UnityConsole prefab, not DFU source).
+  installConsoleProbe();
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {

@@ -87,7 +87,7 @@
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:6023 and scenes/exterior.js:2085, the only two
+// scenes/world.js:6165 and scenes/exterior.js:2108, the only two
 // hosts that carry the call, each over a useFwd built from cam.yaw
 // and cam.pitch one line above it), not a pixel unprojected through
 // the projection matrix, so a reduced viewport would not move a
@@ -104,7 +104,8 @@
 //     to become renderer-owned frame state, not a call at one site.
 //   - the PROJECTION ASPECT, which is not the renderer's: each host
 //     builds its own `perspective(fieldOfView(), clientWidth /
-//     clientHeight, ...)` (scenes/world.js:5993, :6126 and the
+//     clientHeight, ...)` (scenes/world.js:6278, and :6385/:6411 for
+//     the sky and the water's own copies of the same aspect, and the
 //     equivalents in the other three), so a reduced view that does not
 //     also reduce the aspect stretches the world instead of cropping
 //     it.

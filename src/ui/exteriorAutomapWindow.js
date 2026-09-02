@@ -95,11 +95,20 @@
 //    the chrome's own hover clock - which already returned the rested
 //    rect and was being thrown away here - drives them.
 //
-// FLAGGED, still awaiting a seam this stage does not own:
-//  - map_revealbuildings / map_hidebuildings (:1796-1830). The flag
-//    they set - `revealUndiscoveredBuildings` - is live on this window
-//    and pinned; the port has no console for them to live in, exactly
-//    as ui/travelMapWindow.js records for map_reveallocations.
+// ROAD-E E3 CLOSED THE LAST FLAG ON THIS HEADER (2026-09-02):
+//  - map_revealbuildings / map_hidebuildings (:1796-1830) are
+//    REGISTERED now, on the real ConsoleCommandsDatabase
+//    (systems/consoleCommands.js - Wenzil.Console's own, which is what
+//    was missing, not the flag). The registrar is at the foot of this
+//    file, ExteriorAutoMapConsoleCommands verbatim: both names, both
+//    descriptions, both usages, DFU's IsPlayerInside gate and its four
+//    answer strings. `revealUndiscoveredBuildings` moved to MODULE
+//    scope with them, because ExteriorAutomap.cs:230-234 is a property
+//    on the persistent component and the console sets it with no map
+//    open; the window's own property is an accessor over it, so every
+//    reader and pin here is unchanged. The console WINDOW is a
+//    recorded departure (Ledger A): DFU's is the third-party
+//    UnityConsole addon's Unity uGUI prefab, not DFU source.
 //
 // THE COPY LAW: getBlockAutoMap's removeGroundFlats mutates the
 // CACHED block array in place, and cityNavigation carves the navgrid
@@ -135,6 +144,12 @@ import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
 import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:377-378)
 import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { registerCommand } from '../systems/consoleCommands.js';   // E3: the console command database
+
+// E3: RevealUndiscoveredBuildings (:230-234) - the persistent
+// component's flag, set by the console with no window open and read by
+// the next one that opens.
+let _revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
 
 export const BLOCK_PX = 64;                      // blockSizeWidth/Height (ExteriorAutomap.cs:153-154)
 const WORLD_PER_PX = 102.4 / BLOCK_PX;           // 1.6 world units per layout pixel (RMBDimension * GlobalScale / 64)
@@ -526,8 +541,18 @@ export class ExteriorAutomapWindow {
     this._platesKey = '';
     this._hoverPlate = null;
     this._tooltipRect = null;   // the chrome rect whose tooltip is due (automapChrome.tick)
-    this.revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
   }
+
+  /** E3: RevealUndiscoveredBuildings (ExteriorAutomap.cs:230-234) is a
+   *  property on the PERSISTENT component, not on the window - the
+   *  console sets it while no map is open and the next open reads it -
+   *  so the flag lives at module scope here (the shape
+   *  ui/travelMapWindow.js has always used for its own pair) and the
+   *  window's property is the same value under the name the drawing
+   *  code and its pins already read. */
+  get revealUndiscoveredBuildings() { return _revealUndiscoveredBuildings; }
+
+  set revealUndiscoveredBuildings(on) { _revealUndiscoveredBuildings = !!on; }
 
   // ---- the verb table (ui/automapChrome.js answers NAMES) -----------
 
@@ -1109,5 +1134,46 @@ export class ExteriorAutomapWindow {
       drawToolTipBox(renderer, m, font, t.name, this._hoverAt[0], this._hoverAt[1],
         { ignoreEnableSetting: true });
     }
+  }
+}
+
+// ── ROAD-E E3: ExteriorAutoMapConsoleCommands ────────────────────────
+// ExteriorAutomap.cs:1777-1844. The two verbs this file's header
+// carried as its last open item: the flag was live and pinned, and
+// what was missing was the database to register them in. It exists now
+// (systems/consoleCommands.js), so they are registered as C# registers
+// them, with C#'s gate and C#'s four answer strings.
+//
+// `ExteriorAutomap.instance` is a persistent component in DFU and the
+// port's window is per-open, so the INSTANCE test below is the one
+// thing that cannot be a window reference: what the commands need is
+// the flag, which lives at module scope with the window class, so the
+// instance is always there and the null arm is DFU's unreachable-in-
+// practice guard kept for its message. IsPlayerInside is the host's -
+// a mounted interior or dungeon mode - and it is passed in, because a
+// UI module cannot ask a host a question it was not handed.
+
+/** map_revealbuildings / map_hidebuildings (:1793-1842). */
+export function registerExteriorAutomapConsoleCommands(deps = {}) {
+  const inside = () => !!deps.isPlayerInside?.();
+  try {
+    registerCommand('map_revealbuildings',
+      'Reveals undiscovered buildings on exterior automap (temporary)',
+      'map_revealbuildings',
+      () => {
+        if (inside()) return 'this command only has an effect when outside and at a location';
+        _revealUndiscoveredBuildings = true;
+        return 'undiscovered buildings have been revealed (temporary) on the exterior automap';
+      });
+    registerCommand('map_hidebuildings',
+      'Hides undiscovered buildings on exterior automap',
+      'map_hidebuildings',
+      () => {
+        if (inside()) return 'this command only has an effect when outside and at a location';
+        _revealUndiscoveredBuildings = false;
+        return 'undiscovered buildings have been hidden on the exterior automap again';
+      });
+  } catch (ex) {
+    console.error(`Error Registering Exterior Automap Console commands: ${ex?.message ?? ex}`);
   }
 }

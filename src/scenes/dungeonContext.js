@@ -12,7 +12,8 @@ import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
-import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, revealAllAutomap, hideAllAutomap, toggleAutomapDebugTeleportMode, automapDebugTeleportMode } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs
+import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
@@ -3603,6 +3604,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // return runs DFU's layout guard (:2385-2386) over it.
   const automapModel = buildRevealIndex(automapEntries);
   bindAutomapLayout(automapRec, automapModel);
+  // ROAD-E E3: Automap.Start's LAST act (:965-975) - AutoMapConsoleCommands
+  // .RegisterCommands, inside DFU's own try/catch. It lands after the bind
+  // because the bind is what makes `Automap.instance` answer.
+  registerAutomapConsoleCommands();
   // ROAD-C c2/S8: THE AUTOMAP'S TELEPORT LISTENER. DFU subscribes
   // Automap.OnTeleportAction to the static DaggerfallAction event at
   // :924, so a portal the player walks through is recorded on the map
@@ -3813,26 +3818,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         debugTeleport: (pos) => actions.onTeleport?.({ pos, yawDeg: 0 }),
       });
     },
-    /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688). The
-     *  port has no in-game console; the standalone host mounts these on
-     *  its probe surface, which is where every other developer verb in
-     *  this port lives. The RETURN STRINGS are DFU's own. */
-    automapCommand(name) {
-      if (name === 'map_revealall') {
-        revealAllAutomap(automapRec, automapModel);
-        return 'dungeon has been completely revealed on the automap';
-      }
-      if (name === 'map_hideall') {
-        hideAllAutomap(automapRec);
-        return 'hide complete on automap';
-      }
-      if (name === 'map_teleportmode') {
-        return toggleAutomapDebugTeleportMode()
-          ? 'debug teleport mode has been enabled'
-          : 'debug teleport mode has been disabled';
-      }
-      return `unknown command ${name}`;
-    },
+    /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688).
+     *  ROAD-E E3 put them on the real ConsoleCommandsDatabase, where C#
+     *  registers them (systems/automap.js's registrar, above), so this
+     *  is now the standalone host's probe DOOR onto that database and
+     *  not a second copy of the three answers: an unknown name gets
+     *  NoSuchCommandException's own "Command X not found." message, and
+     *  both gates - IsPlayerInside and a null Automap.instance - are the
+     *  database's. */
+    automapCommand(name) { return executeConsoleCommand(name, []); },
     automapDebugTeleportMode,
     enemies,
     foes,

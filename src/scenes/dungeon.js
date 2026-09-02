@@ -50,6 +50,7 @@ import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   //
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -356,6 +357,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
 
+  // E3: the console's door, ungated - the database is one static class
+  // in DFU and every command registered anywhere is reachable from any
+  // scene, which is exactly what a static class means.
+  installConsoleProbe();
+
   if (shotMode) {
     // Probe hooks (parity with the world scene): displace the camera and
     // frame-sync instead of sleeping.
@@ -393,9 +399,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
     window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
     // ROAD-C c2/S8: AutoMapConsoleCommands' three verbs - map_revealall,
-    // map_hideall, map_teleportmode. DFU registers them with the
-    // ConsoleCommandsDatabase; the port has no console, so they mount
-    // here beside every other developer verb, under their own names.
+    // map_hideall, map_teleportmode. ROAD-E E3 registered them with the
+    // real ConsoleCommandsDatabase (systems/consoleCommands.js), so this
+    // probe is a NAMED door onto it - kept because the probes that drive
+    // this host call it by this name. `window.__console` beside it is the
+    // console's own door, where any registered command is reachable.
     window.__automapCommand = (name) => ctx.automapCommand?.(name) ?? 'Automap instance not found';
     window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };
     window.__piles = () => JSON.stringify(ctx.dropped?.().map((p) => ({ n: p.items.length, flat: !!p.batch })) ?? []);

@@ -32,6 +32,7 @@ import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -223,6 +224,12 @@ export async function bootInterior(canvas, renderer, params, status) {
   });
 
   const shotMode = params.has('shot');
+  // E3: the console's door. This host mounts no window that registers a
+  // command, but the database is one static class in DFU - every
+  // command registered anywhere is reachable from any scene - and the
+  // building's own automap registers the three map verbs from
+  // interiorContext, so the door is not empty here.
+  installConsoleProbe();
   status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
   console.log(
     `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +

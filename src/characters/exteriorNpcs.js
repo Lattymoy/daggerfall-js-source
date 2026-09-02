@@ -56,3 +56,51 @@ export function exteriorNpcRecord(flat, flatData = null) {
     context: NPC_CONTEXT.Custom,
   };
 }
+
+/**
+ * E3 - RMBLayout's THIRD act on an exterior StaticNPC, as a pass over
+ * the records above (RMBLayout.cs:377 and :453 - the block-flat site and
+ * the building-subrecord one; the same statement in both):
+ *
+ *     QuestMachine.Instance.SetupIndividualStaticNPC(go, obj.FactionID);
+ *
+ * It is a LOOP here and a per-GameObject line there because the port
+ * resolves its billboards in one pass, but nothing about the order
+ * changes: it runs at LAYOUT, per NPC, before the billboard is drawn or
+ * clickable. Two halves, both C#'s:
+ *
+ *   - the AWAY ARM. An individual a live quest has placed somewhere
+ *     else answers false, and the machine has already called
+ *     `SetActive(false)` on the host it was handed - so the home copy
+ *     is out of the draw AND out of the activation ray, a disabled
+ *     GameObject having no BoxCollider either. The host is the flag,
+ *     which is why the caller must stand billboards AFTER this pass.
+ *   - the BOOTSTRAP BEHAVIOUR. Every other individual gets a
+ *     QuestResourceBehaviour whatever the quest state is (a
+ *     non-individual faction gets `true` and nothing attached, C#'s own
+ *     shape). It is not inert when no quest is running: DoClick's
+ *     individual broadcast (QuestResourceBehaviour :243-248) walks the
+ *     LIVE quests at click time, which is how a questor hands out the
+ *     follow-up quest they had no resource for at layout.
+ *
+ * @param npcs      exteriorNpcRecord()s carrying `active`/`questBehaviour`
+ * @param machine   the QuestMachine, or null when the host mounts none
+ *                  (DFU always has the singleton; a machine-less host
+ *                  gets C#'s empty-machine answer - everyone stands)
+ * @param makeHost  the person's GameObject stand-in (setActive + the
+ *                  DoClick broadcast's staticNpcFactionId)
+ * @returns whether the pass ran (false = no machine to ask)
+ */
+export function setupExteriorQuestStaticNpcs(npcs, machine, makeHost) {
+  if (!machine) return false;
+  for (const pn of npcs) {
+    pn.host = makeHost(pn);
+    const setup = machine.setupIndividualStaticNPC(pn.host, pn.factionID);
+    // The RETURN is the behaviour when there is one, `true` for a
+    // non-individual and `false` for the away arm - C# hands back a
+    // bool and the port hands back the component, so only an object
+    // is a behaviour.
+    if (setup && setup !== true) pn.questBehaviour = setup;
+  }
+  return true;
+}

@@ -40,7 +40,7 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { worldAabb } from '../player/activate.js';   // ROAD-C c2/S9: the automap rows' world bounds
-import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, SCAN_INTERVAL_S } from '../systems/automap.js';   // ROAD-C c2/S9
+import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands } from '../systems/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
 import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S9
 
 /**
@@ -568,6 +568,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     dungeonEntranceDiscovered: !!opts.dungeonEntranceDiscovered,
   });
   bindAutomapLayout(automapRec, automapModel);
+  // ROAD-E E3: Automap.Start's RegisterCommands (:965-975). ONE Automap
+  // component serves both arms in DFU, and map_revealall's gate is
+  // IsPlayerInside - true in a shop too - so the building's map answers
+  // the same three verbs the dungeon's does. Registration is idempotent
+  // (the database is a dictionary keyed by name), which is why both
+  // mounts may do it.
+  registerAutomapConsoleCommands();
   // SetupBeacons' building arm parks the entrance beacon at the door the
   // player walked through (:1450-1457); rayEntrancePosOffset is (0,0,0)
   // (:236), so this is the door's world position exactly. The standalone

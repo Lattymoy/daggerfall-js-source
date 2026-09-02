@@ -265,6 +265,11 @@ export const LIVE = Object.freeze({
   // gate on moving a quest item out of the pack, read by the one law
   // both the inventory window and the shop's Sell staging call.
   'GUI/CanDropQuestItems': 'src/systems/itemTransfer.js',   // U56: TransferItem's quest arm moved with the ladder
+  // ROAD-E E3: the developer console. ConsoleUI.ToggleConsole refuses
+  // to open at all when this is off (:51-53), and the port's console
+  // door answers the same way - so the key is LIVE the moment the
+  // command database has a door, which is what E3 built.
+  'Enhancements/LypyL_GameConsole': 'src/systems/consoleCommands.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

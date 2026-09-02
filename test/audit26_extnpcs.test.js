@@ -16,7 +16,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { collectBlockFlats } from '../src/world/rmbFlats.js';
-import { collectExteriorNpcs, exteriorNpcRecord } from '../src/characters/exteriorNpcs.js';
+import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../src/characters/exteriorNpcs.js';
+import { makeInteriorPersonHost } from '../src/scenes/interiorContext.js';
+import { QuestMachine } from '../src/systems/quest/machine.js';
+import { QuestResourceBehaviour } from '../src/systems/quest/resourceBehaviour.js';
+import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import {
   exteriorNpcFlags, staticNpcData, NPC_CONTEXT, ZERO_NPC_DATA,
 } from '../src/characters/staticNpc.js';
@@ -127,7 +131,7 @@ test('AUDIT 26 F019: the wiring - collectExteriorNpcs has production callers in 
   // building, so neither has an exterior flat to collect.
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const host = src(f);
-    assert.match(host, /import \{ collectExteriorNpcs, exteriorNpcRecord \}/, `${f}: the collection is not imported`);
+    assert.match(host, /import \{ collectExteriorNpcs, exteriorNpcRecord\s*[,}]/, `${f}: the collection is not imported`);
     assert.ok(host.includes('collectExteriorNpcs(blockFlats)'), `${f}: the collection is never called on the block's flats`);
     assert.ok(host.includes('exteriorNpcRecord('), `${f}: no NPC record is ever stood`);
     assert.ok(host.includes('npcTargets: ()'), `${f}: the NPCs never reach the mode machine`);
@@ -156,4 +160,113 @@ test('AUDIT 26 F019: the exterior activation ray clicks them (PlayerActivate.cs:
   // outdoors, Context.Building inside).
   assert.ok(wm.includes('...(pn?.context != null ? { context: pn.context } : {})'),
     'the click always derives a BUILDING record - the exterior overload stamps Context.Custom');
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// ROAD-E E3: RMBLayout's THIRD act on an exterior StaticNPC
+// (RMBLayout.cs:377 / :453) - the one the AUDIT 26 wiring left flagged.
+// The law is `QuestMachine.Instance.SetupIndividualStaticNPC(go,
+// obj.FactionID)` at LAYOUT, per NPC, and its two observable halves:
+// the away arm's SetActive(false) (out of the draw AND out of the ray)
+// and the bootstrap QuestResourceBehaviour every other individual gets.
+// ═══════════════════════════════════════════════════════════════════
+
+/** A machine whose one site link places the individual 305 AWAY from
+ *  home (or at home), without parsing a quest: the walk reads
+ *  SiteLink -> Quest -> Place -> selectedMarker -> resource. */
+function individualMachine({ atHome = false } = {}) {
+  const m = new QuestMachine({
+    world: {
+      getFactionData: (id) => (id === 305 ? { id: 305, type: FACTION_TYPES.Individual }
+        : id === 510 ? { id: 510, type: FACTION_TYPES.Group } : null),
+    },
+  });
+  const person = {
+    isPerson: true, symbol: { name: 'ind' }, isIndividualNPC: true,
+    isIndividualAtHome: atHome, factionId: 305, factionData: { id: 305 },
+    questResourceBehaviour: null,
+  };
+  const place = { isPlace: true, siteDetails: { selectedMarker: { targetResources: [{ name: 'ind' }] } } };
+  const quest = {
+    uid: 7, questComplete: false, questTombstoned: false,
+    resources: new Map([['ind', person], ['lair', place]]),
+    getPlace: (sym) => (sym?.name === 'lair' ? place : null),
+    getResource: (sym) => quest.resources.get(sym?.name) ?? null,
+  };
+  person.parentQuest = quest;   // AssignResource reads targetQuest.uid off the resource
+  m.quests.set(quest.uid, quest);
+  m.siteLinks.push({ questUID: quest.uid, placeSymbol: { name: 'lair' }, siteType: 0, mapId: 999, buildingKey: 0, magicNumberIndex: 0 });
+  return { m, person };
+}
+
+/** The two records one town pixel would stand: the individual, and a
+ *  Group-faction street NPC that is not one. */
+const npcRecords = () => [
+  { ...exteriorNpcRecord({ archive: 179, record: 5, x: 1, y: 0, z: 2, factionID: 305, flags: 0, rawX: 1, rawY: 0, rawZ: 2, recordPosition: 12 }), active: true, questBehaviour: null, host: null },
+  { ...exteriorNpcRecord({ archive: 181, record: 2, x: 3, y: 0, z: 4, factionID: 510, flags: 0, rawX: 3, rawY: 0, rawZ: 4, recordPosition: 13 }), active: true, questBehaviour: null, host: null },
+];
+
+test('E3: the away arm takes the home copy out of the draw AND the ray (RMBLayout.cs:377)', () => {
+  const { m } = individualMachine({ atHome: false });
+  const npcs = npcRecords();
+  assert.equal(setupExteriorQuestStaticNpcs(npcs, m, makeInteriorPersonHost), true, 'the pass ran');
+  assert.equal(npcs[0].active, false, 'an individual placed elsewhere loses its home copy (SetActive(false))');
+  assert.equal(npcs[0].questBehaviour, null, 'the away arm attaches NO behaviour - it returns false first');
+  // ...and the second half of "out of the ray": a deactivated
+  // GameObject has no BoxCollider, so the host must not offer it as a
+  // target. This is the shape scenes/world.js filters on.
+  assert.deepEqual(npcs.filter((pn) => pn.active).map((pn) => pn.factionID), [510]);
+  // the Group faction is not an individual: plain true, still standing
+  assert.equal(npcs[1].active, true);
+  assert.equal(npcs[1].questBehaviour, null);
+});
+
+test('E3: at home every individual gets the BOOTSTRAP behaviour, and it is coupled to the Person', () => {
+  const { m, person } = individualMachine({ atHome: true });
+  const npcs = npcRecords();
+  setupExteriorQuestStaticNpcs(npcs, m, makeInteriorPersonHost);
+  assert.equal(npcs[0].active, true, 'at home the copy stands');
+  assert.ok(npcs[0].questBehaviour instanceof QuestResourceBehaviour,
+    'the follow-up-quest bootstrap click needs a behaviour on EVERY individual');
+  assert.equal(person.questResourceBehaviour, npcs[0].questBehaviour, 'coupled back to the Person');
+  // the host carries the faction DoClick's individual broadcast reads
+  assert.equal(npcs[0].host.staticNpcFactionId, 305);
+});
+
+test('E3: a host with no quest machine is C-sharp\'s empty-machine answer - everyone stands, nobody is touched', () => {
+  const npcs = npcRecords();
+  assert.equal(setupExteriorQuestStaticNpcs(npcs, null, makeInteriorPersonHost), false,
+    'the pass must report that it did NOT run, so the caller can run it again when a machine exists');
+  assert.deepEqual(npcs.map((pn) => [pn.active, pn.questBehaviour, pn.host]), [[true, null, null], [true, null, null]]);
+});
+
+test('E3: the wiring - world.js runs the pass at layout and stands only the ACTIVE billboards', () => {
+  const w = src('src/scenes/world.js');
+  // the pass runs where RMBLayout runs it: at layout, per pixel,
+  // BEFORE the billboards are batched
+  assert.ok(w.includes('setupExteriorQuestStaticNpcs(entry.npcs, machine, makeStaticNpcHost)'),
+    'world.js never asks the quest machine about its street NPCs');
+  assert.ok(w.includes('await standPixelNpcs(entry);'), 'the pass is never reached from the pixel build');
+  const from = w.indexOf('async function standPixelNpcs(');
+  const to = w.indexOf('function buildFieldFor(');
+  assert.ok(from > 0 && to > from, 'standPixelNpcs changed shape');
+  const stand = w.slice(from, to);
+  assert.ok(/if \(!pn\.active\) continue;/.test(stand),
+    'a deactivated NPC must not reach a billboard batch - that is the whole of the away arm');
+  assert.ok(stand.indexOf('setupExteriorQuestStaticNpcs') < stand.indexOf('createBillboardBatch'),
+    'the pass must answer BEFORE the batch is built, or the away arm has nothing to remove');
+  // the block loop hands the NPC flats to the pass instead of batching
+  // them with the scenery
+  assert.ok(w.includes('if (npcFlatSet.has(flat)) continue;'),
+    "an NPC's billboard batched with the scenery can never be withdrawn");
+  // the ray: an inactive person is not a target
+  const nt = w.indexOf('npcTargets: () => {');
+  assert.ok(nt > 0, 'npcTargets changed shape');
+  assert.ok(/if \(!pn\.active\) continue;/.test(w.slice(nt, nt + 900)),
+    'a deactivated GameObject has no collider - it must not be an activation target');
+  // and the pixels laid before the bridge existed get the pass when it
+  // lands (QuestMachine is a scene singleton in DFU; this host's bridge
+  // is built one statement after its start pixel)
+  assert.ok(w.includes('for (const p of built.values()) await standPixelNpcs(p);'),
+    'the start pixel would carry no bootstrap behaviours at all');
 });

@@ -131,7 +131,8 @@ import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from 
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
-import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { ExteriorAutomapWindow, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; E3: ExteriorAutoMapConsoleCommands
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
 import { discoveredBuildings, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename
@@ -590,6 +591,20 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     this is a coalesced wait, not a second load.
   //   - the AABB is the swept billboard box, exactly as the interior
   //     host's static NPCs take it (interiorContext.js:298-316).
+  //   - E3: RMBLayout's THIRD act on one of these flats
+  //     (`QuestMachine.Instance.SetupIndividualStaticNPC(go,
+  //     obj.FactionID)`, :377/:453) has no machine to ask in THIS host,
+  //     which mounts no quest bridge at all - the same decision
+  //     `tickQuests: null` records for TickRest above, and the same
+  //     stance D5 rowed for this host's automap plates ("scenes/
+  //     exterior.js mounts none, so its every residence takes DFU's own
+  //     empty-set answer"). With no live quest there is no site link to
+  //     place an individual elsewhere, so C#'s own answer here is the
+  //     one below: every street NPC stands, and none carries a
+  //     behaviour. The pass with a machine behind it, and the away
+  //     arm's SetActive(false) taking the billboard out of the batch at
+  //     layout, is `scenes/world.js`'s standPixelNpcs - the host that
+  //     has the bridge.
   await pipeline.loadFlats();
   const exteriorNpcs = [];
   for (const flat of exteriorNpcFlats) {
@@ -1684,6 +1699,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLocation.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
+  // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) registers its two
+  // verbs; this host owns that window too, so it registers them the way
+  // world.js does. It has no travel map (that door is world.js's), so
+  // TravelMapConsoleCommands is not this host's to register - and the
+  // commands are still REACHABLE from here, because the database is one
+  // static class in DFU and one module here.
+  registerExteriorAutomapConsoleCommands({ isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior' });
+  installConsoleProbe();
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it
     window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats

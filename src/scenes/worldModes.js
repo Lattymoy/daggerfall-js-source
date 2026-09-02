@@ -1656,26 +1656,31 @@ export function createWorldModes(host) {
   //     ?interior and ?dungeon scenes lay out ONE building interior /
   //     one dungeon and never an RMB block's exterior.
   //
-  // FLAGGED, above ground only, each with the DFU line it owes.
-  // ROAD-D D10 re-examined both and NARROWED them to what is really
-  // open; neither shrank to a one-file swap.
+  // ROAD-E E3 CLOSED THE FIRST OF THESE TWO (2026-09-02).
+  // QuestMachine.SetupIndividualStaticNPC (RMBLayout.cs:377/:453), the
+  // third thing layout does to an exterior NPC, RUNS ABOVE GROUND NOW:
+  // `scenes/world.js`'s standPixelNpcs is that call site, at RMBLayout's
+  // own moment - per NPC, before the billboard is batched, so the away
+  // arm's SetActive(false) really does take it out of the draw AND out
+  // of the ray (npcTargets skips an inactive person, because a disabled
+  // GameObject has no BoxCollider either). Its two halves are DFU's:
+  // an individual a live quest placed elsewhere loses its home copy,
+  // and every other individual gets the BOOTSTRAP QuestResourceBehaviour
+  // that `pn.questBehaviour?.doClick()` below reads - the follow-up
+  // quest's door, since DoClick's individual broadcast walks the live
+  // quests at CLICK time. The port's one seam beyond C# is that
+  // QuestMachine is a scene singleton there and this port's bridge is
+  // built one statement after the start pixel, so the pass is
+  // idempotent and runs again over the already-laid pixels when the
+  // bridge lands, with no frame drawn in between; it is NOT a
+  // quest-change re-run, because DFU has none - a quest that starts
+  // while you stand in the town leaves the home copy there until the
+  // block is laid again. `scenes/exterior.js` mounts no quest bridge
+  // (it says so at its own NPC site), which is C#'s empty-machine
+  // answer: everyone stands.
   //
-  //   - QuestMachine.SetupIndividualStaticNPC (RMBLayout.cs:376/:447),
-  //     the third thing layout does to an exterior NPC. The LAW is
-  //     ported and idle (systems/quest/machine.js:708-730, the away
-  //     arm's setActive(false) included); what is missing is a moment
-  //     to run it. The interior path runs it at DFU's own moment
-  //     (interiorContext's people walk) because the interior is built
-  //     long after the quest bridge exists; the exterior blocks are
-  //     laid out BEFORE it in both hosts (world.js builds the start
-  //     pixel first), so there is no machine to ask yet, and doing it
-  //     at click time would be the wrong moment - the away arm has to
-  //     take the billboard out of the batch AT LAYOUT. Closing it is a
-  //     MULTI-HOST slice in world.js and exterior.js: either defer the
-  //     exterior block's NPC pass until the bridge exists, or re-run
-  //     one pass over every already-laid pixel when it lands. The
-  //     click still stamps LastNPCClicked and still honours a faction
-  //     listener.
+  // FLAGGED, above ground only, with the DFU line it owes:
+  //
   //   - the GUILD SERVICE popup, if a street NPC ever carries a guild
   //     service faction: its window and every window it dispatches to
   //     mount in `interiorOverlay`, which only the interior/dungeon
