@@ -510,6 +510,12 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   assert.match(src, /grid\.roadsKey !== roadsKey/, 'the grid is keyed on the flags');
   assert.match(src, /const i = y \* MAP_WIDTH \+ x;/, 'AUDIT 46 A1: the mask is indexed at the WORLD\'s stride, not the window\'s');
   assert.match(src, /\(showRoads && net\.roads\[i\]\)/, 'and a hidden layer is not drawn');
+  // AUDIT 47 A1: the two flags must be READ from the store. The line
+  // above proves a hidden layer is not drawn IF showRoads is false; it
+  // said nothing about where showRoads comes from, and a mutant that
+  // set both to `true` passed every pin with the chips toggling nothing.
+  assert.match(src, /const showRoads = !this\.filters\.roads, showTracks = !this\.filters\.tracks;/,
+    'showRoads and showTracks are the classic inversion of the live store, not constants');
 });
 
 // AUDIT 46 A10: NO CHUNK IS EVER BUILT WITHOUT THE NETWORK. The worker
