@@ -594,9 +594,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       }
       renderer.uploadTileArray(groundArchive, layers);
-      // GR1: which of this archive's records are GRASS, from its own
-      // texels - roads excluded by record, and a winter archive has no
-      // green base so it yields none
+    }
+    // GR1: which of this archive's records are GRASS, from its own texels -
+    // roads excluded by record, and a winter archive has no green base so
+    // it yields none. AUDIT 49 F3: learned whenever MISSING, not only on a
+    // tile-cache miss - the tile array cache lives on the renderer and
+    // outlives this scene, so an archive the exterior host had uploaded
+    // came back here cached, skipped the block above, and grew no grass.
+    if (!grassRecords.has(groundArchive)) {
+      const layers = [];
+      for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       grassRecords.set(groundArchive, grassRecordsOf(layers));
     }
     const terrain = renderer.createTerrainSurface(positions, normals,
@@ -5956,6 +5963,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
+      labGrassCentre = null;   // AUDIT 49 F2: the scatter is baked in world coordinates and the world just moved - re-place it around the eye
       droppedLoot.offsetAll(r.offset);
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
@@ -6394,9 +6402,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       const w = sky?.cloudShadow?.wind ?? [0, 0];
       const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
       const slider = mag * 260;
+      // AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the gust;
+      // uWindV is the rate without it - the same pair the rain is fed
+      const tsec = now / 1000;
+      const gustG = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: LAB_DIM[weather] ?? 1 },
-        { dir, speed: slider, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
+        { dir, speed: slider * gustG, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
     // C13: streaming-world arrows fly against the live pixel

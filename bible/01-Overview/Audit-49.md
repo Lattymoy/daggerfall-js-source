@@ -1,55 +1,62 @@
-# Audit 49 - Roads 14-18, the calibrated network, before continuing
+# AUDIT 49 - THE LAB'S GRASS AND WEATHER IN THE GAME (2026-09-02)
 
-Mac, 2026-09-02: "Lets do a comprehensive audit before continuing."
-Sweep first; then the two things only the real map can show, which
-this container now has.
+Mac: a comprehensive audit of GR1 (the lab's grass, byte for byte) -
+and WX1 (the lab's weather) with it, since they share the method.
 
-## The sweep
+## Method
 
-Six mutants over ROADS 14-18. R14 the squared turn, R15 tracks aiming
-at the road pixel, R16 the track set, R18 the wide join: DEAD. R16's
-neighbours dial: ALIVE, expected - a dial is a number, not a law. R17
-the through-road merge: ALIVE, and that became A2.
+The byte-exact claim is a pin, not a sentence: both shader stages of
+each pass are sliced out of grass-proto.html at test time and compared
+as strings. What this audit looked for is everything AROUND the
+verbatim text - the GL state the lab assumed, the coordinates the game
+moves, the caches the game keeps - because that is where a verbatim
+port goes wrong.
 
-## A1 - HIGH, FIXED. Half the build was spent proving the sea is wet.
+## Findings
 
-7.25 seconds on the real map, and 3.46 of them - 48% - were the 44
-unrouted pairs, all but one with water between them, each paying the
-12-, 40- and 120-pixel A* boxes at eight headings before giving up.
-Land is flood-filled once into 4-connected components (the
-conservative match for a router that will not cut a water corner), and
-a pair on different components is named unrouted without a search.
-Build 7.25s -> 4.44s, the network byte-identical, the same 44 named.
-Pinned with a one-pixel strait and a COUNT - stats.islands - because the first pin used a clock and a fast failure looked like a skip to it; the mutant survived until the count replaced the clock.
+**F1 - THE BLADES WERE CULLED.** The lab never enables CULL_FACE - a
+blade is one quad seen from both sides - and the world renderer
+enables it at every frame. Drawn with culling on, every blade whose
+winding faced away from the eye vanished, and turning changed which
+half of the sward was there. This is "grass that disappears". Off for
+the grass draw, back on after, as the renderer left it. Mutant dead.
 
-The remaining 4.4 seconds are 2,222 road routes and 6,362 track routes
-at roughly half a millisecond each. That is what caching (item 8,
-parked on this number) would remove for every boot after the first,
-and the number now says it is worth it.
+**F2 - THE SCATTER DID NOT FOLLOW THE ORIGIN.** The world uses a
+floating origin (EV1) and shifts everything by 819 units when the
+player crosses a pixel boundary; the blades are baked in world
+coordinates and were not in the list of things shifted, so the whole
+sward jumped a pixel away until the next re-place 60m later. The
+shift now forces a re-place around the eye.
 
-## A2 - LOW, RECORDED. The merge is real, small, and invisible to any fixture.
+**F3 - AN ARCHIVE COULD HAVE NO GRASS RECORDS.** The records were
+learned only inside the tile-array cache MISS, and that cache lives on
+the renderer and outlives the scene. An archive the exterior host had
+uploaded came back to the world host cached, skipped the block, and
+grew no grass. Learned whenever missing now.
 
-Disabling R17's through-road merge left every pin green. On every flat
-fixture tried, the wide join steers an approach by itself, and a route
-that rides the existing road into town leaves the same pixels whether
-it stops three pixels early or not. On the REAL map it is measurable:
-junctions 7.0% -> 6.5%, 118 duplicate spur pixels removed, right
-angles unchanged. The hairpin and right-angle win credited to ROADS
-17/18 was the WIDE JOIN's, and the record now says so. The merge stays,
-pinned at the source, with the measurement that justifies it.
+**F4 - THE GUST WAS DROPPED FROM uWind.** The lab passes WIND.speed,
+which carries its three-sine gust; the game passed the bare speed.
+The vertex text never reads uWind (it reads uWindV), so nothing was
+visible - but byte-exact means the uniforms too. The same pair the
+rain is fed.
 
-## Cleared
+## Verified
 
-The calibration table reproduces from the uploaded archives to the
-pixel on every run. The 44 unrouted pairs are islands and the far
-north by name (Millitor -> Paponirea across water, Chestertower ->
-Penwall Derry across water, ...); one land pair, Atruza -> Baghada, is
-walled by blocked pixels and the no-corner rule and is the only
-candidate for a wider fallback.
+- Both lab programs (grass and weather) declare every uniform they use;
+  the declaration sweep now composes labGrass's HEAD + FIELD + body the
+  way the module does.
+- The lab weather draw restores depth write, culling and blend after
+  itself; the grass draw restores culling and blend.
+- Both foreign draws mark the EV6 seam; every count that said four
+  passes says five.
+- No blade on a road record, on water, under the sea plane, or in
+  winter - pinned pure, and measured live (0 in a winter town).
 
-## Standing
+## Costs, stated
 
-Right angles 0.9% (his 1.7%), hairpins 0 (his 0), junctions 6.5% (his
-4.4%), bends 25% (his 30%), road pixels 14.0k (his 21.5k). Two
-structural gaps remain from ROADS 16, unchanged: the track webs
-(dead-ends 29% vs 7%) and road length. They are the next slices.
+The placer walks 1,200,000 candidates on the main thread every time
+the eye moves 60m from the last centre: 169ms, a visible hitch per
+re-place. A worker would hide it; Mac's call was performance later,
+and it is later. And the harness cannot screenshot a million lab
+blades in its time budget, so the grass has not been SEEN by me - it
+has been counted, and its shaders proven identical.

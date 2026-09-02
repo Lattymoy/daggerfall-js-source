@@ -67,3 +67,20 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
   assert.match(w, /labGrass\.draw\(proj, view, new Float32Array\(cam\.pos\), now \/ 1000,/);
   assert.match(w, /renderer\.markForeignPass\(\);   \/\/ EV6: the grass changed programs/);
 });
+
+test('AUDIT 49: the grass is double-sided, follows the origin, learns its records whenever missing, and carries the gust', () => {
+  const g = readFileSync('src/render/labGrass.js', 'utf8');
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  // F1: the lab never enables CULL_FACE; the world renderer does at every
+  // frame; drawn culled, every blade whose winding faced away vanished
+  assert.match(g, /const culled = gl\.isEnabled\(gl\.CULL_FACE\);\s*\n\s*if \(culled\) gl\.disable\(gl\.CULL_FACE\);/);
+  assert.match(g, /gl\.disable\(gl\.BLEND\);\s*\n\s*if \(culled\) gl\.enable\(gl\.CULL_FACE\);/, 'and put back as it was found');
+  assert.ok(!/CULL_FACE/.test(readFileSync('grass-proto.html', 'utf8')), 'the lab itself never culls');
+  // F2: the scatter is baked in world coordinates; an origin shift re-places it
+  assert.match(w, /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassCentre = null;/, 'the origin shift forces a re-place');
+  // F3: the records are learned whenever missing, not only on a tile-cache miss
+  assert.match(w, /if \(!grassRecords\.has\(groundArchive\)\) \{\s*\n\s*const layers = \[\];/);
+  assert.ok(!/renderer\.uploadTileArray\(groundArchive, layers\);\s*\n[^}]*grassRecords\.set/.test(w), 'not inside the cache-miss block');
+  // F4: uWind carries the gust, as the lab's WIND.speed does; uWindV does not
+  assert.match(w, /speed: slider \* gustG, windV: \[dir\[0\] \* slider \* 0\.16, dir\[1\] \* slider \* 0\.16\]/);
+});

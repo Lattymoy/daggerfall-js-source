@@ -305,6 +305,13 @@ export class LabGrassRenderer {
     for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) o[c * 4 + r] = proj[r] * view[c * 4] + proj[4 + r] * view[c * 4 + 1] + proj[8 + r] * view[c * 4 + 2] + proj[12 + r] * view[c * 4 + 3];
     gl.useProgram(this.program);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // AUDIT 49 F1: the lab never enables CULL_FACE - a blade is one quad
+    // seen from both sides - and the world renderer enables it at every
+    // frame. Drawn with culling on, every blade whose winding faced away
+    // vanished, which is grass that "disappears" as the eye turns. Off
+    // for the grass, back on after, as the renderer left it.
+    const culled = gl.isEnabled(gl.CULL_FACE);
+    if (culled) gl.disable(gl.CULL_FACE);
     gl.uniformMatrix4fv(u.uVP, false, o);
     gl.uniform1f(u.uTime, timeSeconds);
     gl.uniform1f(u.uWind, wind.speed);
@@ -327,6 +334,7 @@ export class LabGrassRenderer {
     gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count);
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
+    if (culled) gl.enable(gl.CULL_FACE);
   }
 
   destroy() {
