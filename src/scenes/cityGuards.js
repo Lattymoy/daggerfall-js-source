@@ -106,12 +106,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // carries the same dep and the same default: a host with no streamed
   // pixels never collects, which is a pixel that never leaves range.
   currentPixelKey = () => null,
-  // ROAD-B B4: PlayerEnterExit's three entry latches, for SpawnCityGuards'
+  // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
+  // OUTER gate (IsPlayerInsideDungeon, PlayerEntity.cs:625) and its
   // INDOOR arm (PlayerEntity.cs:628-641). Handed in raw -
-  // { isPlayerInside, insideOpenShop, insideTavern, insideResidence } - so
-  // the conjunction stays in this file with the rest of the law. A host
-  // with no interiors (the standalone exterior) answers null, which is
-  // that host's flags all false.
+  // { isPlayerInsideDungeon, isPlayerInside, insideOpenShop,
+  // insideTavern, insideResidence } - so the conjunction stays in this
+  // file with the rest of the law. A host with no interiors and no
+  // dungeons (the standalone exterior) answers null, which is that
+  // host's flags all false.
   enterExitFlags = () => null,
   playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
@@ -257,6 +259,17 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  :1120-1122). Absent (an above-ground host) the arm is skipped
    *  and the street law below runs, which is what being outside IS. */
   async function spawnCityGuards(immediate, { playerFeet, playerFwd, pool = [], interior = null }) {
+    const _ee = enterExitFlags?.();
+    // PlayerEntity.cs:625, the FIRST of the two terms that enclose the
+    // WHOLE member: `if (!IsPlayerInsideDungeon && HowManyEnemiesOfType(
+    // Knight_CityWatch, false, true) <= maxActiveGuardSpawns)`. The
+    // indoor arm and both street arms live inside that one `if`, so
+    // underground SpawnCityGuards does nothing from any caller - the
+    // quest action `spawncityguards` included, which ticks in dungeon
+    // mode. Without it that call fell through to the street law with an
+    // empty pool and rang 2-5 watchmen onto the exterior collider at
+    // the player's dungeon-local feet.
+    if (_ee?.isPlayerInsideDungeon) return;
     if (activeCount() > MAX_ACTIVE_GUARD_SPAWNS) return;
     // PlayerEntity.cs:628-642, the FIRST thing inside the cap gate and
     // ahead of both street arms: the watch does not come down the road
@@ -273,7 +286,6 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // that the player is inside an open shop, tavern or residence,
     // returns and spawns nobody - the C# return is unconditional, and
     // the watch never comes through the wall.
-    const _ee = enterExitFlags?.();
     if (!interior?.eligible && _ee && _ee.isPlayerInside
         && (_ee.insideOpenShop || _ee.insideTavern || _ee.insideResidence)) {
       return;
@@ -559,7 +571,16 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // cleared inside the court flow, so a player who killed or
     // outran the watch never saw the surrender box again - and that
     // box is the ONLY call site of LowerRepForCrime.
-    if (playerEntity.haveShownSurrenderDialogue && !guards.some((g) => !g.dead)) {
+    //
+    // The count is HowManyEnemiesOfType(Knight_CityWatch, true) - the
+    // positional `true` is stopLookingIfFound, and `includingPacified`
+    // keeps its default FALSE (GameManager.cs:740/752), so a watchman
+    // talked down by Etiquette/Streetwise or charmed onto team
+    // PlayerAlly is NOT counted and the flag clears with him standing.
+    // That is `anyWatchStanding` above, this member's one spelling of
+    // the predicate; a bare liveness test held the flag raised through
+    // the rest of an active crime and swallowed the next surrender box.
+    if (playerEntity.haveShownSurrenderDialogue && !anyWatchStanding()) {
       playerEntity.haveShownSurrenderDialogue = false;
     }
     if (countdown > 0) {

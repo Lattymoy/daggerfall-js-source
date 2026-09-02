@@ -250,10 +250,16 @@ export async function bootInterior(canvas, renderer, params, status) {
     renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
 
     // ROAD-C c2/S9: the 5 Hz reveal probes and the map over them. The
-    // probes run whether or not the window is open (DFU's Update does
-    // the same - CheckForNewlyDiscoveredMeshes is on the component, not
-    // on the window), and this host has no pause, so there is no gate.
-    ctx.automapTick?.(dt, cam.pos, fwd);
+    // probe PAUSES while the window is up: its driver is not Update but
+    // CoroutineCheckForNewlyDiscoveredMeshes (Automap.cs:1280-1291),
+    // whose body is `if (!isOpenAutomap) { CheckForNewlyDiscoveredMeshes(); }`
+    // - the coroutine keeps its 1/scanRate cadence and simply skips the
+    // scan, for the reason DFU states on the gate (SetActive(false) on
+    // the geometry would mess with the open map's rendering). Update's
+    // own call at :1001 is the one-shot lazy init, not a per-frame
+    // driver. dungeon.js:520 and worldModes.js:4442/:4546 gate the same
+    // way; this is that gate for this host.
+    if (!overlay) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {
       overlay.tick(dt);
       drainOverlay();

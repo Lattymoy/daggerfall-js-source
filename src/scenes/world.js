@@ -926,6 +926,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
   let _reskinPending = false;
+  // ROAD-Ar (R1), closeout: the teleport's SEASON LATCH. DFU runs
+  // TeleportToCoordinates (DaggerfallTravelPopUp.cs:333) and RaiseTime
+  // (:344) inside one Unity frame with nothing between them, so the
+  // window in which the season cache holds the ARRIVAL month while the
+  // one clock still reads the DEPARTURE minute does not exist there.
+  // Here it does: the destination pixel is BUILT across an await, and
+  // refreshSeason latches `_seasonDay` from whatever clock it is handed
+  // with no memory that the clock was a future one - so a frame taken
+  // during that build read the live (departure) clock, saw the day go
+  // BACKWARDS, and wrote the departure season back over the arrival one
+  // before buildPixelNow's post-await `applyClimate(..., season)` ever
+  // looked at it. The arrival was skinned for the month the player left
+  // and the next tickSeason after RaiseTime tore the whole grid down
+  // again - exactly what R1 says it removed. While this is up the
+  // frame's poll stands off; the teleport rebuilds every pixel anyway,
+  // so a skipped poll can lose nothing, and by the time it clears the
+  // caller has raised time onto the day the cache already holds.
+  let _seasonStraightening = false;
   // ROAD-Ar (R0): the re-skin's MOTOR HOLD - the key of the pixel the
   // player stood on when the flip tore the world down, null when
   // nothing is held. DaggerfallLocation re-skins standing geometry in
@@ -943,6 +961,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference still: the player does not move at all.
   let _seasonHoldKey = null;
   function tickSeason() {
+    if (_seasonStraightening) return;   // the FRAME's poll only (see above)
     if (refreshSeason()) _reskinPending = true;
     // A pixel whose textures are still crossing must PUBLISH before its
     // key can be torn down - the same hazard pump re-checks for after
@@ -1473,11 +1492,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
-    // ROAD-B B4: PlayerEnterExit's three entry latches, for SpawnCityGuards'
-    // indoor gate (PlayerEntity.cs:628-641). The mode host owns all three
-    // (it is the one that runs TransitionInterior); this host owns the
+    // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
+    // outer gate (PlayerEntity.cs:625) and its indoor arm (:628-641).
+    // The mode host owns them all (it is the one that runs
+    // TransitionInterior/TransitionDungeonInterior); this host owns the
     // exterior pool the gate decides against.
     enterExitFlags: () => ({
+      isPlayerInsideDungeon: (modes?.mode ?? 'exterior') === 'dungeon',
       isPlayerInside: (modes?.mode ?? 'exterior') !== 'exterior',
       insideOpenShop: modes?.insideOpenShop ?? false,
       insideTavern: modes?.insideTavern ?? false,
@@ -2443,8 +2464,28 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   /** A DECLARATION, not a const: paperDollWhere() reaches it from the
    *  boot-time preload above, and a `const` here is the temporal dead
-   *  zone that took the site down on 2026-08-31. */
+   *  zone that took the site down on 2026-08-31.
+   *
+   *  A10: PlayerGPS's pixel FREEZES underground. StreamingWorld.cs
+   *  :297-301 opens Update with "Do not update world position if player
+   *  is inside dungeon / This can cause player to become desynced from
+   *  world as dungeon can actually extend beyond the current map pixel
+   *  area / if (...IsPlayerInsideDungeon) return;" - so WorldX/WorldZ,
+   *  and with them CurrentMapPixel, hold the entrance's values for as
+   *  long as the player is down there. A dungeon's local frame is its
+   *  own (RDB block origins are SIGNED, dungeonLayout.js:64-65), so
+   *  converting the player's dungeon feet through the streamer's
+   *  exterior origin slides the pixel a step west on any negative local
+   *  x and a step south on any negative local z - one block off the
+   *  start of Privateer's Hold is enough. That is what made Recall's
+   *  IsSameInterior dungeon arm (teleportAnchor.js:161-164) unable to
+   *  answer true against an anchor set in the room the player is
+   *  standing in: setRecallAnchor already took the streamer's pixel
+   *  (:2777) and this read did not. The streamer is frozen while a mode
+   *  is mounted (state.update sits below the modal early return), so
+   *  state.current IS the entrance pixel DFU holds. */
   function playerTravelPixel() {
+    if ((modes?.mode ?? 'exterior') === 'dungeon') return { x: state.current.x, y: state.current.y };
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
   }
@@ -2536,6 +2577,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // it straightened nothing. No re-skin sweep either way: the
     // teardown below is a real unload (CollectLooseObjects and all).
     refreshSeason(arriveMinutes ?? worldMinutes());
+    _seasonStraightening = true;   // ...and no frame polls it back off the live clock until the destination stands
     _reskinPending = false;   // ...and the frame's own re-skin has nothing left to re-skin
     _seasonHoldKey = null;    // ...nor a held motor: the spawn below re-anchors it anyway
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
@@ -2561,7 +2603,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.length = 0;
     queue.push(...state.init(px, py));
     const first = queue.shift();
-    const dest = await buildPixel(first.px, first.py);
+    let dest;   // `finally`: a throwing build must not leave the poll off
+    try { dest = await buildPixel(first.px, first.py); }
+    finally { _seasonStraightening = false; }
     // PositionPlayerToLocation ends in FixStanding (StreamingWorld
     // :1597-1608): the arrival is snapped to what is under it, not
     // dropped from 2u up. The pixel is built by now, so the collider

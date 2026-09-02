@@ -340,3 +340,50 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   assert.ok(teleport > 0, 'the arrival minute rides the teleport');
   assert.ok(raise > teleport, 'and RaiseTime still comes after it (:333 then :344)');
 });
+
+test('R1 CLOSEOUT: the frame cannot poll the straightened season away while the destination builds', () => {
+  // R1 straightened the season off the ARRIVAL clock, and the frame
+  // loop put it straight back. DaggerfallTravelPopUp runs
+  // TeleportToCoordinates (:333) and RaiseTime (:344) inside ONE Unity
+  // frame with nothing between them, so the state R1 creates - the
+  // season cache holding the ARRIVAL month while the one clock still
+  // reads the DEPARTURE minute - cannot be observed there. Here it can:
+  // the destination pixel is built across an await, and the frame's
+  // tickSeason has no travel gate.
+  //
+  // The mechanism, over the real law: refreshSeason latches its day AND
+  // its season from whatever clock it is handed, with no memory that
+  // the clock was a future one - so a live-clock re-read during the
+  // build sees the day go BACKWARDS and reassigns both.
+  const departure = dateToClassicMinutes({ year: 405, month: 5, day: 0, hour: 12, minute: 0 });   // Second Seed
+  const arrival = dateToClassicMinutes({ year: 405, month: 11, day: 0, hour: 12, minute: 0 });    // Evening Star
+  assert.equal(climateSeasonFromMinutes(departure), SEASON.Summer);
+  assert.equal(climateSeasonFromMinutes(arrival), SEASON.Winter);
+  assert.notEqual(Math.floor(arrival / MINUTES_PER_DAY), Math.floor(departure / MINUTES_PER_DAY),
+    'the day moves, which is the only thing refreshSeason gates on - so a live re-read is not a no-op');
+  // buildPixelNow reads `season` only AFTER its own await, so whatever
+  // the last write left is what the destination is skinned with.
+  const world = read('src/scenes/world.js');
+  const build = world.slice(world.indexOf('async function buildPixelNow'));
+  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('getTerrainGroundArchive(climate, season)'),
+    'the ground archive is chosen after the worker yields - the window is real');
+
+  // THE LATCH. The frame's poll is the first thing tickSeason answers
+  // to, the teleport raises it beside the straightening, and it comes
+  // down in a `finally` so a failed build cannot switch the frame's
+  // season off for the rest of the session.
+  const tick = world.slice(world.indexOf('function tickSeason() {'));
+  assert.match(tick.slice(0, tick.indexOf('\n  }')), /^function tickSeason\(\) \{\n(\s*\/\/[^\n]*\n)*\s*if \(_seasonStraightening\) return;[^\n]*\n\s*if \(refreshSeason\(\)\) _reskinPending = true;/,
+    'the frame poll stands down FIRST - above the refreshSeason that would otherwise mutate the cache');
+  const tp = world.slice(world.indexOf('async function _teleportToPixel'));
+  const core = tp.slice(0, tp.indexOf('\n  }'));
+  const straighten = core.indexOf('refreshSeason(arriveMinutes ?? worldMinutes());');
+  const raise = core.indexOf('_seasonStraightening = true;');
+  const build2 = core.indexOf('await buildPixel(first.px, first.py);');
+  const clear = core.indexOf('finally { _seasonStraightening = false; }');
+  assert.ok(straighten > 0 && raise > straighten, 'the latch goes up with the straightening');
+  assert.ok(build2 > raise, '...before the destination build yields');
+  assert.ok(clear > build2, '...and comes down only once it has landed');
+  assert.match(core, /try \{ dest = await buildPixel\(first\.px, first\.py\); \}\n\s*finally \{ _seasonStraightening = false; \}/,
+    'in a `finally`, so a throwing build cannot leave the frame poll off');
+});

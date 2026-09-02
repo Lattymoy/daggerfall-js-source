@@ -20,6 +20,7 @@ import {
   DUNGEON_LIGHT_BLOCK_RANGE, UNSCALED_BLOCK_RANGE,
 } from '../src/world/dungeonLights.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
+import { StreamingWorldState, worldCoordToMapPixel } from '../src/world/streamingWorld.js';
 import {
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,
 } from '../src/systems/sceneCache.js';
@@ -403,4 +404,60 @@ test('A10: the dungeon context routes Recall UP when the streaming host mounted 
     'worldModes hands the outer host\'s prompt down to the context it mounts');
   const w = read('src/scenes/world.js');
   assert.match(w, /onTeleport: \(\) => teleportPrompt\(\),/, 'and the outer host supplies it - twice, engine and modes');
+});
+
+test('A10 CLOSEOUT: PlayerGPS freezes its map pixel underground (StreamingWorld.cs:297-301)', () => {
+  // DFU opens StreamingWorld.Update with the law and its reason:
+  //     // Do not update world position if player is inside dungeon
+  //     // This can cause player to become desynced from world as dungeon
+  //     // can actually extend beyond the current map pixel area
+  //     if (GameManager.Instance.PlayerEnterExit.IsPlayerInsideDungeon) return;
+  // so WorldX/WorldZ - and with them CurrentMapPixel, which is just
+  // WorldCoordToMapPixel of the two (PlayerGPS.cs:141-143) - hold the
+  // entrance's values for as long as the player is down there. BOTH
+  // sides of IsSameInterior's dungeon arm (Teleport.cs:209-218) read
+  // that one frozen source, which is how the arm can ever answer true.
+  //
+  // The port converted the player's DUNGEON-LOCAL feet through the
+  // streamer's exterior origin instead. RDB block origins are signed
+  // (dungeonLayout.js:64-65, RDB_SIDE = 51.2), so the arithmetic below
+  // is not a corner case: walking one block west or south of the start
+  // slides the pixel, and Privateer's Hold - the first dungeon in the
+  // game - has blocks at -51.2 on both axes.
+  const st = new StreamingWorldState();
+  st.init(100, 200);
+  const pixelOfFeet = (p) => { const wc = st.worldCoords(p); return worldCoordToMapPixel(wc.x, wc.z); };
+  assert.deepEqual(pixelOfFeet([28.375, 0, 12.4]), { x: 100, y: 200 }, 'the start block is on the entrance pixel');
+  assert.deepEqual(pixelOfFeet([-30, 0, 12.4]), { x: 99, y: 200 }, 'one block WEST and the pixel slides');
+  assert.deepEqual(pixelOfFeet([28.375, 0, -20]), { x: 100, y: 201 }, 'one block SOUTH and it slides the other way');
+
+  // ...and that slide is exactly what the dungeon arm cannot survive:
+  // the anchor's pixel is the streamer's (setRecallAnchor has always
+  // taken it there), so a slid read makes Recall in the room you are
+  // standing in take the CROSS plan - forceExitToExterior, which tears
+  // the dungeon down with its quest flats, its foes and its loot, and
+  // re-mounts it from the entrance (or says "The way underground is
+  // closed" where no entrance door is found).
+  const crypt = makeAnchor({
+    worldContext: WORLD_CONTEXT.Dungeon, pixel: { x: 100, y: 200 },
+    nativeX: 0, nativeZ: 0, y: 0, yaw: 0, pitch: 0, local: [1, 2, 3], buildingKey: 0, interior: null,
+  });
+  const here = (pixel) => ({ insideBuilding: false, insideDungeon: true, buildingKey: 0, pixel });
+  assert.equal(teleportPlan(crypt, here(pixelOfFeet([-30, 0, -20]))).kind, 'cross',
+    'the feet-derived pixel loses the arm outright');
+  assert.equal(teleportPlan(crypt, here({ x: st.current.x, y: st.current.y })).kind, 'same-interior',
+    "...where the frozen pixel is the room the player is standing in");
+
+  // THE HOST SEAM, which no pin ever asked about: `playerTravelPixel`
+  // is this port's PlayerGPS.CurrentMapPixel, and it owes the freeze -
+  // not just `recallToAnchor`, since the region/paperdoll read, the
+  // footstep climate, the loose-pile keys and the quest location
+  // lookup all go through it.
+  const w2 = read('src/scenes/world.js');
+  const fn = w2.slice(w2.indexOf('function playerTravelPixel() {'));
+  const body = fn.slice(0, fn.indexOf('\n  }'));
+  assert.match(body, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'dungeon'\) return \{ x: state\.current\.x, y: state\.current\.y \};/,
+    'the dungeon arm answers the streamer pixel');
+  assert.ok(body.indexOf("=== 'dungeon'") < body.indexOf('state.worldCoords('),
+    'and it answers BEFORE the feet are converted through the exterior origin');
 });

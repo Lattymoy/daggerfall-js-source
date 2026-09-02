@@ -379,7 +379,27 @@ test('c2/S9 SOURCE PINS: BOTH interior hosts tick the probes and route AutoMap, 
   assert.match(wm, /signalAutomapReset\(\);/, 'and raises the reset signal on entry (:2486)');
 
   const ij = src('src/scenes/interior.js');
-  assert.match(ij, /ctx\.automapTick\?\.\(dt, cam\.pos, fwd\);/, 'the standalone interior host ticks them too');
+  // ...GATED, like all three of its siblings. The probe's driver is not
+  // Update at all: CoroutineCheckForNewlyDiscoveredMeshes (Automap.cs
+  // :1280-1291) is `while (true) { if (!isOpenAutomap) {
+  // CheckForNewlyDiscoveredMeshes(); } yield return new WaitForSeconds(
+  // 1.0f / scanRateGeometryDiscoveryInHertz); }` - it keeps its cadence
+  // and SKIPS the scan while the map is up, for the reason DFU states
+  // on the gate ("otherwise command gameobjectGeometry.SetActive(false)
+  // will mess with automap rendering"). Update's own call at :1001 is
+  // the one-shot lazy init inside `if (!gameobjectGeometry)`, and
+  // Update's per-frame body runs when the map IS open. This host's fly
+  // camera keeps moving under the overlay (the keydown handler returns
+  // before it can clear the held keys), and the 5 Hz accumulator has no
+  // movement gate, so an ungated tick both burned up to 93 raycast
+  // walks per 200 ms behind the open window and revealed rows into the
+  // record the same frame was drawing.
+  assert.match(ij, /if \(!overlay\) ctx\.automapTick\?\.\(dt, cam\.pos, fwd\);/,
+    'the standalone interior host ticks them too - and stands the probe down while its map is open');
+  assert.match(ij, /CoroutineCheckForNewlyDiscoveredMeshes \(Automap\.cs:1280-1291\)/,
+    'and cites the driver that actually carries the gate, not Update');
+  assert.match(src('src/scenes/dungeon.js'), /if \(!overlayHeld\) ctx\.automapTick\?\.\(dt, cam\.pos, fwd\);/,
+    'the standalone dungeon host has always had it');
   assert.match(ij, /if \(e\.code === 'KeyM'\) \{ toggleAutomap\(\); e\.preventDefault\(\); return; \}/, 'and routes the key');
   assert.match(ij, /insideBuilding: true,/);
 

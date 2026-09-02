@@ -1591,6 +1591,24 @@ export async function bootExterior(canvas, renderer, params, status) {
     // alone - which is the arm C# itself takes when the mill has
     // nothing fit for a sign (:727 guards only the second half).
     boardTargets: () => bulletinBoards,
+    // ...and that name is not free: the heading is PlayerGPS
+    // .CurrentLocalizedLocationName (PlayerActivate.cs:721), which
+    // worldModes reads off `buildingDirectory` (:1649) and nowhere
+    // else. Without this key the "location name alone" arm above drew
+    // a BLANK parchment - one empty row, the starter label shifted off
+    // (bulletinBoard.js:97). This host knows its own location outright,
+    // so it hands over the same bag the world host builds; `buildings`
+    // is empty (that list is the houses-for-sale roll's, and every
+    // consumer guards on `?.buildings?.length`), while the mapId,
+    // region and port-town byte are the host's real ones.
+    buildingDirectory: () => ({
+      buildings: [],
+      mapId: dfLocation?.mapTableData?.mapId ?? 0,
+      regionIndex: dfLocation.regionIndex ?? 0,
+      locationName: dfLocation.name ?? locationName,
+      regionName: maps.getRegionName(dfLocation.regionIndex ?? 0) ?? '',
+      portTownAndUnknown: dfLocation.exterior?.exteriorData?.portTownAndUnknown ?? 0,
+    }),
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity (the T3c
     // pool merge) + the directory name by buildingKey.

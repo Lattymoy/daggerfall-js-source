@@ -279,7 +279,12 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // DaggerfallTravelPopUp.cs:333/:344, so the live clock read the
   // departure date), and the core clears the season re-skin's motor
   // hold beside it. Both notes are above these needles.
-  const core = src.slice(k, k + 2600);
+  // PIN MOVED AGAIN (CLOSEOUT), 2600 -> 2800: the straightening now
+  // raises a latch the frame's season poll honours, so no frame taken
+  // across the destination build can read the DEPARTURE clock and undo
+  // it - one statement and a `finally` around the build's await, both
+  // above these needles, which are still unchanged.
+  const core = src.slice(k, k + 2800);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }
