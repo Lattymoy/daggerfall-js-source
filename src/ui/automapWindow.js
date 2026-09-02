@@ -781,16 +781,25 @@ export class AutomapWindow {
    * recorded departure, and it is retired.
    */
   input(code, e = null) {
+    // The dictionary is InputManager's, not this window's control flow:
+    // it records the press whatever any arm below does with it, exactly
+    // as InputManager.Update does before any window reads it - and that
+    // is why it sits ABOVE both lockouts. InputManager.PollInput
+    // (InputManager.cs:1795-1809) rebuilds `heldKeys` every frame no
+    // matter what any window's Update does, so a key pressed or
+    // released while the portal tween runs - or while the note editor
+    // stands - genuinely changes state there. Swallowing the edge here
+    // instead would strand the code in the Set for ever and the map
+    // would pan on its own once the tween ended, which is the same
+    // hazard the pointer half already makes its own exception for
+    // (:860-871).
+    this._noteKey(code, e, true);
     // c2/S8: the tween's lockout - Update returns before base.Update(),
     // so no key reaches a control while the portal jump plays (:686-696)
     if (this._jump) return;
     // ...and the note editor is a PUSHED window, so it owns the keyboard
     // while it is up (DaggerfallInputMessageBox.Show()).
     if (this._noteBox) { this._noteBoxInput(code, e); return; }
-    // The dictionary is InputManager's, not this window's control flow:
-    // it records the press whatever any arm below does with it, exactly
-    // as InputManager.Update does before any window reads it.
-    this._noteKey(code, e, true);
     if (this.automapBinding && normalizeCode(code, e) === this.automapBinding) {
       this.isCloseWindowDeferred = true;
       return;
@@ -819,11 +828,18 @@ export class AutomapWindow {
    * swallows the release too - otherwise the M that dismisses the box
    * would also close the map underneath it - and the tween's lockout
    * (:686-696) returns before base.Update() the same way `input` does.
+   * Neither lockout reaches the DICTIONARY, though: that write is
+   * InputManager's frame poll, not this window's Update, and it runs
+   * first.
    */
   keyup(code, e = null) {
-    if (this._jump) return;
-    if (this._noteBox) { this._noteKey(code, e, false); return; }
+    // The drain, above both lockouts for the reason `input`'s write is:
+    // InputManager's dictionary is a global refreshed every frame
+    // (InputManager.cs:1795-1809), so a key released during the tween
+    // really does stop being held.
     this._noteKey(code, e, false);
+    if (this._jump) return;
+    if (this._noteBox) return;
     const nc = normalizeCode(code, e);
     const isToggle = (this.automapBinding && nc === this.automapBinding) || nc === 'Escape';
     if (isToggle && this.isCloseWindowDeferred && !this.done) {

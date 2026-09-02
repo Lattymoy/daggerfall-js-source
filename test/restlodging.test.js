@@ -1183,7 +1183,10 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   // ...and EVERY exit clears it. Five doors reach `done`, and a flag
   // cleared on four of them would leave the player permanently
   // resting and burn held enchantments 15x for the session.
-  w.keyup('back');                       // ROAD-E E1: the selection page's Esc is GetBackButtonUp() (:193)
+  // ROAD-E E1: the selection page's Esc is GetBackButtonUp() (:193),
+  // and the door carries the automap windows' deferral (:703-713)
+  // because this port opens on the press - so both edges.
+  w.input('back'); w.keyup('back');
   assert.equal(w.done, true);
   assert.equal(e.isResting, false);
 
@@ -1450,7 +1453,7 @@ test('S40: PopToHUD runs BEFORE RaiseSkills, so a rest-end level-up is not swall
 
   // Every exit vacates - a window that leaves itself in the slot is a
   // window the host paints forever.
-  for (const exit of [(x) => x.keyup('back'), (x) => x.dispose()]) {
+  for (const exit of [(x) => { x.input('back'); x.keyup('back'); }, (x) => x.dispose()]) {
     const seen = [];
     const v = new RestWindow(winDeps({ onClose: () => seen.push(1) }));
     exit(v);
@@ -1800,6 +1803,7 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
     if (slot?.done) slot = null;          // the `?.` is the fix, on this edge too
   };
   slot = new RestWindow(deps);
+  drain('back');                         // the press that arms the release door (:703-708)
   assert.doesNotThrow(() => drainUp('back'));
   assert.equal(slot, null, 'and the slot really is clear');
   // the press half still drains for the windows that close on it
@@ -1894,7 +1898,7 @@ test('S40/merge -> ROAD-B B1: a rest under a pushed box is SUSPENDED, not replac
   assert.equal(e.isResting, true);
   // ...and it is still a LIVE rest, not a husk: it ends the way it
   // would have, through its own session.
-  slot.keyup('back');              // ROAD-E E1: Update :193's release arm -> EndRest
+  slot.input('back'); slot.keyup('back');   // ROAD-E E1: Update :193's release arm -> EndRest
   slot.input('confirm');           // ...and the finished popup closes
   assert.equal(e.isResting, false, 'and clears the flag when it really closes');
 

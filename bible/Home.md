@@ -295,7 +295,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/ui/chargenArt.js:731` - *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
 - `src/ui/enhancedMenu.js:1768` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/pauseWindow.js:61` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
+- `src/ui/pauseWindow.js:65` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 
 ## Audits
 

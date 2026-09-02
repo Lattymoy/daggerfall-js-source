@@ -390,7 +390,13 @@ test('B5: the rest window runs UpdateNpcPresence on pop, ONCE, and it only ever 
     advanceMinutes() {}, endLines: (id) => [`x${id}`],
     updateNpcPresence: () => { calls++; for (const p of people) p.active = true; },
   }));
-  w.keyup('back');   // ROAD-E E1: Esc off the selection page is GetBackButtonUp() (:193) - CloseWindow -> OnPop
+  // ROAD-E E1: Esc off the selection page is GetBackButtonUp() (:193) -
+  // CloseWindow -> OnPop. Both edges, because the release arm carries
+  // the automap windows' deferral (:703-713): the port opens on the
+  // press, so only a press this window saw arms the close.
+  w.input('back');
+  assert.equal(w.done, false, 'the press arms, it does not close');
+  w.keyup('back');
   assert.equal(calls, 1);
   assert.deepEqual(people.map((p) => p.active), [true, true]);
   // dispose() runs _close a second time deliberately (the 2026-08-29
@@ -467,8 +473,16 @@ test('B5: the key that OPENED the rest window closes it - and ENDS a running res
     // On the selection page the binding is CloseWindow (:195-196).
     const w = new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] }));
     // ROAD-E E1: :193 is GetKeyUp(toggleClosedBinding), so the PRESS
-    // arms nothing and the RELEASE closes - which is why the press that
-    // opens the window cannot also close it.
+    // arms nothing and the RELEASE closes. A BARE release is inert,
+    // though, and that is not a detail: the press that OPENS this
+    // window is the host's (world.js:4048 opens on the key down, where
+    // GameManager.cs:534-537 opens on `ActionComplete` - the release -
+    // so DFU's opening release is already spent), so the door carries
+    // DaggerfallAutomapWindow.cs:703-713's deferral and closes only on
+    // the release of a press this window itself saw. The host-level
+    // walk that proves the open edge is roade_up_seam.test.js's.
+    w.keyup('char:r');
+    assert.equal(w.done, false, 'a release with nothing armed closes nothing (:709)');
     w.input('char:r');
     assert.equal(w.done, false, 'the press is not the toggle - GetKeyUp is (:193)');
     w.keyup('char:r');
@@ -482,6 +496,8 @@ test('B5: the key that OPENED the rest window closes it - and ENDS a running res
     }));
     w2.input('char:1'); w2.input('char:9'); w2.input('confirm');
     assert.equal(w2.state, 'resting');
+    w2.input('char:r');
+    assert.equal(w2.state, 'resting', 'the press arms the door and nothing else');
     w2.keyup('char:r');
     assert.equal(w2.state, 'ended', 'EndRest, not CloseWindow');
     assert.deepEqual(w2.endLines, [`rsc${REST_TEXT.wakeUp}`],
@@ -501,8 +517,11 @@ test('B5: the toggle close FOLLOWS A REBIND, and does not eat the letter it is n
     const w = new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] }));
     // R is no longer the rest key, so it is an ordinary character
     // again - the selection page ignores it.
+    w.input('char:r');
     w.keyup('char:r');
     assert.equal(w.done, false);
+    w.input('char:z');
+    assert.equal(w.done, false, ':193 is GetKeyUp - the press only arms');
     w.keyup('char:z');
     assert.equal(w.done, true, 'the REBOUND key toggles the window closed');
   } finally { setBindings(null); }

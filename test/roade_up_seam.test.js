@@ -47,9 +47,15 @@ import { createTownTalk } from '../src/scenes/townTalk.js';
 import { ListPickerWindow, PICKER_X, PICKER_Y, PICKER_RECTS, ROWS_DISPLAYED } from '../src/ui/listPicker.js';
 import { thumbSpan } from '../src/ui/verticalScrollBar.js';
 import {
-  AutomapWindow, HOTKEYS_HELD, HOTKEYS_DOWN,
+  AutomapWindow, HOTKEYS_HELD, HOTKEYS_DOWN, TELEPORT_JUMP_DURATION,
   resetAutomapWindowState, signalAutomapReset, automapCameraState, _setAutomapArt,
 } from '../src/ui/automapWindow.js';
+import { RestWindow } from '../src/ui/restWindow.js';
+import { PauseOptionsWindow } from '../src/ui/pauseWindow.js';
+import { createRestDeps } from '../src/scenes/shared.js';
+import { createBindings, setBinding } from '../src/systems/inputActions.js';
+import { setBindings } from '../src/ui/input.js';
+import { SKILLS } from '../src/systems/skills.js';
 import { shortcutOrFallback } from '../src/ui/automapText.js';
 import { _resetForTests } from '../src/systems/settings.js';
 
@@ -474,4 +480,132 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
   const ledger = src('bible/01-Overview/Port-Ledger.md');
   assert.match(ledger, /~~C2: the dungeon automap's HELD hotkeys[\s\S]{0,400}?~~ RETIRED \(E-group, 2026-09-02\)/,
     'the Ledger A row is struck in the Ledger\'s idiom');
+});
+
+// -------------------------------------------------------------------
+// E-FIX: THE OPEN EDGE. DFU opens the rest window and the pause screen
+// on `ActionComplete` - GameManager.cs:534-537 and :515-518 - which
+// InputManager.cs:634-637 defines as `previousActions.Contains(action)
+// && !currentActions.Contains(action)`, the RELEASE. So the release
+// that opened either window is already spent when its first Update
+// runs, and DaggerfallRestWindow.cs:187-196 / DaggerfallPauseOptions-
+// Window.cs:183-188 can read a bare `GetKeyUp` and be safe.
+//
+// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:4048/:4068,
+// exterior.js:1445/:1453, ui/input.js:297/:303) and then routes that
+// same key's release into the window it just mounted (world.js:4085 ->
+// townTalk.keyup). The bare `GetKeyUp` therefore is NOT safe here, and
+// the shape DFU uses for exactly this case - a window whose open edge
+// is the key DOWN - is DaggerfallAutomapWindow.cs:703-713's
+// `isCloseWindowDeferred`: armed by a press the window itself saw,
+// consumed by the release.
+//
+// Both pins below drive the REAL townTalk host, because a bare window
+// cannot see which edge opened it - which is precisely why the pins
+// that stood here (roadb_rest_residue.test.js and pausewindow.test.js
+// both drove `input()` then `keyup()` on a fresh window) could not.
+// -------------------------------------------------------------------
+
+const sleeper = () => ({
+  isPlayer: true, level: 1, health: 5, maxHealth: 50, magicka: 0, maxMagicka: 8,
+  fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 20,
+  career: {}, skillUses: { [SKILLS.Medical]: 0 },
+});
+
+/** world.js:4048's keydown arm, verbatim in shape: the host consumes
+ *  the press itself and hands the slot a brand-new window. */
+const openOnKeydown = (tt, win) => { tt.showOverlay(win); return win; };
+
+test('E-FIX LIVE (townTalk): the R that OPENS the rest window does not close it on its own release', () => {
+  const store = createBindings();
+  setBinding(store, 'KeyR', 'Rest');
+  setBindings(store);
+  try {
+    const tt = talkHost();
+    const w = openOnKeydown(tt, new RestWindow(createRestDeps(sleeper(), {
+      advanceMinutes() {}, endLines: (id) => [`x${id}`],
+    })));
+    assert.equal(w.done, false, 'the window stands the instant the host mounts it');
+
+    // world.js:4085 delivers THAT SAME KEY'S release into the slot.
+    tt.keyup({ code: 'KeyR', key: 'r' });
+    assert.equal(w.done, false,
+      'the opening release closes nothing: its press was the HOST\'s, not this window\'s '
+      + '(DaggerfallAutomapWindow.cs:709 `&& isCloseWindowDeferred`)');
+    assert.equal(w.state, 'selection', 'and the page is untouched');
+
+    // a SECOND press - one the window itself sees - arms the door...
+    tt.keydown({ code: 'KeyR', key: 'r', preventDefault() {} });
+    assert.equal(w.done, false, ':193 is GetKeyUp, so the press is still not the close');
+    // ...and its release is the close DFU reads.
+    tt.keyup({ code: 'KeyR', key: 'r' });
+    assert.equal(w.done, true, 'CloseWindow (:195-196), on the release of a press this window saw');
+  } finally { setBindings(null); }
+});
+
+test('E-FIX LIVE (townTalk): the Escape that OPENS the pause screen does not close it on its own release', () => {
+  const tt = talkHost();
+  const w = openOnKeydown(tt, new PauseOptionsWindow({}));
+
+  tt.keyup({ code: 'Escape', key: 'Escape' });
+  assert.equal(w.done, false,
+    'the press that opened the pause screen never reached it, so its release finds nothing armed');
+
+  tt.keydown({ code: 'Escape', key: 'Escape', preventDefault() {} });
+  assert.equal(w.done, false, ':186 is GetKeyUp - the press is not the close');
+  tt.keyup({ code: 'Escape', key: 'Escape' });
+  assert.equal(w.done, true, 'CloseWindow (:186-187)');
+});
+
+// -------------------------------------------------------------------
+// E-FIX: THE HELD DICTIONARY IS NOT A WINDOW'S TO GATE.
+// DaggerfallAutomapWindow.cs:686-696 returns out of Update while the
+// iTween portal jump plays - which is `tick()`'s `if (this._jump)
+// return;` - but InputManager.PollInput (InputManager.cs:1795-1809)
+// rebuilds `heldKeys` every frame regardless, and `GetKey` (:1080-1085)
+// - HotkeySequence.IsPressedWith - reads that live array. So in DFU a
+// key released during the jump genuinely stops being held. The port's
+// pointer half already makes this exception by hand ("a port that
+// swallowed the release outright would leave the drag that started the
+// jump held for ever"); the keyboard half now does too.
+// -------------------------------------------------------------------
+
+test('E-FIX LIVE: a pan key released DURING the portal tween stops being held, and one pressed during it starts', () => {
+  const w = freshAutomap();
+  const code = shortcutOrFallback('AutomapMoveForward', w.automapBinding).code;
+  assert.ok(code, 'AutomapMoveForward resolves to a key');
+
+  w.input(code, { code });
+  w.tick(1);
+  const p0 = [...automapCameraState().pos];
+
+  // The jump is started from a MOUSE double-click on a teleporter
+  // (_tryTeleporterPortals), never from the keyboard - which is exactly
+  // how a pan key comes to be down across one. from == to, so the lerp
+  // itself moves nothing and only the held-key state is under test.
+  w._jump = { from: [...p0], to: [...p0], t: 0 };
+  assert.equal(w.iTweenCameraAnimationIsRunning, true, 'the tween is running (:265)');
+
+  w.keyup(code, { code });
+  w.tick(TELEPORT_JUMP_DURATION);
+  assert.equal(w.iTweenCameraAnimationIsRunning, false, ':753-756 - the jump ended');
+  const p1 = [...automapCameraState().pos];
+
+  w.tick(1);
+  assert.deepEqual([...automapCameraState().pos], p1,
+    'the key released mid-jump is NOT still held: the map does not pan on its own for ever');
+  w.tick(1);
+  assert.deepEqual([...automapCameraState().pos], p1, 'and not on the frame after that either');
+
+  // THE MIRROR. A press made during the tween is recorded too, so a key
+  // genuinely held across the jump pans on the frames that follow it.
+  const w2 = freshAutomap();
+  const q0 = [...automapCameraState().pos];
+  w2._jump = { from: [...q0], to: [...q0], t: 0 };
+  w2.input(code, { code });
+  w2.tick(TELEPORT_JUMP_DURATION);
+  const q1 = [...automapCameraState().pos];
+  w2.tick(1);
+  assert.notDeepEqual([...automapCameraState().pos], q1,
+    'a key held across the jump pans afterwards - the press was recorded, not swallowed');
 });

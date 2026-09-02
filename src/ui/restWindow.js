@@ -189,6 +189,19 @@ export class RestWindow {
     // KeyDown arm plays ButtonClick and raises this; its KeyUp arm ends
     // the rest. DFU's field name (:75).
     this.isCloseWindowDeferred = false;
+    // ...and the TOGGLE/back door's own latch, which DFU does not need
+    // and this port does: GameManager.cs:534-537 opens the rest window
+    // on `ActionComplete(Actions.Rest)` - the RELEASE edge
+    // (InputManager.cs:634-637) - so the opening release is already
+    // spent when DFU's window first runs, and :193's bare `GetKeyUp`
+    // is safe there. Every host here opens on the key DOWN
+    // (world.js:4048, exterior.js:1445, ui/input.js:303), and that same
+    // key's release is then routed straight into the freshly mounted
+    // window, so the release door needs the deferral DFU gives every
+    // window whose open edge IS the down: DaggerfallAutomapWindow.cs
+    // :703-713's `isCloseWindowDeferred` - armed by a press THIS WINDOW
+    // SAW, consumed by the release.
+    this._toggleArmed = false;
     // OnPush (:266-268): "Raise player resting flag when UI opens.
     // This is used for random enemy spawning and influences
     // CastWhenHeld durability loss" - DFU's own comment, and it names
@@ -409,6 +422,11 @@ export class RestWindow {
     }
     const back = normalizeCode(action, e) === 'Escape';
     if (!back && !this._togglePressed(action, e)) return;
+    // DaggerfallAutomapWindow.cs:709's `&& isCloseWindowDeferred`: a
+    // release whose press this window never saw is the one that opened
+    // it, and it closes nothing.
+    if (!this._toggleArmed) return;
+    this._toggleArmed = false;
     if (this.state === 'resting') { this._stopRest(); return; }
     // ButtonClick, as the port's `back` arm has always played it here -
     // ExitButton_OnMouseClick, the handler DFU routes the same outcome
@@ -450,6 +468,15 @@ export class RestWindow {
     // resolves the way DFU's does without porting the gate at all: the
     // BUTTON hotkeys are read on the press (below) and the toggle on
     // the release, so the button always wins a colliding press.
+    // ...and the ARM for that release door, above the state ladder so
+    // both pages take it (DaggerfallAutomapWindow.cs:703-708's
+    // `GetBackButtonDown() || GetKeyDown(automapBinding)`). It does NOT
+    // consume the press: the button hotkeys below must still see a
+    // colliding binding, which is the whole point of E1's split.
+    if ((this.state === 'selection' || this.state === 'resting')
+      && (normalizeCode(action, e) === 'Escape' || this._togglePressed(action, e))) {
+      this._toggleArmed = true;
+    }
     if (this.state === 'refused') { this._close(); return; }
     // F144: the over-cap box is click-anywhere; dismissing lands on
     // the selection page, NOT back in a prompt - the prompt is gone.

@@ -73,8 +73,10 @@ const DOORS = {
   'the refusal page': (w) => { w.state = 'refused'; w.input('confirm'); },
   // ROAD-E E1: the selection page's Esc is GetBackButtonUp() (Update
   // :193), so backing out is a RELEASE - and the release drain is the
-  // same re-entrancy hazard the press drain was.
-  'backing out of the selection page': (w) => { w.state = 'selection'; w.keyup('back'); },
+  // same re-entrancy hazard the press drain was. Both edges, because
+  // the door carries DaggerfallAutomapWindow.cs:703-713's deferral (the
+  // port opens on the press where DFU opens on ActionComplete).
+  'backing out of the selection page': (w) => { w.state = 'selection'; w.input('back'); w.keyup('back'); },
   'the host closing the slot': (w, h) => { h.close(); },
   'the host disposing the window': (w) => { w.dispose(); },
 };

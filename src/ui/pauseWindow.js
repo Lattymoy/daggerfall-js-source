@@ -53,10 +53,14 @@
 //   control was actually touched, then the whole store saves on close.
 // - closing: CONTINUE (:276-280), or the same Escape that opened it
 //   (:183-188 - DFU keys on GetKeyUp, and ROAD-E E1 built the key-up
-//   route the port lacked, so `keyup` below is that edge and the
-//   Escape that opens this window can no longer close it in the same
-//   press. The record that stood here - "the port's overlay channel
-//   delivers keydowns, one edge earlier" - is retired).
+//   route the port lacked, so `keyup` below is that edge. DFU's bare
+//   GetKeyUp is safe only because GameManager.cs:515-518 OPENS the
+//   window on ActionComplete - the release - so the opening release is
+//   already spent; this port opens on the press, so the window arms on
+//   the press it receives and closes on THAT press's release, which is
+//   DaggerfallAutomapWindow.cs:703-713's deferral. The record that
+//   stood here - "the port's overlay channel delivers keydowns, one
+//   edge earlier" - is retired).
 //
 // FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 // dropdown, a DFU-era addition riding its settings stack; the port's
@@ -150,6 +154,18 @@ export class PauseOptionsWindow {
     this.top = null;              // 'exit' | 'note' - the stacked box
     this._noteRows = null;
     this._box = null;             // laid out at draw (the U23 shape)
+    // The automap windows' latch (automapWindow.js:560,
+    // DaggerfallAutomapWindow.cs:703-713's `isCloseWindowDeferred`), and
+    // this window needs it for the reason those two do: DFU opens the
+    // pause screen on `ActionComplete(Actions.Escape)` -
+    // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
+    // (InputManager.cs:634-637) - so its opening release is spent before
+    // the window exists and :186's bare `GetKeyUp` is safe there. Every
+    // host here opens on the key DOWN (world.js:4068, exterior.js:1453,
+    // ui/input.js:297) and then routes that same key's release into the
+    // window it just mounted, so the release door closes only a window
+    // whose own press it saw.
+    this.isCloseWindowDeferred = false;
   }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
@@ -172,19 +188,31 @@ export class PauseOptionsWindow {
       return;
     }
     if (this.top) { this.top = null; return; }   // any key clears a note
+    // :703-708's arming edge - the press this window SAW, which the
+    // press that opened it never is.
+    if (code === 'Escape') this.isCloseWindowDeferred = true;
   }
 
   /** ROAD-E E1: THE TOGGLE CLOSE, on the edge DFU reads it from. :183-188
    *  is `if (GetKeyUp(toggleClosedBinding) || GetBackButtonUp())
-   *  CloseWindow();` inside Update - a RELEASE, so the Escape that
-   *  OPENS this window cannot also close it. The port had no key-up
-   *  route when this window was built and the site recorded the edge as
-   *  "one edge earlier"; E1 built the route, so the record is now the
-   *  law. A note or the exit box owns the keyboard while it stands, and
-   *  they take the press, exactly as `input` above has them. */
+   *  CloseWindow();` inside Update - a RELEASE. DFU can read it bare
+   *  because GameManager.cs:515-518 opens the window on the release
+   *  too; this port's hosts open on the press and hand the window that
+   *  same press's release, so the door carries the automap windows'
+   *  `isCloseWindowDeferred` and the Escape that OPENS this window
+   *  still cannot close it. The port had no key-up route when this
+   *  window was built and the site recorded the edge as "one edge
+   *  earlier"; E1 built the route, so the record is now the law. A note
+   *  or the exit box owns the keyboard while it stands, and they take
+   *  the press, exactly as `input` above has them. */
   keyup(code) {
     if (this.top) return;
     if (code !== 'Escape') return;
+    // :709's `&& isCloseWindowDeferred` - the press that opened this
+    // window was consumed by the host and never reached here, so its
+    // release finds nothing armed and closes nothing.
+    if (!this.isCloseWindowDeferred) return;
+    this.isCloseWindowDeferred = false;
     this._click();   // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
   }
