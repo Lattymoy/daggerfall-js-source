@@ -692,3 +692,38 @@ test('ROADS 20: a track\u2019s diagonal is 51/52, its inside corner 10/25, and a
   paintRoads(st, s2, 0, DIR.S | DIR.E);
   assert.equal(s2[63 * 128 + 64] & 0x3f, 25);
 });
+
+// ROADS 21: THE TRACKS ARE A WEB. His villages sit ON tracks (84%) and
+// his tracks pass through the places they serve, chaining village to
+// village to road - 14 px per dead-end, not 3.6 px stubs. Three rules:
+// a track may cross a track-grade pixel where a road may not; each
+// track node links to its nearest neighbours, shortest-first, and a
+// link commits to B's side of the web; and a village is entered wide.
+test('ROADS 21: a row of villages chains into one track, and most of them are passed through', async () => {
+  const { measure } = await import('../tools/roadsCalibrate.mjs');
+  const locations = [{ x: 200, y: 200, type: LT.TownCity }, { x: 300, y: 200, type: LT.TownHamlet }];
+  for (let i = 0; i < 6; i++) locations.push({ x: 210 + i * 14, y: 230, type: LT.TownVillage });   // a row, 14 px apart
+  const { tracks, stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
+  assert.ok(stats.trackLinks >= 5, `the villages linked to each other (${stats.trackLinks} links)`);
+  const m = measure(tracks);
+  assert.ok(m.deadEndRate < 0.2, `a web, not stubs: dead-ends ${(m.deadEndRate * 100).toFixed(0)}% of track pixels`);
+  assert.equal(m.hairpinShare, 0, 'no village is left with two links from adjacent directions');
+  // the middle villages are passed THROUGH: two bits, not one
+  let through = 0;
+  for (let i = 1; i < 5; i++) { const v = tracks[230 * MAP_W + 210 + i * 14]; if (v && (v & (v - 1))) through++; }
+  assert.ok(through >= 3, `the inner villages sit on the track rather than at the end of one (${through} of 4)`);
+});
+
+test('ROADS 21: the web\u2019s two real-map rules, pinned at the source with their readings', async () => {
+  // RECORDED: on a straight row of villages every join is collinear and
+  // no link needs to cross a village, so neither rule can be seen on a
+  // fixture. On the real map, entering villages WIDE took the web's
+  // hairpins from 5.3% to 0.0% and its right angles from 12.9% to 1.9%
+  // (his 0.0% and 2.4%); letting tracks CROSS track-grade pixels is what
+  // lets a chain pass through a village at all (his: 84% of villages on
+  // a track).
+  const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
+  assert.match(src, /for \(const t of trackNodes\) trackBlocked\[t\.y \* MAP_WIDTH \+ t\.x\] = 0;/, 'a track may cross a track-grade pixel');
+  assert.match(src, /for \(const t of trackNodes\) trackTowns\[t\.y \* MAP_WIDTH \+ t\.x\] = 1;/, 'and a village is one of the web\u2019s towns');
+  assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side');
+});

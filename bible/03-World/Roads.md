@@ -266,6 +266,33 @@ diagonal inner (51/52) and inside corner (10/25) read from the same
 table. Audit 50 has the detail and names the painter's ring road as the
 one remaining departure from the mod.
 
+## ROADS 21 - the tracks are a web (2026-09-02)
+
+The larger of ROADS 16's two structural gaps. His villages sit ON
+tracks (84%), his tracks average 14 px per dead-end and junction at
+6.9%; ours were 3.6 px stubs at 29% dead-ends. His tracks pass THROUGH
+the places they serve, chaining village to village to road. Three
+rules: a track may cross a track-grade pixel where a road may not; each
+track node links to its two nearest neighbours within 24 px, routed
+shortest-first so the web grows outward from the roads, and a link
+commits to B's side of the web (it may end on any path closer to B than
+to A, never on A's own track at step one); and a village is entered
+WIDE - ROADS 18's rule with the web's nodes as its towns. The first two
+alone gave a web with sharp joins (right angles 14.8%, hairpins 5.3%);
+the third took them to 1.9% and 0.0%.
+
+| | pixels | bend | right-angle | hairpin | dead-end | junction |
+|---|---|---|---|---|---|---|
+| his tracks | 30,472 | 39% | 2.4% | 0.0% | 7.1% | 6.9% |
+| ours before | 22,907 | 30% | 9.2% | 0.0% | 29.4% | 4.9% |
+| ours now | 26,944 | 40% | 1.9% | 0.0% | 12.7% | 8.1% |
+
+Found on the way: `stopIf` had been designed for ROADS 17 and never
+plumbed through the other instance's rewrite of routeInBox; a link that
+could stop on ANY path stopped on its own at step one and the web was
+stubs and hairpins. It carries the heading now, so a stop can be judged
+wide.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
