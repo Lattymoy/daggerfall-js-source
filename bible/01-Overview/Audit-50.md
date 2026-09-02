@@ -40,7 +40,7 @@ edge tiles the mod has.
 
 ROADS 19 (the cache): a key that ignores the towns' pixels and the
 dials - DEAD. ROADS 20: three mutants above - DEAD. ROADS 14-18 were
-swept in Audit 49 and their pins are unchanged.
+swept in Audit 52 (originally 49) and their pins are unchanged.
 
 ## Cleared
 

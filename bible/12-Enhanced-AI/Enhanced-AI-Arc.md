@@ -120,3 +120,13 @@ the bake on `api.enhancedNav` for the motor.
 
 Moving platforms and action-driven geometry: out of scope until 4 is
 proven.
+
+## A standing law, written after three audits were filed as 49 in one day
+
+Audit numbers are taken by CREATING THE FILE, and `cat >` overwrites
+without asking - which is how three lanes each filed an Audit 49 on
+2026-09-02 and two of them silently overwrote a predecessor. Both are
+recovered from history (52 the roads calibration, 53 the road-to-1:1
+campaign; 49 stays with the grass audit that holds the file now). The
+law: before filing an audit, `ls bible/01-Overview/Audit-*.md` and take
+the next free number; never write an audit file that already exists.
