@@ -487,3 +487,26 @@ test('ROADS 11: the settlement sweep restores the region it found loaded', async
   paintRoads(grass, t, 0xff, 0xff);
   for (const v of t) assert.notEqual(v, 0xff, 'no 0xff from the painter');
 });
+
+// ROADS 12 (2026-09-02, Mac: "the toggle that attaches to the buttons
+// for each type"): a chip for roads and one for tracks, beside DFU's
+// four, under the same law - the live store, the classic inversion
+// (TRUE hides), saved with the game, absent in an older save meaning
+// shown. A chip flips the RELIEF, not the markers, so the terrain step
+// is re-run and the grid is keyed on the two flags.
+test('ROADS 12: the two chips ride the store, default shown, and the relief is keyed on them', async () => {
+  const { travelMapFilters, travelMapSaveData, restoreTravelMapSaveData, resetTravelMapState } = await import('../src/systems/travelMapState.js');
+  resetTravelMapState();
+  const f = travelMapFilters();
+  assert.equal(f.roads, false); assert.equal(f.tracks, false);
+  f.tracks = true;
+  assert.equal(travelMapSaveData().filterTracks, true, 'a hidden layer saves as hidden');
+  restoreTravelMapSaveData({ filterDungeons: true });   // an older save: no road keys
+  assert.deepEqual([travelMapFilters().roads, travelMapFilters().tracks], [false, false], 'absent means shown');
+  resetTravelMapState();
+  const src = (await import('node:fs')).readFileSync('src/ui/overworldMap.js', 'utf8');
+  assert.match(src, /'dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks'/, 'six chips');
+  assert.match(src, /if \(key === 'roads' \|\| key === 'tracks'\) this\._ensureTerrain\(\);/, 'a road chip re-runs the terrain step');
+  assert.match(src, /grid\.roadsKey !== roadsKey/, 'the grid is keyed on the flags');
+  assert.match(src, /\(showRoads && net\.roads\[y \* W \+ x\]\)/, 'and a hidden layer is not drawn');
+});

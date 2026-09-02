@@ -224,6 +224,18 @@ F5 corrected rather than fixed: autoDiscard is DFU's own default, the
 sweep holds one region, and the region it found loaded is put back.
 F8 removed: the painter's tables never hold tile 0.
 
+## ROADS 12 - the toggles (2026-09-02)
+
+Mac: a toggle per type. A Roads chip and a Tracks chip beside DFU's
+four on the overworld map, under the same law: the live
+travelMapState store, the classic inversion (TRUE hides), saved in the
+TravelMapSaveData envelope as filterRoads/filterTracks, absent in an
+older save meaning shown - so the default is still always on. A road
+chip does not dirty the markers; it re-runs the terrain step, which
+was extracted from scene creation into _ensureTerrain and keys the
+relief grid on the network AND the two flags, so a toggle rebuilds the
+relief and a toggle back finds the cache stale again.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

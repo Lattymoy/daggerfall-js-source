@@ -393,27 +393,7 @@ export class OverworldMapWindow {
       this._ov = new OverworldRenderer(renderer.gl);
       const bytes = this.deps.woods?.heightMapBuffer;
       if (!bytes) throw new Error('no heightmap');
-      // ROADS 7: the network is always on. It may land after the first
-      // grid was built (the worker builds it), so the cache is keyed on
-      // the bytes AND the network it was drawn with, and a grid drawn
-      // without roads is rebuilt the first time the map opens with them.
-      const net = this.deps.roads?.() ?? null;
-      let grid = _gridCache.get(bytes);
-      if (!grid || grid.roadsRef !== net) {
-        const W = this._size.width;
-        const pathAt = net ? (x, y) => (net.roads[y * W + x] ? 2 : (net.tracks[y * W + x] ? 1 : 0)) : null;
-        grid = buildOverworldGrid({
-          heightBytes: bytes,
-          width: this._size.width,
-          height: this._size.height,
-          climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
-          pathAt,
-        });
-        grid.roadsRef = net;
-        _gridCache.set(bytes, grid);
-      }
-      this._grid = grid;
-      this._ov.setTerrain(grid);
+      this._ensureTerrain(bytes);
 
     }
     if (this._markersDirty) {
@@ -842,13 +822,19 @@ export class OverworldMapWindow {
     top.append(label, search, close);
 
     const chips = el('div', 'ovfilters');
-    for (const key of ['dungeons', 'temples', 'homes', 'towns']) {
+    // ROADS 12 (Mac): roads and tracks get a chip each, beside the four
+    // DFU filters and under the same law - the live store, the classic
+    // inversion, saved with the game. A road chip does not dirty the
+    // markers; it dirties the RELIEF, which is rebuilt on the next draw
+    // because the grid is keyed on the flags.
+    for (const key of ['dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks']) {
       const b = el('button', 'ovchip', key[0].toUpperCase() + key.slice(1));
       b.dataset.key = key;
       b.onclick = () => {
         // the LIVE store object, edited in place - the classic law
         this.filters[key] = !this.filters[key];
         this._markersDirty = true;
+        if (key === 'roads' || key === 'tracks') this._ensureTerrain();   // ROADS 12
         this._renderChips();
       };
       chips.append(b);
@@ -1006,6 +992,37 @@ export class OverworldMapWindow {
     const m = this._markerAt(sx, sy);
     if (m) this._select(m);
     else if (this._selected) this._select(null);
+  }
+
+  /** ROADS 7/12: the relief, built from the heightmap AND the network
+   *  AND the two chips. The network may land after the first grid (the
+   *  worker builds it), and a chip may flip while the map is open, so
+   *  this runs at scene creation and again from the chips; the cache is
+   *  keyed on all three and a stale grid is rebuilt and re-uploaded. */
+  _ensureTerrain(bytes = this.deps.woods?.heightMapBuffer) {
+    if (!this._ov || !bytes) return;
+    const net = this.deps.roads?.() ?? null;
+    // Hidden is TRUE, the classic inversion.
+    const showRoads = !this.filters.roads, showTracks = !this.filters.tracks;
+    const roadsKey = `${showRoads ? 'r' : '-'}${showTracks ? 't' : '-'}`;
+    let grid = _gridCache.get(bytes);
+    if (!grid || grid.roadsRef !== net || grid.roadsKey !== roadsKey) {
+      const W = this._size.width;
+      const pathAt = net && (showRoads || showTracks)
+        ? (x, y) => ((showRoads && net.roads[y * W + x]) ? 2 : ((showTracks && net.tracks[y * W + x]) ? 1 : 0))
+        : null;
+      grid = buildOverworldGrid({
+        heightBytes: bytes,
+        width: this._size.width,
+        height: this._size.height,
+        climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
+        pathAt,
+      });
+      grid.roadsRef = net;
+      grid.roadsKey = roadsKey;
+      _gridCache.set(bytes, grid);
+    }
+    if (this._grid !== grid) { this._grid = grid; this._ov.setTerrain(grid); }
   }
 
   _renderChips() {
