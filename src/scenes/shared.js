@@ -236,6 +236,28 @@ export function createSkyController(gl, params) {
   return {
     renderer: enhancedSky ?? sky,
     enhanced: Boolean(enhancedSky),
+    /** GR3 (Mac: "the wind still isn't working ingame"): THE CLOUD
+     *  SHADOW DECK, off the dome. EE5 publishes `cloudShadow` on the
+     *  EnhancedSkyRenderer - cover, softness, WIND, time - "from the
+     *  same state the dome is drawn from, so no host can feed them
+     *  different numbers". Then three readers in world.js read it off
+     *  THIS object - `sky.cloudShadow` - and this object never carried
+     *  it: the dome sits one key down, under `renderer`. So every one
+     *  of them read undefined. The grass took wind [0,0] and a slider
+     *  of 0, the rain fell un-enhanced, and the ground's cloud shadows
+     *  were set to null - three features dead from one missing key,
+     *  and the suite green throughout, because nothing pinned the
+     *  VALUE that reached the shader. GR2 measured a million blades
+     *  placed and never a blade moving.
+     *
+     *  A getter, so it is live: the dome rebuilds the deck every draw
+     *  and this always answers with the current one. null under the
+     *  classic sky, as `wind()` above is null - "no deck is known",
+     *  which is what the three readers' `?? null`/`?? [0, 0]` arms
+     *  were written for. */
+    get cloudShadow() {
+      return enhancedSky?.cloudShadow ?? null;
+    },
     /** WM2b: THE EASED WIND, and the ONE place anything but the sky can
      *  read it. `easeWeather` walks this row toward the sim's over
      *  WEATHER_EASE_SECONDS, and the cloud deck is drawn with it - so a
