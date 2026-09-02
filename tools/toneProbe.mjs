@@ -1,6 +1,20 @@
 // T3f probe: the tone cycle on the live talk window - greet, cycle
 // T (Normal -> Blunt -> Polite), and re-ask Where-is under a new
-// tone; the label tracks and the toned answer still renders.
+// tone; the selection tracks and the toned answer still renders.
+//
+// ROAD-E E8 PORTED IT ACROSS THE WINDOW. This probe was written
+// against the KEYED talk window and asserted on a text option row
+// naming the tone, read out of `overlayOptions`. B5-6's native window
+// (ui/nativeTalk.js) draws the tone as ART - three 6x6 radios at
+// (258,18/28/38), the selection a flat toggleColor fill (:63-65,
+// :545-547) - so there IS no text row to find and the probe failed on
+// a window that was working. The DRIVE is unchanged, because the keys
+// are: KeyT is the tone cycle (nativeTalk.js:431), KeyW opens the
+// where-is categories (:430) and a digit uses a visible row (:435).
+// What moved is what is READ: `native` (townTalk.js:1136, true only
+// when the art window is up), `tone`, and the ABSENCE of
+// `overlayOptions` - which is the positive statement that the window
+// under the keys is the native one and not the keyed fallback.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
@@ -33,14 +47,22 @@ await page.evaluate(([x, y, z]) => window.__pose(x, y, z, 0, 0), [p.pos[0], p.po
 await waitFrames(12);
 await press('KeyE');
 const greet = await talk();
-console.log('greeting:', JSON.stringify({ text: greet.overlayText, opts: greet.overlayOptions, tone: greet.tone }));
-if (!greet.overlayOptions?.some((o) => o.includes('tone: Normal'))) { console.log('NO TONE BUTTON'); process.exit(1); }
+console.log('greeting:', JSON.stringify({ text: greet.overlayText, native: greet.native, opts: greet.overlayOptions, tone: greet.tone }));
+if (!greet.native) { console.log('NOT THE NATIVE TALK WINDOW'); process.exit(1); }
+if (greet.overlayOptions) { console.log('KEYED OPTION ROWS ARE UP - the art window did not mount'); process.exit(1); }
+if (greet.tone !== 'Normal') { console.log(`TONE DOES NOT START NORMAL: ${greet.tone}`); process.exit(1); }
 await press('KeyT');   // Normal -> Blunt
 const blunt = await talk();
-console.log('after T:', JSON.stringify({ opts: blunt.overlayOptions, tone: blunt.tone }));
+console.log('after T:', JSON.stringify({ native: blunt.native, tone: blunt.tone }));
 if (blunt.tone !== 'Blunt') { console.log('TONE DID NOT CYCLE'); process.exit(1); }
 await press('KeyW');
+const cats = await talk();
+console.log('categories:', JSON.stringify({ mode: cats.topicMode, count: cats.topicCount }));
+if (cats.topicMode !== 'categories') { console.log(`WHERE-IS DID NOT OPEN: ${cats.topicMode}`); process.exit(1); }
 await press('Digit1');
+const blds = await talk();
+console.log('buildings:', JSON.stringify({ mode: blds.topicMode, count: blds.topicCount }));
+if (blds.topicMode !== 'buildings') { console.log(`CATEGORY DID NOT OPEN: ${blds.topicMode}`); process.exit(1); }
 await press('Digit1');
 const ans = await talk();
 console.log('blunt answer:', JSON.stringify({ text: ans.overlayText, tone: ans.tone, session: ans.toneSession }));

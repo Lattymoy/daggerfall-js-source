@@ -210,7 +210,7 @@ import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '.
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
-import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
+import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker; E8: on INFO01I0 art
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
@@ -879,6 +879,7 @@ export function createWorldModes(host) {
     preloadPurchaseArt({ renderer, fetchBytes, palette });   // H2: BANK01I0 for the house market
     preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
     preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
+    preloadSpellMakerArt({ renderer, fetchBytes, palette });   // E8: INFO01I0 + MASK01I0 + the editor's MASK05I0
     preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
       .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
     preloadAutomapArt({ renderer, fetchBytes, palette })   // ROAD-C c2/S9: AMAP00I0 + AMAP01I0 - the map opens inside a building too
@@ -3028,13 +3029,22 @@ export function createWorldModes(host) {
       interiorOverlay = bookWin;
       return bookWin;
     }
-    if (destination === 'guildServiceSpellMaker') {
-      interiorOverlay = new SpellMakerWindow({
+    // E8: the spell maker is a NATIVE window now (INFO01I0), so it
+    // takes the art gate its two sibling maker windows take. `rows` is
+    // the host's TEXT.RSC reader - the five boxes this window shows
+    // are classic records 1702-1708.
+    if (destination === 'guildServiceSpellMaker' && spellMakerArtLoaded() && _shopFont) {
+      let makerWin = null;
+      makerWin = new SpellMakerWindow({
         entity: playerEntity,
-        onClose: () => { if (interiorOverlay === flow) interiorOverlay = null; },
+        rows,
+        onClose: () => { if (interiorOverlay === makerWin) interiorOverlay = null; },
       });
-      flow = interiorOverlay;
-      return interiorOverlay;
+      interiorOverlay = makerWin;
+      // The popup's onService reads the return value and answers "not
+      // available yet" on a null, so this hands the window back the way
+      // the buy-spells arm does.
+      return makerWin;
     }
     if (destination === 'guildServiceTraining') {
       flow = buildTrainingFlow(playerEntity, guild, membership, {

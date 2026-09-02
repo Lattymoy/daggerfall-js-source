@@ -35,11 +35,19 @@ let _art = null;
 // module-level warm now, beside the art it belongs with: one load, one
 // home, and no signature carrying it.
 let _largeFont = null;
+/** ROAD-E E8: the LargeFont warm, split out so a second consumer can
+ *  ask for it without dragging LGBK00I0 along. DaggerfallUI.LargeFont
+ *  is one font (DaggerfallUI.cs:153), so it stays one home and one
+ *  upload - the spell maker's three effect rows draw in it too
+ *  (DaggerfallSpellMakerWindow.cs:272-276). */
+export async function preloadLargeFont(deps) {
+  if (_largeFont) return _largeFont;
+  try { _largeFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0000.FNT')), 'FONT0000'); }
+  catch { console.warn('[journal] FONT0000.FNT unavailable; the title falls back to the host font'); }
+  return _largeFont;
+}
 export async function preloadQuestJournalArt(deps) {
-  if (!_largeFont) {
-    try { _largeFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0000.FNT')), 'FONT0000'); }
-    catch { console.warn('[journal] FONT0000.FNT unavailable; the title falls back to the host font'); }
-  }
+  await preloadLargeFont(deps);
   if (_art) return;
   try { _art = await loadImg(deps, 'LGBK00I0.IMG'); }
   catch { console.warn('[journal] LGBK00I0.IMG unavailable; the logbook falls back to text'); }

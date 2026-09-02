@@ -27,7 +27,7 @@ Port-Doctrine keeps Daggerfall Unity an **external** reference — the sparse
 clone — for the same reason ARENA2 never enters the repo. Vendoring 1.2MB of
 its C# would quietly change that stance, so `prepare.sh` reproduces the
 checkout instead. What IS committed is only what this project wrote: the
-driver, the shims, the JS dumpers, and five patches.
+driver, the shims, the JS dumpers, and six patches.
 
 DFU is MIT (Interkarma and contributors); see the repo's attribution.
 
@@ -41,7 +41,7 @@ DFU is MIT (Interkarma and contributors); see the repo's attribution.
 | `cs/shim/BiogParse.cs`, `SpectralShim.cs` | DFU source sliced programmatically, not retyped |
 | `cs/shim/HarnessCorpus.cs` | records FaceUVTool's inputs so both sides consume one corpus |
 | `js/*.mjs` | the port-side dumpers, same format |
-| `patches/*.cs.patch` | the five behaviour-neutral edits (see `prepare.sh`) |
+| `patches/*.cs.patch` | five behaviour-neutral edits, plus `FaceUVTool.cs.patch` - the row-18 float→double widening that puts the faceuv corpus AT MATCHED PRECISION (not behaviour-neutral, and `prepare.sh` says so) |
 | `tables/*.mjs` | the **data-table** differential: extracts DFU's hardcoded C# tables and the port's JS literals and diffs them key-for-key. ~9,900 values across 30 tables at AUDIT 18 |
 
 ## The format
@@ -61,7 +61,9 @@ A difference is not automatically a port bug. Check, in order:
    divergences; sharing one `DFPalette` across IMG files corrupted later ones.
 2. **`bible/01-Overview/Port-Ledger.md` A and B.** Approved departures and
    deliberately preserved DFU bugs are not findings. Row 18's float→double
-   widening alone accounts for 52,505 of 1,917,087 UVs.
+   widening alone accounts for 52,505 of 1,917,087 UVs against a STOCK DFU
+   build - which is why `patches/FaceUVTool.cs.patch` widens DFU's side too,
+   so the faceuv line measures everything EXCEPT that departure.
 3. **Then** the port.
 
 To prove a mismatch is really the port's, build a **controlled probe**: copy the

@@ -278,3 +278,31 @@ export const SPELLBOOK_DESCRIPTION_IDS = new Map([
  *  null where the effect class declares none (EntityEffect's default
  *  is a null token array, and the box is then empty). */
 export const spellBookDescriptionId = (key) => SPELLBOOK_DESCRIPTION_IDS.get(key) ?? null;
+
+/** ROAD-E E8 - SpellMakerDescription, the record the SETTINGS EDITOR
+ *  puts on its parchment (DaggerfallEffectSettingsEditorWindow.cs
+ *  :262-267). Every effect class in DFU declares BOTH properties, and
+ *  across all 85 of them the spell-maker record is the spellbook's
+ *  PLUS 300 - including the two variant families, which compute both
+ *  from a base (ElementalResistance 1527+variant against 1227+variant,
+ *  PacifyEffect 1585+variant against 1285+variant). So this reads the
+ *  table above rather than repeating it.
+ *
+ *  TWO EXCEPTIONS, and they are the classic Personality/Speed swap
+ *  seen from the other side. The table above carries the SPELLBOOK
+ *  order DFU's classes declare - DrainPersonality 1225 and DrainSpeed
+ *  1224 (DrainPersonality.cs:41, DrainSpeed.cs:41), Personality's id
+ *  ABOVE Speed's - while their spell-maker records are in plain
+ *  ascending order, 1524 and 1525 (DrainPersonality.cs:40,
+ *  DrainSpeed.cs:40). +300 would swap them, so the two are named. */
+export const SPELLMAKER_DESCRIPTION_OFFSET = 300;
+const SPELLMAKER_DESCRIPTION_EXCEPTIONS = new Map([
+  ['7,5', 1524],   // Drain Personality
+  ['7,6', 1525],   // Drain Speed
+]);
+export const spellMakerDescriptionId = (key) => {
+  const named = SPELLMAKER_DESCRIPTION_EXCEPTIONS.get(key);
+  if (named != null) return named;
+  const book = spellBookDescriptionId(key);
+  return book == null ? null : book + SPELLMAKER_DESCRIPTION_OFFSET;
+};

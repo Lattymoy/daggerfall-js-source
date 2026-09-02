@@ -173,10 +173,14 @@ C1) and the automap pair - `ui/automapWindow.js` 1,504,
 ten stages in two flights). 5,524 lines of window that did not exist
 when the superseded page was written.
 
-One window is drawn in a different idiom and says so: the spell maker.
-`ui/spellMakerWindow.js:12` records that DFU's window is native
-INFO01I0.IMG art with invisible hit-buttons and modal boxes, and this is
-a keyed text window in the travel-map idiom. It has no Ledger row.
+~~One window is drawn in a different idiom and says so: the spell maker.~~
+**CLOSED (E-group, 2026-09-02): the spell maker is native too.**
+`ui/spellMakerWindow.js` is DaggerfallSpellMakerWindow on INFO01I0.IMG
+with the MASK01I0 selected-state marks and
+DaggerfallEffectSettingsEditorWindow on MASK05I0 beside it - DFU's hit
+rects digit for digit, its tip label and lock quirk, the eighteen
+SpellMaker* shortcut bindings, and the classic 1702-1708 boxes. The
+departure that had no Ledger row is retired rather than given one.
 
 ---
 
@@ -579,10 +583,18 @@ preamble opens with.
 *Genuinely open:*
 
 1. **`:483` FaceUVTool's 1,803-UV residual at matched precision** ->
-   Readers arc. With DFU's `FaceUVTool` compiled under Mono, float
-   widened to double and `Vector3.Normalize`'s reciprocal restored,
-   1,803 of 1,917,087 corpus UVs still differ. Cause unknown, sub-texel,
-   no visible defect. The differential harness is re-runnable.
+   Readers arc. **NARROWED (E-group, 2026-09-02), not closed.** The
+   surface is fenced from DFU's own sources: `API/Vector3.cs` is double
+   throughout, so the whole basis walk was already matched and cannot
+   carry it; points 0-2 are pure Int32 delta sums, so all of it lives at
+   point index >= 3; and the one genuinely single-precision half is
+   `df3duvparams_lt`/`df3duvmatrix_t` and `l_ComputeDFUVMatrixXY`, whose
+   float rounding flips the final truncation on 0.019% of random
+   four-point faces (`test/faceuvresidue.test.js` pins one). And the
+   harness was NOT re-runnable as the row claimed: the float->double
+   widening the measurement was taken against was never a committed
+   patch. It is one now (`tools/parity/patches/FaceUVTool.cs.patch`).
+   The 1,803 itself still needs ARENA2 plus mono to re-measure.
 2. **`:496` the custom builder's hidden `ResetBonusPool` control** ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
    the row says "the port has no keybinding registry to hang it on", and
@@ -612,14 +624,17 @@ preamble opens with.
    dungeon-host lane. **Adjudicated by the closeout as BLOCKED** (see
    list 1): there is no DFU original for a standalone dungeon scene, so
    this is an owner decision about a dev route, not a routed gap.
-8. **`:575` three stale probes** -> a probe-hygiene lane.
-   `tools/shopProbe.mjs` still drives the keyed browse window U8c/U40
-   replaced and dies on `undefined.some` (port-or-retire, and its
-   subject is covered twice by `tradeModeProbe`/`nativeTradeProbe`);
-   `tools/toneProbe.mjs` wants a text tone option the native talk window
-   draws as art; `tools/worldWhereIsProbe.mjs` needs the classic-start
-   intro dismissed the way `firstHourProbe` does. All three still exist
-   under `tools/`.
+8. ~~**`:575` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
+   `tools/shopProbe.mjs` is RETIRED - it drove the keyed browse window
+   U8c/U40 replaced, and its subject is covered twice over by
+   `tradeModeProbe`/`nativeTradeProbe`. `tools/toneProbe.mjs` and
+   `tools/worldWhereIsProbe.mjs` were ported: the first onto the native
+   talk window's own `native`/`tone`/`topicMode` state (it hunted a
+   text tone row the art window does not draw), the second onto the
+   boot-box drain `firstHourProbe` runs - a modal holds the motor, so
+   its "NO LIVE WALKER" was a frozen world rather than a missing
+   walker. Neither ported probe has been RUN here (no ARENA2, no
+   browser); each is verified against the live seam it reads.
 
 *Stale - the row is a claim the tree has outrun:*
 
@@ -647,9 +662,10 @@ preamble opens with.
     `ui/spellbookWindow.js:135-137`, drawn at `:921`), the icon picker
     ships (`ui/spellIconPickerWindow.js`), and the
     inert-catalogue count is gated at 0. What survives is not residue
-    but a **departure with no Ledger row**: `ui/spellMakerWindow.js:12`
-    records that DFU's native INFO01I0 art window is a keyed text window
-    here.
+    ~~but a **departure with no Ledger row**: DFU's native INFO01I0 art
+    window is a keyed text window here.~~ **THAT SHIPPED TOO (E-group,
+    2026-09-02): the window is native, and the row's last unstruck
+    clause goes with it.**
 13. **`:510` the talk manager.** The row's own tail already says both
     named PENDING gaps closed at TK-vi; A9 then took the questor name
     bank behind `%pqn`, which the row's parent list still implies is
@@ -721,10 +737,13 @@ faithful to whatever reference it does have, and none of them is a gap.
   for nature scatter; the houses-for-sale seed, which cannot reproduce a
   CLR identity hash and should not want to.
 - **`FaceUVTool` arithmetic** - JS doubles for C# float mix, `Math.trunc`
-  for `(Int32)`. Measured once against stock DFU over the whole ARCH3D
-  corpus: 52,505 of 1,917,087 UVs (2.74%) differ. The 1,803 that survive
-  matched precision are ledger row `:483` and the only part of this that
-  is still open work.
+  for `(Int32)`. The float half is exactly `df3duvparams_lt`,
+  `df3duvmatrix_t` and `l_ComputeDFUVMatrixXY`; `API/Vector3.cs` is
+  already double, so the basis walk is not part of this departure at
+  all. Measured once against stock DFU over the whole ARCH3D corpus:
+  52,505 of 1,917,087 UVs (2.74%) differ. The 1,803 that survive matched
+  precision are ledger row `:483`, narrowed at E8 and the only part of
+  this that is still open work.
 - **Removed whole:** the road system (2026-08-29, ~5,200 lines), which
   retired the only departure that ever touched the travel law -
   `systems/travel.js` is the verbatim port again.

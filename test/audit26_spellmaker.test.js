@@ -20,7 +20,7 @@ import {
 } from '../src/systems/spellMaker.js';
 import { MAGIC_ONLY_KEYS } from '../src/systems/effects.js';
 import { SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
-import { SpellMakerWindow } from '../src/ui/spellMakerWindow.js';
+import { SpellMakerWindow, SPELL_MAKER_RECTS, EFFECT_NAME_PANELS } from '../src/ui/spellMakerWindow.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';
 
 const slot = (type, subType) => ({ type, subType, key: `${type},${subType}`, settings: {} });
@@ -146,6 +146,12 @@ test('audit26 F181: the cycle steps OVER disallowed values in both directions', 
 // ---------------------------------------------------------------
 // The window: the recompute runs on every slot change, so no
 // selection outlives the effect that permitted it.
+//
+// ROAD-E E8: these three drove the keyed sheet's cursor (`_rows()`,
+// `input('confirm')`, `char:d`). The window is DFU's own art now, so
+// they press DFU's own buttons - the five target rects at x275, the
+// five element rects at x299, and the 1708 alter box's Delete. The
+// LAW under them did not move an inch.
 // ---------------------------------------------------------------
 const win = () => new SpellMakerWindow({ entity: {
   name: 'S', level: 1, stats: {}, skills: [50], maxMagicka: 40,
@@ -153,45 +159,43 @@ const win = () => new SpellMakerWindow({ entity: {
   items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
   spells: [],
 } });
-const toRow = (w, kind, i = 0) => {
-  w.cursor = w._rows().findIndex((r) => r.kind === kind && (r.i ?? 0) === i);
-  return w;
-};
+const press = (w, key) => { const [x, y] = SPELL_MAKER_RECTS[key]; w.click(x + 1, y + 1); return w; };
 
 test('audit26 F181: adding a caster-only effect drags an Area selection back to Caster Only', () => {
   const w = win();
   // pick Area At Range while the sheet is empty (every target legal)
-  toRow(w, 'target');
-  for (let i = 0; i < 4; i++) w.input('confirm');
+  press(w, 'areaAtRange');
   assert.equal(w.rangeType, 4, 'Area At Range');
 
   // now add a caster-only effect: AddEffect ends in
   // UpdateAllowedButtons, whose EnforceSelectedButtons moves it.
   w.slots[0] = slot(2, 255);
-  w._updateAllowed();
+  w._updateAllowedButtons();
   assert.equal(w.allowedTargets, TARGET_FLAGS_SELF);
   assert.equal(w.rangeType, 0, 'the illegal selection did not survive the effect that outlawed it');
-  // ...and the row can no longer be cycled off it
-  toRow(w, 'target').input('confirm');
+  // ...and the button can no longer put it back - SetSpellTarget
+  // returns early on a bit outside allowedTargets (:490-491)
+  press(w, 'areaAtRange');
   assert.equal(w.rangeType, 0);
 });
 
 test('audit26 F181: deleting the last effect FORCES CasterOnly and Magic back, not merely a legal value', () => {
   const w = win();
   w.slots[0] = slot(4, 0);          // Other targets, All elements
-  w._updateAllowed();
-  toRow(w, 'target');
-  w.input('confirm');               // step off ByTouch
-  toRow(w, 'element').input('confirm');
+  w._updateAllowedButtons();
+  press(w, 'byTouch');
+  press(w, 'fireBased');
   const target = w.rangeType;
   const element = w.element;
   assert.notEqual(target, 0);
   assert.notEqual(element, 4);
 
-  // delete it. The default arm allows EVERY target, so a mere
-  // enforcement would leave the selection alone - DFU calls
-  // SetSpellTarget(CasterOnly) outright (:567-568).
-  toRow(w, 'slot', 0).input('char:d');
+  // delete it through the row's own 1708 box. The default arm allows
+  // EVERY target, so a mere enforcement would leave the selection
+  // alone - DFU calls SetSpellTarget(CasterOnly) outright (:567-568).
+  w.click(EFFECT_NAME_PANELS[0][0] + 4, EFFECT_NAME_PANELS[0][1] + 4);
+  assert.equal(w.editOrDeleteSlot, 0, 'the row opened the alter box');
+  w.box.onButton(9);                // MB_BUTTONS.Delete
   assert.equal(w.allowedTargets, TARGET_FLAGS_ALL, 'every target is legal again');
   assert.equal(w.rangeType, 0, 'and it STILL snaps back to Caster Only');
   assert.equal(w.element, 4, 'and to Magic');
@@ -203,7 +207,8 @@ test('audit26 F181: a fresh sheet starts on the default flags', () => {
   assert.equal(w.allowedElements, ELEMENT_FLAGS_MAGIC_ONLY);
   assert.equal(w.rangeType, 0);
   assert.equal(w.element, 4);
-  // ...and the element row is inert until an effect opens it
-  toRow(w, 'element').input('confirm');
+  // ...and the four non-magic element buttons are inert until an
+  // effect opens them
+  press(w, 'fireBased');
   assert.equal(w.element, 4);
 });
