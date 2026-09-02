@@ -24,6 +24,7 @@ import { PotionMakerWindow } from '../src/ui/potionMakerWindow.js';
 import { scrollerToolTipText } from '../src/ui/itemScroller.js';
 import { itemLongName, resolveItemName, itemInfoRows, POTION_RECIPE_FOR_TEXT, POTION_RECIPE_WEIGHT_TEXT } from '../src/systems/itemInfo.js';
 import { repairJobsAt, isBeingRepaired, calculateItemRepairTime, INTERRUPT_REPAIR_TEXT } from '../src/systems/repairService.js';
+import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { MB_BUTTONS } from '../src/ui/messageBox.js';
 import { POTION_RECIPES, potionRecipeKey } from '../src/systems/potions.js';
 
@@ -168,7 +169,14 @@ test('D7: a job still under way raises ConfirmInterruptRepairBox; Yes takes it b
   h.entity.otherItems.push(job);
   const w = new NativeTradeWindow(h);
   w.click(...REMOTE_SLOT0);
-  assert.equal(w.box?.rows?.[0]?.text, INTERRUPT_REPAIR_TEXT, 'the confirm is raised, not the item taken (:845-851)');
+  // the row itself, not the constant: DaggerfallTradeWindow.cs:846-848
+  // hands GetLocalizedText("interruptRepair") straight to the box
+  assert.equal(w.box?.rows?.[0]?.text, "Take back that item before it's repaired?",
+    'the confirm is raised with Internal_Strings.csv:819 verbatim, not the item taken (:845-851)');
+  assert.equal(INTERRUPT_REPAIR_TEXT, "Take back that item before it's repaired?");
+  // and the keyed flow speaks that one constant rather than keeping a
+  // second copy of the row of its own
+  assert.match(src('scenes/worldModes.js'), /lines: \[INTERRUPT_REPAIR_TEXT\],/);
   assert.deepEqual(h.entity.items, [], 'and nothing has moved yet');
   w.input('KeyN');
   assert.deepEqual(h.entity.otherItems, [job], 'No leaves it with the shop');
@@ -207,10 +215,17 @@ test('D7: the host opens the native Repair screen when the art is up, keyed when
 
 test('D7: the booked job carries this shop\'s key and CalculateItemRepairTime', () => {
   // the commit arm is the host's; this pins the two numbers it must
-  // write, which the keyed flow has always written.
+  // write - the shop's own buildingKey and CalculateItemRepairTime's
+  // answer - which the keyed flow has always written.
   const wm = src('scenes/worldModes.js');
   assert.match(wm, /leaveForRepair\(it, bk, calculateItemRepairTime\(it\.currentCondition \?\? 0, it\.maxCondition \?\? 0\), now\);/);
-  assert.equal(calculateItemRepairTime(50, 100), calculateItemRepairTime(50, 100));
+  // and the number itself (FormulaHelper.cs:1924-1933): 50 points of
+  // damage is trunc(50 * 1440 / 1000) = 72 minutes, which the one-day
+  // floor raises to a full day
+  assert.equal(calculateItemRepairTime(50, 100), MINUTES_PER_DAY);
+  assert.equal(MINUTES_PER_DAY, 1440);
+  // an unfloored case, so a constant return cannot pass either
+  assert.equal(calculateItemRepairTime(0, 2500), 3600);
 });
 
 // ── 3. the potion recipe's info panel ─────────────────────────────

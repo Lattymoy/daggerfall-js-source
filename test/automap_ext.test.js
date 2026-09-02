@@ -1088,7 +1088,7 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
   const calls = [];
   const marked = (over = {}) => ({ isQuestResource: true, locationWasMarkedOnMapByNPC: true, overrideBuildingName: 'from the inner call', ...over });
   const quests = {
-    1: { resources: new Map([['a', place(42, 'First House')], ['b', place(99, 'Wrong Key')]]) },
+    1: { resources: new Map([['a', place(42, 'First House')], ['b', place(99, 'Wrong Key')], ['a2', place(42, 'Same Quest, Later')]]) },
     2: { resources: new Map([['c', place(42, 'Second House')], ['d', { isPerson: true, symbol: { name: 'x' } }]]) },
   };
   const qs = (answer) => ({
@@ -1097,11 +1097,21 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
     isBuildingQuestResource: (mapID, key) => { calls.push([mapID, key]); return answer; },
   });
   // QUIRK 1 - NO BREAK: both loops run to the end, so the LAST marked
-  // match wins, not the first.
+  // match wins, not the first. Quest 1 carries TWO key-42 places, so
+  // the INNER loop's no-break is discriminated too: it must keep going
+  // past 'First House' and leave 'Same Quest, Later' behind, and the
+  // OUTER loop must then overwrite that with quest 2's answer.
   assert.equal(residenceQuestName(qs(marked()), 100, 42), 'Second House');
   // QUIRK 2 - THE `&&` SHORT-CIRCUITS: IsBuildingQuestResource is never
-  // called for the key-99 place, nor for the Person resource.
-  assert.deepEqual(calls, [[100, 42], [100, 42]], 'two Place resources carry the key; nothing else asks');
+  // called for the key-99 place, nor for the Person resource - but it
+  // IS called again for a second match inside the same quest, which a
+  // break in the inner loop would skip.
+  assert.deepEqual(calls, [[100, 42], [100, 42], [100, 42]], 'three Place resources carry the key; nothing else asks');
+  // and the inner loop on its own, one quest only, so nothing the outer
+  // loop does can stand in for it
+  assert.equal(residenceQuestName({
+    getAllActiveQuestIds: () => [1], getQuest: () => quests[1], isBuildingQuestResource: () => marked(),
+  }, 100, 42), 'Same Quest, Later', 'NO break in the INNER loop either - the LAST match in one quest wins');
   // QUIRK 3 - the name is the OUTER place's `SiteDetails.buildingName`,
   // NOT the `overrideBuildingName` the inner call answers. The two
   // agree in the common case (the C# comment says so) and part exactly
