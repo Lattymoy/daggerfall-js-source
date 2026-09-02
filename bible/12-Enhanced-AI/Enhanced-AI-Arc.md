@@ -84,11 +84,24 @@ gated Privateer's Hold pin is written and skips until the archives are
 here; Mac chose not to upload them, so the first real bake is his to
 see. Not yet: the worker, the cache, the dungeon host's call (3b).
 
-## The slices ahead
+## ENHANCED AI 3b - the worker, the cache, the host (2026-09-02)
 
-- **ENHANCED AI 3b - the worker, the cache, the host.** The dungeon
-  host calls the bake at load through a worker, anchored at the entry,
-  cached with bakeNavData keyed on the location. Feed the Collider's buckets
+`navWorker.js` bakes off the frame in navBake's exact order and posts
+bakeNavData's compact form; the compact heightfield the motor queries
+every tick lives on the main thread, because findPath is synchronous by
+his design. `navClient.js` fingerprints the soup (tris, y-range, agent),
+asks IndexedDB, else the worker, else bakes here (node), hydrates on
+this thread by re-cutting the boxes deterministically at the baked cell
+size, and PUTS THE GROUND BACK - his hydrateBakedNav rebuilds a
+heightfield without one, its maps being arenas at zero; the dungeon's
+constant floor rides the cache metadata, so a cached dungeon answers
+the same heights as a fresh bake, with no third change to his file. The
+dungeon host asks once, with the Enhanced tab's switch on, the moment
+the player's feet are known - the feet are the anchor - and exposes
+the bake on `api.enhancedNav` for the motor.
+
+## The slices ahead
+ Feed the Collider's buckets
   through triRaster at load, in a worker, anchored at the player's
   entry; cache with bakeNavData in IndexedDB keyed on the location. The
   budget/coarsen rule sizes the cells (a twenty-block dungeon is ~800k

@@ -151,3 +151,42 @@ test('ENHANCED AI 3 (ARENA2): Privateer\u2019s Hold bakes, and a path crosses it
   // call is the one dungeonContext.js:426 feeds.
   assert.ok(true);
 });
+
+// ENHANCED AI 3b: the worker, the cache, the host. Pinned where node can
+// reach: the client with no Worker bakes here and caches through an
+// injected store (a second bake hits), a hydrated bake answers the same
+// heights as a fresh one (the ground put back), and the host asks only
+// with the switch on and only once.
+test('ENHANCED AI 3b: the client bakes without a worker, caches, and a hydrated bake keeps the floor', async () => {
+  const { Collider } = await import('../src/player/collider.js');
+  const { NavClient, navCacheKey } = await import('../src/ai/navClient.js');
+  const { polyHeight, __locatePolyIndexed } = await import('../src/ai/navmesh.js');
+  const { navPath } = await import('../src/ai/navBake.js');
+  const Id = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const P = [], I = []; const Y = -5;
+  const quad = (a, b, c, d) => { const s = P.length / 3; P.push(...a, ...b, ...c, ...d); I.push(s, s + 1, s + 2, s, s + 2, s + 3); };
+  quad([0, Y, 0], [10, Y, 0], [10, Y, 10], [0, Y, 10]);
+  for (const [a, b] of [[[0, 0], [10, 0]], [[10, 0], [10, 10]], [[10, 10], [0, 10]], [[0, 10], [0, 0]]]) quad([a[0], Y, a[1]], [b[0], Y, b[1]], [b[0], Y + 3, b[1]], [a[0], Y + 3, a[1]]);
+  const collider = new Collider(() => -Infinity);
+  collider.addMesh('dungeon', new Float32Array(P), new Uint32Array(I), Id);
+  const mem = new Map(); const store = { async get(k) { return mem.get(k) ?? null; }, async set(k, v) { mem.set(k, v); } };
+  const client = new NavClient({ store, WorkerCtor: undefined });
+  const a = await client.bake({ collider, anchor: [1, Y, 5], key: 'dungeon:test' });
+  assert.ok(a && a.chf && !a.cached, 'baked here, no worker');
+  const b = await client.bake({ collider, anchor: [1, Y, 5], key: 'dungeon:test' });
+  assert.ok(b.cached, 'the second bake is a cache hit');
+  for (const bake of [a, b]) {
+    const pi = __locatePolyIndexed(bake.chf, 5, 5);
+    assert.ok(pi >= 0);
+    assert.ok(Math.abs(polyHeight(bake.chf, pi, 5, 5) - Y) < 0.6, `${bake.cached ? 'hydrated' : 'fresh'}: the floor is ${Y}, not 0`);
+    const path = navPath(bake, [1, Y, 5], [9, Y, 5]);
+    assert.ok(path && path.length >= 2, `${bake.cached ? 'hydrated' : 'fresh'}: a path`);
+    assert.ok(Math.abs(path[path.length - 1][1] - Y) < 0.6, 'the path\u2019s points sit on the real floor');
+  }
+  const k = navCacheKey({ key: 'dungeon:test', tris: 10, minY: -5, maxY: -2 });
+  assert.notEqual(k, navCacheKey({ key: 'dungeon:test', tris: 11, minY: -5, maxY: -2 }), 'a different soup is a different key');
+  assert.notEqual(k, navCacheKey({ key: 'dungeon:other', tris: 10, minY: -5, maxY: -2 }), 'a different dungeon');
+  const src = readFileSync('src/scenes/dungeonContext.js', 'utf8');
+  assert.match(src, /if \(playerFeet && !enhancedNav\.requested && getPref\('enhancedAI'\)\) \{/, 'the host asks once, with the switch on, once the feet are known');
+  assert.match(src, /api\.enhancedNav = enhancedNav;/, 'and exposes the bake for the motor');
+});

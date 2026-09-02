@@ -291,7 +291,7 @@ combat line numbers below are refreshed with it.
 - `src/characters/enemyCasting.js:91` - * FLAGGED, and now exactly one term wide: HasClearPathToShootProjectile
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
 - `src/combat/fpsSpellCasting.js:178` - * FLAGGED: the release is not the spell. DFU raises OnReleaseFrame
-- `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:1690` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/exterior.js:1050` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1302` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/world.js:2748` - landing stands in for it - FLAGGED for the first session with

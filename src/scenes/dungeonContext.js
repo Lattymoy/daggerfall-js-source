@@ -153,6 +153,8 @@ import { pickActivatable } from '../player/activate.js';   // PX21c: the hover r
 import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
 import { isEnhanced } from '../systems/uiSkin.js';
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
+import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
+import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 
 
 
@@ -1274,6 +1276,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // ActionSystem's own dep (above); this is the sink.
   actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null;
+  const enhancedNav = { requested: false, client: null, chf: null };   // ENHANCED AI 3b
   let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
@@ -3049,6 +3052,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
+    // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
+    // player's feet are known - they are the anchor, the component the
+    // enemies live in. Only when the Enhanced tab's switch is on; the
+    // classic motor never sees this. The bake lands on enhancedNav.chf
+    // for the motor (ENHANCED AI 4) and its stats on the console.
+    if (playerFeet && !enhancedNav.requested && getPref('enhancedAI')) {
+      enhancedNav.requested = true;
+      enhancedNav.client = new NavClient();
+      enhancedNav.client.bake({ collider, anchor: [playerFeet[0], playerFeet[1], playerFeet[2]], key: _locationKey })
+        .then((bake) => { if (bake) { enhancedNav.chf = bake.chf; console.log(`[enhanced-ai] navmesh: ${bake.stats.polys} polys, cs ${bake.stats.cs}${bake.cached ? ', cached' : `, ${bake.stats.ms}ms`}`); } })
+        .catch((e) => console.warn('[enhanced-ai] navmesh bake failed - classic motor stands:', e?.message ?? e));
+    }
     // B1: QuestResourceBehaviour.Update every frame the object lives
     // (dead included - a corpse's component still runs in DFU, and the
     // kill credit lands the update AFTER health hit zero).
@@ -4593,5 +4608,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       setInfectionHost(_prevInfectionHost);
     },
   };
+  api.enhancedNav = enhancedNav;   // ENHANCED AI 3b: the bake for the motor (4); null chf until it lands
   return api;
 }
