@@ -19,19 +19,29 @@ const server = await createServer({ server: { port: 5233, strictPort: true } });
 await server.listen();
 const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--enable-unsafe-swiftshader'] });
 
+// AUDIT 48: --skin classic proves the classic skin carries NO field and no
+// grass - the switch's other half, which no gate had ever actually run.
+const SKIN = process.argv.includes('--skin') ? process.argv[process.argv.indexOf('--skin') + 1] : null;
 const run = async (query, walk) => {
   const page = await browser.newPage({ viewport: { width: 320, height: 200 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message)));
-  await page.goto(`http://localhost:5233/play/?world&shot&novideo&nofoes&class=1&season=winter&grass=off${query}`);
+  await page.goto(`http://localhost:5233/play/?world&shot&novideo&nofoes&class=1&season=winter${SKIN === 'classic' ? '' : '&grass=off'}${SKIN ? '&skin=' + SKIN : ''}${query}`);   // AUDIT 48: the skin's real door; grass stays ON for the classic run so its absence is the skin's doing
   const until = Date.now() + 200000; let f = 0;
   while (Date.now() < until) { f = await page.evaluate(() => window.__frame ?? 0); if (f > 10) break; await page.waitForTimeout(1000); }
   const before = await page.evaluate(() => (window.__fieldCensus ? window.__fieldCensus() : null));
   let after = null;
   if (walk) {
-    // walk forward for a few seconds, then read the depth under the feet
-    await page.keyboard.down('w'); await page.waitForTimeout(4000); await page.keyboard.up('w');
-    await page.waitForTimeout(600);
+    // WALK by the world's own door, not by a key: a keypress into a
+    // headless page moves nothing until the canvas has focus, and the
+    // last run's feet read identical before and after. __warpTo moves
+    // the walker two metres, the field's stride rule sees a step, and
+    // the print lands on the next tick - deterministically.
+    await page.evaluate(() => {
+      const c = window.__fieldCensus(); const [x, z] = c.feet;
+      if (window.__warpTo) window.__warpTo([x + 2.2, 0, z - 2.2], 0);
+    });
+    await page.waitForTimeout(900);
     after = await page.evaluate(() => (window.__fieldCensus ? window.__fieldCensus() : null));
   }
   await page.close();
@@ -39,17 +49,27 @@ const run = async (query, walk) => {
 };
 
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
-if (only !== 'off') {
+if (SKIN === 'classic') {
+  const cl = await run('');
+  check('classic skin: the winter world renders', cl.frames > 10, `frames=${cl.frames}`);
+  check(`classic skin: NO pixel carries a field (${cl.census?.pixels ?? 0})`, (cl.census?.pixels ?? 0) === 0);
+  check(`classic skin: NO pixel carries grass (${cl.grass?.blades ?? 0} blades)`, (cl.grass?.blades ?? 0) === 0);
+} else if (only !== 'off') {
   const on = await run('', true);
   check('field ON: the winter world renders frames', on.frames > 10, `frames=${on.frames}`);
   check('field ON: no page error', on.errors.length === 0, on.errors.slice(0, 2).join(' | '));
   check(`field ON: near-ring pixels carry a field (${on.before?.pixels ?? 0})`, (on.before?.pixels ?? 0) > 0);
   check(`field ON: midwinter snow is the FIELD's (mean ${(on.before?.snow ?? 0).toFixed(2)} > 0.2)`, (on.before?.snow ?? 0) > 0.2);
-  const b = on.before?.underPlayer; const a = on.after?.underPlayer;
-  check(`field ON: a walk leaves a print under the feet (${b?.toFixed?.(2)} -> ${a?.toFixed?.(2)})`,
-    typeof b === 'number' && typeof a === 'number' && (a < b * 0.9 || b < 0.02));
+  // THE PRINT: the cell the walker stands on against an UNTOUCHED cell
+  // beside the trail. The first census compared two stamped cells - the
+  // walker stamps the cell it boots on - and read "no print" on a field
+  // full of them; an hour went into the field before the 5x5 grid showed
+  // the trenches were there all along. Measure what the number means.
+  const trench = on.after?.underPlayer; const beside = on.after?.beside;
+  check(`field ON: a walk leaves a DEEP print - under the feet ${trench?.toFixed?.(2)} against untouched ${beside?.toFixed?.(2)} beside it (stamps ${on.before?.stamps ?? 0} -> ${on.after?.stamps ?? 0})`,
+    typeof trench === 'number' && typeof beside === 'number' && (trench < beside * 0.5 || beside < 0.02));
 }
-if (only !== 'on') {
+if (SKIN !== 'classic' && only !== 'on') {
   const off = await run('&field=off', false);
   check('field OFF: the winter world still renders', off.frames > 10, `frames=${off.frames}`);
   check(`field OFF: the kill switch takes every field away (${off.before?.pixels ?? 0})`, (off.before?.pixels ?? 0) === 0);

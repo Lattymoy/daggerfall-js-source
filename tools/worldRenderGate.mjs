@@ -61,7 +61,11 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 // the classic skin is the control; the enhanced skin is what the arc
 // changes. ?sky=classic is NOT set, so the enhanced sky draws when the
 // pref allows it.
-const skin = MODE === 'classic' ? '&classic' : '';
+// AUDIT 48 F1: the skin's URL door is ?skin=classic. A bare ?classic is
+// the classic START-LOCATION door in world.js, so every classic-mode run
+// of this gate before today rendered the ENHANCED skin and called it
+// classic - the numbers only differed by weather. Now it is the skin.
+const skin = MODE === 'classic' ? '&skin=classic' : '';
 const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '') + (GRASS ? `&grass=${GRASS}` : '') + (SEASON ? `&season=${SEASON}` : '') + (RAIN ? `&rain=${RAIN}` : '');
 await page.goto(`http://localhost:${PORT}/play/?${WORLD ? 'world' : 'exterior'}&shot&novideo&nofoes${skin}${ground}`);
 

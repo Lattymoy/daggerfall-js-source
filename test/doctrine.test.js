@@ -264,6 +264,11 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
 test('EE0: the world render gate boots the real exterior and judges real pixels', () => {
   const g = readFileSync('tools/worldRenderGate.mjs', 'utf8');
   // it boots the GAME, against data, into the exterior
+  // AUDIT 48 F1: the classic mode must open the SKIN's door, ?skin=classic.
+  // A bare ?classic is the classic start-location door, and every
+  // classic-mode run before this rendered the enhanced skin.
+  assert.match(g, /const skin = MODE === 'classic' \? '&skin=classic' : '';/);
+  assert.ok(!/'&classic'/.test(g), 'the start-location door is not the skin door');
   // EE7: the gate can boot either host - ?exterior by default, ?world
   // with --world, where the grass lives
   assert.match(g, /\/play\/\?\$\{WORLD \? 'world' : 'exterior'\}&shot&novideo&nofoes/);

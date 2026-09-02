@@ -190,7 +190,7 @@ test('EE11: no snow on water, no blade under the sea, NPCs stamp the field, and 
   assert.match(w, /waterLevel: SCALED_OCEAN_ELEVATION \* DEFAULT_TERRAIN_SCALE \+ 0\.5,/);
   assert.match(w, /sim\.setWater\(tilemapBytes, new Set\(\[0\]\), SCALED_OCEAN_ELEVATION \* DEFAULT_TERRAIN_SCALE \+ 0\.5\);/);
   assert.match(w, /for \(const it of p\.population\.pool\) \{\s*\n\s*if \(!it\.active \|\| !it\.visible \|\| !it\.person\?\.pos\) continue;/, 'active, visible people only');
-  assert.match(w, /it\.person\._fieldStep = \[nx, nz\];/, 'each person carries its own last footfall');
+  assert.match(w, /holder\._fieldStep = \[nx, nz\];/, 'each walker carries its own last footfall (EE12: one stride rule)');
   // the shader: drifts and sastrugi shape the NORMAL and the colour, and
   // a trodden print is dark enough to read
   const r = readFileSync('src/render/renderer.js', 'utf8');
@@ -199,4 +199,53 @@ test('EE11: no snow on water, no blade under the sea, NPCs stamp the field, and 
   assert.match(fs, /float sast = tfbm\(vLocalXZ \* vec2\(0\.42, 0\.11\) \+ 7\.0\);/, 'sastrugi are anisotropic - a comb, not a blob');
   assert.match(fs, /vec3 driftN = normalize\(vec3\(-\(dGx \* 9\.0 \+ sGx \* 4\.0\), 1\.0, -\(dGz \* 9\.0\)\)\);/, 'a drift is a shape before it is a shade');
   assert.match(fs, /vec3 packed2 = vec3\(0\.56, 0\.62, 0\.74\);/, 'a print is dark enough to see');
+});
+
+// ═══ EE12: deep, persistent deformation, for everyone who walks ═════
+test('EE12: a step is a trench with walls that the calendar cannot refill - only new snow can', () => {
+  const dim = 8; const hDim = dim + 1;
+  const heights = new Float32Array(hDim * hDim).fill(100); const tilemap = new Uint8Array(dim * dim).fill(2 << 2);
+  const f = new SurfaceField({ heights, tileDim: dim }); f.setBase(1);
+  for (let i = 0; i < 60; i++) f.tick(60, { warmth: 0.1 });
+  const cellOf = (tx, tz) => ((tz * f.cells + 1) * f.dim + (tx * f.cells + 1)) * 4;
+  const before = f.data[cellOf(4, 4) + 1];
+  f.stamp(4 * 6.4 + 2.4, 4 * 6.4 + 2.4);
+  const after = f.data[cellOf(4, 4) + 1];
+  assert.ok(after < before * 0.3, `a foot drives most of the way down (${before.toFixed(2)} -> ${after.toFixed(2)})`);
+  assert.ok(f.data[cellOf(4, 4) + 2] > 0.8, 'and packs the cell in one step');
+  // the rim: the cells around the print stand HIGHER than they did
+  const rim = f.data[((4 * f.cells + 3) * f.dim + (4 * f.cells + 1)) * 4 + 1];
+  assert.ok(rim >= before, 'what the foot took is thrown to the rim - the trench has walls');
+  // an hour of cold, no fall: the calendar does NOT refill the trench
+  for (let i = 0; i < 600; i++) f.tick(6, { warmth: 0.1 });
+  const hourLater = f.data[cellOf(4, 4) + 1];
+  assert.ok(hourLater < before * 0.5, `an hour later the print is still there (${hourLater.toFixed(2)} of ${before.toFixed(2)})`);
+  // a storm: NEW snow fills it, and the pack heals under the fall
+  for (let i = 0; i < 300; i++) f.tick(6, { warmth: 0.1, snowRate: 0.8 });
+  assert.ok(f.data[cellOf(4, 4) + 1] > before * 0.9, 'a fall covers the trail');
+  assert.ok(f.data[cellOf(4, 4) + 2] < 0.2, 'and the pack heals under it');
+  // every walker stamps: the town's people, the guards, the foes - one rule
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /const stride = \(holder, wx, wz\) => \{/, 'one stride rule for everyone');
+  assert.match(w, /for \(const foe of exteriorFoes\.foes\) \{\s*\n\s*if \(foe\.dead \|\| !foe\.ai\?\.feet\) continue;\s*\n\s*stride\(foe, foe\.ai\.feet\[0\], foe\.ai\.feet\[2\]\);/, 'foes tread');
+  assert.match(w, /for \(const g of cityGuards\.guards\) \{\s*\n\s*if \(g\.dead \|\| !g\.ai\?\.feet\) continue;\s*\n\s*stride\(g, g\.ai\.feet\[0\], g\.ai\.feet\[2\]\);/, 'guards tread');
+  assert.match(w, /stride\(it\.person, it\.person\.pos\[0\], it\.person\.pos\[2\]\);/, 'people tread');
+});
+
+test('AUDIT 48: the census measures what it means, and the classic skin carries nothing of the arc', () => {
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  // the print is judged against an UNTOUCHED cell beside the trail, not
+  // against the cell the walker stamped when it booted
+  assert.match(w, /out\.beside = p\.field\.sim\.snowAt\(Math\.min\(TERRAIN_SIZE - 1, lx \+ 4\.8\), lz\);/);
+  const probe = readFileSync('tools/fieldCensusProbe.mjs', 'utf8');
+  assert.match(probe, /trench < beside \* 0\.5 \|\| beside < 0\.02/, 'a trench is under half the untouched depth beside it');
+  assert.ok(!/keyboard\.down\('w'\)/.test(probe), 'the walker walks by the world\u2019s own door, not a key the page may not hear');
+  assert.match(probe, /window\.__warpTo\(\[x \+ 2\.2, 0, z - 2\.2\], 0\)/);
+  // and the classic skin is proven EMPTY of the arc by the same probe
+  assert.match(probe, /check\(`classic skin: NO pixel carries a field/);
+  assert.match(probe, /check\(`classic skin: NO pixel carries grass/);
+  assert.match(probe, /\$\{SKIN \? '&skin=' \+ SKIN : ''\}/, 'through the skin\u2019s real door');
+  // the debug door that found the truth stays, and is read-only
+  const dbg = w.slice(w.indexOf('window.__fieldDebug = () => {'), w.indexOf('window.__fieldCensus = () => {'));
+  assert.ok(!/stamp\(|\] = /.test(dbg), 'a debug door reads and never writes');
 });

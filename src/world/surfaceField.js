@@ -212,7 +212,20 @@ export class SurfaceField {
       if (snowRate > 0) snow += snowRate * dt * (0.25 + flat[k] * 1.4) * (1 - pack * 0.45) * (1 - hard * 0.7) * 0.02;
       // the calendar: fill toward the base where the cold holds, settle toward it otherwise
       const target = base * (0.3 + flat[k] * 0.7) * (1 - hard * 0.75);   // EE10: the calendar's base is thin on a road too
-      if (snow < target && cold > 0) snow += (target - snow) * relax * (0.5 + cold);
+      // EE12: PERSISTENCE. The calendar's base refills the field toward its
+      // season - and it was refilling every print within the hour, which
+      // is why the trails vanished. A PACKED cell is a trench with walls,
+      // and the base does not fill a trench: only NEW SNOW does. The
+      // refill is gated by (1 - pack), so a fresh cell fills and a trodden
+      // one holds its shape until a fall covers it.
+      // The gate is STEEP: any cell packed past a third gets no calendar
+      // refill at all. A linear (1 - pack) left a 0.7-packed print taking
+      // 30% of the gap every tick, and at the world clock's 60x that
+      // filled a footprint inside a second - measured in the census, where
+      // a print read 0.17 -> 0.16 on one run and 1.00 -> 0.32 on the next
+      // depending on where the foot fell inside the cell.
+      const held = pack < 0.25 ? 1 : pack > 0.6 ? 0 : 1 - (pack - 0.25) / 0.35;
+      if (snow < target && cold > 0) snow += (target - snow) * relax * (0.5 + cold) * held;
       else if (snow > target && melt === 0) snow += (target - snow) * relax * 0.5;
       // 5. melt is a CONVERSION: the snow becomes the water
       if (melt > 0 && snow > 0) {
@@ -227,8 +240,8 @@ export class SurfaceField {
       // the sun outran the melt 3.6 to 1 and no thaw ever left a puddle.
       water = Math.max(0, water - Math.max(0, warmth) * dt * 0.0016 * (1.1 - pool[k] * 0.6) * (1 + hard * 0.4));   // EE10: a thin sheet on stone dries sooner than a soaked field
       // wind and fresh fall heal a print; wear outlasts it
-      pack = Math.max(hard * 0.55, pack - dt * (0.0006 + snowRate * 0.02));   // EE10: a road never un-treads
-      wear = Math.max(0, wear - dt * 0.00015);
+      pack = Math.max(hard * 0.55, pack - dt * (0.00004 + snowRate * 0.02));   // EE10: a road never un-treads; EE12: a trail heals under FRESH snow, and otherwise over days, not hours
+      wear = Math.max(0, wear - dt * 0.00004);   // EE12: wear outlasts the print by days
       water = Math.min(1, water); snow = Math.min(1, snow); pack = Math.min(1, pack); wear = Math.min(1, wear);
       if (water !== w0 || snow !== s0 || pack !== p0 || wear !== e0) {
         d[o] = water; d[o + 1] = snow; d[o + 2] = pack; d[o + 3] = wear;
@@ -243,8 +256,10 @@ export class SurfaceField {
    *  and a 0.5m print would fall between cell centres and touch nothing.
    *  Coarser than the lab's 25cm texels, by design. */
   stamp(x, z, radius = null) {
+    this.stamps = (this.stamps ?? 0) + 1;   // EE12: counted, so a probe can see a step land
+    this.lastStamp = [Math.round(x * 10) / 10, Math.round(z * 10) / 10];
     const cs = this.cellSize; const dim = this.dim; const d = this.data;
-    radius = radius ?? cs * 1.15;
+    radius = radius ?? cs * 1.35;   // EE12: a foot's whole width and a bit, at 1.6m a cell
     const i0 = Math.max(0, Math.floor((x - radius * 1.6) / cs)); const i1 = Math.min(dim - 1, Math.ceil((x + radius * 1.6) / cs));
     const j0 = Math.max(0, Math.floor((z - radius * 1.6) / cs)); const j1 = Math.min(dim - 1, Math.ceil((z + radius * 1.6) / cs));
     for (let j = j0; j <= j1; j++) {
@@ -252,15 +267,22 @@ export class SurfaceField {
         const dist = Math.hypot((i + 0.5) * cs - x, (j + 0.5) * cs - z);
         const o = (j * dim + i) * 4;
         if (dist <= radius) {
-          const w = 1 - dist / radius;
-          const taken = d[o + 1] * w * 0.55;
+          const w = 1 - (dist / radius) * (dist / radius);   // EE12: a flat-bottomed foot - the whole tread compresses fully, only the edge tapers
+          // EE12 (Mac: deep, persistent deformation, not just prints).
+          // A foot drives most of the way to the ground: the snow under
+          // it goes to a fifth of its depth, and the cell is fully packed
+          // in one step. What is taken is thrown to the rim (below), so
+          // a trail has WALLS, and the depth loss is what the vertex
+          // shader displaces and the fragment stage slopes - which is
+          // what makes it a trench and not a stain.
+          const taken = d[o + 1] * w * 0.82;
           d[o + 1] -= taken;                                   // compressed, not deleted
-          d[o + 2] = Math.min(1, d[o + 2] + w * 0.8);          // packed
-          d[o + 3] = Math.min(1, d[o + 3] + w * 0.5);          // worn
+          d[o + 2] = Math.min(1, d[o + 2] + w * 1.2);          // packed, fully, in one step
+          d[o + 3] = Math.min(1, d[o + 3] + w * 0.7);          // worn
           d[o] = Math.max(0, d[o] - w * 0.35);                 // the splash
           this.dirtyRows[j] = 1;
         } else if (dist <= radius * 1.6) {
-          d[o + 1] = Math.min(1, d[o + 1] + 0.04);             // the rim
+          d[o + 1] = Math.min(1, d[o + 1] + 0.09);             // the rim: what the foot threw
           this.dirtyRows[j] = 1;
         }
       }

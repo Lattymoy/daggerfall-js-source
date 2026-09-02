@@ -3989,15 +3989,41 @@ export async function bootWorld(canvas, renderer, params, status) {
     }));
     window.__frame = 0;
     // EE9: the field's census, for the gate
-    window.__fieldCensus = () => {
-      const out = { pixels: 0, snow: 0, water: 0, underPlayer: null };
+    window.__fieldDebug = () => {
       const feet = walkMode ? player.pos : cam.pos;
+      for (const p of built.values()) {
+        if (!p.field) continue;
+        const t = state.pixelTranslation(p.px, p.py, [0, 0, 0]);
+        const lx = feet[0] - t[0]; const lz = feet[2] - t[2];
+        if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+        const sim = p.field.sim; const cs = sim.cellSize; const i = Math.floor(lx / cs); const j = Math.floor(lz / cs);
+        const rows = [];
+        for (let dj = -2; dj <= 2; dj++) { const row = []; for (let di = -2; di <= 2; di++) { const o = ((j + dj) * sim.dim + (i + di)) * 4; row.push(o >= 0 && o < sim.data.length ? `${sim.data[o + 1].toFixed(2)}/${sim.data[o + 2].toFixed(2)}` : 'edge'); } rows.push(row.join(' ')); }
+        return { px: p.px, py: p.py, cell: [i, j], dim: sim.dim, cs, stamps: sim.stamps, lastStamp: sim.lastStamp, grid: rows, hardHere: sim.hard[j * sim.dim + i], wetHere: sim.wet ? sim.wet[j * sim.dim + i] : -1 };
+      }
+      return null;
+    };
+    window.__fieldCensus = () => {
+      const out = { pixels: 0, snow: 0, water: 0, underPlayer: null, feet: null };
+      const feet = walkMode ? player.pos : cam.pos;
+      out.feet = [Math.round(feet[0] * 10) / 10, Math.round(feet[2] * 10) / 10];   // EE12: so a probe can see whether the walker walked
       for (const p of built.values()) {
         if (!p.field) continue;
         const c = p.field.sim.census(); out.pixels++; out.snow += c.snow; out.water += c.water;
         const t = state.pixelTranslation(p.px, p.py, [0, 0, 0]);
         const lx = feet[0] - t[0]; const lz = feet[2] - t[2];
-        if (lx >= 0 && lz >= 0 && lx < TERRAIN_SIZE && lz < TERRAIN_SIZE) out.underPlayer = p.field.sim.snowAt(lx, lz);
+        if (lx >= 0 && lz >= 0 && lx < TERRAIN_SIZE && lz < TERRAIN_SIZE) {
+          out.underPlayer = p.field.sim.snowAt(lx, lz);
+          // EE12: the census compares the cell under the feet with an
+          // UNTOUCHED cell beside the trail - four metres to the side, off
+          // any stride the walker took. The first census compared two
+          // stamped cells (the walker stamps the cell it boots on) and
+          // read "no print" on a field full of them.
+          out.beside = p.field.sim.snowAt(Math.min(TERRAIN_SIZE - 1, lx + 4.8), lz);
+          out.local = [Math.round(lx * 10) / 10, Math.round(lz * 10) / 10];
+          out.lastStamp = p.field.sim.lastStamp ?? null;
+          out.stamps = p.field.sim.stamps ?? 0;
+        }
       }
       if (out.pixels) { out.snow /= out.pixels; out.water /= out.pixels; }
       return out;
@@ -6592,17 +6618,31 @@ export async function bootWorld(canvas, renderer, params, status) {
             // footfall - so a busy street tramples itself into a path.
             // Active, visible people only: a pool entry asleep in the
             // recycle bin is not walking anywhere.
+            // EE12 (Mac: the player, NPCs AND enemies): one stride rule for
+            // every walker in the world. A walker carries its own last
+            // footfall; when it has moved a stride from it, it stamps and
+            // the mark moves. Applied to the town's people, the city's
+            // guards and the exterior foes alike - the field does not care
+            // who walks, only that something did.
+            const stride = (holder, wx, wz) => {
+              const nx = wx - t[0]; const nz = wz - t[2];
+              if (nx < 0 || nz < 0 || nx >= TERRAIN_SIZE || nz >= TERRAIN_SIZE) return;
+              const last = holder._fieldStep;
+              if (!last || Math.hypot(nx - last[0], nz - last[1]) > 0.75) { f.sim.stamp(nx, nz); holder._fieldStep = [nx, nz]; }
+            };
             if (p.population?.pool) {
               for (const it of p.population.pool) {
                 if (!it.active || !it.visible || !it.person?.pos) continue;
-                const nx = it.person.pos[0] - t[0]; const nz = it.person.pos[2] - t[2];
-                if (nx < 0 || nz < 0 || nx >= TERRAIN_SIZE || nz >= TERRAIN_SIZE) continue;
-                const last = it.person._fieldStep;
-                if (!last || Math.hypot(nx - last[0], nz - last[1]) > 0.75) {
-                  f.sim.stamp(nx, nz);
-                  it.person._fieldStep = [nx, nz];
-                }
+                stride(it.person, it.person.pos[0], it.person.pos[2]);
               }
+            }
+            for (const foe of exteriorFoes.foes) {
+              if (foe.dead || !foe.ai?.feet) continue;
+              stride(foe, foe.ai.feet[0], foe.ai.feet[2]);
+            }
+            for (const g of cityGuards.guards) {
+              if (g.dead || !g.ai?.feet) continue;
+              stride(g, g.ai.feet[0], g.ai.feet[2]);
             }
             const span = f.sim.flush();
             if (span) renderer.updateFieldRows(f.tex, FIELD_DIM, f.sim.pixels, span.first, span.last);
