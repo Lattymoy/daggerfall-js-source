@@ -667,11 +667,42 @@ export function buildPolyMesh(chf, opts = {}) {
       .flatMap((r) => r.length > nvp ? triangulate(r.map(V)).map((t) => t.map(vid)) : [r]); // a cell ∩ tri can carry up to 7 verts - ear-clip back under the nvp contract (internal diagonals, no T-junction risk)
   };
 
+  // ENHANCED AI 2 (Daggerfall, 2026-09-02): HOLES ARE MERGED INTO THEIR OUTER LOOP - Recast's
+  // mergeRegionHoles. A free-standing pillar in a room is a hole contour (CW, area < 0) inside an outer
+  // (CCW); the arena never had one and this skipped them, so a path ran straight through a pillar. Each
+  // hole, leftmost first, is bridged to the nearest outer vertex by a diagonal that crosses no edge of
+  // the outer or any hole; the hole's vertices are spliced in around that bridge (the bridge is walked
+  // twice, once each way), and the result is a weakly-simple polygon the ear-clip below cuts as before.
+  // A hole that cannot be bridged is left out, as Recast leaves it, rather than corrupting the loop.
+  const mergeHoles = (outer, holes) => {
+    let poly = outer.slice();
+    const leftmostOf = (hv) => { let m = 0; for (let i = 1; i < hv.length; i++) if (hv[i].x < hv[m].x || (hv[i].x === hv[m].x && hv[i].z < hv[m].z)) m = i; return m; };
+    const sorted = holes.map((hv) => ({ verts: hv, lm: leftmostOf(hv) })).sort((a, b) => (a.verts[a.lm].x - b.verts[b.lm].x) || (a.verts[a.lm].z - b.verts[b.lm].z));
+    for (const h of sorted) {
+      const target = h.verts[h.lm];
+      const order = poly.map((v, i) => ({ i, d: (v.x - target.x) * (v.x - target.x) + (v.z - target.z) * (v.z - target.z) })).sort((a, b) => a.d - b.d);
+      let bi = -1;
+      for (const cand of order) {
+        const a = poly[cand.i]; let ok = true;
+        for (let k = 0; k < poly.length && ok; k++) { const pp = poly[k], q = poly[(k + 1) % poly.length]; if (pp === a || q === a) continue; if (intersect(a, target, pp, q)) ok = false; }
+        for (const oh of sorted) for (let k = 0; k < oh.verts.length && ok; k++) { const pp = oh.verts[k], q = oh.verts[(k + 1) % oh.verts.length]; if (pp === target || q === target) continue; if (intersect(a, target, pp, q)) ok = false; }
+        if (ok) { bi = cand.i; break; }
+      }
+      if (bi < 0) continue;
+      const rot = [...h.verts.slice(h.lm), ...h.verts.slice(0, h.lm)];
+      poly = [...poly.slice(0, bi + 1), ...rot, rot[0], poly[bi], ...poly.slice(bi + 1)];
+    }
+    return poly;
+  };
+  const holesByReg = new Map();
+  for (const c of contours) if (c.hole) { let l = holesByReg.get(c.reg); if (!l) { l = []; holesByReg.set(c.reg, l); } l.push(c.verts); }
+
   // build convex polys region by region
   const polys = [];
   for (const c of contours) {
-    if (c.hole) continue; // arena has none; hole-merging into the outer loop is future work
-    let rp = triangulate(c.verts).flatMap(sliceTri);
+    if (c.hole) continue; // merged into its outer below
+    const loop = holesByReg.has(c.reg) ? mergeHoles(c.verts, holesByReg.get(c.reg)) : c.verts;
+    let rp = triangulate(loop).flatMap(sliceTri);
     for (;;) { let bi = -1, bj = -1, bv = -1;
       for (let i = 0; i < rp.length; i++) for (let j = i + 1; j < rp.length; j++) { const v = mergeValue(rp[i], rp[j]); if (v > bv) { bv = v; bi = i; bj = j; } }
       if (bv < 0) break;

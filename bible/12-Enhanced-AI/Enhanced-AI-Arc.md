@@ -49,12 +49,24 @@ ANCHORED - `{ anchor: { x, z } }`, the component holding the agents'
 home survives and the rest is dropped, so a bake must always be told
 where the enemies live; and findPath's points are `[x, y, z]` arrays.
 
+## ENHANCED AI 2 - holes (2026-09-02)
+
+Made in project-final first (9f5e323) and ported, the body still
+byte-identical from the agent params on. Recast's mergeRegionHoles:
+each hole, leftmost first, bridged to the nearest outer vertex by a
+diagonal that crosses no edge of the outer or of any hole - the
+ear-clip's own O'Rourke intersect, which is why it lives inside
+buildPolyMesh's closure - the hole's vertices spliced in around the
+bridge, walked twice, once each way; a hole that cannot be bridged is
+left out as Recast leaves it. The pillar room: polys 9 -> 27, the path
+two points through the pillar -> four around it. The pin walks every
+segment, because a two-point path through an obstacle has no waypoint
+inside it and that is exactly how AI 1's check was fooled.
+project-final's god-file guard: raised 1041 -> 1075 on purpose, with
+the reason in its own idiom.
+
 ## The slices ahead
 
-- **ENHANCED AI 2 - holes.** Merge hole contours into the outer loop in
-  buildPolyMesh (Recast's mergeHoles: the hole's closest vertex pair to
-  the outer, joined by a diagonal). Made in project-final and ported, so
-  the file stays one file. Pinned on the pillar room.
 - **ENHANCED AI 3 - a dungeon bakes.** Feed the Collider's buckets
   through triRaster at load, in a worker, anchored at the player's
   entry; cache with bakeNavData in IndexedDB keyed on the location. The
