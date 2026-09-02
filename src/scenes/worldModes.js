@@ -1339,7 +1339,7 @@ export function createWorldModes(host) {
    *  lane's routed half. The commit closure below is already built per
    *  window, so the latch simply lives in it: its lifetime IS the
    *  window's, by construction, and no drain has to remember it. */
-  function openTradeWindow(shelf, b, mode, { guildFactionId = null, identifySpell = null } = {}) {
+  function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}) {
     const skills = () => ({
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality ?? 50,
@@ -1349,19 +1349,27 @@ export function createWorldModes(host) {
       shelfItems: () => shelf.items,
       // AUDIT 17e F4: an EQUIPPED item never reaches either list -
       // selling a worn item left equip.slots pointing at it.
-      // DFU hands the window the LIVE collection (DaggerfallTradeWindow
-      // .cs:389 `localItems = PlayerEntity.Items`) and TransferItem
-      // (:795) moves a clicked item OUT of it there and then. A
-      // filtered view cannot be spliced, so on this side the staged lot
-      // is a SELECTION over the pack and commitTrade owns the removal
-      // at the concluded deal (:1036-1051). FLAGGED: the equipped test
-      // is the WINDOW's in DFU (FilterLocalItems :693 `!item.IsEquipped`
-      // in every mode); moving it there is what would let this hand
-      // over the live array and transfer at the click. Until that
-      // happens the WINDOW owes the selection its own guard, and has
-      // one: localList drops what is already staged (AUDIT 39 F102),
-      // which is what DFU's splice does for FilterLocalItems.
-      packItems: () => (playerEntity.items ??= []).filter((it) => !isEquipped(it)),
+      // D7 MOVED THAT TEST WHERE DFU KEEPS IT. FilterLocalItems
+      // (DaggerfallTradeWindow.cs:693, :697) applies `!item.IsEquipped`
+      // inside the WINDOW, to the basket and to the pack, and what the
+      // host hands over is the LIVE collection (:389 `localItems =
+      // PlayerEntity.Items`) so that TransferItem (:795) can move a
+      // clicked item OUT of it there and then. While this filtered on
+      // the host side the window was handed a fresh array on every
+      // call, the splice landed on a throwaway, and the staged lot was
+      // a SELECTION over a pack that still held every item - so the
+      // weight strip counted goods DFU had already moved out, and the
+      // letter-of-credit test (:1032) weighed a sale against an
+      // encumbrance the sale had not yet relieved. The removal is at
+      // the click now, and OnPop's ClearSelectedItems (:404-407) puts
+      // back whatever is still staged when the screen closes.
+      packItems: () => (playerEntity.items ??= []),
+      isEquipped: (it) => isEquipped(it),
+      // remoteItems in REPAIR mode (:392) and the filtered view over it
+      // (:705-724), which is repairService's own repairJobsAt.
+      otherItems: () => (playerEntity.otherItems ??= []),
+      repairItems: () => repairJobsAt(playerEntity, b.buildingKey ?? 0, Math.floor(worldMinutes())),
+      nowMinutes: () => Math.floor(worldMinutes()),
       accepts: (it) => shopBuysItem(b.buildingType, it),
       enchanted: (it) => isEnchanted(it),
       isBeingRepaired: (it) => isBeingRepaired(it),
@@ -1382,6 +1390,9 @@ export function createWorldModes(host) {
         // high-street shop still passes null, because a shop belongs
         // to no guild.
         guildFactionId,
+        // R1's FightersGuild.ReducedRepairCost, which the native
+        // Repair window needs for the same reason the keyed list did.
+        reducedRepairCost: repairDiscount,
         skills: skills(),
       }),
       gold: () => goldAmount(playerEntity),
@@ -1421,12 +1432,15 @@ export function createWorldModes(host) {
       } else {
         addGold(playerEntity, price);
       }
-      // TransferItem(item, localItems, remoteItems) (:795) takes the
-      // goods OUT of the player's collection when they are staged, and
-      // the confirm then clears the remote lot (:1051). The staging
-      // list here is a selection over the live pack (see packItems), so
-      // both halves land at the deal - without the removal the player
-      // was paid full price and kept the item, over and over.
+      // TransferItem(item, localItems, remoteItems) (:795) took the
+      // goods OUT of the player's collection when they were staged -
+      // D7 made that move real, so the indexOf below finds nothing and
+      // the splice is the belt to its braces. What is left for the
+      // concluded deal is the DESTINATION: DFU's remoteItems in Sell
+      // mode IS the merchant's collection, so the goods are already on
+      // the shelf by now and `remoteItems.Clear()` (:1051) only drops
+      // the window's view of them. The port stages into the window and
+      // lands them here, which is what makes a sold item buyable back.
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
@@ -1435,27 +1449,32 @@ export function createWorldModes(host) {
     } else if (mode === 'Repair') {
       deductGold(playerEntity, price);
       const now = Math.floor(worldMinutes());
-      for (const it of staged) {
-        // ClearSelectedItems (:601-610) returns everything NOT actively
-        // being repaired, so an instant repair is the item back in the
-        // player's hands and a booked one stays with the shop. The
-        // staged item never left the pack here (see packItems), so the
-        // instant arm mends it in place: the addItem that stood for
-        // that return aliased it into the pack a second time.
-        if (getBool('Controls', 'InstantRepairs')) { it.currentCondition = it.maxCondition; continue; }
-        leaveForRepair(it, interiorBuilding?.buildingKey ?? 0,
-          calculateItemRepairTime(it.currentCondition ?? 0, it.maxCondition ?? 0), now);
-        // AUDIT 26 F070: ConfirmTrade's Repair arm runs
-        // UpdateRepairTimes(true) over remoteItemsFiltered - EVERY job
-        // at this shop plus the new one (:1060-1072 -> :514-568), which
-        // is what makes the longest-job queue stretch and the
-        // never-decrease clamp real laws rather than dead arms of a
-        // one-item list. This arm booked each item on its own time and
-        // would have diverged the day the native window is opened in
-        // Repair mode; the keyed choice flow has applied the queue law
-        // since R1 and is the only live path today.
-        const bk = interiorBuilding?.buildingKey ?? 0;
-        updateRepairTimes([...repairJobsAt(playerEntity, bk, now), it], { commit: true, nowMinutes: now, buildingKey: bk });
+      const bk = interiorBuilding?.buildingKey ?? 0;
+      // D7 - ConfirmTrade's Repair arm, whole (:1057-1074). `staged` is
+      // remoteItemsFiltered: every job at THIS shop plus whatever was
+      // staged this visit, because the window's remoteItems in Repair
+      // mode IS PlayerEntity.OtherItems (:392) and the click moved the
+      // goods into it. DFU branches ONCE, not once per item:
+      //
+      //   InstantRepairs -> every item in the filtered list goes to
+      //     maxCondition, in place, and stays in OtherItems until
+      //     ClearSelectedItems hands it back on the way out (:601-610).
+      //   otherwise      -> ONE UpdateRepairTimes(true) over the whole
+      //     list (:1071 -> :514-568), which is what makes the
+      //     longest-job queue stretch and the never-decrease clamp real
+      //     laws rather than dead arms of a one-item list. The arm that
+      //     stood here booked each item on its own time; AUDIT 26 F070
+      //     named that divergence and the keyed flow carried the queue
+      //     law alone. It carries it here now.
+      if (getBool('Controls', 'InstantRepairs')) {
+        for (const it of staged) it.currentCondition = it.maxCondition;
+      } else {
+        for (const it of staged) {
+          if (isBeingRepaired(it)) continue;   // already booked; UpdateRepairTimes only stretches it
+          leaveForRepair(it, bk, calculateItemRepairTime(it.currentCondition ?? 0, it.maxCondition ?? 0), now);
+          questBridge?.notebook?.addNote?.(`Left ${_itemLabel(it)} to be repaired at ${interiorBuilding?.name ?? 'the shop'}.`);
+        }
+        updateRepairTimes([...staged], { commit: true, nowMinutes: now, buildingKey: bk });
       }
     } else if (mode === 'Identify') {
       // X7: two Identify paths through one arm, as DFU has them. The
@@ -2989,18 +3008,25 @@ export function createWorldModes(host) {
     onClose: () => { if (interiorOverlay === self()) interiorOverlay = null; },
   });
 
-  // ---- R1: THE REPAIR SERVICE (DaggerfallTradeWindow's Repair mode
-  // over the keyed-window idiom - the INVE12I0 native art mode pends
-  // with the trade window's own mode flow, the same INTERIM the
-  // buy/sell screen documents: transactions conclude AT THE CLICK,
-  // one item per payment, so the multi-item queue stretch engages
-  // only through the law module's own scheduler). The laws are
-  // systems/repairService.js's; this owns gold, the windows and the
-  // otherItems moves (PlayerEntity.OtherItems - the in-repair
-  // collection, :392). InstantRepairs heals in place; otherwise the
-  // item leaves the bag for the shop's queue and comes back through
-  // the collect list - finished free, in-progress only past the
-  // interrupt confirm, partial and unrefunded (:843-855). ----
+  // ---- R1/D7: THE REPAIR SERVICE. R1 shipped it over the
+  // keyed-window idiom and said what that cost: transactions concluded
+  // AT THE CLICK, one item per payment, so the multi-item queue
+  // stretch engaged only through the law module's own scheduler. D7
+  // opened the INVE12I0 native mode over the trade window's mode flow
+  // (openRepairService below), and that whole reservation belongs to
+  // the keyed fallback now - the native screen stages a lot, totals it
+  // on the cost strip and commits it behind one Yes/No, so ConfirmTrade's
+  // single UpdateRepairTimes(true) over remoteItemsFiltered is the live
+  // path (commitTrade's Repair arm above). The keyed list stays as the
+  // fallback with no ARENA2, and as the only one of the two that can
+  // offer the popup's Talk and Sell rows.
+  //
+  // The laws are systems/repairService.js's; this owns gold, the
+  // windows and the otherItems moves (PlayerEntity.OtherItems - the
+  // in-repair collection, :392). InstantRepairs heals in place;
+  // otherwise the item leaves the bag for the shop's queue and comes
+  // back through the collect list - finished free, in-progress only
+  // past the interrupt confirm, partial and unrefunded (:843-855). ----
 
   const _rowsText = (rows, fallback) => {
     const t = (rows ?? []).map((r) => r.text).filter((t2) => t2.trim() !== '');
@@ -3015,7 +3041,29 @@ export function createWorldModes(host) {
     // GetTradePrice: Repair shares the Buy branch (:497-498)
     return calculateTradePrice(raw, b?.quality ?? 0, { mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality ?? 50 }, false);
   }
-  function openRepairService(ctx = {}) { showRepairList(0, ctx); }
+  /** D7: the native INVE12I0 Repair screen when the art is up, the
+   *  keyed list when it is not - the same split openShelf takes for
+   *  Buy and openMerchantSell for Sell. R1's own reservation -
+   *  transactions concluding at the click, one item per payment -
+   *  belongs to the keyed list alone now: the native window stages,
+   *  totals the lot on the cost strip and commits it behind one Yes/No,
+   *  and its remote list IS PlayerEntity.OtherItems, so the collect
+   *  list and the interrupt confirm are the same screen rather than a
+   *  second menu.
+   *
+   *  The keyed flow stays because it is the fallback with no ARENA2 -
+   *  and because it is the only one of the two that can offer Talk and
+   *  Sell, which DFU puts on the merchant POPUP (:82-97), not on the
+   *  trade window. */
+  function openRepairService(ctx = {}) {
+    const b = interiorBuilding;
+    if (b && tradeArtLoaded() && _shopFont) {
+      const shelf = (interiorCtx?.shelves ?? [])[0] ?? { items: [] };
+      interiorOverlay = openTradeWindow(shelf, b, 'Repair', { reducedRepairCost: ctx.reducedRepairCost ?? null });
+      return;
+    }
+    showRepairList(0, ctx);
+  }
   function showRepairList(page, ctx) {
     const now = Math.floor(worldMinutes());
     const jobs = repairJobsAt(playerEntity, interiorBuilding?.buildingKey ?? 0, now);

@@ -56,6 +56,23 @@ export const INFO_TEXT = Object.freeze({
   houseDeed: 1073,
 });
 
+/** GetPotionRecipeTokens (ItemHelper.cs:848-855), the ONE info panel
+ *  DFU does not read out of TEXT.RSC. Four tokens: a text line, a
+ *  JustifyCenter, a second text line, a second JustifyCenter - so on
+ *  this side, two CENTRED rows. The strings are the reference tree's
+ *  own (Internal_Strings.csv:30-31), verbatim, macros included: %po is
+ *  the recipe's potion name and %kg the item's weight, and both are
+ *  filled by expandItemInfo's existing pass. Before D7 a recipe fell
+ *  through to record 1003 and its panel read as a generic misc item,
+ *  which is the one thing a recipe's panel is for - it names the
+ *  potion it makes. */
+export const POTION_RECIPE_FOR_TEXT = 'Recipe for Potion of %po';
+export const POTION_RECIPE_WEIGHT_TEXT = 'Weight: %kg kilograms';
+export const potionRecipeTokens = () => [
+  { text: POTION_RECIPE_FOR_TEXT, center: true },
+  { text: POTION_RECIPE_WEIGHT_TEXT, center: true },
+];
+
 /** ArmorShouldShowMaterial (:822-848). The HelmAndShieldMaterialDisplay
  *  setting has four values (SettingsManager: GetInt, 0..3) and DFU's
  *  DEFAULT is 0 - "classic behavior", where a helm or a shield never
@@ -106,7 +123,12 @@ export function itemInfoTextId(item) {
     case 'Paintings':
       return INFO_TEXT.painting;
     case 'MiscItems':
-      if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+      // D7: a RECIPE has no record at all - GetItemInfo returns
+      // GetPotionRecipeTokens() here (:794), four tokens built by
+      // hand, which itemInfoRows below answers as a generated
+      // `record`. This arm keeps the misc id for a caller that wants
+      // an id and nothing else; the panel never reaches it.
+      if (isPotionRecipe(item)) return INFO_TEXT.misc;
       if (item.templateIndex === TEMPLATES.House_Deed) return INFO_TEXT.houseDeed;
       if (item.templateIndex === TEMPLATES.Soul_trap) return INFO_TEXT.soulTrap;
       if (item.templateIndex === TEMPLATES.Letter_of_credit) return INFO_TEXT.letterOfCredit;
@@ -362,6 +384,66 @@ export function paintingMacros(info, readVariant) {
   return { sub, adj, pp1, pp2, artist: fullName(bank, gender) };
 }
 
+/** MacroHelper's %po (DaggerfallUnityItemMCP.cs:230-241), lifted out
+ *  of expandItemInfo so ResolveItemLongName's potion arm can reach the
+ *  same producer DFU reaches (ItemHelper.cs:330-331 IS a
+ *  `MacroHelper.GetValue("%po", item)` call). A RECIPE answers the
+ *  bare name - its record reads "Recipe for Potion of %po" - while a
+ *  POTION answers the whole "Potion of X"; anything else has no %po
+ *  at all and the caller falls back to the item's own name. */
+export function potionMacroName(item) {
+  if (!isPotion(item) && !isPotionRecipe(item)) return null;
+  const name = potionRecipeByKey(item?.potionRecipeKey)?.displayName ?? 'Unknown Powers';
+  return isPotionRecipe(item) ? name : `Potion of ${name}`;
+}
+
+/** ResolveItemName (ItemHelper.cs:263-291). The item's own shortName
+ *  with %it filled from the TEMPLATE name - except that an
+ *  UNIDENTIFIED item gives up its short name entirely and reads as the
+ *  bare template, an ARTIFACT is its shortName and nothing else, and a
+ *  BOOK "is handled differently": its name IS its title. */
+export function resolveItemName(item) {
+  const templateName = templateByIndex(item?.templateIndex)?.name ?? '';
+  if (!itemIsIdentified(item)) return templateName;
+  const short = item?.name ?? templateName;
+  if (item?.artifact) return short;
+  if (item?.group === 'Books') return bookTitle(item?.message ?? -1) ?? short;
+  return templateName ? short.replaceAll('%it', templateName) : short;
+}
+
+/** D7 - ResolveItemLongName (ItemHelper.cs:296-371), the name every
+ *  ITEM LIST TOOLTIP shows (ItemListScroller.cs:464). ResolveItemName
+ *  plus the MATERIAL prefix, and then four arms that REPLACE the
+ *  result outright rather than decorating it.
+ *
+ *  The order is DFU's and it matters: an unidentified item or an
+ *  artifact returns before any prefix; the two plant groups return
+ *  their (northern)/(southern) variant before the material arms can
+ *  run at all; a potion answers %po whatever its name was; a quest
+ *  parchment answers its signoff; and only the soul trap's suffix is
+ *  an APPEND. `longWeaponNameFormatString`, `longArmorNameFormatString`
+ *  and `ingredientFormatString` are all "{0} {1}" in the reference
+ *  tree (Internal_Strings.csv:1383-1385), and northern/southern read
+ *  "(northern)"/"(southern)" (:844-845).
+ *
+ *  `getQuest` is QuestMachine.GetQuest for the parchment arm; a caller
+ *  with no quest machine passes none and the plain name stands, which
+ *  is questLetterName's own null answer. */
+export function itemLongName(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
+  let result = resolveItemName(item);
+  if (!itemIsIdentified(item) || item?.artifact) return result;
+  if (differentiatePlantIngredients) {
+    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return `${result} (northern)`;
+    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return `${result} (southern)`;
+  }
+  if (item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow) result = `${materialName(item)} ${result}`;
+  if (item?.group === 'Armor' && armorShouldShowMaterial(item)) result = `${materialName(item)} ${result}`;
+  if (isPotion(item)) return potionMacroName(item) ?? result;
+  const signoff = questLetterName(item, getQuest);
+  if (signoff) return signoff;
+  return result + soulTrapNameSuffix(item, enemyDisplayName);
+}
+
 export function expandItemInfo(text, item, { name = null, soul = null, potion = null, bookTitle: macroBookTitle = null, bookAuthor = null, painting = null } = {}) {
   const t = templateByIndex(item?.templateIndex);
   // X7: ResolveItemName (:265-292) and ResolveItemLongName (:296-303).
@@ -399,12 +481,7 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
   // unknown). A RECIPE answers the bare name - its record reads
   // "Potion recipe for %po" - while a POTION answers the localized
   // potionOf template whole, "Potion of %po" with the name in it.
-  const potionName = (isPotion(item) || isPotionRecipe(item))
-    ? (potionRecipeByKey(item?.potionRecipeKey)?.displayName ?? 'Unknown Powers')
-    : null;
-  const potionMacro = potion
-    ?? (isPotionRecipe(item) ? potionName
-      : isPotion(item) ? `Potion of ${potionName}` : null);
+  const potionMacro = potion ?? potionMacroName(item);
   // IM1 - BookAuthor (:162-183): DFU opens the book FILE at info time
   // and reads its author line; the port's fetch is async, so the
   // author rides the reader's own load (setBookAuthor below) and is
@@ -479,6 +556,10 @@ export const getBookAuthor = (id) => _bookAuthors.get(id) ?? null;
 export function itemInfoRows(item, rows, macros = {}) {
   let painting = macros.painting ?? null;
   let record = null;
+  // D7: the recipe arm sits beside the painting one because it is the
+  // same shape - GetItemInfo's MiscItems switch (:793-794) hands back
+  // BUILT tokens rather than a record id, so both bypass `rows(id)`.
+  if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers

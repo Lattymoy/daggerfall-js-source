@@ -87,6 +87,12 @@ export const daysUntil = (timeMinutes, nowMinutes) => Math.ceil((timeMinutes - n
 export const MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID = 33;
 export const DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID = 24;
 export const CANNOT_BE_REPAIRED_TEXT = 'This item cannot be repaired.';   // TextManager key cannotBeRepaired, prose ours
+/** ConfirmInterruptRepairBox's line (DaggerfallTradeWindow.cs:845-848
+ *  - TextManager key interruptRepair, prose ours). D7 gave it a second
+ *  caller when the native Repair window landed, so the string moved
+ *  here beside the other three the repair screen speaks rather than
+ *  being written down twice. */
+export const INTERRUPT_REPAIR_TEXT = 'Do you want to interrupt the repair?';
 export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
   if (isEnchantedItem(item) && !allowMagicRepairs) return 'magic';
   if (templateByIndex(item.templateIndex)?.isNotRepairable) return 'notRepairable';
