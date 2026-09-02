@@ -1222,12 +1222,14 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   w6.input('char:1'); w6.input('char:1'); w6.input('confirm');
   assert.equal(e.isLoitering, false);
 
-  // The consumer is wired: world.js' enchant ctx (which the INTERIOR
-  // mode shares) reads the flag, and the false comment that said it
-  // "stays absent above ground" is gone.
-  const wj = src('src/scenes/world.js');
-  assert.match(wj, /isResting: \(\) => !!playerEntity\.isResting,/);
-  assert.doesNotMatch(wj, /isResting stays absent/);
+  // The consumer is wired: the enchant ctx reads the flag, and the
+  // false comment that said it "stays absent above ground" is gone.
+  // WAVE D: the ctx body is scenes/hostEnchant.js, mounted by both
+  // hosts that can hold an enchanted item - so a rest in a dungeon
+  // burns a held enchantment at CastWhenHeld's resting rate too.
+  const wj = src('src/scenes/hostEnchant.js');
+  assert.match(wj, /isResting = \(\) => !!playerEntity\?\.isResting,/);
+  assert.doesNotMatch(src('src/scenes/world.js'), /isResting stays absent/);
   // ...and the flags are written by the ONE composition, not by four
   // hosts that each have to remember.
   assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{ entity\.isResting = !!b; \},/);

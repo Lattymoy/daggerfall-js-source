@@ -141,14 +141,25 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   assert.match(world, /open world still has no ACTION OBJECTS in melee reach/);
 });
 
-test('FS1: the enchant ctx has its flag in the file that owes the mount', () => {
+test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
+  // WAVE D closed this. The flag's own claim was load-bearing and
+  // checkable - "setDefaultEnchantCtx has exactly ONE caller in the
+  // tree, world.js" - and it is the thing that changed: the standalone
+  // dungeon host mounts it too, through the SAME body, so the two
+  // cannot diverge.
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT\n\s*\/\/ MOUNTED HERE/);
-  // the claim is load-bearing and checkable: ONE caller, in world.js
+  assert.equal(/FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT\n\s*\/\/ MOUNTED HERE/.test(dc), false,
+    'the flag is retired where it stood');
   const callers = SRC.filter((f) => f !== 'src/systems/enchantments.js'
-    && /setDefaultEnchantCtx\(\{/.test(TEXT.get(f)));
-  assert.deepEqual(callers, ['src/scenes/world.js'],
-    'the flag says setDefaultEnchantCtx has exactly one caller; a second host mounting it retires the flag');
+    && /setDefaultEnchantCtx\(/.test(TEXT.get(f)));
+  assert.deepEqual(callers.sort(), ['src/scenes/dungeonContext.js', 'src/scenes/world.js'],
+    'both hosts that can hold an enchanted item mount it, and no third file does');
+  // ...through ONE body. A host that hand-rolled a ctx object would be
+  // the shape the flag was written about, one host later.
+  for (const f of callers) {
+    assert.match(TEXT.get(f), /setDefaultEnchantCtx\(createEnchantCtx\(\{/,
+      `${f} mounts the shared body rather than a second copy of it`);
+  }
   // and world.js no longer claims the flag lives somewhere it did not
   assert.equal(/FLAGGED\n\s*\/\/ there with the rest of its enchant wiring/.test(read('src/scenes/world.js')), false);
 });

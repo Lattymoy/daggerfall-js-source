@@ -288,10 +288,16 @@ test('V2c: THE FOUR HOSTS answer the sunlight seam', () => {
   const dc = read('src/scenes/dungeonContext.js');
   assert.ok(dc.includes('const _prevPassiveHost = setPassiveSpecialsHost({'), 'dungeonContext registers and keeps the previous');
   assert.ok(dc.includes('setPassiveSpecialsHost(_prevPassiveHost)'), 'destroy() hands the seam back');
-  // world.js wires the two E1-FLAGGED enchant ctx arms off the seam
-  const w = read('src/scenes/world.js');
-  assert.ok(w.includes('inSunlight: () => playerInSunlight()'), 'the E1 conditional arms are live');
-  assert.ok(w.includes('inHolyPlace: () => playerInHolyPlace()'), 'both of them');
+  // the enchant ctx wires the two E1-FLAGGED arms off the seam. WAVE
+  // D: in the SHARED ctx body, so every host that mounts it answers
+  // them - the two reads route by live mode anyway, which is why they
+  // are resolved there rather than handed in by each host.
+  const he = read('src/scenes/hostEnchant.js');
+  assert.ok(he.includes('inSunlight: () => playerInSunlight()'), 'the E1 conditional arms are live');
+  assert.ok(he.includes('inHolyPlace: () => playerInHolyPlace()'), 'both of them');
+  for (const h of ['src/scenes/world.js', 'src/scenes/dungeonContext.js']) {
+    assert.ok(read(h).includes('createEnchantCtx('), `${h} mounts that body`);
+  }
   // exterior.js gets the registration from the mode machine it builds
   const ex = read('src/scenes/exterior.js');
   assert.ok(ex.includes('setPassiveSpecialsHost'), 'exterior names the seam at its createWorldModes call');

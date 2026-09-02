@@ -285,6 +285,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // ActivateLockUnlock sound on success
     this.onLockpickTally = null;
     this.onLockpickResult = null;
+    // WAVE D: onFlatMoved(o) - a MOVE-flag FLAT reached a new pose.
+    // The host owns the billboard, so it owns the draw; this system
+    // owns the tween. Fires on every advance and on a restore settle,
+    // the same shape onDoorState has for the audio seam.
+    this.onFlatMoved = null;
   }
 
   _register(ns, positionKey, o) {
@@ -575,6 +580,88 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     return o;
   }
 
+  /** A MOVE-flag acting FLAT (wave D). DFU gives a flat the SAME
+   *  DaggerfallAction a model gets - AddActionFlatHelper
+   *  (RDBLayout.cs:904-944) calls AddAction, whose Translation /
+   *  Rotation / PositiveX..NegativeZ cases (RDBLayout.cs:998-1055)
+   *  build ActionTranslation and ActionRotation for description "FLT"
+   *  exactly as they do for a model - and a flat IS a transform, so
+   *  iTween.MoveTo carries it. The port sent every move-flag flat to
+   *  addRelay: the CHAIN lived and the MOTION did not.
+   *
+   *  Two things separate this from addAction, and both are DFU's own:
+   *
+   *  - NO MESH, so no collider bucket. AddAction's flat arm attaches a
+   *    BoxCollider with `isTrigger = true` (RDBLayout.cs:977-987) -
+   *    for raycasting, expressly not for standing on - so the object
+   *    carries an `aabb` that TRAVELS with it and never a solid.
+   *    `frameDelta` stays null for the same reason: a trigger is not a
+   *    moving platform.
+   *
+   *  - THE ROTATION IS INVISIBLE AND THAT IS VERBATIM. DFU rotates the
+   *    flat's transform, and DaggerfallBillboard re-faces the camera
+   *    every frame regardless, so a rotating flat looks identical to a
+   *    still one there too. The port holds the rotation in the state
+   *    machine (it is what `t` advances) and shows the translation,
+   *    which is exactly what the engine shows.
+   *
+   *  `origin` is the flat's placed world position - iTween's
+   *  StartingPosition, the point `position: StartingPosition +
+   *  ActionTranslation` is measured from (DaggerfallAction.cs:372). */
+  addMoveFlat(ns, positionKey, action, origin, aabb = null) {
+    const key = `act:${ns}:${positionKey}`;
+    const o = {
+      key,
+      ns,
+      positionKey,
+      kind: 'moveFlat',
+      isFlat: true,
+      actionFlag: action.actionFlag,
+      index: action.index,        // the RDB soundIndex plays on every Play
+      magnitude: action.magnitude,
+      axisRaw: action.axisRaw,
+      // AddActionFlatHelper passes duration 0 (RDBLayout.cs:915), so a
+      // flat Translation/Rotation tween is INSTANT and only the six
+      // PositiveX..NegativeZ flags (which set ActionDuration = 50
+      // themselves) take 2.5s. That quirk is the data's, kept.
+      duration: action.duration / 20,
+      rotation: action.rotation,
+      translation: action.translation,
+      origin: [origin[0], origin[1], origin[2]],
+      offset: [0, 0, 0],
+      pos: [origin[0], origin[1], origin[2]],
+      aabb,
+      baseAabb: aabb ? { min: [...aabb.min], max: [...aabb.max] } : null,
+      activationCount: 0,
+      state: 'start',
+      t: 0,
+      nextKey: action.nextObject,
+      triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
+    };
+    this._register(ns, positionKey, o);
+    return o;
+  }
+
+  /** The moveFlat half of _applyMatrix: the live translation off the
+   *  placed origin, and the trigger box that travels with it. Written
+   *  IN PLACE - the host holds these arrays (the billboard batch reads
+   *  `offset`, the activation scan reads `aabb`) and a fresh object
+   *  every frame would strand both. */
+  _applyFlat(o) {
+    const p = o.t;
+    o.offset[0] = o.translation.x * p;
+    o.offset[1] = o.translation.y * p;
+    o.offset[2] = o.translation.z * p;
+    for (let i = 0; i < 3; i++) {
+      o.pos[i] = o.origin[i] + o.offset[i];
+      if (o.aabb && o.baseAabb) {
+        o.aabb.min[i] = o.baseAabb.min[i] + o.offset[i];
+        o.aabb.max[i] = o.baseAabb.max[i] + o.offset[i];
+      }
+    }
+    this.onFlatMoved?.(o);
+  }
+
   /** DaggerfallAction.IsPlaying: this ACTION's own state, or anything
    *  down the chain. On a door that is `currentState` of the
    *  DaggerfallAction component - the record's Move state, NOT the
@@ -659,9 +746,13 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     if (o.kind === 'relay') { this._runRelay(o); return; }
     if (o.kind === 'door') { this._dispatchDoor(o, selfToggle); return; }
     if (o.duration <= 0) {
-      // Instant flip, still honoring the state cycle.
+      // Instant flip, still honoring the state cycle. (iTween with
+      // time 0 fires its oncomplete SetState on the spot; a FLAT gets
+      // here on every Translation/Rotation, since AddActionFlatHelper
+      // hands AddAction a duration of 0.)
       o.state = o.state === 'start' || o.state === 'reverse' ? 'end' : 'start';
       o.t = o.state === 'end' ? 1 : 0;
+      if (o.kind === 'moveFlat') { this._applyFlat(o); return; }
       this._applyMatrix(o);
       if (o.kind === 'action') {
         this.collider.removeBucket(o.key);
@@ -1012,6 +1103,16 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  must not stay solid (and was, latently, before P10); movers
    *  rebuild at the restored pose. */
   syncRestored(o) {
+    // A flat carries a SerializableActionObject in DFU exactly as a
+    // model does (RDBLayout.cs:970-973 runs for both), so its record
+    // restores and settles here too - there is just no bucket to
+    // reconcile, only the offset and the trigger box.
+    if (o.kind === 'moveFlat') {
+      if (o.state === 'start') o.t = 0;
+      else if (o.state === 'end') o.t = 1;
+      this._applyFlat(o);
+      return;
+    }
     if (o.kind !== 'door' && o.kind !== 'action') return;
     if (o.kind === 'door' && o.state === 'start') { o.t = 0; }
     if (o.kind === 'door') {
@@ -1069,7 +1170,19 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (o.kind === 'door') { this._tickDoor(o, dt); continue; }
       if (o.state !== 'forward' && o.state !== 'reverse') { o.frameDelta = null; continue; }
       const dir = o.state === 'forward' ? 1 : -1;
-      o.t = Math.max(0, Math.min(1, o.t + (dir * dt) / o.duration));
+      // A zero-duration tween is instant (and _play never leaves one
+      // in a playing state), so the guard is for the restored-state
+      // path and for a dt of exactly 0, which would otherwise make t
+      // NaN rather than snapping it.
+      o.t = Math.max(0, Math.min(1, o.t + (o.duration > 0 ? (dir * dt) / o.duration : dir)));
+      if (o.kind === 'moveFlat') {
+        this._applyFlat(o);
+        // A trigger box is not a moving platform - DFU's flat collider
+        // is `isTrigger = true` and nothing rides it.
+        o.frameDelta = null;
+        if (o.state === 'forward' ? o.t >= 1 : o.t <= 0) o.state = o.state === 'forward' ? 'end' : 'start';
+        continue;
+      }
       const px = o.matrix[12], py = o.matrix[13], pz = o.matrix[14];
       this._applyMatrix(o);
       // Platform riding (2026-08-14): the frame's translation delta -

@@ -232,8 +232,10 @@ test('AUDIT 39 #84: the WheneverUsed leech bills the wearer at BOTH doors', () =
   } finally { setDefaultEnchantCtx(null); }
 
   // the host mount is where it has to live - worldTick's round ctx
-  // reaches only the magic round
-  assert.match(read('src/scenes/world.js'), /hurtSelf: \(n\) => \{ if \(n > 0\) hurtPlayer\(playerEntity, n\); \},/);
+  // reaches only the magic round. WAVE D: the mount BODY is
+  // scenes/hostEnchant.js, so the drawback bills at both doors in
+  // every host that mounts it rather than in the one that had a copy.
+  assert.match(read('src/scenes/hostEnchant.js'), /hurtSelf: \(n\) => \{ if \(n > 0\) sinks\?\.hurt\?\.\(n\); \},/);
 });
 
 test('AUDIT 39 #85: the strike stamps the LIVE classic minute, so the timed leech switches off', () => {

@@ -178,19 +178,27 @@ test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly 
   assert.equal(spawned.at(-1), MOBILE_TYPES.Lich);
   // MT-ii: THE DOOR IS MOUNTED, and RETIRING A FLAG DELETES THE
   // SENTENCE - the module header's "no host mounts it" is gone with it.
-  const w = read('src/scenes/world.js');
   // SD1 re-anchored this from the literal spawn line onto the LAW it
   // holds. The old assertion quoted `exteriorFoes.spawnFoe(mobileType,
   // [pf[0] + 2, ...], { allied: true })` - a fixed offset from the
   // player's feet - and SD1 replaced that call with DFU's placement
   // ring, so the pin went red for a change that strengthened exactly
   // what it was defending. F041's precedent: anchor on the gate.
-  assert.ok(w.includes("spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); }"),
-    'world.js mounts the allied spawn');
-  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 1600);
-  assert.ok(/\? d\.spawnLooseFoe\(mobileType, pos, \{ yawRad: yaw, allied \}\)/.test(stander)
-    && /: exteriorFoes\.spawnFoe\(mobileType, pos, \{ yaw, allied \}\)/.test(stander),
+  // WAVE D moved the gate itself: the ctx BODY is scenes/hostEnchant.js
+  // now and both mounting hosts hand it their own pool door, so the
+  // arm is pinned where it lives and each host is pinned to reach it.
+  const he = read('src/scenes/hostEnchant.js');
+  assert.ok(he.includes("spawnAlliedFoe: (mobileType) => { standFoe?.(mobileType, { allied: true }); },"),
+    'the shared ctx mounts the allied spawn');
+  const w = read('src/scenes/world.js');
+  assert.ok(/standLooseFoe: _standLooseFoe,/.test(w), 'world.js hands in its own stander');
+  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 1200);
+  assert.ok(/\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: o\.yawRad, allied: o\.allied \}\)/.test(stander)
+    && /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/.test(stander),
     'through a live pool either way, carrying allied to it');
+  const dc0 = read('src/scenes/dungeonContext.js');
+  assert.ok(/standLooseFoe: \(mobileType, o = \{\}\) => standLooseFoe\(\{/.test(dc0),
+    'and the dungeon host hands in its own');
   for (const [f, line] of [
     ['src/scenes/exteriorFoes.js', "if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }"],
     ['src/scenes/dungeonContext.js', "if (allied && f.entity) { f.entity.team = 'PlayerAlly'; f.entity.mobileTeam = 'PlayerAlly'; }"],

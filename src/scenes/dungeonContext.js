@@ -25,7 +25,7 @@ import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE } from '../world/rdbLayout.js';
+import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
@@ -51,7 +51,9 @@ import { HudText } from '../ui/hudText.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { SWING_MODS } from '../combat/playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
+import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // FS1 (wave D): this host mounts the enchant ctx too
+import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
+import { playerArrowHitFoe } from '../combat/arrowFlight.js';   // AUDIT 39 (#64) wave D: the FOURTH host calls the shared player-arrow law rather than carrying a fourth body of it
 import {
   equipEnemy, hasBowAttack, attackSkillOf, isBowWeapon, backstabChanceOf,
   tallySwingSkills, zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
@@ -64,7 +66,7 @@ import {
   makeEnemiesHostile,              // ROAD-B: GameManager.cs:790-806
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
-import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
+import { createChargenFlow, createChargenWindow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam   // FS-slice (wave D): and the SKIN FORK, which this host held the raw flow to avoid
 import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
@@ -265,13 +267,40 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     await remapSubMeshes(cpuModels.get(id)?.subMeshes, texRemap, (archive) => remap(archive), deps);
   };
 
+  // The MOVE-flag flats, each with its own single-flat billboard batch
+  // (wave D). A grouped batch cannot move one of its members, which is
+  // why these leave flatGroups: `{ o, archive, record, drawn }`, and
+  // the batch is minted with the rest of the flat art below.
+  const moveFlats = [];
+  const moveFlatBatches = new Map();   // action key -> its batch
+  // ActionSystem tweens the flat and tells the host where it got to -
+  // the same shape onDoorState has. The batch was built ONCE at the
+  // flat's placed origin, so flight rides the batch's origin uniform
+  // (the missile law, :2135 - zero GL churn).
+  actions.onFlatMoved = (o) => {
+    const b = moveFlatBatches.get(o.key);
+    if (b) b.origin = [o.offset[0], o.offset[1], o.offset[2]];
+  };
+
   // One registration path for acting FLATS (audit 2026-08-16: flat and
   // marker actions were never registered - classic flat levers/trigger
   // zones were dead). The box brackets the billboard the way DFU's
   // AddAction BoxCollider brackets the flat; effects keep their verbatim
-  // origin; a move-flag flat has no mesh to tween here, so it relays -
-  // the chain lives, the motion is INTERIM (loud) until flats can tween.
-  const registerFlatAction = async (ns, position, action, x, y, z, archive, record) => {
+  // origin.
+  //
+  // WAVE D - THE MOVE-FLAG FLAT MOVES. This arm used to send every
+  // move-flag flat to addRelay: the chain lived and the motion did not,
+  // recorded (loudly) as "no mesh to tween here". DFU hands a flat the
+  // SAME DaggerfallAction a model gets - AddActionFlatHelper
+  // (RDBLayout.cs:904-944) calls AddAction, whose Translation /
+  // Rotation / PositiveX..NegativeZ cases build ActionTranslation and
+  // ActionRotation for description "FLT" exactly as for a model - and
+  // a flat is a transform, so iTween.MoveTo carries it. It needed no
+  // mesh: a billboard batch moves by its origin uniform, which is how
+  // the missiles above have flown since S5. `drawn` is false for an
+  // acting MARKER (archive 199), which has no billboard in this port
+  // at all - its chain and its state machine are the whole of it.
+  const registerFlatAction = async (ns, position, action, x, y, z, archive, record, drawn = true) => {
     let aabb = null;
     const t = await getTexture(archive);
     if (t && record < t.recordCount) {
@@ -284,6 +313,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (EFFECT_ACTION_FLAGS.has(action.actionFlag)) {
       const eo = actions.addEffect(ns, position, action, [x, y, z]);
       if (aabb) eo.aabb = aabb;
+    } else if (MOVE_ACTION_FLAGS.has(action.actionFlag)) {
+      const o = actions.addMoveFlat(ns, position, action, [x, y, z], aabb);
+      moveFlats.push({ o, archive, record, drawn });
     } else {
       actions.addRelay(ns, position, action, aabb, [x, y, z]);
     }
@@ -430,8 +462,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     for (const f of b.layout.flats) {
       const key = `${f.archive}_${f.record}`;
-      if (!flatGroups.has(key)) flatGroups.set(key, []);
-      flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
+      // WAVE D: a MOVE-flag flat is drawn by its OWN single-flat batch
+      // (registerFlatAction mints it) - a member of a grouped batch
+      // cannot be moved on its own, and this is the one flat in the
+      // block that has to move.
+      if (!(f.action && MOVE_ACTION_FLAGS.has(f.action.actionFlag))) {
+        if (!flatGroups.has(key)) flatGroups.set(key, []);
+        flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
+      }
       // A2 ambient sources: burning torches (RDBLayout.IsTorchFlat,
       // 210/{0,1,6,16..20}) loop within 5; animal flats (201) bark on
       // the classic random cadence within 19.2.
@@ -449,7 +487,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // on inactive objects, so their actions are inert; preserved by
       // skipping them (audit 2026-08-16).
       if (!m.action || m.record === 15 || m.record === 16) continue;
-      await registerFlatAction(bi, m.position, m.action, m.x + b.originX, m.y, m.z + b.originZ, m.archive ?? 199, m.record);
+      await registerFlatAction(bi, m.position, m.action, m.x + b.originX, m.y, m.z + b.originZ, m.archive ?? 199, m.record, false);
     }
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
@@ -931,6 +969,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   for (const f of foes) assignFoeSpells(f);
 
   let chargenFlow = null;
+  // scenes/chargenSession.js FS-slice (wave D): the WINDOW that
+  // wraps the flow. `chargenFlow` stays the flow itself - the AUDIT
+  // 17i probe surface answers it and finishChargenHere reads its
+  // result - and this is what occupies the overlay slot.
+  let chargenWindow = null;
   let activeOverlay = null;
   /** ROAD-B B1: the DEPTH under this context's one slot, exactly as
    *  worldModes' interior half took it. `activeOverlay` stays the live
@@ -1536,28 +1579,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // below and reuse the engine's explodeAt/applySpellToPlayer. The
   // absorb context is the dungeon constant (inside, no daylight).
   //
-  // FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-  // MOUNTED HERE. setDefaultEnchantCtx (systems/enchantments.js:247)
-  // has exactly ONE caller in the tree, scenes/world.js, so in the
+  // FS1 - SHIPPED (wave D, THE FOUR HOSTS RULE): THE ENCHANT CTX IS
+  // MOUNTED HERE NOW, below the engine it casts through.
+  // setDefaultEnchantCtx (systems/enchantments.js:250) used to have
+  // exactly ONE caller in the tree, scenes/world.js, so in the
   // standalone ?dungeon host every item-enchantment arm that needs a
-  // host runs against no ctx at all: CastWhenUsed's CasterOnly assign
-  // and its click-to-cast ready (:335-336), the vampiric-drain and
-  // affinity scans (:421, :624), and SoulBound's break release (:502).
-  // Every one of them is optional-chained, which is exactly the
-  // AUDIT 24 seam shape - a ported law that evaporates in SILENCE with
-  // a green suite. The world host's DUNGEON MODE used to share the
-  // second half of this gap - its mounted ctx answered an empty foe
-  // pool in every mode but exterior - and EC1 closed that one: the
-  // mount reads THIS context's foes and sinks through modes.dungeonCtx
-  // when the live mode is dungeon. What is still open is only the
-  // standalone host, which has no ctx to read them with.
+  // host ran against no ctx at all: CastWhenUsed's CasterOnly assign
+  // and its click-to-cast ready, the vampiric-drain and affinity
+  // scans, and SoulBound's break release. Every one is
+  // optional-chained, which is exactly the AUDIT 24 seam shape - a
+  // ported law that evaporates in SILENCE with a green suite.
   //
-  // world.js:1373 claimed for several slices that this was "FLAGGED
-  // there with the rest of its enchant wiring". It was not; FS1 found
-  // the delegation pointing at a flag nobody had written. The mount
-  // itself is its own slice - the world host's is ~90 lines of live
-  // plumbing (spell reflection re-targeting, per-foe sinks, the say
-  // sink) and none of it is host-portable by copy.
+  // The flag said the world host's mount was "~90 lines of live
+  // plumbing and none of it is host-portable by copy". The plumbing
+  // was real; "not portable" was not. Every host-specific term in it -
+  // the pools, the sinks, the text channel, the two windows, the
+  // spawn door - was already a closure over a host binding, which is
+  // a PARAMETER everywhere else in this tree. So the body moved to
+  // scenes/hostEnchant.js and both hosts hand in their own doors; a
+  // copied mount would have diverged the first time an arm grew.
   const magic = createPlayerMagic({
     // QG1: the ready-spell doors - this host's own cast engine raises
     // into the same machine the world lane's does (opts.questBridge is
@@ -1648,6 +1688,73 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeSinks,
     absorbCtx: () => ({ inside: true, day: false }),
   });
+  // FS1 (wave D): the mount itself. `enchantCtx: false` is the
+  // `chargen: false` shape exactly - AN OUTER HOST ALREADY OWNS IT.
+  // setDefaultEnchantCtx is a session singleton, and EC1 already made
+  // world.js's mount read THIS context's foes and sinks through
+  // modes.dungeonCtx whenever the live mode is dungeon; a second
+  // unconditional mount here would simply overwrite that one at the
+  // moment worldModes builds the dungeon, and the last writer would
+  // win silently. So the standalone ?dungeon route mounts and the
+  // hosted route does not.
+  if (opts.enchantCtx !== false) {
+    setDefaultEnchantCtx(createEnchantCtx({
+      playerEntity,
+      spellsByIndex: () => spellsByIndex,
+      now: () => Math.floor(classicMinutesRef.value),
+      sinks: {
+        hurt: (n) => { if (n > 0) hurtPlayer(n); },
+        heal: (n) => { if (n > 0) healPlayer(n); },
+      },
+      playerSpellSinks: playerSinks,
+      say: (l) => hudText.add(l),
+      magic,
+      foes: () => foes,
+      foeSinks,
+      feet: () => lastPlayerFeet ?? [0, 0, 0],
+      // SD1's placement, over THIS host's collider and pool - the same
+      // body world.js stands its loose foes through.
+      standLooseFoe: (mobileType, o = {}) => standLooseFoe({
+        collider,
+        feet: lastPlayerFeet,
+        yawRad: _motorYaw,
+        fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+        foes,
+        spawn: (mt, pos, so) => spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied }),
+      }, mobileType, o),
+      // V3: Azura's TEXT.RSC popup goes through this host's WINDOW
+      // STACK (PushWindow), not its one overlay slot - the same door
+      // the action plaques take, so a box raised under an open window
+      // is not swallowed.
+      messageBox: (id) => {
+        const lines = rscLines(id);
+        if (lines?.length) pushDungeonWindow(new ActionTextBox(lines));
+      },
+      // AUDIT 44 (a11)/U43: `api.toggleCharSheet` is this host's ONE
+      // sheet construction, free-slot guard included - the Oghma opens
+      // that, never a second bag built here.
+      openCharacterSheet: () => api.toggleCharSheet(),
+      // V3: the Wabbajack's transform over this host's own pool. The
+      // old foe leaves through questPoolOps.removeFoe (which is
+      // GameObject.Destroy - no corpse, no loot, no death, and it
+      // notifies the quest resource) and the new type stands at its
+      // feet with the damage taken carried over. A quest foe still in
+      // use is left alone - QuestResourceBehaviour's own check.
+      replaceFoe: (targetEntity, mobileType) => {
+        const f = foes.find((x) => !x.dead && x.entity === targetEntity);
+        if (!f) return;
+        if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+        const at = f.ai?.feet ? [...f.ai.feet] : (lastPlayerFeet ?? [0, 0, 0]);
+        const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
+        questPoolOps.removeFoe(f);
+        Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {
+          if (!nf?.entity) return;
+          nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
+          nf.entity.health -= missing;        // carry over damage (:94)
+        }).catch(() => {});
+      },
+    }));
+  }
   // AUDIT 24: `chargen: false` says an OUTER host already owns the
   // wizard - worldModes passes it, the standalone dungeon scene does
   // not. Without it the classic start ran two wizards at once.
@@ -1675,7 +1782,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // grew - the starting spellbook (17f), the starting kit (17f)
       // and the biography (17h). One seam mints it for everyone.
       chargenFlow = (await createChargenFlow(fetchBytes)).flow;
-      activeOverlay = chargenFlow;
+      // systems/chargenSession.js FS-slice - SHIPPED (wave D). This
+      // host held the RAW flow as its own overlay and drew it
+      // directly, so it could not reach the skin fork that lives in
+      // createChargenWindow (chargenSession.js:344) - THE ONE
+      // CONSTRUCTION SEAM AUDIT 17i split out precisely so no host
+      // would wire chargen by hand a fourth time. It is through that
+      // door now, which is also where the fire-once law, the shared
+      // overlayAction key table and the native click seam live.
+      chargenWindow = createChargenWindow(chargenFlow, {
+        // ui-chargen-4: backing out of the race screen cancels the
+        // wizard - DFU unwinds the UI stack to the start screen
+        // (RaceSelectWindow_OnClose :299-302). The port's front door
+        // is the boot flow, so the unwind is a reload: the bare URL
+        // lands back on title -> main menu; a dev-scene URL re-offers
+        // the wizard fresh (SetRaceSelectWindow Resets on re-entry).
+        // The window fires this from its own input/click arms, which
+        // is why tickOverlay no longer polls `flow.cancelled`.
+        onCancel: () => location.reload(),
+        onDone: (r) => finishChargenHere(r),
+      });
+      activeOverlay = chargenWindow;
     }
   }
 
@@ -1685,9 +1812,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: the completion the KEY
    *  seam and the U14 POINTER seam share. It was already the second
    *  copy of finishChargen once; it is not going to become a third. */
-  function finishChargenHere() {
-    finishChargen(playerEntity, chargenFlow.result(), spellsByIndex);
+  function finishChargenHere(result = chargenFlow?.result()) {
+    finishChargen(playerEntity, result, spellsByIndex);
     chargenFlow = null;
+    chargenWindow = null;
   }
 
   function chargenInputFallback() {
@@ -1709,6 +1837,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     applyCreationExtras(playerEntity, r, spellsByIndex);
     surfacePlayer();
     chargenFlow = null;
+    chargenWindow = null;
   }
   const hudArt = await loadHud({ fetchBytes, ImgFile, palette, renderer });
   let hudFont = null;
@@ -1864,6 +1993,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const batch = renderer.createBillboardBatch(archive, record, size, based);
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
+  }
+  // WAVE D: and one batch per MOVE-flag flat, minted at the flat's
+  // placed origin so the tween's offset is exactly the origin uniform.
+  // Same base-centering and same AnimateBillboard arming as the grouped
+  // art above - a moving flat that stopped animating would be a second
+  // bug traded for the first.
+  for (const mf of moveFlats) {
+    if (!mf.drawn) continue;
+    const t = await getTexture(mf.archive);
+    if (!t || mf.record >= t.recordCount) continue;
+    uploadRecord(mf.archive, mf.record);
+    const size = scaledBillboardSize(t.getSize(mf.record), t.getScale(mf.record));
+    const o = mf.o;
+    const batch = renderer.createBillboardBatch(mf.archive, mf.record, size,
+      [[o.origin[0], o.origin[1] - size.h / 2, o.origin[2]]]);
+    armFlatAnim(batch, t, mf.archive, mf.record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(batch);
+    moveFlatBatches.set(o.key, batch);
   }
 
   const flicker = new CityLightAnimator(lights.length, lights.map((l) => l.range));
@@ -2195,45 +2342,37 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             if (f.dead) continue;
             const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
             if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-              // AUDIT 18: an arrow hit runs the SAME
-              // FormulaHelper.CalculateAttackDamage the melee swing
-              // does (WeaponManager.cs:547) - `attacker == player`, so
-              // the swing modifiers, the backstab chance and the
-              // enemy-type modifier all apply. The port passed the
-              // weapon alone, so every shot lost the target group, the
-              // swing mods and any chance of a backstab.
-              const _swing = SWING_MODS[playerWeapon.machine.state] ?? { damage: 0, toHit: 0 };
-              const _back = foeDeps ? foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet) : false;
-              const dmg = foeDeps ? foeDeps.calculateAttackDamage(playerEntity, f.entity, {
-                weapon: m.weapon,
-                // AUDIT 18: the group is no longer passed in - calculateAttackDamage
-                // derives it from the TARGET ENTITY, verbatim to
-                // GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052).
-                damageMod: _swing.damage, toHitMod: _swing.toHit,
-                backstabChance: backstabChanceOf(playerEntity, _back),
-                onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
+              // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
+              // this host was the FOURTH BODY of the player-arrow law
+              // and is now the fourth CALLER. combat/arrowFlight.js's
+              // playerArrowHitFoe is the one copy world.js:6359,
+              // exterior.js:2290 and worldModes.js:4619 already ran;
+              // the flag said the divergence would bite and it already
+              // had. This copy splashed at the ARROW TIP
+              // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
+              // "the missile's own position IS DFU's impactPosition".
+              // It is not: AssignBowDamageToTarget's player arm hands
+              // WeaponDamage `hitTransform.position`
+              // (DaggerfallMissile.cs:679-687) - the struck entity's
+              // own transform origin, which is `foe.ai.feet` - and
+              // WeaponManager.cs:568-571 passes whatever it got
+              // straight to ShowBloodSplash. Only the MELEE callers
+              // pass a contact point (WeaponManager.cs:1054
+              // ClosestPoint, :1068 hit.point). AUDIT 39r/R16 fixed
+              // the shared copy; this one kept the bug for want of a
+              // call. Everything else the block carried - the swing
+              // mods, the backstab arc, the poisoned shaft, the
+              // equipment-break line, the hit sound before the pain
+              // voice, the recoverable Arrow - is that function's own
+              // body now, verbatim.
+              playerArrowHitFoe(m, f, {
+                playerEntity, playerWeapon, playerFeet,
+                dealDamage: (t, d) => damageFoe(t, d, lastPlayerFeet, m.dir),   // C15: arrows knock along their flight; MT-iv: the player arm keys on the feet, so an arrow kill reverts a struck ally too
+                audio,
+                hitEffects,
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
-              }) : 0;
-              if (dmg > 0) {
-                // AUDIT 26 F052: an arrow runs the SAME
-                // WeaponManager.WeaponDamage the melee swing does
-                // (DaggerfallMissile.cs:681-687, arrowHit true), whose
-                // damage-above-zero arm plays the enemy-side hit sound
-                // (:562-567) and splashes at the impact point
-                // (:569-573) BEFORE the knockback and the pain voice.
-                // This arm played the voice alone, so every landed
-                // arrow was silent and bloodless while every melee hit
-                // thudded and splashed. The missile's own position IS
-                // DFU's impactPosition here - the one place the port
-                // has the real hit point rather than the body centre.
-                audio.play3d(hitSoundFor(m.weapon), f.ai.feet, 1.1, { maxDistance: 16 });
-                hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, [m.pos[0], m.pos[1], m.pos[2]]);
-                // C2-slice (combat-17): the arrow-struck class foe cries out too
-                const pain = enemyPainVoice(f, dmg);
-                if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
-                damageFoe(f, dmg, lastPlayerFeet, m.dir);   // C15: arrows knock along their flight; MT-iv: the player arm keys on the feet, so an arrow kill reverts a struck ally too
-              }
-              addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
+                onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
+              });
               retireMissile(m);
               break;
             }
@@ -3969,17 +4108,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // just loaded. The context mounts chargen at build time
       // (dungeonContext.js:772) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
-      // NOTE: activeOverlay is cleared but chargenFlow is NOT nulled.
-      // Four later sites test `activeOverlay === chargenFlow`, and with
+      // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
+      // Later sites test `activeOverlay === chargenWindow`, and with
       // both null that comparison is TRUE - which would fire
       // finishChargen on the very character the load just restored.
       // AUDIT F2-I2: quickLoad drops the wizard by clearing the slot and
-      // deliberately keeps chargenFlow, so the flow can never reach its
-      // own exit arm again - a constellation still playing would latch
-      // the module's active index and its texture for ever. The host
-      // releases it, since the host is what tore the overlay down.
-      if (activeOverlay === chargenFlow) stopConstellationAnim();
-      if (activeOverlay instanceof DeathScreen || activeOverlay === chargenFlow) activeOverlay = null;
+      // deliberately keeps chargenWindow, so the flow can never reach
+      // its own exit arm again - a constellation still playing would
+      // latch the module's active index and its texture for ever. The
+      // host releases it, since the host is what tore the overlay down.
+      if (activeOverlay === chargenWindow) stopConstellationAnim();
+      if (activeOverlay instanceof DeathScreen || activeOverlay === chargenWindow) activeOverlay = null;
       hudText.add('Game loaded.');
     },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
@@ -4047,15 +4186,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // generic call is the point: a host cannot forget a branch it
       // does not have to write. Two lanes found this independently.
       activeOverlay.tick?.(dt);
-      // ui-chargen-4: backing out of the race screen cancels the
-      // wizard - DFU unwinds the UI stack to the start screen
-      // (RaceSelectWindow_OnClose :299-302). The port's front door is
-      // the boot flow, so the unwind is a reload: the bare URL lands
-      // back on title -> main menu; a dev-scene URL re-offers the
-      // wizard fresh (SetRaceSelectWindow Resets on re-entry).
-      if (activeOverlay === chargenFlow && chargenFlow?.cancelled) { location.reload(); return; }
+      // FS-slice (wave D): the race screen's back-out used to be
+      // POLLED here off `chargenFlow.cancelled`. The window owns it
+      // now and fires onCancel from the very input that sets the flag
+      // (chargenSession.js:366), which is the shape the other hosts
+      // have always had - and the enhanced skin, whose DOM view never
+      // reaches this host's input seam at all, could never have been
+      // cancelled by a poll on a flow the host was not driving.
       if (activeOverlay?.done) {   // S40: optional - a window may clear the slot from inside its own tick
-        if (activeOverlay === chargenFlow) finishChargenHere();
+        // FS-slice: the window already ran onDone - finishChargenHere
+        // is ITS callback now, not this seam's. Calling it here too
+        // applied the character twice.
         surfacePlayer();
         activeOverlay = null;
       }
@@ -4081,7 +4222,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // from inside it, so this seam reaches a null now - and it did
       // not before, which is why the unguarded read stood.
       if (activeOverlay?.done) {
-        if (activeOverlay === chargenFlow) { finishChargenHere(); }
         surfacePlayer();
         activeOverlay = null;
       }
@@ -4145,7 +4285,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // input() and dereferencing it unguarded threw on the very key
       // that closes the rest window.
       if (activeOverlay?.done) {
-        if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
         activeOverlay = null;
       }
@@ -4160,7 +4299,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // Font-less: overlays cannot render. Chargen falls back to
         // the headless roll; a pending level-up applies headlessly;
         // anything else just closes. All loud.
-        if (activeOverlay === chargenFlow) { chargenInputFallback(); }
+        if (activeOverlay === chargenWindow) { chargenInputFallback(); }
         else if (activeOverlay instanceof LevelUpScreen) {
           console.warn('[levelup] FONT art unavailable; applying headlessly');
           applyLevelUp(playerEntity, (st, pool) => spendPoolLowest(st, Object.keys(st), pool));

@@ -4460,19 +4460,39 @@ over-retiring is the equal and opposite failure.
 **And one delegation pointed at a flag nobody had ever written.**
 `world.js:1373` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
-not. `setDefaultEnchantCtx` has exactly **one** caller in the tree, so
-the standalone `?dungeon` host runs every arm that needs a host
+not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
+the standalone `?dungeon` host ran every arm that needs a host
 against no ctx at all - CastWhenUsed's CasterOnly assign and its
 click-to-cast ready, the vampiric-drain and affinity scans, SoulBound's
-break release. Every one is optional-chained, so it is **silent**:
+break release. Every one is optional-chained, so it was **silent**:
 the AUDIT 24 seam shape exactly, a ported law evaporating with a green
 suite. This is the worse of the two failures - the work is real, and
-the ledger could not see it. The flag now lives in the file that owes
-the mount, and the pin asserts its load-bearing claim (one caller,
-`world.js`) so a second host mounting the ctx retires the flag by
-failing. The mount itself is its own slice: the world host's is ~90
-lines of live plumbing - spell-reflection re-targeting, per-foe sinks,
-the say sink - and none of it is host-portable by copy.
+the ledger could not see it. The flag went to the file that owed the
+mount, and the pin asserted its load-bearing claim (one caller,
+`world.js`) so that a second host mounting the ctx would retire the
+flag **by failing**.
+
+**WAVE D closed it, and the pin failed exactly as designed.** The flag
+also said the mount was "~90 lines of live plumbing - spell-reflection
+re-targeting, per-foe sinks, the say sink - and none of it is
+host-portable by copy". The plumbing was real; *not portable* was not.
+Every host-specific term in it - the pools, the sinks, the text
+channel, the two windows, the spawn door - was already a closure over a
+host binding, which is a **parameter** everywhere else in this tree. So
+the body moved to `scenes/hostEnchant.js` and each host hands in its
+own doors, which is also the only way the two mounts can be held to one
+law: a copied mount diverges the first time an arm grows. What is
+deliberately *not* a parameter is the set of seams the port already
+answers once - `playerInSunlight`/`playerInHolyPlace` (which route by
+live mode), `worldMinutes`, the settings store.
+
+The one thing the mount needed that a copy would not have: a **gate**.
+`setDefaultEnchantCtx` is a session singleton and EC1 had already
+routed `world.js`'s mount into this context through `modes.dungeonCtx`
+whenever the live mode is dungeon - so an unconditional second mount
+would simply overwrite that one the moment `worldModes` builds a
+dungeon, last writer wins, silently. `opts.enchantCtx !== false` is the
+`chargen: false` shape exactly: **an outer host already owns it.**
 
 Pins: 7 in `test/flagsweep.test.js`. Campaign: 16 mutants, 16 killed.
 One design note from writing it: the population pin (*the guard

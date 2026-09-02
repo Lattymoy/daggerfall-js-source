@@ -37,6 +37,7 @@ import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from 
 import { createTownTalk } from './townTalk.js';
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
+import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ctx BODY and DFU's loose-foe placement, one copy for the two hosts that mount them
 import { applySpell } from '../systems/effects.js';   // E2: CastWhenStrikes' target arm
 import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -1920,7 +1921,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the same way. The budget is the port's own call: DFU leaves a
    *  MonoBehaviour running for free, and a spawn that cannot find a
    *  spot in a sealed corridor must not spin here. */
-  const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+  // SD1/FS1 (wave D): the retry budget and the placement law moved to
+  // scenes/hostEnchant.js, where the dungeon host reaches them too.
+  // _standEncounterFoe below keeps its OWN call because it differs in
+  // what it IS - it is rolled by the world clock, is always exterior,
+  // and carries its own band - which is exactly how DFU's two call
+  // sites differ.
   /** RE1: an intermittent encounter, stood through DFU's placement.
    *  Separate from _standLooseFoe because the two differ in what they
    *  are: a loose foe is summoned AT the player and takes the enchant
@@ -1949,36 +1955,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
     }).catch(() => null);
   };
-  const _standLooseFoe = (mobileType, { allied = false, lineOfSightCheck = true } = {}) => {
+  const _standLooseFoe = (mobileType, opts = {}) => {
     const mode = _mode();
     // Interiors have no foe pool to stand one in, so they still refuse
     // - EC1's answer, and the honest one until a pool exists.
     if (mode !== 'exterior' && mode !== 'dungeon') return null;
     const d = _dungeonPool();
-    const feet = enchantFeet();
-    const env = placeFoeEnv({
+    return standLooseFoe({
       collider: d ? d.collider : collider,
-      // origin at the controller centre, as tryPlaceFoe has it - DFU
-      // casts from PlayerObject.transform.position, not the feet
-      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
-      playerYawRad: cam.yaw,
+      feet: enchantFeet(),
+      yawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
-      isOccupied: entityOccupancy((f) => f.ai?.feet, () => enchantFoes(), feet),
-    });
-    let spot = null;
-    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
-      spot = placeFoeFreely(env, { minDistance: 4, maxDistance: 20, lineOfSightCheck });
-    }
-    if (!spot) return null;
-    // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
-    // the test point; walkers land through the pool's own chain.
-    const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
-    const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
-    const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
-    const stand = d
-      ? d.spawnLooseFoe(mobileType, pos, { yawRad: yaw, allied })
-      : exteriorFoes.spawnFoe(mobileType, pos, { yaw, allied });
-    return Promise.resolve(stand).catch(() => null);
+      foes: enchantFoes(),
+      spawn: (mt, pos, o) => (d
+        ? d.spawnLooseFoe(mt, pos, { yawRad: o.yawRad, allied: o.allied })
+        : exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied })),
+    }, mobileType, opts);
   };
   /** EC1: THIS host's own pools, exterior only - and deliberately NOT
    *  enchantFoes(), which now answers the live mode's. Two consumers
@@ -2006,104 +1998,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     feet: () => enchantFeet(),
   });
   {
-    setDefaultEnchantCtx({
+    // FS1 (wave D): the BODY of this mount is scenes/hostEnchant.js
+    // now, and the dungeon host mounts the same one. What was ~90
+    // lines here is the doors this host answers with; every arm the
+    // two hosts share - the reflection re-target, the affinity scan,
+    // the two spawn arms, the calendar and lunar conditions, the
+    // AllowMagicRepairs read - lives in one body, so it cannot be
+    // right in one host and stale in the other.
+    setDefaultEnchantCtx(createEnchantCtx({
+      playerEntity,
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.classicMinutes),
       sinks: {
         hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
-      // AUDIT 39: HealthLeech.cs:86-89 bills the WEARER on every strike
-      // (8) and every use (16) of a WheneverUsed leech, not only on the
-      // magic round - and worldTick's per-round ctx was the only mount
-      // in the tree that carried hurtSelf, so the -4000-point drawback
-      // cost the player nothing at the two doors that spend it.
-      hurtSelf: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+      playerSpellSinks,
       say: (l) => townTalk.say(l),
-      // S40: CastWhenHeld.cs:135 - a held enchantment degrades at 60
-      // per round while the player is resting and 4 otherwise, and the
-      // port's consumer (enchantments.js:317) had NO feed because rest
-      // lived in the one host whose enchant ctx is unmounted. The
-      // window raises the flag on OPEN, so it is live here the moment
-      // the rest page is up.
-      isResting: () => !!playerEntity.isResting,
-      // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
-      // gate, the affinity/curse place gates). Both read the sunlight
-      // seam worldModes registered, so they route by LIVE mode.
-      inSunlight: () => playerInSunlight(),
-      inHolyPlace: () => playerInHolyPlace(),
-      applySpellToSelf: (record) => magic.castByItemSelf(record),
-      setReadySpell: (record) => magic.readySpell(record, { free: true }),
-      applySpellToTarget: (record, attacker, target) => {
-        // X11: the caster now travels WITH ITS SINKS. Spell Reflection
-        // sends the bundle back at whoever cast it, and a caster with
-        // no sinks would have the reflected damage land nowhere -
-        // silently, which is the worst way for it to be wrong. The
-        // attacker here is either the player or one of the pool's
-        // foes, and both have sinks a few lines up.
-        const af = attacker && attacker !== playerEntity
-          ? enchantFoes().find((x) => x.entity === attacker) : null;
-        const casterOf = () => {
-          if (!attacker) return null;
-          if (attacker === playerEntity) return { entity: playerEntity, sinks: playerSpellSinks };
-          return af ? { entity: attacker, sinks: enchantFoeSinks(af) } : { entity: attacker };
-        };
-        if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
-        const f = enchantFoes().find((x) => !x.dead && x.entity === target);
-        if (!f) return;
-        const caster = casterOf();
-        const r = applySpell(record, attacker?.level ?? 1, target, enchantFoeSinks(f), Math.random, caster);
-        // The same re-target hostMagic does for the cast paths - this
-        // door is the enchantment path's equivalent seam.
-        if (r.reflected && caster?.entity) {
-          if (caster.entity === playerEntity) magic.applySpellToPlayer(record, attacker?.level ?? 1, caster, { reflectedCount: 1 });
-          else applySpell(record, attacker?.level ?? 1, caster.entity, caster.sinks ?? {}, Math.random, caster, { reflectedCount: 1 });
-        }
-      },
-      nearbyFoes: (range) => {
-        const pf = enchantFeet();
-        return enchantFoes().filter((f) => !f.dead && f.ai
-          && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
-          // V3: distance rides along - the Skull of Corruption clones
-          // the NEAREST enemy; the field is additive, no reader broke
-          .map((f) => ({
-            mobileType: f.mobileType ?? f.entity?.mobileType ?? 128,
-            distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]),
-            // MT-ii: the LIVE team - both summons filter their scan on
-            // `Team != MobileTeams.PlayerAlly` before counting company
-            // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
-            // .cs:47-48), so your own standing summons never count.
-            team: f.entity?.team ?? 'PlayerEnemy',
-            hurt: (n) => enchantFoeSinks(f).hurt(n),
-          }));
-      },
-      // SD1: the two SPAWN arms - SoulBound's break release and the
-      // Sanguine Rose's Daedroth. EC1 made them refuse underground
-      // rather than stand a foe in the streaming world the player was
-      // not in; SD1 gives them the door they were refusing for want
-      // of, and DFU's placement law on the way through.
-      //
-      // Both go through _standLooseFoe, which is where the two callers
-      // differ exactly as DFU has them differ: SoulBound passes
-      // lineOfSightCheck FALSE (SoulBound.cs:100 - a released soul may
-      // appear in front of you), the Sanguine Rose takes the default
-      // TRUE and allied TRUE (SanguineRoseEffect.cs:56).
-      spawnFoe: (mobileType) => { _standLooseFoe(mobileType, { lineOfSightCheck: false }); },
-      spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); },
-      // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
-      // (the infection host's flatten, at this consumer);
-      // openCharacterSheet is the Oghma's sheet push; replaceFoe is
-      // the Wabbajack's transform over the exterior pool - the old
-      // foe leaves through removeFoe (a quest foe still in use is
-      // left alone, QuestResourceBehaviour's own check) and the new
-      // type spawns at its feet with the damage taken carried over.
-      // spawnAlliedFoe is MOUNTED at MT-ii, where MobileTeams
-      // targeting shipped: GameObjectHelper.CreateFoeSpawner(foeType,
-      // spawnCount: 1, alliedToPlayer: true) is one foe into this
-      // host's own encounter pool on team PlayerAlly, and getTargets'
-      // ally arms then make it fight FOR the player. The spawn offset
-      // is spawnFoe's own (DFU's FoeSpawner places by its own law -
-      // the port's exterior pool has no free-placement caller).
+      magic,
+      foes: () => enchantFoes(),
+      foeSinks: (f) => enchantFoeSinks(f),
+      feet: () => enchantFeet(),
+      standLooseFoe: _standLooseFoe,
       messageBox: (id) => {
         const lines = plainLines(townTalk.lines(id));
         if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
@@ -2122,30 +2038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           nf.entity.health -= missing;        // carry over damage (:94)
         }).catch(() => {});
       },
-      // R1: the AllowMagicRepairs seam goes LIVE - RepairsObjects'
-      // enchanted-item skip and the break-consumption arm both read it
-      get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },
-      // W1: the season seam goes LIVE - ExtraSpellPts' seasonal
-      // conditions compare against its OWN param order (DuringWinter=0
-      // ..DuringFall=3, ExtraSpellPts.cs:184-189), not the calendar
-      // enum (Fall=0..Winter=3) - the map is the two ends swapped.
-      season: () => {
-        const s = seasonValue(dateFromClassicMinutes(worldMinutes()));
-        return s === SEASONS.Winter ? 0 : s === SEASONS.Fall ? 3 : s;
-      },
-      // V2c: the moon arms, off V2a's lunar law. ExtraSpellPts'
-      // IsFullMoon/IsHalfMoon/IsNewMoon (:133-154) each answer true
-      // when EITHER moon shows the phase; half counts both the waxing
-      // and waning half. Params 4/5/6 = Full/Half/New (:190-192).
-      moonPhase: (param) => {
-        const { masser, secunda } = lunarPhasesFromMinutes(worldMinutes());
-        const either = (...phases) => phases.includes(masser) || phases.includes(secunda);
-        if (param === 4) return either(LUNAR_PHASES.Full);
-        if (param === 5) return either(LUNAR_PHASES.HalfWax, LUNAR_PHASES.HalfWane);
-        if (param === 6) return either(LUNAR_PHASES.New);
-        return false;
-      },
-    });
+    }));
   }
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.
   // OnNewMagicRound is global and every EntityEffectManager handles it, so

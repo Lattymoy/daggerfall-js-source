@@ -3998,6 +3998,14 @@ export function createWorldModes(host) {
           // The classic-start probe never caught it because it boots
           // with &class, which takes the headless branch in both.
           chargen: false,
+          // FS1 (wave D): AND THE OUTER HOST OWNS THE ENCHANT CTX, for
+          // the same reason. setDefaultEnchantCtx is a session
+          // singleton; EC1 already made world.js's mount read THIS
+          // context's foes and sinks through modes.dungeonCtx whenever
+          // the live mode is dungeon, so a second mount on build would
+          // simply overwrite the routed one and win silently. The
+          // standalone ?dungeon route passes none and mounts its own.
+          enchantCtx: false,
           // wave 22: PopupText.AddText files into the notebook ring
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // B4: the dungeon quicksave rides the ONE composer - DFU

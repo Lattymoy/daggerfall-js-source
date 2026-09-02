@@ -1565,10 +1565,18 @@ same table this window uses, so every host arm is a NO-OP BY DESIGN and
 says so. `done` stays FALSE until the view is down, because a host
 tears an overlay down when it reports done and a DOM node outlives the
 object reporting it. THE FOUR HOSTS: world WIRED, exterior WIRED,
-worldModes N/A (interiors never run the wizard), dungeonContext FLAGGED
-- it holds the RAW flow as its own overlay and cannot reach the fork,
-so it keeps the classic wizard; since U31 that is the `?dungeon` dev
-scene alone.
+worldModes N/A (interiors never run the wizard), dungeonContext WIRED
+since WAVE D - it held the RAW flow as its own overlay and so could
+reach neither the skin fork nor the fire-once latch, and since U31 that
+was the `?dungeon` dev scene alone, which is why it stayed open. Small
+is not the same as absent: routing it through the seam also stopped it
+letterboxing the wizard TWICE, because its non-native draw arm handed
+the flow a virtual canvas AND a screen offset under art that measures
+itself off the real canvas with `nativeMetrics` - AUDIT 19 F2's defect,
+one more time. The window reports `isChoiceWindow`, which takes the
+host's native arm instead, and its `draw` now honours the letterbox
+scale the host computed rather than dropping it for the constructed
+default.
 
 PROVED IN THE RUNNING GAME by `tools/enhancedIntegrationProbe.mjs`:
 front door, New Game, the world host booting, and the map traced from
@@ -4319,8 +4327,12 @@ a `location.reload()` to the boot flow's front door. On the bare URL
 that lands back on title -> main menu, DFU's unwind exactly; on a
 dev-scene URL (?world with no ?class) it re-offers the wizard fresh,
 which is what SetRaceSelectWindow's Reset() does on re-entry anyway.
-The dungeon host's arm rides tickOverlay (it drives the RAW flow,
-not the window), so the classic-start path cancels too.
+The dungeon host used to POLL `flow.cancelled` from tickOverlay,
+because it drove the RAW flow rather than the window; WAVE D put it on
+the same `onCancel` latch as the other two. That matters beyond
+tidiness: the enhanced skin's DOM view never reaches a host input seam
+at all, so a poll on a flow the host was not driving could never have
+cancelled it.
 
 Mutations: 3 run, 3 killed (the flag dropped back to the no-op; the
 once-latch dropped so onCancel refires; the modal back cancelling

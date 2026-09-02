@@ -232,13 +232,18 @@ test('audit18: the player is the Humanoid group, and no host can kill the modifi
 });
 
 test('audit18 sweep: the player arrow recovers the swing mods and the backstab it dropped', () => {
+  // WAVE D: the arm this pinned is no longer INSIDE the dungeon host -
+  // it is combat/arrowFlight.js's playerArrowHitFoe, which all four
+  // hosts call. The law is pinned where it lives, and the host is
+  // pinned to be a CALLER rather than a fourth copy of it.
+  const shared = readFileSync(new URL('../src/combat/arrowFlight.js', import.meta.url), 'utf8');
+  const shot = shared.slice(shared.indexOf('export function playerArrowHitFoe'));
+  assert.ok(/damageMod: swing\.damage, toHitMod: swing\.toHit/.test(shot));
+  assert.ok(/backstabChance: backstabChanceOf\(playerEntity, back\)/.test(shot));
   const src = hostSrc('dungeonContext.js');
-  // The window is generous on purpose: an AUDIT 18 merge note sits inside
-  // this call, and a tight slice made the pin fail on a COMMENT rather than
-  // on the arguments it exists to hold.
-  const shot = src.slice(src.indexOf('SWING_MODS[playerWeapon.machine.state]'), src.indexOf('SWING_MODS[playerWeapon.machine.state]') + 1200);
-  assert.ok(/damageMod: _swing\.damage, toHitMod: _swing\.toHit/.test(shot));
-  assert.ok(/backstabChance: backstabChanceOf\(playerEntity, _back\)/.test(shot));
+  assert.ok(!src.includes('SWING_MODS[playerWeapon.machine.state]'),
+    'the dungeon host no longer prices its own shot');
+  assert.match(src, /playerArrowHitFoe\(m, f, \{/, 'it calls the one that does');
 });
 
 // ---------------------------------------------------------------
