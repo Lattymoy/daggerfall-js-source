@@ -336,6 +336,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     startLoc = locationIndex.get(cell) ?? null;
     if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
   }
+  // EE13 (Mac: a season test that spawns somewhere random, from the
+  // menu): ?spawn=random picks any TOWN in the index - a place with
+  // ground, roads and people, which is what the outdoors is being tested
+  // with. Seeded from the clock so two presses give two towns; the town
+  // is logged so a good one can be found again by ?region=&loc=.
+  if (!startLoc && params.get('spawn') === 'random') {
+    const towns = [...locationIndex.values()].filter((l) => [0, 1, 2].includes(l.mapTableData?.locationType));   // TownCity, TownHamlet, TownVillage (MapsFile LocationTypes)
+    const pick = towns.length ? towns[Math.floor((Date.now() / 7919) % towns.length)] : null;
+    if (pick) { startLoc = pick; console.info(`[world] random spawn: ${pick.regionName ?? pick.mapTableData?.regionName ?? '?'} / ${pick.name ?? '?'} (${params.get('season') ?? 'the calendar\u2019s season'})`); }
+  }
   if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
   if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
   const startPixel = longitudeLatitudeToMapPixel(

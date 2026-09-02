@@ -857,6 +857,34 @@ function paneEnhanced(body) {
     + 'as the season warms, while the roads stay walked and wet-shining in the rain. '
     + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own 64-pixel ground. '
     + 'Takes effect when the world next loads.'));
+
+  // EE13 (Mac: a season test option that spawns you somewhere random, so
+  // the outdoors can be checked without a walk to a season). A season, a
+  // weather, and a town chosen at random by the world's ?spawn=random
+  // door. This is a TEST door, not a setting: it navigates, it stores
+  // nothing, and it names the town in the console so a good one can be
+  // found again.
+  const test = el('div', 'row');
+  const testMain = el('div', 'row-main');
+  testMain.append(el('div', 'row-name', 'Test the outdoors'));
+  testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
+  const testCtl = el('div', 'ctl');
+  const seasonSel = el('select', 'act');
+  for (const sn of ['winter', 'spring', 'summer', 'fall']) { const o = el('option', '', sn); o.value = sn; seasonSel.append(o); }
+  const weatherSel = el('select', 'act');
+  for (const wn of ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow']) { const o = el('option', '', wn); o.value = wn; weatherSel.append(o); }
+  const go = el('button', 'act primary', 'Spawn');
+  go.type = 'button';
+  go.addEventListener('click', () => {
+    // the menu already lives at /play/: same page, the world's doors set
+    const url = new URL(location.href);
+    url.search = '';
+    for (const [k, v] of [['world', ''], ['spawn', 'random'], ['season', seasonSel.value], ['weather', weatherSel.value], ['class', '1'], ['novideo', '']]) url.searchParams.set(k, v);
+    location.href = url.toString().replace(/=(&|$)/g, '$1');
+  });
+  testCtl.append(seasonSel, weatherSel, go);
+  test.append(testMain, testCtl);
+  live.append(test);
   body.append(live);
 
   // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
