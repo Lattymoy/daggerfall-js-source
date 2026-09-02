@@ -2396,10 +2396,23 @@ export async function bootExterior(canvas, renderer, params, status) {
       precip.enhanced = !!sky?.cloudShadow;
       precip.countCap = Number(new URLSearchParams(globalThis.location?.search ?? '').get('rain')) || null;
       if (precip.enhanced) {
+        // WX1: THE LAB'S WIND LAW, term for term. The sky's eased row gives
+        // a direction and a speed (its wind vector, in the deck's units,
+        // times 260 for the lab's slider units); a slow three-sine GUST
+        // rides on the speed; the rate handed to the shader is
+        // speed * 0.16 (the lab's metres a second) WITHOUT the gust, and
+        // the travel integrated on the CPU is speed * gust * 0.16 * dt,
+        // exactly as grass-proto.html's frame() does it.
         const w = sky.cloudShadow.wind;
+        const tsec = now / 1000;
+        const gust = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
+        const mag = Math.hypot(w[0], w[1]);
+        const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
+        const slider = mag * 260;
         const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
-        precip.windOff[0] += (2.5 + w[0] * 260) * dtp;
-        precip.windOff[1] += (1.2 + w[1] * 260) * dtp;
+        precip.windV[0] = dir[0] * slider * 0.16; precip.windV[1] = dir[1] * slider * 0.16;
+        precip.windOff[0] += dir[0] * slider * gust * 0.16 * dtp;
+        precip.windOff[1] += dir[1] * slider * gust * 0.16 * dtp;
       }
       precip._lastNow = now;
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);

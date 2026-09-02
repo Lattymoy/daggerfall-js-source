@@ -527,7 +527,7 @@ test('EE8: the enhanced profile is gated, driven by the sky\u2019s own wind INTE
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile follows the enhanced sky`);
-    assert.match(h, /precip\.windOff\[0\] \+= \(2\.5 \+ w\[0\] \* 260\) \* dtp;/, `${host}: integrated, by dt`);
+    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: integrated, by dt (WX1: the lab's own law)`);
     assert.ok(!/windOff\[0\] = .*uTime|windOff\[0\] = .*now \//.test(h), `${host}: never wind times uptime`);
   }
 });
@@ -557,7 +557,42 @@ test('EE8: the enhanced precipitation rides the switch, drives on integrated win
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile rides the switch`);
-    assert.match(h, /precip\.windOff\[0\] \+= \(2\.5 \+ w\[0\] \* 260\) \* dtp;/, `${host}: the wind is INTEGRATED`);
+    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: the wind is INTEGRATED (WX1: the lab's own law)`);
     assert.ok(!/windOff\[0\] = .*now/.test(h), `${host}: never wind times uptime`);
+  }
+});
+
+// ═══ WX1: the weather is the lab's, byte for byte ═══════════════════
+test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, and the wind law is the lab\u2019s', async () => {
+  const { LAB_WX_VS, LAB_WX_FS, LAB_BOX, LAB_COUNTS, LAB_FALL } = await import('../src/render/precipitation.js');
+  const lab = read('grass-proto.html');
+  // BYTE-EXACT: the shader bodies are the lab's text, sliced from the
+  // page at test time and compared as strings
+  const vsStart = lab.indexOf('layout(location=0) in vec2 aCorner;\nlayout(location=1) in vec4 aSeed;      // x,y,z in the box + phase');
+  const vsEnd = lab.indexOf('}`, HEAD + `', vsStart) + 1;
+  const fsStart = lab.indexOf('in float vT; in float vSeed;\nuniform float uKind;', vsEnd);
+  const fsEnd = lab.indexOf('}`);', fsStart) + 1;
+  assert.ok(vsStart > 0 && fsStart > 0, 'the lab page still carries its weather shaders');
+  assert.equal(LAB_WX_VS, '#version 300 es\nprecision highp float;\n' + lab.slice(vsStart, vsEnd), 'the vertex stage is the lab\u2019s, byte for byte');
+  assert.equal(LAB_WX_FS, '#version 300 es\nprecision highp float;\n' + lab.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s, byte for byte');
+  // the lab's constants
+  assert.equal(LAB_BOX, 42);
+  assert.deepEqual({ ...LAB_COUNTS }, { rain: 26000, storm: 26000, snow: 20000 });
+  assert.deepEqual({ ...LAB_FALL }, { rain: 22.0, storm: 22.0, snow: 1.6 });
+  // the wrap that makes rain fall through the world instead of sticking
+  assert.match(LAB_WX_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/);
+  // the draw: the lab's blend and depth, world up, the enhanced profile
+  // routed to it, the classic program untouched
+  const p = read('src/render/precipitation.js');
+  assert.match(p, /if \(this\.enhanced\) return this\.drawLab\(mode, proj, view, camPos, camRight, timeSeconds\);/);
+  assert.match(p, /gl\.uniform3f\(L\.uUp, 0, 1, 0\);/, 'a flake faces the camera about Y only');
+  assert.match(p, /gl\.drawArraysInstanced\(gl\.TRIANGLES, 0, 6, count\);/);
+  assert.match(p, /const rnd = \(\) => \{ s2 \^= s2 << 13; s2 \^= s2 >>> 17; s2 \^= s2 << 5; s2 >>>= 0; return s2 \/ 4294967296; \};/, 'the lab\u2019s own scatter');
+  // both hosts: the lab's gust, rate without the gust, travel with it
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /const gust = 0\.72 \+ 0\.20 \* Math\.sin\(tsec \* 0\.31\) \+ 0\.14 \* Math\.sin\(tsec \* 0\.83 \+ 1\.7\) \+ 0\.10 \* Math\.sin\(tsec \* 2\.10 \+ 0\.4\);/, `${host}: the lab's gust`);
+    assert.match(h, /precip\.windV\[0\] = dir\[0\] \* slider \* 0\.16; precip\.windV\[1\] = dir\[1\] \* slider \* 0\.16;/, `${host}: the rate, without the gust`);
+    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: the travel, integrated, with the gust`);
   }
 });
