@@ -37,6 +37,14 @@ test('ROAD-B: the lowest outer interior door is lowest AND farthest from the bui
   assert.equal(got.index, 1, 'the ground-level one 8 units out');
   assert.deepEqual(got.pos, [8, 0, 0]);
   assert.deepEqual(got.normal, [0, 0, 1]);
+
+  // HORIZONTAL is a Vector2 (DaggerfallStaticDoors.cs:226), and the y
+  // gap is no part of it: an upper-storey door NEAR in xz must not lock
+  // farthestDist against a ground-floor door farther out. Read in 3D
+  // this answers 0 - the watch would stand upstairs.
+  const storey = [door(1, 6, 0), door(3, 0, 0)];
+  assert.equal(findLowestOuterInteriorDoor(storey, [0, 0, 0]).index, 1,
+    'the y gap is not part of dist - Vector2.Distance, not Vector3');
 });
 
 test('ROAD-B: the pick is measured from the INTERIOR origin, not from world zero', () => {

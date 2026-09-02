@@ -150,10 +150,22 @@ test('a4 envelope: a skill raise SETS the mark and the mark survives a save', ()
   assert.equal(skillRecentlyIncreased(e, SKILLS.Swimming), false, 'a skill that did not go up is unmarked');
 
   const loaded = makeEntity();
-  restorePlayer(loaded, snapshotPlayer(e, {}));
+  // BOTH copy edges, separately - asserted against the ORIGINAL entity
+  // alone, the snapshot's own array sits between them and either spread
+  // can go missing without the assertion moving.
+  const snap = snapshotPlayer(e, {});
+  assert.notEqual(snap.skillsRecentlyRaised, e.skillsRecentlyRaised,
+    'the snapshot takes a COPY, not the live entity array');
+  restorePlayer(loaded, snap);
   assert.equal(skillRecentlyIncreased(loaded, SKILLS.Running), true,
     'the sheet still has something to highlight after a reload');
-  assert.notEqual(loaded.skillsRecentlyRaised, e.skillsRecentlyRaised, 'a COPY, not the live array');
+  assert.notEqual(loaded.skillsRecentlyRaised, snap.skillsRecentlyRaised,
+    'and the restore hands out a COPY, not the save record\'s array');
+  // the behavioural tell: a raise on the restored entity must not write
+  // back through the save record it was restored from
+  setSkillRecentlyIncreased(loaded, SKILLS.Swimming);
+  assert.equal(skillRecentlyIncreased({ skillsRecentlyRaised: snap.skillsRecentlyRaised }, SKILLS.Swimming),
+    false, 'the save record is not a window onto the live entity');
 });
 
 test('a4 envelope: a save with no skillsRecentlyRaised restores DFU\'s new uint[2]', () => {

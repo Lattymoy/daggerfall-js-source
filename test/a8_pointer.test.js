@@ -62,14 +62,29 @@ test('A8: a TOUCH spell is the stated exception - doors stay reachable (:255-258
   assert.deepEqual(f, { cast: false, activate: true });
 });
 
-test('A8: castPending only ever swallows ONE frame', () => {
+test('A8: castPending swallows the frame the cast’s own click would activate, and ONE frame only', () => {
   const gate = createActivateGate();
-  activateFrame(gate, { down: true, hasReadySpell: true });   // sets castPending
+  // the press casts and arms the consume (:245-254)
+  assert.deepEqual(activateFrame(gate, { down: true, hasReadySpell: true }), { cast: true, activate: false });
   assert.equal(gate.castPending, true);
-  activateFrame(gate, { down: true, hasReadySpell: false });  // clears it
+  // The spell clears as the button comes UP: this frame is an
+  // ActionComplete, so the consume at :260-265 is the only thing
+  // between the cast's own click and the door behind it. A swallowed
+  // frame that was never an activation frame would pin nothing.
+  assert.deepEqual(activateFrame(gate, { down: false, hasReadySpell: false }), { cast: false, activate: false });
   assert.equal(gate.castPending, false);
-  // the button is still down; releasing now activates
+  // ...and ONE frame only - the next press/release activates
+  activateFrame(gate, { down: true });
   assert.equal(activateFrame(gate, { down: false }).activate, true);
+
+  // the same consume on a still-HELD button: it clears there too, so
+  // the release that follows is a normal activation
+  const held2 = createActivateGate();
+  activateFrame(held2, { down: true, hasReadySpell: true });
+  assert.equal(held2.castPending, true);
+  activateFrame(held2, { down: true, hasReadySpell: false });
+  assert.equal(held2.castPending, false);
+  assert.equal(activateFrame(held2, { down: false }).activate, true);
 });
 
 test('A8: a gate that never sees the button does nothing', () => {

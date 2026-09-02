@@ -68,8 +68,12 @@ test('B1: PauseWhileOpen defaults TRUE and the pause is a LATCH, not a fold', ()
   s.popWindow();
   assert.equal(s.paused(), false, 'draining to nothing resumes it');
 
-  // ...and the OTHER half: a non-pausing window on an otherwise empty
-  // stack does not pause (IsPlayingGame's :937-939 test).
+  // ...and AddWindow's own guard (:183-184), which is what this
+  // assertion actually pins: a non-pausing window pushed onto a drained
+  // stack does not re-raise the latch. (It is NOT IsPlayingGame's
+  // :937-939 top-window test - the port folds that term into the latch,
+  // which is UIManager-local and cannot be lowered from outside; see
+  // windowStack.js's `paused` note.)
   s.pushWindow(free);
   assert.equal(s.paused(), false);
 });
@@ -194,6 +198,16 @@ test('B1: reconcile treats a hand-assigned successor as a one-level replace', ()
   slot = null;
   s.reconcile(slot);
   assert.equal(slot, rest, 'and the rest is still underneath');
+
+  // The replace RAISES the latch itself - AddWindow's :183-184 in
+  // ChangeWindow's clothing. A non-pausing window handing over to a
+  // pausing successor is the one state where that raise decides, and
+  // `paused()` is the latch alone, so nothing else can answer for it.
+  const s2 = makeWindowStack();
+  s2.pushWindow(win('free', { pauseWhileOpen: false }));
+  assert.equal(s2.paused(), false);
+  assert.equal(s2.reconcile(win('menu')), true);
+  assert.equal(s2.paused(), true, 'the successor pauses even though the window it replaced did not');
 });
 
 test('B1: reconcile adopts a slot filled while the stack was empty', () => {

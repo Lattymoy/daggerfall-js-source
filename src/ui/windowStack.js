@@ -197,13 +197,27 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     },
 
     /** GameManager.IsPlayingGame's window half, inverted
-     *  (GameManager.cs:926-942): the game is not being played while
-     *  `isGamePaused` (:928-930), nor while the top window is a
-     *  non-HUD window that pauses (:937-939). */
+     *  (GameManager.cs:926-942).
+     *
+     *  DFU asks TWO questions there: `isGamePaused` (:928-930), and
+     *  whether the top window is a non-HUD window that pauses
+     *  (:937-939). It needs both because `isGamePaused` is GLOBAL -
+     *  StartGameBehaviour (:439, :697) and SaveLoadManager (:418) call
+     *  `PauseGame(false)` from outside the stack, so the flag can be
+     *  down while a pausing window is still up, and only :937-939
+     *  catches that.
+     *
+     *  This latch is not that flag: it is UIManager-local, raised by
+     *  AddWindow (:183-184) and by reconcile's replace, and lowered
+     *  ONLY by RemoveWindow on drain (:201-215). Nothing outside can
+     *  put it down, so `gamePaused` is already true in every state
+     *  :937-939 would catch and the second question cannot decide one.
+     *  Asking it anyway would be worse than redundant - it would read
+     *  the top window instead of the latch and so MASK a latch that
+     *  failed to rise. If the port ever grows an external PauseGame
+     *  door, DFU's second term comes back with it. */
     paused() {
-      if (gamePaused) return true;
-      const t = top();
-      return !!t && !isHud(t) && pauseWhileOpen(t);
+      return gamePaused;
     },
 
     /** PostMessage (:139-150) - the overflow arm CLEARS the queue,

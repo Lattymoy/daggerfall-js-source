@@ -135,6 +135,12 @@ test('ROAD-B b3: terrain and StaticGeometry are the NEAREST hit, and are mutuall
   // the model BELOW the ground cannot be what you stand on
   p = downProbe({ centreY: 5, terrainY: 4.8, meshDist: 0.9, rayDistance: 1 });
   assert.deepEqual([p.terrain, p.staticGeometry], [true, false]);
+  // FLUSH - the tie. A model laid flat ON the terrain is what the
+  // player stands on (:149-152), so the answer is StaticGeometry, and a
+  // flush model over a water tile therefore reports None, not Swimming.
+  p = downProbe({ centreY: 5, terrainY: 4, meshDist: 1, rayDistance: 1 });
+  assert.deepEqual([p.hit, p.terrain, p.staticGeometry], [true, false, true],
+    'ties go to the mesh - `terrainDist < md`, never <=');
   // nothing in range at all
   p = downProbe({ centreY: 5, terrainY: -Infinity, meshDist: Infinity, rayDistance: 1 });
   assert.deepEqual([p.hit, p.terrain, p.staticGeometry], [false, false, false]);
@@ -222,7 +228,7 @@ test('ROAD-B b3: exteriorSurfaces runs all three off one raw tilemap byte, senti
 
 // ── 4. what the exterior does NOT have ─────────────────────────────
 
-test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim flag, ALWAYS', {
+test('ROAD-B b3: PlayerEnterExit’s exterior else arm is DFU’s own', {
   skip: missingDfu(PEE_CS) && 'no DFU checkout (DFU_PATH)',
 }, () => {
   const cs = readFileSync(dfuFile(PEE_CS), 'utf8');
@@ -232,6 +238,12 @@ test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim fl
   // and the else arm's three assignments
   assert.match(cs, /PlayerTileMapIndex\s*!=\s*0\)\s*\n\s*isPlayerSwimming\s*=\s*false;/,
     'the MeteoricDragon latch: swimming survives only on a water tile');
+});
+
+// The behaviour table itself reads no file and calls only the port's own
+// pure function, so it runs with or without a checkout - the law must be
+// pinned in the environment the suite actually runs in.
+test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim flag, ALWAYS', () => {
   const latchWater = exteriorSwimLatch(true, 0);
   assert.deepEqual(latchWater, { swimming: true, submerged: false, motorSwimming: false },
     'a swimmer who surfaces onto open water keeps IsPlayerSwimming');

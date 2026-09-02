@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import {
   ActionSystem, CASTLE_DAGGERFALL_MAP_ID, CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS,
 } from '../src/world/actionSystem.js';
-import { TRIGGER_FLAGS } from '../src/world/rdbLayout.js';
+import { TRIGGER_FLAGS, ACTION_FLAGS } from '../src/world/rdbLayout.js';
 import { BUILDING_TYPES, isTavern, isResidence } from '../src/world/buildingNames.js';
 import { createCityGuards } from '../src/scenes/cityGuards.js';
 
@@ -74,17 +74,19 @@ test('ROAD-B B4: the foyer-door constants are DFU\'s literals', () => {
  *  ambient context is the Castle Daggerfall teleport-in case. */
 function magicDoorRig(over = {}, loadID = 29331574) {
   const c = stubCollider();
+  const { action = null, ...ctxOver } = over;
   const ctx = {
     playerTeleportedIntoDungeon: true,
     isPlayerInsideDungeon: true,
     currentMapId: CASTLE_DAGGERFALL_MAP_ID,
-    ...over,
+    ...ctxOver,
   };
   const a = new ActionSystem(c, { magicDoorsContext: () => ctx });
-  // TriggerFlag None: the door's own record accepts NOTHING but a chain
-  // cascade, which is the point - DFU runs the hack BEFORE that switch.
+  // With no `action`, TriggerFlag is None: the door's own record accepts
+  // NOTHING but a chain cascade, which is the point - DFU runs the hack
+  // BEFORE that switch. Pass one to make the record observable.
   const door = a.addDoor(CUBE, I, {
-    ns: 0, positionKey: 7, startingLockValue: 20, loadID,
+    ns: 0, positionKey: 7, startingLockValue: 20, loadID, action,
   });
   return { a, c, door, ctx };
 }
@@ -98,6 +100,29 @@ test('ROAD-B B4: the hack unlocks and opens a magically-held foyer door', () => 
     assert.equal(door.state, 'forward', 'ToggleDoor() swung it open');
     assert.equal(c.buckets.has(door.key), false, 'MakeTrigger(true) - the player can walk through');
   }
+});
+
+test('ROAD-B B4: the hack\'s ToggleDoor() is NOT activatedByPlayer (DaggerfallAction.cs:272)', () => {
+  // The live foyer doors carry a DaggerfallAction - the hack runs from
+  // Receive, so the component is there - and a record with no action at
+  // all cannot tell the two arities apart. With activatedByPlayer TRUE
+  // the DoorText first-activation hold (DaggerfallActionDoor.cs:265,
+  // ported at actionSystem.js's _openDoor) swallows the open and leaves
+  // the door shut with its collider solid, which is precisely what DFU
+  // wrote the hack to prevent ("just to prevent player being locked
+  // inside throne room", :268).
+  const { a, c, door } = magicDoorRig({
+    action: {
+      actionFlag: ACTION_FLAGS.DoorText, index: 5, magnitude: 0, axisRaw: 0,
+      duration: 0, nextObject: -1, triggerFlag: TRIGGER_FLAGS.Direct,
+      rotation: { x: 0, y: 0, z: 0 }, translation: { x: 0, y: 0, z: 0 },
+    },
+  });
+  a.receive(door, 'Direct');
+  assert.equal(door.currentLockValue, 0, 'CurrentLockValue = 0 either way');
+  assert.equal(door.state, 'forward',
+    'ToggleDoor() with its default activatedByPlayer = false opens straight through the DoorText hold');
+  assert.equal(c.buckets.has(door.key), false, 'MakeTrigger(true) - the throne room is not sealed');
 });
 
 test('ROAD-B B4: the hack runs BEFORE the trigger-flag switch (DaggerfallAction.cs:183)', () => {
