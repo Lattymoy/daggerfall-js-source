@@ -112,6 +112,18 @@ export class TerrainGenClient {
   /** ROADS 7: the network for whoever draws it - null until built. */
   roads() { return this._roads; }
 
+  /** ROADS 22: a ready-made network (his) - kept here for the map and
+   *  the fallback, a copy posted to the worker. No build anywhere. */
+  setRoadsData(net, onStats = null) {
+    this._settlements = null;
+    this._roads = { roads: net.roads, tracks: net.tracks };
+    this._roadsStats = onStats;
+    if (this._worker) {
+      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice() };
+      this._worker.postMessage({ t: 'roads', net: copy, stats: net.stats ?? null }, [copy.roads.buffer, copy.tracks.buffer]);
+    } else if (onStats) onStats(net.stats ?? { source: 'basic-roads' });
+  }
+
   _roadsFallback() {
     if (this._roads || !this._settlements) return;
     const net = buildRoadsFromSettlements(this._settlements, this._woods);

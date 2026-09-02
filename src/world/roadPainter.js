@@ -83,13 +83,12 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       if (t && write(tilemap, i, t, TRACK_CENTRE, TRACK_DIAG_CENTRE, TRACK_DIAG_EDGE, ground)) painted++;
     }
   }
-  // ROADS 5: the ring AFTER the arms, so an arm crossing the ring's edge
-  // annulus keeps its road surface and the ring fills in around it.
-  if (locationRect) {
-    painted += roadMask
-      ? paintRing(tileData, tilemap, locationRect, ROAD_CENTRE, ROAD_DIAG_EDGE, tdDim)
-      : paintRing(tileData, tilemap, locationRect, TRACK_CENTRE, TRACK_DIAG_EDGE, tdDim);
-  }
+  // ROADS 22: NO RING. The mod paints none - its towns are ringed by
+  // the DATA, a through-road detouring through the neighbouring pixels
+  // (ROADS 6's measurement: five-neighbour arcs, never a loop), and
+  // inside a pixel a road stops at the location rect. With his data in
+  // play the ring was the one piece of the painter that was ours
+  // (Audit 50 A2), and 1:1 has no room for it.
   return painted;
 }
 
@@ -111,31 +110,6 @@ function inRect(x, y, r) { return x >= r.xMin && x <= r.xMax && y >= r.yMin && y
  *  joins the ring instead of ending in a field. A track-only pixel
  *  rings in track. Clamped to the tile grid: a city whose clearance
  *  reaches the pixel edge rings on the sides that fit. */
-function paintRing(tileData, tilemap, r, centreTable, edgeTable, tdDim) {
-  let n = 0;
-  const band = (x0, x1, y0, y1, table, isCentre) => {
-    for (let y = Math.max(0, y0); y <= Math.min(DIM - 1, y1); y++) {
-      for (let x = Math.max(0, x0); x <= Math.min(DIM - 1, x1); x++) {
-        if (inRect(x, y, r)) continue;
-        const i = y * DIM + x;
-        if (tilemap[i] !== 0) continue;
-        let ground = tileData[y * tdDim + x];
-        if (ground > TILE.stone) ground = TILE.grass;
-        // the ring's rotate follows the side it runs along; flip is the outer half
-        const onEW = y < r.yMin || y > r.yMax;
-        const outer = isCentre ? (x === x0 || x === x1 || y === y0 || y === y1) : false;
-        if (write(tilemap, i, { centre: isCentre, rotate: onEW, flip: outer }, centreTable, centreTable, edgeTable, ground)) n++;
-      }
-    }
-  };
-  // The two-tile centre band FIRST, then the edge pass over the 3-deep
-  // annulus - the loop skips painted tiles, so the edge pass only finds
-  // the outermost ring left. The first draft had them the other way
-  // round and the edge filled everything before the centre arrived.
-  band(r.xMin - 2, r.xMax + 2, r.yMin - 2, r.yMax + 2, centreTable, true);
-  band(r.xMin - 3, r.xMax + 3, r.yMin - 3, r.yMax + 3, edgeTable, false);
-  return n;
-}
 
 function iCorner(x, y, mask) {
   if ((mask & DIR.N) && (mask & DIR.W) && x === MID_LO && y === MID_HI) return { rotate: false, flip: false };

@@ -4,6 +4,18 @@ Mac, 2026-09-01, on Hazelnut's Basic Roads for Daggerfall Unity:
 "recreate it using it as a resource and avoiding the legal stuff
 altogether... be as faithful as possible without crossing the line."
 
+## The line - and then permission
+
+The line below was the law from ROADS 1 to ROADS 21: the design learned
+from, the data never shipped. On 2026-09-02 Hazelnut gave Mac
+permission to integrate Basic Roads 1:1, and the line is gone: the four
+arrays are vendored in `vendor/roads-hazelnut/` with attribution and
+credited on the About screen beside the windmills. Everything below
+about deriving our own network is still true and still runs - as the
+FALLBACK for a map where his data cannot load - and the fourteen slices
+that calibrated it against his data are how the fallback got good.
+ROADS 22 is the integration.
+
 ## The line
 
 Basic Roads is two things. Its CODE is MIT (every source file carries
@@ -292,6 +304,20 @@ plumbed through the other instance's rewrite of routeInBox; a link that
 could stop on ANY path stopped on its own at step one and the web was
 stubs and hairpins. It carries the heading now, so a stop can be judged
 wide.
+
+## ROADS 22 - his network, 1:1 (2026-09-02)
+
+With Hazelnut's permission: `vendor/roads-hazelnut/` carries the four
+arrays byte-exact (a 500 KB file gzips to 28 KB; GitHub Pages serves
+gzip), `roadsProducer.loadModRoads` reads them as Vite assets by
+`new URL(import.meta.url)` and refuses a wrong length, the worker takes
+the arrays ready-made with no build and no cache, the map draws them
+through the door it already had, and the About screen credits him as
+it credits Kamer. The generator is the fallback: a failed load logs
+and builds ours. The painter's ring road - Audit 50's one departure -
+is removed; the mod paints none, and an arm now stops at the rect as
+his does. Rivers and streams are loaded and unpainted, off by default
+as the mod ships them; their painter branch is the next slice.
 
 ## Audit 45 (2026-09-01)
 

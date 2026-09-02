@@ -278,28 +278,22 @@ test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still 
     'h is scaled by the cheapest step, which is what admissibility requires');
 });
 
-test('ROADS 5: a town is RINGED, and the arm joins the ring instead of ending in a field', () => {
+// ROADS 22: THE PAINTER DRAWS NO RING. The mod paints none - its towns
+// are ringed by the data (ROADS 6: five-neighbour arcs, never a loop)
+// and inside a pixel a road stops at the location rect. The ring that
+// ROADS 5 added was the painter's one piece that was ours (Audit 50
+// A2); with Hazelnut's data in play, 1:1 has no room for it. This pin
+// replaces ROADS 5's: an arm reaches the rect and STOPS.
+test('ROADS 22: an arm stops at the location rect, and nothing rings it', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
-  const rect = { xMin: 56, xMax: 71, yMin: 56, yMax: 71 };
-  paintRoads(tileData, tilemap, DIR.N, 0, rect);
-  // inside the rect: nothing
-  assert.equal(tilemap[64 * 128 + 64], 0, 'the streets are left alone');
-  assert.equal(tilemap[70 * 128 + 58], 0, 'the clearance band too');
-  // the ring: two tiles of road just outside, on every side
-  for (const [x, y] of [[54, 64], [55, 64], [72, 64], [73, 64], [64, 54], [64, 55], [64, 72], [64, 73], [54, 54], [73, 73]]) {
-    assert.equal(tilemap[y * 128 + x] & 0x3f, TILE.road, `ring at ${x},${y}`);
-  }
-  // an edge tile one further out
-  assert.equal(tilemap[64 * 128 + 53] & 0x3f, TILE.roadGrass, 'the ring has an edge');
-  assert.equal(tilemap[64 * 128 + 52], 0, 'and stops');
-  // the N arm runs from the ring to the north edge, not from the centre
-  assert.equal(tilemap[100 * 128 + 63] & 0x3f, TILE.road, 'the arm');
-  assert.equal(tilemap[74 * 128 + 63] & 0x3f, TILE.road, 'meets the ring');
-  // and a rect that runs off the tile grid rings on the sides that fit
-  const t2 = new Uint8Array(128 * 128);
-  paintRoads(tileData, t2, DIR.S, 0, { xMin: -4, xMax: 20, yMin: 100, yMax: 130 });
-  assert.equal(t2[98 * 128 + 10] & 0x3f, TILE.road, 'the south side rings');
+  const rect = { x: 56, y: 56, w: 16, h: 16, xMin: 56, xMax: 71, yMin: 56, yMax: 71 };
+  paintRoads(tileData, tilemap, DIR.S, 0, rect);
+  assert.equal(tilemap[10 * 128 + 63] & 0x3f, TILE.road, 'the arm');
+  assert.equal(tilemap[55 * 128 + 63] & 0x3f, TILE.road, 'reaches the rect');
+  assert.equal(tilemap[60 * 128 + 63], 0, 'and stops - the streets are left alone');
+  // no annulus anywhere around the rect
+  for (const [x, y] of [[54, 64], [73, 64], [64, 73], [53, 53], [74, 74]]) assert.equal(tilemap[y * 128 + x], 0, `no ring at ${x},${y}`);
 });
 
 // ROADS 5 (2026-09-01, Mac's first real-data look: "the roads are
@@ -726,4 +720,34 @@ test('ROADS 21: the web\u2019s two real-map rules, pinned at the source with the
   assert.match(src, /for \(const t of trackNodes\) trackBlocked\[t\.y \* MAP_WIDTH \+ t\.x\] = 0;/, 'a track may cross a track-grade pixel');
   assert.match(src, /for \(const t of trackNodes\) trackTowns\[t\.y \* MAP_WIDTH \+ t\.x\] = 1;/, 'and a village is one of the web\u2019s towns');
   assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side');
+});
+
+// ROADS 22: HIS NETWORK, 1:1. The four arrays load byte-exact from the
+// vendor folder; the wrong length is no file; a failed fetch is a null
+// and the generator takes over. The worker takes the arrays ready-made.
+test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls back on failure', async () => {
+  const { loadModRoads, MOD_ROADS } = await import('../src/world/roadsProducer.js');
+  const fs = await import('node:fs');
+  const real = (k) => new Uint8Array(fs.readFileSync(`vendor/roads-hazelnut/${k}Data.bytes`));
+  const FILE = { roads: 'road', tracks: 'track', rivers: 'river', streams: 'stream' };
+  const fetchOk = async (url) => {
+    const key = Object.keys(MOD_ROADS).find((k) => MOD_ROADS[k] === url);
+    return { ok: true, arrayBuffer: async () => real(FILE[key]).buffer };
+  };
+  const net = await loadModRoads(fetchOk);
+  assert.ok(net, 'loaded');
+  assert.equal(net.roads.length, MAP_W * MAP_H); assert.equal(net.tracks.length, MAP_W * MAP_H);
+  let n = 0; for (const v of net.roads) if (v) n++;
+  assert.equal(n, 21554, 'his 21,554 road pixels, byte-exact');
+  assert.equal(net.stats.source, 'basic-roads');
+  const fetchShort = async () => ({ ok: true, arrayBuffer: async () => new Uint8Array(10).buffer });
+  assert.equal(await loadModRoads(fetchShort), null, 'the wrong length is no file');
+  const fetch404 = async () => ({ ok: false });
+  assert.equal(await loadModRoads(fetch404), null, 'a failed fetch is a null');
+  assert.equal(await loadModRoads(undefined), null, 'no fetch at all is a null');
+  const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
+  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks \};/, 'the worker takes his arrays ready-made');
+  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(his/, 'his first');
+  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads\);/, 'ours as the fallback');
 });

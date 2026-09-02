@@ -47,5 +47,15 @@ export const CREDITS = Object.freeze({
       contact: 'DFU Discord',
       vendor: Object.freeze(['windmills-kamer']),
     }),
+    Object.freeze({
+      title: 'Basic Roads',
+      version: '1.3.1',
+      author: 'Hazelnut',
+      what: 'The roads and tracks of the Iliac Bay: the hand-drawn network of which pixels carry a road or a track and which way each leaves, and the painter that lays them into the terrain. Both skins; the map draws them too.',
+      terms: 'Vendored with the author\'s permission (2026-09-02). The painter is MIT (Copyright (C) 2020 Hazelnut).',
+      contact: 'DFU forums',
+      vendor: Object.freeze(['roads-hazelnut']),
+      link: 'https://github.com/ajrb/dfunity-mods',
+    }),
   ]),
 });

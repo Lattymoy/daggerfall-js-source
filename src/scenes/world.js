@@ -13,7 +13,7 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
-import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2
+import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
 import { placeGrass, ROAD_RECORDS } from '../render/groundSurfaces.js';   // EE7: the grass placer; EE10: the road records the field reads
@@ -304,7 +304,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ROADS 3: OUR network, from the player's own map. Built once here,
   // handed to both terrain kernels; a failure draws a world without
   // roads and says so, never no world.
-  terrainGen.setRoads(settlementsOf(maps), (st) => {
+  // ROADS 22: HIS NETWORK FIRST, 1:1 - Basic Roads' arrays, vendored
+  // with Hazelnut's permission. Ours is the fallback for a map where
+  // they cannot load. The log line says which it was.
+  const logRoads = (st) => {
     console.log(`[roads] ${st.roadNodes} towns, ${st.roadEdges} roads, ${st.trackEdges} tracks, ${st.unrouted} unrouted, ${st.ms}ms`);
     // AUDIT 45 F7: an unrouted pair is a finding, and it is named.
     for (const [a, b] of st.unroutedPairs ?? []) {
@@ -312,6 +315,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       const nm = (l) => `${l.name ?? '?'} (${l.x},${l.y}) ${maps.getRegionName(l.region)}`;
       console.warn(`[roads] no route: ${nm(a)} -> ${nm(b)}`);
     }
+  };
+  loadModRoads().then((his) => {
+    if (his) { terrainGen.setRoadsData(his, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)`)); return; }
+    console.warn('[roads] Basic Roads data did not load - generating our own network');
+    terrainGen.setRoads(settlementsOf(maps), logRoads);
   });
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
