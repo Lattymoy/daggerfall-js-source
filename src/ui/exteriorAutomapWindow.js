@@ -63,8 +63,6 @@
 //    driven in the reference too, so those ten are parity. The MOUSE
 //    arms have no gap either: the chrome's press-hold machine and both
 //    drags run off the real down/move/up seam and are frame-exact.
-//  - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
-//    the port's quest bridge exposes no locationWasMarkedOnMapByNPC.
 //  - the plate label is the port's FNT text, not DFU's yellow-reloaded
 //    DaggerfallFont Texture2D, so TextScale is halved for the port's
 //    16px-cell glyphs (the A2 legibility pick, kept).
@@ -74,11 +72,28 @@
 //    ~8.5 native px across (see meshStamp.js's arithmetic) what it
 //    loses is a handful of texels.
 //
-// FLAGGED, both awaiting a seam this stage does not own:
-//  - the eight BUTTON tooltips. ToolTipText for the exterior chrome is
-//    the Internal_Strings automap block with hotkey substitution, which
-//    ui/automapText.js carries for the dungeon window; the PLATE
-//    tooltips (ToolTipDelay 0, the canonical name) ship here.
+// ROAD-D D5 CLOSED THE RESIDUE THIS WINDOW OWNED, and both halves
+// closed because the blocker each was written against had gone stale:
+//  - THE RESIDENCE-WITH-ACTIVE-QUEST PLATE ARM (:682-709). The port
+//    DOES expose locationWasMarkedOnMapByNPC - systems/topicTree.js
+//    :394-419 is IsBuildingQuestResource verbatim, flag and override
+//    name both - it simply had no consumer. residenceQuestName +
+//    stampResidenceQuestNames below are ExteriorAutomap.cs's own
+//    double loop over it (its three quirks kept and named at the
+//    site), stamped onto the summaries rows at window-open by the host
+//    that has a quest machine, which is where DFU resolves the name
+//    too. `questName` finally has a producer, so a quest-marked
+//    residence is named on the town map instead of being silently
+//    plateless.
+//  - THE TEN BUTTON TOOLTIPS (UpdateButtonToolTipsText, :230-239).
+//    Internal_Strings.csv:908-917 now sits beside the dungeon block in
+//    ui/automapText.js, formatted by THE SAME two laws
+//    (ShortcutOrFallback onto KeyCode.Home, String.Format over
+//    HotkeySequence.ToString) with the ExtAutomap* shortcut names, and
+//    the chrome's own hover clock - which already returned the rested
+//    rect and was being thrown away here - drives them.
+//
+// FLAGGED, still awaiting a seam this stage does not own:
 //  - map_revealbuildings / map_hidebuildings (:1796-1830). The flag
 //    they set - `revealUndiscoveredBuildings` - is live on this window
 //    and pinned; the port has no console for them to live in, exactly
@@ -93,7 +108,7 @@
 import { drawText, measureText } from './text.js';
 import { getBool, getInt, getString } from '../systems/settings.js';
 import { hexColor32 } from './automapWindow.js';
-import { shortcutOrFallback } from './automapText.js';
+import { shortcutOrFallback, exteriorAutomapTooltipFor } from './automapText.js';
 import { bindings } from './input.js';
 import { getBinding } from '../systems/inputActions.js';
 import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
@@ -369,6 +384,81 @@ export const EXT_BACKGROUND_HOTKEYS = Object.freeze({
   ExtAutomapSwitchToExteriorAutomapBackgroundAlternative3: 'alt3',
 });
 
+/**
+ * THE RESIDENCE-WITH-ACTIVE-QUEST NAME (ExteriorAutomap.cs:693-709),
+ * ported as its own double loop rather than folded into
+ * IsBuildingQuestResource, because DFU's two loops do NOT ask the same
+ * question and the difference is observable.
+ *
+ *   foreach active quest -> foreach Place resource
+ *     if (place.SiteDetails.buildingKey == discoveredBuilding.buildingKey
+ *         && TalkManager.IsBuildingQuestResource(CurrentMapID, key, ...))
+ *       if (locationWasMarkedOnMapByNPC)
+ *         buildingQuestName = place.SiteDetails.buildingName;
+ *
+ * THREE QUIRKS, all kept:
+ *  - the OUTER guard tests the buildingKey ALONE while
+ *    IsBuildingQuestResource tests mapID AND buildingKey (topicTree.js
+ *    :394-419). A buildingKey is location-relative
+ *    (BuildingDirectory.MakeBuildingKey over layout x/y + record
+ *    index), so two towns really can share one - and when a place in
+ *    ANOTHER town matches the key while a place HERE is the one that
+ *    was marked on the map, the name that lands is the OUTER place's,
+ *    not the matched one's. The C# comment beside it ("same as
+ *    overrideBuildingName") is true of the common case only;
+ *  - `&&` SHORT-CIRCUITS, so IsBuildingQuestResource is never called
+ *    for a place whose key does not match. That matters because the
+ *    call is not free and because it is what makes the outer guard
+ *    load-bearing at all;
+ *  - there is NO break. The loops run to the end, so the LAST marked
+ *    match wins, not the first.
+ *
+ * `questSource` is the port's QuestMachine + TalkManager pair:
+ * { getAllActiveQuestIds(), getQuest(id), isBuildingQuestResource(
+ * mapID, buildingKey) }. Pure - no host, no window.
+ */
+export function residenceQuestName(questSource, mapID, buildingKey) {
+  let buildingQuestName = '';   // string.Empty if building not involved in active quest
+  for (const questID of questSource?.getAllActiveQuestIds?.() ?? []) {
+    const quest = questSource.getQuest?.(questID);
+    if (!quest) continue;
+    for (const resource of quest.resources?.values?.() ?? []) {
+      if (!resource.isPlace) continue;   // GetAllResources(typeof(Place))
+      if (resource.siteDetails?.buildingKey !== buildingKey) continue;
+      const r = questSource.isBuildingQuestResource?.(mapID, buildingKey);
+      if (!r?.isQuestResource) continue;
+      if (r.locationWasMarkedOnMapByNPC) buildingQuestName = resource.siteDetails.buildingName ?? '';
+    }
+  }
+  return buildingQuestName;
+}
+
+/**
+ * The stamp CreateBuildingNameplates makes on its way past each
+ * building (:672-709), landed on the summaries rows the two hosts hand
+ * this window - which is where DFU does it too: the name is resolved
+ * ONCE per nameplate build (:273 on window push, :917 after a rename),
+ * never per frame, and buildPlates below only reads the field.
+ *
+ * THE GATE IS DFU'S WHOLE LADDER, not just "is it a residence":
+ * the quest arm is the `else if` of `!IsResidence || isOverrideName`
+ * (:676-682), so an override-named residence takes the display-name
+ * arm and never reaches this at all, and an UNdiscovered building
+ * takes the revealUndiscoveredBuildings arm instead.
+ *
+ * Mutates and returns `summaries` - they are built fresh at every
+ * open, and the field has no other producer.
+ */
+export function stampResidenceQuestNames(summaries, discoveredRows, questSource, mapID) {
+  const discovered = new Map((discoveredRows ?? []).map((r) => [r.buildingKey, r]));
+  for (const b of summaries ?? []) {
+    const rec = discovered.get(b.buildingKey);
+    if (!rec || !b.isResidence || rec.isOverrideName) continue;
+    b.questName = residenceQuestName(questSource, mapID, b.buildingKey);
+  }
+  return summaries;
+}
+
 export class ExteriorAutomapWindow {
   /** deps: { locationName, locationId, gridW, gridH,
    *  blocks [{x,y,autoMap}], playerPos() -> location-local [x,y,z],
@@ -425,6 +515,7 @@ export class ExteriorAutomapWindow {
     this._plates = null;  // cached solver output for the current view
     this._platesKey = '';
     this._hoverPlate = null;
+    this._tooltipRect = null;   // the chrome rect whose tooltip is due (automapChrome.tick)
     this.revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
   }
 
@@ -628,7 +719,11 @@ export class ExteriorAutomapWindow {
    *  poll order. */
   tick(dt) {
     this._dt = dt;
-    const { verbs } = this.chrome.tick(dt);
+    // the SHARED chrome answers both halves: the held verbs, and which
+    // rect has rested under the pointer for ToolTipDelay (:22 - one
+    // second, and SuppressToolTip while its own button is held)
+    const { verbs, tooltip } = this.chrome.tick(dt);
+    this._tooltipRect = tooltip;
     for (const v of verbs) this.runVerb(v, dt);
     _zoomLevel = this.cam.orthoSize;   // OnPop stores the level (:551)
     _yawDeg = this.cam.yawDeg;         // ...and the automap script stores the rotation
@@ -827,9 +922,11 @@ export class ExteriorAutomapWindow {
    *    displayName, with customUserDisplayName drawn in its place while
    *    the TOOLTIP keeps the canonical one (:882-885);
    *  - a discovered RESIDENCE shows a plate only when an active quest
-   *    marked it - FLAGGED, the port's quest bridge exposes no
-   *    locationWasMarkedOnMapByNPC, so the arm reads a `questName` the
-   *    host may supply and is otherwise silent;
+   *    marked it (:682-709), which is the `questName` the host stamped
+   *    on the row at open through stampResidenceQuestNames above - and
+   *    a host with no quest machine at all (scenes/exterior.js) leaves
+   *    it unset, which is the same answer DFU gives with no active
+   *    quests: no plate;
    *  - an UNdiscovered building shows a plate only under
    *    revealUndiscoveredBuildings, from the BuildingNames table
    *    (:712-719);
@@ -853,7 +950,10 @@ export class ExteriorAutomapWindow {
           name = rec.displayName || byKey.get(b.buildingKey)?.name || '';
           custom = rec.customUserDisplayName || '';
         } else if (b.questName) {
-          name = b.questName;   // FLAGGED: the port has no locationWasMarkedOnMapByNPC
+          // :705-707 - `if (!string.IsNullOrEmpty(buildingQuestName))`,
+          // the empty string being the "not involved in an active
+          // quest" answer stampResidenceQuestNames leaves behind
+          name = b.questName;
         }
       } else if (this.revealUndiscoveredBuildings) {
         name = b.name || '';
@@ -894,8 +994,9 @@ export class ExteriorAutomapWindow {
   }
 
   /** The native chrome: the caption strip's three live swatches
-   *  (:466-476), the compass on the MAP camera's yaw, and the hovered
-   *  plate's tooltip. */
+   *  (:466-476), the compass on the MAP camera's yaw, the rested
+   *  BUTTON's tooltip and the hovered plate's, in DFU's own draw
+   *  order. */
   _drawChrome(renderer, canvas, font, m, s) {
     if (_art) {
       drawImg(renderer, _art.town, m, CAPTION_STRIP.x, CAPTION_STRIP.y, CAPTION_STRIP.w, CAPTION_STRIP.h);
@@ -925,6 +1026,24 @@ export class ExteriorAutomapWindow {
     if (!_art) {
       // the keyed fallback shell: the location name and the controls
       drawText(renderer, font, `${this.deps.locationName ?? ''} - ${this.mode} view`, m.ox + 4 * s, m.oy + 191 * s, s, [0.9, 0.9, 0.75, 1]);
+    }
+    // THE EIGHT BUTTON TOOLTIPS + THE COMPASS PANEL'S
+    // (UpdateButtonToolTipsText, :230-239), through the block
+    // ui/automapText.js now carries for BOTH windows. These ride the
+    // window's SHARED `defaultToolTip`, so unlike the plate tooltip
+    // below they ARE behind EnableToolTips (DaggerfallBaseWindow.cs
+    // :50-56) - drawToolTipBox's own default - and they wait out
+    // ToolTipDelay where the plate's shows at once.
+    //
+    // ORDER IS DFU'S: Draw() runs base.Draw() - which is where
+    // defaultToolTip lands - and only then "Draw nameplate tooltip
+    // last" (:566-573). Two tooltips can only overlap if the pointer
+    // is over a chrome button AND a plate at once, which the render
+    // panel's scissor rules out; the order is kept anyway because it
+    // is free and it is the reference's.
+    if (this._tooltipRect && this._hoverAt) {
+      const tip = exteriorAutomapTooltipFor(this._tooltipRect, this.automapBinding);
+      if (tip) drawToolTipBox(renderer, m, font, tip, this._hoverAt[0], this._hoverAt[1]);
     }
     // THE PLATE TOOLTIP, through ui/toolTip.js's ONE box - a real
     // ToolTip in DFU (window :870-878), so it is ToolTip.Draw's own

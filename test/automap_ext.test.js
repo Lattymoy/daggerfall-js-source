@@ -25,7 +25,10 @@ import {
   toPanelScreen, layoutQuadRotation, playerMarkerLayoutPos,
   MARKER_TILE_SCALE, MARKER_REF_SPAN, CUSTOM_LOCATION_OFFSET, BACKGROUNDS,
   EXT_HOTKEYS_DOWN, EXT_HOTKEYS_HELD, EXT_HOTKEY_VERBS, EXT_BACKGROUND_HOTKEYS,
+  residenceQuestName, stampResidenceQuestNames,
 } from '../src/ui/exteriorAutomapWindow.js';
+import { EXTERIOR_AUTOMAP_STRINGS, exteriorAutomapTooltipFor } from '../src/ui/automapText.js';
+import { TopicTree, QUEST_INFO_RESOURCE_TYPE, BUILDING_HINT_TYPE } from '../src/systems/topicTree.js';
 import { shortcutBinding, sequenceString } from '../src/systems/dialogShortcuts.js';
 import { nameplatesIntersect, resolveNameplates, nameplateAnchor } from '../src/ui/nameplateLayout.js';
 import { CAPTION_STRIP, CAPTION_SWATCHES, CHROME_RECTS } from '../src/ui/automapChrome.js';
@@ -1073,5 +1076,233 @@ test('c2/S10 the camera ROTATION is remembered across close/reopen, exactly as t
     // ActionResetView is DFU's other way back to north-up (:1304-1313)
     b.runVerb('ActionResetView', 1); b.tick(0);
     assert.equal(new ExteriorAutomapWindow(deps('r:yaw2')).cam.yawDeg, 0);
+  } finally { _resetForTests(); _resetZoomForTests(); }
+});
+
+// ── ROAD-D D5: the exterior automap's FLAGGED residue ────────────────
+
+test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'s double loop, its three quirks, and the plate it finally raises', () => {
+  // ---- the law on its own, with a synthetic QuestMachine/TalkManager
+  // pair, so each quirk is isolated from the store and the window ----
+  const place = (key, name) => ({ isPlace: true, symbol: { name: `p:${key}:${name}` }, siteDetails: { buildingKey: key, buildingName: name } });
+  const calls = [];
+  const marked = (over = {}) => ({ isQuestResource: true, locationWasMarkedOnMapByNPC: true, overrideBuildingName: 'from the inner call', ...over });
+  const quests = {
+    1: { resources: new Map([['a', place(42, 'First House')], ['b', place(99, 'Wrong Key')]]) },
+    2: { resources: new Map([['c', place(42, 'Second House')], ['d', { isPerson: true, symbol: { name: 'x' } }]]) },
+  };
+  const qs = (answer) => ({
+    getAllActiveQuestIds: () => [1, 2],
+    getQuest: (id) => quests[id] ?? null,
+    isBuildingQuestResource: (mapID, key) => { calls.push([mapID, key]); return answer; },
+  });
+  // QUIRK 1 - NO BREAK: both loops run to the end, so the LAST marked
+  // match wins, not the first.
+  assert.equal(residenceQuestName(qs(marked()), 100, 42), 'Second House');
+  // QUIRK 2 - THE `&&` SHORT-CIRCUITS: IsBuildingQuestResource is never
+  // called for the key-99 place, nor for the Person resource.
+  assert.deepEqual(calls, [[100, 42], [100, 42]], 'two Place resources carry the key; nothing else asks');
+  // QUIRK 3 - the name is the OUTER place's `SiteDetails.buildingName`,
+  // NOT the `overrideBuildingName` the inner call answers. The two
+  // agree in the common case (the C# comment says so) and part exactly
+  // when the outer guard - which tests the buildingKey ALONE - matches
+  // a place in another town while IsBuildingQuestResource, which tests
+  // mapID AND buildingKey, matches one here.
+  assert.notEqual(residenceQuestName(qs(marked()), 100, 42), 'from the inner call');
+  // and the two gates the arm really is: the flag, and the resource test
+  assert.equal(residenceQuestName(qs(marked({ locationWasMarkedOnMapByNPC: false })), 100, 42), '',
+    'directional hints alone name nothing - only LocationWasMarkedOnMap does');
+  assert.equal(residenceQuestName(qs({ isQuestResource: false, locationWasMarkedOnMapByNPC: true }), 100, 42), '');
+  assert.equal(residenceQuestName({ getAllActiveQuestIds: () => [] }, 100, 42), '', 'no active quests: string.Empty');
+
+  // ---- and the WIRE, through the port's real IsBuildingQuestResource
+  // (systems/topicTree.js:394-419) and the real discovery store ----
+  _resetForTests(); _resetZoomForTests();
+  restoreDiscovery(null);
+  try {
+    const summaries = buildingSummaries(
+      [{ buildingType: 9, nameSeed: 1, factionId: 0, quality: 10 }], [FAKE_BLOCK], {});
+    const shop = summaries[0], house = summaries[1];
+    assert.equal(house.isResidence, true);
+    const site = {
+      isPlace: true,
+      symbol: { name: '_site_' },
+      siteDetails: { mapId: 100, buildingKey: house.buildingKey, buildingName: 'The Marked House', locationName: 'T', regionName: 'R' },
+    };
+    const quest = { uid: 3, resources: new Map([['_site_', site]]) };
+    const tree = new TopicTree({
+      getQuest: () => quest,
+      getAllActiveQuestIds: () => [3],
+      currentRegionIndex: () => 17,
+      currentRegionName: () => 'R',
+      currentLocationName: () => 'T',
+      currentMapId: () => 100,
+      isPlayerInside: () => false,
+      isPlayerInsideBuilding: () => false,
+      isPlayerInsideCastle: () => false,
+      currentBuildingKey: () => -1,
+      getBuildingList: () => [],
+      exteriorBuildings: () => [],
+      factionName: () => '',
+      addOrReplaceQuestProgressRumor: () => {},
+      undiscoverBuilding: () => {},
+      talkPartner: () => null,
+      onTopicListsUpdated: () => {},
+    });
+    tree.addQuestTopicWithInfoAndRumors(3, site, '_site_', QUEST_INFO_RESOURCE_TYPE.Location, null, null);
+    const source = {
+      getAllActiveQuestIds: () => [3],
+      getQuest: () => quest,
+      isBuildingQuestResource: (mapID, key) => tree.isBuildingQuestResource(mapID, key),
+    };
+    const w = new ExteriorAutomapWindow({
+      ...deps('r:questplate'),
+      buildings: () => summaries,
+      discovered: () => discoveredBuildings('r:questplate'),
+    });
+    const m = { s: 3, ox: 0, oy: 0 };
+    discoverBuilding('r:questplate', { buildingKey: house.buildingKey, name: 'House', buildingType: 17 });
+    // the quest exists and the residence is discovered, but the NPC has
+    // not marked it on the map yet: no plate, exactly as before D5
+    stampResidenceQuestNames(summaries, discoveredBuildings('r:questplate'), source, 100);
+    assert.equal(house.questName, '');
+    assert.deepEqual(w.buildPlates(FONT, m), []);
+    // ...and now an NPC marks it (BUILDING_HINT_TYPE.LocationWasMarkedOnMap)
+    const info = tree.dictQuestInfo.get(3).resourceInfo.get('_site_');
+    info.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;
+    assert.equal(tree.isBuildingQuestResource(100, house.buildingKey).locationWasMarkedOnMapByNPC, true);
+    stampResidenceQuestNames(summaries, discoveredBuildings('r:questplate'), source, 100);
+    assert.equal(house.questName, 'The Marked House');
+    let plates = w.buildPlates(FONT, m);
+    assert.equal(plates.length, 1, 'the quest-marked residence is finally named on the town map');
+    assert.equal(plates[0].text, 'The Marked House');
+    assert.equal(plates[0].isResidence, true);
+    // PlayerGPS.CurrentMapID is a real gate: standing in another town,
+    // IsBuildingQuestResource never matches and the plate goes away
+    house.questName = '';
+    stampResidenceQuestNames(summaries, discoveredBuildings('r:questplate'), source, 101);
+    assert.equal(house.questName, '');
+    assert.deepEqual(w.buildPlates(FONT, m), []);
+    // THE GATE IS DFU'S WHOLE LADDER (:676-682), not "is it a
+    // residence": an OVERRIDE-NAMED residence takes the display-name
+    // arm and is never stamped at all...
+    const over = [{ buildingKey: house.buildingKey, displayName: 'The Odd House', isOverrideName: true, customUserDisplayName: '' }];
+    house.questName = 'stale';
+    stampResidenceQuestNames(summaries, over, source, 100);
+    assert.equal(house.questName, 'stale', 'the override arm never reaches the quest walk');
+    // ...an UNdiscovered building is not stamped either (its arm is
+    // revealUndiscoveredBuildings)...
+    house.questName = '';
+    stampResidenceQuestNames(summaries, [], source, 100);
+    assert.equal(house.questName, '');
+    // ...and a NON-residence never is: the shop keeps its displayName
+    discoverBuilding('r:questplate', { buildingKey: shop.buildingKey, name: 'The Odd Blades', buildingType: 9 });
+    stampResidenceQuestNames(summaries, discoveredBuildings('r:questplate'), source, 100);
+    assert.equal(shop.questName, undefined, 'the non-residence arm is `!IsResidence || isOverrideName`, which returns first');
+    plates = w.buildPlates(FONT, m);
+    assert.deepEqual(plates.map((p) => p.text).sort(), ['The Marked House', 'The Odd Blades']);
+    // AND THE FIELD REALLY HAS A PRODUCER NOW. Before D5 `questName`
+    // had none anywhere in src/, so this arm could never fire and a
+    // quest-marked residence was silently plateless. The stamp lives in
+    // the M-outside door of the host that HAS a quest machine, between
+    // the summaries walk and the window, on DFU's own three inputs.
+    const wsrc = src('src/scenes/world.js');
+    const door = wsrc.slice(wsrc.indexOf('const toggleExteriorAutomap'), wsrc.indexOf('SetCustomBuildingName (ExteriorAutomap.cs:867-899)'));
+    assert.match(door, /\n {4}stampResidenceQuestNames\(summaries, discoveredBuildings\(locId\), \{/);
+    assert.match(door, /getAllActiveQuestIds: activeQuestIds,/, 'QuestMachine.GetAllActiveQuests, the tree\'s own definition');
+    assert.match(door, /isBuildingQuestResource: \(mapID, key\) => topicTree\.isBuildingQuestResource\(mapID, key\),/);
+    assert.match(door, /\}, dfLoc\.mapTableData\?\.mapId \?\? 0\);/, 'PlayerGPS.CurrentMapID');
+    // ...and the OTHER host mounts no quest machine at all, so it
+    // stamps nothing and says why (DFU's empty-set answer is the same)
+    assert.equal(/stampResidenceQuestNames\(/.test(src('src/scenes/exterior.js')), false);
+  } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
+});
+
+test('D5 the exterior BUTTON tooltips: Internal_Strings.csv:908-917 with its typos, DFU\'s own {0}.. order, the Home fallback, and the chrome\'s rest clock', () => {
+  const seq = (name) => sequenceString(shortcutBinding(name));
+  // THE ROWS, byte for byte - including the two misprints a player
+  // really reads (an unopened ")" on the zoom-in row, an unclosed "("
+  // on the zoom-out row) and the DOUBLE SPACE on rotate-left.
+  assert.equal(EXTERIOR_AUTOMAP_STRINGS.exteriorAutomapToolTipUpstairsButton,
+    'left click: zoom in (hotkey: {0})\\rright click: apply maximum zoom)');
+  assert.equal(EXTERIOR_AUTOMAP_STRINGS.exteriorAutomapToolTipDownstairsButton,
+    'left click: zoom out (hotkey: {0}\\rright click: apply minimum zoom)');
+  assert.match(EXTERIOR_AUTOMAP_STRINGS.exteriorAutomapToolTipRotateLeftButton, /to the left {2}\(hotkey: \{1\}\)$/);
+  assert.equal(EXTERIOR_AUTOMAP_STRINGS.exteriorAutomapToolTipPanelCompass,
+    'left click: focus player position (hotkey: {0})\\rright click: reset view (hotkey: {1})');
+  // ...and the escape is the CSV's two-character \r, which toolTip.js's
+  // UpdateTextRows collapses - nothing here re-spells it
+  assert.equal(EXTERIOR_AUTOMAP_STRINGS.exteriorAutomapToolTipForwardButton.includes('\r'), false);
+
+  // THE SLOTS, in the C# argument order (:230-239). The grid row's
+  // eight are next-mode, the three DIRECT view modes, then the four
+  // backgrounds - the sentence's own order is NOT the argument order.
+  assert.equal(exteriorAutomapTooltipFor('grid'),
+    `left click: switch to next view mode (hotkey: ${seq('ExtAutomapSwitchToNextExteriorAutomapViewMode')})\\ravailable view modes are:`
+    + `\\r- original (hotkey ${seq('ExtAutomapSwitchToExteriorAutomapViewModeOriginal')})`
+    + `\\r- extra: includes extra buildings (hotkey ${seq('ExtAutomapSwitchToExteriorAutomapViewModeExtra')})`
+    + `\\r- all: includes extra buildings, ground flats (hotkey ${seq('ExtAutomapSwitchToExteriorAutomapViewModeAll')})`
+    + `\\rswitch background texture with ${seq('ExtAutomapSwitchToExteriorAutomapBackgroundOriginal')}, ${seq('ExtAutomapSwitchToExteriorAutomapBackgroundAlternative1')}`
+    + `, ${seq('ExtAutomapSwitchToExteriorAutomapBackgroundAlternative2')}, ${seq('ExtAutomapSwitchToExteriorAutomapBackgroundAlternative3')}`);
+  assert.equal(exteriorAutomapTooltipFor('forward'),
+    `left click: move up (hotkey: ${seq('ExtAutomapMoveForward')})\\rright click: move to north location border (hotkey: ${seq('ExtAutomapMoveToNorthLocationBorder')})`);
+  assert.equal(exteriorAutomapTooltipFor('compass'),
+    `left click: focus player position (hotkey: ${seq('ExtAutomapFocusPlayerPosition')})\\rright click: reset view (hotkey: ${seq('ExtAutomapResetView')})`);
+  // THE STAIR ROWS TAKE THE ZOOM ROWS, not the Upstairs/Downstairs rows
+  // their BUTTONS are named after (:237-238), and neither row
+  // substitutes anything for its right-click max/min zoom.
+  assert.equal(exteriorAutomapTooltipFor('upstairs'),
+    `left click: zoom in (hotkey: ${seq('ExtAutomapZoomIn')})\\rright click: apply maximum zoom)`);
+  assert.notEqual(seq('ExtAutomapZoomIn'), seq('ExtAutomapUpstairs'));
+  assert.equal(exteriorAutomapTooltipFor('downstairs'),
+    `left click: zoom out (hotkey: ${seq('ExtAutomapZoomOut')}\\rright click: apply minimum zoom)`);
+  // the EXIT button, the render panel and the micro-map rect carry none
+  for (const name of ['exit', 'panel', 'microMap', 'nope']) assert.equal(exteriorAutomapTooltipFor(name), null);
+  // SHORTCUT-OR-FALLBACK, the exterior window's own copy (:217-224) at
+  // the SAME KeyCode.Home (:55): a row whose key code is the player's
+  // AutoMap binding prints Home instead - the key that opens the map
+  // must not also drive a button while it is up.
+  assert.match(exteriorAutomapTooltipFor('forward', 'ArrowUp'), /move up \(hotkey: Home\)/);
+  assert.match(exteriorAutomapTooltipFor('forward', 'ArrowUp'), /north location border \(hotkey: Shift-Home\)/,
+    'the test is the KEY CODE alone - modifiers do not save a sequence');
+
+  // AND THE WINDOW DRAWS THEM, on the chrome clock it was already
+  // computing and throwing away.
+  _resetForTests(); _resetZoomForTests();
+  try {
+    setValue('GUI', 'EnableToolTips', true);
+    setValue('GUI', 'ToolTipBackgroundColor', '10203040');
+    const log = [];
+    const r = stubRenderer(log);
+    const F = { ...FONT, tex: 'atlas' };
+    const w = new ExteriorAutomapWindow(deps('r:tips'));
+    const canvas = { width: 320, height: 200 };
+    const bgA = 0x40 / 255;
+    const box = () => log.filter((l) => l.kind === 'quad')
+      .find((q) => q.tex === null && q.color && q.color.length === 4 && Math.abs(q.color[3] - bgA) < 1e-9);
+    w.hover(110, 180);          // inside the FORWARD button (105..126 x 171..190)
+    w.tick(0.5); log.length = 0; w.draw(r, canvas, F, 1);
+    assert.equal(box(), undefined, 'nothing before ToolTipDelay (DaggerfallAutomapWindow.cs:22 - one second)');
+    w.tick(0.5); log.length = 0; w.draw(r, canvas, F, 1);
+    const shown = box();
+    assert.ok(shown, 'the rested button\'s tooltip drew');
+    assert.equal(shown.dst.y, 180 + 4, 'at the cursor plus ToolTip.MouseOffset (0,4)');
+    // two rows of text, so the box is glyph*2 + 3 tall (toolTip.js) -
+    // and this row is WIDER than the 320-px screen, so ToolTip.Draw's
+    // right-edge shift is what places it
+    assert.equal(shown.dst.h, 6 * 2 + 3);
+    assert.ok(shown.dst.w > 320);
+    assert.equal(shown.dst.x, 320 - shown.dst.w, 'x -= (x + w) - NATIVE_W');
+    // ...and unlike the PLATE tooltip these ride the window's shared
+    // defaultToolTip, so EnableToolTips really does gate them
+    // (DaggerfallBaseWindow.cs:50-56)
+    setValue('GUI', 'EnableToolTips', false);
+    log.length = 0; w.draw(r, canvas, F, 1);
+    assert.equal(box(), undefined, 'the master switch is honoured for the BUTTON tooltips');
+    setValue('GUI', 'EnableToolTips', true);
+    // and the render panel carries no tooltip at all - moving off the
+    // rect restarts the delay, so a second of rest there shows nothing
+    w.hover(160, 100); w.tick(1); log.length = 0; w.draw(r, canvas, F, 1);
+    assert.equal(box(), undefined, 'the render panel carries no tooltip');
   } finally { _resetForTests(); _resetZoomForTests(); }
 });

@@ -1294,6 +1294,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       getGpuMesh(99900).catch(() => {});
       const summaries = buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
         { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex) });
+      // ROAD-D D5: NO stampResidenceQuestNames here, and that is not a
+      // gap. The residence plate arm (ExteriorAutomap.cs:682-709) walks
+      // QuestMachine.GetAllActiveQuests, and this dev host mounts no
+      // quest bridge at all (see TickRest's note above) - so the honest
+      // answer for every residence is DFU's own empty-set answer,
+      // `buildingQuestName = string.Empty`, which is what leaving
+      // `questName` unset already means to buildPlates. world.js is the
+      // host that has the machine and it does the stamp.
       townTalk.showOverlay(new ExteriorAutomapWindow({
         locationName: dfLocation.name ?? locationName,
         locationId: locId,

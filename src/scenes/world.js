@@ -72,7 +72,7 @@ import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e:
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
-import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { ExteriorAutomapWindow, stampResidenceQuestNames } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -3566,6 +3566,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // walk over ALL buildings, not off the discovered doors.
     const summaries = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
       { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+    // ROAD-D D5: CreateBuildingNameplates' residence arm (:682-709).
+    // DFU resolves the quest name for every discovered residence AS IT
+    // BUILDS THE NAMEPLATES - once per open (:273), never per frame -
+    // and this is that build. The quest source is the pair DFU reads:
+    // QuestMachine.GetAllActiveQuests/GetQuest and TalkManager
+    // .IsBuildingQuestResource, which the topic tree already carries.
+    // PlayerGPS.CurrentMapID is the map ID of the location the player
+    // is standing in, which is exactly the pixel this door resolved.
+    stampResidenceQuestNames(summaries, discoveredBuildings(locId), {
+      getAllActiveQuestIds: activeQuestIds,
+      getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
+      isBuildingQuestResource: (mapID, key) => topicTree.isBuildingQuestResource(mapID, key),
+    }, dfLoc.mapTableData?.mapId ?? 0);
     townTalk.showOverlay(new ExteriorAutomapWindow({
       locationName: dfLoc.name,
       locationId: locId,
@@ -4594,9 +4607,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // seams land here; the tree's WINDOW consumers (the Tell-me-about
   // page, the quest Where-is entries) mount with TK-v; the position
   // half of BuildingInfo (the compass) rides TK-iii.
+  // QuestMachine.GetAllActiveQuests (:849-859). ONE definition: the
+  // topic tree reads it, and so does the exterior automap's
+  // residence-plate arm (ExteriorAutomap.cs:686), which walks the same
+  // set.
+  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid);
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
-    getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid),
+    getAllActiveQuestIds: activeQuestIds,
     currentRegionIndex: () => _questRegionIndex(),
     currentRegionName: () => questWorld.currentRegionName(),
     currentLocationName: () => _questLoc()?.name ?? '',
