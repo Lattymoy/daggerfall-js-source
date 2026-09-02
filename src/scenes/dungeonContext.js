@@ -12,7 +12,8 @@ import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
-import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, revealAllAutomap, hideAllAutomap, toggleAutomapDebugTeleportMode, automapDebugTeleportMode } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs
+import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 import { applyTextureTable, isMainStoryDungeon } from '../world/dungeonTextures.js';   // AUDIT 28 W4: the warp arm's story-dungeon gate
@@ -1622,16 +1623,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // handed down by world.js/worldModes; the standalone ?dungeon
     // probe has none and the chain no-ops).
     onNewReadySpell: (sp) => opts.questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => {
-      opts.questBridge?.machine?.notifyCastReadySpell?.(sp);
-      // MW-D39: THE SPELL GOES, AND SO DOES THE ARM. The reference's
-      // own cast moment - RaiseOnCastReadySpell, the frame the spell
-      // leaves the hand - runs the spellcast group's release. An
-      // animation, never a gate: a missing clip is a note on the card
-      // and the spell still flies.
-      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
-      weaponRig.castSpellAnim(sp?.rangeType, sp?.element);
-    },
+    onCastReadySpell: (sp) => opts.questBridge?.machine?.notifyCastReadySpell?.(sp),
+    // MW-D39: THE SPELL GOES, AND SO DOES THE ARM.
+    // ROAD-E6: and it goes FIRST. This is CastReadySpell's PlayOneShot
+    // (:430-435) - the hands start as the magicka is spent, and the
+    // engine parks the spell's resolution on the animation's release
+    // frame five steps (0.2s) later. An animation, never a gate: a rig
+    // that refuses (no CIF for the element) answers false and the
+    // engine releases on the spot.
+    startCastAnim: (sp, onRelease) => weaponRig.castSpellAnim(sp?.rangeType, sp?.element, onRelease),
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
@@ -3618,6 +3618,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // return runs DFU's layout guard (:2385-2386) over it.
   const automapModel = buildRevealIndex(automapEntries);
   bindAutomapLayout(automapRec, automapModel);
+  // ROAD-E E3: Automap.Start's LAST act (:965-975) - AutoMapConsoleCommands
+  // .RegisterCommands, inside DFU's own try/catch. It lands after the bind
+  // because the bind is what makes `Automap.instance` answer.
+  registerAutomapConsoleCommands();
   // ROAD-C c2/S8: THE AUTOMAP'S TELEPORT LISTENER. DFU subscribes
   // Automap.OnTeleportAction to the static DaggerfallAction event at
   // :924, so a portal the player walks through is recorded on the map
@@ -3828,26 +3832,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         debugTeleport: (pos) => actions.onTeleport?.({ pos, yawDeg: 0 }),
       });
     },
-    /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688). The
-     *  port has no in-game console; the standalone host mounts these on
-     *  its probe surface, which is where every other developer verb in
-     *  this port lives. The RETURN STRINGS are DFU's own. */
-    automapCommand(name) {
-      if (name === 'map_revealall') {
-        revealAllAutomap(automapRec, automapModel);
-        return 'dungeon has been completely revealed on the automap';
-      }
-      if (name === 'map_hideall') {
-        hideAllAutomap(automapRec);
-        return 'hide complete on automap';
-      }
-      if (name === 'map_teleportmode') {
-        return toggleAutomapDebugTeleportMode()
-          ? 'debug teleport mode has been enabled'
-          : 'debug teleport mode has been disabled';
-      }
-      return `unknown command ${name}`;
-    },
+    /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688).
+     *  ROAD-E E3 put them on the real ConsoleCommandsDatabase, where C#
+     *  registers them (systems/automap.js's registrar, above), so this
+     *  is now the standalone host's probe DOOR onto that database and
+     *  not a second copy of the three answers: an unknown name gets
+     *  NoSuchCommandException's own "Command X not found." message, and
+     *  both gates - IsPlayerInside and a null Automap.instance - are the
+     *  database's. */
+    automapCommand(name) { return executeConsoleCommand(name, []); },
     automapDebugTeleportMode,
     enemies,
     foes,
@@ -4296,6 +4289,41 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  event already holds; every other phase leaves it null. */
     overlayPointer(phase, vx, vy, button = 0, mods = null) {
       activeOverlay?.pointer?.(phase, vx, vy, button, mods);
+      // ROAD-E E1: THE RELEASE EDGE, on this slot's one pointer door.
+      // A window with no `pointer` seam at all still has to hear the
+      // button come up, because a press can LATCH: the list picker's
+      // thumb drag is VerticalScrollBar.Update (:101-130), whose
+      // `else` arm (:123-129) drops `draggingThumb` the frame
+      // GetMouseButton(0) reads false. Unwired, the latch survived
+      // until the next mouse move.
+      if (phase === 'up') activeOverlay?.release?.();
+    },
+    /**
+     * ROAD-E E1: THE KEY-UP SEAM, `overlayInput`'s mirror.
+     *
+     * DFU windows read `InputManager`'s held-key dictionary in their
+     * own Update, so the release is an edge they can all see
+     * (HotkeySequence.IsUpWith / IsPressedWith, HotkeySequence.cs
+     * :174-183). The port's windows are handed events, and this slot
+     * was handed presses only - so the dungeon automap's two-phase
+     * toggle-close (DaggerfallAutomapWindow.cs:703-713) had no UP to
+     * close on and its twenty-two IsPressedWith camera arms had no
+     * held state to poll. `ui/input.js`'s `routeKeyUp` is the door the
+     * two hosts that mount this context call.
+     *
+     * OPTIONAL on the window, like `keyup` in townTalk's slot: a
+     * window that defines none is one whose buttons subscribe no
+     * keyboard handler. A release that ENDS the window drains here
+     * exactly as `overlayInput`'s does.
+     */
+    overlayKeyUp(code, e = null) {
+      if (!activeOverlay) return;
+      activeOverlay.keyup?.(code, e);
+      if (activeOverlay?.done) {
+        surfacePlayer();
+        activeOverlay = null;
+      }
+      dungeonWindows.reconcile(activeOverlay);
     },
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering

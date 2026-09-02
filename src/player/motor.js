@@ -293,9 +293,11 @@ export class PlayerMotor {
     this.stats = stats;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
     // AUDIT 26 F027: () => PlayerEntity.CarriedWeight (:184 - the
-    // pack's weight plus gold at 0.0025 kg a piece, which the port's
-    // inventory.totalWeight already is, gold being an item here).
-    // A headless motor passes none and is never over-encumbered.
+    // pack's weight PLUS `goldPieces * goldPieceWeightInKg`). E4 made
+    // the second term real: gold is a counter now rather than a stack
+    // in the bag, so a host hands inventory.carriedWeight, which is
+    // that member. A headless motor passes none and is never
+    // over-encumbered.
     this.carriedWeight = carriedWeight;
     // M3 CLIMBING (ClimbingMotor, classic path): the check machine -
     // mounted ONLY when the host passes deps, exactly as the

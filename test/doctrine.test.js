@@ -243,7 +243,11 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
     const text = readFileSync(join(root, f), 'utf8');
     // Both spellings: the shouted convention, and the prose one that let
     // messageBox.js's row go unenforced when this pin first landed.
-    if (!/\bDEPARTURE\b/.test(text) && !/deliberate departure/i.test(text)) continue;
+    // ROAD-E fix-D: and the PLURAL. `\bDEPARTURE\b` is false on
+    // "RECORDED DEPARTURES", so nine files that shout the plural - the
+    // spell maker among them, which cited a Ledger A row that did not
+    // exist - were never scanned at all. The trailing S is now optional.
+    if (!/\bDEPARTURES?\b/.test(text) && !/deliberate departure/i.test(text)) continue;
     // The LEDGER must name the file. Citing the Ledger from the source side is
     // NOT enough and deliberately does not count here: F7's eleven sites all
     // cited "the Ledger A engine-PRNG rule" and no such row existed. A claim

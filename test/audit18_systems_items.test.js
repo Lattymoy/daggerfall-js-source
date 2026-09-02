@@ -15,9 +15,10 @@ import {
 } from '../src/systems/loot.js';
 import { getRandomBookID } from '../src/systems/books.js';   // IM1: the mint's message roll
 import {
-  goldStack, GOLD_TEMPLATE, addItem, transferAll, itemWeight, totalWeight,
+  goldStack, GOLD_TEMPLATE, addItem, itemWeight, totalWeight, carriedWeight,
   isStackable, ARROW_TEMPLATE, OIL_TEMPLATE,
 } from '../src/systems/inventory.js';
+import { planTake, applyTransfer } from '../src/systems/itemTransfer.js';   // E4: the transfer door
 import { goldAmount } from '../src/systems/court.js';
 import { stockShopShelf, randomizeArmorVariant } from '../src/systems/shopStock.js';
 import { ITEM_TEMPLATES, inventoryItemImage } from '../src/systems/itemTemplates.js';
@@ -38,28 +39,38 @@ const lcg = (s) => { let x = s >>> 0; return () => { x = (x * 1664525 + 10139042
 //    dungeon takeLoot seam) / transferAll (the container seam) ->
 //    goldAmount, which is what every spend reads.
 // ---------------------------------------------------------------
-test('audit18 items: looted gold carries the Currency template and merges into the player stack', () => {
+test('audit18 items: looted gold carries the Currency template, and the transfer door spends it into the counter', () => {
   // key J at level 3, gold roll 0 -> MinGold 50 * 3 = 150, everything else misses.
   const looted = generateItems('J', { level: 3, gender: 'male' }, seq(0, 0.99));
-  assert.deepEqual(looted, [{ group: 'Currency', templateIndex: GOLD_TEMPLATE, name: 'Gold Pieces', stackCount: 150 }]);
+  assert.deepEqual(looted,
+    [{ group: 'Currency', templateIndex: GOLD_TEMPLATE, name: 'Gold Pieces', value: 1, stackCount: 150 }]);
   assert.equal(GOLD_TEMPLATE, 276);
 
-  // the container seam (worldModes transferAll)
-  const player = { items: [goldStack(100)] };
-  assert.equal(transferAll(looted, player.items), 1);
-  assert.deepEqual(player.items, [{ group: 'Currency', templateIndex: GOLD_TEMPLATE, name: 'Gold Pieces', stackCount: 250 }]);
-  assert.equal(player.items.filter((i) => i.group === 'Currency').length, 1);
+  // E4: the seam is DoTransferItem (:1562-1571), not a bulk merge -
+  // `PlayerEntity.Items == to` intercepts the pile, adds its
+  // stackCount to GoldPieces, removes it from the loot and RETURNS.
+  const player = { items: [], goldPieces: 100 };
+  const plan = planTake(looted[0], { bag: player.items, entity: null });
+  assert.equal(plan.sound, 'gold', 'and it clinks (:1569), not clicks');
+  assert.equal(applyTransfer(looted[0], plan, looted, player.items, { entity: player, toPlayer: true }), null,
+    'DFU RETURNS out of DoTransferItem - nothing arrives to equip or claim');
+  assert.equal(looted.length, 0, 'from.RemoveItem(item)');
+  assert.equal(player.items.length, 0, 'the pack can never hold Currency');
   assert.equal(goldAmount(player), 250);
 
-  // the corpse/pile seam (dungeonContext takeLoot uses addItem per row)
-  const player2 = { items: [goldStack(100)] };
-  for (const it of generateItems('J', { level: 3, gender: 'male' }, seq(0, 0.99))) addItem(player2.items, it);
-  assert.equal(player2.items.length, 1);
-  assert.equal(goldAmount(player2), 250);
-
-  // the row really carries template 276: Gold Pieces weigh 0.0025 kg each
+  // the row really carries template 276: Gold Pieces weigh 0.0025 kg
+  // each, and CarriedWeight bills the counter by hand (:184).
   assert.equal(ITEM_TEMPLATES[GOLD_TEMPLATE].baseWeight, 0.0025);
-  assert.equal(itemWeight(player.items[0]), 0.0025 * 250);
+  assert.equal(itemWeight(goldStack(250)), 0.0025 * 250);
+  assert.equal(carriedWeight(player), 0.0025 * 250);
+
+  // and the WAGON is not the pack: a pile stashed in the cart stays an
+  // item, which is the stack DaggerfallBankManager.cs:343 reads back.
+  const cart = [];
+  const pile = generateItems('J', { level: 3, gender: 'male' }, seq(0, 0.99))[0];
+  applyTransfer(pile, { amount: pile.stackCount }, [pile], cart);
+  assert.equal(cart.length, 1);
+  assert.equal(cart[0].stackCount, 150);
 });
 
 // ---------------------------------------------------------------

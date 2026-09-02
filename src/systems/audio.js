@@ -390,3 +390,51 @@ export class AudioEngine {
 }
 
 export const audio = new AudioEngine();
+
+/**
+ * E6: DaggerfallAudioSource, as much of it as the QUEST MACHINE's own
+ * component needs - `QuestMachine.Instance.GetComponent<
+ * DaggerfallAudioSource>()`, the one source every PlaySound quest
+ * action in every running quest shares (PlaySound.cs:110-116).
+ *
+ * Two methods, both verbatim:
+ *  - PlayOneShot (DaggerfallAudioSource.cs:188-199).
+ *  - IsPlaying (:244-247) - `audioSource.isPlaying`, which is what
+ *    PlaySound's busy-skip reads. A WebAudio one-shot is a fire-and-
+ *    forget BufferSource with no `isPlaying` of its own, so the source
+ *    keeps the END TIME of the clip it last started: the engine's
+ *    playOneShot already answers the clip's duration (it has since A3's
+ *    exclusive ambient channel), so "busy" is "the clip that started
+ *    has not run out yet".
+ *
+ * The clock is real time, which is the clock Unity's isPlaying runs on
+ * - not the game clock PlaySound's interval is measured in. A clip
+ * that never started (no archive, no gesture yet, no such index) leaves
+ * the source idle, exactly as Unity's does when GetAudioClip answers
+ * null.
+ */
+export class QuestAudioSource {
+  constructor(engine = audio, clock = defaultAudioClock) {
+    this._audio = engine;
+    this._clock = clock;
+    this._endsAt = -Infinity;
+  }
+
+  /** IsPlaying (:244-247). */
+  isPlaying() { return this._clock() < this._endsAt; }
+
+  /** PlayOneShot (:188-199). Answers the duration the engine reported,
+   *  or undefined when nothing started. */
+  playOneShot(index, volume = 1) {
+    const dur = this._audio.playOneShot(index, volume);
+    if (typeof dur === 'number' && dur > 0) this._endsAt = this._clock() + dur;
+    return dur;
+  }
+}
+
+/** Real seconds, monotonic - `performance.now()` where there is one. */
+export function defaultAudioClock() {
+  return (typeof performance !== 'undefined' && performance.now)
+    ? performance.now() / 1000
+    : Date.now() / 1000;
+}

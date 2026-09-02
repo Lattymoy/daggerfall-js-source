@@ -67,8 +67,14 @@
 //   region maps (:648-660, :821-833) have no door here.
 // - no world data replacement: checkLocationDiscovered reads the
 //   BAKED map table flag, which is what the TV-slice already did.
-// - the console's map_reveallocations pair has no console to live
-//   in; the flag survives as setRevealUndiscoveredLocations.
+// - (RETIRED by ROAD-E E3, 2026-09-02: the console's THREE commands -
+//   map_reveallocations, map_hidelocations and map_reveallocation -
+//   are registered on the real ConsoleCommandsDatabase by the
+//   registrar at the foot of this file, and the flag they set is the
+//   same setRevealUndiscoveredLocations. What has no port is the
+//   console WINDOW, which is a recorded departure in Ledger A: DFU's
+//   is the third-party UnityConsole addon's Unity uGUI prefab, not
+//   DFU source.)
 // - DFU's Update() polls the mouse every frame; the port's windows
 //   are told (hover/click), so the same work happens on the move.
 //
@@ -103,6 +109,7 @@ import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { hasDiscoveredLocationId } from '../systems/discovery.js';
 import { getBool } from '../systems/settings.js';
+import { registerCommand, consoleLog, HELP_COMMAND } from '../systems/consoleCommands.js';   // E3: the console command database
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData } from '../systems/travelMapState.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -238,8 +245,9 @@ export function getPixelColorIndex(locationType, filters = {}) {
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 const packRGBA = (r, g, b, a) => (((a << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0;
 
-// map_reveallocations / map_hidelocations (:1788-1884) - the flag
-// outlives the console the port does not have.
+// map_reveallocations / map_hidelocations (:1788-1884). E3 gave them
+// the database DFU registers them in (the registrar is at the foot of
+// this file); the flag they set is this one.
 let _revealUndiscoveredLocations = false;
 export function setRevealUndiscoveredLocations(on) { _revealUndiscoveredLocations = !!on; }
 export const revealUndiscoveredLocations = () => _revealUndiscoveredLocations;
@@ -1116,6 +1124,11 @@ export class TravelMapWindow {
     }
   }
 
+  /** ROAD-E E1: the release edge, forwarded to the teleport list the
+   *  way `hover` is - the thumb latches on the press, and until the
+   *  hosts routed pointer UP nothing dropped it but the next move. */
+  release() { this.picker?.release(); }
+
   hover(vx, vy, e = null) {
     if (this.telePopUp) return;   // a yes/no box has nothing to hover
     if (this.popUp) { this.popUp.hover(vx, vy); return; }
@@ -1371,5 +1384,60 @@ export class TravelMapWindow {
     if (messageBoxArtLoaded() && drawMessageBox(renderer, m, font, this._box)) return;
     (this._box.rows ?? []).forEach((r, i) => drawText(renderer, font, r.text ?? r,
       m.ox + 20 * m.s, m.oy + (20 + i * 10) * m.s, m.s, [0.9, 0.9, 0.75, 1]));
+  }
+}
+
+// ── ROAD-E E3: TravelMapConsoleCommands ──────────────────────────────
+// DaggerfallTravelMapWindow.cs:1786-1884, registered in the window's
+// own constructor there (:226-234) and here by the host that builds
+// this window - the port's windows are per-open and its hosts are what
+// persist, which is also where `isPlayerInside` and PlayerGPS live.
+// Three commands, not two: the recorded departure above named the pair
+// this file's flag sets, and `map_reveallocation` (singular) is the
+// third row of the same RegisterCommands.
+export function registerTravelMapConsoleCommands(deps = {}) {
+  const inside = () => !!deps.isPlayerInside?.();
+  try {
+    registerCommand('map_reveallocations',
+      'Reveals undiscovered locations on travelmap (temporary)',
+      'map_reveallocations',
+      () => {
+        if (inside()) return 'this command only has an effect when outside';
+        _revealUndiscoveredLocations = true;
+        return 'undiscovered locations have been revealed (temporary) on the travelmap';
+      });
+    registerCommand('map_hidelocations',
+      'Hides undiscovered locations on travelmap',
+      'map_hidelocations',
+      () => {
+        if (inside()) return 'this command only has an effect when outside';
+        _revealUndiscoveredLocations = false;
+        return 'undiscovered locations have been hidden on the travelmap again';
+      });
+    // RevealLocation (:1846-1884). Its `error` field is declared and
+    // never read in C#, which is why no string below is it. The
+    // too-few-arguments arm LOGS the sentence and answers with HELP's
+    // own details block for this command - and C#'s try/catch around
+    // the log answers the same way either way, because the only thing
+    // in the try is the log itself.
+    registerCommand('map_reveallocation',
+      'Permanently reveals the location with [locationName] in region [regionName] on travelmap',
+      'map_reveallocation [regionName] [locationName] - inside the name strings use underscores instead of spaces, e.g Dragontail_Mountains',
+      (args) => {
+        if (args == null || args.length < 2) {
+          consoleLog('please provide both a region name as well as a location name');
+          return HELP_COMMAND.execute(['map_reveallocation']);
+        }
+        const regionName = String(args[0]).replaceAll('_', ' ');
+        const locationName = String(args[1]).replaceAll('_', ' ');
+        try {
+          deps.discoverLocation?.(regionName, locationName);
+          return `revealed location ${regionName} : ${locationName} on the travelmap`;
+        } catch (ex) {
+          return `Could not reveal location: ${ex?.message ?? ex}`;
+        }
+      });
+  } catch (ex) {
+    console.error(`Error Registering Travelmap Console commands: ${ex?.message ?? ex}`);
   }
 }

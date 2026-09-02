@@ -166,8 +166,8 @@ test('F140: both sheets show coins PLUS letters of credit', () => {
   // = PlayerEntity.cs:1313-1316 `goldPieces + items.GetCreditAmount()`.
   const e = {
     name: 'Aelwyn', level: 1, stats: {}, skills: {},
+    goldPieces: 1287,   // E4: PlayerEntity.GoldPieces, the counter
     items: [
-      { group: 'Currency', name: 'Gold pieces', stackCount: 1287 },
       { group: 'MiscItems', templateIndex: LETTER_OF_CREDIT_TEMPLATE, name: 'Letter of credit', value: 5000 },
     ],
   };
@@ -179,6 +179,9 @@ test('F140: both sheets show coins PLUS letters of credit', () => {
   assert.match(s, /label\(totalGoldAmount\(e\), 39, 44\);/, 'the (39,44) label is GetGoldAmount');
   assert.equal(s.includes("it.group === 'Currency')?.stackCount"), false,
     'the coins-only read is gone from the sheet');
+  // E4: and there is no Currency stack left to read anywhere - the
+  // coins are PlayerEntity.GoldPieces.
+  assert.equal(sheetModel({ ...e, goldPieces: 0 }).gold, 5000, 'letters alone still show');
 });
 
 // ── F141: THE CENSOR WELDS HANG OFF PlayerNudity ──────────────────

@@ -27,7 +27,7 @@ import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/auto
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb } from '../player/activate.js';   // QG1: the foe-click door
-import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
@@ -52,7 +52,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
-import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
+import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -88,6 +88,7 @@ import { setDeathPresenter, setAvoidDeathHook, hurtPlayer } from '../characters/
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { largeHudOptions, routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
@@ -209,7 +210,7 @@ import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '.
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
-import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
+import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker; E8: on INFO01I0 art
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
@@ -878,6 +879,7 @@ export function createWorldModes(host) {
     preloadPurchaseArt({ renderer, fetchBytes, palette });   // H2: BANK01I0 for the house market
     preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
     preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
+    preloadSpellMakerArt({ renderer, fetchBytes, palette });   // E8: INFO01I0 + MASK01I0 + the editor's MASK05I0
     preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
       .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
     preloadAutomapArt({ renderer, fetchBytes, palette })   // ROAD-C c2/S9: AMAP00I0 + AMAP01I0 - the map opens inside a building too
@@ -1442,7 +1444,10 @@ export function createWorldModes(host) {
       rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       cityName: () => townTalk?.cityName?.() ?? (interiorBuilding?.name ?? ''),
       weight: () => ({
-        carriedWeightKg: totalWeight(playerEntity.items ?? []),
+        // E4: PlayerEntity.CarriedWeight (:1039), the gold counter's
+        // own term included - the sell gate weighs the coin the sale
+        // would ADD against what the player already carries.
+        carriedWeightKg: carriedWeight(playerEntity),
         maxEncumbranceKg: entityMaxEncumbrance(playerEntity),   // DaggerfallTradeWindow.cs:1039 reads PlayerEntity.MaxEncumbrance
       }),
       commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
@@ -1656,26 +1661,31 @@ export function createWorldModes(host) {
   //     ?interior and ?dungeon scenes lay out ONE building interior /
   //     one dungeon and never an RMB block's exterior.
   //
-  // FLAGGED, above ground only, each with the DFU line it owes.
-  // ROAD-D D10 re-examined both and NARROWED them to what is really
-  // open; neither shrank to a one-file swap.
+  // ROAD-E E3 CLOSED THE FIRST OF THESE TWO (2026-09-02).
+  // QuestMachine.SetupIndividualStaticNPC (RMBLayout.cs:377/:453), the
+  // third thing layout does to an exterior NPC, RUNS ABOVE GROUND NOW:
+  // `scenes/world.js`'s standPixelNpcs is that call site, at RMBLayout's
+  // own moment - per NPC, before the billboard is batched, so the away
+  // arm's SetActive(false) really does take it out of the draw AND out
+  // of the ray (npcTargets skips an inactive person, because a disabled
+  // GameObject has no BoxCollider either). Its two halves are DFU's:
+  // an individual a live quest placed elsewhere loses its home copy,
+  // and every other individual gets the BOOTSTRAP QuestResourceBehaviour
+  // that `pn.questBehaviour?.doClick()` below reads - the follow-up
+  // quest's door, since DoClick's individual broadcast walks the live
+  // quests at CLICK time. The port's one seam beyond C# is that
+  // QuestMachine is a scene singleton there and this port's bridge is
+  // built one statement after the start pixel, so the pass is
+  // idempotent and runs again over the already-laid pixels when the
+  // bridge lands, with no frame drawn in between; it is NOT a
+  // quest-change re-run, because DFU has none - a quest that starts
+  // while you stand in the town leaves the home copy there until the
+  // block is laid again. `scenes/exterior.js` mounts no quest bridge
+  // (it says so at its own NPC site), which is C#'s empty-machine
+  // answer: everyone stands.
   //
-  //   - QuestMachine.SetupIndividualStaticNPC (RMBLayout.cs:376/:447),
-  //     the third thing layout does to an exterior NPC. The LAW is
-  //     ported and idle (systems/quest/machine.js:708-730, the away
-  //     arm's setActive(false) included); what is missing is a moment
-  //     to run it. The interior path runs it at DFU's own moment
-  //     (interiorContext's people walk) because the interior is built
-  //     long after the quest bridge exists; the exterior blocks are
-  //     laid out BEFORE it in both hosts (world.js builds the start
-  //     pixel first), so there is no machine to ask yet, and doing it
-  //     at click time would be the wrong moment - the away arm has to
-  //     take the billboard out of the batch AT LAYOUT. Closing it is a
-  //     MULTI-HOST slice in world.js and exterior.js: either defer the
-  //     exterior block's NPC pass until the bridge exists, or re-run
-  //     one pass over every already-laid pixel when it lands. The
-  //     click still stamps LastNPCClicked and still honours a faction
-  //     listener.
+  // FLAGGED, above ground only, with the DFU line it owes:
+  //
   //   - the GUILD SERVICE popup, if a street NPC ever carries a guild
   //     service faction: its window and every window it dispatches to
   //     mount in `interiorOverlay`, which only the interior/dungeon
@@ -2360,7 +2370,7 @@ export function createWorldModes(host) {
         return i < 0 ? null : playerEntity.items.splice(i, 1)[0];
       },
       addLetter: (loc) => { (playerEntity.items ??= []).unshift(loc); },
-      carriedWeightKg: () => totalWeight(playerEntity.items ?? []),
+      carriedWeightKg: () => carriedWeight(playerEntity),   // E4: DaggerfallBankManager.cs:370 reads PlayerEntity.CarriedWeight
       maxEncumbranceKg: () => entityMaxEncumbrance(playerEntity),   // DaggerfallBankManager.cs:370 reads PlayerEntity.MaxEncumbrance
     };
   }
@@ -3019,13 +3029,22 @@ export function createWorldModes(host) {
       interiorOverlay = bookWin;
       return bookWin;
     }
-    if (destination === 'guildServiceSpellMaker') {
-      interiorOverlay = new SpellMakerWindow({
+    // E8: the spell maker is a NATIVE window now (INFO01I0), so it
+    // takes the art gate its two sibling maker windows take. `rows` is
+    // the host's TEXT.RSC reader - the five boxes this window shows
+    // are classic records 1702-1708.
+    if (destination === 'guildServiceSpellMaker' && spellMakerArtLoaded() && _shopFont) {
+      let makerWin = null;
+      makerWin = new SpellMakerWindow({
         entity: playerEntity,
-        onClose: () => { if (interiorOverlay === flow) interiorOverlay = null; },
+        rows,
+        onClose: () => { if (interiorOverlay === makerWin) interiorOverlay = null; },
       });
-      flow = interiorOverlay;
-      return interiorOverlay;
+      interiorOverlay = makerWin;
+      // The popup's onService reads the return value and answers "not
+      // available yet" on a null, so this hands the window back the way
+      // the buy-spells arm does.
+      return makerWin;
     }
     if (destination === 'guildServiceTraining') {
       flow = buildTrainingFlow(playerEntity, guild, membership, {
@@ -4633,7 +4652,12 @@ export function createWorldModes(host) {
     // loop, so P3/P8 verification never exercised the in-frame path.)
     if (mode === 'exterior') return true;
 
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 500));   // HANDEDNESS (mat4's law)
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator. Both modal arms below share this
+    // one projection, and both draw the bar.
+    const proj = mirrorProjectionX(perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 500));   // HANDEDNESS (mat4's law)
     // MW-D25: the modal hosts ride the same Morrowind camera machine as
     // the walk hosts - one eye law, this context's own collider.
     const mwv = mwViewFrame({
@@ -4688,6 +4712,7 @@ export function createWorldModes(host) {
         withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 the Light effect's candle; T1 the torch
         new Float32Array(DUNGEON_LIGHT_COLOR));
+      renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
       mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
@@ -4751,6 +4776,7 @@ export function createWorldModes(host) {
     // CheckForNewlyDiscoveredMeshes runs on IsPlayerInsideBuilding
     // exactly as it runs in a dungeon (Automap.cs:1155).
     if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd);
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
@@ -6013,12 +6039,41 @@ export function createWorldModes(host) {
     if (mode === 'interior' && interiorOverlay) {
       const vi = pointerNative(e);
       interiorOverlay.pointer?.('up', vi ? vi[0] : -1, vi ? vi[1] : -1, e.button);
+      // ROAD-E E1: and the RELEASE EDGE for a window with no pointer
+      // seam at all - the list picker's thumb latch (its `release()` is
+      // VerticalScrollBar.Update's else arm, :123-129). The dungeon
+      // arm below takes it inside `overlayPointer`, which is the one
+      // door that slot has.
+      interiorOverlay.release?.();
       return true;
     }
     if (mode !== 'dungeon' || !dungeonCtx?.uiOverlayActive) return false;
     const v = pointerNative(e);
     dungeonCtx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
     return true;
+  }
+
+  /**
+   * ROAD-E E1: THE KEY-UP ROUTE, in both of this host's modes. The
+   * keydown dispatch above is `routeKey`; this is its mirror, and it
+   * exists for the same reason the pointer seam's `up` does - DFU's
+   * windows poll a held-key dictionary, so `IsUpWith` (the automap
+   * windows' two-phase toggle-close) and `IsPressedWith` (their
+   * twenty-two per-frame camera arms) both need the edge that ends a
+   * press. The two exterior hosts own the DOM listener for this host,
+   * so they call this beside `townTalk.keyup`.
+   */
+  function keyup(e) {
+    if (townTalk?.overlayActive) return false;   // the outer slot owns the keyboard (the keydown arm's own rule)
+    if (mode === 'interior') {
+      if (!interiorOverlay) return false;
+      interiorOverlay.keyup?.(e.code, e);
+      if (interiorOverlay?.done) interiorOverlay = null;
+      interiorWindows.reconcile(interiorOverlay);   // a release that closes the top window is PopWindow too
+      return true;
+    }
+    if (mode !== 'dungeon' || !dungeonCtx) return false;
+    return routeKeyUp(e, dungeonCtx);
   }
 
   /** The wheel seam (U-scroll), the pointerdown shape: an open
@@ -6419,6 +6474,7 @@ export function createWorldModes(host) {
     pointerdown,
     pointermove,   // ROAD-C c2/S4 - all three phases, or the drag latches
     pointerup,
+    keyup,   // ROAD-E E1: the up seam's key half, beside its pointer half
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

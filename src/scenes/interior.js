@@ -32,6 +32,7 @@ import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -173,7 +174,17 @@ export async function bootInterior(canvas, renderer, params, status) {
     // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
     if (document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => keys.delete(e.code));
+  // ROAD-E E1: THE KEY-UP ROUTE, the shape the other four hosts carry.
+  // An open window owns the keyboard on the way DOWN (the keydown arm
+  // above) and had never been told about the way up, so the automap
+  // this host mounts could neither close on DFU's key UP nor hold a
+  // key down for more than the browser's repeat.
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    if (!overlay) return;
+    overlay.keyup?.(e.code, e);
+    drainOverlay();
+  });
   canvas.addEventListener('pointerdown', (e) => {
     // An open window withholds the pointer lock (the dungeon.js law) -
     // the drag has to work with the lock released.
@@ -194,6 +205,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (!overlay) return;
     const v = nativeAt(e);
     overlay.pointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
+    overlay.release?.();   // ROAD-E E1: the latch-dropping edge, for a window with no pointer seam (the list picker's thumb)
     drainOverlay();
   });
   addEventListener('wheel', (e) => { if (overlay) overlay.wheel?.(Math.sign(e.deltaY)); });
@@ -212,6 +224,12 @@ export async function bootInterior(canvas, renderer, params, status) {
   });
 
   const shotMode = params.has('shot');
+  // E3: the console's door. This host mounts no window that registers a
+  // command, but the database is one static class in DFU - every
+  // command registered anywhere is reachable from any scene - and the
+  // building's own automap registers the three map verbs from
+  // interiorContext, so the door is not empty here.
+  installConsoleProbe();
   status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
   console.log(
     `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +

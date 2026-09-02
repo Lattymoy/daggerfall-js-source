@@ -285,6 +285,10 @@ export class PotionMakerWindow {
     this._tip.show(this._itemAt(vx, vy), vx, vy);
   }
 
+  /** ROAD-E E1: the release edge, forwarded the way `hover` is - the
+   *  picker's thumb latches on the press and this is what ends it. */
+  release() { this.picker?.release(); }
+
   click(vx, vy) {
     if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
     if (this.box) { this.box = null; return true; }

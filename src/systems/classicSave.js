@@ -53,7 +53,6 @@ import {
   // their one home beside createArtifact.
   ITEM_ARTIFACT_MASK, ITEM_IDENTIFIED_MASK, legacyArtifactIndexBitfieldCheck,
 } from './loot.js';
-import { goldStack } from './inventory.js';
 import { equipItem } from './equip.js';
 import { guildGroupOfFaction, daySinceZero } from './guilds.js';
 import { dateFromClassicMinutes } from './gameDate.js';
@@ -392,7 +391,7 @@ export function classicSpellsFromContainer(containerRecord, spellsByIndex = null
  *  wagon and bag apart, equips what the character record's 27 equip
  *  slots name, imports the spellbook's spells, and mints the physical
  *  gold as the port's one Currency stack.
- *  @returns {{items, wagonItems, spells, scratch}} */
+ *  @returns {{items, wagonItems, spells, goldPieces, scratch}} */
 export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
   // The scratch entity exists so the ONE equip law places equipSlot -
   // its table and armor writes are discarded with it.
@@ -447,11 +446,13 @@ export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
     }
   }
 
-  // GoldPieces (:602-603): the port's gold is the one Currency stack.
-  const physicalGold = character.parsedData?.physicalGold ?? 0;
-  if (physicalGold > 0) scratch.items.push(goldStack(physicalGold));
+  // GoldPieces (StartGameBehaviour.cs:602-603), verbatim since E4:
+  // `playerEntity.GoldPieces = (int)characterRecord.ParsedData
+  // .physicalGold` - an assignment to the COUNTER, so a zero purse
+  // is an honest zero rather than an absent stack.
+  const goldPieces = character.parsedData?.physicalGold ?? 0;
 
-  return { items: scratch.items, wagonItems: scratch.wagonItems, spells, scratch };
+  return { items: scratch.items, wagonItems: scratch.wagonItems, spells, goldPieces, scratch };
 }
 
 /** PlayerEntity.AssignGuildMemberships + GuildManager.
@@ -615,7 +616,7 @@ export function classicSaveToSnapshot(saveGames, {
 
   // Items, spells, gold and the worn set - the equip law runs on the
   // scratch, whose slot marks ride each item into the envelope.
-  const { items, wagonItems, spells, scratch } = classicItemsAndSpells(saveTree, { spellsByIndex });
+  const { items, wagonItems, spells, goldPieces, scratch } = classicItemsAndSpells(saveTree, { spellsByIndex });
 
   // The stats object in the port's keyed shape.
   const stats = {};
@@ -728,6 +729,9 @@ export function classicSaveToSnapshot(saveGames, {
     skillsRecentlyRaised: [doc.skillsRaisedThisLevel1, doc.skillsRaisedThisLevel2],
 
     items, wagonItems,
+    // StartGameBehaviour.cs:603 - the purse rides the envelope as the
+    // counter restorePlayer now restores (E4).
+    goldPieces,
     otherItems: [],
     // The envelope's spell shape (save.js S1): a NUMBER is a stock
     // SPELLS.STD index, an OBJECT is a made spell riding whole. The

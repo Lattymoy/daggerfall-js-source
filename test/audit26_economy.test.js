@@ -16,10 +16,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 
 const LETTER = 275;   // LETTER_OF_CREDIT_TEMPLATE (the real template)
+// E4: coins are PlayerEntity.GoldPieces, a counter; only the letters
+// are items.
 const mkPlayer = (coins, letterValue = 0) => ({
   level: 5, gender: 'male', stats: { luck: 50 }, skills: [],
+  goldPieces: coins,
   items: [
-    ...(coins > 0 ? [{ group: 'Currency', templateIndex: 131, stackCount: coins }] : []),
     ...(letterValue > 0 ? [{ templateIndex: LETTER, group: 'MiscItems', value: letterValue }] : []),
   ],
 });

@@ -13,12 +13,13 @@ import {
   enchantmentParamName, enchantmentSettings, PARAM_NONE,
 } from '../src/systems/enchantmentCatalogue.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
-import { goldStack, splitStack } from '../src/systems/inventory.js';
+import { splitStack } from '../src/systems/inventory.js';
 import { SKILL_NAMES } from '../src/systems/skills.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
 
-const makeWin = (items, over = {}) => {
-  const player = { items };
+const makeWin = (items, over = {}, gold = 0) => {
+  // E4: gold is PlayerEntity.GoldPieces, not a stack in the bag.
+  const player = { items, goldPieces: gold };
   const w = new ItemMakerWindow({
     packItems: () => player.items,
     player,
@@ -86,7 +87,7 @@ test('F166: a FORCED child row cannot be clicked away - only its parent takes it
 
 test('F167: enchanting a STACK splits ONE item off - the rest stay plain (DaggerfallItemMakerWindow.cs:751-754)', () => {
   const stack = ruby({ stackCount: 5 });
-  const { w, player } = makeWin([goldStack(100000), stack]);
+  const { w, player } = makeWin([stack], {}, 100000);
   w.selected = stack;
   w.powers = [enchantmentSettings('FeatherWeight', PARAM_NONE)];
   w._enchant();
@@ -121,7 +122,7 @@ test('F167: enchanting a STACK splits ONE item off - the rest stay plain (Dagger
 
   // ...and an UNSTACKED item is enchanted where it lies (no split)
   const solo = ruby();
-  const solow = makeWin([goldStack(100000), solo]);
+  const solow = makeWin([solo], {}, 100000);
   solow.w.selected = solo;
   solow.w.powers = [enchantmentSettings('FeatherWeight', PARAM_NONE)];
   solow.w._enchant();
@@ -134,7 +135,7 @@ test('F167: enchanting a STACK splits ONE item off - the rest stay plain (Dagger
 test('F168: the gold label and check count LETTERS OF CREDIT (PlayerEntity.cs:1313-1316)', () => {
   const letter = { templateIndex: 275, group: 'MiscItems', name: 'Letter of Credit', value: 5000 };
   const gem = ruby();
-  const { w } = makeWin([goldStack(10), letter, gem]);
+  const { w } = makeWin([letter, gem], {}, 10);
   assert.equal(w.gold(), 5010, 'GetGoldAmount = goldPieces + GetCreditAmount');
   assert.equal(w.labels().availableGold, '5010');
 

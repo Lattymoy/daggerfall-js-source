@@ -13,6 +13,8 @@ import {
   mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied, ARROW_TEMPLATE_INDEX,
 } from '../src/scenes/corpseMarker.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
+import { goldStack } from '../src/systems/inventory.js';
+import { goldAmount } from '../src/systems/court.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../src/combat/formulas.js';
 import { ENEMY_BASICS, ENEMY_NAMES, enemyDisplayName } from '../src/characters/enemyBasics.js';
@@ -211,6 +213,26 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   player.items = [];
   assert.equal(takeCorpseLoot({ corpse: true, entity: { items: [{ templateIndex: 120 }] } }, player, s), 1);
   assert.deepEqual(say, ['You take 1 item.']);
+
+  // E4's GOLD DOOR, on the bulk take. DoTransferItem's first statement
+  // (DaggerfallInventoryWindow.cs:1562-1571) spends a Currency pile
+  // bound for PlayerEntity.Items into the counter and never adds it to
+  // the list; DFU reaches it because :957 opens the window over the
+  // corpse. The port's bulk take is the residue this file records, so
+  // the door is spelled in takeCorpseLoot - without it a corpse's
+  // loot-table gold (loot.js:169) lands in the pack, where
+  // court.goldAmount cannot see it and it is unspendable forever.
+  say.length = 0;
+  player.items = [];
+  player.goldPieces = 50;
+  const rich = { corpse: true, entity: { items: [goldStack(500), { name: 'Dagger', templateIndex: 111 }] } };
+  assert.equal(takeCorpseLoot(rich, player, s), 2, 'the pile still counts toward the line');
+  assert.deepEqual(say, ['You take 2 items.']);
+  assert.equal(player.items.some((it) => it.group === 'Currency'), false,
+    'the player\'s collection can NEVER hold Currency (inventory.js:48-56)');
+  assert.equal(player.items.length, 1);
+  assert.equal(player.goldPieces, 550, 'playerEntity.GoldPieces += item.stackCount');
+  assert.equal(goldAmount(player), 550, 'and it is spendable');
 });
 
 test('audit24 wave38: the kill notice, and the name table that was out of reach', () => {

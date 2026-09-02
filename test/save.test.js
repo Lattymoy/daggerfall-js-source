@@ -75,22 +75,61 @@ test('AUDIT 22 F7/F8: the lit light source and the training clock survive a load
   const torch = { group: 'UselessItems2', templateIndex: 247, name: 'Torch', currentCondition: 9 };
   const e = {
     name: 'B', stats: {}, skills: 30, skillUses: [], activeEffects: [], spells: [],
-    items: [{ group: 'Currency', name: 'Gold pieces', templateIndex: 276, stackCount: 5 }, torch],
+    // E4: the purse is PlayerEntity.GoldPieces; a dagger holds the
+    // index-0 slot the old gold stack used to, so lightSourceIndex is
+    // still an index into a list of two.
+    items: [{ group: 'Weapons', templateIndex: 113, name: 'Dagger' }, torch],
+    goldPieces: 5,
     timeOfLastSkillTraining: 4321,
   };
   e.lightSource = torch;
   const snap = snapshotPlayer(e, {});
   assert.equal(snap.timeOfLastSkillTraining, 4321);
   assert.equal(snap.lightSourceIndex, 1);
+  assert.equal(snap.goldPieces, 5, 'SerializablePlayer.cs:133');
 
   const e2 = { items: [], stats: {}, activeEffects: [] };
   restorePlayer(e2, snap, null);
   assert.equal(e2.timeOfLastSkillTraining, 4321, 'the 12-hour training gate is a DIFFERENCE against this');
+  assert.equal(e2.goldPieces, 5, 'SerializablePlayer.cs:302');
   // THE IDENTITY is the point: UseItem douses by `LightSource == item`,
   // so a restored copy that merely LOOKS like the torch would leave it
   // permanently unquenchable.
   assert.equal(e2.lightSource, e2.items[1]);
   assert.notEqual(e2.lightSource, torch, 'and it is the restored record, not the old object');
+
+  // E4 / THE ORDER: a PRE-E4 save carries the purse as a Currency
+  // stack INSIDE items, and lightSourceIndex indexes that list. The
+  // absorb must run after the relink, or dropping the stack slides the
+  // torch down one and the restored player carries an unlit torch (or
+  // whatever landed at the old index).
+  const legacy = snapshotPlayer({
+    name: 'B', stats: {}, skills: 30, skillUses: [], activeEffects: [], spells: [],
+    items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 5 }, torch],
+    lightSource: torch,
+  }, {});
+  delete legacy.goldPieces;
+  const e5 = { items: [], stats: {}, activeEffects: [] };
+  restorePlayer(e5, legacy, null);
+  assert.equal(e5.goldPieces, 5, 'the stack was absorbed into the counter');
+  assert.deepEqual(e5.items.map((i) => i.name), ['Torch']);
+  assert.equal(e5.lightSource, e5.items[0], 'and the torch is still the one that is lit');
+
+  // ...and the migration is FOR THAT SAVE ONLY. DFU can put a Currency
+  // stack in PlayerEntity.Items through GivePc's notify/silently arms
+  // (GivePc.cs:179, :186), which call Items.AddItem with no currency
+  // check - unspendable there too, because GetGoldAmount reads
+  // `goldPieces`. A post-E4 save round-trips that quirk instead of
+  // laundering it into the purse.
+  const quirk = snapshotPlayer({
+    name: 'B', stats: {}, skills: 30, skillUses: [], activeEffects: [], spells: [],
+    goldPieces: 5,
+    items: [{ group: 'Currency', name: 'Gold pieces', templateIndex: 276, stackCount: 900 }],
+  }, {});
+  const e6 = { items: [], stats: {}, activeEffects: [] };
+  restorePlayer(e6, quirk, null);
+  assert.equal(e6.goldPieces, 5, 'the quest-planted stack is NOT spendable gold');
+  assert.equal(e6.items.length, 1, 'and it is still sitting in the pack, as DFU leaves it');
 
   // nothing lit round-trips as nothing lit
   const dark = { name: 'B', stats: {}, skills: 30, skillUses: [], activeEffects: [], spells: [], items: [torch] };

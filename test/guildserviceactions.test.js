@@ -25,7 +25,7 @@ import { calculateCost, calculateTradePrice } from '../src/systems/shopStock.js'
 
 const player = (over = {}) => ({
   name: 'Bob', isPlayer: true, level: 2, health: 30, maxHealth: 30,
-  items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 5000 }],
+  goldPieces: 5000, items: [],   // E4: PlayerEntity.GoldPieces, the counter
   skills: Object.fromEntries(Object.values(SKILLS).map((s) => [s, 20])),
   skillUses: Object.fromEntries(Object.values(SKILLS).map((s) => [s, 0])),
   stats: { personality: 50 }, activeEffects: [], fatigue: 3200,

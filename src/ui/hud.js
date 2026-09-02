@@ -21,7 +21,7 @@ import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
-import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
+import { drawHudLarge, dockedLargeHudHeight } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
 // VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
 // loss trails and gain bars, the smoother, and the one change detector.
@@ -498,8 +498,15 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       ...largeHud,
       vitalsBars: { rig, skin, indicators },
     });
+    // ROAD-E E5: ...and it MOVES with the viewport. HUDCrosshair.cs
+    // :43-52 re-centres the reticle into the view a DOCKED bar leaves,
+    // because the world pass is now drawn there (ViewportChanger.cs
+    // :56-62) - a crosshair left on the screen's own middle would sit
+    // below the point the camera is actually pointing at. Undocked the
+    // bar is "just an overlay" and the middle is still the middle.
     drawCrosshairAndModeIcon(renderer, canvas, font,
-      { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
+      { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false,
+        largeHudHeight: dockedLargeHudHeight(lastLargeHudBar) });
     // DaggerfallHUD.cs:203 sets breathBar.Enabled from ShowBreathBar
     // every frame and the force-off block (:214-220) does NOT include
     // it, so the bar survives the large HUD - drawn here after the

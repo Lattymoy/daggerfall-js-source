@@ -26,7 +26,7 @@
 // a later U8 slice).
 
 import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
-import { itemWeight } from '../systems/inventory.js';   // AUDIT 17e F30
+import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // U10
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
@@ -68,13 +68,16 @@ export const charSheetArtLoaded = () => !!_art;
 // leather formula) - so a daedric warhammer weighed its iron base.
 // AUDIT 17f: gold used to be the one term with a second constant
 // here (DaggerfallBankManager.goldPieceWeightInKg, 0.0025) because
-// the port's gold stack carried no template index. It carries
-// Currency.Gold_pieces (276) now, whose baseWeight IS 0.0025, so
-// itemWeight serves it like every other stack.
-// U52: EXPORTED. The enhanced sheet shows the same encumbrance the
+// the port's gold stack carried no template index. It carried
+// Currency.Gold_pieces (276) after that, whose baseWeight IS 0.0025.
+// E4 RETIRED THE STACK ALTOGETHER: gold is PlayerEntity.GoldPieces,
+// so the coin term comes back as DFU's own hand-written product -
+// which is the whole of PlayerEntity.CarriedWeight (:184), and lives
+// once, in systems/inventory.js, beside the constant it multiplies.
+// U52: RE-EXPORTED. The enhanced sheet shows the same encumbrance the
 // classic one draws, and a second reduce over e.items in that module
 // would be this comment's own warning happening again one file over.
-export const carriedWeight = (e) => (e.items ?? []).reduce((kg, it) => kg + itemWeight(it), 0);
+export { carriedWeight };
 
 export class LevelUpScreen {
   constructor(entity, rolls = Math.random) {

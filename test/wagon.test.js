@@ -104,8 +104,11 @@ test('wagon: the 750kg gates - the refusal, the split-take, the gold clamp', () 
   // the drop-gold clamp: a full wagon takes nothing; a near-full one
   // clamps to the headroom with the wagonFullGold box
   const wagon2 = [book(370)];   // 740 kg
-  const bag2 = [cart(), { group: 'Currency', templateIndex: 137, name: 'Gold Pieces', stackCount: 100000 }];
-  const w2 = new NativeInventoryWindow({ items: () => bag2, wagonItems: () => wagon2, icons: ICONS });
+  // E4: the purse the field reads is PlayerEntity.GoldPieces (:1288),
+  // not a stack in the bag.
+  const bag2 = [cart()];
+  const rich = { items: bag2, goldPieces: 100000 };
+  const w2 = new NativeInventoryWindow({ items: () => bag2, entity: rich, wagonItems: () => wagon2, icons: ICONS });
   wagonBtn(w2);
   w2._dropGold();
   w2.topBox.onInput('100000');   // 250kg of gold offered into 10kg of headroom
@@ -113,6 +116,7 @@ test('wagon: the 750kg gates - the refusal, the split-take, the gold clamp', () 
   assert.ok(goldInWagon, 'the clamp still drops what fits');
   assert.equal(goldInWagon.stackCount, 4000, '10kg headroom / 0.0025kg per piece');
   assert.equal(w2.topBox.rows[0].text, wagonFullGoldText(4000), 'the wagonFullGold box names the clamp');
+  assert.equal(rich.goldPieces, 96000, 'and only the clamped amount left the counter');
 });
 
 test('wagon: the collection rides the save envelope', () => {

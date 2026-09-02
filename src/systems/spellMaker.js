@@ -26,9 +26,10 @@
 // consumer that keys by index (the readied-spell round trip). The
 // save envelope carries the whole record for these; see save.js.
 
-import { calculateCastCost } from './spellcost.js';
+import { calculateCastCost, effectCost } from './spellcost.js';
+import { skillValue } from './skills.js';   // E8: the editor's per-effect cost reads the caster's own skill
 import { MAGIC_ONLY_KEYS } from './effects.js';   // AUDIT 26 F181: the AllowedElements set, already read off the effect classes
-import { goldAmount, deductGold } from './court.js';
+import { totalGoldAmount, deductGold } from './court.js';
 
 
 /** AUDIT 26 F181 - THE ALLOWED TARGET AND ELEMENT SETS.
@@ -263,6 +264,23 @@ export function buildCustomSpell({ slots, rangeType = 0, element = 4, name = '',
  *  the caster's magic skills, the target multiplier and the floor. */
 export function spellMakerCost(spell, entity) { return calculateCastCost(spell, entity); }
 
+/** ROAD-E E8 - the SETTINGS EDITOR's own cost label
+ *  (DaggerfallEffectSettingsEditorWindow.UpdateCosts, :373-381):
+ *  FormulaHelper.CalculateEffectCosts over the ONE effect being
+ *  edited. Two things it is NOT: there is no target multiplier and no
+ *  five-point casting floor - both belong to CalculateTotalEffectCosts
+ *  and neither runs here - so a cheap effect's label really does read
+ *  under 5 while the sheet's own total does not.
+ *
+ *  The caster argument is null at the call site, and a null caster
+ *  reads the PLAYER's live skill (FormulaHelper.cs:2271-2275), which
+ *  is the entity this window was opened for. */
+export function editedEffectCost(slot, entity) {
+  if (!slot || slot.type == null || slot.type < 0) return { gold: 0, sp: 0 };
+  const st = { ...blankEffectSettings(), ...(slot.settings ?? {}) };
+  return effectCost({ type: slot.type, subType: slot.subType ?? -1, ...st }, (id) => skillValue(entity, id));
+}
+
 // ---- the purchase ladder -------------------------------------------
 
 export const SPELLBOOK_TEMPLATE_INDEX = 132;   // MiscItems Spellbook (startingGear's own constant)
@@ -287,7 +305,16 @@ export function validateSpellPurchase({ entity, slots, goldCost, name }) {
   if (!hasSpellbook(entity)) return { ok: false, textId: NO_SPELLBOOK_ID };
   const used = (slots ?? []).filter((s) => s && s.type != null && s.type >= 0);
   if (!used.length) return { ok: false, text: NO_EFFECTS_TEXT };
-  if (goldAmount(entity) < goldCost) return { ok: false, textId: SPELLMAKER_NOT_ENOUGH_GOLD_ID };
+  // ROAD-E E8: GetGoldAmount, not GoldPieces. BuyButton reads
+  // `PlayerEntity.GetGoldAmount()` (:748-751) - coins PLUS letters of
+  // credit - and then spends through DeductGoldAmount, which the port
+  // has always matched (purchaseSpell's deductGold spends letters).
+  // The gate read the PURSE alone, so a mage holding a 5,000-gold
+  // letter and no coins was refused a spell DFU sells him, and the
+  // deduction that would have paid for it never ran. The window's
+  // money LABEL keeps GoldPieces, which is DFU's own asymmetry
+  // (SetStatusLabels, :356).
+  if (totalGoldAmount(entity) < goldCost) return { ok: false, textId: SPELLMAKER_NOT_ENOUGH_GOLD_ID };
   if (!name || !String(name).trim()) return { ok: false, textId: MUST_CHOOSE_NAME_ID };
   return { ok: true };
 }

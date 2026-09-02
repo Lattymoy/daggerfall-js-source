@@ -284,23 +284,27 @@ test('AUDIT 39 F134: a count-1 plate whose only collider was placed is PLACED, n
 });
 
 // ---------------------------------------------------------------
-// F135 - the docked large HUD's viewport, recorded
+// F135 - the docked large HUD's viewport. SHIPPED (ROAD-E E5).
 // ---------------------------------------------------------------
 
-test('AUDIT 39 F135: the docked bar\'s whole-viewport departure is RECORDED at the module head', () => {
-  // DFU shrinks the camera rect (ViewportChanger.cs:53-62) and
-  // re-centres the crosshair into what is left (HUDCrosshair.cs:43-52).
-  // The port draws the bar over a full-canvas frame; the two halves
-  // must land together, so neither is half-ported and the departure is
-  // written down where the bar is drawn.
+test('AUDIT 39 F135: the docked bar SHRINKS the world pass, and the head records the ship', () => {
+  // The finding was that DFU shrinks the camera rect
+  // (ViewportChanger.cs:52-67) and re-centres the crosshair into what
+  // is left (HUDCrosshair.cs:43-52) while the port drew the bar over a
+  // full-canvas frame. E5 landed both halves together, which is the
+  // condition this test used to hold the flag open for - so it now
+  // pins the ship, and the flag TOKEN is pinned GONE.
   const large = read('src/ui/hudLarge.js');
   const head = large.slice(0, large.indexOf('import '));
-  assert.match(head, /FLAGGED \(AUDIT 39 F135\)/);
-  assert.match(head, /ViewportChanger\.cs:\s*\n\/\/ 53-62/);
+  assert.equal(/FLAGGED|INTERIM/.test(head), false, 'the flag is retired, not re-worded');
+  assert.match(head, /SHIPPED \(ROAD-E E5, 2026-09-02\)/);
+  assert.match(head, /ViewportChanger\.cs:52-67/);
   assert.match(head, /HUDCrosshair\.cs:43-52/);
-  // ...and the crosshair still marks the camera centre, which is the
-  // half that must NOT move on its own.
-  assert.match(read('src/ui/hudCrosshair.js'), /const cx = canvas\.width \/ 2, cy = canvas\.height \/ 2;/);
+  // ...and the crosshair marks the centre of the VIEWPORT, which is
+  // the camera centre in both states - the half that could not move on
+  // its own.
+  assert.match(read('src/ui/hudCrosshair.js'),
+    /const cx = canvas\.width \/ 2, cy = crosshairCentreY\(canvas\.height, largeHudHeight\);/);
 });
 
 // ---------------------------------------------------------------

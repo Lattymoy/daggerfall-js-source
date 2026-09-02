@@ -48,6 +48,7 @@ import { liveStat, FATIGUE_LOSS } from '../statMods.js';   // Q5: WhenAttributeL
 import { CRIMES } from '../court.js';   // Q5: SetPlayerCrime's enum
 import { randomRangeInclusive } from '../../formats/dfRandom.js';   // Q5: TrainPc's Range(10,21)
 import { makeItemPermanent } from './item.js';
+import { isGoldPieces } from '../inventory.js';   // E4: GetItem's IsOfTemplate(Currency, Gold_pieces) test, one spelling
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
@@ -790,7 +791,11 @@ export class PromptMulti extends ActionTemplate {
  *  forever) / "play sound X N unknown" - a REPEATING action with no
  *  SetComplete; timesPlayed++ rides the interval check while only a
  *  real play (hook answers truthy; C# skips while the audio source is
- *  busy) re-stamps lastTimePlayed. Create resolves the sound through
+ *  busy) re-stamps lastTimePlayed. E6 SHIPPED the other half of that
+ *  skip: the host's door now HAS the busy state DFU reads - one
+ *  `QuestAudioSource` per machine (systems/audio.js, the
+ *  DaggerfallAudioSource the QuestMachine carries) keeping the end
+ *  time of the clip it last started. Create resolves the sound through
  *  Quests-Sounds inside the C#'s try/catch - an unknown name answers
  *  null and the line pends. DEPARTURE (recorded): C# also resolves
  *  SoundReader.GetSoundIndex/GetAudioClip at create and nulls on
@@ -1489,7 +1494,7 @@ export class GetItem extends ActionTemplate {
     const hooks = this.parentQuest.hooks;
     hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
     const dfItem = item.daggerfallUnityItem;
-    if (dfItem && dfItem.group === 'Currency') {
+    if (dfItem && isGoldPieces(dfItem)) {   // GetItem.cs:73 - IsOfTemplate, both terms
       const amount = dfItem.stackCount ?? 0;
       hooks?.addGold?.(amount);
       hooks?.addHUDText?.(YOU_RECEIVE_GOLD_PIECES.replace('%s', String(amount)));

@@ -75,15 +75,18 @@ test('S3e: skill, gold and the gold quirks', () => {
   assert.equal(e.skills[SKILLS.Destruction], 36);
   assert.equal(applyBiographyEffect(e, `${SKILLS.Destruction} -4`), 'skill');
   assert.equal(e.skills[SKILLS.Destruction], 32);
+  // E4: `playerEntity.GoldPieces +=/-=` (:283-289) - the COUNTER, and
+  // the pack never holds a Currency stack at all.
   assert.equal(applyBiographyEffect(e, 'GP +500'), 'gold');
-  assert.equal(e.items.find((i) => i.group === 'Currency').stackCount, 500);
+  assert.equal(e.goldPieces, 500);
+  assert.equal(e.items.filter((i) => i.group === 'Currency').length, 0);
   // "Correct GP commands with spaces between the sign and the amount"
   // (:271-275) - "+ 250" is ONE argument
   applyBiographyEffect(e, 'GP + 250');
-  assert.equal(e.items.find((i) => i.group === 'Currency').stackCount, 750);
+  assert.equal(e.goldPieces, 750);
   // "The player can't carry negative gold pieces" (:288-289)
   applyBiographyEffect(e, 'GP -5000');
-  assert.equal(e.items.find((i) => i.group === 'Currency').stackCount, 0);
+  assert.equal(e.goldPieces, 0);
 });
 
 test('S3e: reputation - social groups land, factions queue', () => {

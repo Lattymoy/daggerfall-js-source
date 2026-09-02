@@ -929,10 +929,11 @@ FLAGGED loud: selling + the offer/counteroffer haggle UI pend
 OPEN HOURS pend (shelves answer at any hour); Library/Guild/Temple
 bookshelves + owned-house storage pend; restock pends the calendar.
 
-Probed live (tools/shopProbe.mjs): door 37 = "The Adventurer's Book
-Dealer" (Bookseller, quality 6) -> enter -> 4 shelves -> browse
-"1 - Book (2950 gold)" x3 -> Digit1 buys: gold 20000 -> 17050, the
-item in the entity, the window re-lists 2.
+Probed live (tools/shopProbe.mjs, RETIRED at ROAD-E E8 - its drive
+lives on in tools/nativeTradeProbe.mjs): door 37 = "The
+Adventurer's Book Dealer" (Bookseller, quality 6) -> enter -> 4
+shelves -> browse "1 - Book (2950 gold)" x3 -> Digit1 buys: gold
+20000 -> 17050, the item in the entity, the window re-lists 2.
 
 Suite 449/98 (the CalculateTradePrice fixed-point pin).
 
@@ -959,10 +960,10 @@ both directions now); letters of credit (the >maxGold overflow)
 pend banking; Repair/Identify/SellMagic window modes pend their
 systems.
 
-Probed live (tools/shopProbe.mjs, extended): the bookseller round
-trip - buy a Book at 3062, S, sell it back at 2904 (the merchant's
-margin), gold 20000 -> 16938 -> 19842, the item off then back on
-the shelf.
+Probed live (tools/shopProbe.mjs, retired - see above): the
+bookseller round trip - buy a Book at 3062, S, sell it back at
+2904 (the merchant's margin), gold 20000 -> 16938 -> 19842, the
+item off then back on the shelf.
 
 Suite 450/98 (the storeBuysItemType pin).
 

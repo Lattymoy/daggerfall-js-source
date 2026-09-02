@@ -180,16 +180,15 @@ test('AUDIT 39 #82: the biography lands BEFORE the starting kit', () => {
   // GP arm, which is the half with arithmetic in it. A '-' command
   // clamps at zero, so an empty purse and a stocked one differ.
   finishChargen(e, synthResult({ biographyEffects: ['GP - 50'] }), null, { rolls: () => 0 });
-  const gold = e.items.find((it) => it.group === 'Currency');
-  assert.equal(gold.stackCount, 100,
+  // E4: gold is PlayerEntity.GoldPieces, so the purse is a number.
+  assert.equal(e.goldPieces, 100,
     'the answer took 50 from an EMPTY purse (clamped to 0), then the kit paid its 100');
 
   // and the same answer after the kit would have taken it out of the
   // 100 - which is what the old order did
   const kitFirst = freshEntity();
   applyCreationExtras(kitFirst, synthResult(), null, { rolls: () => 0 });
-  const before = kitFirst.items.find((it) => it.group === 'Currency').stackCount;
-  assert.equal(before, 100, 'the kit alone is 100 gold');
+  assert.equal(kitFirst.goldPieces, 100, 'the kit alone is 100 gold');
 
   // the bag ORDER: the spellbook still heads the kit (ItemHelper.cs:1300)
   const bagged = freshEntity();

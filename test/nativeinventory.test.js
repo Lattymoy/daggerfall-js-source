@@ -134,28 +134,30 @@ test('U25: Use mode uses, and an EQUIP click on a light source uses too', () => 
 });
 
 test('U25: the gold button drops gold into the remote pile, refusing bad amounts', () => {
-  const gold = { group: 'Currency', name: 'Gold pieces', templateIndex: 276, stackCount: 500 };
-  // (the gold button acts wherever the lists are pointing)
-  const bag = [gold];
-  const entity = { isPlayer: true, items: bag };
+  // E4: `int playerGold = PlayerEntity.GoldPieces` (:1288) - the purse
+  // is the COUNTER, and the amount that leaves it mints a fresh pile
+  // (ItemBuilder.CreateGoldPieces) in the remote container (:1307).
+  const bag = [];
+  const entity = { isPlayer: true, items: bag, goldPieces: 500 };
   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity });
   w.click(230, 130);            // the gold button
   assert.equal(w.topBox.field, true);
   assert.equal(w.goldEntry, '0', 'TextBox.Text = "0"');
   // 0 is refused outright - DFU returns without clamping
   w.input('Enter');
-  assert.equal(gold.stackCount, 500);
+  assert.equal(entity.goldPieces, 500);
   // so is more than you carry
   w.click(230, 130);
   w.goldEntry = '9999';
   w.input('Enter');
-  assert.equal(gold.stackCount, 500);
+  assert.equal(entity.goldPieces, 500);
   // a real amount lands in the remote pile
   w.click(230, 130);
   w.goldEntry = '120';
   w.input('Enter');
-  assert.equal(gold.stackCount, 380);
+  assert.equal(entity.goldPieces, 380);
   assert.equal(w._remote().find((it) => it.group === 'Currency')?.stackCount, 120);
+  assert.equal(bag.length, 0, 'and the pack never held a coin');
 });
 
 test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {

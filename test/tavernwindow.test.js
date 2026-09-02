@@ -28,7 +28,7 @@ const idOf = (box) => Number(/^#(\d+)/.exec(box?.rows?.[0]?.text ?? '')?.[1]);
 
 const player = (gold = 5000) => ({
   name: 'Rin', health: 20, maxHealth: 50, rentedRooms: [],
-  items: [{ group: 'Currency', stackCount: gold }],
+  goldPieces: gold, items: [],   // E4: PlayerEntity.GoldPieces, the counter
   stats: { personality: 50 },
 });
 
@@ -136,9 +136,9 @@ test('U39: renting - offer, confirm, gold, and the record it mints', () => {
   const price = Number(/(\d+) gold/.exec(offer.rows[0].text)[1]);
   assert.ok(price > 0, 'the %a macro carried the trade price');
 
-  const before = entity.items[0].stackCount;
+  const before = entity.goldPieces;
   w.flow.input('KeyY');
-  assert.equal(entity.items[0].stackCount, before - price, 'the gold left at the YES, not at the offer');
+  assert.equal(entity.goldPieces, before - price, 'the gold left at the YES, not at the offer');
   assert.equal(entity.rentedRooms.length, 1);
   const room = entity.rentedRooms[0];
   assert.equal(room.mapId, 7);
@@ -161,9 +161,9 @@ test('U39/F143: declining the price returns to the four-button panel', () => {
   clickRect(w, 'room');
   type(w, '2');
   w.flow.input('Enter');
-  const before = entity.items[0].stackCount;
+  const before = entity.goldPieces;
   w.flow.input('KeyN');
-  assert.equal(entity.items[0].stackCount, before, 'nothing paid');
+  assert.equal(entity.goldPieces, before, 'nothing paid');
   assert.equal(entity.rentedRooms.length, 0, 'nothing rented');
   assert.equal(w.done, false, 'the tavern stands');
   assert.equal(w.flow, null, 'and the panel is back');
@@ -178,7 +178,7 @@ test('U39: the gold test is at the YES, so the game offers a price you cannot pa
   w.flow.input('KeyY');
   assert.equal(idOf(w.flow.top), NOT_ENOUGH_GOLD_ID, '...and the refusal lands only after agreeing');
   assert.equal(entity.rentedRooms.length, 0);
-  assert.equal(entity.items[0].stackCount, 3, 'and no partial charge');
+  assert.equal(entity.goldPieces, 3, 'and no partial charge');
 });
 
 test('U39: a KNIGHT rents free, and the ceiling still stops them (:204-208, :188)', () => {
@@ -187,7 +187,7 @@ test('U39: a KNIGHT rents free, and the ceiling still stops them (:204-208, :188
   type(w, '5');
   w.flow.input('Enter');
   assert.equal(w.flow.top.rows[0].text, ROOM_FREE_FOR_KNIGHT);
-  assert.equal(entity.items[0].stackCount, 5000, 'not a coin');
+  assert.equal(entity.goldPieces, 5000, 'not a coin');
   assert.equal(entity.rentedRooms[0].expiryMinutes, now + 5 * MINUTES_PER_DAY);
 
   // THE ORDER: the 350-day ceiling is tested BEFORE the knightly arm
@@ -261,7 +261,7 @@ test('U39: a meal charges, heals twice the price, and stamps the clock (:305-334
   clickRect(w, 'food');
   // row 3 is Wine (3 gold) on an ordinary day
   w.flow._picker.onPick(3, TAVERN_MENU[3]);
-  assert.equal(entity.items[0].stackCount, 4997);
+  assert.equal(entity.goldPieces, 4997);
   assert.equal(entity.health, 26, '20 + 2 * 3');
   assert.equal(entity.lastTimePlayerAteOrDrankAtTavern, now, 'the hunger clock is stamped');
   assert.equal(w.done, true, 'a meal says nothing and the window is already closed');
@@ -283,7 +283,7 @@ test('U39: the healing is CLAMPED by the entity, not by the formula', () => {
   clickRect(w, 'food');
   w.flow._picker.onPick(3, TAVERN_MENU[3]);
   assert.equal(entity.health, 50, 'a 6-point meal at 49/50 does not overheal');
-  assert.equal(entity.items[0].stackCount, 4997, 'and it is still paid for');
+  assert.equal(entity.goldPieces, 4997, 'and it is still paid for');
 });
 
 test('U39: ONE clock - the room formula reads the day the tavern\'s own minutes name', () => {

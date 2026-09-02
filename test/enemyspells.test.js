@@ -11,9 +11,11 @@ import { SKILLS } from '../src/systems/skills.js';
 import { skillValue } from '../src/systems/skills.js';
 import { effectsAlreadyOnTarget } from '../src/systems/effects.js';
 import {
-  EnemyCaster, pickRangedSpell, pickTouchSpell,
+  EnemyCaster, pickRangedSpell, pickTouchSpell, clearPathToShootSpell,
   MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE, RANGED_SPELL_CHANCE,
 } from '../src/characters/enemyCasting.js';
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS } from '../src/systems/spellcast.js';
+import { ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const mkSpell = (index, rangeType, effects = [{ type: 4, subType: 0 }]) => ({ index, rangeType, element: 0, effects });
@@ -189,4 +191,47 @@ test('D9: the tick KEEPS SelectedSpell, so EffectsAlreadyOnTarget reaches the st
   const c5 = new EnemyCaster(ent, seq(0.001));
   assert.equal(c5.update(0.0625, mkAi(20), busy, [0, 0, 20], clean), null, 'no cast mid-swing');
   assert.equal(c5.canCastRangedSpell(), true, 'but the stand-off holds');
+});
+
+
+test('E6: HasClearPathToShootProjectile is CanCastRangedSpell’s last term - it vetoes the band too', () => {
+  // EnemyMotor.cs:786-788. The probe runs AFTER the pick and after the
+  // EffectsAlreadyOnTarget veto, and its answer is the answer of the
+  // whole of CanCastRangedSpell - which is DoRangedAttack's band term
+  // (:572), so a vetoed caster neither casts nor stands off.
+  const ranged = mkSpell(3, 2);
+  const ent = { level: 5, magicka: 100, spells: [ranged] };
+  const player = { activeEffects: [] };
+  const mkAi = (dist, path) => ({
+    _dist: dist, inSight: true, detected: true, giveUpTimer: 200, yaw: 0, feet: [0, 0, 0],
+    hasClearPathToShootProjectile: path,
+  });
+  const mkAttack = () => ({ machine: { state: 'Idle' }, meleeTimer: 0, playerLevel: 10, reflexes: 2, rangedAttack: false });
+
+  // BLOCKED: the pick is drawn (the roll is spent, as DFU spends it)
+  // and then thrown away, so there is no selection to stand off on.
+  const blocked = new EnemyCaster(ent, seq(0.9, 0.01));
+  assert.equal(blocked.update(0.0625, mkAi(20, () => false), mkAttack(), [0, 0, 20], player), null,
+    'a wall in the way refuses the cast');
+  assert.equal(blocked.selectedSpell, null, 'and leaves no selection');
+  assert.equal(blocked.canCastRangedSpell(), false, 'so the motor closes in instead of standing off');
+
+  // CLEAR: the same rolls, the same band, the spell goes.
+  const clear = new EnemyCaster(ent, seq(0.9, 0.01));
+  assert.equal(clear.update(0.0625, mkAi(20, () => true), mkAttack(), [0, 0, 20], player)?.spell, ranged,
+    'a clear path lets it through');
+  assert.equal(clear.canCastRangedSpell(), true);
+
+  // ...asked with DFU's own three constants, off the motor.
+  let args = null;
+  new EnemyCaster(ent, seq(0.9, 0.01))
+    .update(0.0625, mkAi(20, (...a) => { args = a; return true; }), mkAttack(), [0, 0, 20], player);
+  assert.deepEqual(args, [MISSILE_SPEED, ARROW_ARM_LENGTH, MISSILE_COLLIDER_RADIUS]);
+  assert.equal(MISSILE_SPEED, 25);
+  assert.equal(ARROW_ARM_LENGTH, 0.9);
+  assert.equal(MISSILE_COLLIDER_RADIUS, 0.45);
+
+  // A bare ai with no probe keeps this file's permissive default.
+  assert.equal(clearPathToShootSpell({}), true);
+  assert.equal(clearPathToShootSpell(null), true);
 });

@@ -33,10 +33,11 @@ import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
+import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -48,8 +49,9 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
+import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -149,7 +151,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
   _motorRef = player;   // DC1: the motorState seam binds here
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
@@ -223,7 +225,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  // ROAD-E E1: THE KEY-UP ROUTE. This listener drained the held-keys
+  // Set and told the open window nothing, so a window that answers
+  // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
+  // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
+  // routeKey's mirror, on the same ctx.
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts
@@ -351,6 +358,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
 
+  // E3: the console's door, ungated - the database is one static class
+  // in DFU and every command registered anywhere is reachable from any
+  // scene, which is exactly what a static class means.
+  installConsoleProbe();
+
   if (shotMode) {
     // Probe hooks (parity with the world scene): displace the camera and
     // frame-sync instead of sleeping.
@@ -388,9 +400,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
     window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
     // ROAD-C c2/S8: AutoMapConsoleCommands' three verbs - map_revealall,
-    // map_hideall, map_teleportmode. DFU registers them with the
-    // ConsoleCommandsDatabase; the port has no console, so they mount
-    // here beside every other developer verb, under their own names.
+    // map_hideall, map_teleportmode. ROAD-E E3 registered them with the
+    // real ConsoleCommandsDatabase (systems/consoleCommands.js), so this
+    // probe is a NAMED door onto it - kept because the probes that drive
+    // this host call it by this name. `window.__console` beside it is the
+    // console's own door, where any registered command is reachable.
     window.__automapCommand = (name) => ctx.automapCommand?.(name) ?? 'Automap instance not found';
     window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };
     window.__piles = () => JSON.stringify(ctx.dropped?.().map((p) => ({ n: p.items.length, flat: !!p.batch })) ?? []);
@@ -643,7 +657,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
 
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800));   // HANDEDNESS (mat4's law)
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator. This host draws the bar through
+    // dungeonContext's own drawHud, so it carries the law too.
+    const proj = mirrorProjectionX(perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 800));   // HANDEDNESS (mat4's law)
     // MW-D25: the walk camera rides the Morrowind machine; the free-fly
     // scout keeps its own eye (it has no player body to orbit).
     const mwv = walkMode
@@ -671,6 +690,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);

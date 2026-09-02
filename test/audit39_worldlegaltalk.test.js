@@ -242,16 +242,29 @@ test('AUDIT 39 (#27): indexing the name array with a name is undefined - the fol
 // always drew the tone-1 opening.
 // ---------------------------------------------------------------
 
-test('AUDIT 39 (#107): talkMcp carries the five host reads its handlers make', () => {
+test('AUDIT 39 (#107) -> E7: talkMcp rides the ONE GameManager for the host reads its handlers make', () => {
+  // #107 wired playerName/playerRace/cityName by hand onto the talk
+  // MCP, because expandTalkMacros substituted the empty string for
+  // every symbol its private twenty-six-row table missed. E7 made the
+  // talk expansion run MacroHelper's WHOLE table, whose GLOBAL rows
+  // read `GameManager.Instance` - and the port has exactly one of
+  // those, the quest machine's macro hooks. So the hand-wires are the
+  // hooks' now, and the reads #107 named resolve there:
+  // %pcn/%pcf/%pcl off playerName, %ra off playerRaceName, %cn off
+  // PlayerGPS. The two seams that are TalkManager's own stay.
   const mcp = literalBody(read('src/scenes/world.js'), 'const talkMcp = () => (');
+  assert.match(mcp, /hooks: questBridge\?\.machine\.macroContext\(\)\?\.hooks \?\? null/,
+    'the ONE GameManager, handed to the talk MCP');
   for (const [seam, wiring] of [
-    ['playerName', /playerName: \(\) => playerEntity\.name \?\? ''/],
     ['playerGender', /playerGender: \(\) => playerEntity\.gender/],
-    ['playerRace', /playerRace: \(\) => playerEntity\.race/],
-    ['cityName', /cityName: \(\) => townTalk\.cityName\(\)/],
     ['toneIndex', /toneIndex: \(\) => townTalk\.toneIndex\(\)/],
   ]) {
     assert.match(mcp, wiring, `talkMcp supplies ${seam}`);
+  }
+  // and the machine's hooks really do carry the four #107 named
+  const hooks = literalBody(read('src/systems/quest/machine.js'), '_buildHooks() {');
+  for (const seam of ['playerName', 'playerRaceName', 'playerEntity', 'world']) {
+    assert.ok(hooks.includes(`${seam}:`), `the GameManager stand-in carries ${seam}`);
   }
 });
 

@@ -999,9 +999,17 @@ test('c2/S8 SOURCE: the host installs the listener, the two dungeon hosts carry 
   assert.match(ctx, /actions\.onTeleportPortal = \(from, to\) => \{ recordTeleporterConnection\(automapRec, from, to\); \};/);
   assert.match(ctx, /debugTeleport: \(pos\) => actions\.onTeleport\?\.\(/, 'the debug click reuses the warp door');
   assert.match(ctx, /automapCommand\(name\)/, 'and the three console verbs have a home');
+  // ROAD-E E3: that home is now the real ConsoleCommandsDatabase -
+  // AutoMapConsoleCommands.RegisterCommands lives with the laws in
+  // systems/automap.js, where C# has it, and the host's probe door runs
+  // the database rather than repeating the three answers.
+  const am = src('src/systems/automap.js');
   for (const cmd of ['map_revealall', 'map_hideall', 'map_teleportmode']) {
-    assert.ok(ctx.includes(cmd), `${cmd} is registered`);
+    assert.ok(am.includes(`registerCommand('${cmd}'`), `${cmd} is registered`);
   }
+  assert.match(ctx, /registerAutomapConsoleCommands\(\);/, "Automap.Start's registration is never reached");
+  assert.match(ctx, /automapCommand\(name\) \{ return executeConsoleCommand\(name, \[\]\); \}/,
+    'the probe door must RUN the database, not a second copy of the three answers');
   assert.match(src('src/scenes/dungeon.js'), /window\.__automapCommand/, 'mounted on the probe surface');
 
   // BOTH hosts that route a pointer DOWN into the dungeon overlay must

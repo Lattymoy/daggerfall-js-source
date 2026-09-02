@@ -31,7 +31,14 @@ import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, H
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
-import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
+import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
+// E3: ...and the person HOST the quest machine's away arm writes through.
+// It is not interior law - it is the StaticNPC GameObject's one act,
+// SetActive - so the street's people take the same object the building's
+// people do rather than a second copy of it.
+import { makeInteriorPersonHost as makeStaticNpcHost } from './interiorContext.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
@@ -75,7 +82,7 @@ import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e:
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
-import { ExteriorAutomapWindow, stampResidenceQuestNames } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name
+import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -123,6 +130,7 @@ import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   
 import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
 import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
@@ -149,7 +157,7 @@ import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the p
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
-import { audio } from '../systems/audio.js';
+import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
@@ -164,7 +172,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDea
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
-import { addItem, spendArrow, totalWeight } from '../systems/inventory.js';
+import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -198,7 +206,7 @@ import { liveVampirism } from '../systems/racialLive.js';   // AUDIT 39 (#23): t
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
-import { OATH_RACE_INDEX } from '../systems/talkSession.js';
+import { OATH_RACE_INDEX, raceDisplayName } from '../systems/talkSession.js';
 import { bumpSeed } from '../formats/dfRandom.js';
 import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
 
@@ -736,7 +744,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 26 (F019): ...and the same flats' STATIC NPCs
         // (RMBLayout.cs:366-378 / :442-454 - the non-zero FactionID
         // rule), pixel-local like everything else this host builds.
-        for (const npc of collectExteriorNpcs(blockFlats)) {
+        const npcFlats = collectExteriorNpcs(blockFlats);
+        const npcFlatSet = new Set(npcFlats);   // E3: identity, not coordinates - collectExteriorNpcs FILTERS the same objects
+        for (const npc of npcFlats) {
           pixelNpcFlats.push({
             ...npc,
             x: locLocal[0] + b.originX + npc.x,
@@ -745,16 +755,26 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
         }
         for (const flat of blockFlats) {
-          addFlat(flat.archive, flat.record,
-            locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
           // A4: every archive-201 town animal is an audio source
-          // (AddAnimalAudioSource on RMB flats, verbatim).
+          // (AddAnimalAudioSource on RMB flats, verbatim). It runs
+          // BEFORE DFU's faction test (:363-377), so it is not part of
+          // what the NPC pass takes over below.
           if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
             pixelAnimals.push({
               pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z],
               sound: ANIMAL_SOUND_BY_RECORD[flat.record],
             });
           }
+          // E3: an exterior StaticNPC's BILLBOARD is stood by
+          // standPixelNpcs, not batched here - RMBLayout hands the same
+          // GameObject to SetupIndividualStaticNPC (:377) and the away
+          // arm's SetActive(false) has to take it out of the draw AT
+          // LAYOUT, which a center already inside a built batch cannot
+          // leave. Their batches are appended to this pixel's list the
+          // moment the pass has answered for them.
+          if (npcFlatSet.has(flat)) continue;
+          addFlat(flat.archive, flat.record,
+            locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
           pixelLights.push([
@@ -848,7 +868,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!t || flat.record >= t.recordCount) continue;
       const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
       const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
-      pixelNpcs.push({ ...pn, width: size.w, height: size.h });
+      // E3: `active` is the GameObject's own state (the away arm's
+      // SetActive(false)) and `questBehaviour` the component
+      // SetupIndividualStaticNPC attaches; both are what the interior
+      // host's people carry, so the click seam reads one shape.
+      pixelNpcs.push({ ...pn, width: size.w, height: size.h, active: true, questBehaviour: null, host: null });
+      // The extent still belongs to the pixel's culling box even though
+      // the billboard is batched later (a pixel whose only content near
+      // an edge is a street NPC must not cull itself away).
+      unionBox(flatBatchAabb([[flat.x, flat.y, flat.z]], size));
     }
 
     // EV6: the pixel's models sort by MESH at build - one archetype's
@@ -862,6 +890,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
+      npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
       locBlocks,   // T3d: the Where-is directory's block scan
 
@@ -877,7 +906,90 @@ export async function bootWorld(canvas, renderer, params, status) {
     // NEXT crossing (which a player who stops walking never makes).
     const wantStride = strideFor(px, py);
     if (wantStride !== entry._stride) restrideTerrain(entry, wantStride);
+    // E3: RMBLayout's THIRD act on an exterior StaticNPC, and the stand
+    // of its billboard, in that order (:372-377).
+    await standPixelNpcs(entry);
     return entry;
+  }
+
+  /** E3 - THE EXTERIOR QUEST STATIC-NPC PASS
+   *  (RMBLayout.cs:377 / :453, the block-flat and subrecord-flat sites).
+   *
+   *  DFU's layout does three things to a flat with a non-zero FactionID
+   *  and this is the third: `QuestMachine.Instance
+   *  .SetupIndividualStaticNPC(go, obj.FactionID)`, inline, at the
+   *  GameObject it has just stood. Two observable halves:
+   *    - the AWAY ARM. An individual a live quest has placed somewhere
+   *      else answers false and its home copy is `SetActive(false)` -
+   *      gone from the draw and gone from the ray, because a disabled
+   *      GameObject has no collider either. That is why the pass runs
+   *      HERE and not at click time: the billboard has to be missing
+   *      from the batch, and a center already inside a built batch
+   *      cannot leave one.
+   *    - the BOOTSTRAP BEHAVIOUR. Every other individual gets a
+   *      QuestResourceBehaviour whatever the quest state is, because
+   *      DoClick's individual broadcast (:243-248) is what lets a
+   *      questor hand out the FOLLOW-UP quest - it walks the live
+   *      quests at CLICK time, so a behaviour minted with no resource
+   *      is not inert.
+   *
+   *  The port's one difference from C# is WHEN a machine exists.
+   *  QuestMachine is a scene singleton, so DFU's layout can always ask;
+   *  this host builds its start pixel during scene init, before
+   *  `questBridge` is constructed. So the pass is idempotent and runs
+   *  again over the already-laid pixels the moment the bridge lands
+   *  (below, at the bridge's own construction) - and no frame is drawn
+   *  in between, both being init statements. It is not a "re-run when
+   *  quests change" seam and must not become one: DFU has no such
+   *  thing, and a quest that starts while you stand in the town leaves
+   *  the home copy standing there until the block is laid again.
+   *
+   *  A restore is already in DFU's order - SaveLoadManager.LoadGame
+   *  restores the quest machine (:1437) BEFORE it puts the player back
+   *  in the world (:1477), and `worldQuickLoad` likewise restores the
+   *  session before `_teleportToPixel` rebuilds every pixel.
+   */
+  async function standPixelNpcs(entry) {
+    if (!entry?.npcs?.length) return;
+    const machine = questBridge?.machine ?? null;
+    // The host is the interior person's, unchanged: above ground a
+    // StaticNPC is the same GameObject with the same one act on it
+    // (SetActive), and DFU's SECOND caller - UpdateNpcPresence - is
+    // DaggerfallInterior's alone, so nothing flips this one after
+    // layout and the hookless (flag-only) shape is the whole story.
+    if (!entry.npcQuestPass) {
+      entry.npcQuestPass = setupExteriorQuestStaticNpcs(entry.npcs, machine, makeStaticNpcHost);
+    }
+    // The stand: one batch per archive/record over the ACTIVE NPCs,
+    // appended to the pixel's own list so the frame walk draws them,
+    // the culling test carries them and destroyPixel frees them with
+    // everything else.
+    for (const b of entry.npcBatches ?? []) {
+      const i = entry.batches.indexOf(b);
+      if (i >= 0) entry.batches.splice(i, 1);
+      entry.flatAnims.remove(b);
+      renderer.destroyBatch(b);
+    }
+    entry.npcBatches = [];
+    const npcGroups = new Map();
+    for (const pn of entry.npcs) {
+      if (!pn.active) continue;
+      const k = `${pn.textureArchive}_${pn.textureRecord}`;
+      if (!npcGroups.has(k)) npcGroups.set(k, []);
+      npcGroups.get(k).push([pn.x, pn.y, pn.z]);
+    }
+    for (const [k, centers] of npcGroups) {
+      const [archive, record] = k.split('_').map(Number);
+      const t = await getTexture(archive);
+      if (!t || record >= t.recordCount) continue;
+      uploadRecord(archive, record);
+      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      batch._box = flatBatchAabb(centers, size);   // EV3
+      armFlatAnim(batch, t, archive, record, entry.flatAnims, uploadRecordFrame);
+      entry.npcBatches.push(batch);
+      entry.batches.push(batch);
+    }
   }
 
   // EV4: a built pixel crosses between the full-res core and the far
@@ -1113,7 +1225,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -1871,18 +1983,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // contract since the Q arc; nothing raised them until now, so the
     // three corpus quests' `cast X spell do` triggers never fired).
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
-    onCastReadySpell: (sp) => {
-      questBridge?.machine?.notifyCastReadySpell?.(sp);
-      // MW-D39: the spell goes, and so does the arm - the same cast
-      // moment the dungeon host uses, through the rig's one door. An
-      // animation, never a gate.
-      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
-      weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element);
-      // This host's rig is also the one INTERIOR mode's cast reaches:
-      // worldModes takes this same magic engine, so its own rig never
-      // sees a cast moment - the hands are a singleton for that reason
-      // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322).
-    },
+    onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
+    // MW-D39: the spell goes, and so does the arm - the same cast
+    // moment the dungeon host uses, through the rig's one door.
+    // ROAD-E6: and it is CastReadySpell's PlayOneShot (:430-435), the
+    // moment the magicka is spent, not the release - the engine parks
+    // the resolution on the animation's frame 5.
+    // This host's rig is also the one INTERIOR mode's cast reaches:
+    // worldModes takes this same magic engine, so its own rig never
+    // starts a cast - the hands are a singleton for that reason
+    // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322), and
+    // whichever rig owns the frame is the one that steps them to the
+    // release.
+    startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks,
@@ -3898,7 +4011,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
@@ -4703,16 +4816,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     randomFullName: () => talkFullName(GENDERS.Male),
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
-    // AUDIT 39 (#107): THE FIVE READS THE HANDLERS ALREADY MAKE.
-    // Absent, expandTalkMacros substituted the empty string, so
-    // %pcf/%pcn/%cn/%ra were DELETED from every greeting and where-is
-    // record, getHonoric's `gender === 'male'` arm never fired (every
-    // player was "Ma'am"), and %1com always drew the tone-1 (Normal)
-    // opening whatever tone the player had picked.
-    playerName: () => playerEntity.name ?? '',
-    playerGender: () => playerEntity.gender,
-    playerRace: () => playerEntity.race,
-    cityName: () => townTalk.cityName(),
+    // ROAD-E E7: THE ONE GAMEMANAGER. MacroHelper's GLOBAL rows read
+    // `GameManager.Instance` - PlayerEntity, PlayerGPS, WorldTime -
+    // and DFU has exactly one of it whichever context provider is
+    // expanding. The port's stand-in is the quest machine's macro
+    // hooks (questWorld + the player/clock seams), so the talk MCP
+    // rides the SAME bundle rather than a private copy: %pcn/%pcf/
+    // %pcl/%ra/%cn/%crn/%dat/%tim/%ltn/%ct/%fa..%fpa and the rest of
+    // the table resolve here exactly as they do in a quest message.
+    // (AUDIT 39 #107 had wired four of them by hand - playerName,
+    // playerRace, cityName - because expandTalkMacros substituted the
+    // empty string for everything its 26-row table missed. The table
+    // is whole now and those hand-wires are the hooks'.)
+    hooks: questBridge?.machine.macroContext()?.hooks ?? null,
+    playerGender: () => playerEntity.gender,   // Honorific's read (GetHonoric)
     toneIndex: () => townTalk.toneIndex(),
     // PlayerGPS.GetRaceOfCurrentRegion, through the same REGION_RACES
     // table getNameBankOfRegion reads
@@ -4847,6 +4964,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       && it.questUID === dfItem.questUID
       && it.questSymbol?.name === dfItem.questSymbol?.name);
   };
+  // E6: `QuestMachine.Instance.GetComponent<DaggerfallAudioSource>()`
+  // (PlaySound.cs:112) - ONE source for every PlaySound action in every
+  // running quest, which is what makes the busy-skip a shared gate
+  // rather than a per-action one.
+  const questAudioSource = new QuestAudioSource(audio);
   questBridge = createQuestBridge({
     data: questPack,
     world: questWorld,
@@ -4965,7 +5087,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return [...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
         !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
-    playerRaceName: () => playerEntity.race ?? null,
+    playerRaceName: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // %ra is BirthRaceTemplate.Name (MacroHelper.cs:942-945) - "Dark Elf", not the CamelCase key
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
@@ -5022,10 +5144,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
       });
     },
-    // DELTA (recorded): C# skips while the audio source is BUSY and
-    // only a real play re-stamps PlaySound's timer; the port's one-shot
-    // engine has no busy state, so every call reports played.
-    playSound: (id) => { audio.playOneShot(id); return true; },
+    // E6: THE BUSY SKIP, DFU's own. PlaySound.cs:110-116 is
+    // `if (source != null && !source.IsPlaying()) { source.PlayOneShot(
+    // ...); lastTimePlayed = gameSeconds; }` over the ONE
+    // DaggerfallAudioSource the QuestMachine carries - so a quest sound
+    // that comes due while the last one is still ringing is DROPPED,
+    // and because lastTimePlayed is only re-stamped by a real play the
+    // interval stays due and the action tries again on the next tick.
+    // (timesPlayed has already been spent by then, at PlaySound.cs:106
+    // - the count budget burns down whether or not a sound came out.
+    // That half is the action's, and it has always been verbatim.)
+    // The stamp is returned WHENEVER the source was idle, even if the
+    // clip itself failed to start: DFU stamps it beside PlayOneShot,
+    // which swallows a missing clip in silence.
+    playSound: (id) => {
+      if (questAudioSource.isPlaying()) return false;
+      questAudioSource.playOneShot(id);
+      return true;
+    },
     // PlaySong hands a MIDI.BSA record name; the SongFiles member was
     // resolved in the action (systems/songFiles.js), which is where
     // DaggerfallSongPlayer.Play does it. DFU's quest song plays ONCE
@@ -5130,6 +5266,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
   });
+  // E3: the pixels this host laid BEFORE the bridge existed - the start
+  // pixel is built during init, above - get RMBLayout's third act now.
+  // QuestMachine is a scene singleton in DFU, so its layout never has
+  // this moment; the port's is one statement later than the first
+  // pixel and the pass is idempotent, so it is simply run again. No
+  // frame has been drawn in between (both are init statements) and no
+  // quest has started yet either, so this is the bootstrap behaviour
+  // arriving, not a billboard changing under a player's eye.
+  for (const p of built.values()) await standPixelNpcs(p);
   // AUDIT 24 (wave 22): PopupText.AddText's last line files the popup
   // in the notebook ring (:123), which is the journal's Messages page.
   // The notebook only exists once the bridge is built, so the sink is
@@ -5367,7 +5512,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const p of built.values()) {
         if (!p.npcs?.length) continue;
         const t = state.pixelTranslation(p.px, p.py);
-        for (const pn of p.npcs) out.push({ ...pn, x: pn.x + t[0], y: pn.y + t[1], z: pn.z + t[2] });
+        // E3: a person the quest machine's away arm deactivated is not
+        // a target - SetActive(false) takes the BoxCollider with the
+        // billboard, so DFU's ray meets nothing there either.
+        for (const pn of p.npcs) {
+          if (!pn.active) continue;
+          out.push({ ...pn, x: pn.x + t[0], y: pn.y + t[1], z: pn.z + t[2] });
+        }
       }
       return out;
     },
@@ -5450,6 +5601,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const entered = await modes.startInDungeon();
     if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
   }
+  // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
+  // DaggerfallTravelMapWindow's ctor (:229) each register their own
+  // console commands; both surfaces are THIS host's, so both
+  // registrations are its, once, at mount - the port's windows are
+  // per-open and its hosts are what persist. `isPlayerInside` is
+  // GameManager's, spelled here as it is at every other reader in this
+  // file, and `discoverLocation` is PlayerGPS's, the same throwing
+  // resolver questWorld hands the quest engine.
+  registerExteriorAutomapConsoleCommands({ isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior' });
+  registerTravelMapConsoleCommands({
+    isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
+    discoverLocation: (regionName, locationName) => questWorld.discoverLocation(regionName, locationName),
+  });
+  // ...and the door itself (the recorded departure: DFU's console
+  // WINDOW is the third-party UnityConsole prefab, not DFU source).
+  installConsoleProbe();
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {
@@ -6014,7 +6181,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     pump();
 
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.2, 6000));   // HANDEDNESS (mat4's law)
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator here, and the sky, which draws
+    // into the same rect, takes the same number.
+    const worldAspect = largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight);
+    const proj = mirrorProjectionX(perspective(fieldOfView(), worldAspect, 0.2, 6000));   // HANDEDNESS (mat4's law)
     // MW-D25: the eye goes through the Morrowind camera machine - in
     // first person it comes back untouched (camera.cpp:165-169), in
     // third it is the reference's focal-and-pull-back with this host's
@@ -6120,8 +6293,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
-    sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
+    sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect);
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
     // world repaints everything nearer). Skipped when exp fog owns
@@ -6147,7 +6321,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
         fogColor, fogEnd: weatherFog.end,
-        fovY: fieldOfView(), aspect: canvas.clientWidth / canvas.clientHeight,
+        // E5: the ring draws INTO the world pass's rect, so it takes
+        // that pass's aspect - a horizon built on the full-canvas ratio
+        // would step against the terrain in front of it under a docked bar.
+        fovY: fieldOfView(), aspect: worldAspect,
       });
     }
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back

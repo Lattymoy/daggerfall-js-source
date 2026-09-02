@@ -1,8 +1,11 @@
 // S1: the effect CATALOG (every row DFU's Spell Maker offers, with
-// the support flags that gate the settings editor's panels) and the
-// keyed WINDOW's flow - the group/subgroup walk, the spinner editor,
-// target/element cycling, the name field, and the buy ladder ending
-// in an inscribed spell and a reset sheet.
+// the support flags that gate the settings editor's panels).
+//
+// ROAD-E E8: ...and the NATIVE window - DaggerfallSpellMakerWindow on
+// INFO01I0 art. The window half of this file used to drive a keyed
+// text sheet (a cursor, ENTER, `w._rows()`); it drives DFU's own hit
+// rects now, because that is what the window is. Every pin below
+// clicks where a player clicks.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,37 +15,47 @@ import { fileURLToPath } from 'node:url';
 import {
   SPELL_MAKER_EFFECTS, STAT_SUBGROUPS, PORTED_KEYS,
   spellMakerGroups, spellMakerSubgroups, effectByKey,
+  spellMakerDescriptionId, spellBookDescriptionId,
 } from '../src/systems/spellEffects.js';
-import { SpellMakerWindow, TARGET_LABELS, ELEMENT_LABELS } from '../src/ui/spellMakerWindow.js';
-import { SPELLBOOK_TEMPLATE_INDEX, _resetCustomIndexForTests, blankEffectSettings } from '../src/systems/spellMaker.js';
-import { goldStack } from '../src/systems/inventory.js';
+import {
+  SpellMakerWindow, TARGET_LABELS, ELEMENT_LABELS,
+  SPELL_MAKER_RECTS, EFFECT_NAME_PANELS, EFFECT_PANEL_X,
+  SPELL_MAKER_LABELS, SPELL_MAKER_TIPS, SPELL_MAKER_TEXT,
+  EDITOR_RECTS, SPINNER_UP, SPINNER_DOWN, SPINNER_VALUE, spinnerPart,
+  SELECT_SUBRECTS, TARGET_BUTTONS, ELEMENT_BUTTONS,
+  EDITOR_DESCRIPTION_PANEL, _setSpellMakerArtForTests,
+} from '../src/ui/spellMakerWindow.js';
+import {
+  SPELLBOOK_TEMPLATE_INDEX, _resetCustomIndexForTests, blankEffectSettings,
+  SPELL_ICON_COUNT,
+} from '../src/systems/spellMaker.js';
+import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
 
-const player = (gold = 100000) => ({
+const player = (gold = 100000, extra = []) => ({
   name: 'S', level: 1, stats: {}, skills: [50], maxMagicka: 40,
-  items: [goldStack(gold), { group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
+  goldPieces: gold,   // E4: PlayerEntity.GoldPieces
+  items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }, ...extra],
   spells: [],
 });
-const win = (gold) => new SpellMakerWindow({ entity: player(gold) });
-// walk a window's main cursor onto the row of a given kind
-const toRow = (w, kind, i = 0) => {
-  const idx = w._rows().findIndex((r) => r.kind === kind && (r.i ?? 0) === i);
-  w.cursor = idx;
+const win = (gold, extra) => new SpellMakerWindow({ entity: player(gold, extra) });
+/** A click one pixel inside a named button rect. */
+const press = (w, key) => {
+  const [x, y] = SPELL_MAKER_RECTS[key];
+  w.click(x + 1, y + 1);
   return w;
 };
-
-/** walk the picker onto Damage/Health (4,0) in the first free slot -
- *  AllowedTargets Other, AllowedElements All. */
-const addDamageHealth = (w) => {
-  const free = w.slots.findIndex((sl) => !sl);
-  toRow(w, 'slot', free).input('confirm');
-  w.pickCursor = spellMakerGroups().indexOf('Damage');
-  w.input('confirm');
-  w.pickCursor = spellMakerSubgroups('Damage').findIndex((e) => e.subgroup === 'Health');
-  w.input('confirm');
-  w.mode = 'main';
+/** Walk the two pickers onto one catalogue row, the way a player does. */
+const addEffect = (w, group, subgroup) => {
+  press(w, 'addEffect');
+  w.picker.selectedIndex = spellMakerGroups().indexOf(group);
+  w.picker.input('Enter');
+  if (subgroup !== undefined) {
+    w.picker.selectedIndex = spellMakerSubgroups(group).findIndex((e) => e.subgroup === subgroup);
+    w.picker.input('Enter');
+  }
   return w;
 };
 
@@ -90,7 +103,7 @@ test('S1 catalog: the support flags gate the editor panels, per DFU class', () =
   assert.equal(spellMakerSubgroups('Morph Self').length, 0);
 });
 
-test('S1 catalog: the pickers de-duplicate and sort, and the port marks its inert rows', () => {
+test('S1 catalog: the pickers de-duplicate and sort, and every row has its runtime arm', () => {
   const groups = spellMakerGroups();
   assert.deepEqual(groups, [...new Set(groups)], 'de-duplicated');
   assert.deepEqual(groups, [...groups].sort(), 'alpha-sorted (GetGroupNames sortAlpha)');
@@ -101,16 +114,10 @@ test('S1 catalog: the pickers de-duplicate and sort, and the port marks its iner
   const solo = spellMakerSubgroups('Paralyze');
   assert.equal(solo.length, 1);
   assert.equal(solo[0].subgroup, '');
-  // the inert mark: implemented effects are flagged, the rest are not
-  assert.equal(effectByKey('4,0').ported, true, 'Damage Health casts');
   // The standing inert example, walked forward as the arms land: Lock
   // lived here until X1, Identify until X7 gave it unidentified-item
-  // state, Spell Reflection until X11a, and MORPH SELF - "durable for
-  // a reason no lane will casually close" - until V2a built the
-  // LycanthropyEffect it was waiting on. NOTHING is inert now; the
-  // walked-forward pin holds the whole set at zero, and craftable
-  // stays false on 29,255 (AllowedCraftingStations = None is a law
-  // about the MAKER, not about the arm).
+  // state, Spell Reflection until X11a, and MORPH SELF until V2a
+  // built the LycanthropyEffect it was waiting on.
   assert.equal(effectByKey('40,255').ported, true, 'Identify casts since X7');
   assert.equal(effectByKey('21,255').ported, true, 'Spell Reflection re-targets since X11a');
   assert.equal(effectByKey('29,255').ported, true, 'Morph Self casts since V2a built its racial override');
@@ -120,162 +127,425 @@ test('S1 catalog: the pickers de-duplicate and sort, and the port marks its iner
   assert.equal(PORTED_KEYS.size, SPELL_MAKER_EFFECTS.filter((e) => e.ported).length);
 });
 
-test('S1 window: the group -> subgroup walk lands an effect and opens its editor', () => {
-  const w = win();
-  toRow(w, 'slot', 0).input('confirm');
-  assert.equal(w.mode, 'group');
-  // pick 'Damage' -> its three subgroups
-  w.pickCursor = spellMakerGroups().indexOf('Damage');
-  w.input('confirm');
-  assert.equal(w.mode, 'sub');
-  w.pickCursor = spellMakerSubgroups('Damage').findIndex((e) => e.subgroup === 'Health');
-  w.input('confirm');
-  assert.equal(w.mode, 'edit', 'choosing a subgroup opens the settings editor');
-  assert.equal(w.slots[0].key, '4,0');
-  assert.deepEqual(Object.values(w.slots[0].settings).every((v) => v === 1), true, 'every spinner starts at 1');
-  // Damage Health is magnitude-only: five rows, no duration or chance
-  const rows = w._editRows();
-  assert.equal(rows.length, 5);
-  assert.ok(rows.every((r) => r.comp === 'magnitude'));
-  // back returns to the sheet with the effect kept
-  w.input('back');
-  assert.equal(w.mode, 'main');
-  assert.equal(w.slots[0].key, '4,0');
+// ---------------------------------------------------------------------------
+// E8: the native window.
+// ---------------------------------------------------------------------------
+
+test('E8 rects: every hit rect is DFU\'s, and the effect rows are CENTRED not at x3', () => {
+  // :36-53, digit for digit
+  assert.deepEqual(SPELL_MAKER_RECTS.addEffect, [244, 114, 28, 28]);
+  assert.deepEqual(SPELL_MAKER_RECTS.buySpell, [244, 147, 24, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.newSpell, [244, 163, 24, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.exit, [244, 179, 24, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.casterOnly, [275, 114, 24, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.areaAtRange, [275, 178, 24, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.fireBased, [299, 114, 16, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.magicBased, [299, 178, 16, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.nextIcon, [275, 80, 9, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.previousIcon, [275, 96, 9, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.selectIcon, [288, 94, 16, 16]);
+  assert.deepEqual(SPELL_MAKER_RECTS.nameSpell, [59, 184, 142, 7]);
+  // the labels (:32, :261-267)
+  assert.deepEqual(SPELL_MAKER_LABELS.tip, [5, 22]);
+  assert.deepEqual(SPELL_MAKER_LABELS.maxSpellPoints, [43, 149]);
+  assert.deepEqual(SPELL_MAKER_LABELS.money, [39, 158]);
+  assert.deepEqual(SPELL_MAKER_LABELS.goldCost, [59, 167]);
+  assert.deepEqual(SPELL_MAKER_LABELS.spellPointCost, [70, 176]);
+  assert.deepEqual(SPELL_MAKER_LABELS.spellName, [60, 185]);
+  // the 40x80 select sheet (:56-65)
+  assert.deepEqual(SELECT_SUBRECTS.casterOnly, [0, 0, 24, 16]);
+  assert.deepEqual(SELECT_SUBRECTS.areaAtRange, [0, 64, 24, 16]);
+  assert.deepEqual(SELECT_SUBRECTS.fireBased, [24, 0, 16, 16]);
+  assert.deepEqual(SELECT_SUBRECTS.magicBased, [24, 64, 16, 16]);
+
+  // THE CENTRING. The declared rects are (3, 30/62/94, 230, 9), but
+  // SetupLabels centres each panel (:271, :280, :289) and centring
+  // ASSIGNS x - so the live rows start at 45, and a click at x=3 (or
+  // anywhere left of 45) is NOT on an effect row.
+  assert.equal(EFFECT_PANEL_X, 45);
+  assert.deepEqual(EFFECT_NAME_PANELS, [[45, 30, 230, 9], [45, 62, 230, 9], [45, 94, 230, 9]]);
+  const w = addEffect(win(), 'Damage', 'Health');
+  w.editor = null;
+  w.click(4, 34);                       // where the DECLARED rect would put row 1
+  assert.equal(w.box, null, 'the dead x3 rect opens nothing');
+  w.click(46, 34);                      // where the CENTRED rect really is
+  assert.deepEqual(w.box.rows, SPELL_MAKER_TEXT[1708].map((text) => ({ text, center: true })),
+    'the centred row opens the 1708 alter box');
 });
 
-test('S1 window: a group whose single effect has no subgroup skips the sub picker', () => {
+test('E8 window: add-effect walks group -> subgroup -> the settings editor', () => {
   const w = win();
-  toRow(w, 'slot', 0).input('confirm');
-  w.pickCursor = spellMakerGroups().indexOf('Paralyze');
-  w.input('confirm');
-  assert.equal(w.mode, 'edit', 'straight to the editor - no empty picker');
+  press(w, 'addEffect');
+  assert.ok(w.picker, 'the group picker is up');
+  assert.deepEqual(w.picker.items, spellMakerGroups());
+  assert.equal(w.picker.selectedIndex, 0, 'ListBox.SelectedIndex = 0 (:727)');
+  w.picker.selectedIndex = spellMakerGroups().indexOf('Damage');
+  w.picker.input('Enter');
+  assert.deepEqual(w.picker.items, spellMakerSubgroups('Damage').map((e) => e.subgroup));
+  w.picker.selectedIndex = spellMakerSubgroups('Damage').findIndex((e) => e.subgroup === 'Health');
+  w.picker.input('Enter');
+  assert.equal(w.picker, null, 'both pickers close (:1000-1002)');
+  assert.ok(w.editor, 'and the settings editor opens');
+  assert.equal(w.slots[0].key, '4,0');
+  assert.equal(w.editOrDeleteSlot, 0, 'AddAndEditSlot leaves the slot pending (:431)');
+  assert.deepEqual(w.slots[0].settings, blankEffectSettings(), 'every spinner starts at its range floor');
+  // Escape out of the SUBGROUP picker returns to the GROUP list - the
+  // one thing DFU changed from classic on purpose (:299-300)
+  const w2 = win();
+  press(w2, 'addEffect');
+  w2.picker.selectedIndex = spellMakerGroups().indexOf('Damage');
+  w2.picker.input('Enter');
+  w2.picker.input('Escape');
+  assert.deepEqual(w2.picker.items, spellMakerGroups(), 'back to the groups, not out of the window');
+});
+
+test('E8 window: a group whose single effect has no subgroup skips the sub picker', () => {
+  const w = win();
+  addEffect(w, 'Paralyze');
+  assert.equal(w.picker, null, 'straight to the editor - no empty picker (:945-951)');
+  assert.ok(w.editor);
   assert.equal(w.slots[0].key, '0,255');
-  // Paralyze is duration + chance: six rows, no magnitude
-  const rows = w._editRows();
-  assert.equal(rows.length, 6);
-  assert.equal(rows.filter((r) => r.comp === 'magnitude').length, 0);
 });
 
-test('S1 window: the editor steps and clamps, and the cost follows every change', () => {
+test('E1 LIVE: the button-up reaches the NESTED picker, so its thumb latch drops', () => {
+  // The host hands the release to whatever holds its overlay slot
+  // (scenes/worldModes.js `interiorOverlay.release?.()`), and the spell
+  // maker IS that slot - so SpellMakerWindow, the class that owns
+  // `this.picker`, has to pass it on. It once sat on
+  // EffectSettingsEditorWindow, which owns no picker, and the drag
+  // latch survived the button coming up: one stray held move after
+  // letting go and the thumb resumed from the stale anchor
+  // (VerticalScrollBar.Update's else arm, listPicker.js:123-129).
   const w = win();
-  toRow(w, 'slot', 0).input('confirm');
-  w.pickCursor = spellMakerGroups().indexOf('Damage');
-  w.input('confirm');
-  w.pickCursor = spellMakerSubgroups('Damage').findIndex((e) => e.subgroup === 'Health');
-  w.input('confirm');
-  const before = w.cost().gold;
-  // raise Base min - the pair rule drags Base max with it
-  for (let i = 0; i < 9; i++) w.input('plus');
+  press(w, 'addEffect');
+  const bar = w.picker.scrollBar;
+  w.picker.syncScrollBar();
+  const span = bar.thumbSpan;
+  assert.ok(span && span.h < bar.rect[3], 'the group list overflows, so the bar has a real thumb');
+  const bx = bar.rect[0] + 1;
+  const thumbTop = bar.rect[1] + span.y;
+  w.click(bx, thumbTop + 1);                      // press INSIDE the thumb - the latch
+  assert.equal(bar.draggingThumb, true, 'the press latched the drag');
+  w.hover(bx, thumbTop + 1 + 40, { buttons: 1 }); // held move - the drag
+  const dragged = w.picker.scrollIndex;
+  assert.ok(dragged > 0, 'the held move actually scrolled the list');
+  w.release();                                    // the host's up edge
+  assert.equal(bar.draggingThumb, false, 'the release drops the latch');
+  // ...and the stray move that used to resume the drag now does nothing
+  w.hover(bx, bar.rect[1] + 1, { buttons: 1 });
+  assert.equal(w.picker.scrollIndex, dragged, 'no jump back from the stale anchor');
+});
+
+test('E8 editor: the support flags gate the spinners, and only an enabled one steps', () => {
+  const w = addEffect(win(), 'Damage', 'Health');
+  const ed = w.editor;
+  // :31-41, digit for digit
+  assert.deepEqual(EDITOR_RECTS.durationBase, [64, 94, 24, 16]);
+  assert.deepEqual(EDITOR_RECTS.magnitudePerLevel, [235, 134, 24, 16]);
+  assert.deepEqual(EDITOR_RECTS.exit, [281, 94, 24, 16]);
+  assert.deepEqual([...SPINNER_UP], [0, 0, 24, 5]);
+  assert.deepEqual([...SPINNER_VALUE], [0, 5, 24, 6]);
+  assert.deepEqual([...SPINNER_DOWN], [0, 11, 24, 5]);
+  // Damage Health is magnitude only
+  assert.equal(ed.enabled('durationBase'), false);
+  assert.equal(ed.enabled('chanceBase'), false);
+  assert.equal(ed.enabled('magnitudeBaseLow'), true);
+  // a DISABLED spinner is not drawn and takes no click (:268-315)
+  const durUp = spinnerPart(EDITOR_RECTS.durationBase, SPINNER_UP);
+  ed.click(durUp[0] + 1, durUp[1] + 1);
+  assert.equal(w.slots[0].settings.durationBase, 1, 'the disabled spinner did not move');
+  // the enabled one steps, and the magnitude PAIR rule drags the max
+  const magUp = spinnerPart(EDITOR_RECTS.magnitudeBaseLow, SPINNER_UP);
+  for (let i = 0; i < 9; i++) ed.click(magUp[0] + 1, magUp[1] + 1);
   assert.equal(w.slots[0].settings.magnitudeBaseLow, 10);
   assert.equal(w.slots[0].settings.magnitudeBaseHigh, 10, 'the max came along');
-  assert.ok(w.cost().gold > before, 'a stronger spell costs more');
-  // stepping down past the floor clamps at 1
-  for (let i = 0; i < 50; i++) w.input('minus');
-  assert.equal(w.slots[0].settings.magnitudeBaseLow, 1);
+  // ...and down clamps at the range floor
+  const magDown = spinnerPart(EDITOR_RECTS.magnitudeBaseHigh, SPINNER_DOWN);
+  for (let i = 0; i < 50; i++) ed.click(magDown[0] + 1, magDown[1] + 1);
+  assert.equal(w.slots[0].settings.magnitudeBaseHigh, 1);
+  assert.equal(w.slots[0].settings.magnitudeBaseLow, 1, 'lowering the max drags the min down');
+  // the editor's OWN label is this effect's cost alone - no target
+  // multiplier and no five-point floor (:373-381). A VALUE, not
+  // `editedEffectCost(...)` again: the label and the law are the same
+  // call, so comparing them is f(x) === f(x) and holds for any body.
+  assert.equal(ed.cost(), 13, 'CalculateEffectCosts over Damage Health at its range floor');
+  ed.click(EDITOR_RECTS.exit[0] + 1, EDITOR_RECTS.exit[1] + 1);
+  assert.equal(w.editor, null, 'exit closes the editor');
+  assert.equal(w.editOrDeleteSlot, -1, 'EffectEditor_OnClose clears the pending slot (:997-1001)');
 });
 
-test('S1 window: target and element cycle both ways, name types, d clears a slot', () => {
+test('E8 editor: the cost label is CalculateEffectCosts alone - live skill, no floor, no target multiplier', () => {
+  // UpdateCosts (:373-381) calls CalculateEffectCosts, not
+  // CalculateTotalEffectCosts (FormulaHelper.cs:2248-2256 against
+  // :2203-2243), so THREE things separate the label from the sheet's
+  // own total, and each needs a value of its own or the whole law can
+  // be replaced by a constant.
+  const w = addEffect(win(), 'Damage', 'Health');
+  const ed = w.editor;
+  // 1. the number itself, at the settings' range floor
+  assert.equal(ed.cost(), 13, 'Damage Health at a 50 skill');
+  assert.equal(w.totalSpellPointCost, 13, 'the sheet agrees while nothing else applies');
+  // 2. the caster argument is NULL, and a null caster reads the
+  //    PLAYER's live skill (:2271-2275) - raise it and the label moves
+  const skilled = new SpellMakerWindow({ entity: { ...player(), skills: 100 } });
+  addEffect(skilled, 'Damage', 'Health');
+  assert.equal(skilled.editor.cost(), 1, 'a 100 skill takes the same effect to 1');
+  // ...and NO five-point floor here, though the sheet's total takes it
+  assert.equal(skilled.totalSpellPointCost, 5, 'CalculateTotalEffectCosts\' castCostFloor (:2239-2240)');
+  // 3. no target multiplier (ApplyTargetCostMultiplier, :2231-2232):
+  //    the sheet scales, the editor's own label does not
+  const targeted = addEffect(win(), 'Damage', 'Health');
+  const tEd = targeted.editor;
+  tEd.click(EDITOR_RECTS.exit[0] + 1, EDITOR_RECTS.exit[1] + 1);
+  press(targeted, 'areaAtRange');
+  assert.equal(targeted.totalSpellPointCost, 32, 'Area at Range multiplies the SHEET');
+  assert.equal(tEd.cost(), 13, 'and leaves the editor\'s per-effect label alone');
+});
+
+test('E8 window: the empty sheet reads 0 and 0, NOT the five-point casting floor', () => {
+  // UpdateSpellCosts returns before CalculateTotalEffectCosts when no
+  // slot is used (:346-353), so the floor that formula imposes never
+  // reaches these labels. DFU says so in its own comment (:338-341).
   const w = win();
-  toRow(w, 'target');
-  assert.equal(w.rangeType, 0);
-  w.input('confirm');
-  assert.equal(w.rangeType, 1);
-  w.input('minus');
-  assert.equal(w.rangeType, 0);
-  w.input('minus');
-  assert.equal(w.rangeType, TARGET_LABELS.length - 1, 'wraps backwards');
-  toRow(w, 'element');
-  assert.equal(w.element, 4, 'the default is Magic');
-  // AUDIT 26 F181: with NO effects chosen, allowedElements is
-  // defaultElementFlags = ElementFlags_MagicOnly (:565), so Magic is
-  // the only legal element and the cycle has nowhere to go. This pin
-  // used to run on the ungated window and read the wrap as freedom.
-  w.input('confirm');
-  assert.equal(w.element, 4, 'nothing to cycle to while the sheet is empty');
-  // give it an effect whose AllowedElements is ElementFlags_All and
-  // the row cycles - Damage Health (4,0).
-  addDamageHealth(w);
-  toRow(w, 'element');
-  w.input('confirm');
+  assert.equal(w.totalGoldCost, 0);
+  assert.equal(w.totalSpellPointCost, 0);
+  assert.equal(w.labels().spellPointCost, '0');
+  addEffect(w, 'Damage', 'Health');
+  assert.ok(w.totalSpellPointCost >= 5, 'and a real spell prices through the shared formula');
+});
+
+test('E8 window: the target and element buttons refuse an illegal bit in silence', () => {
+  const w = win();
+  // with nothing chosen, allowedElements is ElementFlags_MagicOnly
+  // (:565) - the four element buttons are inert and Magic stands
+  assert.equal(w.element, 4);
+  press(w, 'fireBased');
+  assert.equal(w.element, 4, 'SetSpellElement returns early on a disallowed bit (:526-528)');
+  press(w, 'areaAtRange');
+  assert.equal(w.rangeType, 4, 'every target is legal on an empty sheet');
+  assert.equal(TARGET_LABELS[4], 'Area at Range');
+  // Damage Health is AllowedElements_All and AllowedTargets_Other
+  addEffect(w, 'Damage', 'Health');
+  w.editor = null;
+  press(w, 'fireBased');
   assert.equal(w.element, 0);
   assert.equal(ELEMENT_LABELS[0], 'Fire');
-  // the name field
-  toRow(w, 'name').input('confirm');
-  assert.equal(w.mode, 'name');
-  for (const c of 'Zap') w.input(`char:${c}`);
-  w.input('confirm');
-  assert.equal(w.name, 'Zap');
-  assert.equal(w.mode, 'main');
-  // backspace inside the field
-  toRow(w, 'name').input('confirm');
-  w.input('backspace');
-  assert.equal(w.name, 'Za');
-  w.input('back');
-  // d clears the slot under the cursor
-  w.slots[1] = { type: 4, subType: 0, key: '4,0', settings: {} };
-  toRow(w, 'slot', 1).input('char:d');
-  assert.equal(w.slots[1], null);
+  press(w, 'casterOnly');
+  assert.equal(w.rangeType, 4, 'Damage Health forbids CasterOnly, so the button does nothing');
+  assert.equal(TARGET_BUTTONS[0], 'casterOnly');
+  assert.equal(ELEMENT_BUTTONS[4], 'magicBased');
 });
 
-test('S1 window: buying inscribes the spell, spends the gold and resets the sheet for another', () => {
+test('E8 window: the tip label locks when the cursor slides between adjacent buttons', () => {
+  // TipButton_OnMouseEnter/Leave (:1039-1066). Unity raises the NEW
+  // button's Enter BEFORE the old button's Leave, so a slide from one
+  // button to its neighbour locks the tip and the leave spends the
+  // lock instead of wiping the text that just arrived.
+  const w = win();
+  assert.equal(w.tip, '');
+  w.hover(...SPELL_MAKER_RECTS.addEffect.slice(0, 2).map((v) => v + 1));
+  assert.equal(w.tip, w.tipFor('addEffect'));
+  assert.match(w.tip, /^Add effect \(/, 'Internal_Strings.csv:936 plus the shortcut');
+  assert.equal(w.lockTip, false);
+  w.hover(SPELL_MAKER_RECTS.buySpell[0] + 1, SPELL_MAKER_RECTS.buySpell[1] + 1);
+  assert.equal(w.tip, w.tipFor('buySpell'), 'the new button won the label');
+  assert.equal(w.lockTip, false, 'and the leave that followed spent the lock');
+  w.hover(2, 2);
+  assert.equal(w.tip, '', 'off every button, the tip clears');
+  assert.equal(SPELL_MAKER_TIPS.areaAroundCaster, 'Area around caster');
+});
+
+test('E8 window: the icon arrows wrap, and buying resets the sheet without closing', () => {
   _resetCustomIndexForTests();
   const w = win(100000);
   const e = w.entity;
-  // one Damage Health effect, named, at range
-  w.slots[0] = { type: 4, subType: 0, key: '4,0', settings: { ...blankEffectSettings(), magnitudeBaseLow: 5, magnitudeBaseHigh: 5 } };
-  w.name = 'Zap';
-  w.rangeType = 2;
-  const price = w.cost().gold;
-  const before = e.items[0].stackCount;
-  toRow(w, 'buy').input('confirm');
+  assert.equal(w.icon, 1, 'defaultSpellIcon (:132)');
+  press(w, 'previousIcon');
+  assert.equal(w.icon, 0);
+  press(w, 'previousIcon');
+  assert.equal(w.icon, SPELL_ICON_COUNT - 1, 'PreviousIconButton wraps to the last (:900-908)');
+  press(w, 'nextIcon');
+  assert.equal(w.icon, 0, 'NextIconButton wraps to the first (:875-884)');
+
+  addEffect(w, 'Damage', 'Health');
+  w.editor = null;
+  press(w, 'nameSpell');
+  assert.equal(w.naming, true);
+  for (const c of 'Zap') w.input(`Key${c}`, { key: c });
+  w.input('Enter');
+  assert.equal(w.name, 'Zap');
+  press(w, 'singleTargetAtRange');
+  const price = w.totalGoldCost;
+  const before = e.goldPieces;
+  press(w, 'buySpell');
   assert.equal(e.spells.length, 1, 'the spell is in the book');
   assert.equal(e.spells[0].name, 'Zap');
   assert.equal(e.spells[0].rangeType, 2);
   assert.equal(e.spells[0].custom, true);
-  assert.equal(e.items[0].stackCount, before - price, 'the gold really left');
-  assert.match(w.notice, /inscribed/, 'record 1705');
-  // the sheet resets for another spell - the window does NOT close
-  assert.equal(w.done, false);
+  assert.equal(e.goldPieces, before - price, 'the gold really left');
+  assert.deepEqual(w.box.rows, SPELL_MAKER_TEXT[1705].map((text) => ({ text, center: true })),
+    'record 1705, verbatim from Internal_RSC.csv');
+  // the box is click-anywhere, and its dismissal is SetDefaults
+  w.click(2, 2);
+  assert.equal(w.done, false, 'the window does NOT close (:790-806)');
   assert.deepEqual(w.slots, [null, null, null]);
   assert.equal(w.name, '');
   assert.equal(w.rangeType, 0);
+  assert.equal(w.icon, 1);
 });
 
-test('S1 window: the refusals speak, and nothing is bought or spent', () => {
+test('E8 window: the buy ladder speaks the classic records, in DFU\'s order', () => {
+  const rows = (id) => SPELL_MAKER_TEXT[id]?.map((text) => ({ text, center: true })) ?? [];
+  // no spellbook is the FIRST gate (:742-747)
+  const noBook = new SpellMakerWindow({ entity: { goldPieces: 9999, items: [], spells: [], skills: [50] }, rows });
+  press(noBook, 'buySpell');
+  assert.deepEqual(noBook.box.rows, rows(1703));
+  // then effects, with DFU's own localized string (not a record)
   const w = win(10);
-  const e = w.entity;
-  // no effects yet
-  toRow(w, 'buy').input('confirm');
-  assert.match(w.notice, /at least one effect/);
-  assert.equal(e.spells.length, 0);
-  // an effect, but not enough gold
-  w.slots[0] = { type: 4, subType: 0, key: '4,0', settings: blankEffectSettings() };
+  press(w, 'buySpell');
+  assert.deepEqual(w.box.rows, [{ text: 'You must add at least one effect to this spell.', center: true }]);
+  w.click(2, 2);
+  // then gold
+  addEffect(w, 'Damage', 'Health');
+  w.editor = null;
   w.name = 'Zap';
-  toRow(w, 'buy').input('confirm');
-  assert.match(w.notice, /enough gold/);
-  assert.equal(e.items[0].stackCount, 10, 'no gold moved');
-  assert.equal(e.spells.length, 0);
-  // affordable, but nameless - the LAST check
+  press(w, 'buySpell');
+  assert.deepEqual(w.box.rows, SPELL_MAKER_TEXT[1702].map((text) => ({ text, center: true })));
+  assert.equal(w.entity.goldPieces, 10, 'no gold moved');
+  assert.equal(w.entity.spells.length, 0);
+  w.click(2, 2);
+  // ...and the NAME last, "only bother the player if everything else
+  // is correct" (:775-780)
   const w2 = win(100000);
-  w2.slots[0] = { type: 4, subType: 0, key: '4,0', settings: blankEffectSettings() };
-  toRow(w2, 'buy').input('confirm');
-  assert.match(w2.notice, /name/);
+  addEffect(w2, 'Damage', 'Health');
+  w2.editor = null;
+  press(w2, 'buySpell');
+  assert.deepEqual(w2.box.rows, SPELL_MAKER_TEXT[1704].map((text) => ({ text, center: true })));
   assert.equal(w2.entity.spells.length, 0);
-  // three effects is the ceiling
-  const w3 = win();
-  w3.slots = [1, 2, 3].map(() => ({ type: 4, subType: 0, key: '4,0', settings: {} }));
-  w3.slots[0] = null;   // free one, fill the cursor slot, then try a fourth
-  w3.slots[0] = { type: 4, subType: 0, key: '4,0', settings: {} };
-  toRow(w3, 'slot', 0).input('confirm');
-  assert.equal(w3.mode, 'edit', 'a FILLED slot edits rather than adding');
 });
 
-test('S1 wiring pin: the guild destination is live and the interior host mounts the window', () => {
+test('E8 window: a fourth effect is refused with record 1707, and a filled row alters', () => {
+  const w = win();
+  for (const sub of ['Health', 'Fatigue', 'Spell Points']) { addEffect(w, 'Damage', sub); w.editor = null; }
+  assert.equal(w.usedSlots().length, 3);
+  press(w, 'addEffect');
+  assert.equal(w.picker, null, 'no picker opens');
+  assert.deepEqual(w.box.rows, SPELL_MAKER_TEXT[1707].map((text) => ({ text, center: true })));
+  w.click(2, 2);
+  // EditOrDeleteSlot: the 1708 box, and DELETE clears the slot
+  w.click(EFFECT_NAME_PANELS[1][0] + 4, EFFECT_NAME_PANELS[1][1] + 4);
+  assert.deepEqual(w.box.rows, SPELL_MAKER_TEXT[1708].map((text) => ({ text, center: true })));
+  assert.equal(w.editOrDeleteSlot, 1);
+  w.box.onButton(9);                       // MB_BUTTONS.Delete
+  w.box = null;
+  assert.equal(w.slots[1], null, 'ClearPendingDeleteEffectSlot (:391-400)');
+  assert.equal(w.editOrDeleteSlot, -1);
+  // an EMPTY row opens nothing at all (:439-440)
+  w.click(EFFECT_NAME_PANELS[1][0] + 4, EFFECT_NAME_PANELS[1][1] + 4);
+  assert.equal(w.box, null);
+});
+
+test('E8 ladder: a letter of credit buys a spell, as GetGoldAmount says it must', () => {
+  // BuyButton reads PlayerEntity.GetGoldAmount() (:748-751) - coins
+  // PLUS letters - and pays through DeductGoldAmount, which the port
+  // has always matched. The gate read the purse alone, so a mage with
+  // a letter and no coins was refused a spell DFU sells him.
+  const w = win(0, [{ group: 'Currency', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: 5000 }]);
+  addEffect(w, 'Damage', 'Health');
+  w.editor = null;
+  w.name = 'Zap';
+  press(w, 'buySpell');
+  assert.equal(w.entity.spells.length, 1, 'the letter paid for it');
+  assert.deepEqual(w.box.rows, SPELL_MAKER_TEXT[1705].map((text) => ({ text, center: true })));
+  // ...while the money LABEL still shows GoldPieces alone, which is
+  // DFU's own asymmetry (SetStatusLabels, :356)
+  assert.equal(w.labels().money, '0');
+});
+
+test('E8 editor: SpellMakerDescription is the spellbook record + 300, bar the two swapped', () => {
+  // Every one of DFU's 85 effect classes declares both, and the maker
+  // record is the book's plus 300 - DamageHealth 1512/1212
+  // (DamageHealth.cs:40-41), the variant families included
+  // (ElementalResistance 1527+v against 1227+v).
+  assert.equal(spellMakerDescriptionId('4,0'), 1512);
+  assert.equal(spellBookDescriptionId('4,0'), 1212);
+  assert.equal(spellMakerDescriptionId('8,3'), 1530, 'ElementalResistance variant 3');
+  assert.equal(spellMakerDescriptionId('33,2'), 1587, 'PacifyEffect variant 2');
+  assert.equal(spellMakerDescriptionId('43,255'), 1602, 'Teleport');
+  // THE TWO EXCEPTIONS: the spellbook table carries the classic
+  // Personality/Speed swap (1225 above 1224) and the spell-maker
+  // records do not (1524 then 1525), so +300 would swap them back.
+  assert.equal(spellBookDescriptionId('7,5'), 1225, 'Drain Personality, spellbook');
+  assert.equal(spellBookDescriptionId('7,6'), 1224, 'Drain Speed, spellbook');
+  assert.equal(spellMakerDescriptionId('7,5'), 1524, 'Drain Personality, spell maker');
+  assert.equal(spellMakerDescriptionId('7,6'), 1525, 'Drain Speed, spell maker');
+  assert.equal(spellMakerDescriptionId('nope'), null);
+  // and the editor reads it through that one door
+  const w = win();
+  const seen = [];
+  w.rows = (id) => { seen.push(id); return [{ text: 'x', center: true }]; };
+  addEffect(w, 'Damage', 'Health');
+  assert.deepEqual(w.editor.descriptionRows(), [{ text: 'x', center: true }]);
+  assert.ok(seen.includes(1512), 'the parchment asked for 1512');
+});
+
+test('E8 editor: the parchment is DFU\'s FIXED (7,19,306,69) panel, not a centred message box', () => {
+  // SetupEffectDescriptionPanels (:175-193): a (5,19,312,69) parent
+  // centred on the native panel puts it at x4, and the 306-wide child
+  // centred inside that at x7 - a plain Panel wearing PopupStyle
+  // .Parchment, NOT a DaggerfallMessageBox. Only the label inside it is
+  // Center/Middle. An auto-sized, screen-centred box lands on the
+  // spinner rows instead of above them.
+  const FONT = { tex: {}, fnt: { fixedWidth: 6, fixedHeight: 6, glyphWidth: () => 5 } };
+  const CANVAS = { width: 320, height: 200 };
+  const REND = { drawScreenQuad: () => {}, setScreenScissor: () => {}, clearScreenScissor: () => {} };
+  const IMG = { tex: {}, w: 320, h: 200 };
+  _setSpellMakerArtForTests(IMG, IMG, IMG);
+  try {
+    const short = win();
+    short.rows = () => [{ text: 'Damages health.', center: true }];
+    addEffect(short, 'Damage', 'Health');
+    short.editor.draw(REND, CANVAS, FONT);
+    const box = short.editor._boxLayout;
+    assert.deepEqual([box.x, box.y, box.w, box.h], [...EDITOR_DESCRIPTION_PANEL]);
+    assert.deepEqual([...EDITOR_DESCRIPTION_PANEL], [7, 19, 306, 69], 'and the rect is DFU\'s own');
+    // it must clear the first spinner row (durationBase, y94)
+    assert.ok(box.y + box.h <= EDITOR_RECTS.durationBase[1], 'the parchment sits ABOVE the spinners');
+    // ...and a LONG description does not grow or move it
+    const long = win();
+    long.rows = () => Array.from({ length: 8 }, (_, i) => ({ text: `row ${i} of a very long parchment`, center: true }));
+    addEffect(long, 'Damage', 'Health');
+    long.editor.draw(REND, CANVAS, FONT);
+    assert.deepEqual(
+      [long.editor._boxLayout.x, long.editor._boxLayout.y, long.editor._boxLayout.w, long.editor._boxLayout.h],
+      [...EDITOR_DESCRIPTION_PANEL], 'a fixed Rect does not auto-size');
+    // the recorded never-traps line is an EMPTY parchment, not none
+    const none = win();
+    none.rows = () => [];
+    addEffect(none, 'Damage', 'Health');
+    none.editor.draw(REND, CANVAS, FONT);
+    assert.ok(none.editor._boxLayout, 'a description-less effect still draws the panel');
+    assert.deepEqual([none.editor._boxLayout.x, none.editor._boxLayout.w], [7, 306]);
+  } finally {
+    _setSpellMakerArtForTests(null, null, null);
+  }
+});
+
+test('E8 wiring pin: the guild destination mounts the NATIVE window behind an art gate', () => {
   assert.match(src('src/systems/guildServiceFlow.js'), /MakeSpells: 'guildServiceSpellMaker'/);
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /destination === 'guildServiceSpellMaker'/);
+  assert.match(wm, /destination === 'guildServiceSpellMaker' && spellMakerArtLoaded\(\) && _shopFont/);
   assert.match(wm, /new SpellMakerWindow\(\{/);
+  assert.match(wm, /preloadSpellMakerArt\(\{ renderer, fetchBytes, palette \}\)/,
+    'the art warms at boot with its sibling maker windows');
   // the Mages Guild gate is membership; Kynareth's is rank 6 - both
   // already live, so the destination is all that was missing
   assert.match(src('src/systems/guildServices.js'), /case 'MakeSpells':/);
+  // ...and the window really is native now: no `isChoiceWindow` false,
+  // and the three ARENA2 sheets DFU names are the ones it loads.
+  const file = src('src/ui/spellMakerWindow.js');
+  assert.match(file, /INFO01I0\.IMG/);
+  assert.match(file, /MASK01I0\.IMG/);
+  assert.match(file, /MASK05I0\.IMG/);
+  assert.equal(/isChoiceWindow\(\) \{ return false/.test(file), false);
 });

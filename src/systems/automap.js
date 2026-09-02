@@ -112,6 +112,7 @@
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { buildAutomapModel, restoreMatchesLayout, AABB_TOLERANCE } from './automapModel.js';
+import { registerCommand } from './consoleCommands.js';   // E3: the console command database
 
 export const SCAN_INTERVAL_S = 1 / 5;              // scanRateGeometryDiscoveryInHertz = 5 (:172)
 export const RAYCAST_DISTANCE_DOWN = 3.0;          // :168
@@ -124,6 +125,7 @@ export const HIT_DISTANCE_AGREEMENT = 0.01;        // Math.Abs(...) < 0.01f (:11
 // ---- the per-dungeon store (module singleton - one player) ---------
 
 let _dungeons = new Map();   // key -> { revealed:Set, visitedThisRun:Set, entranceDiscovered, lastVisited }
+let _live = null;            // E3: { rec, model } - the console's `Automap.instance`
 let _inside = false;         // GameManager.IsPlayerInside's automap half - the N=0 forget law reads it
 let _liveKey = null;         // the dungeon the player stands in - structurally unevictable (see prune)
 
@@ -171,6 +173,7 @@ export function enterDungeonAutomap(key, nowMinutes, { fromLoad = false } = {}) 
 export function exitDungeonAutomap() {
   _inside = false;
   _liveKey = null;
+  _live = null;   // E3: Automap.instance goes with the geometry
   if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();
 }
 
@@ -272,6 +275,7 @@ export function resetAutomapStore() {
   _dungeons = new Map();
   _inside = false;
   _liveKey = null;
+  _live = null;
   _interior = null;   // c2/S9: the visit-scoped interior record dies with the store
 }
 
@@ -401,7 +405,7 @@ export function setupInteriorEntranceBeacon(rec) {
 /** OnTransitionToExterior (:2525-2528): the beacons are destroyed and
  *  the state written to a field nothing reads. The port drops the
  *  record instead - see the dead-restore note above. */
-export function exitInteriorAutomap() { _interior = null; }
+export function exitInteriorAutomap() { _interior = null; _live = null; }
 
 export const getInteriorAutomap = () => _interior;
 
@@ -425,6 +429,13 @@ export const buildRevealIndex = (entries) => buildAutomapModel(entries);
  */
 export function bindAutomapLayout(rec, model) {
   if (!rec || !model) return false;
+  // E3: `Automap.instance` for the console commands. DFU's Automap is
+  // ONE component holding both halves - the state dictionary and the
+  // geometry it reveals - and the port split them (the records here,
+  // the model in the host that built the room). RevealAll needs both,
+  // so the pair is latched at the one moment they meet, which is this
+  // bind, and dropped by both exits below.
+  _live = { rec, model };
   if (!restoreMatchesLayout(model, rec.blockNames)) {
     rec.revealed = new Set();
     rec.visitedThisRun = new Set();
@@ -847,4 +858,62 @@ export const automapDebugTeleportMode = () => _debugTeleportMode;
 export function toggleAutomapDebugTeleportMode() {
   _debugTeleportMode = !_debugTeleportMode;
   return _debugTeleportMode;
+}
+
+// ── ROAD-E E3: AutoMapConsoleCommands, ON THE DATABASE ────────────────
+// Automap.cs:2596-2688. c2/S8 ported the three LAWS above and mounted
+// them on the standalone dungeon host's probe surface because the port
+// had no command database; E3 built the database
+// (systems/consoleCommands.js), so the commands are registered the way
+// C# registers them - name, description, usage, callback - with their
+// two gates and their answer strings verbatim. `automapCommand` on the
+// dungeon context stays as the probe door and now runs THESE.
+
+/** GameManager.Instance.IsPlayerInside, for the automap's purpose: the
+ *  module already tracks both halves - `_inside` is the dungeon's (its
+ *  own comment says so) and a non-null `_interior` is the building's,
+ *  which is why RevealAll works on a shop's map in DFU too. */
+export const automapIsPlayerInside = () => _inside || _interior != null;
+
+/** `Automap.instance` - null outside, and null after either exit. */
+export const automapInstance = () => _live;
+
+/** AutoMapConsoleCommands.RegisterCommands (:2598-2612), including the
+ *  try/catch DFU wraps it in (a registration that throws must not take
+ *  the automap's Start down with it). */
+export function registerAutomapConsoleCommands() {
+  try {
+    registerCommand('map_revealall',
+      'Reveals entire map (including disconnected dungeon segments) on automap',
+      'map_revealall',
+      () => {
+        if (!automapIsPlayerInside()) return 'this command only has an effect when inside a dungeon';
+        const automap = automapInstance();
+        if (automap == null) return 'Automap instance not found';
+        revealAllAutomap(automap.rec, automap.model);
+        return 'dungeon has been completely revealed on the automap';
+      });
+    registerCommand('map_hideall', 'Hides entire map', 'map_hideall',
+      () => {
+        if (!automapIsPlayerInside()) return 'this command only has an effect when inside a dungeon';
+        const automap = automapInstance();
+        if (automap == null) return 'Automap instance not found';
+        hideAllAutomap(automap.rec);
+        return 'hide complete on automap';
+      });
+    // DebugTeleportMode (:2666-2688) has NO inside gate - only the
+    // instance one - which is C#'s own asymmetry, kept.
+    registerCommand('map_teleportmode',
+      'toggles (enables or disables) debug teleport mode (Control+Shift+Left Mouse Click on a dungeon segment will teleport player to it)',
+      'map_teleportmode',
+      () => {
+        const automap = automapInstance();
+        if (automap == null) return 'Automap instance not found';
+        return toggleAutomapDebugTeleportMode()
+          ? 'debug teleport mode has been enabled'
+          : 'debug teleport mode has been disabled';
+      });
+  } catch (ex) {
+    console.error(`Error Registering Automap Console commands: ${ex?.message ?? ex}`);
+  }
 }

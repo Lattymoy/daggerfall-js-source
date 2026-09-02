@@ -24,7 +24,7 @@ import { createWeaponRig } from '../combat/weaponRig.js';
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64): a poisoned shaft doses its mark
-import { spendArrow, totalWeight } from '../systems/inventory.js';
+import { spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -84,6 +84,7 @@ import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -129,7 +130,8 @@ import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from 
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
-import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { ExteriorAutomapWindow, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; E3: ExteriorAutoMapConsoleCommands
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
 import { discoveredBuildings, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename
@@ -567,6 +569,20 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     this is a coalesced wait, not a second load.
   //   - the AABB is the swept billboard box, exactly as the interior
   //     host's static NPCs take it (interiorContext.js:298-316).
+  //   - E3: RMBLayout's THIRD act on one of these flats
+  //     (`QuestMachine.Instance.SetupIndividualStaticNPC(go,
+  //     obj.FactionID)`, :377/:453) has no machine to ask in THIS host,
+  //     which mounts no quest bridge at all - the same decision
+  //     `tickQuests: null` records for TickRest above, and the same
+  //     stance D5 rowed for this host's automap plates ("scenes/
+  //     exterior.js mounts none, so its every residence takes DFU's own
+  //     empty-set answer"). With no live quest there is no site link to
+  //     place an individual elsewhere, so C#'s own answer here is the
+  //     one below: every street NPC stands, and none carries a
+  //     behaviour. The pass with a machine behind it, and the away
+  //     arm's SetActive(false) taking the billboard out of the batch at
+  //     layout, is `scenes/world.js`'s standPixelNpcs - the host that
+  //     has the bridge.
   await pipeline.loadFlats();
   const exteriorNpcs = [];
   for (const flat of exteriorNpcFlats) {
@@ -581,7 +597,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -1096,7 +1112,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // this one - the standalone exterior page, which has its own magic
     // engine and its own rig - so a spell cast above ground played the
     // stance and never the cast. The same moment, the same one door.
-    onCastReadySpell: (sp) => { weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element); },   // ROAD-tail: the ELEMENT rides along (CastReadySpell :434)
+    // ROAD-E6: CastReadySpell's PlayOneShot (:430-435) - the same one
+    // door, now at the moment the magicka is spent rather than at the
+    // release the engine parks on frame 5.
+    startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
   });
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch (this host mints no encounter foes).
   // OnNewMagicRound is global and every EntityEffectManager handles it, so
@@ -1430,7 +1449,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD
@@ -1661,6 +1680,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLocation.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
+  // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) registers its two
+  // verbs; this host owns that window too, so it registers them the way
+  // world.js does. It has no travel map (that door is world.js's), so
+  // TravelMapConsoleCommands is not this host's to register - and the
+  // commands are still REACHABLE from here, because the database is one
+  // static class in DFU and one module here.
+  registerExteriorAutomapConsoleCommands({ isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior' });
+  installConsoleProbe();
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it
     window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
@@ -2117,9 +2144,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : mwv.eye;
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator here, and the sky, which draws
+    // into the same rect, takes the same number.
+    const worldAspect = largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight);
     const proj = mirrorProjectionX(perspective(   // HANDEDNESS (mat4's law)
       fieldOfView(),
-      canvas.clientWidth / canvas.clientHeight,
+      worldAspect,
       0.1,
       Math.max(2000, extentX * 4)
     ));
@@ -2213,13 +2246,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch
       CITY_LIGHT_COLOR_F32
     );
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;
-      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(),
-        canvas.clientWidth / canvas.clientHeight);
+      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(), worldAspect);
       renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
     // EE5: the ground shadows under the SKY'S OWN deck - one field for the

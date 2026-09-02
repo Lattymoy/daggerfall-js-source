@@ -51,8 +51,9 @@
 // are DaggerfallSpellBookWindow.cs:149 and DaggerfallSpellMakerWindow
 // .cs:194. The RENAME half is a widget departure, not a hole: DFU pops
 // a DaggerfallInputMessageBox (NameItemButon_OnMouseClick, :799-811)
-// where this window types into an inline strip, recorded at
-// Port-Ledger.md:686 - and that row's one real defect, the character
+// where this window types into an inline strip, recorded as Ledger A
+// row TB1 (by NAME - the line number this used to cite rotted) - and
+// the F171 NIT row's one real defect, the character
 // cap, is fixed (MAX_ITEM_NAME = 31, the TextBox default at
 // TextBox.cs:26, which RenameItem itself never narrows).
 
@@ -195,6 +196,7 @@ export class ItemMakerWindow {
    *  SetScrollIndex clamp; routed to whichever list the cursor is
    *  over, since DFU's wheel fires per component. */
   hover(vx, vy, e = null) { this._mouse = [vx, vy]; this.picker?.hover(vx, vy, e); }   // ROAD-A7: the picker's own hover
+  release() { this.picker?.release(); }   // ROAD-E E1: and the picker's own release, the edge that drops the thumb latch
   wheel(dir) {
     if (!dir) return;
     const [vx, vy] = this._mouse;

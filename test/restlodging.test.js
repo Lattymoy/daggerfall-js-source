@@ -1183,7 +1183,10 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   // ...and EVERY exit clears it. Five doors reach `done`, and a flag
   // cleared on four of them would leave the player permanently
   // resting and burn held enchantments 15x for the session.
-  w.input('back');                       // the selection page's Esc
+  // ROAD-E E1: the selection page's Esc is GetBackButtonUp() (:193),
+  // and the door carries the automap windows' deferral (:703-713)
+  // because this port opens on the press - so both edges.
+  w.input('back'); w.keyup('back');
   assert.equal(w.done, true);
   assert.equal(e.isResting, false);
 
@@ -1371,7 +1374,10 @@ test('D3: the pointer half is DFU\'s button rects - and art-less it is the whole
   // The ART arm is rect-gated, and the selection arm routes each button
   // to the letter's handler rather than growing a second copy of it.
   const w = src('src/ui/restWindow.js');
-  assert.match(w, /if \(!_art \|\| restStopHit\(vx, vy\)\) this\.input\('back'\);/);
+  // ROAD-E E1: the mouse click is StopButton_OnMouseClick, ONE call -
+  // it no longer borrows `back`, which is GetBackButtonUp() and lives
+  // on the release now.
+  assert.match(w, /if \(!_art \|\| restStopHit\(vx, vy\)\) this\._stopRest\(\);/);
   assert.match(w, /const b = restButtonAt\(vx, vy, _art\.base\.w\);/);
   assert.match(w, /if \(b\) this\.input\(b === 'while' \? 'char:1' : b === 'healed' \? 'char:2' : 'char:3'\);/);
 });
@@ -1447,7 +1453,7 @@ test('S40: PopToHUD runs BEFORE RaiseSkills, so a rest-end level-up is not swall
 
   // Every exit vacates - a window that leaves itself in the slot is a
   // window the host paints forever.
-  for (const exit of [(x) => x.input('back'), (x) => x.dispose()]) {
+  for (const exit of [(x) => { x.input('back'); x.keyup('back'); }, (x) => x.dispose()]) {
     const seen = [];
     const v = new RestWindow(winDeps({ onClose: () => seen.push(1) }));
     exit(v);
@@ -1786,9 +1792,25 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
     slot.input(action);
     if (slot?.done) slot = null;          // the `?.` is the fix
   };
+  // ROAD-E E1: the seam grew a second edge, and it is the SAME hazard -
+  // townTalk.keyup / dungeonContext.overlayKeyUp re-read the slot after
+  // handing the release down, and the rest window's close is now on
+  // that edge (Update :193 is GetKeyUp). So the release drain takes the
+  // same shape and the same `?.`.
+  const drainUp = (action) => {
+    if (!slot) return;
+    slot.keyup(action);
+    if (slot?.done) slot = null;          // the `?.` is the fix, on this edge too
+  };
   slot = new RestWindow(deps);
-  assert.doesNotThrow(() => drain('back'));
+  drain('back');                         // the press that arms the release door (:703-708)
+  assert.doesNotThrow(() => drainUp('back'));
   assert.equal(slot, null, 'and the slot really is clear');
+  // the press half still drains for the windows that close on it
+  slot = new RestWindow(deps);
+  slot.state = 'refused';
+  assert.doesNotThrow(() => drain('back'));
+  assert.equal(slot, null);
 
   // The click seam too, now that the window has one.
   slot = new RestWindow(deps);
@@ -1876,7 +1898,7 @@ test('S40/merge -> ROAD-B B1: a rest under a pushed box is SUSPENDED, not replac
   assert.equal(e.isResting, true);
   // ...and it is still a LIVE rest, not a husk: it ends the way it
   // would have, through its own session.
-  slot.input('back');              // StopButton_OnMouseClick -> EndRest
+  slot.input('back'); slot.keyup('back');   // ROAD-E E1: Update :193's release arm -> EndRest
   slot.input('confirm');           // ...and the finished popup closes
   assert.equal(e.isResting, false, 'and clears the flag when it really closes');
 

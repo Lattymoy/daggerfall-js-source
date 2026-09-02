@@ -17,7 +17,6 @@ import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
-import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
@@ -189,6 +188,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.skillUses = [...(entity.skillUses ?? [])];
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
+  // E4: `data.playerEntity.goldPieces = entity.GoldPieces`
+  // (SerializablePlayer.cs:133). Gold left the item list when it
+  // became the counter DFU keeps it in, so the envelope carries it
+  // beside the collections exactly as DFU's does.
+  snap.goldPieces = entity.goldPieces ?? 0;
   // W-slice: the cart's own 750kg collection (PlayerEntity.WagonItems
   // - SerializablePlayer carries wagonItems beside items).
   snap.wagonItems = (entity.wagonItems ?? []).map((it) => ({ ...it }));
@@ -455,14 +459,11 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.previousVampireClan = snap.previousVampireClan ?? 0;
   entity.timeToBecomeVampireOrWerebeast = snap.timeToBecomeVampireOrWerebeast ?? 0;
   entity.racialOverridePending = snap.racialOverridePending ? { ...snap.racialOverridePending } : null;   // V1
-  // AUDIT 17f: a Currency stack saved before gold gained its template
-  // index carries none, and stacksWith compares templateIndex - a
-  // restored save would grow a SECOND gold stack the next time gold
-  // was added, and goldAmount only ever finds the first. The
-  // additive-field upgrade DFU's serializer gives missing members.
-  for (const it of entity.items) {
-    if (it.group === 'Currency' && it.templateIndex == null) Object.assign(it, goldStack(it.stackCount ?? 0));
-  }
+  // E4: `entity.GoldPieces = data.playerEntity.goldPieces`
+  // (SerializablePlayer.cs:302). The pre-E4 MIGRATION that goes with
+  // it runs further down, below the two index-keyed relinks - see
+  // there for why the order matters.
+  entity.goldPieces = snap.goldPieces ?? 0;
   // AUDIT 17e C1: the equip table + armor values are DERIVED state -
   // rebuild them from the freshly restored items (SerializablePlayer
   // .cs:301, :355-368). Must run AFTER items are replaced, or the
@@ -474,6 +475,39 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // this field carries none, which reads as "nothing lit".
   const li = snap.lightSourceIndex ?? -1;
   entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
+  // E4 - THE PRE-E4 MIGRATION, and two things about it are load-bearing.
+  //
+  // WHAT: a save written before gold became a counter carries the
+  // purse as a Currency stack inside `items`, where nothing can spend
+  // it any more. The restore absorbs every such stack into GoldPieces
+  // and drops it - what the transfer door does to a pile that reaches
+  // the pack.
+  //
+  // ONLY FOR SUCH A SAVE. `snap.goldPieces == null` is the test, and
+  // it is not a convenience: DFU CAN put a Currency stack in
+  // PlayerEntity.Items, through GivePc's notify and silently arms
+  // (GivePc.cs:179, :186), which call `Items.AddItem` with no currency
+  // check at all. Such a stack is unspendable in DFU too - GetGoldAmount
+  // reads `goldPieces`, not the list - and it is a quirk the port
+  // INHERITS rather than quietly launders on the next load.
+  //
+  // WHERE: below both index-keyed relinks. `lightSourceIndex` is an
+  // INDEX INTO THE SAVED LIST (the port's recorded stand-in for DFU's
+  // item UIDs, Ledger A), so removing a row before the relink would
+  // slide every later item one place and light the wrong thing - or
+  // nothing.
+  //
+  // (It also subsumes AUDIT 17f's template-index upgrade, whose whole
+  // purpose was to stop a pre-17f stack splitting into two the gold
+  // reader could not add up.)
+  if (snap.goldPieces == null) {
+    for (let i = entity.items.length - 1; i >= 0; i--) {
+      const it = entity.items[i];
+      if (it.group !== 'Currency') continue;
+      entity.goldPieces += it.stackCount ?? 0;
+      entity.items.splice(i, 1);
+    }
+  }
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the

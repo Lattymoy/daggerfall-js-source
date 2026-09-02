@@ -2935,17 +2935,20 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   // spellcasting hands come through the same moment (FPSSpellCasting
   // .PlayOneShot off EntityEffectManager.CastReadySpell :434). Still
   // ONE door; the arm's half of it is unchanged.
-  assert.match(rig, /castSpellAnim: \(rangeType, element\) => \{\n\s+fpArm\.castSpell\(rangeType\);/, 'the cast must have one door, and it carries the range');
+  // ROAD-E6 moved the moment: the door is CastReadySpell's PlayOneShot
+  // (:430-435), it takes the release handler the engine parks its
+  // resolution on, and it ANSWERS - false when PlayOneShot refused.
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+fpArm\.castSpell\(rangeType\);\n\s+return fpsSpellCasting\.playOneShot\(element, onRelease\);/,
+    'the cast must have one door, and it carries the range, the element and the release');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');
     assert.match(h, /castSpellAnim/, `${host} does not run the cast animation`);
-    // it hangs off the CAST moment, not the ready one
-    // ROAD-tail widened the window from 500: the comment block at the
-    // dungeon site grew by the element's own line, and a pin that
-    // measures a comment's length is measuring the wrong thing.
-    const cast = h.slice(h.indexOf('onCastReadySpell'), h.indexOf('onCastReadySpell') + 900);
-    assert.match(cast, /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element\)/, `${host} does not hand the cast its range`);
-    assert.ok(!/castSpellAnim/.test(h.slice(h.indexOf('onNewReadySpell'), h.indexOf('onCastReadySpell'))),
+    // it hangs off the CAST moment - which since ROAD-E6 is the
+    // startCastAnim dep (the spend), not onCastReadySpell (the release
+    // the engine now parks on the animation's fifth frame).
+    assert.match(h, /startCastAnim: \(sp, onRelease\) => !?!?weaponRig\??\.?castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element, onRelease\)/,
+      `${host} does not hand the cast its range and its release`);
+    assert.ok(!/castSpellAnim/.test(h.slice(h.indexOf('onNewReadySpell'), h.indexOf('startCastAnim'))),
       `${host} casts on the READY moment - the spell has not gone yet`);
   }
 });
@@ -2954,9 +2957,9 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
 test('AUDIT 36 F1: ALL THREE hosts run the cast animation, on the cast moment, with the range', () => {
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = readFileSync(host, 'utf8');
-    const at = h.indexOf('onCastReadySpell');
+    const at = h.indexOf('startCastAnim');
     assert.ok(at > 0, `${host} raises no cast moment`);
-    assert.match(h.slice(at, at + 700), /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element\)/, `${host} does not run the cast animation with its range`);
+    assert.match(h.slice(at, at + 300), /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element, onRelease\)/, `${host} does not run the cast animation with its range`);
   }
 });
 
@@ -2976,7 +2979,10 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
   assert.match(hm, /if \(sp\.rangeType === 0\) \{ castInput\(null, null\); return; \}/,
     'the CasterOnly instant cast is the case F2 exists for');
-  assert.match(hm, /onCastReadySpell\?\.\(sp\);\s+\/\/ QG1: RaiseOnCastReadySpell, before the ready clears/,
+  // ROAD-E6 folded the four release arms' identical tail into one
+  // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE
+  // `readySpell = null` (:2135), which is the ordering F2 rests on.
+  assert.match(hm, /const done = \(v\) => \{ onCastReadySpell\?\.\(sp\); readiedSpell = null;/,
     'the cast callback must fire while the spell is still readied');
 });
 

@@ -29,7 +29,7 @@ import { racialSuppressCrime } from './lycanthropy.js';   // V4: SuppressCrime's
 import { tallyCrimeGuildRequirements } from './crimeGuilds.js';   // CG2: a leaf, so this module can reach it
 import { calculatePickpocketingChance, dice100 } from '../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
+import { addGoldPieces } from './inventory.js';   // E4: the pinched purse lands in the counter
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // wave 26: the compass law
 
 // PlayerActivate constants. AUDIT 24 (wave 23): these were a SECOND
@@ -320,9 +320,7 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
   if (dice100(chance, rolls())) {
     if (!dice100(33, rolls())) {   // Dice100.FailedRoll(33)
       const gold = Math.floor(rolls() * 6) + 1;   // Random.Range(0,6) + 1
-      let stack = player.items.find((it) => it.group === 'Currency');
-      if (!stack) player.items.push(stack = goldStack(0));
-      stack.stackCount += gold;
+      addGoldPieces(player, gold);   // E4: `player.GoldPieces += pinchedGoldPieces` (:1628)
       // CG2: PlayerActivate.cs:1641's TallyCrimeGuildRequirements(true,
       // 1) - the pinched purse counts toward the Thieves Guild's ten.
       // Only the arm that actually TOOK something tallies: the 33%

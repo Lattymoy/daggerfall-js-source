@@ -147,6 +147,7 @@ export class SpellCastAnim {
     this.element = null;    // currentAnimType
     this.currentFrame = -1;
     this._acc = 0;
+    this._onRelease = null;   // the OnReleaseFrame subscriber (see playOneShot)
   }
 
   /** IsPlayingAnim (:71-74). */
@@ -159,15 +160,44 @@ export class SpellCastAnim {
    * PlayOneShot (:126-136), verbatim: "Do nothing if already playing
    * anim", then SetCurrentAnims + currentFrame = 0. The element gate
    * is magicAnimFilename's refusal (see there).
+   *
+   * THE RELEASE SUBSCRIBER RIDES THE CAST. DFU subscribes ONCE, at
+   * Awake - `GameManager.Instance.PlayerSpellCasting.OnReleaseFrame +=
+   * PlayerSpellCasting_OnReleaseFrame` (EntityEffectManager.cs:165-166),
+   * gated on IsPlayerEntity - because there is one player, one
+   * FPSSpellCasting component (GameManager.cs:322) and therefore one
+   * handler for the life of the game. This port has the same ONE
+   * animation (the singleton below) but up to FOUR cast engines: each
+   * host builds its own `scenes/hostMagic.js`, and a streaming host
+   * mounts a dungeon context that builds another. So the single
+   * subscription binds at PlayOneShot rather than at Awake - the engine
+   * that started the hands is the engine the release reaches, which is
+   * the same one-handler shape DFU gets from having one manager. A
+   * REFUSED PlayOneShot (either arm below) leaves the standing handler
+   * untouched, exactly as a refused PlayOneShot leaves DFU's running
+   * animation - and its pending release - untouched.
+   *
+   * @param {?Function} onRelease raised on the release frame (:284).
    * @returns true when a cast actually started.
    */
-  playOneShot(element) {
+  playOneShot(element, onRelease = null) {
     if (this.isPlayingAnim) return false;
     if (!magicAnimFilename(element)) return false;
     this.element = element;
     this.currentFrame = 0;
     this._acc = 0;
+    this._onRelease = onRelease;
     return true;
+  }
+
+  /** RaiseOnReleaseFrameEvent (:317-321). The handler is taken BEFORE
+   *  it runs: DFU's event stays subscribed across casts because the
+   *  subscription is per-component, and this port's is per-cast, so
+   *  one cast raises exactly one release. */
+  _raiseRelease() {
+    const h = this._onRelease;
+    this._onRelease = null;
+    if (h) h();
   }
 
   /**
@@ -175,19 +205,17 @@ export class SpellCastAnim {
    * the release on the step that reaches releaseFrame, and ends the
    * animation past the last index.
    *
-   * FLAGGED: the release is not the spell. DFU raises OnReleaseFrame
-   * HERE and EntityEffectManager.PlayerSpellCasting_OnReleaseFrame
-   * (:2098-2143) is what actually spends, tallies, assigns the bundle
-   * or launches the missile - so in the reference the hands are five
-   * frames (0.2s) into their motion before the spell leaves them. This
-   * port already runs those semantics, but SYNCHRONOUSLY: hostMagic's
-   * castInput resolves the whole cast and then raises
-   * onCastReadySpell, which is the ported OnReleaseFrame moment (see
-   * scenes/hostMagic.js:308, :329, :342, :352). The hands are started
-   * from that same moment, so the animation's own release frame lands
-   * 0.2s AFTER the spell rather than on it, and this method's return
-   * value is deliberately not wired to anything - a second release
-   * would fire the cast twice.
+   * THE RELEASE IS THE SPELL (ROAD-E6, closing this site's flag). DFU
+   * raises OnReleaseFrame HERE and
+   * EntityEffectManager.PlayerSpellCasting_OnReleaseFrame (:2098-2143)
+   * is what tallies, plays the cast sound, assigns the bundle or
+   * launches the missile, raises OnCastReadySpell and clears the ready
+   * - five frames (RELEASE_FRAME x ANIM_SPEED = 0.2s) into the hand
+   * motion. `scenes/hostMagic.js`'s castInput now runs DFU's split:
+   * the gates and the magicka spend at the CAST (CastReadySpell
+   * :402-435, where DecreaseMagicka sits BEFORE PlayOneShot), the
+   * resolution parked on this raise. The return value is still the
+   * step signal; the raise below is what carries the cast.
    *
    * @returns true on the step that crossed the release frame.
    */
@@ -198,7 +226,9 @@ export class SpellCastAnim {
     while (this._acc >= ANIM_SPEED && this.currentFrame >= 0) {
       this._acc -= ANIM_SPEED;
       this.currentFrame++;
-      if (this.currentFrame === RELEASE_FRAME) released = true;
+      // :283-284 - the raise happens ON the step, before the end-of-
+      // frames wrap, and the handler runs inside the coroutine.
+      if (this.currentFrame === RELEASE_FRAME) { released = true; this._raiseRelease(); }
       if (this.currentFrame >= FRAME_INDICES.length) this.currentFrame = -1;
     }
     return released;

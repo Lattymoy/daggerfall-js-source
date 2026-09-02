@@ -1,6 +1,7 @@
 #!/bin/bash
 # Fetch the DFU sources the differential harness compiles, and apply the
-# three behaviour-neutral harness edits.
+# harness edits - five behaviour-neutral ones and, since E8, the ONE that
+# is not (FaceUVTool's row-18 widening; see below).
 #
 # DFU source is NOT committed to this repo, for the same reason ARENA2 is
 # not: Port-Doctrine keeps Daggerfall Unity an EXTERNAL reference (the
@@ -60,8 +61,25 @@ done
 #   SpellRecord - SaveTree plumbing stripped (SaveTreeBaseRecord is game
 #                 layer; the harness only reads SPELLS.STD records)
 #   DaggerfallSpellReader - FullSerializer JSON helpers stripped
+#
+# ...and ONE that is not behaviour-neutral, and says so:
+#   FaceUVTool  - ROAD-E E8. Ledger row 18 (Port-Ledger.md A) approves the
+#                 port computing FaceUVTool in JS doubles where DFU's
+#                 df3duvparams_lt/df3duvmatrix_t are float. That departure
+#                 alone moves 52,505 of 1,917,087 corpus UVs, which would
+#                 bury every OTHER faceuv finding under it - so the faceuv
+#                 corpus is compared against a DFU built AT MATCHED
+#                 PRECISION: this patch widens the two structs, the
+#                 determinant and Xi/Yi/Zi to double. Vector3 is ALREADY
+#                 double in DFU (API/Vector3.cs:35-45, :151-160, :508-520,
+#                 :583-597), so nothing in the basis walk is touched.
+#                 The audit-18 F4 pin (test/audit18.test.js:190) carries
+#                 expected values dumped from exactly this build; before
+#                 E8 the edit lived only in a scratchpad tree, so the
+#                 "re-runnable" claim on Port-Ledger row :483 was not true
+#                 of anything in the repo. It is now.
 echo "== applying the harness patches =="
-for f in Arch3dFile BlocksFile DFBlock SpellRecord DaggerfallSpellReader; do
+for f in Arch3dFile BlocksFile DFBlock SpellRecord DaggerfallSpellReader FaceUVTool; do
   patch -s -p0 -d "$D/cs/api" -i "$D/patches/$f.cs.patch" -o "$D/cs/api/$f.cs.new" "$D/cs/api/$f.cs" \
     && mv "$D/cs/api/$f.cs.new" "$D/cs/api/$f.cs" \
     || { echo "patch failed for $f.cs - DFU master has moved; re-derive it" >&2; exit 1; }

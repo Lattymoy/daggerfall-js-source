@@ -285,10 +285,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  the readied spell's ElementType, and this port's hosts raise
      *  their cast moment there. The range picks the Morrowind arm's
      *  attack type; the element picks the classic archive. Exactly one
-     *  of the two ever reaches the screen (see draw()). */
-    castSpellAnim: (rangeType, element) => {
+     *  of the two ever reaches the screen (see draw()).
+     *
+     *  ROAD-E6: the moment moved. This is now CastReadySpell's
+     *  PlayOneShot (:430-435) rather than the release - the host calls
+     *  it as the magicka is spent, hands the animation the engine's
+     *  release handler, and gets back FPSSpellCasting's own answer:
+     *  true when the hands actually started (and therefore when the
+     *  spell's resolution is parked on frame 5), false when PlayOneShot
+     *  refused - already playing, or an element with no CIF archive -
+     *  in which case the engine resolves on the spot. */
+    castSpellAnim: (rangeType, element, onRelease = null) => {
       fpArm.castSpell(rangeType);
-      fpsSpellCasting.playOneShot(element);
+      return fpsSpellCasting.playOneShot(element, onRelease);
     },
     playerWeapon,
     /** Host mouse events buffer here (sheathed = no attack processing).

@@ -25,7 +25,7 @@ const idOf = (box) => Number(/rsc:(\d+)/.exec(box?.rows?.[0]?.text ?? '')?.[1] ?
 
 const player = (over = {}) => ({
   name: 'Bob', isPlayer: true, level: 2, health: 30, maxHealth: 30,
-  items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 5000 }],
+  goldPieces: 5000, items: [],   // E4: PlayerEntity.GoldPieces, the counter
   skills: Object.fromEntries(Object.values(SKILLS).map((s) => [s, 20])),
   skillUses: Object.fromEntries(Object.values(SKILLS).map((s) => [s, 0])),
   stats: { personality: 50 }, activeEffects: [], fatigue: 3200,
@@ -340,7 +340,7 @@ test('U24: a free-holiday cure happens on OPEN, before any question', () => {
 });
 
 test('U24: saying yes with no gold is told so, and stays sick', () => {
-  const e = player({ items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 1 }] });
+  const e = player({ goldPieces: 1 });
   startDisease(e, 0, 0, () => 0);
   const f = buildCureDiseaseFlow(e, GUILDS.FightersGuild, null, { rows, now: () => 0, quality: 10 });
   f.input('KeyY');

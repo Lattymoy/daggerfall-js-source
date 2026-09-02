@@ -363,8 +363,14 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
       // the same frame did not.
       if (_fired) return;
       // the SHARED overlay table (ui/input.js) - not a second copy
-      const a = overlayAction(ev ?? { key: codeToKey(code) });
-      if (a) flow.input(a);
+      // ROAD-E2: the EVENT is built once and handed BOTH to the table
+      // and to the flow. The flow asks the DaggerfallShortcut table
+      // about modifiers (the builder's Ctrl-U ResetBonusPool), and the
+      // action string alone cannot carry them - 'char:u' is what Ctrl-U
+      // and a bare u both look like here.
+      const kev = ev ?? { key: codeToKey(code) };
+      const a = overlayAction(kev);
+      if (a) flow.input(a, kev);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard (the flow flags it; the host unwinds) - once, like done
       if (flow.cancelled) { _fired = true; onCancel?.(); return; }
@@ -378,6 +384,18 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
       if (flow.cancelled) { _fired = true; onCancel?.(); return; }
       if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
+    // ROAD-E2 / THE FOUR HOSTS RULE: the HOVER seam, which the wizard
+    // had no use for until the list pickers' scroll bar gained a
+    // thumb drag. VerticalScrollBar.Update (:101-130) polls
+    // InputManager.GetMouseButton(0) every frame, and `e.buttons` is
+    // the port's only reading of it - without this the thumb could
+    // latch on the press and then never move. Every host that runs
+    // the wizard already routes a mousemove here: world.js and
+    // exterior.js through `townTalk.hover` (townTalk.js:1027-1039),
+    // dungeonContext.js through `overlayHover` (:4292), which
+    // dungeon.js:328 and worldModes.js:6049 both feed. Hovering never
+    // advances the flow, so no done check.
+    hover(vx, vy, e = null) { if (!_fired) flow.hover?.(vx, vy, e); },
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },

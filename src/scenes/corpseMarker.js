@@ -36,7 +36,7 @@
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { addItem } from '../systems/inventory.js';
+import { addItem, isGoldPieces, addGoldPieces } from '../systems/inventory.js';
 import { SOUND } from '../systems/soundClips.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
@@ -180,7 +180,18 @@ export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
   }
   playerEntity.items = playerEntity.items || [];
   let n = 0;
-  for (const item of items) { addItem(playerEntity.items, item); n++; }
+  for (const item of items) {
+    // DoTransferItem's FIRST statement (DaggerfallInventoryWindow.cs:1562-1571):
+    // a Currency.Gold_pieces pile bound for PlayerEntity.Items is spent into
+    // the counter (`playerEntity.GoldPieces += item.stackCount`) and never
+    // added to the list. DFU reaches that door because :957 opens the window;
+    // the port's bulk take is the recorded UI residue above, so the door has
+    // to be spelled here too - E4's invariant is that the player's collection
+    // never holds Currency, and gold that lands in it is unspendable.
+    if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);
+    else addItem(playerEntity.items, item);
+    n++;
+  }
   items.length = 0;
   say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
   return n;

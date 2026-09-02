@@ -17,7 +17,7 @@ import {
 } from '../src/ui/spellIconPickerWindow.js';
 import { SPELL_ICON_COUNT } from '../src/ui/spellIcons.js';
 import { SpellbookWindow } from '../src/ui/spellbookWindow.js';
-import { SpellMakerWindow } from '../src/ui/spellMakerWindow.js';
+import { SpellMakerWindow, SPELL_MAKER_RECTS } from '../src/ui/spellMakerWindow.js';
 import { DEFAULT_SPELL_ICON } from '../src/systems/spellMaker.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -208,41 +208,43 @@ test('MC1 spellbook: the icon panel click opens the picker in cast mode (the buy
 
 // ---------------------------------------------------------------
 // 6. THE SPELL MAKER CONSUMER (:894-898, :875-892, :1013-1017)
+//
+// ROAD-E E8: the maker is DFU's own art now, so its three icon
+// controls are the rects DFU declares - selectIcon (288,94,16,16)
+// pushes the picker, and nextIcon (275,80,9,16) / previousIcon
+// (275,96,9,16) are the wrap cycle. The picker itself did not change.
 // ---------------------------------------------------------------
 
 const makerRig = () => new SpellMakerWindow({ entity: { items: [], spells: [] } });
+const pressMaker = (w, key) => { const [x, y] = SPELL_MAKER_RECTS[key]; w.click(x + 1, y + 1); return w; };
 
-test('MC1 maker: ENTER on the icon row pushes the picker; the pick lands on this.icon', () => {
+test('MC1 maker: the icon well pushes the picker; the pick lands on this.icon', () => {
   const w = makerRig();
-  const rows = w._rows();
-  w.cursor = rows.findIndex((r) => r.kind === 'icon');
-  assert.ok(w.cursor > 0, 'the icon row exists on the main sheet');
-  w.input('confirm');
+  pressMaker(w, 'selectIcon');
   assert.ok(w.picker instanceof SpellIconPickerWindow);
   w.click(...iconCenter(31));   // the host's pointer route, forwarded
   assert.equal(w.picker, null);
   assert.equal(w.icon, 31);
   // cancel keeps the icon
-  w.input('confirm');
-  w.input('back');   // Escape arrives as the keyed 'back'
+  pressMaker(w, 'selectIcon');
+  w.input('Escape');
   assert.equal(w.picker, null);
   assert.equal(w.icon, 31, 'a null pick keeps the icon (:1015-1016)');
 });
 
-test('MC1 maker: +/- is the Next/PreviousIconButton wrap cycle over the classic 69', () => {
+test('MC1 maker: the two arrows are the Next/PreviousIconButton wrap cycle over the classic 69', () => {
   const w = makerRig();
-  w.cursor = w._rows().findIndex((r) => r.kind === 'icon');
   assert.equal(w.icon, DEFAULT_SPELL_ICON);
-  w.input('minus'); w.input('minus');
-  assert.equal(w.icon, (DEFAULT_SPELL_ICON - 2 + SPELL_ICON_COUNT) % SPELL_ICON_COUNT, 'previous wraps below zero (:877-879)');
-  for (let i = 0; i < SPELL_ICON_COUNT; i++) w.input('plus');
+  pressMaker(w, 'previousIcon');
+  pressMaker(w, 'previousIcon');
+  assert.equal(w.icon, (DEFAULT_SPELL_ICON - 2 + SPELL_ICON_COUNT) % SPELL_ICON_COUNT, 'previous wraps below zero (:900-908)');
+  for (let i = 0; i < SPELL_ICON_COUNT; i++) pressMaker(w, 'nextIcon');
   assert.equal(w.icon, (DEFAULT_SPELL_ICON - 2 + SPELL_ICON_COUNT) % SPELL_ICON_COUNT, 'a full cycle returns home');
 });
 
 test('MC1 maker: the bought spell carries the picked icon', () => {
   const w = makerRig();
-  w.cursor = w._rows().findIndex((r) => r.kind === 'icon');
-  w.input('confirm');
+  pressMaker(w, 'selectIcon');
   w.click(...iconCenter(55));
   assert.equal(w.icon, 55);
   // buildCustomSpell reads this.icon (:232's shape) - pinned at the source

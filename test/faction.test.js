@@ -81,7 +81,8 @@ test('pickpocket: the verbatim chance clamp and the three outcomes', () => {
   const p1 = { level: 1, skills: 50, items: [] };
   const r1 = pickpocketTownsperson(p1, { rolls: seq(0.30, 0.50, 0.99) });
   assert.deepEqual([r1.success, r1.gold], [true, 6]);
-  assert.equal(p1.items.find((i) => i.group === 'Currency').stackCount, 6);
+  assert.equal(p1.goldPieces, 6, 'E4: `player.GoldPieces += pinchedGoldPieces` (:1628)');
+  assert.equal(p1.items.length, 0);
   assert.equal(r1.message, 'You pinched 6 gold pieces.');
   // ROAD-D D10: DFU raises a real parchment for BOTH success arms
   // (PlayerActivate.cs:1630 and :1645) and leaves only the failure on

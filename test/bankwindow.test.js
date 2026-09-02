@@ -27,7 +27,7 @@ const rows = (id) => [{ text: `#${id}`, center: true }];
 const idOf = (box) => Number(/^#(\d+)/.exec(box?.rows?.[0]?.text ?? '')?.[1]);
 
 function win(over = {}) {
-  const entity = over.entity ?? { level: 5, items: [{ group: 'Currency', stackCount: 1000 }] };
+  const entity = over.entity ?? { level: 5, goldPieces: 1000, items: [] };   // E4: the counter
   const accounts = over.accounts ?? createBankAccounts(62);
   const wagon = over.wagon ?? null;
   let closed = 0;

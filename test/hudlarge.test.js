@@ -10,7 +10,10 @@ import {
   HUD_MODE_CYCLE, hudLargeNextMode, hudLargePrevMode, LARGE_HUD_PANELS,
   largeHudRect, compassFrameIndex, largeHudPoint, largeHudPanelAt, largeHudClick,
   headArchiveFor, horseOffsetHeight, weaponOffsetHeight,
+  dockedLargeHudHeight, largeHudViewportRect, largeHudWorldAspect, STANDARD_VIEWPORT_RECT,   // ROAD-E E5
 } from '../src/ui/hudLarge.js';
+import { crosshairCentreY, drawCrosshairAndModeIcon } from '../src/ui/hudCrosshair.js';   // ROAD-E E5
+import { Renderer } from '../src/render/renderer.js';   // ROAD-E E5: the viewport is the renderer's own frame state
 import { setValue, resetToDefaults } from '../src/systems/settings.js';
 import { ridingRect } from '../src/systems/riding.js';
 import { MODES, nextInteractionMode } from '../src/player/interactionMode.js';
@@ -362,7 +365,10 @@ test('D10: the narrowed flag\'s citation resolves to the activation ray it rests
   // nothing and had to re-derive the clause. Resolve it instead of
   // trusting it, both ways: the cite must land on the call, and the
   // hosts it names must be ALL the hosts that carry one.
-  const header = src('ui/hudLarge.js').split('WHAT REALLY REMAINS')[0];
+  // E5 shipped what "WHAT REALLY REMAINS" named and rewrote that
+  // paragraph; the withdrawal above it stands unchanged, so the split
+  // moves to the block that now follows it.
+  const header = src('ui/hudLarge.js').split('WHAT E5 DID NOT TAKE')[0];
   const cites = [...header.matchAll(/scenes\/([A-Za-z0-9_]+)\.js:(\d+)/g)]
     .map((m) => [`scenes/${m[1]}.js`, Number(m[2])]);
   assert.ok(cites.length >= 2, 'the withdrawal cites the hosts it rests on');
@@ -382,4 +388,260 @@ test('D10: the narrowed flag\'s citation resolves to the activation ray it rests
     .map((h) => `scenes/${h}.js`);
   assert.deepEqual(cites.map(([r]) => r).sort(), hosts.sort(),
     'the cite names exactly the hosts that pick this way - "the other hosts" was one host');
+});
+
+// ---------------------------------------------------------------
+// ROAD-E E5: THE DOCKED BAR SHRINKS THE WORLD PASS.
+// ViewportChanger.cs:52-67 sets the game camera's rect to
+// `new Rect(0, hudHeight, 1, 1 - hudHeight)` every frame the bar is
+// docked, and HUDCrosshair.cs:43-52 re-centres the reticle into what
+// is left. The rect is renderer-owned frame state; the aspect is not
+// (each host builds its own lens), and both halves are pinned here.
+// ---------------------------------------------------------------
+
+test('E5: the docked height is ScreenHeight, and ONLY when LargeHUD && LargeHUDDocked', () => {
+  resetToDefaults();
+  // ViewportChanger.cs:44-45 `if (DaggerfallHUD == null) return` - the
+  // port's null bar is the same nothing-drawn state.
+  setValue('GUI', 'LargeHUD', 'True');
+  assert.equal(dockedLargeHudHeight(null), 0, 'a null bar is a null HUD');
+  assert.equal(dockedLargeHudHeight(barOf(46)), 46, 'LargeHUDDocked ships True');
+  // :57 "When not using docked the large HUD is just an overlay of
+  // variable size and main viewport does not change"
+  setValue('GUI', 'LargeHUDDocked', 'False');
+  assert.equal(dockedLargeHudHeight(barOf(46)), 0, 'undocked changes no viewport');
+  setValue('GUI', 'LargeHUDDocked', 'True');
+  setValue('GUI', 'LargeHUD', 'False');
+  assert.equal(dockedLargeHudHeight(barOf(46)), 0, 'no bar, no rect');
+  resetToDefaults();
+  // ...and it is NOT the horse's gate, which never asks about docking
+  setValue('GUI', 'LargeHUD', 'True');
+  setValue('GUI', 'LargeHUDDocked', 'False');
+  assert.equal(horseOffsetHeight(barOf(46)), 46);
+  assert.equal(dockedLargeHudHeight(barOf(46)), 0, 'the two gates really differ');
+  resetToDefaults();
+});
+
+test('E5: the camera rect is Rect(0, hudHeight, 1, 1 - hudHeight), bottom-left as Unity writes it', () => {
+  resetToDefaults();
+  setValue('GUI', 'LargeHUD', 'True');
+  // a 640-wide canvas docks the bar at 640/320 = 2x, so 92px tall.
+  const bar = largeHudRect(canvas(640, 400), { docked: true });
+  assert.equal(bar.h, 92);
+  const r = largeHudViewportRect(400, bar);
+  assert.equal(r.x, 0);
+  assert.equal(r.w, 1);
+  assert.equal(r.y, 92 / 400, 'hudHeight = ScreenHeight / Screen.height');
+  assert.equal(r.h, 1 - 92 / 400, 'and the height is its complement');
+  // y is the BOTTOM edge in this space - the bar sits under the view,
+  // so the rect starts above it. A top-left reading would put the
+  // world where the bar is.
+  assert.ok(r.y > 0 && r.y + r.h === 1, 'the rect reaches the top of the screen');
+  // every non-docked state is standardViewportRect (:26, :64-66)
+  assert.equal(largeHudViewportRect(400, null), STANDARD_VIEWPORT_RECT);
+  setValue('GUI', 'LargeHUDDocked', 'False');
+  assert.equal(largeHudViewportRect(400, bar), STANDARD_VIEWPORT_RECT);
+  setValue('GUI', 'LargeHUDDocked', 'True');
+  setValue('GUI', 'LargeHUD', 'False');
+  assert.equal(largeHudViewportRect(400, bar), STANDARD_VIEWPORT_RECT);
+  assert.deepEqual({ ...STANDARD_VIEWPORT_RECT }, { x: 0, y: 0, w: 1, h: 1 });
+  resetToDefaults();
+});
+
+test('E5: the ASPECT loses the bar too, or the world stretches instead of cropping', () => {
+  resetToDefaults();
+  setValue('GUI', 'LargeHUD', 'True');
+  const bar = largeHudRect(canvas(640, 400), { docked: true });   // h = 92
+  assert.equal(largeHudWorldAspect(640, 400, bar), 640 / (400 - 92));
+  assert.notEqual(largeHudWorldAspect(640, 400, bar), 640 / 400,
+    'the plain canvas ratio is exactly what a shrunk rect must not keep');
+  // undocked, off, and no bar at all all answer the plain ratio
+  setValue('GUI', 'LargeHUDDocked', 'False');
+  assert.equal(largeHudWorldAspect(640, 400, bar), 640 / 400);
+  resetToDefaults();
+  assert.equal(largeHudWorldAspect(640, 400, null), 640 / 400);
+});
+
+test('E5: the crosshair re-centres into the reduced view (HUDCrosshair.cs:43-52)', () => {
+  // DFU's `y = (Screen.height - ScreenHeight - crosshairSize.y) / 2` is
+  // the reticle's TOP; its CENTRE is that plus crosshairSize.y / 2, so
+  // the size cancels and the answer is the middle of what the bar
+  // leaves. That is the form this port draws about.
+  assert.equal(crosshairCentreY(400, 92), (400 - 92) / 2);
+  assert.equal(crosshairCentreY(400, 92), 154);
+  assert.equal(crosshairCentreY(400, 0), 200, 'VerticalAlignment.Middle, the else arm at :50-51');
+  // ...and it really moves the drawn cross. The plain crosshair is two
+  // quads about (cx, cy); take the vertical arm's centre back out.
+  resetToDefaults();
+  setValue('GUI', 'Crosshair', 'True');
+  setValue('GUI', 'InteractionModeIcon', 'none');
+  const centreOf = (opts) => {
+    const quads = [];
+    const rec = { drawScreenQuad: (tex, rect) => quads.push(rect) };
+    drawCrosshairAndModeIcon(rec, canvas(640, 400), null,
+      { cursorActive: false, scale: 1, showModeIcon: false, ...opts });
+    assert.equal(quads.length, 2, 'the cross is two arms');
+    return quads[1].y + quads[1].h / 2;   // the vertical arm spans the centre
+  };
+  assert.equal(centreOf({}), 200, 'no bar: the screen middle');
+  assert.equal(centreOf({ largeHudHeight: 92 }), 154, 'docked: the viewport middle');
+  resetToDefaults();
+});
+
+// The EV6 counting Proxy-GL, the glstate/panelframe precedent, grown a
+// call LOG so the viewport arguments themselves can be read back.
+function loggingRenderer(log, size = { w: 640, h: 400 }) {
+  const stub = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+      if (k === 'createTexture' || k === 'createBuffer' || k === 'createVertexArray'
+        || k === 'createProgram' || k === 'createShader' || k === 'createFramebuffer') return () => ({});
+      if (k === 'getParameter') return () => new Float32Array([0, 0, 0, 0]);
+      if (k === 'drawingBufferWidth') return size.w;
+      if (k === 'drawingBufferHeight') return size.h;
+      if (typeof k === 'string' && k.toUpperCase() === k) return k;
+      return (...args) => { log.push([k, ...args]); };
+    },
+  });
+  const canvasEl = {
+    getContext: () => stub, clientWidth: size.w, clientHeight: size.h, width: size.w, height: size.h,
+  };
+  const r = new Renderer(canvasEl);
+  log.length = 0;
+  return r;
+}
+const viewports = (log) => log.filter((c) => c[0] === 'viewport').map((c) => c.slice(1));
+const IDENT = () => { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; };
+const LIGHT = () => new Float32Array([0, 1, 0]);
+
+test('E5: the renderer draws the world into the rect and gives the canvas back for the 2D pass', () => {
+  const log = [];
+  const r = loggingRenderer(log);
+  const I = IDENT();
+
+  // a frame with no rect set is the full canvas, exactly as before -
+  // this is what keeps a menu, the video player or the travel map from
+  // ever inheriting a world frame's strip.
+  r.beginFrame(I, I, LIGHT());
+  assert.deepEqual(viewports(log), [[0, 0, 640, 400]]);
+  assert.equal(r.worldViewportPx, null);
+
+  // ...and a docked rect shrinks it. 92/400 of the bottom goes to the
+  // bar; gl.viewport is BOTTOM-LEFT origin, so y is the bar's height.
+  log.length = 0;
+  r.setWorldViewport({ x: 0, y: 92 / 400, w: 1, h: 1 - 92 / 400 });
+  r.beginFrame(I, I, LIGHT());
+  assert.deepEqual(viewports(log), [[0, 0, 640, 400], [0, 92, 640, 308]],
+    'full canvas first (beginFrame may have resized), then the world rect');
+  assert.deepEqual(r.worldViewportPx, [0, 92, 640, 308]);
+  // the clear is NOT viewport-clipped, so the strip under the rect is
+  // still cleared and the bar paints over it - Unity's own behaviour.
+  assert.ok(log.some((c) => c[0] === 'clear'));
+
+  // the FIRST screen quad is where the canvas comes back: drawScreenQuad
+  // lays out in canvas pixels and would be squashed into the strip
+  // otherwise. No host has to ask for it.
+  log.length = 0;
+  r.drawScreenQuad(null, { x: 0, y: 0, w: 10, h: 10 });
+  assert.deepEqual(viewports(log)[0], [0, 0, 640, 400], 'the 2D pass owns the whole canvas');
+  assert.equal(r.worldViewportPx, null, 'and the world pass is over');
+  log.length = 0;
+  r.drawScreenQuad(null, { x: 0, y: 0, w: 10, h: 10 });
+  assert.equal(viewports(log).length, 0, 'the restore is once, not per quad');
+
+  // THE PENDING RECT IS CONSUMED. ViewportChanger.Update recomputes it
+  // every frame; a host that stops asking gets the standard viewport
+  // back on its very next frame.
+  log.length = 0;
+  r.beginFrame(I, I, LIGHT());
+  assert.deepEqual(viewports(log), [[0, 0, 640, 400]], 'no rect carried into the next frame');
+  // Rect(0,0,1,1) is standardViewportRect and sets nothing extra
+  log.length = 0;
+  r.setWorldViewport({ x: 0, y: 0, w: 1, h: 1 });
+  r.beginFrame(I, I, LIGHT());
+  assert.deepEqual(viewports(log), [[0, 0, 640, 400]]);
+});
+
+test('E5: the sprite RT and the panel bracket both RETURN the world rect they borrow', () => {
+  const log = [];
+  const r = loggingRenderer(log);
+  const I = IDENT();
+  r.setWorldViewport({ x: 0, y: 92 / 400, w: 1, h: 1 - 92 / 400 });
+  r.beginFrame(I, I, LIGHT());
+
+  // Every voxel character composites through renderCharacterSprite in
+  // the MIDDLE of the world pass. Returning a hardcoded full canvas
+  // would undo the rect for every draw after the first character.
+  log.length = 0;
+  r.renderCharacterSprite({ vao: {}, subMeshes: [] }, I, I, I, 64, 64);
+  assert.deepEqual(viewports(log).at(-1), [0, 92, 640, 308], 'the world rect comes back');
+  assert.deepEqual(r.worldViewportPx, [0, 92, 640, 308]);
+
+  // A panel frame sets its OWN rect and must not read its clear quad as
+  // "the 2D pass has begun"; on the way out the host's world rect is
+  // restored, because the bracket saves every global it takes (EV6).
+  log.length = 0;
+  r.panelFrame({ proj: I, view: I, lightDir: LIGHT(), rect: { x: 10, y: 20, w: 318, h: 169 } }, () => {
+    assert.equal(r.worldViewportPx, null, 'inside the panel the world rect is not live');
+  });
+  assert.deepEqual(r.worldViewportPx, [0, 92, 640, 308], 'and it is handed back');
+  assert.deepEqual(viewports(log).at(-1), [0, 92, 640, 308]);
+});
+
+test('E5: every host that draws the bar shrinks its world pass AND its lens', () => {
+  // The four-hosts rule. dungeonContext.js is where the dungeon HUD is
+  // drawn, but its beginFrame and its projection belong to the two
+  // hosts that call drawFoes - worldModes.js and dungeon.js - so those
+  // are the files that carry the law.
+  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
+    const body = src(host);
+    assert.match(body, /renderer\.setWorldViewport\(largeHudViewportRect\(canvas\.clientHeight\)\);/,
+      `${host} sets the world pass's rect`);
+    assert.match(body, /largeHudWorldAspect\(canvas\.clientWidth, canvas\.clientHeight\)/,
+      `${host} takes the bar out of its aspect`);
+    // ...and the plain ratio is GONE from every world LENS the host
+    // builds - an aspect left at clientWidth/clientHeight stretches the
+    // world into the strip instead of cropping the lens, and a
+    // largeHudWorldAspect computed and then not used would satisfy the
+    // line above on its own. Each perspective() that names the game's
+    // own field of view is read whole, to its statement's semicolon.
+    const lenses = [...body.matchAll(/perspective\(/g)]
+      .map((m) => body.slice(m.index, body.indexOf(';', m.index) + 1))
+      .filter((stmt) => stmt.includes('fieldOfView()'));
+    assert.ok(lenses.length >= 1, `${host} builds a world lens`);
+    for (const stmt of lenses) {
+      // the call itself, or the const each streaming host binds it to
+      assert.match(stmt, /[wW]orldAspect/,
+        `${host}'s world lens takes the reduced aspect`);
+      assert.equal(stmt.includes('canvas.clientWidth / canvas.clientHeight'), false,
+        `${host} has no full-canvas world lens left`);
+    }
+  }
+  // both of worldModes' modal arms are covered by its ONE projection,
+  // and each sets the rect immediately above its own beginFrame, so no
+  // early return between them can strand a pending rect.
+  const wm = src('scenes/worldModes.js');
+  assert.equal((wm.match(/renderer\.setWorldViewport\(/g) || []).length, 2,
+    'the dungeon arm and the interior arm each set it');
+  assert.equal((wm.match(/renderer\.setWorldViewport\([^\n]*\n\s*renderer\.beginFrame\(/g) || []).length, 2,
+    'and each sits immediately above its beginFrame');
+  // the SKY draws into the same rect, so it takes the same aspect -
+  // and so does EV8's far province ring, the other pass in this frame
+  // that builds a projection of its own.
+  for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
+    assert.match(src(host), /sky\.draw\([^;]*worldAspect\)/s, `${host}'s sky shares the lens`);
+  }
+  assert.match(src('scenes/world.js'), /fovY: fieldOfView\(\), aspect: worldAspect,/,
+    'the far ring shares it too, or the horizon steps against the terrain');
+  // no plain-ratio lens survives anywhere in the world host
+  const w = src('scenes/world.js');
+  assert.equal(/aspect: canvas\.clientWidth \/ canvas\.clientHeight/.test(w), false);
+  // scenes/interior.js draws no HUD at all - no bar, no crosshair - so
+  // it has no surface to carry, and a call there would be dead forever.
+  const interior = src('scenes/interior.js');
+  assert.equal(/drawHud\(|drawCrosshairAndModeIcon\(|largeHudOptions\(/.test(interior), false,
+    'interior.js still draws no HUD; the day it does, it takes this law too');
+  // the crosshair's own re-centre is fed from the ONE home
+  assert.match(src('ui/hud.js'), /largeHudHeight: dockedLargeHudHeight\(lastLargeHudBar\)/);
 });

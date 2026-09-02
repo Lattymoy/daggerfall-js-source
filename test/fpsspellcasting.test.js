@@ -262,9 +262,9 @@ test('fpsSpellCasting: every host that draws the FPS weapon gets the hands', () 
   // parent's cast engine, which is why the animation is a SINGLETON.
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = rd(host);
-    const at = h.indexOf('onCastReadySpell');
+    const at = h.indexOf('startCastAnim');
     assert.ok(at > 0, `${host} raises no cast moment`);
-    assert.match(h.slice(at, at + 900), /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element\)/,
+    assert.match(h.slice(at, at + 300), /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element, onRelease\)/,
       `${host} does not hand the cast its ELEMENT`);
   }
   // All four DRAW through the one rig, which is why the draw wiring is

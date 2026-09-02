@@ -100,10 +100,14 @@ test('17f F12: item names come from the TEMPLATE, not a hand copy', () => {
   // hand-written "Short shirt"/"Casual pants" were lower-cased.
   const e = { gender: 'female', race: 'Khajiit' };
   assignStartingGear(e, { classIndex: 13, rolls: () => 0.1 });
+  // E4: the kit's last row used to be a 'Gold Pieces' stack. Gold is
+  // PlayerEntity.GoldPieces now (ItemHelper.cs:1354's `+= 100`), so
+  // the bag ends at the arrows and the purse is a number.
   assert.deepEqual(e.items.map((i) => i.name),
-    ['Spellbook', 'Short Shirt', 'Casual Pants', 'Long Bow', 'Battle Axe', 'Arrow', 'Gold Pieces']);
+    ['Spellbook', 'Short Shirt', 'Casual Pants', 'Long Bow', 'Battle Axe', 'Arrow']);
   assert.equal(e.items.find((i) => i.name === 'Arrow').stackCount, 24);
-  assert.equal(e.items.find((i) => i.name === 'Gold Pieces').stackCount, STARTING_GOLD);
+  assert.equal(e.goldPieces, STARTING_GOLD);
+  assert.equal(e.items.filter((i) => i.group === 'Currency').length, 0);
 });
 
 // ---- F10 + F2: the modal contract, driven through the real flow ----
@@ -182,23 +186,31 @@ test('17f F15: the gold stack is Currency.Gold_pieces, minted once', () => {
   assert.equal(templateByIndex(GOLD_TEMPLATE).playerTextureArchive, 0, 'no player texture: the world pile is the icon');
   assert.deepEqual(inventoryItemImage(g), { archive: 216, record: 1 });
   assert.equal(itemWeight(g), 0.25, '0.0025 kg a piece, from the TEMPLATE');
-  // and every producer agrees, so the stacks MERGE
+  // E4 REPLACED THE MERGE WITH AN INVARIANT. The three producers no
+  // longer mint a stack at all - PlayerEntity.Items cannot hold
+  // Currency - so there is nothing left to disagree about: the
+  // starting 100 and a later credit are one number.
   const e = { gender: 'male', race: 'Breton' };
   assignStartingGear(e, { classIndex: 0, rolls: () => 0.5 });
   addGold(e, 50);
-  const stacks = e.items.filter((i) => i.group === 'Currency');
-  assert.equal(stacks.length, 1, 'a second shape would split the stack and hide it from goldAmount');
-  assert.equal(stacks[0].stackCount, STARTING_GOLD + 50);
+  assert.equal(e.items.filter((i) => i.group === 'Currency').length, 0,
+    'the pack can never hold Currency (DoTransferItem :1562-1571)');
+  assert.equal(e.goldPieces, STARTING_GOLD + 50);
 });
 
-test('17f F15: a pre-17f save upgrades its untemplated gold stack', () => {
-  // stacksWith compares templateIndex, so a restored legacy stack
-  // would never merge with newly minted gold again.
+test('17f F15 / E4: a legacy save\'s gold STACK is absorbed into the counter', () => {
+  // The 17f upgrade (stamp the template index on a pre-17f stack so
+  // stacksWith would still merge it) is moot now and its successor is
+  // pinned instead: restorePlayer takes every Currency stack out of
+  // the restored bag and adds it to PlayerEntity.GoldPieces, which is
+  // exactly what the transfer door does to a pile.
   const entity = {};
   const snap = snapshotPlayer({ items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 7 }], stats: {}, skills: [] });
+  delete snap.goldPieces;   // a save older than E4 carries no counter
   restorePlayer(entity, snap);
-  assert.equal(entity.items[0].templateIndex, GOLD_TEMPLATE);
+  assert.equal(entity.items.length, 0);
+  assert.equal(entity.goldPieces, 7);
   addGold(entity, 3);
-  assert.equal(entity.items.filter((i) => i.group === 'Currency').length, 1);
-  assert.equal(entity.items[0].stackCount, 10);
+  assert.equal(entity.goldPieces, 10);
+  assert.equal(entity.items.filter((i) => i.group === 'Currency').length, 0);
 });
