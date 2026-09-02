@@ -191,11 +191,15 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
 /** CureDiseaseService (:54-113), as a decision.
  *
  *  `numberOfDiseases` is DFU's disease count PLUS ONE while the player
- *  is turning into a vampire or werebeast (:57-59). A4 closed the
- *  FLAGGED gap that stood here: the timer is
+ *  is turning into a vampire or werebeast (:57-59). A4 SHIPPED the
+ *  timer that used to be missing here: it is
  *  PlayerEntity.TimeToBecomeVampireOrWerebeast, classic's "three days
- *  after infection" stamp, and it is read off the ENTITY exactly as
- *  DFU reads it off playerEntity rather than passed in by a host. It
+ *  after infection" stamp, and becomingVampireOrWerebeast below reads
+ *  it off the ENTITY exactly as DFU reads it off playerEntity (:57-59)
+ *  rather than taking it from a host. The field arrives from the
+ *  classic import (formats/characterRecord.js:110, offset 0x1f3 ->
+ *  classicSave.js:189/:722) and round-trips through the save envelope
+ *  (save.js:342 out, :436 back). It
  *  reaches a character only through AssignCharacter (PlayerEntity.cs
  *  :856), i.e. a classic import - the port's own infections are
  *  disease effects and diseaseCount already counts those - so a

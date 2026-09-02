@@ -228,16 +228,18 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   return steps;
 }
 
-/** The service the popup's middle button runs, and whether the port
- *  can run it yet. DoGuildService's switch (:334-452) has twenty
- *  arms; the ones whose destination window does not exist are named
- *  here rather than silently doing nothing, so the popup can say
- *  "not yet" the way DFU's own `default:` arm does.
- *
- *  SHIPPED lands in U24 (training, donation, cure disease) and Q4-ii
- *  (Quests -> quest/offerFlow.js's offerGuildQuest, the GetQuest
- *  override's law). Every other arm is FLAGGED with the window it
- *  waits on. */
+/** The service the popup's middle button runs. DoGuildService's switch
+ *  (:334-452) has twenty arms, and the table below now names a shipped
+ *  window for ALL TWENTY - U24 opened it with three (training,
+ *  donation, cure disease), Q4-ii added Quests (quest/offerFlow.js's
+ *  offerGuildQuest, the GetQuest override's law), and DR2 closed the
+ *  last of them. Nothing waits on a window any more: worldModes.js
+ *  routes every destination this table can answer (:2513-:2906), and
+ *  its own note at :2436-2438 records that serviceDestination has no
+ *  null left to name. The `?? null` on serviceDestination and the
+ *  caller's "not available yet" line stay because DFU's own switch
+ *  ends in a `default:` arm too (:447-450, CloseWindow then a message
+ *  box) - an unknown service string is answered, not thrown at. */
 export const SERVICE_DESTINATION = Object.freeze({
   Training: 'guildServiceTraining',
   Donate: 'guildServiceDonation',

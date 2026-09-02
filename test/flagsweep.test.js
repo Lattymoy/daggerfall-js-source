@@ -94,6 +94,9 @@ test('FS1: the extractor really reads the form, on a fixture', () => {
   // and a delegation the tree does carry would still be caught: a
   // dangling target fails the sweep above, which is the whole law.
   assert.deepEqual(scan(['// FLAGGED in nosuchmodule.js']), [{ line: 1, target: 'nosuchmodule.js' }]);
+  // ...and the sweep is reading a REAL population, not an empty tree:
+  assert.ok(SRC.filter(carriesFlag).length > 10,
+    'the tree still carries flags, so the delegation guard has something to resolve against');
 });
 
 test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () => {

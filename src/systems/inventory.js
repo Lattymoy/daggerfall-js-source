@@ -159,11 +159,20 @@ export function stacksWith(a, b) {
     // different things, so a SplitStack mint - which writes
     // nativeMaterialValue = 0 verbatim (DaggerfallUnityItem.cs:558) -
     // could not re-merge into a source stack that carried no material
-    // field at all, e.g. the gold stack goldStack() mints. FLAGGED:
-    // FindExistingStack (:708-713) does not compare material AT ALL;
-    // the port's extra term is a pre-existing narrowing this line does
-    // not widen, it only stops the term firing on a spelling
-    // difference.
+    // field at all, e.g. the gold stack goldStack() mints.
+    //
+    // RECORDED, and not a divergence: FindExistingStack (:708-713)
+    // does not compare material AT ALL, so the port carries one term
+    // DFU does not - and the term is INERT, which is why it may stay.
+    // Nothing that reaches isStackable's ladder (:126-131) carries a
+    // material: ingredients, glass-bottle potions, books, Currency and
+    // oil have none, and the one stackable WEAPON is the arrow, whose
+    // material DFU itself zeroes - CreateWeapon's arrow arm writes
+    // `newItem.nativeMaterialValue = 0` and skips ApplyWeaponMaterial
+    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:131-138
+    // reproduces. So `(a.material ?? 0) === (b.material ?? 0)` is true
+    // wherever ItemCollection.cs:706-714 would have matched, and the
+    // `?? 0` above is the fix that keeps it that way.
     (a.material ?? 0) === (b.material ?? 0) &&
     (a.message ?? 0) === (b.message ?? 0) &&
     (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&

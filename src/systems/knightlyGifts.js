@@ -1,7 +1,12 @@
 // G6 - THE KNIGHTLY ORDER'S GIFTS: KnightlyOrder.ReceiveArmor and the
 // Spymaster's greeting (MIT, Daggerfall Workshop). Two of the four
-// remaining FLAGGED service destinations, and the only two that need
-// no window of their own.
+// service destinations still unbuilt at G6, and the only two that
+// need no window of their own. All four have shipped since - the
+// third is ReceiveHouse, below (:105-151, H1) - and DR2 closed the
+// twentieth, so guildServiceFlow.js's SERVICE_DESTINATION now names a
+// window for every arm of DoGuildService's switch. This file's three
+// are routed at worldModes.js:2600 (Spymaster), :2612 (ReceiveArmor)
+// and :2732 (ReceiveHouse).
 //
 // THE ARMOUR IS ONCE PER RANK, and the bookkeeping is a BITFIELD on
 // the membership rather than a counter: `armorMask = ArmorFlagStart
@@ -97,9 +102,12 @@ export const RECEIVE_HOUSE_RANK = 9;           // ReceiveHouse's gate (:224)
 export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
 
 /**
- * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
- * destinations that needs no window of its own, and the only path in
- * the game that grants a house without DaggerfallBankPurchasePopUp -
+ * H1 - ReceiveHouse (:222-252). SHIPPED HERE: the last of the service
+ * destinations that needs no window of its own - the four-refusal
+ * ladder is receiveHouseDecision below and the flag write is
+ * claimHouse, wired at worldModes.js:2732-2736 through
+ * SERVICE_DESTINATION.ReceiveHouse. It is also the only path in the
+ * game that grants a house without DaggerfallBankPurchasePopUp -
  * a 436-line window that renders the building's own 3D model beside a
  * price list, which is its own slice.
  *

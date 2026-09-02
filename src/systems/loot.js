@@ -14,9 +14,14 @@
 //   - DFU reseeds Unity's global Random with items.GetHashCode()
 //     (an arbitrary hash, no determinism value); our uniform roll
 //     slots match the role per the approved engine-PRNG stance
-// INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
-// (setMagicItemTemplates) - a context that has not loaded it
-// under-generates by that category.
+// MI (magic items) rolls need the MAGIC.DEF registry
+// (setMagicItemTemplates), and EVERY host that can generate loot now
+// loads it: scenes/shared.js:98-101 (loadMagicRegistries) feeds the
+// module table this file reads, called from dungeonContext.js:889,
+// world.js:1272 and exterior.js:751 - interiors run inside those hosts
+// and read the same table. What is left is the data-absent boot, and
+// that is DFU's own answer rather than a stand-in: shared.js:101
+// records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
@@ -241,10 +246,12 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses.
   //
-  // G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
-  // since S4c - the enchantment cost sum was unported, so a magic
-  // item sold at its mundane base - and M4's catalogue closed that
-  // half. `newItem.value = value` REPLACES whatever the base item was
+  // G4: THE VALUE IS OVERWRITTEN (:632). The gap that stood here from
+  // S4c - the enchantment cost sum unported, so a magic item sold at
+  // its mundane base - closed with M4's catalogue: the sum is
+  // legacyEnchantmentValue (enchantments.js:218-236) and it is called
+  // on the `value:` line below. `newItem.value = value` REPLACES
+  // whatever the base item was
   // worth, so a daedric longsword and a leather boot with the same
   // enchantment are worth the same; and it replaces MAGIC.DEF's own
   // stored `value` field too, which is why that field is read and

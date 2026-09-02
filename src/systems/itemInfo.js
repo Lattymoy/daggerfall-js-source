@@ -2,8 +2,12 @@
 // (:748-817) and the %-macros DaggerfallUnityItemMCP binds for it
 // (:117-165). MIT, Daggerfall Workshop.
 //
-// U8e's inventory shipped an INTERIM info panel that made up its own
-// three lines (name / weight / value). This is the real thing: DFU
+// U8e's inventory shipped a stand-in info panel that made up its own
+// three lines (name / weight / value). THIS MODULE IS ITS REPLACEMENT
+// and nothing here invents a line: the record switch is itemInfoTextId
+// (:89-120) against ItemHelper.GetItemInfo (:764-816), and the macro
+// pass is expandItemInfo (:353-427) against DaggerfallUnityItemMCP
+// (:117-165). DFU
 // picks one of thirteen TEXT.RSC records by the item's GROUP and
 // TEMPLATE, and each record is a macro string the item fills in. The
 // panel therefore reads differently for a sword, a shield, an arrow,
@@ -184,14 +188,25 @@ export function materialName(item) {
   return MATERIAL_NAMES[m ?? 0] ?? '';
 }
 
-/** The panel's macro pass. Everything the port can compute is filled;
- *  the ones it cannot are named rather than left raw: %po the potion's
- *  recipe name, %bt/%ba the book's title and author (BOOKS.BSA has no
- *  reader yet). Each falls back to the item's own name or a dash,
- *  which is what an unfilled macro would otherwise print raw on
- *  screen. FLAGGED as a group - they land with their own arcs.
+/** The panel's macro pass. Everything the port can compute is filled,
+ *  and the three that once could not - %po, %bt, %ba - have all landed
+ *  with the arcs they were waiting on. %po is IM1's Potion()
+ *  (:402-407): the recipe by the item's own key through
+ *  potionRecipeByKey, with DFU's own Unknown Powers for key 255, a
+ *  recipe answering the bare name and a potion the whole "Potion of"
+ *  template. %bt is IM1's Books arm (:392-394): an identified book's
+ *  name IS its title through books.js's GetBookTitle, and %bt maps to
+ *  ItemName in MacroHelper's own table, so one arm feeds both. %ba is
+ *  the author cache at :414/:422, falling back to BS1's verbatim
+ *  lowercase "unknown author" rather than an invention - with the one
+ *  RECORDED caveat written at :408-413, that the port's book read is
+ *  async, so an unopened book reads the fallback until the reader has
+ *  loaded it once this session. Each unfilled macro still falls back
+ *  to the item's own name or a blank, which is what an unfilled macro
+ *  would otherwise print raw on screen.
  *
- *  X5: %hs LEFT THAT GROUP. It is the trapped soul's name, and it had
+ *  X5: %hs WAS THE FOURTH OF THEM, and it left first. It is the
+ *  trapped soul's name, and it had
  *  no producer because nothing could fill a soul trap; now the trap
  *  fires, so the default resolves the item's own trappedSoulType
  *  through the bestiary rather than printing "Nothing" over a full

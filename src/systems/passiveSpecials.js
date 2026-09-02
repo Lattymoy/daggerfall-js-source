@@ -5,7 +5,11 @@
 // custom-class careers whose regeneration / sun damage / light-and-
 // darkness magery have been mintable since chargen and read by
 // nothing, and the enchantment conditions' inSunlight/inHolyPlace ctx
-// arms FLAGGED since E1.
+// arms, which had stood open since E1 and are answered here: the two
+// readers below are wired into the enchant ctx at world.js:2023-2024
+// off the host seam that worldModes.js:769 and dungeonContext.js:2082
+// register (bible/01-Overview/Port-Ledger.md:558 strikes the pair
+// through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
 //   IsPlayerInSunlight  = IsDay && !IsPlayerInside && !InPrison

@@ -2,9 +2,10 @@
 // Workshop, Assets/Scripts/Game/Entities/RaceTemplate.cs:172-345)
 // verbatim for all eight playable races.
 //
-// Every race's paperdoll art follows one regular scheme, which the
-// port had only ever instantiated for Breton (the loud INTERIM the
-// U8f/U8g records carried):
+// Every race's paperdoll art follows one regular scheme. The port had
+// only ever instantiated it for Breton - the stand-in the U8f/U8g
+// records carried - and S3c/U9 shipped the other seven HERE, at
+// RACE_TEMPLATES (:109-110), which builds all eight from the scheme:
 //   background  SCBG0<n>I0.IMG
 //   male body   BODY0<n>I0.IMG (unclothed) / BODY0<n>I1.IMG (clothed)
 //   female body BODY1<n>I0.IMG / BODY1<n>I1.IMG

@@ -164,7 +164,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
-  // (playerEntity's INTERIM skills: 30) - spreading it threw.
+  // (the stand-in entity's flat skills, characters/playerEntity.js:27)
+  // - spreading it threw. RECORDED, and no divergence from
+  // SerializablePlayer: the line below is the working guard, it
+  // round-trips BOTH shapes, and restore reads back whichever it
+  // wrote. The stand-in columns themselves are that file's to retire.
   snap.skills = Array.isArray(entity.skills) ? [...entity.skills] : entity.skills;
   snap.skillUses = [...(entity.skillUses ?? [])];
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
