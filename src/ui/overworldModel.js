@@ -130,7 +130,15 @@ export function overworldTint(climate, byte) {
  *   colors    - Uint8Array, rgb per vertex, slope-shaded
  *   indices   - Uint32Array, two triangles per cell
  */
-export function buildOverworldGrid({ heightBytes, width, height, climateAt }) {
+/** ROADS 7: the thread a road draws on the relief. A packed-earth brown
+ *  for a road, blended hard so it reads at one vertex per 819m; a
+ *  lighter, fainter dirt for a track. Never on water - a road bit over
+ *  water is a routing bug and the map should show the terrain, not hide
+ *  it. Colours are ours, like the rest of this table (:33). */
+export const OVERWORLD_ROAD = [118, 92, 62];
+export const OVERWORLD_TRACK = [150, 128, 96];
+
+export function buildOverworldGrid({ heightBytes, width, height, climateAt, pathAt = null }) {
   const positions = new Float32Array(width * height * 3);
   const colors = new Uint8Array(width * height * 3);
   const at = (x, y) => heightBytes[y * width + x];
@@ -160,6 +168,10 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt }) {
         const slope = (cl(px + 1, py + 1) - cl(px - 1, py - 1)) * BASE_HEIGHT_SCALE;
         const shade = Math.min(1.18, Math.max(0.55, 0.9 + slope * 0.004));
         r *= shade; g *= shade; b *= shade;
+        // ROADS 7: the thread. 2 = road, 1 = track, 0 = nothing.
+        const path = pathAt ? pathAt(px, py) : 0;
+        if (path === 2) { [r, g, b] = lerp3([r, g, b], OVERWORLD_ROAD, 0.85); }
+        else if (path === 1) { [r, g, b] = lerp3([r, g, b], OVERWORLD_TRACK, 0.55); }
       }
       colors[i * 3] = Math.min(255, r | 0);
       colors[i * 3 + 1] = Math.min(255, g | 0);

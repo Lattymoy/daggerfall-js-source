@@ -694,10 +694,12 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     // DFU re-pushes ONE window; the port mints a new one and the
     // state it would have carried is waiting for it
     const second = new TravelMapWindow(deps);
-    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: true, towns: true });
+    // ROADS 12: two more flags ride the same store, default shown (false).
+    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: true, towns: true, roads: false, tracks: false });
     const save = second.getTravelMapSaveData();
     assert.deepEqual(save, {
       filterDungeons: false, filterHomes: true, filterTemples: false, filterTowns: true,
+      filterRoads: false, filterTracks: false,   // ROADS 12
       sleepInn: true, speedCautious: true, travelShip: true,
     }, 'GetTravelMapSaveData reads the live state and the struct\'s own defaults');
     // a popup's choices come back on the NEXT popup
@@ -714,7 +716,7 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     assert.equal(second.getTravelMapSaveData().speedCautious, false);
     // a null envelope is DFU's "use the defaults" (:1344-1345)
     second.setTravelMapFromSaveData(null);
-    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: false, towns: false });
+    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false });   // ROADS 12
     assert.equal(second.popUp.speedCautious, true);
     // and the envelope really rides the ONE composer both hosts call
     // (SaveLoadManager.cs:871 / :1479)
@@ -723,6 +725,7 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     const envelope = composeSessionState({});
     assert.deepEqual(envelope.travelMap, {
       filterDungeons: true, filterTemples: false, filterHomes: false, filterTowns: false,
+      filterRoads: false, filterTracks: false,   // ROADS 12
       sleepInn: false, speedCautious: false, travelShip: false,
     });
     restoreSessionState({ travelMap: envelope.travelMap }, {});
@@ -730,6 +733,7 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     restoreSessionState({}, {});
     assert.deepEqual(travelMapSaveData(), {
       filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
+      filterRoads: false, filterTracks: false,   // ROADS 12
       sleepInn: true, speedCautious: true, travelShip: true,
     }, 'a pre-U41 save restores the struct\'s defaults, as DFU\'s null arm does');
   } finally { _setTravelMapArtForTests(null); resetTravelMapState(); }
@@ -1028,4 +1032,42 @@ test('G5: the teleport box is its OWN field, so the save envelope never reads it
     tele.hover(10, 10);
     assert.ok(tele.telePopUp, 'a hover over a teleport box is simply nothing');
   } finally { _setTravelMapArtForTests(null); }
+});
+
+// ROADS 13 (2026-09-02): THE CLASSIC MAP DRAWS THE NETWORK. Same loop
+// as the dots, same texel-to-pixel law, same "this region only" rule,
+// written UNDER the dots, gated by the shared flags the enhanced map's
+// chips flip. A road pixel across the region border is not drawn - DFU
+// shows the current region alone, and the network follows that.
+test('ROADS 13: roads and tracks plot on the region panel, under the dots, by the shared flags', async () => {
+  const { MAP_WIDTH } = await import('../src/formats/woodsFile.js');
+  restoreDiscovery(null);
+  _resetForTests();
+  mountArt();
+  try {
+    const { deps } = mkWorld();
+    const roads = new Uint8Array(MAP_WIDTH * 500), tracks = new Uint8Array(MAP_WIDTH * 500);
+    roads[125 * MAP_WIDTH + 55] = 34;      // a road pixel inside the region
+    roads[130 * MAP_WIDTH + 60] = 34;      // a road pixel in the OTHER region (politic 23)
+    tracks[126 * MAP_WIDTH + 57] = 34;     // a track pixel inside
+    roads[120 * MAP_WIDTH + 50] = 34;      // a road on the city's own pixel
+    deps.roads = () => ({ roads, tracks });
+    const w = new TravelMapWindow(deps);
+    w._openRegionPanel(DAGGERFALL);
+    const at = (mx, my) => w._dotsBuf[((REGION_H - (my - ORIGIN[1]) - 1) * REGION_W) + (mx - ORIGIN[0])];
+    const road = at(55, 125), track = at(57, 126);
+    assert.notEqual(road, 0, 'the road pixel plots');
+    assert.notEqual(track, 0, 'the track pixel plots');
+    assert.notEqual(road, track, 'in different colours');
+    assert.equal(at(60, 130), 0, 'a road in another region does not plot on this panel');
+    assert.notEqual(at(50, 120), road, 'the city\u2019s dot sits ON TOP of the road that reaches it');
+    // the shared flags: hide roads, the road texel clears, the track stays
+    w.filters.roads = true;
+    w._updateMapLocationDotsTexture();
+    assert.equal(at(55, 125), 0, 'roads off');
+    assert.notEqual(at(57, 126), 0, 'tracks still on');
+    w.filters.roads = false; w.filters.tracks = true;
+    w._updateMapLocationDotsTexture();
+    assert.notEqual(at(55, 125), 0); assert.equal(at(57, 126), 0, 'tracks off');
+  } finally { _setTravelMapArtForTests(null); restoreDiscovery(null); _resetForTests(); }
 });

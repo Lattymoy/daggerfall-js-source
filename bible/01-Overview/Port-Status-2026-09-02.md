@@ -1,7 +1,7 @@
 # Port Status 2026-09-02 - 1:1 against Daggerfall Unity, re-measured
 
 *The state of the tree at the campaign's closing head (the commit that carries this page; the figures below were first taken at `c3c12ee` and re-taken at the close), after the Road-to-1:1
-campaign (`Road-To-1-1.md`; audited in `Audit-45.md`). Supersedes
+campaign (`Road-To-1-1.md`; audited in `Audit-49.md`). Supersedes
 `Port-Status-2026-09.md`, which measured `6881171` - the tree AUDIT 44
 found, before its 166-defect fix wave and before the campaign. Every
 figure below was re-derived by running a command against this tree and
@@ -51,7 +51,7 @@ changed, +55,758/-3,999** (`git rev-list --count 6881171..HEAD`, `git
 diff --shortstat`) - `src/` 212 files `+24,781/-3,102`, `test/` 202
 files `+26,737/-616`, `bible/` 22 files `+1,369/-263`. The suite grew
 faster than the source, which is the campaign's signature and also its
-largest defect class (`Audit-45.md`: 37 of 118 confirmed findings are a
+largest defect class (`Audit-49.md`: 37 of 118 confirmed findings are a
 pin that cannot fail).
 
 `bible/09-Testing/Testing.md:4` says 6,016 tests across 588 files - one
@@ -341,7 +341,7 @@ groups, **34 slices done, 14 not-a-gap, 24 recorded**; Wave B 4 groups
 plus B5, **11 done, 12 not-a-gap, 11 recorded**; Wave C two arcs - the
 save window, and the automap pair's **ten judged stages in two
 flights**; Wave D 10 groups, **39 of 42 slices shipped, 16 recorded**. Five adversarial rounds judged 145 findings, 118 confirmed
-(`Audit-45.md`). The flag front ran separately: **145 flag sites
+(`Audit-49.md`). The flag front ran separately: **145 flag sites
 triaged - 69 stale, 42 closable, 24 not-a-gap, 10 blocked** - six
 retirement lanes retired 96 sites and kept 2, and the 42 closable
 became Wave D's 42 slices.
@@ -717,9 +717,9 @@ named sound clips) - all three from the port's side, all three gated.
 
 The wiring half has moved further than any single wave in this repo's
 history: 207 commits, +24,781 lines of `src/`, +907 tests measured from
-AUDIT 44's commit (`Audit-45.md` counts +676 over the campaign's own
+AUDIT 44's commit (`Audit-49.md` counts +676 over the campaign's own
 narrower window), and the two largest genuinely-unbuilt reference
-surfaces built. What it did not do is retire the class. `Audit-45.md`
+surfaces built. What it did not do is retire the class. `Audit-49.md`
 measured 43 of 61 code defects in the campaign as a missing caller or a
 missing clause - the same shape, found in a tree the campaign had just
 rewritten 40,000 lines of - and this page's own sweep turns up the

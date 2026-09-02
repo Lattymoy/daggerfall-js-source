@@ -259,3 +259,35 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
     + '"approved or bug?" and gets the wrong answer:\n'
     + unrecorded.join('\n'));
 });
+
+// ═══ EE0: the world render gate exists, and reads the compositor's frame ═══
+test('EE0: the world render gate boots the real exterior and judges real pixels', () => {
+  const g = readFileSync('tools/worldRenderGate.mjs', 'utf8');
+  // it boots the GAME, against data, into the exterior
+  // AUDIT 48 F1: the classic mode must open the SKIN's door, ?skin=classic.
+  // A bare ?classic is the classic start-location door, and every
+  // classic-mode run before this rendered the enhanced skin.
+  assert.match(g, /const skin = MODE === 'classic' \? '&skin=classic' : '';/);
+  assert.ok(!/'&classic'/.test(g), 'the start-location door is not the skin door');
+  // EE7: the gate can boot either host - ?exterior by default, ?world
+  // with --world, where the grass lives
+  assert.match(g, /\/play\/\?\$\{WORLD \? 'world' : 'exterior'\}&shot&novideo&nofoes/);
+  assert.match(g, /window\.__frame/, 'it must wait for frames, not for load');
+  // it judges the COMPOSITOR'S frame: a readPixels outside the game's
+  // rAF returns a cleared buffer, which reads as "everything is black"
+  assert.match(g, /canvas\.screenshot\(\{ type: 'png'/);
+  assert.ok(!/readPixels\(/.test(g), 'a read-back of the default framebuffer lies here');
+  // and it fails on the three things a black world has
+  // EE3 sharpened these: the lower half is judged, and then the TERRAIN
+  // itself by a median band, because a lit building beside a void
+  // ground passed the lower-half check
+  assert.match(g, /the lower half is lit/);
+  assert.match(g, /the lower half has detail/);
+  assert.match(g, /the TERRAIN is lit \(street band median/);
+  assert.match(g, /the sky is drawn/);
+  // the arc plan names it as every slice's gate
+  const plan = readFileSync('bible/07-Rendering/Enhanced-Environments-Arc.md', 'utf8');
+  assert.match(plan, /tools\/worldRenderGate\.mjs/);
+  assert.match(plan, /an upload may create, fill and\s+parameterise an object\. It may not draw/,
+    'the law the texture incident taught must be in the plan');
+});

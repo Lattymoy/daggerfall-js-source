@@ -8,6 +8,7 @@
 // design, a data gate that drifts back in front of the door, or an
 // exit where there should not be one.
 import { test } from 'node:test';
+import { execSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -172,7 +173,8 @@ test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', 
   // system (2026-08-29, Mac's call). The pane must still carry a REAL
   // one, or the law above ("every switch is real") is vacuous on an
   // empty list - the procedural sky is it.
-  assert.match(pane, /prefRow\('proceduralSky'/, 'the pane carries no live switch at all');
+  // EE1: the sky switch became ENHANCED ENVIRONMENTS, which contains it.
+  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the pane carries no live switch at all');
   assert.doesNotMatch(pane, /prefRow\('roads'/, 'the roads switch is back without its system');
   assert.match(pane, /skinRow\(\)/, 'and the skin switch comes home here');
 
@@ -200,7 +202,9 @@ test('R7: the pane does not claim a feature the tree does not have', () => {
   }
   // RA1: the sky IS built (render/enhancedSky.js, on by default), so
   // the pane must offer the switch and must no longer call it a hole.
-  assert.match(pane, /prefRow\('proceduralSky'/, 'the ES1 sky must be a real switch');
+  // EE1: that switch is ENHANCED ENVIRONMENTS now, which contains the
+  // sky and everything the arc adds after it.
+  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the ES1 sky must be a real switch');
   assert.ok(!/not built/.test(pane) || !/[Pp]rocedural sky[^]*not built/.test(pane),
     'the pane must not still label the shipped sky "not built"');
   assert.ok(!/Nothing procedural is built yet/.test(pane),
@@ -418,4 +422,64 @@ test('AUDIT UI: the 44px law follows the POINTER, not the viewport width', () =>
   assert.doesNotMatch(menu, /b\.style\.padding = '8px 16px'/);
   assert.equal((menu.match(/classList\.add\('rowact'\)/g) ?? []).length, 3, 'all three sites take the class');
   assert.match(css, /\.rowact \{ min-height: 38px; padding: 8px 16px; \}/, 'the compact size a mouse keeps');
+});
+
+// ═══ EE1: Enhanced Environments replaces the procedural sky switch ═══
+test('EE1: one switch for the whole outdoors, migrated once from the old sky answer', () => {
+  const prefs = read('src/systems/uiPrefs.js');
+  assert.match(prefs, /enhancedEnvironments: true,/, 'the new key defaults ON');
+  assert.match(prefs, /proceduralSky: true,\s+\/\/ LEGACY: read only by the migration in loadPrefs/,
+    'the old key stays only for the migration');
+  assert.match(prefs, /if \(p\.enhancedEnvironments === undefined && p\.proceduralSky !== undefined\) \{\s*\n\s*_prefs\.enhancedEnvironments = !!p\.proceduralSky;/,
+    'a player who switched the sky off must not be surprised by a lit world');
+  const menu = read('src/ui/enhancedMenu.js');
+  assert.match(menu, /prefRow\('enhancedEnvironments', 'Enhanced environments',/);
+  assert.ok(!/prefRow\('proceduralSky'/.test(menu), 'the old row must be gone, not doubled');
+  assert.match(menu, /Today: a procedural sky/, 'the row must claim only what the tree has today');
+  const shared = read('src/scenes/shared.js');
+  assert.match(shared, /params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)/);
+  // nothing outside uiPrefs reads the retired key at runtime - src AND tools
+  const hits = execSync("grep -rl \"getPref('proceduralSky')\" src/ tools/ || true", { encoding: 'utf8' }).trim();
+  assert.equal(hits, '', `still reading the retired pref: ${hits}`);
+});
+
+test('EE1: the migration, exercised - stale OFF comes up OFF, an explicit answer is never overwritten', async () => {
+  // a throwaway localStorage, so loadPrefs reads what this test wrote
+  const store = {};
+  globalThis.localStorage = {
+    getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = v; }, removeItem: (k) => { delete store[k]; },
+  };
+  const m = await import('../src/systems/uiPrefs.js');
+  const KEY = 'dagger.ui.v1';
+  store[KEY] = JSON.stringify({ proceduralSky: false, textScale: 0 });
+  m.loadPrefs();
+  assert.equal(m.getPref('enhancedEnvironments'), false, 'a player who turned the sky off gets environments off');
+  store[KEY] = JSON.stringify({ proceduralSky: false, enhancedEnvironments: true });
+  m.loadPrefs();
+  assert.equal(m.getPref('enhancedEnvironments'), true, 'an explicit answer beats the old one');
+  store[KEY] = JSON.stringify({ textScale: 1 });
+  m.loadPrefs();
+  assert.equal(m.getPref('enhancedEnvironments'), true, 'no old answer: the default');
+  delete globalThis.localStorage;
+});
+
+// ═══ EE13: a season test door - drop into a random town ═════════════
+test('EE13: the Enhanced pane offers a season/weather test that spawns in a random town, and stores nothing', () => {
+  const menu = read('src/ui/enhancedMenu.js');
+  const from = menu.indexOf('function paneEnhanced(body)');
+  const pane = menu.slice(from, menu.indexOf('\n}', from));
+  assert.match(pane, /el\('div', 'row-name', 'Test the outdoors'\)/, 'the row exists');
+  // EE14: a season is both an archive and a day - the game has three
+  // archive seasons and the field has a calendar, and 'spring' as a bare
+  // name was a pin that ignored it
+  assert.match(pane, /for \(const \[label, , day\] of SEASONS\)/, 'the four seasons, each an archive and a day');
+  assert.match(pane, /for \(const wn of \['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'\]\)/, 'the seven weathers the sim has');
+  assert.match(pane, /\['world', ''\], \['spawn', 'random'\], \['season', archive\], \['day', String\(day\)\], \['weather', weatherSel\.value\], \['class', '1'\], \['novideo', ''\]/,
+    'it navigates through the world\u2019s own doors, archive and day both');
+  assert.ok(!/setPref\(.*season|setPref\(.*weather/.test(pane), 'a test door stores nothing');
+  // and the world honours the door: any town, named in the console
+  const w = read('src/scenes/world.js');
+  assert.match(w, /if \(!startLoc && params\.get\('spawn'\) === 'random'\) \{/);
+  assert.match(w, /\[0, 1, 2\]\.includes\(l\.mapTableData\?\.locationType\)/, 'a city, a hamlet or a village - a place with ground and people');
+  assert.match(w, /console\.info\(`\[world\] random spawn: /, 'the town is named, so a good one can be found again');
 });

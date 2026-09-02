@@ -27,6 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { generatePixelTerrain } from './terrainGen.js';
+import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 
 /** The escape hatch, read once at scene build (the ?cull=off shape). */
 export function terrainThreadDisabled(search = globalThis.location?.search) {
@@ -61,7 +62,17 @@ export class TerrainGenClient {
     try {
       w = factory();
       w.onerror = (e) => this._down(e?.message ?? 'terrain worker failed');
-      w.onmessage = (ev) => this._answer(ev.data ?? {});
+      w.onmessage = (ev) => {
+        const m = ev.data ?? {};
+        if (m.t === 'roads') {
+          // ROADS 7: the arrays come back for the map (and, as it happens,
+          // for the fallback - the lazy build stands down when they do).
+          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks };
+          if (m.stats && this._roadsStats) this._roadsStats(m.stats);
+          return;
+        }
+        this._answer(m);
+      };
       // a COPY - transferring the reader's own bytes would detach the
       // buffer the rest of the session still reads (the RA1 law)
       const bytes = woodsBytes.slice();
@@ -82,9 +93,36 @@ export class TerrainGenClient {
    *  dying worker falls back to); the reply's big arrays arrive
    *  TRANSFERRED. Always resolves - a worker failure resolves through
    *  the same-thread kernel, never rejects. */
+  /** ROADS 3: hand the network to both kernels - the worker gets a
+   *  COPY (the RA1 law: the arrays this thread keeps are the fallback's)
+   *  and this thread keeps its own for the same-thread path. null
+   *  clears both. */
+  setRoads(settlements, onStats = null) {
+    // AUDIT ROADS F2: the worker BUILDS from the list with its own woods;
+    // this thread builds only if it has to - lazily, on the fallback
+    // path, from the list it kept. A build is never paid twice and never
+    // paid on the frame while a worker is up.
+    this._settlements = settlements ?? null;
+    this._roads = null;
+    this._roadsStats = onStats;
+    if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements });
+    else if (!this._worker) this._roadsFallback();
+  }
+
+  /** ROADS 7: the network for whoever draws it - null until built. */
+  roads() { return this._roads; }
+
+  _roadsFallback() {
+    if (this._roads || !this._settlements) return;
+    const net = buildRoadsFromSettlements(this._settlements, this._woods);
+    this._roads = net ? { roads: net.roads, tracks: net.tracks } : null;
+    if (net && this._roadsStats) this._roadsStats(net.stats);
+  }
+
   generate(job) {
     if (!this._worker) {
-      return Promise.resolve(generatePixelTerrain({ woods: this._woods, ...job }));
+      this._roadsFallback();
+      return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...job }));
     }
     return new Promise((resolve) => {
       this._fifo.push({ job, resolve });
@@ -99,7 +137,8 @@ export class TerrainGenClient {
     if (m.t === 'error') {
       // this job's inputs are still whole on this side - run them here
       console.warn('[terrain] worker job failed; generating on the main thread -', m.message);
-      p.resolve(generatePixelTerrain({ woods: this._woods, ...p.job }));
+      this._roadsFallback();   // AUDIT ROADS F2: a one-off same-thread job still wants its roads
+      p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...p.job }));
       return;
     }
     // The reply crosses WHOLE, like the job: the envelope tag comes
@@ -117,6 +156,7 @@ export class TerrainGenClient {
     this._fifo = [];
     try { this._worker?.terminate?.(); } catch { /* already gone */ }
     this._worker = null;
-    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, ...p.job }));
+    this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it
+    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...p.job }));
   }
 }

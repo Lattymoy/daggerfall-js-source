@@ -151,7 +151,7 @@ IMGs and not to the courtroom - so the court screen drew solid red
 while the suite stayed green, and the pin that should have caught it
 asserted the defective line. The incident sweep now walks all of
 `src/` for the six real names and asserts the complement. The record
-is `Audit-45.md`; the re-measured status is `Port-Status-2026-09-02.md`.
+is `Audit-49.md`; the re-measured status is `Port-Status-2026-09-02.md`.
 
 The open-flag re-triage (145 entries, five chunks, every site opened
 against its DFU original) found 69 STALE (the thing shipped), 24

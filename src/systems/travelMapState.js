@@ -14,7 +14,11 @@
 // and sleepInn/speedCautious/travelShip start TRUE, which is what a
 // null envelope (an old save) restores.
 
-const DEFAULT_FILTERS = Object.freeze({ dungeons: false, temples: false, homes: false, towns: false });
+// ROADS 12: two more, the port's own - roads and tracks on the map.
+// Same inversion as DFU's four (TRUE means HIDDEN), so the default of
+// false is "always on" and a pre-ROADS-12 save, which has no such keys,
+// restores to shown.
+const DEFAULT_FILTERS = Object.freeze({ dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false });
 const DEFAULT_POPUP = Object.freeze({ speedCautious: true, sleepModeInn: true, travelShip: true });
 
 let _filters = { ...DEFAULT_FILTERS };
@@ -43,6 +47,8 @@ export function travelMapSaveData(live = null) {
     filterTemples: _filters.temples,
     filterHomes: _filters.homes,
     filterTowns: _filters.towns,
+    filterRoads: _filters.roads,     // ROADS 12: the port's own two
+    filterTracks: _filters.tracks,
     sleepInn: p.sleepModeInn,
     speedCautious: p.speedCautious,
     travelShip: p.travelShip,
@@ -56,6 +62,7 @@ export function restoreTravelMapSaveData(data) {
   _filters = {
     dungeons: !!d.filterDungeons, temples: !!d.filterTemples,
     homes: !!d.filterHomes, towns: !!d.filterTowns,
+    roads: !!d.filterRoads, tracks: !!d.filterTracks,   // ROADS 12: absent in an older save -> shown
   };
   _popUp = {
     speedCautious: d.speedCautious ?? true,

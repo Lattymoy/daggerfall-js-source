@@ -103,7 +103,7 @@ async function run(label, opts) {
   const pane = await page.evaluate(() => {
     const rows = [...document.querySelectorAll('#enhanced-menu .row')];
     const find = (n) => rows.find((r) => r.querySelector('.row-name')?.textContent === n);
-    const sky = find('Procedural sky');
+    const sky = find('Enhanced environments');   // EE1
     return {
       sky: sky ? sky.querySelector('.ctl .act')?.textContent : null,
       skyTarget: sky ? Math.round(sky.querySelector('.ctl .act').getBoundingClientRect().height) : 0,
@@ -114,14 +114,14 @@ async function run(label, opts) {
     pane.sky !== null && pane.skin, JSON.stringify(pane));
   check(`${label}: the sky reads ON by default`, pane.sky === 'On', String(pane.sky));
   if (label === 'phone') check("phone: the sky switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
-  await page.locator('#enhanced-menu .row', { hasText: 'Procedural sky' }).locator('.ctl .act').click();
+  await page.locator('#enhanced-menu .row', { hasText: 'Enhanced environments' }).locator('.ctl .act').click();
   const skyOff = await page.evaluate(async () => {
     const m = await import('/src/systems/uiPrefs.js');
     m._resetForTests();
-    return m.getPref('proceduralSky');
+    return m.getPref('enhancedEnvironments');   // EE1
   });
   check(`${label}: the sky switch PERSISTS`, skyOff === false, String(skyOff));
-  await page.locator('#enhanced-menu .row', { hasText: 'Procedural sky' }).locator('.ctl .act').click();
+  await page.locator('#enhanced-menu .row', { hasText: 'Enhanced environments' }).locator('.ctl .act').click();
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });

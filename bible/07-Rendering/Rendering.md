@@ -21,6 +21,12 @@ directory by `test/audit18_bible_docs.test.js`:
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `groundSurfaces.js` - EE4 the DRAWN GROUND SURFACES: water, dirt, grass,
+  stone, sand and snow as procedural functions reporting a colour AND a
+  height, the identifier that reads a base's family off its own mean, and
+  the builder that keeps Daggerfall's tile shapes and colours and replaces
+  what is inside them - residual materials included. Built at upload,
+  behind the Enhanced Environments switch; ?ground=classic|tiles|drawn.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing
@@ -84,3 +90,7 @@ GetFireWallColors32 stays unported until a firewall consumer exists
 (a two-line lerp). Live visual sign-off open (Mac). R13 shipped precipitation + verbatim storm
 lightning. R10 retired groundMesh.js - all ground
 (exterior + terrain) runs the verbatim tilemap shader.
+
+See `Enhanced-Environments-Arc.md` for the Enhanced Environments arc plan (second attempt): its laws, its slices in order, and the gate each one must pass.
+
+`EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.

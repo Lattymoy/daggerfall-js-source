@@ -40,6 +40,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getTerrainGroundArchive, getNatureArchive, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation, hasCustomLocationPosition } from '../world/locationLayout.js';
+import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
@@ -113,7 +114,8 @@ import {
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM4c: and the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
+import { isEnhanced } from '../systems/uiSkin.js';
+import { getPref } from '../systems/uiPrefs.js';   // EE3: the ground half of the Enhanced Environments switch   // WM2d: mills are an enhanced-skin departure (the roads were the other one, removed whole at RX)
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -463,7 +465,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // R9 ground GL: cached tile array per archive, the location tilemap,
   // and a flat 2x2 surface at GroundOffset spanning the exact extent
   // (winding matches buildTerrainIndices' quad diagonal).
-  if (!renderer.tileArrays.has(groundArchive)) {
+  // EE3: the ground's half of the Enhanced Environments switch and its
+  // URL door, set BEFORE the cache is asked - the guard below must ask
+  // about the mode the upload will use, or a flipped switch skips the
+  // upload for the new mode and draws the terrain with no texture.
+  renderer.enhancedGround = isEnhanced() && getPref('enhancedEnvironments');
+  renderer.groundMode = new URLSearchParams(globalThis.location?.search ?? '').get('ground');
+  if (!renderer.tileArrayFor(groundArchive)   /* EE3 */) {
     const groundTex = textureFiles.get(groundArchive);
     const layers = [];
     for (let r = 0; r < groundTex.recordCount; r++) {
@@ -471,7 +479,23 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     renderer.uploadTileArray(groundArchive, layers);
   }
-  const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(locationTilemap), tilemapDim);
+  const tilemapBytes = convertTilemap(locationTilemap);
+  const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, tilemapDim);
+  // EE7: the location's grass on its own tilemap. The exterior ground is
+  // one flat quad, so the heightmap is flat too - every corner at the
+  // ground's own height - and the tile size is the quad's side over the
+  // tilemap's dimension. Nothing when the mode places none, or ?grass=off.
+  const grass = (() => {
+    const grassOf = renderer.tileGrassFor(groundArchive);
+    if (!grassOf || new URLSearchParams(globalThis.location?.search ?? '').get('grass') === 'off') return null;
+    const gy = GROUND_OFFSET * 0.025;
+    const flat = new Float32Array((tilemapDim + 1) * (tilemapDim + 1)).fill(gy);
+    const placed = placeGrass({
+      tilemap: tilemapBytes, grassOf, heights: flat, tileDim: tilemapDim,
+      tileSize: (loc.width * RMB_SIDE) / tilemapDim, heightScale: 1, seed: 0x5eed,
+    });
+    return renderer.createGrass(placed.data, placed.count);
+  })();
   const groundSurface = (() => {
     const gy = GROUND_OFFSET * 0.025;
     const gw = loc.width * RMB_SIDE;
@@ -2221,8 +2245,14 @@ export async function bootExterior(canvas, renderer, params, status) {
         canvas.clientWidth / canvas.clientHeight);
       renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
+    // EE5: the ground shadows under the SKY'S OWN deck - one field for the
+    // cloud and for the shadow it casts. Null when there is no enhanced
+    // sky, which is the classic skin and every interior.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
     renderer.drawTerrain(groundSurface, identityMatrix,
-      renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
+      renderer.tileArrayFor(groundArchive), tilemapTex, 6.4, renderer.tileNormalFor(groundArchive) /* EE6 */);
+    // EE7: the grass after its ground, same matrix, same light, same deck
+    if (grass) renderer.drawGrass(grass, identityMatrix, performance.now() / 1000, null);
     for (const d of drawList) {
       if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
       renderer.drawMesh(d.mesh, d.matrix, texRemap);
@@ -2384,6 +2414,19 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
     if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
+      // EE8: the enhanced profile rides the switch, and the wind that drives
+      // its rain is the SKY'S OWN - the deck's wind from the eased weather
+      // row - INTEGRATED here as travel, so a change in the wind moves what
+      // falls next and never what has already fallen.
+      precip.enhanced = !!sky?.cloudShadow;
+      precip.countCap = Number(new URLSearchParams(globalThis.location?.search ?? '').get('rain')) || null;
+      if (precip.enhanced) {
+        const w = sky.cloudShadow.wind;
+        const dtp = Math.min(0.05, (now - (precip._lastNow ?? now)) / 1000);
+        precip.windOff[0] += (2.5 + w[0] * 260) * dtp;
+        precip.windOff[1] += (1.2 + w[1] * 260) * dtp;
+      }
+      precip._lastNow = now;
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
       renderer.markForeignPass();   // EV6: so did the rain
     }

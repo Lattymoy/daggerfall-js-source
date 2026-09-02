@@ -86,6 +86,8 @@
 // offers the find dialog and the host hands the place here.
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
+import { OVERWORLD_ROAD, OVERWORLD_TRACK } from './overworldModel.js';   // ROADS 13: the same two colours as the relief
+import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
 import { TravelPopUpWindow, preloadTravelPopUpArt } from './travelPopUp.js';
@@ -484,6 +486,34 @@ export class TravelMapWindow {
     this.scale = getRegionMapScale(this.selectedRegion);
     this._dotsBuf.fill(0);
     this._outlineBuf.fill(0);
+    // ROADS 13 (the ROADS 7 gap, named three times): THE CLASSIC MAP
+    // DRAWS THE NETWORK TOO. Same loop, same texel-to-pixel law
+    // (originX + x, originY + y), same "this region only" rule as the
+    // dots, written UNDER them so a town's dot stays on top of the road
+    // that reaches it. The flags are the shared store's - the enhanced
+    // map's two chips flip them and the save carries them - because the
+    // classic panel has no native art for two more buttons; a classic
+    // player sees roads on and tracks on until the enhanced map says
+    // otherwise, which is the same inversion the four DFU filters use.
+    const net = this.deps.roads?.() ?? null;
+    if (net) {
+      const showRoads = !this.filters.roads, showTracks = !this.filters.tracks;
+      const roadPx = packRGBA(OVERWORLD_ROAD[0], OVERWORLD_ROAD[1], OVERWORLD_ROAD[2], 255);
+      const trackPx = packRGBA(OVERWORLD_TRACK[0], OVERWORLD_TRACK[1], OVERWORLD_TRACK[2], 255);
+      for (let y = 0; y < height && (showRoads || showTracks); y++) {
+        for (let x = 0; x < width; x++) {
+          const px = originX + x, py = originY + y;
+          if (px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) continue;
+          const i = py * MAP_WIDTH + px;
+          const kind = (showRoads && net.roads[i]) ? 2 : ((showTracks && net.tracks[i]) ? 1 : 0);
+          if (!kind) continue;
+          const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
+          if (offset >= width * height) continue;
+          if (maps.getPoliticIndex(px, py) - 128 !== this.selectedRegion) continue;
+          this._dotsBuf[offset] = kind === 2 ? roadPx : trackPx;
+        }
+      }
+    }
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         // the `* scale` on the whole offset is DFU's own (:691)

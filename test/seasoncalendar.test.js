@@ -365,7 +365,7 @@ test('R1 CLOSEOUT: the frame cannot poll the straightened season away while the 
   // the last write left is what the destination is skinned with.
   const world = read('src/scenes/world.js');
   const build = world.slice(world.indexOf('async function buildPixelNow'));
-  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('getTerrainGroundArchive(climate, season)'),
+  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('getTerrainGroundArchive(climate, groundSeason)'),
     'the ground archive is chosen after the worker yields - the window is real');
 
   // THE LATCH. The frame's poll is the first thing tickSeason answers

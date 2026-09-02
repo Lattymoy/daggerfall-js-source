@@ -841,10 +841,56 @@ function paneEnhanced(body) {
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
   // same uiPrefs shelf as roads.
-  live.append(prefRow('proceduralSky', 'Procedural sky',
-    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
-    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
-    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
+  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, which contains it.
+  // The prose names what the switch covers TODAY and grows as slices
+  // land - a row that claims more than the tree has is the fault RA1
+  // fixed here in the other direction.
+  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors as one system. Today: a procedural sky with the sun, both moons on '
+    + 'their real phases, a star field, a finely stepped sunrise and sunset, and clouds that '
+    + 'follow the weather to the horizon and cast their shadows on the land; and ground drawn at four times the detail in '
+    + 'Daggerfall\u2019s own tile shapes and colours, lit by the sun so every blade and pebble '
+    + 'has a bright side and a shaded side, holding still at distance instead of shimmering; and '
+    + 'three-dimensional grass standing in the meadows, bending in the wind; and rain and snow '
+    + 'that fall through the world around you, driven by the wind, rather than across the screen; '
+    + 'and snow that gathers on the ground through a storm, takes your footprints, and melts away '
+    + 'as the season warms, while the roads stay walked and wet-shining in the rain. '
+    + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own 64-pixel ground. '
+    + 'Takes effect when the world next loads.'));
+
+  // EE13 (Mac: a season test option that spawns you somewhere random, so
+  // the outdoors can be checked without a walk to a season). A season, a
+  // weather, and a town chosen at random by the world's ?spawn=random
+  // door. This is a TEST door, not a setting: it navigates, it stores
+  // nothing, and it names the town in the console so a good one can be
+  // found again.
+  const test = el('div', 'row');
+  const testMain = el('div', 'row-main');
+  testMain.append(el('div', 'row-name', 'Test the outdoors'));
+  testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
+  const testCtl = el('div', 'ctl');
+  const seasonSel = el('select', 'act');
+  // EE14: Daggerfall has three ARCHIVE seasons (winter, rain, summer),
+  // and the field has a CALENDAR. A season here is both: the archive
+  // the world dresses in, and the day of the year the field warms to.
+  const SEASONS = [['winter', 'winter', 0], ['spring', 'rain', 90], ['summer', 'summer', 180], ['fall', 'summer', 300]];
+  for (const [label, , day] of SEASONS) { const o = el('option', '', label); o.value = String(day); seasonSel.append(o); }
+  const weatherSel = el('select', 'act');
+  for (const wn of ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow']) { const o = el('option', '', wn); o.value = wn; weatherSel.append(o); }
+  const go = el('button', 'act primary', 'Spawn');
+  go.type = 'button';
+  go.addEventListener('click', () => {
+    // the menu already lives at /play/: same page, the world's doors set
+    const url = new URL(location.href);
+    url.search = '';
+    const day = Number(seasonSel.value);
+    const archive = SEASONS.find((x) => x[2] === day)?.[1] ?? 'summer';
+    for (const [k, v] of [['world', ''], ['spawn', 'random'], ['season', archive], ['day', String(day)], ['weather', weatherSel.value], ['class', '1'], ['novideo', '']]) url.searchParams.set(k, v);
+    location.href = url.toString().replace(/=(&|$)/g, '$1');
+  });
+  testCtl.append(seasonSel, weatherSel, go);
+  test.append(testMain, testCtl);
+  live.append(test);
   body.append(live);
 
   // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S

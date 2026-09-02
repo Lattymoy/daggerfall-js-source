@@ -234,15 +234,21 @@ test('EV7 AUDIT F-DOC1: the REAL shell executes - both error arms answer through
 test('EV7: the worker shell imports only pure modules and spells the Worker URL the Vite way', () => {
   const shell = readFileSync('src/world/terrainGenWorker.js', 'utf8');
   const imports = [...shell.matchAll(/from '([^']+)'/g)].map((m) => m[1]).sort();
-  assert.deepEqual(imports, ['../formats/woodsFile.js', './terrainGen.js'],
-    'the import graph is exactly the reader and the kernel');
+  // AUDIT ROADS F2: the road producer joins the graph so the network is
+  // BUILT in the worker rather than shipped to it. It is pure - the
+  // generator, the map's lon/lat law and the sampler's constants, no DOM
+  // anywhere in its closure - which is the law this list enforces.
+  assert.deepEqual(imports, ['../formats/woodsFile.js', './roadsProducer.js', './terrainGen.js'],
+    'the import graph is exactly the reader, the road producer and the kernel');
   const code = shell.replace(/\/\/[^\n]*/g, '').replace(/\/\*[^]*?\*\//g, '');
   assert.ok(!/\bdocument\b/.test(code) && !/new Worker/.test(code), 'no DOM, no nested workers');
   assert.ok(shell.includes('globalThis.onmessage = (ev) =>'), 'the message loop is the module');
   // AUDIT EV F-DOC1: the job crosses as a SPREAD - a hand-copied field
   // list was the one place a new kernel input could be dropped with
   // every test green
-  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods })'), 'the job forwards whole');
+  // ROADS 3: `roads` joined `woods` as worker-owned state that rides
+  // beside the spread - the job itself still crosses WHOLE.
+  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods, roads })'), 'the job forwards whole');
   // the client spells the constructor the way Vite's static analysis
   // bundles (eslint.config.js's RA1 note: never globalThis.Worker)
   const client = readFileSync('src/world/terrainGenClient.js', 'utf8');
