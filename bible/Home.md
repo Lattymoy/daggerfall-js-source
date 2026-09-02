@@ -308,7 +308,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2731` - landing stands in for it - FLAGGED for the first session with
 - `src/scenes/world.js:4057` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:5117` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6290` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:6303` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1340` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1358` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1570` - is the quest machine's, FLAGGED with it.
