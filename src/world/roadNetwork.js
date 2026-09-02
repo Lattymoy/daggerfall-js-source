@@ -80,7 +80,8 @@ export const TRACK_TYPES = Object.freeze(new Set([
 export const ROAD_DIALS = Object.freeze({
   neighbours: 3,          // k-nearest edges per road node
   roadReach: 70,          // max pixel distance for a road edge
-  trackReach: 40,         // max pixel distance for a track to its road node
+  trackReach: 14,         // ROADS 15: his track dead-ends sit within 9 px of a road at the 95th
+                          // percentile (median 0, max 56); 40 drew tracks four times his length
   climbCost: 40,          // per unit of small-heightmap rise, per step (percent)
   descentCost: 10,        // downhill is cheaper but not free (percent)
   highCost: 0.08,         // per unit of height above `highAbove`, per step
@@ -155,13 +156,34 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // kept in step as each track lands.
   const paths = new Uint8Array(roads);
   for (const t of trackNodes) {
-    let best = null; let bd = Infinity;
-    for (const r of roadNodes) { const dd = dist(t, r); if (dd < bd) { bd = dd; best = r; } }
-    if (!best || bd > d.trackReach) continue;
+    // ROADS 15: A TRACK JOINS THE ROAD WHERE THE ROAD PASSES, not at the
+    // next town. Measured on the hand-drawn network, a track dead-end
+    // sits within 9 pixels of a road at the 95th percentile - his spurs
+    // are short because they meet the road wherever it is. The first
+    // draft aimed every track at the nearest road NODE and called it
+    // "the way to town"; it was the way to a town thirty pixels off
+    // when the road ran eight pixels away. The target is the nearest
+    // path pixel within reach; the route stops the moment it touches
+    // any path, so the join lands wherever the terrain says.
+    const best = nearestPath(paths, t, d.trackReach);
+    if (!best) continue;
     const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: occupied });
-    if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, best);
+    if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, { ...best, region: t.region, name: null });
   }
   return { roads, tracks, stats };
+}
+
+/** The nearest set pixel of a mask within `reach` of (x, y), or null. */
+function nearestPath(mask, at, reach) {
+  let best = null; let bd = Infinity;
+  const x0 = Math.max(0, at.x - reach), x1 = Math.min(MAP_WIDTH - 1, at.x + reach);
+  const y0 = Math.max(0, at.y - reach), y1 = Math.min(MAP_HEIGHT - 1, at.y + reach);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (!mask[y * MAP_WIDTH + x]) continue;
+    const dd = Math.hypot(x - at.x, y - at.y);
+    if (dd <= reach && dd < bd) { bd = dd; best = { x, y }; }
+  }
+  return best;
 }
 
 function inMap(l) { return l.x >= 0 && l.x < MAP_WIDTH && l.y >= 0 && l.y < MAP_HEIGHT; }

@@ -304,3 +304,21 @@ Mac's machine: `ARENA2_PATH=... node tools/roadsCalibrate.mjs --bytes
 dial, run again. That loop is the design being perfected against the
 resource, and every number it lands on goes into ROAD_DIALS with the
 run that chose it.
+
+## ROADS 15 - tracks join the road where it passes (2026-09-02)
+
+Calibrated from his arrays alone, no heightmap needed. Of his 2,166
+track dead-ends, the median distance to a road pixel is 0, the 95th
+percentile 9, the max 56: HIS SPURS ARE SHORT, because they meet the
+road wherever it runs. Ours aimed every track at the nearest road NODE
+- "the way to town" - and reached 40 pixels to do it, which was the way
+to a town thirty pixels off when the road ran eight pixels away. The
+target is the nearest path pixel now, the reach is 14 (generous against
+his 95th), and the route stops the moment it touches any path.
+
+WHAT THE SAME NUMBER SAYS THAT NEEDS THE MAP TO ACT ON: a median of
+zero means most of his villages sit ON a road. His roads route past
+villages; ours join towns and leave villages to spurs. Making villages
+waypoints the roads pass through is the next calibration, and it can
+double the network's size, so it waits on MAPS.BSA and WOODS.WLD to be
+measured against his 21,554 road pixels before it is turned.

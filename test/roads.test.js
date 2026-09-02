@@ -16,7 +16,7 @@ test('ROADS 1: every road-grade town is reachable - the spanning tree strands no
   const locations = [
     { x: 200, y: 100, type: LT.TownCity }, { x: 260, y: 120, type: LT.TownHamlet },
     { x: 400, y: 300, type: LT.TownCity },   // far from the others: only the tree reaches it
-    { x: 210, y: 130, type: LT.TownVillage }, // a track node
+    { x: 230, y: 118, type: LT.TownVillage }, // a track node, 8 px off the A-B road (ROADS 15: his reach)
     { x: 150, y: 300, type: LT.DungeonLabyrinth }, // gets nothing - and sits OFF every line, since a road passing a dungeon is fine; a path TO one is not
   ];
   const { roads, tracks, stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
@@ -24,7 +24,7 @@ test('ROADS 1: every road-grade town is reachable - the spanning tree strands no
   for (const l of locations.filter((l) => l.type === LT.TownCity || l.type === LT.TownHamlet)) {
     assert.ok(roads[l.y * MAP_W + l.x] !== 0, `town at ${l.x},${l.y} has a road`);
   }
-  assert.ok(tracks[130 * MAP_W + 210] !== 0, 'the village has a track');
+  assert.ok(tracks[118 * MAP_W + 230] !== 0, 'the village has a track');
   assert.equal(roads[300 * MAP_W + 150] | tracks[300 * MAP_W + 150], 0, 'the dungeon gets no path');
   // Every bit set has its partner: a step's two ends point at each other.
   let steps = 0;
@@ -223,11 +223,11 @@ test('AUDIT ROADS F1: a farm gets no track - it sits in the fields it works', as
   // And the behaviour: a farm beside a town gets nothing, a village does.
   const locations = [
     { x: 200, y: 100, type: LT.TownCity }, { x: 260, y: 120, type: LT.TownHamlet },
-    { x: 210, y: 140, type: LT.HomeFarms }, { x: 250, y: 90, type: LT.TownVillage },
+    { x: 230, y: 118, type: LT.HomeFarms }, { x: 250, y: 108, type: LT.TownVillage },
   ];
   const { tracks } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
-  assert.equal(tracks[140 * MAP_W + 210], 0, 'the farm has no track');
-  assert.ok(tracks[90 * MAP_W + 250] !== 0, 'the village does');
+  assert.equal(tracks[118 * MAP_W + 230], 0, 'the farm has no track');
+  assert.ok(tracks[108 * MAP_W + 250] !== 0, 'the village does');
 });
 
 test('AUDIT ROADS F6: two villages a mile apart share the last mile', () => {
@@ -563,4 +563,21 @@ test('ROADS 14: a right angle costs more than two single-point bends, so the roa
   // 1.7%. The guarantee is pinned at the source:
   const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
   assert.match(src, /cost \+= t \* t \* d\.turnCost;/, 'the turn cost is squared in compass points');
+});
+
+// ROADS 15 (calibrated from his arrays alone): TRACKS ARE SHORT SPURS.
+// Of 2,166 track dead-ends in Basic Roads, the median distance to a
+// road pixel is 0, the 95th percentile 9, the max 56. Ours reached 40.
+test('ROADS 15: track reach is the answer key\'s, and a far village gets no track', async () => {
+  const { ROAD_DIALS } = await import('../src/world/roadNetwork.js');
+  assert.ok(ROAD_DIALS.trackReach >= 9 && ROAD_DIALS.trackReach <= 20, `reach ${ROAD_DIALS.trackReach} sits at his 95th percentile, not four times it`);
+  const locations = [
+    { x: 200, y: 200, type: LT.TownCity }, { x: 260, y: 200, type: LT.TownHamlet },
+    { x: 230, y: 208, type: LT.TownVillage },   // 8 px off the road: a spur
+    { x: 230, y: 240, type: LT.TownVillage },   // 40 px off: no track at his reach
+  ];
+  const { tracks, stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: () => false });
+  assert.ok(tracks[208 * MAP_W + 230] !== 0, 'the near village gets a spur');
+  assert.equal(tracks[240 * MAP_W + 230], 0, 'the far one does not');
+  assert.equal(stats.trackEdges, 1);
 });
