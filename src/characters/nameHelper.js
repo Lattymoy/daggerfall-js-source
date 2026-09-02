@@ -22,8 +22,9 @@
 //     (the Ledger A engine-PRNG rule); every PART draw stays on
 //     DFRandom.rand(), verbatim order.
 
-import { rand } from '../formats/dfRandom.js';
+import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { RACES } from '../systems/races.js';
 import nameGen from './nameGen.json' with { type: 'json' };
 
 export const BANK_TYPES = Object.freeze({
@@ -49,6 +50,27 @@ const BANK_BY_RACE = Object.freeze({
   Khajiit: BANK_TYPES.Khajiit, Argonian: BANK_TYPES.Imperial,
 });
 export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
+
+/** EntityEnums.Races ordinal -> race key, so the 1..8 roll below can
+ *  be handed to getNameBank exactly as C# hands GetNameBank a Races. */
+const RACE_KEY_BY_ORDINAL = Object.freeze(Object.fromEntries(
+  Object.entries(RACES).map(([key, ordinal]) => [ordinal, key])));
+
+/** MacroHelper.GetRandomNameBank (MacroHelper.cs:303-308):
+ *
+ *      DFRandom.Seed = (uint)random.Next();
+ *      Races race = (Races)DFRandom.random_range_inclusive(1, 8);
+ *      return GetNameBank(race);
+ *
+ *  A bank drawn from a RANDOM one of the eight playable races - it
+ *  reads no PlayerGPS and no region at all, which is what separates it
+ *  from GetRandomFullName (:333-341, the region-bank form). The seed is
+ *  System.Random.Next(), i.e. a non-negative Int32, cast to uint.
+ *  Ledger A's engine-PRNG rule puts Math.random on that outer draw. */
+export function getRandomNameBank() {
+  srand((Math.random() * 0x80000000) >>> 0);
+  return getNameBank(RACE_KEY_BY_ORDINAL[randomRangeInclusive(1, 8)]);
+}
 
 /** Verbatim MapsFile.GetNameBankOfRegion. */
 export function getNameBankOfRegion(regionIndex) {

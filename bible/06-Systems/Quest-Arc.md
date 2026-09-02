@@ -5058,9 +5058,12 @@ first-primary-at-permanent-100-else-"BLANK", the pronoun quartet
 plus %pg/%pg1 sharing PlayerPronoun, %pcl's parts[1] lastname,
 %ltn's FOURTEEN legal-rep bands with C#'s unreachable "unknown" tail
 kept, %ct's switch over the REAL LOCATION_TYPES ids (HomeWealthy is
-a manor, HomePoor a shack) with the default falling to the enum
-value's own string, %lp's Breton-or-Hammerfell, %cn2's
-first-other-TownCity walk, %cbd's "[invalid]" outside-a-building
+a manor, HomePoor a shack) with the default falling to
+Enum.ToString() - the member NAME ("Graveyard", "Coven",
+"DungeonKeep"), a number only for a value the enum does not define -
+%lp's Breton-or-Hammerfell, %cn2's first-other-TownCity walk ending
+in CityName2's own "Daggerfall" error fallback, %cbd's "[invalid]"
+outside-a-building
 arm, and the talk/news block (%fa/%fae/%fe/%fea/%fnpc/%fpa/%fpc plus
 %fx1/%fx2 over the new setIdFactions state and the lord reads) -
 with C#'s OWN asymmetry kept: %fae speaks GetFactionNPCEnemy exactly

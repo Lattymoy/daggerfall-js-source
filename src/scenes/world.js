@@ -206,7 +206,7 @@ import { liveVampirism } from '../systems/racialLive.js';   // AUDIT 39 (#23): t
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
-import { OATH_RACE_INDEX } from '../systems/talkSession.js';
+import { OATH_RACE_INDEX, raceDisplayName } from '../systems/talkSession.js';
 import { bumpSeed } from '../formats/dfRandom.js';
 import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
 
@@ -5207,7 +5207,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return [...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
         !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
-    playerRaceName: () => playerEntity.race ?? null,
+    playerRaceName: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // %ra is BirthRaceTemplate.Name (MacroHelper.cs:942-945) - "Dark Elf", not the CamelCase key
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),

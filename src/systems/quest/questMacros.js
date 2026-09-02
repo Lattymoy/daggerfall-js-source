@@ -34,7 +34,7 @@ import { srand, randomRangeInclusive } from '../../formats/dfRandom.js';
 import { liveStat } from '../statMods.js';                       // M-X: %mad's MagicResist read
 import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
 import { entityMaxEncumbrance } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength)
-import { surname } from '../../characters/nameHelper.js';        // M-X: %ln
+import { surname, getRandomNameBank } from '../../characters/nameHelper.js';   // M-X: %ln (E-fix: GetRandomNameBank)
 import { GENDERS, getNameBankOfRegion, fullName, getNameBank } from '../../characters/nameHelper.js';
 
 // FactionRaces number -> race key (FactionFile.cs:609-624 through
@@ -45,7 +45,7 @@ const FACTION_RACE_KEYS = Object.freeze({
   4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
 });
 import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
-import { REGION_TEMPLES } from '../../formats/mapsFile.js';
+import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 
 export const MACRO_TYPES = Object.freeze({
@@ -389,7 +389,8 @@ const HANDLERS = {
   // DFU is Lord. The sibling %rn above already separates them, gating
   // on `!w`; these two did not. rulerTitle's own `?? 'Lord'` is
   // already GetRulerTitle's default arm, so the zero struct falls
-  // through it exactly.
+  // through it exactly. %lt1 (TitleOfLordOfFaction1, below) is the
+  // THIRD row on this law and was carried through the same way.
   '%rt': (mcp, hooks) => {
     const w = hooks?.world;
     if (!w) return null;
@@ -548,14 +549,16 @@ const HANDLERS = {
   '%pg2self': (mcp, hooks) => pgender(hooks) ? EN.pronounHerself : EN.pronounHimself,
   '%pg4': (mcp, hooks) => pgender(hooks) ? EN.pronounHers : EN.pronounHis2,
 
-  // RANDOM NAMES (the mcp-less %ln off the current region's bank;
-  // the mcp-sourced pairs ride the biography/talk sources)
-  '%ln': (mcp, hooks) => {
-    const w = hooks?.world;
-    if (!w) return null;
-    const bank = getNameBankOfRegion(w.currentRegionIndex?.() ?? -1);
-    return surname(bank);
-  },
+  // RANDOM NAMES (the mcp-less %ln off a RANDOM race's bank; the
+  // mcp-sourced pairs ride the biography/talk sources)
+  //
+  // LastName (MacroHelper.cs:1102-1105) is `NameHelper.Surname(
+  // GetRandomNameBank())`, and GetRandomNameBank (:303-308) re-seeds
+  // and rolls Races 1..8 - it reads NO world state, so the row cannot
+  // be gated on `hooks.world` and cannot answer the [nullMCP]
+  // sentinel. The region-bank form is GetRandomFullName (:333-341),
+  // which is what questMacroSource's name/femaleName/maleName use.
+  '%ln': () => surname(getRandomNameBank()),
   '%bn': (mcp) => call(mcp, 'name'),
   '%fn2': (mcp) => call(mcp, 'femaleName'),
   '%mn2': (mcp) => call(mcp, 'maleName'),
@@ -599,17 +602,25 @@ const HANDLERS = {
   '%ct': (mcp, hooks) => {   // CityType's switch, verbatim strings
     const t = hooks?.world?.currentLocationType?.();
     if (t == null) return null;
-    return CITY_TYPES[t] ?? String(t);
+    return CITY_TYPES[t] ?? LOCATION_TYPE_NAMES[t] ?? String(t);
   },
   '%cn2': (mcp, hooks) => {   // the region's first OTHER TownCity
     const w = hooks?.world;
     const region = w?.maps?.getRegion?.(w.currentRegionIndex?.());
-    if (!region?.mapTable) return null;
+    if (!region?.mapTable) return null;   // headless: no region was read at all
     const here = w.currentLocationIndex?.() ?? -1;
     for (let i = 0; i < region.mapTable.length; i++) {
-      if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) return region.mapNames?.[i] ?? null;
+      // GetLocalizedLocationName(MapId, MapNames[i]) always yields a
+      // string, so a found-but-unnamed row is not a miss either.
+      if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) {
+        return region.mapNames?.[i] ?? CITY_NAME2_FALLBACK;
+      }
     }
-    return null;
+    // MacroHelper.cs:585 `return GetLocalizedText("daggerfall")` -
+    // C#'s own "Localizaed fallback in case of error". A region whose
+    // only TownCity is the one the player stands in takes this arm,
+    // and it must not render the [nullMCP] sentinel.
+    return CITY_NAME2_FALLBACK;
   },
   '%cbd': (mcp, hooks) => {   // CurrentBuilding: "[invalid]" outside
     const w = hooks?.world;
@@ -635,9 +646,17 @@ const HANDLERS = {
   '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? hooks?.world?.getFactionData?.(idFaction2)?.name ?? null : null),
   '%fl1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1) ?? null,
   '%fl2': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction2) ?? null,
+  // TitleOfLordOfFaction1 (MacroHelper.cs:1040-1047) DISCARDS
+  // GetFactionData's bool and reads the out struct regardless, and
+  // PersistentFactionData assigns `new FactionFile.FactionData()`
+  // before searching - so a MISS hands back all zeros and
+  // GetRulerTitle(0) takes its default: arm, "Lord". The third row on
+  // the law the %rt/%nrn block above records: gate on the WORLD (the
+  // port's headless charter), never on the lookup.
   '%lt1': (mcp, hooks) => {
-    const fd = hooks?.world?.getFactionData?.(idFaction1);
-    return fd ? rulerTitle(fd.ruler ?? 0) : null;
+    const w = hooks?.world;
+    if (!w) return null;
+    return rulerTitle(w.getFactionData?.(idFaction1)?.ruler ?? 0);
   },
   '%ol1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1, true) ?? null,
   '%olf': (mcp, hooks) => hooks?.world?.oldLeaderFate?.(randomRangeInclusive(0, 4)) ?? null,
@@ -840,16 +859,27 @@ const daySuffix = (day) => (day === 1 || day === 21 ? 'st' : day === 2 || day ==
 const LOCAL_PROVINCE_BRETON = 1;
 /** DFRegion.LocationTypes.TownCity (mapsFile.LOCATION_TYPES). */
 const TOWN_CITY_TYPE = 0;
+/** CityName2's error fallback (MacroHelper.cs:585,
+ *  `GetLocalizedText("daggerfall")` = Internal_Strings.csv:1275
+ *  `daggerfall,Daggerfall`). */
+const CITY_NAME2_FALLBACK = 'Daggerfall';
 /** CityType's switch (MacroHelper %ct), the Internal_Strings values
  *  over mapsFile.LOCATION_TYPES' real ids: TownCity 0 city,
  *  TownHamlet 1 hamlet, TownVillage 2 village, HomeFarms 3 farm,
  *  HomePoor 11 shack, HomeWealthy 8 manor, Tavern 6 community,
  *  ReligionTemple 5 temple, ReligionCult 9 shrine; everything else
- *  falls to the enum's own name-string arm (the default:). */
+ *  falls to the default:, Enum.ToString() - the member NAME. */
 const CITY_TYPES = Object.freeze({
   0: 'city', 1: 'hamlet', 2: 'village', 3: 'farm',
   11: 'shack', 8: 'manor', 6: 'community', 5: 'temple', 9: 'shrine',
 });
+/** The default: arm, `gps.CurrentLocationType.ToString()`
+ *  (MacroHelper.cs:617). On a DEFINED DFRegion.LocationTypes member
+ *  C# stringifies the MEMBER NAME - "Graveyard", "Coven",
+ *  "DungeonKeep" - not the number; only a value the enum does not
+ *  define stringifies as its digits, which is the String(t) tail. */
+const LOCATION_TYPE_NAMES = Object.freeze(Object.fromEntries(
+  Object.entries(LOCATION_TYPES).map(([name, id]) => [id, name])));
 
 
 // C#'s table carries these with a NULL handler - '[unhandled]'.

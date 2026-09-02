@@ -17,7 +17,7 @@ import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sp
 import { AnswerPipeline, TALK_STRINGS } from '../src/systems/answerPipeline.js';
 import { NPCSession } from '../src/systems/npcSession.js';
 import { TopicTree, QUESTION_TYPE, newListItem, QUEST_INFO_RESOURCE_TYPE } from '../src/systems/topicTree.js';
-import { OATH_RACE_INDEX } from '../src/systems/talkSession.js';
+import { OATH_RACE_INDEX, raceDisplayName } from '../src/systems/talkSession.js';
 
 const h2 = (ctx) => talkMacroHandlers(ctx);
 const t = (text) => ({ text, formatting: 1, x: 0, y: 0 });
@@ -52,7 +52,10 @@ function makeCtx(over = {}) {
  *  host hands in as ctx.hooks (the quest machine's macroContext). */
 const HOOKS = {
   playerName: () => 'Wobbles Ironfoot',
-  playerRaceName: () => 'Dark Elf',
+  // the host mount's own expression (world.js:5215), so the pin sees
+  // the CamelCase entity key travel through RaceTemplate.Name and not
+  // a pre-spaced literal
+  playerRaceName: () => raceDisplayName('DarkElf'),
   playerGender: () => 'male',
   getGoldPieces: () => 317,
   nowSeconds: () => (1 * 1440 + 65) * 60,   // day 1, 01:05

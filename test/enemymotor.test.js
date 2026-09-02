@@ -478,6 +478,36 @@ test('E6: HasClearPathToShootProjectile - the sentinel, the clear shot, the wall
   const nose = new EnemyAI(walls, [0, 0, 5.4], 0, { liveSpeed: 50 });
   nose.makeHostileToPlayer(200, [0, 0, 12]);
   assert.equal(shot(nose), false, 'no space to spawn the projectile');
+
+  // THE OVERSHOOT, which the three cases above cannot see because the
+  // body and the shoot origin agree in all of them. :709 measures
+  // sphereCastDist from `transform.position` - the BODY - while :727
+  // starts the cast at shootOrigin, an arm's length ALONG the shot. So
+  // the sweep reaches originDistance PAST the target: 0.9 + 12 + 0.45
+  // = 13.35 from the caster's centre, and a target backed against a
+  // wall at 13 is not shootable.
+  const backed = floorOf();
+  backed.addMesh('wall', new Float32Array([-5, 0, 13, 5, 0, 13, 5, 4, 13, -5, 4, 13]), quadIdx, I);
+  const against = new EnemyAI(backed, [0, 0, 0], 0, { liveSpeed: 50 });
+  against.makeHostileToPlayer(200, [0, 0, 12]);
+  assert.equal(shot(against), false,
+    'the sweep starts at the shoot origin and overshoots the target by the arm length');
+  // ...and the control that keeps 13.35 honest: past the reach, the
+  // same wall does not block.
+  const far = floorOf();
+  far.addMesh('wall', new Float32Array([-5, 0, 13.5, 5, 0, 13.5, 5, 4, 13.5, -5, 4, 13.5]), quadIdx, I);
+  const clear = new EnemyAI(far, [0, 0, 0], 0, { liveSpeed: 50 });
+  clear.makeHostileToPlayer(200, [0, 0, 12]);
+  assert.equal(shot(clear), true, 'a wall beyond the overshoot is out of the sweep');
+
+  // The near half of the same term: a slab at z=0.3 clips the BODY
+  // sphere but sits behind the shoot origin (0.9), so a body-origin
+  // sweep would refuse the shot the real one takes.
+  const behind = floorOf();
+  behind.addMesh('slab', new Float32Array([-5, 0, 0.3, 5, 0, 0.3, 5, 4, 0.3, -5, 4, 0.3]), quadIdx, I);
+  const past = new EnemyAI(behind, [0, 0, 0], 0, { liveSpeed: 50 });
+  past.makeHostileToPlayer(200, [0, 0, 12]);
+  assert.equal(shot(past), true, 'the cast begins at the shoot origin, already past the caster\'s own footprint');
 });
 
 test('E6: PredictNextTargetPos leads a moving target and never through a wall', () => {

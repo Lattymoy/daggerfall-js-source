@@ -113,6 +113,13 @@ test('T4: the townTalk seam is wired - the lazy %hnt gate, the mark, the entity 
   assert.match(src, /if \(h\.reveal\) discoverBuilding\(/, 'the %loc mark side effect fires only on the reveal arm');
   assert.match(src, /honorific: honorificOf\(playerEntity\.gender\)/, '%hnr reads the entity');
   assert.match(src, /race: raceDisplayName\(playerEntity\.race\)/, '%ra reads the entity');
+  // ...and so does the QUEST/talk macro table's one host mount. %ra is
+  // MacroHelper.PlayerRace (:942-945) = BirthRaceTemplate.Name, and
+  // playerEntity.race is the CamelCase KEY, so the seam owes
+  // raceDisplayName or every elf prints "DarkElf".
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /playerRaceName: \(\) => \(playerEntity\.race \? raceDisplayName\(playerEntity\.race\) : null\)/,
+    "the macro table's playerRaceName mount is RaceTemplate.Name, not the key");
 });
 
 test('T4: TEXT.RSC grounds the record ids - 7332 marks the map, 7333 gives directions', { skip: skipReal }, () => {
