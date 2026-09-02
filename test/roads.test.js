@@ -601,3 +601,30 @@ test('ROADS 17: a road may not enter a town at a right angle to the road already
   const lone = buildRoadNetwork({ locations: [A, { x: 200, y: 260, type: LT.TownCity }], heightAt: flat, isWater: () => false });
   assert.equal(lone.stats.unrouted, 0);
 });
+
+// AUDIT 49: the island skip and the merge, each pinned as what it is.
+test('AUDIT 49 A1: a pair on different landmasses is named unrouted without a search', async () => {
+  const { landComponents } = await import('../src/world/roadNetwork.js');
+  const strait = (x) => x === 300;   // a one-pixel channel splits the map
+  const comp = landComponents(strait);
+  assert.ok(comp[100 * MAP_W + 200] !== comp[100 * MAP_W + 400], 'two components');
+  assert.equal(comp[100 * MAP_W + 300], 0, 'water is 0');
+  const locations = [{ x: 200, y: 100, type: LT.TownCity, name: 'West' }, { x: 400, y: 100, type: LT.TownCity, name: 'East' }];
+  const t0 = Date.now();
+  const { stats } = buildRoadNetwork({ locations, heightAt: flat, isWater: strait, dials: { roadReach: 300 } });
+  assert.equal(stats.unrouted, 1);
+  assert.deepEqual(stats.unroutedPairs[0].map((l) => l.name), ['West', 'East'], 'named');
+  assert.equal(stats.islands, 1, 'skipped as an island - counted, not clocked, because a fast failure looks like a skip to a clock');
+  assert.ok(Date.now() - t0 < 1500);
+});
+
+test('AUDIT 49 A2: the through-road merge is pinned at the source - no fixture can see it', async () => {
+  // RECORDED: on every flat fixture tried, the wide-join rule steers an
+  // approach on its own and a route that rides the existing road into
+  // town leaves the same pixels whether it stops 3 px early or not. On
+  // the REAL map the merge is measurable and small: junctions 7.0% ->
+  // 6.5%, 118 duplicate spur pixels removed. The hairpin and right-angle
+  // win was the wide join's. The law stays, at the source.
+  const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
+  assert.match(src, /if \(mergeNear && cell !== sc && existing\[cy \* MAP_WIDTH \+ cx\] !== 0/, 'a road joins the road it meets within mergeNear of its town');
+});

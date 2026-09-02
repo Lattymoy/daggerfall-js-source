@@ -139,6 +139,17 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // it (avoided).
   const occupied = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const l of locations) if (inMap(l) && !ROAD_TYPES.has(l.type)) occupied[l.y * MAP_WIDTH + l.x] = 1;
+
+  // AUDIT 49 A1: AN ISLAND IS NOT A ROUTE THAT FAILED, IT IS A ROUTE
+  // THAT WAS NEVER THERE. On the real map 44 pairs were unrouted, all
+  // but one with water between them, and each paid all three A* boxes
+  // - the 120-pixel one at eight headings - before giving up: 3.5 of
+  // the build's 7.3 seconds spent proving the sea is wet. Land is
+  // flood-filled once into components (4-connected, the conservative
+  // match for a router that will not cut a water corner), and a pair on
+  // different components is named unrouted without a search.
+  const component = landComponents(isWater);
+  const sameLand = (a, b) => component[a.y * MAP_WIDTH + a.x] === component[b.y * MAP_WIDTH + b.x];
   const towns = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const l of roadNodes) towns[l.y * MAP_WIDTH + l.x] = 1;
 
@@ -162,9 +173,10 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // each end as {x, y, region}, so the boot log can say WHICH town has
   // no road rather than how many do. `stats.unrouted` stays a count for
   // the log line; `stats.unroutedPairs` carries the names.
-  const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [] };
+  const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [], islands: 0 };
   const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region, name: a.name ?? null }, { x: b.x, y: b.y, region: b.region, name: b.name ?? null }]); };
   for (const [i, j] of routed) {
+    if (!sameLand(roadNodes[i], roadNodes[j])) { stats.islands++; miss(roadNodes[i], roadNodes[j]); continue; }
     const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied, mergeNear: d.mergeNear, towns });
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
   }
@@ -207,6 +219,29 @@ function wideEnough(have, bit, d) {
     const dd = Math.abs(j - bi); if (Math.min(dd, 8 - dd) < d.joinAngle) return false;
   }
   return true;
+}
+
+/** AUDIT 49 A1: label every land pixel with its 4-connected component.
+ *  One pass over the map; water is 0, land gets 1, 2, 3... */
+export function landComponents(isWater) {
+  const comp = new Int32Array(MAP_WIDTH * MAP_HEIGHT);
+  const stack = new Int32Array(MAP_WIDTH * MAP_HEIGHT);
+  let next = 0;
+  for (let start = 0; start < comp.length; start++) {
+    if (comp[start] || isWater(start % MAP_WIDTH, (start / MAP_WIDTH) | 0)) continue;
+    next++; let sp = 0; stack[sp++] = start; comp[start] = next;
+    while (sp) {
+      const i = stack[--sp]; const x = i % MAP_WIDTH, y = (i / MAP_WIDTH) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= MAP_WIDTH || ny >= MAP_HEIGHT) continue;
+        const j = ny * MAP_WIDTH + nx;
+        if (comp[j] || isWater(nx, ny)) continue;
+        comp[j] = next; stack[sp++] = j;
+      }
+    }
+  }
+  return comp;
 }
 
 /** The nearest set pixel of a mask within `reach` of (x, y), or null. */
