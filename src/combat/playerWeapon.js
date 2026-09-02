@@ -15,8 +15,10 @@
 // weapon per frame - the old 'until the items arc' claim retired).
 // Racial modifiers are LIVE
 // (AUDIT 18 ported CalculateRacialModifiers into formulas.js, which
-// reads the raceId chargen writes); proficiency modifiers pend the
-// career proficiency flags. Backstab is threaded by the host that
+// reads the raceId chargen writes), and so are the proficiency
+// modifiers this line used to say pend the career proficiency flags:
+// CF1 put proficiencyModifiers in formulas.js ahead of the racial
+// term, FormulaHelper.cs:602-609's order. Backstab is threaded by the host that
 // keeps facing bookkeeping on foes.
 
 import {
@@ -47,7 +49,12 @@ export const SWING_MODS = Object.freeze({
   StrikeRight: { damage: 0, toHit: 0 },
 });
 
-/** INTERIM starting weapon (items arc replaces): Iron Dagger.
+/** The PRE-CHARGEN fallback weapon, Iron Dagger - PlayerWeapon's
+ *  constructor default and nothing more. The items arc this used to
+ *  wait on landed: systems/startingGear.js is
+ *  ItemHelper.AssignStartingGear verbatim (ItemHelper.cs:1277-1364)
+ *  and chargen routes every character through it, so a real character
+ *  never holds this.
  *  AUDIT 18: the baked minDamage/maxDamage are gone - the formulas
  *  resolve the span from templateIndex, as GetBaseDamageMin/Max do -
  *  and so is `flags: 0x10`. DaggerfallUnityItem.SetItem

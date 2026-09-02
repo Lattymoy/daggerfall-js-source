@@ -80,9 +80,16 @@ export function buildArmsFor(entity) {
  *     (canvas may be the element OR a () => element - the dungeon
  *      context only holds a canvas per frame, C10),
  *   entity          - the player entity (arrow stock reads it),
- *   say(line)       - the classic-message sink ('You have no arrows.');
- *                     hosts without a HUD text layer pass console
- *                     (FLAGGED at the call sites - their HUD pends),
+ *   say(line)       - the classic-message sink ('You have no arrows.').
+ *                     The note that hosts without a HUD text layer
+ *                     pass console is retired: every call site hands
+ *                     over a real one - hudText.add
+ *                     (dungeonContext.js:1934), townTalk.say
+ *                     (exterior.js:1000, world.js:1725) and
+ *                     worldModes' own interior sink (worldModes.js:346,
+ *                     which warns to console only where a host mounts
+ *                     no townTalk at all), so the empty default below
+ *                     is unreached,
  *   spellArmed()    - optional: WeaponManager's HasReadySpell leg
  *                     (hosts without casting omit it),
  * }

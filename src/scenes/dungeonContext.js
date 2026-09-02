@@ -863,8 +863,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   // S3: the REAL player entity - chargen rolls from a CLASS*.CFG
   // career before anything consumes the player. Career = ?class= (an
-  // index into the 18 careers) or the INTERIM default Warrior (16,
-  // loud - the chargen UI replaces the default and the pool policy).
+  // index into the 18 careers, through applyHeadlessChargen) or the
+  // real 18-career wizard from createChargenFlow; the Warrior-16
+  // default this sentence used to name is GONE, as the boot that
+  // mounts them says at its own site below.
   // S4b: trap spells - SPELLS.STD by index; CastSpell actions queue
   // missiles that fly at the player (speed 25, radius 0.45, life 8s,
   // element billboards 375-379). Resolution: the WHOLE library, since
@@ -1570,7 +1572,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and the spell still flies.
       weaponRig.castSpellAnim(sp?.rangeType);
     },
-    // A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
+    // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
     // STREAMING host mounts for dungeon mode too, so the line meant a
@@ -3619,9 +3621,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         pushWindow: (w) => pushDungeonWindow(w),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => rscLines(id),
-        // PX3 FLAGGED: questMessages - the dungeon quest mount is
-        // itself a pending seam (AUDIT 25 P0), so the pause window's
-        // Quests tab says so here too.
+        // (The PX3 note that used to close this literal - questMessages
+        // pends on the dungeon quest mount, AUDIT 25 P0 - was paid by
+        // PX17c at the top of it: the Quests tab reads THIS host's own
+        // opts.questBridge machine, not a refusal.)
       });
     },
     /** A1: the M window, in the one overlay slot (toggleCharSheet's

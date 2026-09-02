@@ -24,7 +24,16 @@
 //    within 16m, and the watch is the one class enemy its human mute
 //    spares. Same clip, continuously, instead of once and never again.
 //
-// FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
+// Enemy-vs-enemy is IN - the MT-ii wave paid the C15 residual this
+// header used to hold open. _armed wraps a host's senses with
+// runTargetMachine (characters/enemyTargets.js) whenever the host
+// hands over `candidates`, and MeleeDamage takes DFU's two-arm split
+// (EnemyAttack.cs:199-209): a selected non-player target eats a real
+// swing through applyDamageToNonPlayer (scenes/hostCombat.js). A host
+// that hands over no candidates - exterior.js's guard-only pool -
+// keeps the watch player-only because there is nothing else in the
+// pool to fight, which is that context's answer and not a missing
+// arm. (The
 // "guard archers forced melee" flag retired in AUDIT 18: DFU's
 // Knight_CityWatch has HasRangedAttack1 = false, so the watch never
 // had a bow to force away.) G3: corpse loot is

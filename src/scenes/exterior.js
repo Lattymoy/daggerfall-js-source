@@ -733,15 +733,22 @@ export async function bootExterior(canvas, renderer, params, status) {
   preloadChargenArt({ renderer, fetchBytes, palette });   // U10: CHAR0*/PICK00/TMAP00 warm at boot
   preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS warm at boot
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
-  // S3d: the INTERIM dagger seed is the FALLBACK only - a character
-  // who runs chargen gets AssignStartingGear's real kit instead, so
-  // seeding here would leave a stray dagger in the bag.
+  // S3d retired the dagger seed outright: systems/startingGear.js is
+  // ItemHelper.AssignStartingGear verbatim (ItemHelper.cs:1277-1364)
+  // and every character who runs chargen gets that kit. The call
+  // below cannot fire from this host either - chargenDone is false
+  // for the whole boot walk (the wizard is mounted further down, and
+  // a save's chargenDone arrives after the walk), and were it ever
+  // true the bag is already non-empty and seedStartingEquipment
+  // early-returns (equip.js:289).
   if (playerEntity.chargenDone) seedStartingEquipment(playerEntity);
   // S3c/U9 / THE FOUR HOSTS RULE: chargen lived only in the dungeon
   // host, so booting straight into a town left the player on the
-  // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-  // whole session. Both exterior hosts now run it through the shared
-  // session, and the paperdoll reloads on the chosen identity.
+  // pre-chargen stand-in entity (flat skills 30, maxHealth 50) for
+  // the whole session. Both exterior hosts now run it through the
+  // shared session - the ?class arm and the real flow just below,
+  // both out of systems/chargenSession.js - and the paperdoll
+  // reloads on the chosen identity.
   let spellsByIndex = null;   // M2: the host-level SPELLS.STD map (the spellbook + the cast engine read it)
   // G4: THE FOUR HOSTS RULE. The magic registries were set only
   // in the dungeon host's boot, so a magic item minted out here -
@@ -1711,9 +1718,12 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   // T1 TOWNS: the wandering population (PopulationManager verbatim -
   // 10Hz pool, 24/16-blocks clamp, daytime only, anti-skate hidden
-  // first move). Race: the region's people - Daggerfall = Breton
-  // (FLAGGED: the climate People table pends; the test city is
-  // correct). Each pool person owns a live billboard batch (the C11
+  // first move). Race: the CLIMATE's People, live a dozen lines below
+  // since AUDIT 23 (characters-4) - PopulationManager.cs:94's
+  // populationRace through GetEntityRace's Redguard/Nord/default-Breton
+  // switch (:320-335) over FactionFile.cs:612-615's numbering, so
+  // Daggerfall = Breton is the table's answer and not a hardcode.
+  // Each pool person owns a live billboard batch (the C11
   // shape) drawn on the flats' axis (the billboard-axis doctrine).
   // AUDIT 18 HOST GAP: StreamingWorld.cs:771-781 adds PopulationManager
   // to exactly SEVEN LocationTypes. The streaming host gated on them;

@@ -275,27 +275,12 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/characters/enemyCasting.js:71` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
-- `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
-- `src/characters/playerEntity.js:5` - chargenSession - AUDIT 23). INTERIM until then, loudly: flat
-- `src/characters/playerEntity.js:20` - maxHealth: 50,    // INTERIM until chargen rolls career HP
-- `src/characters/playerEntity.js:27` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
 - `src/combat/arrowFlight.js:132` - * the three hosts that call it price one shot one way. (FLAGGED: the
-- `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
-- `src/combat/playerWeapon.js:50` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
-- `src/combat/weaponRig.js:85` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/dungeonContext.js:273` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:866` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1536` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1573` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
-- `src/scenes/dungeonContext.js:1628` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3622` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/exterior.js:736` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:742` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:1023` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1275` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1715` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/dungeonContext.js:1538` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1630` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/exterior.js:1030` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1282` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/shared.js:352` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:369` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:536` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture

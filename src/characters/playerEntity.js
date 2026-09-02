@@ -1,10 +1,22 @@
 // The shared player entity (E3a/E3b; chargen S3 mutates it in
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
-// time a chargen-running context boots (every host runs it via
-// chargenSession - AUDIT 23). INTERIM until then, loudly: flat
-// skills 30 and maxHealth 50. armor 0 until player equipment.
-// LiveSpeed lives in PlayerMotor stats.
+// time a chargen-running context boots, and every host runs it
+// through systems/chargenSession.js - dungeonContext.js:1653,
+// world.js:1339, exterior.js:773 and applyHeadlessChargen for the
+// test room (AUDIT 23).
+//
+// NOT A GAP (recorded): the stand-ins below - flat skills 30,
+// maxHealth 50, the fatigue they imply - are DFU's own pre-chargen
+// shape rather than pending work. CharacterDocument.cs:70-90
+// SetDefaultValues (its own comment: some default values for testing
+// during development) hands a Breton/male/Mage entity the same
+// all-100 armorValues table, and SetupPlayerFromCharacterDocument
+// replaces the lot. Matching the NUMBERS would mean reading Mage's
+// CLASS00.CFG off the Arena2 path (DaggerfallEntity.cs:907-915
+// GetClassCareerTemplate), which a module-level literal cannot await
+// - and nothing reads these once chargen resolves. armor 0 until
+// player equipment. LiveSpeed lives in PlayerMotor stats.
 import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from '../systems/skills.js';
 
 export const playerEntity = {
@@ -17,16 +29,16 @@ export const playerEntity = {
   gender: 'male',
   level: 1,
   reflexes: 2,      // 0 VeryHigh .. 4 VeryLow; 2 = Average (classic default)
-  maxHealth: 50,    // INTERIM until chargen rolls career HP
+  maxHealth: 50,    // the header's stand-in; chargen rolls career HP
   health: 50,
   armor: 0,      // legacy scalar fallback (armorValues wins in the to-hit)
   // U8h: the 7-part armor table (CharacterDocument: 100 each = no
   // armor; equip subtracts material*5 - the classic law makes an
   // UNARMORED player far easier to hit than the old armor:0 scalar)
   armorValues: [100, 100, 100, 100, 100, 100, 100],
-  skills: 30,       // INTERIM flat skills until chargen
+  skills: 30,       // the header's stand-in, and a HANDLED shape: permanentSkillValue (skills.js:72) returns a numeric `skills` whole, so no reader ever indexes it
   stats: { strength: 50, agility: 50, luck: 50 },
-  fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
+  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:130), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
   items: [],        // the inventory (S2); gold rides as a Currency stack
   // THE ONE CONSTRUCTION SEAM, sixth occurrence (U24). DFU's
   // PlayerEntity is constructed WITH its skill-use counters, and

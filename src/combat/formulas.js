@@ -7,8 +7,16 @@
 // Entity shape (ours): { level, health, maxHealth, armor, skills
 // (flat, per SetEnemyCareer), stats: {strength, agility, luck},
 // attackModifierFlags (career CFG byte), isPlayer }.
-// FLAGGED interims (all documented at their site): proficiency
-// modifiers and the enchantment channels. (AUDIT 23: adrenaline rush,
+// Both interims this header used to hold open SHIPPED, in this file.
+// Proficiency (CF1): proficiencyModifiers is CalculateProficiencyModifiers
+// (FormulaHelper.cs:908-931) and calculateAttackDamage applies it in
+// the player block in DFU's own order - proficiency before racial,
+// FormulaHelper.cs:602-609. The enchantment channels (E1): the
+// to-hit chain adds enchantArmorMod on the armour term
+// (FormulaHelper.cs:1158's IncreasedArmorValueModifier /
+// DecreasedArmorValueModifier) and enchantChanceToHitMod in
+// attacker.ChanceToHitModifier's slot (:814), both imported from
+// systems/enchantments.js below. (AUDIT 23: adrenaline rush,
 // biography adjustments and per-part armor SHIPPED - the first two
 // live in this very file.)
 
