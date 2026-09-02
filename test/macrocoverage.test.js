@@ -1,9 +1,14 @@
-// M-X - THE MACRO TABLE COMPLETED + THE COVERAGE GATE the completion
-// analysis asked for by name: MacroHelper.cs's own table is extracted
-// and diffed against the port's, so a macro DFU adds (or one this
-// port loses) fails here mechanically instead of by sweep. The gate
-// needs the DFU sparse clone and SKIPS without it - the ARENA2-gate
-// posture; the behavior pins below it run everywhere.
+// M-X + E7 - THE MACRO TABLE COMPLETED + THE COVERAGE GATE the
+// completion analysis asked for by name: MacroHelper.cs's own table is
+// extracted and diffed against the port's, so a macro DFU adds (or one
+// this port loses) fails here mechanically instead of by sweep. The
+// gate needs the DFU sparse clone and SKIPS without it - the
+// ARENA2-gate posture; the behavior pins below it run everywhere.
+//
+// E7 (2026-09-02) closed the last thirty-seven rows and deleted the
+// ELSEWHERE crutch, so the gate now proves the ONE table IS the whole
+// dictionary - 217 rows, none missing, none invented, C#'s nulls
+// exactly ours.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -16,57 +21,48 @@ import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sp
 
 const DFU_MACROHELPER = dfuFile('Assets/Scripts/Utility/MacroHelper.cs');
 
-test('M-X GATE: every macro in MacroHelper.cs has a row in the port\'s table', (t) => {
+test('E7 GATE: every macro in MacroHelper.cs has a row in the port\'s table', (t) => {
   if (!existsSync(DFU_MACROHELPER)) {
     t.skip('DFU sparse clone absent (tools/parity/prepare.sh) - the gate needs the source tree');
     return;
   }
   const mh = readFileSync(DFU_MACROHELPER, 'utf8');
-  const tokens = [...new Set([...mh.matchAll(/\{\s*"(%[a-zA-Z0-9]+)",\s*(\w+)\s*\}/g)].map((m) => [m[1], m[2]]).map(JSON.stringify))].map(JSON.parse);
-  assert.ok(tokens.length > 200, `the extraction found the table (${tokens.length} rows)`);
+  // the symbol class is `*`, not `+`: the 217th row is the BARE '%'
+  // ({ "%", Percent } - MacroHelper.cs:243), which a `+` sweep walks
+  // straight past. M-X's sweep did, and so the port's table was
+  // missing it with the gate green.
+  const tokens = [...new Set([...mh.matchAll(/\{\s*"(%[a-zA-Z0-9]*)",\s*(\w+)\s*\}/g)].map((m) => [m[1], m[2]]).map(JSON.stringify))].map(JSON.parse);
+  assert.equal(tokens.length, 217, 'the extraction found the whole table');
   const { handled, nulls } = macroTableCoverage();
-  // DFU has ONE table; the port grew per-window expanders before the
-  // table existed, so thirty-seven macros live at their consumers -
-  // RECORDED here, each VERIFIED to still be in its named home so the
-  // record cannot rot. Consolidating them into the one table is the
-  // recorded follow-up, not a gap.
-  const ELSEWHERE = {
-    '%1com': 'src/scenes/townTalk.js', '%hnt': 'src/scenes/townTalk.js',
-    '%key': 'src/scenes/townTalk.js', '%loc': 'src/scenes/townTalk.js',
-    '%a': 'src/systems/guildServiceActions.js', '%cpn': 'src/systems/guildServiceActions.js',
-    '%dwr': 'src/systems/guildServiceActions.js', '%gii': 'src/systems/guildServiceActions.js',
-    '%adj': 'src/systems/itemInfo.js', '%an': 'src/systems/itemInfo.js',
-    '%arm': 'src/systems/itemInfo.js', '%ba': 'src/systems/itemInfo.js',
-    '%bt': 'src/systems/itemInfo.js', '%hs': 'src/systems/itemInfo.js',
-    '%kg': 'src/systems/itemInfo.js', '%mat': 'src/systems/itemInfo.js',
-    '%mod': 'src/systems/itemInfo.js', '%po': 'src/systems/itemInfo.js',
-    '%pp1': 'src/systems/itemInfo.js', '%pp2': 'src/systems/itemInfo.js',
-    '%qua': 'src/systems/itemInfo.js', '%sub': 'src/systems/itemInfo.js',
-    '%wdm': 'src/systems/itemInfo.js', '%wep': 'src/systems/itemInfo.js',
-    '%wth': 'src/systems/itemInfo.js',
-    '%cri': 'src/scenes/arrestFlow.js', '%dip': 'src/scenes/arrestFlow.js',
-    '%gtp': 'src/scenes/arrestFlow.js', '%pen': 'src/scenes/arrestFlow.js',
-    '%fcn': 'src/systems/talkMacros.js', '%hnt2': 'src/systems/talkMacros.js',
-    '%pqn': 'src/systems/talkMacros.js', '%pqp': 'src/systems/talkMacros.js',
-    '%hnr': 'src/systems/talkSession.js',
-    '%it': 'src/systems/useItem.js',
-    '%map': 'src/scenes/world.js',
-    '%tcn': 'src/ui/travelMapWindow.js',
-  };
-  for (const [tok, home] of Object.entries(ELSEWHERE)) {
-    assert.ok(readFileSync(new URL(`../${home}`, import.meta.url), 'utf8').includes(`'${tok}'`) || readFileSync(new URL(`../${home}`, import.meta.url), 'utf8').includes(tok),
-      `${tok} claims ${home} as its home and is not there`);
-  }
-  const covered = new Set([...handled, ...nulls, ...Object.keys(ELSEWHERE)]);
+  // E7: THE ELSEWHERE MAP IS GONE. M-X left thirty-seven rows
+  // recorded at their consuming windows instead of in the table, with
+  // its own note that consolidating them was "the recorded follow-up,
+  // not a gap" - and until that landed, a symbol reaching the LADDER
+  // from any other context (the talk MCP above all) answered
+  // `%xx[undefined]`, the shape DFU reserves for a macro it has never
+  // heard of. The per-window VALUE MAPS still answer first through
+  // expandMacroValues; the table is what everything else falls to.
+  const covered = new Set([...handled, ...nulls]);
   const missing = tokens.filter(([tok]) => !covered.has(tok)).map(([tok]) => tok);
-  assert.deepEqual(missing, [], 'every C# row is handled, null-handled, or recorded at its home');
-  // and the C#-null rows are OUR null rows - a port handler standing
-  // where C# has null would be an invention, not a port. (%tcn is the
-  // one recorded exception: C# nulls it, the port's talk arc
-  // implemented the town-name read the comment describes.)
+  assert.deepEqual(missing, [], 'every C# row is in the ONE table');
+  const extra = handled.filter((tok) => !tokens.some(([t2]) => t2 === tok));
+  assert.deepEqual(extra, [], 'and the port invents no row DFU does not carry');
+  // the C#-null rows are OUR null rows - a port handler standing
+  // where C# has null would be an invention, not a port. (%tcn is no
+  // longer the exception it was: the travel window's own
+  // `Replace("%tcn", name)` is string surgery on TEXT.RSC 31, not a
+  // table row, so C#'s null stands here too.)
   const csNulls = tokens.filter(([, h]) => h === 'null').map(([tok]) => tok);
-  const invented = csNulls.filter((tok) => handled.includes(tok) && tok !== '%tcn');
-  assert.deepEqual(invented, [], 'no handler stands where C# has null');
+  assert.deepEqual(csNulls.filter((tok) => handled.includes(tok)), [], 'no handler stands where C# has null');
+  assert.deepEqual(nulls.slice().sort(), csNulls.slice().sort(), 'and every C# null row is one of ours');
+  // the SHARED ROWS: C# points several symbols at ONE handler, and
+  // the port must too - a per-symbol re-implementation is where they
+  // drift apart.
+  const handlerOf = new Map(tokens);
+  for (const group of [['%it', '%wep', '%arm', '%bt'], ['%lev', '%pct'], ['%n', '%nam', '%bn'], ['%rt', '%t'], ['%fn', '%fn2'], ['%mn', '%mn2']]) {
+    const names = group.map((tok) => handlerOf.get(tok));
+    assert.equal(new Set(names).size, 1, `${group.join('/')} share one C# handler (${names.join(',')})`);
+  }
 });
 
 // ── the behavior pins (no clone needed) ──────────────────────────

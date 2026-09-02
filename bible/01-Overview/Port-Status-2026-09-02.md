@@ -423,14 +423,14 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   unknowable, so closing it needs an owner-chosen number. The ON arm
   needs none of it - it re-reads range from the item template every
   frame, which is what ships.*
-- **`src/systems/talkMacros.js:268`** - `GetValue`'s
-  `symbolStr + "[undefined]"` sentinel. *Blocked on the table.
-  `MacroHelper.cs`'s `macroHandlers` carries 217 entries and the port
-  names 26. The branch itself is one line - `name in handlers` already
-  separates carried-with-null-handler from absent - but emitting DFU's
-  sentinel over a 26-entry table would stamp `%xx[undefined]` across
-  ~190 macros DFU renders for real, which is worse than the empty
-  string.*
+- ~~**`src/systems/talkMacros.js:268`** - `GetValue`'s
+  `symbolStr + "[undefined]"` sentinel.~~ SHIPPED (E-group E7,
+  2026-09-02): *the blocker was the table, so the table was finished.
+  `questMacros.js`'s HANDLERS carries all 217 `macroHandlers` rows
+  (M-X's thirty-seven ELSEWHERE records consolidated, plus the bare
+  `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
+  thirteen overrides over the one GameManager the host hands in - and
+  all four sentinels are reachable and pinned.*
 - **`src/systems/inputActions.js:465`** - STILL FLAGGED: axes and
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`

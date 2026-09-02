@@ -183,6 +183,11 @@ test('F097: the questor gender is read only on a Work question', () => {
   assert.ok(arm.slice(0, 400).includes('return null;'), 'and a refusal falls to the male branch');
   // the macro's own male default is what null lands on
   const tm = src('systems/talkMacros.js');
-  assert.ok(tm.includes("ctx.questorGender?.() === 'female' ? 'pronounShe' : 'pronoun"),
+  // E7 moved the shared read into one helper - the four pronoun
+  // overrides all fork on it - but the law is unchanged: only
+  // 'female' takes the female arm, and C#'s `default:` shares Male.
+  assert.ok(tm.includes("const female = () => ctx.questorGender?.() === 'female';"),
+    'the questor-gender read is one helper');
+  assert.ok(tm.includes("pronoun() { return text(female() ? 'pronounShe' : 'pronounHe'); }"),
     'anything but female is the male pronoun');
 });

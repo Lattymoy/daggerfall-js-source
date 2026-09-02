@@ -4936,16 +4936,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     randomFullName: () => talkFullName(GENDERS.Male),
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
-    // AUDIT 39 (#107): THE FIVE READS THE HANDLERS ALREADY MAKE.
-    // Absent, expandTalkMacros substituted the empty string, so
-    // %pcf/%pcn/%cn/%ra were DELETED from every greeting and where-is
-    // record, getHonoric's `gender === 'male'` arm never fired (every
-    // player was "Ma'am"), and %1com always drew the tone-1 (Normal)
-    // opening whatever tone the player had picked.
-    playerName: () => playerEntity.name ?? '',
-    playerGender: () => playerEntity.gender,
-    playerRace: () => playerEntity.race,
-    cityName: () => townTalk.cityName(),
+    // ROAD-E E7: THE ONE GAMEMANAGER. MacroHelper's GLOBAL rows read
+    // `GameManager.Instance` - PlayerEntity, PlayerGPS, WorldTime -
+    // and DFU has exactly one of it whichever context provider is
+    // expanding. The port's stand-in is the quest machine's macro
+    // hooks (questWorld + the player/clock seams), so the talk MCP
+    // rides the SAME bundle rather than a private copy: %pcn/%pcf/
+    // %pcl/%ra/%cn/%crn/%dat/%tim/%ltn/%ct/%fa..%fpa and the rest of
+    // the table resolve here exactly as they do in a quest message.
+    // (AUDIT 39 #107 had wired four of them by hand - playerName,
+    // playerRace, cityName - because expandTalkMacros substituted the
+    // empty string for everything its 26-row table missed. The table
+    // is whole now and those hand-wires are the hooks'.)
+    hooks: questBridge?.machine.macroContext()?.hooks ?? null,
+    playerGender: () => playerEntity.gender,   // Honorific's read (GetHonoric)
     toneIndex: () => townTalk.toneIndex(),
     // PlayerGPS.GetRaceOfCurrentRegion, through the same REGION_RACES
     // table getNameBankOfRegion reads

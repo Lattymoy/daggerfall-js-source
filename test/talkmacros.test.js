@@ -7,10 +7,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { readFileSync, existsSync } from 'node:fs';
+
 import {
-  talkMacroHandlers, expandTalkMacros, expandRandomTextRecord,
-  TALK_MACROS, OATH_BASE_TEXT_ID, MACRO_TERMINATORS,
+  talkMacroHandlers, talkMacroSource, expandTalkMacros, expandRandomTextRecord,
+  TALK_MACROS, TALK_SOURCE_METHODS, MACRO_SYMBOLS, OATH_BASE_TEXT_ID, MACRO_TERMINATORS,
 } from '../src/systems/talkMacros.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 import { AnswerPipeline, TALK_STRINGS } from '../src/systems/answerPipeline.js';
 import { NPCSession } from '../src/systems/npcSession.js';
 import { TopicTree, QUESTION_TYPE, newListItem, QUEST_INFO_RESOURCE_TYPE } from '../src/systems/topicTree.js';
@@ -45,23 +48,78 @@ function makeCtx(over = {}) {
   };
 }
 
-test('the macro token set: the MCP-s thirteen overrides plus the TalkManager globals', () => {
-  // TK-vi: %key, %loc and %fcn are MacroHelper's own static handlers
-  // (DialogKeySubject :1059, MarkLocationOnMap :1085,
-  // LocationOfRegionalBuilding :1097), not the MCP's - but they read
-  // TalkManager's fields, and ExpandRandomTextRecord runs the whole
-  // table over a talk record, so they belong to this expansion.
-  // AUDIT 26 (talk): the same argument reaches SIX more globals the
-  // talk records actually carry - %1com (GreetingOrFollowUpText
-  // MacroHelper.cs:44), %pcf (:151), %pcn (:152), %cn (:67),
-  // %hnr (:111) and %ra (:210). This pin asserted the port's short
-  // table, not MacroHelper's, so it never saw them missing.
+/** The ONE GameManager the table's GLOBAL rows read - the shape the
+ *  host hands in as ctx.hooks (the quest machine's macroContext). */
+const HOOKS = {
+  playerName: () => 'Wobbles Ironfoot',
+  playerRaceName: () => 'Dark Elf',
+  playerGender: () => 'male',
+  getGoldPieces: () => 317,
+  nowSeconds: () => (1 * 1440 + 65) * 60,   // day 1, 01:05
+  world: {
+    currentLocation: () => ({ loaded: true, name: 'Daggerfall' }),
+    maps: { getRegion: () => ({ name: 'Betony' }) },
+    currentRegionIndex: () => 17,
+    currentLocationType: () => 0,      // DFRegion.LocationTypes.TownCity
+    currentRegionRace: () => 1,        // RaceTemplate id 1 = Breton -> High Rock
+    legalRepNow: () => 11,
+    factionNPCAlly: () => 'the allies',
+    factionNPCEnemy: () => 'the enemies',
+    factionPC: () => 'the PC faction',
+    factionName: () => 'Kynareth',
+  },
+};
+
+/** One symbol through the whole walk, as a talk record carries it. */
+const expandOne = (ctx, symbol) => {
+  const tokens = [t(symbol)];
+  expandTalkMacros(tokens, talkMacroHandlers(ctx));
+  return tokens[0].text;
+};
+
+test('E7: the MCP-s thirteen overrides, and the twenty-three table rows C# points at them', () => {
+  // TalkManagerDataSource overrides exactly thirteen methods
+  // (TalkManagerMCP.cs:49-199). Everything else the base class throws
+  // NotImplementedException for, which is the ladder's
+  // [srcDataUnknown] arm - so this list IS the talk MCP's surface.
+  assert.deepEqual(Object.keys(talkMacroSource(makeCtx())).sort(), [...TALK_SOURCE_METHODS].sort());
+  assert.equal(TALK_SOURCE_METHODS.length, 13);
+  // and the rows C# points at them - note the SHARING: Name answers
+  // %n/%nam/%bn, FemaleName %fn/%fn2, MaleName %mn/%mn2, and each
+  // Pronoun answers its lowercase row AND its CapFirst twin
+  // (MacroHelper.cs:236-241). %g2self is deliberately NOT here: the
+  // talk source does not override Pronoun2self.
   assert.deepEqual([...TALK_MACROS].sort(), [
-    '%di', '%fcn', '%fn', '%g', '%g2', '%g3', '%g4', '%hnt', '%hnt2',
-    '%key', '%loc', '%mn', '%n', '%oth', '%pqn', '%pqp',
-    '%1com', '%pcf', '%pcn', '%cn', '%hnr', '%ra',
+    '%n', '%nam', '%bn', '%fn', '%fn2', '%mn', '%mn2',
+    '%di', '%hnt', '%hnt2', '%oth',
+    '%g', '%g1', '%G', '%G1', '%g2', '%G2', '%g3', '%G3', '%g4', '%G4',
+    '%pqn', '%pqp',
   ].sort());
   assert.equal(OATH_BASE_TEXT_ID, 201);
+  // ...and the HANDLER TABLE the expansion runs is MacroHelper's
+  // whole dictionary, not the twenty-six rows this module used to
+  // carry. %pql is still not a DFU macro at all.
+  const h = talkMacroHandlers(makeCtx());
+  assert.equal(Object.keys(h).length, 217, 'MacroHelper.cs carries 217 rows and so does the talk MCP');
+  assert.equal(Object.hasOwn(h, '%pql'), false, '%pql is not a DFU macro at all');
+  assert.deepEqual([...MACRO_SYMBOLS].sort(), Object.keys(h).sort());
+});
+
+test('E7 GATE: every handler name in MacroHelper.cs-s dictionary is in the talk MCP-s table', (t) => {
+  // the SOURCE SWEEP the slice asks for: the C# dictionary itself,
+  // extracted row by row and diffed against what talkMacroHandlers
+  // hands back. The symbol class is `*` so the bare '%' row
+  // ({ "%", Percent }, MacroHelper.cs:243) is caught too.
+  const MH = dfuFile('Assets/Scripts/Utility/MacroHelper.cs');
+  if (!existsSync(MH)) {
+    t.skip('DFU sparse clone absent (tools/parity/prepare.sh) - the sweep needs the source tree');
+    return;
+  }
+  const rows = [...new Set([...readFileSync(MH, 'utf8').matchAll(/\{\s*"(%[a-zA-Z0-9]*)",\s*(\w+)\s*\}/g)].map((m) => m[1]))];
+  assert.equal(rows.length, 217);
+  const h = talkMacroHandlers(makeCtx());
+  assert.deepEqual(rows.filter((r) => !Object.hasOwn(h, r)), [], 'no C# row is missing from the talk table');
+  assert.deepEqual(Object.keys(h).filter((k) => !rows.includes(k)), [], 'and the table invents none');
 });
 
 test('TK-vi: %key switches on the key-subject TYPE, %loc marks the map, %fcn names the town', () => {
@@ -258,10 +316,109 @@ test('THE PIPE IS EATEN: %di|ern becomes southern, and every other terminator su
     'a comma, a full stop, a bang and a bracket all terminate and all survive');
 });
 
-test('an unknown macro resolves to the empty string, as MacroHelpers missing-handler path does', () => {
+test('E7: a symbol the table does not carry is `[undefined]`, GetValue-s outermost else', () => {
+  // MacroHelper.GetValue (:526-527): `return symbolStr +
+  // "[undefined]"`. This walk used to substitute the EMPTY STRING for
+  // every symbol its own twenty-six-row table missed - which deleted
+  // ~190 macros DFU renders for real out of talk records and made all
+  // four of C#-s error shapes unreachable. It was FLAGGED as blocked
+  // on exactly that: the shape is only safe to speak once the table
+  // is whole. It is.
   const tokens = [t('a %nosuchmacro b')];
   expandTalkMacros(tokens, { '%n': () => 'x' });
-  assert.equal(tokens[0].text, 'a  b', 'the symbol goes, the surrounding text stays');
+  assert.equal(tokens[0].text, 'a %nosuchmacro[undefined] b', 'the symbol stays and says so');
+  // and through the real table, where only a genuine non-macro lands here
+  const real = [t('a %nosuchmacro b')];
+  expandTalkMacros(real, talkMacroHandlers(makeCtx()));
+  assert.equal(real[0].text, 'a %nosuchmacro[undefined] b');
+});
+
+test('E7: the FOUR SENTINELS of GetValue, each reachable through the talk MCP', () => {
+  const h = talkMacroHandlers(makeCtx());
+  // 1. the table does not carry it
+  assert.equal(expandOne(makeCtx(), '%zzz'), '%zzz[undefined]');
+  // 2. the table carries it with a NULL handler (MacroHelper.cs:43 and
+  //    the nineteen others) - '[unhandled]'
+  assert.equal(h['%hol'](), '%hol[unhandled]');
+  assert.equal(h['%wpn'](), '%wpn[unhandled]');
+  assert.equal(h['%tcn'](), '%tcn[unhandled]', 'C#-s row IS null; the travel window-s own Replace is not this table');
+  // 3. the handler answers null - '[nullMCP]'. %map is
+  //    PlayerGPS.LocationRevealedByMapItem and no talk context has one.
+  assert.equal(h['%map'](), '%map[nullMCP]');
+  // 4. the source method is NotImplemented and the SECOND provider
+  //    (null, in an ExpandMacros call) misses too - '[srcDataUnknown]'.
+  //    This is the whole of MacroDataSource-s base class seen from a
+  //    talk record: the talk source overrides thirteen methods and
+  //    the other hundred-odd rows land here.
+  assert.equal(h['%str'](), '%str[srcDataUnknown]', 'no Str override on the talk source');
+  assert.equal(h['%q7b'](), '%q7b[srcDataUnknown]', 'the biography block');
+  assert.equal(h['%wep'](), '%wep[srcDataUnknown]', 'the item block');
+  assert.equal(h['%vcn'](), '%vcn[srcDataUnknown]');
+  assert.equal(h['%g2self'](), '%g2self[srcDataUnknown]',
+    'Pronoun2self is the ONE pronoun TalkManagerDataSource does not override');
+  assert.equal(h['%G2self'](), '%G2self[srcDataUnknown]', 'and its CapFirst twin with it');
+});
+
+test('E7: %lev and %pct are ONE C# row, so both fall through to the PLAYER-s name', () => {
+  // GuildTitle (MacroHelper.cs:1131-1136) opens `if (mcp == null)
+  // return GameManager.Instance.PlayerEntity.Name`. The talk source
+  // has no GuildTitle override, so GetValue catches the
+  // NotImplementedException and re-invokes the handler with the
+  // SECOND provider - null - which lands on that very arm. Both rows
+  // point at the one handler, so both answer the name; the port had
+  // given %lev the bare call-through and it answered a sentinel.
+  const h = talkMacroHandlers(makeCtx({ hooks: { playerName: () => 'Wobbles Ironfoot' } }));
+  assert.equal(h['%pct'](), 'Wobbles Ironfoot');
+  assert.equal(h['%lev'](), 'Wobbles Ironfoot');
+});
+
+test('E7: the GLOBAL families answer off the ONE GameManager the host hands in', () => {
+  const ctx = makeCtx({ hooks: HOOKS });
+  const h = talkMacroHandlers(ctx);
+  // the player identity block (PlayerName :779, GetFirstname/GetLastname)
+  assert.equal(h['%pcn'](), 'Wobbles Ironfoot');
+  assert.equal(h['%pcf'](), 'Wobbles');
+  assert.equal(h['%pcl'](), 'Ironfoot', 'GetLastname is parts[1]');
+  assert.equal(h['%ra'](), 'Dark Elf');
+  // the date/time family (WorldTime.Now)
+  assert.equal(h['%tim'](), '01:05', 'MinTimeString');
+  assert.equal(h['%year'](), '404');
+  assert.match(h['%dat'](), / the \d+(st|nd|rd|th) of \w/, 'Date is a GLOBAL - the world clock, not a quest-s');
+  // the region/location family (PlayerGPS)
+  assert.equal(h['%cn'](), 'Daggerfall');
+  assert.equal(h['%crn'](), 'Betony');
+  assert.equal(h['%ct'](), 'city');
+  assert.equal(h['%lp'](), 'High Rock');
+  // the faction/guild family (the TalkManager getters :1795-1824)
+  assert.equal(h['%fa'](), 'the allies');
+  assert.equal(h['%fe'](), 'the enemies');
+  assert.equal(h['%fae'](), 'the enemies', "C#-s own asymmetry: %fae reads GetFactionNPCEnemy");
+  assert.equal(h['%fpc'](), 'the PC faction');
+  assert.equal(h['%fpa'](), 'Kynareth');
+  // the gold / reputation / legal numbers
+  assert.equal(h['%gii'](), '317', 'PlayerEntity.GoldPieces');
+  assert.equal(h['%ltn'](), 'respected', "LegalReputation-s bands");
+  // and the one-character row, which is not really a macro at all
+  assert.equal(h['%'](), '%');
+});
+
+test('E7: the four TALK GLOBALS ride the pipeline - the port-s GameManager.TalkManager', () => {
+  const ctx = makeCtx({ hooks: HOOKS });
+  const p = ctx.pipeline;
+  p.locationOfRegionalBuilding = 'Tulune';
+  assert.equal(talkMacroHandlers(ctx)['%fcn'](), 'Tulune');
+  // Honorific (:890-893) -> GetHonoric by the PLAYER-s gender
+  assert.equal(talkMacroHandlers({ ...ctx, playerGender: () => 'male' })['%hnr'](), 'Sir');
+  assert.equal(talkMacroHandlers({ ...ctx, playerGender: () => 'female' })['%hnr'](), "Ma'am");
+  // GreetingOrFollowUpText (:957-960) - the PC-s own opening line,
+  // which every question record 7225/7212/7231 + tone opens with
+  assert.match(talkMacroHandlers(ctx)['%1com'](), /^record:/);
+  // and with NO pipeline at all the four are simply absent: [nullMCP]
+  const bare = talkMacroHandlers({ hooks: HOOKS });
+  assert.equal(bare['%fcn'](), '%fcn[nullMCP]');
+  assert.equal(bare['%hnr'](), '%hnr[nullMCP]');
+  assert.equal(bare['%1com'](), '%1com[nullMCP]');
+  assert.equal(bare['%key'](), '%key[nullMCP]');
 });
 
 test('expandRandomTextRecord: draw, expand, and convert with NO separator', () => {
@@ -323,9 +480,19 @@ test('a token with NO text is skipped rather than scanned - C#s `tokenText != nu
   assert.equal(tokens[4].text, 'Sirien');
 });
 
-test('the scan starts ONE past the %, so a bare % followed by a terminator consumes only itself', () => {
+test('E7: the scan starts ONE past the %, and the one-character row PRINTS a percent sign', () => {
+  // MacroHelper.cs:243 `{ "%", Percent }` - "Not really a macro, just
+  // print %". The scan finds it on its own, because '%' is itself a
+  // MACRO_TERMINATOR: `%.` names the one-character symbol and leaves
+  // the full stop. The port's table did not carry the row, so the
+  // walk substituted the empty string and DELETED every literal
+  // percent sign in talk text - "50%" reached the player as "50".
   const tokens = [t('a %. b'), t('50%, and %n')];
-  expandTalkMacros(tokens, { '%n': () => 'Sirien' });
-  assert.equal(tokens[0].text, 'a . b', 'the % goes, the full stop stays - it TERMINATED the name');
-  assert.equal(tokens[1].text, '50, and Sirien', 'and a percent sign in prose eats only itself');
+  expandTalkMacros(tokens, talkMacroHandlers(makeCtx({ pipeline: { greetingNameNPC: 'x' } })));
+  assert.equal(tokens[0].text, 'a %. b', 'the % prints itself, the full stop TERMINATED it');
+  assert.equal(tokens[1].text.startsWith('50%, and '), true, 'and a percent sign in prose survives');
+  // a handler map without the row still takes the [undefined] arm
+  const bare = [t('a %. b')];
+  expandTalkMacros(bare, { '%n': () => 'Sirien' });
+  assert.equal(bare[0].text, 'a %[undefined]. b');
 });
