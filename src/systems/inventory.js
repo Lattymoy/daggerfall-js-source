@@ -48,7 +48,31 @@ export function isEnchanted(item) {
  *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
  *  the GOLD button reads - it is not an item and never appears in the
  *  list. The port's S2 shape carries it as a bag stack; retiring that
- *  is its own slice (goldAmount/trade/loot all read the stack). */
+ *  is its own slice (goldAmount/trade/loot all read the stack).
+ *
+ *  D9 NARROWED IT, and corrected the shape of the difference. What is
+ *  open is the REPRESENTATION and nothing smaller. In particular there
+ *  is no filter to add: DaggerfallInventoryWindow.AddLocalItem
+ *  (:914-943) has NO Currency arm - its four tab tests are
+ *  weapon/armor, enchanted, ingredient and everything-else, exactly
+ *  what ui/nativeInventory.js filterByTab already ports. DFU's list
+ *  cannot show gold because the PLAYER'S COLLECTION never holds any:
+ *  DoTransferItem (:1562-1571) intercepts a Currency.Gold_pieces item
+ *  whose destination is PlayerEntity.Items, does `GoldPieces +=
+ *  stackCount`, removes the item from the source and returns before
+ *  the transfer - so a gold pile is spent into the counter at the
+ *  moment it would enter the pack, and no later code has to exclude
+ *  it. Porting that one arm alone would leave the port with gold in
+ *  the pack anyway (every producer - startingGear, court.addGold,
+ *  biography, talk, classicSave, the quest mint - puts the stack
+ *  there directly), so it closes nothing on its own.
+ *
+ *  Weight is NOT part of what is open: template 276's baseWeight is
+ *  0.0025 = DaggerfallBankManager.goldPieceWeightInKg, so
+ *  charsheet.js's carriedWeight already equals PlayerEntity.cs:184
+ *  CarriedWeight, which adds `GoldPieces * goldPieceWeightInKg` by
+ *  hand. The stack IS the counter, at the right weight; what differs
+ *  is that a counter cannot be dragged and a stack can. */
 export const GOLD_TEMPLATE = 276;
 export const goldStack = (stackCount = 0) => ({
   group: 'Currency', templateIndex: GOLD_TEMPLATE,
@@ -159,11 +183,20 @@ export function stacksWith(a, b) {
     // different things, so a SplitStack mint - which writes
     // nativeMaterialValue = 0 verbatim (DaggerfallUnityItem.cs:558) -
     // could not re-merge into a source stack that carried no material
-    // field at all, e.g. the gold stack goldStack() mints. FLAGGED:
-    // FindExistingStack (:708-713) does not compare material AT ALL;
-    // the port's extra term is a pre-existing narrowing this line does
-    // not widen, it only stops the term firing on a spelling
-    // difference.
+    // field at all, e.g. the gold stack goldStack() mints.
+    //
+    // RECORDED, and not a divergence: FindExistingStack (:708-713)
+    // does not compare material AT ALL, so the port carries one term
+    // DFU does not - and the term is INERT, which is why it may stay.
+    // Nothing that reaches isStackable's ladder (:126-131) carries a
+    // material: ingredients, glass-bottle potions, books, Currency and
+    // oil have none, and the one stackable WEAPON is the arrow, whose
+    // material DFU itself zeroes - CreateWeapon's arrow arm writes
+    // `newItem.nativeMaterialValue = 0` and skips ApplyWeaponMaterial
+    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:131-138
+    // reproduces. So `(a.material ?? 0) === (b.material ?? 0)` is true
+    // wherever ItemCollection.cs:706-714 would have matched, and the
+    // `?? 0` above is the fix that keeps it that way.
     (a.material ?? 0) === (b.material ?? 0) &&
     (a.message ?? 0) === (b.message ?? 0) &&
     (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&

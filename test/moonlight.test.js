@@ -118,5 +118,15 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   assert.equal((wm.match(/renderer\.setIndirectLight\(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR\);/g) || []).length, 2,
     'the stale exterior indirect goes dark with it (the same leak family)');
   const am = readFileSync('src/ui/automapWindow.js', 'utf8');
-  assert.equal((am.match(/renderer\.setMoonlight\(null\);/g) || []).length, 1, 'the map pass clears it too');
+  assert.equal((am.match(/renderer\.setMoonlight\(null\);/g) || []).length, 2,
+    'the map pass clears it too - in the bracket setup, and again when the beacon group hands the unlit state back');
+  // ROAD-C c2 flight 2: the ONE non-null call in the window is not
+  // moonlight at all. DFU lights its automap BEACONS with three
+  // directional lights (Automap.cs:2025-2076) where the mesh shader
+  // carries two plus a third slot, so the FILL light rides the moon
+  // slot for that one never-sliced group and is cleared the moment the
+  // group is done - which is why the count above is two and not one.
+  assert.equal((am.match(/renderer\.setMoonlight\(/g) || []).length, 3, 'and there is exactly one non-null call');
+  assert.match(am, /renderer\.setMoonlight\(\{ scale: beacon\.fill, dir: BEACON_FILL_DIR, color: WHITE3 \}\);/,
+    'the automap fill light (:2039-2044, intensity :2074), not a moon');
 });

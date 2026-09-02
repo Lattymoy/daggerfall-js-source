@@ -18,11 +18,21 @@
 // selected building's own ARCH3D model rotating -1 degree per 0.02s
 // (:163-178's Update), through the host's drawModelPreview door - the
 // WINDOW owns the rotation clock and the camera law (houses at
-// (0,3,-20), Display3dModelSelection :245; the ships arm's
-// (0,12,shipCameraDist) camera is carried for the day a ships list
-// exists), the HOST owns the scissored second camera pass (the
-// automap's beginFrame precedent). No selection, no render - DFU
-// starts with SelectNone and an empty panel.
+// (0,3,-20), Display3dModelSelection :245), the HOST owns the
+// scissored second camera pass (the automap's beginFrame precedent).
+// No selection, no render - DFU starts with SelectNone and an empty
+// panel.
+//
+// D6: THE SHIPS ARM, which is the same window. DFU does not have two
+// popups - it has ONE, and its discriminator is the house list it was
+// constructed with: BuyShipButton pushes it with `null` (:463) and
+// PopulatePriceList reads `housesForSale == null` as "the two
+// ShipTypes at their flat prices" (:181-185), Display3dModelSelection
+// frames them from (0, 12, GetShipCameraDist) instead of (0, 3, -20)
+// (:243-244), and BuyButton dispatches to GeneratePurchaseShipPopup
+// with the SelectedIndex cast straight to a ShipType (:388-389). So
+// the port keeps the null list as the switch: a `houses` hook is the
+// house market, no hook at all is the shipyard.
 //
 // The port's own departure (Ledger A, the bank window's rule): DFU
 // binds each button to a DaggerfallShortcut hotkey; the accelerators
@@ -32,7 +42,10 @@ import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { TRANSACTION_RESULT, housePrice } from '../systems/banking.js';
+import {
+  TRANSACTION_RESULT, housePrice,
+  SHIP_TYPES, shipPrice, shipModelId, shipCameraDist,
+} from '../systems/banking.js';
 
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
@@ -68,12 +81,18 @@ export const SCROLL_NUM = 1;
 /** rotSpeed (:68) - the model turns one degree every 0.02 seconds,
  *  NEGATIVE about Y (Update :175). */
 export const PREVIEW_ROT_SPEED = 0.02;
-/** Display3dModelSelection's two cameras (:245-252): houses from
+/** Display3dModelSelection's two cameras (:243-252): houses from
  *  (0, 3, -20); ships from (0, 12, GetShipCameraDist) - the ship
  *  distances are banking.js's SHIP_CAMERA_DIST. Near 0.7, far 100
  *  (SetupDisplayPanel :212-213). */
 export const PREVIEW_HOUSE_CAMERA = Object.freeze({ y: 3, z: -20 });
+export const previewShipCamera = (ship) => ({ y: 12, z: shipCameraDist(ship) });
 export const PREVIEW_NEAR = 0.7, PREVIEW_FAR = 100;
+
+/** PopulatePriceList's ships arm (:181-185): `for (int i = 0; i < 2;
+ *  i++)` - the list IS ShipType order, Small then Large, and the row
+ *  tag is the index, which is what BuyButton casts back (:389). */
+export const SHIP_LIST = Object.freeze([SHIP_TYPES.Small, SHIP_TYPES.Large]);
 
 /** Internal_Strings `bankPurchasePrice`, verbatim. */
 export const priceRow = (price) => `Price : ${price} gold`;
@@ -94,8 +113,11 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PURCHASE_PANEL_X && y >= ry
 
 /**
  * hooks:
- *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market
- *   buy(house)      -> { result, amount } (systems/banking.purchaseHouse)
+ *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market.
+ *                      ABSENT (DFU's null list, :463) IS THE SHIPS ARM.
+ *   buy(item)       -> { result, amount }: the house record for the
+ *                      market (systems/banking.purchaseHouse), the
+ *                      ShipType index for the shipyard (purchaseShip)
  *   showResult(result, amount) -> the BANKING window's GeneratePopup
  *   onClose()
  */
@@ -120,28 +142,39 @@ export class BankPurchaseWindow {
     }
   }
 
-  get houses() { return this.hooks.houses?.() ?? []; }
+  /** D6: DFU's discriminator, verbatim - a NULL house list is the
+   *  shipyard (:181). `?? null` rather than `?? []` is the whole
+   *  switch. */
+  get houses() { return this.hooks.houses?.() ?? null; }
+  get isShips() { return this.houses === null; }
+  /** PopulatePriceList (:180-194) - the rows in list order. */
+  items() { return this.houses ?? SHIP_LIST; }
+  /** The one localized row, `bankPurchasePrice` with %s filled: a
+   *  house by its own mesh radius, a ship off the flat table. */
+  priceText(item) {
+    return priceRow(this.isShips ? shipPrice(item) : housePrice(item?.meshRadius ?? 0));
+  }
   _close() { this.done = true; this.hooks.onClose?.(); }
 
   /** The visible slice, and the scroll clamp that keeps it whole. */
   rows() {
-    const all = this.houses;
+    const all = this.items();
     const maxScroll = Math.max(0, all.length - LIST_ROWS);
     if (this.scroll > maxScroll) this.scroll = maxScroll;
     if (this.scroll < 0) this.scroll = 0;   // scrollIndex is never negative in DFU; no path may leave one standing
     return all.slice(this.scroll, this.scroll + LIST_ROWS)
-      .map((h, i) => ({ house: h, index: this.scroll + i, text: priceRow(housePrice(h.meshRadius ?? 0)) }));
+      .map((it, i) => ({ item: it, index: this.scroll + i, text: this.priceText(it) }));
   }
 
   /** UpdateListScrollerButtons (:338-346) - the arrows are GREEN only
    *  while there is somewhere to go, which is what the port draws
    *  instead of the two arrow textures DFU swaps. */
   canScrollUp() { return this.scroll > 0; }
-  canScrollDown() { return this.scroll < Math.max(0, this.houses.length - LIST_ROWS); }
+  canScrollDown() { return this.scroll < Math.max(0, this.items().length - LIST_ROWS); }
 
   _scroll(by) {
     const next = this.scroll + by * SCROLL_NUM;
-    this.scroll = Math.max(0, Math.min(next, Math.max(0, this.houses.length - LIST_ROWS)));
+    this.scroll = Math.max(0, Math.min(next, Math.max(0, this.items().length - LIST_ROWS)));
   }
 
   /** BuyButton_OnMouseClick (:380-391), in DFU's exact order - the
@@ -156,10 +189,13 @@ export class BankPurchaseWindow {
   _buy() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     if (this.selected < 0) return;
-    const house = this.houses[this.selected];
-    if (!house) return;
+    // D6: `== null`, not falsiness - ShipType.Small IS 0, and a truthy
+    // test would make the small ship the one row in the game that
+    // cannot be bought.
+    const item = this.items()[this.selected];
+    if (item == null) return;
     this._close();
-    const r = this.hooks.buy?.(house) ?? { result: TRANSACTION_RESULT.NONE };
+    const r = this.hooks.buy?.(item) ?? { result: TRANSACTION_RESULT.NONE };
     this.hooks.showResult?.(r.result, r.amount ?? 0);
   }
 
@@ -173,7 +209,7 @@ export class BankPurchaseWindow {
       const row = Math.floor((vy - (ly + PURCHASE_PANEL_Y)) / LIST_ROW_H);
       if (row >= 0 && row < LIST_ROWS) {
         const pick = this.scroll + row;
-        if (pick < this.houses.length) { this.selected = pick; audio.playOneShot(SOUND.ButtonClick, 1); }
+        if (pick < this.items().length) { this.selected = pick; audio.playOneShot(SOUND.ButtonClick, 1); }
         return true;
       }
     }
@@ -195,7 +231,7 @@ export class BankPurchaseWindow {
       return;
     }
     if (code === 'ArrowDown') {
-      if (this.selected < this.houses.length - 1) {
+      if (this.selected < this.items().length - 1) {
         this.selected++;
         if (this.selected >= this.scroll + LIST_ROWS) this.scroll = this.selected - LIST_ROWS + 1;
       }
@@ -221,14 +257,18 @@ export class BankPurchaseWindow {
     // H4: the live model, through the host's door - AFTER the chrome,
     // because the pass paints inside the display rect over it. The
     // rect travels in CANVAS pixels (the scissor's frame).
-    const sel = this.houses[this.selected];
-    if (sel?.modelIdNum != null) {
+    // D6: Display3dModelSelection's two arms (:238-252) - the ship's
+    // model id and camera come off its ShipType, the house's off its
+    // own record. SelectNone still shows an empty panel either way.
+    const sel = this.items()[this.selected];
+    const modelIdNum = sel == null ? null : (this.isShips ? shipModelId(sel) : sel.modelIdNum ?? null);
+    if (modelIdNum != null) {
       const [dx, dy, dw, dh] = PURCHASE_RECTS.display;
-      this.hooks.drawModelPreview?.(sel.modelIdNum, {
+      this.hooks.drawModelPreview?.(modelIdNum, {
         x: m.ox + (PURCHASE_PANEL_X + dx) * m.s,
         y: m.oy + (PURCHASE_PANEL_Y + dy) * m.s,
         w: dw * m.s, h: dh * m.s,
-      }, this.yawDeg, PREVIEW_HOUSE_CAMERA);
+      }, this.yawDeg, this.isShips ? previewShipCamera(sel) : PREVIEW_HOUSE_CAMERA);
     }
   }
 }

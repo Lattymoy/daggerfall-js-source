@@ -4,10 +4,14 @@
 // THE FOUR HOSTS RULE: chargen used to live entirely inside
 // dungeonContext, so a player who booted straight into a town
 // (either exterior host) never created a character at all - they
-// played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-// 50, Warrior-shaped nothing). The dungeon kept its own copy of the
-// load/apply code, which is exactly the duplication the audit's
-// rules forbid, so both live here now.
+// played the pre-chargen placeholder entity (flat skills 30,
+// maxHealth 50, Warrior-shaped nothing; it is described at
+// characters/playerEntity.js:5). The dungeon kept its own copy of
+// the load/apply code, which is exactly the duplication the audit's
+// rules forbid, so both live here now. FIXED, not pending: world.js:
+// 126/:1364-1366 and exterior.js:95/:782-784 both import and run
+// createChargenFlow + createChargenWindow from here, so a town boot
+// runs the wizard.
 //
 // The returned object is shaped for the exterior hosts' overlay seam
 // (townTalk.showOverlay): isChoiceWindow so it receives RAW key
@@ -328,12 +332,14 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
  *    - scenes/world.js       WIRED (it calls this)
  *    - scenes/exterior.js    WIRED (it calls this)
  *    - scenes/worldModes.js  N/A - interiors never run the wizard
- *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
- *      own overlay and draws it directly, so it cannot reach this
- *      fork. It keeps the CLASSIC wizard. Since U31 the classic start
- *      boots the WORLD host, so that path is the `?dungeon` dev scene
- *      alone - a real gap, and a small one, recorded rather than
- *      quietly left. */
+ *    - scenes/dungeonContext.js  WIRED (wave D - it calls this). It
+ *      held the RAW flow as its own overlay and drew it directly, so
+ *      it could reach neither the skin fork nor the fire-once latch;
+ *      routing it here also stopped it letterboxing the wizard TWICE
+ *      (its non-native draw arm applied a screen offset under art
+ *      that reads nativeMetrics off the real canvas itself). Since
+ *      U31 that path is the `?dungeon` dev scene alone, which is why
+ *      it stayed open so long - but small is not the same as absent. */
 export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   let _fired = false;
   // A DOM view needs a DOM. The headless suite constructs this window
@@ -375,11 +381,18 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },
-    // F2 / THE FOUR-HOSTS RULE: the townTalk hosts drive the overlay's
-    // clock through this wrapper; dungeonContext holds the RAW flow and
-    // reaches flow.tick directly.
+    // F2 / THE FOUR-HOSTS RULE: every host that runs the wizard drives
+    // the overlay's clock through this wrapper - dungeonContext reached
+    // flow.tick directly until wave D put it through this door too.
     tick(dt) { flow.tick?.(dt); },
-    draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
+    // FS-slice (wave D): the host's OWN scale wins when it hands one
+    // in. Every overlay seam in the tree passes the letterbox scale it
+    // just computed off the real canvas (townTalk:881,
+    // dungeonContext's drawOverlay), and this arm dropped it on the
+    // floor for the constructed default - so the art-less interim
+    // panels drew at 2 on a canvas the rest of the UI was drawing at 3
+    // or 4. `hudScale` stays the default for a caller that passes none.
+    draw(renderer, canvas, font, scale = hudScale) { flow.draw(renderer, canvas, font, scale); },
   };
 }
 

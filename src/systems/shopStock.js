@@ -20,8 +20,8 @@
 //   RegionDataFlags store that half was waiting on; the member's own
 //   docblock below carries the three arms).
 //
-// A2 (ROAD TO 1:1) closed the two INTERIM clauses that stood here.
-// Book items now carry the BOOK FILE's price through
+// A2 (ROAD TO 1:1) closed the two stand-in clauses this header once
+// carried. Book items now carry the BOOK FILE's price through
 // books.createRandomBook, and shelf/container restocking rides
 // CreateStockedDate below - the calendar the pend was waiting on has
 // been shipped since S41. The regional-price line above lost its

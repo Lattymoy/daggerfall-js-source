@@ -27,8 +27,11 @@ test('AUDIT39 #28: overlayHeld takes townTalk\'s slot, so a window mounted OUT T
   const decl = WM.slice(WM.indexOf('const overlayHeld ='), WM.indexOf('const crouchHeld'));
   assert.match(decl, /!!townTalk\?\.overlayActive \|\|/,
     'AddWindow pauses for the WINDOW, not for the slot it was pushed into');
-  // the two that were already there stay there
-  assert.match(decl, /mode === 'interior' && !!interiorOverlay/);
+  // the two that were already there stay there - the interior one now
+  // asks the STACK (ROAD-tail: `interiorPaused` is windowStack's pause
+  // latch, AddWindow :183-184 / RemoveWindow :201-215) instead of
+  // re-deriving the slot here.
+  assert.match(decl, /mode === 'interior' && interiorPaused\(\)/);
   assert.match(decl, /mode === 'dungeon' && !!dungeonCtx\?\.uiOverlayActive/);
   // and this host mounts into that slot itself - the reachability the
   // finding turns on, kept next to the gate that answers it

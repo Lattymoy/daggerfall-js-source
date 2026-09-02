@@ -36,6 +36,8 @@ import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { itemInfoTextId, INFO_TEXT } from '../src/systems/itemInfo.js';
 import { isBook } from '../src/systems/useItem.js';
 import { itemIsIdentified } from '../src/systems/tradeModes.js';
+import { hasArtifactSubtype, ARTIFACTS } from '../src/systems/artifactEffects.js';   // ROAD-U: the identity DFU keys on
+import { fillEmptyTrap } from '../src/systems/mysticism.js';
 import { SKILLS } from '../src/systems/skills.js';
 
 /** A minimal live entity snapshotPlayer accepts (the audit24_save
@@ -150,10 +152,22 @@ test('a4 envelope: a skill raise SETS the mark and the mark survives a save', ()
   assert.equal(skillRecentlyIncreased(e, SKILLS.Swimming), false, 'a skill that did not go up is unmarked');
 
   const loaded = makeEntity();
-  restorePlayer(loaded, snapshotPlayer(e, {}));
+  // BOTH copy edges, separately - asserted against the ORIGINAL entity
+  // alone, the snapshot's own array sits between them and either spread
+  // can go missing without the assertion moving.
+  const snap = snapshotPlayer(e, {});
+  assert.notEqual(snap.skillsRecentlyRaised, e.skillsRecentlyRaised,
+    'the snapshot takes a COPY, not the live entity array');
+  restorePlayer(loaded, snap);
   assert.equal(skillRecentlyIncreased(loaded, SKILLS.Running), true,
     'the sheet still has something to highlight after a reload');
-  assert.notEqual(loaded.skillsRecentlyRaised, e.skillsRecentlyRaised, 'a COPY, not the live array');
+  assert.notEqual(loaded.skillsRecentlyRaised, snap.skillsRecentlyRaised,
+    'and the restore hands out a COPY, not the save record\'s array');
+  // the behavioural tell: a raise on the restored entity must not write
+  // back through the save record it was restored from
+  setSkillRecentlyIncreased(loaded, SKILLS.Swimming);
+  assert.equal(skillRecentlyIncreased({ skillsRecentlyRaised: snap.skillsRecentlyRaised }, SKILLS.Swimming),
+    false, 'the save record is not a window onto the live entity');
 });
 
 test('a4 envelope: a save with no skillsRecentlyRaised restores DFU\'s new uint[2]', () => {
@@ -312,6 +326,29 @@ test('a4 import: a classic artifact imports as an artifact, not as a plain encha
   assert.equal(oghma.group, 'Books');
   assert.equal(oghma.artifact, true);
   assert.equal(isBook(oghma), false, 'an artifact book skips the plain reader (:1712)');
+
+  // ROAD-U: AND THE SUBTYPE TESTS. DFU reads the artifact's identity
+  // off the record the save itself carries - ItemHelper.cs:782 (the
+  // Oghma's info text), :811 (`param == 9`, Azura's Star) and
+  // SoulTrap.cs:129's ContainsEnchantment. The port keyed all three on
+  // BOOLEANS whose only producer was loot.js's createArtifact, so an
+  // imported Oghma read 1009 (a plain book), an imported Star 1003 (a
+  // plain misc item), and an equipped imported Star captured no souls
+  // at either death site - while isAzurasStarEquipped, read on the
+  // very same host line, correctly answered that it was worn. The
+  // enchantment array was sitting on the item the whole time.
+  assert.equal(itemInfoTextId(oghma), INFO_TEXT.oghmaInfinium, 'ItemHelper.cs:782');
+  const star = classicItemFromRecord(record({
+    name: 'Azura\'s Star', group: 25, index: 0, magic: [{ type: 26, param: 9 }, { type: -1, param: -1 }],
+  }));
+  assert.equal(star.artifactIndexBitfield >> 1, 9, 'ArtifactsSubTypes.Azuras_Star');
+  assert.equal(itemInfoTextId(star), INFO_TEXT.soulTrap, 'ItemHelper.cs:811');
+  assert.equal(hasArtifactSubtype(star, ARTIFACTS.AzurasStar), true);
+  // ...and it takes a soul, which is the half that was silent
+  const bag = [star];
+  assert.equal(fillEmptyTrap(bag, 15, { azurasStarOnly: true }), star, 'SoulTrap.cs:129');
+  assert.equal(star.trappedSoulType, 15);
+  assert.equal(fillEmptyTrap(bag, 3, { azurasStarOnly: true }), null, 'and a FULL Star takes no second soul');
 
   // and an ORDINARY enchanted item keeps reading as one
   const ring = classicItemFromRecord(record({ name: 'Ring', group: 25, index: 0, flags: 0 }));

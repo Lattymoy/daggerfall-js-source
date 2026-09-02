@@ -14,8 +14,11 @@
 //   (200,8); TEXTURE.237 records 52/54 carry DFU's known-bad-offset
 //   fix (237,43);
 // - item images (GetItemImage forPaperDoll + GetInventoryTexture*):
-//   clothing = template.playerTextureArchive + bodyMorphology (SetRace;
-//   Human +2 - Breton INTERIM), record = playerTextureRecord
+//   clothing = template.playerTextureArchive + bodyMorphology
+//   (SetRace), the morphology resolved from the LIVE race since S3c/U9
+//   - `raceByKey(race)?.morphologyIndex` over systems/races.js's
+//   MORPHOLOGY_OF -> BODY_MORPHOLOGY, all eight races, Human's +2 now
+//   only the fallback; record = playerTextureRecord
 //   (+1 for cloaks' interior-first record) + variant;
 //   armor = firstMale/FemaleArchive (249/245) + morphology, variant
 //   CLAMPED by material family (SetVariant: cuirass leather 0 /
@@ -62,7 +65,9 @@ export { CLOTHING_DYES };
 
 // S3c/U9: all EIGHT races now come from systems/races.js (DFU
 // RaceTemplate verbatim) - this file used to carry a Breton-only
-// table, the loud INTERIM the U8f/U8g records flagged.
+// table, which the U8f/U8g records named as standing in for the other
+// seven. raceArt/FACES_PER_RACE/raceByKey are imported above and every
+// morphology read goes through them.
 const CONTEXT_BG = Object.freeze({ town: 'SCBG04I0.IMG', dungeon: 'SCBG07I0.IMG', graveyard: 'SCBG08I0.IMG' });
 
 // UI3 - GEOGRAPHIC BACKGROUNDS: PaperDoll.GetPaperDollBackground

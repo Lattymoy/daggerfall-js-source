@@ -122,8 +122,12 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     windowCount: () => windows.length - (hud ? 1 : 0),
     /** MessageCount (:62-65). */
     messageCount: () => messages.length,
-    /** The depth the port's hosts ask about: how many windows are on
-     *  top of the HUD, i.e. whether a pop has somewhere to return to. */
+    /** How many windows are on top of the HUD, i.e. whether a pop has
+     *  somewhere to return to. ROAD-tail: this is a WINDOW COUNT and
+     *  no longer the hosts' pause question - counting it to decide
+     *  whether the world is stopped was the per-host arithmetic
+     *  `paused()` replaced, and no host does it now
+     *  (test/roadb_host_pause.test.js sweeps for it). */
     depth: () => windows.length - (hud ? 1 : 0),
 
     /** PushWindow (:79-91). */
@@ -145,6 +149,30 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
 
     /** ContainsWindow (:114-117). */
     containsWindow(win) { return windows.indexOf(win) >= 0; },
+
+    /** THE DRAW CHAIN. DaggerfallUI paints ONE window a frame -
+     *  `uiManager.TopWindow.Draw()` (DaggerfallUI.cs:491) - and depth
+     *  reaches the screen through DaggerfallPopupWindow.Draw
+     *  (:77-86), which runs `previousWindow.Draw()` BEFORE its own
+     *  `base.Draw()`. Every box DaggerfallUI.MessageBox opens is
+     *  built on `uiManager.TopWindow` as its previousWindow (:1330,
+     *  :1339), so the chain is exactly this stack and the window a
+     *  box was pushed over is painted UNDER it.
+     *
+     *  The port's hosts hold the TOP in their own slot (that is what
+     *  `onTop` mirrors) and paint it themselves, so this walks what
+     *  the top COVERS, deepest first, and the host draws its slot
+     *  after. The HUD is skipped - the hosts draw it outside the
+     *  stack. A stack of depth 1 enumerates nothing, which is why
+     *  every single-window host renders exactly as before.
+     *
+     *  No dim rides with it: `parentPanel.BackgroundColor =
+     *  ScreenDimColor` is Color.clear (nativePanel.js's SCREEN_DIM),
+     *  and the court boxes set it to (0,0,0,0) themselves
+     *  (DaggerfallCourtWindow.cs:224). */
+    eachCoveredWindow(fn) {
+      for (let i = 0; i < windows.length - 1; i++) if (!isHud(windows[i])) fn(windows[i], i);
+    },
 
     /** ChangeWindow (:123-131) - pop EVERYTHING, then add the one.
      *  This is what the port's dispatch sites have always done in a
@@ -173,13 +201,41 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     },
 
     /** GameManager.IsPlayingGame's window half, inverted
-     *  (GameManager.cs:926-942): the game is not being played while
-     *  `isGamePaused` (:928-930), nor while the top window is a
-     *  non-HUD window that pauses (:937-939). */
+     *  (GameManager.cs:926-942).
+     *
+     *  DFU asks TWO questions there: `isGamePaused` (:928-930), and
+     *  whether the top window is a non-HUD window that pauses
+     *  (:937-939). It needs both because `isGamePaused` is GLOBAL -
+     *  StartGameBehaviour (:439, :697) and SaveLoadManager (:418) call
+     *  `PauseGame(false)` from outside the stack, so the flag can be
+     *  down while a pausing window is still up, and only :937-939
+     *  catches that.
+     *
+     *  This latch is not that flag: it is UIManager-local, raised by
+     *  AddWindow (:183-184) and by reconcile's replace, and lowered
+     *  ONLY by RemoveWindow on drain (:201-215). Nothing outside can
+     *  put it down, so `gamePaused` is already true in every state
+     *  :937-939 would catch and the second question cannot decide one.
+     *  Asking it anyway would be worse than redundant - it would read
+     *  the top window instead of the latch and so MASK a latch that
+     *  failed to rise. If the port ever grows an external PauseGame
+     *  door, DFU's second term comes back with it.
+     *
+     *  ROAD-tail: THIS IS WHAT THE HOSTS GATE ON, and each of the four
+     *  that own a stack reads it through exactly one reader of its own
+     *  (`interiorPaused`, `dungeonPaused`, `talkPaused`, `gamePaused`).
+     *  Those readers DO OR in `pauseWhileOpen(slot)`, which reads like
+     *  the second term the paragraph above declines - it is not. DFU's
+     *  :937-939 exists because an EXTERNAL PauseGame(false) can put the
+     *  flag down under a live window; the port has no such door, and
+     *  asking the top window there would still mask a latch that failed
+     *  to rise. The hosts' term answers a state DFU cannot be in at
+     *  all: a slot holding a window the stack has not been told about
+     *  yet, because the host wrote it by hand instead of pushing (the
+     *  seam `reconcile` exists for). It is the SLOT that is asked, and
+     *  only until the next reconcile hands the question back here. */
     paused() {
-      if (gamePaused) return true;
-      const t = top();
-      return !!t && !isHud(t) && pauseWhileOpen(t);
+      return gamePaused;
     },
 
     /** PostMessage (:139-150) - the overflow arm CLEARS the queue,

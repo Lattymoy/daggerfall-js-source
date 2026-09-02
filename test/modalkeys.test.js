@@ -88,7 +88,13 @@ test('V4: world.js still gates its own actions on the same modal (both sides of 
   // Deleting world.js's gate would make the ordering rule above look
   // satisfied while the defect moved hosts.
   const w = code('scenes/world.js');
-  const gated = (w.match(/!townTalk\.overlayActive/g) ?? []).length;
+  // ROAD-tail: some of those gates are now the host's ONE pause reader,
+  // `!gamePaused()` - which is `townTalk.overlayActive ||
+  // modes?.overlayHeld`, i.e. the same slot plus the modal host's, both
+  // answered by ui/windowStack.js's `paused()`. Widening a gate is not
+  // deleting it, so both spellings count toward the same floor.
+  const gated = (w.match(/!townTalk\.overlayActive/g) ?? []).length
+    + (w.match(/!gamePaused\(\)/g) ?? []).length;
   assert.ok(gated >= 6,
     `world.js gates its keyed actions on !townTalk.overlayActive; found ${gated}, expected the\n`
     + 'sheet/inventory/cast/quicksave/travel/automap/pause set. If these were removed, the\n'

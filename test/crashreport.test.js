@@ -141,7 +141,10 @@ test('interior placements skip a model this ARCH3D does not carry', () => {
   // `cpu.positions` off undefined one line later - the only builder in
   // the port that did not skip the placement.
   const ctx = readFileSync(new URL('../src/scenes/interiorContext.js', import.meta.url), 'utf8');
-  const loop = ctx.match(/for \(const p of interior\.placements\)[\s\S]*?\n {2}}/)[0];
+  // RE-BASELINED at ROAD-C c2/S9: the loop enumerates now, because the
+  // automap row's key is the PLACEMENT INDEX and a skipped model must
+  // leave a gap rather than renumber every key after it.
+  const loop = ctx.match(/for \(const \[pi, p\] of interior\.placements\.entries\(\)\)[\s\S]*?\n {2}}/)[0];
   assert.match(loop, /if \(!gpu \|\| !cpu\) \{[\s\S]*?continue;/, 'the placement is skipped');
   assert.ok(!/drawList\.push\(\{ mesh: await getGpuMesh/.test(loop),
     'and the null never reaches the draw list');

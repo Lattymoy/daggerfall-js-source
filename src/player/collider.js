@@ -133,8 +133,8 @@ export class Collider {
    * Walks XZ grid cells with a 2D DDA per bucket (Moller-Trumbore per
    * triangle, front and back faces).
    */
-  raycast(origin, dir, maxDist) {
-    return this.raycastHit(origin, dir, maxDist).dist;
+  raycast(origin, dir, maxDist, filter = null) {
+    return this.raycastHit(origin, dir, maxDist, filter).dist;
   }
 
   /**
@@ -143,12 +143,25 @@ export class Collider {
    * which surface blocked a sight line (EnemySenses.CanSeeTarget
    * records an action door the ray strikes first, :912-918) - action
    * doors are their own buckets keyed by the action object.
+   *
+   * ROAD-C c2/S1: an OPTIONAL bucket filter - `{ only, skip }`, each
+   * an array/Set of bucket keys - lets a caller narrow the walk
+   * without a second collider. DFU's automap scan excludes the player
+   * collider by name (Automap.cs:1053) and the port's reveal walk
+   * wants the same power without paying for a duplicate dungeon-sized
+   * bucket (which raycastHit AND _resolveSphere would then walk for
+   * movement, senses, activation and arrows). Strictly additive: with
+   * no filter the walk is byte-for-byte what it was.
    */
-  raycastHit(origin, dir, maxDist) {
+  raycastHit(origin, dir, maxDist, filter = null) {
     let best = Infinity;
     let bestKey = null;
     let bestTri = null;   // M3 climbing: the hit surface's normal rides the result
+    const only = filter?.only ? new Set(filter.only) : null;
+    const skip = filter?.skip ? new Set(filter.skip) : null;
     for (const [bkey, bucket] of this._buckets) {
+      if (only && !only.has(bkey)) continue;
+      if (skip && skip.has(bkey)) continue;
       const t = bucket.t();
       const ox = origin[0] - t[0];
       const oy = origin[1] - t[1];

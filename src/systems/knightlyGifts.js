@@ -1,7 +1,12 @@
 // G6 - THE KNIGHTLY ORDER'S GIFTS: KnightlyOrder.ReceiveArmor and the
 // Spymaster's greeting (MIT, Daggerfall Workshop). Two of the four
-// remaining FLAGGED service destinations, and the only two that need
-// no window of their own.
+// service destinations still unbuilt at G6, and the only two that
+// need no window of their own. All four have shipped since - the
+// third is ReceiveHouse, below (:105-151, H1) - and DR2 closed the
+// twentieth, so guildServiceFlow.js's SERVICE_DESTINATION now names a
+// window for every arm of DoGuildService's switch. This file's three
+// are routed at worldModes.js:2600 (Spymaster), :2612 (ReceiveArmor)
+// and :2732 (ReceiveHouse).
 //
 // THE ARMOUR IS ONCE PER RANK, and the bookkeeping is a BITFIELD on
 // the membership rather than a counter: `armorMask = ArmorFlagStart
@@ -28,10 +33,28 @@
 // taking anything leaves the flag clear and the armour claimable
 // later. Declining costs nothing.
 //
-// FLAGGED, not ported: RestoreGuildData's legacy flag migration
-// (:288-294) rewrites a pre-DFU-0.11 flag layout on load. This port
-// has never written that layout, so there is nothing to migrate and
-// the arm would only be able to corrupt a save it invented.
+// D9: RestoreGuildData's flag migration (:283-295) SHIPS - the arm
+// that used to stand open here as "a layout this port never
+// wrote". That reading was of the wrong gate. DFU does not test for
+// a legacy layout; it tests `(flags & 4092) == 0` - NO NEW-STYLE
+// ARMOUR BIT SET AT ALL - and every membership this port writes
+// satisfies it constantly: claimHouse writes flags = 2 (:141), and a
+// knight promoted without ever claiming armour carries flags 0. On
+// that history DFU back-fills the armour bit for every rank BELOW
+// the current one
+//
+//     for (int i = 0; i < rank; i++) flags |= ArmorFlagStart << i;
+//     if ((flags & ArmorFlagMask) > 0) flags |= ArmorFlagStart << rank;
+//
+// (ArmorFlagMask is 1, the pre-0.11 BOOLEAN "armour taken" flag - a
+// bit this port genuinely never writes, so its arm is inert here and
+// ported for completeness). The back-fill is observable: after a
+// DEMOTION, DFU refuses the lower rank's gift because the load
+// already marked it claimed, and the port used to offer it again.
+// The one door is restoreKnightlyOrderFlags below, run by save.js's
+// restoreMembershipBook (save.js:46) from restorePlayer's single load
+// door (save.js:570-571) - RestoreMembershipData's own per-guild
+// RestoreGuildData call, GuildManager.cs:332.
 
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
@@ -39,6 +62,29 @@ import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 /** KnightlyOrder's two flag constants (:42-43). */
 export const HOUSE_FLAG_MASK = 2;
 export const ARMOR_FLAG_START = 4;
+/** The pre-0.11 BOOLEAN armour flag, and the mask of every NEW-style
+ *  rank bit (bits 2..11 = 4092) whose emptiness gates the migration
+ *  (:41, :288). */
+export const LEGACY_ARMOR_FLAG_MASK = 1;
+export const ARMOR_FLAG_ANY_MASK = 4092;
+
+/** KnightlyOrder.RestoreGuildData (:283-295), verbatim: a membership
+ *  loaded with no per-rank armour bit set at all gets one for every
+ *  rank BELOW its current one, plus its OWN rank's bit when the
+ *  legacy boolean says the armour was already taken. Mutates and
+ *  returns the row, as DFU mutates the guild object it just built. */
+export function restoreKnightlyOrderFlags(membership) {
+  if (!membership) return membership;
+  const flags = membership.flags ?? 0;
+  if ((flags & ARMOR_FLAG_ANY_MASK) !== 0) return membership;
+  const rank = membership.rank ?? 0;
+  let out = flags;
+  for (let i = 0; i < rank; i++) out |= ARMOR_FLAG_START << i;
+  if ((out & LEGACY_ARMOR_FLAG_MASK) > 0) out |= ARMOR_FLAG_START << rank;
+  membership.flags = out;
+  return membership;
+}
+
 /** The rank's own bit (:197). */
 export const armorMaskForRank = (rank) => ARMOR_FLAG_START << rank;
 export const hasClaimedArmor = (membership, rank = membership?.rank ?? 0) =>
@@ -97,9 +143,12 @@ export const RECEIVE_HOUSE_RANK = 9;           // ReceiveHouse's gate (:224)
 export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
 
 /**
- * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
- * destinations that needs no window of its own, and the only path in
- * the game that grants a house without DaggerfallBankPurchasePopUp -
+ * H1 - ReceiveHouse (:222-252). SHIPPED HERE: the last of the service
+ * destinations that needs no window of its own - the four-refusal
+ * ladder is receiveHouseDecision below and the flag write is
+ * claimHouse, wired at worldModes.js:2732-2736 through
+ * SERVICE_DESTINATION.ReceiveHouse. It is also the only path in the
+ * game that grants a house without DaggerfallBankPurchasePopUp -
  * a 436-line window that renders the building's own 3D model beside a
  * price list, which is its own slice.
  *

@@ -99,11 +99,27 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
   assert.match(world, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\);/);
   assert.match(world, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks\);/);
   // every enchant-ctx site that reaches a foe's vitals goes through the
-  // router - a bare foeSinks() there is the exterior assumption again
-  const at = world.indexOf('setDefaultEnchantCtx({');
-  const mount = world.slice(at, world.indexOf('const detectFeed', at) > at ? world.indexOf('const detectFeed', at) : at + 6000);
-  assert.equal(/[^t]foeSinks\(/.test(mount), false, 'no site inside the mount reaches the exterior sinks directly');
-  assert.equal((mount.match(/enchantFoeSinks\(/g) ?? []).length, 3, 'all three sites route: the caster, the target, and the nearby scan');
+  // router - a bare foeSinks() there is the exterior assumption again.
+  //
+  // WAVE D: the mount's BODY is scenes/hostEnchant.js, one copy for the
+  // two hosts that mount it, so this host hands the router IN and the
+  // shared body reaches a foe's vitals only through what it was handed.
+  // Both halves are pinned, because either alone would let the
+  // exterior assumption back: the host could hand in the raw sinks, or
+  // the body could reach past what it was given.
+  const at = world.indexOf('setDefaultEnchantCtx(createEnchantCtx({');
+  assert.ok(at > 0, 'the host mounts the shared body');
+  const mount = world.slice(at, world.indexOf('\n  }\n', at));
+  assert.match(mount, /foes: \(\) => enchantFoes\(\),/);
+  assert.match(mount, /foeSinks: \(f\) => enchantFoeSinks\(f\),/);
+  assert.equal(/[^t]foeSinks\(/.test(mount.replace('foeSinks: (f) => enchantFoeSinks(f),', '')), false,
+    'no other site inside the mount reaches the exterior sinks directly');
+  const body = read('src/scenes/hostEnchant.js');
+  const ctx = body.slice(body.indexOf('export function createEnchantCtx'));
+  assert.equal((ctx.match(/foeSinks\(/g) ?? []).length, 3,
+    'all three sites route through the handed-in sinks: the caster, the target, and the nearby scan');
+  assert.equal(/exteriorFoes|cityGuards|dungeonCtx/.test(ctx), false,
+    'and the shared body names no host\'s pool at all');
 });
 
 test('EC1: the DETECT feed keeps its own exterior pool - one change, two consumers', () => {
@@ -138,13 +154,22 @@ test('EC1: the two SPAWN arms never stand a foe in a world the player is not in'
     'and the fixed player-feet offset both arms used is gone (SD1)');
 });
 
-test('EC1: dungeonContext\'s flag narrows to what is still open', () => {
-  // FS1 planted it; EC1 closed half of it. The half that is still true
-  // is the STANDALONE host, which has no ctx at all.
+test('EC1/FS1: dungeonContext mounts the ctx, and only when no outer host owns it', () => {
+  // FS1 planted the flag; EC1 closed half of it (the world host's
+  // dungeon MODE); wave D closed the other half - the STANDALONE host,
+  // which had no ctx at all, mounts the shared body now.
   const dc = read('src/scenes/dungeonContext.js').replace(/"[^"]*"/g, '""');
   assert.equal(/its foe pool answers empty by design/.test(dc), false,
     'the retired half of the flag is gone from the sentence that carried it');
-  assert.match(dc, /EC1 closed that one/);
-  assert.match(dc, /FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT/,
-    'and the half that is still open still stands');
+  assert.equal(/FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT/.test(dc), false,
+    'and so is the half wave D closed');
+  assert.match(dc, /FS1 - SHIPPED \(wave D/);
+  // setDefaultEnchantCtx is a SESSION SINGLETON. EC1 routed the world
+  // host's mount into this context through modes.dungeonCtx, so a
+  // second unconditional mount here would overwrite that one the
+  // moment worldModes builds a dungeon - last writer wins, silently.
+  assert.match(dc, /if \(opts\.enchantCtx !== false\) \{\n\s*setDefaultEnchantCtx\(createEnchantCtx\(\{/,
+    'the mount is gated on the outer host not owning it');
+  assert.match(read('src/scenes/worldModes.js'), /\n\s*enchantCtx: false,/,
+    'and the outer host says so, beside the chargen: false it already said it with');
 });

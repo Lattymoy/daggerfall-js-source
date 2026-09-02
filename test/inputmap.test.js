@@ -255,9 +255,19 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
   // (ui/windowStack.js), so the popup does what DFU does - PushWindow
   // (UserInterfaceManager.cs:79-91) - and the window it covers is
   // suspended, not clobbered and not lost.
-  assert.match(dc, /showOverlay\(win\) \{\n {6}if \(!win\) return false;\n {6}dungeonWindows\.reconcile\(activeOverlay\);/,
+  //
+  // ROAD-B B5 MOVED IT AGAIN, one level: the push is now the named
+  // function `pushDungeonWindow`, because B5's refusal-guard walk gave
+  // it four more callers inside this file (the infection popup,
+  // ShowText, ShowTextWithInput and the rest mastery box) that are
+  // built ABOVE the returned ctx object and could not reach a member of
+  // it. The ctx member delegates rather than keeping a second copy, so
+  // what this pin asks for is the DOOR and the delegation.
+  assert.match(dc, /function pushDungeonWindow\(win\) \{\n {4}if \(!win\) return false;\n {4}dungeonWindows\.reconcile\(activeOverlay\);/,
     'and the dungeon slot PUSHES onto the stack rather than refusing');
-  assert.match(dc, /dungeonWindows\.pushWindow\(win\);\n {6}return true;/);
+  assert.match(dc, /dungeonWindows\.pushWindow\(win\);\n {4}return true;/);
+  assert.match(dc, /showOverlay\(win\) \{ return pushDungeonWindow\(win\); \},/,
+    'and the ctx member is that same door');
   // ...and the host stops warning, because the fall-through is gone
   assert.equal(/popup in dungeon mode pends/.test(src('scenes/world.js')), false,
     "world.js's dungeon-popup warning is retired, not silenced");

@@ -53,10 +53,14 @@ test('F159: the conversation scroll PERSISTS - pinned to the newest row only on 
   w._scrollConversationBy(999);
   assert.equal(w.conversationScroll, 74, '...and at the bottom');
   assert.equal(conversationScroll(200, 126), 74, 'the pin value is UpdateScrollBarConversation\'s');
-  // new content re-pins: both push sites null the field
+  // new content re-pins. ROAD-D D10 folded the two push sites into
+  // the ONE _pushQA helper - which is DFU's own shape, since
+  // SetQuestionAnswerPairInConversationListbox (:1290-1293) is the
+  // single writer both the topic ask and ButtonOkay's Work arm reach.
   const s = src('ui/nativeTalk.js');
-  assert.equal((s.match(/this\.conversationScroll = null;\s+\/\/ F159/g) ?? []).length, 2,
-    'both conversation writers reset to the newest row');
+  assert.equal((s.match(/this\.conversationScroll = null;\s+\/\/ F159/g) ?? []).length, 1,
+    'the one conversation writer resets to the newest row');
+  assert.equal((s.match(/this\._pushQA\(/g) ?? []).length, 2, 'and both askers go through it');
   // ...and draw() itself HOLDS the player's position - pin-once on
   // null, clamp otherwise - never a per-frame recompute.
   assert.ok(s.includes('else this.conversationScroll = clampScrollPixels(this.conversationScroll, contentH, R.conversation[3]);'),
@@ -134,11 +138,18 @@ test('F180: the spellbook trough pages by displayUnits on click', () => {
   // VerticalScrollBar.MouseClick (:142-150): above the thumb pages
   // up, below pages down; the drag stays unported - no held-button
   // state reaches an overlay window (the listPicker.js precedent).
+  //
+  // ROAD-D2 moved the arithmetic itself into ui/verticalScrollBar.js,
+  // where the thumb art already lived, so the trough and the paint can
+  // never disagree: this pins the DELEGATION (and road_d2's own pins
+  // drive the two arms through the live window).
   const s = src('ui/spellbookWindow.js');
   const arm = s.slice(s.indexOf('F180:'));
-  assert.ok(arm.includes('if (localY < ty) this.scrollIndex -= ROWS_DISPLAYED;'), 'page up above the thumb');
-  assert.ok(arm.includes('else if (localY > ty + th) this.scrollIndex += ROWS_DISPLAYED;'), 'page down below it');
-  assert.ok(arm.slice(0, 1400).includes('this._clampScroll();'), 'through the SetScrollIndex clamp');
+  assert.ok(arm.includes('const span = thumbSpan(sh, this._rows.length, ROWS_DISPLAYED, this.scrollIndex);'),
+    'the same span the draw uses');
+  assert.ok(arm.includes('this.scrollIndex = scrollBarClick(vy - PANEL_Y - sy, span,'),
+    'and MouseClick\'s two arms, paging by DisplayUnits through SetScrollIndex\'s clamp');
+  assert.ok(arm.includes('this.scrollIndex, this._rows.length, ROWS_DISPLAYED);'));
 });
 
 // ── F160 ──────────────────────────────────────────────────────────

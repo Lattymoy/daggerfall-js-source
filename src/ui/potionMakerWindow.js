@@ -21,16 +21,20 @@
 // slot cap, the wagon fallback and the break. This file is the panel,
 // the two lists and the picker.
 //
-// FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
-// label through ItemListScroller's own template; the port's shared
-// scroller draws the icon and the stack label, and the tooltip rides
-// U37's ToolTip once the scroller exposes a per-slot hover.
+// D7: DFU's ingredient buttons carry a tooltip AND a stack-count label
+// through ItemListScroller's own template, and both are here now. The
+// stack label is the shared scroller's drawStackLabel
+// (ItemListScroller.cs:360-365/:447); the tooltip is the same file's
+// :340/:464 - the window's shared ToolTip, its text
+// ResolveItemLongName, moved onto whichever button the pointer rests
+// over. Both lists get one, because DFU builds both out of the same
+// ItemListScroller (:226-239) and hands both the same tip.
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
-import { makeIconDrawer, drawStackLabel } from './itemScroller.js';
+import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './itemScroller.js';
 import { audio } from '../systems/audio.js';
 import { isEnchanted } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148)
 import { SOUND } from '../systems/soundClips.js';
@@ -127,6 +131,22 @@ export class PotionMakerWindow {
     this.box = null;
     this.picker = null;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
+    this._tip = makeSlotToolTip();   // D7: the window's shared ToolTip (:340)
+  }
+
+  /** The rest clock DaggerfallBaseWindow's defaultToolTip runs. */
+  tick(dt) { this._tip.update(dt); }
+
+  /** The item under the cursor, on either list - the two grids the
+   *  click path already reads, so the tip can never name a slot the
+   *  click would miss. */
+  _itemAt(vx, vy) {
+    const R = POTION_RECTS;
+    const cs = slotAt(R.cauldronList, CAULDRON_BUTTONS, vx, vy);
+    if (cs !== null) return this.cauldron[cs] ?? null;
+    const is = slotAt(R.ingredientsList, INGREDIENT_BUTTONS, vx, vy, INGREDIENT_LIST_X);
+    if (is === null) return null;
+    return this.ingredients()[this.scroll * INGREDIENT_COLS + is] ?? null;
   }
 
   _close() { this.done = true; this.hooks.onClose?.(); }
@@ -255,8 +275,15 @@ export class PotionMakerWindow {
     if (code === 'KeyR') this._recipes();
   }
 
-  /** ROAD-A7: the recipe picker's hover seam. */
-  hover(vx, vy, e = null) { this.picker?.hover(vx, vy, e); }
+  /** ROAD-A7: the recipe picker's hover seam. D7: and, with no picker
+   *  over the panel, the item tooltip - which follows the pointer the
+   *  way a button's ToolTip does, and clears the moment it rests on
+   *  nothing. */
+  hover(vx, vy, e = null) {
+    if (this.picker) { this.picker.hover(vx, vy, e); this._tip.hide(); return; }
+    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    this._tip.show(this._itemAt(vx, vy), vx, vy);
+  }
 
   click(vx, vy) {
     if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
@@ -310,5 +337,6 @@ export class PotionMakerWindow {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
+    this._tip.draw(renderer, m, font);   // D7: drawn LAST, over everything (DFU's final-component order)
   }
 }

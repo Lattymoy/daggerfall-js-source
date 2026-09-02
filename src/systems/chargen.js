@@ -6,8 +6,11 @@ import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveInt
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
 // FormulaHelper.cs (MIT, Daggerfall Workshop). This slice replaces
-// the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
-// stats 50s) with the real rolled entity.
+// the pre-chargen placeholder player (maxHealth 50, flat skills 30,
+// stats 50s) with the real rolled entity - that placeholder carries
+// its own notes at characters/playerEntity.js:5/:20/:27/:29, and
+// systems/chargenSession.js is the path that supersedes it (:239
+// finishChargen -> applyCharacter). Nothing pends HERE.
 //
 // Verbatim rules:
 //   - stats: career base attribute + Range(0, 10+1) each;
@@ -21,11 +24,16 @@ import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveInt
 //     DFRandom with the frame counter here - an arbitrary reseed;
 //     our uniform slot matches the role, approved stance)
 //   - reflexes default Average (2)
-// INTERIM (loud): the UI distributes the bonus pools by hand; the
-// headless policy spends each pool one point at a time into the
-// LOWEST stat / lowest skill of its group so the character is
-// classic-legal (pool exhausted). The chargen UI (UI arc) replaces
-// the policy with the player's own choices.
+// THE UI ARC SHIPPED, so the pools are distributed BY HAND, as
+// classic does: ui/chargen.js:48-63 is the verbatim rollout
+// arithmetic (statUp clamped at MAX_STAT_VALUE, statDown floored at
+// the rolled value, skillUp/skillDown per group pool - StatsRollout /
+// SkillsRollout), spent per spinner at :1147 spendStat and :1173
+// spendSkill, and chargenSession.js:239 finishChargen hands the
+// hand-distributed result to applyCharacter. The headless policy
+// below (one point at a time into the LOWEST of the eligible set,
+// pool exhausted so the character stays classic-legal) survives only
+// as the documented degraded paths named at spendPoolLowest.
 
 
 export const CLASS_CAREERS = Object.freeze([
@@ -129,8 +137,15 @@ export function hitPointsPerLevelUp(career, endurance, rolls = Math.random) {
   return add < 1 ? 1 : add;
 }
 
-/** INTERIM headless pool policy (loud; the chargen UI replaces it):
- *  one point at a time into the lowest of the eligible set. */
+/** The HEADLESS pool policy: one point at a time into the lowest of
+ *  the eligible set. The chargen UI replaced it on the shipping
+ *  creation path (ui/chargen.js spendStat/spendSkill), so what is
+ *  left is a documented fallback, and every caller is a degraded or
+ *  headless path: the ?class= wizard skip (chargenSession.js:113
+ *  applyHeadlessChargen), the no-FONT-art escapes in
+ *  scenes/dungeonContext.js (:1705 chargenInputFallback, :4162 and
+ *  :4172 the font-less level-up, each console.warn'd first), and
+ *  advancement.js's level-up when no host supplied onLevelUp. */
 export function spendPoolLowest(values, keysOrIds, pool) {
   let p = pool;
   while (p > 0) {
@@ -148,7 +163,7 @@ export function spendPoolLowest(values, keysOrIds, pool) {
  */
 export function createCharacter(playerEntity, career, careerIndex, { rolls = Math.random, name = career.name } = {}) {
   const { stats, bonusPool } = rollStats(career, rolls);
-  spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
+  spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // headless policy; U2b's hand-distribution shipped and owns the live path
   const { skills, groupPools } = rollSkills(career, rolls);
   spendPoolLowest(skills, career.primarySkills, groupPools.primary);
   spendPoolLowest(skills, career.majorSkills, groupPools.major);

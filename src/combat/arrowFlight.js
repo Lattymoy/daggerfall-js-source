@@ -129,9 +129,13 @@ export class ArrowFlight {
 /**
  * AUDIT 39 (#64): a PLAYER arrow that meets a foe, verbatim to the
  * dungeon host's own arm (dungeonContext's `m.fromPlayer` block) so
- * the three hosts that call it price one shot one way. (FLAGGED: the
- * dungeon host still carries its own inline copy of this law rather
- * than calling here - four bodies, not four callers.)
+ * the hosts that call it price one shot one way.
+ *
+ * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
+ * `m.fromPlayer` block - the arm this function was extracted FROM -
+ * now calls it (dungeonContext.js:2220), so the copy that survived
+ * the extraction is gone. It was not a harmless copy: it still
+ * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
  * WeaponManager.WeaponDamage with `arrowHit` true, which is the SAME
  * CalculateAttackDamage a melee swing runs - `attacker == player`, so

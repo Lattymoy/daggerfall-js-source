@@ -114,7 +114,19 @@ test('F141/F145: the guild and tavern buttons all click; F146: the teleport Yes/
 
   const tavern = src('ui/tavernWindow.js');
   // four buttons (:135, :155, :264, :339) + the food picker (:307)
-  assert.equal((tavern.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 5);
+  const tavernClick = tavern.slice(tavern.indexOf('click(vx, vy)'));
+  assert.equal((tavernClick.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 4);
+  assert.equal((tavern.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 6,
+    'the four rects, the food picker, and D1\'s one keyboard-side call');
+  // D1: the KEYBOARD side sounds too - one call heading the hotkey
+  // switch on each window, which is DFU's OnKeyboardEvent KeyDown arm
+  // (and, for the handler-less Room/Join buttons, Button.cs:85-90's
+  // faked mouse click).
+  for (const [file, s] of [['guild', guild], ['tavern', tavern]]) {
+    const input = s.slice(s.indexOf('input(code, e = null)'), s.indexOf('click(vx, vy)'));
+    assert.equal((input.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 1,
+      `${file}: the hotkey arm sounds exactly once`);
+  }
 
   // DaggerfallTeleportPopUp sets no ClickSound and plays nothing
   // (:116-119, :153-156) - the port had invented a click on both.

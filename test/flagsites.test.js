@@ -128,5 +128,7 @@ test('IN1: the board lists exactly the sites the rule finds', () => {
   })('src');
   const harvested = files.reduce((n, f) => n + flagLines(read(f)).length, 0);
   assert.equal(listed, harvested, 'Home.md lists exactly the sites the rule finds');
-  assert.ok(harvested > 100, 'and the rule is measuring a real population, not an empty one');
+  // a floor, not a count: the closeout retired 96 flags (145 -> 53) and Wave D 36 more (-> 17),
+  // and a floor at the old population would have refused the retirement.
+  assert.ok(harvested > 5, 'and the rule is measuring a real population, not an empty one');
 });

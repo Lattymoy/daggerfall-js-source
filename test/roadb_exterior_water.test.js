@@ -46,6 +46,7 @@ import {
   FOG_DENSITY_MIN, FOG_DENSITY_MAX, DUNGEON_FOG, applyFog,
 } from '../src/render/underwaterFog.js';
 import { pickFootstepSet, FootstepMachine, FOOTSTEP, WALK_STEP_INTERVAL } from '../src/systems/footsteps.js';
+import { isOnFoot, TRANSPORT_MODES } from '../src/systems/transport.js';   // ROAD-U: IsOnFoot is Foot alone
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { dfuFile, missingDfu } from './dfuRoot.mjs';
 
@@ -123,6 +124,25 @@ test('ROAD-B b3: the down probe reaches rayDistance * 2, and riding doubles the 
   assert.equal(ride(4.1).hit, false);
 });
 
+test('ROAD-B b3 (ROAD-U): the ray-distance pin states IsOnFoot the right way round for the SHIP', () => {
+  // TransportManager.cs:55-58 is `return mode == TransportModes.Foot;`
+  // - Foot ALONE, with Horse, Cart and Ship as three separate modes
+  // that all take the riding branch of PlayerMotor.cs:507/:533. The
+  // comment over rayDistanceFor read "IsOnFoot is Foot OR Ship", the
+  // exact inverse for the one mode PlayerMotor's own note (:499-502)
+  // is written about: under it a player aboard their ship would take
+  // the SHORT 2.0-deep cast where DFU casts 4.0 and finds the sea.
+  // The executable code was always right - a pin that misstates its
+  // own reference is a licence to "fix" the code down to the pin.
+  const src = readFileSync(join(SRC, 'player/exteriorSurface.js'), 'utf8');
+  assert.equal(/IsOnFoot is Foot OR Ship/.test(src), false, 'the inverted claim is gone');
+  assert.match(src, /IsOnFoot is TransportModes\.Foot ALONE/);
+  // ...and the live predicate has always agreed: a ship rides
+  assert.equal(isOnFoot(TRANSPORT_MODES.Ship), false);
+  assert.equal(rayDistanceFor(isOnFoot(TRANSPORT_MODES.Ship)), RIDING_RAY_DISTANCE);
+  assert.equal(rayDistanceFor(isOnFoot(TRANSPORT_MODES.Foot)), WALKING_RAY_DISTANCE);
+});
+
 test('ROAD-B b3: terrain and StaticGeometry are the NEAREST hit, and are mutually exclusive', () => {
   // terrain alone
   let p = downProbe({ centreY: 5, terrainY: 4, meshDist: Infinity, rayDistance: 1 });
@@ -135,6 +155,12 @@ test('ROAD-B b3: terrain and StaticGeometry are the NEAREST hit, and are mutuall
   // the model BELOW the ground cannot be what you stand on
   p = downProbe({ centreY: 5, terrainY: 4.8, meshDist: 0.9, rayDistance: 1 });
   assert.deepEqual([p.terrain, p.staticGeometry], [true, false]);
+  // FLUSH - the tie. A model laid flat ON the terrain is what the
+  // player stands on (:149-152), so the answer is StaticGeometry, and a
+  // flush model over a water tile therefore reports None, not Swimming.
+  p = downProbe({ centreY: 5, terrainY: 4, meshDist: 1, rayDistance: 1 });
+  assert.deepEqual([p.hit, p.terrain, p.staticGeometry], [true, false, true],
+    'ties go to the mesh - `terrainDist < md`, never <=');
   // nothing in range at all
   p = downProbe({ centreY: 5, terrainY: -Infinity, meshDist: Infinity, rayDistance: 1 });
   assert.deepEqual([p.hit, p.terrain, p.staticGeometry], [false, false, false]);
@@ -222,7 +248,7 @@ test('ROAD-B b3: exteriorSurfaces runs all three off one raw tilemap byte, senti
 
 // ── 4. what the exterior does NOT have ─────────────────────────────
 
-test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim flag, ALWAYS', {
+test('ROAD-B b3: PlayerEnterExit’s exterior else arm is DFU’s own', {
   skip: missingDfu(PEE_CS) && 'no DFU checkout (DFU_PATH)',
 }, () => {
   const cs = readFileSync(dfuFile(PEE_CS), 'utf8');
@@ -232,6 +258,12 @@ test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim fl
   // and the else arm's three assignments
   assert.match(cs, /PlayerTileMapIndex\s*!=\s*0\)\s*\n\s*isPlayerSwimming\s*=\s*false;/,
     'the MeteoricDragon latch: swimming survives only on a water tile');
+});
+
+// The behaviour table itself reads no file and calls only the port's own
+// pure function, so it runs with or without a checkout - the law must be
+// pinned in the environment the suite actually runs in.
+test('ROAD-B b3: the exterior swim latch clears submersion and the motor swim flag, ALWAYS', () => {
   const latchWater = exteriorSwimLatch(true, 0);
   assert.deepEqual(latchWater, { swimming: true, submerged: false, motorSwimming: false },
     'a swimmer who surfaces onto open water keeps IsPlayerSwimming');

@@ -43,10 +43,18 @@
 // sit one pixel left and rows one pixel taller than DFU's. One
 // scroller, corrected once, is worth the pixel (Ledger A).
 //
-// FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
-// strip and an icon picker from the selected-item well; the rename
-// rides the port's own inline field here, and the icon picker waits
-// on the item-icon variant seam.
+// NOT A GAP, recorded. The icon picker was a phantom: DFU's
+// selected-item well opens nothing. SelectedItemButton_OnMouseClick
+// (DaggerfallItemMakerWindow.cs:605-611) nulls selectedItem, clears
+// both enchantment lists and Refresh()es - which _deselect (:243) does
+// exactly - and the only SpellIconPickerWindow consumers in the tree
+// are DaggerfallSpellBookWindow.cs:149 and DaggerfallSpellMakerWindow
+// .cs:194. The RENAME half is a widget departure, not a hole: DFU pops
+// a DaggerfallInputMessageBox (NameItemButon_OnMouseClick, :799-811)
+// where this window types into an inline strip, recorded at
+// Port-Ledger.md:686 - and that row's one real defect, the character
+// cap, is fixed (MAX_ITEM_NAME = 31, the TextBox default at
+// TextBox.cs:26, which RenameItem itself never narrows).
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';

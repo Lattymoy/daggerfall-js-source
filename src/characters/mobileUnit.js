@@ -434,15 +434,21 @@ export class MobileUnit {
     // interrupt a Spell mid-cast, verbatim). C14: casting is an edge
     // like striking (the cast decision fires ChangeEnemyState once).
     //
-    // A5: ...unless a one-shot that PAUSES ACTIONS is playing. DFU
-    // spends OneShotPauseActionsWhilePlaying at three sites and all
-    // three feed this one block: EnemyMotor.TakeAction returns before
-    // any state decision (:465-466), EnemyAttack.FixedUpdate returns
-    // before the melee timer and MeleeAnimation (:60-61), and
-    // KnockbackMovement returns before its ChangeEnemyState(Hurt)
-    // (:267-269). So a transforming Seducer holds its sequence against
-    // strike, cast and hurt alike - "prevent stunlocking transforming
-    // Seducers" - and the clock below keeps stepping it.
+    // A5, CORRECTED AT ROAD-U: ...unless a one-shot that PAUSES
+    // ACTIONS is playing. This block is the ANIM half alone - it holds
+    // the sequence against a strike, cast or hurt INTENT while the
+    // clock below keeps stepping it. The other two halves are spent
+    // where DFU spends them, and the comment that used to stand here
+    // claimed all three fed this one block, which was false: the
+    // ACTOR went on acting. EnemyMotor.TakeAction returns at :464-466
+    // (enemyMotor.js's `paused`, which also carries
+    // KnockbackMovement's :267-269 return - no shove, no decay, no
+    // CanAct write) and EnemyAttack.FixedUpdate returns at :59-61
+    // (enemyAttack.js's `paused` - no melee timer, no DFRandom draw,
+    // no MeleeAnimation). Both read this predicate off the mobile, in
+    // the two pools that can hold a Seducer (scenes/dungeonContext.js
+    // and scenes/exteriorFoes.js; the city watch is Knight_CityWatch
+    // and can never enter a transform state).
     if (this.isPlayingOneShot() && this.oneShotPauseActionsWhilePlaying()) {
       // no intent this frame
     } else if (striking && this.state !== 'attack') this._change('attack');

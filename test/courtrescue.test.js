@@ -69,7 +69,13 @@ test('CR1: the flow arm - before the plead box, with the acquittal exit trio', (
   assert.match(body, /fillVitalSigns\(playerEntity\);\s*\n\s*raiseRepForSentence\(playerEntity, court\);\s*\n\s*release\(\{ reposition: false \}\);/,
     'FillVitalSigns + RaiseReputationForDoingSentence + release (:191-193)');
   assert.match(body, /courtLines\(rescue\.textId,/, 'TEXT.RSC 550/551 through the court macro pass');
-  assert.match(body, /return;\s*\n\s*\}\s*\n\s*townTalk\.showOverlay/,
+  // ROAD-B B5: the door renamed, the law did not. Every box of the
+  // trial now goes through `courtBox` - a PushWindow onto the live
+  // court window for the first, a one-level replacement for each later
+  // one - so the courtroom stands behind the plea. What this pin
+  // actually asserts is the RETURN: the rescue arm ends before the
+  // plead box is ever built.
+  assert.match(body, /return;\s*\n\s*\}\s*\n\s*courtBox\(/,
     'a rescued player never sees the plead box');
   // the default member read is the one guild home
   assert.match(flow, /guildOfFaction\(factionId, resolveVariantGuild\(dict\), dict\)/,

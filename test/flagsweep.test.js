@@ -36,22 +36,22 @@ const TEXT = new Map(SRC.map((f) => [f, read(f)]));
 /** The tool's own marker test (tools/regenOpenFlags.mjs), per file. */
 const carriesFlag = (f) => /FLAGGED|INTERIM/.test(TEXT.get(f) ?? '');
 
-/** Every "FLAGGED in <file>.js" site, with the wrapped path resolved.
- *  Comments wrap, so the path routinely lands a line or two below the
- *  words - dungeonContext's restWindow delegation does exactly that,
- *  and a single-line regex reads the tree as almost empty. */
-function delegations() {
+/** Every "FLAGGED in <file>.js" site in one file's lines, with the
+ *  wrapped path resolved. Comments wrap, so the path routinely lands a
+ *  line or two below the words, and a single-line regex reads the tree
+ *  as almost empty. */
+function scan(lines) {
   const out = [];
-  for (const f of SRC) {
-    const lines = TEXT.get(f).split('\n');
-    lines.forEach((l, i) => {
-      if (!/FLAGGED in\b/.test(l)) return;
-      const win = lines.slice(i, i + 3).map((x) => x.replace(/^\s*(\/\/|\*)\s?/, '')).join(' ');
-      const m = /FLAGGED in\s+[\w/.-]*?([A-Za-z0-9_]+\.js)/.exec(win);
-      if (m) out.push({ from: f, line: i + 1, target: m[1] });
-    });
-  }
+  lines.forEach((l, i) => {
+    if (!/FLAGGED in\b/.test(l)) return;
+    const win = lines.slice(i, i + 3).map((x) => x.replace(/^\s*(\/\/|\*)\s?/, '')).join(' ');
+    const m = /FLAGGED in\s+[\w/.-]*?([A-Za-z0-9_]+\.js)/.exec(win);
+    if (m) out.push({ line: i + 1, target: m[1] });
+  });
   return out;
+}
+function delegations() {
+  return SRC.flatMap((f) => scan(TEXT.get(f).split('\n')).map((d) => ({ from: f, ...d })));
 }
 
 test('FS1: a flag that delegates to another FILE must find a flag in that file', () => {
@@ -70,16 +70,33 @@ test('FS1: a flag that delegates to another FILE must find a flag in that file',
   assert.deepEqual(dangling, [], 'every "FLAGGED in <file>" points at a file that really is flagged');
 });
 
-test('FS1: the form the guard measures is actually present in the tree', () => {
+test('FS1: the extractor really reads the form, on a fixture', () => {
   // A guard over an empty population is a green light that means
-  // nothing - PY1's lesson in a different shape. This asserts the
-  // sweep has real work to do, so deleting the last delegation (or
-  // breaking the regex) fails loudly instead of passing vacuously.
-  const found = delegations();
-  assert.ok(found.length >= 2, `the guard measures ${found.length} delegations; it is not measuring nothing`);
-  // and it reads the WRAPPED form, which is the common one
-  assert.ok(found.some((d) => d.from === 'src/scenes/dungeonContext.js' && d.target === 'restWindow.js'),
+  // nothing - PY1's lesson in a different shape - and this test used
+  // to answer that by requiring the TREE to carry a delegation. CR-35
+  // already showed why the tree is the wrong place to hold it: the
+  // requirement was pinned to dungeonContext's restWindow
+  // delegation, so a sentence B5 had retired could not be deleted
+  // without failing this file, and a guard that PUNISHES retirement
+  // is pointed backwards. The CLOSEOUT retired the last one -
+  // regionConditions.js sent the reader to a banishment flag in
+  // court.js, and the arrest arc had shipped both halves of it - so
+  // the population is now zero and the pin goes where CR-35 said it
+  // belongs: the extractor's reach is a property of the EXTRACTOR,
+  // measured on a fixture, and the sweep above stays armed for the
+  // next delegation anyone writes.
+  assert.deepEqual(scan(["// ... a thing is FLAGGED in", "// ui/restWindow.js' header."]),
+    [{ line: 1, target: 'restWindow.js' }],
     'the path that lands a line below the words is still resolved');
+  // the single-line form, which the wrapped one must not have cost us
+  assert.deepEqual(scan(['// the timer is FLAGGED in systems/guildServiceActions.js']),
+    [{ line: 1, target: 'guildServiceActions.js' }]);
+  // and a delegation the tree does carry would still be caught: a
+  // dangling target fails the sweep above, which is the whole law.
+  assert.deepEqual(scan(['// FLAGGED in nosuchmodule.js']), [{ line: 1, target: 'nosuchmodule.js' }]);
+  // ...and the sweep is reading a REAL population, not an empty tree:
+  assert.ok(SRC.filter(carriesFlag).length > 10,
+    'the tree still carries flags, so the delegation guard has something to resolve against');
 });
 
 test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () => {
@@ -124,19 +141,44 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   assert.match(world, /open world still has no ACTION OBJECTS in melee reach/);
 });
 
-test('FS1: the enchant ctx has its flag in the file that owes the mount', () => {
+test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
+  // WAVE D closed this. The flag's own claim was load-bearing and
+  // checkable - "setDefaultEnchantCtx has exactly ONE caller in the
+  // tree, world.js" - and it is the thing that changed: the standalone
+  // dungeon host mounts it too, through the SAME body, so the two
+  // cannot diverge.
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT\n\s*\/\/ MOUNTED HERE/);
-  // the claim is load-bearing and checkable: ONE caller, in world.js
+  assert.equal(/FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT\n\s*\/\/ MOUNTED HERE/.test(dc), false,
+    'the flag is retired where it stood');
   const callers = SRC.filter((f) => f !== 'src/systems/enchantments.js'
-    && /setDefaultEnchantCtx\(\{/.test(TEXT.get(f)));
-  assert.deepEqual(callers, ['src/scenes/world.js'],
-    'the flag says setDefaultEnchantCtx has exactly one caller; a second host mounting it retires the flag');
+    && /setDefaultEnchantCtx\(/.test(TEXT.get(f)));
+  assert.deepEqual(callers.sort(), ['src/scenes/dungeonContext.js', 'src/scenes/world.js'],
+    'both hosts that can hold an enchanted item mount it, and no third file does');
+  // ...through ONE body. A host that hand-rolled a ctx object would be
+  // the shape the flag was written about, one host later.
+  for (const f of callers) {
+    assert.match(TEXT.get(f), /setDefaultEnchantCtx\(createEnchantCtx\(\{/,
+      `${f} mounts the shared body rather than a second copy of it`);
+  }
   // and world.js no longer claims the flag lives somewhere it did not
-  assert.equal(/FLAGGED\n\s*\/\/ there with the rest of its enchant wiring/.test(read('src/scenes/world.js')), false);
+  const world = read('src/scenes/world.js');
+  assert.equal(/FLAGGED\n\s*\/\/ there with the rest of its enchant wiring/.test(world), false);
+  // ...nor states the RETIRED half in the present tense. world.js's E2
+  // mount header is the first file a reader of this mount opens, and
+  // it went on asserting "setDefaultEnchantCtx has exactly one caller
+  // in the tree" - and "the flag now exists where the work does",
+  // pointing at a flag this wave retired - after the second mount
+  // shipped. dungeonContext.js:1587 and hostEnchant.js:8 both say
+  // "had"; the sentence a reader meets first must too.
+  assert.equal(/setDefaultEnchantCtx has\n\s*\/\/ exactly one caller/.test(world), false,
+    'the E2 header states the one-caller claim as HISTORY, not as present fact');
+  assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
+    'the flag it pointed at was retired at the mount');
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1703 mounts the same one/,
+    'and the header names the shipped shape instead');
 });
 
-test('FS1: none of the four retired claims has a second home', () => {
+test('FS1: none of the retired claims has a second home', () => {
   // CQ1b's per-slice check, with EF1c's unquote rule so a correction
   // may quote what it retired.
   const RETIRED = [
@@ -144,6 +186,12 @@ test('FS1: none of the four retired claims has a second home', () => {
     /Routing F5\/F6 into interiors is its own arc/,
     /so melee strike frames resolve to nothing/,
     /C13 - targets pend the RMB animal\/exterior-foe arc/,
+    // CR-35: B5 retired restWindow's toggle-binding flag and BUILT the
+    // facility, but two files still sent the reader to that flag - and
+    // FS1's own delegation test could not see it, because restWindow
+    // carries three unrelated flags and carriesFlag is whole-file.
+    /toggle-close binding is FLAGGED in/,
+    /the reason restWindow's own header flags its toggle-close/,
   ];
   const offenders = [];
   for (const f of SRC) {

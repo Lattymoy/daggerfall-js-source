@@ -38,6 +38,13 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
+// ROAD-C c2: the THIRD directional term, and the only pass in the game
+// that lights it - DFU's automap beacons take THREE directional lights
+// (CreateLightsForAutomapGeometry, Automap.cs:2025-2076) where the world
+// has two. 0 = off, which is every other pass.
+uniform vec3 uLight3Dir;
+uniform float uLight3Scale;
+uniform vec3 uLight3Color;
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -50,7 +57,20 @@ uniform float uFogDensity;
 uniform vec2 uFogRange; // start, end
 uniform vec3 uCamPos;
 uniform float uClipY;  // A1: the automap slice plane (_SclicingPositionY's law) - fragments above it discard; 1e9 = off
-uniform float uAutomapMode;  // A2: 0 = off, 1 = automap (slice-distance dim), 2 = automap grayscale (prior-run geometry)
+// A2 + ROAD-C c2/S6: the SIX automap presentations, which are DFU's two
+// SubShader passes crossed with RENDER_IN_GRAYSCALE
+// (Assets/Shaders/DaggerfallAutomap.shader):
+//   0            off - the world
+//   1 / 2        BELOW the slice, colour / grayscale        (pass 1)
+//   3 / 4        ABOVE the slice, TRANSPARENT (alpha 0.75)  (pass 2)
+//   5 / 6        ABOVE the slice, WIREFRAME constant colour (pass 2)
+// Cutout is not a mode: DFU's #else clip(-1.0) arm means "draw the
+// above-slice group not at all", and the port simply does not issue it.
+// The EVEN modes are the grayscale halves, which is why the tests below
+// read amMode % 2 == 0.
+uniform float uAutomapMode;
+uniform float uAutomapWaterLevel;   // _WaterLevel: AddWater's per-block level (:1982-2001); the shader's own default is -10000
+uniform vec4 uAutomapWaterColor;    // _WaterColor: UnderwaterFog.waterMapColor, which Automap.cs:2590 injects into the one automap material
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -61,12 +81,20 @@ float fogFactorAt(vec3 worldPos) {
   return exp(-uFogDensity * d);
 }
 void main() {
-  if (vWorldPos.y > uClipY) discard;   // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY)
+  int amMode = int(uAutomapMode + 0.5);
+  // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY). c2/S6: the
+  // above-slice pass INVERTS it - DFU's second pass keeps exactly the
+  // fragments the first one threw away (if worldPos.y > slice {...}
+  // else discard), so the two passes are a partition of the geometry
+  // and never draw the same fragment twice.
+  if (amMode >= 3) { if (vWorldPos.y <= uClipY) discard; }
+  else if (vWorldPos.y > uClipY) discard;
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
+  float l3diff = max(dot(n, uLight3Dir), 0.0);
   // AUDIT 39r R17: DaggerfallDefault.shader:83-85 - "Emission cancels out
   // other lights". The lit term runs on albedo.rgb - emission, NOT on
   // the raw albedo, so an auto-emissive record (whose mask IS its albedo,
@@ -77,7 +105,8 @@ void main() {
   // and a negative albedo has no honest meaning here.
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
   vec3 albedo = max(tex.rgb - emission, vec3(0.0));
-  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+    + uLight3Color * (uLight3Scale * l3diff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   vec3 pointAcc = vec3(0.0);
@@ -106,10 +135,30 @@ void main() {
   // RENDER_IN_GRAYSCALE variant collapses to the 0.3/0.59/0.11
   // luminance. A maxed-out slice (1e9) dims everything to the 40%
   // floor - DFU's own AlwaysMaxOutSliceLevel behavior, bug for bug.
-  if (uAutomapMode > 0.5) {
-    float sliceDist = abs(vWorldPos.y - uClipY);
+  if (amMode > 0) {
+    // c2/S6: THE WATER TINT, which both DFU passes carry and the port
+    // omitted. It lands BEFORE the dim and before the mode's own
+    // colour decision, so wireframe's constant overwrites it exactly as
+    // the C# does (the tint is only ever visible above the slice in
+    // TRANSPARENT mode - that is DFU, not an omission).
+    if (vWorldPos.y <= uAutomapWaterLevel) {
+      outColor.rgb = mix(outColor.rgb, uAutomapWaterColor.rgb, uAutomapWaterColor.a);
+    }
+    // the above-slice arms, in the C#'s own order: WIREFRAME replaces
+    // the fragment outright, TRANSPARENT only rewrites the alpha.
+    if (amMode >= 5) outColor = (amMode >= 6) ? vec4(0.25, 0.25, 0.25, 0.6) : vec4(0.9, 0.9, 0.7, 0.6);
+    else if (amMode >= 3) outColor.a = 0.75;
+    // THE ABOVE-SLICE PASS NEVER DIMS, and this expression is why:
+    // DFU's second pass writes distance(min(worldPos.y, slice),
+    // slice), which is IDENTICALLY ZERO for every fragment it keeps
+    // (they are all above the slice, so the min IS the slice). Below
+    // the slice min(y, slice) == y and this is the first pass's
+    // distance(worldPos.y, slice) unchanged. One expression, both
+    // passes, bug for bug - a port that dims the above-slice group is
+    // wrong.
+    float sliceDist = distance(min(vWorldPos.y, uClipY), uClipY);
     outColor.rgb *= 1.0 - clamp(sliceDist / 20.0, 0.0, 0.6);
-    if (uAutomapMode > 1.5) {
+    if (amMode % 2 == 0) {
       float grayValue = dot(outColor.rgb, vec3(0.3, 0.59, 0.11));
       outColor.rgb = vec3(grayValue);
     }
@@ -798,6 +847,105 @@ export function screenQuadBlends(tex, color, opts = {}) {
   return (!tex && color[3] < 1) || Boolean(tex && opts.blend);
 }
 
+/** setFog takes a STRING mode and shadows an int; the panel bracket
+ *  has to spell the round trip. */
+const FOG_MODE_NAMES = ['off', 'linear', 'exp'];
+
+/**
+ * ROAD-C c2/S2: Unity's DEFAULT camera background, which is what
+ * `cameraAutomap` clears to - `clearFlags = SolidColor`
+ * (Automap.cs:2012) with `backgroundColor` never assigned anywhere in
+ * the file. (49, 77, 121, 5) / 255. The ALPHA IS THE POINT: at 5/255
+ * the automap's render texture is ~98% transparent over empty map
+ * space, which is how AMAP00I0's map-area art and the three
+ * alternative backgrounds show through. Clear this to opaque black
+ * and that whole feature disappears with no error anywhere.
+ */
+export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 / 255]);
+
+// c2/S6: the automap's water tint is UnderwaterFog's, not the shader's -
+// see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
+import { WATER_MAP_COLOR } from './underwaterFog.js';
+
+/** The automap render panel, DFU's own rect on the 320x200 native
+ *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
+ *  ExteriorAutomap's panelRenderAutomap: 1, 1, 318, 169). */
+export const AUTOMAP_PANEL_NATIVE_RECT = Object.freeze({ x: 1, y: 1, w: 318, h: 169 });
+
+/**
+ * ROAD-C c2/S6: THE SIX AUTOMAP PRESENTATIONS, which are DFU's two
+ * SubShader passes crossed with the RENDER_IN_GRAYSCALE keyword
+ * (Assets/Shaders/DaggerfallAutomap.shader). `Cutout` is deliberately
+ * NOT a mode: DFU's cutout arm is `clip(-1.0)` in the second pass -
+ * i.e. "draw the above-slice group not at all" - so the port answers it
+ * by not issuing that group.
+ */
+export const AUTOMAP_MODE = Object.freeze({
+  OFF: 0,
+  BELOW_COLOUR: 1,
+  BELOW_GRAY: 2,
+  ABOVE_TRANSPARENT_COLOUR: 3,
+  ABOVE_TRANSPARENT_GRAY: 4,
+  ABOVE_WIREFRAME_COLOUR: 5,
+  ABOVE_WIREFRAME_GRAY: 6,
+});
+
+/** `_WaterLevel`'s property default (the shader's own): a level no
+ *  dungeon floor reaches, so a dry block tints nothing. AddWater
+ *  (Automap.cs:1982-1988) returns without touching a renderer when the
+ *  native level is 10000, which leaves exactly this value in place. */
+export const AUTOMAP_NO_WATER = -10000;
+/** `_WaterColor` AS THE AUTOMAP MATERIAL ACTUALLY CARRIES IT, which is
+ *  NOT the shader's property default. DaggerfallAutomap.shader:27
+ *  declares `_WaterColor = (0.0,0.3,0.5,0.4)`, but that value is dead:
+ *  Automap.cs:2589-2590 mints the ONE automap material and immediately
+ *  does `automapMaterial.SetColor("_WaterColor",
+ *  PlayerEnterExit.UnderwaterFog.waterMapColor)` before the injection
+ *  event is raised, and AutomapModel.cs:83 `Instantiate(automapMaterial)`
+ *  copies that material onto every automap submesh - so every flooded
+ *  fragment in the game lerps toward waterMapColor. AddWater
+ *  (:1982-2001) sets only `_WaterLevel` and never touches the colour.
+ *  ONE SOURCE OF TRUTH: the number lives in underwaterFog.js, where DFU
+ *  keeps it (UnderwaterFog.cs:28, its only assignment in the tree), and
+ *  the automap reads it off that object rather than re-declaring it. */
+export const AUTOMAP_WATER_COLOR = WATER_MAP_COLOR;
+
+/**
+ * ROAD-C c2/S6: TRIANGLE INDICES -> LINE INDICES, the pure half of the
+ * wireframe substitution (see the drawMeshWire header for what it
+ * stands in for and what the loss is).
+ *
+ * THREE EDGES PER TRIANGLE, and a shared edge therefore appears TWICE -
+ * which is not waste, it is the fidelity: DFU's geometry shader computes
+ * per-triangle barycentrics, so it too draws every triangle's own three
+ * edges independently and shows the quad diagonals. De-duplicating
+ * edges would make the port's wireframe *cleaner than the original*.
+ *
+ * The ranges come out per sub-mesh, in the sub-mesh order, so the line
+ * draw can bind exactly the textures the triangle draw does (and so the
+ * albedo alpha cutout that gates every fragment of this shader gates
+ * the lines identically).
+ */
+export function buildWireIndices(triIndices, subMeshes) {
+  let total = 0;
+  for (const sm of subMeshes) total += sm.primitiveCount * 6;
+  const indices = new Uint32Array(total);
+  const ranges = [];
+  let w = 0;
+  for (const sm of subMeshes) {
+    const start = w;
+    for (let t = 0; t < sm.primitiveCount; t++) {
+      const b = sm.startIndex + t * 3;
+      const i0 = triIndices[b], i1 = triIndices[b + 1], i2 = triIndices[b + 2];
+      indices[w++] = i0; indices[w++] = i1;
+      indices[w++] = i1; indices[w++] = i2;
+      indices[w++] = i2; indices[w++] = i0;
+    }
+    ranges.push({ start, count: w - start });
+  }
+  return { indices, ranges };
+}
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -816,6 +964,9 @@ export class Renderer {
     this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
     this.uMoonScale = gl.getUniformLocation(this.program, 'uMoonScale');
     this.uMoonColor = gl.getUniformLocation(this.program, 'uMoonColor');
+    this.uLight3Dir = gl.getUniformLocation(this.program, 'uLight3Dir');
+    this.uLight3Scale = gl.getUniformLocation(this.program, 'uLight3Scale');
+    this.uLight3Color = gl.getUniformLocation(this.program, 'uLight3Color');
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
     this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
@@ -873,12 +1024,21 @@ export class Renderer {
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
-    this._automapMode = 0;   // A2: 0 off, 1 automap dim, 2 automap grayscale
+    this._automapMode = 0;   // A2/c2-S6: 0 off, 1/2 below-slice, 3/4 above-slice transparent, 5/6 above-slice wireframe
+    // c2/S6: the automap water tint. _WaterLevel starts at the shader's
+    // own property default, -10000.0 (below every dungeon floor, so a
+    // dry block tints nothing); _WaterColor starts at the value
+    // Automap.cs:2590 injects into the automap material, which is what
+    // every automap fragment in DFU actually lerps toward.
+    this._automapWaterLevel = AUTOMAP_NO_WATER;
+    this._automapWaterColor = new Float32Array(AUTOMAP_WATER_COLOR);
     const fogLocs = (program) => ({
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
       amMode: gl.getUniformLocation(program, 'uAutomapMode'),
+      amWaterLevel: gl.getUniformLocation(program, 'uAutomapWaterLevel'),
+      amWaterColor: gl.getUniformLocation(program, 'uAutomapWaterColor'),
       fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
       fogRange: gl.getUniformLocation(program, 'uFogRange'),
       camPos: gl.getUniformLocation(program, 'uCamPos'),
@@ -919,6 +1079,11 @@ export class Renderer {
     this._moonDir = new Float32Array([0, 1, 0]);
     this._moonScale = 0;
     this._moonColor = new Float32Array([1, 1, 1]);
+    // ROAD-C c2: the third directional term defaults off the same way -
+    // the automap beacon group is the one pass that ever raises it.
+    this._light3Dir = new Float32Array([0, 1, 0]);
+    this._light3Scale = 0;
+    this._light3Color = new Float32Array([1, 1, 1]);
     // Billboards stay full-bright until a scene installs the clock via
     // setLighting - the solid defaults above reproduce the pre-R5 solid
     // shading, but 0.45 + 0.55 * 0.5 would silently dim flats to 72.5%
@@ -1544,6 +1709,25 @@ void main() {
 
   clearScreenScissor() { this.gl.disable(this.gl.SCISSOR_TEST); }
 
+  /**
+   * ROAD-C c2/S10: THE SCISSOR-ONLY BRACKET, and it exists for the same
+   * reason beginPanelFrame does - the renderer owns GL state, and a
+   * leaked SCISSOR_TEST silently blanks the next host frame's clear
+   * rather than erroring (see setScreenScissor's own warning).
+   *
+   * The exterior automap needs a clipped region but NOT a panel frame:
+   * it is a CPU composition of screen quads drawn OVER the window art
+   * that is already on the canvas, so beginPanelFrame's beginFrame -
+   * which resizes the canvas and clears it - would wipe the chrome it
+   * is composing into. This is the narrow bracket for that case: set,
+   * run, clear, in a finally, so a throwing body cannot leave the
+   * scissor on.
+   */
+  screenScissor(rect, body) {
+    this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);
+    try { return body(); } finally { this.clearScreenScissor(); }
+  }
+
   drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1], opts = {}) {
     const gl = this.gl;
     if (!this.screenQuadProgram) {
@@ -1552,11 +1736,24 @@ layout(location=0) in vec2 aPos;
 uniform vec4 uDst;      // x, y, w, h in pixels (top-left origin)
 uniform vec2 uCanvas;
 uniform vec4 uSrc;      // u0, v0, u1, v1
+uniform vec4 uRot;      // cos, sin, pivotX, pivotY (screen pixels)
+uniform int uRotOn;
 out vec2 vUV;
 void main() {
   vec2 p = aPos * 0.5 + 0.5;                     // 0..1
   vUV = mix(uSrc.xy, uSrc.zw, vec2(p.x, p.y));
   vec2 px = uDst.xy + p * uDst.zw;
+  // ROAD-C c2/S10: the ONE new GL of the exterior automap. DFU's town
+  // map is a world quad seen by an orthographic camera that is rotated
+  // about -up, so its layout texture, its arrow and its stamp all draw
+  // TURNED. This is that turn, in the screen-quad's own space: a plain
+  // 2D rotation about a pixel pivot, applied AFTER uDst places the
+  // rect. It deliberately does NOT touch mirrorProjectionX - screen
+  // quads run with CULL_FACE disabled and have no facing to mirror.
+  if (uRotOn == 1) {
+    vec2 d = px - uRot.zw;
+    px = uRot.zw + vec2(d.x * uRot.x - d.y * uRot.y, d.x * uRot.y + d.y * uRot.x);
+  }
   vec2 ndc = vec2(px.x / uCanvas.x * 2.0 - 1.0, 1.0 - px.y / uCanvas.y * 2.0);
   gl_Position = vec4(ndc, 0.0, 1.0);
 }`;
@@ -1591,6 +1788,8 @@ void main() {
         useTex: gl.getUniformLocation(this.screenQuadProgram, 'uUseTex'),
         blendTex: gl.getUniformLocation(this.screenQuadProgram, 'uBlendTex'),
         color: gl.getUniformLocation(this.screenQuadProgram, 'uColor'),
+        rot: gl.getUniformLocation(this.screenQuadProgram, 'uRot'),
+        rotOn: gl.getUniformLocation(this.screenQuadProgram, 'uRotOn'),
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -1622,6 +1821,14 @@ void main() {
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
     gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
+    // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
+    // space dst is (the screen offset applies to both, so a rotated
+    // quad and its unrotated siblings letterbox together).
+    const rot = opts.rotate ?? null;
+    gl.uniform1i(this._screenQuad.rotOn, rot ? 1 : 0);
+    if (rot) {
+      gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
+    }
     if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); this.stats.texBinds++; }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
@@ -1795,7 +2002,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // fields on objects it OWNS; a shallow copy at upload time makes
     // that true for every mesh, present and future, at build cost
     // only.
-    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers };
+    // c2/S6: `triIndices` is a REFERENCE to the model's own index array,
+    // never a copy - it is what drawMeshWire expands into edge pairs the
+    // first time a mesh is drawn in the automap's wireframe mode. A
+    // bundle built without it simply cannot be wireframed (drawMeshWire
+    // draws nothing), which is the honest answer for a hand-built one.
+    return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers, triIndices: model.indices };
   }
 
   beginFrame(proj, view, lightDir) {
@@ -1825,6 +2037,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uMoonDir, this._moonDir);
     gl.uniform1f(this.uMoonScale, this._moonScale);
     gl.uniform3fv(this.uMoonColor, this._moonColor);
+    gl.uniform3fv(this.uLight3Dir, this._light3Dir);
+    gl.uniform1f(this.uLight3Scale, this._light3Scale);
+    gl.uniform3fv(this.uLight3Color, this._light3Color);
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
@@ -1846,6 +2061,158 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._view = view;
   }
 
+  /**
+   * ROAD-C c2/S2 - THE PANEL BRACKET. A second camera frame confined
+   * to a rectangle of the real canvas, opened and CLOSED by the
+   * renderer itself. EV6's law is that the renderer owns GL state, so
+   * this lives here and not in a ui/ module holding its own
+   * save/restore list one import away from a second copy: three such
+   * copies already existed (both automap windows and the bank's model
+   * preview) and every one of them leaked something.
+   *
+   * THE ORDER IS NOT FREE, and both halves of it are load-bearing:
+   *  - the SCISSOR goes on BEFORE beginFrame, because SCISSOR_TEST
+   *    also gates gl.clear (setScreenScissor's own warning) - the
+   *    clear beginFrame issues must not escape the panel;
+   *  - the VIEWPORT goes on AFTER it, because beginFrame's own
+   *    gl.viewport is full-canvas (and beginFrame may resize the
+   *    canvas first, which is also why the scissor is re-armed after).
+   *
+   * THE CLEAR IS DFU'S, not black. cameraAutomap.clearFlags is
+   * SolidColor (Automap.cs:2012) and backgroundColor is never
+   * assigned, so it is Unity's default (49,77,121,5)/255 - alpha
+   * 5/255, TWO PERCENT - and the render texture is alpha-blended over
+   * the panel. That near-transparent clear is exactly what lets
+   * AMAP00I0's map-area art and the three alternative backgrounds
+   * show through empty map space; an opaque black clear silently
+   * deletes the feature. The port draws DIRECTLY over the background
+   * already on the canvas, so the "clear" is a DEPTH-ONLY clear
+   * (colorMask off across beginFrame's clear) plus a BLENDED
+   * full-panel quad at that colour.
+   *
+   * `rect` is real canvas pixels, top-left origin - drawScreenQuad's
+   * space, with the letterbox offset already applied by the caller.
+   */
+  beginPanelFrame(proj, view, lightDir, rect, clearRGBA = PANEL_CLEAR_RGBA, setup = null) {
+    if (this._panelSaved) throw new Error('beginPanelFrame: already inside a panel frame');
+    const gl = this.gl;
+    // EVERY global this pass can touch, saved by name. A thirteenth
+    // one added to the renderer later must be added HERE - the source
+    // pin in test/roadc_panelframe.test.js is what enforces it.
+    this._panelSaved = {
+      screenOffset: this._screenOffset ? [...this._screenOffset] : [0, 0],
+      clipY: this._clipY,
+      automapMode: this._automapMode,
+      automapWaterLevel: this._automapWaterLevel,
+      automapWaterColor: [...this._automapWaterColor],
+      fogMode: this._fogMode,
+      fogDensity: this._fogDensity,
+      fogRange: [this._fogRange[0], this._fogRange[1]],
+      fogColor: this._fogColor,
+      ambient: this._ambient,
+      sunScale: this._sunScale,
+      sunColor: this._sunColor,
+      clockLit: this._clockLit,
+      moonScale: this._moonScale,
+      moonDir: [...this._moonDir],
+      moonColor: [...this._moonColor],
+      light3Scale: this._light3Scale,
+      light3Dir: [...this._light3Dir],
+      light3Color: [...this._light3Color],
+      windowEmission: this._windowEmission,
+      pointLights: this._pointLights,
+      pointColor: this._pointColor,
+      pointColors: this._pointColors,
+      indirect: [this._indirect[0], this._indirect[1], this._indirect[2], this._indirect[3]],
+      indirectColor: this._indirectColor,
+      clearColor: [this._clearColor[0], this._clearColor[1], this._clearColor[2], this._clearColor[3]],
+      proj: this._proj,
+      view: this._view,
+      lightDir: this._lightDir,
+      camPos: [this._camPos[0], this._camPos[1], this._camPos[2]],
+      rect,
+    };
+    this.setScreenOffset(0, 0);
+    // `setup` runs AFTER the save and BEFORE beginFrame, which is the
+    // only window in which a pass can choose its own fog/lighting:
+    // those setters merely shadow, and beginFrame is what uploads
+    // them. A caller that sets them before entering the bracket would
+    // have its own overrides saved as the "entry" state and restored
+    // on the way out - the leak this bracket exists to end.
+    if (setup) setup();
+    this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);   // BEFORE beginFrame - SCISSOR_TEST gates gl.clear
+    gl.colorMask(false, false, false, false);                // ...and the colour half of that clear must not land
+    this.beginFrame(proj, view, lightDir);
+    gl.colorMask(true, true, true, true);
+    // beginFrame may have resized the canvas; re-arm the scissor and
+    // take the viewport it just set to full-canvas.
+    this.setScreenScissor(rect.x, rect.y, rect.w, rect.h);
+    gl.viewport(
+      Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)),
+      Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)),
+    );
+    // the DFU clear, blended over whatever the panel already shows
+    if (clearRGBA) {
+      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,
+        [clearRGBA[0], clearRGBA[1], clearRGBA[2], clearRGBA[3]]);
+      gl.viewport(
+        Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)),
+        Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)),
+      );
+    }
+  }
+
+  /** Close the bracket: every global back to its entry value, the
+   *  viewport and scissor back to the host's, the draw state back to
+   *  the renderer's baseline, and ONE markForeignPass - the pass ran
+   *  its own programs and the shadows must not be trusted. */
+  endPanelFrame() {
+    const s = this._panelSaved;
+    if (!s) return;
+    this._panelSaved = null;
+    const gl = this.gl;
+    this.setClipY(s.clipY);
+    this.setAutomapMode(s.automapMode);
+    this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
+    this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
+    this.setLighting(s.ambient, s.sunScale, s.sunColor);
+    this._clockLit = s.clockLit;
+    this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
+    this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];
+    this._moonColor[0] = s.moonColor[0]; this._moonColor[1] = s.moonColor[1]; this._moonColor[2] = s.moonColor[2];
+    this.setThirdLight(s.light3Scale ? { scale: s.light3Scale, dir: s.light3Dir, color: s.light3Color } : null);
+    this._light3Dir[0] = s.light3Dir[0]; this._light3Dir[1] = s.light3Dir[1]; this._light3Dir[2] = s.light3Dir[2];
+    this._light3Color[0] = s.light3Color[0]; this._light3Color[1] = s.light3Color[1];
+    this._light3Color[2] = s.light3Color[2];
+    this.setWindowEmission(s.windowEmission);
+    this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
+    this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
+    this._proj = s.proj; this._view = s.view; this._lightDir = s.lightDir;
+    this._camPos[0] = s.camPos[0]; this._camPos[1] = s.camPos[1]; this._camPos[2] = s.camPos[2];
+    this._clearColor[0] = s.clearColor[0]; this._clearColor[1] = s.clearColor[1];
+    this._clearColor[2] = s.clearColor[2]; this._clearColor[3] = s.clearColor[3];
+    gl.clearColor(s.clearColor[0], s.clearColor[1], s.clearColor[2], s.clearColor[3]);
+    // the draw-state baseline every entry point in this file assumes
+    gl.colorMask(true, true, true, true);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    this.clearScreenScissor();
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.setScreenOffset(s.screenOffset[0], s.screenOffset[1]);
+    this.markForeignPass();
+  }
+
+  /** The ONLY sanctioned way to run a panel pass: the return happens
+   *  in a `finally`, so a throw inside the body cannot leave the
+   *  session's one shared renderer holding a scissor (which silently
+   *  blanks the next host frame's clear rather than erroring). */
+  panelFrame({ proj, view, lightDir, rect, clear = PANEL_CLEAR_RGBA, setup = null }, body) {
+    this.beginPanelFrame(proj, view, lightDir, rect, clear, setup);
+    try { return body(); } finally { this.endPanelFrame(); }
+  }
+
   /** Active window style emission (windowEmissionRGB output). */
   setWindowEmission(rgb) {
     this._windowEmission = rgb;
@@ -1859,6 +2226,55 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._moonScale = moon.scale;
     this._moonDir[0] = moon.dir[0]; this._moonDir[1] = moon.dir[1]; this._moonDir[2] = moon.dir[2];
     this._moonColor[0] = moon.color[0]; this._moonColor[1] = moon.color[1]; this._moonColor[2] = moon.color[2];
+  }
+
+  /**
+   * ROAD-C c2: the THIRD directional term. Takes {scale, dir, color} or
+   * null (off, which is every pass but one). It exists because DFU's
+   * automap beacons are lit by THREE directional lights -
+   * CreateLightsForAutomapGeometry (Automap.cs:2025-2076) - where the
+   * world's own lighting has two, sun and masser; collapsing the back
+   * light into either of those would be a departure, and it is cheaper
+   * to carry the term than to record one.
+   */
+  setThirdLight(light) {
+    if (!light) { this._light3Scale = 0; return; }
+    this._light3Scale = light.scale;
+    this._light3Dir[0] = light.dir[0]; this._light3Dir[1] = light.dir[1]; this._light3Dir[2] = light.dir[2];
+    this._light3Color[0] = light.color[0]; this._light3Color[1] = light.color[1];
+    this._light3Color[2] = light.color[2];
+  }
+
+  /** The frame's key-light direction (the direction TOWARD the light).
+   *  beginFrame takes it as an argument; this is for a pass that has to
+   *  change it BETWEEN draws - see uploadLighting. */
+  setLightDir(dir) {
+    this._lightDir = dir;
+  }
+
+  /**
+   * Push the directional lighting to the mesh program NOW. beginFrame is
+   * normally the only uploader - the setters merely shadow - but the
+   * automap's beacon group is LIT where the geometry group drawn just
+   * before it is not (DaggerfallAutomap.shader has no light term at all;
+   * the three automap lights carry `cullingMask = 1 << layerAutomap` and
+   * reach only the Standard-material beacons), and both are draws inside
+   * ONE panelFrame. Same immediate-upload seam setClipY and
+   * setAutomapWater already have, for the same reason.
+   */
+  uploadLighting() {
+    const gl = this.gl;
+    this._use(this.program);
+    gl.uniform3fv(this.uLightDir, this._lightDir);
+    gl.uniform3fv(this.uAmbient, this._ambient);
+    gl.uniform1f(this.uSunScale, this._sunScale);
+    gl.uniform3fv(this.uSunColor, this._sunColor);
+    gl.uniform3fv(this.uMoonDir, this._moonDir);
+    gl.uniform1f(this.uMoonScale, this._moonScale);
+    gl.uniform3fv(this.uMoonColor, this._moonColor);
+    gl.uniform3fv(this.uLight3Dir, this._light3Dir);
+    gl.uniform1f(this.uLight3Scale, this._light3Scale);
+    gl.uniform3fv(this.uLight3Color, this._light3Color);
   }
 
   /** Time-of-day lighting: ambient color, sun scale, sun color. */
@@ -1887,6 +2303,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(prog.camPos, this._camPos);
     if (prog.clipY) gl.uniform1f(prog.clipY, this._clipY);   // A1: only the mesh shader carries the slice
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
+    if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
+    if (prog.amWaterColor) gl.uniform4fv(prog.amWaterColor, this._automapWaterColor);
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
@@ -1907,18 +2325,55 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
   }
 
-  /** A2: the automap presentation mode for the SOLID mesh pass -
-   *  0 off (the world), 1 = automap (the slice-distance dim), 2 =
-   *  automap grayscale (prior-run geometry, RENDER_IN_GRAYSCALE's
-   *  law). Immediate upload, same reason as setClipY: the automap
-   *  window flips it between draw groups MID-pass. */
+  /**
+   * A2 + c2/S6: the automap presentation mode for the SOLID mesh pass -
+   * one of AUTOMAP_MODE. Immediate upload, same reason as setClipY: the
+   * automap window flips it between draw groups MID-pass.
+   *
+   * THE MODE IS THE QUEUE, so this setter owns the blend flip too, and
+   * that is not a convenience - it is the only way the two cannot drift.
+   * DaggerfallAutomap.shader puts the below-slice pass in
+   * `Queue = Geometry / RenderType = Opaque` (no Blend line at all) and
+   * the above-slice pass in `Queue = Transparent` under
+   * `Blend SrcAlpha OneMinusSrcAlpha` with `ZWrite On` and BlendOp Add.
+   * ZWrite ON with NO sorting is deliberate on DFU's part: the
+   * order-dependent artifacts of the transparent map ARE the classic
+   * look, not a bug for a port to fix.
+   */
   setAutomapMode(m) {
     this._automapMode = m ?? 0;
+    const gl = this.gl;
     if (this._solidFog?.amMode) {
-      const gl = this.gl;
       this._use(this.program);
       gl.uniform1f(this._solidFog.amMode, this._automapMode);
     }
+    if (this._automapMode >= AUTOMAP_MODE.ABOVE_TRANSPARENT_COLOUR) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    } else {
+      gl.disable(gl.BLEND);
+    }
+    gl.depthMask(true);   // ZWrite On in BOTH passes - the transparent group still writes depth
+  }
+
+  /**
+   * c2/S6: the automap water tint - `_WaterLevel` and `_WaterColor`,
+   * which AddWater (Automap.cs:1982-2001) sets per BLOCK through a
+   * MaterialPropertyBlock and every automap fragment reads. `level`
+   * null means a dry block: the shader's own -10000 default, which
+   * AddWater leaves in place when the native level is 10000.
+   * Immediate upload, for setClipY's reason - the draw loop changes it
+   * between blocks inside one pass.
+   */
+  setAutomapWater(level, rgba = null) {
+    this._automapWaterLevel = level ?? AUTOMAP_NO_WATER;
+    if (rgba) this._automapWaterColor.set(rgba);
+    const f = this._solidFog;
+    if (!f?.amWaterLevel && !f?.amWaterColor) return;
+    const gl = this.gl;
+    this._use(this.program);
+    if (f.amWaterLevel) gl.uniform1f(f.amWaterLevel, this._automapWaterLevel);
+    if (f.amWaterColor) gl.uniform4fv(f.amWaterColor, this._automapWaterColor);
   }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16.
@@ -2052,6 +2507,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
+    // c2/S6: the wireframe cache is the mesh's, and dies with it
+    if (mesh._wire) {
+      gl.deleteBuffer(mesh._wire.ebo);
+      gl.deleteVertexArray(mesh._wire.vao);
+    }
+    mesh._wire = null;
   }
 
   /** Release a billboard batch's GPU resources. */
@@ -2541,7 +3002,76 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     console.warn(`[renderer] drawMesh skipped a draw with ${why} - a model is missing from this scene, not from the frame loop`, mesh, modelMatrix);
   }
 
+  /**
+   * ROAD-C c2/S6: THE AUTOMAP'S WIREFRAME MODE, and a RECORDED
+   * SUBSTITUTION stated at its true size.
+   *
+   * DFU draws wireframe with a GEOMETRY SHADER: `geom` hands each
+   * fragment the triangle's barycentric distances and the fragment
+   * shader keeps only `exp2(-4*d*d) >= 0.1`, writing a CONSTANT colour
+   * on the kept fragments. WebGL2 has no geometry shader stage, so the
+   * port draws `gl.LINES` over an edge index buffer instead.
+   *
+   * THE LOSS IS SMALL, and this is why: DFU's falloff is HARD-CLIPPED at
+   * I < 0.1 and the kept fragments are a flat (0.9,0.9,0.7,0.6) /
+   * (0.25,0.25,0.25,0.6) - there is no soft falloff to lose, only a
+   * ~0.9 px hard band. The two real deltas are (a) WebGL2 caps
+   * `lineWidth` at 1 px on every desktop driver, so the band is 1 px
+   * rather than ~0.9, and (b) quad diagonals - which DFU's per-triangle
+   * barycentrics draw as well, so they are parity, not a defect.
+   * DO NOT "fix" this with a barycentric vertex variant: that needs a
+   * de-indexed copy of every mesh (three unique vertices per triangle),
+   * which doubles automap-eligible vertex memory for under a pixel.
+   *
+   * The line index buffer is built ONCE per mesh, on the first
+   * wireframe draw, and freed with the mesh. It gets its OWN VAO over
+   * the mesh's OWN vertex buffers - no vertex data is duplicated - and
+   * that second VAO is not a nicety: a WebGL2 VAO captures its
+   * ELEMENT_ARRAY_BUFFER binding, so drawing lines through the mesh's
+   * VAO would have to swap the triangle EBO out and back on every
+   * single draw, and one missed restore silently corrupts every later
+   * triangle draw of that mesh with no error anywhere.
+   */
+  drawMeshWire(mesh, modelMatrix, texRemap = null) {
+    this._drawMeshBundle(mesh, modelMatrix, texRemap, true);
+  }
+
+  /** Lazily expand a mesh's triangles into edge pairs, with a VAO of
+   *  their own over the mesh's existing vertex buffers. Answers null
+   *  for a bundle that kept no indices (nothing to line-draw). */
+  _ensureWireMesh(mesh) {
+    if (mesh._wire !== undefined) return mesh._wire;
+    if (!mesh.triIndices || !mesh.buffers || mesh.buffers.length < 3) {
+      mesh._wire = null;
+      return null;
+    }
+    const gl = this.gl;
+    const { indices, ranges } = buildWireIndices(mesh.triIndices, mesh.subMeshes);
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    // the SAME three vertex buffers createMesh built, in its layout
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffers[0]);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffers[1]);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffers[2]);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+    const ebo = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    this._bindVao(null);
+    mesh._wire = { vao, ebo, ranges, indexCount: indices.length };
+    return mesh._wire;
+  }
+
   drawMesh(mesh, modelMatrix, texRemap = null) {
+    this._drawMeshBundle(mesh, modelMatrix, texRemap, false);
+  }
+
+  _drawMeshBundle(mesh, modelMatrix, texRemap, wire) {
     // NEVER TRAPS. A mesh that is absent, or one whose subMeshes never
     // arrived, is game DATA missing - a model id the player's ARCH3D
     // does not carry, a record the ingest diet dropped - and the rule
@@ -2565,6 +3095,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       return;
     }
     const gl = this.gl;
+    const wireMesh = wire ? this._ensureWireMesh(mesh) : null;
+    if (wire && !wireMesh) return;
     // Every draw entry point owns its program binding (drawTerrain /
     // drawBillboards / drawWater already do) - R9 interleaved terrain
     // draws before the model loop, which silently ran meshes on the
@@ -2574,8 +3106,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // program is already bound.
     this._use(this.program);
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
-    this._bindVao(mesh.vao);
-    for (const sm of mesh.subMeshes) {
+    this._bindVao(wire ? wireMesh.vao : mesh.vao);
+    for (let smi = 0; smi < mesh.subMeshes.length; smi++) {
+      const sm = mesh.subMeshes[smi];
       // EV2: the resolved textures cache on the sub-mesh, stamped with
       // the texture generation and the remap's identity. The old body
       // built the `${archive}_${record}` key fresh here - per sub-mesh,
@@ -2617,8 +3150,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
       this.stats.texBinds += 2;
-      gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
-      this.stats.draws++;
+      if (wire) {
+        const range = wireMesh.ranges[smi];
+        gl.drawElements(gl.LINES, range.count, gl.UNSIGNED_INT, range.start * 4);
+        this.stats.draws++;   // F50: every gl.draw* site carries its own count
+      } else {
+        gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
+        this.stats.draws++;
+      }
     }
     // EV6: no trailing unbind - the sorted drawLists mean the next
     // drawMesh is very often the SAME mesh, and the shadow then skips

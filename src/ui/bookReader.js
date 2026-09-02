@@ -22,14 +22,41 @@
 // convention for every native window; DFU's reader is mouse-only).
 // OpenBook plays SoundClips.OpenBook, as DFU's Setup/OnPush do.
 //
-// INTERIM, loud: lines draw in the host font at a fixed 10px row -
-// DFU measures per-label heights and honors FontPrefix switches; the
-// port's font set has one book face today. A row not fully inside
-// the panel is clipped WHOLE (the question-scroll interim, same row).
+// ROAD-D D10 closed this file's interim, both halves of it.
+//
+// THE ROWS ARE MEASURED. Every label CreateBookLabels makes is a
+// WRAPPING label (WrapText/WrapWords, MaxWidth = the page panel's
+// 300 - DaggerfallBookReaderWindow.cs:259-271, :318-320), and
+// LayoutBookLabels stacks them with `y += label.Size.y` (:317-328)
+// where TextLabel's own Size.y is `rows.Count * font.GlyphHeight`
+// (TextLabel.cs:708, :789). So a token that wraps to three rows
+// advances three glyph heights and a token in a taller font advances
+// by ITS height - which the old fixed 10px row could not express in
+// either direction. maxHeight, and with it ScrollBook's clamp, is
+// that same sum (:311, :328).
+//
+// FONTPREFIX SWITCHES THE FACE. `currentFont = GetFont((FontName)
+// token.x - 1)` (:235-237) indexes DaggerfallFont.FontName
+// (DaggerfallFont.cs:65-72), so 1 is FONT0000 and 5 is FONT0004; the
+// state is sticky until the next prefix or an empty line's reset, and
+// the reader starts in DaggerfallUI.DefaultFont (:210), which is the
+// font the port's hosts already hand this window. All five FNTs load
+// through the host's fetchBytes beside the art, each in its own guard
+// - a missing FNT costs that face, never the book.
+//
+// A PARTIALLY VISIBLE LABEL DRAWS. ScrollBook's own enable test is
+// `label.Position.y < pagePanel.Size.y && label.Position.y +
+// label.Size.y > 0` (:193-194) - overlap, not containment - and the
+// pixel cut comes from RestrictedRenderArea, which is the renderer's
+// scissor bracket here (the same one chargenArt.js:1054 uses for the
+// question scroll). The old whole-row clip popped the boundary line
+// in and out instead of sliding it.
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
-import { drawText, measureText } from './text.js';
+import { drawText, measureText, makeFont } from './text.js';
+import { FntFile } from '../formats/fntFile.js';   // ROAD-D D10: FontPrefix's five faces
+import { wrapText } from './talkWindow.js';        // ROAD-D D10: TextLabel's word wrap, one home
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { BookFile } from '../formats/bookFile.js';
 import { getBookFileName, loadBookPrices } from '../systems/books.js';   // A2: the book-price warm
@@ -44,7 +71,14 @@ export const BOOK_RECTS = Object.freeze({
 });
 export const PAGE_PANEL = Object.freeze({ x: 10, y: 21, w: 300, h: 159 });   // classic geometry
 export const SCROLL_AMOUNT = 24;
-const ROW_H = 10;   // interim fixed row (see header)
+/** MaxWidth = pagePanel.Size.x (:319) - the width every book label
+ *  word-wraps at. */
+export const BOOK_WRAP_WIDTH = PAGE_PANEL.w;
+/** FontPrefix's `(FontName)token.x - 1` (:236) over
+ *  DaggerfallFont.FontName (DaggerfallFont.cs:65-72). Index 0 is "no
+ *  prefix seen", which is DaggerfallUI.DefaultFont. */
+export const BOOK_FONT_NAMES = Object.freeze(['FONT0000', 'FONT0001', 'FONT0002', 'FONT0003', 'FONT0004']);
+export const bookFontName = (x) => BOOK_FONT_NAMES[(x | 0) - 1] ?? null;
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
@@ -58,11 +92,56 @@ export async function preloadBookArt(deps) {
   // (systems/books.js). Fire-and-forget: an unwarmed registry prices
   // books at the template's basePrice and says so, once, loudly.
   loadBookPrices(deps?.fetchBytes).catch(() => {});
+  await loadBookFonts(deps);
   if (_art) return;
   try { _art = await loadImg(deps, 'BOOK00I0.IMG'); }
   catch { console.warn('[book] BOOK00I0.IMG unavailable; the text fallback stands in'); }
 }
 export const bookArtLoaded = () => !!_art;
+
+// ROAD-D D10: the five FNT faces FontPrefix can name. Each is loaded
+// in its OWN guard, the chargenArt.js:409 shape - a missing FNT costs
+// that face and falls back to the host's font, never the book. The
+// version counter is what tells a window laid out before the fonts
+// landed to measure itself again.
+const _fonts = new Map();
+let _fontsVersion = 0;
+export const bookFont = (x) => _fonts.get(bookFontName(x)) ?? null;
+export const bookFontsVersion = () => _fontsVersion;
+export async function loadBookFonts(deps) {
+  if (!deps?.fetchBytes || !deps?.renderer) return;
+  for (const name of BOOK_FONT_NAMES) {
+    if (_fonts.has(name)) continue;
+    try {
+      _fonts.set(name, makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes(`${name}.FNT`)), name));
+      _fontsVersion++;
+    } catch (e) { console.warn(`[book] ${name}.FNT unavailable; that FontPrefix falls back to the host font`, e?.message ?? e); }
+  }
+}
+
+/** LayoutBookLabels (:307-330), pure. Each layout line becomes one
+ *  WRAPPING label: its rows are wrapText at MaxWidth, its height is
+ *  `rows.length * GlyphHeight` in ITS OWN face (TextLabel.cs:708),
+ *  and the next label starts where it ends. An empty line still
+ *  measures one row, because CreateNewTextLayout always pushes a
+ *  final row even for no glyphs (TextLabel.cs:701-704). */
+export function placeBookLabels(lines, fontFor, maxWidth = BOOK_WRAP_WIDTH) {
+  const placed = [];
+  let y = 0;
+  for (const line of lines) {
+    const face = fontFor(line.font);
+    const rowH = face?.fnt?.fixedHeight ?? 0;
+    const rows = line.text && face ? wrapText(face.fnt, line.text, maxWidth) : [line.text ?? ''];
+    const h = rows.length * rowH;
+    placed.push({ text: line.text, center: line.center, face, rows, rowH, y, h });
+    y += h;
+  }
+  return { placed, maxHeight: y };
+}
+
+/** ScrollBook's enable test (:193-194) - OVERLAP with the panel, not
+ *  containment, so the boundary label draws and the scissor cuts it. */
+export const bookLabelVisible = (posY, h, panelH = PAGE_PANEL.h) => posY < panelH && posY + h > 0;
 
 /** Token stream -> layout lines, LocalizedBook.ConvertTokensToString +
  *  CreateBookLabels' law (AUDIT B-P1, which corrected this):
@@ -77,9 +156,9 @@ export const bookArtLoaded = () => !!_art;
  *     the next page's first line rather than closing a row.
  *   - PositionPrefix and SameLineOffset are "Unused" for books in
  *     DFU's own converter - dropped here too, bug-for-bug.
- *   - FontPrefix is sticky font state in DFU (currentFont); the port
- *     has one book face, so it is recorded and not yet applied (the
- *     loud interim in this file's header). */
+ *   - FontPrefix is sticky font state in DFU (currentFont, :235-237)
+ *     and ROAD-D D10 applies it: `font` here is the token's raw x,
+ *     which bookFontName maps onto DaggerfallFont.FontName. */
 export function layoutBookLines(bookFile) {
   const lines = [];
   let alignCenter = false, font = 0, lineTokens = 0;
@@ -161,7 +240,15 @@ export class BookReaderWindow {
   constructor(bookFile) {
     this.book = bookFile;
     this.lines = layoutBookLines(bookFile);
-    this.maxHeight = this.lines.length * ROW_H;
+    // ROAD-D D10: measured at the first draw, because the port's
+    // fonts arrive through an async seam where DFU's are ready at
+    // Setup. Until then maxHeight is 0, which only makes ScrollBook's
+    // down-clamp stricter - the window cannot scroll a book it has
+    // not measured, and it measures on the frame it first draws.
+    this.placed = [];
+    this.maxHeight = 0;
+    this._layoutFont = null;
+    this._layoutVersion = -1;
     this.scrollPosition = 0;
     this.currentPage = 0;   // page-turn sound only
     this.done = false;
@@ -205,30 +292,51 @@ export class BookReaderWindow {
     return true;   // an open window owns the pointer
   }
 
+  /** LayoutBookLabels (:307-330). DFU runs it once, from Setup;
+   *  here it re-runs whenever the font set it measured against has
+   *  changed - the host's default font, or another FNT landing. */
+  layout(defaultFont) {
+    if (this._layoutFont === defaultFont && this._layoutVersion === bookFontsVersion()) return this.placed;
+    const out = placeBookLabels(this.lines, (x) => bookFont(x) ?? defaultFont);
+    this.placed = out.placed;
+    this.maxHeight = out.maxHeight;
+    this._layoutFont = defaultFont;
+    this._layoutVersion = bookFontsVersion();
+    return this.placed;
+  }
+
   draw(renderer, canvas, font, s) {
     if (!_art) return this._drawFallback(renderer, canvas, font, s);
     const m = nativeMetrics(canvas);
     drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
-    const top = PAGE_PANEL.y, bottom = PAGE_PANEL.y + PAGE_PANEL.h;
-    for (let i = 0; i < this.lines.length; i++) {
-      const y = top + this.scrollPosition + i * ROW_H;
-      if (y < top || y + ROW_H > bottom) continue;   // whole-row clip (interim)
-      const line = this.lines[i];
-      if (!line.text) continue;
-      if (line.center) {
-        shadowText(renderer, font, line.text, m, PAGE_PANEL.x, y, { align: 'center', w: PAGE_PANEL.w });
-      } else {
-        shadowText(renderer, font, line.text, m, PAGE_PANEL.x, y);
+    const placed = this.layout(font);
+    // RestrictedRenderArea over the page panel (:321-322): the pixel
+    // cut, so a boundary label slides out instead of popping.
+    renderer.setScreenScissor?.(m.ox + PAGE_PANEL.x * m.s, m.oy + PAGE_PANEL.y * m.s, PAGE_PANEL.w * m.s, PAGE_PANEL.h * m.s);
+    try {
+      for (const label of placed) {
+        const posY = label.y + this.scrollPosition;   // label.Position.y, panel-relative
+        if (!bookLabelVisible(posY, label.h)) continue;
+        if (!label.text) continue;
+        const face = label.face ?? font;
+        for (let r = 0; r < label.rows.length; r++) {
+          const y = PAGE_PANEL.y + posY + r * label.rowH;
+          if (label.center) {
+            shadowText(renderer, face, label.rows[r], m, PAGE_PANEL.x, y, { align: 'center', w: PAGE_PANEL.w });
+          } else {
+            shadowText(renderer, face, label.rows[r], m, PAGE_PANEL.x, y);
+          }
+        }
       }
-    }
+    } finally { renderer.clearScreenScissor?.(); }
   }
 
   _drawFallback(renderer, canvas, font, s) {
     const W = canvas.width, H = canvas.height;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: W, h: H }, undefined, [0.04, 0.03, 0.02, 0.92]);
     const white = [0.9, 0.9, 0.85, 1];
-    const start = Math.max(0, Math.trunc(-this.scrollPosition / ROW_H));
+    const start = Math.max(0, Math.trunc(-this.scrollPosition / 10));   // the art-less panel keeps its own 10px row
     this.lines.slice(start, start + 16).forEach((line, i) => {
       const t = line.text || ' ';
       const x = line.center ? (W - measureText(font.fnt, t) * s) / 2 : 20 * s;

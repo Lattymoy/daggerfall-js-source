@@ -87,13 +87,18 @@ function fireListener(lineSrc, event = {}) {
   // is the state a grab happens in, so the arm is witnessed in the
   // order it runs.
   const document = { pointerLockElement: null };
+  // ROAD-tail: the routeLargeHudClick line reads the host's ONE pause
+  // (`gamePaused()`, the union of the hosts' stacks' `paused()`) where
+  // it used to re-derive `townTalk.overlayActive || modes?.overlayHeld`
+  // inline. Same subject for this pin - the harness just owes the name.
+  const gamePaused = () => false;
   const latch = {};
   const createActivateGate = () => ({});
   const setClickDelay = () => seen.push({ type: 'setClickDelay' });
   new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
-    'document', 'latch', 'createActivateGate', 'setClickDelay',
+    'document', 'gamePaused', 'latch', 'createActivateGate', 'setClickDelay',
     `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel,
-    document, latch, createActivateGate, setClickDelay);
+    document, gamePaused, latch, createActivateGate, setClickDelay);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);

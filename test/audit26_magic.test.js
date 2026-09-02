@@ -306,5 +306,5 @@ test('audit26 F067: the refused pass spends nothing - the per-item roll never ru
   const ran = identifySpellPass(items, 100, () => 0);
   assert.equal(ran.successCount, 2, 'the pass identifies when it runs at all');
   assert.equal(ran.spendMagicka, true);
-  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'Not enough spell points left.');
+  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'You do not have enough spell points left.');
 });

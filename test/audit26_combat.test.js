@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { fillVitalSigns, maxFatigue } from '../src/systems/statMods.js';
+import { playerArrowHitFoe } from '../src/combat/arrowFlight.js';   // WAVE D: F052's arm lives in the ONE body the four hosts call
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
@@ -175,21 +176,53 @@ test('F206: a damaging fall in a dungeon flashes the screen', () => {
 // ── F052 / F053 ───────────────────────────────────────────────────
 
 test('F052: a landed player arrow thuds and splashes, at the real impact point', () => {
-  const d = src('scenes/dungeonContext.js');
-  const arm = d.slice(d.indexOf('// AUDIT 26 F052'));
-  assert.ok(arm.slice(0, 1400).includes('audio.play3d(hitSoundFor(m.weapon), f.ai.feet, 1.1, { maxDistance: 16 });'),
-    'the enemy-side hit sound (:562-567)');
-  assert.ok(arm.slice(0, 1400).includes("hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, [m.pos[0], m.pos[1], m.pos[2]]);"),
-    'and the splash at the MISSILE position - DFU\'s impactPosition (:569-573)');
+  // WAVE D: F052's arm left the dungeon host for the ONE body all four
+  // hosts call (combat/arrowFlight.js's playerArrowHitFoe), so the
+  // payload is pinned there - BEHAVIOURALLY, which is what finally
+  // fixed the position this pin used to assert. The dungeon copy
+  // splashed at the arrow tip on the claim that "the missile's own
+  // position IS DFU's impactPosition". It is not: the player arm of
+  // AssignBowDamageToTarget hands WeaponDamage `hitTransform.position`
+  // (DaggerfallMissile.cs:679-687) - the struck entity's own transform
+  // origin - and WeaponManager.cs:568-571 passes that to
+  // ShowBloodSplash. Only the MELEE callers pass a contact point
+  // (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point).
+  const foe = {
+    entity: {
+      minMetalToHit: -1, armorValues: [0, 0, 0, 0, 0, 0, 0], items: [],
+      basics: { bloodIndex: 3 }, isClass: false, careerIndex: 0, skills: 0,
+      maxHealth: 30, health: 30, stats: { strength: 50, agility: 50, luck: 50 },
+    },
+    ai: { feet: [7, 2, -4], yaw: 0 },
+  };
+  const log = [];
+  let i = 0;
+  const rolls = () => [0, 0.99, 0.05, 0.999, 0.99][i++ % 5];
+  const dmg = playerArrowHitFoe(
+    { weapon: { templateIndex: 130, material: 0, poisonType: -1 }, pos: [1, 1, 1], dir: [0, 0, 1] }, foe, {
+      playerEntity: { isPlayer: true, level: 1, skills: 30, skillUses: [], stats: { strength: 50, agility: 50, luck: 50 } },
+      playerFeet: [0, 0, 9],
+      dealDamage: (f, d) => log.push(['deal', d]),
+      audio: { play3d: (clip, at) => log.push(['sound', [...at]]) },
+      hitEffects: { showBloodSplash: (b, at) => log.push(['blood', b, [...at]]) },
+      say: () => {}, rolls,
+    });
+  assert.ok(dmg > 0, 'the shot lands');
+  // the enemy-side hit sound (:562-567) rings at the target
+  assert.deepEqual(log[0], ['sound', [7, 2, -4]]);
+  // ...and the splash is at that SAME transform origin, NOT [1, 1, 1]
+  assert.deepEqual(log[1], ['blood', 3, [7, 2, -4]]);
+  assert.notDeepEqual(log[1][2], [1, 1, 1], 'the arrow tip is not the impact position');
   // ordering: sound and blood come BEFORE the pain voice and the
-  // knockback, as WeaponDamage has them
-  const sound = arm.indexOf('audio.play3d(hitSoundFor(m.weapon)');
-  const pain = arm.indexOf('enemyPainVoice(f, dmg)');
-  // MT-iv passes the player's feet here: damageFoe's player arm keys
-  // on them, so an arrow KILL reverts a struck ally to its species
-  // the way a sword kill does. Ordering unchanged.
-  const knock = arm.indexOf('damageFoe(f, dmg, lastPlayerFeet, m.dir)');
-  assert.ok(sound > -1 && sound < pain && pain < knock, 'sound, blood, then the voice and the knockback');
+  // knockback, as WeaponDamage has them. MT-iv: the knockback rides
+  // the host's own damage door (damageFoe with the player's feet), so
+  // an arrow KILL reverts a struck ally the way a sword kill does.
+  assert.equal(log[log.length - 1][0], 'deal', 'the pool\'s damage door is last');
+  // and the fourth host is a CALLER of this, not a fourth copy of it
+  const d = src('scenes/dungeonContext.js');
+  assert.match(d, /playerArrowHitFoe\(m, f, \{/);
+  assert.ok(!/showBloodSplash\([^)]*m\.pos/.test(d),
+    'the arrow-tip splash is gone from the host (the impact FLASH still rides m.pos, and should - DoCollision flashes at the collider point)');
 });
 
 test('F053: a missed enemy arrow rings, like a missed enemy swing', () => {

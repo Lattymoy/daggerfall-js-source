@@ -25,11 +25,22 @@
 //   (RaiseReputationForDoingSentence; the classic double-raise on
 //   fine+prison is DFU-noted and kept). Release clears the crime.
 //
-// FLAGGED loud: execution (punishmentType 1) is unreachable in classic
-// and here; the prison time-skip rides the host clock callback;
-// banishment's SeverePunishmentFlags consequences pend. (The guild
-// rescues - Thieves/Dark Brotherhood - landed at CR1, guildRescue
-// below.)
+// NOT A GAP, recorded (closeout): execution (punishmentType 1) is
+// unreachable in classic AND IN DFU. DaggerfallCourtWindow.cs assigns
+// the field only 2 (:137) or 0 (:139), so its own `punishmentType ==
+// 1` arms at :329 and :399 are dead code, and :279 says so in DFU's
+// own words - "Seems like an execution sentence can't be given in
+// classic. It can't be given here, either." court.js:76, :409 and
+// :431 carry the same unreachable arm for the same reason (an arm
+// that is absent and an arm that is wrong read alike from the call
+// site). The prison time-skip riding the host clock callback is the
+// port's seam shape, not a remainder.
+// BANISHMENT'S CONSEQUENCES SHIPPED: `SeverePunishmentFlags |= 1` is
+// written at scenes/arrestFlow.js:421-424 (severePunishment, off
+// OnPop) and read every catch-up minute by encounters.js:220
+// passiveGuardSpawns - PlayerEntity.cs:507's 10% banished-player
+// guard roll - fed at scenes/world.js:1627-1629. (The guild rescues -
+// Thieves/Dark Brotherhood - landed at CR1, guildRescue below.)
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';

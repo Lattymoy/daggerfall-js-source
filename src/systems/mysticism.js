@@ -61,6 +61,7 @@
 // next slice, and those are its seams.
 import { EFFECT_FLAGS } from './spellcast.js';
 import { isSilencedEffect } from './effects.js';
+import { hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: ContainsEnchantment, the way SoulTrap.cs asks
 
 /** The ten, with the classic key DFU registers and which of the three
  *  cost axes each supports. `chance` and `duration` cost pairs are
@@ -104,6 +105,30 @@ export const isMysticism = (e) => Object.values(MYSTICISM_EFFECTS)
  * AssignBundleFlags.BypassChance path (ctx.bypassChance) rather than a
  * flag of its own. This module keeps only what the DOOR needs: the two
  * triggers below and the alert table at the foot of the file. */
+
+/** Open.CheckCastByItem (Open.cs:172-181), verbatim - THE SKELETON'S
+ *  KEY TEST. DFU writes the two texture numbers as literals in this
+ *  method, so the port does too:
+ *
+ *      castBySkeletonKey =
+ *          ParentBundle.castByItem != null &&
+ *          ParentBundle.castByItem.IsArtifact &&
+ *          ParentBundle.castByItem.WorldTextureArchive == 432 &&
+ *          ParentBundle.castByItem.WorldTextureRecord == 20;
+ *
+ *  Archive 432 is the MALE artifact archive (ItemHelper.cs:50) and
+ *  record 20 the mapping row for Skeletons_Key (ArtifactsSubTypes 21,
+ *  ItemHelper.cs:43). A FEMALE character's artifacts are minted at
+ *  archive 433, so her Skeleton's Key fails this test and unlocks only
+ *  to her level - DFU's own quirk, kept.
+ *
+ *  The item reaches here through the bundle: only CastWhenUsed sets
+ *  CastByItem (CastWhenUsed.cs:136), so only a USED item can ever
+ *  arm a key-cast Open. */
+export function castBySkeletonKey(item) {
+  return !!item && item.artifact === true
+    && item.worldTextureArchive === 432 && item.worldTextureRecord === 20;
+}
 
 /** TriggerOpenEffect (:97-131), against the port's ActionSystem door
  *  record ({currentLockValue, state}).
@@ -306,7 +331,13 @@ export const SOUL_TRAP_TEMPLATE = 274;
  *  isPotionRecipe/isMap). */
 export function fillEmptyTrap(items, soulType, {
   azurasStarOnly = false,
-  isAzurasStar = (it) => it?.azurasStar === true,
+  // ROAD-U, the X5 fix one item further on: this default was
+  // `it?.azurasStar === true`, a boolean only createArtifact minted -
+  // so a Star imported from a classic save captured nothing at either
+  // death site while isAzurasStarEquipped, read on the very same line
+  // there, said it was worn. SoulTrap.cs:129 asks the ITEM:
+  // ContainsEnchantment(SpecialArtifactEffect, Azuras_Star).
+  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
   isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
 } = {}) {
   const empty = (it) => (it?.trappedSoulType ?? null) === null;

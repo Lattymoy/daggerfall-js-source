@@ -32,6 +32,7 @@
 import { templateByIndex } from './itemTemplates.js';
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
+import { getItem } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791)
 
 /** The template indices the predicates name (ItemEnums.cs). */
 export const TEMPLATES = Object.freeze({
@@ -315,10 +316,13 @@ export function useItem(item, collection, {
   else if (item.group === 'UselessItems2' && item.templateIndex === TEMPLATES.Oil && collection) {
     // The oil refuels a LANTERN in the LOCAL pack, and only if the
     // whole bottle fits - DFU adds the oil's condition to the
-    // lantern's and refuses when it would overflow. FLAGGED: DFU
-    // passes allowQuestItem: false, and the port has no quest items
-    // to exclude yet.
-    const lantern = (bag ?? []).find((it) => it.group === 'UselessItems2' && it.templateIndex === TEMPLATES.Lantern);
+    // lantern's and refuses when it would overflow. D9: the lookup is
+    // ItemCollection.GetItem verbatim now, allowQuestItem: false
+    // included (:1791) - the port grew quest items (item.questItem,
+    // read at :211) and inventory.getItem already ports that filter
+    // (inventory.js:270), so a quest lantern is invisible to the oil
+    // exactly as it is in DFU and the bottle refuses instead.
+    const lantern = getItem(bag ?? [], 'UselessItems2', TEMPLATES.Lantern, { allowQuestItem: false });
     const oil = item.currentCondition ?? 0;
     if (lantern && (lantern.currentCondition ?? 0) <= (lantern.maxCondition ?? 0) - oil) {
       lantern.currentCondition = (lantern.currentCondition ?? 0) + oil;

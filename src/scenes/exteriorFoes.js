@@ -21,7 +21,7 @@ import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
-import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
+import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
 import { applySpell, maxFatigue, entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // X3: self-casts land through the effect spine   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
@@ -148,7 +148,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
         hasBowAttack: hasBowAttack(basics),
-        canCastRangedSpell: () => hasRangedSpell(entity),
+        canCastRangedSpell: () => caster?.canCastRangedSpell() ?? false,   // D9: SelectedSpell, from the caster stood below
+        hasMagickaToCast: () => hasMagickaToCast(entity),   // GetDestination's own term (:539-540)
       });
       pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
       const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
@@ -438,7 +439,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // its Update (:91-94) and its FixedUpdate (:55-57).
       const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
       applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
-      f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);
+      // ROAD-U: MobileUnit.OneShotPauseActionsWhilePlaying, read where
+      // DFU's components read it - the transforming Seducer takes no
+      // action at all (EnemyMotor.cs:464-466 + :267-269,
+      // EnemyAttack.cs:59-61), not merely no anim intent.
+      const _fPaused = !!(f.mobile?.isPlayingOneShot() && f.mobile.oneShotPauseActionsWhilePlaying());
+      f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);
       // MT-ii: the foe now aims at whatever it SELECTED - the player
       // (the only candidate in an unarmed host) or another enemy.
       const _tgt = _targetFeet(f, playerFeet);
@@ -488,7 +494,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // actively targeting player will continue to raise alert").
       if (isPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt);   // MT-ii: at the SELECTED target (:199-209)
+      if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-ii: at the SELECTED target (:199-209)
       // X3-slice: the S16 casting decision rides beside the attack
       // machine, the dungeon's exact shape - the decision casts
       // INSTANTLY through the ONE shared executor.
@@ -501,7 +507,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // target's live effects for its school picks).
       const _castTargetEntity = isPlayerTarget(f.ai.target) || !f.ai._armedTargeting
         ? playerEntity : (f.ai.target?.entity ?? playerEntity);
-      if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {
+      // ROAD-U: DoRangedAttack's spell branch and DoTouchSpell both sit
+      // BELOW TakeAction's pause return (EnemyMotor.cs:466), so a
+      // transforming Seducer casts nothing either.
+      if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {
         const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity);
         if (dec) {
           castSpellFrom(f, dec.spell, _tgt);

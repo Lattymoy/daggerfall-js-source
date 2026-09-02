@@ -72,6 +72,8 @@ test('littlelaws combat-16: a too-low weapon material says so for the PLAYER, si
   const n = calculateAttackDamage({ isPlayer: true }, { minMetalToHit: 2 }, { weapon, say: (l) => said.push(l) });
   assert.equal(n, 0, 'the material gate returns 0 damage');
   assert.deepEqual(said, [MATERIAL_INEFFECTIVE_TEXT], 'the HUD line fires once (FormulaHelper.cs:576-583)');
+  // and the line is the ROW, not our paraphrase (Internal_Strings.csv:56)
+  assert.deepEqual(said, ['The material of the weapon you are using is ineffective.']);
   // an enemy swinging the same weapon fails SILENTLY (attacker == player gate)
   const said2 = [];
   assert.equal(calculateAttackDamage({ isPlayer: false }, { minMetalToHit: 2 }, { weapon, say: (l) => said2.push(l) }), 0);

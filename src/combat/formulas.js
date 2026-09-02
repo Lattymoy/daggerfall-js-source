@@ -7,8 +7,16 @@
 // Entity shape (ours): { level, health, maxHealth, armor, skills
 // (flat, per SetEnemyCareer), stats: {strength, agility, luck},
 // attackModifierFlags (career CFG byte), isPlayer }.
-// FLAGGED interims (all documented at their site): proficiency
-// modifiers and the enchantment channels. (AUDIT 23: adrenaline rush,
+// Both interims this header used to hold open SHIPPED, in this file.
+// Proficiency (CF1): proficiencyModifiers is CalculateProficiencyModifiers
+// (FormulaHelper.cs:908-931) and calculateAttackDamage applies it in
+// the player block in DFU's own order - proficiency before racial,
+// FormulaHelper.cs:602-609. The enchantment channels (E1): the
+// to-hit chain adds enchantArmorMod on the armour term
+// (FormulaHelper.cs:1158's IncreasedArmorValueModifier /
+// DecreasedArmorValueModifier) and enchantChanceToHitMod in
+// attacker.ChanceToHitModifier's slot (:814), both imported from
+// systems/enchantments.js below. (AUDIT 23: adrenaline rush,
 // biography adjustments and per-part armor SHIPPED - the first two
 // live in this very file.)
 
@@ -64,8 +72,10 @@ export const entityMaxEncumbrance = (entity) => {
   return mult > 0 ? amount + Math.trunc(amount * mult) : amount;
 };
 /** L-slice (combat-16): the HUD line for a weapon whose material
- *  cannot bite the target (key "materialIneffective"; prose ours). */
-export const MATERIAL_INEFFECTIVE_TEXT = 'Your weapon is ineffective against this creature.';
+ *  cannot bite the target. The row is Internal_Strings.csv:56
+ *  (`materialIneffective`), verbatim - GetLocalizedText hands it over
+ *  with no substitution, so the words are the whole string. */
+export const MATERIAL_INEFFECTIVE_TEXT = 'The material of the weapon you are using is ineffective.';
 export const spellPointsFor = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
 export const magicResist = (willpower) => Math.floor(willpower / 10);
 export const toHitModifier = (agility) => Math.floor(agility / 10) - 5;
@@ -410,8 +420,9 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
 /** C2-slice (AUDIT 23 combat-12): the Dice100 rolls ONLY behind the
  *  level > 1 gate (the source short-circuits at :984) - the old
  *  eager roll01 argument burned a draw on every non-backstab swing.
- *  A landed backstab speaks (key "successfulBackstab", prose ours). */
-export const SUCCESSFUL_BACKSTAB_TEXT = 'You backstab your opponent!';
+ *  A landed backstab speaks: Internal_Strings.csv:57
+ *  (`successfulBackstab`), verbatim into PopupMessage (:987-988). */
+export const SUCCESSFUL_BACKSTAB_TEXT = 'Successful backstab!';
 export function backstabDamage(damage, backstabbingLevel, rolls = Math.random, say = null) {
   if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
     say?.(SUCCESSFUL_BACKSTAB_TEXT);
@@ -488,8 +499,8 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
     // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
     // too-low weapon material returns 0, and when the attacker is
-    // the PLAYER the HUD says so (key "materialIneffective";
-    // Unity-side localization, prose ours). Enemies fail silently.
+    // the PLAYER the HUD says so (`materialIneffective`,
+    // Internal_Strings.csv:56). Enemies fail silently.
     if (attacker.isPlayer) say?.(MATERIAL_INEFFECTIVE_TEXT);
     notes.ineffective = true;
     return report(0);

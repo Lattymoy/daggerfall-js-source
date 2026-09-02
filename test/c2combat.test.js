@@ -86,6 +86,7 @@ test('c2combat combat-12: the backstab roll draws ONLY behind the >1 gate; a lan
   const said = [];
   assert.equal(backstabDamage(10, 50, () => 0.4, (l) => said.push(l)), 30);
   assert.deepEqual(said, [SUCCESSFUL_BACKSTAB_TEXT]);
+  assert.deepEqual(said, ['Successful backstab!'], 'the row, not a paraphrase (Internal_Strings.csv:57)');
   assert.equal(backstabDamage(10, 50, () => 0.6), 10);
 });
 

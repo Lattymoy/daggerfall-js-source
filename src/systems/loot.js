@@ -14,9 +14,14 @@
 //   - DFU reseeds Unity's global Random with items.GetHashCode()
 //     (an arbitrary hash, no determinism value); our uniform roll
 //     slots match the role per the approved engine-PRNG stance
-// INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
-// (setMagicItemTemplates) - a context that has not loaded it
-// under-generates by that category.
+// MI (magic items) rolls need the MAGIC.DEF registry
+// (setMagicItemTemplates), and EVERY host that can generate loot now
+// loads it: scenes/shared.js:98-101 (loadMagicRegistries) feeds the
+// module table this file reads, called from dungeonContext.js:889,
+// world.js:1272 and exterior.js:751 - interiors run inside those hosts
+// and read the same table. What is left is the data-absent boot, and
+// that is DFU's own answer rather than a stand-in: shared.js:101
+// records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
@@ -241,10 +246,12 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses.
   //
-  // G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
-  // since S4c - the enchantment cost sum was unported, so a magic
-  // item sold at its mundane base - and M4's catalogue closed that
-  // half. `newItem.value = value` REPLACES whatever the base item was
+  // G4: THE VALUE IS OVERWRITTEN (:632). The gap that stood here from
+  // S4c - the enchantment cost sum unported, so a magic item sold at
+  // its mundane base - closed with M4's catalogue: the sum is
+  // legacyEnchantmentValue (enchantments.js:218-236) and it is called
+  // on the `value:` line below. `newItem.value = value` REPLACES
+  // whatever the base item was
   // worth, so a daedric longsword and a leather boot with the same
   // enchantment are worth the same; and it replaces MAGIC.DEF's own
   // stored `value` field too, which is why that field is read and
@@ -344,15 +351,42 @@ export function legacyArtifactIndexBitfieldCheck(item) {
   return item;
 }
 
+/** ItemHelper.GetArtifactTextureIndices (ItemHelper.cs:519-523), the
+ *  whole of it: the ARCHIVE is the player's gender and nothing else,
+ *  and the RECORD is this table indexed by the artifact subtype
+ *  (ItemHelper.cs:43). Both are static - no ARENA2 read anywhere in
+ *  the call. */
+export const ARTIFACT_MALE_TEXTURE_ARCHIVE = 432;     // ItemHelper.cs:50
+export const ARTIFACT_FEMALE_TEXTURE_ARCHIVE = 433;   // ItemHelper.cs:51
+export const ARTIFACT_TEXTURE_INDEX_MAPPINGS = Object.freeze([
+  12, 13, 10, 8, 19, 16, 25, 18, 21, 2, 24, 26, 0, 15, 3, 9, 23, 17, 7, 1, 22, 20, 5,
+]);
+export function artifactTextureIndices(artifactIndex, gender = 'male') {
+  return {
+    archive: gender === 'female' ? ARTIFACT_FEMALE_TEXTURE_ARCHIVE : ARTIFACT_MALE_TEXTURE_ARCHIVE,
+    record: ARTIFACT_TEXTURE_INDEX_MAPPINGS[artifactIndex] ?? 0,
+  };
+}
+
 /** DaggerfallUnityItem.SetArtifact (DaggerfallUnityItem.cs:580-612)
  *  over the MAGIC.DEF registry: the artifact template (rows with type
  *  ArtifactClass1/2, file order - ItemHelper.cs:1511-1517) expands to
  *  its base group/groupIndex, armor material moves to the plate band
  *  (0x200+), the magic name replaces the base name and the
- *  enchantments ride raw. The artifact texture-index half is the
- *  inventory art's concern (the icons resolve at Q4's quest-item UI).
- *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity. */
-export function createArtifact(templates, artifactIndex) {
+ *  enchantments ride raw.
+ *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity.
+ *
+ *  D9: THE TEXTURE INDICES SHIP. They used to be waved off as "the
+ *  inventory art's concern", but SetArtifact writes all four
+ *  (:608-611, world = player, on DFU's own "not sure about artifact
+ *  world textures" note) and one LAW reads them: Open.CheckCastByItem
+ *  identifies the Skeleton's Key by `IsArtifact && WorldTextureArchive
+ *  == 432 && WorldTextureRecord == 20` (Open.cs:176-180) - so without
+ *  them no item could ever be the key. Note what that means for a
+ *  FEMALE character: her artifacts are archive 433, so her Skeleton's
+ *  Key does NOT bypass the door's level test. That is DFU's, verbatim,
+ *  and it is why the gender rides this call. */
+export function createArtifact(templates, artifactIndex, { gender = 'male' } = {}) {
   const artifacts = templates.filter((t) => t.type === 1 || t.type === 2);
   const magicItem = artifacts[artifactIndex];
   if (!magicItem) throw new Error(`Artifact template index out of range: ArtifactIndex=${artifactIndex}`);
@@ -360,14 +394,17 @@ export function createArtifact(templates, artifactIndex) {
   const templateIndex = GROUP_TEMPLATE_INDICES[groupName]?.[magicItem.groupIndex];
   let material = magicItem.material;
   if (magicItem.group === 2) material = 0x200 + material;   // Armor -> plate band
-  // The two identity flags itemInfo reads (DFU checks ArtifactsSubTypes
-  // - ItemEnums.cs:246,250: Oghma_Infinium = 5, Azuras_Star = 9).
-  // AUDIT 22 F11's producerless flags gain their producer here.
-  const identity = {};
-  if (artifactIndex === 5) identity.oghmaInfinium = true;
-  if (artifactIndex === 9) identity.azurasStar = true;
+  // ROAD-U: the two identity BOOLEANS this used to stamp here
+  // (`oghmaInfinium` on index 5, `azurasStar` on index 9) are gone.
+  // Nothing in DFU carries them: ItemHelper.GetItemInfo (:782, :811)
+  // and SoulTrap.cs:129 both ask the ITEM's own enchantment record for
+  // SpecialArtifactEffect + subtype, which SetArtifact copies below
+  // and which a classic import carries too - so keying on a flag only
+  // this mint wrote made every imported Oghma a plain book and every
+  // imported Star an inert gem. The identity now rides
+  // `enchantments`, one predicate for both paths
+  // (artifactEffects.hasArtifactSubtype).
   return {
-    ...identity,
     group: groupName,
     templateIndex,
     name: magicItem.name,
@@ -388,6 +425,11 @@ export function createArtifact(templates, artifactIndex) {
     enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
     maxCondition: magicItem.uses,
     currentCondition: magicItem.uses,
+    // SetArtifact :608-611 - the same pair twice, player and world.
+    playerTextureArchive: artifactTextureIndices(artifactIndex, gender).archive,
+    playerTextureRecord: artifactTextureIndices(artifactIndex, gender).record,
+    worldTextureArchive: artifactTextureIndices(artifactIndex, gender).archive,
+    worldTextureRecord: artifactTextureIndices(artifactIndex, gender).record,
     // SetArtifact's own price (:615) - the MAGIC.DEF row's value, not
     // the mundane base template's (Q2b-ii VERIFY: it was dropped).
     value: magicItem.value,

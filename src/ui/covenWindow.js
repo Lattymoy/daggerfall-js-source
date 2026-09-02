@@ -24,16 +24,32 @@
 // is the Witches-pool nonmember offer (offerFlow.offerCovenQuest).
 // The boxes it stacks are the U11 parchment, the guild popup's idiom.
 //
-// FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-// (:84, :90, :96, :102) read from the player's own keybind file,
-// which the port has no source for; the keyboard accelerators here
-// are the port's own (Ledger A) and are named as such.
+// THE HOTKEYS (D1, retiring the flag that stood here): DFU does not
+// read a keybind file for these - DaggerfallShortcut.cs:307-326 reads
+// the text database StreamingAssets/Text/DialogShortcuts.txt, whose
+// "-- Witches Covens" block (:205-209) is WitchesTalk T,
+// WitchesDaedraSummon D, WitchesQuest Q, WitchesExit E. A8 ported the
+// whole file to systems/dialogShortcuts.js, so the four bindings here
+// (:84, :90, :96, :102) are now the table's answers. The correction
+// the flag was hiding: Summon was on S, and the table says D.
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+
+/** The window's DaggerfallShortcut.Buttons, in ctor ADD order
+ *  (:82-103) - which is the order Panel.ProcessHotkeySequences asks.
+ *  Every one of the four OnKeyboardEvent handlers plays ButtonClick on
+ *  KeyDown and DEFERS its action to KeyUp (:167-180, :187-200,
+ *  :207-220, :227-240); the port's windows are handed KeyDown only, so
+ *  the sound and the action land together - the same one-frame
+ *  collapse dialogShortcuts.hotkeyHit already records. */
+export const COVEN_BUTTONS = Object.freeze([
+  'WitchesTalk', 'WitchesDaedraSummon', 'WitchesQuest', 'WitchesExit',
+]);
 
 /** mainPanel.Size (:79) - and the size of the IMG. */
 export const COVEN_PANEL_W = 130, COVEN_PANEL_H = 51;
@@ -111,7 +127,7 @@ export class CovenWindow {
     if (r?.dispatched || !r) this._close();
   }
 
-  input(code) {
+  input(code, e = null) {
     if (this.top) {
       if (this.top.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissTop(MB_BUTTONS.Yes);
@@ -121,11 +137,17 @@ export class CovenWindow {
       this._dismissTop();
       return;
     }
-    // The port's own accelerators (Ledger A - DFU reads its keybinds).
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this._close(); return; }
-    if (code === 'KeyT') { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); this.hooks.onTalk?.(); return; }
-    if (code === 'KeyS') { audio.playOneShot(SOUND.ButtonClick, 1); this._summon(); return; }
-    if (code === 'KeyQ') { audio.playOneShot(SOUND.ButtonClick, 1); this._quest(); }
+    // Escape/Enter are the port host's close keys, not DFU buttons.
+    if (code === 'Escape' || code === 'Enter') { this._close(); return; }
+    // D1: the four Hotkeys, from the table, in DFU's button ADD order.
+    // Each fires the SAME handler its click does, sound and all.
+    switch (firstHotkey(COVEN_BUTTONS, code, e)) {
+      case 'WitchesTalk': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); this.hooks.onTalk?.(); return;
+      case 'WitchesDaedraSummon': audio.playOneShot(SOUND.ButtonClick, 1); this._summon(); return;
+      case 'WitchesQuest': audio.playOneShot(SOUND.ButtonClick, 1); this._quest(); return;
+      case 'WitchesExit': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return;
+      default: break;   // DFU hangs no other accelerator on this window
+    }
   }
 
   click(vx, vy) {

@@ -94,6 +94,47 @@ test('audit24 wave35: an archer STANDS OFF - it does not walk up to melee range'
   assert.equal(caster.moving, false, 'a ranged caster stands off too');
 });
 
+test('D9: GetDestination\'s magic term is CurrentMagicka > 0, not CanCastRangedSpell', () => {
+  // EnemyMotor.cs:539-540 -
+  //   ClearPathToPosition(...) || (TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0))
+  // The port served that arm and DoRangedAttack's band from ONE dep;
+  // widening the band to CanCastRangedSpell (SelectedSpell, vetoes and
+  // all) would have dragged the vetoes into a line that has none.
+  const blocked = () => ({
+    // the ground is under us, and EVERYTHING else is a wall - so
+    // ClearPathToPosition is false and only the shooter arm can hold
+    // the destination on the target
+    raycast: (o, d) => (d[1] < -0.5 ? 1 : 1),
+    capsuleCast: () => ({ dist: 1, key: 'wall' }),
+    move: () => ({ grounded: true }),
+  });
+  const mk = (opts) => {
+    const ai = new EnemyAI(blocked(), [0, 0, 0], 0, { liveSpeed: 50, ...opts });
+    ai.detected = true; ai.giveUpTimer = 200; ai.inSight = true;
+    // the SEARCH arm walks to the last KNOWN position, which is a
+    // different point from the predicted one - so the two arms are
+    // distinguishable by the destination they leave behind
+    ai.lastKnownTargetPos = [0, 0, 10];
+    ai.predictedTargetPos = [0, 0, 20];
+    ai.destination = [0, 0, 20];
+    ai._dist = 20;
+    return ai;
+  };
+  const onTarget = (ai) => ai.destination[2] === 20;
+  const mage = mk({ hasMagickaToCast: () => true, canCastRangedSpell: () => false });
+  mage._getDestination([0, 0, 20]);
+  assert.equal(onTarget(mage), true, 'magicka alone holds the destination on the target through a wall');
+  const spent = mk({ hasMagickaToCast: () => false, canCastRangedSpell: () => true });
+  spent._getDestination([0, 0, 20]);
+  assert.equal(onTarget(spent), false,
+    'and a selection with NO magicka does not - this line never asks CanCastRangedSpell');
+  const motor = rd('src/characters/enemyMotor.js');
+  assert.ok(motor.includes('|| (this.inSight && (this.hasBowAttack || this.hasMagickaToCast()))'),
+    'the GetDestination arm reads the magicka term');
+  assert.ok(motor.includes('(this.hasBowAttack || this.canCastRangedSpell())'),
+    'and DoRangedAttack keeps the band term');
+});
+
 test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee stop', () => {
   const ai = new EnemyAI(clearStub(), [0, 0, 0], Math.PI, { liveSpeed: 50, hasBowAttack: true });
   ai.detected = true; ai.giveUpTimer = 200; ai.inSight = true;
@@ -111,7 +152,7 @@ test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee st
   // inside melee range is NOT handled by the ranged arm (the band's
   // near edge excludes it) but by the ordinary stop.
   const src = rd('src/characters/enemyMotor.js');
-  const body = src.slice(src.indexOf('  _classicTick(playerFeet) {'));
+  const body = src.slice(src.indexOf('  _classicTick(playerFeet, paused = false) {'));
   // AUDIT 39: the stop test now reads `this.stopDistance`, which
   // TakeAction:443-449 sets per pass (2.25 vs the player, 1.5 vs
   // another AI). The ORDERING law this pin guards is unchanged - only
@@ -408,10 +449,10 @@ test('audit24 wave35: hasRangedSpell is the SELECTION-FREE half, and draws no ro
 test('audit24 wave35: every pool passes the two ranged deps', () => {
   const dc = rd('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/hasBowAttack: hasBowAttack\(basics\),/g) ?? []).length, 2, 'both dungeon branches');
-  assert.equal((dc.match(/canCastRangedSpell: \(\) => foeDeps\.hasRangedSpell\(entity\),/g) ?? []).length, 2);
+  assert.equal((dc.match(/canCastRangedSpell: \(\) => rec\?\.caster\?\.canCastRangedSpell\(\) \?\? false,/g) ?? []).length, 2);
   const xf = rd('src/scenes/exteriorFoes.js');
   assert.ok(xf.includes('hasBowAttack: hasBowAttack(basics),'));
-  assert.ok(xf.includes('canCastRangedSpell: () => hasRangedSpell(entity),'));
+  assert.ok(xf.includes('canCastRangedSpell: () => caster?.canCastRangedSpell() ?? false,'));
   const cg = rd('src/scenes/cityGuards.js');
   // the watch has neither, and the literal sits beside the same literal
   // attack.rangedAttack that EnemyBasics justifies

@@ -242,9 +242,13 @@ export function gatherRecipe(recipe, availableTemplateIndices) {
   return { found, missing };
 }
 
-// FLAGGED, with the slice it waits on:
-//  - the potion's EFFECT when drunk rides the effect broker's
-//    recipe->effect map; the port's useItem arm needs the M-arc's
-//    second half to know what a mixed potion does.
-//  - RandomlyAddPotionRecipe(25) in shopStock is now unblocked: the
-//    keys exist, so a shop can stock a recipe scroll.
+// BOTH OF THE SLICES THIS FILE WAITED ON HAVE LANDED:
+//  - the potion's EFFECT when drunk is the recipe->effect map, and it
+//    is potionBundle above (:138) - DrinkPotion's EffectBundleSettings
+//    (:903-947). U44 mounted it: scenes/hostMagic.js:522-529 builds the
+//    bundle, all three hosts hand `drinkPotion` down (world.js:2182,
+//    dungeonContext.js:1096, exterior.js:1116) and useItem.js:257
+//    routes the bottle into it.
+//  - RandomlyAddPotionRecipe(25) is live in shopStock.js:203-209
+//    (AUDIT 26 F129, DaggerfallLoot.cs:165 - the Alchemist arm), so a
+//    shop stocks a recipe scroll.

@@ -83,13 +83,47 @@ export function maceState(entity, mint = false) {
   return entry ?? null;
 }
 
+/** ROAD-U: THE ONE ARTIFACT IDENTITY TEST.
+ *  DaggerfallUnityItem.ContainsEnchantment (:1362-1374) over the
+ *  LEGACY array - the item's own record answers "is this the Star",
+ *  which is how DFU asks it (SoulTrap.cs:129
+ *  `amulet.ContainsEnchantment(EnchantmentTypes.SpecialArtifactEffect,
+ *  (short)ArtifactsSubTypes.Azuras_Star)`) and the only way that can
+ *  answer for an item the port did not mint itself. It used to be
+ *  asked of two BOOLEANS - `item.oghmaInfinium` / `item.azurasStar` -
+ *  whose only producer was createArtifact, so an Oghma Infinium or an
+ *  Azura's Star imported from a classic save (classicSave.js's
+ *  classicItemFromRecord, which carries the very same enchantment
+ *  array) read as a plain book and a plain gem: 1009 and 1003 instead
+ *  of 1015 and 1004, and an equipped imported Star captured NO souls
+ *  while isAzurasStarEquipped, one line away at the same death sites,
+ *  correctly said it was worn.
+ *
+ *  The scan stands for DFU's `legacyMagic[0]` index in
+ *  ItemHelper.GetItemInfo (:782, :811) as well: SetArtifact keeps the
+ *  MAGIC.DEF row's None slots where the port's mint filters them out,
+ *  so a fixed index means different slots on the two sides, while a
+ *  scan answers identically on every array either side can hold -
+ *  nothing but an artifact carries type 26 at all. */
+export function hasArtifactSubtype(item, subtype) {
+  const magic = item?.enchantments;
+  if (!magic || magic.length === 0) return false;
+  return magic.some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === subtype);
+}
+
+/** GetItemInfo's Books arm (:782) asks only for the TYPE - any Special
+ *  artifact effect on a book is the Oghma, no param tested. Kept as
+ *  written. */
+export const hasArtifactEffect = (item) => (item?.enchantments ?? [])
+  .some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect);
+
 /** IsRingOfNamira / isWearingHircineRing's shape: an EQUIPPED item
  *  carrying SpecialArtifactEffect with the given subtype param. */
 export function isWearingArtifact(entity, subtype) {
   const slots = equipTableOf(entity);   // the SLOTS dict itself (equip.js:37)
   if (!slots) return false;
   for (const item of Object.values(slots)) {
-    if (item && (item.enchantments ?? []).some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === subtype)) return true;
+    if (hasArtifactSubtype(item, subtype)) return true;
   }
   return false;
 }

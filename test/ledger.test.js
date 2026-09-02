@@ -89,3 +89,118 @@ test('L2 ledger: a superseded figure may be QUOTED but never left standing', () 
   assert.deepEqual(offenders, [],
     'a superseded figure is stated without any marker saying it was corrected');
 });
+
+test('L2 ledger: a section-C "unported" claim whose facility shipped is struck, and the facility is really there', () => {
+  // CR-36/37/38. The four tests above pin FIGURES; this pins the other
+  // half of the same disease, the half section C is defined by
+  // (Home.md: "a stale row is worse than a missing one - it sends the
+  // next slice off to build what already ships"). Three rows survived
+  // the road-to-1:1 campaign claiming a shipped, tested facility was
+  // still unported.
+  //
+  // The gate is two-sided on purpose. The claim may still be READ - a
+  // strike quotes what it retired, EF1c's rule - but the line must
+  // carry the strike AND the slice that closed it; and that slice's
+  // facility must still be in the tree, so ripping the code out fails
+  // here instead of leaving the ledger boasting.
+  const CLOSED = [
+    { claim: /U24's list picker picks straight through/, slice: /ROAD-A7/,
+      file: 'src/ui/listPicker.js', built: /if \(wasDouble\) \{ this\._lastRowClick = null; this\._use\(\); \}/ },
+    { claim: /the vertical scroll bar's THUMB DRAG is not implemented/, slice: /ROAD-A7/,
+      file: 'src/ui/verticalScrollBar.js', built: /this\.draggingThumb = true;/ },
+    { claim: /what wa-4 still waits on is the CROSS-HOST arm/, slice: /ROAD-B B4 \+ ROAD-A A10/,
+      file: 'src/world/actionSystem.js', built: /CASTLE_DAGGERFALL_MAP_ID = 1291010263;/ },
+    { claim: /book VALUE from the file price pends the pricing row/, slice: /SHIPPED at ROAD-A A2/,
+      file: 'src/systems/books.js', built: /export function bookValue\(id\) \{/ },
+    { claim: /the value half pends the E1 book-file-pricing row/, slice: /ROAD-A A2/,
+      file: 'src/systems/quest/item.js', built: /createBook\(itemKey\) \?\?/ },
+  ];
+  const rows = LEDGER.split('\n').filter((l) => l.startsWith('|'));
+  const unstruck = [];
+  for (const { claim, slice, file, built } of CLOSED) {
+    const line = rows.find((l) => claim.test(l));
+    if (!line) continue;                          // struck by deletion is struck
+    if (!/~~/.test(line)) unstruck.push(`${claim} stands unstruck`);
+    else if (!slice.test(line)) unstruck.push(`${claim} is struck without naming the slice that closed it`);
+    assert.match(readFileSync(join(ROOT, file), 'utf8'), built,
+      `the ledger says ${String(claim)} shipped; ${file} must still carry it`);
+  }
+  assert.deepEqual(unstruck, [], 'every closed section-C claim carries its strike and its slice');
+
+  // CR (wave D): the same disease inside a RESIDUE list. The ENCHANTING
+  // row's residue items are struck one by one as they close, and D9
+  // edited that very row - striking the held-INSTANT clause - while
+  // walking past "the dungeon host's ctx mount" two clauses to its
+  // left, which D8 had already built. The generic loop above cannot
+  // see it: the line carries strikes, just not on this item.
+  const enchanting = rows.find((l) => /~~ENCHANTING, WHOLE~~/.test(l));
+  assert.ok(enchanting, 'section C still carries the ENCHANTING row');
+  assert.equal(/RESIDUE: the dungeon host's ctx mount/.test(enchanting), false,
+    'a residue item D8 closed does not stand as a live "unported" claim');
+  assert.match(enchanting, /RESIDUE: ~~the dungeon host's ctx mount~~ CLOSED D8/,
+    'it is struck, and names the slice that closed it');
+  // and the two-sided half: the mount must still be in the tree.
+  assert.match(readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8'),
+    /setDefaultEnchantCtx\(createEnchantCtx\(\{/,
+    'the ledger says the dungeon host mounts the enchant ctx; dungeonContext.js must still do it');
+});
+
+test('TC1 ledger: the six re-measured section-C rows are struck, and each names the tree it closed on', () => {
+  // TC1 (2026-09-02). The re-measurement of section C found SIX routed
+  // rows the road-to-1:1 campaign had closed in the tree and never
+  // struck here - the disease the CR-36/37/38 pin above exists for,
+  // one campaign later. That pin holds CLAUSES; this one holds the ROW
+  // HEADS, because a head left unstruck is what a reader scanning
+  // section C for the next slice actually sees.
+  //
+  // Two-sided, same contract: the head carries its strike AND the
+  // slice that closed it, and the facility that slice named is still
+  // in the tree - so ripping the code out fails here rather than
+  // leaving the Ledger boasting.
+  const CLOSED = [
+    // UseItem's last three arms: DrinkPotion, RecordLocationFromMap, the quest-item click.
+    { head: /~~UseItem's UNBUILT DESTINATIONS~~/, slice: /TC1 2026-09-02/,
+      file: 'src/systems/useItem.js', built: /resource\.useClicked = true;/ },
+    // The talk arc's last routed clause: AddNonQuestRumor's producer.
+    { head: /~~THE TALK MANAGER~~/, slice: /TC1 2026-09-02/,
+      file: 'src/systems/regionPower.js', built: /rumorMill\?\.addNonQuestRumor\?\./ },
+    // Fast travel: transport ownership, the mint the row said nothing had.
+    { head: /~~FAST TRAVEL residue~~/, slice: /TC1 2026-09-02/,
+      file: 'src/systems/shopStock.js', built: /export const TRANSPORT_SMALL_CART = 93;/ },
+    { head: /~~PatchRegionIndex legacy-save fix~~/, slice: /U32 \+ U41/,
+      file: 'src/formats/mapsFile.js', built: /export function patchRegionIndex\(regionIndex, canonicalRegionName\)/ },
+    { head: /~~Biography GP arm ledger note/, slice: /TC1 2026-09-02/,
+      file: 'src/formats/faceUVTool.js', built: /Can not normalize a vector when it/ },
+    { head: /~~THE MAGIC CRAFTING WINDOWS~~/, slice: /TC1 2026-09-02/,
+      file: 'src/ui/spellIconPickerWindow.js', built: /SpellIconPickerWindow/ },
+  ];
+  const rows = LEDGER.split('\n').filter((l) => l.startsWith('|'));
+  const missing = [];
+  for (const { head, slice, file, built } of CLOSED) {
+    const line = rows.find((l) => head.test(l));
+    if (!line) { missing.push(`${head} - no section-C row carries this struck head`); continue; }
+    if (!slice.test(line)) missing.push(`${head} is struck without naming the slice that closed it`);
+    assert.match(readFileSync(join(ROOT, file), 'utf8'), built,
+      `the Ledger says ${String(head)} closed on ${file}; the file must still carry it`);
+  }
+  assert.deepEqual(missing, [], 'every re-measured row carries its strike and its slice');
+
+  // The two DFU windows nothing in src/ cited. Neither is a gap, and
+  // the record of WHY has to be reachable from the code that points at
+  // it: controlsWindow's JOYSTICK tab sends the reader to "the
+  // Ledger", so the Ledger has to name the window and the flag.
+  const keybind = rows.find((l) => /~~THE KEYBINDING REGISTRY~~/.test(l));
+  assert.ok(keybind, 'section C still carries the keybinding-registry row');
+  assert.match(keybind, /DaggerfallJoystickControlsWindow\.cs/,
+    'the joystick window has no Ledger row while controlsWindow.js sends the player to one');
+  assert.match(keybind, /systems\/inputActions\.js:465-468/,
+    'the joystick row must point at the flag that carries the owner decision');
+  assert.match(keybind, /DaggerfallUnityMouseControlsWindow\.cs \(411\)[\s\S]*?THE SETTINGS SURFACE/,
+    "the mouse/advanced window must be recorded against section A's settings-surface row");
+  assert.match(readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8'),
+    /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
+    'the Ledger cites the gamepad flag at inputActions.js; the flag must still be there');
+  assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
+    /The port has no gamepad layer \(Ledger\)\./,
+    'the JOYSTICK tab note that sends the reader to this row must still be there');
+});

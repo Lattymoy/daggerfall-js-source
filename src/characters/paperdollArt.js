@@ -67,10 +67,19 @@ export function armorArchive(gender, race) {
  *  list read it back - GetInventoryTextureArchive returns that same
  *  field (DaggerfallUnityItem.cs:1728-1735). The port resolves it at
  *  draw time from the wearer's identity instead, so a saved item
- *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
- *  therefore draws its clothing on the PLAYER's morphology, where
- *  classic would show the vendor's - invisible until shop stock
- *  carries its own owner identity. */
+ *  needs no new field.
+ *
+ *  NOT A GAP (recorded): the note here used to say a remote list -
+ *  shop stock, a corpse - therefore draws its clothing on the
+ *  PLAYER's morphology where classic would show the vendor's. There
+ *  is no vendor identity in DFU to show. Every remote list is minted
+ *  off the PLAYER's own race and gender, so the archive DFU bakes IS
+ *  the one this resolves: shop shelves (DaggerfallLoot.cs:229
+ *  CreateArmor(playerEntity.Gender, playerEntity.Race, ...), :232
+ *  CreateMensClothing(..., playerEntity.Race), :237
+ *  CreateWomensClothing), house containers (:357, :367) and corpses
+ *  (LootTables.cs:212, :237), all of them landing in SetRace
+ *  (ItemBuilder.cs:146/:172/:200/:475). */
 export function playerArchiveFor(item, template, { gender = 'male', race = 'Breton' } = {}) {
   const morph = morphologyOfRace(race);
   const base = template?.playerTextureArchive ?? 0;

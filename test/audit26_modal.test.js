@@ -272,6 +272,13 @@ test('AUDIT 26 F063: a native-mode sale takes the goods out of the pack, and the
     'the only addItem in the transaction is Buy\'s - the shelf item that really does change hands');
   assert.doesNotMatch(commit, /for \(const it of staged\) addItem\(playerEntity\.items, it\);/);
   assert.doesNotMatch(commit, /it\.isIdentified = true; addItem\(playerEntity\.items, it\);/);
-  // and the collection the window is handed is named for what it is
-  assert.match(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\)\.filter\(\(it\) => !isEquipped\(it\)\),/);
+  // ...and D7 finished the move F063 started: what the window is
+  // handed is the LIVE collection (DaggerfallTradeWindow.cs:389), not
+  // a filtered view of it, so TransferItem's splice at the click lands
+  // on the real pack. The equipped test went with it, into
+  // FilterLocalItems where DFU keeps it (:693, :697).
+  assert.match(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\),/);
+  assert.match(WM, /isEquipped: \(it\) => isEquipped\(it\),/);
+  assert.doesNotMatch(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\)\.filter\(/,
+    'a filtered view cannot be spliced - the host must not narrow the pack again');
 });

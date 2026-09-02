@@ -134,8 +134,13 @@ test('TP1: the two closed flags are gone from the popup header', () => {
   for (const dead of [/no guild perk seam/, /RaiseSkills on arrival \(:380\), and/]) {
     assert.equal(dead.test(unquoted), false, `a retired blocker still reads as current: ${dead}`);
   }
-  // ...and the two that genuinely DO still idle are still named, so
-  // this slice cannot be read as having closed the whole row.
-  assert.match(src, /smash-to-black\/fade/, 'the fade layer really is absent');
-  assert.match(src, /key-UP deferral/, 'and the overlay seam really has no key-up edge');
+  // D4 CLOSED THE OTHER TWO. This pin used to assert they were still
+  // named as open; it now asserts the opposite, because the header
+  // that keeps a retired blocker alive and the header that keeps a
+  // SHIPPED law described as pending are the same defect.
+  assert.equal(/FLAGGED/.test(unquoted), false, 'the popup header carries no open flag any more');
+  assert.equal(/no fade layer in the port/.test(unquoted), false,
+    'the fade layer exists - ui/fadeLayer.js');
+  assert.equal(/overlay seam has\s*\n?\/\/ no key-up edge/.test(unquoted), false,
+    'the overlay seam has a key-up edge - townTalk.keyup');
 });

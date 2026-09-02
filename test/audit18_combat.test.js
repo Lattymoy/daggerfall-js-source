@@ -400,7 +400,7 @@ test('THE BACKSTAB IS INSIDE THE HIT: a miss draws no roll and says nothing', ()
       { weapon: w, toHitMod: 100000, backstabChance: 100,
         rolls: () => { draws2++; return 0.5; }, say: (m) => said2.push(m) });
     assert.ok(hit > 0, `${label}: the hit lands`);
-    assert.deepEqual(said2, ['You backstab your opponent!'], `${label}: and announces the backstab`);
+    assert.deepEqual(said2, ['Successful backstab!'], `${label}: and announces the backstab (Internal_Strings.csv:57)`);
     assert.ok(draws2 > missDraws, `${label}: the hit spends more rolls than the miss`);
   }
 });

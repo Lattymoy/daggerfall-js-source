@@ -112,5 +112,7 @@ test('WM4c: both interior hosts start the gear\'s hum on the part that carries S
       `${host}: does not start the gear's hum`);
   }
   const ctx = read('src/scenes/interiorContext.js');
-  assert.match(ctx, /destroy\(\) \{\s*\n\s*for \(const r of rotors\) \{ r\.hum\?\.stop\(\); r\.hum = null; \}/, 'the context does not stop the hum on destroy');
+  // RE-BASELINED at ROAD-C c2/S9: the interior automap record is dropped
+  // in the same teardown, one statement ahead of the hum.
+  assert.match(ctx, /destroy\(\) \{[\s\S]{0,700}for \(const r of rotors\) \{ r\.hum\?\.stop\(\); r\.hum = null; \}/, 'the context does not stop the hum on destroy');
 });

@@ -35,7 +35,27 @@ export function discoverBuilding(locationId, building) {
     quality: building.quality ?? 0,
     buildingType: building.buildingType ?? 0,
     lastLockpickAttempt: 0,   // R1: PlayerGPS.cs:101 - the failed-attempt skill record
+    customUserDisplayName: '',   // c2/S10: the exterior automap's rename (PlayerGPS.cs:97)
   });
+  return true;
+}
+
+/**
+ * SetDiscoveredBuildingCustomName (PlayerGPS.cs:1057-1075) - the town
+ * map's double-click rename. c2/S10 HALF B.
+ *
+ * DFU's own two laws, both kept: the write is a NO-OP for a building
+ * that is not actually discovered ("If building not actually
+ * discovered then nothing is changed", ExteriorAutomap.cs:914-915),
+ * and the input is TRIMMED before it lands so a player cannot store
+ * leading, trailing or whitespace-only names (:911-912). The plate
+ * DRAWS this name and its tooltip keeps the canonical displayName -
+ * that split lives in the window (:880-885), not here.
+ */
+export function setDiscoveredBuildingCustomName(locationId, buildingKey, name) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  if (!rec) return false;
+  rec.customUserDisplayName = String(name ?? '').trim();
   return true;
 }
 
@@ -148,8 +168,12 @@ export function restoreDiscovery(snap) {
   const legacy = !snap.buildings && !snap.locations;
   const buildings = legacy ? snap : (snap.buildings ?? {});
   for (const [locId, b] of Object.entries(buildings)) {
+    // c2/S10: the missing-field discipline the rest of this store
+    // already keeps - a record written before the rename shipped
+    // restores with an EMPTY custom name, never `undefined`, so the
+    // plate's `custom || name` fallback cannot read a hole.
     _discovered.set(locId, new Map(
-      Object.entries(b).map(([k, r]) => [Number(k), { ...r }])));
+      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', ...r }])));
   }
   for (const [k, r] of Object.entries(snap.locations ?? {})) {
     _locations.set(Number(k), { ...r });

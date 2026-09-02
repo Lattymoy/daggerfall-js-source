@@ -195,6 +195,8 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 
 ## Active arcs
 
+- `01-Overview/Road-To-1-1.md` - ACTIVE, opened 2026-09-01 off AUDIT 44's measurement (`Port-Status-2026-09.md`): THE CLOSING CAMPAIGN, the ledger of what remains between the port and a finished 1:1, in waves, each wave a worktree fleet with an adversarial review and its own gated merge. A struck item names the wave that closed it; the deliberate departures that are NOT on this road (the voxel character engine, the enhanced skin and visuals, the Morrowind lane, mod injection, AdvancedClimbing/Rappel/Hanging, the SoundFont synth, shadow maps, SDF fonts) are listed at the head so nobody re-opens them. Wave A closed 2026-09-01 (twelve groups) and Wave B behind it. READ THE DEPLOY STATE BEFORE BUILDING ON IT: the whole of Waves B5 and C, plus the bow salvage and the incident record, is the PARKED deploy batch - gated on the branch, waiting for the owner's eyes before it merges to main under incident law 2, because the automap windows are first-ever-rendered surfaces. The standing watches (the per-host pause architecture, the FLAGGED/INTERIM ledger below, AUDIT 44's overflow tail) are the page's closing section.
+- `01-Overview/Incident-2026-09-01.md` - CLOSED 2026-09-01, and its four **Standing lessons are binding process law** for every slice after it: (1) the palette is SHARED and mutable and any palettized-IMG load can destroy it - `incident_texture.test.js`'s site sweep is the guard, and a new palettized-IMG consumer either mints its own palette or extends that sweep; (2) a FIRST-EVER-RENDERED path is a release risk however lawful the code (winter-at-boot was correct 1:1 behaviour and still broke the live site), so any change that lights a never-drawn path gets the owner's eyes before merge - the suite cannot see pixels; (3) keep merging through GATED PRs, because deploy-and-eyeball bisects in O(log n) only when the known-good checkpoints exist; (4) never plain-merge a revert commit into the branch that carries the fix - `-s ours` or a tree-restore, since the three-way silently prefers the revert wherever the fix branch is quiet. The record itself: two texture breakages in one afternoon, both invisible to 5,600+ green tests.
 - `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
 - `01-Overview/Audit-UI.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE AUDIT. Twelve sweeps over the PX arc's 54 slices, nine modules and 7,130 lines - and LIVE, not static, because a sheet this size answers grep questions with grep answers. Two findings, both fixed: the 44px touch rule hung off a SCREEN WIDTH and failed on the device the proxy stands in for (measured on an iPad in landscape: skin switch 28px, steppers 34px, value buttons 38px), and the reason the fix at first did not take - three controls sized INLINE in JavaScript, which no media query can reach. Eight sweeps came back clean, including the class-collision shape that has bitten this file four times.
 - `01-Overview/Audit-UI-2.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE, SECOND PASS. 38 PX slices on from the first, and shaped by what actually went wrong since - six faults, every one of which passed its own pins, because they verified the thing built and not the PATH a player takes to it. Six sweeps: every surface at desktop/tablet/phone (12 combinations, clean), and the two recurring faults turned into PINS - no part styled for one shell and left bare in another (four occurrences), and every enhanced window reachable from a host following DYNAMIC imports (PX24's unhung door). Both mutation-tested against the real historical faults.
@@ -203,6 +205,8 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `01-Overview/Audit-48.md` - CLOSED 2026-09-02: EVERYTHING SINCE 2026-09-01 - the sweep found FIVE of twelve mutants had nothing to hit: a third lane's `SOLID REVERT` (7dcc16ba) removed MW-D42c/42d and MW-D44..49 whole, with their pins, their rules and the ARENA2-free boot probe, on a judgement of "residue" - two of them fixes Mac reported and confirmed, now regressed. Nothing re-landed unilaterally; the order is recommended and the decision is Mac's. One medium fixed (the map's chips gated the relief in no pin), one low recorded (GLSL has no node pin), six cleared.
 - `01-Overview/Audit-46.md` - CLOSED 2026-09-02: ROADS 1-12, EVERYTHING SO FAR - 21 mutants across every road module, 21 dead; one medium fixed (the map indexed the road mask at the window's stride, not the world's - a 10x10 window would have sheared it); one suspicion cleared by message ordering and pinned (no chunk is ever built before the network lands); four low recorded (the smoother at a plateau's edge, per-route A* allocation, the track tiles unseen, two flags the classic window never shows).
 - `01-Overview/Audit-45.md` - CLOSED 2026-09-01: ROADS 1-3, THE DEEP PASS - three suspects cleared by reading the line (assignTiles skips non-zero; rotate/flip honoured; one seam, one host), four findings fixed (farms were track-grade and would have blanketed the map; the build ran on the frame's thread and now runs in the worker from a posted settlement list; the A* heuristic was inadmissible under the road discount; tracks could not merge with tracks), four recorded, and the audit's own fixes found UNPINNED by the sweep and pinned second. 15 pins, 9 mutants dead.
+- `01-Overview/Audit-49.md` - CLOSED 2026-09-02: THE ROAD-TO-1:1 CAMPAIGN AUDITED - the record of the campaign's five adversarial review rounds over four waves plus the closeout (145 findings judged, 118 confirmed and every one closed, 27 refuted), classified by defect class (the vacuous pin the largest at 37, then the dropped term and the broken seam), the three criticals named (A8's ungated activate frame, the exterior automap's inverted rotation sign, the CORT01I0 courtroom palette - the incident's own remedy copied to a file its predicate excludes), the 145-flag re-triage, and seven lessons in AUDIT 44's register.
+- `01-Overview/Port-Status-2026-09-02.md` - the RE-MEASURED 1:1 status at the campaign's end, superseding `Port-Status-2026-09.md`: every figure re-derived by command against the tree and the DFU reference (three of the superseded page's figures corrected), the DFU class-citation sweep per directory as a lower bound, the sixty windows, the effect library, the quest actions, the formats, the systems - and the three lists that are the point: the 17 open flags each with its blocker, the section C rows still routed, and the departures not on the road.
 - `01-Overview/Audit-44.md` - CLOSED 2026-09-01: THE COMPREHENSIVE PARITY/BUG AUDIT, fleets end to end - a 32-lane finder sweep with 2-3 adversarial refuters per finding (528 agents), a 21-group fix wave in isolated worktrees, an 8-lane review of the fixes, and a 7-group review round. 183 findings judged, 172 confirmed, 166 canonical after dupes - ALL FIXED: the trade window's repeat-pay gold duplication, loot minted with no value, the bow that resolved nothing above ground, Levitate billing the fall it broke, the crime region frozen at boot, the dungeon keeping the death presenter, TG/DB unjoinable, the default skin's crash doors and dead HUD laws, the save envelope's dropped features and the quickload foe pile-up, and the talk surface's five empty macro reads. The review round then caught 39 defects IN the fixes (a merge collision cemented by its own pin, the third host's paralysis arm, in-flight spawns surviving the teleport sweep, an emission sign error vs DFU's shaders) and fixed those too. Port status measured whole: `Port-Status-2026-09.md`, which supersedes Port-Completion-Analysis for volume figures. The standing lesson: 26 of 32 lanes found the caller-does-not-deliver seam class - the law layer is near-verbatim, the wiring is where the bugs live, and the audit39_* tests now pin seams, not just laws.
 - `01-Overview/Audit-43.md` - CLOSED 2026-08-31: THE LAB AFTER PROTO-14 - Audit 42's measure-the-running-page method re-run after the PROTO-14 slice; every active uniform of every program probed at four states.
 - `01-Overview/Audit-42.md` - CLOSED 2026-08-31: THE LAB, MEASURED - the enhanced lab audited by probing the LIVE page (uniforms read off the running programs) instead of re-reading the code; the black-sky class caught by measurement.
@@ -279,152 +283,25 @@ DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
-- `src/characters/enemyCasting.js:71` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
-- `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
-- `src/characters/playerEntity.js:5` - chargenSession - AUDIT 23). INTERIM until then, loudly: flat
-- `src/characters/playerEntity.js:20` - maxHealth: 50,    // INTERIM until chargen rolls career HP
-- `src/characters/playerEntity.js:27` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
-- `src/combat/arrowFlight.js:132` - * the three hosts that call it price one shot one way. (FLAGGED: the
-- `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
-- `src/combat/playerWeapon.js:50` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
-- `src/combat/weaponRig.js:85` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/dungeonContext.js:272` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:826` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1461` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1498` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
-- `src/scenes/dungeonContext.js:1553` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3494` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3605` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:749` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:755` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:1014` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1266` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1646` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/shared.js:357` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:374` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:541` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
-- `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1353` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1359` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1764` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2806` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:4172` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5232` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6419` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:1340` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1358` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1570` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1575` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1820` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:2110` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:2142` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2364` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2486` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2761` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2806` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2825` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2930` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:3186` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:4862` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4961` - *  FLAGGED null this slice closed. */
-- `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
-- `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
-- `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
-- `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
-- `src/systems/buildingLocks.js:56` - *                                   (FLAGGED with banking)
-- `src/systems/chargen.js:9` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
-- `src/systems/chargen.js:24` - INTERIM (loud): the UI distributes the bonus pools by hand; the
-- `src/systems/chargen.js:132` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
-- `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-- `src/systems/chargenSession.js:331` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
-- `src/systems/court.js:28` - FLAGGED loud: execution (punishmentType 1) is unreachable in classic
-- `src/systems/effects.js:48` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:60` - *  Same FLAGGED caveat as the line above: DFU reads these from the
-- `src/systems/effects.js:737` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:1513` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
-- `src/systems/enchantments.js:151` - had been FLAGGED at its own site since S4c - "a magic item still
-- `src/systems/enchantments.js:685` - a MagicRound-FLAGGED row's is the payload callback :1767
-- `src/systems/encounters.js:79` - :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
-- `src/systems/encounters.js:285` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
-- `src/systems/equip.js:284` - /** INTERIM starting equipment (chargen's starting-gear roll
-- `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
-- `src/systems/guildServiceActions.js:195` - *  FLAGGED gap that stood here: the timer is
-- `src/systems/guildServiceFlow.js:239` - *  override's law). Every other arm is FLAGGED with the window it
+- `src/characters/enemyCasting.js:91` - * FLAGGED, and now exactly one term wide: HasClearPathToShootProjectile
+- `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
+- `src/combat/fpsSpellCasting.js:178` - * FLAGGED: the release is not the spell. DFU raises OnReleaseFrame
+- `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/exterior.js:1073` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1325` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/world.js:2819` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/worldModes.js:1659` - FLAGGED, above ground only, each with the DFU line it owes.
 - `src/systems/inputActions.js:465` - STILL FLAGGED:
 - `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
-- `src/systems/inventory.js:162` - field at all, e.g. the gold stack goldStack() mints. FLAGGED:
-- `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:98` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:183` - *  screen. FLAGGED as a group - they land with their own arcs.
-- `src/systems/knightlyGifts.js:3` - remaining FLAGGED service destinations, and the only two that need
-- `src/systems/knightlyGifts.js:31` - FLAGGED, not ported: RestoreGuildData's legacy flag migration
-- `src/systems/knightlyGifts.js:100` - * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
-- `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
-- `src/systems/loot.js:244` - G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
-- `src/systems/passiveSpecials.js:8` - arms FLAGGED since E1.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
-- `src/systems/potions.js:245` - FLAGGED, with the slice it waits on:
-- `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
-- `src/systems/save.js:167` - (playerEntity's INTERIM skills: 30) - spreading it threw.
-- `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
-- `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
-- `src/systems/shopStock.js:23` - A2 (ROAD TO 1:1) closed the two INTERIM clauses that stood here.
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
-- `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
-- `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
-- `src/systems/talk.js:293` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
-- `src/systems/talkTopics.js:346` - * FLAGGED: the walk is still over DOORS, so a building with no
-- `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
-- `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
-- `src/systems/tradeModes.js:177` - *  (DaggerfallTradeWindow.cs:960-963). FLAGGED: DFU reads the text
-- `src/systems/tradeModes.js:402` - FLAGGED, with the slices they wait on:
-- `src/systems/useItem.js:318` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
-- `src/ui/bankWindow.js:28` - law's. The SHIP popup is still FLAGGED - it needs the two fixed
-- `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
-- `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-- `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
+- `src/ui/chargenArt.js:731` - *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
 - `src/ui/enhancedMenu.js:1768` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1939` - if (action === 'delete') return;   // FLAGGED: no save manager yet
-- `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
-- `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
-- `src/ui/hudLarge.js:56` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
-- `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
-- `src/ui/listPicker.js:22` - ROAD-A7 closes this file's FLAGGED note. The bar is now a real
-- `src/ui/messageBox.js:35` - ROAD-A7 closes this file's FLAGGED note. Both halves are here now:
-- `src/ui/messageBox.js:264` - so the strip never rides higher than that. FLAGGED as a
-- `src/ui/nativeInventory.js:42` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:389` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeTalk.js:285` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:310` - B5-6: the four pages that were INTERIM no-ops. Each falls back
-- `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
-- `src/ui/paperDoll.js:65` - table, the loud INTERIM the U8f/U8g records flagged.
+- `src/ui/exteriorAutomapWindow.js:96` - FLAGGED, still awaiting a seam this stage does not own:
+- `src/ui/hudLarge.js:75` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
-- `src/ui/pixelDial.js:36` - FLAGGED (THE FOUR HOSTS RULE): no host is wired yet — world.js,
-- `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
-- `src/ui/prisonScreen.js:29` - FLAGGED, and honestly: the trial's own message boxes still stand on
-- `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
-- `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
-- `src/ui/restWindow.js:141` - FLAGGED, all three from OnPop/Update and all three belonging to
-- `src/ui/restWindow.js:422` - where classic counts DOWN. The backgrounds are still FLAGGED
-- `src/ui/spellbookWindow.js:114` - FLAGGED, idling loudly: the effect popup's body
-- `src/ui/spellbookWindow.js:951` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
-- `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
-- `src/ui/teleportPopUp.js:8` - `Teleport: null, // FLAGGED: the travel map's teleport mode`. Two
-- `src/ui/teleportPopUp.js:37` - FLAGGED: the HUD smash-to-black/fade either side of the jump
-- `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
-- `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the guild TELEPORT mode
-- `src/ui/travelPopUp.js:59` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
-- `src/world/actionSystem.js:508` - FLAGGED, a live gap, not parity.
-- `src/world/windmills.js:77` - carries a rotor", along with the FLAGGED note asking for the two it
 
 ## Audits
 

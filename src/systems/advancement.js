@@ -88,8 +88,16 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
 /**
  * PlayerEntity.RaiseSkills verbatim (the >360-classic-minute gate
  * lives here via entity.lastSkillCheckTime). Returns the raised
- * skill ids. The headless level-up applies immediately (INTERIM,
- * loud - DFU routes through the char sheet).
+ * skill ids.
+ *
+ * NOT A GAP (closeout): `onLevelUp` IS DFU's char-sheet route.
+ * RaiseSkills' tail is `if (CheckForLevelUp()) DaggerfallUI.PostMessage(
+ * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
+ * live host supplies that message as the hook - world.js:1120/:2386/
+ * :3132, exterior.js:650/:925, worldModes.js:363/:5478,
+ * dungeonContext.js:1394. The immediate arm below is taken only when
+ * onLevelUp is null: a headless/test path (and the ?class= skip) that
+ * DFU has no counterpart for, so there is nothing to diverge from.
  *
  * ROAD-Ar R12 - THE HOOKS FIRE IN DFU'S ORDER, WHICH IS THE WHOLE
  * POINT OF HAVING THEM. RaiseSkills does the skillImprove popup

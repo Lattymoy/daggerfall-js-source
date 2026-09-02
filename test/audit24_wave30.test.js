@@ -168,8 +168,13 @@ test('audit24 wave30: OnMonsterHit rides EVERY monster melee door and no other',
   // EnemyClass`). So: every host's monster-melee call must pass the rider, and
   // the arrow paths and the city watch must NOT. Both directions, because a
   // gate has a blind spot until somebody looks for it from the other side.
+  // WAVE D: the dungeon host's player-arrow door MOVED - it is
+  // combat/arrowFlight.js's playerArrowHitFoe now, the one body all
+  // four hosts call - so the file it lives in joins the sweep. The
+  // count is unchanged because the door is: seven, not six.
   const files = ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js',
-    'src/scenes/cityGuards.js', 'src/scenes/world.js', 'src/combat/playerWeapon.js'];
+    'src/scenes/cityGuards.js', 'src/scenes/world.js', 'src/combat/playerWeapon.js',
+    'src/combat/arrowFlight.js'];
   const sites = [];
   for (const f of files) {
     const src = rd(f);

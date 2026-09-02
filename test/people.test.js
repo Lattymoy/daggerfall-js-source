@@ -171,7 +171,11 @@ test('P1 hosts: the gate is evaluated at the DOOR and the quest hook is its ELSE
   assert.ok(idAt > 0 && ctxAt > 0, 'the transition changed shape');
   assert.ok(idAt < ctxAt, 'the building identity is resolved AFTER the interior stands - the people gate cannot read it');
   assert.ok(wm.includes('peopleAreVisible('), 'the host never evaluates the visibility gate');
-  assert.ok(wm.includes('peopleVisible })'), 'the answer never reaches buildInteriorContext');
+  // RE-BASELINED at ROAD-C c2/S9: the opts literal grew the automap's
+  // two entries, so the pin is on peopleVisible being INSIDE the call
+  // rather than on it being the literal's last word.
+  assert.match(wm, /const ctx = await buildInteriorContext\([\s\S]{0,900}peopleVisible,/,
+    'the answer never reaches buildInteriorContext');
   // the latch is the entry-time computation, not a live clock read
   // (IS1 hoisted the declaration - the RESTORE branch takes the saved
   // latch instead of recomputing, SerializablePlayer.cs:394-400)

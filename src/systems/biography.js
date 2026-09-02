@@ -11,11 +11,14 @@
 // sGroupReputations by the same, so a biography answer changes how
 // townspeople greet you from the first conversation.
 //
-// FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
-// LOGGED, not applied - DFU has never implemented them either
-// (BiogFile.cs:427-440), so applying a guess would be a divergence,
-// not a fix. `&` is a data quirk in six of the files; DFU logs it as
-// an invalid command and moves on.
+// NOT A GAP, recorded (closeout): AE, AF and AO are parsed and
+// LOGGED, not applied, because that is verbatim what DFU does -
+// BiogFile.cs:427 heads the arms "// Unimplemented commands" and
+// :428-431/:432-435/:436-439 log "CreateCharBiography: AE|AF|AO -
+// command unimplemented." and nothing else. applyEffect (:163-165)
+// is those three arms. Applying a guess would BE the divergence.
+// `&` is a data quirk in six of the files; DFU's else at :441-444
+// logs "Invalid command - " and moves on, which is :167 here.
 // `rf` FACTION reputation parks its deltas on the entity, because this
 // runs before FACTION.TXT is in hand. S25's attachFactionRep drains
 // them at the end of finishChargen, PROPAGATING, exactly as

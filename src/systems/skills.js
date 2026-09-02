@@ -167,17 +167,38 @@ export function resetSkillsRecentlyRaised(entity) {
  *  abilityFlagsAndSpellPointsBitfield 0x1406, so a VANILLA Acrobat,
  *  not just a custom class, jumped 10% short.
  *
- *  improvedAthleticism (+0.1) is an ImprovesTalents ENCHANTMENT and
- *  still pends; X1 landed the Jump SPELL's term (+0.6, AcrobatMotor's
- *  own jumpSpellMultiplier :16, added when IsEnhancedJumping :104-105
- *  - which the port reads as the live 'jumping' effect). P14. */
+ *  D9: improvedAthleticism (+0.1, AcrobatMotor.cs:15) now ships too.
+ *  It is an ImprovesTalents ENCHANTMENT (ImprovesTalents.cs:75-88 ->
+ *  _enchantMods.improvedAthleticism, E1's fold) and DFU adds it
+ *  NESTED INSIDE the career check (:96-101)
+ *
+ *      if (Career.Athleticism) {
+ *          jumpSpeedMultiplier += athleticismMultiplier;
+ *          if (ImprovedAthleticism) += improvedAthleticismMultiplier;
+ *      }
+ *
+ *  - exactly the shape shared.js:1144 already uses for the same pair
+ *  on the fatigue rate, so the item alone does nothing and the two
+ *  together make +20%. X1 landed the Jump SPELL's term (+0.6,
+ *  AcrobatMotor's own jumpSpellMultiplier :16, added when
+ *  IsEnhancedJumping :104-105 - which the port reads as the live
+ *  'jumping' effect). P14. */
 export const JUMP_SPELL_MULTIPLIER = 0.6;   // AcrobatMotor.cs:16
+export const ATHLETICISM_MULTIPLIER = 0.1;            // AcrobatMotor.cs:14
+export const IMPROVED_ATHLETICISM_MULTIPLIER = 0.1;   // AcrobatMotor.cs:15
 export function jumpSpeedMultiplier(entity) {
   let m = 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
   if (entity?.activeEffects?.some((a) => a.kind === 'jumping')) m += JUMP_SPELL_MULTIPLIER;
   // DFCareer.HasSpecialAbility: the flag masked against the
   // bitfield's LOW BYTE, verbatim (the C# (byte)flags cast).
   const bits = entity.career?.abilityFlagsAndSpellPointsBitfield ?? 0;
-  if ((bits & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) m += 0.1;
+  if ((bits & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) {
+    m += ATHLETICISM_MULTIPLIER;
+    // The same fold entityImprovedAthleticism (enchantments.js:861)
+    // answers, read in place: this leaf cannot import enchantments.js
+    // without closing a cycle back through skills.js, which is why
+    // the skillMods read above (:86) is spelled out the same way.
+    if (entity._enchantMods?.improvedAthleticism) m += IMPROVED_ATHLETICISM_MULTIPLIER;
+  }
   return m;
 }

@@ -15,9 +15,11 @@ import { readFileSync } from 'node:fs';
 //
 // The module is pure, so every law here is held with synthetic wind and
 // synthetic placement - no ARENA2, no GL. What it CANNOT hold is the
-// half that needs real data: whether model 41600 is a windmill in
-// ARCH3D.BSA and where its hub sits. Those are FLAGGED in the module
-// and belong to the wiring slice; nothing below pretends otherwise.
+// half that needs real data: where a mill's hub sits in ARCH3D.BSA.
+// That belongs to the wiring slice; nothing below pretends otherwise.
+// (The other half of that old caveat - whether model 41600 is a
+// windmill - died with WM2d: classic stands no mill at all, the port
+// places its own, and the module says so.)
 
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 

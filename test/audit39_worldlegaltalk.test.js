@@ -15,7 +15,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createArrestFlow } from '../src/scenes/arrestFlow.js';
 import { CRIMES, REPUTATION_LOSS_PER_CRIME } from '../src/systems/court.js';
-import { buildBuildingDirectory } from '../src/systems/talkTopics.js';
+import { buildBuildingDirectory, whereIsAnswer } from '../src/systems/talkTopics.js';
+import { RMB_SIDE } from '../src/world/locationLayout.js';
 import { BUILDING_TYPES, isNamedBuildingType } from '../src/world/buildingNames.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
 import { currentWeather, setWeather } from '../src/systems/weatherSim.js';
@@ -301,8 +302,7 @@ const fakeBlock = (types) => ({
 test('AUDIT 39 (#110): the building list holds residences, named or not', () => {
   const types = [BUILDING_TYPES.Tavern, BUILDING_TYPES.House2, BUILDING_TYPES.GeneralStore];
   const blk = fakeBlock(types);
-  const doors = types.map((_, i) => ({ dfBlock: blk.dfBlock, recordIndex: i, position: [1, 0, 1] }));
-  const dir = buildBuildingDirectory([], [blk], doors, { locationName: 'Tulune', regionName: 'Tigonus' });
+  const dir = buildBuildingDirectory([], [blk], { locationName: 'Tulune', regionName: 'Tigonus' });
   assert.equal(dir.length, 3, 'every building with a key is a row - C#\'s only gate');
   const house = dir.find((d) => d.buildingType === BUILDING_TYPES.House2);
   assert.ok(house, 'the residence a quest site would name is resolvable by key now');
@@ -311,10 +311,47 @@ test('AUDIT 39 (#110): the building list holds residences, named or not', () => 
   assert.ok(house.buildingKey > 0);
   // the named rows are untouched: same key, still named
   assert.match(dir.find((d) => d.buildingType === BUILDING_TYPES.Tavern).name, /\S/);
-  // one row per building even when several doors reach it
-  const twice = buildBuildingDirectory([], [blk],
-    [...doors, { dfBlock: blk.dfBlock, recordIndex: 1, position: [2, 0, 2] }], {});
-  assert.equal(twice.length, 3, 'the multi-door dedupe still holds');
+  // D9: one row per building whatever the doors do - the walk no longer
+  // sees them, so the multi-door dedupe is not a rule that can be broken.
+  const twice = buildBuildingDirectory([], [blk], {});
+  assert.equal(twice.length, 3, 'one row per building, doorless block included');
+});
+
+// D9: the walk is over BUILDINGS, whose Position (RMBLayout.cs:570-571)
+// is BLOCK-LOCAL - so the directory has to re-add the block origin the
+// door's own world position used to carry. whereIsAnswer subtracts a
+// LOCATION-LOCAL player term (talkTopics.js:456), so without it every
+// block's buildings collapse onto block (0,0)'s coordinates and every
+// compass hint outside that block points the wrong way.
+test('AUDIT 39 (#110): a directory row carries BLOCK ORIGIN + the subrecord Position', () => {
+  const cell = (x, y) => ({
+    x, y, originX: x * RMB_SIDE, originZ: y * RMB_SIDE,
+    dfBlock: {
+      rmbBlock: {
+        fldHeader: {
+          otherNames: null,
+          buildingDataList: [{
+            buildingType: BUILDING_TYPES.Tavern, nameSeed: 4242, factionId: 0, quality: 10, sector: 0, locationId: 0,
+          }],
+        },
+        // RMB_DIMENSION/2 in both axes - dead centre of its own block
+        subRecords: [{ xPos: 2048, zPos: 2048, yRotation: 0 }],
+      },
+    },
+  });
+  const home = cell(0, 0);
+  const away = cell(2, 1);
+  const dir = buildBuildingDirectory([], [home, away], { locationName: 'Tulune', regionName: 'Tigonus' });
+  assert.equal(dir.length, 2);
+  const half = RMB_SIDE / 2;                       // 51.2 world units
+  assert.deepEqual(dir[0].position, [half, 0, half], 'block (0,0) is the origin-free case');
+  assert.deepEqual(dir[1].position, [2 * RMB_SIDE + half, 0, RMB_SIDE + half],
+    'block (2,1) is shifted by its own origin, not stacked on (0,0)');
+
+  // and the observable: the compass hint the townsperson speaks
+  const player = [2 * RMB_SIDE, 0, RMB_SIDE + half];
+  assert.equal(whereIsAnswer(player, dir[1], 50, 7).direction, 'east');
+  assert.equal(whereIsAnswer(player, dir[0], 50, 7).direction, 'southwest');
 });
 
 // ---------------------------------------------------------------

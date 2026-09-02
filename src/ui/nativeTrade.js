@@ -29,7 +29,7 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
-  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick } from './itemScroller.js';
+  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
@@ -42,7 +42,8 @@ import {
   localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY, LETTER_OF_CREDIT_TEXT,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
-import { CANNOT_BE_REPAIRED_TEXT } from '../systems/repairService.js';
+import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
+  isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
 import { isSummoned } from '../systems/inventory.js';   // TransferItem's summoned guard
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
 import { questTransferRefused, SMALL_CART_TEMPLATE } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
@@ -107,7 +108,17 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  * hooks:
  *   mode           'Buy' | 'Sell' | 'SellMagic' | 'Repair' | 'Identify'
  *   shelfItems()   -> the shop's stock (the Buy mode remote list)
- *   packItems()    -> the player's own items, already minus equipped
+ *   packItems()    -> PlayerEntity.Items, the LIVE collection (:389).
+ *                     D7: not a filtered view - a click TRANSFERS out
+ *                     of it, so it must be spliceable. The equipped
+ *                     test is this window's, in localList.
+ *   isEquipped(it) -> FilterLocalItems' `!item.IsEquipped` (:693)
+ *   otherItems()   -> PlayerEntity.OtherItems, the REPAIR mode's
+ *                     remoteItems (:392) - the in-repair collection
+ *   repairItems()  -> FilterRemoteItems' Repair arm (:705-724) over
+ *                     that collection, which the port's repair law
+ *                     already owns (repairService.repairJobsAt)
+ *   nowMinutes()   -> the clock the repair arm's IsRepairFinished reads
  *   accepts(item)  -> storeBuysItemType for THIS shop (Sell's filter)
  *   enchanted(item)-> SellMagic's filter
  *   priceCtx()     -> { quality, priceAdjustment, holidayId, guildFactionId,
@@ -142,10 +153,56 @@ export class NativeTradeWindow {
     this.staged = [];
     this.box = null;             // the confirm / refusal box, when one is up
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
+    // D7: the window's shared ToolTip - one tip, both lists, exactly
+    // as ItemListScroller hands `toolTip` to every item button it
+    // builds (:340). Its text is ResolveItemLongName (:464), which is
+    // the only thing on this screen that names what is in a slot.
+    this._tip = makeSlotToolTip();
   }
 
-  /** The collection the cost strip totals (:430, :453). */
-  get stagedForCost() { return this.mode === 'Buy' ? this.basket : this.staged; }
+  /** DaggerfallBaseWindow's defaultToolTip rest clock. */
+  tick(dt) { this._tip.update(dt); }
+
+  /** The item under the cursor on either list. The hit-test is
+   *  scrollerHit's - the same one the click uses - so the tip can
+   *  never name a slot a click would miss. */
+  _itemAt(vx, vy) {
+    for (const [rect, scroll, items] of [
+      [TRADE_RECTS.remoteList, this.remoteScroll, this.remoteList()],
+      [TRADE_RECTS.localList, this.localScroll, this.localList()],
+    ]) {
+      const hit = scrollerHit(rect, vx, vy, scroll, items.length);
+      if (hit?.kind === 'slot') return items[scroll + hit.slot] ?? null;
+      if (hit) return null;
+    }
+    return null;
+  }
+
+  /** The pointer over the panel. A box is up = no tip: DFU's message
+   *  box is a window of its own pushed OVER this one, and the buttons
+   *  underneath stop getting mouse events at all. */
+  hover(vx, vy) {
+    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    this._tip.show(this._itemAt(vx, vy), vx, vy, { getQuest: this.hooks.getQuest ?? null });
+  }
+
+  /** remoteItems (:392). In REPAIR mode DFU points it at
+   *  PlayerEntity.OtherItems - the shop-side in-repair collection -
+   *  and in every other mode at merchantItems, which on this side is
+   *  the window's own staged lot. Everything that stages, unstages or
+   *  clears goes through here, so the Repair mode moves real items
+   *  into the real collection the repair law reads back. */
+  get remoteItems() { return this.mode === 'Repair' ? (this.hooks.otherItems?.() ?? this.staged) : this.staged; }
+
+  /** The collection the cost strip totals (:430, :453). UpdateCostAndGold
+   *  walks `basketItems` in Buy mode and `remoteItems` in every other -
+   *  and in Repair that walk skips anything already being repaired
+   *  (:466-471), which is the same cut FilterRemoteItems makes, so the
+   *  filtered list and the raw collection agree on the number. */
+  get stagedForCost() {
+    if (this.mode === 'Buy') return this.basket;
+    return this.mode === 'Repair' ? this.remoteList() : this.staged;
+  }
 
   /** FilterLocalItems (:672-703): the basket FIRST in Buy mode, then
    *  the pack narrowed by the mode's own gate.
@@ -161,14 +218,46 @@ export class NativeTradeWindow {
    *  host that does hand over the live array: the item is gone from
    *  the pack by then and matches nothing. */
   localList() {
-    const pack = (this.hooks.packItems?.() ?? []).filter((it) => localListAccepts(this.mode, it, {
+    // D7: `!item.IsEquipped` is the WINDOW's test in DFU and it is
+    // applied TWICE - once to the basket (:697) and once to the pack
+    // (:693) - because Buy mode lets the player equip out of the
+    // basket while shopping. The host used to make the cut on its
+    // side, which meant handing over a fresh FILTERED array that
+    // could not be spliced; with the test here the host hands the
+    // live PlayerEntity.Items and a click TRANSFERS, as DFU does.
+    const equipped = this.hooks.isEquipped ?? (() => false);
+    const staged = this.remoteItems;
+    const pack = (this.hooks.packItems?.() ?? []).filter((it) => !equipped(it) && localListAccepts(this.mode, it, {
       accepts: this.hooks.accepts, enchanted: this.hooks.enchanted,
-    }) && !this.staged.includes(it));
-    return this.mode === 'Buy' ? [...this.basket, ...pack] : pack;
+    }) && !staged.includes(it));
+    return this.mode === 'Buy' ? [...this.basket.filter((it) => !equipped(it)), ...pack] : pack;
   }
 
-  /** The remote list: the shelf in Buy mode, the staged lot otherwise. */
-  remoteList() { return this.mode === 'Buy' ? (this.hooks.shelfItems?.() ?? []) : this.staged; }
+  /** FilterRemoteItems (:704-727): the shelf in Buy mode, the in-repair
+   *  collection NARROWED in Repair mode, and the staged lot otherwise.
+   *
+   *  D7 - the Repair arm. DFU keeps an item only if it is not being
+   *  repaired at all or is being repaired HERE (a job left at another
+   *  shop is invisible from this counter), and heals any job whose
+   *  time is up on the way past. That walk is repairService's
+   *  repairJobsAt, character for character, so the host hands it in
+   *  rather than the window growing a second copy.
+   *
+   *  RECORDED: FilterRemoteItems ends with `UpdateRepairTimes(false)`
+   *  (:725), the ESTIMATE pass, and this does not run it. That pass
+   *  exists for exactly one reader - RepairItemLabelTextHandler's
+   *  "%d days" MISC LABEL (:282-288), which is an ItemListScroller
+   *  label template the port's shared scroller does not draw (icon,
+   *  stack count and tooltip only). Running it here would also run it
+   *  per FRAME rather than per Refresh, and its clamp never decreases,
+   *  so the estimate would ratchet. The keyed collect list computes
+   *  the same number on demand through repairStatusLabel; when the
+   *  misc label lands, it does the same. */
+  remoteList() {
+    if (this.mode === 'Buy') return this.hooks.shelfItems?.() ?? [];
+    if (this.mode === 'Repair') return this.hooks.repairItems?.() ?? this.remoteItems;
+    return this.staged;
+  }
 
   /** UpdateCostAndGold (:425-489) - the strip's number and whether the
    *  mode action is live, from one walk. */
@@ -259,7 +348,7 @@ export class NativeTradeWindow {
       // AUDIT 26 F157: TransferItem :1506-1508 - staging a LIT torch
       // for sale douses it; from is localItems on every staging arm.
       clearLightSourceOnLeave(item, this.hooks.entity, true);
-      this._move(item, this.hooks.packItems(), this.staged);
+      this._move(item, this.hooks.packItems(), this.remoteItems);
       return;
     }
     // Buy: a basket item clicks back OUT to the shelf (:800-801)
@@ -290,17 +379,70 @@ export class NativeTradeWindow {
       applyTransfer(item, plan, this.hooks.shelfItems(), this.basket);
       return;
     }
-    this._move(item, this.staged, this.hooks.packItems());
+    // D7 - the REPAIR arm (:842-853). A job still under way is not
+    // simply taken back: it raises ConfirmInterruptRepairBox first,
+    // and only Yes reaches TakeItemFromRepair. A finished job, or one
+    // that was never booked (staged this visit, or instantly
+    // repaired), comes straight back.
+    if (this.mode === 'Repair') {
+      const now = this.hooks.nowMinutes?.() ?? 0;
+      if (itemIsBeingRepaired(item) && !isRepairFinished(item, now)) {
+        this.box = {
+          rows: [{ text: INTERRUPT_REPAIR_TEXT, center: true }],
+          buttons: 'YesNo',
+          onYes: () => this._takeItemFromRepair(item),
+        };
+        return;
+      }
+      this._takeItemFromRepair(item);
+      return;
+    }
+    this._move(item, this.remoteItems, this.hooks.packItems());
   }
 
-  /** ClearButton_OnMouseClick (:1020-1025) - everything staged goes
-   *  back where it came from. */
+  /** TakeItemFromRepair (:857-862): the item comes back to the pack
+   *  and its repair record leaves whole - an interrupted job is
+   *  partial and UNREFUNDED, which is the whole point of the confirm. */
+  _takeItemFromRepair(item) {
+    this._move(item, this.remoteItems, this.hooks.packItems());
+    collectRepaired(item);
+  }
+
+  /** ClearSelectedItems (:589-627) - everything staged goes back
+   *  where it came from. Three arms, and the third is not the same as
+   *  the second: Buy returns the basket to the merchant, REPAIR
+   *  returns only what is not actively under way (Collect()ing each as
+   *  it goes), and every other mode returns the whole remote lot to
+   *  the player - "ignoring weight here, like classic. Priority is to
+   *  not lose any items."
+   *
+   *  D7: this is also OnPop (:404-407), so it runs when the window
+   *  CLOSES as well as when the Clear button is pressed. That is what
+   *  makes the live-array transfer safe - walking out of a shop with
+   *  goods staged puts them back in the pack rather than dropping them
+   *  on the floor of a collection nobody reads. */
   _clear() {
     if (this.mode === 'Buy') {
       while (this.basket.length) this._move(this.basket[0], this.basket, this.hooks.shelfItems());
-    } else {
-      while (this.staged.length) this._move(this.staged[0], this.staged, this.hooks.packItems());
+      return;
     }
+    if (this.mode === 'Repair') {
+      const now = this.hooks.nowMinutes?.() ?? 0;
+      for (const it of [...this.remoteList()]) {
+        if (itemIsBeingRepaired(it) && !isRepairFinished(it, now)) continue;
+        this._takeItemFromRepair(it);
+      }
+      return;
+    }
+    const remote = this.remoteItems;
+    while (remote.length) this._move(remote[0], remote, this.hooks.packItems());
+  }
+
+  /** CloseWindow -> OnPop (:404-407). Every exit from this screen is
+   *  DFU's window pop, and the pop clears the selection. */
+  _close() {
+    this._clear();
+    this.done = true;
   }
 
   /** DoModeAction -> ShowTradePopup (:954-998, :1100-1134). */
@@ -332,7 +474,11 @@ export class NativeTradeWindow {
    *  which this path never reaches. */
   _castIdentifySpell() {
     if (this.hooks.commit?.(this.mode, [...this.staged], 0, null) === false) return;
-    this.staged.length = 0;
+    // "Transfer all items back to player" (:992) IS ClearSelectedItems,
+    // and D7 made that a real move rather than a list reset: the goods
+    // left the pack at the click, so dropping the references here
+    // would have destroyed them.
+    this._clear();
     this.localScroll = 0;
     this.remoteScroll = 0;
   }
@@ -344,8 +490,16 @@ export class NativeTradeWindow {
       ? sellProceeds(price, this.hooks.weight?.() ?? {})
       : null;
     this.hooks.commit?.(this.mode, [...this.stagedForCost], price, proceeds);
-    this.basket.length = 0;
-    this.staged.length = 0;
+    // D7 - ConfirmTrade clears PER MODE, and two of the four clear
+    // nothing at all (:1027-1090). Buy does `PlayerEntity.Items
+    // .TransferAll(basketItems)`, Sell/SellMagic `remoteItems.Clear()`;
+    // REPAIR and IDENTIFY leave the remote lot exactly where it is -
+    // the booked jobs stay with the shop and the rest goes back through
+    // OnPop's ClearSelectedItems when the player walks out. Zeroing
+    // both collections here dropped an identified amulet on the floor
+    // the moment the goods stopped being a selection over the pack.
+    if (this.mode === 'Buy') this.basket.length = 0;
+    else if (selling) this.staged.length = 0;
     this.lastPrice = price;
     // "a concluded deal clinks" - and a LETTER OF CREDIT scratches
     // instead (:1084-1087), which is the one place that sound is used.
@@ -383,7 +537,7 @@ export class NativeTradeWindow {
       } else this._dismissBox();
       return;
     }
-    if (code === 'Escape') { this.done = true; return; }
+    if (code === 'Escape') { this._close(); return; }
     // Enter commits the deal rather than closing - the port's own
     // accelerator, kept; DFU has no Return arm on this screen.
     if (code === 'Enter') { this._modeAction(); return; }
@@ -396,7 +550,7 @@ export class NativeTradeWindow {
     // dead button is worse than a quiet one.
     const action = MODE_ACTION_BUTTON[this.mode] ?? null;   // Inventory mode assigns none ("Shouldn't happen")
     const hit = firstHotkey(['TradeExit', ...(action ? [action] : []), 'TradeClear'], code, e);
-    if (hit === 'TradeExit') { this.done = true; return; }
+    if (hit === 'TradeExit') { this._close(); return; }
     if (hit === 'TradeClear') { this._clear(); return; }
     if (hit) { this._modeAction(); return; }
     const d = /^Digit([1-4])$/.exec(code);   // digits stage the visible remote slots (the port's own)
@@ -419,7 +573,7 @@ export class NativeTradeWindow {
       return true;
     }
     const R = TRADE_RECTS;
-    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }   // every trade button clicks (:887-1022)
+    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }   // every trade button clicks (:887-1022)
     if (inRect(R.modeAction, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._modeAction(); return true; }
     if (inRect(R.clear, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._clear(); return true; }
     for (const [rect, which, items, pick] of [
@@ -442,7 +596,7 @@ export class NativeTradeWindow {
   _drawIcon(renderer, m, it, rect, slot) { return this._icon(renderer, m, it, rect, slot); }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this.done = true; return; }
+    if (!_art) { this._close(); return; }   // D7: an art-less bail is still a POP - the selection goes home
     const m = nativeMetrics(canvas);
     // AUDIT 19 F2: OPAQUE BLACK, not a dim. DaggerfallBaseWindow's
     // constructor sets `parentPanel.BackgroundColor = Color.black`
@@ -489,5 +643,6 @@ export class NativeTradeWindow {
       this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
+    this._tip.draw(renderer, m, font);   // D7: last, over the panel and the box
   }
 }

@@ -2931,13 +2931,20 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
   // the ready rides the per-frame read the rig already makes
   assert.match(rig, /fpArm\.readySpell\(spellArmed\(\)\);/, 'the arm must follow the rig\u2019s own HasReadySpell read');
-  assert.match(rig, /castSpellAnim: \(rangeType\) => fpArm\.castSpell\(rangeType\),/, 'the cast must have one door, and it carries the range');
+  // ROAD-tail: the door now carries the ELEMENT too - the classic
+  // spellcasting hands come through the same moment (FPSSpellCasting
+  // .PlayOneShot off EntityEffectManager.CastReadySpell :434). Still
+  // ONE door; the arm's half of it is unchanged.
+  assert.match(rig, /castSpellAnim: \(rangeType, element\) => \{\n\s+fpArm\.castSpell\(rangeType\);/, 'the cast must have one door, and it carries the range');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');
     assert.match(h, /castSpellAnim/, `${host} does not run the cast animation`);
     // it hangs off the CAST moment, not the ready one
-    const cast = h.slice(h.indexOf('onCastReadySpell'), h.indexOf('onCastReadySpell') + 500);
-    assert.match(cast, /castSpellAnim\??\.?\(sp\?\.rangeType\)/, `${host} does not hand the cast its range`);
+    // ROAD-tail widened the window from 500: the comment block at the
+    // dungeon site grew by the element's own line, and a pin that
+    // measures a comment's length is measuring the wrong thing.
+    const cast = h.slice(h.indexOf('onCastReadySpell'), h.indexOf('onCastReadySpell') + 900);
+    assert.match(cast, /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element\)/, `${host} does not hand the cast its range`);
     assert.ok(!/castSpellAnim/.test(h.slice(h.indexOf('onNewReadySpell'), h.indexOf('onCastReadySpell'))),
       `${host} casts on the READY moment - the spell has not gone yet`);
   }
@@ -2949,7 +2956,7 @@ test('AUDIT 36 F1: ALL THREE hosts run the cast animation, on the cast moment, w
     const h = readFileSync(host, 'utf8');
     const at = h.indexOf('onCastReadySpell');
     assert.ok(at > 0, `${host} raises no cast moment`);
-    assert.match(h.slice(at, at + 700), /castSpellAnim\??\.?\(sp\?\.rangeType\)/, `${host} does not run the cast animation with its range`);
+    assert.match(h.slice(at, at + 700), /castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element\)/, `${host} does not run the cast animation with its range`);
   }
 });
 

@@ -50,8 +50,9 @@
 //   resetToneSession()          - TK-iii's pipeline
 import { srand } from '../formats/dfRandom.js';
 import { randomRangeInclusive } from '../formats/dfRandom.js';
-import { isAlly, isEnemy } from '../formats/factionFile.js';
+import { isAlly, isEnemy, flatArchive, flatRecord } from '../formats/factionFile.js';
 import { tokensToString } from './rumorMill.js';
+import { GENDERS } from '../characters/nameHelper.js';
 import {
   NO_RESPONSE_TEXT_ID, MIN_NEUTRAL_REACTION, MIN_LIKE_REACTION,
   MIN_VERY_LIKE_REACTION, REFUSE_TALK_REACTION,
@@ -761,4 +762,41 @@ export class NPCSession {
     this.deps.clearQuestInfo?.();
     this.deps.clearRumorMill?.();
   }
+}
+
+/** ROAD-D D10 - GetPortraitIndexFromStaticNPCBillboard
+ *  (TalkManager.cs:3505-3543), whole and pure. It answers WHICH face
+ *  archive and WHICH record a static NPC's talk portrait comes from,
+ *  and its three-step overwrite is DFU's own:
+ *
+ *   1. an INDIVIDUAL faction (type 4) portraits from its own `face`
+ *      field and returns immediately - and the archive test is
+ *      INVERTED against intuition: `face > 60` is a COMMON face
+ *      (TFAC00I0.RCI), 60 and below a SPECIAL one (FACES.CIF), which
+ *      is the same split ui/hudEscortFaces.js resolveFaceImage keeps;
+ *   2. everyone else starts at record 410 - DFU's own comment calls
+ *      it "oops", the face shown when nothing else resolves;
+ *   3. the faction's FLAT (flat1, or flat2 for a female NPC) is
+ *      decoded to archive/record and looked up in FLATS.CFG for a
+ *      faceIndex; then the NPC's OWN billboard is looked up the same
+ *      way and overwrites it when it resolves, "more specific than
+ *      just the factiondata - which will always resolve to the same
+ *      portrait for a specific faction".
+ *
+ *  `flatFaceIndex(archive, record)` is FlatsFile.GetFlatData's
+ *  faceIndex (formats/flatsFile.js:84 returns -1 when the flat is
+ *  absent, which is this function's not-found arm). */
+export const OOPS_PORTRAIT_RECORD = 410;
+export function portraitIndexFromStaticNPCBillboard(data, { factionData = null, flatFaceIndex = null } = {}) {
+  const f = factionData ?? EMPTY_FACTION;
+  if (f.type === FACTION_TYPE.Individual) {
+    return { archive: (f.face ?? 0) > 60 ? 'CommonFaces' : 'SpecialFaces', record: f.face ?? 0 };
+  }
+  let record = OOPS_PORTRAIT_RECORD;
+  const flat = (data?.gender ?? 0) === GENDERS.Female ? (f.flat2 ?? 0) : (f.flat1 ?? 0);
+  const fromFaction = flatFaceIndex?.(flatArchive(flat), flatRecord(flat)) ?? -1;
+  if (fromFaction >= 0) record = fromFaction;
+  const fromBillboard = flatFaceIndex?.(data?.billboardArchiveIndex ?? 0, data?.billboardRecordIndex ?? 0) ?? -1;
+  if (fromBillboard >= 0) record = fromBillboard;
+  return { archive: 'CommonFaces', record };
 }

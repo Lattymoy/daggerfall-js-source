@@ -144,13 +144,13 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
   assert.ok(xf.includes('const _fParalyzed = entityIsParalyzed(f.entity);'), 'exteriorFoes reads it');
   // MT-ii wrapped the context (_armed adds the targeting closure when
   // the host supplies candidates); the paralysis argument is untouched.
-  assert.ok(xf.includes('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);'), 'the motor is told');
+  assert.ok(xf.includes('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);'), 'the motor is told');
   // MT-ii: the component aims at the SELECTED target (EnemyAttack
   // reads senses.Target, :199-209) and holds when there is none.
-  assert.ok(xf.includes('if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt);'), 'the attack machine holds');
+  assert.ok(xf.includes('if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt, _fPaused);'), 'the attack machine holds');
   // MT-ii: the caster aims at the target too, so a foe duelling
   // another foe stops hurling its fireballs at the player.
-  assert.ok(xf.includes('if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {'), 'and so does casting');
+  assert.ok(xf.includes('if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {'), 'and so does casting');
   // and no DAMAGE FRAME resolves. EnemyAttack.Update returns at the top while
   // paralysed, so MeleeDamage/BowDamage never run. The dungeon host gets this
   // free by suppressing the whole mobile update; these pools resolve off the

@@ -40,6 +40,7 @@ import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from 
 import { createTownTalk } from './townTalk.js';
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
+import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ctx BODY and DFU's loose-foe placement, one copy for the two hosts that mount them
 import { applySpell } from '../systems/effects.js';   // E2: CastWhenStrikes' target arm
 import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -49,15 +50,16 @@ import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flig
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
+import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
-import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
+import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
-import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
+import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
 import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
@@ -74,7 +76,9 @@ import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e:
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
-import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { ExteriorAutomapWindow, stampResidenceQuestNames } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name
+import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
+import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
@@ -118,6 +122,7 @@ import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/
 import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
+import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
@@ -139,7 +144,7 @@ import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrain
 // The court release's RandomStartMarker arm (StreamingWorld's
 // PositionPlayerToLocation), the law and its two location-type reads.
 import { positionPlayerToLocation, locationStartMarkers, entranceOptionsForLocationType } from '../world/locationEntrance.js';
-import { preloadPrisonScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen
+import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
@@ -202,7 +207,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -1052,6 +1057,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
   let _reskinPending = false;
+  // ROAD-Ar (R1), closeout: the teleport's SEASON LATCH. DFU runs
+  // TeleportToCoordinates (DaggerfallTravelPopUp.cs:333) and RaiseTime
+  // (:344) inside one Unity frame with nothing between them, so the
+  // window in which the season cache holds the ARRIVAL month while the
+  // one clock still reads the DEPARTURE minute does not exist there.
+  // Here it does: the destination pixel is BUILT across an await, and
+  // refreshSeason latches `_seasonDay` from whatever clock it is handed
+  // with no memory that the clock was a future one - so a frame taken
+  // during that build read the live (departure) clock, saw the day go
+  // BACKWARDS, and wrote the departure season back over the arrival one
+  // before buildPixelNow's post-await `applyClimate(..., season)` ever
+  // looked at it. The arrival was skinned for the month the player left
+  // and the next tickSeason after RaiseTime tore the whole grid down
+  // again - exactly what R1 says it removed. While this is up the
+  // frame's poll stands off; the teleport rebuilds every pixel anyway,
+  // so a skipped poll can lose nothing, and by the time it clears the
+  // caller has raised time onto the day the cache already holds.
+  let _seasonStraightening = false;
   // ROAD-Ar (R0): the re-skin's MOTOR HOLD - the key of the pixel the
   // player stood on when the flip tore the world down, null when
   // nothing is held. DaggerfallLocation re-skins standing geometry in
@@ -1069,6 +1092,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference still: the player does not move at all.
   let _seasonHoldKey = null;
   function tickSeason() {
+    if (_seasonStraightening) return;   // the FRAME's poll only (see above)
     if (refreshSeason()) _reskinPending = true;
     // A pixel whose textures are still crossing must PUBLISH before its
     // key can be torn down - the same hazard pump re-checks for after
@@ -1188,7 +1212,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         day: !isNight(minuteNow()), inside: false,
       });
       const lines = out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.'];
-      if (!townTalk.overlay) townTalk.showOverlay(new ActionTextBox(lines));
+      // ROAD-B B5: a PUSH. PlayerEntity's OnExhausted handler is a plain
+      // DaggerfallUI.MessageBox, and DaggerfallUI.MessageBox is
+      // `new DaggerfallMessageBox(...); mb.Show()` -> uiManager
+      // .PushWindow (DaggerfallUI.cs:1330-1360) - it has never asked
+      // whether something else is open. Collapsing from exhaustion
+      // WITH A WINDOW UP is not exotic: the fatigue drain runs through
+      // the inventory, the map and the spellbook alike, and the
+      // refusal meant the one message that explains the lost hour (or
+      // the drowning) was dropped.
+      townTalk.pushOverlay(new ActionTextBox(lines));
       if (out.kind === 'rest') {
         playerTicker.advance(60);
         playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
@@ -1316,6 +1349,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
   });
   townTalk.ensureLoaded();
+  /** THE GAME PAUSE for this host - ONE composition, asked of the
+   *  stacks and never re-derived.
+   *
+   *  DFU has ONE UserInterfaceManager, so the question "is a window
+   *  holding the world?" has one answer there: the pause AddWindow
+   *  raised (UserInterfaceManager.cs:179-186 ->
+   *  GameManager.PauseGame(true), GameManager.cs:600-635) and
+   *  RemoveWindow has not yet lowered (:190-216). The port gives each
+   *  modal host its own stack, so this host's answer is the union of
+   *  the stacks that can be live over its frame: townTalk's street
+   *  window and the mode machine's interior/dungeon window. BOTH terms
+   *  are those hosts' own `paused()` (townTalk's `talkPaused`,
+   *  worldModes' `interiorPaused`, dungeonContext's `dungeonPaused`) -
+   *  the union is all this host adds, and it adds it once.
+   *
+   *  `modes?.` because the mode machine is built further down and the
+   *  event handlers that ask this are bound before it exists. */
+  const gamePaused = () => townTalk.overlayActive || (modes?.overlayHeld ?? false);
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   preloadTransportArt({ renderer, fetchBytes, palette });   // TR3: MOVE00I0 + MOVE01I0
@@ -1343,6 +1394,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadChargenArt({ renderer, fetchBytes, palette });   // U10: CHAR0*/PICK00/TMAP00 warm at boot
   preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS warm at boot
+  preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   preloadTravelMapArt({ renderer, fetchBytes, palette })   // W1: TRAV0I00/01/03/04 + the FMAP palette warm at boot
     .catch((e) => console.warn('[travelmap] classic travel map art unavailable:', e?.message ?? e));
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
@@ -1350,15 +1402,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { where: paperDollWhere() });   // U8f/U8g + UI3: SCBG/BODY/FACE + the item-record pipeline ( Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
   preloadPrisonScreenArt({ renderer, fetchBytes, palette })   // PRIS00I0 - the serving-time screen
     .catch((e) => console.warn('[court] prison screen art unavailable:', e?.message ?? e));
-  // S3d: the INTERIM dagger seed is the FALLBACK only - a character
-  // who runs chargen gets AssignStartingGear's real kit instead, so
-  // seeding here would leave a stray dagger in the bag.
+  preloadCourtScreenArt({ renderer, fetchBytes, palette })   // ROAD-B B5: CORT01I0 - Setup's courtPanel (:75-84)
+    .catch((e) => console.warn('[court] court screen art unavailable:', e?.message ?? e));
+  // S3d: systems/startingGear.js retired the iron-dagger seed -
+  // AssignStartingGear verbatim (ItemHelper.cs:1277-1364) dresses a
+  // new character, spellbook first, with their class's weapon and 100
+  // gold. The guarded call left here can no longer fire either way:
+  // at the boot walk chargenDone is falsy (chargen runs below, and
+  // a save's flag "arrives after the boot walk"), and when it is true
+  // equip.js's seed early-returns on the non-empty bag. Kept as the
+  // shape of the seam, not as a fallback.
   if (playerEntity.chargenDone) seedStartingEquipment(playerEntity);
-  // S3c/U9 / THE FOUR HOSTS RULE: chargen lived only in the dungeon
-  // host, so booting straight into a town left the player on the
-  // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-  // whole session. Both exterior hosts now run it through the shared
-  // session, and the paperdoll reloads on the chosen identity.
+  // S3c/U9 / THE FOUR HOSTS RULE, SHIPPED: chargen once lived only in
+  // the dungeon host, so booting straight into a town left the player
+  // on the pre-chargen stand-in (flat skills 30, maxHealth 50) for the
+  // whole session. Both exterior hosts run it through
+  // systems/chargenSession.js now (imported above) - the test preset,
+  // the headless ?class skip and the full wizard are the three arms
+  // below - and the paperdoll reloads on the chosen identity.
   let spellsByIndex = null;   // M2: the host-level SPELLS.STD map
   // G4: THE FOUR HOSTS RULE. The magic registries were set only
   // in the dungeon host's boot, so a magic item minted out here -
@@ -1372,7 +1433,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // lifecycle still runs and the player just never sees the dream.
   wireInfectionVideos(renderer, {
     textAt: (id) => townTalk.lines(id),
-    showText: (lines) => townTalk.showOverlay(new ChoiceWindow({ lines })),
+    // ROAD review-p: a PUSH, like the two interior hosts. Its C# is
+    // `DaggerfallMessageBox mb = DaggerfallUI.MessageBox(
+    // deathIsNotEternalTextID); mb.Show();` (VampirismInfection.cs
+    // :186-188), and MessageBox is `new DaggerfallMessageBox(uiManager,
+    // uiManager.TopWindow); ...; messageBox.Show()`
+    // (DaggerfallUI.cs:1352-1358) - a PushWindow that has never asked
+    // what is open. showOverlay would replace and DISPOSE whatever was
+    // (the map, the spellbook, an open rest window): the same box, the
+    // same event, two behaviours across the four hosts.
+    showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })),
     factionDict: () => townTalk.factionDict ?? null,
     transferToCemetery: transferToCemeteryArm,   // V2e: the world host's arm (hoisted; defined by fastTravelTo)
   });
@@ -1579,11 +1649,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
-    // ROAD-B B4: PlayerEnterExit's three entry latches, for SpawnCityGuards'
-    // indoor gate (PlayerEntity.cs:628-641). The mode host owns all three
-    // (it is the one that runs TransitionInterior); this host owns the
+    // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
+    // outer gate (PlayerEntity.cs:625) and its indoor arm (:628-641).
+    // The mode host owns them all (it is the one that runs
+    // TransitionInterior/TransitionDungeonInterior); this host owns the
     // exterior pool the gate decides against.
     enterExitFlags: () => ({
+      isPlayerInsideDungeon: (modes?.mode ?? 'exterior') === 'dungeon',
       isPlayerInside: (modes?.mode ?? 'exterior') !== 'exterior',
       insideOpenShop: modes?.insideOpenShop ?? false,
       insideTavern: modes?.insideTavern ?? false,
@@ -1761,10 +1833,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  a residence is answered at that building's own lowest outer door
    *  by the interior's own watch pool, and the street law below never
    *  runs. Every other case falls through here exactly as C# falls
-   *  through the `if`. This host's FLAGGED note (below, at the mode
-   *  machine's `spawnCityGuards` key) said the arm was unreachable
-   *  because "this host's pool is the exterior street"; the pool it
-   *  needed is worldModes' own, and this is the routing. */
+   *  through the `if`. The note this host used to carry (below, at
+   *  the mode machine's `spawnCityGuards` key, where its retirement is
+   *  written) said the arm was unreachable because "this host's pool
+   *  is the exterior street"; the pool it needed is worldModes' own,
+   *  and this is the routing. */
   function _spawnGuards(immediate) {
     if (modes?.spawnCityGuardsInside?.(immediate)) return;
     const feet = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -1792,6 +1865,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const arrestFlow = createArrestFlow({
     townTalk, playerEntity, regionIndex: () => _questRegionIndex(),
     onCourtScreen: () => cameraRecoiler.reset(),
+    // ROAD-B B5: InputManager.GetBackButton, the prison countdown's
+    // held-Escape accelerator (DaggerfallCourtWindow.cs:301-304).
+    backButtonHeld: () => backButtonHeld,
     // ReleaseFromPrison's last two lines (DaggerfallCourtWindow.cs:488-489).
     // GameManager.ClearEnemies destroys every active enemy object and every
     // pending foe spawner; above ground that is the encounter pool. The
@@ -1871,7 +1947,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // MW-D39: the spell goes, and so does the arm - the same cast
       // moment the dungeon host uses, through the rig's one door. An
       // animation, never a gate.
-      weaponRig?.castSpellAnim?.(sp?.rangeType);
+      // ROAD-tail: the ELEMENT rides along (CastReadySpell :434).
+      weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element);
+      // This host's rig is also the one INTERIOR mode's cast reaches:
+      // worldModes takes this same magic engine, so its own rig never
+      // sees a cast moment - the hands are a singleton for that reason
+      // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322).
     },
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
@@ -1930,11 +2011,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // shares this mount (its foes list is empty, so the scan arms answer
   // none); the dungeon-mode ctx is dungeonContext's to mount. FS1:
   // that used to read "FLAGGED there with the rest of its enchant
-  // wiring", and there was no flag there - setDefaultEnchantCtx has
+  // wiring", and there was no flag there - setDefaultEnchantCtx HAD
   // exactly one caller in the tree, this one, so the standalone
-  // ?dungeon host runs every CastWhenUsed / CastWhenStrikes / SoulBound
+  // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
-  // it is silent. The flag now exists where the work does. S40 filled isResting
+  // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
+  // and dungeonContext.js:1703 mounts the same one, gated on
+  // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
+  // session singleton and EC1 already routes THIS host's mount into
+  // that context through modes.dungeonCtx - so worldModes.js:4047
+  // passes false beside its `chargen: false` and only the standalone
+  // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
   // ground (no rest window here yet)", and this slice put one here.
   // V2c filled inSunlight/inHolyPlace in the same way: the answers
@@ -1992,7 +2079,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the same way. The budget is the port's own call: DFU leaves a
    *  MonoBehaviour running for free, and a spawn that cannot find a
    *  spot in a sealed corridor must not spin here. */
-  const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+  // SD1/FS1 (wave D): the retry budget and the placement law moved to
+  // scenes/hostEnchant.js, where the dungeon host reaches them too.
+  // _standEncounterFoe below keeps its OWN call because it differs in
+  // what it IS - it is rolled by the world clock, is always exterior,
+  // and carries its own band - which is exactly how DFU's two call
+  // sites differ.
   /** RE1: an intermittent encounter, stood through DFU's placement.
    *  Separate from _standLooseFoe because the two differ in what they
    *  are: a loose foe is summoned AT the player and takes the enchant
@@ -2021,36 +2113,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
     }).catch(() => null);
   };
-  const _standLooseFoe = (mobileType, { allied = false, lineOfSightCheck = true } = {}) => {
+  const _standLooseFoe = (mobileType, opts = {}) => {
     const mode = _mode();
     // Interiors have no foe pool to stand one in, so they still refuse
     // - EC1's answer, and the honest one until a pool exists.
     if (mode !== 'exterior' && mode !== 'dungeon') return null;
     const d = _dungeonPool();
-    const feet = enchantFeet();
-    const env = placeFoeEnv({
+    return standLooseFoe({
       collider: d ? d.collider : collider,
-      // origin at the controller centre, as tryPlaceFoe has it - DFU
-      // casts from PlayerObject.transform.position, not the feet
-      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
-      playerYawRad: cam.yaw,
+      feet: enchantFeet(),
+      yawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
-      isOccupied: entityOccupancy((f) => f.ai?.feet, () => enchantFoes(), feet),
-    });
-    let spot = null;
-    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
-      spot = placeFoeFreely(env, { minDistance: 4, maxDistance: 20, lineOfSightCheck });
-    }
-    if (!spot) return null;
-    // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
-    // the test point; walkers land through the pool's own chain.
-    const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
-    const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
-    const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
-    const stand = d
-      ? d.spawnLooseFoe(mobileType, pos, { yawRad: yaw, allied })
-      : exteriorFoes.spawnFoe(mobileType, pos, { yaw, allied });
-    return Promise.resolve(stand).catch(() => null);
+      foes: enchantFoes(),
+      spawn: (mt, pos, o) => (d
+        ? d.spawnLooseFoe(mt, pos, { yawRad: o.yawRad, allied: o.allied })
+        : exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied })),
+    }, mobileType, opts);
   };
   /** EC1: THIS host's own pools, exterior only - and deliberately NOT
    *  enchantFoes(), which now answers the live mode's. Two consumers
@@ -2078,104 +2156,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     feet: () => enchantFeet(),
   });
   {
-    setDefaultEnchantCtx({
+    // FS1 (wave D): the BODY of this mount is scenes/hostEnchant.js
+    // now, and the dungeon host mounts the same one. What was ~90
+    // lines here is the doors this host answers with; every arm the
+    // two hosts share - the reflection re-target, the affinity scan,
+    // the two spawn arms, the calendar and lunar conditions, the
+    // AllowMagicRepairs read - lives in one body, so it cannot be
+    // right in one host and stale in the other.
+    setDefaultEnchantCtx(createEnchantCtx({
+      playerEntity,
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.classicMinutes),
       sinks: {
         hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
-      // AUDIT 39: HealthLeech.cs:86-89 bills the WEARER on every strike
-      // (8) and every use (16) of a WheneverUsed leech, not only on the
-      // magic round - and worldTick's per-round ctx was the only mount
-      // in the tree that carried hurtSelf, so the -4000-point drawback
-      // cost the player nothing at the two doors that spend it.
-      hurtSelf: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+      playerSpellSinks,
       say: (l) => townTalk.say(l),
-      // S40: CastWhenHeld.cs:135 - a held enchantment degrades at 60
-      // per round while the player is resting and 4 otherwise, and the
-      // port's consumer (enchantments.js:317) had NO feed because rest
-      // lived in the one host whose enchant ctx is unmounted. The
-      // window raises the flag on OPEN, so it is live here the moment
-      // the rest page is up.
-      isResting: () => !!playerEntity.isResting,
-      // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
-      // gate, the affinity/curse place gates). Both read the sunlight
-      // seam worldModes registered, so they route by LIVE mode.
-      inSunlight: () => playerInSunlight(),
-      inHolyPlace: () => playerInHolyPlace(),
-      applySpellToSelf: (record) => magic.castByItemSelf(record),
-      setReadySpell: (record) => magic.readySpell(record, { free: true }),
-      applySpellToTarget: (record, attacker, target) => {
-        // X11: the caster now travels WITH ITS SINKS. Spell Reflection
-        // sends the bundle back at whoever cast it, and a caster with
-        // no sinks would have the reflected damage land nowhere -
-        // silently, which is the worst way for it to be wrong. The
-        // attacker here is either the player or one of the pool's
-        // foes, and both have sinks a few lines up.
-        const af = attacker && attacker !== playerEntity
-          ? enchantFoes().find((x) => x.entity === attacker) : null;
-        const casterOf = () => {
-          if (!attacker) return null;
-          if (attacker === playerEntity) return { entity: playerEntity, sinks: playerSpellSinks };
-          return af ? { entity: attacker, sinks: enchantFoeSinks(af) } : { entity: attacker };
-        };
-        if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
-        const f = enchantFoes().find((x) => !x.dead && x.entity === target);
-        if (!f) return;
-        const caster = casterOf();
-        const r = applySpell(record, attacker?.level ?? 1, target, enchantFoeSinks(f), Math.random, caster);
-        // The same re-target hostMagic does for the cast paths - this
-        // door is the enchantment path's equivalent seam.
-        if (r.reflected && caster?.entity) {
-          if (caster.entity === playerEntity) magic.applySpellToPlayer(record, attacker?.level ?? 1, caster, { reflectedCount: 1 });
-          else applySpell(record, attacker?.level ?? 1, caster.entity, caster.sinks ?? {}, Math.random, caster, { reflectedCount: 1 });
-        }
-      },
-      nearbyFoes: (range) => {
-        const pf = enchantFeet();
-        return enchantFoes().filter((f) => !f.dead && f.ai
-          && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
-          // V3: distance rides along - the Skull of Corruption clones
-          // the NEAREST enemy; the field is additive, no reader broke
-          .map((f) => ({
-            mobileType: f.mobileType ?? f.entity?.mobileType ?? 128,
-            distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]),
-            // MT-ii: the LIVE team - both summons filter their scan on
-            // `Team != MobileTeams.PlayerAlly` before counting company
-            // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
-            // .cs:47-48), so your own standing summons never count.
-            team: f.entity?.team ?? 'PlayerEnemy',
-            hurt: (n) => enchantFoeSinks(f).hurt(n),
-          }));
-      },
-      // SD1: the two SPAWN arms - SoulBound's break release and the
-      // Sanguine Rose's Daedroth. EC1 made them refuse underground
-      // rather than stand a foe in the streaming world the player was
-      // not in; SD1 gives them the door they were refusing for want
-      // of, and DFU's placement law on the way through.
-      //
-      // Both go through _standLooseFoe, which is where the two callers
-      // differ exactly as DFU has them differ: SoulBound passes
-      // lineOfSightCheck FALSE (SoulBound.cs:100 - a released soul may
-      // appear in front of you), the Sanguine Rose takes the default
-      // TRUE and allied TRUE (SanguineRoseEffect.cs:56).
-      spawnFoe: (mobileType) => { _standLooseFoe(mobileType, { lineOfSightCheck: false }); },
-      spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); },
-      // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
-      // (the infection host's flatten, at this consumer);
-      // openCharacterSheet is the Oghma's sheet push; replaceFoe is
-      // the Wabbajack's transform over the exterior pool - the old
-      // foe leaves through removeFoe (a quest foe still in use is
-      // left alone, QuestResourceBehaviour's own check) and the new
-      // type spawns at its feet with the damage taken carried over.
-      // spawnAlliedFoe is MOUNTED at MT-ii, where MobileTeams
-      // targeting shipped: GameObjectHelper.CreateFoeSpawner(foeType,
-      // spawnCount: 1, alliedToPlayer: true) is one foe into this
-      // host's own encounter pool on team PlayerAlly, and getTargets'
-      // ally arms then make it fight FOR the player. The spawn offset
-      // is spawnFoe's own (DFU's FoeSpawner places by its own law -
-      // the port's exterior pool has no free-placement caller).
+      magic,
+      foes: () => enchantFoes(),
+      foeSinks: (f) => enchantFoeSinks(f),
+      feet: () => enchantFeet(),
+      standLooseFoe: _standLooseFoe,
       messageBox: (id) => {
         const lines = plainLines(townTalk.lines(id));
         if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
@@ -2194,30 +2196,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           nf.entity.health -= missing;        // carry over damage (:94)
         }).catch(() => {});
       },
-      // R1: the AllowMagicRepairs seam goes LIVE - RepairsObjects'
-      // enchanted-item skip and the break-consumption arm both read it
-      get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },
-      // W1: the season seam goes LIVE - ExtraSpellPts' seasonal
-      // conditions compare against its OWN param order (DuringWinter=0
-      // ..DuringFall=3, ExtraSpellPts.cs:184-189), not the calendar
-      // enum (Fall=0..Winter=3) - the map is the two ends swapped.
-      season: () => {
-        const s = seasonValue(dateFromClassicMinutes(worldMinutes()));
-        return s === SEASONS.Winter ? 0 : s === SEASONS.Fall ? 3 : s;
-      },
-      // V2c: the moon arms, off V2a's lunar law. ExtraSpellPts'
-      // IsFullMoon/IsHalfMoon/IsNewMoon (:133-154) each answer true
-      // when EITHER moon shows the phase; half counts both the waxing
-      // and waning half. Params 4/5/6 = Full/Half/New (:190-192).
-      moonPhase: (param) => {
-        const { masser, secunda } = lunarPhasesFromMinutes(worldMinutes());
-        const either = (...phases) => phases.includes(masser) || phases.includes(secunda);
-        if (param === 4) return either(LUNAR_PHASES.Full);
-        if (param === 5) return either(LUNAR_PHASES.HalfWax, LUNAR_PHASES.HalfWane);
-        if (param === 6) return either(LUNAR_PHASES.New);
-        return false;
-      },
-    });
+    }));
   }
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.
   // OnNewMagicRound is global and every EntityEffectManager handles it, so
@@ -2412,6 +2391,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
   const outdoorRestDeps = createRestDeps(playerEntity, {
+    // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
+    // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
+    // TOP of its window stack, so the slot IS the answer - and the
+    // reachable test is the second one, where a quest popup pushed by
+    // the rest's own sub-tick suspends it mid-hour.
+    topWindow: () => townTalk.overlay,
     // The MASTERY box (RaiseSkills :1390-1401): TEXT.RSC 4020 in a
     // click-anywhere box when a primary skill lands on 100. Same
     // overlay slot the rest window has just vacated.
@@ -2485,6 +2470,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      // ROAD-B B5: the gate's third arm has a producer now. ROAD
+      // review-p: the PRODUCER, not a poll - :667-669 fetches it
+      // inside the third `else`, after the other two arms have
+      // returned.
+      preventedMessage: getPreventedRestMessage,
       racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
@@ -2535,8 +2525,28 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   /** A DECLARATION, not a const: paperDollWhere() reaches it from the
    *  boot-time preload above, and a `const` here is the temporal dead
-   *  zone that took the site down on 2026-08-31. */
+   *  zone that took the site down on 2026-08-31.
+   *
+   *  A10: PlayerGPS's pixel FREEZES underground. StreamingWorld.cs
+   *  :297-301 opens Update with "Do not update world position if player
+   *  is inside dungeon / This can cause player to become desynced from
+   *  world as dungeon can actually extend beyond the current map pixel
+   *  area / if (...IsPlayerInsideDungeon) return;" - so WorldX/WorldZ,
+   *  and with them CurrentMapPixel, hold the entrance's values for as
+   *  long as the player is down there. A dungeon's local frame is its
+   *  own (RDB block origins are SIGNED, dungeonLayout.js:64-65), so
+   *  converting the player's dungeon feet through the streamer's
+   *  exterior origin slides the pixel a step west on any negative local
+   *  x and a step south on any negative local z - one block off the
+   *  start of Privateer's Hold is enough. That is what made Recall's
+   *  IsSameInterior dungeon arm (teleportAnchor.js:161-164) unable to
+   *  answer true against an anchor set in the room the player is
+   *  standing in: setRecallAnchor already took the streamer's pixel
+   *  (:2777) and this read did not. The streamer is frozen while a mode
+   *  is mounted (state.update sits below the modal early return), so
+   *  state.current IS the entrance pixel DFU holds. */
   function playerTravelPixel() {
+    if ((modes?.mode ?? 'exterior') === 'dungeon') return { x: state.current.x, y: state.current.y };
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
   }
@@ -2628,6 +2638,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // it straightened nothing. No re-skin sweep either way: the
     // teardown below is a real unload (CollectLooseObjects and all).
     refreshSeason(arriveMinutes ?? worldMinutes());
+    _seasonStraightening = true;   // ...and no frame polls it back off the live clock until the destination stands
     _reskinPending = false;   // ...and the frame's own re-skin has nothing left to re-skin
     _seasonHoldKey = null;    // ...nor a held motor: the spawn below re-anchors it anyway
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
@@ -2653,7 +2664,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.length = 0;
     queue.push(...state.init(px, py));
     const first = queue.shift();
-    const dest = await buildPixel(first.px, first.py);
+    let dest;   // `finally`: a throwing build must not leave the poll off
+    try { dest = await buildPixel(first.px, first.py); }
+    finally { _seasonStraightening = false; }
     // PositionPlayerToLocation ends in FixStanding (StreamingWorld
     // :1597-1608): the arrival is snapped to what is under it, not
     // dropped from 2u up. The pixel is built by now, so the collider
@@ -3015,10 +3028,13 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   /** PromptPlayer (:81-98): the 4000 anchor/teleport box, with
    *  AllowCancel - DFU's own QoL, and its own comment says the cast
-   *  is not refunded. Every host routes its Recall arrival here. */
+   *  is not refunded. Every host routes its Recall arrival here.
+   *  `teleportOrSetAnchor` is a TEXT.RSC ID (:32), not a localization
+   *  key, so the box's line is record 4000 verbatim - Internal_RSC.csv
+   *  :4819, whose one [/center] is the centring ChoiceWindow does. */
   function teleportPrompt() {
     townTalk.showOverlay(new ChoiceWindow({
-      lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours
+      lines: ['Do you want to Teleport or Set an Anchor?'],
       options: [
         { code: 'KeyA', label: 'A - set anchor', action: () => setRecallAnchor() },
         { code: 'KeyT', label: 'T - teleport', action: () => { recallToAnchor(); } },
@@ -3038,6 +3054,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (currentWeather() !== weather) applyWeather(currentWeather());
       }
       surfacePlayer();
+      // D4 - TeleportAway's last line (:150). The window smashed the
+      // screen to black before it handed the destination over
+      // (ui/teleportPopUp.js's `_yes`, :137), so the black has covered
+      // the streamer's whole rebuild; this lifts it. DFU raises the
+      // fade immediately after CloseWindow because
+      // TeleportToCoordinates has already returned - here the arrival
+      // is awaited, which is the same instant.
+      hudFade.fadeHUDFromBlack();
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _teleporting = false;
@@ -3179,6 +3203,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
         onLevelUp: () => townTalk.showOverlay(makeCharSheetWindow()),
       });
+      // D4 - performFastTravel's very last line before the event
+      // (:381). The popup smashed the screen to black on the frame the
+      // day counter emptied (ui/travelPopUp.js's tick, :242); this is
+      // the half-second lerp back to clear, and it runs AFTER
+      // RaiseSkills exactly as DFU orders them - so a level-up box
+      // raised by the arrival is pushed onto a screen that is still
+      // black, and the fade it clears is the one that has not started.
+      hudFade.fadeHUDFromBlack();
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -3580,16 +3612,63 @@ export async function bootWorld(canvas, renderer, params, status) {
     // conversion (setTopics' playerPos closure); the overlay holds
     // the motor, so the open-time capture stays truthful
     const local = [feet[0] - t[0] - b.locOrigin[0], feet[1] - t[1] - b.locOrigin[1], feet[2] - t[2] - b.locOrigin[2]];
+    const locId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    // ROAD-C c2/S10: the arrow/stamp is the REAL mesh 99900, rasterised
+    // once from its CPU data (ui/meshStamp.js). Kicked off here and
+    // read lazily - the window draws its two other layers meanwhile.
+    getGpuMesh(99900).catch(() => {});
+    // HALF B: the plates now come off the Position-bearing subrecord
+    // walk over ALL buildings, not off the discovered doors.
+    const summaries = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+    // ROAD-D D5: CreateBuildingNameplates' residence arm (:682-709).
+    // DFU resolves the quest name for every discovered residence AS IT
+    // BUILDS THE NAMEPLATES - once per open (:273), never per frame -
+    // and this is that build. The quest source is the pair DFU reads:
+    // QuestMachine.GetAllActiveQuests/GetQuest and TalkManager
+    // .IsBuildingQuestResource, which the topic tree already carries.
+    // PlayerGPS.CurrentMapID is the map ID of the location the player
+    // is standing in, which is exactly the pixel this door resolved.
+    stampResidenceQuestNames(summaries, discoveredBuildings(locId), {
+      getAllActiveQuestIds: activeQuestIds,
+      getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
+      isBuildingQuestResource: (mapID, key) => topicTree.isBuildingQuestResource(mapID, key),
+    }, dfLoc.mapTableData?.mapId ?? 0);
     townTalk.showOverlay(new ExteriorAutomapWindow({
       locationName: dfLoc.name,
-      locationId: `${dfLoc.regionIndex}:${dfLoc.name}`,
+      locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
       blocks: b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData })),
       playerPos: () => local,
+      // the marker law is DFU's modulo of the MAP PIXEL frame, so the
+      // window needs the location's origin inside that pixel back
+      locOrigin: [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]],
+      isCustomLocation: hasCustomLocationPosition(dfLoc),
       playerYaw: () => cam.yaw,
+      arrowMesh: () => cpuModels.get(99900) ?? null,
+      compassArt: hudArt,
+      buildings: () => summaries,
       directory: () => townTalk.directory,
-      discovered: () => discoveredBuildings(`${dfLoc.regionIndex}:${dfLoc.name}`),
+      discovered: () => discoveredBuildings(locId),
+      rename: (buildingKey, name) => renameMapBuilding(locId, buildingKey, name),
     }));
+  };
+  /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
+   *  double-click raises DFU's DaggerfallInputMessageBox over the open
+   *  map (a PUSH, not a replace - the map is still there underneath),
+   *  pre-filled with the name the player is LOOKING AT - `mb.TextBox
+   *  .Text = renamingLabelRef.Text` (:888), the custom name whenever
+   *  one is set - and the answer lands on the discovery record. The
+   *  canonical is only TextBox.Name/DefaultText (:887, :889), the
+   *  fallback for an emptied box, which the port reaches by storing ''.
+   *  MaxCharacters 80, WidthOverride 306 (:893-894); the
+   *  "Custom name: " label is Internal_Strings' `customName`. */
+  const renameMapBuilding = (locId, buildingKey, displayed) => {
+    townTalk.pushOverlay(new ServiceFlowWindow([{
+      rows: ['Custom name: '],
+      field: { numeric: false, maxCharacters: 80, initial: displayed ?? '' },
+      onInput: (text) => { setDiscoveredBuildingCustomName(locId, buildingKey, text); return null; },
+    }]));
   };
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
@@ -3755,6 +3834,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         playerName: () => playerEntity.name,
         saveAs: (saveName) => worldQuickSave(saveName),
         loadKey: (key) => worldQuickLoad({ key }),
+        // ROAD-C C1: DFU PUSHES the slot window over the pause window
+        // (DaggerfallPauseOptionsWindow.cs:302/:308) rather than
+        // replacing it, and Cancel pops back onto it. This host's push
+        // door is townTalk's (ROAD-B B5).
+        pushWindow: (w) => townTalk.pushOverlay(w),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
         // PX3: the pause window's Quests tab - the SAME seam the F5
@@ -3791,7 +3875,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
   };
+  // ROAD-B B5 - InputManager.GetBackButton() (InputManager.cs:1075-1078)
+  // is `Input.GetKey(KeyCode.Escape)`, a RAW held read that no window
+  // intercepts. This ladder returns at `townTalk.keydown` while a
+  // window is up, so `keys` never sees the press - hence its own latch,
+  // above the return. Its one consumer is the prison countdown's
+  // accelerator (DaggerfallCourtWindow.cs:301-304).
+  let backButtonHeld = false;
   addEventListener('keydown', (e) => {
+    if (e.code === 'Escape') backButtonHeld = true;
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
     // host rule); preventDefault stops the browser reload.
@@ -3871,13 +3963,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
-    if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
+    if (!gamePaused() && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  // D4: the overlay's KEY-UP edge. This listener has drained the
+  // movement Set since the first host and never told the open window
+  // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
+  // travel popup's EXIT is the deferral that needs the release.
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); });
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
-  bindCursorToggle(canvas, () => townTalk.overlayActive || (modes?.overlayHeld ?? false), actionOf);
+  bindCursorToggle(canvas, () => gamePaused(), actionOf);
   // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
   // hoisted so these two listeners can be installed HERE and still reach
   // the mode machine that is not built until ~600 lines below. `var`
@@ -3901,7 +3997,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (routeLargeHudClick(
       (e.clientX - _r.left) * (canvas.width / _r.width),
       (e.clientY - _r.top) * (canvas.height / _r.height),
-      e.button, hudCtx, { windowUp: townTalk.overlayActive || (modes?.overlayHeld ?? false) })) return;
+      e.button, hudCtx, { windowUp: gamePaused() })) return;
     // ROAD-Ar: the click that GRABS the pointer back is a UI gesture,
     // not a world click, and it presses and releases Mouse0 into the
     // gate exactly as a window's close button does - so it takes
@@ -3913,6 +4009,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     requestLook(canvas);
   });   // U8b/U8c: native windows own the pointer
   canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e) || mwViewWheel(e.deltaY)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel; MW-D25: otherwise the Morrowind camera zoom
+  // ROAD-C c2/S4: THE OTHER TWO PHASES. This host already routed
+  // `pointerdown` into the mode machine; the automap's chrome is
+  // press-HOLD and drag driven, so a host that delivers `down` alone
+  // latches a drag that spins the map forever - and nothing errors.
+  // The listeners are on the WINDOW, not the canvas, because a release
+  // outside the canvas must still end the drag.
+  addEventListener('pointermove', (e) => { modes?.pointermove?.(e); });
+  // ROAD-C c2/S10: townTalk's slot needs the RELEASE too, for the same
+  // reason. Its 'down' rides `townTalk.pointerdown` and its 'move'
+  // rides `townTalk.hover` (the mousemove listener below), so this is
+  // the third phase and the only one with no existing route - a town
+  // map that never hears the release keeps panning forever.
+  addEventListener('pointerup', (e) => { townTalk.pointer('up', e); modes?.pointerup?.(e); });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -4168,9 +4277,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     return findFactions(dict, { type: FACTION_TYPES.Province, region: _questRegionIndex() })[0] ?? null;
   };
   // Quest parchment boxes land in whichever overlay slot is LIVE:
-  // exterior -> the townTalk overlay, interior -> the mode machine's
-  // slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-  // logged loudly rather than lost silently).
+  // exterior -> the townTalk overlay, interior OR dungeon -> the mode
+  // machine's slot. U43-ii shipped the dungeon half: showQuestBox
+  // offers the window to `modes.showQuestOverlay` below, and
+  // worldModes answers it in BOTH modes (worldModes.js:6295-6307 -
+  // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
+  // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
   // uiManager.PushWindow - a STACK. ShowPendingTaskMessages pops the
   // whole pending stack and Shows each one, so a drain of several
@@ -4599,9 +4711,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // seams land here; the tree's WINDOW consumers (the Tell-me-about
   // page, the quest Where-is entries) mount with TK-v; the position
   // half of BuildingInfo (the compass) rides TK-iii.
+  // QuestMachine.GetAllActiveQuests (:849-859). ONE definition: the
+  // topic tree reads it, and so does the exterior automap's
+  // residence-plate arm (ExteriorAutomap.cs:686), which walks the same
+  // set.
+  const activeQuestIds = () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid);
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
-    getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid),
+    getAllActiveQuestIds: activeQuestIds,
     currentRegionIndex: () => _questRegionIndex(),
     currentRegionName: () => questWorld.currentRegionName(),
     currentLocationName: () => _questLoc()?.name ?? '',
@@ -5229,14 +5346,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and NO host supplied it, so the optional call no-opped: the
     // player robbed every house in the Bay and no watch ever came.
     // The immediate/witness split is what the bool means.
-    // ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-    // INDOOR arm spawns 2-5 guards at the interior's lowest outer door
-    // (PlayerEntity.cs:628-641); this host's pool is the exterior
-    // street, so the watch is waiting outside." The mode machine mints
+    // ROAD-B CLOSED THE FLAG THAT STOOD HERE. It said the indoor arm
+    // was unreachable because "this host's pool is the exterior
+    // street, so the watch is waiting outside". The mode machine mints
     // its own watch pool with the interior now, and `_spawnGuards`
-    // offers it the call first - so a theft in a shop is answered at
-    // that shop's own door, and the street arm is what happens
-    // everywhere else, as C# has it.
+    // offers it the call first - so DFU's INDOOR arm, 2-5 guards at
+    // the interior's lowest outer door (PlayerEntity.cs:628-641), is
+    // what answers a theft in a shop, and the street arm is what
+    // happens everywhere else, as C# has it.
     spawnCityGuards: (immediate) => _spawnGuards(!!immediate),
     // G2: the arrest interception, for the mode machine's indoor
     // watch. The court flow and the overlay it opens are this host's,
@@ -5589,19 +5706,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
-    if (!(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+    if (!gamePaused()) {
       if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
     }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
-    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: townTalk.overlayActive || (modes?.overlayHeld ?? false) });
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: gamePaused() });
     // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
     // dip; the position rides player.eye as a world offset, the nod is a
     // per-frame offset on the look (removed and re-applied each frame).
     {
       const bob = headBobber.update(dt, cam, {
-        health: playerEntity.health, paused: townTalk.overlayActive || (modes?.overlayHeld ?? false), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+        health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
         swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
@@ -5609,7 +5726,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
-    lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
+    lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
 
@@ -6162,7 +6279,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // airborne holds the stride (horseGaitClip answers null). Paused
     // HIDES, the sprite's own F-E1 law - no advance, no draw.
     if (pegas && player.transportMode === TRANSPORT_MODES.Horse
-      && !(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+      && !gamePaused()) {
       const clip = horseGaitClip({
         standingStill: player.standing, grounded: player.grounded,
         movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
@@ -6415,9 +6532,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig. The
-    // open world still has no ACTION OBJECTS in melee reach (static
-    // building doors are the E-enter seam, not bashables - FLAGGED
-    // with the towns arc), which is the clause that is still true.
+    // open world still has no ACTION OBJECTS in melee reach, and that
+    // is DFU's own shape above ground rather than a hole: there is no
+    // action-object list out here for envAttack to walk, so
+    // WeaponEnvDamage's exterior arm is AttemptExteriorDoorBash
+    // (WeaponManager.cs:475 -> PlayerActivate.cs:1056-1079). ROAD-B
+    // shipped that arm - static building doors are BASHABLE now, off
+    // the no-enemy swing at the foot of this frame (:6442), through
+    // the mode machine's `attemptExteriorDoorBash` - so the E-enter
+    // seam is no longer their only door.
     // FS1: the two that rode along with it are not. "Melee strike
     // frames resolve to nothing" was written before G1/G4/X, and forty
     // lines below this comment a swing resolves against live guards,
@@ -6522,7 +6645,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // 39 hoisted drawHud out of it: the mount is the classic skin's
       // business and this fix owns the HUD call, nothing else.
       if (hudArt) {
-        const ridePaused = townTalk.overlayActive || (modes?.overlayHeld ?? false);
+        const ridePaused = gamePaused();
         const r = ridingAnimator.update(dt, {
           mode: player.transportMode,
           standingStill: player.standing,
@@ -6553,14 +6676,18 @@ export async function bootWorld(canvas, renderer, params, status) {
           // while the 3D horse actually stands under you (the cart,
           // the classic skin, and every failed load keep it).
           if (!pegasUp) {
-            const rect = ridingRect(canvas, ridingArt);
+            // ROAD-D D10: horseOffsetHeight (TransportManager.cs
+            // :304-309) - the bar the LAST drawHud drew, lifted out
+            // from under the mount. Docking is not asked here; DFU's
+            // horse arm never asks it.
+            const rect = ridingRect(canvas, ridingArt, horseOffsetHeight());
             renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
           }
         }
       }
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
-        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
+        { font: townTalk.font, cursorActive: gamePaused(),
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values

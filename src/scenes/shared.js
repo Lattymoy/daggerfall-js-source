@@ -16,7 +16,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
+import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
@@ -25,6 +25,7 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
+import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -354,10 +355,15 @@ export function createSkyController(gl, params) {
  *  Every host passed `undefined` here, which took the motor's
  *  hardcoded 50/30/30 default for the whole session.
  *
- *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
- *  entity carries no `speed` key (characters/playerEntity.js), and an
- *  unguarded liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5
- *  instead of the documented SPD-50 stand-in. */
+ *  RECORDED, not a gap: the pre-chargen guard is load-bearing, and
+ *  what it guards is a state DFU never has. The pre-chargen literal
+ *  (characters/playerEntity.js:28) is `stats: { strength: 50,
+ *  agility: 50, luck: 50 }` with no `speed` key, so an unguarded
+ *  liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5 instead
+ *  of the documented SPD-50 stand-in. DFU builds its stats from the
+ *  CharacterDocument and always has a Speed, so for any chargen'd or
+ *  loaded entity the LIVE arm is the only one taken - and that arm is
+ *  :389/:400/:418 verbatim. Nothing diverges here. */
 export function motorStats(entity) {
   return {
     get speed() { return entity.stats?.speed != null ? liveStat(entity, 'speed') : 50; },
@@ -370,8 +376,16 @@ export function motorStats(entity) {
  *  inputs = CalculateClimbingChance's reads (live Climbing, live
  *  Luck, the Khajiit racial arm; the Climbing effect pends - the
  *  `enhanced` seam is here); tally = ClimbingSkillCheck's
- *  TallySkill(Climbing, 1), once per check. The pre-chargen guard
- *  mirrors motorStats (the INTERIM entity carries no stats). */
+ *  TallySkill(Climbing, 1), once per check.
+ *
+ *  RECORDED, not a gap, and the old reason here was wrong: the luck
+ *  ternary below LOOKS like motorStats' `speed` guard and is not one.
+ *  The pre-chargen entity does carry luck (characters/playerEntity.js
+ *  :28 `stats: { strength: 50, agility: 50, luck: 50 }`), so the
+ *  fallback arm is unreachable and both paths hand back 50. Nothing
+ *  diverges from CalculateClimbingChance's GetLiveStatValue(Luck)
+ *  (FormulaHelper.cs:300); the ternary is kept for shape with its
+ *  sibling, not for need. */
 export function climbingDeps(entity, say = null) {
   return {
     inputs: () => ({
@@ -538,12 +552,20 @@ export function doorSpellFor(entity) {
   return {
     kind: open ? 'open' : 'lock',
     holderLevel: entity?.level ?? 1,
-    // FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
-    // 432/20, Open.cs:176-180) bypasses the level test on INTERIOR
-    // doors only - the exterior arm checks the level regardless
-    // (Open.cs:142). The port has no artifact identity yet, so no
-    // item can claim it.
-    skeletonKey: false,
+    // D9: the Skeleton's Key. Open.CheckCastByItem asks the ARMED
+    // BUNDLE's castByItem whether it is the artifact with world
+    // texture 432/20 (Open.cs:176-180) and, if it is, the interior
+    // trigger skips the level test entirely - "Skeleton's Key can open
+    // even magical locks" (:117). The EXTERIOR arm still checks the
+    // level regardless, and says so in as many words
+    // (TriggerExteriorOpenEffect's summary: "for the classic effect,
+    // the player's level is always checked, even for the Skeleton
+    // Key"), so triggerExteriorOpen is not passed this at all.
+    //
+    // What used to be missing was the identity, not the law: the mint
+    // dropped SetArtifact's texture indices and the armed entry
+    // carried no casting item. Both ship at D9, so the key is a key.
+    skeletonKey: castBySkeletonKey(armed.castByItem),
   };
 }
 
@@ -1517,6 +1539,12 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
+    // ROAD-B B5: GameManager.GetPreventedRestMessage, polled by
+    // TickRest every frame of a running rest. It is a GameManager
+    // member, not a host one - the registry is one module singleton -
+    // so it is COMPOSED here beside setResting rather than asked of
+    // four hosts, and the same read feeds each host's open gate.
+    preventedRestMessage: getPreventedRestMessage,
     onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {
   itemIsIdentified, calculateItemIdentifyCost, identifySpellPass, identifiedTallyText,
   tradeCost, localClickDecision,
+  DOESNT_NEED_IDENTIFY, NOT_ENOUGH_SPELL_POINTS_TEXT,
 } from '../src/systems/tradeModes.js';
 import { expandItemInfo } from '../src/systems/itemInfo.js';
 import { serviceDestination } from '../src/systems/guildServiceFlow.js';
@@ -93,6 +94,22 @@ test('X7 spell: the pass rolls PER ITEM, counts the already-known as successes, 
   // an EMPTY list spends no magicka (:985-986)
   assert.equal(identifySpellPass([], 100, () => 0).spendMagicka, false);
   assert.equal(identifiedTallyText(1, 3), '1 out of 3 identified.');
+});
+
+test('X7 D1: Identify\'s two refusal strings are the Internal_Strings rows verbatim', () => {
+  // DaggerfallTradeWindow.cs:826 and :962 both go through
+  // TextManager.GetLocalizedText, so the row IS the string. From
+  // Assets/StreamingAssets/Text/Master Localization CSV Files/
+  // Internal_Strings.csv:
+  //   :821  doesntNeedIdentify,This does not need to be identified.
+  //   :1052 notEnoughSpellpointsLeft,You do not have enough spell points left.
+  // Neither carries the word "item", and the magicka refusal is a full
+  // sentence in the second person - both of which the port used to lose.
+  assert.equal(DOESNT_NEED_IDENTIFY, 'This does not need to be identified.');
+  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'You do not have enough spell points left.');
+  // ...and the tally row (:1053, `{0} out of {1} identified.`) is the
+  // same table, already exact.
+  assert.equal(identifiedTallyText(2, 5), '2 out of 5 identified.');
 });
 
 test('X7 spell: the cast REFUNDS its own cost, floored at 5, and lands on nobody', () => {

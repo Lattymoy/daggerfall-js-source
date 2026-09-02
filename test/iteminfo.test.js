@@ -277,30 +277,37 @@ test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignm
   assert.deepEqual(rsc.variantLinesById(3100, () => 0), rsc.linesById(3100, 0));
 });
 
-test('AUDIT 22 F11 retired at Q2b-ii: createArtifact is the producer of the three artifact flags', async () => {
-  // The pin that guarded these as producerless went red the day the
-  // quest Item mint's artifact arm landed - as designed. The flags now
-  // pin THE SHAPE THE PRODUCER MINTS: identity flags derive from the
-  // artifact index (ArtifactsSubTypes - Oghma_Infinium 5, Azuras_Star
-  // 9, ItemEnums.cs:246,250), the base item expands from the MAGIC.DEF
-  // template, armor material moves to the plate band.
+test('ROAD-U (was AUDIT 22 F11): artifact IDENTITY is the enchantment record, not a mint-only flag', async () => {
+  // THIS PIN MOVED, and the law it now holds is DFU's. It used to
+  // assert that createArtifact stamped two BOOLEANS - `oghmaInfinium`
+  // on index 5, `azurasStar` on index 9 - and the subtype tests keyed
+  // on them. DFU carries no such flags: GetItemInfo asks the item's
+  // own legacy enchantment record (:782 for the Oghma, :811 with
+  // `param == 9` for the Star) and SoulTrap.cs:129 asks
+  // ContainsEnchantment. Keying on a flag only the MINT wrote meant a
+  // classic import - which carries the very same enchantment array -
+  // failed every one of those tests: an imported Oghma read 1009
+  // (plain book), an imported Star 1003 (plain misc), and an equipped
+  // imported Star captured no souls. What createArtifact mints is the
+  // FLAGS WORD's own (artifact + identified), the index bitfield, the
+  // MAGIC.DEF expansion and the enchantments the identity rides on.
   const { createArtifact } = await import('../src/systems/loot.js');
+  const special = (param) => [{ type: 26, param }];   // EnchantmentTypes.SpecialArtifactEffect
   const T = (i, over = {}) => ({ index: i, name: `A${i}`, type: 1, group: 14, groupIndex: 0, enchantments: [], uses: 100, value: 0, material: 0, ...over });
   const templates = Array.from({ length: 12 }, (_, i) => T(i));
-  templates[5] = T(5, { group: 7, groupIndex: 0 });    // Oghma Infinium is a book
-  templates[9] = T(9, { group: 14, groupIndex: 2 });   // Azura's Star, a gem
+  templates[5] = T(5, { group: 7, groupIndex: 0, enchantments: special(5) });    // Oghma Infinium is a book
+  templates[9] = T(9, { group: 14, groupIndex: 2, enchantments: special(9) });   // Azura's Star, a gem
   templates[3] = T(3, { group: 2, groupIndex: 4, material: 3 });   // an armor artifact
 
   const oghma = createArtifact(templates, 5);
-  assert.equal(oghma.oghmaInfinium, true);
-  assert.equal(oghma.azurasStar, undefined);
+  assert.equal(oghma.oghmaInfinium, undefined, 'no boolean is minted any more');
   assert.equal(oghma.artifact, true);
+  assert.equal(itemInfoTextId(oghma), INFO_TEXT.oghmaInfinium, 'the RECORD answers (:782)');
   const star = createArtifact(templates, 9);
-  assert.equal(star.azurasStar, true);
-  assert.equal(star.oghmaInfinium, undefined);
+  assert.equal(star.azurasStar, undefined);
+  assert.equal(itemInfoTextId(star), INFO_TEXT.soulTrap, ':811, param == Azuras_Star');
   const plain = createArtifact(templates, 0);
-  assert.equal(plain.azurasStar, undefined);
-  assert.equal(plain.oghmaInfinium, undefined);
+  assert.equal(itemInfoTextId(plain), INFO_TEXT.misc, 'an artifact gem with no Special effect is misc');
   assert.equal(plain.artifact, true);
   // the armor artifact's material lands in the plate band
   const armor = createArtifact(templates, 3);

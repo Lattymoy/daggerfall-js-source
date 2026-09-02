@@ -40,6 +40,7 @@ import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
+import { thumbSpan, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: the list picker's thumb, DFU's own slices
 import { drawText, measureText, makeFont } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text; AUDIT 18: SmallFont
 import { FntFile } from '../formats/fntFile.js';   // AUDIT 18: FONT0002, DaggerfallUI.SmallFont
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
@@ -715,11 +716,26 @@ function drawClassConfirm(renderer, m, font, flow) {
  *  it (ONE DFU MEMBER, ONE EXPORT). Draws the visible window from
  *  `scroll`, the selected row in the selected colour; returns the
  *  panel origin + row height for the caller's overlays.
- *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
- *  is verbatim and simple (VerticalScrollBar.cs:206-221) but the
- *  thumb is three texture slices this port has not identified yet,
- *  and inventing a colour would break the NATIVE-WINDOW RULE. The
- *  rail and both arrows are baked into PICK00I0 and do draw. */
+ *
+ *  ROAD-D2 drew the THUMB. AUDIT 17g flagged it because the three
+ *  texture slices were unidentified and inventing a colour would
+ *  break the NATIVE-WINDOW RULE; ROAD-A7 then identified and carried
+ *  them (vScrollThumbTop/Body/Bottom, fifteen literal bytes in
+ *  ui/verticalScrollBar.js), so nothing is invented here: the bar is
+ *  the picker panel's own 5x82 at (181,23) (RECTS.pickScroll,
+ *  DaggerfallListPickerWindow.cs:96-99), the span is
+ *  VerticalScrollBar.cs:206-211 verbatim through thumbSpan, and Draw
+ *  (:135-139) paints NOTHING when the list fits - which thumbSpan's
+ *  null carries. The rail and both arrows are baked into PICK00I0.
+ *
+ *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
+ *  picker inherits VerticalScrollBar's trough paging (MouseClick
+ *  :142-150) and thumb drag (Update :101-130); this arc's hit path
+ *  (chargenHit's three picker arms) answers only the two 9x9 arrows
+ *  and the rows, so a click on the rail does nothing. Wiring it needs
+ *  a scroll-index result threaded through chargen.js's flow for all
+ *  three pickers plus a held-button frame the chargen host does not
+ *  poll - both outside the thumb-art law this comment used to hold. */
 function drawListPicker(renderer, m, font, names, scroll, selected, rows = LIST_ROWS) {
   const [ox, oy] = PICK_PANEL;
   drawImg(renderer, img('PICK00I0.IMG'), m, ox, oy);
@@ -736,7 +752,25 @@ function drawListPicker(renderer, m, font, names, scroll, selected, rows = LIST_
     shadowText(renderer, font, names[idx], m, ox + lx, oy + y,
       { color: idx === selected ? SELECTED_TEXT : DEFAULT_TEXT_COLOR, shadow: DEFAULT_SHADOW_COLOR });
   }
+  drawPickerScrollThumb(renderer, m, names.length, rows, scroll);
   return [ox, oy, h];
+}
+
+/** ROAD-D2 - the picker's scrollBar (DaggerfallListPickerWindow.cs:96-99
+ *  is the rect; VerticalScrollBar.cs:132-221 is everything it does).
+ *  Its own function because it is its own COMPONENT in DFU and because
+ *  it needs no art: PICK00I0 has the rail and the arrows baked in, the
+ *  thumb is the three carried slices, so this pins bare where the rest
+ *  of drawListPicker cannot. Update (:103-119) refreshes TotalUnits
+ *  from the live list and DisplayUnits from RowsDisplayed every frame,
+ *  which is exactly the two arguments here - so the 9-row class list
+ *  and the 15-row SmallFont pickers each take their own fraction of
+ *  the rail. */
+export function drawPickerScrollThumb(renderer, m, totalUnits, displayUnits, scrollIndex) {
+  const [ox, oy] = PICK_PANEL;
+  const [sx, sy, sw, sh] = RECTS.pickScroll;
+  return drawScrollThumb(renderer, m, [ox + sx, oy + sy, sw, sh],
+    thumbSpan(sh, totalUnits, displayUnits, scrollIndex));
 }
 
 function drawClass(renderer, m, font, flow) {

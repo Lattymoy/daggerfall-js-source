@@ -408,8 +408,13 @@ test('the FOUR HOSTS are each named at the seam', () => {
   for (const host of ['world.js', 'exterior.js', 'worldModes.js', 'dungeonContext.js']) {
     assert.ok(src.includes(host), `the seam does not name ${host}`);
   }
-  assert.match(src, /dungeonContext\.js\s+FLAGGED/,
-    'the host that cannot reach the fork must be FLAGGED by name, not omitted');
+  // WAVE D: the fourth host went through the door, so the seam names
+  // it WIRED. What the rule demands is that the list ACCOUNT for every
+  // host - a host may not be omitted, whatever its state - so the pin
+  // reads the state rather than assuming one.
+  assert.match(src, /dungeonContext\.js\s+WIRED \(wave D/,
+    'the fourth host reaches the fork now, and the seam says so by name');
+  assert.ok(!/FLAGGED/.test(src), 'and no host is left outside the seam');
 });
 
 // ── A MODAL OVERLAY OWNS ITS INPUT ───────────────────────────────

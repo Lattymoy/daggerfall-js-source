@@ -75,7 +75,10 @@ test('AUDIT 18: every open-flags citation in Home.md points at the line it quote
   // the BOTH-ways rule below already pins the list and src/ to exact
   // agreement, and a hard number here is one more thing to rot (AUDIT 21
   // found Testing.md still quoting 109 when the list had reached 115).
-  assert.ok(seen >= 100, `only ${seen} open-flag citations parsed - the list or its format changed`);
+  // The floor is a floor: the Road-to-1:1 closeout retired 96 flags in
+  // one afternoon (145 -> 53) and Wave D took it to 17, and a floor set at the old population
+  // would have punished the retirement (CR-35's lesson).
+  assert.ok(seen >= 5, `only ${seen} open-flag citations parsed - the list or its format changed`);
   assert.deepEqual(wrong, [], `stale open-flags citations:\n${wrong.join('\n')}`);
 });
 
@@ -463,18 +466,35 @@ test('AUDIT 39: Rendering.md\'s "0.45 + 0.55*diffuse" base is the renderer\'s re
 // AUDIT 38 and stopped. The gate is the same both-ways shape as the
 // open-flags list: a new record must be indexed, and a renamed one cannot
 // leave a dead row behind.
+//
+// CR-39 widened it from RECORDS NAMED "Audit-*" to every record under
+// 01-Overview/, because the prefix was doing the work the law does: the
+// road-to-1:1 campaign ledger and the 2026-09-01 incident record - whose
+// four Standing lessons are binding process law - both slipped in
+// unindexed while this test reported green. What is deliberately NOT
+// indexed is an explicit list, so leaving a record out is a decision
+// somebody writes down rather than a name that happens not to match.
 // ---------------------------------------------------------------------------
 
-test('AUDIT 39: Home.md names every audit record under bible/01-Overview/', () => {
+/** Records under 01-Overview/ the index deliberately does not name. */
+const UNINDEXED_RECORDS = [
+  'Bible-Review-2026-08-25.md',   // a one-off review OF the bible, not a record of the port
+  'Port-Completion-Analysis.md',  // superseded for volume figures by Port-Status-2026-09.md
+];
+
+test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const home = read('bible/Home.md');
   const records = readdirSync(join(root, 'bible/01-Overview'))
-    .filter((f) => /^Audit-.+\.md$/.test(f)).sort();
+    .filter((f) => f.endsWith('.md') && !UNINDEXED_RECORDS.includes(f)).sort();
   const missing = records.filter((f) => !home.includes(f));
   assert.deepEqual(missing, [],
-    `audit records the index does not name:\n${missing.join('\n')}`);
-  const named = [...home.matchAll(/`01-Overview\/(Audit-[A-Za-z0-9.-]+\.md)`/g)].map((m) => m[1]);
-  const dead = [...new Set(named)].filter((f) => !records.includes(f));
-  assert.deepEqual(dead, [], `the index names audit records that are gone:\n${dead.join('\n')}`);
+    `records the index does not name:\n${missing.join('\n')}`);
+  // the allow-list may not outlive its files either
+  const gone = UNINDEXED_RECORDS.filter((f) => !existsSync(join(root, 'bible/01-Overview', f)));
+  assert.deepEqual(gone, [], `the not-indexed list names files that are gone:\n${gone.join('\n')}`);
+  const named = [...home.matchAll(/`01-Overview\/([A-Za-z0-9._-]+\.md)`/g)].map((m) => m[1]);
+  const dead = [...new Set(named)].filter((f) => !records.includes(f) && !UNINDEXED_RECORDS.includes(f));
+  assert.deepEqual(dead, [], `the index names records that are gone:\n${dead.join('\n')}`);
 });
 
 // ---------------------------------------------------------------------------
@@ -576,4 +596,43 @@ test('AUDIT 39r: three arc pages stop advertising work the wave closed or dispro
   const ench = read('src/systems/enchantments.js');
   assert.match(ench, /export const entityImprovedAcuteHearing =/);
   assert.match(ench, /export const entityImprovedAdrenalineRush =/);
+});
+
+test('WAVE D: two ACTIVE arc pages stop describing work this wave shipped', () => {
+  // The arc pages are not frozen chronicles - this same wave retro-
+  // edited dated paragraphs in both of them the moment a slice made
+  // them false (UI-Arc's "dungeonContext WIRED since WAVE D",
+  // Systems-Arc's FS1 section moved to "had"/"ran"/"was"). Three live
+  // claims were missed, and each has a mechanical answer in the tree,
+  // so pin them the two-way way AUDIT 18 pins everything: the sentence
+  // may not come back, AND the facility that retired it must still be
+  // there.
+  const ui = read('bible/10-UI/UI-Arc.md');
+  const sys = read('bible/06-Systems/Systems-Arc.md');
+
+  // 1. D10 shipped the two large-HUD offsets, and tiered both live.
+  assert.equal(/both settings stay read by nothing/.test(ui), false,
+    'UI-Arc still records the two large-HUD offsets as read by nothing');
+  const hud = read('src/ui/hudLarge.js');
+  assert.match(hud, /export function horseOffsetHeight\(/);
+  assert.match(hud, /export function weaponOffsetHeight\(/);
+  const settings = read('src/systems/settings.js');
+  assert.match(settings, /'GUI\/LargeHUDOffsetHorse': 'src\/ui\/hudLarge\.js'/);
+  assert.match(settings, /'GUI\/LargeHUDUndockedOffsetWeapon': 'src\/ui\/hudLarge\.js'/);
+
+  // 2. D4 built the fade layer, so no page may say the port has none.
+  assert.equal(/fade layer the port does not have/.test(ui), false,
+    'UI-Arc still says the fast-travel smash waits on a fade layer that exists');
+  assert.match(read('src/ui/fadeLayer.js'), /smashHUDToBlack/);
+  assert.match(read('src/ui/travelPopUp.js'), /hudFade\.smashHUDToBlack\(\);/);
+
+  // 3. ...and Systems-Arc's TP1 section cited a pin for a claim that
+  //    pin now REFUTES: travelguild.test.js used to assert both flags
+  //    were still named as open, and now asserts they are gone.
+  assert.equal(/The two flags that genuinely DO still idle/.test(sys), false,
+    'Systems-Arc still says the two D4 flags idle, citing a pin that asserts the opposite');
+  assert.match(read('test/travelguild.test.js'),
+    /no fade layer in the port\/\.test\(unquoted\), false/,
+    'the cited pin is the INVERTED one');
+  assert.match(read('src/ui/travelPopUp.js'), /this\.isCloseWindowDeferred = true;/);
 });

@@ -34,8 +34,8 @@ export const SMALL_CART_TEMPLATE = 93;
 export const WAGON_ACCESS_DISTANCE = 5;
 /** Internal_Strings "noWagon" (:1237). */
 export const NO_WAGON_TEXT = "You don't own a wagon.";
-/** key "exitTooFar" (:1239) - prose ours pending a string source. */
-export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
+/** `exitTooFar` (:1239) - Internal_Strings.csv:847, verbatim. */
+export const EXIT_TOO_FAR_TEXT = 'The exit is too far away for you to access your wagon.';
 
 /** Why the wagon did not open. Same shape as itemTransfer's REFUSAL
  *  so one renderer answers both, and separate from it because these

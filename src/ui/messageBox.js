@@ -32,7 +32,7 @@
 //   ("HACK: Lower vertical position if only a single button so that
 //   it aligns like two or more buttons" - :544-550, verbatim quirk).
 //
-// ROAD-A7 closes this file's FLAGGED note. Both halves are here now:
+// ROAD-A7 closed this file's note. Both halves are here now:
 //
 // - THE SCROLLING VARIANT (:461-470, :571-590). EnableVerticalScrolling
 //   sets MultiFormatTextLabel.MaxTextHeight, which CAPS the label's
@@ -261,8 +261,10 @@ export function layoutMessageBox(font, lines, buttons = [], {
     // with one) has the buttons punched through it. Eyeballed: "Is
     // your [YES]ter to [NO]Redguard?". The reservation is the intent -
     // 4px under the text is where 16px of button exactly fills it -
-    // so the strip never rides higher than that. FLAGGED as a
-    // deliberate departure, the only one in this file.
+    // so the strip never rides higher than that. A DELIBERATE
+    // DEPARTURE, recorded in Port-Ledger.md section A (the row at
+    // :119) - a DFU layout bug the port chose not to be bug-for-bug
+    // about - and the only one in this file.
     stripY = Math.max(stripY, textY + textH + BUTTON_TEXT_DISTANCE);
   }
   const stripX = x + Math.round((w - stripW) / 2);

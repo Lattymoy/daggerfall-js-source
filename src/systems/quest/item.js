@@ -224,7 +224,11 @@ export class Item extends QuestResource {
       // their MAGIC.DEF template via SetArtifact.
       const templates = getMagicItemTemplates();
       result = templates
-        ? createArtifact(templates, itemSubClass)
+        ? createArtifact(templates, itemSubClass,
+          // D9: SetArtifact reads PlayerEntity.Gender for the texture
+          // archive (ItemHelper.cs:521) - the same hook the magic-item
+          // mint above already asks for.
+          { gender: this.parentQuest?.hooks?.playerGender?.() ?? 'male' })
         : { group: 'Artifacts', pendingMagicDef: true, artifactIndex: itemSubClass, name: this.itemName };
     } else if (itemClass === 7) {
       // Item.cs:343-345 verbatim: `(itemKey != -1) ?

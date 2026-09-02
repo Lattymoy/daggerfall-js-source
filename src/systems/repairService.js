@@ -86,7 +86,13 @@ export const daysUntil = (timeMinutes, nowMinutes) => Math.ceil((timeMinutes - n
  *  'undamaged' TEXT.RSC 24 (doesNotNeedToBeRepairedTextId). */
 export const MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID = 33;
 export const DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID = 24;
-export const CANNOT_BE_REPAIRED_TEXT = 'This item cannot be repaired.';   // TextManager key cannotBeRepaired, prose ours
+export const CANNOT_BE_REPAIRED_TEXT = 'This cannot be repaired.';   // Internal_Strings.csv:974 (key cannotBeRepaired), verbatim
+/** ConfirmInterruptRepairBox's line (DaggerfallTradeWindow.cs:845-848
+ *  hands GetLocalizedText("interruptRepair") straight to the box, so
+ *  the row IS the string: Internal_Strings.csv:819, verbatim - and
+ *  note its sense, Yes = take the item back. Both the native Repair
+ *  window and the keyed flow speak this one constant. */
+export const INTERRUPT_REPAIR_TEXT = "Take back that item before it's repaired?";
 export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
   if (isEnchantedItem(item) && !allowMagicRepairs) return 'magic';
   if (templateByIndex(item.templateIndex)?.isNotRepairable) return 'notRepairable';
@@ -155,7 +161,7 @@ export function repairJobsAt(entity, buildingKey, nowMinutes) {
  *  item (or its committed time). */
 export function repairStatusLabel(item, nowMinutes, estimateMinutes = null) {
   const repairDone = isBeingRepaired(item) ? isRepairFinished(item, nowMinutes) : item.currentCondition === item.maxCondition;
-  if (repairDone) return 'Repair done';   // TextManager key repairDone, prose ours
+  if (repairDone) return 'DONE';   // Internal_Strings.csv:817 (key repairDone), verbatim
   const doneAt = isBeingRepaired(item)
     ? repairTimeDone(item)
     : nowMinutes + (estimateMinutes ?? calculateItemRepairTime(item.currentCondition, item.maxCondition));

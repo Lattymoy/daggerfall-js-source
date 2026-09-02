@@ -224,19 +224,24 @@ export function attachFactionRep(entity, factionDict) {
 }
 
 /** THE ONE CONSTRUCTION SEAM, fifth occurrence (U23). DFU's
- *  PlayerEntity is CONSTRUCTED with its FactionData - there is no
- *  moment in DFU where a player exists without one. The port's
- *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
- *  store until finishChargen or applyHeadlessChargen attaches one, so
- *  a host reached without chargen - ?play, a probe, a save loaded into
- *  a fresh tab - hands every reputation reader a null and it throws on
- *  `store.dict`. The U23 guild popup found it live.
+ *  PlayerEntity is CONSTRUCTED with its FactionData - the field is
+ *  initialised inline (PlayerEntity.cs:65, `protected
+ *  PersistentFactionData factionData = new PersistentFactionData()`),
+ *  so there is no moment in DFU where a player exists without one. The
+ *  port's pre-chargen stand-in entity (characters/playerEntity.js) has
+ *  no store until finishChargen or applyHeadlessChargen attaches one,
+ *  so a host reached without chargen - ?play, a probe, a save loaded
+ *  into a fresh tab - handed every reputation reader a null and it
+ *  threw on `store.dict`. The U23 guild popup found it live.
  *
- *  This is the idempotent front door: attach if absent, return what is
- *  there otherwise. It does NOT re-drain the biography (attachFactionRep
+ *  RECORDED, and no gap at this site: the guard below IS the answer,
+ *  the idempotent front door - attach if absent, return what is there
+ *  otherwise. It does NOT re-drain the biography (attachFactionRep
  *  already clears the pending list), and it cannot invent a store
  *  without FACTION.TXT - a caller with no dictionary gets null and must
- *  say so rather than pretend the reputation is zero. */
+ *  say so rather than pretend the reputation is zero. The stand-in
+ *  entity's own stand-in columns are flagged where they live, at
+ *  characters/playerEntity.js:5/:20/:27, and are that file's to retire. */
 export function ensureFactionRep(entity, factionDict) {
   if (!entity) return null;
   return entity.factionRep ?? attachFactionRep(entity, factionDict);

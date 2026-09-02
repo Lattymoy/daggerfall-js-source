@@ -20,9 +20,12 @@
 // this module owns the CONDITION half - Values, Flags, Flags2 - and the
 // other two keep their homes. The three together are DFU's record.
 // PrecipitationOverride and SeverePunishmentFlags are here because
-// nothing else has them; both are inert until their own arcs (the
-// weather override is never set by classic, and the banishment
-// consequences are FLAGGED in court.js).
+// nothing else has them. The weather override stays inert - classic
+// never sets it - but SeverePunishmentFlags is LIVE both ways as of
+// the arrest arc: scenes/arrestFlow.js:421-424 sets bit 1 on
+// banishment (DaggerfallCourtWindow.cs:272) and encounters.js:220
+// passiveGuardSpawns reads it every catch-up minute through
+// scenes/world.js:1627-1629 (PlayerEntity.cs:507).
 
 /** PlayerEntity.RegionDataFlags (:1588-1619), all thirty. */
 export const REGION_FLAGS = Object.freeze({

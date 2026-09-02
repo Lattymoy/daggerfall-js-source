@@ -111,12 +111,20 @@
 //   pass both (:262). The port has one castCost hook for both, so
 //   the offer's price rides the player's live skills either way.
 //
-// FLAGGED, idling loudly: the effect popup's body
-// (ShowEffectPopup reads each effect's own SpellBookDescription
-// tokens, which the port's effect table does not carry yet, so the
-// box shows the group/subgroup pair alone); and DFU's
-// double-click-to-buy on the list (the port's list picks straight
-// through, U24's own recorded departure).
+// ROAD-D D10 gave the effect popup its BODY. ShowEffectPopup
+// (:651-660) puts one thing in its click-anywhere box - the effect's
+// own SpellBookDescription tokens - and the port had no per-effect
+// text id, so the box carried the group/subgroup pair instead. The
+// ids are systems/spellEffects.js's SPELLBOOK_DESCRIPTION_IDS now
+// (EntityEffect.cs:78/:395, overridden by 85 effect classes and
+// computed from the variant index by the two variant families), read
+// through the TEXT.RSC seam this window already had one method down.
+// The group/subgroup line remains the FALLBACK for a host with no
+// record source and for an effect DFU gives no description - never a
+// box with nothing in it.
+//
+// STILL DEPARTED: DFU's double-click-to-buy on the list (the port's
+// list picks straight through, U24's own recorded departure).
 
 import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
@@ -127,9 +135,10 @@ import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId } from '../systems/spellEffects.js';
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
+import { thumbSpan, scrollBarClick, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all
 import { ALT_SHADOW_1 } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed
 import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
 import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
@@ -746,26 +755,32 @@ export class SpellbookWindow {
       const [group, subgroup] = this.effectLabels(i);
       if (!group) return true;
       this.top = 'note';
-      this._noteRows = [subgroup ? `${group} ${subgroup}` : group,
-        ...(this._effectDescription(i) ?? [])];
+      // SetTextTokens(effect.SpellBookDescription) and nothing else
+      // (:658) - the group/subgroup line is the port's fallback for a
+      // record the host cannot read, not a header DFU draws.
+      this._noteRows = this._effectDescription(i) ?? [subgroup ? `${group} ${subgroup}` : group];
       return true;
     }
     // F180: VerticalScrollBar.MouseClick (:142-150) - a trough click
     // PAGES by displayUnits, above or below the thumb, with the same
     // thumb geometry draw() computes. (DFU also drags the thumb from
-    // its per-frame Update loop, :101-130; the port's UI seam carries
-    // single-shot clicks only - no held-button state reaches any
-    // overlay window - so the drag stays unported, the listPicker.js
-    // precedent, and the trough + wheel + arrows reach every index
-    // the drag can.)
+    // its per-frame Update loop, :101-130; no held-button state
+    // reaches THIS window from its hosts - they hand it single-shot
+    // clicks only - so the drag stays unported, and the trough +
+    // wheel + arrows reach every index the drag can. The reason used
+    // to read "the listPicker.js precedent"; ROAD-A7 retired that
+    // half - listPicker's hosts DO poll the held button into
+    // ui/verticalScrollBar.js's update(), so the limit is per-host,
+    // not the port's seam. Recorded in the Ledger's F159/F170/F180
+    // row.)
     if (this._rows.length > ROWS_DISPLAYED && hitPanel(SPELLBOOK_RECTS.scrollBar, vx, vy)) {
+      // ROAD-D2: the thumb geometry and the two paging arms are
+      // ui/verticalScrollBar.js's now - the same span the draw uses,
+      // so the trough and the art can never disagree.
       const [, sy, , sh] = SPELLBOOK_RECTS.scrollBar;
-      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
-      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
-      const localY = vy - PANEL_Y - sy;
-      if (localY < ty) this.scrollIndex -= ROWS_DISPLAYED;
-      else if (localY > ty + th) this.scrollIndex += ROWS_DISPLAYED;
-      this._clampScroll();
+      const span = thumbSpan(sh, this._rows.length, ROWS_DISPLAYED, this.scrollIndex);
+      this.scrollIndex = scrollBarClick(vy - PANEL_Y - sy, span,
+        this.scrollIndex, this._rows.length, ROWS_DISPLAYED);
       return true;
     }
     // a click in the list selects that row
@@ -782,10 +797,17 @@ export class SpellbookWindow {
     return true;
   }
 
-  /** ShowEffectPopup (:651-660) reads the effect's own
-   *  SpellBookDescription; the port has no per-effect description
-   *  text source yet, so the box carries the name alone and says so. */
-  _effectDescription() { return null; }
+  /** ShowEffectPopup (:651-660): the box is the effect's own
+   *  SpellBookDescription. Null when the effect declares none
+   *  (EntityEffect's default) or the host has no TEXT.RSC seam. */
+  _effectDescription(slot) {
+    const e = spellEffects(this.selected)[slot];
+    if (!e) return null;
+    const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
+    if (id == null) return null;
+    const rows = this._boxText(id);
+    return rows.length ? rows : null;
+  }
 
   _rowHeight() { return (this._font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
@@ -857,14 +879,13 @@ export class SpellbookWindow {
     }
 
     // VerticalScrollBar: Draw() returns early when the list fits
-    // (:135-139), so a book of sixteen spells or fewer has NO thumb.
-    // The geometry is :204-207 verbatim, minimum height included.
-    if (this._rows.length > ROWS_DISPLAYED) {
-      const [sx, sy, sw, sh] = SPELLBOOK_RECTS.scrollBar;
-      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
-      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
-      drawRect(renderer, m, PANEL_X + sx, PANEL_Y + sy + ty, sw, th, SCROLL_THUMB_COLOR);
-    }
+    // (:135-139), so a book of sixteen spells or fewer has NO thumb -
+    // thumbSpan answers null there and drawScrollThumb paints nothing.
+    // The geometry is :204-207 verbatim, minimum height included, and
+    // ROAD-D2 gave it DFU's OWN three art slices (see below).
+    const [sbx, sby, sbw, sbh] = SPELLBOOK_RECTS.scrollBar;
+    drawScrollThumb(renderer, m, [PANEL_X + sbx, PANEL_Y + sby, sbw, sbh],
+      thumbSpan(sbh, this._rows.length, ROWS_DISPLAYED, this.scrollIndex));
 
     const spell = this.selected;
     // The name and the spell-point labels carry
@@ -945,9 +966,16 @@ export class SpellbookWindow {
 /** DaggerfallUI.cs:52's default row colour is nativePanel's
  *  DEFAULT_TEXT_COLOR and :62's dark-red selected row is the list
  *  picker's SELECTED_TEXT_COLOR - both imported, neither rewritten. */
-/** VerticalScrollBar.cs:204-206 - the thumb never shrinks past ten
- *  pixels however long the list gets. Its three-slice art is a
- *  Resources sprite the port has no reader for, so the thumb is
- *  drawn as a flat bar in the panel's own brass - FLAGGED. */
-const SCROLL_THUMB_MIN_H = 10;
-const SCROLL_THUMB_COLOR = Object.freeze([0.42, 0.35, 0.16, 1]);
+/** ROAD-D2 closed this file's thumb note. The "Resources sprite the
+ *  port has no reader for" was stale: ROAD-A7 carried vScrollThumb
+ *  Top/Body/Bottom into the repo as their fifteen literal bytes
+ *  (ui/verticalScrollBar.js:56-58), so the book's thumb is DFU's own
+ *  art - a 77 left edge, a 186 body under a 223 highlight, an all-77
+ *  foot, each strip StretchToFill across the 7-wide rail - drawn by
+ *  drawScrollThumb, and the local 10px floor and the flat brass
+ *  rectangle it used to paint are both gone. THUMB_MIN_H
+ *  (VerticalScrollBar.cs:209) and the whole of :204-221 live in that
+ *  one file; this window states no geometry of its own.
+ *  The DRAG (Update, :101-130) stays unported here and only here -
+ *  no host hands this window a held-button frame - which is the
+ *  Ledger's F159/F170/F180 row, not a thumb-art gap. */

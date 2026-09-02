@@ -7,7 +7,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   TAVERN_PANEL_W, TAVERN_PANEL_H, TAVERN_PANEL_X, TAVERN_PANEL_Y, TAVERN_RECTS, DAYS_FIELD, TavernWindow,
+  TAVERN_BUTTONS,
 } from '../src/ui/tavernWindow.js';
+import { shortcutBinding } from '../src/systems/dialogShortcuts.js';
 import { NATIVE_W, NATIVE_H } from '../src/ui/nativePanel.js';
 import {
   TAVERN_MENU, HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
@@ -337,4 +339,41 @@ test('U39: the host consumes the tavern route the G8 law has answered all along'
   assert.match(save, /'lastTimePlayerAteOrDrankAtTavern'/);
   assert.match(save, /snap\.rentedRooms =/);
   assert.match(save, /entity\.rentedRooms = \(snap\.rentedRooms \?\? \[\]\)/);
+});
+
+test('D1: the four hotkeys are DialogShortcuts.txt\'s, so EXIT is G and E does nothing', () => {
+  // DaggerfallTavernWindow.cs:103-124 hangs
+  // DaggerfallShortcut.GetBinding on all four buttons; the table's
+  // "-- Taverns menu" block (DialogShortcuts.txt:175-179) reads
+  // R / T / F / G. The port had spelled KeyE for Exit, which is the
+  // one letter the table does NOT bind on this window.
+  assert.deepEqual([...TAVERN_BUTTONS],
+    ['TavernRoom', 'TavernTalk', 'TavernFood', 'TavernExit'], 'DFU\'s ctor ADD order');
+  assert.equal(shortcutBinding('TavernExit').code, 'KeyG');
+
+  const exit = win();
+  exit.w.input('KeyE');
+  assert.equal(exit.w.done, false, 'E is nobody\'s accelerator here');
+  exit.w.input('KeyG');
+  assert.equal(exit.w.done, true, 'TavernExit is G');
+  assert.equal(exit.closed.count, 1);
+
+  const talk = win();
+  talk.w.input('KeyT');
+  assert.equal(talk.closed.talked, true);
+  assert.equal(talk.w.done, true);
+
+  const room = win();
+  room.w.input('KeyR');
+  assert.equal(idOf(room.w.flow?.top), HOW_MANY_DAYS_ID, 'TavernRoom raises the day field');
+
+  const food = win();
+  food.w.input('KeyF');
+  assert.ok(food.w.flow, 'TavernFood opens the menu chain');
+
+  // A held modifier masks the letter out exactly as HotkeySequence
+  // does - the thing four bare literals could never do.
+  const mod = win();
+  mod.w.input('KeyG', { ctrlKey: true });
+  assert.equal(mod.w.done, false, 'Ctrl-G is not TavernExit');
 });

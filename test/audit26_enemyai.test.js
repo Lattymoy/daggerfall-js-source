@@ -172,9 +172,9 @@ test('audit26 F010: a foe in hit-stun holds its bow', () => {
   // rolls: melee byte draw passes nothing, bow roll 0 always passes
   const attack = new EnemyAttack({ liveSpeed: 50, playerLevel: 10, reflexes: 2, rolls: () => 0 });
   attack.rangedAttack = true;
-  attack.update(0.0625, mkAi(false), [0, 0, 20], 20);
+  attack.update(0.0625, mkAi(false), [0, 0, 20]);
   assert.equal(attack.machine.state, 'Idle', 'knocked back: no bow strike started');
-  attack.update(0.0625, mkAi(true), [0, 0, 20], 20);
+  attack.update(0.0625, mkAi(true), [0, 0, 20]);
   assert.notEqual(attack.machine.state, 'Idle', 'free: the same tick shoots');
 });
 

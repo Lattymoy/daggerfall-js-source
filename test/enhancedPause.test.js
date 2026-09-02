@@ -684,6 +684,15 @@ test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   assert.ok(windows.length >= 8, `${windows.length} enhanced windows found`);
   assert.deepEqual(windows.filter((w) => !seen.has(w)), [],
     'a window nothing reaches is a window nobody can open');
-  // ...and no src/ui module at all is orphaned.
-  assert.deepEqual(files.filter((f) => f.startsWith('src/ui/') && !seen.has(f)), []);
+  // ...and no src/ui module at all is orphaned. THE STAGING EXEMPTION
+  // IS GONE, as its own counter-pin instructed: flight 2 mounted
+  // ui/automapChrome.js from BOTH ends - c2/S5's native dungeon window
+  // and c2/S10's exterior town map - so the chrome is reached from the
+  // hosts like everything else, the list is empty and the sweep is
+  // unconditional again, which is the state it has to be in for PX24's
+  // fault (a window nothing reaches) to stay caught.
+  assert.deepEqual(files.filter((f) => f.startsWith('src/ui/') && !seen.has(f)), [],
+    'a src/ui module nothing reaches is a module nobody can open');
+  assert.ok(seen.has('src/ui/automapChrome.js'),
+    'the automap chrome is reachable - flight 2 mounted it in both automap windows');
 });

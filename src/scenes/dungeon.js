@@ -234,6 +234,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     if (ctx.uiOverlayActive) {
       const v = pointToNative(nativeMetrics(canvas), px, py);
+      // ROAD-C c2/S4: the POINTER seam runs first and always - the
+      // automap chrome is press-HOLD and drag driven, so `down` must
+      // reach it whether or not the click seam consumes the event.
+      // c2/S8: the DOWN route carries the modifiers with it - DFU's
+      // double-click and debug-teleport handlers poll Input.GetKey at
+      // the click, and this seam is the port's only reader of that.
+      if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
       if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
       return;   // a window is up: never grab the pointer behind it
     }
@@ -250,6 +257,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // world's.
     if (document.pointerLockElement !== canvas) setClickDelay(activateGate);
     requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
+  });
+  // ROAD-C c2/S4: THE UP ROUTE. A host that routes `down` but not `up`
+  // latches an automap drag that spins the map forever, with nothing
+  // to error on. It listens on the WINDOW, not the canvas, because a
+  // release outside the canvas must still end the drag.
+  addEventListener('pointerup', (e) => {
+    if (!ctx.uiOverlayActive) return;
+    const r = canvas.getBoundingClientRect();
+    const v = pointToNative(nativeMetrics(canvas),
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height));
+    ctx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
   });
   // U-scroll: the wheel reaches an open window (question scroll, list
   // pickers); passive:false so the page never scrolls under the game.
@@ -307,6 +326,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
         (e.clientX - r.left) * (canvas.width / r.width),
         (e.clientY - r.top) * (canvas.height / r.height));
       ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e);   // ROAD-A7: e.buttons is the scroll-bar drag's held-button poll
+      if (v) ctx.overlayPointer?.('move', v[0], v[1], 0);      // ROAD-C c2/S4
       return;
     }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
@@ -367,6 +387,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__overlayWindow = () => ctx.overlayWindow?.() ?? null;   // U37 probe surface: the live window itself
     window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
     window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
+    // ROAD-C c2/S8: AutoMapConsoleCommands' three verbs - map_revealall,
+    // map_hideall, map_teleportmode. DFU registers them with the
+    // ConsoleCommandsDatabase; the port has no console, so they mount
+    // here beside every other developer verb, under their own names.
+    window.__automapCommand = (name) => ctx.automapCommand?.(name) ?? 'Automap instance not found';
     window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };
     window.__piles = () => JSON.stringify(ctx.dropped?.().map((p) => ({ n: p.items.length, flat: !!p.batch })) ?? []);
     // The fist repro (2026-08-18): the entity + the rig's two combat

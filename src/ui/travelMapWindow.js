@@ -6,11 +6,11 @@
 // four filter buttons, the find box and its list picker, and the
 // travel popup behind it (ui/travelPopUp.js).
 //
-// It RETIRES ui/travelMap.js, the keyed typeahead that stood in for
-// this window since the F-slice - the Ledger row called it INTERIM
-// and this is the window it was standing in for. What it carried
-// forward: the visibility law (checkLocationDiscovered, TV-slice)
-// and the arrival seam (onTravel -> the host's fastTravelTo).
+// It RETIRED ui/travelMap.js, the keyed typeahead that stood in for
+// this window since the F-slice: that file is gone from src/ and
+// nothing imports it. What it carried forward and this window holds:
+// the visibility law (checkLocationDiscovered, TV-slice) and the
+// arrival seam (onTravel -> the host's fastTravelTo).
 //
 // THE NATIVE-WINDOW RULE, element by element:
 // - the background is the whole 320x200 TRAV0I00.IMG (:326);
@@ -72,11 +72,16 @@
 // - DFU's Update() polls the mouse every frame; the port's windows
 //   are told (hover/click), so the same work happens on the move.
 //
-// FLAGGED, idling loudly: the guild TELEPORT mode
-// (ActivateTeleportationTravel + DaggerfallTeleportPopUp, :1705-1730),
-// which waits on the guild arc's teleport service. (TravelMapSaveData
-// is NOT flagged: it ships through systems/travelMapState.js and the
-// session envelope.) The journal's click-through travel (GotoPlace,
+// The guild TELEPORT mode (ActivateTeleportationTravel +
+// DaggerfallTeleportPopUp, :1705-1730) idled here for one slice and is
+// LIVE at G5: the service it waited on is systems/guildServiceFlow.js's
+// `Teleport: 'guildServiceTeleport'`, and this file carries the map
+// half - ui/teleportPopUp.js imported above, TELE00I0 preloaded, the
+// one-shot `teleportationTravel` flag, activateTeleportationTravel
+// (ActivateTeleportationTravel) and the TeleportPopUpWindow raised on
+// the destination pick. (TravelMapSaveData ships through
+// systems/travelMapState.js and the session envelope.) The journal's
+// click-through travel (GotoPlace,
 // :214-217 and its Update consumer :443-455) is LIVE - ui/questJournal.js
 // offers the find dialog and the host hands the place here.
 
@@ -1029,6 +1034,26 @@ export class TravelMapWindow {
   }
 
   // --- the host seam ---
+
+  /** D4: THE KEY-UP EDGE. A DFU Button with an OnKeyboardEvent handler
+   *  is raised on BOTH edges of its Hotkey (Button.cs:79-92), and this
+   *  window's travel popup is the one place in the port that needs the
+   *  release: EXIT plays its click on the press and pops on the
+   *  release (DaggerfallTravelPopUp.cs:482-495). Routed exactly like
+   *  `input` above - to whichever sub-window owns the keyboard - and
+   *  nothing else on this map reads a key-up, so the map's own arms
+   *  answer nothing rather than mirroring the ladder. */
+  keyup(code, e = null) {
+    if (this.telePopUp) {
+      this.telePopUp.keyup?.(code, e);
+      if (this.telePopUp?.done) this.telePopUp = null;
+      return;
+    }
+    if (this.popUp) {
+      this.popUp.keyup?.(code, e);
+      if (this.popUp?.done) this.popUp = null;
+    }
+  }
 
   input(code, e = null) {
     if (this.telePopUp) {

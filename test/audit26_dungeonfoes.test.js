@@ -491,7 +491,10 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // one clock still read the departure date here), and the core also
   // drops the season re-skin's motor hold on its way past. Both notes
   // sit above these needles; the needles themselves are unchanged.
-  const core = WORLD.slice(t, t + 2600);
+  // PIN MOVED AGAIN (CLOSEOUT), 2600 -> 2800: the straightening now
+  // raises a latch the frame's season poll honours across the awaited
+  // destination build, which is two more statements above the needles.
+  const core = WORLD.slice(t, t + 2800);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

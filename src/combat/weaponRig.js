@@ -29,6 +29,11 @@ import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e 
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+// ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
+// separate component in DFU and a separate module here, drawn by the
+// same rig because this is the one surface every FPS-weapon host
+// already mounts - so wiring it here wires all four at once.
+import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilename } from './fpsSpellCasting.js';
 // MW-D8: the classic sprite is still the DEFAULT and still the fallback,
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
@@ -80,9 +85,16 @@ export function buildArmsFor(entity) {
  *     (canvas may be the element OR a () => element - the dungeon
  *      context only holds a canvas per frame, C10),
  *   entity          - the player entity (arrow stock reads it),
- *   say(line)       - the classic-message sink ('You have no arrows.');
- *                     hosts without a HUD text layer pass console
- *                     (FLAGGED at the call sites - their HUD pends),
+ *   say(line)       - the classic-message sink ('You have no arrows.').
+ *                     The note that hosts without a HUD text layer
+ *                     pass console is retired: every call site hands
+ *                     over a real one - hudText.add
+ *                     (dungeonContext.js:1934), townTalk.say
+ *                     (exterior.js:1000, world.js:1725) and
+ *                     worldModes' own interior sink (worldModes.js:346,
+ *                     which warns to console only where a host mounts
+ *                     no townTalk at all), so the empty default below
+ *                     is unreached,
  *   spellArmed()    - optional: WeaponManager's HasReadySpell leg
  *                     (hosts without casting omit it),
  * }
@@ -169,6 +181,28 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return cache.get(key);
   }
 
+  /**
+   * SetCurrentAnims' cache (FPSSpellCasting.cs:145-149): "This happens
+   * the first time a spell is cast and stored for re-casting. It's
+   * likely player will use a wide variety of spell types in normal
+   * play." Same shape as artFor above - the first ask starts the load
+   * and draws nothing, every later one hits the map. The textures
+   * themselves are keyed globally by renderer.uploadTexture, so four
+   * rigs holding four maps still upload each archive once.
+   */
+  const spellCache = new Map();   // element -> art (null while loading)
+
+  function spellArtFor(element) {
+    if (!palette || !magicAnimFilename(element)) return null;
+    if (!spellCache.has(element)) {
+      spellCache.set(element, null);
+      loadSpellCastArt(fetchBytes, palette, renderer, element)
+        .then((art) => spellCache.set(element, art))
+        .catch((e) => console.warn('[weaponRig] spell anim load failed', element, e));
+    }
+    return spellCache.get(element);
+  }
+
   /** WeaponManager.Update's ShowWeapons legs, verbatim order.
    *  FX1 (F024/F025) rebuilt both clocks:
    *  - the bow COOLDOWN is an EARLY RETURN (:230-233), leaving
@@ -184,13 +218,22 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // real release lands near 0.44s and always beats this.
   const HELD_HIT_MAX_S = 1.2;
   let _heldHit = false;
+  // MW-D42d: the loose SOUND, held with the loose it belongs to.
+  let _heldSound = false;
   let _heldHitAge = 0;
   let _lastShown = false;
   function shown() {
     const m = playerWeapon.machine;
     if (m.isBow && m.now < m.cooldownUntil) return _lastShown;   // F024: the early return freezes the state
     let v = true;
-    if (spellArmed()) v = false;                               // HasReadySpell / IsPlayingAnim
+    // WeaponManager.cs:247 is `HasReadySpell || PlayerSpellCasting
+    // .IsPlayingAnim` - BOTH legs. The second half had nothing to
+    // read until the classic spellcasting hands existed, and the
+    // comment on this line has claimed it since C9: a weapon sprite
+    // drawn over the casting hands is the state DFU's own note says
+    // never happens ("never mixed with weapons directly on screen at
+    // same time").
+    if (spellArmed() || fpsSpellCasting.isPlayingAnim) v = false;   // HasReadySpell / IsPlayingAnim
     else if ((entity?.equipCountdown ?? 0) > 0) v = false;     // F025: empty hands while equipping
     else if (playerWeapon.sheathed) v = false;
     _lastShown = v;
@@ -234,8 +277,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
 
   return {
     /** MW-D39: the host's cast moment runs the arm's spellcast release.
-     *  One door, like setWeapon - the host never reaches into fpArm. */
-    castSpellAnim: (rangeType) => fpArm.castSpell(rangeType),
+     *  One door, like setWeapon - the host never reaches into fpArm.
+     *
+     *  ROAD-tail: and the CLASSIC lane's hands come through the same
+     *  door, because it is the same moment - EntityEffectManager
+     *  .CastReadySpell (:434) calls PlayerSpellCasting.PlayOneShot with
+     *  the readied spell's ElementType, and this port's hosts raise
+     *  their cast moment there. The range picks the Morrowind arm's
+     *  attack type; the element picks the classic archive. Exactly one
+     *  of the two ever reaches the screen (see draw()). */
+    castSpellAnim: (rangeType, element) => {
+      fpArm.castSpell(rangeType);
+      fpsSpellCasting.playOneShot(element);
+    },
     playerWeapon,
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
@@ -305,6 +359,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     frame(dt, { paralyzed = false } = {}) {
       bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
+      // FPSSpellCasting's AnimateSpellCast coroutine (:265-286). It is
+      // a Start() coroutine, so it runs for the life of the component
+      // - before the gesture, before the machine, and NOT under the
+      // paralysis gate below: FPSSpellCasting is its own component and
+      // WeaponManager.ShowWeapons(false) never touched it, so a cast
+      // already in flight when paralysis lands finishes its motion.
+      // Only the rig that owns the frame steps it (the hosts return
+      // early on a modal mode), which is why one accumulator is safe
+      // across four rigs.
+      fpsSpellCasting.tick(dt);
       // CH3 (characters-13): the swap pause drains at the classic
       // approximation - dt x 980 units/second, clamped at 0
       // (WeaponManager.cs:677-693).
@@ -392,15 +456,38 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // The rule's own reason was the hit frame - it never argued the
       // arrow should leave before the string does.
       const evs = playerWeapon.update(dt);
-      if (!fpArm.active() || !playerWeapon.machine.isBow) {
+      // MW-D42c (Mac: "in third person, clicking instantly triggers the
+      // attack, unlike the changes we made to first person. Ensure
+      // parity"): THE ARM IS ANIMATING IN EITHER VIEW. active() is the
+      // FIRST-person predicate by construction - it ends in
+      // `viewMode === 'first'` - so MW-D42's hold silently did nothing
+      // the moment the wheel turned, and the classic frame-5 hit fired
+      // straight through on the click exactly as it always had. The
+      // question this asks is not "which view" but "is the arm the
+      // thing on screen", and in third person that is thirdActive().
+      // Same animation, same release key, same clock; only the pass
+      // that draws it differs, and the pass is none of the loose's
+      // business.
+      if (!(fpArm.active() || fpArm.thirdActive()) || !playerWeapon.machine.isBow) {
         // The classic sprite path is untouched, and so is every melee
         // weapon on every path.
         if (_heldHit) _heldHit = false;
+        _heldSound = false;
         return evs;
       }
       const out = [];
       for (const ev of evs) {
         if (ev === 'hit') { _heldHit = true; _heldHitAge = 0; continue; }
+        // MW-D42d (Mac: "the sound affect plays before the arrow is
+        // fired"): THE LOOSE SOUND RIDES WITH THE LOOSE. The machine
+        // puts bowSound on frame 4 and the hit on frame 5 - one 0.0625
+        // tick apart, which is the same instant to an ear. MW-D42 moved
+        // the HIT to the arm's release key and let the sound through
+        // untouched, so the two came apart by the whole length of the
+        // draw and the string was heard before the arrow left. Holding
+        // the arrow and not its sound is not half a fix, it is a new
+        // defect, and it was mine.
+        if (ev === 'bowSound') { _heldSound = true; continue; }
         out.push(ev);
       }
       if (_heldHit) {
@@ -413,6 +500,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // is seven frames at a 0.0625 tick, about 0.44s.
         if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
           _heldHit = false;
+          // SOUND FIRST, then the hit - the machine's own order across
+          // frames 4 and 5, preserved rather than reinvented.
+          if (_heldSound) { _heldSound = false; out.push('bowSound'); }
           out.push('hit');
         }
       }
@@ -423,14 +513,32 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     draw({ paralyzed = false } = {}) {
       bindArm();    // AUDIT 39: the DRAWING rig owns it too - the arm renders through it
       bowArrowGuard();
-      if (paralyzed || !shown()) return;
       const c = cv();
       // MW-D24: in THIRD PERSON nothing first-person draws at all - not
       // the arm (its predicate is view-gated) and not the classic
       // sprite either, or the player would wear a floating weapon
       // overlay while watching their own back. Morrowind's third person
-      // has no viewmodel; the body carries the weapon.
+      // has no viewmodel; the body carries the weapon. ROAD-tail HOISTED
+      // it above the spellcasting hands below, which are first-person
+      // art by exactly the same argument.
       if (fpArm.thirdActive()) return;
+      // ROAD-tail: THE CLASSIC SPELLCASTING HANDS (FPSSpellCasting
+      // .OnGUI :97-119). Three things about where this sits:
+      //   - BEFORE the weapon, "Draw spell cast texture behind other
+      //     HUD elements" (:113) and GUI.depth = 1 (:99);
+      //   - NOT under shown() - the weapon is the thing shown() hides
+      //     while these play (see the IsPlayingAnim leg there), and
+      //     hiding the hands with it would leave a cast with nothing
+      //     on screen at all;
+      //   - NOT under paralyzed, for the reason frame()'s tick is not:
+      //     DFU's spellcasting component is nobody's viewmodel.
+      // The Morrowind lane draws its OWN cast through fpArm's casting
+      // stance (MW-D39), so the two never composite - the same one
+      // seam the weapon sprite has.
+      if (c && !fpArm.active()) {
+        drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex);
+      }
+      if (paralyzed || !shown()) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a

@@ -230,7 +230,10 @@ test('X11 Spell Reflection: the host seam re-targets - the effect module never d
   assert.ok(foeArm.includes('r.reflected'), 'the foe arm re-targets');
   assert.ok(!foeArm.includes('SPELL_REFLECTED_TEXT'), 'and stays silent about it');
   assert.ok(/reflectedCount: 1/.test(foeArm), 'the bounce is marked so it cannot volley');
-  assert.ok(src('src/scenes/world.js').includes('r.reflected'), 'the enchantment door re-targets too');
+  // WAVE D: the enchantment door is scenes/hostEnchant.js's, one body
+  // for both mounting hosts - so the bounce cannot be re-targeted in
+  // one host and dropped in the other.
+  assert.ok(src('src/scenes/hostEnchant.js').includes('r.reflected'), 'the enchantment door re-targets too');
 });
 
 // ── Light (15,255) and its candle ─────────────────────────────────

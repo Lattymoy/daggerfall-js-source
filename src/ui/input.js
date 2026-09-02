@@ -282,7 +282,7 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // (DaggerfallUI.cs:704-711).
     case 'LogBook': ctx.toggleLogbook?.(); return true;
     case 'NoteBook': ctx.toggleNotebook?.(); return true;
-    case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
+    case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1; ROAD-C c2/S9 gave the INTERIOR ctx one too - the optional call is now for the exterior arm alone
     case 'QuickSave': ctx.quickSave?.(); return true;
     case 'QuickLoad': ctx.quickLoad?.(setPlayerPos); return true;
     // U45: the four the large HUD reaches that no keybind in this

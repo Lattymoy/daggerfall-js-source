@@ -223,4 +223,19 @@ test('the probe exterior host stands its boards too - the standing host rule', (
   assert.ok(e.includes('boardTargets: () => bulletinBoards,'));
   assert.equal(e.includes('bulletinBoardNews:'), false,
     "no mill in this host - the board opens on the location name alone, C#'s own empty arm");
+  // ...AND THE NAME IS NOT FREE. The heading is PlayerGPS
+  // .CurrentLocalizedLocationName (:721), which the arm reads off
+  // `buildingDirectory` (worldModes.js:1649) and off nothing else - so
+  // a host that stands boards without handing one over opens the box
+  // on a BLANK parchment, not "the location name alone": the head row
+  // composes empty and bulletinBoard.js:97 shifts the starter row off,
+  // leaving one empty line. This host knows its own location outright.
+  assert.match(e, /buildingDirectory: \(\) => \(\{[\s\S]{0,400}?locationName: dfLocation\.name \?\? locationName,/,
+    'the probe host hands the arm the location name it already holds');
+  // and the CONTENT of the no-news arm, which the absence pin above
+  // could never observe - one centred row, the location's own name.
+  assert.deepEqual(bulletinBoardRows('Daggerfall', null, tokenRows).map((r) => r.text), ['Daggerfall'],
+    'the empty mill still shows the town');
+  assert.deepEqual(bulletinBoardRows('', null, tokenRows).map((r) => r.text), [''],
+    '...and with no name at all there is nothing on the sign, which is the defect this pins against');
 });

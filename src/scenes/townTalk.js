@@ -13,13 +13,23 @@
 // FACTION.TXT + TEXT.RSC + FONT0003 through the host's fetchBytes.
 // Overlay active = the motor holds (the U3 seam shape).
 //
-// FLAGGED loud: Info mode opens the same talk window (DFU routes
-// Info/Grab/Talk on mobiles identically); the TFAC portrait art is
-// the one T3c piece still open (guards-on-pickpocket, topics and
-// tones all SHIPPED - AUDIT 23 retired those clauses); pickpocket
-// gold/nothing land as HUD lines where DFU raises a modal MessageBox
-// ("not successful" IS a HUD popup in DFU too) - the box swap rides
-// the U-arc message-box rollout to these hosts.
+// ROAD-D D10 closed the last of this header's open clauses, and each
+// deserves its record:
+//   - Info mode opening the same talk window was never a gap:
+//     PlayerActivate.cs:775-783 falls Info, Grab and Talk on a mobile
+//     through to the same TalkToMobileNPC call.
+//   - THE TFAC PORTRAIT SHIPPED. SetNPCPortrait
+//     (DaggerfallTalkWindow.cs:360-385) is called from SetTargetNPC,
+//     before the push, so it rides openTalkWindow's `portrait` option
+//     below - CommonFaces (TFAC00I0.RCI) at SetPerson's minted record
+//     for a mobile (TalkManager.cs:817, systems/townPopulation.js's
+//     _setFaceRecord), and GetPortraitIndexFromStaticNPCBillboard's
+//     archive/record pair for a static NPC (:849, the law in
+//     systems/npcSession.js, wired at scenes/worldModes.js).
+//   - THE PICKPOCKET BOX SWAPPED. Pickpocket (PlayerActivate.cs:
+//     1611-1660) raises a real MessageBox for both success arms and
+//     leaves only the failure on the HUD, which systems/talk.js now
+//     reports as `modal` and the steal arm below routes on.
 
 import { FactionFile } from '../formats/factionFile.js';
 import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
@@ -30,7 +40,8 @@ import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { overlayAction } from '../ui/input.js';
-import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
+import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
+import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
@@ -44,8 +55,10 @@ import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
-import { NativeTalkWindow, preloadTalkArt, talkArtLoaded } from '../ui/nativeTalk.js';   // U8b
+import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
+import { NativeTalkWindow, preloadTalkArt, talkArtLoaded, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
+import { preloadExteriorAutomapArt } from '../ui/exteriorAutomapWindow.js';   // ROAD-C c2/S10: the town map's native art
 
 export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
 
@@ -126,6 +139,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  quest popup's case, and the reason a rest taken in the street can
    *  now be paused and resumed like DFU's. */
   const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
+  /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK (worldModes'
+   *  `interiorPaused` carries the full note). AddWindow
+   *  (UserInterfaceManager.cs:179-186) raises
+   *  `GameManager.PauseGame(true)`, RemoveWindow (:190-216) lowers it
+   *  only on the drain, and PauseGame (GameManager.cs:600-635) is the
+   *  `Time.timeScale = 0` the two outdoor hosts freeze on. Both doors
+   *  into this slot reconcile, so the latch is the whole answer here
+   *  and `pauseWhileOpen(overlay)` (UserInterfaceWindow.cs:141) only
+   *  keeps the term shape identical to the other hosts' - and would
+   *  catch a future third door that writes the slot without one. */
+  const talkPaused = () => windows.paused() || pauseWhileOpen(overlay);
   /** The close callbacks of the windows currently SUSPENDED, deepest
    *  first - `_onOverlayClosed` belongs to the top window alone, and a
    *  push must not clobber the covered window's. */
@@ -158,6 +182,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
       catch { console.warn('[town] FONT0003.FNT unavailable; talk UI text disabled'); }
       if (palette) preloadTalkArt({ renderer, fetchBytes, palette });   // U8b: TALK01I0 (art-less keeps the text chain)
+      // ROAD-C c2/S10: the town map's native art (AMAP00I0 + TOWN00I0).
+      // ONE preload for BOTH exterior hosts, because this is the one
+      // seam both of them already share - and it is fire-and-forget for
+      // the same reason the talk art is: an art-less boot keeps the
+      // window's keyed fallback.
+      if (palette) {
+        preloadExteriorAutomapArt({ renderer, fetchBytes, palette })
+          .catch(() => console.warn('[town] AMAP00I0/TOWN00I0 unavailable; the town map keeps its keyed shell'));
+      }
       try {
         factions = new FactionFile();
         factions.load(await fetchBytes('FACTION.TXT'));
@@ -215,7 +248,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     try {
       const opts = nameOpts();
       if (!opts) return;
-      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, opts);
+      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, opts);
       // QP1: GetBuildingList's questor half rides the SAME rebuild -
       // C# populates npcsWithWork inside the one building walk
       // (TalkManager.cs:2807-2874). The candidates go out through the
@@ -315,6 +348,25 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return false;
   }
 
+  /** D4 - THE OVERLAY'S KEY-UP EDGE. Every host binds `keyup` on the
+   *  window already (it is how the movement key Set is drained) and
+   *  none of them forwarded it here, so an overlay could only ever see
+   *  a press. DFU's UI sees both: a Button with an OnKeyboardEvent
+   *  handler is raised on KeyDown AND KeyUp (Button.cs:79-92), and the
+   *  travel popup's EXIT is the deferral that needs the release
+   *  (DaggerfallTravelPopUp.cs:482-495). OPTIONAL by design - a window
+   *  that does not define `keyup` is a window whose buttons subscribe
+   *  no keyboard handler, which is nearly all of them. Answers whether
+   *  the overlay consumed it, the way `keydown` does; a host that
+   *  drains its own key Set on the same event does that first. */
+  function keyup(e) {
+    if (!overlay) return false;
+    if (typeof overlay.keyup !== 'function') return true;
+    overlay.keyup(e.code, e);
+    if (overlay?.done) dropOverlay();
+    return true;
+  }
+
   // G2: the arrest/court flows push their own windows through the
   // same overlay slot (one motor-holding seam).
   let _onOverlayClosed = null;
@@ -372,7 +424,36 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // slot is not empty and reconcile reads that as a one-level
     // replacement - the successor sits over the same suspended window,
     // which is what a dispatch mid-chain means.
+    //
+    // ROAD-B B5 FIXED THE RESTORE'S GUARD. It read `if (overlay)
+    // _onOverlayClosed = _suspendedCallbacks.pop() ?? null;` and could
+    // not tell the two cases apart, because BOTH leave the slot full:
+    // a real pop (the uncovered window, whose callback must come back)
+    // and a SUCCESSOR the callback just opened (whose callback was
+    // written two lines ago and must NOT be thrown away). It threw it
+    // away - `pop()` on an empty list is undefined, `?? null` makes
+    // that a null, and the successor's own close callback was gone.
+    //
+    // That is arrestFlow's live shape, not a hypothetical: the guilty
+    // verdict shows its box with `() => finish(...)` as the close
+    // callback, and `finish` opens the prison screen with `() =>
+    // release()` as ITS close callback. The release is ReleaseFromPrison
+    // (DaggerfallCourtWindow.cs:482-491) - the crime clearing, the four
+    // hours, the reposition and ClearEnemies - so a player who was
+    // found guilty and served their days walked out of the courthouse
+    // still arrested, still wanted, still standing where they were,
+    // with the court music playing. A pre-B1 dropOverlay had no restore
+    // at all and did not have this.
+    //
+    // The successor is "the slot is already full BEFORE the pop" - it
+    // was nulled at the top of this function, so only the dispose or
+    // the callback can have filled it. Either door may have: a
+    // showOverlay replaces at this level and owes no entry, and a
+    // pushOverlay reached from here pops this window first and so owes
+    // none either (see pushOverlay - it is the one that decides).
+    const successor = overlay;
     windows.reconcile(overlay);
+    if (successor) return true;
     if (overlay) _onOverlayClosed = _suspendedCallbacks.pop() ?? null;
     else _suspendedCallbacks.length = 0;
     return true;
@@ -384,9 +465,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  callback rather than disposed. Returns true when it went up. */
   function pushOverlay(win, onClosed = null) {
     if (!win) return false;
+    if (hudFade.fadeInProgress) hudFade.clearFade();   // D4: UserInterfaceManager.PushWindow (:88-89), gate and all
+    // ROAD review-p: WHAT THIS PUSH COVERS, read before reconcile can
+    // move the stack. A full slot is a live window, and its callback
+    // rides down with it. An EMPTY slot is one of two things - nothing
+    // is open, or dropOverlay is running and the window that was here
+    // is about to be popped by the reconcile below - and neither owes
+    // a suspended entry. Pushing one unconditionally (which is what
+    // this did) left the list one deeper than the stack whenever a
+    // close callback pushed rather than replaced, so the NEXT close
+    // popped a stray null and threw the uncovered window's real
+    // callback away: the very loss B5's successor guard closed, moved
+    // one window along.
+    const covered = overlay;
     windows.reconcile(overlay);
     if (windows.containsWindow(win)) return true;
-    _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
+    if (covered) _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
     windows.pushWindow(win);                      // `onTop` puts it in the slot
     _onOverlayClosed = onClosed;
     return true;
@@ -397,6 +491,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // uploadTexture memoizes forever, so a silent replace both leaks
   // and leaves a live cache key behind.
   function showOverlay(win, onClosed = null) {
+    // D4 - "Clear fade in progress when any UI window is pushed"
+    // (UserInterfaceManager.cs:86-89). Both doors into this slot are
+    // PushWindow, so both clear it: a half-finished fade under a window
+    // the player just opened would go on lerping the HUD's parent panel
+    // for the rest of its duration. THE GATE IS THE CALLER'S AND IT
+    // MATTERS: ClearFade itself sets the panel to clear
+    // unconditionally, so a push made while the screen is SMASHED to
+    // black - which raises no fadeInProgress - must not reach it, or
+    // the level-up box the fast-travel arrival raises would tear the
+    // black off a frame before performFastTravel fades it.
+    if (hudFade.fadeInProgress) hudFade.clearFade();
     // Same order as dropOverlay, for the same reason: the slot holds
     // the SUCCESSOR before the outgoing window is disposed, so an
     // outgoing window that closes this slot from inside its dispose
@@ -456,7 +561,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         rolls,
         nothingText: () => randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),   // F046: GetRandomText(8999)
       });
-      hud.add(r.message);
+      // ROAD-D D10: the box swap the header pended. Pickpocket
+      // (PlayerActivate.cs:1611-1660) raises a MESSAGE BOX for both
+      // success arms - the pinched purse (:1630) and the 8999
+      // nothing-valuable record (:1645) - and leaves only the failure
+      // on the HUD (`PopupMessage`, :1650), which is right: the
+      // failure is the arm that spawns the watch behind it.
+      if (r.modal) showOverlay(new ActionTextBox(String(r.message).split('\n')));
+      else hud.add(r.message);
       // G1: the caught pickpocket IS the crime - SpawnCityGuards(true)
       if (!r.success) onCrime?.();
       return;
@@ -498,6 +610,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       _questionsAsked = 0;
       openTalkWindow(talk.greeting, {
         npcSeed: target.person._talkSeed, npcName: target.person.nameNPC ?? '',
+        // TalkManager.cs:817 - a mobile ALWAYS portraits from
+        // TFAC00I0.RCI, at the record SetPerson minted for it.
+        portrait: { archive: 'CommonFaces', record: target.person.personFaceRecordId ?? 0 },
       });
       return;
     }
@@ -532,7 +647,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _questionsAsked = 0;
     // U8b: the native TALK01I0 window when the art is up (clicks/taps
     // through the verbatim hit rects; the keyed chain is the fallback)
-    openTalkWindow(t.text, { npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '' });
+    openTalkWindow(t.text, {
+      npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '',
+      portrait: { archive: 'CommonFaces', record: _talkNpc?.personFaceRecordId ?? 0 },
+    });
   }
 
   /** B7: THE ONE WINDOW-OPENER. The mobile path above and
@@ -543,7 +661,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  resets are NOT here: the mobile path runs its own above, and
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
-  function openTalkWindow(greeting, { npcSeed = 0, npcName = '' } = {}) {
+  function openTalkWindow(greeting, { npcSeed = 0, npcName = '', portrait = null } = {}) {
+    // ROAD-D D10: SetNPCPortrait (DaggerfallTalkWindow.cs:360-385).
+    // DFU sets it from SetTargetNPC, BEFORE the push (TalkManager.cs
+    // :817 for a mobile, :849 for a static NPC), so it lands here -
+    // the port's one window door. A caller with no portrait clears
+    // the last one rather than inheriting a stranger's face.
+    if (portrait) setNpcPortrait(portrait.archive, portrait.record);
+    else clearNpcPortrait();
     _talkSeed = npcSeed;   // F043: whoever we are talking to now
     // V4: GetSuppressTalk (LycanthropyEffect.cs:423-437) - every
     // conversation door lands here (B7's one-opener law), so the
@@ -568,13 +693,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
           // (TK-iv owns it); no work in town = record 8078 verbatim
           workAvailable: eng.session?.workAvailable ?? false,
         }),
-        answer: (row) => (row.listItem
-          ? eng.pipeline.getAnswerText(row.listItem, { npcSeed })
-          : answerText(row)),
-        question: (row) => {
-          if (row.listItem) return eng.pipeline.getQuestionText(row.listItem, tone);
-          const q = questionText(row); _questionsAsked++; return q;   // AUDIT 17e F13 (the engine's counter climbs in getAnswerText)
+        answer: (row) => {
+          if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
+          const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
         },
+        // ROAD-D D10: the counter climbs in the ANSWER, not here.
+        // UpdateQuestion now runs on every SELECTION (the window's
+        // shipped selection model), and DFU's GetQuestionText has
+        // never touched numQuestionsAsked - GetAnswerText does, which
+        // is where the engine path already had it.
+        question: (row) => (row.listItem
+          ? eng.pipeline.getQuestionText(row.listItem, tone)
+          : questionText(row)),
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName,   // AUDIT 18 F5: the NPC's OWN name, not the People faction
@@ -817,8 +947,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if (overlay?.done) dropOverlay();
     const s = hudScale(canvas.width, canvas.height);
     if (font) hud.draw(renderer, canvas, font, s);
-    if (overlay && font) overlay.draw(renderer, canvas, font, s);
-    else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
+    // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
+    // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
+    // before its own, and every box DaggerfallUI.MessageBox opens
+    // carries the then-top as its previousWindow (DaggerfallUI.cs:1330)
+    // - so a pushed box is drawn OVER a live window, not instead of
+    // it. This slot painted the top alone, which is why the courtroom
+    // CORT01I0 stood under every plea box of a trial and was never
+    // once rendered. Deepest first, then the slot's own occupant.
+    if (overlay && font) {
+      windows.eachCoveredWindow((w) => w.draw(renderer, canvas, font, s));
+      overlay.draw(renderer, canvas, font, s);
+    } else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
   }
 
   // U8b: pointer routing for native windows (phone taps + mouse) -
@@ -845,9 +985,41 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // window has none), and a window that HAS one may clear this slot
     // from inside it (S40's does, through the PopToHUD door), so the
     // `.done` read below is optional too.
-    if (v) overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+    // ROAD-C c2/S10: a window with the THREE-PHASE seam takes the press
+    // through it and never through `click` as well - two 'down's would
+    // arm the automap chrome's press-hold machine twice.
+    if (v) {
+      if (overlay.pointer) overlay.pointer('down', v[0], v[1], e.button ?? 0);
+      else overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+    }
     if (overlay?.done) dropOverlay();
     return true;   // an open native window owns the pointer either way
+  }
+
+  /**
+   * ROAD-C c2/S10: THE OTHER TWO POINTER PHASES, on this slot.
+   * dungeonContext has carried `overlayPointer` since c2/S4 because the
+   * automap's chrome is press-HOLD and drag driven; the town map is the
+   * same machine (ui/automapChrome.js, EXTERIOR_ACTIONS) in the
+   * exterior hosts' slot, and a host that delivers `down` alone latches
+   * a drag that spins the map forever - with nothing to error on.
+   *
+   * A window that has no `pointer` is untouched: every window on this
+   * slot before S10 keeps the click-only seam above.
+   *
+   * The RELEASE is delivered WHEREVER it lands, including outside the
+   * canvas (the listener is on the window, not the canvas) - the
+   * chrome's own header records why that is deliberate.
+   */
+  function pointer(phase, e) {
+    if (!overlay?.pointer) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.pointer(phase, v ? v[0] : -1, v ? v[1] : -1, e.button ?? 0);
+    if (overlay?.done) dropOverlay();
+    return true;
   }
 
   /** U37: THE HOVER SEAM - native coords to whatever window is up.
@@ -874,7 +1046,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's
+    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a
@@ -931,7 +1103,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       hud.tick(dt);
       if (font_) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));
     },
-    get overlayActive() { return !!overlay; },
+    get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
     /** U38: the loaded HUD font, for the components drawHud draws
      *  (the crosshair's mode label). This module already owns the ONE
      *  FONT0003 both exterior hosts use; handing it out beats a second

@@ -7,7 +7,9 @@
 // scrollbar (1,18,6,117) between. Icons ScaleToFit with MaxAutoScale
 // 1 (never upscaled), centered both axes in the button; the ONLY
 // cell text is the stack count (FONT0004 at the button's top-left,
-// drawn when stackCount > 1 - names ride the info/tooltip seam).
+// drawn when stackCount > 1 - the NAME rides the button's TOOLTIP,
+// which D7 shipped: scrollerToolTipText below is :464 and
+// makeSlotToolTip is the per-window ToolTip every item button shares.
 
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { drawText, measureText } from './text.js';
@@ -15,6 +17,9 @@ import { loadImg, drawImgCrop } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { thumbSpan, drawScrollThumb, VerticalScrollBar } from './verticalScrollBar.js';
+import { itemLongName } from '../systems/itemInfo.js';   // D7: ResolveItemLongName, the tooltip's text
+import { bookTitle } from '../systems/books.js';         // D7: GetBookTitle, the Books arm
+import { ToolTip } from './toolTip.js';                  // D7: itemButtons[i].ToolTip = toolTip (:340)
 
 export const LIST_SLOTS = 4;
 export const CELL_X = 9;         // itemListPanelRect.x - the buttons' column
@@ -236,4 +241,54 @@ export function drawStackLabel(renderer, font4, m, it, rect, slot) {
 export function safeScrollIndex(scroll, len) {
   if (scroll < len) return scroll;
   return Math.max(0, len - LIST_SLOTS);
+}
+
+// ── D7: THE ITEM BUTTON'S TOOLTIP (ItemListScroller.cs:340, :462-465)
+//
+// Every one of the scroller's item buttons is handed the WINDOW's
+// shared ToolTip at construction (`itemButtons[i].ToolTip = toolTip`,
+// :340) and its text is re-set on every refresh from the item under
+// it (:462-465). That text is not the item's short name: it is
+// ResolveItemLongName - so a list shows "Daedric Broadsword", a
+// northern plant its (northern) variant, a potion its %po and a quest
+// letter its signoff - with ONE exception, spelled out on the line
+// itself: a BOOK that is not an artifact reads GetBookTitle instead.
+//
+// The port drew the icon and the stack label and stopped there, which
+// left every native item list a wall of unlabelled pictures: the only
+// way to find out what a slot held was to click it.
+
+/** ItemListScroller.cs:462-465, verbatim - including the
+ *  `!item.IsArtifact` half of the Books test, which is what keeps an
+ *  artifact tome reading as the artifact rather than as its title.
+ *  DFU passes `item.LongName` as GetBookTitle's fallback, so an
+ *  unmapped book id keeps the long name it already had. */
+export function scrollerToolTipText(item, { getQuest = null } = {}) {
+  if (!item) return null;
+  const long = itemLongName(item, { getQuest });
+  if (item.group === 'Books' && !item.artifact) return bookTitle(item.message ?? -1) ?? long;
+  return long;
+}
+
+/** The window's shared ToolTip over a scroller (DaggerfallBaseWindow's
+ *  defaultToolTip, :50-56), with the rest clock U37's ToolTip already
+ *  owns. A window builds ONE of these, points its `hover` at it with
+ *  the item under the cursor, runs `tick(dt)` and draws it LAST.
+ *  `show(null, ...)` is the pointer leaving every button, which is
+ *  DFU's OnMouseLeave clearing the shared tip. */
+export function makeSlotToolTip() {
+  const tip = new ToolTip();
+  return {
+    tip,
+    /** The item under the cursor, or null to clear. */
+    show(item, vx, vy, opts = {}) {
+      const text = scrollerToolTipText(item, opts);
+      if (!text) { tip.hide(); return null; }
+      tip.show(text, vx, vy);
+      return text;
+    },
+    hide: () => tip.hide(),
+    update: (dt) => tip.update(dt),
+    draw: (renderer, m, font) => tip.draw(renderer, m, font),
+  };
 }

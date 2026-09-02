@@ -2,9 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseNif } from '../src/formats/mwNifFile.js';
-import { nodeTransformOf, findNodeByName } from '../src/formats/mwCharacter.js';
+import { nodeTransformOf, findNodeByName, boneOffsetOf } from '../src/formats/mwCharacter.js';
+import { flattenNif } from '../src/formats/mwNifMesh.js';   // MW-D48: the OTHER composition, run rather than transcribed
 import {
   MW_WEAPON_TYPE, WEAPON_AMMO_TYPE, ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE,
+  assembleFirstPersonArm,
 } from '../src/formats/mwFirstPerson.js';
 import { buildFpArm, createFpArm, fpSkeletonPath, FP_CLIP_PATH, UPPER_BODY } from '../src/combat/fpArm.js';
 
@@ -338,4 +340,332 @@ test('MW-D42: an empty quiver still draws an EMPTY bow', async () => {
   for (let i = 0; i < 80 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
   arm.attack('StrikeDown');
   assert.equal(arm.status().arrowShown, false, 'the draw cannot nock what was never built');
+});
+
+// --- MW-D44 + MW-D49: WHERE THE ROUND SITS BEFORE IT FLIES ----------------
+//
+// THE REFERENCE'S WHOLE ATTACH LAW FOR A HELD ARROW, read rather than
+// assumed, because "1:1" was asserted off a search snippet once already
+// and it was wrong:
+//
+//   character.cpp:1153-1165  "shoot attach" (and "shoot follow attach")
+//       call attachArrow(); "shoot release" calls releaseArrow(). Those
+//       keys are the whole life of the held round.
+//   npcanimation.cpp:1077-1102 / creatureanimation.cpp:220-247
+//       getArrowBone(): the AMMO type's own attach bone on the actor
+//       ("Bip01 Arrow", weapontype.cpp:316) FIRST, and failing that a
+//       node named "ArrowBone" found inside the WEAPON PART's node.
+//   weaponanimation.cpp:80-94
+//       the Ranged branch: `getInstance(model, parent)` and nothing
+//       more, where parent is that bone.
+//   scenemanager.cpp:1100-1110
+//       and getInstance(path, parentNode) is attachTo, which is
+//       `parentNode->addChild(instance)`. IDENTITY. The arrow has no
+//       transform of its own at all - no offset, no attitude, no
+//       mirror. Everything it wears, it wears because its PARENT does.
+//
+// So on the fallback branch the round's parent is a node deep inside the
+// weapon's live graph, and the weapon got there through
+// SceneUtil::attach (attach.cpp:145-198), which inserts ONE
+// PositionAttitudeTransform between the actor's bone and the weapon
+// mesh carrying the weapon's BoneOffset POSITION (:158-159) and rule
+// 13's mirror scale (:166-179). The arrow inherits that PAT. Its world
+// place is therefore
+//
+//   bone x T(weaponBoneOffset) x S(mirror) x chain(root..ArrowBone) x v
+//
+// which is exactly placeAtBone's `bone x (offset + mirror(v))` over
+// applyPre'd vertices - a PAT's matrix being T(position) R(attitude)
+// S(scale). MW-D48 left open whether a 90-degree rotation was also
+// owed; it is not. :159 reads only getTrans(), and the only rotation
+// attach() can apply is the caller's `attitude` (:181-186), which
+// ActorAnimation::attach passes for isLight ALONE
+// (actoranimation.cpp:98-103) and never for a weapon (:104-105).
+//
+// PINNED BEHAVIOURALLY, which is what MW-D44 named as its honest next
+// step and could not do: it needs a rigid part carrying a BoneOffset
+// standing in for the bow, and armskelx + boneoffset.nif are exactly
+// that pair. A bow-shaped fixture (an ArrowBone AND a BoneOffset in one
+// mesh) is still owed to generate.py for the resolveWeaponParts half;
+// this pins the BINDER's half, which is where the offset is spent.
+test('MW-D44: the held round inherits the WEAPON\'s BoneOffset, and only that', async () => {
+  const PRE = { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 2, 0] };
+  const armWith = await assembleFirstPersonArm({
+    skeletonBytes: f('armskelx.nif'),
+    parts: [
+      { slot: 'weapon', bones: ['Left Hand'], bytes: f('boneoffset.nif') },
+      { slot: 'arrow', bones: ['Left Hand'], bytes: f('armcuff.nif'), ammo: true, preTransform: PRE },
+    ],
+  });
+  assert.ok(armWith.ok, armWith.error);
+  const withWeapon = armWith.pieces.find((p) => p.slot === 'arrow');
+  assert.deepEqual(withWeapon.boneOffset, [3, -4, 5], 'the weapon\'s offset reached the round');
+
+  // THE CONTROL, and it is the measurement: the SAME round with no
+  // weapon in the list. Every vertex must differ by exactly (3,-4,5) -
+  // the displacement Mac was looking at, now applied on purpose.
+  const armAlone = await assembleFirstPersonArm({
+    skeletonBytes: f('armskelx.nif'),
+    parts: [{ slot: 'arrow', bones: ['Left Hand'], bytes: f('armcuff.nif'), ammo: true, preTransform: PRE }],
+  });
+  const alone = armAlone.pieces.find((p) => p.slot === 'arrow');
+  assert.equal(alone.boneOffset, null);
+  assert.equal(withWeapon.positions.length, alone.positions.length);
+  assert.ok(alone.positions.length >= 3, 'there are vertices to compare');
+  for (let v = 0; v < alone.positions.length; v += 3) {
+    assert.ok(Math.abs((withWeapon.positions[v] - alone.positions[v]) - 3) < 1e-4,
+      `x: ${withWeapon.positions[v]} vs ${alone.positions[v]}`);
+    assert.ok(Math.abs((withWeapon.positions[v + 1] - alone.positions[v + 1]) + 4) < 1e-4,
+      `y: ${withWeapon.positions[v + 1]} vs ${alone.positions[v + 1]}`);
+    assert.ok(Math.abs((withWeapon.positions[v + 2] - alone.positions[v + 2]) - 5) < 1e-4,
+      `z: ${withWeapon.positions[v + 2]} vs ${alone.positions[v + 2]}`);
+  }
+  // AND THE OFFSET IS NOT MIRRORED. The round is on "Left Hand", so its
+  // vertices ARE mirrored - but the shift above is +3 in x, not -3,
+  // because the PAT is T(position) x S(scale) and the offset sits
+  // outside the scale. Adding it before the mirror would negate its x
+  // on every left-hand part, the bow among them.
+  assert.equal(withWeapon.mirrored, true, 'the round is on the left, like the bow');
+});
+
+test('MW-D44: only the WEAPON lends it, and only on the weapon-mesh branch', async () => {
+  const PRE = { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 2, 0] };
+  const arrow = (parts) => assembleFirstPersonArm({ skeletonBytes: f('armskelx.nif'), parts })
+    .then((a) => a.pieces.find((p) => p.slot === 'arrow'));
+
+  // getArrowBone's FIRST branch: the ACTOR's skeleton carries the bone,
+  // the parent is that bone, and the weapon is not in the chain at all.
+  // preTransform is set in exactly the other case, so it IS the branch
+  // test - inheriting the weapon's offset here would be the same
+  // mistake pointing the other way.
+  const onActor = await arrow([
+    { slot: 'weapon', bones: ['Left Hand'], bytes: f('boneoffset.nif') },
+    { slot: 'arrow', bones: ['Left Hand'], bytes: f('armcuff.nif'), ammo: true },
+  ]);
+  assert.equal(onActor.boneOffset, null, 'the quiver branch inherits nothing from the bow');
+
+  // A SHIELD LENDS THE ARROW NOTHING. The reference reads the
+  // CarriedRight slot's part (npcanimation.cpp:1078-1086); any other
+  // rigid part carrying a BoneOffset is a bystander.
+  const withShield = await arrow([
+    { slot: 'shield', bones: ['Left Hand'], bytes: f('boneoffset.nif') },
+    { slot: 'arrow', bones: ['Left Hand'], bytes: f('armcuff.nif'), ammo: true, preTransform: PRE },
+  ]);
+  assert.equal(withShield.boneOffset, null, 'a shield is not the weapon');
+
+  // MW-D34 STILL STANDS, and it is this fix's control: the ammunition
+  // mesh's OWN BoneOffset is never searched for, because attachArrow
+  // does not go through SceneUtil::attach. armcuffx carries one of
+  // (0.5,0,0); the round wears the weapon's (3,-4,5) and not the sum.
+  const ownOffset = await arrow([
+    { slot: 'weapon', bones: ['Left Hand'], bytes: f('boneoffset.nif') },
+    { slot: 'arrow', bones: ['Left Hand'], bytes: f('armcuffx.nif'), ammo: true, preTransform: PRE },
+  ]);
+  assert.deepEqual(ownOffset.boneOffset, [3, -4, 5],
+    'the weapon\'s offset, never the round\'s own and never both');
+
+  // AND THE CARRY IS PER-CALL. A body built without a weapon cannot
+  // pick up the last one's offset.
+  const stale = await arrow([
+    { slot: 'arrow', bones: ['Left Hand'], bytes: f('armcuff.nif'), ammo: true, preTransform: PRE },
+  ]);
+  assert.equal(stale.boneOffset, null, 'no weapon in this list, no offset');
+});
+
+// MW-D48: THE TWO COMPOSITIONS AGREE, PROVEN BY EXECUTION. The arrow is
+// the ONLY part whose placement goes through nodeTransformOf/mulAffine
+// (affineOf folds scale into the 3x3); every other part is placed by
+// flattenNif's composeTransform, which carries scale as its own field
+// and applies it to the child's translation separately. Two different
+// shapes of arithmetic for the same job, and the arrow is the one that
+// is mispositioned - so it reads like the fault and it is NOT. Pinned
+// by RUNNING both over a chain with rotations AND scales - literally
+// both, since ROAD review-p: flattenNif is CALLED over the same chain
+// rather than copied into this file, because reading them side by side
+// is exactly how this was called a bug once already. If someone ever
+// changes one, this says the other must move with it.
+test('MW-D48: nodeTransformOf composes the same chain flattenNif does', () => {
+  // A hand-built NIF shape: root (rule 34 zeroes it), a scaled+rotated
+  // parent, then the named node - the shape of a real weapon chain.
+  const R = [0, -1, 0, 1, 0, 0, 0, 0, 1];
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const nif = {
+    roots: [0],
+    records: [
+      { type: 'NiNode', name: 'root', rotation: I3, translation: [0, 0, 0], scale: 1, children: [1] },
+      { type: 'NiNode', name: 'mid', rotation: R, translation: [3, 1, 0], scale: 2, children: [2] },
+      { type: 'NiNode', name: 'ArrowBone', rotation: R, translation: [10, 4, 2], scale: 1.5, children: [] },
+    ],
+  };
+  const pre = nodeTransformOf(nif, 'ArrowBone');
+  assert.ok(pre, 'the node resolves');
+
+  // THE OTHER SIDE, RUN AND NOT TRANSCRIBED (ROAD review-p). The
+  // header used to say "proven by execution" over a hand copy of
+  // composeTransform's arithmetic written into this file, so changing
+  // the real one could not fail this test - the coupling the pin
+  // exists to enforce was the one thing it did not hold. Instead:
+  // hang a shape off the SAME ArrowBone node and let flattenNif bake
+  // the chain into its vertices, which is exactly what it does for
+  // every non-arrow part. A vertex at the local origin comes out at
+  // the composed translation; the three unit vertices come out at the
+  // composed 3x3's columns, scale folded in - the whole affine, read
+  // off the drawable.
+  const probe = {
+    roots: [0],
+    records: [
+      ...nif.records.map((r) => ({ ...r })),
+      { type: 'NiTriShape', name: 'probe', rotation: I3, translation: [0, 0, 0], scale: 1, data: 4, skin: -1 },
+      {
+        type: 'NiTriShapeData', numVertices: 4, uvSets: [],
+        vertices: Float32Array.from([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]),
+        triangles: Uint16Array.from([0, 1, 2]),
+      },
+    ],
+  };
+  probe.records[2] = { ...probe.records[2], children: [3] };
+  const [batch] = flattenNif(probe);
+  assert.ok(batch, 'flattenNif emitted the probe shape');
+  const at = (i) => [batch.positions[i * 3], batch.positions[i * 3 + 1], batch.positions[i * 3 + 2]];
+  const origin = at(0);
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(pre.t[i] - origin[i]) < 1e-5,
+      `translation ${i}: ${pre.t[i]} vs ${origin[i]} - the round would land off the string by the difference`);
+  }
+  // The columns, which carry the rotation AND the folded scale: the
+  // arrow's vertices are scaled and turned by exactly what flattenNif
+  // scales and turns the bow's by.
+  for (let c = 0; c < 3; c++) {
+    const col = at(c + 1);
+    for (let r = 0; r < 3; r++) {
+      const mine = pre.a[r * 3 + c];
+      assert.ok(Math.abs(mine - (col[r] - origin[r])) < 1e-5,
+        `a[${r}][${c}]: ${mine} vs ${col[r] - origin[r]}`);
+    }
+  }
+  const folded = Math.hypot(pre.a[0], pre.a[3], pre.a[6]);
+  assert.ok(Math.abs(folded - 3) < 1e-6, `the chain's scale product, folded: ${folded}`);
+});
+
+// MW-D49: THE NAME SEARCH READS THE TREE THE LOADER WOULD BUILD - AND
+// THE LOADER BUILDS ALMOST ALL OF IT. FindByNameVisitor is an
+// osg::NodeVisitor (visitor.cpp:36-48) walking the BUILT SCENE, so the
+// only thing it cannot answer with is a subtree handleNode never made,
+// and handleNode drops exactly ONE: `if (args.mRootNode &&
+// ciEqual(nifNode->mName, "Bounding Box")) return nullptr;`
+// (nifloader.cpp:710). findNodeByName reads the RAW PARSED NIF, where
+// that subtree is still there, so it takes that cut and no other - a
+// different node answering to "ArrowBone" is a different preTransform,
+// which is the round in a different place while it stays on the same
+// bone.
+//
+// CORRECTED AT ROAD review-p. MW-D49 landed two filters more than the
+// reference has, on the reading that a RootCollisionNode and a hidden
+// node are "stripped". They are not: both are KEPT and merely masked -
+// "Hide collision shapes, but don't skip the subgraph"
+// (nifloader.cpp:806-812) and "skip child meshes, but still create the
+// child node hierarchy" (:817-831), with the child loop recursing
+// unconditionally (:933-937). getHiddenNodeMask() is Mask_UpdateVisitor
+// = 0x1 (vismask.hpp:24), non-zero, and the visitor is a default
+// `osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)` with no node-mask override
+// (visitor.hpp:18-36) - so it sees them. The port's extra filters made
+// this search NARROWER than the reference's, which is the same defect
+// MW-D49 was landed to close, pointing the other way; and because
+// findNodeByName is also rule 14's search (boneOffsetOf, mirroring
+// attach.cpp:147-159), every rigid attach whose BoneOffset was hidden
+// or nested under collision silently lost its
+// PositionAttitudeTransform. flattenNif's identical returns are a
+// DRAWABLES rule (mwNifMesh.js:472-480) and do not transfer to a
+// function that returns a node.
+test('MW-D49: findNodeByName honours rule 58, like the scene the reference searches', () => {
+  const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const n = (name, extra = {}) => ({
+    type: 'NiNode', name, rotation: I3, translation: [0, 0, 0], scale: 1, children: [], flags: 0, ...extra,
+  });
+  // Nested under a RootCollisionNode - which the loader hides but
+  // keeps, so the reference's search walks straight into it.
+  const nif = {
+    roots: [0],
+    records: [
+      { ...n('root'), children: [1, 3] },
+      { ...n('collision'), type: 'RootCollisionNode', children: [2] },
+      { ...n('ArrowBone'), translation: [999, 999, 999] },
+      { ...n('ArrowBone'), translation: [1, 2, 3] },
+    ],
+  };
+  const hit = findNodeByName(nif, 'ArrowBone');
+  assert.ok(hit, 'found');
+  assert.deepEqual([...hit.rec.translation], [999, 999, 999],
+    'pre-order, and the collision subtree IS in the built scene (:806-812)');
+
+  // A "Bounding Box" subtree, on the other hand, is the one the loader
+  // really does drop.
+  const bb = {
+    roots: [0],
+    records: [
+      { ...n('root'), children: [1, 3] },
+      { ...n('Bounding Box'), children: [2] },
+      { ...n('ArrowBone'), translation: [999, 999, 999] },
+      { ...n('ArrowBone'), translation: [7, 8, 9] },
+    ],
+  };
+  assert.deepEqual([...findNodeByName(bb, 'ArrowBone').rec.translation], [7, 8, 9],
+    'a Bounding Box subtree is not searched either');
+
+  // A hidden node is MASKED, not removed (:817-831), and the mask is
+  // 0x1 while the visitor's traversal mask is the default 0xffffffff.
+  const hidden = {
+    roots: [0],
+    records: [{ ...n('root'), children: [1] }, { ...n('ArrowBone'), flags: 0x0001, translation: [2, 4, 6] }],
+  };
+  assert.deepEqual([...findNodeByName(hidden, 'ArrowBone').rec.translation], [2, 4, 6],
+    'a hidden node is in the scene and answers by name');
+
+  // RULE 14'S SEARCH IS THIS SEARCH (boneOffsetOf -> attach.cpp:147),
+  // and it runs for EVERY rigid weapon and shield, not just the arrow.
+  // Both shapes cost the part its whole PositionAttitudeTransform.
+  const hiddenOffset = {
+    roots: [0],
+    records: [{ ...n('root'), children: [1] }, { ...n('BoneOffset'), flags: 0x0001, translation: [3, -4, 5] }],
+  };
+  assert.deepEqual(boneOffsetOf(hiddenOffset), [3, -4, 5], 'a hidden BoneOffset still places the part');
+  const collidedOffset = {
+    roots: [0],
+    records: [
+      { ...n('root'), children: [1] },
+      { ...n('collision'), type: 'RootCollisionNode', children: [2] },
+      { ...n('BoneOffset'), translation: [1, 2, 3] },
+    ],
+  };
+  assert.deepEqual(boneOffsetOf(collidedOffset), [1, 2, 3], 'and so does one under collision');
+
+  // THE ONE NARROWING THAT STAYS, and it stays RECORDED: the geometry
+  // record. `apply(osg::Geometry&) {}` (visitor.cpp:48) stops the
+  // DRAWABLE, but handleNode has already built the NIF geometry node
+  // itself as a named MatrixTransform (nifloader.cpp:694-698,
+  // :715-718), which apply(osg::MatrixTransform&) matches - so the
+  // reference WOULD answer with a NiTriShape named ArrowBone and this
+  // does not. Moving it moves rule 14's answer on every mesh that
+  // names a shape BoneOffset (test/mwmaterial.test.js's fixture is
+  // exactly that), so it is written down rather than flipped here.
+  const shapeNamed = {
+    roots: [0],
+    records: [
+      { ...n('root'), children: [1] },
+      { type: 'NiTriShape', name: 'ArrowBone', rotation: I3, translation: [8, 9, 10], scale: 1, flags: 0 },
+    ],
+  };
+  assert.equal(findNodeByName(shapeNamed, 'ArrowBone'), null, 'the port skips the geometry RECORD - a delta');
+  assert.match(readFileSync(new URL('../src/formats/mwCharacter.js', import.meta.url), 'utf8'),
+    /DELTA \(recorded at ROAD review-p\)[\s\S]{0,1400}NiTriShape/,
+    'and says so where it does it, rather than calling it the reference\'s rule');
+
+  // But a ROOT named "Bounding Box" is NOT skipped - the reference's
+  // guard is `args.mRootNode && ...` and mRootNode is null on the first
+  // call. flattenNif reproduces that oversight and so must this.
+  const bbRoot = {
+    roots: [0],
+    records: [{ ...n('Bounding Box'), children: [1] }, { ...n('ArrowBone'), translation: [4, 5, 6] }],
+  };
+  assert.ok(findNodeByName(bbRoot, 'ArrowBone'), 'a Bounding Box ROOT is load-bearing, not skipped');
 });

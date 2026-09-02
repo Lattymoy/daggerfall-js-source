@@ -76,12 +76,15 @@ export const SPAWNER_ARMS = Object.freeze({
   wilderness: Object.freeze({ minDistance: MIN_WILDERNESS_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
   // :610 - resting in a dungeon under an alert. THE ONE THAT PASSES FALSE.
   dungeonRest: Object.freeze({ minDistance: MIN_DUNGEON_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: false }),
-  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
-  // port stands guards through the street-person pool (cityGuards'
-  // spawnGuardAt takes a person's own position and facing), which is a
-  // different placement problem from this ring and is not folded in
-  // here. The row is carried so the table is the whole call site list
-  // and a reader can see what is not wired.
+  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. D9 WIRED IT.
+  // The row used to be carried unread, on the grounds that the watch
+  // arrives through the street-person pool; that is true of the pool
+  // arm (spawnGuardAt takes a person's own position and facing, which
+  // is a conversion, not a spawn), but PlayerEntity.cs:687 is the
+  // FALLBACK - "nobody in the pool converted" - and it is a plain
+  // CreateFoeSpawner like every other row here. cityGuards.js now
+  // stands those guards through placeFoeFreely with this band, so the
+  // table is read end to end.
   cityGuards: Object.freeze({ minDistance: 12.8, maxDistance: 51.2, lineOfSightCheck: true }),
 });
 
@@ -282,8 +285,18 @@ export const RESTING_DISTANCE = 12;
  * port had dropped entirely; it is what a caller passes to ask the
  * coarser "is anything alive nearby" question.
  *
- * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
- * carrying a live position.
+ * THE FoeSpawner SWEEP (:720-728) IS NOT A GAP, recorded. DFU walks
+ * ActiveGameObjectDatabase's FoeSpawner MonoBehaviours because those
+ * objects PERSIST - GameObjectHelper.CreateFoeSpawner (:1314-1318)
+ * mounts one and it retries placement across frames, so a spawner
+ * inside spawnDistance is an enemy that is coming. The port has no
+ * such object: world.js places within a SINGLE call and gives up
+ * (LOOSE_FOE_PLACE_ATTEMPTS = 12, :1913, at :1930 and :1959), and a
+ * foe that placed is already in the pool this walks, so there is
+ * nothing pending to count. Nor were quest spawns ever in that sweep
+ * on either side - DFU's CreateFoe is a QuestAction that calls
+ * CreateFoeGameObjects + TryPlacement itself (no CreateFoeSpawner in
+ * CreateFoe.cs), which is systems/quest/actions.js:2283-2305 here.
  */
 export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {

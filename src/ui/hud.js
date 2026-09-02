@@ -20,6 +20,7 @@ import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin 
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
+import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
 // VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
@@ -304,18 +305,36 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
  *  the colour it writes is the HUD's PARENT PANEL background - a tint
  *  under every element - so it draws here as a screen quad before the
  *  bars, with the detector's HealthLost the vitals rig just computed.
- *  The two fade gates have no reader in this HUD and answer false
- *  (recorded in Audit-28.md). */
+ *
+ *  D4: THE PANEL IS ui/fadeLayer.js's, and this is now the whole of
+ *  DaggerfallHUD's share of one Unity Panel that has TWO writers.
+ *  FadeBehaviour targets dfHUD.ParentPanel (DaggerfallUI.cs:409) and
+ *  HUDFlickerController is a component OF that panel
+ *  (DaggerfallHUD.cs:163) assigning `Parent.BackgroundColor`
+ *  (HUDFlickerController.cs:81-82). So the order here is DFU's own:
+ *  TickFade advances the fade, NextCycle may overwrite the colour -
+ *  unless one of its two gates says a fade owns the panel this frame
+ *  (:46-47) - and the panel then draws once. Both gates had no reader
+ *  until this slice and were answered false; they are read from the
+ *  fade now, which is what stops a healthy player's Normal arm from
+ *  clearing a smashed-to-black screen on the next frame.
+ *
+ *  `dt` is the caller's PAUSED dt for both: FadeBehaviour.OnGUI steps
+ *  on Time.deltaTime exactly as the flicker does, so a fade started
+ *  before a window opened holds still under it. */
 let _flicker = new HudFlickerController();
 export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
+  hudFade.tickFade(dt);
   const c = _flicker.nextCycle({
     health: cur.health, maxHealth: cur.maxHealth, healthLost: lastHealthLost(), dt,
     enabled: getBool('Enhancements', 'NearDeathWarning'),
+    fadeInProgress: hudFade.fadeInProgress,
+    parentAlpha: hudFade.backgroundColor[3],
   });
-  const color = c ?? _flicker.backColor;
-  if (!(color[3] > 0)) return false;
-  renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, color);
-  return true;
+  // `Parent.BackgroundColor = backColor` - the only write; a gated or
+  // Dead cycle answers null and the panel keeps what it holds.
+  if (c) hudFade.backgroundColor = c;
+  return hudFade.draw(renderer, canvas);
 }
 
 /** The bows, by template (ItemEnums.cs Weapons: Short_Bow 129,
@@ -366,6 +385,29 @@ function drawArrowCount(renderer, canvas, font, entity, weaponSheathed, compass,
   const x = canvas.width - compass.bw - w - 8;
   const y = canvas.height - compass.bh / 2 - h / 2;
   drawText(renderer, font, label.text, x, y, s, label.color);
+}
+
+/**
+ * HUDCompass.DrawCompass (:105-157) at an ARBITRARY top-left corner:
+ * the strip window inset by the 2 px box outline first, the COMPBOX
+ * frame over it. Two windows draw this - the HUD's bottom-right corner
+ * and (ROAD-C c2/S5) the dungeon automap's own (3,172) panel, which
+ * mounts a HUDCompass of its own and hands it the MAP camera
+ * (DaggerfallAutomapWindow.cs:503-508). ONE HOME: the scroll law, the
+ * outline inset and the strip height live here and nowhere else.
+ * `x`/`y` are real canvas pixels; `s` is the caller's scale.
+ * Answers the box's drawn size, which the HUD's arrow label needs.
+ */
+export function drawCompassStrip(renderer, art, x, y, s, heading01) {
+  const box = art.compassBox;
+  const bw = box.w * s, bh = box.h * s;
+  const scroll = compassScroll(heading01);
+  const stripH = art.compass.h * s;
+  renderer.drawScreenQuad(art.compass.tex,
+    { x: x + COMPASS_BOX_OUTLINE * s, y: y + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
+    { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
+  renderer.drawScreenQuad(box.tex, { x, y, w: bw, h: bh });
+  return { bw, bh };
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
@@ -492,16 +534,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // DaggerfallHUD.cs:254-257 sets compass.Position to
   // (screenRect.xMax - Size.x, screenRect.yMax - Size.y) and HUDCompass
   // never calls SetMargins - COMPBOX sits FLUSH in the corner.
-  const box = art.compassBox;
-  const bw = box.w * s, bh = box.h * s;
-  const bx = canvas.width - bw;
-  const by = canvas.height - bh;
-  const scroll = compassScroll(heading01);
-  const stripH = art.compass.h * s;
-  renderer.drawScreenQuad(art.compass.tex,
-    { x: bx + COMPASS_BOX_OUTLINE * s, y: by + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
-    { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
-  renderer.drawScreenQuad(box.tex, { x: bx, y: by, w: bw, h: bh });
+  const bx = canvas.width - art.compassBox.w * s;
+  const by = canvas.height - art.compassBox.h * s;
+  const { bw, bh } = drawCompassStrip(renderer, art, bx, by, s, heading01);
   drawArrowCount(renderer, canvas, font, vitals, weaponSheathed, { bw, bh }, s);
   // X4: DrawTrackedObjects (HUDCompass.cs:198-217), AFTER the box -
   // HUDCompass.Draw() calls DrawCompass() then DrawTrackedObjects(),
