@@ -26,6 +26,7 @@ import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/pape
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
 import { maxEncumbrance } from '../src/combat/formulas.js';
+import { carriedWeight, totalWeight } from '../src/systems/inventory.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
 
@@ -86,6 +87,16 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
   assert.equal(m.encumbrance.max, maxEncumbrance(liveStat(e, 'strength')));
   assert.notEqual(m.encumbrance.max, maxEncumbrance(e.stats.strength),
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
+  // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
+  // items PLUS the gold counter's weight, and the pane composes it by
+  // hand (enhancedInventory.js:173-174) because it is handed the list
+  // and not the entity - so it must still land on inventory
+  // .carriedWeight's answer.
+  assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
+  // The coin term must be LIVE: hero()'s purse is heavy enough that
+  // the items-only total truncs to a DIFFERENT integer, so the pin
+  // above cannot go vacuous by both sides dropping it at once.
+  assert.notEqual(Math.trunc(carriedWeight(e)), Math.trunc(totalWeight(e.items)));
 });
 
 // ── THE EQUIP CHAIN IS systems/equip.js's, RUN FOR REAL ──────────

@@ -23,10 +23,11 @@ import {
   SPELL_MAKER_LABELS, SPELL_MAKER_TIPS, SPELL_MAKER_TEXT,
   EDITOR_RECTS, SPINNER_UP, SPINNER_DOWN, SPINNER_VALUE, spinnerPart,
   SELECT_SUBRECTS, TARGET_BUTTONS, ELEMENT_BUTTONS,
+  EDITOR_DESCRIPTION_PANEL, _setSpellMakerArtForTests,
 } from '../src/ui/spellMakerWindow.js';
 import {
   SPELLBOOK_TEMPLATE_INDEX, _resetCustomIndexForTests, blankEffectSettings,
-  SPELL_ICON_COUNT, editedEffectCost,
+  SPELL_ICON_COUNT,
 } from '../src/systems/spellMaker.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 
@@ -206,6 +207,35 @@ test('E8 window: a group whose single effect has no subgroup skips the sub picke
   assert.equal(w.slots[0].key, '0,255');
 });
 
+test('E1 LIVE: the button-up reaches the NESTED picker, so its thumb latch drops', () => {
+  // The host hands the release to whatever holds its overlay slot
+  // (scenes/worldModes.js `interiorOverlay.release?.()`), and the spell
+  // maker IS that slot - so SpellMakerWindow, the class that owns
+  // `this.picker`, has to pass it on. It once sat on
+  // EffectSettingsEditorWindow, which owns no picker, and the drag
+  // latch survived the button coming up: one stray held move after
+  // letting go and the thumb resumed from the stale anchor
+  // (VerticalScrollBar.Update's else arm, listPicker.js:123-129).
+  const w = win();
+  press(w, 'addEffect');
+  const bar = w.picker.scrollBar;
+  w.picker.syncScrollBar();
+  const span = bar.thumbSpan;
+  assert.ok(span && span.h < bar.rect[3], 'the group list overflows, so the bar has a real thumb');
+  const bx = bar.rect[0] + 1;
+  const thumbTop = bar.rect[1] + span.y;
+  w.click(bx, thumbTop + 1);                      // press INSIDE the thumb - the latch
+  assert.equal(bar.draggingThumb, true, 'the press latched the drag');
+  w.hover(bx, thumbTop + 1 + 40, { buttons: 1 }); // held move - the drag
+  const dragged = w.picker.scrollIndex;
+  assert.ok(dragged > 0, 'the held move actually scrolled the list');
+  w.release();                                    // the host's up edge
+  assert.equal(bar.draggingThumb, false, 'the release drops the latch');
+  // ...and the stray move that used to resume the drag now does nothing
+  w.hover(bx, bar.rect[1] + 1, { buttons: 1 });
+  assert.equal(w.picker.scrollIndex, dragged, 'no jump back from the stale anchor');
+});
+
 test('E8 editor: the support flags gate the spinners, and only an enabled one steps', () => {
   const w = addEffect(win(), 'Damage', 'Health');
   const ed = w.editor;
@@ -235,11 +265,41 @@ test('E8 editor: the support flags gate the spinners, and only an enabled one st
   assert.equal(w.slots[0].settings.magnitudeBaseHigh, 1);
   assert.equal(w.slots[0].settings.magnitudeBaseLow, 1, 'lowering the max drags the min down');
   // the editor's OWN label is this effect's cost alone - no target
-  // multiplier and no five-point floor (:373-381)
-  assert.equal(ed.cost(), editedEffectCost(w.slots[0], w.entity).sp);
+  // multiplier and no five-point floor (:373-381). A VALUE, not
+  // `editedEffectCost(...)` again: the label and the law are the same
+  // call, so comparing them is f(x) === f(x) and holds for any body.
+  assert.equal(ed.cost(), 13, 'CalculateEffectCosts over Damage Health at its range floor');
   ed.click(EDITOR_RECTS.exit[0] + 1, EDITOR_RECTS.exit[1] + 1);
   assert.equal(w.editor, null, 'exit closes the editor');
   assert.equal(w.editOrDeleteSlot, -1, 'EffectEditor_OnClose clears the pending slot (:997-1001)');
+});
+
+test('E8 editor: the cost label is CalculateEffectCosts alone - live skill, no floor, no target multiplier', () => {
+  // UpdateCosts (:373-381) calls CalculateEffectCosts, not
+  // CalculateTotalEffectCosts (FormulaHelper.cs:2248-2256 against
+  // :2203-2243), so THREE things separate the label from the sheet's
+  // own total, and each needs a value of its own or the whole law can
+  // be replaced by a constant.
+  const w = addEffect(win(), 'Damage', 'Health');
+  const ed = w.editor;
+  // 1. the number itself, at the settings' range floor
+  assert.equal(ed.cost(), 13, 'Damage Health at a 50 skill');
+  assert.equal(w.totalSpellPointCost, 13, 'the sheet agrees while nothing else applies');
+  // 2. the caster argument is NULL, and a null caster reads the
+  //    PLAYER's live skill (:2271-2275) - raise it and the label moves
+  const skilled = new SpellMakerWindow({ entity: { ...player(), skills: 100 } });
+  addEffect(skilled, 'Damage', 'Health');
+  assert.equal(skilled.editor.cost(), 1, 'a 100 skill takes the same effect to 1');
+  // ...and NO five-point floor here, though the sheet's total takes it
+  assert.equal(skilled.totalSpellPointCost, 5, 'CalculateTotalEffectCosts\' castCostFloor (:2239-2240)');
+  // 3. no target multiplier (ApplyTargetCostMultiplier, :2231-2232):
+  //    the sheet scales, the editor's own label does not
+  const targeted = addEffect(win(), 'Damage', 'Health');
+  const tEd = targeted.editor;
+  tEd.click(EDITOR_RECTS.exit[0] + 1, EDITOR_RECTS.exit[1] + 1);
+  press(targeted, 'areaAtRange');
+  assert.equal(targeted.totalSpellPointCost, 32, 'Area at Range multiplies the SHEET');
+  assert.equal(tEd.cost(), 13, 'and leaves the editor\'s per-effect label alone');
 });
 
 test('E8 window: the empty sheet reads 0 and 0, NOT the five-point casting floor', () => {
@@ -427,6 +487,48 @@ test('E8 editor: SpellMakerDescription is the spellbook record + 300, bar the tw
   addEffect(w, 'Damage', 'Health');
   assert.deepEqual(w.editor.descriptionRows(), [{ text: 'x', center: true }]);
   assert.ok(seen.includes(1512), 'the parchment asked for 1512');
+});
+
+test('E8 editor: the parchment is DFU\'s FIXED (7,19,306,69) panel, not a centred message box', () => {
+  // SetupEffectDescriptionPanels (:175-193): a (5,19,312,69) parent
+  // centred on the native panel puts it at x4, and the 306-wide child
+  // centred inside that at x7 - a plain Panel wearing PopupStyle
+  // .Parchment, NOT a DaggerfallMessageBox. Only the label inside it is
+  // Center/Middle. An auto-sized, screen-centred box lands on the
+  // spinner rows instead of above them.
+  const FONT = { tex: {}, fnt: { fixedWidth: 6, fixedHeight: 6, glyphWidth: () => 5 } };
+  const CANVAS = { width: 320, height: 200 };
+  const REND = { drawScreenQuad: () => {}, setScreenScissor: () => {}, clearScreenScissor: () => {} };
+  const IMG = { tex: {}, w: 320, h: 200 };
+  _setSpellMakerArtForTests(IMG, IMG, IMG);
+  try {
+    const short = win();
+    short.rows = () => [{ text: 'Damages health.', center: true }];
+    addEffect(short, 'Damage', 'Health');
+    short.editor.draw(REND, CANVAS, FONT);
+    const box = short.editor._boxLayout;
+    assert.deepEqual([box.x, box.y, box.w, box.h], [...EDITOR_DESCRIPTION_PANEL]);
+    assert.deepEqual([...EDITOR_DESCRIPTION_PANEL], [7, 19, 306, 69], 'and the rect is DFU\'s own');
+    // it must clear the first spinner row (durationBase, y94)
+    assert.ok(box.y + box.h <= EDITOR_RECTS.durationBase[1], 'the parchment sits ABOVE the spinners');
+    // ...and a LONG description does not grow or move it
+    const long = win();
+    long.rows = () => Array.from({ length: 8 }, (_, i) => ({ text: `row ${i} of a very long parchment`, center: true }));
+    addEffect(long, 'Damage', 'Health');
+    long.editor.draw(REND, CANVAS, FONT);
+    assert.deepEqual(
+      [long.editor._boxLayout.x, long.editor._boxLayout.y, long.editor._boxLayout.w, long.editor._boxLayout.h],
+      [...EDITOR_DESCRIPTION_PANEL], 'a fixed Rect does not auto-size');
+    // the recorded never-traps line is an EMPTY parchment, not none
+    const none = win();
+    none.rows = () => [];
+    addEffect(none, 'Damage', 'Health');
+    none.editor.draw(REND, CANVAS, FONT);
+    assert.ok(none.editor._boxLayout, 'a description-less effect still draws the panel');
+    assert.deepEqual([none.editor._boxLayout.x, none.editor._boxLayout.w], [7, 306]);
+  } finally {
+    _setSpellMakerArtForTests(null, null, null);
+  }
 });
 
 test('E8 wiring pin: the guild destination mounts the NATIVE window behind an art gate', () => {

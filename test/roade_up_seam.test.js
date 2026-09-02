@@ -149,14 +149,36 @@ test('E1 SOURCE SWEEP: a window that NESTS a list picker forwards the release, e
   // hears the release if it passes it on - and a file that has a
   // `hover` forwarder and no `release` one is the shape this sweep
   // exists to catch.
+  //
+  // ...and it must be the OWNING class that carries it. A file-scope
+  // grep is satisfied by a forwarder parked on a SIBLING class that
+  // owns no picker (which is exactly how the spell maker shipped its
+  // release onto EffectSettingsEditorWindow while the class the host
+  // mounts, SpellMakerWindow, had none), so slice each file at its
+  // class heads and ask the segment that holds the ASSIGNMENT.
+  const classSegments = (body) => {
+    const heads = [...body.matchAll(/^(?:export )?class (\w+)/gm)];
+    return heads.map((h, i) => ({
+      name: h[1],
+      body: body.slice(h.index, i + 1 < heads.length ? heads[i + 1].index : body.length),
+    }));
+  };
+  const ASSIGN = /this\._?picker = new ListPickerWindow\(/;
+  // `?.release?.()` is the same forwarder: the spell maker also parks a
+  // SpellIconPickerWindow in the slot, which has no drag latch to drop.
+  const FORWARD = /release\(\) \{ this\._?picker\?\.release(?:\?\.)?\(\); \}/;
   const nesting = [];
   for (const name of readdirSync(new URL('../src/ui/', import.meta.url))) {
     if (!name.endsWith('.js')) continue;
     const body = src(`src/ui/${name}`);
-    if (!/this\._?picker = new ListPickerWindow\(/.test(body)) continue;
+    if (!ASSIGN.test(body)) continue;
     nesting.push(name);
-    assert.match(body, /release\(\) \{ this\._?picker\?\.release\(\); \}/,
-      `${name} nests a picker and must forward release()`);
+    const owners = classSegments(body).filter((c) => ASSIGN.test(c.body));
+    assert.notEqual(owners.length, 0, `${name} assigns a picker outside every class body`);
+    for (const owner of owners) {
+      assert.match(owner.body, FORWARD,
+        `${name}: ${owner.name} nests a picker and must itself forward release()`);
+    }
   }
   assert.deepEqual(nesting.sort(), [
     'guildServiceWindows.js', 'itemMakerWindow.js', 'potionMakerWindow.js', 'spellMakerWindow.js', 'travelMapWindow.js',

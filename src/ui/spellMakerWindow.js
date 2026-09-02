@@ -367,12 +367,6 @@ export class EffectSettingsEditorWindow {
     if (normalizeCode(code) === 'Escape') { this._close(); return; }
   }
 
-  /** The nested pickers get both pointer edges the way every nesting
-   *  window does (ROAD-E E1): hover for the row highlight, release for
-   *  the thumb-drag latch (VerticalScrollBar.Update's else arm). */
-  hover(vx, vy, e = null) { this.picker?.hover?.(vx, vy, e); }
-  release() { this.picker?.release(); }
-
   click(vx, vy) {
     for (const [field, cell] of Object.entries(EDITOR_RECTS)) {
       if (field === 'exit') continue;
@@ -402,12 +396,16 @@ export class EffectSettingsEditorWindow {
     }
     shadowText(renderer, font, String(this.cost()), m, EDITOR_COST_LABEL[0], EDITOR_COST_LABEL[1]);
 
-    // the parchment description, centred in its panel
+    // The parchment. SetupEffectDescriptionPanels (:175-193) is a FIXED
+    // Rect, not a DaggerfallMessageBox: the panel is 306x69 at (7,19)
+    // and only the MultiFormatTextLabel inside it is Center/Middle. It
+    // sits ABOVE the first spinner row (durationBase, y94) - an
+    // auto-sized, screen-centred box lands on top of the spinners.
     const rows = this.descriptionRows();
-    if (rows.length) {
-      this._boxLayout = layoutMessageBox(font, rows, []);
-      drawMessageBox(renderer, m, font, this._boxLayout);
-    } else this._boxLayout = null;
+    this._boxLayout = layoutMessageBox(font, rows, [], { rect: EDITOR_DESCRIPTION_PANEL });
+    // ...and it draws even with no rows: the recorded never-traps line
+    // is an EMPTY parchment where DFU throws (:262-266), not no panel.
+    drawMessageBox(renderer, m, font, this._boxLayout);
   }
 }
 
@@ -768,6 +766,15 @@ export class SpellMakerWindow {
     if (this.editor || this.box || this.naming) return;
     this._setHot(this.buttonAt(vx, vy));
   }
+
+  /** ROAD-E E1, on the class that OWNS the picker: the button-up drops
+   *  the thumb-drag latch (VerticalScrollBar.Update's else arm,
+   *  listPicker.js:123-129), instead of it surviving until the next
+   *  hover whose buttons bit happens to be clear. The call is optional
+   *  on `release` as well as on `picker` because `_openIconPicker`
+   *  (:679) parks a SpellIconPickerWindow here, and that window scrolls
+   *  by index with no drag latch to drop. */
+  release() { this.picker?.release?.(); }
 
   wheel(dir) {
     if (this.picker) { this.picker.wheel?.(dir); return; }

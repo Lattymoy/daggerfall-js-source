@@ -202,7 +202,7 @@ const normalizeRows = (lines) =>
  *  `buttons` are MB_BUTTONS values. Returns everything the draw and
  *  the hit test need, in VIRTUAL (320x200) pixels. */
 export function layoutMessageBox(font, lines, buttons = [], {
-  sizingRows = null, maxTextHeight = 0, image = null, scrollIndex = 0,
+  sizingRows = null, maxTextHeight = 0, image = null, scrollIndex = 0, rect = null,
 } = {}) {
   const rowH = font?.fnt?.fixedHeight ?? 6;         // rowLeading 0
   const rows = normalizeRows(lines);
@@ -234,15 +234,27 @@ export function layoutMessageBox(font, lines, buttons = [], {
   const finalY = stripH + imageH;
   const labelH = textH + (finalY > 0 ? finalY - imageH + BUTTON_TEXT_DISTANCE : 0);
 
-  let w = Math.max(stripW, textW) + MARGIN * 2;
-  if (w < MIN_BOX_WIDTH) w = MIN_BOX_WIDTH;
-  w = roundUpSlice(w);
-  // :555 - the image's height is part of the PANEL's height, not of
-  // the label block's.
-  const h = roundUpSlice(labelH + imageH + MARGIN * 2);
-
-  // messagePanel is Center/Middle on the 320x200 native panel
-  const x = Math.round((320 - w) / 2), y = Math.round((200 - h) / 2);
+  let w, h, x, y;
+  if (rect) {
+    // A FIXED parchment. SetDaggerfallPopupStyle is not only the
+    // message box's own auto-sizer: DFU also stamps the same
+    // PopupStyle.Parchment nine-slice onto plain Panels of a declared
+    // Rect (DaggerfallEffectSettingsEditorWindow.SetupEffectDescription
+    // Panels :175-193 is one). Such a panel does NOT auto-size from its
+    // text and is NOT centred on the native panel - only the label
+    // inside it is Center/Middle. Its w/h need not be slice multiples,
+    // which is what drawFrame's shear arm exists for.
+    [x, y, w, h] = rect;
+  } else {
+    w = Math.max(stripW, textW) + MARGIN * 2;
+    if (w < MIN_BOX_WIDTH) w = MIN_BOX_WIDTH;
+    w = roundUpSlice(w);
+    // :555 - the image's height is part of the PANEL's height, not of
+    // the label block's.
+    h = roundUpSlice(labelH + imageH + MARGIN * 2);
+    // messagePanel is Center/Middle on the 320x200 native panel
+    x = Math.round((320 - w) / 2); y = Math.round((200 - h) / 2);
+  }
   // the label is Center/Middle INSIDE the panel - except with an image,
   // where :533 moves it to VerticalAlignment.Bottom
   // (BaseScreenComponent.cs:1231-1232: yMax - BottomMargin - height).
@@ -313,17 +325,26 @@ export function messageBoxWheel(box, dir) {
     box.scroll.totalUnits, box.scroll.displayUnits);
 }
 
-/** Draw the nine-slice frame. Corners once, edges and fill tiled -
- *  an exact integer repeat, the box being a multiple of the slice. */
+/** Draw the nine-slice frame. Corners once, edges and fill tiled - an
+ *  exact integer repeat while the box is a multiple of the slice, which
+ *  every auto-sized message panel is (roundUpSlice). A FIXED parchment
+ *  need not be (the effect editor's is 306x69), so the tiled passes
+ *  round UP and a scissor over the box shears the last partial tile -
+ *  BaseScreenComponent.DrawBorder's own behaviour, which fills its
+ *  rects with GUI.DrawTextureWithTexCoords rather than whole tiles.
+ *  The four corners land at exact positions either way. */
 function drawFrame(renderer, m, box) {
   const [TL, T, TR, L, F, R, BL, B, BR] = _art.slices;
   const at = (tex, x, y) => renderer.drawScreenQuad(tex,
     { x: m.ox + x * m.s, y: m.oy + y * m.s, w: SLICE * m.s, h: SLICE * m.s });
   const { x, y, w, h } = box;
-  const cols = (w - SLICE * 2) / SLICE, rows = (h - SLICE * 2) / SLICE;
+  const cols = Math.ceil((w - SLICE * 2) / SLICE), rows = Math.ceil((h - SLICE * 2) / SLICE);
+  const shear = (w - SLICE * 2) % SLICE !== 0 || (h - SLICE * 2) % SLICE !== 0;
+  if (shear) renderer.setScreenScissor(m.ox + x * m.s, m.oy + y * m.s, w * m.s, h * m.s);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) at(F, x + SLICE + c * SLICE, y + SLICE + r * SLICE);
   for (let c = 0; c < cols; c++) { at(T, x + SLICE + c * SLICE, y); at(B, x + SLICE + c * SLICE, y + h - SLICE); }
   for (let r = 0; r < rows; r++) { at(L, x, y + SLICE + r * SLICE); at(R, x + w - SLICE, y + SLICE + r * SLICE); }
+  if (shear) renderer.clearScreenScissor();
   at(TL, x, y); at(TR, x + w - SLICE, y);
   at(BL, x, y + h - SLICE); at(BR, x + w - SLICE, y + h - SLICE);
 }

@@ -96,7 +96,9 @@ export const goldStack = (stackCount = 0) => ({
 
 /** `item.IsOfTemplate(ItemGroups.Currency, (int)Currency.Gold_pieces)`
  *  - DFU's own test, spelled once. Both terms, because DaggerfallUnity
- *  Item.IsOfTemplate (:747-750) compares the group AND the index. */
+ *  Item.IsOfTemplate (:647-653) compares the group AND the index -
+ *  and it must, since MiscItems.Unused is template 276 too
+ *  (ItemEnums.cs:592-608). */
 export const isGoldPieces = (item) =>
   item?.group === 'Currency' && item?.templateIndex === GOLD_TEMPLATE;
 

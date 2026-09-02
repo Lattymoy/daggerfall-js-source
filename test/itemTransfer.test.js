@@ -118,10 +118,24 @@ test('U56 planTake: the carry gate, the two sounds, and the gift', () => {
   // DoTransferItem: gold rides its own clink (:1569)
   assert.equal(planTake(gold(500), { bag: [] }).sound, 'gold');
   assert.equal(planTake(book(), { bag: [] }).sound, 'click');
-  // ...and it is IsOfTemplate, both terms: a Currency row that is not
-  // template 276 is not gold pieces (DaggerfallUnityItem.cs:747-750).
+  // ...and it is IsOfTemplate, BOTH terms (DaggerfallUnityItem.cs:
+  // 647-653). A Currency row that is not template 276 is not gold
+  // pieces...
   assert.equal(planTake({ group: 'Currency', templateIndex: 137, stackCount: 5 }, { bag: [] }).sound,
     'click', 'the group alone does not make a coin');
+  // ...and the index alone does not either: MiscItems.Unused is ALSO
+  // template 276 (ItemEnums.cs:592-608 - Letter_of_credit 275 then a
+  // bare `Unused`), the very collision the two-term test exists to
+  // resolve, and classicSave.js:299 really does build such a row.
+  assert.equal(planTake({ group: 'MiscItems', templateIndex: 276, stackCount: 5 }, { bag: [] }).sound,
+    'click', 'the index alone does not make a coin');
+  // ...and the interception is where the loss would be DESTRUCTIVE:
+  // a MiscItems row must move as an item, not be minted into coin.
+  const mFrom = [{ group: 'MiscItems', templateIndex: 276, stackCount: 7 }];
+  const mTo = [], mEnt = { goldPieces: 0, items: [] };
+  assert.notEqual(applyTransfer(mFrom[0], { amount: 7 }, mFrom, mTo, { entity: mEnt, toPlayer: true }), null);
+  assert.equal(mTo.length, 1, 'MiscItems.Unused arrives as a row');
+  assert.equal(mEnt.goldPieces, 0, 'and mints no coin');
   // and the gate is ABOVE the sound - a refused transfer is silent
   assert.equal(planTake(gold(500), { bag: [book(100)], entity: e }).sound, undefined,
     'a refused transfer still picked a sound');

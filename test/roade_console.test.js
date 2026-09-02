@@ -24,8 +24,9 @@ import {
   registerCommand, consoleCommands, hasConsoleCommand, getConsoleCommand,
   tryGetConsoleCommand, executeConsoleCommand, executeConsoleLine, installConsoleProbe,
   NoSuchCommandError, makeConsoleCommand, ConsoleInputHistory, HELP_COMMAND,
-  onConsoleLog,
+  onConsoleLog, consoleInputHistory,
 } from '../src/systems/consoleCommands.js';
+import { setValue, _resetForTests } from '../src/systems/settings.js';
 import {
   enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout,
   resetAutomapStore, registerAutomapConsoleCommands, automapDebugTeleportMode,
@@ -237,6 +238,25 @@ test('E3 console: the door honours LypyL_GameConsole and runs the whole submit l
   assert.equal(typeof target.__console, 'function');
   // the settings default is True (settingsDefaults.js), so the door runs
   assert.equal(door('e3_door'), 'through');
+  // ...and OFF it REFUSES, without reaching ExecuteCommand at all -
+  // ConsoleUI.ToggleConsole:51-53 does not open the window, so nothing
+  // is parsed, nothing is run and nothing joins the history.
+  let ran = 0;
+  registerCommand('e3_shut', 'd', 'u', () => { ran += 1; return 'through'; });
+  try {
+    setValue('Enhancements', 'LypyL_GameConsole', false);
+    assert.equal(door('e3_shut'),
+      'the developer console is disabled (Enhancements/LypyL_GameConsole)',
+      'the refusal string, verbatim');
+    assert.equal(ran, 0, 'the refused line never reaches ExecuteCommand');
+    assert.equal(consoleInputHistory.inputHistory.includes('e3_shut'), false,
+      'and never joins the input history');
+    setValue('Enhancements', 'LypyL_GameConsole', true);
+    assert.equal(door('e3_shut'), 'through', 'and back on again');
+    assert.equal(ran, 1);
+  } finally {
+    _resetForTests();
+  }
 });
 
 test('E3 console: the wiring - every host with a registering surface registers, and every host has the door', () => {
