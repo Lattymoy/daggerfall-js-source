@@ -75,7 +75,10 @@ test('AUDIT 18: every open-flags citation in Home.md points at the line it quote
   // the BOTH-ways rule below already pins the list and src/ to exact
   // agreement, and a hard number here is one more thing to rot (AUDIT 21
   // found Testing.md still quoting 109 when the list had reached 115).
-  assert.ok(seen >= 100, `only ${seen} open-flag citations parsed - the list or its format changed`);
+  // The floor is a floor: the Road-to-1:1 closeout retired 96 flags in
+  // one afternoon (145 -> 53), and a floor set at the old population
+  // would have punished the retirement (CR-35's lesson).
+  assert.ok(seen >= 20, `only ${seen} open-flag citations parsed - the list or its format changed`);
   assert.deepEqual(wrong, [], `stale open-flags citations:\n${wrong.join('\n')}`);
 });
 
