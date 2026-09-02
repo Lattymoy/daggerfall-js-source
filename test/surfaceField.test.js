@@ -361,3 +361,21 @@ test('EE16: the fine ground bakes a whole pixel by the patch’s law, rebakes by
   assert.match(w, /if \(p\.field\.fineMesh\) renderer\.destroyMesh\(p\.field\.fineMesh\);/, 'gone with the pixel');
   assert.ok(!/POLYGON_OFFSET_FILL/.test(readFileSync('src/render/renderer.js', 'utf8')), 'nothing is under the fine ground, so no offset');
 });
+
+// ═══ EE17: the ledger's last two - ripples, and one wind ════════════
+test('EE17: rain ripples bend the puddle\u2019s reflection, and the grass, the rain and the deck share one wind', () => {
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const fi = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(fi, r.indexOf('`;', fi));
+  // the ring is a NORMAL disturbance inside the puddle block, only under rain
+  const pud = fs.slice(fs.indexOf('if (pud > 0.001) {'), fs.indexOf('if (pud > 0.001) {') + 1400);
+  assert.match(pud, /if \(uRainAmt > 0\.0\) \{/, 'only while rain falls');
+  assert.match(pud, /float ring = sin\(\(dd - rad\) \* 40\.0\) \* exp\(-dd \* 6\.0\) \* \(1\.0 - tt\) \* step\(dd, rad \+ 0\.05\);/, 'an expanding ring that decays as it spreads');
+  assert.match(pud, /n = normalize\(n \+ vec3\(dirR\.x, 0\.0, dirR\.y\) \* ring \* 0\.35 \* pud \* uRainAmt\);/, 'a ripple bends the normal - it is not a colour');
+  assert.match(pud, /float ph = thash\(rc\);/, 'each cell\u2019s impact has its own phase');
+  // one wind: the grass takes the sky's wind, its SPEED from that wind, and
+  // its gust from the rain's own integrated travel
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /const wd = sky\?\.cloudShadow\?\.wind;/);
+  assert.match(w, /speed: 12 \+ Math\.hypot\(wd\[0\], wd\[1\]\) \* 260 \* 0\.9 \+ \(precip\?\.enhanced \? Math\.sin\(precip\.windOff\[0\] \* 0\.05\) \* 8 : 0\),/, 'the grass\u2019s strength is the wind\u2019s speed, its gust the rain\u2019s travel');
+  assert.ok(!/speed: 40 \}/.test(w), 'no constant wind on the grass');
+});

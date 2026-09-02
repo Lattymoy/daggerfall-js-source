@@ -6342,7 +6342,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         // EE7: the pixel's grass, after its terrain and inside the same
         // cull - a pixel that is not drawn has no grass drawn either
-        if (p.grass) renderer.drawGrass(p.grass, pixelMatrix, performance.now() / 1000, sky?.cloudShadow ? { dir: sky.cloudShadow.wind[0] || sky.cloudShadow.wind[1] ? [sky.cloudShadow.wind[0], sky.cloudShadow.wind[1]] : [1, 0.2], speed: 40 } : null);
+        // EE17: ONE WIND. The deck, the rain and the grass read the SAME
+        // wind - the sky's eased row - and the grass's strength is that
+        // wind's speed, not a constant: a still day barely stirs it, a
+        // storm lays it over. The gust is the same integrated travel the
+        // rain uses, so a lull in the rain is a lull in the grass.
+        if (p.grass) {
+          const wd = sky?.cloudShadow?.wind;
+          const wind = wd ? {
+            dir: (wd[0] || wd[1]) ? [wd[0], wd[1]] : [1, 0.2],
+            speed: 12 + Math.hypot(wd[0], wd[1]) * 260 * 0.9 + (precip?.enhanced ? Math.sin(precip.windOff[0] * 0.05) * 8 : 0),
+          } : null;
+          renderer.drawGrass(p.grass, pixelMatrix, performance.now() / 1000, wind);
+        }
         for (const m of p.models) {
           if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
           if (m._worldGen !== p._worldGen || !m._world) {

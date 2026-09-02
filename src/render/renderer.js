@@ -693,6 +693,23 @@ void main() {
     if (pud > 0.001) {
       n = normalize(mix(n, vec3(0.0, 1.0, 0.0), pud * 0.92));
       tex *= mix(1.0, 0.42, pud);
+      // EE17: RAIN RIPPLES, the lab's own. A coarse lattice of impacts,
+      // one per cell with its own phase, each an expanding ring whose
+      // amplitude decays as it spreads - and the ring is a NORMAL
+      // disturbance, not a colour: it bends the sky the puddle reflects,
+      // which is how a ripple reads on water. Only where water stands,
+      // only while rain falls.
+      if (uRainAmt > 0.0) {
+        vec2 rp = vLocalXZ * 1.4;
+        vec2 rc = floor(rp); vec2 rf = fract(rp) - 0.5;
+        float ph = thash(rc);
+        float tt = fract(uCloudTime * 0.9 + ph);                 // 0..1, the ring's life
+        float rad = tt * 0.42;
+        float dd = length(rf + (vec2(thash(rc + 3.1), thash(rc + 7.7)) - 0.5) * 0.5);
+        float ring = sin((dd - rad) * 40.0) * exp(-dd * 6.0) * (1.0 - tt) * step(dd, rad + 0.05);
+        vec2 dirR = normalize(rf + 1e-4);
+        n = normalize(n + vec3(dirR.x, 0.0, dirR.y) * ring * 0.35 * pud * uRainAmt);
+      }
     }
   }
   float diff = max(dot(n, uLightDir), 0.0);
