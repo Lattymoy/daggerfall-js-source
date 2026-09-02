@@ -753,11 +753,15 @@ export class SpellbookWindow {
     // F180: VerticalScrollBar.MouseClick (:142-150) - a trough click
     // PAGES by displayUnits, above or below the thumb, with the same
     // thumb geometry draw() computes. (DFU also drags the thumb from
-    // its per-frame Update loop, :101-130; the port's UI seam carries
-    // single-shot clicks only - no held-button state reaches any
-    // overlay window - so the drag stays unported, the listPicker.js
-    // precedent, and the trough + wheel + arrows reach every index
-    // the drag can.)
+    // its per-frame Update loop, :101-130; no held-button state
+    // reaches THIS window from its hosts - they hand it single-shot
+    // clicks only - so the drag stays unported, and the trough +
+    // wheel + arrows reach every index the drag can. The reason used
+    // to read "the listPicker.js precedent"; ROAD-A7 retired that
+    // half - listPicker's hosts DO poll the held button into
+    // ui/verticalScrollBar.js's update(), so the limit is per-host,
+    // not the port's seam. Recorded in the Ledger's F159/F170/F180
+    // row.)
     if (this._rows.length > ROWS_DISPLAYED && hitPanel(SPELLBOOK_RECTS.scrollBar, vx, vy)) {
       const [, sy, , sh] = SPELLBOOK_RECTS.scrollBar;
       const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));

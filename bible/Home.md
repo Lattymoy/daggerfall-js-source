@@ -193,6 +193,8 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 
 ## Active arcs
 
+- `01-Overview/Road-To-1-1.md` - ACTIVE, opened 2026-09-01 off AUDIT 44's measurement (`Port-Status-2026-09.md`): THE CLOSING CAMPAIGN, the ledger of what remains between the port and a finished 1:1, in waves, each wave a worktree fleet with an adversarial review and its own gated merge. A struck item names the wave that closed it; the deliberate departures that are NOT on this road (the voxel character engine, the enhanced skin and visuals, the Morrowind lane, mod injection, AdvancedClimbing/Rappel/Hanging, the SoundFont synth, shadow maps, SDF fonts) are listed at the head so nobody re-opens them. Wave A closed 2026-09-01 (twelve groups) and Wave B behind it. READ THE DEPLOY STATE BEFORE BUILDING ON IT: the whole of Waves B5 and C, plus the bow salvage and the incident record, is the PARKED deploy batch - gated on the branch, waiting for the owner's eyes before it merges to main under incident law 2, because the automap windows are first-ever-rendered surfaces. The standing watches (the per-host pause architecture, the FLAGGED/INTERIM ledger below, AUDIT 44's overflow tail) are the page's closing section.
+- `01-Overview/Incident-2026-09-01.md` - CLOSED 2026-09-01, and its four **Standing lessons are binding process law** for every slice after it: (1) the palette is SHARED and mutable and any palettized-IMG load can destroy it - `incident_texture.test.js`'s site sweep is the guard, and a new palettized-IMG consumer either mints its own palette or extends that sweep; (2) a FIRST-EVER-RENDERED path is a release risk however lawful the code (winter-at-boot was correct 1:1 behaviour and still broke the live site), so any change that lights a never-drawn path gets the owner's eyes before merge - the suite cannot see pixels; (3) keep merging through GATED PRs, because deploy-and-eyeball bisects in O(log n) only when the known-good checkpoints exist; (4) never plain-merge a revert commit into the branch that carries the fix - `-s ours` or a tree-restore, since the three-way silently prefers the revert wherever the fix branch is quiet. The record itself: two texture breakages in one afternoon, both invisible to 5,600+ green tests.
 - `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
 - `01-Overview/Audit-UI.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE AUDIT. Twelve sweeps over the PX arc's 54 slices, nine modules and 7,130 lines - and LIVE, not static, because a sheet this size answers grep questions with grep answers. Two findings, both fixed: the 44px touch rule hung off a SCREEN WIDTH and failed on the device the proxy stands in for (measured on an iPad in landscape: skin switch 28px, steppers 34px, value buttons 38px), and the reason the fix at first did not take - three controls sized INLINE in JavaScript, which no media query can reach. Eight sweeps came back clean, including the class-collision shape that has bitten this file four times.
 - `01-Overview/Audit-UI-2.md` - CLOSED 2026-08-27: THE ENHANCED SURFACE, SECOND PASS. 38 PX slices on from the first, and shaped by what actually went wrong since - six faults, every one of which passed its own pins, because they verified the thing built and not the PATH a player takes to it. Six sweeps: every surface at desktop/tablet/phone (12 combinations, clean), and the two recurring faults turned into PINS - no part styled for one shell and left bare in another (four occurrences), and every enhanced window reachable from a host following DYNAMIC imports (PX24's unhung door). Both mutation-tested against the real historical faults.
@@ -288,24 +290,23 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1536` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
 - `src/scenes/dungeonContext.js:1573` - A10: THE RECALL ARRIVAL, ROUTED. This used to be an INTERIM line
 - `src/scenes/dungeonContext.js:1628` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3622` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3766` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3613` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/exterior.js:736` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:742` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:1023` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1275` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1715` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1697` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:352` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:369` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:536` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1257` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1263` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1679` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2758` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:4134` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5194` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6360` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1238` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1244` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1658` - *  through the `if`. This host's FLAGGED note (below, at the mode
+- `src/scenes/world.js:2714` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:4090` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:5150` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+- `src/scenes/world.js:6316` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1356` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1374` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1586` - is the quest machine's, FLAGGED with it.
@@ -350,8 +351,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/inventory.js:162` - field at all, e.g. the gold stack goldStack() mints. FLAGGED:
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:105` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:192` - *  screen. FLAGGED as a group - they land with their own arcs.
+- `src/systems/itemInfo.js:98` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+- `src/systems/itemInfo.js:183` - *  screen. FLAGGED as a group - they land with their own arcs.
 - `src/systems/knightlyGifts.js:3` - remaining FLAGGED service destinations, and the only two that need
 - `src/systems/knightlyGifts.js:31` - FLAGGED, not ported: RestoreGuildData's legacy flag migration
 - `src/systems/knightlyGifts.js:100` - * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
@@ -408,7 +409,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/restWindow.js:172` - FLAGGED, both from OnPop/Update and both belonging to other arcs
 - `src/ui/restWindow.js:514` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:114` - FLAGGED, idling loudly: the effect popup's body
-- `src/ui/spellbookWindow.js:951` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
+- `src/ui/spellbookWindow.js:955` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
 - `src/ui/teleportPopUp.js:8` - `Teleport: null, // FLAGGED: the travel map's teleport mode`. Two
 - `src/ui/teleportPopUp.js:37` - FLAGGED: the HUD smash-to-black/fade either side of the jump

@@ -3759,12 +3759,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // nearby -> TEXT.RSC 354; swimming or airborne -> 355 "You
     // cannot rest now."; else the rest window opens. S40 struck the
     // sentence that followed, which said a second press "routes
-    // through the overlay as 'back' (ends a running rest)": it does
-    // not, and never did. With a window up, overlayAction turns any
-    // single character into `char:<k>`, so KeyR arrives as 'char:r',
-    // which the running page ignores and the selection page reads as
-    // rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-    // ui/restWindow.js' header.
+    // through the overlay as 'back' (ends a running rest)": that route
+    // was never real. ROAD-B B5 built the real one. With a window up,
+    // overlayAction turns any single character into `char:<k>`, so
+    // KeyR arrives as 'char:r', and ui/restWindow.js:266-268 runs A8's
+    // normalizeCode inverse to turn it back into 'KeyR' - DFU's
+    // toggleClosedBinding - so a second Rest press ends a running rest
+    // or closes the selection page (:302-315), which is
+    // DaggerfallRestWindow.Update :187-196 whole.
     toggleRest() {
       if (activeOverlay) return;
       // S40: the gate itself moved to systems/restSession.js. It was

@@ -36,22 +36,22 @@ const TEXT = new Map(SRC.map((f) => [f, read(f)]));
 /** The tool's own marker test (tools/regenOpenFlags.mjs), per file. */
 const carriesFlag = (f) => /FLAGGED|INTERIM/.test(TEXT.get(f) ?? '');
 
-/** Every "FLAGGED in <file>.js" site, with the wrapped path resolved.
- *  Comments wrap, so the path routinely lands a line or two below the
- *  words - dungeonContext's restWindow delegation does exactly that,
- *  and a single-line regex reads the tree as almost empty. */
-function delegations() {
+/** Every "FLAGGED in <file>.js" site in one file's lines, with the
+ *  wrapped path resolved. Comments wrap, so the path routinely lands a
+ *  line or two below the words, and a single-line regex reads the tree
+ *  as almost empty. */
+function scan(lines) {
   const out = [];
-  for (const f of SRC) {
-    const lines = TEXT.get(f).split('\n');
-    lines.forEach((l, i) => {
-      if (!/FLAGGED in\b/.test(l)) return;
-      const win = lines.slice(i, i + 3).map((x) => x.replace(/^\s*(\/\/|\*)\s?/, '')).join(' ');
-      const m = /FLAGGED in\s+[\w/.-]*?([A-Za-z0-9_]+\.js)/.exec(win);
-      if (m) out.push({ from: f, line: i + 1, target: m[1] });
-    });
-  }
+  lines.forEach((l, i) => {
+    if (!/FLAGGED in\b/.test(l)) return;
+    const win = lines.slice(i, i + 3).map((x) => x.replace(/^\s*(\/\/|\*)\s?/, '')).join(' ');
+    const m = /FLAGGED in\s+[\w/.-]*?([A-Za-z0-9_]+\.js)/.exec(win);
+    if (m) out.push({ line: i + 1, target: m[1] });
+  });
   return out;
+}
+function delegations() {
+  return SRC.flatMap((f) => scan(TEXT.get(f).split('\n')).map((d) => ({ from: f, ...d })));
 }
 
 test('FS1: a flag that delegates to another FILE must find a flag in that file', () => {
@@ -76,9 +76,15 @@ test('FS1: the form the guard measures is actually present in the tree', () => {
   // sweep has real work to do, so deleting the last delegation (or
   // breaking the regex) fails loudly instead of passing vacuously.
   const found = delegations();
-  assert.ok(found.length >= 2, `the guard measures ${found.length} delegations; it is not measuring nothing`);
-  // and it reads the WRAPPED form, which is the common one
-  assert.ok(found.some((d) => d.from === 'src/scenes/dungeonContext.js' && d.target === 'restWindow.js'),
+  assert.ok(found.length >= 1, `the guard measures ${found.length} delegations; it is not measuring nothing`);
+  // and it reads the WRAPPED form, which is the common one. CR-35
+  // took that claim off the tree: it was pinned to dungeonContext's
+  // restWindow delegation, so the sentence B5 had already retired
+  // could not be deleted without failing this file. The extractor's
+  // reach is a property of the extractor, so it is measured on a
+  // fixture; the tree only has to carry real work.
+  assert.deepEqual(scan(["// ... a thing is FLAGGED in", "// ui/restWindow.js' header."]),
+    [{ line: 1, target: 'restWindow.js' }],
     'the path that lands a line below the words is still resolved');
 });
 
@@ -136,7 +142,7 @@ test('FS1: the enchant ctx has its flag in the file that owes the mount', () => 
   assert.equal(/FLAGGED\n\s*\/\/ there with the rest of its enchant wiring/.test(read('src/scenes/world.js')), false);
 });
 
-test('FS1: none of the four retired claims has a second home', () => {
+test('FS1: none of the retired claims has a second home', () => {
   // CQ1b's per-slice check, with EF1c's unquote rule so a correction
   // may quote what it retired.
   const RETIRED = [
@@ -144,6 +150,12 @@ test('FS1: none of the four retired claims has a second home', () => {
     /Routing F5\/F6 into interiors is its own arc/,
     /so melee strike frames resolve to nothing/,
     /C13 - targets pend the RMB animal\/exterior-foe arc/,
+    // CR-35: B5 retired restWindow's toggle-binding flag and BUILT the
+    // facility, but two files still sent the reader to that flag - and
+    // FS1's own delegation test could not see it, because restWindow
+    // carries three unrelated flags and carriesFlag is whole-file.
+    /toggle-close binding is FLAGGED in/,
+    /the reason restWindow's own header flags its toggle-close/,
   ];
   const offenders = [];
   for (const f of SRC) {

@@ -463,18 +463,35 @@ test('AUDIT 39: Rendering.md\'s "0.45 + 0.55*diffuse" base is the renderer\'s re
 // AUDIT 38 and stopped. The gate is the same both-ways shape as the
 // open-flags list: a new record must be indexed, and a renamed one cannot
 // leave a dead row behind.
+//
+// CR-39 widened it from RECORDS NAMED "Audit-*" to every record under
+// 01-Overview/, because the prefix was doing the work the law does: the
+// road-to-1:1 campaign ledger and the 2026-09-01 incident record - whose
+// four Standing lessons are binding process law - both slipped in
+// unindexed while this test reported green. What is deliberately NOT
+// indexed is an explicit list, so leaving a record out is a decision
+// somebody writes down rather than a name that happens not to match.
 // ---------------------------------------------------------------------------
 
-test('AUDIT 39: Home.md names every audit record under bible/01-Overview/', () => {
+/** Records under 01-Overview/ the index deliberately does not name. */
+const UNINDEXED_RECORDS = [
+  'Bible-Review-2026-08-25.md',   // a one-off review OF the bible, not a record of the port
+  'Port-Completion-Analysis.md',  // superseded for volume figures by Port-Status-2026-09.md
+];
+
+test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const home = read('bible/Home.md');
   const records = readdirSync(join(root, 'bible/01-Overview'))
-    .filter((f) => /^Audit-.+\.md$/.test(f)).sort();
+    .filter((f) => f.endsWith('.md') && !UNINDEXED_RECORDS.includes(f)).sort();
   const missing = records.filter((f) => !home.includes(f));
   assert.deepEqual(missing, [],
-    `audit records the index does not name:\n${missing.join('\n')}`);
-  const named = [...home.matchAll(/`01-Overview\/(Audit-[A-Za-z0-9.-]+\.md)`/g)].map((m) => m[1]);
-  const dead = [...new Set(named)].filter((f) => !records.includes(f));
-  assert.deepEqual(dead, [], `the index names audit records that are gone:\n${dead.join('\n')}`);
+    `records the index does not name:\n${missing.join('\n')}`);
+  // the allow-list may not outlive its files either
+  const gone = UNINDEXED_RECORDS.filter((f) => !existsSync(join(root, 'bible/01-Overview', f)));
+  assert.deepEqual(gone, [], `the not-indexed list names files that are gone:\n${gone.join('\n')}`);
+  const named = [...home.matchAll(/`01-Overview\/([A-Za-z0-9._-]+\.md)`/g)].map((m) => m[1]);
+  const dead = [...new Set(named)].filter((f) => !records.includes(f) && !UNINDEXED_RECORDS.includes(f));
+  assert.deepEqual(dead, [], `the index names records that are gone:\n${dead.join('\n')}`);
 });
 
 // ---------------------------------------------------------------------------

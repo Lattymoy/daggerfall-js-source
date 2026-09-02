@@ -89,3 +89,41 @@ test('L2 ledger: a superseded figure may be QUOTED but never left standing', () 
   assert.deepEqual(offenders, [],
     'a superseded figure is stated without any marker saying it was corrected');
 });
+
+test('L2 ledger: a section-C "unported" claim whose facility shipped is struck, and the facility is really there', () => {
+  // CR-36/37/38. The four tests above pin FIGURES; this pins the other
+  // half of the same disease, the half section C is defined by
+  // (Home.md: "a stale row is worse than a missing one - it sends the
+  // next slice off to build what already ships"). Three rows survived
+  // the road-to-1:1 campaign claiming a shipped, tested facility was
+  // still unported.
+  //
+  // The gate is two-sided on purpose. The claim may still be READ - a
+  // strike quotes what it retired, EF1c's rule - but the line must
+  // carry the strike AND the slice that closed it; and that slice's
+  // facility must still be in the tree, so ripping the code out fails
+  // here instead of leaving the ledger boasting.
+  const CLOSED = [
+    { claim: /U24's list picker picks straight through/, slice: /ROAD-A7/,
+      file: 'src/ui/listPicker.js', built: /if \(wasDouble\) \{ this\._lastRowClick = null; this\._use\(\); \}/ },
+    { claim: /the vertical scroll bar's THUMB DRAG is not implemented/, slice: /ROAD-A7/,
+      file: 'src/ui/verticalScrollBar.js', built: /this\.draggingThumb = true;/ },
+    { claim: /what wa-4 still waits on is the CROSS-HOST arm/, slice: /ROAD-B B4 \+ ROAD-A A10/,
+      file: 'src/world/actionSystem.js', built: /CASTLE_DAGGERFALL_MAP_ID = 1291010263;/ },
+    { claim: /book VALUE from the file price pends the pricing row/, slice: /SHIPPED at ROAD-A A2/,
+      file: 'src/systems/books.js', built: /export function bookValue\(id\) \{/ },
+    { claim: /the value half pends the E1 book-file-pricing row/, slice: /ROAD-A A2/,
+      file: 'src/systems/quest/item.js', built: /createBook\(itemKey\) \?\?/ },
+  ];
+  const rows = LEDGER.split('\n').filter((l) => l.startsWith('|'));
+  const unstruck = [];
+  for (const { claim, slice, file, built } of CLOSED) {
+    const line = rows.find((l) => claim.test(l));
+    if (!line) continue;                          // struck by deletion is struck
+    if (!/~~/.test(line)) unstruck.push(`${claim} stands unstruck`);
+    else if (!slice.test(line)) unstruck.push(`${claim} is struck without naming the slice that closed it`);
+    assert.match(readFileSync(join(ROOT, file), 'utf8'), built,
+      `the ledger says ${String(claim)} shipped; ${file} must still carry it`);
+  }
+  assert.deepEqual(unstruck, [], 'every closed section-C claim carries its strike and its slice');
+});
