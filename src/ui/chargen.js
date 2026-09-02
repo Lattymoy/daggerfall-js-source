@@ -38,10 +38,12 @@ import { SOUND } from '../systems/soundClips.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, startConstellationAnim, tickConstellationAnim, stopConstellationAnim } from './chargenArt.js';   // U10 / U17 / U18 / U20a
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, PICK_SCROLL_RECT, startConstellationAnim, tickConstellationAnim, stopConstellationAnim } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
 // AUDIT 24 (wave 24): FormulaHelper.MaxStatValue, one home.
 import { MAX_STAT_VALUE } from '../systems/statMods.js';
+import { hotkeyHit } from '../systems/dialogShortcuts.js';   // ROAD-E2: the DaggerfallShortcut table - the builder's ResetBonusPool
+import { VerticalScrollBar } from './verticalScrollBar.js';   // ROAD-E2: DFU's VerticalScrollBar, the picker's bar
 
 export { MAX_STAT_VALUE };
 
@@ -715,6 +717,40 @@ export class ChargenFlow {
     else if (delta < 0 && c.stats[key] > FREE_EDIT_MIN) { c.stats[key]--; c.statPool++; }
   }
 
+  /** ROAD-E2 - the builder's HIDDEN reset control
+   *  (CreateCharCustomClass.cs:257-259, :404-411). `resetButton` is a
+   *  zero-sized Button at Rect(0,0,0,0) with no art and no hit area:
+   *  it exists ONLY to carry
+   *  `DaggerfallShortcut.GetBinding(Buttons.ResetBonusPool)` and its
+   *  OnKeyboardEvent, which is why classic has no such control and
+   *  DFU still does. The handler is three lines, verbatim:
+   *
+   *      if (keyboardEvent.type == EventType.KeyDown)
+   *      {
+   *          DaggerfallUI.Instance.PlayOneShot(SoundClips.ButtonClick);
+   *          statsRollout.BonusPool = 0;
+   *      }
+   *
+   *  KeyDown only - the port's windows are called on key DOWN alone,
+   *  which is `hotkeyHit`'s own `isDownWith` half.
+   *
+   *  WHAT `BonusPool = 0` ACTUALLY DOES (StatsRollout.cs:65-69 ->
+   *  SetStats :183-191): it assigns the POOL and nothing else. The
+   *  starting and working stats are handed back unchanged, so the
+   *  points already spent STAY spent and the unspent remainder is
+   *  simply thrown away - this is a "let me out" control, not an undo.
+   *  The freeEdit pool runs negative too (a builder can overspend),
+   *  and zeroing that direction GRANTS the overspend for free; DFU
+   *  makes no distinction and neither does this. SetStats' tail is
+   *  UpdateStatLabels() then SelectStat(0), so the spinner returns to
+   *  Strength - the same tail `loadRoll` already carries. */
+  customResetBonusPool() {
+    const c = this.custom;
+    if (!c) return;
+    c.statPool = 0;
+    c.statCursor = 0;
+  }
+
   /** HitPointsUp/DownButton (:346-364): 4..30, one per click. */
   customHp(delta) {
     const c = this.custom;
@@ -953,6 +989,84 @@ export class ChargenFlow {
    *  which put a scrollbar on an 11-item list DFU shows whole. */
   _pickRows() {
     return this.custom?.pickList ? ADV_PICKER_ITEM_COUNT : CLASS_LIST_ROWS;
+  }
+
+  /**
+   * ROAD-E2 - WHICH list picker is on top, and the two unit counts +
+   * the index it keeps. DFU has FOUR DaggerfallListPickerWindow
+   * instances in the wizard (CreateCharClassSelect itself,
+   * CreateCharCustomClass's skillPicker and helpPicker, and
+   * CreateCharSpecialAdvantageWindow's primary/secondary pair), each
+   * carrying its own scrollBar; the port collapses the wizard into one
+   * state machine, so ONE bar is re-pointed at whichever picker holds
+   * the stack. Null means no picker is on top - the answer for every
+   * other screen and, crucially, for a picker with a
+   * ClickAnywhereToClose box or a pushed sub-window over it, because
+   * DaggerfallUI.Update runs Update() on the TOP window alone.
+   */
+  _openPickList() {
+    if (this.state === 'class') {
+      if (this.classConfirm) return null;   // the description box is the top window
+      return {
+        total: this.classRowCount(), rows: CLASS_LIST_ROWS,
+        index: this.classScroll ?? 0,
+        set: (v) => { this.classScroll = v; },
+      };
+    }
+    const c = this.custom;
+    if (this.state !== 'customClass' || !c || c.box) return null;
+    const open = c.sub === 'skillPick' || c.sub === 'help'
+      || ((c.sub === 'advantage' || c.sub === 'disadvantage') && !!c.pickList);
+    if (!open) return null;
+    // _pickCount and _pickRows are the SAME two readings the draw and
+    // the keyboard already resolve against (9 rows for the skill and
+    // help pickers, advPickerItemCount = 12 for the two special ones).
+    return {
+      total: this._pickCount(), rows: this._pickRows(),
+      index: c.pickScroll ?? 0,
+      set: (v) => { c.pickScroll = v; },
+    };
+  }
+
+  /** DaggerfallListPickerWindow.Update (:103-119), verbatim over the
+   *  one bar. Answers the open picker's accessor, or null. */
+  syncPickBar() {
+    const bar = (this.pickBar ??= new VerticalScrollBar({ rect: [...PICK_SCROLL_RECT] }));
+    const p = this._openPickList();
+    // No picker on top: DFU simply does not run this Update, and the
+    // drag cannot survive the window losing the stack.
+    if (!p) { bar.draggingThumb = false; return null; }
+    bar.totalUnits = p.total;
+    bar.displayUnits = p.rows;
+    if (bar.draggingThumb) p.set(bar.scrollIndex);
+    else bar.setScrollIndexWithoutRaisingScrollEvent(p.index);
+    return p;
+  }
+
+  /** The press on the bar: VerticalScrollBar splits it across
+   *  MouseClick (:142-150 - above thumbRect.yMin pages up by
+   *  DisplayUnits, below yMax pages down, a click ON the thumb moves
+   *  nothing) and Update's latch (:105-113), and ui/verticalScrollBar.js
+   *  `press()` is that pair. Native coordinates, because the bar's rect
+   *  is native. */
+  pressPickBar(vx, vy) {
+    const p = this.syncPickBar();
+    if (!p) return false;
+    this.pickBar.press(vx, vy);
+    p.set(this.pickBar.scrollIndex);
+    return true;
+  }
+
+  /** VerticalScrollBar.Update's per-frame arm (:101-130), on the
+   *  hosts' HOVER seam - `e.buttons & 1` is the port's only reading of
+   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:259
+   *  takes. Releasing the button drops the latch on the next move,
+   *  which is the overlay mouse-UP remainder the shared picker already
+   *  records; nothing else here reads the pointer. */
+  hover(vx, vy, e = null) {
+    const p = this.syncPickBar();
+    if (!p) return;
+    if (this.pickBar.update(!!(e?.buttons & 1), vy)) p.set(this.pickBar.scrollIndex);
   }
 
   /** The pick list's minimal scroll (the ListBox law the class list
@@ -1283,8 +1397,16 @@ export class ChargenFlow {
     this.statCursor = 0;
   }
 
-  /** actions: up/down/plus/minus/confirm/back/reroll/char:<c>/backspace */
-  input(action) {
+  /** actions: up/down/plus/minus/confirm/back/reroll/char:<c>/backspace
+   *
+   *  ROAD-E2: `e` is the host's own KeyboardEvent, threaded so the
+   *  DaggerfallShortcut table can be asked about MODIFIERS the action
+   *  string cannot carry (Ctrl-U is 'char:u' through the shared
+   *  overlay map). Every host hands it down already - townTalk's
+   *  choice-window arm passes `(e.code, e)` and dungeonContext's
+   *  `overlayInput(action, e)` does the same - and a caller that omits
+   *  it simply asks the table about an unmodified key. */
+  input(action, e = null) {
     const s = this.state;
     if (s === 'name') {
       if (action.startsWith('char:') && this.name.length < NAME_MAX_CHARACTERS) this.name += action.slice(5);
@@ -1490,6 +1612,29 @@ export class ChargenFlow {
       // literal '+' into the name where the port's table has already
       // spent that key on 'plus' for the stats and skills screens (no
       // text box there), so '+' is inert here rather than typed.
+      // ROAD-E2: the hidden ResetBonusPool button
+      // (CreateCharCustomClass.cs:257-259) - a Rect(0,0,0,0) Button
+      // whose only reason to exist is its Hotkey, Ctrl-U by default
+      // (StreamingAssets/Text/DialogShortcuts.txt, carried at
+      // systems/dialogShortcuts.js:311). It is a control of THIS
+      // window, so it answers only while the window itself is on top:
+      // the two returns above have already taken every key while a
+      // ClickAnywhereToClose box or one of the pushed sub-windows
+      // holds the stack, exactly as DFU's ProcessHotKeySequences asks
+      // only the TOP window.
+      //
+      // It fires BEFORE the name box takes the character, and that is
+      // the one place the port cannot be verbatim: DFU's TextBox reads
+      // Event.current.character, which under Ctrl is the control code
+      // rather than the letter, while the port's shared overlay table
+      // has already turned the event into 'char:u'. Typing a literal
+      // 'u' into the class name on the key that resets the pool would
+      // be the worse read of the two, so the hotkey CONSUMES it.
+      if (hotkeyHit('ResetBonusPool', action, e)) {
+        audio.playOneShot(SOUND.ButtonClick, 1);   // PlayOneShot(SoundClips.ButtonClick) (:408)
+        this.customResetBonusPool();
+        return;
+      }
       if (action.startsWith('char:') && c.className.length < NAME_MAX_CHARACTERS) c.className += action.slice(5);
       else if (action === 'backspace') c.className = c.className.slice(0, -1);
       else if (action === 'up') c.statCursor = (c.statCursor + 7) % 8;
@@ -1737,6 +1882,9 @@ export class ChargenFlow {
       return true;
     }
     if (hit.customExit) { this.customExit(); return true; }
+    // ROAD-E2: the picker's scroll bar. No sound - VerticalScrollBar is
+    // not a Button, so BaseScreenComponent.MouseClick plays nothing.
+    if (hit.pickBar) return this.pressPickBar(hit.pickBar[0], hit.pickBar[1]);
     if (hit.pickRow != null) return this.clickPickRow(hit.pickRow, hit.now ?? this._now());
     if (hit.pickStep != null) {
       const c = this.custom;

@@ -620,3 +620,99 @@ test('U20a follow-up: the MINUS key reaches the stat and skill spinners', () => 
   f.input('char:-');
   assert.deepEqual(f.skills, skills);
 });
+
+// ---- ROAD-E2: the hidden ResetBonusPool control ----
+
+test('ROAD-E2: Ctrl-U zeroes the builder\'s bonus pool and returns the spinner to Strength', () => {
+  // CreateCharCustomClass.cs:257-259 hangs a Rect(0,0,0,0) Button on
+  // DaggerfallShortcut.Buttons.ResetBonusPool, and :404-411 is the
+  // whole handler: on KeyDown, PlayOneShot(ButtonClick) then
+  // `statsRollout.BonusPool = 0`. The default binding is Ctrl-U
+  // (StreamingAssets/Text/DialogShortcuts.txt).
+  const f = readyBuilder();
+  const c = f.custom;
+  c.statPool = 7;
+  c.statCursor = 4;
+  const stats = { ...c.stats };
+  f.input('char:u', { key: 'u', ctrlKey: true });
+  assert.equal(c.statPool, 0, 'the pool is zeroed outright');
+  // StatsRollout.BonusPool's setter is SetStats(startingStats,
+  // workingStats, value) (:65-69) - the two stat sets are handed back
+  // UNCHANGED, so this throws the remainder away rather than undoing
+  // anything.
+  assert.deepEqual(c.stats, stats, 'the spent points STAY spent - this is not an undo');
+  // SetStats ends in SelectStat(0) (:183-191), the same tail loadRoll
+  // already carries.
+  assert.equal(c.statCursor, 0, 'the spinner returns to Strength');
+  assert.equal(c.className, 'Scout', 'the hotkey CONSUMED the key - no stray letter in the name box');
+});
+
+test('ROAD-E2: the reset is Ctrl-U ALONE, and only while the builder itself is on top', () => {
+  const f = readyBuilder();
+  const c = f.custom;
+  // a bare u is a typed character, not the shortcut
+  c.statPool = 7;
+  f.input('char:u', { key: 'u' });
+  assert.equal(c.statPool, 7, 'no modifier, no reset');
+  assert.equal(c.className, 'Scoutu', 'it types into the class name instead');
+  c.className = 'Scout';
+  // CheckSetModifiers' second clause (:158-162): a modifier the
+  // sequence did NOT ask for disqualifies it.
+  f.input('char:u', { key: 'u', ctrlKey: true, shiftKey: true });
+  assert.equal(c.statPool, 7, 'Ctrl-Shift-U is a different sequence');
+  // and a pushed sub-window owns the keyboard: DaggerfallUI asks
+  // ProcessHotKeySequences of the TOP window alone.
+  c.sub = 'skillPick';
+  c.pickItems = availableSkills(c.skills);
+  c.pickCursor = 0;
+  c.pickScroll = 0;
+  f.input('char:u', { key: 'u', ctrlKey: true });
+  assert.equal(c.statPool, 7, 'the skill picker is on top - the builder never sees the key');
+  c.sub = null;
+  // the same for a ClickAnywhereToClose box
+  c.box = [{ text: 'x', center: true }];
+  f.input('char:u', { key: 'u', ctrlKey: true });
+  assert.equal(c.statPool, 7, 'the box eats it, and closes');
+  assert.equal(c.box, null);
+  // ...and with the stack clear it fires
+  f.input('char:u', { key: 'u', ctrlKey: true });
+  assert.equal(c.statPool, 0);
+});
+
+test('ROAD-E2: the reset is what lets an unbalanced builder out of the exit gate', () => {
+  // ExitButton_OnMouseClick's third gate (:440-447) is
+  // `statsRollout.BonusPool != 0` -> TEXT.RSC 302. That is the whole
+  // point of the control, and the freeEdit pool runs NEGATIVE too
+  // (StatsRollout.cs:231-276 clamps the VALUE, not the pool), which
+  // the reset grants for free exactly as DFU's does.
+  const f = readyBuilder();
+  const c = f.custom;
+  c.statPool = -3;
+  f.customExit();
+  assert.equal(f.state, 'customClass', 'an overspent ledger is refused');
+  assert.deepEqual(c.box, [{ text: 'record 302', center: true }]);
+  c.box = null;
+  f.input('char:u', { key: 'u', ctrlKey: true });
+  assert.equal(c.statPool, 0);
+  f.customExit();
+  assert.notEqual(f.state, 'customClass', 'and now it leaves');
+});
+
+test('ROAD-E2: the wizard window hands the KeyboardEvent to the flow', () => {
+  // The action string alone cannot carry a modifier - Ctrl-U and a
+  // bare u are both 'char:u' through the shared overlay table
+  // (ui/input.js:151-157). Both hosts' key seams already pass the
+  // event (townTalk.js:335 `overlay.input(e.code, e)`,
+  // dungeonContext.js `overlayInput(action, e)`), so the window must
+  // pass it on.
+  const f = readyBuilder();
+  f.custom.statPool = 6;
+  const w = createChargenWindow(f, { onDone() {}, onCancel() {} });
+  w.input('KeyU', { key: 'u', code: 'KeyU', ctrlKey: true });
+  assert.equal(f.custom.statPool, 0, 'the modifier survived the wrapper');
+  // and the synthesised fallback event (no host event at all) is
+  // unmodified, so it types rather than resetting
+  f.custom.statPool = 6;
+  w.input('KeyU');
+  assert.equal(f.custom.statPool, 6);
+});

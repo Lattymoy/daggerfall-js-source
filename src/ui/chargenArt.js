@@ -175,6 +175,20 @@ export const METHOD_CHOOSE_QUESTIONS = Object.freeze([8, 100, 167, 34]);  // cho
  *  and so the one the pins could not drive. Draw and hit share it. */
 export const PICK_PANEL = Object.freeze([60, 36, 200, 128]);
 
+/** ROAD-E2 - the picker's scroll bar in NATIVE coordinates, the ONE
+ *  rect the draw, the hit and the drag all resolve against. DFU adds
+ *  it as a pickerPanel CHILD at (181,23) sized 5x82
+ *  (DaggerfallListPickerWindow.cs:96-99), so its screen rect is the
+ *  panel's own origin plus that - 60+181, 36+23. Every list picker in
+ *  the wizard inherits it: the class list (CreateCharClassSelect
+ *  extends DaggerfallListPickerWindow), the builder's skill and help
+ *  pickers (CreateCharCustomClass.cs:283, :368) and the two special
+ *  advantage pickers (CreateCharSpecialAdvantageWindow.cs:270, :273). */
+export const PICK_SCROLL_RECT = Object.freeze([
+  PICK_PANEL[0] + RECTS.pickScroll[0], PICK_PANEL[1] + RECTS.pickScroll[1],
+  RECTS.pickScroll[2], RECTS.pickScroll[3],
+]);
+
 // U20a - the CUSTOM-CLASS BUILDER (CreateCharCustomClass.cs). The
 // window is CUST00I0.IMG full-screen; the difficulty dagger is
 // CUST08I0.IMG (24x9) at x 220 with its Y from the difficulty law;
@@ -728,14 +742,24 @@ function drawClassConfirm(renderer, m, font, flow) {
  *  (:135-139) paints NOTHING when the list fits - which thumbSpan's
  *  null carries. The rail and both arrows are baked into PICK00I0.
  *
- *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
- *  picker inherits VerticalScrollBar's trough paging (MouseClick
- *  :142-150) and thumb drag (Update :101-130); this arc's hit path
- *  (chargenHit's three picker arms) answers only the two 9x9 arrows
- *  and the rows, so a click on the rail does nothing. Wiring it needs
- *  a scroll-index result threaded through chargen.js's flow for all
- *  three pickers plus a held-button frame the chargen host does not
- *  poll - both outside the thumb-art law this comment used to hold. */
+ *  ROAD-E2 SHIPPED THE HIT, which AUDIT 17g had narrowed to itself.
+ *  All three of chargenHit's picker arms now answer `PICK_SCROLL_RECT`
+ *  with `{ pickBar: [vx, vy] }`, and `ChargenFlow` drives DFU's own
+ *  component through it - one `VerticalScrollBar` (ui/verticalScrollBar.js,
+ *  the same object the shared list picker and the item scroller use),
+ *  re-pointed each frame at whichever picker is open by
+ *  `_openPickList` + `syncPickBar`, which are
+ *  DaggerfallListPickerWindow.Update (:103-119) verbatim: TotalUnits
+ *  from the live list, DisplayUnits from RowsDisplayed, and the index
+ *  flowing FROM the bar while the thumb is dragged and TO it
+ *  otherwise. `press()` is MouseClick's trough paging (:142-150) and
+ *  Update's drag latch (:105-113); `flow.hover` is Update's per-frame
+ *  arm, polling the host's `e.buttons & 1` for
+ *  InputManager.GetMouseButton(0) exactly as ui/listPicker.js:259
+ *  does. The held-button frame the flag named is that hover seam, and
+ *  every host that runs the wizard already routes it
+ *  (townTalk.hover for world.js and exterior.js, overlayHover for
+ *  dungeonContext.js; worldModes.js and interior.js never run it). */
 function drawListPicker(renderer, m, font, names, scroll, selected, rows = LIST_ROWS) {
   const [ox, oy] = PICK_PANEL;
   drawImg(renderer, img('PICK00I0.IMG'), m, ox, oy);
@@ -1261,6 +1285,7 @@ export function chargenHit(flow, vx, vy) {
     const lx = vx - ox, ly = vy - oy;
     if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return 'up';
     if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return 'down';
+    if (inRect(PICK_SCROLL_RECT)) return { pickBar: [vx, vy] };   // ROAD-E2: the bar answers in NATIVE coords - press() and the drag both want them
     // a click ON a row selects it (DaggerfallListPickerWindow's list)
     const [plx, ply, plw] = RECTS.pickList;
     if (lx >= plx && lx < plx + plw && ly >= ply) {
@@ -1323,6 +1348,7 @@ export function chargenHit(flow, vx, vy) {
       const lx = vx - ox, ly = vy - oy;
       if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return { pickStep: -1 };
       if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
+      if (inRect(PICK_SCROLL_RECT)) return { pickBar: [vx, vy] };   // ROAD-E2: the bar answers in NATIVE coords - press() and the drag both want them
       const [plx, ply, plw] = RECTS.pickList;
       if (lx >= plx && lx < plx + plw && ly >= ply) {
         const row = Math.floor((ly - ply) / (c._rowH || 1));
@@ -1353,6 +1379,7 @@ export function chargenHit(flow, vx, vy) {
         const lx = vx - ox, ly = vy - oy;
         if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return { pickStep: -1 };
         if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
+        if (inRect(PICK_SCROLL_RECT)) return { pickBar: [vx, vy] };   // ROAD-E2: the bar answers in NATIVE coords - press() and the drag both want them
         const [plx, ply, plw] = RECTS.pickList;
         if (lx >= plx && lx < plx + plw && ly >= ply) {
           // AUDIT 18: advPickerItemCount rows, at SmallFont's 6px pitch
