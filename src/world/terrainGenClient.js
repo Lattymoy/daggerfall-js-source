@@ -116,11 +116,12 @@ export class TerrainGenClient {
    *  the fallback, a copy posted to the worker. No build anywhere. */
   setRoadsData(net, onStats = null) {
     this._settlements = null;
-    this._roads = { roads: net.roads, tracks: net.tracks };
+    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water };
     this._roadsStats = onStats;
     if (this._worker) {
-      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice() };
-      this._worker.postMessage({ t: 'roads', net: copy, stats: net.stats ?? null }, [copy.roads.buffer, copy.tracks.buffer]);
+      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water };
+      const xfer = [copy.roads.buffer, copy.tracks.buffer]; if (copy.rivers) xfer.push(copy.rivers.buffer); if (copy.streams) xfer.push(copy.streams.buffer);
+      this._worker.postMessage({ t: 'roads', net: copy, stats: net.stats ?? null }, xfer);
     } else if (onStats) onStats(net.stats ?? { source: 'basic-roads' });
   }
 

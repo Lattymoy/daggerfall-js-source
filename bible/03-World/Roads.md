@@ -319,6 +319,29 @@ is removed; the mod paints none, and an arm now stops at the rect as
 his does. Rivers and streams are loaded and unpainted, off by default
 as the mod ships them; their painter branch is the next slice.
 
+## ROADS 23 - the painter is a port (2026-09-02)
+
+With permission, the painter is BasicRoadsTexturing.cs's PaintPath
+ported table-driven as he wrote it: six tile slots per path type
+(cardinal inner and outer, diagonal inner, outer and gap, the inside
+corner), his exact conditions, his paint order - roads, then rivers and
+streams if water is on, then tracks, the first to paint a tile winning.
+The earlier readings-from-a-description are gone with their
+approximations, and every pin they had written still passes against
+the port, which is the best check a rewrite can get.
+
+Three things the readings never had. PIXEL CORNERS: a diagonal leaving
+a neighbouring pixel brushes this pixel's corner tile, and the mod
+paints a diagonal-outer there so the road does not gap at the seam;
+the corner byte is the east neighbour's SW|NW bits and the west's
+NE|SE, as he derives it. RIVERS: water in the centre - stored as 0xff
+so the pipeline reads it as set, the location tiles' own trick - with
+a BANK (a cardinal outer of 6/21/31, the one path type that has one),
+a diagonal gap ring, and centre and corner joins where a stream meets
+them. STREAMS: the bank tile as a narrow centre, no outer. Both behind
+`water` on the network object, OFF by default as the mod ships them.
+The smoother's tile set includes the water tiles, as his does.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

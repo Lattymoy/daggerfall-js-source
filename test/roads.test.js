@@ -746,8 +746,55 @@ test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls 
   assert.equal(await loadModRoads(fetch404), null, 'a failed fetch is a null');
   assert.equal(await loadModRoads(undefined), null, 'no fetch at all is a null');
   const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
-  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks \};/, 'the worker takes his arrays ready-made');
+  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water \};/, 'the worker takes his arrays ready-made, water included');
   const host = fs.readFileSync('src/scenes/world.js', 'utf8');
   assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(his/, 'his first');
   assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads\);/, 'ours as the fallback');
+});
+
+// ROADS 23: THE PAINTER IS A PORT - PaintPath table-driven, his slots,
+// his conditions, his order. Three things the old readings never had.
+test('ROADS 23: a neighbour\u2019s diagonal paints this pixel\u2019s corner tile', async () => {
+  const { pathCorners } = await import('../src/world/roadPainter.js');
+  // pixel P at (10,10); its EAST neighbour carries a NW diagonal - the
+  // line runs from E to N past P's north-east corner (127,127).
+  const m = new Uint8Array(MAP_W * MAP_H);
+  m[10 * MAP_W + 11] = DIR.NW;
+  assert.equal(pathCorners(m, 10, 10, MAP_W), DIR.NW, 'the east neighbour\u2019s NW bit is P\u2019s NW corner byte');
+  const tileData = new Uint8Array(129 * 129).fill(TILE.grass), t = new Uint8Array(128 * 128);
+  const n = paintRoads(tileData, t, 0, 0, null, 129, { corners: { road: DIR.NW } });
+  assert.equal(n, 1, 'exactly one tile - the corner');
+  assert.equal(t[127 * 128 + 127] & 0x3f, TILE.roadGrass, 'P\u2019s (127,127) is the diagonal outer tile');
+  assert.ok(t[127 * 128 + 127] & TILE.ROTATE, 'turned, as the mod turns it');
+  // the WEST neighbour's SE brushes (0,0), turned and mirrored
+  const u = new Uint8Array(128 * 128);
+  paintRoads(tileData, u, 0, 0, null, 129, { corners: { road: DIR.SE } });
+  assert.equal(u[0] & 0x3f, TILE.roadGrass); assert.ok((u[0] & TILE.ROTATE) && (u[0] & TILE.FLIP));
+});
+
+test('ROADS 23: rivers paint water with a bank and streams narrow, only when water is on', () => {
+  const grass = () => new Uint8Array(129 * 129).fill(TILE.grass);
+  const off = new Uint8Array(128 * 128);
+  assert.equal(paintRoads(grass(), off, 0, 0, null, 129, { river: DIR.N | DIR.S, stream: DIR.E | DIR.W, water: false }), 0, 'off by default, as the mod ships it');
+  // ...and off INSIDE the loop too: a road makes the loop run, and the
+  // river beside it still paints nothing.
+  const withRoad = new Uint8Array(128 * 128);
+  paintRoads(grass(), withRoad, DIR.N | DIR.S, 0, null, 129, { river: DIR.E | DIR.W, water: false });
+  assert.equal(withRoad[63 * 128 + 10], 0, 'the E-W river is not painted while water is off');
+  assert.equal(withRoad[10 * 128 + 63] & 0x3f, TILE.road, 'the road is');
+  const r = new Uint8Array(128 * 128);
+  paintRoads(grass(), r, 0, 0, null, 129, { river: DIR.N | DIR.S, water: true });
+  assert.equal(r[10 * 128 + 63], 0xff, 'the river\u2019s centre is water, stored as 0xff so the pipeline reads it as set');
+  assert.equal(r[10 * 128 + 64], 0xff);
+  assert.equal(r[10 * 128 + 62] & 0x3f, 21, 'a river HAS a cardinal outer - its bank, 21 on grass');
+  assert.equal(r[10 * 128 + 65] & 0x3f, 21);
+  assert.equal(r[10 * 128 + 61], 0, 'and stops there');
+  const st = new Uint8Array(128 * 128);
+  paintRoads(grass(), st, 0, 0, null, 129, { stream: DIR.E | DIR.W, water: true });
+  assert.equal(st[63 * 128 + 10] & 0x3f, 21, 'a stream\u2019s centre is the bank tile - a narrow watercourse');
+  assert.equal(st[62 * 128 + 10], 0, 'with no outer');
+  // a road beats water on the same tile: the mod's paint order
+  const both = new Uint8Array(128 * 128);
+  paintRoads(grass(), both, DIR.N | DIR.S, 0, null, 129, { river: DIR.N | DIR.S, water: true });
+  assert.equal(both[10 * 128 + 63] & 0x3f, TILE.road, 'roads first');
 });
