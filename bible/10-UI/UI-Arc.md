@@ -5668,7 +5668,9 @@ service, and `guildServiceFlow`'s `Teleport: null` still points here;
 the quest journal's click-through travel (`GotoPlace`) has no journal
 door yet; TextureReplacement's custom region maps and region
 overlays have no door; and the HUD smash-to-black around the trip
-waits on a fade layer the port does not have.
+waited on a fade layer the port did not have - **CLOSED at ROAD-D D4**:
+`src/ui/fadeLayer.js` is FadeBehaviour.cs whole, and `ui/travelPopUp.js`
+fires `hudFade.smashHUDToBlack()` on the frame the counter empties.
 
 ## U42 - THE SPELLBOOK (2026-08-24)
 
@@ -6257,10 +6259,19 @@ inventory window in the exterior host.
 
 **FLAGGED, by name:** `HUDActiveSpells` (the buff/debuff icon rows)
 and `HUDEscortingNPCFaces` (quest-gated) are the rest of that Ledger
-row. `LargeHUDOffsetHorse` and `LargeHUDUndockedOffsetWeapon` move the
+row. `LargeHUDOffsetHorse` and `LargeHUDUndockedOffsetWeapon` were
+recorded here as read by nothing, on the reasoning that they move the
 bar for a horse sprite this port does not draw and a viewmodel with no
-such offset seam, so both settings stay read by nothing and are
-recorded that way rather than silently tiered live. The interior
+such offset seam. **ROAD-D D10 SHIPPED BOTH**, and that reasoning was
+already stale when it was written: the horse is systems/riding.js's
+sprite drawn by scenes/world.js and the viewmodel is
+combat/fpsWeapon.js's one bottom-anchored quad. `horseOffsetHeight`
+(TransportManager.cs:304-309, which never asks about docking) and
+`weaponOffsetHeight` (FPSWeapon.cs:146-155, FORCED whenever the bar is
+docked whatever the setting says) live in `src/ui/hudLarge.js`, read by
+`ridingRect` in the world host and by fpsWeapon's default
+`offsetHeight`, and both keys are tiered live in
+`src/systems/settings.js`. Port-Ledger.md strikes the same clause. The interior
 host's char-sheet and inventory panels swallow their click and do
 nothing, because F5 and F6 do not reach interiors either — the same
 arc, named in the same place.

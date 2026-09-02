@@ -4389,9 +4389,16 @@ lie the moment travel used it; a name that misleads the next reader is
 the same defect as a stale comment, and this run has now found four of
 those.
 
-The two flags that genuinely DO still idle - the HUD smash-to-black
-fade and EXIT's key-up deferral - stay named, and a pin asserts they
-stay named, so this slice cannot be read as having closed the whole row.
+The two flags that genuinely still idled at TP1 - the HUD
+smash-to-black fade and EXIT's key-up deferral - stayed named, and a
+pin asserted they stayed named, so this slice could not be read as
+having closed the whole row. **WAVE D's D4 closed both** and inverted
+that pin: the fade is `src/ui/fadeLayer.js` (FadeBehaviour.cs whole)
+fired from `ui/travelPopUp.js` on the frame the counter empties, the
+deferral is travelPopUp's KeyDown-arms / KeyUp-pops
+`isCloseWindowDeferred` over the travelMapWindow keyup seam, and
+`test/travelguild.test.js` now asserts neither flag survives in that
+header.
 
 Pins: 6 in `test/travelguild.test.js`. Campaign: 9 mutants, 9 killed
 after two survived the first run, and the two survivors were different

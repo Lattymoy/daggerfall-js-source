@@ -1860,11 +1860,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // shares this mount (its foes list is empty, so the scan arms answer
   // none); the dungeon-mode ctx is dungeonContext's to mount. FS1:
   // that used to read "FLAGGED there with the rest of its enchant
-  // wiring", and there was no flag there - setDefaultEnchantCtx has
+  // wiring", and there was no flag there - setDefaultEnchantCtx HAD
   // exactly one caller in the tree, this one, so the standalone
-  // ?dungeon host runs every CastWhenUsed / CastWhenStrikes / SoulBound
+  // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
-  // it is silent. The flag now exists where the work does. S40 filled isResting
+  // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
+  // and dungeonContext.js:1703 mounts the same one, gated on
+  // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
+  // session singleton and EC1 already routes THIS host's mount into
+  // that context through modes.dungeonCtx - so worldModes.js:4047
+  // passes false beside its `chargen: false` and only the standalone
+  // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
   // ground (no rest window here yet)", and this slice put one here.
   // V2c filled inSunlight/inHolyPlace in the same way: the answers

@@ -351,3 +351,35 @@ test('D10: the offset really moves the horse rect and the viewmodel quad', () =>
   assert.ok(src('scenes/world.js').includes('ridingRect(canvas, ridingArt, horseOffsetHeight())'),
     'the world host feeds the horse arm');
 });
+
+test('D10: the narrowed flag\'s citation resolves to the activation ray it rests on', () => {
+  // A withdrawal is only as good as its evidence, and the evidence
+  // here IS the citation: "there are no screen-to-ray conversions to
+  // fix" rests entirely on the reader being able to open the named
+  // line and find the camera-forward pick. It named scenes/world.js
+  // :5880 - the AUDIT 18 arrow-streaming block, sixty-odd lines from
+  // any activation - so the one reader who checked would have found
+  // nothing and had to re-derive the clause. Resolve it instead of
+  // trusting it, both ways: the cite must land on the call, and the
+  // hosts it names must be ALL the hosts that carry one.
+  const header = src('ui/hudLarge.js').split('WHAT REALLY REMAINS')[0];
+  const cites = [...header.matchAll(/scenes\/([A-Za-z0-9_]+)\.js:(\d+)/g)]
+    .map((m) => [`scenes/${m[1]}.js`, Number(m[2])]);
+  assert.ok(cites.length >= 2, 'the withdrawal cites the hosts it rests on');
+  for (const [rel, n] of cites) {
+    const line = src(rel).split('\n')[n - 1];
+    assert.match(line, /townTalk\.tryActivate\(cam\.pos, useFwd/,
+      `${rel}:${n} is cited for the activation ray and must BE it`);
+    // ...and the ray really is the camera's own forward vector, built
+    // from the angles rather than unprojected from a pixel.
+    assert.match(src(rel).split('\n').slice(Math.max(0, n - 20), n).join('\n'),
+      /const useFwd = \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)/,
+      `${rel}'s useFwd is the camera angles, so a reduced viewport moves no pick`);
+  }
+  // no third host carries the call and goes uncited
+  const hosts = ['world', 'exterior', 'dungeon', 'dungeonContext', 'interior', 'worldModes']
+    .filter((h) => /townTalk\.tryActivate\(cam\.pos, useFwd/.test(src(`scenes/${h}.js`)))
+    .map((h) => `scenes/${h}.js`);
+  assert.deepEqual(cites.map(([r]) => r).sort(), hosts.sort(),
+    'the cite names exactly the hosts that pick this way - "the other hosts" was one host');
+});

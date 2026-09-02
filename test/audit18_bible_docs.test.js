@@ -597,3 +597,42 @@ test('AUDIT 39r: three arc pages stop advertising work the wave closed or dispro
   assert.match(ench, /export const entityImprovedAcuteHearing =/);
   assert.match(ench, /export const entityImprovedAdrenalineRush =/);
 });
+
+test('WAVE D: two ACTIVE arc pages stop describing work this wave shipped', () => {
+  // The arc pages are not frozen chronicles - this same wave retro-
+  // edited dated paragraphs in both of them the moment a slice made
+  // them false (UI-Arc's "dungeonContext WIRED since WAVE D",
+  // Systems-Arc's FS1 section moved to "had"/"ran"/"was"). Three live
+  // claims were missed, and each has a mechanical answer in the tree,
+  // so pin them the two-way way AUDIT 18 pins everything: the sentence
+  // may not come back, AND the facility that retired it must still be
+  // there.
+  const ui = read('bible/10-UI/UI-Arc.md');
+  const sys = read('bible/06-Systems/Systems-Arc.md');
+
+  // 1. D10 shipped the two large-HUD offsets, and tiered both live.
+  assert.equal(/both settings stay read by nothing/.test(ui), false,
+    'UI-Arc still records the two large-HUD offsets as read by nothing');
+  const hud = read('src/ui/hudLarge.js');
+  assert.match(hud, /export function horseOffsetHeight\(/);
+  assert.match(hud, /export function weaponOffsetHeight\(/);
+  const settings = read('src/systems/settings.js');
+  assert.match(settings, /'GUI\/LargeHUDOffsetHorse': 'src\/ui\/hudLarge\.js'/);
+  assert.match(settings, /'GUI\/LargeHUDUndockedOffsetWeapon': 'src\/ui\/hudLarge\.js'/);
+
+  // 2. D4 built the fade layer, so no page may say the port has none.
+  assert.equal(/fade layer the port does not have/.test(ui), false,
+    'UI-Arc still says the fast-travel smash waits on a fade layer that exists');
+  assert.match(read('src/ui/fadeLayer.js'), /smashHUDToBlack/);
+  assert.match(read('src/ui/travelPopUp.js'), /hudFade\.smashHUDToBlack\(\);/);
+
+  // 3. ...and Systems-Arc's TP1 section cited a pin for a claim that
+  //    pin now REFUTES: travelguild.test.js used to assert both flags
+  //    were still named as open, and now asserts they are gone.
+  assert.equal(/The two flags that genuinely DO still idle/.test(sys), false,
+    'Systems-Arc still says the two D4 flags idle, citing a pin that asserts the opposite');
+  assert.match(read('test/travelguild.test.js'),
+    /no fade layer in the port\/\.test\(unquoted\), false/,
+    'the cited pin is the INVERTED one');
+  assert.match(read('src/ui/travelPopUp.js'), /this\.isCloseWindowDeferred = true;/);
+});

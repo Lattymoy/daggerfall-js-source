@@ -126,4 +126,21 @@ test('L2 ledger: a section-C "unported" claim whose facility shipped is struck, 
       `the ledger says ${String(claim)} shipped; ${file} must still carry it`);
   }
   assert.deepEqual(unstruck, [], 'every closed section-C claim carries its strike and its slice');
+
+  // CR (wave D): the same disease inside a RESIDUE list. The ENCHANTING
+  // row's residue items are struck one by one as they close, and D9
+  // edited that very row - striking the held-INSTANT clause - while
+  // walking past "the dungeon host's ctx mount" two clauses to its
+  // left, which D8 had already built. The generic loop above cannot
+  // see it: the line carries strikes, just not on this item.
+  const enchanting = rows.find((l) => /~~ENCHANTING, WHOLE~~/.test(l));
+  assert.ok(enchanting, 'section C still carries the ENCHANTING row');
+  assert.equal(/RESIDUE: the dungeon host's ctx mount/.test(enchanting), false,
+    'a residue item D8 closed does not stand as a live "unported" claim');
+  assert.match(enchanting, /RESIDUE: ~~the dungeon host's ctx mount~~ CLOSED D8/,
+    'it is struck, and names the slice that closed it');
+  // and the two-sided half: the mount must still be in the tree.
+  assert.match(readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8'),
+    /setDefaultEnchantCtx\(createEnchantCtx\(\{/,
+    'the ledger says the dungeon host mounts the enchant ctx; dungeonContext.js must still do it');
 });

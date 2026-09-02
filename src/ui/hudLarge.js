@@ -86,10 +86,15 @@
 // ROAD-D D10 re-examined this and NARROWED it. One clause of the
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
-// forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)`,
-// scenes/world.js:5880, and the same pair in the other hosts), not a
-// pixel unprojected through the projection matrix, so a reduced
-// viewport would not move a single pick.
+// forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
+// scenes/world.js:5819 and scenes/exterior.js:2043, the only two
+// hosts that carry the call, each over a useFwd built from cam.yaw
+// and cam.pitch one line above it), not a pixel unprojected through
+// the projection matrix, so a reduced viewport would not move a
+// single pick. (That cite pointed sixty-odd lines past the call, into
+// the AUDIT 18 arrow-streaming block, for a whole wave - a withdrawal
+// is only as good as its evidence, so test/hudlarge.test.js RESOLVES
+// the line numbers here rather than trusting them.)
 //
 // WHAT REALLY REMAINS is still two halves that must land together:
 //   - the WORLD PASS's viewport. gl.viewport is set full-canvas in
