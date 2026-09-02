@@ -102,7 +102,7 @@ test('EE9: snow is a HEIGHT in the terrain shader, the grass is buried by it, an
   const r = readFileSync('src/render/renderer.js', 'utf8');
   const vi = r.indexOf('const TERRAIN_VS = `'); const vs = r.slice(vi, r.indexOf('`;', vi));
   assert.match(vs, /uniform sampler2D uField;/, 'declared inside the vertex stage that reads it');
-  assert.match(vs, /if \(uFieldAmt > 0\.0\) \{/, 'free when there is no field');
+  assert.match(vs, /if \(uFieldAmt > 0\.0 && uPatch < 0\.5\) \{/, 'free when there is no field (EE15: and off on the patch)');
   // EE14: sampled per VERTEX still, and now the MINIMUM over the cells
   // around it, so a vertex touching a road stays at the road's level and
   // the snow ramps down to it
@@ -280,4 +280,52 @@ test('EE14: the season pins the calendar, roads keep their level, the trench sho
   const b = new SurfaceField({ heights, tileDim: dim }); b.setBase(0.7); for (let i = 0; i < 200; i++) b.tick(60, { warmth: 0.1 });
   const k = ((4 * a.cells + 1) * a.dim + (4 * a.cells + 1)) * 4 + 1;
   assert.ok(Math.abs(a.data[k] - b.data[k]) < 0.05, `one pass lands where the ticks converge (${a.data[k].toFixed(2)} vs ${b.data[k].toFixed(2)})`);
+});
+
+// ═══ EE15: the near patch - the trench and the verge are GEOMETRY ═══
+test('EE15: the near patch bakes a footprint as a hole and a road as a level surface the snow ramps down to', async () => {
+  const { buildNearPatch } = await import('../src/world/surfaceField.js');
+  const dim = 128; const hDim = dim + 1;
+  const heights = new Float32Array(hDim * hDim).fill(50);
+  const tilemap = new Uint8Array(dim * dim).fill(2 << 2);
+  for (let tx = 0; tx < dim; tx++) tilemap[70 * dim + tx] = 46 << 2;        // a road across tile row 70
+  const f = new SurfaceField({ heights, tileDim: dim });
+  f.setHard(tilemap, new Set([46, 47, 55])); f.setBase(1); f.fillToBase();
+  f.stamp(64 * 6.4 + 3, 64 * 6.4 + 3);
+  const p = buildNearPatch({ field: f, terrainHeights: heights, tileDim: dim, centreTile: [64, 66] });
+  const n = p.cellsAcross; const cs = f.cellSize;
+  const yAt = (vx, vz) => p.positions[(vz * (n + 1) + vx) * 3 + 1];
+  const vx = Math.round((64 * 6.4 + 3) / cs) - p.tx0 * f.cells; const vz = Math.round((64 * 6.4 + 3) / cs) - p.tz0 * f.cells;
+  // the print is a HOLE: its vertex sits well below the untouched snow
+  assert.ok(yAt(vx + 6, vz) > 51.0, `untouched snow stands on the ground (${yAt(vx + 6, vz).toFixed(2)})`);
+  assert.ok(yAt(vx, vz) < yAt(vx + 6, vz) - 0.5, `the footprint is a hole in the geometry (${yAt(vx, vz).toFixed(2)} vs ${yAt(vx + 6, vz).toFixed(2)})`);
+  // the road keeps its level, and the snow RAMPS down to it: the road's
+  // vertex is near the ground, the verge two cells out is between, the
+  // open snow beyond is full
+  const rz = 70 * f.cells + 2 - p.tz0 * f.cells;   // a vertex on the road's centre line
+  const road = yAt(vx, rz); const verge = yAt(vx, rz + 3); const open = yAt(vx, rz + 8);
+  assert.ok(road < 50.5, `the road sits at its own level (${road.toFixed(2)})`);
+  assert.ok(open > 51.0, `the open snow is full (${open.toFixed(2)})`);
+  assert.ok(verge > road && verge < open, `the verge ramps between (${road.toFixed(2)} < ${verge.toFixed(2)} < ${open.toFixed(2)})`);
+  // normals carry the walls: the vertex beside the print leans
+  const k = (vz * (n + 1) + vx + 1) * 3;
+  assert.ok(Math.abs(p.normals[k]) > 0.05, 'a trench has walls in its normals');
+  // the renderer: the patch's vertices carry the snow already, so the
+  // vertex stage must not add it again, the fragment stage must trust the
+  // patch's own normal, and the offset must be put back after the draw
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const vi = r.indexOf('const TERRAIN_VS = `'); const vs = r.slice(vi, r.indexOf('`;', vi));
+  assert.match(vs, /if \(uFieldAmt > 0\.0 && uPatch < 0\.5\) \{/, 'no double displacement');
+  const fi = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(fi, r.indexOf('`;', fi));
+  assert.match(fs, /mix\(uPatch > 0\.5 \? n : snowN, driftN, 0\.55\)/, 'no double slope');
+  assert.match(r, /if \(patch\) \{ gl\.enable\(gl\.POLYGON_OFFSET_FILL\); gl\.polygonOffset\(-2\.0, -2\.0\); \}/);
+  assert.match(r, /if \(patch\) gl\.disable\(gl\.POLYGON_OFFSET_FILL\);/, 'the pipeline is left as it was found');
+  assert.match(r, /updateTerrainSurface\(surface, positions, normals\) \{/, 'refilled in place, not recreated');
+  // the host: baked beside the field, rebaked on movement or change,
+  // drawn over the coarse ground, destroyed with the pixel
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /const moved = !f\.patchTile \|\| Math\.abs\(tile\[0\] - f\.patchTile\[0\]\) > 4 \|\| Math\.abs\(tile\[1\] - f\.patchTile\[1\]\) > 4;/);
+  assert.match(w, /if \(span\) \{ renderer\.updateFieldRows\(f\.tex, FIELD_DIM, f\.sim\.pixels, span\.first, span\.last\); f\.patchDirty = true; \}/, 'a changed field rebakes the patch');
+  assert.match(w, /renderer\.drawTerrain\(p\.field\.patch, pixelMatrix,[\s\S]{0,200}true\);/, 'drawn as a patch');
+  assert.match(w, /if \(p\.field\.patch\) renderer\.destroyMesh\(p\.field\.patch\);/, 'gone with the pixel');
 });

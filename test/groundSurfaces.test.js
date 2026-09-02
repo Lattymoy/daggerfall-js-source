@@ -247,7 +247,7 @@ test('EE7: the draw goes through every door the renderer has, and reports', () =
   assert.match(w, /if \(stride === 1 && !p\.grass\) p\.grass = buildGrassFor\(/, 'born when the pixel comes near');
   assert.match(w, /else if \(stride !== 1 && p\.grass\) \{ renderer\.destroyGrass\(p\.grass\); p\.grass = null; \}/, 'gone when it recedes');
   assert.match(w, /renderer\.destroyGrass\(p\.grass\);   \/\/ EE7/, 'and gone with the pixel');
-  assert.match(w, /renderer\.tileNormalFor\(p\.groundArchive\) \/\* EE6 \*\/\);\n[\s\S]{0,400}if \(p\.grass\) renderer\.drawGrass\(p\.grass, pixelMatrix,/, 'drawn right after its terrain');
+  assert.match(w, /renderer\.tileNormalFor\(p\.groundArchive\) \/\* EE6 \*\/\);\n[\s\S]{0,900}if \(p\.grass\) renderer\.drawGrass\(p\.grass, pixelMatrix,/, 'drawn right after its terrain (EE15: the near patch sits between)');
   assert.match(w, /window\.__grassCensus = \(\) => \{/, 'the census the probe reads');
 });
 

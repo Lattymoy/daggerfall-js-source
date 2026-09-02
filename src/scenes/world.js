@@ -17,7 +17,7 @@ import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
 import { placeGrass, ROAD_RECORDS } from '../render/groundSurfaces.js';   // EE7: the grass placer; EE10: the road records the field reads
-import { SurfaceField, warmthAt, baseSnowDepth, FIELD_DIM, SNOW_DEPTH_M } from '../world/surfaceField.js';   // EE9: the surface field   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
+import { SurfaceField, warmthAt, baseSnowDepth, buildNearPatch, FIELD_DIM, SNOW_DEPTH_M } from '../world/surfaceField.js';   // EE15: the near patch   // EE9: the surface field   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -926,7 +926,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (span) renderer.updateFieldRows(tex, FIELD_DIM, sim.pixels, span.first, span.last);
     // ?field=sim keeps the simulation and hides its look - a bisect door
     const amount = new URLSearchParams(globalThis.location?.search ?? '').get('field') === 'sim' ? 0 : 1;
-    return { sim, tex, size: TERRAIN_SIZE, snowM: SNOW_DEPTH_M, amount, rain: 0, lastStep: null, stepPhase: 0 };
+    return { sim, tex, size: TERRAIN_SIZE, snowM: SNOW_DEPTH_M, amount, rain: 0, lastStep: null, stepPhase: 0,
+      heights, patch: null, patchTile: null, patchDirty: true };   // EE15: the heights the patch bakes over, and the patch itself
   }
 
   function buildGrassFor(px, py, groundArchive, tilemapBytes, samples) {
@@ -975,7 +976,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!p) return;
     renderer.destroyMesh(p.terrain);
     renderer.destroyGrass(p.grass);   // EE7
-    if (p.field) { renderer.gl.deleteTexture(p.field.tex); p.field = null; }   // EE9
+    if (p.field) { renderer.gl.deleteTexture(p.field.tex); if (p.field.patch) renderer.destroyMesh(p.field.patch); p.field = null; }   // EE9 / EE15
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
@@ -4152,6 +4153,15 @@ export async function bootWorld(canvas, renderer, params, status) {
           out.local = [Math.round(lx * 10) / 10, Math.round(lz * 10) / 10];
           out.lastStamp = p.field.sim.lastStamp ?? null;
           out.stamps = p.field.sim.stamps ?? 0;
+          // EE15: the patch, and the trench IN ITS GEOMETRY - the vertex
+          // nearest the feet against one twelve cells to the side
+          if (p.field.patch && p.field.patchTile) {
+            const built = buildNearPatch({ field: p.field.sim, terrainHeights: p.field.heights, tileDim: TERRAIN_TILE_DIM, centreTile: p.field.patchTile, snowM: SNOW_DEPTH_M * p.field.amount });
+            const n = built.cellsAcross; const cs = p.field.sim.cellSize;
+            const vx = Math.round(lx / cs) - built.tx0 * p.field.sim.cells; const vz = Math.round(lz / cs) - built.tz0 * p.field.sim.cells;
+            const yAt = (x, z) => built.positions[(Math.max(0, Math.min(n, z)) * (n + 1) + Math.max(0, Math.min(n, x))) * 3 + 1];
+            out.patch = { verts: built.positions.length / 3, underFeet: Math.round(yAt(vx, vz) * 100) / 100, beside: Math.round(yAt(vx + 12, vz) * 100) / 100 };
+          }
         }
       }
       if (out.pixels) { out.snow /= out.pixels; out.water /= out.pixels; }
@@ -6322,6 +6332,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.setSurfaceField(p.field ?? null);   // EE9: this piece's field, or none
         renderer.drawTerrain(p.terrain, pixelMatrix,
           renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive) /* EE6 */);
+        // EE15: the near patch, over the coarse ground it was baked from,
+        // with the same tiles, tilemap and normals - only its vertices differ
+        if (p.field?.patch) {
+          renderer.drawTerrain(p.field.patch, pixelMatrix,
+            renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive), true);
+        }
         // EE7: the pixel's grass, after its terrain and inside the same
         // cull - a pixel that is not drawn has no grass drawn either
         if (p.grass) renderer.drawGrass(p.grass, pixelMatrix, performance.now() / 1000, sky?.cloudShadow ? { dir: sky.cloudShadow.wind[0] || sky.cloudShadow.wind[1] ? [sky.cloudShadow.wind[0], sky.cloudShadow.wind[1]] : [1, 0.2], speed: 40 } : null);
@@ -6792,7 +6808,33 @@ export async function bootWorld(canvas, renderer, params, status) {
               stride(g, g.ai.feet[0], g.ai.feet[2]);
             }
             const span = f.sim.flush();
-            if (span) renderer.updateFieldRows(f.tex, FIELD_DIM, f.sim.pixels, span.first, span.last);
+            if (span) { renderer.updateFieldRows(f.tex, FIELD_DIM, f.sim.pixels, span.first, span.last); f.patchDirty = true; }
+            // EE15: THE NEAR PATCH - a window of the pixel's tiles at the
+            // field's own resolution, baked with the terrain's height plus
+            // the field's snow, so a footprint is a hole and a road's verge
+            // a slope. Rebuilt when the walker's tile moves out of the
+            // window's middle, refilled in place when the field under it
+            // changes. Only the pixel the player stands in carries one;
+            // a print the player is not near is the fragment stage's.
+            const plx = feet[0] - t[0]; const plz = feet[2] - t[2];
+            const inside = plx >= 0 && plz >= 0 && plx < TERRAIN_SIZE && plz < TERRAIN_SIZE;
+            if (!inside) {
+              if (f.patch) { renderer.destroyMesh(f.patch); f.patch = null; f.patchTile = null; }
+            } else {
+              const tile = [Math.floor(plx / 6.4), Math.floor(plz / 6.4)];
+              const moved = !f.patchTile || Math.abs(tile[0] - f.patchTile[0]) > 4 || Math.abs(tile[1] - f.patchTile[1]) > 4;
+              if (moved || f.patchDirty) {
+                const built = buildNearPatch({ field: f.sim, terrainHeights: f.heights, tileDim: TERRAIN_TILE_DIM, centreTile: tile, snowM: SNOW_DEPTH_M * f.amount });
+                if (!f.patch || moved) {
+                  if (f.patch) renderer.destroyMesh(f.patch);
+                  f.patch = renderer.createTerrainSurface(built.positions, built.normals, built.indices);
+                  f.patchTile = tile;
+                } else {
+                  renderer.updateTerrainSurface(f.patch, built.positions, built.normals);
+                }
+                f.patchDirty = false;
+              }
+            }
           }
         }
       }

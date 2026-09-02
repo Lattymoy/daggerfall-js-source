@@ -401,6 +401,7 @@ uniform sampler2D uField;   // EE9: the surface field, piece-local
 uniform float uFieldSize;   // EE9: the piece's extent in world units
 uniform float uFieldAmt;    // EE9: 0 = no field
 uniform float uSnowM;       // EE9: full snow, in metres
+uniform float uPatch;       // EE15: 1 = the near patch, whose vertices carry the snow already
 out vec3 vNormal;
 out vec3 vWorldPos;
 out vec2 vLocalXZ;
@@ -413,7 +414,7 @@ void main() {
   // outside the near ring and outside the enhanced skin, and the term
   // then costs one multiply. The field is piece-local, so the vertex
   // reads it in its own coordinates.
-  if (uFieldAmt > 0.0) {
+  if (uFieldAmt > 0.0 && uPatch < 0.5) {
     // textureLod, explicitly: a vertex stage has no derivatives, and an
     // implicit-LOD fetch there crashed the ANGLE/SwiftShader tab outright
     // EE14 (Mac: roads sit at the snow's height when they should sit at
@@ -574,6 +575,7 @@ uniform sampler2DArray uTileNrm;   // EE6: the drawn tiles' normals
 uniform float uNormalAmt;          // EE6: 0 outside the drawn mode
 uniform sampler2D uField;          // EE9: the surface field, piece-local
 uniform float uFieldSize, uFieldAmt, uSnowM, uRainAmt;   // EE9
+uniform float uPatch;   // EE15: on the near patch the field's slope is in the vertex normal already
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -677,7 +679,7 @@ void main() {
     float sGx = tfbm((vLocalXZ + vec2(0.3, 0.0)) * vec2(0.42, 0.11) + 7.0) - sast;
     vec3 driftN = normalize(vec3(-(dGx * 9.0 + sGx * 4.0), 1.0, -(dGz * 9.0)));
     float deep = smoothstep(0.10, 0.45, snowD);
-    vec3 snowShape = normalize(mix(snowN, driftN, 0.55));
+    vec3 snowShape = normalize(mix(uPatch > 0.5 ? n : snowN, driftN, 0.55));   // EE15: the patch's own normal carries the trench and the verge
     n = normalize(mix(n, snowShape, snowCov * (0.55 + 0.45 * deep)));
     vec3 fresh = vec3(0.86, 0.89, 0.95);
     vec3 hollow = vec3(0.70, 0.78, 0.92);                                       // a hollow is sky-lit, and blue
@@ -1136,6 +1138,7 @@ export class Renderer {
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTileNrm = gl.getUniformLocation(this.terrainProgram, 'uTileNrm');     // EE6
     this.tUNormalAmt = gl.getUniformLocation(this.terrainProgram, 'uNormalAmt'); // EE6
+    this.tUPatch = gl.getUniformLocation(this.terrainProgram, 'uPatch');           // EE15
     // EE9: the field's uniforms, terrain
     this.tUField = gl.getUniformLocation(this.terrainProgram, 'uField');
     this.tUFieldSize = gl.getUniformLocation(this.terrainProgram, 'uFieldSize');
@@ -2817,7 +2820,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   setCloudShadow(d) { this._cloudShadow = d ?? null; }
 
   /** Draw one terrain surface with its tilemap + tile array. */
-  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize, normalTex = null) {
+  /** EE15: refill a terrain surface's positions and normals in place -
+   *  the near patch keeps its vertex count and is rebaked as the field
+   *  under it changes. Creates nothing, draws nothing, binds only the
+   *  buffers it fills. */
+  updateTerrainSurface(surface, positions, normals) {
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, surface.buffers[0]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
+    gl.bindBuffer(gl.ARRAY_BUFFER, surface.buffers[1]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, normals);
+  }
+
+  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize, normalTex = null, patch = false) {
     const gl = this.gl;
     this._use(this.terrainProgram);
     gl.uniformMatrix4fv(this.tUProj, false, this._proj);
@@ -2859,6 +2874,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, normalTex ?? arrayTex);
     gl.uniform1i(this.tUTileNrm, 3);
     gl.uniform1f(this.tUNormalAmt, normalTex ? 1.0 : 0.0);
+    // EE15: the near patch sits ON the coarse ground; a polygon offset
+    // pulls it toward the eye so it wins the depth test where they
+    // coincide, and its vertices already carry the field's height
+    gl.uniform1f(this.tUPatch, patch ? 1.0 : 0.0);
+    if (patch) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2.0, -2.0); }
     // EE9: the field on unit 4 - a 1x1 zero texture when there is none
     const fld = this._field;
     gl.activeTexture(gl.TEXTURE4);
@@ -2871,6 +2891,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    if (patch) gl.disable(gl.POLYGON_OFFSET_FILL);   // EE15: leave the pipeline as it was found
     this.stats.texBinds += 2; this.stats.draws++;
     this._bindVao(null);
   }

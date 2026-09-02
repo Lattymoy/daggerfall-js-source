@@ -339,3 +339,78 @@ export class SurfaceField {
     return this.data[o + 1] * (1 - this.data[o + 2] * 0.55);
   }
 }
+
+/**
+ * EE15: THE NEAR PATCH. The terrain's vertices are 6.4m apart, so a
+ * footprint and a road's verge can only be COLOURED there, never shaped.
+ * The lab's answer was a fine patch around the player at footprint
+ * resolution, displaced by the field, drawn over the coarse ground with
+ * a polygon offset - and that is what this builds: a window of W x W
+ * tiles at the field's own cell resolution (1.6m), heights = the
+ * terrain's bilinear height + the field's snow, exactly the terrain
+ * vertex shader's law (the MINIMUM depth of the cells around, so a road
+ * keeps its level and the snow ramps down to it), normals from the baked
+ * heights so a trench has real walls and a verge a real slope.
+ *
+ * Pure: heights and field in, positions/normals/indices out. The host
+ * rebuilds it when the player's tile moves or the field's rows under it
+ * change; the renderer draws it with the terrain program, displacement
+ * OFF (it is already in the vertices) and polygon offset ON.
+ */
+export function buildNearPatch({ field, terrainHeights, tileDim = 128, tileSize = TILE_SIZE, centreTile, windowTiles = 20, snowM = SNOW_DEPTH_M }) {
+  const c = field.cells; const cs = field.cellSize; const dim = field.dim;
+  const half = Math.floor(windowTiles / 2);
+  const tx0 = Math.max(0, Math.min(tileDim - windowTiles, centreTile[0] - half));
+  const tz0 = Math.max(0, Math.min(tileDim - windowTiles, centreTile[1] - half));
+  const cx0 = tx0 * c; const cz0 = tz0 * c;
+  const n = windowTiles * c;              // cells across the window
+  const verts = (n + 1) * (n + 1);
+  const hDim = tileDim + 1;
+  const hAt = (x, z) => terrainHeights[cl(x, 0, hDim - 1) * hDim + cl(z, 0, hDim - 1)];
+  const groundAt = (lx, lz) => {
+    const fx = lx / tileSize; const fz = lz / tileSize;
+    const x0 = Math.floor(fx); const z0 = Math.floor(fz); const tx = fx - x0; const tz = fz - z0;
+    return (hAt(x0, z0) * (1 - tx) + hAt(x0 + 1, z0) * tx) * (1 - tz) + (hAt(x0, z0 + 1) * (1 - tx) + hAt(x0 + 1, z0 + 1) * tx) * tz;
+  };
+  const d = field.data;
+  const cellAt = (i, j) => { const o = (cl(j, 0, dim - 1) * dim + cl(i, 0, dim - 1)) * 4; return [d[o + 1], d[o + 2]]; };
+  // the shader's law: the minimum depth of the cell and its four
+  // neighbours half a tile out (two cells), scaled by the pack
+  const snowAt = (i, j) => {
+    const [g, b] = cellAt(i, j);
+    const m = Math.min(g, cellAt(i + 2, j)[0], cellAt(i - 2, j)[0], cellAt(i, j + 2)[0], cellAt(i, j - 2)[0]);
+    return m * (1 - b * 0.55) * snowM;
+  };
+  const positions = new Float32Array(verts * 3);
+  const heights = new Float32Array(verts);
+  for (let vz = 0; vz <= n; vz++) {
+    for (let vx = 0; vx <= n; vx++) {
+      const lx = (cx0 + vx) * cs; const lz = (cz0 + vz) * cs;
+      const y = groundAt(lx, lz) + snowAt(cx0 + vx, cz0 + vz);
+      const k = vz * (n + 1) + vx;
+      positions[k * 3] = lx; positions[k * 3 + 1] = y; positions[k * 3 + 2] = lz;
+      heights[k] = y;
+    }
+  }
+  const normals = new Float32Array(verts * 3);
+  const hv = (vx, vz) => heights[cl(vz, 0, n) * (n + 1) + cl(vx, 0, n)];
+  for (let vz = 0; vz <= n; vz++) {
+    for (let vx = 0; vx <= n; vx++) {
+      const dx = (hv(vx + 1, vz) - hv(vx - 1, vz)) / (2 * cs);
+      const dz = (hv(vx, vz + 1) - hv(vx, vz - 1)) / (2 * cs);
+      const l = Math.hypot(dx, 1, dz);
+      const k = (vz * (n + 1) + vx) * 3;
+      normals[k] = -dx / l; normals[k + 1] = 1 / l; normals[k + 2] = -dz / l;
+    }
+  }
+  const indices = new Uint32Array(n * n * 6);
+  let q = 0;
+  for (let vz = 0; vz < n; vz++) {
+    for (let vx = 0; vx < n; vx++) {
+      const a = vz * (n + 1) + vx; const b = a + 1; const cc = a + (n + 1); const dd = cc + 1;
+      indices[q++] = a; indices[q++] = cc; indices[q++] = b;
+      indices[q++] = b; indices[q++] = cc; indices[q++] = dd;
+    }
+  }
+  return { positions, normals, indices, tx0, tz0, windowTiles, cellsAcross: n };
+}

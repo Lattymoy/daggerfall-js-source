@@ -68,6 +68,11 @@ if (SKIN === 'classic') {
   const trench = on.after?.underPlayer; const beside = on.after?.beside;
   check(`field ON: a walk leaves a DEEP print - under the feet ${trench?.toFixed?.(2)} against untouched ${beside?.toFixed?.(2)} beside it (stamps ${on.before?.stamps ?? 0} -> ${on.after?.stamps ?? 0})`,
     typeof trench === 'number' && typeof beside === 'number' && (trench < beside * 0.5 || beside < 0.02));
+  // EE15: and the trench is GEOMETRY - the near patch's vertex under the
+  // feet sits lower than one beside the trail
+  const pt = on.after?.patch;
+  check(`field ON: the near patch exists (${pt?.verts ?? 0} verts) and its vertex under the feet is LOWER than beside (${pt?.underFeet} vs ${pt?.beside})`,
+    !!pt && pt.verts > 1000 && pt.underFeet < pt.beside - 0.3);
 }
 if (SKIN !== 'classic' && only !== 'on') {
   const off = await run('&field=off', false);
