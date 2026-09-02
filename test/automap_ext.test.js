@@ -24,9 +24,13 @@ import {
   BLOCK_PX, ZOOM_MIN, ZOOM_MAX, _resetZoomForTests,
   toPanelScreen, layoutQuadRotation, playerMarkerLayoutPos,
   MARKER_TILE_SCALE, MARKER_REF_SPAN, CUSTOM_LOCATION_OFFSET, BACKGROUNDS,
+  EXT_HOTKEYS_DOWN, EXT_HOTKEYS_HELD, EXT_HOTKEY_VERBS, EXT_BACKGROUND_HOTKEYS,
 } from '../src/ui/exteriorAutomapWindow.js';
+import { shortcutBinding, sequenceString } from '../src/systems/dialogShortcuts.js';
 import { nameplatesIntersect, resolveNameplates, nameplateAnchor } from '../src/ui/nameplateLayout.js';
-import { CAPTION_STRIP, CAPTION_SWATCHES } from '../src/ui/automapChrome.js';
+import { CAPTION_STRIP, CAPTION_SWATCHES, CHROME_RECTS } from '../src/ui/automapChrome.js';
+import { audio } from '../src/systems/audio.js';
+import { SOUND } from '../src/systems/soundClips.js';
 import { EXT_ZOOM_SPEED, EXT_SCROLL_UP_DOWN_SPEED } from '../src/ui/automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc, STAMP_INK } from '../src/ui/meshStamp.js';
 import { buildingSummaries, buildingPosition } from '../src/world/buildingSummaries.js';
@@ -232,8 +236,15 @@ test('c2/S10: ComputeZoom, the zoom band, the remembered level and the reset-on-
     v.runVerb('ActionMoveForward', 1);
     assert.equal(v.cam.center[2] - c0[2], EXT_SCROLL_UP_DOWN_SPEED, 'at yaw 0 forward is +z, at DFU\'s per-second speed');
     assert.equal(v.cam.center[0] - c0[0], 0);
-    v.input('char:m');
-    assert.equal(v.done, true, 'M closes, as the AutoMap binding toggles');
+    // THE TOGGLE-CLOSE IS TWO-PHASE (:586-597): the AutoMap binding's
+    // key DOWN only raises the latch, and the close lands where DFU's
+    // key UP would be - so the press that opened the map cannot also
+    // close it on the same frame.
+    v.input(v.automapBinding, { code: v.automapBinding });
+    assert.equal(v.done, false, 'the down raises isCloseWindowDeferred and nothing else');
+    assert.equal(v.isCloseWindowDeferred, true);
+    v.tick(1 / 60);
+    assert.equal(v.done, true, 'M closes on the LATER frame, as the AutoMap binding toggles');
   } finally { _resetForTests(); _resetZoomForTests(); }
 });
 
@@ -353,14 +364,26 @@ test('c2/S10: the four backgrounds - "original" draws NO fill, and the three alt
     w.draw(r, canvas, null, 3);
     assert.equal(log.some(isPanelFill), false, 'the original arm fills nothing at all');
     log.length = 0;
-    w.input('char:9');
+    // the four keys are DFU'S OWN - F5/F6/F7/F8, read out of the
+    // ExtAutomap rows of DialogShortcuts.txt:273-276 rather than
+    // spelled as literals here
+    const bgKey = (button) => shortcutBinding(button).code;
+    assert.deepEqual(
+      EXT_HOTKEYS_DOWN.filter((b) => EXT_BACKGROUND_HOTKEYS[b]).map(bgKey),
+      ['F5', 'F6', 'F7', 'F8'],
+    );
+    w.input(bgKey('ExtAutomapSwitchToExteriorAutomapBackgroundAlternative2'),
+      { code: bgKey('ExtAutomapSwitchToExteriorAutomapBackgroundAlternative2') });
     assert.equal(w.background, 'alt2');
     w.draw(r, canvas, null, 3);
     const fill = log.find(isPanelFill);
     assert.ok(fill, 'an alternative fills the panel rect');
     assert.deepEqual([...fill.color], [0.2, 0.1, 0.3, 1]);
-    w.input('char:7');
+    w.input('F5', { code: 'F5' });
     assert.equal(w.background, 'original', 'and the original key comes back');
+    // ...and A2's invented digits are gone: 7/8/9/0 do nothing at all
+    for (const ch of ['char:7', 'char:8', 'char:9', 'char:0']) w.input(ch, null);
+    assert.equal(w.background, 'original', 'the invented digit table is dead');
   } finally { _resetForTests(); _resetZoomForTests(); }
 });
 
@@ -635,4 +658,272 @@ test('A2 grayscale pins: the shader law and the two-tier dungeon pass (Daggerfal
   assert.match(aw, /renderer\.panelFrame\(\{/, 'the pass runs inside the renderer\'s bracket');
   assert.match(src('src/render/renderer.js'), /automapMode: this\._automapMode,/, 'and the bracket saves the mode by name');
   assert.match(src('src/render/renderer.js'), /this\.setAutomapMode\(s\.automapMode\);/, 'and hands it back');
+});
+
+// ── ROAD-C c2 flight-2 review fixes ──────────────────────────────────
+
+test('c2/S10 THE ROTATION SIGN, from ExteriorAutomap.cs\'s camera math: rotate-LEFT turns the town counter-clockwise, and rotate-around-player PINS the marker', () => {
+  // THE HAND-COMPUTED DFU VALUE. The camera is Quaternion.Euler(90,0,0)
+  // (:1031); ActionRotateLeft is ActionRotate(+rotateSpeed) (:1088-1091)
+  // and ActionRotate is RotateAround(pos, -Vector3.up, -amount*dt)
+  // (:1103). Unity's AngleAxis(A, -up) == AngleAxis(-A, +up), so the
+  // world turn applied is Ry(+amount*dt) and the camera's euler-y is
+  // +150 after one second of rotateSpeed 150. Under Euler(90, 150, 0)
+  // the camera's right is (cos150, 0, -sin150) and its up is
+  // (sin150, 0, cos150) - toPanelScreen's own basis - so world NORTH
+  // (+z, distance d) lands at
+  //     sx = -sin(150 deg) * d = -0.5 d       (panel LEFT of centre)
+  //     sy =  cos(150 deg) * d = -0.866 d     (and BELOW it)
+  _resetForTests(); _resetZoomForTests();
+  try {
+    const w = new ExteriorAutomapWindow(deps('r:rot'));
+    w.cam = { ...w.cam, center: [0, 0, 0], orthoSize: 100 };
+    w.runVerb('ActionRotateLeft', 1);
+    assert.equal(w.cam.yawDeg, 150, 'one second of rotate-LEFT is euler-y +150, not -150');
+    assert.equal(new ExteriorAutomapWindow(deps('r:rot')).cam.yawDeg, 0);
+    const rect = { x: 0, y: 0, w: 318, h: 169 };
+    const k = rect.h / (2 * w.cam.orthoSize);
+    const north = toPanelScreen(w.cam, rect, 0, 40);
+    assert.ok(Math.abs(north[0] - (rect.w / 2 + (-0.5 * 40) * k)) < 1e-9, 'north lands LEFT of the panel centre');
+    assert.ok(Math.abs(north[1] - (rect.h / 2 + (0.8660254037844387 * 40) * k)) < 1e-9, 'and below it');
+    assert.ok(north[0] < rect.w / 2, 'counter-clockwise, as DFU turns it - a mirrored map puts north RIGHT');
+    // the layout quad and the compass strip ride that same yaw, so the
+    // whole picture turns together
+    assert.ok(Math.abs(layoutQuadRotation(w.cam) - (-150 * Math.PI / 180)) < 1e-12);
+
+    // THE CONVENTION-FREE HALF (:1124-1126): the camera's POSITION and
+    // its BASIS take the same turn about the marker, so the marker's
+    // panel position is INVARIANT. No sign argument is needed for this
+    // one - a centre turning one way and a basis the other is a
+    // self-contradiction inside the port.
+    const v = new ExteriorAutomapWindow(deps('r:rot2'));
+    const base = { center: [30, 0, -12], yawDeg: 17, orthoSize: 100 };
+    const marker = v.markerPos();
+    v.cam = { ...base };
+    const before = toPanelScreen(v.cam, rect, marker[0], marker[2]);
+    for (const verb of ['ActionRotateAroundPlayerPosLeft', 'ActionRotateAroundPlayerPosRight']) {
+      v.cam = { ...base };
+      v.runVerb(verb, 0.2);
+      assert.notEqual(v.cam.yawDeg, base.yawDeg, `${verb} really turned the camera`);
+      const after = toPanelScreen(v.cam, rect, marker[0], marker[2]);
+      assert.ok(Math.abs(after[0] - before[0]) < 1e-9 && Math.abs(after[1] - before[1]) < 1e-9,
+        `the marker never moves when the map turns about it (${verb})`);
+    }
+  } finally { _resetForTests(); _resetZoomForTests(); }
+});
+
+test('c2/S10 THE HOTKEYS ARE DFU\'S OWN ExtAutomap TABLE - every verb bound, resolved through ShortcutOrFallback, and A2\'s invented letters gone', () => {
+  _resetForTests(); _resetZoomForTests();
+  try {
+    // (1) THE TABLE, resolved out of DialogShortcuts.txt:267-296 rather
+    // than spelled here: both classes together are DFU's thirty rows,
+    // each carries a key, and each names a verb runVerb owns.
+    const all = [...EXT_HOTKEYS_DOWN, ...EXT_HOTKEYS_HELD];
+    assert.equal(all.length, 30, 'all thirty ExtAutomap rows are live');
+    assert.equal(new Set(all).size, 30);
+    for (const b of all) assert.ok(shortcutBinding(b).code, `${b} resolves to a key`);
+    // (sequenceString prints the port's alphabet - the browser code -
+    // where DFU's table names the Unity KeyCode: LeftArrow, PageUp,
+    // KeypadPlus.)
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapMoveLeft')), 'ArrowLeft');
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapRotateLeft')), 'Ctrl-ArrowLeft');
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapRotateAroundPlayerPosLeft')), 'Alt-ArrowLeft');
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapMoveToWestLocationBorder')), 'Shift-ArrowLeft');
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapMaxZoom1')), 'Ctrl-PageUp');
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapSwitchToNextExteriorAutomapViewMode')), 'Enter');
+    assert.equal(sequenceString(shortcutBinding('ExtAutomapZoomOut')), 'NumpadSubtract');
+    const RV = src('src/ui/exteriorAutomapWindow.js');
+    for (const b of all) {
+      if (EXT_BACKGROUND_HOTKEYS[b]) { assert.equal(EXT_HOTKEY_VERBS[b], undefined, `${b} is a background, not a verb`); continue; }
+      const verb = EXT_HOTKEY_VERBS[b];
+      assert.ok(verb && RV.includes(`case '${verb}'`), `${b} -> ${verb} has a runVerb arm`);
+    }
+
+    // (2) THE KEYS REALLY DRIVE, and one code carries three verbs by
+    // its modifier - which the invented letter table could not express.
+    const w = new ExteriorAutomapWindow(deps('r:keys'));
+    w.cam = { ...w.cam, center: [0, 0, 0], yawDeg: 0, orthoSize: 100 };
+    w._dt = 1;
+    w.input('ArrowLeft', { code: 'ArrowLeft' });
+    assert.equal(w.cam.center[0], -100, 'LeftArrow is ExtAutomapMoveLeft at 100 units/second');
+    assert.equal(w.cam.yawDeg, 0, 'and it does not rotate');
+    w.input('ArrowLeft', { code: 'ArrowLeft', ctrlKey: true });
+    assert.equal(w.cam.yawDeg, 150, 'Ctrl-LeftArrow is ExtAutomapRotateLeft');
+    w.cam = { ...w.cam, yawDeg: 0, center: [0, 0, 0] };
+    w.input('ArrowLeft', { code: 'ArrowLeft', altKey: true });
+    assert.equal(w.cam.yawDeg, 150, 'Alt-LeftArrow is ExtAutomapRotateAroundPlayerPosLeft');
+    assert.notDeepEqual(w.cam.center, [0, 0, 0], 'and it swings the centre about the marker');
+    w.cam = { ...w.cam, center: [7, 0, -9], yawDeg: 0 };
+    w.input('ArrowUp', { code: 'ArrowUp', shiftKey: true });
+    assert.deepEqual(w.cam.center, [7, 0, +64], 'Shift-UpArrow is ExtAutomapMoveToNorthLocationBorder, not MoveForward');
+
+    // (3) THE ZOOM, BOTH DIRECTIONS. A2's `case 'minus'` could never
+    // fire - ui/input.js returns 'char:-' for the hyphen - so keyboard
+    // zoom-OUT did not exist at all. DFU binds PageUp/PageDown and
+    // Keypad+/-, and the ZoomIn/ZoomOut arms (:700-708) are the same
+    // ActionZoom bodies as Upstairs/Downstairs.
+    w.cam = { ...w.cam, orthoSize: 100 };
+    w.input('PageDown', { code: 'PageDown' });
+    assert.equal(w.cam.orthoSize, 150, 'PageDown is ExtAutomapDownstairs = ActionZoom(+zoomSpeed*dt)');
+    w.input('PageUp', { code: 'PageUp' });
+    assert.equal(w.cam.orthoSize, 100, 'PageUp is ExtAutomapUpstairs');
+    w.input('NumpadSubtract', { code: 'NumpadSubtract' });
+    assert.equal(w.cam.orthoSize, 150, 'KeypadMinus is ExtAutomapZoomOut - the arm the hyphen never reached');
+    w.input('NumpadAdd', { code: 'NumpadAdd' });
+    assert.equal(w.cam.orthoSize, 100, 'KeypadPlus is ExtAutomapZoomIn');
+    w.input('PageUp', { code: 'PageUp', ctrlKey: true });
+    assert.equal(w.cam.orthoSize, ZOOM_MIN, 'Ctrl-PageUp is ExtAutomapMaxZoom1');
+    w.input('PageDown', { code: 'PageDown', ctrlKey: true });
+    assert.equal(w.cam.orthoSize, ZOOM_MAX, 'Ctrl-PageDown is ExtAutomapMinZoom1');
+    w.input('NumpadAdd', { code: 'NumpadAdd', ctrlKey: true });
+    assert.equal(w.cam.orthoSize, ZOOM_MAX, 'Ctrl-KeypadPlus is MinZoom2 - DFU\'s own odd pairing, kept');
+    w.input('NumpadSubtract', { code: 'NumpadSubtract', ctrlKey: true });
+    assert.equal(w.cam.orthoSize, ZOOM_MIN, 'and Ctrl-KeypadMinus is MaxZoom2');
+
+    // (4) THE THREE DIRECT VIEW MODES (:1235-1262) had no arm anywhere
+    // before - F2/F3/F4 SET the mode, they do not cycle to it.
+    w.input('F4', { code: 'F4' });
+    assert.equal(w.mode, 'all');
+    w.input('F2', { code: 'F2' });
+    assert.equal(w.mode, 'original');
+    w.input('F3', { code: 'F3' });
+    assert.equal(w.mode, 'extra');
+    w.input('Enter', { code: 'Enter' });
+    assert.equal(w.mode, 'all', 'Return is ExtAutomapSwitchToNextExteriorAutomapViewMode');
+    w.cam = { ...w.cam, yawDeg: 42, center: [500, 0, 500] };
+    w.input('Tab', { code: 'Tab' });
+    assert.deepEqual(w.cam.center, [...w.markerPos().slice(0, 1), 0, w.markerPos()[2]], 'Tab is ExtAutomapFocusPlayerPosition');
+    w.input('Backspace', { code: 'Backspace' });
+    assert.equal(w.cam.yawDeg, 0, 'Backspace is ExtAutomapResetView');
+
+    // (5) A2'S INVENTED VOCABULARY IS GONE. Not one of its letters or
+    // digits does anything now. ('up'/'down' are left out: those are
+    // ui/input.js's cooked names for the ARROWS, which normalizeCode
+    // resolves back to DFU's own MoveForward/MoveBackward rows.)
+    const shot = () => JSON.stringify({ cam: w.cam, mode: w.mode, bg: w.background, done: w.done, latch: w.isCloseWindowDeferred });
+    const frozen = shot();
+    for (const ch of ['char:w', 'char:a', 'char:s', 'char:d', 'char:q', 'char:e',
+      'char:n', 'char:b', 'char:h', 'char:l', 'char:v', 'char:f', 'char:c',
+      'char:1', 'char:2', 'char:7', 'char:8', 'char:9', 'char:0', 'plus', 'minus']) w.input(ch, null);
+    assert.equal(shot(), frozen, 'the WASD/QE/digit table no longer exists');
+
+    // (6) THE SEAM. townTalk hands raw codes only to a window that asks
+    // for them, and that one flag is what forced the invention.
+    assert.equal(w.isChoiceWindow, true);
+    assert.match(src('src/scenes/townTalk.js'), /if \(overlay\.isChoiceWindow\) overlay\.input\(e\.code, e\);/);
+  } finally { _resetForTests(); _resetZoomForTests(); }
+});
+
+test('c2/S10 the two panel drags run in REAL SCREEN pixels, and the right drag carries ActionRotate\'s own dt', () => {
+  _resetForTests(); _resetZoomForTests();
+  try {
+    const drag = (scale, dt, button) => {
+      const w = new ExteriorAutomapWindow(deps(`r:drag-${scale}-${dt}-${button}`));
+      w.cam = { ...w.cam, center: [0, 0, 0], yawDeg: 0, orthoSize: 100 };
+      w._scale = scale; w._dt = dt;
+      w.pointer('down', 160, 85, button);     // inside CHROME_RECTS.panel
+      w.pointer('move', 170, 85, button);     // ten NATIVE px
+      return w.cam;
+    };
+    // DFU's bias is InputManager.MousePosition - REAL screen pixels
+    // (:731, :744), NOT BaseScreenComponent's localScale-divided
+    // ScaledMousePosition - and both speeds are tuned against that
+    // space, so the same NATIVE delta must move FOUR times as far on a
+    // 4x letterbox. (The dungeon window's `_applyDrag` reads it so.)
+    const one = drag(1, 1 / 60, 0);
+    assert.ok(Math.abs(one.center[0] - -(0.00345 * 100 * 10)) < 1e-9, 'dragSpeed * orthographicSize * bias');
+    const four = drag(4, 1 / 60, 0);
+    assert.ok(Math.abs(four.center[0] - one.center[0] * 4) < 1e-9,
+      'a drag of N native px at m.s = 4 pans 4x the world distance of the same drag at m.s = 1');
+
+    // THE RIGHT DRAG: :748 hands `dragRotateSpeed * bias.x` to
+    // ActionRotate, whose body multiplies by Time.unscaledDeltaTime
+    // (:1103) - so the bias is the AMOUNT, not the angle. Ten screen px
+    // at 60 fps is 5.0 * 10 / 60 degrees, not 50.
+    const r60 = drag(1, 1 / 60, 2);
+    assert.ok(Math.abs(r60.yawDeg - (5.0 * 10 / 60)) < 1e-9, 'one frame of it, not a whole second');
+    const r30 = drag(1, 1 / 30, 2);
+    assert.ok(Math.abs(r30.yawDeg - r60.yawDeg * 2) < 1e-9, 'and a longer frame turns further');
+    assert.ok(Math.abs(drag(4, 1 / 60, 2).yawDeg - r60.yawDeg * 4) < 1e-9, 'scaled to screen pixels too');
+    // ...while the LEFT drag stays dt-FREE: :733-740 has no dt at all,
+    // and the asymmetry is deliberate in the reference.
+    assert.deepEqual(drag(1, 1 / 30, 0).center, one.center, 'the pan is not a per-second speed');
+  } finally { _resetForTests(); _resetZoomForTests(); }
+});
+
+test('c2/S10 the hover sentinel never reaches the drag machine: (-1,-1) freezes the drag, it does not teleport the map', () => {
+  _resetForTests(); _resetZoomForTests();
+  try {
+    const w = new ExteriorAutomapWindow(deps('r:hover'));
+    w.cam = { ...w.cam, center: [0, 0, 0], yawDeg: 0, orthoSize: 250 };
+    w._scale = 1;
+    w.pointer('down', 160, 85, 0);
+    w.hover(170, 85);
+    const moved = [...w.cam.center];
+    assert.ok(Math.abs(moved[0]) > 0, 'a real move drags');
+    // townTalk hands (-1,-1) for ANY pointer outside the native rect -
+    // its listener is on the window, not the canvas - and that is a
+    // FABRICATED coordinate, not a position. DFU never has one: its
+    // Update differences two real MousePosition samples.
+    w.hover(-1, -1);
+    assert.deepEqual(w.cam.center, moved, 'the excursion moves nothing at all');
+    w.hover(180, 85);
+    assert.ok(Math.abs(w.cam.center[0] - moved[0] * 2) < 1e-9, 'and the drag resumes from the re-entry point');
+    assert.match(src('src/scenes/townTalk.js'), /overlay\.hover\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/);
+  } finally { _resetForTests(); _resetZoomForTests(); }
+});
+
+test('c2/S10 the chrome\'s ButtonClick reaches the audio door, so ActionClickSoundOnly means something', () => {
+  _resetForTests(); _resetZoomForTests();
+  const orig = audio.playOneShot;
+  const played = [];
+  audio.playOneShot = (i, v) => { played.push([i, v]); return 0.1; };
+  try {
+    const w = new ExteriorAutomapWindow(deps('r:snd'));
+    const G = CHROME_RECTS.grid;
+    // GridButton_OnRightMouseClick (:1375-1381) is, IN FULL, the drag
+    // guard and one PlayOneShot - the sound is the whole handler.
+    w.pointer('down', G.x + 2, G.y + 2, 2);
+    assert.deepEqual(played, [], 'nothing on the press of a CLICK button');
+    const out = w.pointer('up', G.x + 2, G.y + 2, 2);
+    assert.deepEqual(out.verbs, ['ActionClickSoundOnly']);
+    assert.deepEqual(played, [[SOUND.ButtonClick, 1]], 'exactly one ButtonClick, and it is the only effect');
+    // ...and a HOLD button rings on the PRESS (:1408 and its fifteen twins)
+    played.length = 0;
+    const F = CHROME_RECTS.forward;
+    w.pointer('down', F.x + 2, F.y + 2, 0);
+    assert.deepEqual(played, [[SOUND.ButtonClick, 1]]);
+    // the render panel is not a button and rings nothing
+    played.length = 0;
+    w.pointer('up', F.x + 2, F.y + 2, 0);
+    w.pointer('down', 160, 85, 0);
+    assert.deepEqual(played, []);
+  } finally { audio.playOneShot = orig; _resetForTests(); _resetZoomForTests(); }
+});
+
+test('c2/S10 the camera ROTATION is remembered across close/reopen, exactly as the zoom is (ExteriorAutomap.cs:88, :263-288)', () => {
+  _resetForTests(); _resetZoomForTests();
+  try {
+    const a = new ExteriorAutomapWindow(deps('r:yaw'));
+    assert.equal(a.cam.yawDeg, 0);
+    a.runVerb('ActionRotateLeft', 0.2);
+    assert.equal(a.cam.yawDeg, 30);
+    a.tick(0);   // UpdateAutomapStateOnWindowPop saves the rotation (:285-288)
+    // reopen in the SAME location: UpdateAutomapStateOnWindowPush
+    // assigns cameraTransformRotationSaved straight back (:263-270)
+    assert.equal(new ExteriorAutomapWindow(deps('r:yaw')).cam.yawDeg, 30);
+    // a NEW location raises the reset signal, whose ResetCameraPosition
+    // -> ResetCameraTransform is Quaternion.Euler(90,0,0) - and that
+    // call is NOT behind ExteriorMapResetZoomLevelOnNewLocation, which
+    // gates only the zoom recompute beside it (window :513-521)
+    setValue('Map', 'ExteriorMapResetZoomLevelOnNewLocation', false);
+    assert.equal(new ExteriorAutomapWindow(deps('r:yaw2')).cam.yawDeg, 0, 'a new location resets it either way');
+    const b = new ExteriorAutomapWindow(deps('r:yaw2'));
+    b.runVerb('ActionRotateRight', 0.2); b.tick(0);
+    assert.equal(b.cam.yawDeg, -30);
+    assert.equal(new ExteriorAutomapWindow(deps('r:yaw2')).cam.yawDeg, -30);
+    // ActionResetView is DFU's other way back to north-up (:1304-1313)
+    b.runVerb('ActionResetView', 1); b.tick(0);
+    assert.equal(new ExteriorAutomapWindow(deps('r:yaw2')).cam.yawDeg, 0);
+  } finally { _resetForTests(); _resetZoomForTests(); }
 });

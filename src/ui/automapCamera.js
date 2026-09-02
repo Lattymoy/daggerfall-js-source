@@ -549,23 +549,34 @@ export const exteriorApplyMaxZoom = (s) => ({ ...s, orthoSize: EXT_MAX_ZOOM * EX
 /** ActionRotate (:1101-1107): the camera turns about ITSELF, so the
  *  centre does not move - only the yaw. RotateAround(pos, -up,
  *  -amount*dt) about the camera's own position, under a straight-down
- *  lens, is exactly a yaw change of `-amount * dt`.
- *  SIGN CONVENTION, recorded once for the whole arc: `yawDeg` is the
- *  angle the port's existing map windows already speak - screen-right
- *  is (cos, 0, -sin) and screen-up is (sin, 0, cos), the mirrored
- *  convention automapWindow/exteriorAutomapWindow were written in. So
- *  DFU's "rotate left" button (+rotateSpeed, :1090) DECREASES yawDeg
- *  here. The chrome stage binds the buttons to these verbs rather
- *  than to a sign of its own. */
-export const exteriorRotate = (s, amount, dt) => ({ ...s, yawDeg: s.yawDeg - amount * dt });
+ *  lens, is exactly a yaw change.
+ *
+ *  THE SIGN, DERIVED rather than assumed. The camera starts at
+ *  Quaternion.Euler(90,0,0) (:1031) and ActionRotate is
+ *  `RotateAround(transform.position, -Vector3.up, -amount*dt)`.
+ *  AngleAxis(A, -up) == AngleAxis(-A, +up), so the world turn actually
+ *  applied is Ry(+amount*dt) and the camera's Unity euler-y INCREASES
+ *  by amount*dt. Under Euler(90, A, 0) the camera's right is
+ *  Ry(A)*(1,0,0) = (cos A, 0, -sin A) and its up is Ry(A)*(0,0,1) =
+ *  (sin A, 0, cos A) - which is EXACTLY the basis
+ *  exteriorAutomapWindow.toPanelScreen and exteriorDragPan below are
+ *  written in. So `yawDeg` IS DFU's euler-y: there is no mirror
+ *  anywhere on this path (the exterior window is a 2-D screen-quad
+ *  composition that never touches mirrorProjectionX), and DFU's
+ *  "rotate left" button (+rotateSpeed, :1090) INCREASES yawDeg. */
+export const exteriorRotate = (s, amount, dt) => ({ ...s, yawDeg: s.yawDeg + amount * dt });
 
-/** ActionRotateAroundPlayerPos (:1124-1130): the same turn taken about
- *  the PLAYER MARKER, so the centre swings around it too. */
+/** ActionRotateAroundPlayerPos (:1124-1130): THE SAME rotation taken
+ *  about the PLAYER MARKER, so the camera's POSITION and its BASIS
+ *  turn through the same world angle - which is why the marker's
+ *  screen position is INVARIANT under this verb. `deg` is the angle
+ *  the centre offset turns through about -up; the basis must take the
+ *  same world turn, +amount*dt = -deg, or the pivot cannot hold. */
 export function exteriorRotateAroundPlayerPos(s, amount, dt, playerPos) {
   const deg = -amount * dt;
   const off = sub(s.center, playerPos);
   const turned = rotateVector(off, [0, -1, 0], deg);
-  return { ...s, center: add(playerPos, turned), yawDeg: s.yawDeg + deg };
+  return { ...s, center: add(playerPos, turned), yawDeg: s.yawDeg - deg };
 }
 
 /** GetLocationBorderPos (ExteriorAutomap.cs:347-368): the four jumps

@@ -401,15 +401,29 @@ test('c2/S3 the exterior lens: ComputeZoom clamps 25..250, and the four border j
 
 test('c2/S3 the exterior rotations and drag: about the camera, about the marker, at 0.00345 x orthoSize', () => {
   const e = { ...createExteriorCamera(4), center: [10, 0, 0], yawDeg: 0 };
-  // ActionRotate turns about the camera itself - the centre never moves
+  // THE SIGN, hand-derived from the C#. ActionRotateLeft is
+  // ActionRotate(+rotateSpeed) (:1088-1091) and ActionRotate is
+  // RotateAround(pos, -Vector3.up, -amount*dt) (:1103). Unity's
+  // AngleAxis(A, -up) == AngleAxis(-A, +up), so the world turn applied
+  // is Ry(+amount*dt) and the camera's euler-y - which under
+  // Euler(90, y, 0) gives right = (cos y, 0, -sin y) and up =
+  // (sin y, 0, cos y), the very basis toPanelScreen and
+  // exteriorDragPan are written in - INCREASES.
   const r = exteriorRotate(e, EXT_ROTATE_SPEED, 0.6);   // 150/s * 0.6 = 90
-  near(r.yawDeg, -90, 1e-12, 'RotateAround(pos, -up, -amount*dt)');
+  near(r.yawDeg, +90, 1e-12, 'RotateAround(pos, -up, -amount*dt) RAISES euler-y');
   assert.deepEqual(r.center, [10, 0, 0], 'the centre stays put');
+  near(exteriorRotate(e, -EXT_ROTATE_SPEED, 0.6).yawDeg, -90, 1e-12, 'and rotate-RIGHT lowers it');
 
-  // ActionRotateAroundPlayerPos swings the centre about the marker
+  // ActionRotateAroundPlayerPos (:1124-1126) takes the SAME rotation
+  // about the marker, so the position and the basis turn TOGETHER -
+  // both by Ry(+amount*dt), written here on the positive axis so the
+  // pin does not restate the implementation's own call.
   const p = exteriorRotateAroundPlayerPos(e, EXT_ROTATE_SPEED, 0.6, [0, 0, 0]);
-  near(p.yawDeg, -90, 1e-12);
-  nearV(p.center, rotateVector([10, 0, 0], [0, -1, 0], -90), 1e-9, 'and the centre swings with it');
+  near(p.yawDeg, +90, 1e-12);
+  nearV(p.center, rotateVector([10, 0, 0], [0, 1, 0], +90), 1e-9, 'and the centre swings the SAME way');
+  // the two must never disagree - a centre turning one way and a basis
+  // the other cannot hold the marker on screen at all
+  near(p.yawDeg - e.yawDeg, 90, 1e-12, 'the basis takes the turn the centre took');
 
   // the drag: dragSpeed * orthographicSize (:734)
   const k = EXT_DRAG_SPEED * e.orthoSize;

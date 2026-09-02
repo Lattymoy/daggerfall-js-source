@@ -385,10 +385,10 @@ combat line numbers below are refreshed with it.
 - `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/enhancedMenu.js:1722` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/enhancedMenu.js:1893` - if (action === 'delete') return;   // FLAGGED: no save manager yet
-- `src/ui/exteriorAutomapWindow.js:59` - - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
-- `src/ui/exteriorAutomapWindow.js:70` - FLAGGED, both awaiting a seam this stage does not own:
-- `src/ui/exteriorAutomapWindow.js:626` - *    marked it - FLAGGED, the port's quest bridge exposes no
-- `src/ui/exteriorAutomapWindow.js:652` - name = b.questName;   // FLAGGED: the port has no locationWasMarkedOnMapByNPC
+- `src/ui/exteriorAutomapWindow.js:66` - - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
+- `src/ui/exteriorAutomapWindow.js:77` - FLAGGED, both awaiting a seam this stage does not own:
+- `src/ui/exteriorAutomapWindow.js:807` - *    marked it - FLAGGED, the port's quest bridge exposes no
+- `src/ui/exteriorAutomapWindow.js:833` - name = b.questName;   // FLAGGED: the port has no locationWasMarkedOnMapByNPC
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
 - `src/ui/hudLarge.js:56` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT

@@ -45,17 +45,24 @@
 // yaw, the four border jumps on the arrows' right button, drag pan at
 // dragSpeed 0.00345 x orthoSize and drag rotate at 5.0, max/min zoom,
 // the four backgrounds, and the real mesh-99900 arrow through
-// ui/meshStamp.js.
+// ui/meshStamp.js. THE HOTKEYS ARE DFU'S OWN: all thirty ExtAutomap*
+// rows of systems/dialogShortcuts.js (DialogShortcuts.txt:267-296)
+// through the same ShortcutOrFallback door ui/automapWindow.js reads
+// the Automap* half with, in DFU's two poll classes.
 //
 // DEPARTURES THAT STAND (recorded, Port-Ledger):
-//  - THE KEYBOARD ARMS ARE EDGE-DRIVEN. DFU polls its ExtAutomap
-//    hotkeys with IsPressedWith EVERY frame (window :641-720), so a
-//    held key pans at 100 units/SECOND. The port has no DaggerfallShortcut
-//    registry and townTalk's overlay seam delivers keydown only (no
-//    keyup), so each press applies ONE FRAME of DFU's per-second speed
-//    and the browser's key repeat supplies the hold. The MOUSE arms
-//    have no such gap: the chrome's press-hold machine and both drags
-//    run off the real down/move/up seam and are frame-exact.
+//  - THE HELD KEYBOARD ARMS ARE EDGE-DRIVEN. DFU polls the movement,
+//    border, rotate and zoom hotkeys with IsPressedWith EVERY frame
+//    (window :642-720), so a held key pans at 100 units/SECOND;
+//    townTalk's overlay seam delivers keydown and no keyup, so each
+//    press applies ONE FRAME of DFU's per-second speed and the
+//    browser's key repeat supplies the hold. It is the seam-wide gap
+//    ui/automapWindow.js records for the dungeon window's identical
+//    held class, and it covers THAT CLASS ONLY - DFU's focus, reset,
+//    view-mode and background arms are IsDownWith (:599-641), edge
+//    driven in the reference too, so those ten are parity. The MOUSE
+//    arms have no gap either: the chrome's press-hold machine and both
+//    drags run off the real down/move/up seam and are frame-exact.
 //  - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
 //    the port's quest bridge exposes no locationWasMarkedOnMapByNPC.
 //  - the plate label is the port's FNT text, not DFU's yellow-reloaded
@@ -86,6 +93,12 @@
 import { drawText, measureText } from './text.js';
 import { getBool, getInt, getString } from '../systems/settings.js';
 import { hexColor32 } from './automapWindow.js';
+import { shortcutOrFallback } from './automapText.js';
+import { bindings } from './input.js';
+import { getBinding } from '../systems/inputActions.js';
+import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 import { resolveNameplates, nameplateAnchor } from './nameplateLayout.js';
 import {
   nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
@@ -159,8 +172,18 @@ const DEG = Math.PI / 180;
 // the reset setting holds (window :513-533)
 let _zoomLevel = -1;
 let _zoomLocation = null;
+/** ROTATION memory across close/reopen, and it is DFU's own field, not
+ *  a convenience: `cameraTransformRotationSaved` (ExteriorAutomap.cs:88
+ *  - "camera rotation is saved so that after closing and reopening
+ *  exterior automap the camera transform settings can be restored") is
+ *  written by UpdateAutomapStateOnWindowPop (:285-288) and re-applied
+ *  by UpdateAutomapStateOnWindowPush (:263-270), which the window runs
+ *  at the top of every OnPush (:500). The zoom lives in the WINDOW and
+ *  the rotation in the automap script precisely because the
+ *  orthographicSize line beside that assignment is commented out. */
+let _yawDeg = 0;
 let _texVer = 0;   // module-level, the A1 lesson: versioned keys never collide across instances
-export function _resetZoomForTests() { _zoomLevel = -1; _zoomLocation = null; }
+export function _resetZoomForTests() { _zoomLevel = -1; _zoomLocation = null; _yawDeg = 0; }
 
 // ---- the native art (the U23 preload shape) --------------------------
 let _art = null;
@@ -260,6 +283,91 @@ export function toPanelScreen(cam, rect, worldX, worldZ) {
  *  screen, which is a rotation of -yaw. */
 export const layoutQuadRotation = (cam) => -cam.yawDeg * DEG;
 
+/**
+ * THE DOWN-CLASS HOTKEYS (:599-641), in DFU's own poll order.
+ * `IsDownWith` is InputManager.GetKeyDown - the EDGE - so these ten
+ * are parity here, not a departure: the port's seam delivers exactly
+ * one down per press.
+ */
+export const EXT_HOTKEYS_DOWN = Object.freeze([
+  'ExtAutomapFocusPlayerPosition',
+  'ExtAutomapResetView',
+  'ExtAutomapSwitchToNextExteriorAutomapViewMode',
+  'ExtAutomapSwitchToExteriorAutomapViewModeOriginal',
+  'ExtAutomapSwitchToExteriorAutomapViewModeExtra',
+  'ExtAutomapSwitchToExteriorAutomapViewModeAll',
+  'ExtAutomapSwitchToExteriorAutomapBackgroundOriginal',
+  'ExtAutomapSwitchToExteriorAutomapBackgroundAlternative1',
+  'ExtAutomapSwitchToExteriorAutomapBackgroundAlternative2',
+  'ExtAutomapSwitchToExteriorAutomapBackgroundAlternative3',
+]);
+
+/**
+ * THE PRESSED-CLASS HOTKEYS (:642-720), in DFU's own poll order.
+ * `IsPressedWith` is InputManager.GetKey - HELD, polled every frame,
+ * which is why every speed these carry is per-SECOND. This is the
+ * class the module header's recorded departure covers.
+ */
+export const EXT_HOTKEYS_HELD = Object.freeze([
+  'ExtAutomapMoveForward', 'ExtAutomapMoveBackward',
+  'ExtAutomapMoveLeft', 'ExtAutomapMoveRight',
+  'ExtAutomapMoveToNorthLocationBorder', 'ExtAutomapMoveToSouthLocationBorder',
+  'ExtAutomapMoveToWestLocationBorder', 'ExtAutomapMoveToEastLocationBorder',
+  'ExtAutomapRotateLeft', 'ExtAutomapRotateRight',
+  'ExtAutomapRotateAroundPlayerPosLeft', 'ExtAutomapRotateAroundPlayerPosRight',
+  'ExtAutomapUpstairs', 'ExtAutomapDownstairs',
+  'ExtAutomapZoomIn', 'ExtAutomapZoomOut',
+  'ExtAutomapMaxZoom1', 'ExtAutomapMinZoom1', 'ExtAutomapMinZoom2', 'ExtAutomapMaxZoom2',
+]);
+
+/** Which chrome VERB each hotkey runs - the same table the buttons
+ *  answer, so a button and its hotkey cannot drift apart (the dungeon
+ *  window's HOTKEY_VERBS, one window over). */
+export const EXT_HOTKEY_VERBS = Object.freeze({
+  ExtAutomapFocusPlayerPosition: 'ActionFocusPlayerPosition',
+  ExtAutomapResetView: 'ActionResetView',
+  ExtAutomapSwitchToNextExteriorAutomapViewMode: 'ActionSwitchToNextExteriorAutomapViewMode',
+  ExtAutomapSwitchToExteriorAutomapViewModeOriginal: 'ActionSwitchToExteriorAutomapViewModeOriginal',
+  ExtAutomapSwitchToExteriorAutomapViewModeExtra: 'ActionSwitchToExteriorAutomapViewModeExtra',
+  ExtAutomapSwitchToExteriorAutomapViewModeAll: 'ActionSwitchToExteriorAutomapViewModeAll',
+  ExtAutomapMoveForward: 'ActionMoveForward',
+  ExtAutomapMoveBackward: 'ActionMoveBackward',
+  ExtAutomapMoveLeft: 'ActionMoveLeft',
+  ExtAutomapMoveRight: 'ActionMoveRight',
+  ExtAutomapMoveToNorthLocationBorder: 'ActionMoveToNorthLocationBorder',
+  ExtAutomapMoveToSouthLocationBorder: 'ActionMoveToSouthLocationBorder',
+  ExtAutomapMoveToWestLocationBorder: 'ActionMoveToWestLocationBorder',
+  ExtAutomapMoveToEastLocationBorder: 'ActionMoveToEastLocationBorder',
+  ExtAutomapRotateLeft: 'ActionRotateLeft',
+  ExtAutomapRotateRight: 'ActionRotateRight',
+  ExtAutomapRotateAroundPlayerPosLeft: 'ActionRotateAroundPlayerPosLeft',
+  ExtAutomapRotateAroundPlayerPosRight: 'ActionRotateAroundPlayerPosRight',
+  ExtAutomapUpstairs: 'ActionMoveUpstairs',
+  ExtAutomapDownstairs: 'ActionMoveDownstairs',
+  // :700-708 - the ZoomIn/ZoomOut arms are `ActionZoom(-/+zoomSpeed *
+  // Time.unscaledDeltaTime)` written out inline, which is BODY FOR
+  // BODY what ActionMoveUpstairs/Downstairs do (:1132-1150). Two key
+  // rows, one law - so they take the same verb rather than a new name
+  // the reference does not have.
+  ExtAutomapZoomIn: 'ActionMoveUpstairs',
+  ExtAutomapZoomOut: 'ActionMoveDownstairs',
+  // and the four band-end rows, with DFU's own odd pairing kept:
+  // MinZoom2 is Ctrl-KeypadPlus and MaxZoom2 is Ctrl-KeypadMinus
+  ExtAutomapMaxZoom1: 'ActionApplyMaxZoom',
+  ExtAutomapMinZoom1: 'ActionApplyMinZoom',
+  ExtAutomapMinZoom2: 'ActionApplyMinZoom',
+  ExtAutomapMaxZoom2: 'ActionApplyMaxZoom',
+});
+
+/** The four background rows are not verbs - each assigns a texture to
+ *  dummyPanelAutomap and nothing else (:1258-1290). */
+export const EXT_BACKGROUND_HOTKEYS = Object.freeze({
+  ExtAutomapSwitchToExteriorAutomapBackgroundOriginal: 'original',
+  ExtAutomapSwitchToExteriorAutomapBackgroundAlternative1: 'alt1',
+  ExtAutomapSwitchToExteriorAutomapBackgroundAlternative2: 'alt2',
+  ExtAutomapSwitchToExteriorAutomapBackgroundAlternative3: 'alt3',
+});
+
 export class ExteriorAutomapWindow {
   /** deps: { locationName, locationId, gridW, gridH,
    *  blocks [{x,y,autoMap}], playerPos() -> location-local [x,y,z],
@@ -275,22 +383,41 @@ export class ExteriorAutomapWindow {
   constructor(deps) {
     this.deps = deps;
     this.done = false;
-    this.isChoiceWindow = false;
+    // The raw-code seam townTalk.js:312 forks on, the same one the
+    // dungeon window takes (automapWindow.js:498) - it is that fork's
+    // switch, not a semantic claim about choice windows, and without it
+    // ui/input.js's cooked alphabet cannot spell an arrow, an F-key,
+    // PageUp/Down, a keypad key or ANY modifier, which is nine tenths
+    // of DFU's ExtAutomap table.
+    this.isChoiceWindow = true;
     this.mode = VIEW_MODES[0];
     this.background = 'original';
     this.chrome = new AutomapChrome(EXTERIOR_ACTIONS);
+    // "Store toggle closed binding for this window" - read ONCE at push
+    // (window :489-495), so rebinding AutoMap while the map stands open
+    // does not change the key that closes it.
+    this.automapBinding = getBinding(bindings(), 'AutoMap');
+    this.isCloseWindowDeferred = false;
     this.layoutW = deps.gridW * BLOCK_PX;
     this.layoutH = deps.gridH * BLOCK_PX;
     // ComputeZoom (:1004-1015) through the shared lens; remembered
     // across reopen unless a new location + the reset setting
     const reset = getBool('Map', 'ExteriorMapResetZoomLevelOnNewLocation');
-    if (_zoomLevel < 0 || (_zoomLocation !== deps.locationId && reset)) {
+    const newLocation = _zoomLocation !== deps.locationId;
+    // THE NEW-LOCATION SIGNAL ZEROES THE ROTATION UNCONDITIONALLY: the
+    // window's reset arm (:513-521) calls ResetCameraPosition() ->
+    // ResetCameraTransform's Quaternion.Euler(90,0,0) (:1019-1032)
+    // outside the setting's `if`, and only the zoom recompute beside it
+    // is behind ExteriorMapResetZoomLevelOnNewLocation.
+    if (newLocation) _yawDeg = 0;
+    if (_zoomLevel < 0 || (newLocation && reset)) {
       _zoomLevel = computeExteriorZoom(getInt('Map', 'ExteriorMapDefaultZoomLevel', 4, 31));
     }
     _zoomLocation = deps.locationId;
-    this.cam = { center: [0, 0, 0], yawDeg: 0, orthoSize: _zoomLevel };
+    this.cam = { center: [0, 0, 0], yawDeg: _yawDeg, orthoSize: _zoomLevel };
     this.actionFocusPlayerPosition();   // OnPush's last act before UpdateAutomapView (:544)
     this._renderer = null;
+    this._scale = 1;      // draw() captures the live letterbox factor
     this._tex = null;     // { key, tex, w, h, mode }
     this._stamp = null;   // { key, tex, span, worldPerPx }
     this._disc = null;
@@ -362,6 +489,11 @@ export class ExteriorAutomapWindow {
       case 'ActionApplyMinZoom': this.cam = exteriorApplyMinZoom(c); return undefined;
       case 'ActionSwitchToNextExteriorAutomapViewMode':
         this.mode = VIEW_MODES[(VIEW_MODES.indexOf(this.mode) + 1) % VIEW_MODES.length]; return undefined;
+      // the three DIRECT view-mode verbs (:1235-1262) - F2/F3/F4 in
+      // DFU's table, and each SETS the mode rather than cycling to it
+      case 'ActionSwitchToExteriorAutomapViewModeOriginal': this.mode = VIEW_MODES[0]; return undefined;
+      case 'ActionSwitchToExteriorAutomapViewModeExtra': this.mode = VIEW_MODES[1]; return undefined;
+      case 'ActionSwitchToExteriorAutomapViewModeAll': this.mode = VIEW_MODES[2]; return undefined;
       case 'ActionFocusPlayerPosition': return this.actionFocusPlayerPosition();
       case 'ActionResetView': return this.actionResetView();
       case 'ActionExit': this.done = true; this.dispose(); return undefined;
@@ -380,36 +512,52 @@ export class ExteriorAutomapWindow {
 
   // ---- input ---------------------------------------------------------
 
-  /** The keyed arms. RECORDED DEPARTURE (module header): one frame of
-   *  DFU's per-second speed per press, because this seam has no keyup.
-   *  `dt` is the last frame's, captured by tick(). */
-  input(action) {
+  /** ShortcutOrFallback (:216-223) against this window's live AutoMap
+   *  binding - byte for byte the dungeon window's `_hotkeyHit`, over
+   *  the ExtAutomap* half of the same table. */
+  _hotkeyHit(button, code, e) {
+    const seq = shortcutOrFallback(button, this.automapBinding);
+    if (!seq.code) return false;
+    if (normalizeCode(code, e) !== seq.code) return false;
+    return checkSetModifiers(keyboardModifiers(e), seq.modifiers);
+  }
+
+  /**
+   * Update's keyboard half (:585-720), in DFU's order: the toggle-close
+   * FIRST, then the IsDownWith hotkeys, then the IsPressedWith ones.
+   *
+   * THE TOGGLE-CLOSE IS TWO-PHASE and stays two-phase here (:586-597):
+   * DFU raises `isCloseWindowDeferred` on the key DOWN and closes on
+   * the key UP, so the press that opens the map cannot also close it in
+   * the same frame. The port's overlay seam carries no key-up route at
+   * all, so the latch is drained by the next tick() instead - the
+   * window still closes on a LATER frame than the press, which is the
+   * behaviour the two phases exist for.
+   *
+   * RECORDED DEPARTURE (module header), and it reaches the HELD loop
+   * alone: one frame of DFU's per-second speed per press. `dt` is the
+   * last frame's, captured by tick().
+   */
+  input(code, e = null) {
+    if (this.automapBinding && normalizeCode(code, e) === this.automapBinding) {
+      this.isCloseWindowDeferred = true;
+      return;
+    }
+    // ":587 - GetBackButtonDown()" is the same statement as the toggle
+    // key, so Escape takes the same door.
+    if (normalizeCode(code, e) === 'Escape') { this.isCloseWindowDeferred = true; return; }
     const dt = this._dt || 1 / 60;
-    switch (action) {
-      case 'back': case 'char:m': case 'char:M': this.runVerb('ActionExit', dt); return;
-      case 'up': case 'char:w': case 'char:W': this.runVerb('ActionMoveForward', dt); return;
-      case 'down': case 'char:s': case 'char:S': this.runVerb('ActionMoveBackward', dt); return;
-      case 'char:a': case 'char:A': this.runVerb('ActionMoveLeft', dt); return;
-      case 'char:d': case 'char:D': this.runVerb('ActionMoveRight', dt); return;
-      case 'char:q': case 'char:Q': this.runVerb('ActionRotateLeft', dt); return;
-      case 'char:e': case 'char:E': this.runVerb('ActionRotateRight', dt); return;
-      case 'plus': this.runVerb('ActionMoveUpstairs', dt); return;
-      case 'minus': this.runVerb('ActionMoveDownstairs', dt); return;
-      case 'char:1': this.runVerb('ActionApplyMaxZoom', dt); return;    // HotkeySequence_MaxZoom (:1176-1181)
-      case 'char:2': this.runVerb('ActionApplyMinZoom', dt); return;
-      case 'char:n': case 'char:N': this.jumpToBorder('Top'); return;
-      case 'char:b': case 'char:B': this.jumpToBorder('Bottom'); return;
-      case 'char:h': case 'char:H': this.jumpToBorder('Left'); return;
-      case 'char:l': case 'char:L': this.jumpToBorder('Right'); return;
-      case 'char:v': case 'char:V': this.runVerb('ActionSwitchToNextExteriorAutomapViewMode', dt); return;
-      case 'char:f': case 'char:F': this.runVerb('ActionFocusPlayerPosition', dt); return;
-      case 'char:c': case 'char:C': this.runVerb('ActionResetView', dt); return;
-      // the four backgrounds, each on its own key (:1258-1290)
-      case 'char:7': this.background = 'original'; return;
-      case 'char:8': this.background = 'alt1'; return;
-      case 'char:9': this.background = 'alt2'; return;
-      case 'char:0': this.background = 'alt3'; return;
-      default: return;
+    for (const button of EXT_HOTKEYS_DOWN) {
+      if (!this._hotkeyHit(button, code, e)) continue;
+      const bg = EXT_BACKGROUND_HOTKEYS[button];
+      if (bg) { this.background = bg; return; }
+      this.runVerb(EXT_HOTKEY_VERBS[button], dt);
+      return;
+    }
+    for (const button of EXT_HOTKEYS_HELD) {
+      if (!this._hotkeyHit(button, code, e)) continue;
+      this.runVerb(EXT_HOTKEY_VERBS[button], dt);
+      return;
     }
   }
 
@@ -417,16 +565,30 @@ export class ExteriorAutomapWindow {
    *  and the two panel drags. Native 320x200 coordinates. */
   pointer(phase, nx, ny, button = 0) {
     const out = this.chrome.pointer(phase, nx, ny, button);
+    // PlayOneShot(SoundClips.ButtonClick) - DFU plays it FIRST in every
+    // one of the twenty-one handlers (e.g. :1371-1372), which is also
+    // why ActionClickSoundOnly (:1375-1381) is a whole handler.
+    if (out.sound) audio.playOneShot(SOUND.ButtonClick, 1);
     for (const v of out.verbs) this.runVerb(v, this._dt || 1 / 60);
     if (out.drag) {
+      // DFU measures the mouse bias in REAL SCREEN pixels -
+      // `InputManager.MousePosition` (:731, :744), NOT
+      // BaseScreenComponent's localScale-divided ScaledMousePosition -
+      // and both drag speeds are tuned against that space, so the
+      // chrome's NATIVE 320x200 delta is scaled back up by the
+      // letterbox factor first. The dungeon window's identical idiom
+      // is automapWindow.js's `_applyDrag`.
+      const s = this._scale || 1;
       if (out.drag.kind === 'pan') {
-        // dragSpeed is per NATIVE pixel here, as DFU's is per screen
-        // pixel of its own native panel (:730-740)
-        this.cam = exteriorDragPan(this.cam, out.drag.dx, out.drag.dy);
+        // dragSpeedCompensated = dragSpeed * orthographicSize, and this
+        // arm carries NO dt at all (:733-740)
+        this.cam = exteriorDragPan(this.cam, out.drag.dx * s, out.drag.dy * s);
       } else if (out.drag.kind === 'rotate') {
-        // ActionRotate(dragRotateSpeed * bias.x) with dt folded in as 1
-        // - the drag's bias IS the amount (:748-752)
-        this.cam = exteriorRotate(this.cam, EXT_DRAG_ROTATE_SPEED * out.drag.dx, 1);
+        // :748 hands `dragRotateSpeed * bias.x` to ActionRotate, and
+        // the dt lives INSIDE ActionRotate (:1101-1105,
+        // `-rotationAmount * Time.unscaledDeltaTime`) - so the bias is
+        // the amount, not the angle.
+        this.cam = exteriorRotate(this.cam, EXT_DRAG_ROTATE_SPEED * out.drag.dx * s, this._dt || 1 / 60);
       }
     }
     if (phase === 'move') this._hoverAt = [nx, ny];
@@ -437,7 +599,19 @@ export class ExteriorAutomapWindow {
   /** townTalk's click seam still exists; a native window that has a
    *  pointer seam takes the press through it so the two never disagree. */
   click(nx, ny, isRight = false) { this.pointer('down', nx, ny, isRight ? 2 : 0); }
-  hover(nx, ny) { this.pointer('move', nx, ny, 0); }
+
+  /** THE SENTINEL GUARD, and it is the dungeon window's law verbatim
+   *  (automapWindow.js's own `hover`). townTalk's hover seam delivers
+   *  (-1,-1) for any pointer outside the native 320x200 rect - the
+   *  listener is on the window, not the canvas - and that is a
+   *  FABRICATED coordinate, not a position: fed to the chrome it mints
+   *  a drag delta of order -160 native px and teleports the map. DFU
+   *  never has one; its Update() differences two real
+   *  InputManager.MousePosition samples, so leaving the panel keeps
+   *  tracking a real delta. Freezing the drag while the pointer is out
+   *  and resuming from the re-entry point is the closest a
+   *  clamped-coordinate seam gets to that. */
+  hover(nx, ny) { if (nx >= 0 && ny >= 0) this.pointer('move', nx, ny, 0); }
 
   /** PanelAutomap_OnMouseScrollUp/Down (:1319-1327): ActionZoom at the
    *  wheel speed, and ONLY over the render panel - the exterior grid
@@ -456,6 +630,12 @@ export class ExteriorAutomapWindow {
     const { verbs } = this.chrome.tick(dt);
     for (const v of verbs) this.runVerb(v, dt);
     _zoomLevel = this.cam.orthoSize;   // OnPop stores the level (:551)
+    _yawDeg = this.cam.yawDeg;         // ...and the automap script stores the rotation
+    // the deferred toggle-close, drained where DFU's key-UP would be
+    if (this.isCloseWindowDeferred && !this.done) {
+      this.isCloseWindowDeferred = false;
+      this.runVerb('ActionExit', dt);   // CloseWindow() (:592-594), and it plays no sound
+    }
   }
 
   dispose() {
@@ -515,6 +695,7 @@ export class ExteriorAutomapWindow {
     this._ensureTexture(renderer);
     this._ensureStamp(renderer);
     const m = nativeMetrics(canvas);
+    this._scale = m.s;   // the letterbox factor the two drags spend
     // ScreenDimColor is Color.clear (nativePanel records why) - the
     // letterbox is painted, nothing is dimmed
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, SCREEN_DIM);
