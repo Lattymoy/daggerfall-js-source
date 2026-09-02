@@ -178,7 +178,10 @@ export function restDecision({
   if (prevented !== null && prevented !== undefined) {
     return prevented === ''
       ? { kind: 'cannot', textId: REST_TEXT.cannotRestNow }
-      : { kind: 'prevented', message: preventedMessage };
+      // the RESOLVED text, never the producer: every host renders this
+      // field straight into an ActionTextBox line, and DaggerfallUI.cs
+      // :667-669 shows the string GetPreventedRestMessage returned.
+      : { kind: 'prevented', message: prevented };
   }
   if (racialOverrideBlocks) return { kind: 'blocked' };
   return { kind: 'rest' };

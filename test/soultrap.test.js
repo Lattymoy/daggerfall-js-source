@@ -135,10 +135,13 @@ test('X5 gems: the predicate is GROUP + TEMPLATE, which is what DFU searches by'
 });
 
 test('X5 gems: Azura\'s Star takes the soul first, and it is a REAL identity in the port', () => {
-  // loot.js's createArtifact stamps azurasStar on artifact index 9,
-  // so unlike the Skeleton's Key this predicate has something that
-  // can satisfy it.
-  const star = { azurasStar: true, trappedSoulType: null };
+  // ROAD-U: the identity is the ENCHANTMENT the Star carries -
+  // SpecialArtifactEffect with ArtifactsSubTypes.Azuras_Star (9), the
+  // pair SoulTrap.cs:129 hands ContainsEnchantment - and both the
+  // mint (createArtifact) and a classic import carry it. It used to be
+  // a boolean only the mint wrote, so this fixture proved nothing an
+  // imported Star could satisfy.
+  const star = { enchantments: [{ type: 26, param: 9 }], trappedSoulType: null };
   const ordinary = gem();
   assert.equal(fillEmptyTrap([ordinary, star], 15), star, 'the Star wins wherever it sits');
   assert.equal(ordinary.trappedSoulType, null);

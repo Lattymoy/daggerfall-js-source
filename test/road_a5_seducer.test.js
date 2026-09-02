@@ -29,12 +29,23 @@ import {
   MOVE_ANIMS, PRIMARY_ATTACK_ANIMS, HURT_ANIMS, IDLE_ANIMS, RANGED_ATTACK1_ANIMS,
 } from '../src/characters/mobileUnit.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { EnemyAI } from '../src/characters/enemyMotor.js';        // ROAD-U: the ACTOR half of the pause
+import { EnemyAttack } from '../src/characters/enemyAttack.js';
+import { Collider } from '../src/player/collider.js';
+import { srand, getSeed } from '../src/formats/dfRandom.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const SEDUCER = ENEMY_BASICS[MOBILE_DAEDRA_SEDUCER];
 /** Every record in archive 284 has plenty of frames; the transform
  *  sequences are nine long, so ten keeps the plain run honest. */
 const seducerUnit = () => new MobileUnit(MOBILE_DAEDRA_SEDUCER, SEDUCER, () => 10, () => 0.5, 'female');
+/** A real collider with a flat floor - the motor moves the body. */
+const I4 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+const floorCollider = () => {
+  const c = new Collider(() => -100);
+  c.addMesh('floor', new Float32Array([-60, 0, -60, 60, 0, -60, 60, 0, 60, -60, 0, 60]), [0, 1, 2, 0, 2, 3], I4);
+  return c;
+};
 /** Step the anim clock exactly one frame at MoveAnimSpeed. */
 const stepFrames = (m, n, intent = {}) => {
   for (let i = 0; i < n; i++) m.update(1 / MOVE_ANIM_SPEED, intent, 0, [0, 0, 0], [0, 0, 5]);
@@ -137,6 +148,97 @@ test('seducer: the transform pauses actions - no strike, no cast, no stunlock', 
   assert.equal(m.isAttacking(), true);
 });
 
+test('seducer (ROAD-U): the pause stops the ACTOR - no pursuit, no melee timer, no rand(), no shove', () => {
+  // The pin above covers the ANIM half. DFU spends
+  // OneShotPauseActionsWhilePlaying at three sites, and two of them
+  // are components this port keeps outside the mobile: TakeAction
+  // returns at EnemyMotor.cs:464-466, above DoRangedAttack,
+  // DoTouchSpell, EvaluateMoveInForAttack and every AttemptMove;
+  // EnemyAttack.FixedUpdate returns at :59-61, above the melee
+  // countdown and the `DFRandom.rand() % speed` draw; and
+  // KnockbackMovement returns at :267-269 ("Prevent stunlocking
+  // transforming Seducers"). Until ROAD-U the whole predicate was
+  // spent on the anim intent alone, so a transforming Seducer - whose
+  // transform1 arm sets Behaviour = Flying - FLEW at the player,
+  // burned the one shared DFRandom stream every classic tick, and
+  // could be shoved out of its own transformation.
+  const m = seducerUnit();
+  m.startTransformation();
+  const paused = m.isPlayingOneShot() && m.oneShotPauseActionsWhilePlaying();
+  assert.equal(paused, true);
+  assert.equal(m.basics.behaviour, 'Flying', 'transform1 switched the alignment - an ungated motor would fly');
+
+  // 1. THE MOTOR. Three seconds of pursuit, the pools' own per-frame
+  // CanFly fold applied, at a target twenty units away.
+  const mkAi = () => {
+    const ai = new EnemyAI(floorCollider(), [0, 0, 0], 0, { liveSpeed: 50 });
+    ai._classicSenses = () => {}; ai._senses = () => {};
+    ai.detected = true; ai.inSight = true; ai.giveUpTimer = 200;
+    ai.lastKnownTargetPos = [0, 0, 20];
+    ai.predictedTargetPos = ai.lastKnownTargetPos;
+    ai.destination = ai.lastKnownTargetPos;
+    ai._dist = 20;
+    return ai;
+  };
+  const run = (ai, isPaused) => {
+    for (let i = 0; i < 180; i++) {
+      ai.flies = m.basics.behaviour === 'Flying';
+      ai.update(1 / 60, [0, 0, 20], null, false, isPaused);
+    }
+  };
+  const held = mkAi();
+  run(held, true);
+  assert.deepEqual(held.feet, [0, 0, 0], 'it has not moved a millimetre');
+  assert.equal(held.moving, false);
+  // ...and the same foe, free, closes the distance
+  const free = mkAi();
+  run(free, false);
+  assert.ok(free.feet[2] > 5, `the ungated motor pursues (z=${free.feet[2]})`);
+  // TakeAction's return is ABOVE the whole ladder, so not even the
+  // turn-to-face happens: a Seducer that starts transforming with its
+  // back to you keeps its back to you until the sequence ends.
+  const turned = mkAi();
+  turned.yaw = Math.PI;
+  run(turned, true);
+  assert.equal(turned.yaw, Math.PI, 'the pause returns before TakeAction turns (:464-466)');
+  const turnsFree = mkAi();
+  turnsFree.yaw = Math.PI;
+  run(turnsFree, false);
+  assert.notEqual(turnsFree.yaw, Math.PI, 'the free foe turns to face');
+
+  // 2. THE ATTACK COMPONENT: the timer and the shared stream both hold.
+  const mkAttack = () => new EnemyAttack({ liveSpeed: 50, playerLevel: 10, reflexes: 2, rolls: () => 0.5 });
+  const aiStub = { canAct: true, inSight: true, detected: true, giveUpTimer: 200, yaw: 0, feet: [0, 0, 0], _dist: 20 };
+  srand(12345);
+  const pausedAttack = mkAttack();
+  pausedAttack.meleeTimer = 1.5;
+  for (let i = 0; i < 32; i++) pausedAttack.update(1 / 16, aiStub, [0, 0, 20], true);
+  assert.equal(pausedAttack.meleeTimer, 1.5, 'the countdown never runs (EnemyAttack.cs:64)');
+  assert.equal(getSeed(), 12345, 'and not one byte of the shared DFRandom stream is spent (:81)');
+  // the same ticks, unpaused, do both
+  const freeAttack = mkAttack();
+  freeAttack.meleeTimer = 1.5;
+  for (let i = 0; i < 32; i++) freeAttack.update(1 / 16, aiStub, [0, 0, 20], false);
+  assert.ok(freeAttack.meleeTimer < 1.5, 'the free component counts down');
+  assert.notEqual(getSeed(), 12345, 'and draws');
+
+  // 3. KNOCKBACK: a hit neither shoves the transforming Seducer nor
+  // decays the stored speed (:267-269 returns above the whole block).
+  const hit = mkAi();
+  hit.knockbackSpeed = 20;
+  hit.knockbackDir = [0, 0, -1];
+  for (let i = 0; i < 30; i++) hit.update(1 / 60, [0, 0, 20], null, false, true);
+  assert.ok(Math.abs(hit.feet[2]) < 1e-6 && Math.abs(hit.feet[0]) < 1e-6,
+    `no stunlock: the transform holds its ground (${hit.feet.join()})`);
+  assert.equal(hit.knockbackSpeed, 20, 'and the stored speed is not spent either');
+  assert.equal(hit.hurtKnock, false);
+  const shoved = mkAi();
+  shoved.knockbackSpeed = 20;
+  shoved.knockbackDir = [0, 0, -1];
+  for (let i = 0; i < 30; i++) shoved.update(1 / 60, [0, 0, 20], null, false, false);
+  assert.ok(shoved.feet[2] < -0.5, `an ordinary foe IS shoved (z=${shoved.feet[2]})`);
+});
+
 test('seducer: a mobile without the flags falls back to Idle (ApplyEnemyState :290-298)', () => {
   const rat = new MobileUnit(0, ENEMY_BASICS[0], () => 4, () => 0.5, 'male');
   rat.startTransformation();
@@ -211,6 +313,15 @@ test('seducer pins: the hosts stand the behaviour, fold CanFly, and bill the win
     // EnemyDeath.cs:86-92 reads the mobile's own CorpseTexture.
     assert.ok(src.includes('f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture'),
       `${file}: the corpse comes off the mobile's copy`);
+    // ROAD-U: and the pause reaches the two components DFU gates -
+    // without this wiring the motor and the attack machine take the
+    // permissive default and the actor goes on acting.
+    assert.ok(src.includes(`const _fPaused = !!(${f}.mobile?.isPlayingOneShot() && ${f}.mobile.oneShotPauseActionsWhilePlaying());`),
+      `${file}: the host reads OneShotPauseActionsWhilePlaying`);
+    assert.ok(src.includes('_fParalyzed, _fPaused)'), `${file}: the motor is told (EnemyMotor.cs:464-466)`);
+    assert.ok(src.includes('_tgt, _fPaused)'), `${file}: and the attack component (EnemyAttack.cs:59-61)`);
+    assert.ok(src.includes('!_fParalyzed && !_fPaused && f.ai.isHostile'),
+      `${file}: and the caster, which sits below the same return`);
   }
 });
 

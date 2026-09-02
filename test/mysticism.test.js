@@ -137,7 +137,13 @@ test('mysticism: Soul Trap fills AZURA\'S STAR before any ordinary gem', () => {
   // port's items are {group, templateIndex} records carrying no
   // `name`, and the template's own name is "Soul Trap". Now they are
   // real records, matched the way DFU matches them (group + index).
-  const star = { azurasStar: true, trappedSoulType: null };
+  // ROAD-U: ...and the STAR's fixture was the same mistake one item
+  // over - `{ azurasStar: true }` matched a boolean only the port's
+  // own mint wrote, so a Star imported from a classic save (or any
+  // Star DFU would recognise) fell straight through. SoulTrap.cs:129
+  // asks the ITEM: ContainsEnchantment(SpecialArtifactEffect,
+  // Azuras_Star = 9).
+  const star = { enchantments: [{ type: 26, param: 9 }], trappedSoulType: null };
   const gem1 = { group: 'MiscItems', templateIndex: SOUL_TRAP_TEMPLATE, trappedSoulType: null };
   const gem2 = { group: 'MiscItems', templateIndex: SOUL_TRAP_TEMPLATE, trappedSoulType: null };
   const items = [gem1, star, gem2];

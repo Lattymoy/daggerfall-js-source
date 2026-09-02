@@ -396,7 +396,7 @@ test('audit24 wave34: every pool inherits the probe, because it lives in the AI'
     assert.ok(enemy.includes(m), `${m} is on the AI`);
   }
   // ...and each of the three movement branches probes before it moves
-  const step = enemy.slice(enemy.indexOf('  _step(dt, playerFeet, senses, paralyzed = false) {'));
+  const step = enemy.slice(enemy.indexOf('  _step(dt, playerFeet, senses, paralyzed = false, paused = false) {'));
   assert.equal((step.match(/this\._obstacleCheck\(/g) ?? []).length, 3, 'swimmer, flyer, grounded');
   assert.equal((step.match(/this\._fallCheck\(/g) ?? []).length, 3);
   assert.equal((step.match(/if \(this\.fallDetected \|\| this\.obstacleDetected\)/g) ?? []).length, 3,

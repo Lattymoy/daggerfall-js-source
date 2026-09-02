@@ -149,6 +149,54 @@ test('U24: a click outside the panel cancels', () => {
   assert.equal(w.done, true);
 });
 
+test('U24 (ROAD-U): hover, draw and the hit-test share ONE row height - a router\'s boolean is not a font', () => {
+  // ListBox resolves the hovered row (MouseMove :435) and the clicked
+  // row (MouseClick :469) with the SAME expression off the SAME live
+  // font: `y / ((int)(font.GlyphHeight * Scale.y) + rowSpacing)`. The
+  // port split them - the hit-test read a `font` PARAMETER, and the
+  // three routers that mount a bare picker pass the right-button
+  // BOOLEAN in that slot (townTalk.js, worldModes.js,
+  // dungeonContext.js), which is not nullish, so `false?.fnt` fell to
+  // the 6px default while draw and hover used FONT0003's real 7. From
+  // the sixth visible row on you selected a row you had not
+  // highlighted, and the ninth could not be selected at all.
+  const items = Array.from({ length: 20 }, (_, i) => `item${i}`);
+  const w = new ListPickerWindow({ items });
+  w._font = { fnt: { fixedHeight: 7 } };   // FONT0003, as `draw` records it
+  const rh = 7 + ROW_SPACING;              // the DRAWN pitch: 8
+  const vx = PICKER_X + PICKER_RECTS.list[0] + 1;
+  for (let row = 0; row < ROWS_DISPLAYED; row++) {
+    const vy = PICKER_Y + PICKER_RECTS.list[1] + row * rh + 1;
+    w.hover(vx, vy);
+    assert.equal(w.highlightedIndex, row, `hover resolves drawn row ${row}`);
+    // the third argument is the routers' boolean, and the fourth keeps
+    // every click a SINGLE click
+    w.click(vx, vy, false, 1000 + row * (DOUBLE_CLICK_DELAY_MS + 10));
+    assert.equal(w.selectedIndex, w.highlightedIndex, `row ${row}: you select the row you highlight`);
+  }
+  assert.equal(w.selectedIndex, ROWS_DISPLAYED - 1, 'the LAST visible row is reachable at all');
+});
+
+test('U24 (ROAD-U): ScrollToSelected puts the selection on the TOP row, clamped', () => {
+  // ListBox.cs:778-783 is unconditional - `scrollIndex = selectedIndex;
+  // Mathf.Clamp(scrollIndex, 0, (Count-1) - (rowsDisplayed-1));`. The
+  // port held the keep-it-on-screen arms instead (that is
+  // ClampSelectionToVisibleRange, which the arrow keys do inline), so
+  // a Create Item picker reopened at the remembered row 5 opened
+  // scrolled to 0 with the selection six rows down, where DFU opens
+  // scrolled to 5 with it on the first row (CreateItem.cs:75-76).
+  const items = Array.from({ length: 29 }, (_, i) => `row${i}`);   // the Create Item list
+  assert.equal(new ListPickerWindow({ items, selectedIndex: 5 }).scrollIndex, 5);
+  assert.equal(new ListPickerWindow({ items, selectedIndex: 0 }).scrollIndex, 0);
+  // past the clamp the last page holds: 29 - 9 = 20
+  const late = new ListPickerWindow({ items, selectedIndex: 25 });
+  assert.equal(late.scrollIndex, 29 - ROWS_DISPLAYED);
+  assert.equal(late.selectedIndex, 25, 'the SELECTION is untouched - only the window moved');
+  // a list shorter than the window never scrolls (the port's 0 floor,
+  // where Unity's Mathf.Clamp would hand back a negative bound)
+  assert.equal(new ListPickerWindow({ items: ['a', 'b'], selectedIndex: 1 }).scrollIndex, 0);
+});
+
 // ── the training chain ────────────────────────────────────────────
 
 test('U24: too soon -> one box, no offer, no picker', () => {

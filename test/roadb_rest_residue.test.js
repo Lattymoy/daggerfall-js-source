@@ -107,9 +107,15 @@ test('B5: the OPEN gate finally has a producer - all four hosts read the registr
   }
   // ...and the law it lands in is unchanged: "" falls back to 355.
   assert.deepEqual(restDecision({ preventedMessage: '' }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
-  assert.equal(restDecision({ preventedMessage: 'no' }).kind, 'prevented');
+  assert.deepEqual(restDecision({ preventedMessage: 'no' }), { kind: 'prevented', message: 'no' });
   assert.deepEqual(restDecision({ preventedMessage: () => '' }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
-  assert.equal(restDecision({ preventedMessage: () => 'no' }).kind, 'prevented');
+  // ROAD-U: the message is the RESOLVED text, never the producer. This
+  // arm used to be checked on `.kind` alone, and the branch returned
+  // the FUNCTION - which every host renders verbatim as the box's one
+  // line, so the worded prevention (the one with something to say)
+  // would have printed the source of getPreventedRestMessage.
+  // DaggerfallUI.cs:667-669 shows the string the registry returned.
+  assert.deepEqual(restDecision({ preventedMessage: () => 'no' }), { kind: 'prevented', message: 'no' });
 });
 
 test('B5: the registry is asked in the third arm ONLY - never under the two above it', () => {
@@ -122,7 +128,8 @@ test('B5: the registry is asked in the third arm ONLY - never under the two abov
   assert.equal(restDecision({ swimming: true, preventedMessage: registry }).kind, 'cannot');
   assert.equal(restDecision({ grounded: false, preventedMessage: registry }).kind, 'cannot');
   assert.equal(asked, 0, 'and so does the swimming/grounded arm (:661-666)');
-  assert.equal(restDecision({ preventedMessage: registry }).kind, 'prevented');
+  assert.deepEqual(restDecision({ preventedMessage: registry }),
+    { kind: 'prevented', message: 'The ritual is not finished.' }, 'the registry\'s TEXT, not its producer');
   assert.equal(asked, 1, 'the third else is where GetPreventedRestMessage is called (:667-669)');
 });
 

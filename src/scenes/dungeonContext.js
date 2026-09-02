@@ -3081,7 +3081,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
-      f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
+      // ROAD-U: MobileUnit.OneShotPauseActionsWhilePlaying, read where
+      // DFU's components read it - the transforming Seducer takes no
+      // action at all (EnemyMotor.cs:464-466 + :267-269,
+      // EnemyAttack.cs:59-61), not merely no anim intent.
+      const _fPaused = !!(f.mobile?.isPlayingOneShot() && f.mobile.oneShotPauseActionsWhilePlaying());
+      f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed, _fPaused);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
       const _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
       // CH3 (characters-8): a past-threshold landing bills the
       // player's fall formula - trunc(5 x (drop - 5)) - through the
@@ -3164,7 +3169,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // it swinging is the senses' target drop, which now reads blind
       // in the motor. Skipping the component was a law left with the
       // host, and it desynced the shared stream.
-      f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt);   // MT-iv: at the SELECTED target (:199-209)
+      f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-iv: at the SELECTED target (:199-209)
       // C11 audit 08-17: the attack START edge (machine Idle -> swing
       // this frame) - MeleeAnimation fires ChangeEnemyState + the
       // attack sound ONCE at the start, not at the hit frame, and not
@@ -3196,7 +3201,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // playerFeet[0]. DFU's cast branches read the senses' target
       // and simply do not run without one - so the guard IS the law,
       // not a papered-over null.
-      if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {
+      // ROAD-U: ...and not while a pausing one-shot plays. DoRangedAttack's
+      // spell branch and DoTouchSpell both sit BELOW TakeAction's
+      // return at EnemyMotor.cs:466, so a transforming Seducer - which
+      // carries a spell table - casts nothing.
+      if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {
         // MT-iv: the decision aims at the SELECTED target and reads
         // that target's own entity, so a foe duelling another foe
         // neither picks its school off the player's effects nor

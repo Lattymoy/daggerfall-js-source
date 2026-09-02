@@ -76,8 +76,13 @@ export const WALKING_RAY_DISTANCE = 1.0;
 export const RIDING_RAY_DISTANCE = 2.0;
 
 /** `(TransportManager.IsOnFoot) ? walkingRayDistance : ridingRayDistance`
- *  (:507, :533). IsOnFoot is Foot OR Ship (TransportManager.cs) - the
- *  hosts pass the boolean, this file does not re-derive it. */
+ *  (:507, :533). IsOnFoot is TransportModes.Foot ALONE
+ *  (TransportManager.cs:55-58); Horse, Cart AND Ship all take the
+ *  RIDING branch - which is why a player aboard their ship gets the
+ *  long 2.0 distance and its 4.0-deep cast, the very case
+ *  PlayerMotor's own comment (:499-502) is written for. The hosts pass
+ *  the boolean (systems/transport.js:54), this file does not
+ *  re-derive it. */
 export const rayDistanceFor = (onFoot) => (onFoot ? WALKING_RAY_DISTANCE : RIDING_RAY_DISTANCE);
 
 /** PlayerMotor.OnShallowWaterTile (:551-563), the tile-record set

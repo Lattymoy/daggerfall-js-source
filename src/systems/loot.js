@@ -360,14 +360,17 @@ export function createArtifact(templates, artifactIndex) {
   const templateIndex = GROUP_TEMPLATE_INDICES[groupName]?.[magicItem.groupIndex];
   let material = magicItem.material;
   if (magicItem.group === 2) material = 0x200 + material;   // Armor -> plate band
-  // The two identity flags itemInfo reads (DFU checks ArtifactsSubTypes
-  // - ItemEnums.cs:246,250: Oghma_Infinium = 5, Azuras_Star = 9).
-  // AUDIT 22 F11's producerless flags gain their producer here.
-  const identity = {};
-  if (artifactIndex === 5) identity.oghmaInfinium = true;
-  if (artifactIndex === 9) identity.azurasStar = true;
+  // ROAD-U: the two identity BOOLEANS this used to stamp here
+  // (`oghmaInfinium` on index 5, `azurasStar` on index 9) are gone.
+  // Nothing in DFU carries them: ItemHelper.GetItemInfo (:782, :811)
+  // and SoulTrap.cs:129 both ask the ITEM's own enchantment record for
+  // SpecialArtifactEffect + subtype, which SetArtifact copies below
+  // and which a classic import carries too - so keying on a flag only
+  // this mint wrote made every imported Oghma a plain book and every
+  // imported Star an inert gem. The identity now rides
+  // `enchantments`, one predicate for both paths
+  // (artifactEffects.hasArtifactSubtype).
   return {
-    ...identity,
     group: groupName,
     templateIndex,
     name: magicItem.name,

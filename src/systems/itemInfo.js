@@ -33,6 +33,7 @@ import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongN
 import { potionRecipeByKey } from './potions.js';   // IM1: %po's producer (GetPotionRecipe)
 import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
+import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: the identity DFU reads off the item's own record
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -64,10 +65,11 @@ export const INFO_TEXT = Object.freeze({
  *  point of use as DFU does. `item.material` IS DFU's raw
  *  nativeMaterialValue (equip.js:138), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
-  // `artifact`/`oghmaInfinium`/`azurasStar` are minted by loot.js's
-  // createArtifact since Q2b-ii (the quest Item mint's artifact arm) -
-  // AUDIT 22 F11's producerless-flags pin retired that day, replaced
-  // by producer-shape pins in test/iteminfo.test.js.
+  // `artifact` is the classic FLAGS word's artifact bit: minted by
+  // loot.js's createArtifact (SetArtifact's :617) and read straight
+  // off an imported record (classicSave.js). The two SUBTYPE
+  // identities it used to sit beside are no longer booleans at all -
+  // ROAD-U keys them on the enchantment, as DFU does.
   if (item?.artifact) return false;
   const isHelmOrShield = isShieldTemplate(item?.templateIndex) || item?.templateIndex === TEMPLATES.Helm;
   if (isHelmOrShield) {
@@ -91,7 +93,12 @@ export function itemInfoTextId(item) {
       if (item.artifact) return INFO_TEXT.weaponNoMaterial;
       return INFO_TEXT.weapon;
     case 'Books':
-      return item.oghmaInfinium ? INFO_TEXT.oghmaInfinium : INFO_TEXT.book;
+      // ROAD-U: `item.legacyMagic[0].type == SpecialArtifactEffect`
+      // (:782) - the ITEM's own enchantment record, which a classic
+      // import carries too, not a boolean only the mint writes. DFU
+      // tests no param here: a book with a Special effect IS the
+      // Oghma.
+      return hasArtifactEffect(item) ? INFO_TEXT.oghmaInfinium : INFO_TEXT.book;
     case 'Paintings':
       return INFO_TEXT.painting;
     case 'MiscItems':
@@ -102,7 +109,9 @@ export function itemInfoTextId(item) {
       return INFO_TEXT.misc;
     default:
       if (isPotion(item)) return INFO_TEXT.potion;
-      if (item.azurasStar) return INFO_TEXT.soulTrap;
+      // ...and Azura's Star, which :811 keys on the same record plus
+      // `param == 9` (ArtifactsSubTypes.Azuras_Star).
+      if (hasArtifactSubtype(item, ARTIFACTS.AzurasStar)) return INFO_TEXT.soulTrap;
       return INFO_TEXT.misc;
   }
 }

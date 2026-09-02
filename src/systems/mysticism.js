@@ -61,6 +61,7 @@
 // next slice, and those are its seams.
 import { EFFECT_FLAGS } from './spellcast.js';
 import { isSilencedEffect } from './effects.js';
+import { hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: ContainsEnchantment, the way SoulTrap.cs asks
 
 /** The ten, with the classic key DFU registers and which of the three
  *  cost axes each supports. `chance` and `duration` cost pairs are
@@ -306,7 +307,13 @@ export const SOUL_TRAP_TEMPLATE = 274;
  *  isPotionRecipe/isMap). */
 export function fillEmptyTrap(items, soulType, {
   azurasStarOnly = false,
-  isAzurasStar = (it) => it?.azurasStar === true,
+  // ROAD-U, the X5 fix one item further on: this default was
+  // `it?.azurasStar === true`, a boolean only createArtifact minted -
+  // so a Star imported from a classic save captured nothing at either
+  // death site while isAzurasStarEquipped, read on the very same line
+  // there, said it was worn. SoulTrap.cs:129 asks the ITEM:
+  // ContainsEnchantment(SpecialArtifactEffect, Azuras_Star).
+  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
   isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
 } = {}) {
   const empty = (it) => (it?.trappedSoulType ?? null) === null;

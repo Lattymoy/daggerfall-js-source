@@ -151,11 +151,19 @@ export class ListPickerWindow {
 
   _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
 
-  /** ListBox.ScrollToSelected: put the selection on screen without
-   *  moving it. Called by the constructor and by the arrow keys. */
+  /** ROAD-U CORRECTION. ListBox.ScrollToSelected (:778-783) is
+   *  UNCONDITIONAL - `scrollIndex = selectedIndex;` then a clamp to
+   *  [0, Count - RowsDisplayed]: the selection is moved to the TOP row
+   *  of the window. This used to hold the keep-it-on-screen arms
+   *  (ClampSelectionToVisibleRange's job, which the arrow keys do
+   *  inline at :217-219) under a docstring citing the law it
+   *  contradicted, so a Create Item picker reopened at row 5 opened
+   *  scrolled to 0 with the selection six rows down where DFU opens
+   *  scrolled to 5 with it on the first row. Its one caller is the
+   *  constructor, standing for CreateItem.cs:75-76
+   *  (SelectIndex(lastSelectedIndex); ScrollToSelected()). */
   scrollToSelected() {
-    if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
-    if (this.selectedIndex >= this.scrollIndex + ROWS_DISPLAYED) this.scrollIndex = this.selectedIndex - ROWS_DISPLAYED + 1;
+    this.scrollIndex = this.selectedIndex;
     this._clampScroll();
   }
 
@@ -229,8 +237,8 @@ export class ListPickerWindow {
     this._clampScroll();
   }
 
-  /** The row height a click resolves against (ListBox.cs:434):
-   *  glyphHeight + rowSpacing. */
+  /** The ONE row height draw, hover and the hit-test all resolve
+   *  against (ListBox.cs:435, :469): glyphHeight + rowSpacing. */
   rowHeight(font) { return (font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
   /** MouseMove (:428-458) and MouseLeave (:460-463): the row under the
@@ -269,7 +277,19 @@ export class ListPickerWindow {
       return true;
     }
     if (inRect(PICKER_RECTS.list, vx, vy)) {
-      const rh = this.rowHeight(font ?? this._font);
+      // ROAD-U: ONE row height for draw, hover and hit-test. ListBox
+      // resolves MouseMove (:435) and MouseClick (:469) off the SAME
+      // live font, and `draw` (:312) is what records it here. The third
+      // argument is only a pre-first-frame seed now, and is ignored
+      // unless it really is a font: the three routers that mount a bare
+      // picker pass a right-button BOOLEAN in that slot
+      // (townTalk.js:904, worldModes.js:5770, dungeonContext.js:4064),
+      // and `false ?? this._font` kept the `false`, dropping the click
+      // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
+      // FONT0003 - so from the 6th visible row on, the row you
+      // highlighted was not the row you selected, and the 9th was
+      // unselectable outright.
+      const rh = this.rowHeight(this._font ?? (font?.fnt ? font : null));
       const row = Math.floor((vy - PICKER_Y - PICKER_RECTS.list[1]) / rh);
       if (row >= 0 && row < ROWS_DISPLAYED) {
         const index = this.scrollIndex + row;

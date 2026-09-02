@@ -111,7 +111,7 @@ test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee st
   // inside melee range is NOT handled by the ranged arm (the band's
   // near edge excludes it) but by the ordinary stop.
   const src = rd('src/characters/enemyMotor.js');
-  const body = src.slice(src.indexOf('  _classicTick(playerFeet) {'));
+  const body = src.slice(src.indexOf('  _classicTick(playerFeet, paused = false) {'));
   // AUDIT 39: the stop test now reads `this.stopDistance`, which
   // TakeAction:443-449 sets per pass (2.25 vs the player, 1.5 vs
   // another AI). The ORDERING law this pin guards is unchanged - only

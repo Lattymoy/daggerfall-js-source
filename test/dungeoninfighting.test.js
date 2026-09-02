@@ -111,7 +111,7 @@ test('MT-iv: both alert gates carry EnemySenses\' target==player term', () => {
 });
 
 test('MT-iv: the attack component and the caster aim at the SELECTED target', () => {
-  assert.ok(DG.includes('f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt);'),
+  assert.ok(DG.includes('f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt, _fPaused);'),
     'EnemyAttack reads senses.Target (:199-209), and holds when there is none (:136-137)');
   assert.ok(DG.includes('const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castEnt);'),
     'so does the casting decision');
@@ -149,10 +149,10 @@ test("P0b (Mac 2026-08-28): the dungeon's CAST arm guards on the SELECTED target
   assert.match(DG, /const _tgt = _targetFeet\(f\);/, 'the selected-target feet exist');
   assert.match(DG, /return rec\.ai\._armedTargeting \? null : _pf;/,
     'armed-with-no-target really answers null - the state the guard is for');
-  assert.ok(DG.includes('if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {'),
+  assert.ok(DG.includes('if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {'),
     'the cast arm gates on _tgt');
   assert.ok(!DG.includes('if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {'),
     'and the playerFeet guard that let the null through is gone');
-  assert.ok(DG.includes('(_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt);'),
+  assert.ok(DG.includes('(_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt, _fPaused);'),
     'beside the attack arm that always guarded correctly');
 });

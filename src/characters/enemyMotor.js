@@ -1110,7 +1110,7 @@ export class EnemyAI {
     }
   }
 
-  _classicTick(playerFeet) {
+  _classicTick(playerFeet, paused = false) {
     // AUDIT 26 F010/F014: the GiveUpTimer refill/decrement used to live
     // HERE, inside the CanAct-gated decision - fused, exactly what the
     // finding names. It is UpdateTimers work and runs unconditionally
@@ -1140,6 +1140,13 @@ export class EnemyAI {
     // GetDestination (:528-565), all three arms since wave 35.
     const detouring = this.avoidObstaclesTimer > 0;
     this._getDestination(playerFeet);
+    // ROAD-U - TakeAction's own return, at DFU's own place in it:
+    // "Do not change action if currently playing oneshot wants to stop
+    // actions" (:464-466), AFTER GetDestination (so the destination
+    // still resolves, side effects and all) and BEFORE the whole
+    // action ladder - DoRangedAttack, DoTouchSpell,
+    // EvaluateMoveInForAttack and every AttemptMove below it.
+    if (paused) { this.moving = false; return; }
     const dx = this.destination[0] - this.feet[0], dz = this.destination[2] - this.feet[2];
     // Ranged attacks (:468-470) - the FIRST branch of TakeAction's
     // action ladder, AHEAD of the detour (AUDIT 26 F011: the port took
@@ -1203,15 +1210,29 @@ export class EnemyAI {
    *  senses keep running, decisions and pursuit stop, grounded foes
    *  and FLYERS fall ("intentional side-effect: paralyzed flying
    *  enemies fall out of the air"), swimmers freeze in place. */
-  update(dt, playerFeet, senses = null, paralyzed = false) {
+  /** ROAD-U: `paused` is the host's
+   *  `mobile.IsPlayingOneShot() && mobile.OneShotPauseActionsWhilePlaying()`
+   *  (MobileUnit.cs:174-184 - the two Seducer transform states alone,
+   *  "Seducer should not move and attack while transforming"). DFU
+   *  spends it in TWO places this motor owns: TakeAction returns at
+   *  :464-466, before DoRangedAttack, DoTouchSpell,
+   *  EvaluateMoveInForAttack and every AttemptMove; and
+   *  KnockbackMovement returns at :267-269, before the shove, the
+   *  Hurt state, the decay and the CanAct/flyerFalls writes ("Prevent
+   *  stunlocking transforming Seducers"). Neither was reachable from
+   *  here - the whole predicate was spent on the mobile's own anim
+   *  intent - so a transforming Seducer FLEW ten metres at the player
+   *  (transform1 sets Behaviour = Flying) and could be shoved out of
+   *  its own transformation. */
+  update(dt, playerFeet, senses = null, paralyzed = false, paused = false) {
     this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
-      this._step(FIXED_DT, playerFeet, senses, paralyzed);
+      this._step(FIXED_DT, playerFeet, senses, paralyzed, paused);
     }
   }
 
-  _step(dt, playerFeet, senses, paralyzed = false) {
+  _step(dt, playerFeet, senses, paralyzed = false, paused = false) {
     // CH4 (the senses verify pass): DFU's cadence split, exactly -
     // sight/hearing/detection resolve EVERY FixedUpdate (the fixed
     // step here); the spawn-band recompute and the illusion re-roll
@@ -1223,7 +1244,14 @@ export class EnemyAI {
     // (DFU's senses-then-motor component order). senses = the P13
     // stealth context (see _senses).
     // C15: knockback is CanAct=false - decisions skip, senses run.
-    const knocked = this.knockbackSpeed > 0;
+    // ROAD-U: ...unless a pausing one-shot is playing, because
+    // KnockbackMovement's FIRST line is `if (mobile.EnemyState ==
+    // SeducerTransform1 || == SeducerTransform2) return;` (:267-269) -
+    // it returns above the whole block, so a transforming Seducer
+    // takes no shove, no Hurt state, no decay of the stored speed AND
+    // no CanAct/flyerFalls write. Folding the pause into `knocked`
+    // carries all four, in DFU's own order.
+    const knocked = this.knockbackSpeed > 0 && !paused;
     // AUDIT 26 F010: CanAct, EXPOSED. HandleParalysis and
     // KnockbackMovement clear it (:255, :317) and the attack/cast
     // components' bow-roll and spell branches live behind
@@ -1321,9 +1349,15 @@ export class EnemyAI {
       // C-slice: a pacified foe with NO foe target keeps its senses
       // but takes no action - its senses hold no Target, so
       // HandleNoAction drops CanAct. One with a foe target still acts.
-      if (this.canAct) this._classicTick(targetFeet ?? playerFeet);   // MT-i: pursuit aims at the TARGET
+      if (this.canAct) this._classicTick(targetFeet ?? playerFeet, paused);   // MT-i: pursuit aims at the TARGET
     }
-    if (paralyzed || !(this.isHostile || foeTarget)) this.moving = false;
+    // ROAD-U: `paused` joins the two intent clears. DFU calls
+    // TakeAction (and through it AttemptMove) every FixedUpdate, so
+    // its pause return stops the motion on the very frame the
+    // transform starts; the port's `moving` is a LATCH the classic
+    // tick sets, and a latch left standing would walk the Seducer on
+    // for up to a classic tick after DFU's has stopped dead.
+    if (paralyzed || paused || !(this.isHostile || foeTarget)) this.moving = false;
 
     // C15 KnockbackMovement, verbatim: runs INSTEAD of pursuit (and
     // regardless of paralysis - DFU calls it before the CanAct

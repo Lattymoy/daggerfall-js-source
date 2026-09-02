@@ -46,6 +46,7 @@ import {
   FOG_DENSITY_MIN, FOG_DENSITY_MAX, DUNGEON_FOG, applyFog,
 } from '../src/render/underwaterFog.js';
 import { pickFootstepSet, FootstepMachine, FOOTSTEP, WALK_STEP_INTERVAL } from '../src/systems/footsteps.js';
+import { isOnFoot, TRANSPORT_MODES } from '../src/systems/transport.js';   // ROAD-U: IsOnFoot is Foot alone
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { dfuFile, missingDfu } from './dfuRoot.mjs';
 
@@ -121,6 +122,25 @@ test('ROAD-B b3: the down probe reaches rayDistance * 2, and riding doubles the 
   const ride = (drop) => downProbe({ centreY: 10, terrainY: 10 - drop, rayDistance: RIDING_RAY_DISTANCE });
   assert.equal(ride(3.9).hit, true);
   assert.equal(ride(4.1).hit, false);
+});
+
+test('ROAD-B b3 (ROAD-U): the ray-distance pin states IsOnFoot the right way round for the SHIP', () => {
+  // TransportManager.cs:55-58 is `return mode == TransportModes.Foot;`
+  // - Foot ALONE, with Horse, Cart and Ship as three separate modes
+  // that all take the riding branch of PlayerMotor.cs:507/:533. The
+  // comment over rayDistanceFor read "IsOnFoot is Foot OR Ship", the
+  // exact inverse for the one mode PlayerMotor's own note (:499-502)
+  // is written about: under it a player aboard their ship would take
+  // the SHORT 2.0-deep cast where DFU casts 4.0 and finds the sea.
+  // The executable code was always right - a pin that misstates its
+  // own reference is a licence to "fix" the code down to the pin.
+  const src = readFileSync(join(SRC, 'player/exteriorSurface.js'), 'utf8');
+  assert.equal(/IsOnFoot is Foot OR Ship/.test(src), false, 'the inverted claim is gone');
+  assert.match(src, /IsOnFoot is TransportModes\.Foot ALONE/);
+  // ...and the live predicate has always agreed: a ship rides
+  assert.equal(isOnFoot(TRANSPORT_MODES.Ship), false);
+  assert.equal(rayDistanceFor(isOnFoot(TRANSPORT_MODES.Ship)), RIDING_RAY_DISTANCE);
+  assert.equal(rayDistanceFor(isOnFoot(TRANSPORT_MODES.Foot)), WALKING_RAY_DISTANCE);
 });
 
 test('ROAD-B b3: terrain and StaticGeometry are the NEAREST hit, and are mutually exclusive', () => {
