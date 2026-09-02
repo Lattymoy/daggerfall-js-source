@@ -1148,7 +1148,7 @@ test('SAV2: classic potions and recipes carry their DFU recipe key across the im
 test('SAV2: items and spells - discard law, wagon split, equip, soul, conjured time, gold', () => {
   const tree = buildImportTree();
   const spellsByIndex = new Map([[77, { name: 'Test Spell' }]]);
-  const { items, wagonItems, spells } = classicItemsAndSpells(tree, { spellsByIndex });
+  const { items, wagonItems, spells, goldPieces } = classicItemsAndSpells(tree, { spellsByIndex });
 
   const names = items.map((i) => i.name);
   assert.ok(!names.includes('Hacked'), 'image1 == 0 is discarded');
@@ -1166,8 +1166,11 @@ test('SAV2: items and spells - discard law, wagon split, equip, soul, conjured t
   const conjured = items.find((i) => i.name === 'Conjured');
   assert.equal(conjured.timeForItemToDisappear, 5555, 'flag 0x1000 takes the root Time');
 
-  const gold = items.find((i) => i.group === 'Currency');
-  assert.equal(gold.stackCount, 100000, 'physicalGold mints the one gold stack');
+  // E4: `playerEntity.GoldPieces = physicalGold`
+  // (StartGameBehaviour.cs:602-603) - the COUNTER, and nothing lands
+  // in the imported bag.
+  assert.equal(goldPieces, 100000, 'physicalGold IS PlayerEntity.GoldPieces');
+  assert.equal(items.filter((i) => i.group === 'Currency').length, 0);
 
   // The stock spell matched by index AND name travels as its index.
   assert.deepEqual(spells, [77]);
@@ -1341,7 +1344,8 @@ test('SAV2: classicSaveToSnapshot - the whole envelope, at SAVE_VERSION', () => 
   assert.equal(snap.bankAccounts[0].accountGold, 1000);
   assert.equal(snap.ownedShip, 0, 'the small ship');
   assert.deepEqual(snap.spells, [77]);
-  assert.ok(snap.items.some((i) => i.group === 'Currency'));
+  assert.equal(snap.goldPieces, 100000, 'E4: physicalGold rides the envelope as the counter');
+  assert.ok(!snap.items.some((i) => i.group === 'Currency'));
   assert.deepEqual(snap.backStory, ['a scrappy urchin', '']);
   // The savevars fixture's faction 368 matches the fake dict - its
   // LIVE rep (-3) merges in; 400 has no savevars row and keeps the

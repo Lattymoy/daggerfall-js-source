@@ -57,8 +57,8 @@ const hero = () => {
   };
   e.items = [
     mk('Longsword'), mk('Dagger'), mk('Buckler', 'Armor'), mk('Cuirass', 'Armor'),
-    { name: 'Gold Pieces', templateIndex: 276, group: 'Currency', stackCount: 1287 },
   ];
+  e.goldPieces = 1287;   // E4: gold is the counter, never a row in the pack
   return e;
 };
 const model = (e) => packModel({ entity: e, items: () => e.items });
@@ -73,8 +73,10 @@ test('U53: the pack reads the four DFU tab pages, and nothing else', () => {
     assert.deepEqual(items, filterByTab(e.items, tab),
       `${tab} must be filterByTab's own answer, not a second filter`);
   }
-  assert.equal(m.count, 5);
-  assert.equal(m.gold, 1287, 'the Currency stack, as every other screen reads it');
+  assert.equal(m.count, 4);
+  assert.equal(m.gold, 1287, 'PlayerEntity.GoldPieces, as every other screen reads it');
+  assert.equal(m.tabs.every((t) => t.items.every((i) => i.group !== 'Currency')), true,
+    'and the list can never show a gold row');
 });
 
 test('U53: encumbrance is the same expression the sheet and the classic window use', () => {
@@ -1138,7 +1140,8 @@ test('PX28: looting just TAKES - no second popup over the frame you are reading'
   assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
     'the tab-follows-the-item law is unchanged - it just belongs to the pack');
   // The transfer itself is untouched: this slice changes what is SHOWN.
-  assert.match(src, /const taken = applyTransfer\(item, plan, from, bag\);/);
+  assert.match(src, /const taken = applyTransfer\(item, plan, from, bag, \{ entity: deps\.entity, toPlayer: true \}\);/,
+    'E4: `PlayerEntity.Items == to` is the destination test DoTransferItem makes');
   assert.match(src, /if \(plan\.claimsChoice\) \{/, 'G6\'s one-is-the-whole-gift arm still runs first');
 });
 

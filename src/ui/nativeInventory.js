@@ -541,7 +541,12 @@ export class NativeInventoryWindow {
       rows: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
       field: true,
       onInput: (text) => {
-        const player = this.hooks.entity ?? { items: this.hooks.items() };
+        // E4: `int playerGold = PlayerEntity.GoldPieces` (:1288) - the
+        // COUNTER, so the purse is the entity's or there is none. A
+        // host that mounts the window without one drops every amount
+        // through planDropGold's own silent range refusal, which is
+        // what DFU does with a purse of zero.
+        const player = this.hooks.entity ?? {};
         // U57: the range refusal and the wagon clamp are
         // systems/itemTransfer.js; the BOX is this window's.
         const plan = planDropGold(text, {
@@ -671,7 +676,13 @@ export class NativeInventoryWindow {
       // else the button click (:1583) - after the carry gate, so a
       // refused transfer stays silent.
       audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
-      const taken = applyTransfer(it, plan, remote, bag);
+      // E4: `PlayerEntity.Items == to` is TRUE on this side of the
+      // window - this is the arm DoTransferItem's gold interception
+      // (:1562-1571) exists for, so a pile taken here is spent into
+      // GoldPieces and the member RETURNS. The null IS that return: no
+      // equip (:1580), no choose-one close (:1585-1591).
+      const taken = applyTransfer(it, plan, remote, bag, { entity: this.hooks.entity, toPlayer: true });
+      if (taken === null) return;
       if (plan.equip && this.hooks.entity) {
         // S23: the taken item still has to pass the career gate
         if (this._refuseForbidden(taken)) return;
@@ -960,8 +971,7 @@ export class NativeInventoryWindow {
       drawImgCrop(renderer, _art.info, m, INV_RECTS.infoCutout, INV_RECTS.itemInfoPanel);
       // U47: the GOLD button's own two lines, which are generated and
       // need no TEXT.RSC - so they draw even in a host with none.
-      const carriedGold = this.infoGold
-        ? goldAmount(this.hooks.entity ?? { items: this.hooks.items() }) : 0;
+      const carriedGold = this.infoGold ? goldAmount(this.hooks.entity ?? {}) : 0;
       const panelRows = this.infoGold
         ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
         // ROAD-A7: the PANEL's read, not the popup's - :1135-1137

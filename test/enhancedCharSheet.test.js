@@ -42,7 +42,8 @@ const hero = () => ({
   skills: { 0: 41, 1: 38, 2: 27, 3: 22, 4: 15, 5: 11, 6: 9 },
   health: 41, maxHealth: 58, magicka: 20, maxMagicka: 44,
   fatigue: 3200,
-  items: [{ name: 'Gold Pieces', group: 'Currency', stackCount: 1287 }],
+  goldPieces: 1287,   // E4: PlayerEntity.GoldPieces, the counter
+  items: [],
 });
 
 // ── THE NUMBERS ARE THE CLASSIC SHEET'S ──────────────────────────
@@ -67,7 +68,7 @@ test('U52: every figure is the expression ui/charsheet.js draws', () => {
   assert.notEqual(m.encumbrance.max, maxEncumbrance(e.stats.strength));
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
 
-  assert.equal(m.gold, 1287, 'the Currency stack, as the classic label reads it');
+  assert.equal(m.gold, 1287, 'GetGoldAmount, as the classic label reads it');
   assert.deepEqual(m.health, { now: 41, max: 58 });
   assert.deepEqual(m.magicka, { now: 20, max: 44 });
 });

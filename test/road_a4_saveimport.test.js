@@ -224,12 +224,12 @@ test('a4 envelope: the turn counts as one more disease at the temple, and a cure
   // (TimeToBecomeVampireOrWerebeast != 0) numberOfDiseases++`, at 250
   // gold a disease before every modifier. A clean character with the
   // stamp set is NOT "not diseased".
-  const clean = makeEntity({ items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 100000 }] });
+  const clean = makeEntity({ goldPieces: 100000 })   // E4: PlayerEntity.GoldPieces;
   assert.equal(becomingVampireOrWerebeast(clean), false);
   assert.equal(cureDiseaseOffer(clean, GUILDS.FightersGuild, null, { quality: 10 }).kind, 'noDisease');
 
   const turning = makeEntity({
-    items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 100000 }],
+    goldPieces: 100000,
     timeToBecomeVampireOrWerebeast: 123456,
   });
   assert.equal(becomingVampireOrWerebeast(turning), true);

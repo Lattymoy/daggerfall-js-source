@@ -15,14 +15,14 @@ import {
 } from '../src/systems/spellEffects.js';
 import { SpellMakerWindow, TARGET_LABELS, ELEMENT_LABELS } from '../src/ui/spellMakerWindow.js';
 import { SPELLBOOK_TEMPLATE_INDEX, _resetCustomIndexForTests, blankEffectSettings } from '../src/systems/spellMaker.js';
-import { goldStack } from '../src/systems/inventory.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 const player = (gold = 100000) => ({
   name: 'S', level: 1, stats: {}, skills: [50], maxMagicka: 40,
-  items: [goldStack(gold), { group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
+  goldPieces: gold,   // E4: PlayerEntity.GoldPieces
+  items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
   spells: [],
 });
 const win = (gold) => new SpellMakerWindow({ entity: player(gold) });
@@ -226,13 +226,13 @@ test('S1 window: buying inscribes the spell, spends the gold and resets the shee
   w.name = 'Zap';
   w.rangeType = 2;
   const price = w.cost().gold;
-  const before = e.items[0].stackCount;
+  const before = e.goldPieces;   // E4: PlayerEntity.GoldPieces
   toRow(w, 'buy').input('confirm');
   assert.equal(e.spells.length, 1, 'the spell is in the book');
   assert.equal(e.spells[0].name, 'Zap');
   assert.equal(e.spells[0].rangeType, 2);
   assert.equal(e.spells[0].custom, true);
-  assert.equal(e.items[0].stackCount, before - price, 'the gold really left');
+  assert.equal(e.goldPieces, before - price, 'the gold really left');
   assert.match(w.notice, /inscribed/, 'record 1705');
   // the sheet resets for another spell - the window does NOT close
   assert.equal(w.done, false);
@@ -253,7 +253,7 @@ test('S1 window: the refusals speak, and nothing is bought or spent', () => {
   w.name = 'Zap';
   toRow(w, 'buy').input('confirm');
   assert.match(w.notice, /enough gold/);
-  assert.equal(e.items[0].stackCount, 10, 'no gold moved');
+  assert.equal(e.goldPieces, 10, 'no gold moved');
   assert.equal(e.spells.length, 0);
   // affordable, but nameless - the LAST check
   const w2 = win(100000);

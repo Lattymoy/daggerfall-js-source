@@ -290,9 +290,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1073` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1325` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/world.js:2819` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/worldModes.js:1659` - FLAGGED, above ground only, each with the DFU line it owes.
+- `src/scenes/worldModes.js:1662` - FLAGGED, above ground only, each with the DFU line it owes.
 - `src/systems/inputActions.js:465` - STILL FLAGGED:
-- `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a

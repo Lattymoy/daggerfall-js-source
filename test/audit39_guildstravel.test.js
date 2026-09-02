@@ -194,8 +194,8 @@ test('F99 (AUDIT-39r): the bit lands in the region the GETTER host names', () =>
 /** A purse of `coins` plus one letter of credit worth `letter`. */
 const purse = (coins, letter = 0) => ({
   level: 1,
+  goldPieces: coins,   // E4: PlayerEntity.GoldPieces, the counter
   items: [
-    { group: 'Currency', stackCount: coins },
     ...(letter ? [{ templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: letter }] : []),
   ],
   stats: { personality: 50 },

@@ -456,14 +456,17 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   AT layout, so click time is the wrong moment. Closing it means
   deferring the exterior NPC pass or re-running one pass when the
   bridge lands, in two files.*
-- **`src/systems/inventory.js:48`** - gold as a bag stack. *Multi-host,
-  and a real if quiet divergence. Weight already matches - template
-  276's `baseWeight` 0.0025 is `goldPieceWeightInKg`. What differs is
-  that DFU's player collection can never hold Currency:
-  `DoTransferItem` intercepts a `Currency.Gold_pieces` item bound for
-  `PlayerEntity.Items` and adds to `GoldPieces` instead. D9 corrected
-  the triage's stated observable in passing - `filterByTab` needs no
-  Currency exclusion because `AddLocalItem` has none either.*
+- ~~**`src/systems/inventory.js:48`** - gold as a bag stack.~~ **SHIPPED
+  (E-group, 2026-09-02).** *Gold is `PlayerEntity.GoldPieces`, a
+  counter, and `PlayerEntity.Items` can never hold Currency.
+  `DoTransferItem`'s interception (`:1562-1571`) is
+  `itemTransfer.applyTransfer`'s `toPlayer` arm and runs at both doors;
+  every producer writes the counter as DFU's does; `CarriedWeight`
+  (`:184`) came back whole as `inventory.carriedWeight` and reaches its
+  four DFU readers. The wagon, loot piles and quest gold KEEP the
+  stack, because DFU's do. The envelope carries `goldPieces`, and a
+  pre-slice save's stack is absorbed on restore. D9's correction stood
+  and is why nothing was added to `filterByTab`.*
 - **`src/ui/chargenArt.js:731`** - the picker's scroll bar has no HIT.
   *D2 shipped the DRAW: `drawPickerScrollThumb` lays DFU's three
   carried strips over `RECTS.pickScroll`. The hit is not a one-function

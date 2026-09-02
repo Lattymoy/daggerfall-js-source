@@ -24,7 +24,7 @@
 // them at the end of finishChargen, PROPAGATING, exactly as
 // BiogFile.cs:339 does.
 
-import { addItem, goldStack } from './inventory.js';
+import { addItem, addGoldPieces, goldPiecesOf } from './inventory.js';   // E4: the GP command writes the counter
 import { itemBaseValue, templateByIndex, templateFor } from './itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
@@ -113,11 +113,13 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
     const arg = tokens.length > 2 ? tokens[1] + tokens[2] : tokens[1];
     const v = Number.parseInt(arg, 10);
     if (!Number.isFinite(v)) { console.warn(`[biog] GP - invalid argument: ${effect}`); return null; }
-    entity.items = entity.items ?? [];
-    let stack = entity.items.find((it) => it.group === 'Currency');
-    if (!stack) entity.items.push(stack = goldStack(0));
-    if (arg[0] === '+') stack.stackCount += Math.abs(v);
-    else if (arg[0] === '-') stack.stackCount = Math.max(0, stack.stackCount - Math.abs(v));   // never negative
+    // E4: `playerEntity.GoldPieces +=/-= parseResult` (:283-289) - the
+    // COUNTER, which is what BiogFile writes. The MINUS arm stays the
+    // port's own (Ledger A): DFU double-negates the already-signed
+    // TryParse result and so ADDS on `-`; the port subtracts, clamped
+    // at zero the way DFU's own next line clamps.
+    if (arg[0] === '+') addGoldPieces(entity, Math.abs(v));
+    else if (arg[0] === '-') entity.goldPieces = Math.max(0, goldPiecesOf(entity) - Math.abs(v));
     return 'gold';
   }
   if (effect.startsWith('IT')) {

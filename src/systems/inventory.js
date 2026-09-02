@@ -45,40 +45,73 @@ export function isEnchanted(item) {
  *  Pieces" / "Gold pieces"), so the stack drew no icon at all and its
  *  label changed depending on who created it.
  *
- *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
- *  the GOLD button reads - it is not an item and never appears in the
- *  list. The port's S2 shape carries it as a bag stack; retiring that
- *  is its own slice (goldAmount/trade/loot all read the stack).
+ *  E4 (2026-09-02) RETIRED THE REPRESENTATION FLAG: gold is a COUNTER
+ *  now, `entity.goldPieces` (PlayerEntity.cs:64 `protected int
+ *  goldPieces = 0`, :158 the GoldPieces property), and the PLAYER'S
+ *  COLLECTION CAN NO LONGER HOLD CURRENCY - which is the invariant
+ *  every consumer downstream of it leans on. A gold PILE is still an
+ *  item, because DFU's is: ItemBuilder.CreateGoldPieces (:791-798)
+ *  mints one into loot, the wagon and a quest resource, and
+ *  DaggerfallBankManager reads the WagonItems stack by group and
+ *  template. What no longer exists is a Currency stack in
+ *  PlayerEntity.Items.
  *
- *  D9 NARROWED IT, and corrected the shape of the difference. What is
- *  open is the REPRESENTATION and nothing smaller. In particular there
- *  is no filter to add: DaggerfallInventoryWindow.AddLocalItem
- *  (:914-943) has NO Currency arm - its four tab tests are
- *  weapon/armor, enchanted, ingredient and everything-else, exactly
- *  what ui/nativeInventory.js filterByTab already ports. DFU's list
- *  cannot show gold because the PLAYER'S COLLECTION never holds any:
- *  DoTransferItem (:1562-1571) intercepts a Currency.Gold_pieces item
- *  whose destination is PlayerEntity.Items, does `GoldPieces +=
- *  stackCount`, removes the item from the source and returns before
- *  the transfer - so a gold pile is spent into the counter at the
- *  moment it would enter the pack, and no later code has to exclude
- *  it. Porting that one arm alone would leave the port with gold in
- *  the pack anyway (every producer - startingGear, court.addGold,
- *  biography, talk, classicSave, the quest mint - puts the stack
- *  there directly), so it closes nothing on its own.
+ *  The seam is the TRANSFER DOOR. DoTransferItem (:1562-1571)
+ *  intercepts a Currency.Gold_pieces item whose destination is
+ *  PlayerEntity.Items, does `GoldPieces += stackCount`, removes the
+ *  item from the source and returns BEFORE the transfer - so a pile
+ *  is spent into the counter at the moment it would enter the pack,
+ *  and no later code has to exclude it. systems/itemTransfer.js's
+ *  applyTransfer carries that arm for every screen that transfers.
+ *  D9's other finding stands and is why there is no filter here:
+ *  DaggerfallInventoryWindow.AddLocalItem (:914-943) has NO Currency
+ *  arm - its four tab tests are weapon/armor, enchanted, ingredient
+ *  and everything-else, exactly what ui/nativeInventory.js
+ *  filterByTab already ports. The list cannot show gold because the
+ *  collection never holds any.
  *
- *  Weight is NOT part of what is open: template 276's baseWeight is
- *  0.0025 = DaggerfallBankManager.goldPieceWeightInKg, so
- *  charsheet.js's carriedWeight already equals PlayerEntity.cs:184
- *  CarriedWeight, which adds `GoldPieces * goldPieceWeightInKg` by
- *  hand. The stack IS the counter, at the right weight; what differs
- *  is that a counter cannot be dragged and a stack can. */
+ *  Every OTHER producer writes the counter directly, as DFU's does:
+ *  startingGear (StartGameBehaviour's 100), biography's GP command
+ *  (BiogFile.cs:283-289), the pickpocket (PlayerActivate.cs:1628),
+ *  classicSave's physicalGold (StartGameBehaviour.cs:603), the quest
+ *  machine's GetItem gold arm (GetItem.cs:73-78), court.addGold and
+ *  every trade/bank payment (court.deductGold IS
+ *  PlayerEntity.DeductGoldAmount).
+ *
+ *  Weight was never the difference and still is not: template 276's
+ *  baseWeight is 0.0025 = DaggerfallBankManager.goldPieceWeightInKg,
+ *  so `carriedWeight` below adds `goldPieces * goldPieceWeightInKg`
+ *  by hand exactly as PlayerEntity.cs:184 does, and every reader of
+ *  the old bag total now asks that member instead. */
 export const GOLD_TEMPLATE = 276;
 export const goldStack = (stackCount = 0) => ({
   group: 'Currency', templateIndex: GOLD_TEMPLATE,
   name: templates.find((t) => t.index === GOLD_TEMPLATE)?.name ?? 'Gold Pieces',
+  // ItemBuilder.CreateGoldPieces (:791-798) writes `newItem.value = 1`
+  // over the template's basePrice - a pile is worth its own count, and
+  // a merchant's shelf total would otherwise read template 276's row.
+  value: 1,
   stackCount,
 });
+
+/** `item.IsOfTemplate(ItemGroups.Currency, (int)Currency.Gold_pieces)`
+ *  - DFU's own test, spelled once. Both terms, because DaggerfallUnity
+ *  Item.IsOfTemplate (:747-750) compares the group AND the index. */
+export const isGoldPieces = (item) =>
+  item?.group === 'Currency' && item?.templateIndex === GOLD_TEMPLATE;
+
+/** PlayerEntity.GoldPieces (:158), read. C#'s field defaults to 0, so
+ *  an entity that has never held a coin reads the same as one that
+ *  spent its last. */
+export const goldPiecesOf = (entity) => entity?.goldPieces ?? 0;
+
+/** `playerEntity.GoldPieces += amount` - the write every producer
+ *  makes. The setter is unclamped in DFU and so is this. */
+export function addGoldPieces(entity, amount) {
+  if (!entity) return 0;
+  entity.goldPieces = goldPiecesOf(entity) + amount;
+  return entity.goldPieces;
+}
 
 /** MiscItems.Letter_of_credit (ItemEnums.cs) - minted the one place
  *  DFU mints it (DaggerfallTradeWindow.cs:1044-1048): a sale whose
@@ -453,6 +486,18 @@ export const weightInGPUnits = (kg) => Math.round(kg * 400);
  *  and U40's letter-of-credit gate, which asks whether a sale's
  *  proceeds would push the player past MaxEncumbrance. */
 export const GOLD_PIECE_WEIGHT_KG = 0.0025;
+
+/** PlayerEntity.CarriedWeight (:184), verbatim:
+ *  `Items.GetWeight() + (goldPieces * DaggerfallBankManager
+ *  .goldPieceWeightInKg)`. E4: with gold off the item list this is the
+ *  only honest reading of what the player carries, and it is what the
+ *  four readers DFU has all ask for - the character sheet's
+ *  encumbrance line (:404), DaggerfallInventoryWindow.GetCarriedWeight
+ *  (:852-855, which the CanCarryAmount gate reads), the bank's
+ *  withdrawal weight test (DaggerfallBankManager.cs:370) and
+ *  LevitateMotor's over-encumbered walk (:83). */
+export const carriedWeight = (entity) =>
+  totalWeight(entity?.items ?? []) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
 
 /** ComputeCanHoldAmount (DaggerfallInventoryWindow.cs:1444-1455,
  *  L-slice AUDIT 23 items-9): how many units of an item fit under a

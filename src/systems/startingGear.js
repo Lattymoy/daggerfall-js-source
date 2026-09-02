@@ -27,7 +27,7 @@
 //   defaulted OFF, the same stance the 17e audit took on the
 //   enhanced 16-slot item list.
 
-import { addItem, goldStack } from './inventory.js';
+import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
 import { equipItem } from './equip.js';
 import { itemBaseValue, templateByIndex, mintCondition } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -131,10 +131,9 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
   return added;
 }
 
-/** playerEntity.GoldPieces += 100. Gold rides as a Currency stack in
- *  the bag (the port's S2 shape). */
+/** `playerEntity.GoldPieces += 100` (ItemHelper.cs:1354), verbatim
+ *  since E4: the counter, not a Currency stack in the bag. */
 export function addStartingGold(entity, amount = STARTING_GOLD) {
-  entity.items = entity.items ?? [];
-  addItem(entity.items, goldStack(amount));
+  addGoldPieces(entity, amount);
   return entity;
 }

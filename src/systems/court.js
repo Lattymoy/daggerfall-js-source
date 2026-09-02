@@ -44,7 +44,7 @@
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { goldStack, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // AUDIT 17f: one gold mint; B1: letters are tender
+import { goldPiecesOf, addGoldPieces, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // E4: the counter's two members; B1: letters are tender
 import { getPeopleOfCurrentRegion } from './talk.js';   // T3a shipped the lookup
 import { changeReputation } from './factionRep.js';     // S25
 
@@ -210,8 +210,11 @@ export function lowerRepForCrime(player, regionIndex, crime) {
   }
 }
 
+/** PlayerEntity.GoldPieces (:158). E4: THE COUNTER, not a bag stack -
+ *  the port's collection can no longer hold Currency at all
+ *  (systems/inventory.js's header carries the whole law). */
 export function goldAmount(player) {
-  return player.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0;
+  return goldPiecesOf(player);
 }
 /** ItemCollection.GetCreditAmount (ItemCollection.cs:108-118): every
  *  letter of credit in the pack, by VALUE. U41: the travel popup's
@@ -231,9 +234,8 @@ export function totalGoldAmount(player) {
  *  so this mirrors it and floors at zero rather than minting a
  *  negative purse the port has no other way to hold. */
 export function deductGoldPieces(player, amount) {
-  const stack = player.items?.find((it) => it.group === 'Currency');
-  if (!stack) return;
-  stack.stackCount = Math.max(0, stack.stackCount - amount);
+  if (!player) return;
+  player.goldPieces = Math.max(0, goldPiecesOf(player) - amount);
 }
 /** PlayerEntity.DeductGoldAmount (:1324-1354), which the port had
  *  been standing in for with a clamp. Two halves were missing, and B1
@@ -259,10 +261,9 @@ export function deductGoldPieces(player, amount) {
  *  what is left - so a small payment never breaks a large letter, but
  *  a large one takes the letters before the coins. */
 export function deductGold(player, amount) {
-  const stack = player.items?.find((it) => it.group === 'Currency');
-  const purse = stack?.stackCount ?? 0;
+  const purse = goldPiecesOf(player);
   if (amount <= purse) {
-    if (stack) stack.stackCount = purse - amount;
+    player.goldPieces = purse - amount;
     return 0;
   }
   let owed = amount;
@@ -276,20 +277,22 @@ export function deductGold(player, amount) {
   }
   if (owed > 0) {
     if (owed <= purse) {
-      if (stack) stack.stackCount = purse - owed;
+      player.goldPieces = purse - owed;
       return 0;
     }
     owed -= purse;
-    if (stack) stack.stackCount = 0;
+    player.goldPieces = 0;
     return owed;   // underpaid - the caller decides what covers the rest
   }
   return 0;
 }
-export function addGold(player, amount) {   // E3: sale proceeds
-  player.items = player.items || [];
-  const stack = player.items.find((it) => it.group === 'Currency');
-  if (stack) stack.stackCount = (stack.stackCount ?? 0) + amount;
-  else player.items.push(goldStack(amount));
+/** `playerEntity.GoldPieces += amount` - E3's sale proceeds and every
+ *  other credit. E4 made it the counter's write; nothing lands in the
+ *  pack, so a purse that grows past MaxEncumbrance is DFU's own
+ *  outcome (the trade window weighs the coin BEFORE it pays and mints
+ *  a letter of credit instead - tradeModes.sellProceeds). */
+export function addGold(player, amount) {
+  addGoldPieces(player, amount);
 }
 
 /** SurrenderToCityGuards, verbatim. setHealth1 is the host's vitals

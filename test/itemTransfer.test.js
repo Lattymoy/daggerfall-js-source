@@ -21,7 +21,10 @@ import { totalWeight, goldStack } from '../src/systems/inventory.js';
 
 const book = (n = 1) => ({ group: 'Books', templateIndex: 277, name: 'Book', stackCount: n });
 const cart = () => ({ group: 'Transportation', templateIndex: 93, name: 'Small Cart' });
-const gold = (n = 100) => ({ group: 'Currency', templateIndex: 137, name: 'Gold Pieces', stackCount: n });
+/** Currency.Gold_pieces is template 276 (ItemEnums.cs:605-608) and
+ *  IsOfTemplate compares BOTH terms - this fixture used to carry 137,
+ *  which E4's interception would not have recognised as gold. */
+const gold = (n = 100) => goldStack(n);
 const summon = (it) => Object.assign(it, { timeForItemToDisappear: 1000 });
 /** liveStat reads .stats, so a bare entity with a strength is enough
  *  to give the carry gate a MaxEncumbrance of str*1.5 kg. */
@@ -115,6 +118,10 @@ test('U56 planTake: the carry gate, the two sounds, and the gift', () => {
   // DoTransferItem: gold rides its own clink (:1569)
   assert.equal(planTake(gold(500), { bag: [] }).sound, 'gold');
   assert.equal(planTake(book(), { bag: [] }).sound, 'click');
+  // ...and it is IsOfTemplate, both terms: a Currency row that is not
+  // template 276 is not gold pieces (DaggerfallUnityItem.cs:747-750).
+  assert.equal(planTake({ group: 'Currency', templateIndex: 137, stackCount: 5 }, { bag: [] }).sound,
+    'click', 'the group alone does not make a coin');
   // and the gate is ABOVE the sound - a refused transfer is silent
   assert.equal(planTake(gold(500), { bag: [book(100)], entity: e }).sound, undefined,
     'a refused transfer still picked a sound');

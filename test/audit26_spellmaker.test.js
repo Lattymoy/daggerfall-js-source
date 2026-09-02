@@ -21,7 +21,6 @@ import {
 import { MAGIC_ONLY_KEYS } from '../src/systems/effects.js';
 import { SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
 import { SpellMakerWindow } from '../src/ui/spellMakerWindow.js';
-import { goldStack } from '../src/systems/inventory.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';
 
 const slot = (type, subType) => ({ type, subType, key: `${type},${subType}`, settings: {} });
@@ -150,7 +149,8 @@ test('audit26 F181: the cycle steps OVER disallowed values in both directions', 
 // ---------------------------------------------------------------
 const win = () => new SpellMakerWindow({ entity: {
   name: 'S', level: 1, stats: {}, skills: [50], maxMagicka: 40,
-  items: [goldStack(100000), { group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
+  goldPieces: 100000,   // E4: PlayerEntity.GoldPieces
+  items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
   spells: [],
 } });
 const toRow = (w, kind, i = 0) => {

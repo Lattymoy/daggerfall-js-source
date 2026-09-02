@@ -48,6 +48,7 @@ import { liveStat, FATIGUE_LOSS } from '../statMods.js';   // Q5: WhenAttributeL
 import { CRIMES } from '../court.js';   // Q5: SetPlayerCrime's enum
 import { randomRangeInclusive } from '../../formats/dfRandom.js';   // Q5: TrainPc's Range(10,21)
 import { makeItemPermanent } from './item.js';
+import { isGoldPieces } from '../inventory.js';   // E4: GetItem's IsOfTemplate(Currency, Gold_pieces) test, one spelling
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
@@ -1489,7 +1490,7 @@ export class GetItem extends ActionTemplate {
     const hooks = this.parentQuest.hooks;
     hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
     const dfItem = item.daggerfallUnityItem;
-    if (dfItem && dfItem.group === 'Currency') {
+    if (dfItem && isGoldPieces(dfItem)) {   // GetItem.cs:73 - IsOfTemplate, both terms
       const amount = dfItem.stackCount ?? 0;
       hooks?.addGold?.(amount);
       hooks?.addHUDText?.(YOU_RECEIVE_GOLD_PIECES.replace('%s', String(amount)));

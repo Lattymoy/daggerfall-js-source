@@ -40,7 +40,7 @@
 
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
-  splitStack, GOLD_PIECE_WEIGHT_KG,
+  splitStack, GOLD_PIECE_WEIGHT_KG, goldPiecesOf, addGoldPieces, isGoldPieces,
 } from './inventory.js';
 import { isMap, isLightSource } from './useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
@@ -244,9 +244,18 @@ export function planTake(item, {
   // CanCarryAmount (:1414-1422, AUDIT 23 items-9). AUDIT 26: :1417
   // reads playerEntity.MaxEncumbrance, which is the formula PLUS the
   // enchantment weight allowance - not the bare strength formula.
+  //
+  // E4: and its load is GetCarriedWeight() (:852-855), which is
+  // PlayerEntity.CarriedWeight - Items.GetWeight() PLUS the gold
+  // COUNTER's own weight (PlayerEntity.cs:184). `bag` is the caller's
+  // reading of the collection (the trade window's override :630-633
+  // adds the basket to it); the coin term is the entity's and is
+  // added here, so a purse of 400,000 pieces weighs its thousand
+  // kilograms against the gate exactly as the old bag stack did.
   const canCarry = entity
     ? canHoldAmount(stack, effectiveUnitWeightInKg(item),
-      entityMaxEncumbrance(entity), totalWeight(bag))
+      entityMaxEncumbrance(entity),
+      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG)
     : stack;
   // The window's own gate went silent when it had no entity to read
   // and spoke when it did; there is one answer here, because the only
@@ -262,7 +271,7 @@ export function planTake(item, {
     // DoTransferItem: gold rides its own clink (:1569), everything
     // else the button click (:1583) - AFTER the carry gate, so a
     // refused transfer stays silent.
-    sound: item.group === 'Currency' ? 'gold' : 'click',
+    sound: isGoldPieces(item) ? 'gold' : 'click',
     equip: mode === 'equip',
     // G6 (:1585-1591): ONE is the whole gift. The window closes and
     // the callback runs - the claim and the taking are one event.
@@ -288,43 +297,79 @@ export function clearLightSourceOnLeave(item, entity, fromLocal) {
   if (fromLocal && entity && isLightSource(item) && entity.lightSource === item) entity.lightSource = null;
 }
 
-export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, rolls = Math.random } = {}) {
+/**
+ * E4 - DoTransferItem's FIRST statement (:1562-1571), verbatim:
+ *
+ *     if (item.IsOfTemplate(Currency, Gold_pieces) && PlayerEntity.Items == to)
+ *     { playerEntity.GoldPieces += item.stackCount; from.RemoveItem(item);
+ *       Refresh(false); PlayOneShot(GoldPieces); return; }
+ *
+ * THE TRANSFER DOOR IS WHERE A PILE BECOMES A COUNTER. `toPlayer` is
+ * DFU's `PlayerEntity.Items == to`, and it is the caller's answer
+ * because only the caller knows which collection it handed over - the
+ * trade window's basket and the wagon are not the pack, and a gold
+ * pile put into either stays an item (DaggerfallBankManager.cs:343
+ * reads exactly that wagon stack back).
+ *
+ * The SPLIT still runs first, because DFU's does: TransferItem routes
+ * a partial move through SplitStackPopup_OnGotUserInput (:1554),
+ * which calls SplitStack and only then DoTransferItem - so the item
+ * the counter swallows is the freshly minted half, and the remainder
+ * stays in the source. Nothing lands in `to`.
+ *
+ * THE ARM ANSWERS NULL, because DFU's `return` (:1570) skips the whole
+ * rest of DoTransferItem: no EquipItem (:1580), and no choose-one
+ * close-and-callback (:1585-1591). A guild reward pile of gold is
+ * therefore taken WITHOUT closing the picker, which is DFU's quirk and
+ * not the port's. Every other move answers the record that arrived.
+ */
+export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, toPlayer = false, rolls = Math.random } = {}) {
   clearLightSourceOnLeave(item, entity, fromLocal);
+  if (toPlayer && isGoldPieces(item)) {
+    const coin = _splitOff(item, plan, from, rolls);
+    const at = from.indexOf(coin);
+    if (at >= 0) from.splice(at, 1);
+    addGoldPieces(entity, coin.stackCount ?? 1);
+    return null;
+  }
   return _applyTransfer(item, plan, from, to, rolls);
 }
-function _applyTransfer(item, plan, from, to, rolls = Math.random) {
+/**
+ * The half of a partial move that TRAVELS - or the item itself on a
+ * whole move. E4 pulled it out of _applyTransfer so the gold arm and
+ * the plain one cannot disagree about what a split produces.
+ *
+ * ROAD-Ar R5: DFU has no partial transfer that skips SplitStack.
+ * TransferItem (:1515-1540) routes every `maxAmount < stackCount`
+ * move into the split popup, whose handler is
+ * `stackFrom.SplitStack(stackItem, count)` (:1554) BEFORE
+ * DoTransferItem - so the half that travels is a fresh template item
+ * (ItemCollection.cs:267 -> ItemBuilder.CreateItem -> SetItem:
+ * material, variant, flags, message and potionRecipeKey zeroed, value
+ * back to basePrice, condition back to hitPoints), not a copy of the
+ * record. inventory.splitStack is that member's ONE home; this used
+ * to re-spell it as `{ ...item, stackCount }`, which carried
+ * condition, enchantments (by reference), message and recipe into the
+ * moved half. splitStack pushes the new record into the SOURCE
+ * collection, which is DFU's order exactly - SplitStack adds to
+ * stackFrom, TransferItem then moves it.
+ */
+function _splitOff(item, plan, from, rolls) {
   const stack = item.stackCount ?? 1;
-  if (plan.amount < stack) {
-    // ROAD-Ar R5: DFU has no partial transfer that skips SplitStack.
-    // TransferItem (:1515-1540) routes every `maxAmount < stackCount`
-    // move into the split popup, whose handler is
-    // `stackFrom.SplitStack(stackItem, count)` (:1554) BEFORE
-    // DoTransferItem - so the half that travels is a fresh template
-    // item (ItemCollection.cs:267 -> ItemBuilder.CreateItem -> SetItem:
-    // material, variant, flags, message and potionRecipeKey zeroed,
-    // value back to basePrice, condition back to hitPoints), not a copy
-    // of the record. inventory.splitStack is that member's ONE home;
-    // this used to re-spell it as `{ ...item, stackCount }`, which
-    // carried condition, enchantments (by reference), message and
-    // recipe into the moved half. splitStack pushes the new record into
-    // the SOURCE collection, which is DFU's order exactly - SplitStack
-    // adds to stackFrom, TransferItem then moves it.
-    const minted = splitStack(from, item, plan.amount, { rolls });
-    if (minted && minted !== item) {
-      const at = from.indexOf(minted);
-      if (at >= 0) from.splice(at, 1);
-      addItem(to, minted);
-      return minted;
-    }
-    // splitStack refuses what DFU's popup never offers (a 1-stack, an
-    // item not in `from`); the old spelling stays as that fallback.
-    item.stackCount = stack - plan.amount;
-    const taken = { ...item, stackCount: plan.amount };
-    addItem(to, taken);
-    return taken;
-  }
-  const at = from.indexOf(item);
+  if (plan.amount >= stack) return item;
+  const minted = splitStack(from, item, plan.amount, { rolls });
+  if (minted && minted !== item) return minted;
+  // splitStack refuses what DFU's popup never offers (a 1-stack, an
+  // item not in `from`); the old spelling stays as that fallback, and
+  // it leaves the remainder record in place rather than in `from`'s
+  // way - which is why the caller's splice is index-guarded.
+  item.stackCount = stack - plan.amount;
+  return { ...item, stackCount: plan.amount };
+}
+function _applyTransfer(item, plan, from, to, rolls = Math.random) {
+  const moved = _splitOff(item, plan, from, rolls);
+  const at = from.indexOf(moved);
   if (at >= 0) from.splice(at, 1);
-  addItem(to, item);
-  return item;
+  addItem(to, moved);
+  return moved;
 }

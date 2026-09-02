@@ -834,8 +834,9 @@ test('U42: the CAST binding toggles the book closed, as does Escape', () => {
 function shop(offered, over = {}) {
   const entity = {
     name: 'Nyra Sunborn', magicka: 20, maxMagicka: 40, spells: [], stats: { personality: 50 },
-    items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-      { group: 'Currency', stackCount: 5000 }],
+    // E4: the purse is PlayerEntity.GoldPieces, a counter.
+    goldPieces: 5000,
+    items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
   };
   const w = new SpellbookWindow({
     spells: () => entity.spells,
@@ -895,14 +896,14 @@ test('U42 buy: Witches Festival halves the presented cost, with a floor of one',
 test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => {
   // BuyButton_OnMouseClick (:975-1013), in DFU's exact order.
   const noBook = shop([spell('Arc Bolt', 20)]);
-  noBook.entity.items = [{ group: 'Currency', stackCount: 5000 }];
+  noBook.entity.items = [];
   noBook.w.buyButton();
   assert.equal(noBook.w.top, 'noSpellbook');
   assert.ok(noBook.w._boxRows()[0].text.startsWith(`[${NO_SPELLBOOK_TEXT_ID}]`), 'record 1703');
 
   const broke = shop([spell('Arc Bolt', 20)]);
-  broke.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-    { group: 'Currency', stackCount: 1 }];
+  broke.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }];
+  broke.entity.goldPieces = 1;
   broke.w.buyButton();
   assert.equal(broke.w.top, 'notEnoughGold');
   assert.ok(broke.w._boxRows()[0].text.startsWith('[454]'), 'record 454');
@@ -912,8 +913,8 @@ test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => 
   const between = shop([spell('Arc Bolt', 20)]);
   const price = between.w.tradePrice();
   assert.ok(price < between.w.presentedCost, 'quality 10 discounts the sticker');
-  between.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-    { group: 'Currency', stackCount: price }];
+  between.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }];
+  between.entity.goldPieces = price;
   between.w.buyButton();
   assert.equal(between.w.top, 'trade', 'exactly the asking price is enough');
 
@@ -967,14 +968,14 @@ test('U42 buy: Yes deducts through DeductGoldAmount, adds the spell, and closes'
   assert.equal(entity.spells.length, 1);
   assert.equal(entity.spells[0].name, 'Arc Bolt');
   assert.notEqual(entity.spells[0], w._rows[0].spell, 'the book gets a COPY, not the shelf record');
-  assert.equal(entity.items.find((i) => i.group === 'Currency').stackCount, 5000 - price);
+  assert.equal(entity.goldPieces, 5000 - price);
   assert.equal(w.done, true);
 
   const no = shop([spell('Arc Bolt', 20)]);
   no.w.buyButton();
   no.w.confirmTrade(false);
   assert.equal(no.entity.spells.length, 0, 'No buys nothing');
-  assert.equal(no.entity.items.find((i) => i.group === 'Currency').stackCount, 5000);
+  assert.equal(no.entity.goldPieces, 5000);
   assert.equal(no.w.done, true, '...and closes anyway');
 });
 
@@ -984,8 +985,8 @@ test('U42 buy: a letter of credit is legal tender at the counter', () => {
   // letter can buy a spell.
   const { entity, w } = shop([spell('Arc Bolt', 20)]);
   entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-    { group: 'Currency', stackCount: 1 },
     { group: 'UselessItems2', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: 5000 }];
+  entity.goldPieces = 1;
   const price = w.tradePrice();
   w.buyButton();
   assert.equal(w.top, 'trade', 'the letter covers the price');
@@ -998,7 +999,7 @@ test('U42 buy: a letter of credit is legal tender at the counter', () => {
   w.confirmTrade(true);
   assert.equal(entity.items.find((i) => i.templateIndex === LETTER_OF_CREDIT_TEMPLATE).value, 5000 - price,
     'the letter carries the whole price');
-  assert.equal(entity.items.find((i) => i.group === 'Currency').stackCount, 1, 'and the coin is untouched');
+  assert.equal(entity.goldPieces, 1, 'and the coin is untouched');
   assert.equal(entity.spells.length, 1, 'the spell is bought');
 });
 

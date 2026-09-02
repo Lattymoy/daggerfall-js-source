@@ -74,7 +74,10 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
-import { itemWeight, isEnchanted, totalWeight, addItem, goldStack } from '../systems/inventory.js';
+import {
+  itemWeight, isEnchanted, totalWeight, addItem, goldStack,
+  goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
+} from '../systems/inventory.js';
 import { goldAmount, deductGold } from '../systems/court.js';
 // U56/U57: DFU's transfer ladder and DFU's remote side, both extracted
 // from the classic window so this pane runs them rather than a second
@@ -162,11 +165,19 @@ export function packModel(deps = {}) {
   for (const [slot, item] of Object.entries(slots ?? {})) {
     if (item) worn.set(Number(slot), item);
   }
-  const carried = items.reduce((kg, it) => kg + itemWeight(it), 0);
+  // E4: PlayerEntity.CarriedWeight (:184) - the item list PLUS the
+  // gold counter's own weight. `deps.items()` and `entity.items` are
+  // the same collection in every host, but the pane is handed the
+  // list rather than the entity, so the total is composed from both
+  // halves the same member does.
+  const carried = items.reduce((kg, it) => kg + itemWeight(it), 0)
+    + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
   return {
     tabs: TABS.map((tab) => ({ tab, items: filterByTab(items, tab) })),
     worn,
-    gold: items.find((it) => it.group === 'Currency')?.stackCount ?? 0,
+    // PlayerEntity.GoldPieces, the COUNTER - gold has not been an item
+    // in the pack since E4, so there is no stack here to find.
+    gold: goldPiecesOf(entity),
     // FormulaHelper.MaxEncumbrance over LIVE strength, the same
     // expression the character sheet and the classic window use.
     encumbrance: { now: Math.trunc(carried), max: entityMaxEncumbrance(entity) },
@@ -601,7 +612,12 @@ function take(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
-  const taken = applyTransfer(item, plan, from, bag);
+  // E4: the pack IS the destination here, so DoTransferItem's gold
+  // interception (:1562-1571) fires and answers null - its `return`
+  // skips the choose-one close below, and there is no arriving record
+  // for the tab to follow.
+  const taken = applyTransfer(item, plan, from, bag, { entity: deps.entity, toPlayer: true });
+  if (taken === null) { picked = null; refresh(); render(); return; }
   // G6 (:1585-1591): ONE is the whole gift. The window closes and the
   // callback runs - the claim and the taking are one event, so this
   // arm must not repaint a screen that is going away.
@@ -647,7 +663,7 @@ function toggleWagon() {
  *  is this pane's; the range refusal and the wagon clamp are not. */
 function dropGold(text) {
   notice = null;
-  const player = deps.entity ?? { items: deps.items?.() ?? [] };
+  const player = deps.entity ?? {};
   const to = remoteTarget(deps, sessionState());
   const plan = planDropGold(text, {
     carried: goldAmount(player), usingWagon: session.usingWagon, remote: to,
@@ -1141,7 +1157,7 @@ function remoteCol() {
  *  the ceiling written next to it. */
 function goldField() {
   const form = el('form', 'goldfield');
-  const carried = goldAmount(deps.entity ?? { items: deps.items?.() ?? [] });
+  const carried = goldAmount(deps.entity ?? {});
   const input = el('input');
   input.type = 'text';
   input.inputMode = 'numeric';

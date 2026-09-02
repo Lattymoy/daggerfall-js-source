@@ -27,7 +27,7 @@ import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/auto
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb } from '../player/activate.js';   // QG1: the foe-click door
-import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
@@ -1442,7 +1442,10 @@ export function createWorldModes(host) {
       rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       cityName: () => townTalk?.cityName?.() ?? (interiorBuilding?.name ?? ''),
       weight: () => ({
-        carriedWeightKg: totalWeight(playerEntity.items ?? []),
+        // E4: PlayerEntity.CarriedWeight (:1039), the gold counter's
+        // own term included - the sell gate weighs the coin the sale
+        // would ADD against what the player already carries.
+        carriedWeightKg: carriedWeight(playerEntity),
         maxEncumbranceKg: entityMaxEncumbrance(playerEntity),   // DaggerfallTradeWindow.cs:1039 reads PlayerEntity.MaxEncumbrance
       }),
       commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
@@ -2365,7 +2368,7 @@ export function createWorldModes(host) {
         return i < 0 ? null : playerEntity.items.splice(i, 1)[0];
       },
       addLetter: (loc) => { (playerEntity.items ??= []).unshift(loc); },
-      carriedWeightKg: () => totalWeight(playerEntity.items ?? []),
+      carriedWeightKg: () => carriedWeight(playerEntity),   // E4: DaggerfallBankManager.cs:370 reads PlayerEntity.CarriedWeight
       maxEncumbranceKg: () => entityMaxEncumbrance(playerEntity),   // DaggerfallBankManager.cs:370 reads PlayerEntity.MaxEncumbrance
     };
   }
