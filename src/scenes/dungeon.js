@@ -33,7 +33,7 @@ import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
+import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
@@ -223,7 +223,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  // ROAD-E E1: THE KEY-UP ROUTE. This listener drained the held-keys
+  // Set and told the open window nothing, so a window that answers
+  // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
+  // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
+  // routeKey's mirror, on the same ctx.
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts

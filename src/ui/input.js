@@ -168,6 +168,34 @@ export function typedChar(code, e = null) {
   return d ? d[1] : null;
 }
 
+/**
+ * ROAD-E E1: THE KEY-UP HALF OF THE OVERLAY SEAM, routeKey's mirror.
+ *
+ * DFU has no "key down route": `InputManager` keeps a held-key
+ * dictionary and every window polls it in its own `Update()` -
+ * `GetKeyDown` is the edge, `GetKeyUp` the other edge and `GetKey` the
+ * HELD state (HotkeySequence.IsDownWith / IsUpWith / IsPressedWith,
+ * HotkeySequence.cs:169-183). The port's windows are event driven, so
+ * the release edge has to be delivered the way the press already is,
+ * and a window that never hears it cannot answer `IsUpWith` (the
+ * automap windows' two-phase toggle-close, DaggerfallAutomapWindow.cs
+ * :703-713) or keep a `GetKey` latch honest (their twenty-two
+ * IsPressedWith arms, :783-870).
+ *
+ * The RAW `e.code` goes down, exactly as townTalk's D4 keyup seam
+ * delivers it: `systems/dialogShortcuts.js`'s `normalizeCode` folds
+ * both host alphabets, so one spelling serves a native window and a
+ * keyed one alike. OPTIONAL by design - a context with no
+ * `overlayKeyUp` (or a window with no `keyup`) is one whose buttons
+ * subscribe no keyboard handler, which is nearly all of them - but the
+ * ROUTE is not optional: it is the seam the four hosts must all carry.
+ */
+export function routeKeyUp(e, ctx) {
+  if (!ctx?.uiOverlayActive) return false;
+  ctx.overlayKeyUp?.(e.code, e);
+  return true;
+}
+
 /** Route one keydown against a dungeon context. Returns true when
  *  consumed (the host preventDefaults and stops). Cases carry DFU's
  *  action names; each cites its DFU consumer. */

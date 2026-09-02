@@ -247,8 +247,12 @@ test('c2/S10: ComputeZoom, the zoom band, the remembered level and the reset-on-
     v.input(v.automapBinding, { code: v.automapBinding });
     assert.equal(v.done, false, 'the down raises isCloseWindowDeferred and nothing else');
     assert.equal(v.isCloseWindowDeferred, true);
+    // ROAD-E E1: and a FRAME is not a release - DFU's second phase is
+    // GetKeyUp(automapBinding) (:589-596), which the seam now carries.
     v.tick(1 / 60);
-    assert.equal(v.done, true, 'M closes on the LATER frame, as the AutoMap binding toggles');
+    assert.equal(v.done, false, 'a tick does not close it');
+    v.keyup(v.automapBinding, { code: v.automapBinding });
+    assert.equal(v.done, true, 'M closes on the RELEASE, as the AutoMap binding toggles');
   } finally { _resetForTests(); _resetZoomForTests(); }
 });
 
@@ -596,7 +600,12 @@ test('c2/S10 REVIEW: the rename push must not LATCH the panel drag - the uncover
     // the first frame after the box pops.
     assert.match(src('src/ui/windowStack.js'), /const t = top\(\);\n\s*if \(t\) t\.onReturn\?\.\(\);/,
       'the uncovered window really is told');
-    assert.equal(/function pointer\(phase, e\) \{\n\s*if \(!overlay\?\.pointer\) return false;/.test(src('src/scenes/townTalk.js')), true,
+    // ROAD-E E1 widened that gate (a window with only `release()` - the
+    // list picker's thumb - now hears the up too), but it did NOT widen
+    // it to the covered windows: the release still goes to the SLOT's
+    // occupant alone, which after the push is the box.
+    assert.match(src('src/scenes/townTalk.js'),
+      /overlay\.pointer\?\.\(phase, v \? v\[0\] : -1, v \? v\[1\] : -1, e\.button \?\? 0\);\n\s*if \(phase === 'up'\) overlay\.release\?\.\(\);/,
       'and the release cannot reach a covered window - hence the hook');
     w.onReturn();
     assert.equal(w.chrome.inDragMode(), false, 'the map is released the moment it is uncovered');
@@ -895,17 +904,26 @@ test('c2/S10 THE HOTKEYS ARE DFU\'S OWN ExtAutomap TABLE - every verb bound, res
     const w = new ExteriorAutomapWindow(deps('r:keys'));
     w.cam = { ...w.cam, center: [0, 0, 0], yawDeg: 0, orthoSize: 100 };
     w._dt = 1;
-    w.input('ArrowLeft', { code: 'ArrowLeft' });
+    // ROAD-E E1: THE HELD CLASS IS A FRAME POLL NOW (IsPressedWith =
+    // InputManager.GetKey), so a hotkey is driven the way a player
+    // drives it - press, one frame of 1.0s, release. The DOWN class
+    // below still fires on the press, because IsDownWith is the edge.
+    const hold = (code, mods = {}) => {
+      w.input(code, { code, ...mods });
+      w.tick(1);
+      w.keyup(code, { code, ...mods });
+    };
+    hold('ArrowLeft');
     assert.equal(w.cam.center[0], -100, 'LeftArrow is ExtAutomapMoveLeft at 100 units/second');
     assert.equal(w.cam.yawDeg, 0, 'and it does not rotate');
-    w.input('ArrowLeft', { code: 'ArrowLeft', ctrlKey: true });
+    hold('ArrowLeft', { ctrlKey: true });
     assert.equal(w.cam.yawDeg, 150, 'Ctrl-LeftArrow is ExtAutomapRotateLeft');
     w.cam = { ...w.cam, yawDeg: 0, center: [0, 0, 0] };
-    w.input('ArrowLeft', { code: 'ArrowLeft', altKey: true });
+    hold('ArrowLeft', { altKey: true });
     assert.equal(w.cam.yawDeg, 150, 'Alt-LeftArrow is ExtAutomapRotateAroundPlayerPosLeft');
     assert.notDeepEqual(w.cam.center, [0, 0, 0], 'and it swings the centre about the marker');
     w.cam = { ...w.cam, center: [7, 0, -9], yawDeg: 0 };
-    w.input('ArrowUp', { code: 'ArrowUp', shiftKey: true });
+    hold('ArrowUp', { shiftKey: true });
     assert.deepEqual(w.cam.center, [7, 0, +64], 'Shift-UpArrow is ExtAutomapMoveToNorthLocationBorder, not MoveForward');
 
     // (3) THE ZOOM, BOTH DIRECTIONS. A2's `case 'minus'` could never
@@ -914,21 +932,21 @@ test('c2/S10 THE HOTKEYS ARE DFU\'S OWN ExtAutomap TABLE - every verb bound, res
     // Keypad+/-, and the ZoomIn/ZoomOut arms (:700-708) are the same
     // ActionZoom bodies as Upstairs/Downstairs.
     w.cam = { ...w.cam, orthoSize: 100 };
-    w.input('PageDown', { code: 'PageDown' });
+    hold('PageDown');
     assert.equal(w.cam.orthoSize, 150, 'PageDown is ExtAutomapDownstairs = ActionZoom(+zoomSpeed*dt)');
-    w.input('PageUp', { code: 'PageUp' });
+    hold('PageUp');
     assert.equal(w.cam.orthoSize, 100, 'PageUp is ExtAutomapUpstairs');
-    w.input('NumpadSubtract', { code: 'NumpadSubtract' });
+    hold('NumpadSubtract');
     assert.equal(w.cam.orthoSize, 150, 'KeypadMinus is ExtAutomapZoomOut - the arm the hyphen never reached');
-    w.input('NumpadAdd', { code: 'NumpadAdd' });
+    hold('NumpadAdd');
     assert.equal(w.cam.orthoSize, 100, 'KeypadPlus is ExtAutomapZoomIn');
-    w.input('PageUp', { code: 'PageUp', ctrlKey: true });
+    hold('PageUp', { ctrlKey: true });
     assert.equal(w.cam.orthoSize, ZOOM_MIN, 'Ctrl-PageUp is ExtAutomapMaxZoom1');
-    w.input('PageDown', { code: 'PageDown', ctrlKey: true });
+    hold('PageDown', { ctrlKey: true });
     assert.equal(w.cam.orthoSize, ZOOM_MAX, 'Ctrl-PageDown is ExtAutomapMinZoom1');
-    w.input('NumpadAdd', { code: 'NumpadAdd', ctrlKey: true });
+    hold('NumpadAdd', { ctrlKey: true });
     assert.equal(w.cam.orthoSize, ZOOM_MAX, 'Ctrl-KeypadPlus is MinZoom2 - DFU\'s own odd pairing, kept');
-    w.input('NumpadSubtract', { code: 'NumpadSubtract', ctrlKey: true });
+    hold('NumpadSubtract', { ctrlKey: true });
     assert.equal(w.cam.orthoSize, ZOOM_MIN, 'and Ctrl-KeypadMinus is MaxZoom2');
 
     // (4) THE THREE DIRECT VIEW MODES (:1235-1262) had no arm anywhere

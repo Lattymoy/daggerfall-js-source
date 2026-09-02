@@ -52,7 +52,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
-import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
+import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -6013,12 +6013,41 @@ export function createWorldModes(host) {
     if (mode === 'interior' && interiorOverlay) {
       const vi = pointerNative(e);
       interiorOverlay.pointer?.('up', vi ? vi[0] : -1, vi ? vi[1] : -1, e.button);
+      // ROAD-E E1: and the RELEASE EDGE for a window with no pointer
+      // seam at all - the list picker's thumb latch (its `release()` is
+      // VerticalScrollBar.Update's else arm, :123-129). The dungeon
+      // arm below takes it inside `overlayPointer`, which is the one
+      // door that slot has.
+      interiorOverlay.release?.();
       return true;
     }
     if (mode !== 'dungeon' || !dungeonCtx?.uiOverlayActive) return false;
     const v = pointerNative(e);
     dungeonCtx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
     return true;
+  }
+
+  /**
+   * ROAD-E E1: THE KEY-UP ROUTE, in both of this host's modes. The
+   * keydown dispatch above is `routeKey`; this is its mirror, and it
+   * exists for the same reason the pointer seam's `up` does - DFU's
+   * windows poll a held-key dictionary, so `IsUpWith` (the automap
+   * windows' two-phase toggle-close) and `IsPressedWith` (their
+   * twenty-two per-frame camera arms) both need the edge that ends a
+   * press. The two exterior hosts own the DOM listener for this host,
+   * so they call this beside `townTalk.keyup`.
+   */
+  function keyup(e) {
+    if (townTalk?.overlayActive) return false;   // the outer slot owns the keyboard (the keydown arm's own rule)
+    if (mode === 'interior') {
+      if (!interiorOverlay) return false;
+      interiorOverlay.keyup?.(e.code, e);
+      if (interiorOverlay?.done) interiorOverlay = null;
+      interiorWindows.reconcile(interiorOverlay);   // a release that closes the top window is PopWindow too
+      return true;
+    }
+    if (mode !== 'dungeon' || !dungeonCtx) return false;
+    return routeKeyUp(e, dungeonCtx);
   }
 
   /** The wheel seam (U-scroll), the pointerdown shape: an open
@@ -6419,6 +6448,7 @@ export function createWorldModes(host) {
     pointerdown,
     pointermove,   // ROAD-C c2/S4 - all three phases, or the drag latches
     pointerup,
+    keyup,   // ROAD-E E1: the up seam's key half, beside its pointer half
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

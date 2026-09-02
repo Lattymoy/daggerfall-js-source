@@ -192,6 +192,16 @@ test('FS1: none of the retired claims has a second home', () => {
     // carries three unrelated flags and carriesFlag is whole-file.
     /toggle-close binding is FLAGGED in/,
     /the reason restWindow's own header flags its toggle-close/,
+    // ROAD-E E1: the OVERLAY KEY/MOUSE-UP SEAM exists now, in every host
+    // that owns a slot, so every sentence that said it did not is a
+    // retired claim. Four windows carried one - the two automaps, the
+    // rest window and the pause window - and each may QUOTE what it
+    // retired (the unquote rule above), but none may assert it.
+    /overlay seam carries no key-up route/,
+    /overlay key seam delivers key DOWNS only/,
+    /overlay seam delivers keydown and no keyup/,
+    /overlay seam has no (?:key-)?down\/(?:key-)?up split/,
+    /overlay channel\n?\s*(?:\/\/\s*)?delivers keydowns/,
   ];
   const offenders = [];
   for (const f of SRC) {

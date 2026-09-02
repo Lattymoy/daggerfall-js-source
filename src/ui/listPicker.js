@@ -259,7 +259,20 @@ export class ListPickerWindow {
     if (this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
   }
 
-  /** The button let go: Update's else arm (:123-129). */
+  /** The button let go: Update's else arm (:123-129).
+   *
+   *  ROAD-E E1 WIRED THIS. It was written by A7 and had no caller: the
+   *  port routed pointer down and move to an overlay and no UP, so the
+   *  drag latch survived the release and dropped only on the next
+   *  `hover` (whose `e.buttons & 1` is the port's read of
+   *  `InputManager.GetMouseButton(0)`) - one stray mouse move after
+   *  letting go and the thumb jumped again. Every host that holds an
+   *  overlay slot now delivers the release: `scenes/townTalk.js`'s
+   *  `pointer('up')`, `scenes/worldModes.js`'s `pointerup` in both of
+   *  its modes, `scenes/dungeonContext.js`'s `overlayPointer` up arm
+   *  (which `scenes/dungeon.js` and `worldModes` both feed) and
+   *  `scenes/interior.js`'s own `pointerup`; a window that NESTS a
+   *  picker forwards it the way it already forwards `hover`. */
   release() { this.scrollBar.draggingThumb = false; }
 
   click(vx, vy, font = null, now = null) {

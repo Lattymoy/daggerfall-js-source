@@ -195,6 +195,7 @@ export class ItemMakerWindow {
    *  SetScrollIndex clamp; routed to whichever list the cursor is
    *  over, since DFU's wheel fires per component. */
   hover(vx, vy, e = null) { this._mouse = [vx, vy]; this.picker?.hover(vx, vy, e); }   // ROAD-A7: the picker's own hover
+  release() { this.picker?.release(); }   // ROAD-E E1: and the picker's own release, the edge that drops the thumb latch
   wheel(dir) {
     if (!dir) return;
     const [vx, vy] = this._mouse;

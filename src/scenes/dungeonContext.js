@@ -4281,6 +4281,41 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  event already holds; every other phase leaves it null. */
     overlayPointer(phase, vx, vy, button = 0, mods = null) {
       activeOverlay?.pointer?.(phase, vx, vy, button, mods);
+      // ROAD-E E1: THE RELEASE EDGE, on this slot's one pointer door.
+      // A window with no `pointer` seam at all still has to hear the
+      // button come up, because a press can LATCH: the list picker's
+      // thumb drag is VerticalScrollBar.Update (:101-130), whose
+      // `else` arm (:123-129) drops `draggingThumb` the frame
+      // GetMouseButton(0) reads false. Unwired, the latch survived
+      // until the next mouse move.
+      if (phase === 'up') activeOverlay?.release?.();
+    },
+    /**
+     * ROAD-E E1: THE KEY-UP SEAM, `overlayInput`'s mirror.
+     *
+     * DFU windows read `InputManager`'s held-key dictionary in their
+     * own Update, so the release is an edge they can all see
+     * (HotkeySequence.IsUpWith / IsPressedWith, HotkeySequence.cs
+     * :174-183). The port's windows are handed events, and this slot
+     * was handed presses only - so the dungeon automap's two-phase
+     * toggle-close (DaggerfallAutomapWindow.cs:703-713) had no UP to
+     * close on and its twenty-two IsPressedWith camera arms had no
+     * held state to poll. `ui/input.js`'s `routeKeyUp` is the door the
+     * two hosts that mount this context call.
+     *
+     * OPTIONAL on the window, like `keyup` in townTalk's slot: a
+     * window that defines none is one whose buttons subscribe no
+     * keyboard handler. A release that ENDS the window drains here
+     * exactly as `overlayInput`'s does.
+     */
+    overlayKeyUp(code, e = null) {
+      if (!activeOverlay) return;
+      activeOverlay.keyup?.(code, e);
+      if (activeOverlay?.done) {
+        surfacePlayer();
+        activeOverlay = null;
+      }
+      dungeonWindows.reconcile(activeOverlay);
     },
     /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
      *  tooltip needed it. Native coords, no done check - hovering

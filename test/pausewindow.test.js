@@ -75,9 +75,13 @@ test('I3: continue closes, exit confirms on 1069, No keeps playing', () => {
   const w2 = new PauseOptionsWindow({});
   w2.click(px + 76 + 1, py + 60 + 1);   // continue
   assert.equal(w2.done, true);
-  // and the same Escape that opened it closes it (:186-190)
+  // and the same Escape that opened it closes it (:183-188) - on the
+  // RELEASE, which is GetKeyUp, so the press that opened it cannot
+  // close it in the same breath (ROAD-E E1 built that edge).
   const w3 = new PauseOptionsWindow({});
   w3.input('Escape');
+  assert.equal(w3.done, false, 'the press is not the close - :186 reads GetKeyUp');
+  w3.keyup('Escape');
   assert.equal(w3.done, true);
 });
 

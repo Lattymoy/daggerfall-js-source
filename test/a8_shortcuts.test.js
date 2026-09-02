@@ -206,7 +206,12 @@ test('A8: RestStop ends a running rest from the keyboard (:173)', () => {
   const w = new RestWindow(restDeps());
   w.input('char:2');   // rest until healed - the running page
   assert.equal(w.state, 'resting');
+  // ROAD-E E1: StopButton_OnKeyboardEvent is two phases (:714-726) -
+  // KeyDown plays ButtonClick and defers, KeyUp ends the rest.
   w.input('char:s');
+  assert.equal(w.state, 'resting', 'the press only defers (:717-719)');
+  assert.equal(w.isCloseWindowDeferred, true);
+  w.keyup('char:s');
   assert.notEqual(w.state, 'resting', 'S is RestStop');
 });
 

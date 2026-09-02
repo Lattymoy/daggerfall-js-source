@@ -1112,6 +1112,11 @@ export class TravelMapWindow {
     }
   }
 
+  /** ROAD-E E1: the release edge, forwarded to the teleport list the
+   *  way `hover` is - the thumb latches on the press, and until the
+   *  hosts routed pointer UP nothing dropped it but the next move. */
+  release() { this.picker?.release(); }
+
   hover(vx, vy, e = null) {
     if (this.telePopUp) return;   // a yes/no box has nothing to hover
     if (this.popUp) { this.popUp.hover(vx, vy); return; }

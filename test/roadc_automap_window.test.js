@@ -261,7 +261,7 @@ test('c2/S5 OnPush: the reset signal is consumed EXACTLY ONCE, and the second op
     // mode's backup slot (:645-654), so a rotation the player never
     // closed on is not the state a reopen restores - DFU's own shape.
     w.input('KeyM', { code: 'KeyM' });
-    w.tick(0.016);
+    w.keyup('KeyM', { code: 'KeyM' });   // ROAD-E E1: the RELEASE is what closes (:709-713)
     const fwd = [...automapCameraState().savedView3D.fwd];
 
     // reopen with NO new signal: the flag was erased by the first push
@@ -519,23 +519,36 @@ test('c2/S5 the compass reads the MAP camera, never the player - including at th
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
-test('c2/S5 the toggle-close is TWO-PHASE: the key defers, the next frame closes; OnPop saves the live transform', () => {
+test('c2/S5+E1 the toggle-close is TWO-PHASE: the key defers, the RELEASE closes; OnPop saves the live transform', () => {
   const w = fresh();
   try {
     w.runVerb('ActionMoveUpstairs', 1);
     const lifted = automapCameraState().pos[1];
     w.input('KeyM', { code: 'KeyM' });
-    assert.equal(w.isCloseWindowDeferred, true, 'the press raises the latch (:721-726)');
+    assert.equal(w.isCloseWindowDeferred, true, 'the press raises the latch (:704-706)');
     assert.equal(w.done, false, 'and does NOT close in the same event - the press that opens the map would close it');
+    // ROAD-E E1: FRAMES DO NOT CLOSE IT. The latch used to be drained by
+    // the next tick() because the port had no key-up route; DFU's
+    // second phase is `GetKeyUp(automapBinding)` (:707-713), so a map
+    // left standing with the key still down stays standing.
     w.tick(0.016);
-    assert.equal(w.done, true, 'the deferred close drains on the next frame');
+    w.tick(0.016);
+    assert.equal(w.done, false, 'a frame is not a release');
+    w.keyup('KeyM', { code: 'KeyM' });
+    assert.equal(w.done, true, 'the RELEASE drains the latch and closes');
+    assert.equal(w.isCloseWindowDeferred, false);
     assert.equal(automapCameraState().savedView3D.pos[1], lifted, 'OnPop saved the LIVE mode\'s transform (:645-654)');
-    // Escape takes the same door - ":719 is one statement"
+    // Escape takes the same door - ":703 is one statement"
     const w2 = fresh();
     w2.input('Escape', { code: 'Escape' });
     assert.equal(w2.done, false);
-    w2.tick(0.016);
+    w2.keyup('Escape', { code: 'Escape' });
     assert.equal(w2.done, true);
+    // ...and a release with NOTHING armed does nothing: `&&
+    // isCloseWindowDeferred` (:709).
+    const w3 = fresh();
+    w3.keyup('KeyM', { code: 'KeyM' });
+    assert.equal(w3.done, false, 'an unarmed release is not a close');
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
@@ -595,7 +608,7 @@ test('c2/S5 the art-less fallback still draws the map and still takes keys', () 
     w.runVerb('ActionChangeAutomapGridMode');
     assert.equal(automapCameraState().viewMode, VIEW_2D);
     w.input('KeyM', { code: 'KeyM' });
-    w.tick(0.016);
+    w.keyup('KeyM', { code: 'KeyM' });
     assert.equal(w.done, true);
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });

@@ -470,13 +470,20 @@ export const HOTKEYS_DOWN = Object.freeze([
  * InputManager.GetKey - HELD, polled every frame, which is why every
  * speed they carry is per-SECOND.
  *
- * DEPARTURE, recorded (and it is ui/restWindow.js's, one window over):
- * the port's overlay key seam delivers key DOWNS only, so a held
+ * ROAD-E E1 RETIRED THE DEPARTURE THAT USED TO STAND HERE. It read:
+ * "the port's overlay key seam delivers key DOWNS only, so a held
  * hotkey repeats at the browser's auto-repeat rate rather than once per
- * frame. The MOUSE half of the same verbs is a true per-frame hold
- * (ui/automapChrome.js polls its own flags in tick()), so the buttons
- * are parity and only the keyboard is approximate. Closing this needs a
- * key-UP route through the four hosts, not a change here.
+ * frame... closing this needs a key-UP route through the four hosts,
+ * not a change here." The key-UP route now exists in all five hosts
+ * that own an overlay slot (`ui/input.js`'s `routeKeyUp`,
+ * `scenes/townTalk.js`'s `keyup`, `scenes/worldModes.js`'s `keyup`,
+ * `scenes/dungeonContext.js`'s `overlayKeyUp`, `scenes/interior.js`),
+ * so this class is polled once per FRAME off a held-key dictionary
+ * (`_heldCodes`, `_tickHeldHotkeys`) exactly as DFU polls
+ * InputManager's - the keyboard half is now the same per-frame hold
+ * the MOUSE half has always been (ui/automapChrome.js's own flags in
+ * tick()), and a held key pans at the per-SECOND speed the constant
+ * names rather than at the OS auto-repeat rate.
  */
 export const HOTKEYS_HELD = Object.freeze([
   'AutomapMoveForward', 'AutomapMoveBackward', 'AutomapMoveLeft', 'AutomapMoveRight',
@@ -551,6 +558,16 @@ export class AutomapWindow {
     // not change the key that closes it.
     this.automapBinding = getBinding(bindings(), 'AutoMap');
     this.isCloseWindowDeferred = false;
+    // ROAD-E E1: InputManager's HELD-KEY DICTIONARY, for this window.
+    // DFU polls it every frame - `HotkeySequence.IsPressedWith` is
+    // `InputManager.GetKey` (HotkeySequence.cs:179-182) - and the port
+    // is event driven, so the presses and releases the host now routes
+    // are folded back into the state DFU reads. `_keyModifiers` is
+    // GetKeyboardKeyModifiers (:153-156): the Set supplies the
+    // left/right sides a KeyboardEvent has no flag for, the event
+    // supplies the virtuals for a modifier already down at push.
+    this._heldCodes = new Set();
+    this._keyModifiers = keyboardModifiers();   // KeyModifiers.None until a key event says otherwise
     this.hoverText = '';
     this._renderer = null;
     this._micro = null;      // { key, tex, w, h, stamp }
@@ -734,17 +751,34 @@ export class AutomapWindow {
     return checkSetModifiers(keyboardModifiers(e), seq.modifiers);
   }
 
+  /** ROAD-E E1: InputManager's key dictionary, fed by the seam. A press
+   *  ADDS the code, a release removes it, and every key event refreshes
+   *  the modifier word GetKeyboardKeyModifiers() polls (:153-156) - the
+   *  event's virtuals ORed over the Set's left/right sides, which is
+   *  `keyboardModifiers`' own two-source contract. */
+  _noteKey(code, e, down) {
+    const nc = normalizeCode(code, e);
+    if (nc) { if (down) this._heldCodes.add(nc); else this._heldCodes.delete(nc); }
+    this._keyModifiers = keyboardModifiers(e, this._heldCodes);
+  }
+
   /**
    * Update's keyboard half (:713-870), in DFU's order: the toggle-close
    * FIRST, then the down-class hotkeys, then the held-class ones.
    *
-   * THE TOGGLE-CLOSE IS TWO-PHASE and stays two-phase here (:718-733):
-   * DFU raises `isCloseWindowDeferred` on the key DOWN and closes on the
-   * key UP, so the press that opens the map cannot also close it in the
-   * same frame. The port's overlay seam carries no key-up route at all
-   * (ui/restWindow.js records the same gap), so the latch is drained by
-   * the next tick() instead - the window still closes on a LATER frame
-   * than the press, which is the behaviour the two phases exist for.
+   * THE TOGGLE-CLOSE IS TWO-PHASE (:718-733): DFU raises
+   * `isCloseWindowDeferred` on the key DOWN and closes on the key UP,
+   * so the press that opens the map cannot also close it in the same
+   * frame. ROAD-E E1 built the key-up route through all five hosts, so
+   * the second phase is now DFU's own `GetKeyUp` and lives in `keyup`
+   * below; it used to be drained by the next tick(), one frame late.
+   *
+   * THE HELD CLASS LEFT THIS METHOD with the same slice. `IsPressedWith`
+   * is `InputManager.GetKey` - a STATE, polled once per frame - so the
+   * twenty-two arms at :783-870 are `tick`'s now (`_tickHeldHotkeys`)
+   * and this method only records the press. Nothing here fires them:
+   * running a per-SECOND speed on a browser auto-repeat was the
+   * recorded departure, and it is retired.
    */
   input(code, e = null) {
     // c2/S8: the tween's lockout - Update returns before base.Update(),
@@ -753,6 +787,10 @@ export class AutomapWindow {
     // ...and the note editor is a PUSHED window, so it owns the keyboard
     // while it is up (DaggerfallInputMessageBox.Show()).
     if (this._noteBox) { this._noteBoxInput(code, e); return; }
+    // The dictionary is InputManager's, not this window's control flow:
+    // it records the press whatever any arm below does with it, exactly
+    // as InputManager.Update does before any window reads it.
+    this._noteKey(code, e, true);
     if (this.automapBinding && normalizeCode(code, e) === this.automapBinding) {
       this.isCloseWindowDeferred = true;
       return;
@@ -767,10 +805,49 @@ export class AutomapWindow {
       this.runVerb(HOTKEY_VERBS[button], this._dt ?? 0);
       return;
     }
+  }
+
+  /**
+   * ROAD-E E1: THE RELEASE EDGE - `:721-733` verbatim.
+   *
+   *   else if ((GetBackButtonUp() || GetKeyUp(automapBinding)) && isCloseWindowDeferred)
+   *   { isCloseWindowDeferred = false; CloseWindow(); return; }
+   *
+   * and, before it, the held dictionary's own drain: a key that is no
+   * longer down stops answering `IsPressedWith`, which is what ends a
+   * held pan. The note editor owns the keyboard while it stands, so it
+   * swallows the release too - otherwise the M that dismisses the box
+   * would also close the map underneath it - and the tween's lockout
+   * (:686-696) returns before base.Update() the same way `input` does.
+   */
+  keyup(code, e = null) {
+    if (this._jump) return;
+    if (this._noteBox) { this._noteKey(code, e, false); return; }
+    this._noteKey(code, e, false);
+    const nc = normalizeCode(code, e);
+    const isToggle = (this.automapBinding && nc === this.automapBinding) || nc === 'Escape';
+    if (isToggle && this.isCloseWindowDeferred && !this.done) {
+      this.isCloseWindowDeferred = false;
+      // NO ButtonClick: :711-713 is `isCloseWindowDeferred = false;
+      // CloseWindow(); return;` and nothing else. The twenty-one
+      // BUTTON handlers each play the sound themselves (:1978 onward);
+      // the toggle key is not one of them, and the tick() drain this
+      // replaces played it.
+      this._close();
+    }
+  }
+
+  /** The IsPressedWith class (:783-870), polled once per FRAME over the
+   *  held dictionary. DFU's Update is a flat chain of independent ifs,
+   *  so EVERY matching hotkey runs on the same frame - two held keys
+   *  pan on both axes - which is why there is no early return here. */
+  _tickHeldHotkeys(dt) {
     for (const button of HOTKEYS_HELD) {
-      if (!this._hotkeyHit(button, code, e)) continue;
-      this.runVerb(HOTKEY_VERBS[button], this._dt ?? 0);
-      return;
+      const seq = shortcutOrFallback(button, this.automapBinding);
+      if (!seq.code || !this._heldCodes.has(seq.code)) continue;
+      if (!checkSetModifiers(this._keyModifiers, seq.modifiers)) continue;
+      if (this.done) return;
+      this.runVerb(HOTKEY_VERBS[button], dt);
     }
   }
 
@@ -1020,14 +1097,15 @@ export class AutomapWindow {
     // before the deferred close - so the jump is the only thing that
     // happens on these frames.
     if (this._jump) { this._advanceJump(dt); return; }
+    // ROAD-E E1: the IsPressedWith arms run HERE, before the mouse half
+    // - DFU's Update order is the deferred close, the debug teleport,
+    // the IsDownWith hotkeys, the IsPressedWith hotkeys, THEN the mouse
+    // (:713-880). The close and the down class are the seam's edges
+    // (`keyup`, `input`); this is the frame poll they cannot be.
+    this._tickHeldHotkeys(dt);
     const { verbs, tooltip } = this.chrome.tick(dt);
     for (const v of verbs) { if (!this.done) this.runVerb(v, dt); }
     this._tooltipRect = tooltip;
-    if (this.isCloseWindowDeferred && !this.done) {
-      this.isCloseWindowDeferred = false;
-      this._click();
-      this._close();
-    }
   }
 
   /** iTween.MoveTo on the camera GameObject: position ONLY, over 1.0 s

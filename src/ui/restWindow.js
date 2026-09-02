@@ -185,6 +185,10 @@ export class RestWindow {
     // and that is the behaviour: rebinding Rest while the window stands
     // open does not change the key that closes it.
     this.toggleClosedBinding = getBinding(bindings(), 'Rest');
+    // ROAD-E E1: StopButton_OnKeyboardEvent's own latch (:714-726). Its
+    // KeyDown arm plays ButtonClick and raises this; its KeyUp arm ends
+    // the rest. DFU's field name (:75).
+    this.isCloseWindowDeferred = false;
     // OnPush (:266-268): "Raise player resting flag when UI opens.
     // This is used for random enemy spawning and influences
     // CastWhenHeld durability loss" - DFU's own comment, and it names
@@ -366,6 +370,53 @@ export class RestWindow {
     return normalizeCode(action, e) === this.toggleClosedBinding;
   }
 
+  /** StopButton_OnMouseClick / the Update block's `currentRestMode !=
+   *  Selection` arm - EndRest plus the ButtonClick every handler DFU
+   *  routes this outcome through plays. ONE body, three callers (the
+   *  mouse click, the toggle release, StopButton's deferred KeyUp), so
+   *  they cannot drift apart. */
+  _stopRest() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this._end(this.session.endEarly());
+  }
+
+  /**
+   * ROAD-E E1: THE RELEASE HALF, and both of DFU's arms live here.
+   *
+   * (1) Update :187-196 - `if (HotkeySequenceProcessed == NotFound) if
+   *     (GetKeyUp(toggleClosedBinding) || GetBackButtonUp())` - ONE
+   *     statement, so the Rest binding and the back button are the same
+   *     door and cannot drift apart: `currentRestMode != Selection` is
+   *     EndRest, Selection is CloseWindow. Only the two states that ARE
+   *     the rest window take it (see `input`'s note on the stack).
+   * (2) StopButton_OnKeyboardEvent's KeyUp arm (:721-725): the deferred
+   *     EndRest, with `&& isCloseWindowDeferred` so a release with
+   *     nothing armed does nothing.
+   *
+   * `normalizeCode` folds the two host alphabets - the key-up seam
+   * hands down the raw code and the keyed hosts' press half hands down
+   * `back` - so one spelling serves both.
+   */
+  keyup(action, e = null) {
+    if (this.state !== 'selection' && this.state !== 'resting') return;
+    if (this.state === 'resting' && this.isCloseWindowDeferred
+      && hotkeyHit('RestStop', action, e)) {
+      this.isCloseWindowDeferred = false;
+      // :722-724 - the deferred arm calls EndRest and nothing else; the
+      // ButtonClick was already played on the KeyDown (:717-719).
+      this._end(this.session.endEarly());
+      return;
+    }
+    const back = normalizeCode(action, e) === 'Escape';
+    if (!back && !this._togglePressed(action, e)) return;
+    if (this.state === 'resting') { this._stopRest(); return; }
+    // ButtonClick, as the port's `back` arm has always played it here -
+    // ExitButton_OnMouseClick, the handler DFU routes the same outcome
+    // through, plays it.
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this._close();
+  }
+
   input(action, e = null) {
     // A8: the window's four buttons carry their DFU Hotkey
     // (DaggerfallRestWindow.cs:149/152/155/173 - RestForAWhile,
@@ -389,29 +440,16 @@ export class RestWindow {
     // it - does not run at all. Typing the rest letter into the hours
     // field must not close the window under it, and does not.
     //
-    // NOT ported: the `HotkeySequenceProcessed == NotFound` gate (:189)
-    // - "no BUTTON hotkey claimed this key first". DFU can afford the
-    // race because the toggle is read on the binding's key UP
-    // (GetKeyUp, :193) and the buttons on key DOWN, so the button
-    // always wins a colliding press. The port's overlay seam has no
-    // down/up split (the same structural note StopButton's keyboard
-    // twin carries below), so a player who binds Rest onto F, U, L or S
-    // gets the close rather than the button. Named, not hidden.
-    if ((this.state === 'selection' || this.state === 'resting') && this._togglePressed(action, e)) {
-      // ":193-196 - Window will properly end the rest if the player was
-      // currently resting", DFU's own comment: `currentRestMode !=
-      // Selection` is EndRest, and Selection is CloseWindow.
-      //
-      // :193 is ONE statement - `GetKeyUp(toggleClosedBinding) ||
-      // GetBackButtonUp()` - so the toggle key and the back button are
-      // the same door and must not drift apart inside the port. Both
-      // arms below are therefore exactly what `action === 'back'`
-      // already does in each state, ButtonClick included.
-      audio.playOneShot(SOUND.ButtonClick, 1);
-      if (this.state === 'resting') { this._end(this.session.endEarly()); return; }
-      this._close();
-      return;
-    }
+    // ROAD-E E1 MOVED THIS BLOCK TO `keyup` BELOW, which is where DFU
+    // reads it: :193 is `GetKeyUp(toggleClosedBinding) ||
+    // GetBackButtonUp()`. The note that stood here read: "The port's
+    // overlay seam has no down/up split, so a player who binds Rest
+    // onto F, U, L or S gets the close rather than the button." It has
+    // one now - so the colliding-binding race the
+    // `HotkeySequenceProcessed == NotFound` gate (:189) guards against
+    // resolves the way DFU's does without porting the gate at all: the
+    // BUTTON hotkeys are read on the press (below) and the toggle on
+    // the release, so the button always wins a colliding press.
     if (this.state === 'refused') { this._close(); return; }
     // F144: the over-cap box is click-anywhere; dismissing lands on
     // the selection page, NOT back in a prompt - the prompt is gone.
@@ -433,15 +471,19 @@ export class RestWindow {
       return;
     }
     if (this.state === 'resting') {
-      // StopButton_OnMouseClick (:708-712) - EndRest, then the same
-      // ButtonClick every other button plays. (Its keyboard twin,
-      // :714-726, defers the close to KeyUp; the port's overlay seam
-      // has no key-down/key-up split, so that half is structural.)
-      if (action === 'back' || hot('RestStop')) { audio.playOneShot(SOUND.ButtonClick, 1); this._end(this.session.endEarly()); }
+      // ROAD-E E1: StopButton_OnKeyboardEvent (:714-726) is TWO PHASES -
+      // KeyDown plays ButtonClick and raises `isCloseWindowDeferred`,
+      // KeyUp with the flag set calls EndRest - and the back button
+      // takes the Update block's own release door (`keyup` below), so
+      // neither ends the rest on the press any more. The MOUSE click
+      // (:708-712) is one call and stays one.
+      if (hot('RestStop')) { audio.playOneShot(SOUND.ButtonClick, 1); this.isCloseWindowDeferred = true; }
       return;
     }
     if (this.state === 'selection') {
-      if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return; }
+      // ROAD-E E1: `back` is GetBackButtonUp() here - the same statement
+      // as the toggle binding (:193) - so it closes on the release, in
+      // `keyup`. Only the buttons are read on the press.
       // every button assigns ButtonClick: While :644, Healed :670,
       // Loiter :695, Stop :711
       if (action === 'char:1' || hot('RestForAWhile')) { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
@@ -585,7 +627,12 @@ export class RestWindow {
       // the rest of the panel is scenery - a click on the hour digits
       // must not end the night. The art-less text page has no button
       // drawn anywhere, so there the whole page stays the button.
-      if (!_art || restStopHit(vx, vy)) this.input('back');
+      // ROAD-E E1: the MOUSE click is StopButton_OnMouseClick and it is
+      // ONE call - EndRest then ButtonClick (:708-712). Only the
+      // KEYBOARD twin defers to the release (:714-726), so this arm
+      // stopped routing through `input('back')`: `back` is
+      // GetBackButtonUp() now and lives in `keyup`.
+      if (!_art || restStopHit(vx, vy)) this._stopRest();
     } else if (this.state === 'selection' && _art) {
       // D3 - the three mainPanel children (:147-156). Each handler is
       // the same one the letter takes, ButtonClick included, so they

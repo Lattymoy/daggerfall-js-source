@@ -299,9 +299,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
 - `src/ui/chargenArt.js:731` - *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
 - `src/ui/enhancedMenu.js:1768` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/exteriorAutomapWindow.js:96` - FLAGGED, still awaiting a seam this stage does not own:
+- `src/ui/exteriorAutomapWindow.js:98` - FLAGGED, still awaiting a seam this stage does not own:
 - `src/ui/hudLarge.js:75` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
-- `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
+- `src/ui/pauseWindow.js:61` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 
 ## Audits
 

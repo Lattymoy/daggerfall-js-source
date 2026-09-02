@@ -50,19 +50,21 @@
 // through the same ShortcutOrFallback door ui/automapWindow.js reads
 // the Automap* half with, in DFU's two poll classes.
 //
+// ROAD-E E1 RETIRED ONE OF THE DEPARTURES THIS HEADER CARRIED. It read:
+// "THE HELD KEYBOARD ARMS ARE EDGE-DRIVEN... townTalk's overlay seam
+// delivers keydown and no keyup, so each press applies ONE FRAME of
+// DFU's per-second speed and the browser's key repeat supplies the
+// hold." The key-UP route now exists in every host that owns an
+// overlay slot, so this window keeps InputManager's held-key
+// dictionary (`_heldCodes`) and polls the twenty IsPressedWith arms
+// once per FRAME in tick() - the same per-frame hold the chrome's
+// mouse machine always had, at the per-SECOND speeds the constants
+// name. The two-phase toggle-close closes on DFU's own key UP with it.
+// DFU's focus, reset, view-mode and background arms are IsDownWith
+// (:599-641), edge driven in the reference too, so those ten were
+// always parity.
+//
 // DEPARTURES THAT STAND (recorded, Port-Ledger):
-//  - THE HELD KEYBOARD ARMS ARE EDGE-DRIVEN. DFU polls the movement,
-//    border, rotate and zoom hotkeys with IsPressedWith EVERY frame
-//    (window :642-720), so a held key pans at 100 units/SECOND;
-//    townTalk's overlay seam delivers keydown and no keyup, so each
-//    press applies ONE FRAME of DFU's per-second speed and the
-//    browser's key repeat supplies the hold. It is the seam-wide gap
-//    ui/automapWindow.js records for the dungeon window's identical
-//    held class, and it covers THAT CLASS ONLY - DFU's focus, reset,
-//    view-mode and background arms are IsDownWith (:599-641), edge
-//    driven in the reference too, so those ten are parity. The MOUSE
-//    arms have no gap either: the chrome's press-hold machine and both
-//    drags run off the real down/move/up seam and are frame-exact.
 //  - the plate label is the port's FNT text, not DFU's yellow-reloaded
 //    DaggerfallFont Texture2D, so TextScale is halved for the port's
 //    16px-cell glyphs (the A2 legibility pick, kept).
@@ -321,8 +323,10 @@ export const EXT_HOTKEYS_DOWN = Object.freeze([
 /**
  * THE PRESSED-CLASS HOTKEYS (:642-720), in DFU's own poll order.
  * `IsPressedWith` is InputManager.GetKey - HELD, polled every frame,
- * which is why every speed these carry is per-SECOND. This is the
- * class the module header's recorded departure covers.
+ * which is why every speed these carry is per-SECOND. ROAD-E E1 built
+ * the key-UP route the module header's departure was waiting on, so
+ * this class is polled once per FRAME here too (`_tickHeldHotkeys`)
+ * rather than fired on the browser's auto-repeat.
  */
 export const EXT_HOTKEYS_HELD = Object.freeze([
   'ExtAutomapMoveForward', 'ExtAutomapMoveBackward',
@@ -489,6 +493,12 @@ export class ExteriorAutomapWindow {
     // does not change the key that closes it.
     this.automapBinding = getBinding(bindings(), 'AutoMap');
     this.isCloseWindowDeferred = false;
+    // ROAD-E E1: InputManager's held-key dictionary for this window,
+    // the dungeon window's member verbatim (automapWindow.js's own
+    // `_heldCodes`/`_keyModifiers`) - GetKey is a STATE, so the seam's
+    // presses and releases are folded back into one.
+    this._heldCodes = new Set();
+    this._keyModifiers = keyboardModifiers();
     this.layoutW = deps.gridW * BLOCK_PX;
     this.layoutH = deps.gridH * BLOCK_PX;
     // ComputeZoom (:1004-1015) through the shared lens; remembered
@@ -614,23 +624,30 @@ export class ExteriorAutomapWindow {
     return checkSetModifiers(keyboardModifiers(e), seq.modifiers);
   }
 
+  /** ROAD-E E1: InputManager's key dictionary, fed by the seam - the
+   *  dungeon window's `_noteKey` verbatim. */
+  _noteKey(code, e, down) {
+    const nc = normalizeCode(code, e);
+    if (nc) { if (down) this._heldCodes.add(nc); else this._heldCodes.delete(nc); }
+    this._keyModifiers = keyboardModifiers(e, this._heldCodes);
+  }
+
   /**
    * Update's keyboard half (:585-720), in DFU's order: the toggle-close
    * FIRST, then the IsDownWith hotkeys, then the IsPressedWith ones.
    *
-   * THE TOGGLE-CLOSE IS TWO-PHASE and stays two-phase here (:586-597):
-   * DFU raises `isCloseWindowDeferred` on the key DOWN and closes on
-   * the key UP, so the press that opens the map cannot also close it in
-   * the same frame. The port's overlay seam carries no key-up route at
-   * all, so the latch is drained by the next tick() instead - the
-   * window still closes on a LATER frame than the press, which is the
-   * behaviour the two phases exist for.
+   * THE TOGGLE-CLOSE IS TWO-PHASE (:586-597): DFU raises
+   * `isCloseWindowDeferred` on the key DOWN and closes on the key UP,
+   * so the press that opens the map cannot also close it in the same
+   * frame. ROAD-E E1 gave the port the key-UP route, so the second
+   * phase is `keyup` below rather than the next tick().
    *
-   * RECORDED DEPARTURE (module header), and it reaches the HELD loop
-   * alone: one frame of DFU's per-second speed per press. `dt` is the
-   * last frame's, captured by tick().
+   * THE HELD CLASS LEFT THIS METHOD with the same slice: `IsPressedWith`
+   * is a per-frame STATE poll, so the twenty arms of :642-720 are
+   * `tick`'s now and the press only records itself here.
    */
   input(code, e = null) {
+    this._noteKey(code, e, true);
     if (this.automapBinding && normalizeCode(code, e) === this.automapBinding) {
       this.isCloseWindowDeferred = true;
       return;
@@ -646,10 +663,33 @@ export class ExteriorAutomapWindow {
       this.runVerb(EXT_HOTKEY_VERBS[button], dt);
       return;
     }
+  }
+
+  /** ROAD-E E1: the release edge - :589-596 verbatim (`GetBackButtonUp()
+   *  || GetKeyUp(automapBinding)) && isCloseWindowDeferred` -> the
+   *  latch clears and CloseWindow() runs, playing no sound), plus the
+   *  held dictionary's drain, which is what ends a held pan. */
+  keyup(code, e = null) {
+    this._noteKey(code, e, false);
+    const nc = normalizeCode(code, e);
+    const isToggle = (this.automapBinding && nc === this.automapBinding) || nc === 'Escape';
+    if (isToggle && this.isCloseWindowDeferred && !this.done) {
+      this.isCloseWindowDeferred = false;
+      this.runVerb('ActionExit', this._dt || 1 / 60);   // CloseWindow() (:592-594), and it plays no sound
+    }
+  }
+
+  /** The IsPressedWith class (:642-720), polled once per FRAME over the
+   *  held dictionary. DFU's Update is a flat chain of independent ifs,
+   *  so every matching hotkey runs on the same frame - there is no
+   *  early return. */
+  _tickHeldHotkeys(dt) {
     for (const button of EXT_HOTKEYS_HELD) {
-      if (!this._hotkeyHit(button, code, e)) continue;
+      const seq = shortcutOrFallback(button, this.automapBinding);
+      if (!seq.code || !this._heldCodes.has(seq.code)) continue;
+      if (!checkSetModifiers(this._keyModifiers, seq.modifiers)) continue;
+      if (this.done) return;
       this.runVerb(EXT_HOTKEY_VERBS[button], dt);
-      return;
     }
   }
 
@@ -722,16 +762,17 @@ export class ExteriorAutomapWindow {
     // the SHARED chrome answers both halves: the held verbs, and which
     // rect has rested under the pointer for ToolTipDelay (:22 - one
     // second, and SuppressToolTip while its own button is held)
+    // ROAD-E E1: the IsPressedWith arms, before the mouse half - DFU's
+    // Update runs the close check, the IsDownWith hotkeys, the
+    // IsPressedWith hotkeys, THEN the mouse (:585-760). The first two
+    // are the seam's edges (`keyup`, `input`); this is the frame poll
+    // they cannot be.
+    this._tickHeldHotkeys(dt);
     const { verbs, tooltip } = this.chrome.tick(dt);
     this._tooltipRect = tooltip;
     for (const v of verbs) this.runVerb(v, dt);
     _zoomLevel = this.cam.orthoSize;   // OnPop stores the level (:551)
     _yawDeg = this.cam.yawDeg;         // ...and the automap script stores the rotation
-    // the deferred toggle-close, drained where DFU's key-UP would be
-    if (this.isCloseWindowDeferred && !this.done) {
-      this.isCloseWindowDeferred = false;
-      this.runVerb('ActionExit', dt);   // CloseWindow() (:592-594), and it plays no sound
-    }
   }
 
   /**

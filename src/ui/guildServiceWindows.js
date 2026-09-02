@@ -147,6 +147,11 @@ export class ServiceFlowWindow {
    *  and VerticalScrollBar.Update's drag) reaches it through here. */
   hover(vx, vy, e = null) { if (this.top?.picker) this._picker?.hover(vx, vy, e); }
 
+  /** ROAD-E E1: and the release edge, on the same forwarding rule -
+   *  VerticalScrollBar.Update's else arm (:123-129) needs the button
+   *  coming up, which the hosts now deliver. */
+  release() { this._picker?.release(); }
+
   click(vx, vy) {
     const t = this.top;
     if (!t) { this._close(); return true; }

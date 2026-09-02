@@ -52,8 +52,11 @@
 // - the saveSettings LATCH (:73, :212-215): nothing persists until a
 //   control was actually touched, then the whole store saves on close.
 // - closing: CONTINUE (:276-280), or the same Escape that opened it
-//   (:186-190 - DFU keys on GetKeyUp; the port's overlay channel
-//   delivers keydowns, one edge earlier, recorded here).
+//   (:183-188 - DFU keys on GetKeyUp, and ROAD-E E1 built the key-up
+//   route the port lacked, so `keyup` below is that edge and the
+//   Escape that opens this window can no longer close it in the same
+//   press. The record that stood here - "the port's overlay channel
+//   delivers keydowns, one edge earlier" - is retired).
 //
 // FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 // dropdown, a DFU-era addition riding its settings stack; the port's
@@ -169,8 +172,21 @@ export class PauseOptionsWindow {
       return;
     }
     if (this.top) { this.top = null; return; }   // any key clears a note
-    // the same key that opened it closes it (:186-190)
-    if (code === 'Escape') { this._click(); this._closeWith(); }
+  }
+
+  /** ROAD-E E1: THE TOGGLE CLOSE, on the edge DFU reads it from. :183-188
+   *  is `if (GetKeyUp(toggleClosedBinding) || GetBackButtonUp())
+   *  CloseWindow();` inside Update - a RELEASE, so the Escape that
+   *  OPENS this window cannot also close it. The port had no key-up
+   *  route when this window was built and the site recorded the edge as
+   *  "one edge earlier"; E1 built the route, so the record is now the
+   *  law. A note or the exit box owns the keyboard while it stands, and
+   *  they take the press, exactly as `input` above has them. */
+  keyup(code) {
+    if (this.top) return;
+    if (code !== 'Escape') return;
+    this._click();   // ContinueButton's sound, which this port's two close doors share
+    this._closeWith();
   }
 
   click(vx, vy) {

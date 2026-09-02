@@ -390,7 +390,7 @@ test('B5: the rest window runs UpdateNpcPresence on pop, ONCE, and it only ever 
     advanceMinutes() {}, endLines: (id) => [`x${id}`],
     updateNpcPresence: () => { calls++; for (const p of people) p.active = true; },
   }));
-  w.input('back');   // Esc off the selection page - CloseWindow -> OnPop
+  w.keyup('back');   // ROAD-E E1: Esc off the selection page is GetBackButtonUp() (:193) - CloseWindow -> OnPop
   assert.equal(calls, 1);
   assert.deepEqual(people.map((p) => p.active), [true, true]);
   // dispose() runs _close a second time deliberately (the 2026-08-29
@@ -466,7 +466,12 @@ test('B5: the key that OPENED the rest window closes it - and ENDS a running res
     const e = sleeper();
     // On the selection page the binding is CloseWindow (:195-196).
     const w = new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] }));
+    // ROAD-E E1: :193 is GetKeyUp(toggleClosedBinding), so the PRESS
+    // arms nothing and the RELEASE closes - which is why the press that
+    // opens the window cannot also close it.
     w.input('char:r');
+    assert.equal(w.done, false, 'the press is not the toggle - GetKeyUp is (:193)');
+    w.keyup('char:r');
     assert.equal(w.done, true, 'CloseWindow, because currentRestMode == Selection');
     assert.equal(e.isResting, false);
 
@@ -477,7 +482,7 @@ test('B5: the key that OPENED the rest window closes it - and ENDS a running res
     }));
     w2.input('char:1'); w2.input('char:9'); w2.input('confirm');
     assert.equal(w2.state, 'resting');
-    w2.input('char:r');
+    w2.keyup('char:r');
     assert.equal(w2.state, 'ended', 'EndRest, not CloseWindow');
     assert.deepEqual(w2.endLines, [`rsc${REST_TEXT.wakeUp}`],
       "the mode's own finish text - the toggle is EndRest, so it is NOT the silent close");
@@ -496,9 +501,9 @@ test('B5: the toggle close FOLLOWS A REBIND, and does not eat the letter it is n
     const w = new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] }));
     // R is no longer the rest key, so it is an ordinary character
     // again - the selection page ignores it.
-    w.input('char:r');
+    w.keyup('char:r');
     assert.equal(w.done, false);
-    w.input('char:z');
+    w.keyup('char:z');
     assert.equal(w.done, true, 'the REBOUND key toggles the window closed');
   } finally { setBindings(null); }
 });

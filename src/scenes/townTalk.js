@@ -1012,12 +1012,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    * chrome's own header records why that is deliberate.
    */
   function pointer(phase, e) {
-    if (!overlay?.pointer) return false;
+    // ROAD-E E1: THE RELEASE REACHES A WINDOW THAT HAS NO POINTER SEAM.
+    // This gate read `!overlay?.pointer`, so the up route existed only
+    // for the two automap windows and every other occupant of this slot
+    // was told about presses and moves and never about the button
+    // coming up. A held button is a STATE in DFU (InputManager's
+    // dictionary, polled by VerticalScrollBar.Update :101-130), so a
+    // window that latches on the press - the list picker's thumb drag -
+    // needs the edge that ends it. `release()` is that edge.
+    if (!overlay) return false;
+    if (!overlay.pointer && !(phase === 'up' && overlay.release)) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     const v = pointToNative(nativeMetrics(canvas), px, py);
-    overlay.pointer(phase, v ? v[0] : -1, v ? v[1] : -1, e.button ?? 0);
+    overlay.pointer?.(phase, v ? v[0] : -1, v ? v[1] : -1, e.button ?? 0);
+    if (phase === 'up') overlay.release?.();
     if (overlay?.done) dropOverlay();
     return true;
   }
