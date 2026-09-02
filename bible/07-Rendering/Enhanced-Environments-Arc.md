@@ -133,7 +133,9 @@ the existing precipitation pass, through `markForeignPass` as that
 pass already does. GATE: check + worldRenderGate under rain.
 
 **EE9 - the surface field.** Last, because it must feed the chunker's
-own vertices. Design first, as its own doc, before any code.
+own vertices. Design first, as its own doc, before any code: see
+`EE9-Surface-Field-Design.md`, written during EE8 so it is reviewable
+before a line of it is coded.
 
 Mac's direction, recorded here so it shapes EE9 and is not lost: WINTER
 IS NOT A TEXTURE. The lab retired the snow tile in favour of snow that
