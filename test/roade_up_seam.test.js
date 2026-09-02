@@ -153,8 +153,8 @@ test('E1 SOURCE SWEEP: a window that NESTS a list picker forwards the release, e
       `${name} nests a picker and must forward release()`);
   }
   assert.deepEqual(nesting.sort(), [
-    'guildServiceWindows.js', 'itemMakerWindow.js', 'potionMakerWindow.js', 'travelMapWindow.js',
-  ], 'the four nesting windows, named so a fifth cannot appear unforwarded');
+    'guildServiceWindows.js', 'itemMakerWindow.js', 'potionMakerWindow.js', 'spellMakerWindow.js', 'travelMapWindow.js',
+  ], 'the five nesting windows (E8 made the spell maker the fifth), named so a sixth cannot appear unforwarded');
 });
 
 // ─────────────────────────────────────────────────────────────────────

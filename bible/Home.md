@@ -283,22 +283,18 @@ DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
-- `src/characters/enemyCasting.js:91` - * FLAGGED, and now exactly one term wide: HasClearPathToShootProjectile
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/combat/fpsSpellCasting.js:178` - * FLAGGED: the release is not the spell. DFU raises OnReleaseFrame
 - `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/exterior.js:1073` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1325` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/world.js:2819` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/worldModes.js:1662` - FLAGGED, above ground only, each with the DFU line it owes.
+- `src/scenes/exterior.js:1089` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1344` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/world.js:2932` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/worldModes.js:1687` - FLAGGED, above ground only, with the DFU line it owes:
 - `src/systems/inputActions.js:465` - STILL FLAGGED:
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/ui/chargenArt.js:731` - *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
 - `src/ui/enhancedMenu.js:1768` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/exteriorAutomapWindow.js:98` - FLAGGED, still awaiting a seam this stage does not own:
-- `src/ui/hudLarge.js:75` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
 - `src/ui/pauseWindow.js:61` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 
 ## Audits

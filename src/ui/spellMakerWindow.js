@@ -367,7 +367,11 @@ export class EffectSettingsEditorWindow {
     if (normalizeCode(code) === 'Escape') { this._close(); return; }
   }
 
-  hover() {}
+  /** The nested pickers get both pointer edges the way every nesting
+   *  window does (ROAD-E E1): hover for the row highlight, release for
+   *  the thumb-drag latch (VerticalScrollBar.Update's else arm). */
+  hover(vx, vy, e = null) { this.picker?.hover?.(vx, vy, e); }
+  release() { this.picker?.release(); }
 
   click(vx, vy) {
     for (const [field, cell] of Object.entries(EDITOR_RECTS)) {
