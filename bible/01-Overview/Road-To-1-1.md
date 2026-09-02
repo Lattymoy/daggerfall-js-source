@@ -74,15 +74,18 @@ wait on B1's window stack.
   SwitchHand / usingRightHand, the classic import's
   usingLeftHandWeapon, the FPS draw's mirrored arm.
 
-## Wave B - the interacting band - first flight CLOSED 2026-09-01
+## Wave B - the interacting band - CLOSED 2026-09-01
 
 B1-B4 landed and merged (PR #49, with the incident fixes aboard - see
 `Incident-2026-09-01.md`): the window stack whole with the FLAGGED
 single-slot refusal retired, the hostility model with the indoor watch
 composed from both groups' halves, exterior swimming/drowning with
 underwater fog in both hosts, and the live castle/tavern/residence
-flags. B5 runs now; the groups' recorded remainders live in the wave
-reports.
+flags. B5 landed on B1's stack the same day: the prevent-rest registry
+(GameManager.cs:52, :637-675) polled at TickRest's two positions, the
+second top-window test with its totalHours-already-counted quirk, the
+lazy prevented-message producer. The groups' recorded remainders live
+in the wave reports.
 
 - **B1 window-stack**: a real window stack in the modal hosts - the
   foundation the rest-window pause/resume and layered boxes need.
@@ -102,15 +105,40 @@ reports.
   GetPreventedRestMessage poll, pause/resume of a running rest,
   UpdateNpcPresence on pop, the toggle-binding close.
 
-## Wave C - the two arcs
+## Wave C - the two arcs - CLOSED 2026-09-02
+
+Both arcs landed on the branch, each through its own adversarial
+review round (the C1/flight-1 round: 12 confirmed, 11 fixed, one
+recorded; the flight-2 round: 30 findings verified, 27 confirmed and
+all 27 fixed, three refuted - including the CRITICAL exterior
+rotation-sign inversion and the injected-vs-default water tint).
 
 - **C1 the save/load window**: the classic multi-slot UI over the
   existing slot store (thumbnails, naming, delete), classic-save
-  import surfaced beside it.
-- **C2 the automap pair**: the dungeon 3D automap (revealed-geometry
-  model, render modes, note markers, teleporter connections, beacon
-  cycling) and the exterior town automap - the port's largest unbuilt
-  surfaces, staged like an arc with recorded slices.
+  import surfaced beside it - with its seven law closures (the loading
+  defer, the SW_TEXT strings, the info clear arm, the rename green,
+  the outline law, Enabled=false not drawn, the one-row wheel) and the
+  pause window's save/load as a PUSH on B1's stack.
+- **C2 the automap pair**, ten judged stages in two flights. Flight 1
+  cut the shared halves (`systems/automapModel.js` + the AABB-shape
+  fix that had left the dungeon reveal probe dead, the renderer's
+  panel bracket, `ui/automapCamera.js` pure, `ui/automapChrome.js`).
+  Flight 2 built the windows: S5 the native dungeon window (UNLIT
+  geometry pass, DFU's controls and hotkey table, the OnPush/OnPop
+  handshake), S6 the shader's above-slice half with the water tint
+  and wireframe lines, S7 beacons/markers/picker/hover, S8 notes and
+  teleporter connections with every click verb, S9 the
+  interior-building arm with DFU's quirks reproduced at the site, S10
+  the exterior town map as DFU's own composition with the plate
+  anchor moved onto the building's Position (every plate in every
+  town moved). Residue, all at `ui/exteriorAutomapWindow.js`'s
+  header: the residence-with-active-quest plate arm, the eight button
+  tooltips, the two reveal-buildings console verbs.
+
+The whole of Waves B5 and C - plus the bow salvage and the incident
+record - is the parked deploy batch: gated on the branch, waiting for
+the owner's eyes before it merges to main (incident law 2 - the
+automap windows are first-ever-rendered surfaces).
 
 ## The standing watches (not wave work)
 
