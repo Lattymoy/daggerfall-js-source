@@ -612,8 +612,8 @@ test('ROADS 17: a road may not enter a town at a right angle to the road already
   assert.equal(lone.stats.unrouted, 0);
 });
 
-// AUDIT 49: the island skip and the merge, each pinned as what it is.
-test('AUDIT 49 A1: a pair on different landmasses is named unrouted without a search', async () => {
+// AUDIT 52 (was 49): the island skip and the merge, each pinned as what it is.
+test('AUDIT 52 A1: a pair on different landmasses is named unrouted without a search', async () => {
   const { landComponents } = await import('../src/world/roadNetwork.js');
   const strait = (x) => x === 300;   // a one-pixel channel splits the map
   const comp = landComponents(strait);
@@ -628,7 +628,7 @@ test('AUDIT 49 A1: a pair on different landmasses is named unrouted without a se
   assert.ok(Date.now() - t0 < 1500);
 });
 
-test('AUDIT 49 A2: the through-road merge is pinned at the source - no fixture can see it', async () => {
+test('AUDIT 52 A2: the through-road merge is pinned at the source - no fixture can see it', async () => {
   // RECORDED: on every flat fixture tried, the wide-join rule steers an
   // approach on its own and a route that rides the existing road into
   // town leaves the same pixels whether it stops 3 px early or not. On

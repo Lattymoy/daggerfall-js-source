@@ -516,7 +516,7 @@ gaps are the track webs (dead-ends 29% vs 7%) and road length.
 
 ## ROADS 19 - built once per map (2026-09-02)
 
-Item 8, un-parked by Audit 49's number: 4.4 seconds of routing before
+Item 8, un-parked by Audit 52's number: 4.4 seconds of routing before
 the first terrain chunk, every boot, for a result that is the same
 whenever its inputs are. The worker builds through `roadsCache.js`:
 IndexedDB, keyed on everything that shapes the network - a generator

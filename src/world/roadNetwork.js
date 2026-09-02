@@ -142,7 +142,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   const occupied = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const l of locations) if (inMap(l) && !ROAD_TYPES.has(l.type)) occupied[l.y * MAP_WIDTH + l.x] = 1;
 
-  // AUDIT 49 A1: AN ISLAND IS NOT A ROUTE THAT FAILED, IT IS A ROUTE
+  // AUDIT 52 (was 49) A1: AN ISLAND IS NOT A ROUTE THAT FAILED, IT IS A ROUTE
   // THAT WAS NEVER THERE. On the real map 44 pairs were unrouted, all
   // but one with water between them, and each paid all three A* boxes
   // - the 120-pixel one at eight headings - before giving up: 3.5 of
@@ -261,7 +261,7 @@ function wideEnough(have, bit, d) {
   return true;
 }
 
-/** AUDIT 49 A1: label every land pixel with its 4-connected component.
+/** AUDIT 52 (was 49) A1: label every land pixel with its 4-connected component.
  *  One pass over the map; water is 0, land gets 1, 2, 3... */
 export function landComponents(isWater) {
   const comp = new Int32Array(MAP_WIDTH * MAP_HEIGHT);
