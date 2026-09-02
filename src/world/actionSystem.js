@@ -524,8 +524,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // waits for the live skill to differ. DFU's own field comment
       // there marks it "TODO: persist across save and load", but that
       // TODO is stale: SerializableActionDoor DOES round-trip it
-      // (:78 save, :101 restore). The S12 snapshot still skips it -
-      // FLAGGED, a live gap, not parity.
+      // (:78 save, :101 restore). AUDIT 26 F187 carried it into the
+      // S12 snapshot to match - collectSaveData writes it beside the
+      // lock and restoreSaveData reads it back (both below), so a
+      // failed pick no longer forgets itself across a save.
       failedSkillLevel: 0,
       matrix: baseMatrix,
     };

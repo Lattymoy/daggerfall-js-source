@@ -3,10 +3,14 @@
 //
 // This window is what the Mages Guild's TELEPORT service ends at, and
 // both halves of it had been waiting on each other: the travel map
-// (U41) flagged "the guild TELEPORT mode, which waits on the guild
-// arc's teleport service", and guildServiceFlow flagged
-// `Teleport: null, // FLAGGED: the travel map's teleport mode`. Two
-// finished systems pointing across a gap nobody closed.
+// (U41) named the guild TELEPORT mode as idling on the guild arc's
+// teleport service, and guildServiceFlow's `Teleport` was a null
+// pointing back at the travel map. Two finished systems across a gap
+// nobody had closed - G5 closes it from BOTH ends, and neither
+// sentence survives: systems/guildServiceFlow.js's service table now
+// reads `Teleport: 'guildServiceTeleport'`, and
+// ui/travelMapWindow.js's activateTeleportationTravel arms the map
+// and raises this window on the destination pick.
 //
 // THE NATIVE-WINDOW RULE, element by element:
 // - the panel is TELE00I0.IMG, which ships 171x57 - exactly

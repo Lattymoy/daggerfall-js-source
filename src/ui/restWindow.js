@@ -169,8 +169,10 @@ export class RestWindow {
 
   dispose() { this._close(); }
 
-  // FLAGGED, both from OnPop/Update and both belonging to other arcs
-  // rather than to rest. (The third that stood here, OnPop's
+  // TWO RECORDED NOT-A-GAPS, both from OnPop/Update and both
+  // belonging to other arcs rather than to rest - they were flagged as
+  // owed work, and reading DFU's own tree closes both. (The third that
+  // stood here, OnPop's
   // UpdateNpcPresence, is LANDED at B5: the law is
   // characters/interiorPeople.js and `_close` above calls it. Its old
   // entry said "the port has no NPC-presence pass at all; that is the
@@ -179,17 +181,24 @@ export class RestWindow {
   //
   //  - OnSleepEnd (:288-289): a sleep of MORE than six hours
   //    (sleepEventMinimumHours, :60) raises an event whose ONE
-  //    consumer is EntityEffectManager.RerollItemEffects
-  //    (:2170-2173), which drains `itemsPendingReroll` - the set
-  //    DoMagicRound fills on each item's own hour clock. The port
-  //    FUSED the queue and the drain: enchantments.js fires the
+  //    subscriber in DFU's whole tree is the player's own
+  //    EntityEffectManager (:174 subscribe, :195 unsubscribe), and
+  //    that handler's ENTIRE body is `RerollItemEffects()`
+  //    (EntityEffectManager.cs:2170-2173) - which drains
+  //    `itemsPendingReroll`, the set DoMagicRound fills on each item's
+  //    own hour clock. So the event carries no law of its own; the law
+  //    is "items six hours stale reroll", and the port FUSED the queue
+  //    and the drain to hold it: enchantments.js fires the
   //    RerollEffect payload inline in the magic round once an item is
-  //    REROLL_MINIMUM_HOURS old, and S40's advanceMinutes runs the
-  //    magic rounds THROUGH the sleep, so a rested night rerolls as it
-  //    passes rather than in one flush at the end. Same items, same
-  //    clock, a different moment - written down, not left silent.
+  //    REROLL_MINIMUM_HOURS (= 6, sleepEventMinimumHours) old, and
+  //    S40's advanceMinutes runs the magic rounds THROUGH the sleep,
+  //    so a rested night rerolls as it passes rather than in one flush
+  //    at the end. Same items, same clock, a different moment - a
+  //    recorded divergence in shape, not a missing effect.
   //  - RaiseOnSleepTickEvent (:206-208) has no consumer in DFU's own
-  //    tree - it is a mod hook.
+  //    tree at all: `OnSleepTick` greps to its own delegate, event and
+  //    raise in this one file (:798-805) and nowhere else. It is a mod
+  //    hook, and a port with no mods loses nothing by not raising it.
 
   /** CanRest(alreadyWarned) (:542-599) with DFU's side effects
    *  attached: the crime lands on BOTH the refused and the confirmed

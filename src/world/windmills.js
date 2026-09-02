@@ -74,7 +74,7 @@ import { multiply, trs, quatToMat4, transformPoint } from './mat4.js';
 import { SOUND } from '../systems/soundClips.js';
 
 // WM2d RETIRED `WINDMILL_MODELS`, the table of "which classic model id
-// carries a rotor", along with the FLAGGED note asking for the two it
+// carries a rotor", along with the note that asked for the two ids it
 // could not confirm. The table rested on WM2a's reading that model
 // 41600 stands in Daggerfall's farm blocks, and that reading was
 // backwards: the 41600 was in KAMER'S WorldData overrides, which
