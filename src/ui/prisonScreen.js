@@ -35,6 +35,18 @@
 // plea box and standing under every one of them - and arrestFlow
 // pushes the trial over it.
 //
+// ...and ROAD close-P made it VISIBLE. B5 put the courtroom on the
+// stack and stopped there: townTalk's frame painted the TOP window
+// alone, so the backdrop stood under every box of the trial and was
+// never once rendered - membership is not paint. DaggerfallUI draws
+// one window a frame (DaggerfallUI.cs:491) and depth reaches the
+// screen through DaggerfallPopupWindow.Draw (:77-86), which runs
+// `previousWindow.Draw()` BEFORE its own; every court box is built on
+// the court window as its previousWindow (DaggerfallCourtWindow.cs:
+// 221-229). The host now walks the stack it was already keeping
+// (windowStack's eachCoveredWindow), deepest first, so `draw` below
+// is on a live path.
+//
 // ONE DEVIATION, named: DFU has ONE window with two backgrounds, and
 // SwitchToPrisonScreen (:511-524) swaps the texture in place. Here the
 // prison screen is a separate window laid at the same stack level (the
@@ -91,15 +103,21 @@ export function daysUntilFreedomText(days, localizedText = null) {
 let _courtArt = null;
 /** ROAD-B B5 - Setup's `GetTextureFromImg(nativeImgName)` (:75).
  *
- *  THE PALETTE LAW, and it is the same one PRIS00I0 broke on
- *  2026-09-01: CORT01I0 is a palettized IMG - ImgFile._readPalette
- *  writes INTO the palette instance it is handed - so it MINTS ITS
- *  OWN DFPalette and is never given the host's shared ART_PAL. One
- *  boot-time preload with the session palette repaints every texture
- *  decoded after it for the rest of the session. Read
- *  test/incident_texture.test.js before touching this line. */
+ *  THE PALETTE LAW, and it cuts the OTHER way here: CORT01I0 is NOT
+ *  one of the six palettized IMGs (imgFile.js's PALETTIZED_FILENAMES,
+ *  ImgFile.cs:477-489 - CHGN00I0, DIE_00I0, PICK02I0, PICK03I0,
+ *  PRIS00I0, TITL00I0). `_readPalette` early-returns for it and never
+ *  writes the palette it is handed, so its `paletteName` is the real
+ *  file ART_PAL.COL and it takes the host's SHARED palette, exactly
+ *  as DFU's `LoadPalette(imgFile.PaletteName)` does for it
+ *  (DaggerfallUI.cs:1225-1231, reached from :75). Minting one here
+ *  hands the decode an UNLOADED DFPalette - all 256 entries (255,0,0)
+ *  by its constructor (dfPalette.js:11-17) - and the courtroom draws
+ *  as a solid red panel. The mint-your-own law belongs to PRIS00I0
+ *  below and to those six names only; read
+ *  test/incident_texture.test.js, which now sweeps both directions. */
 export async function preloadCourtScreenArt(deps) {
-  if (!_courtArt) _courtArt = { court: await loadImg({ ...deps, palette: new DFPalette() }, COURT_IMG) };
+  if (!_courtArt) _courtArt = { court: await loadImg(deps, COURT_IMG) };
   return _courtArt;
 }
 export const courtScreenArtLoaded = () => !!_courtArt;

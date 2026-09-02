@@ -146,6 +146,30 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     /** ContainsWindow (:114-117). */
     containsWindow(win) { return windows.indexOf(win) >= 0; },
 
+    /** THE DRAW CHAIN. DaggerfallUI paints ONE window a frame -
+     *  `uiManager.TopWindow.Draw()` (DaggerfallUI.cs:491) - and depth
+     *  reaches the screen through DaggerfallPopupWindow.Draw
+     *  (:77-86), which runs `previousWindow.Draw()` BEFORE its own
+     *  `base.Draw()`. Every box DaggerfallUI.MessageBox opens is
+     *  built on `uiManager.TopWindow` as its previousWindow (:1330,
+     *  :1339), so the chain is exactly this stack and the window a
+     *  box was pushed over is painted UNDER it.
+     *
+     *  The port's hosts hold the TOP in their own slot (that is what
+     *  `onTop` mirrors) and paint it themselves, so this walks what
+     *  the top COVERS, deepest first, and the host draws its slot
+     *  after. The HUD is skipped - the hosts draw it outside the
+     *  stack. A stack of depth 1 enumerates nothing, which is why
+     *  every single-window host renders exactly as before.
+     *
+     *  No dim rides with it: `parentPanel.BackgroundColor =
+     *  ScreenDimColor` is Color.clear (nativePanel.js's SCREEN_DIM),
+     *  and the court boxes set it to (0,0,0,0) themselves
+     *  (DaggerfallCourtWindow.cs:224). */
+    eachCoveredWindow(fn) {
+      for (let i = 0; i < windows.length - 1; i++) if (!isHud(windows[i])) fn(windows[i], i);
+    },
+
     /** ChangeWindow (:123-131) - pop EVERYTHING, then add the one.
      *  This is what the port's dispatch sites have always done in a
      *  single assignment: a window handing control to its successor is

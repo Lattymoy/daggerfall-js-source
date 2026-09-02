@@ -20,10 +20,12 @@ import { readFileSync } from 'node:fs';
 import { createTownTalk } from '../src/scenes/townTalk.js';
 import { createArrestFlow, RELEASE_MINUTES } from '../src/scenes/arrestFlow.js';
 import {
-  CourtScreenWindow, PrisonScreenWindow, COURT_IMG,
+  CourtScreenWindow, PrisonScreenWindow, COURT_IMG, PRISON_IMG,
   PRISON_UPDATE_INTERVAL, PRISON_UPDATE_INTERVAL_FAST,
-  courtScreenArtLoaded, _setCourtScreenArtForTests,
+  courtScreenArtLoaded, _setCourtScreenArtForTests, preloadCourtScreenArt,
 } from '../src/ui/prisonScreen.js';
+import { PALETTIZED_FILENAMES } from '../src/formats/imgFile.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
 import { CRIMES } from '../src/systems/court.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -44,8 +46,35 @@ const convict = () => ({
   haveShownSurrenderDialogue: true, arrested: false,
 });
 
-function mkFlow(over = {}) {
-  const townTalk = talkHost();
+/** A FNT the port's reader accepts: header + the 240-entry glyph table
+ *  + 240 empty 32-byte glyphs. townTalk only draws windows once it has
+ *  a font (townTalk.js's `if (overlay && font)`), so the draw pin below
+ *  needs one and this container has no ARENA2. */
+function synthFnt() {
+  const bytes = new Uint8Array(4 + 240 * 4 + 240 * 32);
+  const v = new DataView(bytes.buffer);
+  v.setUint16(0, 5, true); v.setUint16(2, 7, true);
+  for (let i = 0; i < 240; i++) {
+    v.setUint16(4 + i * 4, 4 + 240 * 4 + i * 32, true);
+    v.setUint16(4 + i * 4 + 2, 4, true);
+  }
+  return bytes;
+}
+
+/** The same host, with a font loaded and a recording renderer, so
+ *  `frame()` is the REAL draw path rather than a stand-in. */
+const drawHost = () => createTownTalk({
+  renderer: { uploadTexture: (_k, n) => `tex:${n}`, createTexture: () => ({}), drawScreenQuad: () => {} },
+  canvas: { width: 640, height: 400 },
+  fetchBytes: async (n) => {
+    if (n === 'FONT0003.FNT') return synthFnt();
+    throw new Error('this pin loads no ARENA2');
+  },
+  playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+  regionIndex: 0,
+});
+
+function mkFlow(over = {}, townTalk = talkHost()) {
   const player = convict();
   const log = { days: [], minutes: [], cleared: 0, repositioned: 0 };
   const flow = createArrestFlow({
@@ -109,6 +138,49 @@ test('B5: every box of the trial keeps the courtroom underneath it', () => {
   assert.ok(court instanceof CourtScreenWindow, 'the courtroom was there the whole time');
   assert.equal(court.done, true, 'and ReleaseFromPrison closed it (:490) - the frame drains it next tick');
   assert.equal(player.arrested, false, 'OnPop cleared the flag');
+});
+
+test('close-P: the courtroom is DRAWN under every box - previousWindow.Draw() runs first', async () => {
+  // MEMBERSHIP IS NOT PAINT, and the two tests above only ever asserted
+  // membership. DaggerfallUI paints ONE window a frame
+  // (`uiManager.TopWindow.Draw()`, DaggerfallUI.cs:491); depth reaches
+  // the screen through DaggerfallPopupWindow.Draw (:77-86), which runs
+  // `previousWindow.Draw()` BEFORE `base.Draw()`, and every court box
+  // is built with the court window as its previousWindow
+  // (DaggerfallCourtWindow.cs:221-229, :233-240, :263-270). The port's
+  // slot painted its top alone, so CORT01I0 stood under the whole trial
+  // and was never once rendered - the FLAG the header claims is retired.
+  const townTalk = drawHost();
+  await townTalk.ensureLoaded();
+  assert.ok(townTalk.font, 'the host has a font, so frame() really draws');
+  const { flow } = mkFlow({}, townTalk);
+
+  const painted = [];
+  const courtDraw = CourtScreenWindow.prototype.draw;
+  CourtScreenWindow.prototype.draw = function drawSpy(...a) { painted.push('courtroom'); return courtDraw.apply(this, a); };
+  try {
+    flow.startCourtFlow();
+    const plead = townTalk.overlay;
+    assert.ok(plead && !(plead instanceof CourtScreenWindow), 'a plea box is what the player is looking at');
+    const boxDraw = plead.draw.bind(plead);
+    plead.draw = (...a) => { painted.push('box'); return boxDraw(...a); };
+
+    townTalk.frame(0.016);
+    assert.deepEqual(painted, ['courtroom', 'box'],
+      'the courtroom is painted on the same frame as the box, and UNDER it (previousWindow first)');
+
+    // ...and on through the trial: the next box replaces this one at the
+    // court's own level and the backdrop keeps painting beneath it.
+    painted.length = 0;
+    townTalk.keydown({ code: 'KeyN', key: 'n', preventDefault() {} });   // Not guilty -> how-convince
+    const box1 = townTalk.overlay;
+    const box1Draw = box1.draw.bind(box1);
+    box1.draw = (...a) => { painted.push('box'); return box1Draw(...a); };
+    townTalk.frame(0.016);
+    assert.deepEqual(painted, ['courtroom', 'box'], 'every box of the trial, not just the first');
+  } finally {
+    CourtScreenWindow.prototype.draw = courtDraw;
+  }
 });
 
 test('B5: the prison screen is laid at the courtroom\'s own level, and both go', () => {
@@ -195,18 +267,44 @@ test('B5: the successor a close callback opens keeps its OWN close callback', ()
     'with ITS callback - not a null filed by a push that covered nobody');
 });
 
-test('B5: CORT01I0 mints its OWN palette - the 2026-09-01 incident, one file over', async () => {
-  // PRIS00I0 broke the whole session's textures this way; CORT01I0 is
-  // the same kind of file (imgFile.js's six palettized IMGs) loaded by
-  // the same module, so it takes the same law.
-  const ps = src('src/ui/prisonScreen.js');
-  assert.match(ps, /loadImg\(\{ \.\.\.deps, palette: new DFPalette\(\) \}, COURT_IMG\)/,
-    'the court preload builds its own DFPalette');
+test('B5/close-P: CORT01I0 takes the HOST palette - it is not one of the palettized six', async () => {
+  // THE PIN THAT STOOD HERE ASSERTED THE OPPOSITE, on a false premise
+  // it stated out loud: "CORT01I0 is the same kind of file (imgFile.js's
+  // six palettized IMGs)". It is not. ImgFile.ReadPalette's switch
+  // (ImgFile.cs:477-489) names CHGN00I0, DIE_00I0, PICK02I0, PICK03I0,
+  // PRIS00I0 and TITL00I0, and nothing else; for CORT01I0
+  // `_readPalette` early-returns, so a minted DFPalette is never
+  // written and stays at the constructor's all-red fill - the courtroom
+  // drew as a solid red panel under the whole trial. DFU decodes it on
+  // `imgFile.PaletteName`, ART_PAL.COL (DaggerfallUI.cs:1225-1231),
+  // which is the shared session palette the host hands the preload.
   assert.equal(COURT_IMG, 'CORT01I0.IMG');
-  // ...and it warms at boot beside the prison screen.
+  assert.equal(PALETTIZED_FILENAMES.includes(PRISON_IMG), true, 'PRIS00I0 IS palettized');
+  assert.equal(PALETTIZED_FILENAMES.includes(COURT_IMG), false, 'CORT01I0 is NOT');
+
+  // Behavioural, through the real preload: a synthetic CORT01I0 whose
+  // pixels are index 1, decoded against a session palette marked
+  // (7,11,13) at that index. The colour that lands in the uploaded
+  // texture names the palette the loader was actually given.
+  _setCourtScreenArtForTests(null);
+  const bytes = new Uint8Array(64768);   // headerless 320x200 + 768 trailing bytes
+  bytes.fill(1, 0, 64000);
+  const palette = new DFPalette();
+  palette.fill(7, 11, 13);
+  let painted = null;
+  await preloadCourtScreenArt({
+    renderer: { uploadTexture: (_kind, _name, color32) => { painted = color32; return {}; }, createTexture: () => ({}) },
+    fetchBytes: async () => bytes,
+    palette,
+  });
+  assert.deepEqual(Array.from(new Uint8Array(painted.colors.buffer, 0, 4)), [7, 11, 13, 255],
+    'the courtroom paints on the session ART_PAL - a minted DFPalette would leave it (255,0,0), a solid red panel');
+
+  // ...and it warms at boot beside the prison screen, on that palette.
   assert.match(src('src/scenes/world.js'), /preloadCourtScreenArt\(\{ renderer, fetchBytes, palette \}\)/);
-  // No `deps.palette` reaches either loader in this file.
-  assert.equal(/loadImg\(deps,/.test(ps), false);
+  // The mint-your-own law is still ON, one function down, where it belongs.
+  assert.match(src('src/ui/prisonScreen.js'),
+    /loadImg\(\{ \.\.\.deps, palette: new DFPalette\(\) \}, PRISON_IMG\)/);
   _setCourtScreenArtForTests(null);
   assert.equal(courtScreenArtLoaded(), false);
 });

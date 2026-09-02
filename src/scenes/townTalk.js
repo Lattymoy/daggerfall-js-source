@@ -868,8 +868,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if (overlay?.done) dropOverlay();
     const s = hudScale(canvas.width, canvas.height);
     if (font) hud.draw(renderer, canvas, font, s);
-    if (overlay && font) overlay.draw(renderer, canvas, font, s);
-    else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
+    // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
+    // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
+    // before its own, and every box DaggerfallUI.MessageBox opens
+    // carries the then-top as its previousWindow (DaggerfallUI.cs:1330)
+    // - so a pushed box is drawn OVER a live window, not instead of
+    // it. This slot painted the top alone, which is why the courtroom
+    // CORT01I0 stood under every plea box of a trial and was never
+    // once rendered. Deepest first, then the slot's own occupant.
+    if (overlay && font) {
+      windows.eachCoveredWindow((w) => w.draw(renderer, canvas, font, s));
+      overlay.draw(renderer, canvas, font, s);
+    } else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
   }
 
   // U8b: pointer routing for native windows (phone taps + mouse) -
