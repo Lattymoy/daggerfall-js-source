@@ -1371,13 +1371,15 @@ export function createWorldModes(host) {
         // UNLIKE the tavern's meal, this one reads the player's REAL
         // region (:437), so a regional holiday actually lands.
         holidayId: getHolidayId(Math.floor(worldMinutes()), b.regionIndex ?? 0),
-        // G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-        // U40, which meant buyHolidayHalvesPrice's Mages Guild clause
-        // - Tales and Tallow halving the price of anything bought AT
-        // the Mages Guild - had never had a caller able to satisfy
-        // it. A guild service opening the trade window is exactly the
-        // case that supplies one; a high-street shop still passes
-        // null, because a shop belongs to no guild.
+        // G4 SHIPPED THE GUILD STORE ARM. It had stood null since U40,
+        // which meant buyHolidayHalvesPrice's Mages Guild clause -
+        // Tales and Tallow halving the price of anything bought AT the
+        // Mages Guild - had never had a caller able to satisfy it.
+        // `guildFactionId` is a real parameter of openTradeWindow now
+        // and every guild service that opens the window supplies the
+        // guild's own id (Identify, Buy, SellMagic below); a
+        // high-street shop still passes null, because a shop belongs
+        // to no guild.
         guildFactionId,
         skills: skills(),
       }),
@@ -1583,7 +1585,10 @@ export function createWorldModes(host) {
   //     RDB flat resources through StaticNPC.cs's OTHER overload
   //     (:139-160, Context.Dungeon), and there are no
   //     blockPeopleRecords either. A quest Person placed in a dungeon
-  //     is the quest machine's, FLAGGED with it.
+  //     is the quest machine's, and B2/DQ1 shipped that half:
+  //     mountQuestResources routes dungeon mode to
+  //     questBridge.mountScene(dungeonQuestAdapter, Dungeon, 0) above,
+  //     whose standNPC is AddQuestNPC's `inDungeon` arm.
   //   - scenes/interior.js / scenes/dungeon.js  N/A - the standalone
   //     ?interior and ?dungeon scenes lay out ONE building interior /
   //     one dungeon and never an RMB block's exterior.
@@ -1833,7 +1838,7 @@ export function createWorldModes(host) {
     // override, a reaction below -20, and a standing rejection - each
     // already said its piece through the session's messageBox seam
     if (talk && talk.kind !== 'talk') return;
-    // CW1 retired the FLAGGED list that lived here - every arm it
+    // CW1 retired the list of open arms that lived here - every one it
     // named is consumed above: repair (R1), tavern (U39), banking
     // (openBank), sell (U40, "needs the trade window's mode split"
     // outlived the split), and the coven popup (CW1 itself). What
@@ -2156,9 +2161,9 @@ export function createWorldModes(host) {
         interiorOverlay = pw;
         return true;
       },
-      // H3: the sell price, which was FLAGGED at zero because it needs
-      // the OWNED building's mesh radius and nothing resolved a model
-      // behind a buildingKey. Nothing new had to be built in the end:
+      // H3 CLOSED the sell price, which had stubbed at zero because it
+      // needs the OWNED building's mesh radius and nothing resolved a
+      // model behind a buildingKey. Nothing new had to be built:
       // `houseMeshRadius` already reads exactly that for the market
       // list, and the location directory already carries `modelIdNum`
       // on every building - the owned one just had to be found in it.
@@ -2377,10 +2382,15 @@ export function createWorldModes(host) {
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
-    // THE ONE CONSTRUCTION SEAM (5th): DFU's PlayerEntity always has
-    // FactionData; the port's pre-chargen INTERIM entity does not, and
-    // the join decision reads reputation. The live probe hit this as a
-    // pageerror on `store.dict`.
+    // THE ONE CONSTRUCTION SEAM (5th), RECORDED and not a gap: DFU's
+    // PlayerEntity is BUILT with its faction store - PlayerEntity.cs
+    // :65 field-initializes `factionData = new PersistentFactionData()`
+    // - so the join decision below can always read reputation. The
+    // port's pre-chargen literal has no such field, and
+    // `ensureFactionRep` mints it at the read, ahead of every
+    // reputation question, which is the same guarantee by another
+    // route. The live probe found the missing seam as a pageerror on
+    // `store.dict`.
     const store = ensureFactionRep(playerEntity, dict);
     const service = npcServiceKind(pn.factionID);
     const rows = (id) => townTalk?.lines?.(id) ?? [];
@@ -2500,10 +2510,13 @@ export function createWorldModes(host) {
     // (DaggerfallGuildServicePopupWindow pushes it exactly as it does
     // Repair), and the port's Identify mode was already whole - the
     // cost formula with its Witches Festival free arm, the per-item
-    // skip, the refusal line. Only the destination was a FLAGGED null,
-    // and under it the identified state was being read raw rather than
+    // skip, the refusal line. Only the destination was missing, and
+    // under it the identified state was being read raw rather than
     // DERIVED, so opening this mode before X7 would have offered to
-    // identify a rusty dagger for money.
+    // identify a rusty dagger for money. X7 closed both in this block:
+    // the `guildServiceIdentify` arm below pushes the trade window in
+    // Identify mode exactly as DaggerfallGuildServicePopupWindow does,
+    // carrying the guild's own faction id.
     //
     // The player's own pack is BOTH lists here: DFU's Identify mode
     // stages out of localItems into remoteItems and hands everything
@@ -2774,8 +2787,9 @@ export function createWorldModes(host) {
     // runs it (the window opens either way, as DFU's does once the
     // popup's own check passes).
     // M2: the potion maker. Same seam as the spell maker below - the
-    // temple and Mages Guild both offer it, and the destination has
-    // been a FLAGGED null since G3.
+    // temple and Mages Guild both offer it - and M2 wired the
+    // destination immediately below: PotionMakerWindow in the interior
+    // slot, behind MakePotionService's no-ingredient refusal.
     if (destination === 'guildServicePotionMaker' && potionArtLoaded() && _shopFont) {
       // AUDIT 26 F201: MakePotionService (:670-686) closes the popup,
       // scans pack AND wagon for any ingredient, and refuses with
@@ -2819,8 +2833,10 @@ export function createWorldModes(host) {
       interiorOverlay = potionWin;
       return null;
     }
-    // M4: the item maker. The Mages Guild's own enchanter, and the
-    // destination has been a FLAGGED null since G3.
+    // M4: the item maker, the Mages Guild's own enchanter. M4 wired
+    // the destination immediately below - ItemMakerWindow into the
+    // interior slot - and the probe seam (`window.__openItemMaker`)
+    // reaches it through the real guild-service dispatcher.
     if (destination === 'guildServiceItemMaker' && itemMakerArtLoaded() && _shopFont) {
       let itemWin = null;
       itemWin = new ItemMakerWindow({
@@ -2838,8 +2854,9 @@ export function createWorldModes(host) {
     // from the service popup - one window, one `true` argument
     // (DaggerfallGuildServicePopupWindow.cs:383-387) - which is why
     // BuySpells (the temples' service) and BuySpellsMages (the Mages
-    // Guild's, open to non-members) share one destination. Both have
-    // been FLAGGED nulls since G3.
+    // Guild's, open to non-members) share one destination. U42 wired
+    // it, immediately below: SpellbookWindow in buy mode over the
+    // SPELLS.STD records this host loaded.
     //
     // The OFFER is every SPELLS.STD record the host loaded;
     // LoadSpellsForSale's own two laws - drop the '!'-prefixed
@@ -3200,15 +3217,20 @@ export function createWorldModes(host) {
     if (hit.door.doorType !== DOOR_TYPE.BUILDING || hit.recordIndex === undefined) return false;
     // R1: THE EXTERIOR DOOR LOCK (ActivateStaticDoor, PlayerActivate.cs
     // :512-568). Closed hours lock the town: the unlocked ladder runs
-    // first (owned houses and quest buildings FLAGGED/seamed per
-    // buildingLocks.js); a locked door in any mode but Steal speaks the
-    // refusal + the look-at text (classic's interior-formula oversight
-    // included); Steal mode picks - gated by the per-building
-    // anti-grind record (the skill must RISE past the last failure),
-    // tallying Lockpicking before the roll, entering ONCE on success
-    // (no persistent unlock - DFU's isBrokenIn is local) and recording
-    // the skill on failure. DiscoverBuilding fires on the activation
-    // (:515). X3 wired the Open-spell bypass (:519-520).
+    // first, and its top two rungs - owned houses and active-quest
+    // buildings, buildingLocks.js:65-68 = PlayerActivate.cs:1262/:1266
+    // - are answered at the call below (`isActiveQuestBuilding` off
+    // the siteLinks walk with DFU's residencesOnly default,
+    // `isHouseOwned` over playerEntity.houses), which is the hookup
+    // R1 wrote that contract for. A locked door in any mode but Steal
+    // speaks the refusal + the look-at text (classic's
+    // interior-formula oversight included); Steal mode picks - gated
+    // by the per-building anti-grind record (the skill must RISE past
+    // the last failure), tallying Lockpicking before the roll, entering
+    // ONCE on success (no persistent unlock - DFU's isBrokenIn is
+    // local) and recording the skill on failure. DiscoverBuilding
+    // fires on the activation (:515). X3 wired the Open-spell bypass
+    // (:519-520).
     // TallyCrimeGuildRequirements landed at CG2 on the success arm
     // below; BG1 took the greeting (:585-628) at the tail.
     //
@@ -4902,8 +4924,9 @@ export function createWorldModes(host) {
     };
     // M4: the item maker, opened through the REAL guild-service
     // dispatcher rather than a private shortcut - the destination
-    // string is the seam that was a FLAGGED null until this slice,
-    // and a probe that bypassed it would prove nothing about it.
+    // string is the seam M4 filled (ItemMakerWindow, mounted at the
+    // `guildServiceItemMaker` arm), and a probe that bypassed it would
+    // prove nothing about it.
     /** G4 probe seams: drop whatever overlay is up, and move the one
      *  clock (a holiday is a DAY OF YEAR, so a probe cannot reach one
      *  by waiting). */
@@ -5000,8 +5023,9 @@ export function createWorldModes(host) {
       return window.__itemMakerOverlay();
     };
     /** What the trade window is showing, and the price context it is
-     *  pricing with - the guildFactionId in particular, which was the
-     *  FLAGGED null this slice closed. */
+     *  pricing with - the guildFactionId in particular, the null G4
+     *  closed, threaded from openTradeWindow's priceCtx to every guild
+     *  call site. */
     window.__tradeOverlay = () => JSON.stringify(_liveTrade() ? (() => {
       const w = _liveTrade();
       return {

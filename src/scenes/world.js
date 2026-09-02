@@ -1254,15 +1254,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     .catch((e) => console.warn('[court] prison screen art unavailable:', e?.message ?? e));
   preloadCourtScreenArt({ renderer, fetchBytes, palette })   // ROAD-B B5: CORT01I0 - Setup's courtPanel (:75-84)
     .catch((e) => console.warn('[court] court screen art unavailable:', e?.message ?? e));
-  // S3d: the INTERIM dagger seed is the FALLBACK only - a character
-  // who runs chargen gets AssignStartingGear's real kit instead, so
-  // seeding here would leave a stray dagger in the bag.
+  // S3d: systems/startingGear.js retired the iron-dagger seed -
+  // AssignStartingGear verbatim (ItemHelper.cs:1277-1364) dresses a
+  // new character, spellbook first, with their class's weapon and 100
+  // gold. The guarded call left here can no longer fire either way:
+  // at the boot walk chargenDone is falsy (chargen runs below, and
+  // a save's flag "arrives after the boot walk"), and when it is true
+  // equip.js's seed early-returns on the non-empty bag. Kept as the
+  // shape of the seam, not as a fallback.
   if (playerEntity.chargenDone) seedStartingEquipment(playerEntity);
-  // S3c/U9 / THE FOUR HOSTS RULE: chargen lived only in the dungeon
-  // host, so booting straight into a town left the player on the
-  // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-  // whole session. Both exterior hosts now run it through the shared
-  // session, and the paperdoll reloads on the chosen identity.
+  // S3c/U9 / THE FOUR HOSTS RULE, SHIPPED: chargen once lived only in
+  // the dungeon host, so booting straight into a town left the player
+  // on the pre-chargen stand-in (flat skills 30, maxHealth 50) for the
+  // whole session. Both exterior hosts run it through
+  // systems/chargenSession.js now (imported above) - the test preset,
+  // the headless ?class skip and the full wizard are the three arms
+  // below - and the paperdoll reloads on the chosen identity.
   let spellsByIndex = null;   // M2: the host-level SPELLS.STD map
   // G4: THE FOUR HOSTS RULE. The magic registries were set only
   // in the dungeon host's boot, so a magic item minted out here -
@@ -1676,10 +1683,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  a residence is answered at that building's own lowest outer door
    *  by the interior's own watch pool, and the street law below never
    *  runs. Every other case falls through here exactly as C# falls
-   *  through the `if`. This host's FLAGGED note (below, at the mode
-   *  machine's `spawnCityGuards` key) said the arm was unreachable
-   *  because "this host's pool is the exterior street"; the pool it
-   *  needed is worldModes' own, and this is the routing. */
+   *  through the `if`. The note this host used to carry (below, at
+   *  the mode machine's `spawnCityGuards` key, where its retirement is
+   *  written) said the arm was unreachable because "this host's pool
+   *  is the exterior street"; the pool it needed is worldModes' own,
+   *  and this is the routing. */
   function _spawnGuards(immediate) {
     if (modes?.spawnCityGuardsInside?.(immediate)) return;
     const feet = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -4130,9 +4138,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     return findFactions(dict, { type: FACTION_TYPES.Province, region: _questRegionIndex() })[0] ?? null;
   };
   // Quest parchment boxes land in whichever overlay slot is LIVE:
-  // exterior -> the townTalk overlay, interior -> the mode machine's
-  // slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-  // logged loudly rather than lost silently).
+  // exterior -> the townTalk overlay, interior OR dungeon -> the mode
+  // machine's slot. U43-ii shipped the dungeon half: showQuestBox
+  // offers the window to `modes.showQuestOverlay` below, and
+  // worldModes answers it in BOTH modes (worldModes.js:6295-6307 -
+  // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
+  // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
   // uiManager.PushWindow - a STACK. ShowPendingTaskMessages pops the
   // whole pending stack and Shows each one, so a drain of several
@@ -5191,14 +5202,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and NO host supplied it, so the optional call no-opped: the
     // player robbed every house in the Bay and no watch ever came.
     // The immediate/witness split is what the bool means.
-    // ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-    // INDOOR arm spawns 2-5 guards at the interior's lowest outer door
-    // (PlayerEntity.cs:628-641); this host's pool is the exterior
-    // street, so the watch is waiting outside." The mode machine mints
+    // ROAD-B CLOSED THE FLAG THAT STOOD HERE. It said the indoor arm
+    // was unreachable because "this host's pool is the exterior
+    // street, so the watch is waiting outside". The mode machine mints
     // its own watch pool with the interior now, and `_spawnGuards`
-    // offers it the call first - so a theft in a shop is answered at
-    // that shop's own door, and the street arm is what happens
-    // everywhere else, as C# has it.
+    // offers it the call first - so DFU's INDOOR arm, 2-5 guards at
+    // the interior's lowest outer door (PlayerEntity.cs:628-641), is
+    // what answers a theft in a shop, and the street arm is what
+    // happens everywhere else, as C# has it.
     spawnCityGuards: (immediate) => _spawnGuards(!!immediate),
     // G2: the arrest interception, for the mode machine's indoor
     // watch. The court flow and the overlay it opens are this host's,
@@ -6356,9 +6367,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig. The
-    // open world still has no ACTION OBJECTS in melee reach (static
-    // building doors are the E-enter seam, not bashables - FLAGGED
-    // with the towns arc), which is the clause that is still true.
+    // open world still has no ACTION OBJECTS in melee reach, and that
+    // is DFU's own shape above ground rather than a hole: there is no
+    // action-object list out here for envAttack to walk, so
+    // WeaponEnvDamage's exterior arm is AttemptExteriorDoorBash
+    // (WeaponManager.cs:475 -> PlayerActivate.cs:1056-1079). ROAD-B
+    // shipped that arm - static building doors are BASHABLE now, off
+    // the no-enemy swing at the foot of this frame (:6442), through
+    // the mode machine's `attemptExteriorDoorBash` - so the E-enter
+    // seam is no longer their only door.
     // FS1: the two that rode along with it are not. "Melee strike
     // frames resolve to nothing" was written before G1/G4/X, and forty
     // lines below this comment a swing resolves against live guards,
