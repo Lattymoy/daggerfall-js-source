@@ -250,3 +250,19 @@ test('EE7: the draw goes through every door the renderer has, and reports', () =
   assert.match(w, /renderer\.tileNormalFor\(p\.groundArchive\) \/\* EE6 \*\/\);\n[\s\S]{0,400}if \(p\.grass\) renderer\.drawGrass\(p\.grass, pixelMatrix,/, 'drawn right after its terrain');
   assert.match(w, /window\.__grassCensus = \(\) => \{/, 'the census the probe reads');
 });
+
+// ═══ ROADS fix: no dome per tile ════════════════════════════════════
+test('ROADS: the road surface carries no tile-centred term - four tiles read as one road', () => {
+  const S = makeSurfaces(); const N = 64;
+  // a dome centred on the tile lights (0.5, 0.5) and darkens the corners:
+  // the "small repeating squares" Mac saw on every road
+  const src = readFileSync('src/render/groundSurfaces.js', 'utf8');
+  const road = src.slice(src.indexOf('const road = (u, v) => {'), src.indexOf('return { water, dirt, grass, stone, sand, snow, road };'));
+  assert.ok(!/hypot\(u - 0\.5, v - 0\.5\)/.test(road), 'no term may be centred on the tile');
+  // and measured: the brightness jump across a tile edge is no larger
+  // than the jump between two neighbouring texels inside the tile
+  const lum = (x, y) => { const r = S.road((x % N) / N, (y % N) / N); return (r.rgb[0] + r.rgb[1] + r.rgb[2]) / 3; };
+  let edge = 0, inner = 0;
+  for (let y = 0; y < 2 * N; y++) { edge += Math.abs(lum(N, y) - lum(N - 1, y)); inner += Math.abs(lum(N / 2, y) - lum(N / 2 - 1, y)); }
+  assert.ok(edge < inner * 1.6 + 2 * N, `the tile edge is not a seam (edge ${(edge / (2 * N)).toFixed(2)} vs inner ${(inner / (2 * N)).toFixed(2)})`);
+});

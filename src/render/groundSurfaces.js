@@ -279,9 +279,13 @@ export function makeSurfaces(seed = 0x51ed) {
     let c = mix3([88, 70, 50], [122, 100, 72], cl((tone - 0.3) * 1.8, 0, 1));
     c = sh(c, 0.88 + grain * 0.22);
     let h = 0.30 + grain * 0.06 + tone * 0.05;
-    // a camber: the middle of the tile sits a touch higher and lighter
-    const camber = 1 - Math.min(1, Math.hypot(u - 0.5, v - 0.5) * 1.4);
-    c = sh(c, 1 + camber * 0.06); h += camber * 0.08;
+    // NO CAMBER. The first cut lit and raised the middle of every TILE -
+    // a dome centred on (0.5, 0.5) - and a dome per tile is a bright
+    // square every 6.4m, which Mac saw as "small repeating squares" on
+    // every road. A road's crown runs ALONG the road and across tile
+    // edges; a tile does not know which way its road runs, so a tile
+    // must not pretend to. Every term left here is periodic on the tile
+    // by construction, and reads as one continuous surface.
     // flat-worn stones, larger and sparser than dirt's pebbles
     for (const [cells, seed2, size, tint] of [[22, 31, 0.26, [140, 132, 120]], [40, 97, 0.17, [118, 110, 98]]]) {
       const w = W(u, v, cells, seed2);
