@@ -310,22 +310,54 @@ test('EE15: the near patch bakes a footprint as a hole and a road as a level sur
   // normals carry the walls: the vertex beside the print leans
   const k = (vz * (n + 1) + vx + 1) * 3;
   assert.ok(Math.abs(p.normals[k]) > 0.05, 'a trench has walls in its normals');
-  // the renderer: the patch's vertices carry the snow already, so the
-  // vertex stage must not add it again, the fragment stage must trust the
-  // patch's own normal, and the offset must be put back after the draw
+  // the renderer: a baked surface's vertices carry the snow already, so
+  // the vertex stage must not add it again and the fragment stage must
+  // trust the vertex normal
   const r = readFileSync('src/render/renderer.js', 'utf8');
   const vi = r.indexOf('const TERRAIN_VS = `'); const vs = r.slice(vi, r.indexOf('`;', vi));
   assert.match(vs, /if \(uFieldAmt > 0\.0 && uPatch < 0\.5\) \{/, 'no double displacement');
   const fi = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(fi, r.indexOf('`;', fi));
   assert.match(fs, /mix\(uPatch > 0\.5 \? n : snowN, driftN, 0\.55\)/, 'no double slope');
-  assert.match(r, /if \(patch\) \{ gl\.enable\(gl\.POLYGON_OFFSET_FILL\); gl\.polygonOffset\(-2\.0, -2\.0\); \}/);
-  assert.match(r, /if \(patch\) gl\.disable\(gl\.POLYGON_OFFSET_FILL\);/, 'the pipeline is left as it was found');
-  assert.match(r, /updateTerrainSurface\(surface, positions, normals\) \{/, 'refilled in place, not recreated');
-  // the host: baked beside the field, rebaked on movement or change,
-  // drawn over the coarse ground, destroyed with the pixel
+});
+
+// ═══ EE16: the fine ground - every near-ring pixel at footprint resolution ══
+test('EE16: the fine ground bakes a whole pixel by the patch’s law, rebakes by rows, and replaces the coarse draw', async () => {
+  const { createFineGround, buildNearPatch } = await import('../src/world/surfaceField.js');
+  const dim = 32; const hDim = dim + 1;
+  const heights = new Float32Array(hDim * hDim); for (let i = 0; i < heights.length; i++) heights[i] = 50 + Math.sin(i * 0.3) * 3;
+  const tilemap = new Uint8Array(dim * dim).fill(2 << 2);
+  for (let tx = 0; tx < dim; tx++) tilemap[20 * dim + tx] = 46 << 2;
+  const f = new SurfaceField({ heights, tileDim: dim });
+  f.setHard(tilemap, new Set([46, 47, 55])); f.setBase(1); f.fillToBase();
+  f.stamp(16 * 6.4 + 3, 16 * 6.4 + 3);
+  const g = createFineGround({ field: f, terrainHeights: heights, tileDim: dim });
+  assert.equal(g.positions.length / 3, (dim * f.cells + 1) ** 2, 'every vertex of the pixel');
+  // ONE LAW: the fine ground and the near patch agree to the vertex
+  const p = buildNearPatch({ field: f, terrainHeights: heights, tileDim: dim, centreTile: [16, 16], windowTiles: dim });
+  let maxDiff = 0;
+  for (let k = 1; k < g.positions.length; k += 3) maxDiff = Math.max(maxDiff, Math.abs(g.positions[k] - p.positions[k]));
+  assert.ok(maxDiff < 1e-4, `the fine ground is the patch's own law over the whole pixel (max diff ${maxDiff})`);
+  // ROW REBAKE: stamp again, rebake only the rows the flush names, and the
+  // result equals a fresh full bake - and the range returned covers the change
+  f.flush();
+  f.stamp(10 * 6.4 + 2, 24 * 6.4 + 2);
+  const span = f.flush();
+  const range = g.bakeRows(span.first, span.last);
+  const fresh = createFineGround({ field: f, terrainHeights: heights, tileDim: dim });
+  let maxDiff2 = 0; let firstDiff = -1;
+  for (let k = 0; k < g.positions.length; k += 3) {
+    const dd = Math.abs(g.positions[k + 1] - fresh.positions[k + 1]);
+    if (dd > 1e-4 && firstDiff < 0) firstDiff = k / 3;
+    maxDiff2 = Math.max(maxDiff2, dd);
+  }
+  assert.ok(maxDiff2 < 1e-4, `a row rebake equals a full bake (max diff ${maxDiff2})`);
+  const changedV = Math.round((24 * 6.4 + 2) / f.cellSize) * g.stride + Math.round((10 * 6.4 + 2) / f.cellSize);
+  assert.ok(changedV >= range.from && changedV < range.to, 'the upload range covers the changed vertex');
+  // the host: lazy, by rows, drawn INSTEAD of the coarse mesh, destroyed with the pixel
   const w = readFileSync('src/scenes/world.js', 'utf8');
-  assert.match(w, /const moved = !f\.patchTile \|\| Math\.abs\(tile\[0\] - f\.patchTile\[0\]\) > 4 \|\| Math\.abs\(tile\[1\] - f\.patchTile\[1\]\) > 4;/);
-  assert.match(w, /if \(span\) \{ renderer\.updateFieldRows\(f\.tex, FIELD_DIM, f\.sim\.pixels, span\.first, span\.last\); f\.patchDirty = true; \}/, 'a changed field rebakes the patch');
-  assert.match(w, /renderer\.drawTerrain\(p\.field\.patch, pixelMatrix,[\s\S]{0,200}true\);/, 'drawn as a patch');
-  assert.match(w, /if \(p\.field\.patch\) renderer\.destroyMesh\(p\.field\.patch\);/, 'gone with the pixel');
+  assert.match(w, /if \(!f\.fine && \(here \|\| !fineBakedThisSlot\)\) \{/, 'the player’s pixel now, one other a slot');
+  assert.match(w, /const r = f\.fine\.bakeRows\(f\.fineDirty\.first, f\.fineDirty\.last\);\s*\n\s*renderer\.updateTerrainRange\(f\.fineMesh, r\.from, r\.to, f\.fine\.positions, f\.fine\.normals\);/, 'rebaked by rows, uploaded by range');
+  assert.match(w, /if \(p\.field\?\.fineMesh\) \{\s*\n\s*renderer\.drawTerrain\(p\.field\.fineMesh, pixelMatrix,[\s\S]{0,200}true\);\s*\n\s*\} else \{\s*\n\s*renderer\.drawTerrain\(p\.terrain, pixelMatrix,/, 'the fine ground replaces the coarse draw');
+  assert.match(w, /if \(p\.field\.fineMesh\) renderer\.destroyMesh\(p\.field\.fineMesh\);/, 'gone with the pixel');
+  assert.ok(!/POLYGON_OFFSET_FILL/.test(readFileSync('src/render/renderer.js', 'utf8')), 'nothing is under the fine ground, so no offset');
 });

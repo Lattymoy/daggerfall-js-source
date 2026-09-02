@@ -290,7 +290,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/exterior.js:1073` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1325` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/world.js:2820` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:2821` - landing stands in for it - FLAGGED for the first session with
 - `src/scenes/worldModes.js:1659` - FLAGGED, above ground only, each with the DFU line it owes.
 - `src/systems/inputActions.js:465` - STILL FLAGGED:
 - `src/systems/inventory.js:48` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter

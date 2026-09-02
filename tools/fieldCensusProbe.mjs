@@ -71,7 +71,7 @@ if (SKIN === 'classic') {
   // EE15: and the trench is GEOMETRY - the near patch's vertex under the
   // feet sits lower than one beside the trail
   const pt = on.after?.patch;
-  check(`field ON: the near patch exists (${pt?.verts ?? 0} verts) and its vertex under the feet is LOWER than beside (${pt?.underFeet} vs ${pt?.beside})`,
+  check(`field ON: the FINE GROUND exists on ${pt?.pixelsFine ?? 0} pixels (${pt?.verts ?? 0} verts each) and its vertex under the feet is LOWER than beside (${pt?.underFeet} vs ${pt?.beside})`,
     !!pt && pt.verts > 1000 && pt.underFeet < pt.beside - 0.3);
 }
 if (SKIN !== 'classic' && only !== 'on') {

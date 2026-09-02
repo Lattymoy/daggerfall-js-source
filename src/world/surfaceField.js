@@ -414,3 +414,93 @@ export function buildNearPatch({ field, terrainHeights, tileDim = 128, tileSize 
   }
   return { positions, normals, indices, tx0, tz0, windowTiles, cellsAcross: n };
 }
+
+/**
+ * EE16: THE FINE GROUND - a whole pixel at the field's resolution, so
+ * every trail on every near-ring pixel is geometry, not just the window
+ * around the player. 512 x 512 vertices a pixel, baked once in ~190ms,
+ * then REBAKED BY ROWS as the field's rows change: a footfall dirties
+ * three rows and costs three rows, and a melt tick that touches the
+ * whole field costs one bake spread over the frames that follow.
+ *
+ * The bake is the near patch's own law - the terrain's bilinear height
+ * plus the field's snow, MINIMUM of the cells around, normals from the
+ * baked heights - so the two agree to the vertex. bakeRows(r0, r1)
+ * refills vertex rows r0..r1 inclusive (and the normals two rows either
+ * side, which the heights changed) and returns the vertex range touched
+ * for one bufferSubData each of positions and normals.
+ */
+export function createFineGround({ field, terrainHeights, tileDim = 128, tileSize = TILE_SIZE, snowM = SNOW_DEPTH_M }) {
+  const c = field.cells; const cs = field.cellSize; const dim = field.dim;
+  const n = tileDim * c;                       // cells across the pixel (512)
+  const stride = n + 1;                        // vertices per row
+  const verts = stride * stride;
+  const hDim = tileDim + 1;
+  const hAt = (x, z) => terrainHeights[cl(x, 0, hDim - 1) * hDim + cl(z, 0, hDim - 1)];
+  const groundAt = (lx, lz) => {
+    const fx = lx / tileSize; const fz = lz / tileSize;
+    const x0 = Math.floor(fx); const z0 = Math.floor(fz); const tx = fx - x0; const tz = fz - z0;
+    return (hAt(x0, z0) * (1 - tx) + hAt(x0 + 1, z0) * tx) * (1 - tz) + (hAt(x0, z0 + 1) * (1 - tx) + hAt(x0 + 1, z0 + 1) * tx) * tz;
+  };
+  const d = field.data;
+  const cellAt = (i, j) => (cl(j, 0, dim - 1) * dim + cl(i, 0, dim - 1)) * 4;
+  const snowAt = (i, j) => {
+    const o = cellAt(i, j);
+    const g = d[o + 1]; const b = d[o + 2];
+    const m = Math.min(g, d[cellAt(i + 2, j) + 1], d[cellAt(i - 2, j) + 1], d[cellAt(i, j + 2) + 1], d[cellAt(i, j - 2) + 1]);
+    return m * (1 - b * 0.55) * snowM;
+  };
+  const positions = new Float32Array(verts * 3);
+  const normals = new Float32Array(verts * 3);
+  const ground = new Float32Array(verts);       // the terrain's own height per vertex, baked once
+  for (let vz = 0; vz < stride; vz++) {
+    for (let vx = 0; vx < stride; vx++) {
+      const k = vz * stride + vx;
+      ground[k] = groundAt(vx * cs, vz * cs);
+      positions[k * 3] = vx * cs; positions[k * 3 + 2] = vz * cs;
+    }
+  }
+  const heightRows = (r0, r1) => {
+    for (let vz = Math.max(0, r0); vz <= Math.min(n, r1); vz++) {
+      for (let vx = 0; vx < stride; vx++) {
+        const k = vz * stride + vx;
+        positions[k * 3 + 1] = ground[k] + snowAt(vx, vz);
+      }
+    }
+  };
+  const normalRows = (r0, r1) => {
+    const hv = (vx, vz) => positions[(cl(vz, 0, n) * stride + cl(vx, 0, n)) * 3 + 1];
+    for (let vz = Math.max(0, r0); vz <= Math.min(n, r1); vz++) {
+      for (let vx = 0; vx < stride; vx++) {
+        const dx = (hv(vx + 1, vz) - hv(vx - 1, vz)) / (2 * cs);
+        const dz = (hv(vx, vz + 1) - hv(vx, vz - 1)) / (2 * cs);
+        const l = Math.hypot(dx, 1, dz);
+        const k = (vz * stride + vx) * 3;
+        normals[k] = -dx / l; normals[k + 1] = 1 / l; normals[k + 2] = -dz / l;
+      }
+    }
+  };
+  const indices = new Uint32Array(n * n * 6);
+  let q = 0;
+  for (let vz = 0; vz < n; vz++) {
+    for (let vx = 0; vx < n; vx++) {
+      const a = vz * stride + vx; const b = a + 1; const cc = a + stride; const dd = cc + 1;
+      indices[q++] = a; indices[q++] = cc; indices[q++] = b;
+      indices[q++] = b; indices[q++] = cc; indices[q++] = dd;
+    }
+  }
+  heightRows(0, n); normalRows(0, n);
+  return {
+    positions, normals, indices, stride, cellsAcross: n,
+    /** field CELL rows r0..r1 changed: rebake the vertex rows they touch
+     *  (a cell row j sits between vertex rows j and j+1, and the minimum
+     *  reaches two cells further) and return the vertex range to upload */
+    bakeRows(r0, r1) {
+      const v0 = Math.max(0, r0 - 2); const v1 = Math.min(n, r1 + 3);
+      heightRows(v0, v1);
+      normalRows(Math.max(0, v0 - 1), Math.min(n, v1 + 1));
+      const from = Math.max(0, v0 - 1) * stride; const to = (Math.min(n, v1 + 1) + 1) * stride;
+      return { from, to };
+    },
+  };
+}

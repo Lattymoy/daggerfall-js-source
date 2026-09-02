@@ -17,7 +17,7 @@ import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
 import { placeGrass, ROAD_RECORDS } from '../render/groundSurfaces.js';   // EE7: the grass placer; EE10: the road records the field reads
-import { SurfaceField, warmthAt, baseSnowDepth, buildNearPatch, FIELD_DIM, SNOW_DEPTH_M } from '../world/surfaceField.js';   // EE15: the near patch   // EE9: the surface field   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
+import { SurfaceField, warmthAt, baseSnowDepth, createFineGround, FIELD_DIM, SNOW_DEPTH_M } from '../world/surfaceField.js';   // EE15: the near patch; EE16: the fine ground   // EE9: the surface field   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -927,7 +927,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ?field=sim keeps the simulation and hides its look - a bisect door
     const amount = new URLSearchParams(globalThis.location?.search ?? '').get('field') === 'sim' ? 0 : 1;
     return { sim, tex, size: TERRAIN_SIZE, snowM: SNOW_DEPTH_M, amount, rain: 0, lastStep: null, stepPhase: 0,
-      heights, patch: null, patchTile: null, patchDirty: true };   // EE15: the heights the patch bakes over, and the patch itself
+      heights,   // the terrain heights the fine ground bakes over
+      fine: null, fineMesh: null, fineDirty: null };   // EE16: the whole pixel as fine ground, baked lazily, rebaked by rows (EE15's window patch is retired by it)
   }
 
   function buildGrassFor(px, py, groundArchive, tilemapBytes, samples) {
@@ -976,7 +977,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!p) return;
     renderer.destroyMesh(p.terrain);
     renderer.destroyGrass(p.grass);   // EE7
-    if (p.field) { renderer.gl.deleteTexture(p.field.tex); if (p.field.patch) renderer.destroyMesh(p.field.patch); p.field = null; }   // EE9 / EE15
+    if (p.field) { renderer.gl.deleteTexture(p.field.tex); if (p.field.fineMesh) renderer.destroyMesh(p.field.fineMesh); p.field = null; }   // EE9 / EE16
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
@@ -4153,14 +4154,13 @@ export async function bootWorld(canvas, renderer, params, status) {
           out.local = [Math.round(lx * 10) / 10, Math.round(lz * 10) / 10];
           out.lastStamp = p.field.sim.lastStamp ?? null;
           out.stamps = p.field.sim.stamps ?? 0;
-          // EE15: the patch, and the trench IN ITS GEOMETRY - the vertex
-          // nearest the feet against one twelve cells to the side
-          if (p.field.patch && p.field.patchTile) {
-            const built = buildNearPatch({ field: p.field.sim, terrainHeights: p.field.heights, tileDim: TERRAIN_TILE_DIM, centreTile: p.field.patchTile, snowM: SNOW_DEPTH_M * p.field.amount });
-            const n = built.cellsAcross; const cs = p.field.sim.cellSize;
-            const vx = Math.round(lx / cs) - built.tx0 * p.field.sim.cells; const vz = Math.round(lz / cs) - built.tz0 * p.field.sim.cells;
-            const yAt = (x, z) => built.positions[(Math.max(0, Math.min(n, z)) * (n + 1) + Math.max(0, Math.min(n, x))) * 3 + 1];
-            out.patch = { verts: built.positions.length / 3, underFeet: Math.round(yAt(vx, vz) * 100) / 100, beside: Math.round(yAt(vx + 12, vz) * 100) / 100 };
+          // EE16: the fine ground, and the trench IN ITS GEOMETRY - the
+          // vertex nearest the feet against one twelve cells to the side
+          if (p.field.fine) {
+            const g = p.field.fine; const cs = p.field.sim.cellSize;
+            const vx = Math.round(lx / cs); const vz = Math.round(lz / cs);
+            const yAt = (x, z) => g.positions[(Math.max(0, Math.min(g.cellsAcross, z)) * g.stride + Math.max(0, Math.min(g.cellsAcross, x))) * 3 + 1];
+            out.patch = { verts: g.positions.length / 3, underFeet: Math.round(yAt(vx, vz) * 100) / 100, beside: Math.round(yAt(vx + 12, vz) * 100) / 100, pixelsFine: [...built.values()].filter((q) => q.field?.fineMesh).length };
           }
         }
       }
@@ -6330,13 +6330,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // sky, which is the classic skin and every interior.
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
         renderer.setSurfaceField(p.field ?? null);   // EE9: this piece's field, or none
-        renderer.drawTerrain(p.terrain, pixelMatrix,
-          renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive) /* EE6 */);
-        // EE15: the near patch, over the coarse ground it was baked from,
-        // with the same tiles, tilemap and normals - only its vertices differ
-        if (p.field?.patch) {
-          renderer.drawTerrain(p.field.patch, pixelMatrix,
+        // EE16: a pixel with FINE GROUND draws that instead of its coarse
+        // mesh - same tiles, tilemap and normals, only the vertices differ,
+        // and every trail on it is geometry. No offset: nothing is under it.
+        if (p.field?.fineMesh) {
+          renderer.drawTerrain(p.field.fineMesh, pixelMatrix,
             renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive), true);
+        } else {
+          renderer.drawTerrain(p.terrain, pixelMatrix,
+            renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive) /* EE6 */);
         }
         // EE7: the pixel's grass, after its terrain and inside the same
         // cull - a pixel that is not drawn has no grass drawn either
@@ -6740,6 +6742,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const day = fieldDay(); const minute = worldMinutes() % 1440;   // EE14: pinned by ?day= for a test
           const cover = sky?.cloudShadow?.cover ?? 0;
           const feet = walkMode ? player.pos : cam.pos;
+          let fineBakedThisSlot = false;   // EE16: one far bake a slot
           // EE9: ROUND-ROBIN. Nine near-ring fields of 262,144 cells each,
           // all ticked ten times a second, is 24 million cell updates a
           // second on the main thread - and the census probe's page
@@ -6808,32 +6811,28 @@ export async function bootWorld(canvas, renderer, params, status) {
               stride(g, g.ai.feet[0], g.ai.feet[2]);
             }
             const span = f.sim.flush();
-            if (span) { renderer.updateFieldRows(f.tex, FIELD_DIM, f.sim.pixels, span.first, span.last); f.patchDirty = true; }
-            // EE15: THE NEAR PATCH - a window of the pixel's tiles at the
-            // field's own resolution, baked with the terrain's height plus
-            // the field's snow, so a footprint is a hole and a road's verge
-            // a slope. Rebuilt when the walker's tile moves out of the
-            // window's middle, refilled in place when the field under it
-            // changes. Only the pixel the player stands in carries one;
-            // a print the player is not near is the fragment stage's.
+            if (span) {
+              renderer.updateFieldRows(f.tex, FIELD_DIM, f.sim.pixels, span.first, span.last);
+              f.fineDirty = f.fineDirty ? { first: Math.min(f.fineDirty.first, span.first), last: Math.max(f.fineDirty.last, span.last) } : { first: span.first, last: span.last };   // EE16
+            }
+            // EE16: THE FINE GROUND. Every near-ring pixel is drawn at the
+            // field's own resolution, so every trail on every pixel is
+            // geometry - not only the window around the player (EE15's
+            // patch, which this replaces). Baked LAZILY: the pixel the
+            // player stands in first, the others one per slot after, so the
+            // load does not stall for all of them at once; then rebaked by
+            // ROWS as the field's rows change - a footfall costs three rows.
             const plx = feet[0] - t[0]; const plz = feet[2] - t[2];
-            const inside = plx >= 0 && plz >= 0 && plx < TERRAIN_SIZE && plz < TERRAIN_SIZE;
-            if (!inside) {
-              if (f.patch) { renderer.destroyMesh(f.patch); f.patch = null; f.patchTile = null; }
-            } else {
-              const tile = [Math.floor(plx / 6.4), Math.floor(plz / 6.4)];
-              const moved = !f.patchTile || Math.abs(tile[0] - f.patchTile[0]) > 4 || Math.abs(tile[1] - f.patchTile[1]) > 4;
-              if (moved || f.patchDirty) {
-                const built = buildNearPatch({ field: f.sim, terrainHeights: f.heights, tileDim: TERRAIN_TILE_DIM, centreTile: tile, snowM: SNOW_DEPTH_M * f.amount });
-                if (!f.patch || moved) {
-                  if (f.patch) renderer.destroyMesh(f.patch);
-                  f.patch = renderer.createTerrainSurface(built.positions, built.normals, built.indices);
-                  f.patchTile = tile;
-                } else {
-                  renderer.updateTerrainSurface(f.patch, built.positions, built.normals);
-                }
-                f.patchDirty = false;
-              }
+            const here = plx >= 0 && plz >= 0 && plx < TERRAIN_SIZE && plz < TERRAIN_SIZE;
+            if (!f.fine && (here || !fineBakedThisSlot)) {
+              f.fine = createFineGround({ field: f.sim, terrainHeights: f.heights, tileDim: TERRAIN_TILE_DIM, snowM: SNOW_DEPTH_M * f.amount });
+              f.fineMesh = renderer.createTerrainSurface(f.fine.positions, f.fine.normals, f.fine.indices);
+              f.fineDirty = null;
+              if (!here) fineBakedThisSlot = true;
+            } else if (f.fine && f.fineDirty) {
+              const r = f.fine.bakeRows(f.fineDirty.first, f.fineDirty.last);
+              renderer.updateTerrainRange(f.fineMesh, r.from, r.to, f.fine.positions, f.fine.normals);
+              f.fineDirty = null;
             }
           }
         }
