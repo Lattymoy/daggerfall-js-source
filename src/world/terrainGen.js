@@ -75,7 +75,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // before the grid is built from the samples. The network carries the
     // switch (`smooth`, default on, the design's SmoothRoads) so the
     // worker needs no settings access.
-    if (roads.smooth !== false) smoothRoadHeights(samples, tilemap);
+    if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
   }
   assignTiles(tileData, tilemap, true);
   const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));

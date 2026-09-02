@@ -54,22 +54,25 @@ export const TILE = Object.freeze({
 // paint - a road has no cardinal outer, which is why it is two tiles
 // wide and not four.
 const NC = TILE.NO_CHANGE;
+// AUDIT 51: the tables are the mod's COLUMNS TOO, water included. His
+// road table paves water (46/47 in column 0) - his data never routes a
+// road across it, so it never shows, but the oracle compares columns.
 export const ROAD_TILES = Object.freeze([
-  [NC, 46, 46, 46],   // cardinal inner
+  [46, 46, 46, 46],   // cardinal inner
   null,               // cardinal outer
-  [NC, 46, 46, 46],   // diagonal inner
-  [NC, 47, 55, 55],   // diagonal outer
+  [46, 46, 46, 46],   // diagonal inner
+  [47, 47, 55, 55],   // diagonal outer
   null,               // diagonal gap
   null,               // inside corner
 ]);
 export const TRACK_TILES = Object.freeze([
-  [NC, NC, 11, 26], null, [NC, NC, 51, 52], [NC, NC, 12, 27], null, [NC, NC, 10, 25],
+  [0, NC, 11, 26], null, [0, NC, 51, 52], [0, NC, 12, 27], null, [0, NC, 10, 25],
 ]);
 export const STREAM_TILES = Object.freeze([
-  [NC, 6, 21, 31], null, [NC, 48, 49, 50], [NC, 7, 22, 32], null, [NC, 5, 20, 30],
+  [0, 6, 21, 31], null, [0, 48, 49, 50], [0, 7, 22, 32], null, [0, 5, 20, 30],
 ]);
 export const RIVER_TILES = Object.freeze([
-  [NC, 0, 0, 0], [NC, 6, 21, 31], [NC, 0, 0, 0], [NC, 5, 20, 30], [NC, 7, 22, 32], [NC, 5, 20, 30],
+  [0, 0, 0, 0], [0, 6, 21, 31], [0, 0, 0, 0], [0, 5, 20, 30], [0, 7, 22, 32], [0, 5, 20, 30],
 ]);
 const CARD_INN = 0, CARD_OUT = 1, DIAG_INN = 2, DIAG_OUT = 3, DIAG_GAP = 4, ICORNER = 5;
 
@@ -103,10 +106,13 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
     for (let x = 0; x < DIM; x++) {
       const i = y * DIM + x;
       if (tilemap[i] !== 0) continue;   // a location's own tile, or already painted
-      if (locationRect && inRect(x, y, locationRect)) continue;
+      // AUDIT 51: NO RECT SKIP. The mod does not skip the location rect;
+      // a location's own tiles are non-zero and stop every painter by
+      // themselves, and the rect's PADDING is painted through - arms
+      // cross it, and a road then fills what is left of it (below).
       let ground = tileData[y * tdDim + x];
       if (ground > TILE.stone) ground = TILE.grass;
-      const ctx = { tilemap, i, x, y, ground };
+      const ctx = { tilemap, i, x, y, ground, rect: locationRect };
       if (paintPath(ctx, ROAD_TILES, masks.road, corners.road)) { painted++; continue; }
       if (water && paintPath(ctx, RIVER_TILES, masks.river, corners.river, masks.stream)) { painted++; continue; }
       if (water && paintPath(ctx, STREAM_TILES, masks.stream, corners.stream)) { painted++; continue; }
@@ -128,9 +134,12 @@ function tile(ctx, slot, rotate, flip, overwrite = true) {
   if (!overwrite && ctx.tilemap[ctx.i] !== 0) return false;
   const t = slot[ctx.ground];
   if (t === NC) return false;
-  let v = t === 0 ? 0xff : t;
-  if (t !== 0) { if (rotate) v += TILE.ROTATE; if (flip) v += TILE.FLIP; }
-  ctx.tilemap[ctx.i] = v;
+  // RotateFlipTile adds the bits BEFORE the zero check, so a rotated
+  // water tile is 64/128/192 and only bare water becomes water_temp.
+  let v = t;
+  if (rotate) v += TILE.ROTATE;
+  if (flip) v += TILE.FLIP;
+  ctx.tilemap[ctx.i] = v === 0 ? 0xff : v;
   return true;
 }
 
@@ -202,6 +211,15 @@ function paintPath(ctx, T, m, corners, sub = 0) {
       if ((m & DIR.S) && (sub & DIR.E) && x === MID_HI + o && y === MID_LO && !(m & DIR.E)) tile(ctx, T[ICORNER], false, true);
     }
   }
+  // "Paint roads around locations": a road pixel paves the rect's
+  // padding - strictly inside the rect, roads only, whatever was left.
+  // THIS is how the mod rings a town: the location's own tiles are
+  // non-zero and untouched; the band between them and the rect's edge
+  // becomes road.
+  if (m && ctx.rect && T === ROAD_TILES && x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax) {
+    ctx.tilemap[ctx.i] = 46;
+    return true;
+  }
   // Map pixel corners: a neighbour's diagonal brushes this pixel's corner
   if (corners && T[DIAG_OUT]) {
     if ((corners & DIR.NW) && x === DIM - 1 && y === DIM - 1) has = tile(ctx, T[DIAG_OUT], true, false) || has;
@@ -228,50 +246,38 @@ export function classify(x, y, mask) {
   return { centre: (v & 0x3f) === 46, rotate: !!(v & TILE.ROTATE), flip: !!(v & TILE.FLIP), diag: false };
 }
 
-export const PATH_TILES = Object.freeze(new Set([TILE.road, TILE.roadDirt, TILE.roadGrass, 11, 12, 26, 27, 51, 52, 10, 25, 5, 6, 7, 20, 21, 22, 30, 31, 32, 48, 49, 50, 0xff]));
-
-/**
- * ROADS 10 (Audit 45's item 7): SMOOTH THE GROUND UNDER THE ROAD. The
- * heightmap carries terrain noise a cart would never tolerate, and a
- * road painted over it bumps with every sample. The design's own
- * smoother is rudimentary by its author's description - it looks for
- * road tiles and blurs the heights under them - and that is what this
- * is: every corner sample touched by a path tile takes the mean of its
- * 3x3 neighbourhood, read from the ORIGINAL heights so the blur is one
- * pass and order-independent. Nothing off a path tile moves, which is
- * what keeps the terrain around a road the terrain.
+/** AUDIT 51: THE SMOOTHER IS THE MOD'S. SmoothRoadsJob, ported: for
+ *  every tile that is road (46) or water_temp (0xff) - NOT edges, NOT
+ *  tracks - the tile's four corner samples each take the five-point
+ *  mean of themselves and their four orthogonal neighbours, IN PLACE
+ *  and in scan order (so later corners read earlier results, as his
+ *  does), over x,y in [1, hDim-3], skipping the location rect.
+ *
+ *  ONE DELIBERATE DIVERGENCE, recorded: the mod reads the tile at
+ *  JobA.Idx(x, y, tDim) - x as the ROW - which is transposed against
+ *  its own painter (index = y*tDim + x), so a north-south road there
+ *  smooths an east-west strip. A typo is not a design; the tile is
+ *  read at y*tDim + x here.
  *
  * @param {Float32Array} samples - 129x129 corner heights, row-major; mutated.
  * @param {Uint8Array} tilemap - 128x128 after the painter.
- * @returns {number} corners smoothed.
+ * @returns {number} corner samples smoothed (with repeats, as his counts).
  */
-export function smoothRoadHeights(samples, tilemap, hDim = 129) {
+export const SMOOTHED_TILES = Object.freeze(new Set([46, 0xff]));
+export function smoothRoadHeights(samples, tilemap, hDim = 129, rect = null) {
   const tDim = hDim - 1;
-  const mark = new Uint8Array(hDim * hDim);
-  let any = 0;
-  for (let y = 0; y < tDim; y++) {
-    for (let x = 0; x < tDim; x++) {
-      if (!PATH_TILES.has(tilemap[y * tDim + x] & 0x3f)) continue;
-      mark[y * hDim + x] = mark[y * hDim + x + 1] = mark[(y + 1) * hDim + x] = mark[(y + 1) * hDim + x + 1] = 1;
-      any = 1;
-    }
-  }
-  if (!any) return 0;
-  const src = Float32Array.from(samples);
   let n = 0;
-  for (let y = 0; y < hDim; y++) {
-    for (let x = 0; x < hDim; x++) {
-      if (!mark[y * hDim + x]) continue;
-      let sum = 0; let cnt = 0;
-      for (let dy = -1; dy <= 1; dy++) {
-        const yy = y + dy; if (yy < 0 || yy >= hDim) continue;
-        for (let dx = -1; dx <= 1; dx++) {
-          const xx = x + dx; if (xx < 0 || xx >= hDim) continue;
-          sum += src[yy * hDim + xx]; cnt++;
-        }
-      }
-      samples[y * hDim + x] = sum / cnt;
-      n++;
+  const smooth = (idx) => {
+    samples[idx] = (samples[idx] + samples[idx + hDim] + samples[idx + 1] + samples[idx - hDim] + samples[idx - 1]) / 5;
+    n++;
+  };
+  for (let y = 1; y < hDim - 2; y++) {
+    for (let x = 1; x < hDim - 2; x++) {
+      if (rect && x >= rect.xMin && x < rect.xMax + 1 && y >= rect.yMin && y < rect.yMax + 1) continue;
+      const tile = tilemap[y * tDim + x];
+      if (tile !== 46 && tile !== 0xff) continue;
+      const idx = y * hDim + x;
+      smooth(idx); smooth(idx + 1); smooth(idx + hDim); smooth(idx + hDim + 1);
     }
   }
   return n;

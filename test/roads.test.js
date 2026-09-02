@@ -113,7 +113,7 @@ test('ROADS 2: N alone paints only the northern half - row 127 is north', () => 
   assert.equal(tilemap[0 * 128 + 63], 0, 'the south edge is bare');
 });
 
-test('ROADS 2: a diagonal is one tile wide on the diagonal, and the location rect is left alone', () => {
+test('ROADS 2/AUDIT 51: a diagonal is one tile wide on the diagonal, and a road pixel paves the rect', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
   // The rect is setLocationTiles' inclusive {xMin,xMax,yMin,yMax}. The
@@ -123,15 +123,20 @@ test('ROADS 2: a diagonal is one tile wide on the diagonal, and the location rec
   assert.equal(tilemap[100 * 128 + 100] & 0x3f, TILE.road, 'on x==y');
   assert.equal(tilemap[100 * 128 + 101] & 0x3f, TILE.roadGrass, 'flanked');
   assert.equal(tilemap[100 * 128 + 102], 0, 'one tile wide');
-  assert.equal(tilemap[64 * 128 + 64], 0, 'the location rect is untouched');
-  assert.equal(tilemap[67 * 128 + 67], 0, 'to its inclusive far corner');
+  // AUDIT 51: the mod paints THROUGH the rect's padding and a road pixel
+  // fills what is left of it (the oracle overruled 'untouched').
+  assert.equal(tilemap[64 * 128 + 64] & 0x3f, TILE.road, 'the rect\u2019s padding is paved by a road pixel');
+  assert.equal(tilemap[67 * 128 + 67] & 0x3f, TILE.road, 'the far corner is on the diagonal, and paved either way');
   assert.equal(tilemap[50 * 128 + 50], 0, 'the SW half is bare - NE alone');
 });
 
 test('ROADS 2: water is never paved, and a track shows dirt through grass only', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.water);
   const tilemap = new Uint8Array(128 * 128);
-  assert.equal(paintRoads(tileData, tilemap, DIR.N | DIR.S, 0), 0, 'a road bit over water paints nothing');
+  // AUDIT 51: the mod's road table paves water (46 in column 0); his data
+  // never routes a road across it, but the columns are his.
+  assert.ok(paintRoads(tileData, tilemap, DIR.N | DIR.S, 0) > 0, 'the mod\u2019s table paves water');
+  assert.equal(tilemap[10 * 128 + 63] & 0x3f, TILE.road);
   const grass = new Uint8Array(129 * 129).fill(TILE.grass);
   const t = new Uint8Array(128 * 128);
   paintRoads(grass, t, 0, DIR.E | DIR.W);
@@ -284,16 +289,23 @@ test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still 
 // ROADS 5 added was the painter's one piece that was ours (Audit 50
 // A2); with Hazelnut's data in play, 1:1 has no room for it. This pin
 // replaces ROADS 5's: an arm reaches the rect and STOPS.
-test('ROADS 22: an arm stops at the location rect, and nothing rings it', () => {
+test('ROADS 22/AUDIT 51: a road pixel paves the rect\u2019s padding, the streets stand, nothing outside', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
   const rect = { x: 56, y: 56, w: 16, h: 16, xMin: 56, xMax: 71, yMin: 56, yMax: 71 };
+  // the location's own tiles are non-zero (seeded by setLocationTiles);
+  // here a 4x4 block of "streets" in the middle of the rect
+  for (let y = 62; y < 66; y++) for (let x = 62; x < 66; x++) tilemap[y * 128 + x] = 0xff;
   paintRoads(tileData, tilemap, DIR.S, 0, rect);
   assert.equal(tilemap[10 * 128 + 63] & 0x3f, TILE.road, 'the arm');
   assert.equal(tilemap[55 * 128 + 63] & 0x3f, TILE.road, 'reaches the rect');
-  assert.equal(tilemap[60 * 128 + 63], 0, 'and stops - the streets are left alone');
-  // no annulus anywhere around the rect
-  for (const [x, y] of [[54, 64], [73, 64], [64, 73], [53, 53], [74, 74]]) assert.equal(tilemap[y * 128 + x], 0, `no ring at ${x},${y}`);
+  // AUDIT 51, by oracle: the mod paints THROUGH the padding and a road
+  // pixel fills what is left of it - that band is how his towns ring.
+  assert.equal(tilemap[58 * 128 + 63] & 0x3f, TILE.road, 'the arm continues through the padding');
+  assert.equal(tilemap[70 * 128 + 58] & 0x3f, TILE.road, 'and the rest of the padding is paved');
+  assert.equal(tilemap[63 * 128 + 63], 0xff, 'the streets themselves are untouched');
+  // nothing OUTSIDE the rect but the arm: no edge annulus
+  for (const [x, y] of [[54, 64], [73, 64], [64, 73], [53, 53], [74, 74]]) assert.equal(tilemap[y * 128 + x], 0, `nothing outside the rect at ${x},${y}`);
 });
 
 // ROADS 5 (2026-09-01, Mac's first real-data look: "the roads are
@@ -458,7 +470,7 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   assert.deepEqual(plain, copy);
   // the switch rides the network object, default on
   const src = (await import('node:fs')).readFileSync('src/world/terrainGen.js', 'utf8');
-  assert.match(src, /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap\);/, 'default on, off only when the network says so');
+  assert.match(src, /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap, 129, hasLocation \? locationRect : null\);/, 'default on, off only when the network says so, and the rect skipped as the mod skips it');
 });
 
 // ROADS 11 (Audit 45 F5, corrected, and F8): the sweep holds one region
@@ -785,7 +797,7 @@ test('ROADS 23: rivers paint water with a bank and streams narrow, only when wat
   const r = new Uint8Array(128 * 128);
   paintRoads(grass(), r, 0, 0, null, 129, { river: DIR.N | DIR.S, water: true });
   assert.equal(r[10 * 128 + 63], 0xff, 'the river\u2019s centre is water, stored as 0xff so the pipeline reads it as set');
-  assert.equal(r[10 * 128 + 64], 0xff);
+  assert.equal(r[10 * 128 + 64], 128, 'the east column is FLIPPED water: the bits go on before the zero check, as the mod does it');
   assert.equal(r[10 * 128 + 62] & 0x3f, 21, 'a river HAS a cardinal outer - its bank, 21 on grass');
   assert.equal(r[10 * 128 + 65] & 0x3f, 21);
   assert.equal(r[10 * 128 + 61], 0, 'and stops there');

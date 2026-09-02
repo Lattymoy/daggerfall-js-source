@@ -342,6 +342,14 @@ them. STREAMS: the bank tile as a narrow centre, no outer. Both behind
 `water` on the network object, OFF by default as the mod ships them.
 The smoother's tile set includes the water tiles, as his does.
 
+## Audit 51 (2026-09-02) - parity by oracle
+
+`01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte
+for byte over 651 cases; the smoother is SmoothRoadsJob but for a
+corrected transpose; the arrays are his to the byte. ROADS 22's claim
+that the mod paints no ring is corrected there: it paves the rect's
+padding, roads only.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
