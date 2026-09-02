@@ -348,12 +348,29 @@ layout(location=1) in vec3 aNormal;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
+uniform sampler2D uField;   // EE9: the surface field, piece-local
+uniform float uFieldSize;   // EE9: the piece's extent in world units
+uniform float uFieldAmt;    // EE9: 0 = no field
+uniform float uSnowM;       // EE9: full snow, in metres
 out vec3 vNormal;
 out vec3 vWorldPos;
 out vec2 vLocalXZ;
 void main() {
   vNormal = mat3(uModel) * aNormal;
-  vec4 world = uModel * vec4(aPos, 1.0);
+  vec3 pos = aPos;
+  // EE9: SNOW IS A HEIGHT. The surface field is sampled at the vertex
+  // and the ground rises by its depth - packed snow sitting lower than
+  // fresh, so a trail reads as a trail from any angle. uFieldAmt is 0
+  // outside the near ring and outside the enhanced skin, and the term
+  // then costs one multiply. The field is piece-local, so the vertex
+  // reads it in its own coordinates.
+  if (uFieldAmt > 0.0) {
+    // textureLod, explicitly: a vertex stage has no derivatives, and an
+    // implicit-LOD fetch there crashed the ANGLE/SwiftShader tab outright
+    vec4 f = textureLod(uField, aPos.xz / uFieldSize, 0.0);
+    pos.y += f.g * (1.0 - f.b * 0.55) * uSnowM * uFieldAmt;
+  }
+  vec4 world = uModel * vec4(pos, 1.0);
   vWorldPos = world.xyz;
   vLocalXZ = aPos.xz;
   gl_Position = uProj * uView * world;
@@ -394,9 +411,27 @@ uniform mat4 uProj, uView, uModel;
 uniform float uTime, uWind, uRange;
 uniform vec2 uWindDir;
 uniform vec3 uCamPos;
+uniform sampler2D uField;                       // EE9: the surface field, piece-local
+uniform float uFieldSize, uFieldAmt, uSnowM;    // EE9
 out float vT; out float vTint; out float vLam; out vec3 vWorldPos;
 void main() {
-  vec3 root = (uModel * vec4(aInst.xyz, 1.0)).xyz;
+  vec3 local = aInst.xyz;
+  float bladeH = aInst.w;
+  // EE9: BURIAL IS GEOMETRIC. The blade reads the same field the ground
+  // does; its root is planted ON the snow surface and its height is
+  // what stands ABOVE it - a blade shorter than the snow is gone
+  // because it is buried, not because a factor shrank it. The snow
+  // line, uSnowM, is the ground's own displacement, so the surface the
+  // ground draws and the surface the blade stands on cannot drift.
+  if (uFieldAmt > 0.0) {
+    vec4 f = texture(uField, local.xz / uFieldSize);
+    float snowSurf = f.g * (1.0 - f.b * 0.55) * uSnowM * uFieldAmt;
+    float drown = smoothstep(0.10, 0.40, f.r) * uFieldAmt;
+    local.y += snowSurf;
+    bladeH = max(0.0, bladeH - snowSurf) * (1.0 - drown * 0.9);
+    if (bladeH <= 0.001) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  }
+  vec3 root = (uModel * vec4(local, 1.0)).xyz;
   float d = distance(root.xz, uCamPos.xz);
   // the fade THINS the field rather than shrinking the blades: a hashed
   // threshold drops whole blades with distance, so the count falls away
@@ -409,9 +444,9 @@ void main() {
   float sway = sin(uTime * 1.7 + aInst2.x + root.x * 0.08 + root.z * 0.05);
   vec2 lean = aInst2.yz + uWindDir * sway * uWind * 0.0055;
   vec3 p = root;
-  p.xz += lean * (vT * vT) * aInst.w;
+  p.xz += lean * (vT * vT) * bladeH;
   p.xz += vec2(aCorner.x - 0.5) * 0.09 * (1.0 - vT * 0.75);
-  p.y += vT * aInst.w;
+  p.y += vT * bladeH;
   // a blade's normal is its lean crossed with up: a leaning blade
   // catches a low sun on one side and goes dark on the other
   vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
@@ -474,6 +509,8 @@ uniform vec3 uMoonColor;
 ${CLOUD_SHADOW_GLSL}
 uniform sampler2DArray uTileNrm;   // EE6: the drawn tiles' normals
 uniform float uNormalAmt;          // EE6: 0 outside the drawn mode
+uniform sampler2D uField;          // EE9: the surface field, piece-local
+uniform float uFieldSize, uFieldAmt, uSnowM, uRainAmt;   // EE9
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -534,6 +571,36 @@ void main() {
     float low = tfbm(vWorldPos.xz * 0.011);
     tex *= 0.86 + 0.28 * low;
   }
+  // EE9: THE FIELD'S LOOK, read per texel where the vertex could only
+  // read it per 6.4m. Fresh snow is near-white and sky-lit; PACKED snow
+  // is duller and bluer, because compressed snow is denser ice and
+  // scatters less - the only reason a trail is visible on a white
+  // field. The snow's own normal comes from the field's slope, so a
+  // drift has shape and a print's rim catches the light. A puddle is
+  // DARK, SMOOTH and Fresnel-reflective: water fills the pores and
+  // reflects the sky at a grazing angle, which is why a puddle reads as
+  // a puddle from across a field and as wet dirt underfoot.
+  float snowCov = 0.0; float pud = 0.0;
+  if (uFieldAmt > 0.0) {
+    vec2 fuv = vLocalXZ / uFieldSize;
+    vec4 f = texture(uField, fuv);
+    float snowD = f.g * (1.0 - f.b * 0.55);
+    snowCov = smoothstep(0.02, 0.16, snowD) * uFieldAmt;
+    float e = 1.0 / 512.0;
+    float sL = texture(uField, fuv - vec2(e, 0.0)).g, sR = texture(uField, fuv + vec2(e, 0.0)).g;
+    float sD = texture(uField, fuv - vec2(0.0, e)).g, sU = texture(uField, fuv + vec2(0.0, e)).g;
+    vec3 snowN = normalize(vec3((sL - sR) * 22.0 * uSnowM, 1.0, (sD - sU) * 22.0 * uSnowM));
+    n = normalize(mix(n, snowN, snowCov));
+    vec3 fresh = vec3(0.86, 0.89, 0.95);
+    vec3 packed2 = vec3(0.66, 0.70, 0.79);
+    tex = mix(tex, mix(fresh, packed2, f.b), snowCov);
+    tex = mix(tex, tex * vec3(0.92, 0.94, 0.98), f.a * snowCov * 0.6);   // wear: the memory of a path
+    pud = smoothstep(0.05, 0.28, f.r) * (1.0 - snowCov) * uFieldAmt;
+    if (pud > 0.001) {
+      n = normalize(mix(n, vec3(0.0, 1.0, 0.0), pud * 0.92));
+      tex *= mix(1.0, 0.42, pud);
+    }
+  }
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
   // crosses the cloud plane - so a bank overhead drags its shadow across
@@ -550,6 +617,20 @@ void main() {
   }
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
+  if (pud > 0.001) {
+    // the sky in the water, stronger at a grazing angle - the Fresnel term
+    vec3 V = normalize(uCamPos - vWorldPos);
+    float fres = pow(1.0 - max(dot(V, vec3(0.0, 1.0, 0.0)), 0.0), 4.0);
+    lit = mix(lit, uFogColor * 1.05 + uAmbient * 0.5, pud * (0.10 + fres * 0.72));
+  }
+  if (snowCov > 0.001) {
+    // a sparse sharp sparkle on FRESH snow only - snow scatters, it does
+    // not shine, and trodden snow is dull
+    vec3 V2 = normalize(uCamPos - vWorldPos);
+    vec3 H = normalize(uLightDir + V2);
+    float glint = thash(floor(vLocalXZ * 40.0));
+    lit += vec3(0.85, 0.90, 1.0) * pow(max(dot(n, H), 0.0), 400.0) * step(0.982, glint) * snowCov * 0.45 * uSunScale;
+  }
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -802,6 +883,7 @@ export class Renderer {
         lightDir: L('uLightDir'), sunScale: L('uSunScale'),
         fogColor: L('uFogColor'), fogMode: L('uFogMode'), fogDensity: L('uFogDensity'), fogRange: L('uFogRange'), camPos: L('uCamPos'),
         shadowAmt: L('uShadowAmt'), cloudCover: L('uCloudCover'), cloudSoft: L('uCloudSoft'), cloudTime: L('uCloudTime'), cloudWind: L('uCloudWind'),
+        field: L('uField'), fieldSize: L('uFieldSize'), fieldAmt: L('uFieldAmt'), snowM: L('uSnowM'),   // EE9
       };
       // the blade: three stacked quads, shared by every instance
       const corners = [];
@@ -826,6 +908,12 @@ export class Renderer {
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTileNrm = gl.getUniformLocation(this.terrainProgram, 'uTileNrm');     // EE6
     this.tUNormalAmt = gl.getUniformLocation(this.terrainProgram, 'uNormalAmt'); // EE6
+    // EE9: the field's uniforms, terrain
+    this.tUField = gl.getUniformLocation(this.terrainProgram, 'uField');
+    this.tUFieldSize = gl.getUniformLocation(this.terrainProgram, 'uFieldSize');
+    this.tUFieldAmt = gl.getUniformLocation(this.terrainProgram, 'uFieldAmt');
+    this.tUSnowM = gl.getUniformLocation(this.terrainProgram, 'uSnowM');
+    this.tURainAmt = gl.getUniformLocation(this.terrainProgram, 'uRainAmt');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
     this.tULightDir = gl.getUniformLocation(this.terrainProgram, 'uLightDir');
@@ -854,6 +942,16 @@ export class Renderer {
      *  host from the SKY's own state. Null = no shadows, which is the
      *  classic skin and every interior. */
     this._cloudShadow = null;
+    /** EE9: the surface field for the piece about to be drawn -
+     *  {tex, size, amount} - or null. Set by the host per piece, numbers
+     *  and a texture handle only; the draw binds it. A 1x1 zero texture
+     *  stands in when there is none, so the sampler is never incomplete. */
+    this._field = null;
+    this._noField = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._noField);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -2031,6 +2129,15 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(u.cloudSoft, cs ? cs.soft : 1);
     gl.uniform1f(u.cloudTime, cs ? cs.time : 0);
     gl.uniform2f(u.cloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
+    // EE9: the same field the terrain read, on unit 4
+    const fld = this._field;
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, fld ? fld.tex : this._noField);
+    gl.uniform1i(u.field, 4);
+    gl.uniform1f(u.fieldSize, fld ? fld.size : 1);
+    gl.uniform1f(u.fieldAmt, fld ? fld.amount : 0);
+    gl.uniform1f(u.snowM, fld ? fld.snowM : 0);
+    gl.activeTexture(gl.TEXTURE0);
     this._bindVao(grass.vao);
     // AUDIT 39 F50's law: every draw in this file reports
     this.stats.draws++;
@@ -2155,6 +2262,32 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return tex;
   }
 
+  /** EE9: the surface field for the next terrain/grass draw, or null. */
+  setSurfaceField(f) { this._field = f ?? null; }
+
+  /** EE9: make a field texture of `dim` x `dim` RGBA8, linear, clamped.
+   *  Creates and parameterises; fills nothing; binds only itself. */
+  createFieldTexture(dim) {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, dim, dim, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+
+  /** EE9: upload the rows [first, last] of a field image. Rows only:
+   *  the field is 512 x 512 and a footfall touches four. */
+  updateFieldRows(tex, dim, pixels, first, last) {
+    const gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    const rows = last - first + 1;
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, first, dim, rows, gl.RGBA, gl.UNSIGNED_BYTE, pixels.subarray(first * dim * 4, (last + 1) * dim * 4));
+  }
+
   /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,
    *  amount} - or null. Numbers only; it binds nothing. */
   setCloudShadow(d) { this._cloudShadow = d ?? null; }
@@ -2202,6 +2335,15 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, normalTex ?? arrayTex);
     gl.uniform1i(this.tUTileNrm, 3);
     gl.uniform1f(this.tUNormalAmt, normalTex ? 1.0 : 0.0);
+    // EE9: the field on unit 4 - a 1x1 zero texture when there is none
+    const fld = this._field;
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, fld ? fld.tex : this._noField);
+    gl.uniform1i(this.tUField, 4);
+    gl.uniform1f(this.tUFieldSize, fld ? fld.size : 1);
+    gl.uniform1f(this.tUFieldAmt, fld ? fld.amount : 0);
+    gl.uniform1f(this.tUSnowM, fld ? fld.snowM : 0);
+    gl.uniform1f(this.tURainAmt, fld ? fld.rain : 0);
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);

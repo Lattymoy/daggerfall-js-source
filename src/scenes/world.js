@@ -16,7 +16,8 @@ import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixe
 import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
-import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
+import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer
+import { SurfaceField, warmthAt, baseSnowDepth, FIELD_DIM, SNOW_DEPTH_M } from '../world/surfaceField.js';   // EE9: the surface field   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -367,6 +368,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  let fieldLastTick = null;   // EE9: the field's 10 Hz clock
+  let fieldRobin = 0;   // EE9: which near-ring field takes this 100ms slot
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   function applyWeather(w) {
@@ -547,7 +550,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shared remap seam takes that differs between the climate hosts
     // and the dungeon.
     const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
-    const groundArchive = getTerrainGroundArchive(climate, season);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133)
+    // EE9: WINTER IS NOT A TEXTURE. When the surface field is live it lays
+    // the snow, so the ground draws its SUMMER materials - grass, dirt,
+    // stone - and the field decides how white they are, by climate,
+    // calendar and hour. The winter archive (x03) is consulted only when
+    // the field is not: the classic skin, the switch off, or ?field=off.
+    // Trees, flats and roofs keep their winter variants; this is the
+    // ground's law alone. EE4's snow identification is thereby retired
+    // from the enhanced path, as the design says it should be.
+    const fieldLive = isEnhanced() && getPref('enhancedEnvironments')
+      && new URLSearchParams(globalThis.location?.search ?? '').get('field') !== 'off';
+    const groundSeason = fieldLive && season === SEASON.Winter ? SEASON.Summer : season;
+    const groundArchive = getTerrainGroundArchive(climate, groundSeason);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133)
     const natureArchive = getNatureArchive(climate.natureArchive, season);
 
     // R9 tilemap pass: shared-index height grid + per-pixel tilemap
@@ -591,6 +605,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // later; dropped when it recedes. tilemapBytes and samples stay on
     // the record for that.
     const grass = stride === 1 ? buildGrassFor(px, py, groundArchive, tilemapBytes, samples) : null;
+    // EE9: the surface field, near ring only, like the grass. The pure
+    // half lives in world/surfaceField.js; here it is given the piece's
+    // own heightmap (scaled to world units, as the terrain grid is) and
+    // a texture the draw will read. The calendar's base is set at once so
+    // a midwinter mountain is white on the first frame.
+    const field = stride === 1 ? buildFieldFor(px, py, samples, climateBase) : null;
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -828,6 +848,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       grass, tilemapBytes,   // EE7: the pixel's blades, drawn with its terrain and destroyed with it; the bytes stay so the near ring can place them later
+      field, climateBase,   // EE9: the pixel's surface field (near ring only) and the climate its warmth reads - the census found the record without either, so no pixel ever carried a field
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
@@ -858,6 +879,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   // already deep enough for either class (the skirt drop at build).
   /** EE7: place and upload one pixel's grass, or null when the mode
    *  places none or ?grass=off. */
+  /** EE9: a pixel's surface field. ?field=off is the kill switch. */
+  function buildFieldFor(px, py, samples, climateType) {
+    if (!(isEnhanced() && getPref('enhancedEnvironments'))) return null;
+    if (new URLSearchParams(globalThis.location?.search ?? '').get('field') === 'off') return null;
+    const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+    const heights = new Float32Array(samples.length);
+    for (let i = 0; i < samples.length; i++) heights[i] = samples[i] * scale;
+    const sim = new SurfaceField({ heights, tileDim: TERRAIN_TILE_DIM });
+    const day = Math.floor(worldMinutes() / 1440);
+    sim.setBase(baseSnowDepth({ climateBase: climateType, dayOfYear: day }));
+    // the calendar's snow is THERE on the first frame, not built over an hour
+    for (let i = 0; i < 40; i++) sim.tick(60, { warmth: warmthAt({ climateBase: climateType, dayOfYear: day, minuteOfDay: 240 }) });
+    const tex = renderer.createFieldTexture(FIELD_DIM);
+    for (let j = 0; j < sim.dim; j++) sim.dirtyRows[j] = 1;
+    const span = sim.flush();
+    if (span) renderer.updateFieldRows(tex, FIELD_DIM, sim.pixels, span.first, span.last);
+    // ?field=sim keeps the simulation and hides its look - a bisect door
+    const amount = new URLSearchParams(globalThis.location?.search ?? '').get('field') === 'sim' ? 0 : 1;
+    return { sim, tex, size: TERRAIN_SIZE, snowM: SNOW_DEPTH_M, amount, rain: 0, lastStep: null, stepPhase: 0 };
+  }
+
   function buildGrassFor(px, py, groundArchive, tilemapBytes, samples) {
     const grassOf = renderer.tileGrassFor(groundArchive);
     // ?grass=off is the kill switch; ?grass=<n> sets blades per tile,
@@ -881,6 +923,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EE7: the grass follows the ring - born when the pixel comes near,
     // gone when it recedes
     if (stride === 1 && !p.grass) p.grass = buildGrassFor(p.px, p.py, p.groundArchive, p.tilemapBytes, p.samples);
+    if (stride === 1 && !p.field) p.field = buildFieldFor(p.px, p.py, p.samples, p.climateBase);   // EE9
+    else if (stride !== 1 && p.field) { renderer.gl.deleteTexture(p.field.tex); p.field = null; }
     else if (stride !== 1 && p.grass) { renderer.destroyGrass(p.grass); p.grass = null; }
     p._stride = stride;
   }
@@ -896,6 +940,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!p) return;
     renderer.destroyMesh(p.terrain);
     renderer.destroyGrass(p.grass);   // EE7
+    if (p.field) { renderer.gl.deleteTexture(p.field.tex); p.field = null; }   // EE9
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
@@ -3933,6 +3978,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { pos: wc.map((v) => +v.toFixed(2)), n: [+(wn[0] / l).toFixed(3), 0, +(wn[2] / l).toFixed(3)] };
     }));
     window.__frame = 0;
+    // EE9: the field's census, for the gate
+    window.__fieldCensus = () => {
+      const out = { pixels: 0, snow: 0, water: 0, underPlayer: null };
+      const feet = walkMode ? player.pos : cam.pos;
+      for (const p of built.values()) {
+        if (!p.field) continue;
+        const c = p.field.sim.census(); out.pixels++; out.snow += c.snow; out.water += c.water;
+        const t = state.pixelTranslation(p.px, p.py, [0, 0, 0]);
+        const lx = feet[0] - t[0]; const lz = feet[2] - t[2];
+        if (lx >= 0 && lz >= 0 && lx < TERRAIN_SIZE && lz < TERRAIN_SIZE) out.underPlayer = p.field.sim.snowAt(lx, lz);
+      }
+      if (out.pixels) { out.snow /= out.pixels; out.water /= out.pixels; }
+      return out;
+    };
     // EE7: the renderer's own counters and the grass census, for the gate.
     // A probe cannot see a blade; it CAN see that the grass draws report
     // and that pixels carry blades. Read-only.
@@ -6087,6 +6146,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // cloud and for the shadow it casts. Null when there is no enhanced
         // sky, which is the classic skin and every interior.
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
+        renderer.setSurfaceField(p.field ?? null);   // EE9: this piece's field, or none
         renderer.drawTerrain(p.terrain, pixelMatrix,
           renderer.tileArrayFor(p.groundArchive), p.tilemapTex, 6.4, renderer.tileNormalFor(p.groundArchive) /* EE6 */);
         // EE7: the pixel's grass, after its terrain and inside the same
@@ -6463,6 +6523,64 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     if (shotMode) {
       window.__frame++;
+      // EE9: THE FIELD TICKS AND TAKES THE PLAYER'S STEPS. Ten times a
+      // second, every near-ring pixel's field runs the laws on the sim's
+      // weather (rain and snow rates from the current weather) and the
+      // clock's warmth (Mac's per-climate function: season, hour, deck);
+      // the player's footfalls stamp the pixel under them every ~0.75m of
+      // travel, alternating sides of the stride, as the lab does; and
+      // only the ROWS that changed are uploaded. The census is exposed
+      // for the gate: mean snow, mean water, and the depth under the
+      // player, which a stamped print must read below.
+      {
+        const nowMs = performance.now();
+        if (nowMs - (fieldLastTick ?? 0) >= 100) {
+          fieldLastTick = nowMs;
+          const w = currentWeather();
+          const rates = { rainRate: w === 'rain' ? 0.6 : w === 'thunder' ? 1 : 0, snowRate: w === 'snow' ? 0.8 : 0 };
+          const day = Math.floor(worldMinutes() / 1440); const minute = worldMinutes() % 1440;
+          const cover = sky?.cloudShadow?.cover ?? 0;
+          const feet = walkMode ? player.pos : cam.pos;
+          // EE9: ROUND-ROBIN. Nine near-ring fields of 262,144 cells each,
+          // all ticked ten times a second, is 24 million cell updates a
+          // second on the main thread - and the census probe's page
+          // CRASHED under it. One field is simulated per 100ms slot, each
+          // carrying its own elapsed world time since its last turn, so
+          // every field still advances (about once a second) and the cost
+          // is a ninth. A footfall stamps immediately regardless: the
+          // stamp is direct, and a print must never wait for its turn.
+          const fields = [...built.values()].filter((p) => p.field);
+          if (fields.length) {
+            fieldRobin = (fieldRobin + 1) % fields.length;
+            const p = fields[fieldRobin];
+            const f = p.field;
+            const dtField = Math.min(6, (nowMs - (f.lastTickMs ?? nowMs)) / 1000) * 60;   // world seconds: the clock runs 60x
+            f.lastTickMs = nowMs;
+            f.sim.setBase(baseSnowDepth({ climateBase: p.climateBase, dayOfYear: day }));
+            f.sim.tick(dtField, { ...rates, warmth: warmthAt({ climateBase: p.climateBase, dayOfYear: day, minuteOfDay: minute, cover }) });
+            f.rain = rates.rainRate;
+          }
+          for (const p of built.values()) {
+            if (!p.field) continue;
+            const f = p.field;
+            // the player's feet, in this piece's own coordinates
+            const t = state.pixelTranslation(p.px, p.py, p._t || (p._t = [0, 0, 0]));
+            const lx = feet[0] - t[0]; const lz = feet[2] - t[2];
+            if (lx >= 0 && lz >= 0 && lx < TERRAIN_SIZE && lz < TERRAIN_SIZE) {
+              const moved = f.lastStep ? Math.hypot(lx - f.lastStep[0], lz - f.lastStep[1]) : 1;
+              if (moved > 0.75) {
+                f.stepPhase++;
+                const side = (f.stepPhase % 2 ? 1 : -1) * 0.22;
+                const yaw = walkMode ? player.yaw : cam.yaw;
+                f.sim.stamp(lx + Math.cos(yaw) * side, lz - Math.sin(yaw) * side);
+                f.lastStep = [lx, lz];
+              }
+            }
+            const span = f.sim.flush();
+            if (span) renderer.updateFieldRows(f.tex, FIELD_DIM, f.sim.pixels, span.first, span.last);
+          }
+        }
+      }
       if (queue.length === 0 && !building && !window.__shotReady) {
         window.__shotReady = true;
       }

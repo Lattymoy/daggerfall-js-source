@@ -542,7 +542,9 @@ test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader 
   // both hosts hand it over immediately before the terrain draw, and
   // hand over NOTHING when there is no enhanced sky
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n\s*renderer\.drawTerrain\(/, host);
+    // EE9 sets the surface field between the deck and the draw; both
+    // are numbers-and-handles setters, and the order among them is free
+    assert.match(read(host), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n(\s*renderer\.setSurfaceField\([^\n]*\n)?\s*renderer\.drawTerrain\(/, host);
   }
   // and the probe door, so the gate can put the sky under overcast
   const shared = read('src/scenes/shared.js');
