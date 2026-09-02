@@ -73,6 +73,44 @@
 //     switchClassic in save mode (:436-437) and switchChar again when
 //     CharacterCount is 0 (:449-452); SAV4 drew both dimmed instead.
 //
+// ── ROAD-S CLOSEOUT, the third pass ───────────────────────────────
+// The audit walked the same C# once more against what C1 landed:
+//
+//  1. POPTOHUD IS NOT ONE POP. SaveGame() (:422) and LoadGame() (:428)
+//     both end in `DaggerfallUI.Instance.PopToHUD()`, which is
+//     `while (uiManager.TopWindow != dfHUD) uiManager.PopWindow();`
+//     (DaggerfallUI.cs:829-836) - the WHOLE stack drains and the game
+//     resumes. Only Cancel is a single CloseWindow (:526). C1 made the
+//     pause door a real PUSH, so `done` alone became exactly that one
+//     pop and a completed save or load handed the player back the
+//     PAUSE window with the motor and the clock still held. The
+//     `popToHUD` hook below is the rest of the drain; the pause flow
+//     hands it over wherever it pushed (ui/pauseWindow.js).
+//  2. THE NAME BOX DRAWS ITS DefaultText IN BOTH MODES. SetMode gives
+//     save mode "enterSaveName" (:435) as load mode gets
+//     "selectSaveName" (:443), and TextBox.Draw's default-text branch
+//     (TextBox.cs:253-260) is gated on `text.Length == 0` ALONE, never
+//     on ReadOnly - the cursor is a separate child (:30, :236-239), so
+//     an empty save box draws the prompt AND the caret over it. The
+//     port computed the save arm and then drew a lone underscore.
+//  3. THE LIST HAS NO SELECTION BAR. ListBox.Draw (ListBox.cs:301-330)
+//     draws row labels and nothing else, and DecideTextColor (:360-372)
+//     hands the selected row `selectedTextColor` - ListBox.cs:43's
+//     DaggerfallDefaultSelectedTextColor, Color32(162,36,12)
+//     (DaggerfallUI.cs:62), which this window never overrides. The
+//     port painted a grey bar and white text.
+//  4. FOUR LABELS CARRY NO SHADOW. Setup zeroes ShadowPosition on
+//     promptLabel (:119), savesList (:149), saveTimeLabel (:226) and
+//     gameTimeLabel (:230), and a zero position skips the shadow pass
+//     outright (TextLabel.cs:354-355, :361-362). The rows' selected
+//     arm is zero too (ListBox.cs:41). The version/folder labels
+//     (:209, :215) and every button label keep theirs.
+//  5. FindIndex IGNORES CASE. SaveNameTextBox_OnType (:539-551) resolves
+//     the typed text through savesList.FindIndex, which compares
+//     InvariantCultureIgnoreCase (ListBox.cs:822-833), and the hit goes
+//     through SelectedIndex -> SavesList_OnSelectItem (:554-556), which
+//     puts the row's STORED casing back in the box.
+//
 // Recorded departures: no mod-conflict prompt (the port has no mods,
 // so PromptLoadGame's message box - SaveLoadManager.cs:489-513 -
 // cannot fire and its callback is taken directly); the folder label
@@ -99,10 +137,19 @@
 //   loadKey(key)            - the HOST restores the slot
 //   onSwitchClassic()       - mounts the classic list (menu-side owns it)
 //   onBack()                - re-open whatever pushed this (pause seam)
+//   popToHUD()              - PopToHUD (:422/:428): the go paths drain
+//                             the WHOLE stack, so whatever this window
+//                             was PUSHED over closes with it. Absent
+//                             where the door replaced rather than
+//                             pushed - there is nothing left under it.
 // } - absent hooks dim their doors, the pause window's own posture.
 
 import { nativeMetrics, drawRect, shadowText, pointToNative } from './nativePanel.js';
 import { measureText } from './text.js';
+// DaggerfallUI.cs:62's DaggerfallDefaultSelectedTextColor, which
+// ListBox hands every selected row (ListBox.cs:43) - one home for the
+// literal, the picker window's.
+import { SELECTED_TEXT_COLOR } from './listPicker.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
@@ -293,11 +340,13 @@ export class SaveWindow {
     this.loading = false;
     this.done = true;
     this.hooks.loadKey?.(this._loadingKey);
+    this.hooks.popToHUD?.();             // PopToHUD (:428), AFTER the load
   }
 
   _saveGame() {
     const ok = this.hooks.saveAs?.(this.nameText);
     this.done = true;                    // SaveGame() -> PopToHUD (:422)
+    this.hooks.popToHUD?.();
     if (ok === false) this.hooks.onSaveFailed?.();
   }
 
@@ -354,11 +403,22 @@ export class SaveWindow {
   }
 
   /** SaveNameTextBox_OnType: a typed name that matches a row selects
-   *  it; a non-match deselects (:539-551). */
+   *  it; a non-match deselects (:539-551).
+   *
+   *  The match is savesList.FindIndex, and ListBox.cs:822-833 compares
+   *  `StringComparison.InvariantCultureIgnoreCase` - so "old" finds the
+   *  save called "Old". The hit is then `savesList.SelectedIndex =
+   *  index`, whose setter raises OnSelectItem (:554-556) and puts the
+   *  row's OWN text back in the box, which is why the port routes it
+   *  through `_select`: the stored casing is what every later
+   *  (character, name) lookup has to be given. The MISS arm is
+   *  SelectNone + UpdateSelectedSaveInfo (:547-548). */
   _onType(text) {
     this.nameText = text;
-    const index = this.rows.findIndex((r) => r.saveName === text);
-    this.selectedIndex = index;
+    const index = this.rows.findIndex(
+      (r) => r.saveName.localeCompare(text, undefined, { sensitivity: 'accent' }) === 0);
+    if (index !== -1) this._select(index);
+    else this.selectedIndex = -1;
   }
 
   _cancel() {
@@ -550,28 +610,46 @@ export class SaveWindow {
       ? SW_TEXT.noSavesFound
       : saveLoadPrompt(this.mode === 'save' ? SW_TEXT.savePrompt : SW_TEXT.loadPrompt,
         this.currentPlayerName);
-    shadowText(renderer, font, prompt, m, M[0] + 4, M[1] + 4);
+    // promptLabel.ShadowPosition = Vector2.zero (:119) - and a zero
+    // position skips the shadow pass outright (TextLabel.cs:354-355).
+    shadowText(renderer, font, prompt, m, M[0] + 4, M[1] + 4, { shadowOffset: 0 });
 
-    // Name panel + text (the caret is the port's plain underscore).
+    // Name panel + text. TextBox.Draw has ONE branch on the content
+    // (TextBox.cs:244 vs :253-260): the text, or the DefaultText in
+    // defaultTextColor - never gated on ReadOnly, so save mode shows
+    // "Enter save name" exactly as load mode shows "Select a save"
+    // (SetMode :435, :443). The CURSOR is a separate child (:30, :160)
+    // that only ReadOnly disables (:236-239), so it draws over the
+    // default text in save mode and never in load mode; the caret is
+    // the port's plain underscore, drawn at the text's own width.
     panel(R.namePanel, SW_COLORS.namePanel);
     const nameShown = this.nameText.length ? this.nameText
       : (this.mode === 'save' ? SW_TEXT.enterSaveName : SW_TEXT.selectSaveName);
-    shadowText(renderer, font, this.mode === 'save' ? this.nameText + '_' : nameShown,
-      m, M[0] + R.namePanel[0] + 2, M[1] + R.namePanel[1] + 1,
+    const nameX = M[0] + R.namePanel[0] + 2, nameY = M[1] + R.namePanel[1] + 1;
+    shadowText(renderer, font, nameShown, m, nameX, nameY,
       this.nameText.length ? {} : { color: SW_COLORS.folder });
+    if (this.mode === 'save') {
+      shadowText(renderer, font, '_', m, nameX + measureText(font.fnt, this.nameText), nameY);
+    }
 
     // Saves panel, list, scroller.
     panel(R.savesPanel, SW_COLORS.main);
     panel(R.savesList, SW_COLORS.list, false);
+    // ListBox.Draw (ListBox.cs:301-330) draws the row LABELS and
+    // nothing else - there is no per-row background anywhere in it, so
+    // the selection is a COLOUR: DecideTextColor (:360-372) hands the
+    // selected row `selectedTextColor`, which ListBox.cs:43 and :68
+    // both take from DaggerfallDefaultSelectedTextColor (162,36,12,
+    // DaggerfallUI.cs:62) and this window never overrides (it sets
+    // TextColor alone, :147). No row carries a shadow either:
+    // savesList.ShadowPosition is zeroed at :149 and the selected arm
+    // rides ListBox.cs:41's selectedShadowPosition, zero as well.
     const visible = this.rows.slice(this.scrollIndex, this.scrollIndex + SW_LIST_ROWS);
     visible.forEach((row, i) => {
       const index = this.scrollIndex + i;
       const y = M[1] + R.savesList[1] + i * ROW_H;
-      if (index === this.selectedIndex) {
-        drawRect(renderer, m, M[0] + R.savesList[0], y, R.savesList[2], ROW_H, [0.3, 0.3, 0.3, 0.6]);
-      }
       shadowText(renderer, font, row.saveName, m, M[0] + R.savesList[0] + 1, y + 1,
-        { color: index === this.selectedIndex ? [1, 1, 1, 1] : SW_COLORS.listText });
+        { color: index === this.selectedIndex ? SELECTED_TEXT_COLOR : SW_COLORS.listText, shadowOffset: 0 });
     });
     if (this.rows.length > SW_LIST_ROWS) {
       panel(R.scroller, SW_COLORS.namePanel, false);
@@ -610,9 +688,12 @@ export class SaveWindow {
         const real = info.dateAndTime?.realTime
           ? new Date(info.dateAndTime.realTime).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
           : '';
-        shadowText(renderer, font, real, m, M[0] + R.infoPanel[0], M[1] + R.infoPanel[1], { align: 'center', w: R.infoPanel[2] });
+        // saveTimeLabel (:226) and gameTimeLabel (:230) are the other
+        // two ShadowPosition = Vector2.zero labels; the version and
+        // folder lines above keep theirs (:209, :215).
+        shadowText(renderer, font, real, m, M[0] + R.infoPanel[0], M[1] + R.infoPanel[1], { align: 'center', w: R.infoPanel[2], shadowOffset: 0 });
         shadowText(renderer, font, midDateTimeString(dateFromClassicMinutes(info.dateAndTime?.gameTime ?? 0)), m,
-          M[0] + R.infoPanel[0], M[1] + R.infoPanel[1] + 9, { align: 'center', w: R.infoPanel[2] });
+          M[0] + R.infoPanel[0], M[1] + R.infoPanel[1] + 9, { align: 'center', w: R.infoPanel[2], shadowOffset: 0 });
       }
     }
 

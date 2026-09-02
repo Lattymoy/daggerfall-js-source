@@ -36,6 +36,9 @@ import {
 import { saveSlot } from '../src/systems/saveSlots.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
 import { openClassicPauseFlow, PAUSE_RECTS, PAUSE_PANEL_Y } from '../src/ui/pauseWindow.js';
+import { makeWindowStack } from '../src/ui/windowStack.js';
+import { SELECTED_TEXT_COLOR } from '../src/ui/listPicker.js';
+import { DEFAULT_SHADOW_COLOR } from '../src/ui/nativePanel.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -555,4 +558,242 @@ test('C1: the flow marks which door it took, and the three hosts that have the s
   assert.match(read('src/scenes/dungeonContext.js'), /pushWindow: \(w\) => pushDungeonWindow\(w\),/);
   assert.equal(read('src/scenes/exterior.js').includes('pushWindow:'), false,
     'the probe host has no save seams to push for');
+});
+
+// ═══ 8. ROAD-S CLOSEOUT: the go paths are PopToHUD, and the four
+//        drawing laws C1's second pass still paraphrased ═══
+//
+// C1 gave the slot window real DEPTH (section 7) and left all three
+// exits expressed as the one `done`. Only Cancel is that: SaveGame
+// (:422) and LoadGame (:428) end in PopToHUD, `while
+// (uiManager.TopWindow != dfHUD) uiManager.PopWindow();`
+// (DaggerfallUI.cs:829-836). The host below is therefore the REAL
+// windowStack driven by the real hosts' one-`if` drain line -
+// stubHost's `while` loop above would drain a single-pop bug into
+// looking right.
+
+/** townTalk/mountInterior/pushDungeonWindow in miniature, over the
+ *  actual ui/windowStack.js: a slot mirror written by `onTop`, the
+ *  push and the drop doors, and the hosts' per-frame
+ *  `if (overlay?.done) dropOverlay()` - ONE pop, exactly as they. */
+function stackHost() {
+  let slot = null;
+  const windows = makeWindowStack({ onTop: (t) => { slot = t; } });
+  return {
+    windows,
+    get slot() { return slot; },
+    show(w) { slot = w; windows.reconcile(slot); },                 // showOverlay
+    push(w) { windows.reconcile(slot); windows.pushWindow(w); },    // pushOverlay
+    frame() {                                                       // the drain line
+      if (!slot?.done) return false;
+      slot = null;
+      windows.reconcile(null);                                      // PopWindow
+      return true;
+    },
+  };
+}
+
+/** A press inside one of the pause panel's own button rects. */
+const pauseAt = (rect) => [160 - 74 + rect[0] + 1, PAUSE_PANEL_Y + rect[1] + 1];
+
+function pushedFlow(host, hooks) {
+  return openClassicPauseFlow((w) => host.show(w), {
+    playerName: () => 'Alaric',
+    saveAs: () => true,
+    loadKey: () => {},
+    pushWindow: (w) => host.push(w),
+    ...hooks,
+  });
+}
+
+test('ROAD-S: a completed SAVE is PopToHUD - the stack drains PAST the pause window (:422)', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const host = stackHost();
+    const saved = [];
+    const pause = pushedFlow(host, { saveAs: (n) => { saved.push(n); return true; } });
+    assert.equal(host.windows.depth(), 1);
+
+    pause.click(...pauseAt(PAUSE_RECTS.save));
+    assert.equal(host.windows.depth(), 2, 'PushWindow (:302) - the pause window rides underneath');
+    const slot = host.slot;
+    slot._onType('Fresh');
+    slot.input('Enter');                       // the Return go key (:311-312)
+
+    assert.deepEqual(saved, ['Fresh'], 'SaveLoadManager.Save (:421)');
+    assert.equal(slot.done, true);
+    assert.equal(pause.done, true,
+      'PopToHUD drains the WHOLE stack (DaggerfallUI.cs:829-836), the covered window included');
+    host.frame();
+    assert.equal(host.windows.depth(), 1, 'one PopWindow a frame, which is all a host drain does');
+    assert.equal(host.slot, pause);
+    host.frame();
+    assert.equal(host.windows.depth(), 0, 'and the stack is back to the HUD');
+    assert.equal(host.windows.topWindow(), null);
+    assert.equal(host.windows.paused(), false, 'the motor and the clock are released');
+  });
+});
+
+test('ROAD-S: a completed LOAD is PopToHUD too, and Cancel is still the single CloseWindow (:428, :526)', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const host = stackHost();
+    const loaded = [];
+    const pause = pushedFlow(host, { loadKey: (k) => loaded.push(k) });
+
+    // CANCEL first: :526 really is one CloseWindow, so the pause
+    // window must come back untouched - a PopToHUD on every exit
+    // would be as wrong as a CloseWindow on every exit.
+    pause.click(...pauseAt(PAUSE_RECTS.load));
+    assert.equal(host.windows.depth(), 2);
+    host.slot.input('Escape');
+    assert.equal(pause.done, false, 'CancelButton_OnMouseClick pops ONE window (:526)');
+    host.frame();
+    assert.equal(host.windows.depth(), 1);
+    assert.equal(host.slot, pause, 'the SAME pause window, still standing');
+
+    // ...and the go path, through the two-frame loading defer.
+    pause.click(...pauseAt(PAUSE_RECTS.load));
+    const slot = host.slot;
+    slot.input('Enter');
+    assert.equal(slot.loading, true, 'the label goes up first (:516-520)');
+    for (let i = 0; i < LOADING_FRAMES; i++) slot.update();
+    assert.deepEqual(loaded, [1], 'LoadGame (:427) - the autoselected top save');
+    assert.equal(pause.done, true, 'then PopToHUD (:428), the pause window with it');
+    host.frame(); host.frame();
+    assert.equal(host.windows.depth(), 0, 'the restored world is NOT under a stale pause menu');
+    assert.equal(host.windows.paused(), false);
+  });
+});
+
+test('ROAD-S: the replace fallback still nets to the HUD - no second close, no popToHUD hook', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const host = stackHost();
+    // No pushWindow: the pause window closed when the slot window
+    // opened, so `done` alone already lands on the HUD.
+    const pause = openClassicPauseFlow((w) => host.show(w), {
+      playerName: () => 'Alaric', saveAs: () => true,
+    });
+    pause.click(...pauseAt(PAUSE_RECTS.save));
+    assert.equal(pause.done, true, 'the replace door closes it up front');
+    const slot = host.slot;
+    assert.equal(slot.hooks.popToHUD, null, 'and there is nothing left under it to drain');
+    slot._onType('Fresh');
+    slot.input('Enter');
+    host.frame();
+    assert.equal(host.windows.depth(), 0);
+  });
+});
+
+test('ROAD-S: the save-mode box draws its DefaultText, with the caret over it (TextBox.cs:253-260)', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const p = probe();
+    const save = new SaveWindow('save', {
+      playerName: () => 'Alaric', saveAs: () => true, screenshotTexture: p.screenshotTexture,
+    });
+    save.draw(p.renderer, CANVAS, p.font);
+    assert.ok(p.saw(SW_TEXT.enterSaveName),
+      'SetMode :435 - the branch is gated on text.Length ALONE, never on ReadOnly');
+    assert.ok(p.saw('_'), 'and the cursor stays: save mode is not ReadOnly (:438, TextBox.cs:236-239)');
+
+    // Typed: TextBox.Draw's text arm (:244), and the prompt is gone.
+    const q = probe();
+    save._onType('Fresh');
+    save.draw(q.renderer, CANVAS, q.font);
+    assert.equal(q.saw(SW_TEXT.enterSaveName), false, 'a non-empty box draws its Text');
+    assert.ok(q.saw('Fresh'));
+    assert.ok(q.saw('_'), 'the caret follows the text');
+
+    // Load mode: its own DefaultText (:443) and NO caret, because
+    // ReadOnly (:444) disables the cursor outright.
+    const r = probe();
+    const load = new SaveWindow('load', { playerName: () => 'Alaric', screenshotTexture: r.screenshotTexture });
+    load.nameText = '';
+    load.selectedIndex = -1;
+    load.draw(r.renderer, CANVAS, r.font);
+    assert.ok(r.saw(SW_TEXT.selectSaveName));
+    assert.equal(r.drawn.includes('_'), false, 'a read-only box has no cursor');
+  });
+});
+
+/** The same recorder as `probe`, keeping EVERY quad - the textured
+ *  glyph ones carry the colour a label was drawn in, which is how the
+ *  two ListBox laws below are read off a real draw. */
+function quadProbe() {
+  const quads = [];
+  return {
+    quads,
+    renderer: {
+      drawScreenQuad: (tex, r, uv, color) => quads.push({ tex, ...r, color }),
+      uploadTexture: () => ({}),
+      releaseTexture: () => {},
+    },
+    font: { tex: 'atlas', fnt: { fixedHeight: 6, fixedWidth: 4, glyphWidth: () => 4 } },
+    screenshotTexture: () => null,
+  };
+}
+
+test('ROAD-S: the saves list draws no selection bar, and the selected row is the dark red (ListBox.cs:301-330)', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const p = quadProbe();
+    const win = new SaveWindow('load', { playerName: () => 'Alaric', screenshotTexture: p.screenshotTexture });
+    assert.equal(win.selectedIndex, 0, 'the top save autoselects');
+    win.draw(p.renderer, CANVAS, p.font);
+
+    const rowY = MAIN_PANEL[1] + SW_RECTS.savesList[1];
+    assert.equal(p.quads.some((q) => !q.tex && near(q.y, rowY) && near(q.h, 8)), false,
+      'ListBox.Draw paints row LABELS and nothing else - there is no per-row background');
+    const selected = p.quads.filter((q) => q.tex && near(q.y, rowY + 1));
+    assert.ok(selected.length > 0, 'the selected row still draws');
+    assert.ok(selected.every((q) => sameColor(q.color, SELECTED_TEXT_COLOR)),
+      'DecideTextColor -> selectedTextColor, DaggerfallDefaultSelectedTextColor 162,36,12 (DaggerfallUI.cs:62)');
+    assert.equal(selected.some((q) => sameColor(q.color, [1, 1, 1, 1])), false, 'never white');
+    const plain = p.quads.filter((q) => q.tex && near(q.y, rowY + 1 + 8));
+    assert.ok(plain.length > 0 && plain.every((q) => sameColor(q.color, SW_COLORS.listText)),
+      'savesList.TextColor for every other row (:147)');
+  });
+});
+
+test('ROAD-S: the four ShadowPosition = Vector2.zero labels draw FLAT (TextLabel.cs:354-355)', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const p = quadProbe();
+    const win = new SaveWindow('load', { playerName: () => 'Alaric', screenshotTexture: p.screenshotTexture });
+    win.draw(p.renderer, CANVAS, p.font);
+    const shadowRows = new Set(p.quads
+      .filter((q) => q.tex && sameColor(q.color, DEFAULT_SHADOW_COLOR)).map((q) => q.y));
+    const M = MAIN_PANEL, R = SW_RECTS;
+    assert.equal(shadowRows.has(M[1] + 5), false, 'promptLabel (:119)');
+    assert.equal(shadowRows.has(M[1] + R.savesList[1] + 2), false,
+      'savesList (:149), and the selected arm rides ListBox.cs:41\'s zero too');
+    assert.equal(shadowRows.has(M[1] + R.infoPanel[1] + 1), false, 'saveTimeLabel (:226)');
+    assert.equal(shadowRows.has(M[1] + R.infoPanel[1] + 10), false, 'gameTimeLabel (:230)');
+    // The witness that the pass exists at all: saveVersionLabel keeps
+    // the default position with ShadowColor = Color.black (:209).
+    assert.ok(shadowRows.has(M[1] + R.screenshot[1] + 2), 'saveVersionLabel is still shadowed');
+  });
+});
+
+test('ROAD-S: FindIndex ignores case, and the hit puts the STORED casing back in the box', () => {
+  withStorage((s) => {
+    seedSaves(s);
+    const win = new SaveWindow('save', { playerName: () => 'Alaric', saveAs: () => true });
+    win._onType('old');
+    assert.equal(win.selectedIndex, 1,
+      'FindIndex compares InvariantCultureIgnoreCase (ListBox.cs:822-833)');
+    assert.equal(win.nameText, 'Old',
+      'SelectedIndex -> SavesList_OnSelectItem writes SelectedItem back (:554-556)');
+    assert.equal(win._infoShown(), true, 'so UpdateSelectedSaveInfo lights the panel, not the clear arm');
+    win.click(MAIN_PANEL[0] + SW_RECTS.rename[0] + 1, MAIN_PANEL[1] + SW_RECTS.rename[1] + 1);
+    assert.equal(win.top, 'rename', 'and rename takes the click it used to refuse (:562)');
+
+    // The miss arm is untouched: SelectNone + UpdateSelectedSaveInfo.
+    win.top = null;
+    win._onType('older');
+    assert.equal(win.selectedIndex, -1, ':547-548');
+    assert.equal(win._infoShown(), false);
+  });
 });

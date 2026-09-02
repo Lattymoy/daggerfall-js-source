@@ -346,14 +346,39 @@ export function openClassicPauseFlow(show, hooks = {}) {
   // anything the open one was holding.
   const push = hooks.pushWindow ?? null;
   const mount = (win) => { if (push) push(win); else show(win); };
+  // ROAD-S: ...and the OTHER half of that push. The slot window has
+  // three exits, and only ONE of them is CloseWindow: Cancel (:526).
+  // SaveGame (:422) and LoadGame (:428) both end in
+  // `DaggerfallUI.Instance.PopToHUD()`, which is `while
+  // (uiManager.TopWindow != dfHUD) uiManager.PopWindow();`
+  // (DaggerfallUI.cs:829-836) - the WHOLE stack drains and play
+  // resumes. C1 gave the slot window depth and left all three exits as
+  // the single `done`, so a completed save or load popped back onto
+  // THIS window with the motor and the clock still held and the player
+  // had to dismiss the pause menu a second time.
+  //
+  // The hook below is the rest of that drain, and it is `_closeWith`
+  // rather than a bare `done` on purpose: PopToHUD pops this window
+  // too, so its OnPop settings latch (:212-215) fires on the way out
+  // exactly as DFU's does. Each host's own `if (overlay?.done)
+  // dropOverlay()` then takes both levels off its stack - one pop a
+  // frame, which is the port's done-drain law at every other close on
+  // these slots, applied one level deeper rather than four hosts
+  // learning a second word for it.
+  //
+  // Null under the replace fallback: there the pause window closed
+  // when the slot window opened, so `done` alone already lands on the
+  // HUD and a second close would only re-run the latch.
+  let win = null;
   const saveWindowHooks = (extra) => ({
     playerName: hooks.playerName,
     // Under a real push the pop uncovers the pause window itself, so
     // `done` is the whole of CloseWindow and onBack must NOT rebuild.
     onBack: push ? null : () => openClassicPauseFlow(show, hooks),
+    popToHUD: push ? () => win?._closeWith() : null,
     ...extra,
   });
-  const win = new PauseOptionsWindow({
+  win = new PauseOptionsWindow({
     ...hooks,
     saveLoadPushes: !!push,   // C1: does this host's door stack, or replace?
     openControls: controlsArtLoaded()
