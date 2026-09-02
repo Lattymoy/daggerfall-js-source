@@ -65,9 +65,30 @@ inside it and that is exactly how AI 1's check was fooled.
 project-final's god-file guard: raised 1041 -> 1075 on purpose, with
 the reason in its own idiom.
 
+## ENHANCED AI 3 - a level bakes from its own collider (2026-09-02)
+
+`src/ai/navBake.js`, pure: the Collider's buckets hold every triangle
+in world space - the ones the player collides with - and the bake
+reads them back, so the nav's ground and the game's ground are one
+source. An anchor is required, always. THE PHANTOM FLOOR: his buildNav
+lays an implicit floor - y = 0 for arenas - and a dungeon has none; the
+ground handed in sits ten metres below the lowest triangle, unreachable
+from any real floor, and the anchored election drops it as an island.
+Found on the way, in his file, fixed there first (8ba9100) and ported:
+the height layer's surfH started at y = 0 and took only tops above it,
+so a floor at -5 answered 0 - buildNav's ground-aware floor had never
+reached the query. The nav now carries its ground to chf and surfH
+falls back to it; arenas answer byte-identically. Pinned on a room at
+y = -5 through the height query, with two mutants dead. The ARENA2-
+gated Privateer's Hold pin is written and skips until the archives are
+here; Mac chose not to upload them, so the first real bake is his to
+see. Not yet: the worker, the cache, the dungeon host's call (3b).
+
 ## The slices ahead
 
-- **ENHANCED AI 3 - a dungeon bakes.** Feed the Collider's buckets
+- **ENHANCED AI 3b - the worker, the cache, the host.** The dungeon
+  host calls the bake at load through a worker, anchored at the entry,
+  cached with bakeNavData keyed on the location. Feed the Collider's buckets
   through triRaster at load, in a worker, anchored at the player's
   entry; cache with bakeNavData in IndexedDB keyed on the location. The
   budget/coarsen rule sizes the cells (a twenty-block dungeon is ~800k

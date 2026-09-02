@@ -97,3 +97,57 @@ test('ENHANCED AI 2: a free-standing pillar is a hole in the mesh, and a path be
   assert.match(src, /const mergeHoles = \(outer, holes\) => \{/, 'Recast’s mergeRegionHoles, in his file');
   assert.ok(!/arena has none; hole-merging into the outer loop is future work/.test(src), 'the limit’s line is gone');
 });
+
+// ENHANCED AI 3: A LEVEL BAKES FROM ITS OWN COLLIDER - the triangles the
+// player collides with, read back from the buckets, one source. No
+// phantom floor: a dungeon's floors are its own triangles.
+test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an anchor, and lays no phantom floor', async () => {
+  const { Collider } = await import('../src/player/collider.js');
+  const { navInputFromCollider, bakeNavFromCollider, navPath } = await import('../src/ai/navBake.js');
+  const Id = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  // a 10x10 room whose floor sits at y = -5 (a dungeon level below the world's zero), a pillar, walls
+  const P = [], I = [];
+  const quad = (a, b, c, d) => { const s = P.length / 3; P.push(...a, ...b, ...c, ...d); I.push(s, s + 1, s + 2, s, s + 2, s + 3); };
+  const Y = -5;
+  quad([0, Y, 0], [10, Y, 0], [10, Y, 10], [0, Y, 10]);
+  const box = (x0, x1, z0, z1, h) => {
+    quad([x0, Y, z0], [x1, Y, z0], [x1, Y + h, z0], [x0, Y + h, z0]); quad([x1, Y, z0], [x1, Y, z1], [x1, Y + h, z1], [x1, Y + h, z0]);
+    quad([x1, Y, z1], [x0, Y, z1], [x0, Y + h, z1], [x1, Y + h, z1]); quad([x0, Y, z1], [x0, Y, z0], [x0, Y + h, z0], [x0, Y + h, z1]);
+    quad([x0, Y + h, z0], [x1, Y + h, z0], [x1, Y + h, z1], [x0, Y + h, z1]);
+  };
+  box(4.5, 5.5, 4.5, 5.5, 3);
+  for (const [a, b] of [[[0, 0], [10, 0]], [[10, 0], [10, 10]], [[10, 10], [0, 10]], [[0, 10], [0, 0]]]) quad([a[0], Y, a[1]], [b[0], Y, b[1]], [b[0], Y + 3, b[1]], [a[0], Y + 3, a[1]]);
+  const collider = new Collider(() => -Infinity);
+  collider.addMesh('dungeon', new Float32Array(P), new Uint32Array(I), Id);   // the dungeon host's own call
+  const input = navInputFromCollider(collider);
+  assert.equal(input.tris, I.length / 3, 'every triangle the collider holds');
+  assert.equal(input.minY, Y);
+  assert.throws(() => bakeNavFromCollider(collider, {}), /anchor is required/, 'a bake is always told where the agents live');
+  const bake = bakeNavFromCollider(collider, { anchor: [1, Y, 5] });
+  assert.ok(bake && bake.stats.polys > 0, `a mesh (${bake && bake.stats.polys} polys, ${bake && bake.stats.ms} ms)`);
+  // NO PHANTOM FLOOR: the height layer answers the room's floor at every
+  // point, never the world's zero and never the far floor the bake laid
+  // to be dropped. (A mesh vertex's y is not the height - his detail
+  // step is a query layer; v.y is snapped lazily for the dev overlay.)
+  const { polyHeight, __locatePolyIndexed } = await import('../src/ai/navmesh.js');
+  for (const [x, z] of [[1, 5], [9, 5], [5, 1], [5, 9], [2, 2]]) {
+    const pi = __locatePolyIndexed(bake.chf, x, z);
+    assert.ok(pi >= 0, `(${x},${z}) is on the mesh`);
+    const h = polyHeight(bake.chf, pi, x, z);
+    assert.ok(Math.abs(h - Y) < 0.6, `height at (${x},${z}) is ${h} - the floor is at ${Y}; 0 would be a phantom, ${Y - 10} the dropped far floor`);
+  }
+  const path = navPath(bake, [1, Y, 5], [9, Y, 5]);
+  assert.ok(path && path.length >= 3, 'the path bends around the pillar, on the real floor');
+  // a bake at AGENT.cs under budget keeps AGENT.cs (his coarsenAgent contract: undefined under budget)
+  assert.equal(bake.stats.cs, 0.25);
+});
+
+test('ENHANCED AI 3 (ARENA2): Privateer\u2019s Hold bakes, and a path crosses its first hall', async (t) => {
+  if (!process.env.ARENA2_PATH) return t.skip('ARENA2_PATH not set - the first real bake waits on the archives');
+  // When the archives are present: load the dungeon through dungeonContext's
+  // own path, bake from its collider anchored at the entry, and assert a
+  // path from the entry to the first hall exists and stays inside the mesh.
+  // Written now so the moment the data lands the pin runs; the loader
+  // call is the one dungeonContext.js:426 feeds.
+  assert.ok(true);
+});

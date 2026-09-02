@@ -138,7 +138,7 @@ export function buildNav(colliders, agent = AGENT, holes = [], ground = null) {
       addSpan(ix, iz, base, surfaceY(c, sx, sz), slopeOK); // box: flat top; ramp: the plane height here
     }
   }
-  return { agent, cs, ch, xmin, zmin, ymin, nx, nz, ny, cells };
+  return { agent, cs, ch, xmin, zmin, ymin, nx, nz, ny, cells, ground }; // ground rides along for the height layer (surfH) - null for arenas, exactly as before
 }
 
 // world height of a cell's top solid surface (top of its highest span), or null if the cell is empty
@@ -247,7 +247,7 @@ export function buildCompact(nav, agent = nav.agent) {
   link(); // re-link over the eroded set
   calcDist(); // final field, for the debug colour + the 4.3 watershed
 
-  return { agent, cs, ch, xmin, zmin, ymin, nx, nz, ny, spans, climb, headroom };
+  return { agent, cs, ch, xmin, zmin, ymin, nx, nz, ny, spans, climb, headroom, ground: nav.ground ?? null };
 }
 
 // ── debug-draw: the walkable surface after erosion, coloured by the distance field (edge -> interior) ─
@@ -794,7 +794,7 @@ function buildLocateIndex(mesh) {
 function ensureMeshHeights(chf) {
   if (!chf._flatHeights || !chf.colliders) return;
   const { cs, xmin, zmin, colliders } = chf;
-  for (const v of chf.mesh.verts) v.y = surfH(colliders, xmin + v.x * cs, zmin + v.z * cs);
+  for (const v of chf.mesh.verts) v.y = surfH(colliders, xmin + v.x * cs, zmin + v.z * cs, chf.ground);
   chf._flatHeights = false;
 }
 
@@ -831,7 +831,7 @@ export function polyMeshDebugFaces(chf) {
 export function buildPolyMeshDetail(chf, colliders) {
   const mesh = chf.mesh; if (!mesh) return null;
   const { cs, xmin, zmin } = chf;
-  for (const v of mesh.verts) v.y = surfH(colliders, xmin + v.x * cs, zmin + v.z * cs); // snap onto the real surface
+  for (const v of mesh.verts) v.y = surfH(colliders, xmin + v.x * cs, zmin + v.z * cs, chf.ground); // snap onto the real surface
   chf.colliders = colliders; // the height query samples the surface directly
   return mesh;
 }
@@ -840,19 +840,24 @@ export function buildPolyMeshDetail(chf, colliders) {
 // (`pi` is reserved for picking among stacked walkable surfaces later; this arena has none, so highest wins.)
 export function polyHeight(chf, pi, wx, wz) {
   void pi;
-  return chf.colliders ? surfH(chf.colliders, wx, wz) : null;
+  return chf.colliders ? surfH(chf.colliders, wx, wz, chf.ground) : null;
 }
 
-// the one surface sampler: the tallest collider top whose footprint covers (wx,wz), else the ground at 0.
-function surfH(colliders, wx, wz) {
-  let y = 0;
+// the one surface sampler: the tallest collider top whose footprint covers (wx,wz), else the ground -
+// the nav's ground where one was given (ENHANCED AI 3, the Daggerfall port: a dungeon's floors sit
+// BELOW zero, and `let y = 0` answered 0 over a floor at -5 - the ground-aware floor of buildNav never
+// reached the height layer), else 0, exactly as before. An arena with every top at or above 0 answers
+// byte-identically; only a top below zero, which used to be floored to 0, is now itself.
+function surfH(colliders, wx, wz, ground = null) {
+  let y = -Infinity;
   for (const c of colliders) {
     if (c.rayOnly) continue; // overhead cover is not a standable surface
     if (wx < c.x0 || wx > c.x1 || wz < c.z0 || wz > c.z1) continue;
     const sy = surfaceY(c, wx, wz);
     if (sy > y) y = sy;
   }
-  return y;
+  const floor = ground ? ground.at(wx, wz) : 0;
+  return y === -Infinity ? floor : Math.max(y, floor);
 }
 
 // ── debug-draw: every walkable cell as a quad at its four corners' true heights, per-region hue - so the
@@ -863,7 +868,7 @@ export function detailDebugFaces(chf) {
   const colour = (r) => { const h = ((r * 0.61803398875) % 1) * 6, x = 1 - Math.abs((h % 2) - 1);
     const [R, G, B] = h < 1 ? [1, x, 0] : h < 2 ? [x, 1, 0] : h < 3 ? [0, 1, x] : h < 4 ? [0, x, 1] : h < 5 ? [x, 0, 1] : [1, 0, x];
     return [40 + R * 175, 40 + G * 175, 40 + B * 175]; };
-  const wy = (gx, gz) => [xmin + gx * cs, surfH(cols, xmin + gx * cs, zmin + gz * cs) + LIFT, zmin + gz * cs];
+  const wy = (gx, gz) => [xmin + gx * cs, surfH(cols, xmin + gx * cs, zmin + gz * cs, chf.ground) + LIFT, zmin + gz * cs];
   const out = [];
   for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) {
     let reg = 0; for (const s of spans[ix + iz * nx]) if (s.walkable && s.reg) { reg = s.reg; break; }
@@ -1069,7 +1074,7 @@ function solvePath(chf, start, goal, opts) {
     portals.push({ left: { x: head.x, z: head.z }, right: { x: tail.x, z: tail.z } });
   }
   portals.push({ left: gG, right: gG });
-  const points = funnel(portals).map((c) => { const wx = xmin + c.x * cs, wz = zmin + c.z * cs; return [wx, chf.colliders ? surfH(chf.colliders, wx, wz) : 0, wz]; });
+  const points = funnel(portals).map((c) => { const wx = xmin + c.x * cs, wz = zmin + c.z * cs; return [wx, chf.colliders ? surfH(chf.colliders, wx, wz, chf.ground) : 0, wz]; });
   return { polys: corridor, points };
 }
 
@@ -1082,7 +1087,7 @@ export function findPath(chf, start, goal, opts) { // opts.ignore (Slice 9): an 
 export function pathDebugFaces(chf, start, goal) {
   const sol = solvePath(chf, start, goal); if (!sol) return [];
   const mesh = chf.mesh, { cs, xmin, zmin } = chf, cols = chf.colliders, out = [];
-  const W = (q, lift) => [xmin + q.x * cs, (cols ? surfH(cols, xmin + q.x * cs, zmin + q.z * cs) : 0) + lift, zmin + q.z * cs];
+  const W = (q, lift) => [xmin + q.x * cs, (cols ? surfH(cols, xmin + q.x * cs, zmin + q.z * cs, chf.ground) : 0) + lift, zmin + q.z * cs];
   for (const pi of sol.polys) { const v = mesh.polys[pi].verts.map((gi) => mesh.verts[gi]);
     for (let k = 1; k + 1 < v.length; k++) out.push({ p: [...W(v[0], 0.08), ...W(v[k], 0.08), ...W(v[k + 1], 0.08), ...W(v[k + 1], 0.08)], n: [0, 1, 0], c: [70, 110, 205] }); }
   const P = sol.points;
