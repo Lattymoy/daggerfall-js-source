@@ -238,8 +238,11 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // BUILT in the worker rather than shipped to it. It is pure - the
   // generator, the map's lon/lat law and the sampler's constants, no DOM
   // anywhere in its closure - which is the law this list enforces.
-  assert.deepEqual(imports, ['../formats/woodsFile.js', './roadsProducer.js', './terrainGen.js'],
-    'the import graph is exactly the reader, the road producer and the kernel');
+  // ROADS 19: the cache joins - pure in the sense this list enforces: it
+  // touches IndexedDB only through an injectable store that answers null
+  // when the API is absent, and nothing else in its closure is a global.
+  assert.deepEqual(imports, ['../formats/woodsFile.js', './roadsCache.js', './roadsProducer.js', './terrainGen.js'],
+    'the import graph is exactly the reader, the road cache, the producer and the kernel');
   const code = shell.replace(/\/\/[^\n]*/g, '').replace(/\/\*[^]*?\*\//g, '');
   assert.ok(!/\bdocument\b/.test(code) && !/new Worker/.test(code), 'no DOM, no nested workers');
   assert.ok(shell.includes('globalThis.onmessage = (ev) =>'), 'the message loop is the module');

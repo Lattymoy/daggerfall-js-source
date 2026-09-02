@@ -400,3 +400,20 @@ map: right angles 8.1% -> 0.9% (his 1.7%), hairpins 3.2% -> 0.0% (his
 0.0%), junctions 9.2% -> 6.5% (his 4.4%). Road pixels 15.3k -> 14.0k:
 the second spurs were a thousand pixels of duplicate road. The remaining
 gaps are the track webs (dead-ends 29% vs 7%) and road length.
+
+## ROADS 19 - built once per map (2026-09-02)
+
+Item 8, un-parked by Audit 49's number: 4.4 seconds of routing before
+the first terrain chunk, every boot, for a result that is the same
+whenever its inputs are. The worker builds through `roadsCache.js`:
+IndexedDB, keyed on everything that shapes the network - a generator
+version bumped by hand when the logic changes shape, the dials
+serialised (so a turned dial invalidates without a bump), the
+settlement list's fingerprint (its length and a sum over pixels and
+types - MAPS.BSA's content as far as roads are concerned), and the
+heightmap's length. A hit skips the build; a miss pays it once and
+stores it; a store that cannot open is a miss, never an error. The
+store is injectable, which is what lets the law be pinned in node. A
+job that arrives during the lookup queues behind it, as it queued
+behind the synchronous build, so no chunk is ever roadless. The boot
+log's stats carry `cached: true` on a hit.

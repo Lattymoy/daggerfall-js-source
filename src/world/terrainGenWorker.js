@@ -16,12 +16,15 @@
 import { WoodsFile } from '../formats/woodsFile.js';
 import { generatePixelTerrain } from './terrainGen.js';
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
+import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
 
 let woods = null;
 
 let roads = null;   // ROADS 3
-globalThis.onmessage = (ev) => {
-  const m = ev.data ?? {};
+let pendingRoads = null;   // ROADS 19: the cache lookup in flight
+globalThis.onmessage = (ev) => handle(ev.data ?? {});
+
+function handle(m) {
   try {
     if (m.t === 'init') {
       const w = new WoodsFile();
@@ -38,16 +41,31 @@ globalThis.onmessage = (ev) => {
     if (m.t === 'roads') {
       roads = null;
       if (m.settlements && woods) {
-        const net = buildRoadsFromSettlements(m.settlements, woods);
-        roads = net ? { roads: net.roads, tracks: net.tracks } : null;
-        // ROADS 7: the map draws the network too, on this thread's other
-        // side, so the arrays go back ONCE - a copy, transferred - and
-        // the worker keeps its own for the terrain jobs.
-        const back = roads ? { roads: roads.roads.slice(), tracks: roads.tracks.slice() } : null;
-        globalThis.postMessage({ t: 'roads', stats: net ? net.stats : null, net: back }, back ? [back.roads.buffer, back.tracks.buffer] : []);
+        // ROADS 19: through the cache. The key is everything that shapes
+        // the network; a hit skips the 4.4-second build, a miss pays it
+        // once and stores it. The message loop is synchronous by design
+        // (the job spread below must not race), so the async cache is
+        // awaited here and jobs queue behind it exactly as they queued
+        // behind the build.
+        pendingRoads = cachedNetwork({
+          key: roadsCacheKey({ settlements: m.settlements, woodsLength: woods._bytes?.byteLength ?? 0 }),
+          build: () => buildRoadsFromSettlements(m.settlements, woods),
+        }).then((net) => {
+          roads = net ? { roads: net.roads, tracks: net.tracks } : null;
+          // ROADS 7: the map draws the network too, on this thread's other
+          // side, so the arrays go back ONCE - a copy, transferred - and
+          // the worker keeps its own for the terrain jobs.
+          const back = roads ? { roads: roads.roads.slice(), tracks: roads.tracks.slice() } : null;
+          const stats = net ? { ...net.stats, cached: !!net.cached } : null;
+          globalThis.postMessage({ t: 'roads', stats, net: back }, back ? [back.roads.buffer, back.tracks.buffer] : []);
+          pendingRoads = null;
+        });
       }
       return;
     }
+    // ROADS 19: a job that arrives while the network is still loading
+    // waits for it, so no chunk is ever generated roadless.
+    if (m.t === 'job' && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
     if (m.t !== 'job') return;
     if (!woods) throw new Error('terrain worker got a job before init');
     // AUDIT EV F-DOC1: the job crosses WHOLE - a spread, not a
@@ -62,4 +80,4 @@ globalThis.onmessage = (ev) => {
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });
   }
-};
+}

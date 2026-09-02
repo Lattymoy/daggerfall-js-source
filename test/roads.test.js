@@ -628,3 +628,39 @@ test('AUDIT 49 A2: the through-road merge is pinned at the source - no fixture c
   const src = (await import('node:fs')).readFileSync('src/world/roadNetwork.js', 'utf8');
   assert.match(src, /if \(mergeNear && cell !== sc && existing\[cy \* MAP_WIDTH \+ cx\] !== 0/, 'a road joins the road it meets within mergeNear of its town');
 });
+
+// ROADS 19: THE NETWORK IS BUILT ONCE PER MAP. The cache's law, pinned
+// against an in-memory store since node has no IndexedDB: the same
+// inputs hit, any change to what shapes the network misses, and a store
+// that cannot open is a miss rather than an error.
+test('ROADS 19: the cache key covers everything that shapes the network, and a miss builds once', async () => {
+  const { roadsCacheKey, cachedNetwork, GENERATOR_VERSION, idbStore } = await import('../src/world/roadsCache.js');
+  const S = [{ x: 200, y: 100, type: LT.TownCity }, { x: 260, y: 120, type: LT.TownHamlet }];
+  const k = roadsCacheKey({ settlements: S, woodsLength: 500 });
+  assert.equal(k, roadsCacheKey({ settlements: S, woodsLength: 500 }), 'same inputs, same key');
+  assert.notEqual(k, roadsCacheKey({ settlements: S, woodsLength: 501 }), 'a different heightmap');
+  assert.notEqual(k, roadsCacheKey({ settlements: [...S, { x: 1, y: 1, type: LT.Tavern }], woodsLength: 500 }), 'a different map');
+  assert.notEqual(k, roadsCacheKey({ settlements: [{ ...S[0], x: 201 }, S[1]], woodsLength: 500 }), 'a town one pixel over');
+  assert.notEqual(k, roadsCacheKey({ settlements: S, woodsLength: 500, dials: { turnCost: 0.5 } }), 'a turned dial');
+  assert.match(k, new RegExp(`^roads:v${GENERATOR_VERSION}:`), 'the generator version leads the key');
+  // build-through: one build, then hits
+  const mem = new Map(); const store = { async get(x) { return mem.get(x) ?? null; }, async set(x, v) { mem.set(x, v); } };
+  let builds = 0;
+  const build = () => { builds++; return buildRoadNetwork({ locations: S, heightAt: flat, isWater: () => false }); };
+  const a = await cachedNetwork({ key: k, build, store });
+  const b = await cachedNetwork({ key: k, build, store });
+  assert.equal(builds, 1, 'built once');
+  assert.equal(a.cached, false); assert.equal(b.cached, true);
+  assert.deepEqual(Array.from(b.roads), Array.from(a.roads), 'the hit is the build');
+  // no store at all: always builds, never throws
+  const c = await cachedNetwork({ key: k, build, store: null });
+  assert.equal(builds, 2); assert.equal(c.cached, false);
+  assert.equal(idbStore(undefined), null, 'no IndexedDB is a null store, not an error');
+});
+
+test('ROADS 19: a job that arrives during the cache lookup waits for it - no chunk is ever roadless', async () => {
+  const src = (await import('node:fs')).readFileSync('src/world/terrainGenWorker.js', 'utf8');
+  assert.match(src, /if \(m\.t === 'job' && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/,
+    'a job behind the lookup queues on it, exactly as it queued behind the synchronous build');
+  assert.match(src, /roadsCacheKey\(\{ settlements: m\.settlements, woodsLength: woods\._bytes\?\.byteLength \?\? 0 \}\)/, 'the worker keys on the list and the heightmap');
+});
