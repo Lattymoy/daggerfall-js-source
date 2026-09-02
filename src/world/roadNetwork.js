@@ -64,7 +64,15 @@ export const ROAD_TYPES = Object.freeze(new Set([
 ]));
 export const TRACK_TYPES = Object.freeze(new Set([
   LOCATION_TYPES.TownVillage, LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple,
+  LOCATION_TYPES.HomeWealthy, LOCATION_TYPES.ReligionCult, LOCATION_TYPES.Coven,
 ]));
+// ROADS 16: THE SET IS THE ANSWER KEY'S, measured on the real map. Share
+// of each class within one pixel of a Basic Roads TRACK: villages 84%,
+// taverns 76%, wealthy homes 74%, covens 71%, temples 67%, cults 63% -
+// all well above the ~47% a random location gets from the web's density
+// alone. Farms sit AT that baseline (47%): incidental, not tracked, and
+// Audit 45 F1's exclusion stands. Dungeons sit BELOW it (24-29%):
+// avoided. HomeWealthy was wrongly excluded by F1 and is back.
 // AUDIT ROADS F1: HomeFarms and HomeWealthy were track-grade in the
 // first draft. Farms are the single most numerous location type on the
 // map - thousands of them - and a dirt track to every one blankets the
@@ -78,16 +86,16 @@ export const TRACK_TYPES = Object.freeze(new Set([
  *  mountain" is a cost-function complaint and the answer should be one
  *  number away. */
 export const ROAD_DIALS = Object.freeze({
-  neighbours: 3,          // k-nearest edges per road node
+  neighbours: 2,          // ROADS 16: 3 made junctions at 14% of road pixels; his are 4.4%. 2 gives 9%
   roadReach: 70,          // max pixel distance for a road edge
-  trackReach: 14,         // ROADS 15: his track dead-ends sit within 9 px of a road at the 95th
-                          // percentile (median 0, max 56); 40 drew tracks four times his length
-  climbCost: 40,          // per unit of small-heightmap rise, per step (percent)
+  trackReach: 20,         // ROADS 15/16: his track ends sit within 9 px of a road at the 95th percentile,
+                          // but his tracks average 14 px and web together; 14 gave stubs, 20 gives 23k px to his 30k
+  climbCost: 80,          // ROADS 16: his roads follow the ground harder than 40 made ours
   descentCost: 10,        // downhill is cheaper but not free (percent)
   highCost: 0.08,         // per unit of height above `highAbove`, per step
   highAbove: 40,          // small-heightmap value where terrain starts to cost
   roadDiscount: 0.5,      // stepping onto an existing road costs half - roads merge
-  turnCost: 0.7,          // per 45 degrees of heading change, per step (ROADS 5)
+  turnCost: 0.4,          // ROADS 16: squared per 45 degrees (ROADS 14); 0.7 held bends at 18%, his are 30%
 });
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);

@@ -218,7 +218,11 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
 test('AUDIT ROADS F1: a farm gets no track - it sits in the fields it works', async () => {
   const { TRACK_TYPES, ROAD_TYPES } = await import('../src/world/roadNetwork.js');
   assert.ok(!TRACK_TYPES.has(LT.HomeFarms), 'HomeFarms is the most numerous location type on the map');
-  assert.ok(!TRACK_TYPES.has(LT.HomeWealthy), 'an estate is off the road');
+  // ROADS 16: HomeWealthy is BACK - 74% of them sit on a Basic Roads
+  // track, far above the 47% a random location gets from density alone.
+  // F1's exclusion was a guess; the answer key overruled it.
+  assert.ok(TRACK_TYPES.has(LT.HomeWealthy), 'an estate gets a track - the answer key says so');
+  assert.ok(TRACK_TYPES.has(LT.ReligionCult) && TRACK_TYPES.has(LT.Coven), 'cults 63%, covens 71%');
   assert.ok(!TRACK_TYPES.has(LT.DungeonLabyrinth) && !ROAD_TYPES.has(LT.DungeonLabyrinth));
   // And the behaviour: a farm beside a town gets nothing, a village does.
   const locations = [

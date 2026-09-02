@@ -322,3 +322,65 @@ villages; ours join towns and leave villages to spurs. Making villages
 waypoints the roads pass through is the next calibration, and it can
 double the network's size, so it waits on MAPS.BSA and WOODS.WLD to be
 measured against his 21,554 road pixels before it is turned.
+
+## ROADS 16 - the real map, his beside ours (2026-09-02)
+
+Mac uploaded the four map files, so the loop ran here. What the answer
+key's design is, read straight off MAPS.BSA against his arrays - the
+share of each class within one pixel of his network:
+
+| class | n | on a road | on a track |
+|---|---|---|---|
+| TownCity | 410 | 100% | 57% |
+| TownHamlet | 1200 | 90% | 67% |
+| TownVillage | 1834 | 39% | 84% |
+| Tavern | 1646 | 33% | 76% |
+| HomeWealthy | 1399 | 29% | 74% |
+| ReligionTemple | 1043 | 24% | 67% |
+| ReligionCult | 475 | 26% | 63% |
+| HomeFarms | 1841 | 23% | 47% |
+| Dungeon* | ~3500 | ~22% | 24-29% |
+
+A random location's chance of sitting within a pixel of his track web
+is about 47%, from density alone. Villages, taverns, wealthy homes,
+temples and cults sit far above it - TRACKED. Farms sit AT it -
+incidental, F1 stands. Dungeons sit BELOW it - avoided. Road-grade is
+cities and hamlets, and ours already was: 1,610 nodes both ways.
+HomeWealthy, ReligionCult and Coven join the track set; F1's exclusion
+of estates was a guess the data overruled.
+
+THE DIALS, swept and set: neighbours 3 -> 2 (junctions 14% -> 9%, his
+4.4%), turnCost 0.7 -> 0.4 and climbCost 40 -> 80 (bends 18% -> 23%,
+his 30%), trackReach 14 -> 20 (track pixels 16k -> 23k, his 30k).
+
+THE TABLE, at the calibrated dials:
+
+| | pixels | bend | right-angle | hairpin | diagonal | dead-end | junction |
+|---|---|---|---|---|---|---|---|
+| his roads | 21,554 | 30% | 1.7% | 0.0% | 34% | 0.3% | 4.4% |
+| our roads | 15,259 | 23% | 8.1% | 3.2% | 37% | 1.5% | 9.2% |
+| his tracks | 30,472 | 39% | 2.4% | 0.0% | 36% | 7.1% | 6.9% |
+| our tracks | 22,907 | 30% | 9.2% | 0.0% | 36% | 29.4% | 4.9% |
+
+WHAT THE DIALS COULD NOT MOVE, and why - three structural gaps, each
+the next slice:
+
+1. RIGHT ANGLES (8% vs 1.7%) and HAIRPINS (3% vs 0%). Every hairpin
+   sampled is a TOWN pixel where two of our spurs arrive from adjacent
+   directions; his towns are entered once and passed through. Ours
+   converge as separate edges. Fix: a second arrival merges into the
+   first spur before the town. The right angles are the same shape
+   plus L-turns around blocked pixels.
+2. TRACK DEAD-ENDS (29% vs 7%). Ours are spurs, one dead end each,
+   3.6 px on average; his are 14 px on average and web together
+   (junction 6.9%). His tracks connect locations to each other along
+   the way, not just to the nearest road. Fix: tracks may route to
+   the nearest OTHER track node as well as the road, so villages chain.
+3. ROAD LENGTH (15k px vs 21.5k at the same node count). His edges
+   are fewer and LONGER - the 30% bend is terrain being followed. Ours
+   are straighter and shorter at any climb dial. Fix is in 1: fewer,
+   through-routed edges naturally lengthen.
+
+Everything above is measured, not felt, and the tool re-reads it in
+one command. 44 unrouted pairs on the real map at these dials - names
+in the boot log (ROADS 8) - most of them islands and the far north.
