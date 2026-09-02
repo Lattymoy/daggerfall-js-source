@@ -14,6 +14,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
+import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
 import { placeGrass, ROAD_RECORDS } from '../render/groundSurfaces.js';   // EE7: the grass placer; EE10: the road records the field reads
@@ -316,10 +317,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       console.warn(`[roads] no route: ${nm(a)} -> ${nm(b)}`);
     }
   };
+  // ROADS 24: the mod's two switches, read from the Mods pane's store
+  // as the world loads - SmoothRoads on, RiversAndStreams off, as the
+  // mod ships them - and carried on the network object into the kernel.
+  const roadSwitches = { smooth: modSetting('roads-hazelnut', 'SmoothRoads'), water: modSetting('roads-hazelnut', 'RiversAndStreams') };
   loadModRoads().then((his) => {
-    if (his) { terrainGen.setRoadsData(his, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)`)); return; }
+    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); return; }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
-    terrainGen.setRoads(settlementsOf(maps), logRoads);
+    terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
   });
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily

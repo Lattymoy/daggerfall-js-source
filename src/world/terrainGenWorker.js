@@ -54,7 +54,7 @@ function handle(m) {
           key: roadsCacheKey({ settlements: m.settlements, woodsLength: woods._bytes?.byteLength ?? 0 }),
           build: () => buildRoadsFromSettlements(m.settlements, woods),
         }).then((net) => {
-          roads = net ? { roads: net.roads, tracks: net.tracks } : null;
+          roads = net ? { roads: net.roads, tracks: net.tracks, ...(m.switches ?? {}) } : null;   // ROADS 24
           // ROADS 7: the map draws the network too, on this thread's other
           // side, so the arrays go back ONCE - a copy, transferred - and
           // the worker keeps its own for the terrain jobs.

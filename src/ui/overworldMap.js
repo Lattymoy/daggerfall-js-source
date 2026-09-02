@@ -827,14 +827,18 @@ export class OverworldMapWindow {
     // inversion, saved with the game. A road chip does not dirty the
     // markers; it dirties the RELIEF, which is rebuilt on the next draw
     // because the grid is keyed on the flags.
-    for (const key of ['dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks']) {
+    // ROADS 24: the water chips appear only when the mod's switch is on -
+    // a chip for a layer the terrain never draws would be a lie.
+    const net0 = this.deps.roads?.() ?? null;
+    const waterOn = !!(net0 && net0.water);
+    for (const key of ['dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks', ...(waterOn ? ['rivers', 'streams'] : [])]) {
       const b = el('button', 'ovchip', key[0].toUpperCase() + key.slice(1));
       b.dataset.key = key;
       b.onclick = () => {
         // the LIVE store object, edited in place - the classic law
         this.filters[key] = !this.filters[key];
         this._markersDirty = true;
-        if (key === 'roads' || key === 'tracks') this._ensureTerrain();   // ROADS 12
+        if (key === 'roads' || key === 'tracks' || key === 'rivers' || key === 'streams') this._ensureTerrain();   // ROADS 12/24
         this._renderChips();
       };
       chips.append(b);
@@ -1004,18 +1008,24 @@ export class OverworldMapWindow {
     const net = this.deps.roads?.() ?? null;
     // Hidden is TRUE, the classic inversion.
     const showRoads = !this.filters.roads, showTracks = !this.filters.tracks;
-    const roadsKey = `${showRoads ? 'r' : '-'}${showTracks ? 't' : '-'}`;
+    const showRivers = !this.filters.rivers, showStreams = !this.filters.streams;   // ROADS 24
+    const roadsKey = `${showRoads ? 'r' : '-'}${showTracks ? 't' : '-'}${showRivers ? 'v' : '-'}${showStreams ? 's' : '-'}`;
     let grid = _gridCache.get(bytes);
     if (!grid || grid.roadsRef !== net || grid.roadsKey !== roadsKey) {
       // AUDIT 46 A1: the mask's stride is the WORLD's (MAP_WIDTH), not the
       // window's - a window built at another mapSize (the tests do) would
       // otherwise shear the network across the relief. Out of the world,
       // no path.
-      const pathAt = net && (showRoads || showTracks)
+      const pathAt = net && (showRoads || showTracks || (net.water && (showRivers || showStreams)))
         ? (x, y) => {
           if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) return 0;
           const i = y * MAP_WIDTH + x;
-          return (showRoads && net.roads[i]) ? 2 : ((showTracks && net.tracks[i]) ? 1 : 0);
+          if (showRoads && net.roads[i]) return 2;
+          if (showTracks && net.tracks[i]) return 1;
+          // ROADS 24: water only when the switch is on and the arrays are there
+          if (net.water && showRivers && net.rivers && net.rivers[i]) return 4;
+          if (net.water && showStreams && net.streams && net.streams[i]) return 3;
+          return 0;
         }
         : null;
       grid = buildOverworldGrid({

@@ -211,7 +211,7 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   assert.match(worker, /m\.t === 'roads'/, 'the worker accepts the network');
   assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'and hands it to the kernel on every job');
   const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
-  assert.match(client, /setRoads\(settlements, onStats = null\)/, 'the client has the door');
+  assert.match(client, /setRoads\(settlements, onStats = null, switches = null\)/, 'the client has the door (ROADS 24: the switches ride it)');
   assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 3,
     'every same-thread path - direct, worker-error, and dying-worker drain - carries it');
   // AUDIT ROADS F2: the worker BUILDS; this thread builds only on a
@@ -511,7 +511,7 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   resetTravelMapState();
   const src = (await import('node:fs')).readFileSync('src/ui/overworldMap.js', 'utf8');
   assert.match(src, /'dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks'/, 'six chips');
-  assert.match(src, /if \(key === 'roads' \|\| key === 'tracks'\) this\._ensureTerrain\(\);/, 'a road chip re-runs the terrain step');
+  assert.match(src, /if \(key === 'roads' \|\| key === 'tracks' \|\| key === 'rivers' \|\| key === 'streams'\) this\._ensureTerrain\(\);/, 'a road or water chip re-runs the terrain step');
   assert.match(src, /grid\.roadsKey !== roadsKey/, 'the grid is keyed on the flags');
   assert.match(src, /const i = y \* MAP_WIDTH \+ x;/, 'AUDIT 46 A1: the mask is indexed at the WORLD\'s stride, not the window\'s');
   assert.match(src, /\(showRoads && net\.roads\[i\]\)/, 'and a hidden layer is not drawn');
@@ -760,8 +760,8 @@ test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls 
   const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
   assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water \};/, 'the worker takes his arrays ready-made, water included');
   const host = fs.readFileSync('src/scenes/world.js', 'utf8');
-  assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(his/, 'his first');
-  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads\);/, 'ours as the fallback');
+  assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'his first, with the switches');
+  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'ours as the fallback, with the switches');
 });
 
 // ROADS 23: THE PAINTER IS A PORT - PaintPath table-driven, his slots,

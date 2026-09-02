@@ -121,6 +121,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
+import { MOD_SETTINGS, modSetting, setModSetting } from '../systems/modSettings.js';   // ROADS 24
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -1076,7 +1077,30 @@ function paneEnhanced(body) {
 }
 
 function paneMods(body) {
-  body.append(empty('No add-ons installed', 'This port has no mod system, so there is no loader for a mod to load into.'));
+  // ROADS 24: a vendored mod's OWN switches, under the mod's own name,
+  // with the mod's own descriptions - where DFU's modsettings puts them.
+  // The row is a switch like DFU's, writing through modSettings.js.
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    const mc = el('div', 'card');
+    mc.append(el('h3', null, mod.title));
+    for (const [key, def] of Object.entries(mod.keys)) {
+      const row = el('div', 'row');
+      const main = el('div', 'row-main');
+      main.append(el('div', 'row-name', key.replace(/([a-z])([A-Z])/g, '$1 $2')));
+      main.append(el('div', 'meta', def.description));
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      const on = modSetting(vendor, key);
+      const b = el('button', 'act rowact', on ? 'On' : 'Off');
+      if (on) b.classList.add('primary');
+      b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+      ctl.append(b);
+      row.append(ctl);
+      mc.append(row);
+    }
+    mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
+    body.append(mc);
+  }
   const c = el('div', 'card');
   c.append(el('h3', null, "DFU's mod switches"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',

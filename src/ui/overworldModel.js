@@ -137,6 +137,9 @@ export function overworldTint(climate, byte) {
  *  it. Colours are ours, like the rest of this table (:33). */
 export const OVERWORLD_ROAD = [118, 92, 62];
 export const OVERWORLD_TRACK = [150, 128, 96];
+/** ROADS 24: water on the relief - a river's blue, a stream fainter. */
+export const OVERWORLD_RIVER = [58, 96, 150];
+export const OVERWORLD_STREAM = [96, 128, 166];
 
 export function buildOverworldGrid({ heightBytes, width, height, climateAt, pathAt = null }) {
   const positions = new Float32Array(width * height * 3);
@@ -168,10 +171,12 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt, path
         const slope = (cl(px + 1, py + 1) - cl(px - 1, py - 1)) * BASE_HEIGHT_SCALE;
         const shade = Math.min(1.18, Math.max(0.55, 0.9 + slope * 0.004));
         r *= shade; g *= shade; b *= shade;
-        // ROADS 7: the thread. 2 = road, 1 = track, 0 = nothing.
+        // ROADS 7/24: the thread. 2 = road, 1 = track, 4 = river, 3 = stream, 0 = nothing.
         const path = pathAt ? pathAt(px, py) : 0;
         if (path === 2) { [r, g, b] = lerp3([r, g, b], OVERWORLD_ROAD, 0.85); }
         else if (path === 1) { [r, g, b] = lerp3([r, g, b], OVERWORLD_TRACK, 0.55); }
+        else if (path === 4) { [r, g, b] = lerp3([r, g, b], OVERWORLD_RIVER, 0.85); }
+        else if (path === 3) { [r, g, b] = lerp3([r, g, b], OVERWORLD_STREAM, 0.6); }
       }
       colors[i * 3] = Math.min(255, r | 0);
       colors[i * 3 + 1] = Math.min(255, g | 0);

@@ -18,7 +18,7 @@
 // Same inversion as DFU's four (TRUE means HIDDEN), so the default of
 // false is "always on" and a pre-ROADS-12 save, which has no such keys,
 // restores to shown.
-const DEFAULT_FILTERS = Object.freeze({ dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false });
+const DEFAULT_FILTERS = Object.freeze({ dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false, rivers: false, streams: false });   // ROADS 24: water too
 const DEFAULT_POPUP = Object.freeze({ speedCautious: true, sleepModeInn: true, travelShip: true });
 
 let _filters = { ...DEFAULT_FILTERS };
@@ -49,6 +49,7 @@ export function travelMapSaveData(live = null) {
     filterTowns: _filters.towns,
     filterRoads: _filters.roads,     // ROADS 12: the port's own two
     filterTracks: _filters.tracks,
+    filterRivers: _filters.rivers, filterStreams: _filters.streams,   // ROADS 24
     sleepInn: p.sleepModeInn,
     speedCautious: p.speedCautious,
     travelShip: p.travelShip,
@@ -63,6 +64,7 @@ export function restoreTravelMapSaveData(data) {
     dungeons: !!d.filterDungeons, temples: !!d.filterTemples,
     homes: !!d.filterHomes, towns: !!d.filterTowns,
     roads: !!d.filterRoads, tracks: !!d.filterTracks,   // ROADS 12: absent in an older save -> shown
+    rivers: !!d.filterRivers, streams: !!d.filterStreams,   // ROADS 24
   };
   _popUp = {
     speedCautious: d.speedCautious ?? true,

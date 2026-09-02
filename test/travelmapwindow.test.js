@@ -695,11 +695,12 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     // state it would have carried is waiting for it
     const second = new TravelMapWindow(deps);
     // ROADS 12: two more flags ride the same store, default shown (false).
-    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: true, towns: true, roads: false, tracks: false });
+    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: true, towns: true, roads: false, tracks: false, rivers: false, streams: false });   // ROADS 24
     const save = second.getTravelMapSaveData();
     assert.deepEqual(save, {
       filterDungeons: false, filterHomes: true, filterTemples: false, filterTowns: true,
       filterRoads: false, filterTracks: false,   // ROADS 12
+      filterRivers: false, filterStreams: false,   // ROADS 24
       sleepInn: true, speedCautious: true, travelShip: true,
     }, 'GetTravelMapSaveData reads the live state and the struct\'s own defaults');
     // a popup's choices come back on the NEXT popup
@@ -716,7 +717,7 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     assert.equal(second.getTravelMapSaveData().speedCautious, false);
     // a null envelope is DFU's "use the defaults" (:1344-1345)
     second.setTravelMapFromSaveData(null);
-    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false });   // ROADS 12
+    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false, rivers: false, streams: false });   // ROADS 12/24
     assert.equal(second.popUp.speedCautious, true);
     // and the envelope really rides the ONE composer both hosts call
     // (SaveLoadManager.cs:871 / :1479)
@@ -726,6 +727,7 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     assert.deepEqual(envelope.travelMap, {
       filterDungeons: true, filterTemples: false, filterHomes: false, filterTowns: false,
       filterRoads: false, filterTracks: false,   // ROADS 12
+      filterRivers: false, filterStreams: false,   // ROADS 24
       sleepInn: false, speedCautious: false, travelShip: false,
     });
     restoreSessionState({ travelMap: envelope.travelMap }, {});
@@ -734,6 +736,7 @@ test('U41: the filters and the popup toggles outlive the window', () => {
     assert.deepEqual(travelMapSaveData(), {
       filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
       filterRoads: false, filterTracks: false,   // ROADS 12
+      filterRivers: false, filterStreams: false,   // ROADS 24
       sleepInn: true, speedCautious: true, travelShip: true,
     }, 'a pre-U41 save restores the struct\'s defaults, as DFU\'s null arm does');
   } finally { _setTravelMapArtForTests(null); resetTravelMapState(); }
