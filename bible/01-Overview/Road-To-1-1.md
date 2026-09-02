@@ -135,10 +135,68 @@ rotation-sign inversion and the injected-vs-default water tint).
   header: the residence-with-active-quest plate arm, the eight button
   tooltips, the two reveal-buildings console verbs.
 
-The whole of Waves B5 and C - plus the bow salvage and the incident
+The whole of Waves B5, C and D - plus the bow salvage and the incident
 record - is the parked deploy batch: gated on the branch, waiting for
 the owner's eyes before it merges to main (incident law 2 - the
 automap windows are first-ever-rendered surfaces).
+
+## The closeout - 2026-09-02
+
+The campaign audit ran as AUDIT 44 did (thirteen finder lenses over
+everything since `d6e9f01`, every finding adversarially verified): 56
+verified, 42 confirmed and all 42 fixed, 14 refuted. The one critical
+was the campaign's own: B5 handed CORT01I0 a fresh palette on the
+incident's own-palette law - a law that belongs to the six palettized
+IMGs and not to the courtroom - so the court screen drew solid red
+while the suite stayed green, and the pin that should have caught it
+asserted the defective line. The incident sweep now walks all of
+`src/` for the six real names and asserts the complement. The record
+is `Audit-45.md`; the re-measured status is `Port-Status-2026-09-02.md`.
+
+The open-flag re-triage (145 entries, five chunks, every site opened
+against its DFU original) found 69 STALE (the thing shipped), 24
+NOT-A-GAP (DFU does the same), 42 CLOSABLE and 10 BLOCKED. The 93
+stale and not-a-gap sites were rewritten at their sites to say what
+shipped or to carry the DFU citation; the 42 closable became WAVE D.
+
+## Wave D - the closable band - CLOSED 2026-09-02
+
+Ten groups off the re-triage (`scratchpad/road/groups/wave-d.json`),
+39 of 42 slices shipped and the three narrowed with evidence at their
+sites; its review round confirmed 19 findings (11 major, none a wrong
+law - eight pins whose claimed mutants did not die, three paraphrased
+strings whose Internal_Strings rows were in the tree all along, and
+the record), all fixed.
+
+- **D1** DialogShortcuts reaches the coven, guild-service and tavern
+  windows - two accelerator letters the port had guessed wrong (the
+  coven's SUMMON is D, the tavern's EXIT is G), the guild popup's
+  per-service middle button (Services.cs:408-459), and the tavern
+  accelerators' Ledger A row struck.
+- **D2** DFU's three-slice thumb art on the picker and spellbook bars.
+- **D3** REST00I0/01I0/02I0 on the rest window.
+- **D4** the fade layer (FadeBehaviour.cs) for teleport and travel, and
+  the travel popup's key-up deferral.
+- **D5** the exterior automap's quest-residence plate and its tooltips.
+- **D6** the bank's shipyard arm and ship ownership live.
+- **D7** the trade window's equipped filter, the INVE12I0 repair mode,
+  potion recipe tokens, ingredient tooltips.
+- **D8** the dungeon host's four residues: the shared arrow law, action
+  flats that move, the enchant ctx hoisted into `scenes/hostEnchant.js`
+  and mounted, the chargen flow as a real overlay.
+- **D9** eight systems residues (ranged-spell vetoes, Skeleton's Key,
+  held-bundle absorption, guard placement, knightly legacy flags,
+  athleticism, the building directory over subrecords, the quest-item
+  filter); gold-as-counter stays flagged, narrowed.
+- **D10** book fonts, large-HUD offsets, talk OKAY selection, spellbook
+  effect popups, the guild popup in both modes, the TFAC portrait; the
+  docked bar's occlusion and the quest static-NPC arm stay flagged.
+
+What remains after Wave D is the 17 flags of `Home.md`, each with its
+blocker named at the site: no asset in the repo (the PlayerTorch
+prefab, the two ship pixels), a DFU original that does not exist (the
+standalone dungeon host's windows, the enhanced menu's keyboard), or
+the owner's call (the gamepad layer, the pause dropdown's mod rows).
 
 ## The standing watches (not wave work)
 
