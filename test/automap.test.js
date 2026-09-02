@@ -336,8 +336,23 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // A1 review: beacons are never sliced (DFU injects the slicing
   // shader into the GEOMETRY only, Automap.cs:1906 vs :1355-1362) -
   // the slice lifts before the arrow/marker draws
-  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);\n\s*renderer\.setAutomapWater\(null\);\n\s*this\._drawMarkerGroup\(/,
+  const markerBracket = w.slice(w.indexOf('renderer.setClipY(null);'), w.indexOf('this._drawMarkerGroup('));
+  assert.match(markerBracket, /renderer\.setAutomapMode\(AUTOMAP_MODE\.OFF\);/,
     'the marker group draws with the slice lifted, the presentation off and (c2/S6) the water tint off');
+  assert.match(markerBracket, /renderer\.setAutomapWater\(null\);/);
+  assert.equal(/renderer\.drawMesh|_drawGroup\(/.test(markerBracket), false, 'and nothing draws in between');
+  // ROAD-C c2 flight 2: the same bracket INSTALLS the three automap
+  // lights, because they are the other half of the same law - the
+  // geometry shader has no light term, but each of DFU's three
+  // directional lights carries `cullingMask = 1 << layerAutomap` and
+  // the beacons are exactly what lives on that layer
+  // (Automap.cs:2025-2076 vs the Standard-material primitives at
+  // :1355-1441). Drawing them flat was the port's hole.
+  assert.match(markerBracket, /renderer\.setLighting\(ZERO3, beacon\.key, WHITE3\);/, 'ambient 0 + the key light');
+  assert.match(markerBracket, /renderer\.setLightDir\(BEACON_KEY_DIR\);/);
+  assert.match(markerBracket, /renderer\.setMoonlight\(\{ scale: beacon\.fill, dir: BEACON_FILL_DIR, color: WHITE3 \}\);/);
+  assert.match(markerBracket, /renderer\.setThirdLight\(\{ scale: beacon\.back, dir: BEACON_BACK_DIR, color: WHITE3 \}\);/);
+  assert.match(markerBracket, /renderer\.uploadLighting\(\);/, 'and it uploads MID-pass, like setClipY above it');
   // A1 review: the death presenter force-replaces the overlay slot -
   // it must release the occupant, and the micro-map version counter
   // is module-global so a leaked key can never serve a stale bitmap

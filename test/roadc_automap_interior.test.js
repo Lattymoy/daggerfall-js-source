@@ -69,6 +69,7 @@ function stubRenderer(log) {
     setFog: (m) => log.push(['setFog', m]),
     setLighting: (a, s) => log.push(['setLighting', [...a], s]),
     setMoonlight: (m) => log.push(['setMoonlight', m]),
+    setLightDir: () => {}, setThirdLight: () => {}, uploadLighting: () => {},
     setPointLights: (d) => log.push(['setPointLights', d.length]),
     setIndirectLight: (p, range) => log.push(['setIndirectLight', [...p], range]),
     setWindowEmission: (e) => log.push(['setWindowEmission', [...e]]),

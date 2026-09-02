@@ -27,6 +27,7 @@ import {
   AUTOMAP_IMG, AUTOMAP_IMG_GRID_3D, HOTKEYS_DOWN, HOTKEYS_HELD, HOTKEY_VERBS,
   RENDER_MODES, signalAutomapReset, resetAutomapWindowState,
   automapCameraState, automapBackground, automapRenderMode, _setAutomapArt,
+  BEACON_KEY_DIR, BEACON_FILL_DIR, BEACON_BACK_DIR, BEACON_LIGHT_INTENSITY,
 } from '../src/ui/automapWindow.js';
 import {
   AUTOMAP_STRINGS, automapText, automapTooltipFor, shortcutOrFallback,
@@ -82,6 +83,9 @@ function stubRenderer(log) {
     setFog: (m) => log.push(['setFog', m]),
     setLighting: (a, s) => log.push(['setLighting', [...a], s]),
     setMoonlight: (m) => log.push(['setMoonlight', m]),
+    setLightDir: (d) => log.push(['setLightDir', [...d]]),
+    setThirdLight: (l) => log.push(['setThirdLight', l]),
+    uploadLighting: () => log.push(['uploadLighting']),
     setPointLights: (d) => log.push(['setPointLights', d.length]),
     setIndirectLight: (p, range) => log.push(['setIndirectLight', [...p], range]),
     setWindowEmission: (e) => log.push(['setWindowEmission', [...e]]),
@@ -171,17 +175,36 @@ test('c2/S5 the layout table, re-pinned THROUGH the window - panel, grid cut, mi
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
-test('c2/S5 the grid button swaps its icon with the view mode (:1746-1758)', () => {
+test('c2/S5 the grid button swaps its icon INSIDE the toggle (:1746-1758) - and carries no icon before the first one', () => {
   const w = fresh();
   try {
     const draw = () => { const log = []; w.draw(stubRenderer(log), CANVAS, null, 1); return quads(log); };
+    const icon = () => draw().find((q) => rectOf(q).join() === '78,171,27,19')[1];
+    // THE FIRST OPEN OF A SESSION. automapViewMode is already View3D
+    // (:124), but Setup (:290-304) loads the two grid textures and
+    // assigns NEITHER - AddButton (DaggerfallUI.cs:981-990) sets only
+    // position, size and parent, and the file's ONLY two writes to
+    // gridButton.BackgroundTexture are :1748 and :1758, both inside
+    // ActionChangeAutomapGridMode, which neither Setup nor OnPush calls.
+    // A null background draws nothing (BaseScreenComponent.cs:791), so
+    // AMAP00I0's own pixels show through: the 2D art, under a 3D mode.
     assert.equal(automapCameraState().viewMode, VIEW_3D, 'the default view mode is 3D on purpose (:124)');
-    let g = draw().find((q) => rectOf(q).join() === '78,171,27,19');
-    assert.equal(g[1], 'AMAP01I0', '3D shows the alternative grid graphic');
+    assert.equal(icon(), 'AMAP00I0',
+      'before the first toggle the button has no texture at all, so the background shows through');
     w.runVerb('ActionChangeAutomapGridMode');
     assert.equal(automapCameraState().viewMode, VIEW_2D);
-    g = draw().find((q) => rectOf(q).join() === '78,171,27,19');
-    assert.equal(g[1], 'AMAP00I0', '2D shows the icon cut from the background');
+    assert.equal(icon(), 'AMAP00I0', '2D shows the icon cut from the background (:1748)');
+    w.runVerb('ActionChangeAutomapGridMode');
+    assert.equal(automapCameraState().viewMode, VIEW_3D);
+    assert.equal(icon(), 'AMAP01I0', '3D shows the alternative grid graphic (:1758)');
+    // and the assignment outlives the window, exactly as DFU's does -
+    // it is a field on the singleton, never un-assigned
+    w.runVerb('ActionExit');
+    const w2 = new AutomapWindow(deps());
+    const log = [];
+    w2.draw(stubRenderer(log), CANVAS, null, 1);
+    assert.equal(quads(log).find((q) => rectOf(q).join() === '78,171,27,19')[1], 'AMAP01I0',
+      'the next open keeps the icon the toggle assigned');
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
@@ -351,6 +374,9 @@ test('c2/S5 THE PASS IS UNLIT, and the bracket hands every global back (the real
       ambient: [...r._ambient], sun: r._sunScale, fog: r._fogMode, moon: r._moonScale,
       points: r._pointLights.length, indirectRange: r._indirect[3], emission: [...r._windowEmission],
       mode: r._automapMode,
+      sunDir: [...r._lightDir], sunColor: [...r._sunColor],
+      moonDir: [...r._moonDir], moonColor: [...r._moonColor],
+      back: r._light3Scale, backDir: [...r._light3Dir], backColor: [...r._light3Color],
     });
 
     const rec = { revealed: new Set(['a']), visitedThisRun: new Set(['a']), entranceDiscovered: false };
@@ -360,18 +386,68 @@ test('c2/S5 THE PASS IS UNLIT, and the bracket hands every global back (the real
     }));
     w.draw(r, canvas, null, 1);
 
-    assert.ok(snaps.length >= 1, 'the revealed row drew');
-    for (const s of snaps) {
+    // THE TWO GROUPS ARE LIT DIFFERENTLY, and the automap mode is what
+    // separates them: the geometry draws under one of the six shader
+    // presentations, the never-sliced beacon group under mode 0.
+    const geometry = snaps.filter((s) => s.mode !== 0);
+    const beacons = snaps.filter((s) => s.mode === 0);
+    assert.ok(geometry.length >= 1, 'the revealed row drew');
+    assert.ok(beacons.length >= 1, 'and the beacons drew');
+    for (const s of geometry) {
       assert.deepEqual(s.ambient, [1, 1, 1],
         'DaggerfallAutomap.shader has NO light term - the geometry runs at the identity, not A1\'s 0.9');
       assert.equal(s.sun, 0, 'no sun');
       assert.equal(s.fog, 0, 'NoFogCamera (:2017)');
       assert.equal(s.moon, 0, 'no moon');
+      assert.equal(s.back, 0, 'and no third light either - the geometry sees none of the three');
       assert.equal(s.points, 0, 'no point lights');
       assert.equal(s.indirectRange, 0, 'no indirect');
       assert.deepEqual(s.emission, [0, 0, 0], 'no window emission');
     }
-    assert.equal(snaps[0].mode, 1, 'visited-this-run draws in COLOUR (mode 1)');
+    assert.equal(geometry[0].mode, 1, 'visited-this-run draws in COLOUR (mode 1)');
+
+    // THE BEACONS ARE LIT BY ALL THREE. CreateLightsForAutomapGeometry
+    // (Automap.cs:2025-2076) builds three DIRECTIONAL lights, each with
+    // `cullingMask = 1 << layerAutomap`, and the beacons are the only
+    // things on that layer the shader can light - Standard-material
+    // CreatePrimitives (:1355-1441). Intensities here are the
+    // dungeon/castle arm (:2066-2076), which is what `insideBuilding:
+    // false` selects; the directions are -forward of Euler(50, 270/126/
+    // 0, 0), which for a level-50 pitch puts 0.766 of each light on a
+    // face turned straight up.
+    const round = (v) => v.map((x) => Math.round(x * 1e6) / 1e6 + 0);   // +0 folds -0 onto 0
+    for (const s of beacons) {
+      assert.deepEqual(s.ambient, [0, 0, 0],
+        'the three lights ARE the beacons\' lighting - there is no fourth term on layerAutomap');
+      assert.equal(s.sun, 0.9, 'keyLight.intensity = 0.9f (:2073)');
+      assert.equal(s.moon, 0.7, 'fillLight.intensity = 0.7f (:2074)');
+      assert.equal(s.back, 0.5, 'backLight.intensity = 0.5f (:2075)');
+      assert.deepEqual(s.sunColor, [1, 1, 1], 'Light.color is left at its white default');
+      assert.deepEqual(s.moonColor, [1, 1, 1]);
+      assert.deepEqual(s.backColor, [1, 1, 1]);
+      assert.deepEqual(round(s.sunDir), round([...BEACON_KEY_DIR]), 'Euler(50, 270, 0)');
+      assert.deepEqual(round(s.moonDir), round([...BEACON_FILL_DIR]), 'Euler(50, 126, 0)');
+      assert.deepEqual(round(s.backDir), round([...BEACON_BACK_DIR]), 'Euler(50, 0, 0)');
+      assert.equal(s.fog, 0, 'still NoFogCamera');
+    }
+    // the directions themselves, against the C#'s Eulers by hand: a
+    // Unity light shines along +forward, the shader wants -forward, and
+    // sin(50 deg) is the Y every one of the three shares
+    const sin50 = Math.sin(50 * Math.PI / 180);
+    const cos50 = Math.cos(50 * Math.PI / 180);
+    assert.deepEqual(round([...BEACON_KEY_DIR]), round([cos50, sin50, 0]));
+    assert.deepEqual(round([...BEACON_FILL_DIR]),
+      round([-Math.sin(126 * Math.PI / 180) * cos50, sin50, -Math.cos(126 * Math.PI / 180) * cos50]));
+    assert.deepEqual(round([...BEACON_BACK_DIR]), round([0, sin50, -cos50]));
+    // the building arm is the other triple (:2061-2064)
+    assert.deepEqual(BEACON_LIGHT_INTENSITY.building, { key: 1.0, fill: 0.6, back: 0.2 });
+    assert.deepEqual(BEACON_LIGHT_INTENSITY.dungeon, { key: 0.9, fill: 0.7, back: 0.5 });
+    // ...and the third light is a real term in the shader the beacons
+    // draw with, not a uniform nothing reads: two lights would leave
+    // the back light's 0.5 doing nothing at all.
+    const rsrc = src('src/render/renderer.js');
+    assert.match(rsrc, /float l3diff = max\(dot\(n, uLight3Dir\), 0\.0\);/, 'the third N.L');
+    assert.match(rsrc, /\+ uLight3Color \* \(uLight3Scale \* l3diff\)\);/, 'summed into `lit` beside the sun and the moon');
 
     // ...and the frame the host draws NEXT is the frame it would have
     // drawn had the window never opened

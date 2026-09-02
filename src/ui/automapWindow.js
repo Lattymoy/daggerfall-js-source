@@ -33,7 +33,11 @@
 // (1,1,1) with sun 0, no point lights, no indirect, no moon, no window
 // emission and fog off - not A1's 0.9 stand-in, which was the three
 // light intensities collapsed into an ambient the real shader never
-// reads.
+// reads. THE BEACON GROUP IS THE OTHER HALF of that same sentence and
+// was missing until c2 flight 2's review: those three lights are real,
+// they carry layerAutomap's culling mask, and the beacons ARE on that
+// layer - so the marker group installs them (BEACON_KEY_DIR and the
+// two beside it) and hands the unlit state back afterwards.
 //
 // THE LENS IS THE VIEW MODE'S, AND THE NEAR PLANE WITH IT. A1 pinned
 // the camera's creation planes (0.7 / 5000, Automap.cs:2015-2016) and
@@ -137,7 +141,7 @@
 // marker's existing note so editing is editing rather than retyping.
 
 import { drawText } from './text.js';
-import { mirrorProjectionX, perspective, lookAt, UP_Y } from '../world/mat4.js';
+import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4.js';
 import { getBool, getString } from '../systems/settings.js';
 import {
   slicingPositionY, DEFAULT_SLICING_BIAS_Y,
@@ -279,6 +283,39 @@ export const FAR_CLIP = CAMERA_FAR;
 const UNLIT_AMBIENT = new Float32Array([1, 1, 1]);
 const NO_POINT_LIGHTS = new Float32Array(0);
 const ZERO3 = new Float32Array([0, 0, 0]);
+const WHITE3 = new Float32Array([1, 1, 1]);   // Light.color's own default
+
+// ── THE BEACONS' THREE LIGHTS ────────────────────────────────────────
+// CreateLightsForAutomapGeometry (Automap.cs:2025-2076), whose NAME is
+// the misleading part: the geometry cannot see these lights at all -
+// DaggerfallAutomap.shader has no light term - and each carries
+// `cullingMask = 1 << layerAutomap`, so the only things they reach are
+// the BEACONS, the CreatePrimitive objects wearing `Shader.Find(
+// "Standard")` on that same layer (:1355-1441). The geometry group above
+// stays unlit; this group is not, and drawing it flat was the port's
+// hole: every beacon fragment came out at exactly its 1x1 texel, so the
+// cylinder barrels, the note diamonds and the portal discs were
+// uniformly saturated where DFU shades them by normal.
+//
+// A Unity directional light shines along its transform.forward and the
+// shader wants the direction TOWARD it, so each direction is -forward of
+// `Quaternion.Euler(50, yaw, 0)` - read off the port's own Unity-order
+// TRS (mat4.js: R = Ry * Rx * Rz) rather than transcribed as digits.
+const beaconLightDir = (yawDeg) => {
+  const m = trs(0, 0, 0, 50, yawDeg, 0);
+  return new Float32Array([-m[8], -m[9], -m[10]]);
+};
+export const BEACON_KEY_DIR = beaconLightDir(270);    // AutomapKeyLight  (:2029)
+export const BEACON_FILL_DIR = beaconLightDir(126);   // AutomapFillLight (:2039)
+export const BEACON_BACK_DIR = beaconLightDir(0);     // AutomapBackLight (:2049)
+/** The intensities, per host, re-set on every window push (:420 calls
+ *  CreateLightsForAutomapGeometry from UpdateAutomapStateOnWindowPush):
+ *  :2057-2065 inside a building, :2066-2076 in a dungeon or a castle.
+ *  Nothing else opens this window. */
+export const BEACON_LIGHT_INTENSITY = Object.freeze({
+  building: Object.freeze({ key: 1.0, fill: 0.6, back: 0.2 }),
+  dungeon: Object.freeze({ key: 0.9, fill: 0.7, back: 0.5 }),
+});
 
 export const MICRO_BLOCK_PX = 2;                  // microMapBlockSizeInPixels (Automap.cs:1771)
 export const MICRO_SIZE_MIN = 7;                  // sizeMin (:1753)
@@ -297,6 +334,17 @@ let _cam = null;             // ui/automapCamera.js state: transforms, pivots, v
 let _background = 'original';
 let _renderMode = 'Cutout';  // currentAutomapRenderMode's default (Automap.cs:203)
 let _resetSignal = false;
+// gridButton.BackgroundTexture, which is a STATE and not a function of
+// the view mode. Setup (:290-304) cuts nativeTextureGrid2D out of the
+// background art and loads nativeTextureGrid3D, but assigns NEITHER -
+// AddButton (DaggerfallUI.cs:981-990) sets only position, size and
+// parent - and the only two writes in the whole file are :1748/:1758,
+// both inside ActionChangeAutomapGridMode. So on the FIRST open of a
+// session the button's texture is null, BaseScreenComponent.cs:791
+// draws nothing, and AMAP00I0's own 2D grid pixels show through even
+// though automapViewMode already starts at View3D (:124). Same lifetime
+// as `_cam`: DFU never un-assigns it.
+let _gridIcon = null;        // null (never toggled) | '2d' | '3d'
 
 /**
  * `Automap.ResetAutomapSettingsSignalForExternalScript = true`
@@ -316,6 +364,7 @@ export const automapRenderMode = () => _renderMode;
 /** Tests and a fresh session: forget everything the singleton kept. */
 export function resetAutomapWindowState() {
   _cam = null; _background = 'original'; _renderMode = 'Cutout'; _resetSignal = false;
+  _gridIcon = null;
 }
 
 // The micro-map version counter is MODULE-level: uploadTexture
@@ -624,7 +673,12 @@ export class AutomapWindow {
     const playerPos = p?.feet ?? mainPos;
     switch (verb) {
       case 'ActionExit': this._close(); return;
-      case 'ActionChangeAutomapGridMode': _cam = actionChangeAutomapGridMode(_cam); return;
+      // :1748/:1758 - the icon is assigned HERE and nowhere else, from
+      // the POST-toggle mode, which is why the first open shows neither.
+      case 'ActionChangeAutomapGridMode':
+        _cam = actionChangeAutomapGridMode(_cam);
+        _gridIcon = _cam.viewMode === VIEW_3D ? '3d' : '2d';
+        return;
       // c2/S6: the render-mode verbs (:1666-1696). Each is a bare
       // assignment on the persistent Automap component in DFU, so it
       // survives the window's close exactly as `_renderMode` does.
@@ -783,9 +837,32 @@ export class AutomapWindow {
     });
   }
 
+  /**
+   * The cache key for the picker, and the law it has to obey: DFU does
+   * not cache at all - UpdateMouseHoverOverText runs at the bottom of
+   * every Update() (window :1014) and re-raycasts (Automap.cs:1843-1844)
+   * - so a stamp that omits ANYTHING the answer depends on answers a
+   * question the player has already changed. Two holes the review found:
+   * the note TEXT (setUserNote rewrites a marker in place, so `notes
+   * .size` never moves and the y=192 label kept printing the old note
+   * after Enter) and the ROTATION PIVOT (ActionMovePivot* moves the
+   * 50.2-unit blue column across the map without touching the camera,
+   * so a still pointer kept answering "rotation pivot axis" after the
+   * axis had walked off the ray). Everything automapMarkerSet is built
+   * from is therefore in here; the camera terms cover cameraYawDeg, and
+   * arrowBounds/entrancePos are constant deps.
+   */
   _pickStamp(rec) {
+    const p = this.deps.player?.() ?? null;
+    const notes = rec?.notes
+      // '=' splits the id from the text and '\n' the markers apart; a note
+      // is typed printable characters, so neither can appear inside one.
+      ? [...rec.notes].map(([id, mk]) => `${id}=${mk?.note ?? ''}`).join('\n')
+      : '';
     return `${_cam?.pos ?? ''}|${_cam?.fwd ?? ''}|${_cam ? cameraLens(_cam).fov : 0}`
-      + `|${rec?.revealed?.size ?? 0}|${rec?.notes?.size ?? 0}|${rec?.teleporters?.size ?? 0}`;
+      + `|${_cam ? rotationPivot(_cam) : ''}`
+      + `|${p?.feet ?? ''}|${p?.yaw ?? 0}|${rec?.entranceDiscovered ? 1 : 0}`
+      + `|${rec?.revealed?.size ?? 0}|${notes}|${rec?.teleporters?.size ?? 0}`;
   }
 
   /**
@@ -1206,8 +1283,13 @@ export class AutomapWindow {
     if (_art) {
       drawImg(renderer, _art.bg, m, 0, 0);                       // NativePanel.BackgroundTexture (:354)
       // gridButton.BackgroundTexture (:1746-1758) - the 2D icon is the
-      // background's own pixels, the 3D icon is AMAP01I0
-      if (_cam?.viewMode === VIEW_3D) {
+      // background's own pixels, the 3D icon is AMAP01I0, and the button
+      // carries NEITHER until the grid has been toggled once (see
+      // `_gridIcon`), which is why the else arm - the background's own
+      // pixels - covers both "never assigned" and "assigned 2D": DFU's
+      // null texture draws nothing and AMAP00I0 shows through, and its
+      // nativeTextureGrid2D is that same rect cut out of AMAP00I0.
+      if (_gridIcon === '3d') {
         drawImg(renderer, _art.grid3d, m, GRID_CUTOUT.x, GRID_CUTOUT.y, GRID_CUTOUT.w, GRID_CUTOUT.h);
       } else {
         drawImgCrop(renderer, _art.bg, m,
@@ -1298,7 +1380,31 @@ export class AutomapWindow {
       renderer.setClipY(null);
       renderer.setAutomapMode(AUTOMAP_MODE.OFF);
       renderer.setAutomapWater(null);
+      // ...AND THE BEACONS ARE THE ONE THING THE THREE AUTOMAP LIGHTS
+      // TOUCH. The geometry pass above is unlit because the shader has
+      // no light term; this group's objects are Standard-material
+      // primitives on layerAutomap, which is exactly the culling mask
+      // CreateLightsForAutomapGeometry gives all three lights. Ambient
+      // is ZERO here - DFU creates these three lights FOR this layer and
+      // there is no fourth term on it - so the beacons are the sum of
+      // key + fill + back, saturating on a face turned up at all three
+      // and falling off on the sides, which is the whole visible
+      // difference from a flat draw in the default 3D view.
+      const beacon = BEACON_LIGHT_INTENSITY[this.deps.insideBuilding ? 'building' : 'dungeon'];
+      renderer.setLighting(ZERO3, beacon.key, WHITE3);
+      renderer.setLightDir(BEACON_KEY_DIR);
+      renderer.setMoonlight({ scale: beacon.fill, dir: BEACON_FILL_DIR, color: WHITE3 });
+      renderer.setThirdLight({ scale: beacon.back, dir: BEACON_BACK_DIR, color: WHITE3 });
+      renderer.uploadLighting();
       this._drawMarkerGroup(renderer, p);
+      // and the unlit state goes back, so the bracket stays composable:
+      // nothing else draws in it today, but the geometry law must not
+      // depend on the marker group being last.
+      renderer.setLighting(UNLIT_AMBIENT, 0);
+      renderer.setLightDir(UP_Y);
+      renderer.setMoonlight(null);
+      renderer.setThirdLight(null);
+      renderer.uploadLighting();
     });
 
     // ── 3. THE CHROME OVER THE MAP ───────────────────────────────────

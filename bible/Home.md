@@ -323,7 +323,6 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:4905` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:5004` - *  FLAGGED null this slice closed. */
 - `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/automap.js:87` - FLAGGED here is now: the exterior window's own native chrome.
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -

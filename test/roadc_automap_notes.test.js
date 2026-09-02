@@ -531,6 +531,7 @@ function stub(log = []) {
     drawScreenQuad: () => {},
     setClipY: () => {}, setAutomapMode: () => {}, setAutomapWater: () => {},
     setFog: () => {}, setLighting: () => {}, setMoonlight: () => {},
+    setLightDir: () => {}, setThirdLight: () => {}, uploadLighting: () => {},
     setPointLights: () => {}, setIndirectLight: () => {}, setWindowEmission: () => {},
     panelFrame: ({ setup }, body) => { setup?.(); body(); },
   };
@@ -619,6 +620,41 @@ test('c2/S8 a left double-click on the floor mints a note 0.7 above it', () => {
     assert.equal(w.userNoteBox.value, 'ne', 'seeded with the existing note');
     w.input('Escape', { code: 'Escape' });
     assert.equal(rec.notes.get(0).note, 'ne', 'Escape writes nothing');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
+test('c2/S8 the y=192 label follows the note the player just typed - the pick cache is stamped on the TEXT', () => {
+  // THE HOLE THIS PINS. DFU cannot answer a stale note: Update() ends
+  // with UpdateMouseHoverOverText (window :1014), which re-runs
+  // Physics.RaycastAll (Automap.cs:1843-1844) and reads the note LIVE
+  // (:565-566). The port caches the pick on a stamp, and the stamp used
+  // to carry only `notes.size` - but setUserNote (systems/automap.js)
+  // rewrites the marker IN PLACE, so retyping a note moved nothing the
+  // stamp could see: same size, same camera, same pointer. The label
+  // kept printing the note the player had just replaced.
+  const { w, rec } = openWindow();
+  try {
+    doubleClick(w, CLICK_X, CLICK_Y);
+    for (const key of ['o', 'l', 'd']) w.input(`Key${key.toUpperCase()}`, { code: `Key${key.toUpperCase()}`, key });
+    w.input('Enter', { code: 'Enter' });
+    assert.equal(rec.notes.get(0).note, 'old');
+
+    // park the pointer on the marker and read the label off a frame
+    w.hover(CLICK_X, CLICK_Y);
+    w.draw(stub(), CANVAS, null, 1);
+    assert.equal(w.hoverText, 'old', 'a user note answers its own text, not a localized string');
+
+    // RETYPE IT: the editor re-opens seeded with 'old' (:1591-1607), a
+    // character is appended and Enter writes it home. The pointer has
+    // not moved (the editor locks pointer input out entirely), the
+    // camera has not moved, and `notes.size` is still 1.
+    doubleClick(w, CLICK_X, CLICK_Y);
+    assert.equal(w.userNoteBox?.value, 'old');
+    w.input('KeyX', { code: 'KeyX', key: 'x' });
+    w.input('Enter', { code: 'Enter' });
+    assert.equal(rec.notes.get(0).note, 'oldx', 'the model took the edit');
+    w.draw(stub(), CANVAS, null, 1);
+    assert.equal(w.hoverText, 'oldx', 'and the very next frame says so');
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 

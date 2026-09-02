@@ -83,8 +83,11 @@
 // the second pass); c2/S7 the beacons, the marker meshes and the hover
 // picker. c2/S8 the USER-DATA HALF - note markers, teleporter
 // connections and the click verbs that mint them. c2/S9 the
-// interior-BUILDING arm (the visit-scoped record below). So what is
-// FLAGGED here is now: the exterior window's own native chrome.
+// interior-BUILDING arm (the visit-scoped record below); c2/S10 the
+// exterior window's own native chrome (AMAP00I0 + TOWN00I0 through the
+// shared ui/automapChrome.js tables). This file carries no open flag
+// of its own any more - the exterior residue is stated, and only
+// stated, at ui/exteriorAutomapWindow.js's header.
 //
 // ── ROAD-C c2/S8: NOTES AND TELEPORTERS ──────────────────────────────
 // AutomapDungeonState carries two more collections (Automap.cs:93-94):

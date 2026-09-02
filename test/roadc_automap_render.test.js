@@ -33,6 +33,7 @@ import { identity } from '../src/world/mat4.js';
 import {
   Renderer, AUTOMAP_MODE, AUTOMAP_NO_WATER, AUTOMAP_WATER_COLOR, buildWireIndices,
 } from '../src/render/renderer.js';
+import { WATER_MAP_COLOR } from '../src/render/underwaterFog.js';
 import {
   AutomapWindow, RENDER_MODES, ABOVE_SLICE_MODES, nextRenderMode,
   HOTKEYS_DOWN, HOTKEY_VERBS, automapRenderMode,
@@ -85,7 +86,29 @@ test('c2/S6 the shader constants, digit for digit against DaggerfallAutomap.shad
   assert.match(AUTOMAP_BLOCK, /vWorldPos\.y <= uAutomapWaterLevel/, 'the water test is `worldPos.y <= _WaterLevel`');
   assert.match(AUTOMAP_BLOCK, /mix\(outColor\.rgb, uAutomapWaterColor\.rgb, uAutomapWaterColor\.a\)/,
     'lerp(rgb, _WaterColor.rgb, _WaterColor.a)');
-  assert.deepEqual([...AUTOMAP_WATER_COLOR], [0.0, 0.3, 0.5, 0.4], 'the _WaterColor property default');
+  // THE TINT IS NOT THE SHADER'S PROPERTY DEFAULT, and pinning that
+  // default is how this stayed wrong: DaggerfallAutomap.shader:27
+  // declares `_WaterColor = (0.0,0.3,0.5,0.4)`, and Automap.cs:2589-2590
+  // overwrites it on the ONE automap material - `automapMaterial
+  // .SetColor("_WaterColor", PlayerEnterExit.UnderwaterFog
+  // .waterMapColor)` - BEFORE the injection event that hands it out, so
+  // no material DFU ever renders with keeps the default.
+  // AutomapModel.cs:83 `Instantiate(automapMaterial)` copies the
+  // overwritten one onto every automap submesh, and AddWater
+  // (:1982-2001) touches only `_WaterLevel`. The shipped tint is
+  // UnderwaterFog.cs:28's `new Color(0.1f, 0.3f, 0.25f, 0.4f)` - a dark
+  // teal, not a blue - and that is its ONLY assignment in the tree.
+  assert.deepEqual([...AUTOMAP_WATER_COLOR], [0.1, 0.3, 0.25, 0.4],
+    'the injected UnderwaterFog.waterMapColor (Automap.cs:2590 / UnderwaterFog.cs:28)');
+  assert.notDeepEqual([...AUTOMAP_WATER_COLOR], [0.0, 0.3, 0.5, 0.4],
+    'and NOT the .shader Properties default, which nothing ever renders with');
+  // ONE SOURCE OF TRUTH, so the seam cannot go dead again: the automap
+  // reads the number off UnderwaterFog exactly as Automap.cs:2590 does,
+  // rather than re-declaring it beside the shader that consumes it.
+  assert.equal(AUTOMAP_WATER_COLOR, WATER_MAP_COLOR,
+    'renderer.js takes the tint FROM underwaterFog.js - it is the same frozen array, not a copy');
+  assert.match(RENDERER, /import \{ WATER_MAP_COLOR \} from '\.\/underwaterFog\.js';/,
+    'and it does so by import, not by transcription');
   assert.equal(AUTOMAP_NO_WATER, -10000, 'the _WaterLevel property default - AddWater leaves it when the block is dry');
 });
 
@@ -305,7 +328,8 @@ test('c2/S6 setAutomapWater uploads immediately, rides the bracket, and returns 
   const r = recordingRenderer(log);
   assert.equal(r._automapWaterLevel, AUTOMAP_NO_WATER, 'a fresh renderer is dry');
   const rounded = () => [...r._automapWaterColor].map((v) => Math.round(v * 1e6) / 1e6);
-  assert.deepEqual(rounded(), [0.0, 0.3, 0.5, 0.4]);
+  assert.deepEqual(rounded(), [0.1, 0.3, 0.25, 0.4],
+    'a fresh renderer already carries the INJECTED tint (Automap.cs:2590), not the shader property default');
 
   log.length = 0;
   r.setAutomapWater(-12.5);
@@ -395,6 +419,7 @@ function windowStub(log) {
     setAutomapMode: (m) => log.push(['setAutomapMode', m]),
     setAutomapWater: (l) => log.push(['setAutomapWater', l]),
     setFog: () => {}, setLighting: () => {}, setMoonlight: () => {},
+    setLightDir: () => {}, setThirdLight: () => {}, uploadLighting: () => {},
     setPointLights: () => {}, setIndirectLight: () => {}, setWindowEmission: () => {},
     panelFrame: ({ setup }, body) => { setup?.(); body(); },
   };

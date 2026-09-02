@@ -462,6 +462,7 @@ function markerStub(log) {
     setAutomapMode: (m) => log.push(['setAutomapMode', m]),
     setAutomapWater: (l) => log.push(['setAutomapWater', l]),
     setFog: () => {}, setLighting: () => {}, setMoonlight: () => {},
+    setLightDir: () => {}, setThirdLight: () => {}, uploadLighting: () => {},
     setPointLights: () => {}, setIndirectLight: () => {}, setWindowEmission: () => {},
     panelFrame: ({ setup }, body) => { setup?.(); body(); },
   };
@@ -539,15 +540,64 @@ test('c2/S7 the beacons ride drawMesh with 1x1 amap solids - no new renderer ent
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
+test('c2/S7 the window PREFERS mesh 99900 over the quad fallback - no ARENA2 needed', () => {
+  // Automap.cs:1355 builds the player marker from model 99900 and only an
+  // art-less boot falls back to the billboard quad. The preference is a
+  // pure branch in _drawMarkerGroup and the stub renderer reads nothing
+  // but `.tag`, so the law is pinned here, ungated, against a fabricated
+  // arrow handed through the window's own `arrowMesh` seam. Delete the
+  // mesh arm and this dies; the data-gated pin below then only has to
+  // prove that 99900 is a real model shaped like one.
+  const log = [];
+  const w = openWindow({ arrowMesh: { tag: 'arrow99900' }, arrowBounds: { min: [-1, -1, -1], max: [1, 1, 1] } });
+  try {
+    w.draw(markerStub(log), CANVAS, null, 1);
+    assert.equal(log.filter((c) => c[0] === 'drawMesh').map((c) => c[1])[0], 'arrow99900',
+      'the arrow draws FIRST, at the player transform');
+    assert.equal(log.some((c) => c[0] === 'drawBillboards'), false, 'and no quad is needed');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
 test('c2/S7 the entrance beacon is not DRAWN and not PICKABLE until it is discovered', () => {
+  // Automap.cs:1447-1448 places the beacon at the start marker and then
+  // sets it INACTIVE for a dungeon, so it neither renders nor collides
+  // until the LOS tick lights it. Both halves are pinned against the SAME
+  // geometry the handedness pin uses - a start marker eight units east,
+  // which is demonstrably reachable from the row y=85 - so the sweep
+  // below cannot pass by simply failing to reach anything.
+  const at = { startMarker: { x: 8, y: 0, z: 0 } };
   const hidden = [];
-  const w1 = openWindow();
+  const w1 = openWindow(at);
   try {
     w1.draw(markerStub(hidden), CANVAS, null, 1);
-    assert.equal(hidden.filter((c) => c[0] === 'drawMesh' && c[1] === MARKER_TEX.ENTRANCE).length, 0);
-    // the pointer over the start marker finds nothing
-    w1.hover(160, 85);
-    w1.draw(markerStub([]), CANVAS, null, 1);
+    assert.equal(hidden.filter((c) => c[0] === 'drawMesh' && c[1] === MARKER_TEX.ENTRANCE).length, 0,
+      'undiscovered: neither the green ray nor its cube is drawn');
+    // ...and no pointer anywhere across the beacon's own row picks it
+    for (let x = 2; x < 319; x++) {
+      w1.hover(x, 85);
+      w1.draw(markerStub([]), CANVAS, null, 1);
+      assert.notEqual(w1.hoverText, AUTOMAP_STRINGS.automapEntranceExitPositionBeacon,
+        `undiscovered: the pointer at x=${x} finds no entrance beacon`);
+    }
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+  // the CONTROL: discovered, the very same sweep does find it, so the
+  // negative above is a policy answer and not an unreachable row
+  const shown = [];
+  const w2 = openWindow({
+    ...at,
+    record: () => ({ revealed: new Set(), visitedThisRun: new Set(), entranceDiscovered: true }),
+  });
+  try {
+    w2.draw(markerStub(shown), CANVAS, null, 1);
+    assert.equal(shown.filter((c) => c[0] === 'drawMesh' && c[1] === MARKER_TEX.ENTRANCE).length, 2,
+      'discovered: the ray and the cube both draw');
+    let found = 0;
+    for (let x = 2; x < 319; x++) {
+      w2.hover(x, 85);
+      w2.draw(markerStub([]), CANVAS, null, 1);
+      if (w2.hoverText === AUTOMAP_STRINGS.automapEntranceExitPositionBeacon) found++;
+    }
+    assert.ok(found > 0, 'discovered: the same sweep answers the beacon');
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
@@ -571,6 +621,45 @@ test('c2/S7 the status label is UpdateMouseHoverOverText - and the panel mouse S
     w.hover(CHROME_RECTS.panel.x + 3, CHROME_RECTS.panel.y + 3);
     w.draw(markerStub([]), CANVAS, null, 1);
     assert.equal(w.hoverText, '', 'geometry and empty space answer ""');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
+test('c2/S7 the pivot arrows move the answer under a STILL pointer - the cache is stamped on the pivot', () => {
+  // THE OTHER HALF OF THE CACHE LAW. DFU re-raycasts every frame
+  // (window :1014 -> Automap.cs:1843), so nothing it draws can outlive
+  // the answer it gives. ActionMovePivot* rewrites `pivot2D/pivot3D`
+  // ONLY (automapCamera.js shiftPivot) - the camera's pos, fwd and fov
+  // are untouched - so a stamp built from the camera alone cannot see
+  // the 50.2-unit blue column walk off the ray, and the label kept
+  // saying "rotation pivot axis" after it had gone.
+  const w = openWindow();
+  try {
+    // walk the pivot out from under the player's own beacon, then find
+    // the screen column it stands in
+    w.runVerb('ActionMoveRotationPivotAxisRight', 1.2);   // 12 units at 10/s
+    let found = [];
+    for (let x = 2; x < 319; x++) {
+      w.hover(x, 85);
+      w.draw(markerStub([]), CANVAS, null, 1);
+      if (w.hoverText === 'rotation pivot axis') found.push(x);
+    }
+    assert.ok(found.length > 0, 'the pivot column is somewhere on the row');
+    const onPivot = found[Math.floor(found.length / 2)];
+    w.hover(onPivot, 85);
+    w.draw(markerStub([]), CANVAS, null, 1);
+    assert.equal(w.hoverText, 'rotation pivot axis');
+
+    // now move it far away WITHOUT touching the pointer or the camera
+    w.runVerb('ActionMoveRotationPivotAxisRight', 50);    // 500 units
+    w.draw(markerStub([]), CANVAS, null, 1);
+    assert.notEqual(w.hoverText, 'rotation pivot axis',
+      'the axis has left the ray, so the label must stop naming it');
+
+    // ...and bringing it back answers again, which is the same law in
+    // the other direction: a stamp that only grew would still be wrong
+    w.runVerb('ActionMoveRotationPivotAxisLeft', 50);
+    w.draw(markerStub([]), CANVAS, null, 1);
+    assert.equal(w.hoverText, 'rotation pivot axis', 'and it is found again when it comes back');
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
@@ -625,18 +714,39 @@ test('c2/S7 SOURCE PINS: the host hands the picker its triangles, and the model 
 // ─────────────────────────────────────────────────────────────────────
 // DATA-GATED
 // ─────────────────────────────────────────────────────────────────────
-test('c2/S7 mesh 99900 loads and the window prefers it over the quad fallback', { skip: skipReal }, async () => {
+test('c2/S7 mesh 99900 is a real, whole model and the window rides IT, not the quad', { skip: skipReal }, async () => {
   const { openArch3d } = await import('../src/world/arch3d.js');
   const { readMesh } = await import('../src/world/meshReader.js');
   const arch = await openArch3d(ARENA2);
   const mesh = readMesh(arch, 99900);
-  assert.ok(mesh.positions.length > 0, 'the player marker arrow is a real model');
+  // SHAPE AND VALUE of the real load: a whole vertex buffer, at least one
+  // textured submesh, and an index run that exactly covers the triangles
+  // the submesh table claims - a truncated or mis-fanned read fails here
+  // rather than being papered over by the tag the stub reads.
+  assert.ok(mesh.positions.length > 0 && mesh.positions.length % 3 === 0, 'a whole vertex buffer');
+  assert.equal(mesh.normals.length, mesh.positions.length);
+  assert.equal(mesh.uvs.length / 2, mesh.positions.length / 3);
+  assert.ok(mesh.subMeshes.length >= 1, 'the arrow has at least one textured submesh');
+  let tris = 0;
+  for (const sm of mesh.subMeshes) {
+    assert.equal(sm.startIndex, tris * 3, 'the submeshes tile the index buffer with no gap');
+    assert.ok(Number.isInteger(sm.textureArchive) && sm.textureArchive >= 0);
+    assert.ok(Number.isInteger(sm.textureRecord) && sm.textureRecord >= 0);
+    assert.ok(sm.primitiveCount > 0);
+    tris += sm.primitiveCount;
+  }
+  assert.equal(mesh.indices.length, tris * 3, 'every claimed triangle has its three indices');
+  const maxIndex = mesh.indices.reduce((m, i) => (i > m ? i : m), 0);
+  assert.ok(maxIndex < mesh.positions.length / 3, 'and every index lands inside the buffer');
+  // ...and the real model really does reach the renderer: the stub tags
+  // the GPU mesh with the first submesh's own texture record.
   const log = [];
-  const gpu = { tag: 'arrow99900', subMeshes: mesh.subMeshes };
+  const gpu = markerStub(log).createMesh(mesh);
+  assert.equal(gpu.tag, mesh.subMeshes[0].textureRecord);
   const w = openWindow({ arrowMesh: gpu, arrowBounds: { min: [-1, -1, -1], max: [1, 1, 1] } });
   try {
     w.draw(markerStub(log), CANVAS, null, 1);
-    assert.equal(log.filter((c) => c[0] === 'drawMesh').map((c) => c[1])[0], 'arrow99900',
+    assert.equal(log.filter((c) => c[0] === 'drawMesh').map((c) => c[1])[0], mesh.subMeshes[0].textureRecord,
       'the arrow draws FIRST, at the player transform, and no billboard is needed');
     assert.equal(log.some((c) => c[0] === 'drawBillboards'), false);
   } finally { _resetForTests(); resetAutomapWindowState(); }

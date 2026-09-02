@@ -38,6 +38,13 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
+// ROAD-C c2: the THIRD directional term, and the only pass in the game
+// that lights it - DFU's automap beacons take THREE directional lights
+// (CreateLightsForAutomapGeometry, Automap.cs:2025-2076) where the world
+// has two. 0 = off, which is every other pass.
+uniform vec3 uLight3Dir;
+uniform float uLight3Scale;
+uniform vec3 uLight3Color;
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -63,7 +70,7 @@ uniform float uClipY;  // A1: the automap slice plane (_SclicingPositionY's law)
 // read amMode % 2 == 0.
 uniform float uAutomapMode;
 uniform float uAutomapWaterLevel;   // _WaterLevel: AddWater's per-block level (:1982-2001); the shader's own default is -10000
-uniform vec4 uAutomapWaterColor;    // _WaterColor: the (0,0.3,0.5,0.4) property default
+uniform vec4 uAutomapWaterColor;    // _WaterColor: UnderwaterFog.waterMapColor, which Automap.cs:2590 injects into the one automap material
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -87,6 +94,7 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
+  float l3diff = max(dot(n, uLight3Dir), 0.0);
   // AUDIT 39r R17: DaggerfallDefault.shader:83-85 - "Emission cancels out
   // other lights". The lit term runs on albedo.rgb - emission, NOT on
   // the raw albedo, so an auto-emissive record (whose mask IS its albedo,
@@ -97,7 +105,8 @@ void main() {
   // and a negative albedo has no honest meaning here.
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
   vec3 albedo = max(tex.rgb - emission, vec3(0.0));
-  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
+  vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
+    + uLight3Color * (uLight3Scale * l3diff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   vec3 pointAcc = vec3(0.0);
@@ -577,6 +586,10 @@ const FOG_MODE_NAMES = ['off', 'linear', 'exp'];
  */
 export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 / 255]);
 
+// c2/S6: the automap's water tint is UnderwaterFog's, not the shader's -
+// see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
+import { WATER_MAP_COLOR } from './underwaterFog.js';
+
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
  *  ExteriorAutomap's panelRenderAutomap: 1, 1, 318, 169). */
@@ -605,8 +618,20 @@ export const AUTOMAP_MODE = Object.freeze({
  *  (Automap.cs:1982-1988) returns without touching a renderer when the
  *  native level is 10000, which leaves exactly this value in place. */
 export const AUTOMAP_NO_WATER = -10000;
-/** `_WaterColor`'s property default: (0.0, 0.3, 0.5, 0.4). */
-export const AUTOMAP_WATER_COLOR = Object.freeze([0.0, 0.3, 0.5, 0.4]);
+/** `_WaterColor` AS THE AUTOMAP MATERIAL ACTUALLY CARRIES IT, which is
+ *  NOT the shader's property default. DaggerfallAutomap.shader:27
+ *  declares `_WaterColor = (0.0,0.3,0.5,0.4)`, but that value is dead:
+ *  Automap.cs:2589-2590 mints the ONE automap material and immediately
+ *  does `automapMaterial.SetColor("_WaterColor",
+ *  PlayerEnterExit.UnderwaterFog.waterMapColor)` before the injection
+ *  event is raised, and AutomapModel.cs:83 `Instantiate(automapMaterial)`
+ *  copies that material onto every automap submesh - so every flooded
+ *  fragment in the game lerps toward waterMapColor. AddWater
+ *  (:1982-2001) sets only `_WaterLevel` and never touches the colour.
+ *  ONE SOURCE OF TRUTH: the number lives in underwaterFog.js, where DFU
+ *  keeps it (UnderwaterFog.cs:28, its only assignment in the tree), and
+ *  the automap reads it off that object rather than re-declaring it. */
+export const AUTOMAP_WATER_COLOR = WATER_MAP_COLOR;
 
 /**
  * ROAD-C c2/S6: TRIANGLE INDICES -> LINE INDICES, the pure half of the
@@ -662,6 +687,9 @@ export class Renderer {
     this.uMoonDir = gl.getUniformLocation(this.program, 'uMoonDir');
     this.uMoonScale = gl.getUniformLocation(this.program, 'uMoonScale');
     this.uMoonColor = gl.getUniformLocation(this.program, 'uMoonColor');
+    this.uLight3Dir = gl.getUniformLocation(this.program, 'uLight3Dir');
+    this.uLight3Scale = gl.getUniformLocation(this.program, 'uLight3Scale');
+    this.uLight3Color = gl.getUniformLocation(this.program, 'uLight3Color');
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
     this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
@@ -720,10 +748,11 @@ export class Renderer {
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
     this._automapMode = 0;   // A2/c2-S6: 0 off, 1/2 below-slice, 3/4 above-slice transparent, 5/6 above-slice wireframe
-    // c2/S6: the automap water tint. The shader property defaults are
-    // DFU's own (DaggerfallAutomap.shader Properties): _WaterLevel
-    // -10000.0 (below every dungeon floor, so a dry block tints
-    // nothing) and _WaterColor (0, 0.3, 0.5, 0.4).
+    // c2/S6: the automap water tint. _WaterLevel starts at the shader's
+    // own property default, -10000.0 (below every dungeon floor, so a
+    // dry block tints nothing); _WaterColor starts at the value
+    // Automap.cs:2590 injects into the automap material, which is what
+    // every automap fragment in DFU actually lerps toward.
     this._automapWaterLevel = AUTOMAP_NO_WATER;
     this._automapWaterColor = new Float32Array(AUTOMAP_WATER_COLOR);
     const fogLocs = (program) => ({
@@ -773,6 +802,11 @@ export class Renderer {
     this._moonDir = new Float32Array([0, 1, 0]);
     this._moonScale = 0;
     this._moonColor = new Float32Array([1, 1, 1]);
+    // ROAD-C c2: the third directional term defaults off the same way -
+    // the automap beacon group is the one pass that ever raises it.
+    this._light3Dir = new Float32Array([0, 1, 0]);
+    this._light3Scale = 0;
+    this._light3Color = new Float32Array([1, 1, 1]);
     // Billboards stay full-bright until a scene installs the clock via
     // setLighting - the solid defaults above reproduce the pre-R5 solid
     // shading, but 0.45 + 0.55 * 0.5 would silently dim flats to 72.5%
@@ -1664,6 +1698,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uMoonDir, this._moonDir);
     gl.uniform1f(this.uMoonScale, this._moonScale);
     gl.uniform3fv(this.uMoonColor, this._moonColor);
+    gl.uniform3fv(this.uLight3Dir, this._light3Dir);
+    gl.uniform1f(this.uLight3Scale, this._light3Scale);
+    gl.uniform3fv(this.uLight3Color, this._light3Color);
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
@@ -1740,6 +1777,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       moonScale: this._moonScale,
       moonDir: [...this._moonDir],
       moonColor: [...this._moonColor],
+      light3Scale: this._light3Scale,
+      light3Dir: [...this._light3Dir],
+      light3Color: [...this._light3Color],
       windowEmission: this._windowEmission,
       pointLights: this._pointLights,
       pointColor: this._pointColor,
@@ -1801,6 +1841,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
     this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];
     this._moonColor[0] = s.moonColor[0]; this._moonColor[1] = s.moonColor[1]; this._moonColor[2] = s.moonColor[2];
+    this.setThirdLight(s.light3Scale ? { scale: s.light3Scale, dir: s.light3Dir, color: s.light3Color } : null);
+    this._light3Dir[0] = s.light3Dir[0]; this._light3Dir[1] = s.light3Dir[1]; this._light3Dir[2] = s.light3Dir[2];
+    this._light3Color[0] = s.light3Color[0]; this._light3Color[1] = s.light3Color[1];
+    this._light3Color[2] = s.light3Color[2];
     this.setWindowEmission(s.windowEmission);
     this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
     this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
@@ -1843,6 +1887,55 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._moonScale = moon.scale;
     this._moonDir[0] = moon.dir[0]; this._moonDir[1] = moon.dir[1]; this._moonDir[2] = moon.dir[2];
     this._moonColor[0] = moon.color[0]; this._moonColor[1] = moon.color[1]; this._moonColor[2] = moon.color[2];
+  }
+
+  /**
+   * ROAD-C c2: the THIRD directional term. Takes {scale, dir, color} or
+   * null (off, which is every pass but one). It exists because DFU's
+   * automap beacons are lit by THREE directional lights -
+   * CreateLightsForAutomapGeometry (Automap.cs:2025-2076) - where the
+   * world's own lighting has two, sun and masser; collapsing the back
+   * light into either of those would be a departure, and it is cheaper
+   * to carry the term than to record one.
+   */
+  setThirdLight(light) {
+    if (!light) { this._light3Scale = 0; return; }
+    this._light3Scale = light.scale;
+    this._light3Dir[0] = light.dir[0]; this._light3Dir[1] = light.dir[1]; this._light3Dir[2] = light.dir[2];
+    this._light3Color[0] = light.color[0]; this._light3Color[1] = light.color[1];
+    this._light3Color[2] = light.color[2];
+  }
+
+  /** The frame's key-light direction (the direction TOWARD the light).
+   *  beginFrame takes it as an argument; this is for a pass that has to
+   *  change it BETWEEN draws - see uploadLighting. */
+  setLightDir(dir) {
+    this._lightDir = dir;
+  }
+
+  /**
+   * Push the directional lighting to the mesh program NOW. beginFrame is
+   * normally the only uploader - the setters merely shadow - but the
+   * automap's beacon group is LIT where the geometry group drawn just
+   * before it is not (DaggerfallAutomap.shader has no light term at all;
+   * the three automap lights carry `cullingMask = 1 << layerAutomap` and
+   * reach only the Standard-material beacons), and both are draws inside
+   * ONE panelFrame. Same immediate-upload seam setClipY and
+   * setAutomapWater already have, for the same reason.
+   */
+  uploadLighting() {
+    const gl = this.gl;
+    this._use(this.program);
+    gl.uniform3fv(this.uLightDir, this._lightDir);
+    gl.uniform3fv(this.uAmbient, this._ambient);
+    gl.uniform1f(this.uSunScale, this._sunScale);
+    gl.uniform3fv(this.uSunColor, this._sunColor);
+    gl.uniform3fv(this.uMoonDir, this._moonDir);
+    gl.uniform1f(this.uMoonScale, this._moonScale);
+    gl.uniform3fv(this.uMoonColor, this._moonColor);
+    gl.uniform3fv(this.uLight3Dir, this._light3Dir);
+    gl.uniform1f(this.uLight3Scale, this._light3Scale);
+    gl.uniform3fv(this.uLight3Color, this._light3Color);
   }
 
   /** Time-of-day lighting: ambient color, sun scale, sun color. */
