@@ -397,43 +397,12 @@ layout(location=1) in vec3 aNormal;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
-uniform sampler2D uField;   // EE9: the surface field, piece-local
-uniform float uFieldSize;   // EE9: the piece's extent in world units
-uniform float uFieldAmt;    // EE9: 0 = no field
-uniform float uSnowM;       // EE9: full snow, in metres
-uniform float uPatch;       // EE15: 1 = the near patch, whose vertices carry the snow already
 out vec3 vNormal;
 out vec3 vWorldPos;
 out vec2 vLocalXZ;
 void main() {
   vNormal = mat3(uModel) * aNormal;
-  vec3 pos = aPos;
-  // EE9: SNOW IS A HEIGHT. The surface field is sampled at the vertex
-  // and the ground rises by its depth - packed snow sitting lower than
-  // fresh, so a trail reads as a trail from any angle. uFieldAmt is 0
-  // outside the near ring and outside the enhanced skin, and the term
-  // then costs one multiply. The field is piece-local, so the vertex
-  // reads it in its own coordinates.
-  if (uFieldAmt > 0.0 && uPatch < 0.5) {
-    // textureLod, explicitly: a vertex stage has no derivatives, and an
-    // implicit-LOD fetch there crashed the ANGLE/SwiftShader tab outright
-    // EE14 (Mac: roads sit at the snow's height when they should sit at
-    // their own, with the snow ramping down to them). A vertex is shared
-    // by the four tiles around it and rose by the snow at its own point,
-    // so a road's edge vertices rose with the verge and the road rode up
-    // on them. The vertex now takes the MINIMUM depth of the cells around
-    // it, half a tile out: a vertex that touches a road (thin, hard)
-    // stays at the road's level, the next vertex out rises, and the
-    // fragment stage's slope draws the ramp between. Open ground is
-    // unchanged - every neighbour there is as deep.
-    vec2 fuv = aPos.xz / uFieldSize;
-    float e = 3.2 / uFieldSize;
-    vec4 f = textureLod(uField, fuv, 0.0);
-    float depth = min(f.g, min(min(textureLod(uField, fuv + vec2(e, 0.0), 0.0).g, textureLod(uField, fuv - vec2(e, 0.0), 0.0).g),
-                                min(textureLod(uField, fuv + vec2(0.0, e), 0.0).g, textureLod(uField, fuv - vec2(0.0, e), 0.0).g)));
-    pos.y += depth * (1.0 - f.b * 0.55) * uSnowM * uFieldAmt;
-  }
-  vec4 world = uModel * vec4(pos, 1.0);
+  vec4 world = uModel * vec4(aPos, 1.0);
   vWorldPos = world.xyz;
   vLocalXZ = aPos.xz;
   gl_Position = uProj * uView * world;
@@ -456,103 +425,6 @@ float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
 float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
 `;
 
-// EE7: THE GRASS. The renderer's first INSTANCED draw: one blade -
-// three stacked quads so it bends instead of shearing - drawn N times,
-// with a per-instance attribute carrying each blade's root, height,
-// phase, lean and tint. Placement is the host's (placeGrass, keyed to
-// the terrain piece's own tilemap and heightmap); this is only the
-// draw. Lit by the SAME uniforms the terrain is - the sun, the ambient,
-// the cloud deck - so a blade at dusk is the colour of dusk and a blade
-// under a cloud is in its shadow, and fogged by the SAME fog function,
-// so it fades with the ground it stands on rather than in front of it.
-const GRASS_VS = `#version 300 es
-precision highp float;
-layout(location=0) in vec2 aCorner;      // 0..1 across, 0..1 up the blade
-layout(location=1) in vec4 aInst;        // root x, y, z (piece-local), height
-layout(location=2) in vec4 aInst2;       // phase, leanX, leanZ, tint
-uniform mat4 uProj, uView, uModel;
-uniform float uTime, uWind, uRange;
-uniform vec2 uWindDir;
-uniform vec3 uCamPos;
-uniform sampler2D uField;                       // EE9: the surface field, piece-local
-uniform float uFieldSize, uFieldAmt, uSnowM;    // EE9
-uniform vec3 uLightDirW;   // AUDIT 47 F1: declared HERE, not injected by a string replace after the fact
-out float vT; out float vTint; out float vLam; out vec3 vWorldPos;
-void main() {
-  vec3 local = aInst.xyz;
-  float bladeH = aInst.w;
-  // EE9: BURIAL IS GEOMETRIC. The blade reads the same field the ground
-  // does; its root is planted ON the snow surface and its height is
-  // what stands ABOVE it - a blade shorter than the snow is gone
-  // because it is buried, not because a factor shrank it. The snow
-  // line, uSnowM, is the ground's own displacement, so the surface the
-  // ground draws and the surface the blade stands on cannot drift.
-  if (uFieldAmt > 0.0) {
-    vec4 f = texture(uField, local.xz / uFieldSize);
-    float snowSurf = f.g * (1.0 - f.b * 0.55) * uSnowM * uFieldAmt;
-    float drown = smoothstep(0.10, 0.40, f.r) * uFieldAmt;
-    local.y += snowSurf;
-    bladeH = max(0.0, bladeH - snowSurf) * (1.0 - drown * 0.9);
-    if (bladeH <= 0.001) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
-  }
-  vec3 root = (uModel * vec4(local, 1.0)).xyz;
-  float d = distance(root.xz, uCamPos.xz);
-  // the fade THINS the field rather than shrinking the blades: a hashed
-  // threshold drops whole blades with distance, so the count falls away
-  // and every blade that remains is its true size
-  float fade = 1.0 - smoothstep(uRange * 0.55, uRange, d);
-  if (fade <= 0.001 || fract(aInst2.x * 91.7) > fade * 1.15) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
-  vT = aCorner.y;
-  // the tip travels and the root does not: the sway is weighted by
-  // height along the blade, squared, which is what a stalk does
-  float sway = sin(uTime * 1.7 + aInst2.x + root.x * 0.08 + root.z * 0.05);
-  vec2 lean = aInst2.yz + uWindDir * sway * uWind * 0.0055;
-  vec3 p = root;
-  p.xz += lean * (vT * vT) * bladeH;
-  p.xz += vec2(aCorner.x - 0.5) * 0.09 * (1.0 - vT * 0.75);
-  p.y += vT * bladeH;
-  // a blade's normal is its lean crossed with up: a leaning blade
-  // catches a low sun on one side and goes dark on the other
-  vec3 nrm = normalize(vec3(-lean.y, 0.35, lean.x) + vec3(0.0, 0.25, 0.0));
-  vLam = max(dot(nrm, normalize(uLightDirW)), 0.0);
-  vTint = aInst2.w;
-  vWorldPos = p;
-  gl_Position = uProj * uView * vec4(p, 1.0);
-}`;
-const GRASS_FS = `#version 300 es
-precision highp float;
-in float vT; in float vTint; in float vLam; in vec3 vWorldPos;
-uniform vec3 uAmbient, uSunColor, uLightDir;
-uniform float uSunScale;
-uniform vec3 uFogColor; uniform int uFogMode; uniform float uFogDensity; uniform vec2 uFogRange; uniform vec3 uCamPos;
-${CLOUD_SHADOW_GLSL}
-out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  return exp(-uFogDensity * d);
-}
-void main() {
-  // olive, not emerald - a Daggerfall field, not a golf course; dark at
-  // the root where the sward shades it, brighter toward the tip
-  vec3 root = vec3(0.10, 0.14, 0.06);
-  vec3 mid  = vec3(0.21, 0.29, 0.11);
-  vec3 tip  = vec3(0.36, 0.44, 0.19);
-  vec3 c = mix(root, mid, smoothstep(0.0, 0.55, vT));
-  c = mix(c, tip, smoothstep(0.5, 1.0, vT));
-  c *= 0.80 + vTint * 0.42;
-  float lam = vLam;
-  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
-    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
-    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
-    lam *= 1.0 - cov * uShadowAmt;
-  }
-  vec3 lit = c * (uAmbient * (0.55 + 0.45 * vT) + uSunColor * (uSunScale * lam));
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
-}`;
-
-
 const TERRAIN_FS = `#version 300 es
 precision highp float;
 precision highp usampler2D;
@@ -571,11 +443,6 @@ uniform vec3 uMoonDir;    // EV5: the second directional term - the masser
 uniform float uMoonScale; // 0 = no moon (classic, indoors, daytime)
 uniform vec3 uMoonColor;
 ${CLOUD_SHADOW_GLSL}
-uniform sampler2DArray uTileNrm;   // EE6: the drawn tiles' normals
-uniform float uNormalAmt;          // EE6: 0 outside the drawn mode
-uniform sampler2D uField;          // EE9: the surface field, piece-local
-uniform float uFieldSize, uFieldAmt, uSnowM, uRainAmt;   // EE9
-uniform float uPatch;   // EE15: on the near patch the field's slope is in the vertex normal already
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -615,103 +482,6 @@ void main() {
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
   vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
   vec3 n = normalize(vNormal);
-  // EE6: THE GROUND IS LIT, NOT PAINTED. The drawn tiles carry a normal
-  // per texel, from their surfaces' own height - a blade's tip stands
-  // higher than its root, a pebble higher than the soil - so every
-  // blade and pebble gets a lit side and a shaded side, and they move
-  // with the sun. The tile's tangent frame is the tile's own axes: the
-  // same rotation that placed its colours places its normal, so a
-  // rotated tile is lit as a rotated surface and not as the unrotated
-  // one. uNormalAmt is 0 outside the drawn mode, and the term costs
-  // nothing there.
-  if (uNormalAmt > 0.0) {
-    vec3 tn = texture(uTileNrm, vec3(tuv, float(layer))).xyz * 2.0 - 1.0;
-    vec2 tr = ROT[t] * tn.xy;                       // the tile's rotation, applied to its normal
-    vec3 perturbed = normalize(vec3(tr.x, tn.z, tr.y));   // tangent (x, y-up, z) -> world on flat ground
-    n = normalize(mix(n, perturbed, uNormalAmt));
-    // DETAIL TILING: a low-frequency read over WORLD position modulates
-    // the albedo, so the tile's 6.4m period does not resolve into a
-    // grid on open ground. The same fbm the shadows use, at a tenth the
-    // rate: damp ground deeper, worn ground lighter.
-    float low = tfbm(vWorldPos.xz * 0.011);
-    tex *= 0.86 + 0.28 * low;
-  }
-  // EE9: THE FIELD'S LOOK, read per texel where the vertex could only
-  // read it per 6.4m. Fresh snow is near-white and sky-lit; PACKED snow
-  // is duller and bluer, because compressed snow is denser ice and
-  // scatters less - the only reason a trail is visible on a white
-  // field. The snow's own normal comes from the field's slope, so a
-  // drift has shape and a print's rim catches the light. A puddle is
-  // DARK, SMOOTH and Fresnel-reflective: water fills the pores and
-  // reflects the sky at a grazing angle, which is why a puddle reads as
-  // a puddle from across a field and as wet dirt underfoot.
-  float snowCov = 0.0; float pud = 0.0;
-  if (uFieldAmt > 0.0) {
-    vec2 fuv = vLocalXZ / uFieldSize;
-    vec4 f = texture(uField, fuv);
-    float snowD = f.g * (1.0 - f.b * 0.55);
-    snowCov = smoothstep(0.02, 0.16, snowD) * uFieldAmt;
-    float e = 1.0 / 512.0;
-    float sL = texture(uField, fuv - vec2(e, 0.0)).g, sR = texture(uField, fuv + vec2(e, 0.0)).g;
-    float sD = texture(uField, fuv - vec2(0.0, e)).g, sU = texture(uField, fuv + vec2(0.0, e)).g;
-    vec3 snowN = normalize(vec3((sL - sR) * 22.0 * uSnowM, 1.0, (sD - sU) * 22.0 * uSnowM));
-    // EE14 (Mac: no snow deformation): the trench WAS in the field - the
-    // census reads it at a fifth of the surrounding depth - and could not
-    // be seen: a vertex every 6.4m cannot sink a footprint, and the packed
-    // colour alone is a stain. So the fragment stage reads the CAVITY -
-    // how far this texel sits below the snow around it, off the same four
-    // taps the normal uses. A cavity darkens its floor the way a trench's
-    // floor is in shadow, and the rim beside it is lit by contrast, which
-    // is what a trench looks like whatever the geometry is doing.
-    float cavity = clamp(((sL + sR + sD + sU) * 0.25 - f.g) * 6.0, 0.0, 1.0) * uFieldAmt;
-    // EE11 (Mac: the snow looks too flat in towns). The field's cells are
-    // 1.6m, and between them a uniform depth is a uniform white. Snow is
-    // never flat: wind lays it in DRIFTS and combs SASTRUGI across them.
-    // Both are fields over the piece's own position - a low broad drift
-    // and a long thin comb - and both act on the NORMAL as well as the
-    // colour, because a drift is a shape before it is a shade. The
-    // tile's own relief (EE6) stays under THIN snow and fades under deep,
-    // so cobbles show through a dusting and vanish under a fall.
-    float drift = tfbm(vLocalXZ * 0.045);
-    float sast = tfbm(vLocalXZ * vec2(0.42, 0.11) + 7.0);
-    float dGx = tfbm((vLocalXZ + vec2(0.6, 0.0)) * 0.045) - drift;
-    float dGz = tfbm((vLocalXZ + vec2(0.0, 0.6)) * 0.045) - drift;
-    float sGx = tfbm((vLocalXZ + vec2(0.3, 0.0)) * vec2(0.42, 0.11) + 7.0) - sast;
-    vec3 driftN = normalize(vec3(-(dGx * 9.0 + sGx * 4.0), 1.0, -(dGz * 9.0)));
-    float deep = smoothstep(0.10, 0.45, snowD);
-    vec3 snowShape = normalize(mix(uPatch > 0.5 ? n : snowN, driftN, 0.55));   // EE15: the patch's own normal carries the trench and the verge
-    n = normalize(mix(n, snowShape, snowCov * (0.55 + 0.45 * deep)));
-    vec3 fresh = vec3(0.86, 0.89, 0.95);
-    vec3 hollow = vec3(0.70, 0.78, 0.92);                                       // a hollow is sky-lit, and blue
-    vec3 packed2 = vec3(0.56, 0.62, 0.74);                                      // trodden snow is denser ice: duller, bluer - and now DARK enough to read as a print
-    vec3 snowC = mix(hollow, fresh, smoothstep(0.30, 0.70, drift * 0.7 + sast * 0.3));
-    snowC *= 0.94 + 0.10 * sast;                                                // the comb's crests catch light
-    tex = mix(tex, mix(snowC, packed2, f.b), snowCov);
-    tex = mix(tex, tex * vec3(0.92, 0.94, 0.98), f.a * snowCov * 0.6);   // wear: the memory of a path
-    tex *= 1.0 - cavity * 0.45 * max(snowCov, f.b);                      // EE14: the trench floor, in its own shadow
-    pud = smoothstep(0.05, 0.28, f.r) * (1.0 - snowCov) * uFieldAmt;
-    if (pud > 0.001) {
-      n = normalize(mix(n, vec3(0.0, 1.0, 0.0), pud * 0.92));
-      tex *= mix(1.0, 0.42, pud);
-      // EE17: RAIN RIPPLES, the lab's own. A coarse lattice of impacts,
-      // one per cell with its own phase, each an expanding ring whose
-      // amplitude decays as it spreads - and the ring is a NORMAL
-      // disturbance, not a colour: it bends the sky the puddle reflects,
-      // which is how a ripple reads on water. Only where water stands,
-      // only while rain falls.
-      if (uRainAmt > 0.0) {
-        vec2 rp = vLocalXZ * 1.4;
-        vec2 rc = floor(rp); vec2 rf = fract(rp) - 0.5;
-        float ph = thash(rc);
-        float tt = fract(uCloudTime * 0.9 + ph);                 // 0..1, the ring's life
-        float rad = tt * 0.42;
-        float dd = length(rf + (vec2(thash(rc + 3.1), thash(rc + 7.7)) - 0.5) * 0.5);
-        float ring = sin((dd - rad) * 40.0) * exp(-dd * 6.0) * (1.0 - tt) * step(dd, rad + 0.05);
-        vec2 dirR = normalize(rf + 1e-4);
-        n = normalize(n + vec3(dirR.x, 0.0, dirR.y) * ring * 0.35 * pud * uRainAmt);
-      }
-    }
-  }
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
   // crosses the cloud plane - so a bank overhead drags its shadow across
@@ -728,40 +498,6 @@ void main() {
   }
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
-  if (pud > 0.001) {
-    // the sky in the water, stronger at a grazing angle - the Fresnel term
-    vec3 V = normalize(uCamPos - vWorldPos);
-    float fres = pow(1.0 - max(dot(V, vec3(0.0, 1.0, 0.0)), 0.0), 4.0);
-    lit = mix(lit, uFogColor * 1.05 + uAmbient * 0.5, pud * (0.10 + fres * 0.72));
-  }
-  // EE10: RAIN-SHINE ON THE ROAD. A road is hard: rain does not soak in,
-  // it SHEETS, and a wet sheet of stone is darker and shinier at once -
-  // water fills the pores (absorbs more) and lies flat on top (reflects
-  // sharper). Either alone looks wrong; the pair reads as rain-soaked.
-  // The road is known here by its RECORD - the same three the painter
-  // writes and the field marks hard - so the shine lives exactly where
-  // the road is. It rises with the rain falling and with water standing,
-  // and it is 0 on dry stone and off the road entirely.
-  bool road = (layer == 46 || layer == 47 || layer == 55);
-  if (road && uFieldAmt > 0.0) {
-    float wet = clamp(max(uRainAmt * 0.8, smoothstep(0.02, 0.20, texture(uField, vLocalXZ / uFieldSize).r) * 1.2), 0.0, 1.0) * (1.0 - snowCov);
-    if (wet > 0.001) {
-      vec3 V3 = normalize(uCamPos - vWorldPos);
-      vec3 H3 = normalize(uLightDir + V3);
-      float grazeR = pow(1.0 - max(dot(V3, n), 0.0), 3.0);
-      lit *= mix(1.0, 0.68, wet);                                                            // darker: the pores fill
-      lit += uSunColor * uSunScale * pow(max(dot(n, H3), 0.0), 90.0) * wet * 0.9;            // shinier: a tight sun highlight
-      lit += (uFogColor * 0.9 + uAmbient * 0.4) * grazeR * wet * 0.35;                       // and the sky, at a grazing angle
-    }
-  }
-  if (snowCov > 0.001) {
-    // a sparse sharp sparkle on FRESH snow only - snow scatters, it does
-    // not shine, and trodden snow is dull
-    vec3 V2 = normalize(uCamPos - vWorldPos);
-    vec3 H = normalize(uLightDir + V2);
-    float glint = thash(floor(vLocalXZ * 40.0));
-    lit += vec3(0.85, 0.90, 1.0) * pow(max(dot(n, H), 0.0), 400.0) * step(0.982, glint) * snowCov * 0.45 * uSunScale;
-  }
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -788,7 +524,6 @@ const EMISSION_WHITE = new Float32Array([1, 1, 1]);
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
 import { TextureFile } from '../formats/textureFile.js';
-import { buildEnhancedTiles, buildTileNormals } from './groundSurfaces.js';   // EE4: the drawn ground; EE6: its normals
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
 export const CHAR_PIXEL = 9;
@@ -1118,31 +853,6 @@ export class Renderer {
 
     this.bbProgram = this._buildProgram(BB_VS, BB_FS);
     this.terrainProgram = this._buildProgram(TERRAIN_VS, TERRAIN_FS);
-    // EE7: the grass program and its locations. Fog and camera ride the
-    // same _uploadFog every other pass uses; light and deck are set per
-    // draw from the same renderer state the terrain reads.
-    this.grassProgram = this._buildProgram(GRASS_VS, GRASS_FS);
-    {
-      const gp = this.grassProgram; const L = (n) => gl.getUniformLocation(gp, n);
-      this._grassU = {
-        proj: L('uProj'), view: L('uView'), model: L('uModel'), time: L('uTime'), wind: L('uWind'), range: L('uRange'),
-        windDir: L('uWindDir'), lightDirW: L('uLightDirW'), ambient: L('uAmbient'), sunColor: L('uSunColor'),
-        lightDir: L('uLightDir'), sunScale: L('uSunScale'),
-        fogColor: L('uFogColor'), fogMode: L('uFogMode'), fogDensity: L('uFogDensity'), fogRange: L('uFogRange'), camPos: L('uCamPos'),
-        shadowAmt: L('uShadowAmt'), cloudCover: L('uCloudCover'), cloudSoft: L('uCloudSoft'), cloudTime: L('uCloudTime'), cloudWind: L('uCloudWind'),
-        field: L('uField'), fieldSize: L('uFieldSize'), fieldAmt: L('uFieldAmt'), snowM: L('uSnowM'),   // EE9
-      };
-      // the blade: three stacked quads, shared by every instance
-      const corners = [];
-      for (let seg = 0; seg < 3; seg++) {
-        const a = seg / 3; const b = (seg + 1) / 3;
-        corners.push(0, a, 1, a, 1, b, 0, a, 1, b, 0, b);
-      }
-      this._grassBlade = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, this._grassBlade);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(corners), gl.STATIC_DRAW);
-      this._grassBladeVerts = corners.length / 2;
-    }
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
@@ -1153,15 +863,6 @@ export class Renderer {
     this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
     this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
-    this.tUTileNrm = gl.getUniformLocation(this.terrainProgram, 'uTileNrm');     // EE6
-    this.tUNormalAmt = gl.getUniformLocation(this.terrainProgram, 'uNormalAmt'); // EE6
-    this.tUPatch = gl.getUniformLocation(this.terrainProgram, 'uPatch');           // EE15
-    // EE9: the field's uniforms, terrain
-    this.tUField = gl.getUniformLocation(this.terrainProgram, 'uField');
-    this.tUFieldSize = gl.getUniformLocation(this.terrainProgram, 'uFieldSize');
-    this.tUFieldAmt = gl.getUniformLocation(this.terrainProgram, 'uFieldAmt');
-    this.tUSnowM = gl.getUniformLocation(this.terrainProgram, 'uSnowM');
-    this.tURainAmt = gl.getUniformLocation(this.terrainProgram, 'uRainAmt');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
     this.tULightDir = gl.getUniformLocation(this.terrainProgram, 'uLightDir');
@@ -1176,30 +877,11 @@ export class Renderer {
     this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
-    this.tileArrays = new Map(); // archive:mode -> TEXTURE_2D_ARRAY
-    this.tileNormals = new Map(); // EE6: archive:mode -> the tiles' normal array (drawn mode only)
-    this.tileGrass = new Map();   // EE7: archive:mode -> per-record grass fraction (drawn mode only)
-    /** EE3: the ground's half of the Enhanced Environments switch, set
-     *  by the host from the skin AND the pref before each upload. OFF by
-     *  default, so the classic skin cannot inherit it. */
-    this.enhancedGround = false;
-    /** EE3: the URL door - ?ground=classic|tiles - which outranks the
-     *  switch, so a report can be bisected in one reload. */
-    this.groundMode = null;
+    this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
     /** EE5: the cloud deck the ground shadows under, handed over by the
      *  host from the SKY's own state. Null = no shadows, which is the
      *  classic skin and every interior. */
     this._cloudShadow = null;
-    /** EE9: the surface field for the piece about to be drawn -
-     *  {tex, size, amount} - or null. Set by the host per piece, numbers
-     *  and a texture handle only; the draw binds it. A 1x1 zero texture
-     *  stands in when there is none, so the sampler is never incomplete. */
-    this._field = null;
-    this._noField = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, this._noField);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -2599,237 +2281,25 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
-  /** EE3: the tile array for an archive in the CURRENT ground mode, or
-   *  undefined if it has not been uploaded in that mode. THE ONLY DOOR
-   *  TO THE CACHE for readers. The first attempt keyed this cache by
-   *  archive:mode and left both hosts reading it by archive alone -
-   *  which returned undefined, drew the terrain with no texture, and
-   *  was the black world. The mode is resolved here, once, and nobody
-   *  else spells the key. */
-  tileArrayFor(archive) {
-    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
-    return this.tileArrays.get(`${archive}:${mode}`);
-  }
-
-  /** EE7: per-record grass fractions for an archive in the current mode,
-   *  or null when the mode places no grass. */
-  tileGrassFor(archive) {
-    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
-    return this.tileGrass.get(`${archive}:${mode}`) ?? null;
-  }
-
-  /** EE7: a grass buffer for one terrain piece. `data` is placeGrass's
-   *  8 floats a blade. Creates and fills; draws nothing; leaves no
-   *  binding behind but the VAO it releases through _bindVao. */
-  createGrass(data, count) {
-    if (!count) return null;
-    const gl = this.gl;
-    const vao = gl.createVertexArray();
-    this._bindVao(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._grassBlade);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    const inst = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, inst);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 0);
-    gl.vertexAttribDivisor(1, 1);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 32, 16);
-    gl.vertexAttribDivisor(2, 1);
-    this._bindVao(null);
-    return { vao, inst, count };
-  }
-
-  destroyGrass(grass) {
-    if (!grass) return;
-    const gl = this.gl;
-    if (this._lastVao === grass.vao) this._bindVao(null);
-    gl.deleteBuffer(grass.inst);
-    gl.deleteVertexArray(grass.vao);
-  }
-
-  /** EE7: draw one piece's grass. Same model matrix as its terrain, same
-   *  light, same deck, same fog. `wind` is {dir:[x,z], speed}. */
-  drawGrass(grass, modelMatrix, timeSeconds, wind = null, range = 200) {   // EE14: the proto's range
-    if (!grass || !grass.count) return;
-    const gl = this.gl;
-    const u = this._grassU;
-    this._use(this.grassProgram);
-    gl.uniformMatrix4fv(u.proj, false, this._proj);
-    gl.uniformMatrix4fv(u.view, false, this._view);
-    gl.uniformMatrix4fv(u.model, false, modelMatrix);
-    gl.uniform1f(u.time, timeSeconds);
-    gl.uniform1f(u.wind, wind ? wind.speed : 40);
-    gl.uniform2f(u.windDir, wind ? wind.dir[0] : 1, wind ? wind.dir[1] : 0.2);
-    gl.uniform1f(u.range, range);
-    gl.uniform3fv(u.lightDirW, this._lightDir);
-    gl.uniform3fv(u.lightDir, this._lightDir);
-    gl.uniform3fv(u.ambient, this._ambient);
-    gl.uniform3fv(u.sunColor, this._sunColor);
-    gl.uniform1f(u.sunScale, this._sunScale);
-    this._uploadFog(u);
-    const cs = this._cloudShadow;
-    gl.uniform1f(u.shadowAmt, cs ? cs.amount : 0);
-    gl.uniform1f(u.cloudCover, cs ? cs.cover : 0);
-    gl.uniform1f(u.cloudSoft, cs ? cs.soft : 1);
-    gl.uniform1f(u.cloudTime, cs ? cs.time : 0);
-    gl.uniform2f(u.cloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
-    // EE9: the same field the terrain read, on unit 4
-    const fld = this._field;
-    gl.activeTexture(gl.TEXTURE4);
-    gl.bindTexture(gl.TEXTURE_2D, fld ? fld.tex : this._noField);
-    gl.uniform1i(u.field, 4);
-    gl.uniform1f(u.fieldSize, fld ? fld.size : 1);
-    gl.uniform1f(u.fieldAmt, fld ? fld.amount : 0);
-    gl.uniform1f(u.snowM, fld ? fld.snowM : 0);
-    gl.activeTexture(gl.TEXTURE0);
-    this._bindVao(grass.vao);
-    // AUDIT 39 F50's law: every draw in this file reports
-    this.stats.draws++;
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, this._grassBladeVerts, grass.count);
-  }
-
-  /** EE6: the normal array for an archive in the current mode, or null
-   *  when the mode carries none. Same door discipline as tileArrayFor. */
-  tileNormalFor(archive) {
-    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
-    return this.tileNormals.get(`${archive}:${mode}`) ?? null;
-  }
-
   uploadTileArray(archive, layers) {
-    // EE3: THE GROUND'S SAMPLING, behind the Enhanced Environments
-    // switch. Two modes, and a URL door between them:
-    //   classic  the original tiles, NEAREST - Daggerfall's own look,
-    //            byte for byte what this always did
-    //   tiles    the original tiles with a mip chain and anisotropy
-    //   drawn    our surfaces in the original tiles' shapes (EE4), the
-    //            enhanced default
-    // The host sets groundMode from ?ground=; absent, the switch
-    // decides. THE MODE IS PART OF THE CACHE KEY: this cache lives on
-    // the renderer, which survives a world load, so a key of archive
-    // alone would hand a flipped switch the array built for the old
-    // one and make the row's "takes effect when the world next loads"
-    // a lie.
-    //
-    // THE UPLOAD LAW (the arc plan, from the texture incident): this
-    // method creates, fills and parameterises ONE texture. It does not
-    // draw, bind a framebuffer, clear, change the pipeline, or leave
-    // any binding but its own behind.
-    const mode = this.groundMode ?? (this.enhancedGround ? 'drawn' : 'classic');
-    const key = `${archive}:${mode}`;
-    if (this.tileArrays.has(key)) return this.tileArrays.get(key);
+    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
     const gl = this.gl;
-    // EE4: THE DRAWN GROUND. A third mode, and the enhanced default:
-    //   drawn    our surfaces, masked through each original tile's own
-    //            classification, colour-matched to the archive's bases,
-    //            at 128px - four times the original's pixels - and
-    //            mipmapped as 'tiles' is
-    // Built here, on the CPU, BEFORE any GL call - so the upload law
-    // still holds: what follows creates, fills and parameterises one
-    // texture and nothing else. Nothing is fetched and nothing is
-    // stored; the surfaces are ours and the shapes are the player's
-    // own archive's. 128 because 256 measured at 2.3s against 0.7s for
-    // a climate's 56 tiles, and a two-second stall entering the world
-    // is worse than the detail is good.
-    const src = mode === 'drawn' ? buildEnhancedTiles(layers, { size: 128 }) : layers;
-    // EE7: the records' grass fractions, kept for the placer. Only the
-    // drawn build knows them; the other modes place no grass.
-    this.tileGrass.set(key, mode === 'drawn' ? src.map((t) => t.grass ?? 0) : null);
-    // EE6: the tiles' NORMALS, from the surfaces' own height, as a second
-    // array beside the colours. Only the drawn tiles carry a height, so
-    // only the drawn mode has normals; the other modes leave the slot
-    // null and the shader's normal term is 0.
-    if (mode === 'drawn') {
-      const nrm = buildTileNormals(src);
-      const ntex = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D_ARRAY, ntex);
-      gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, nrm[0].width, nrm[0].height, nrm.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      for (let i = 0; i < nrm.length; i++) {
-        gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, nrm[i].width, nrm[i].height, 1, gl.RGBA, gl.UNSIGNED_BYTE, nrm[i].colors);
-      }
-      while (gl.getError() !== gl.NO_ERROR) { /* drain */ }
-      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
-      const ok = gl.getError() === gl.NO_ERROR;
-      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, ok ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      this.tileNormals.set(key, ntex);
-    }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
-    const w = src[0].width;
-    const h = src[0].height;
-    // EE3: a SIZED internal format. generateMipmap requires the texture
-    // to be colour-renderable and filterable; RGBA8 is guaranteed to
-    // be, an unsized RGBA is not. Same eight bits a channel, spelled
-    // the way WebGL2 requires when mips are wanted. Classic gets it
-    // too, because it changes nothing NEAREST can see.
-    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, src.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    for (let i = 0; i < src.length; i++) {
-      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(src[i].colors.buffer, src[i].colors.byteOffset, w * h * 4));
+    const w = layers[0].width;
+    const h = layers[0].height;
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (let i = 0; i < layers.length; i++) {
+      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
     }
-    if (mode === 'classic') {
-      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    } else {
-      // EE3: mips are what stop the ground BOILING at distance - a tile
-      // covers 6.4 world units, so a pixel a hundred metres out spans
-      // dozens of texels and NEAREST picks one of them at random as the
-      // camera moves - and anisotropy is what keeps it from going to
-      // mush at grazing angles, which is how almost all ground is seen.
-      // Per-layer by construction: generateMipmap on a 2D array filters
-      // each layer independently, so tiles cannot bleed.
-      //
-      // And if the chain cannot be built on some driver, the sampler
-      // goes back to NEAREST rather than staying MIPMAP-INCOMPLETE,
-      // because an incomplete sampler returns black for every texel.
-      while (gl.getError() !== gl.NO_ERROR) { /* drain: the next read must be ours */ }
-      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
-      if (gl.getError() !== gl.NO_ERROR) {
-        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      } else {
-        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
-        if (aniso) {
-          gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT,
-            Math.min(16, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
-        }
-      }
-    }
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.tileArrays.set(key, tex);
+    this.tileArrays.set(archive, tex);
     return tex;
-  }
-
-  /** EE9: the surface field for the next terrain/grass draw, or null. */
-  setSurfaceField(f) { this._field = f ?? null; }
-
-  /** EE9: make a field texture of `dim` x `dim` RGBA8, linear, clamped.
-   *  Creates and parameterises; fills nothing; binds only itself. */
-  createFieldTexture(dim) {
-    const gl = this.gl;
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, dim, dim, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    return tex;
-  }
-
-  /** EE9: upload the rows [first, last] of a field image. Rows only:
-   *  the field is 512 x 512 and a footfall touches four. */
-  updateFieldRows(tex, dim, pixels, first, last) {
-    const gl = this.gl;
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    const rows = last - first + 1;
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, first, dim, rows, gl.RGBA, gl.UNSIGNED_BYTE, pixels.subarray(first * dim * 4, (last + 1) * dim * 4));
   }
 
   /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,
@@ -2837,30 +2307,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   setCloudShadow(d) { this._cloudShadow = d ?? null; }
 
   /** Draw one terrain surface with its tilemap + tile array. */
-  /** EE15: refill a terrain surface's positions and normals in place -
-   *  the near patch keeps its vertex count and is rebaked as the field
-   *  under it changes. Creates nothing, draws nothing, binds only the
-   *  buffers it fills. */
-  updateTerrainSurface(surface, positions, normals) {
-    const gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, surface.buffers[0]);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
-    gl.bindBuffer(gl.ARRAY_BUFFER, surface.buffers[1]);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, normals);
-  }
-
-  /** EE16: refill a vertex RANGE [from, to) of a terrain surface's
-   *  positions and normals - the fine ground rebakes by rows. */
-  updateTerrainRange(surface, from, to, positions, normals) {
-    const gl = this.gl;
-    const a = from * 3; const len = (to - from) * 3;
-    gl.bindBuffer(gl.ARRAY_BUFFER, surface.buffers[0]);
-    gl.bufferSubData(gl.ARRAY_BUFFER, a * 4, positions.subarray(a, a + len));
-    gl.bindBuffer(gl.ARRAY_BUFFER, surface.buffers[1]);
-    gl.bufferSubData(gl.ARRAY_BUFFER, a * 4, normals.subarray(a, a + len));
-  }
-
-  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize, normalTex = null, patch = false) {
+  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
     this._use(this.terrainProgram);
     gl.uniformMatrix4fv(this.tUProj, false, this._proj);
@@ -2894,28 +2341,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(this.tUTilemap, 2);
-    // EE6: the normals ride unit 3, drawn mode only; the sampler must
-    // still be bound to SOMETHING valid when the amount is 0, or a
-    // driver may treat the unit as incomplete, so the colour array
-    // stands in.
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, normalTex ?? arrayTex);
-    gl.uniform1i(this.tUTileNrm, 3);
-    gl.uniform1f(this.tUNormalAmt, normalTex ? 1.0 : 0.0);
-    // EE15/EE16: a baked surface carries the field's height in its own
-    // vertices, so the vertex stage must not add it and the fragment
-    // stage trusts the vertex normal. (EE16 draws the fine ground INSTEAD
-    // of the coarse mesh, so no polygon offset is needed any more.)
-    gl.uniform1f(this.tUPatch, patch ? 1.0 : 0.0);
-    // EE9: the field on unit 4 - a 1x1 zero texture when there is none
-    const fld = this._field;
-    gl.activeTexture(gl.TEXTURE4);
-    gl.bindTexture(gl.TEXTURE_2D, fld ? fld.tex : this._noField);
-    gl.uniform1i(this.tUField, 4);
-    gl.uniform1f(this.tUFieldSize, fld ? fld.size : 1);
-    gl.uniform1f(this.tUFieldAmt, fld ? fld.amount : 0);
-    gl.uniform1f(this.tUSnowM, fld ? fld.snowM : 0);
-    gl.uniform1f(this.tURainAmt, fld ? fld.rain : 0);
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);

@@ -847,17 +847,11 @@ function paneEnhanced(body) {
   // land - a row that claims more than the tree has is the fault RA1
   // fixed here in the other direction.
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
-    'The enhanced outdoors as one system. Today: a procedural sky with the sun, both moons on '
-    + 'their real phases, a star field, a finely stepped sunrise and sunset, and clouds that '
-    + 'follow the weather to the horizon and cast their shadows on the land; and ground drawn at four times the detail in '
-    + 'Daggerfall\u2019s own tile shapes and colours, lit by the sun so every blade and pebble '
-    + 'has a bright side and a shaded side, holding still at distance instead of shimmering; and '
-    + 'three-dimensional grass standing in the meadows, bending in the wind; and rain and snow '
-    + 'that fall through the world around you, driven by the wind, rather than across the screen; '
-    + 'and snow that gathers on the ground through a storm, takes your footprints, and melts away '
-    + 'as the season warms, while the roads stay walked and wet-shining in the rain. '
-    + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own 64-pixel ground. '
-    + 'Takes effect when the world next loads.'));
+    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
+    + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
+    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
+    + 'driven by the wind, rather than across the screen. Off returns Daggerfall\u2019s SKY*.DAT '
+    + 'panorama and its own weather. Takes effect when the world next loads.'));
 
   // EE13 (Mac: a season test option that spawns you somewhere random, so
   // the outdoors can be checked without a walk to a season). A season, a
@@ -871,9 +865,9 @@ function paneEnhanced(body) {
   testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
   const testCtl = el('div', 'ctl');
   const seasonSel = el('select', 'act');
-  // EE14: Daggerfall has three ARCHIVE seasons (winter, rain, summer),
+  // Daggerfall has three ARCHIVE seasons (winter, rain, summer),
   // and the field has a CALENDAR. A season here is both: the archive
-  // the world dresses in, and the day of the year the field warms to.
+  // the world dresses in; the day is sent for any test that wants it.
   const SEASONS = [['winter', 'winter', 0], ['spring', 'rain', 90], ['summer', 'summer', 180], ['fall', 'summer', 300]];
   for (const [label, , day] of SEASONS) { const o = el('option', '', label); o.value = String(day); seasonSel.append(o); }
   const weatherSel = el('select', 'act');
