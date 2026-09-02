@@ -23,7 +23,21 @@ directory by `test/audit18_bible_docs.test.js`:
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
   verbatim, its placer law, and a renderer of its own beside the world's,
-  drawn on grass records of the near ring outside winter.
+  drawn on grass records of the near ring outside winter. GR2 darkened
+  it, billboarded the blades, time-sliced the walk and rescaled the
+  wind. **GR3 (2026-09-02, Mac: "the wind still isn't working ingame"):
+  it never was.** The host read the wind off `sky.cloudShadow`, and
+  `sky` is the CONTROLLER `createSkyController` returns, which never
+  carried that key - EE5 publishes the deck on the DOME, one level down
+  under `renderer`. Every reader got undefined: the grass took wind
+  [0,0] and a slider of 0, the enhanced rain fell as classic, and the
+  ground's cloud shadows were set to null - three features dead from one
+  missing key, the suite green throughout, because nothing pinned the
+  VALUE that reached the shader. GR2 measured a million blades placed
+  and never one moving. The controller carries a live getter now, and
+  `test/gr3_wind.test.js` pins the value (sunny is the lab's 70, not 0)
+  and a blade's actual tip travel on real placer output (29% of its
+  height over half a gust) - the two assertions GR2 lacked.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing
