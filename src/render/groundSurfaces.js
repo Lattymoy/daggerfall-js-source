@@ -514,7 +514,8 @@ export function placeGrass({ tilemap, grassOf, heights, tileDim = 128, tileSize 
         // rooted below the water pokes through it. No blade below the
         // water level, whatever the record says.
         if (y <= waterLevel) { rnd(); rnd(); rnd(); rnd(); rnd(); rnd(); continue; }   // burn the same draws, so the scatter stays deterministic
-        out.push(lx, y, lz, 0.55 + rnd() * 0.9, rnd() * 6.2832, (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.5, rnd());
+        // EE14: the proto's height - blades from knee to waist, in world units
+        out.push(lx, y, lz, 0.9 + rnd() * 1.5, rnd() * 6.2832, (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.5, rnd());
       }
     }
   }

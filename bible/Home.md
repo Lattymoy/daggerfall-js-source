@@ -306,13 +306,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:374` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:541` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:1343` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:1349` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1754` - *  through the `if`. This host's FLAGGED note (below, at the mode
-- `src/scenes/world.js:2796` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/world.js:4162` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:5222` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
-- `src/scenes/world.js:6409` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:1353` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:1359` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1764` - *  through the `if`. This host's FLAGGED note (below, at the mode
+- `src/scenes/world.js:2806` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/world.js:4172` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:5232` - ROAD-B CLOSED THE FLAG THAT STOOD HERE. It read: "FLAGGED: DFU's
+- `src/scenes/world.js:6419` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:1340` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1358` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
 - `src/scenes/worldModes.js:1570` - is the quest machine's, FLAGGED with it.
@@ -391,8 +391,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/enhancedMenu.js:1762` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1933` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/enhancedMenu.js:1768` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1939` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and

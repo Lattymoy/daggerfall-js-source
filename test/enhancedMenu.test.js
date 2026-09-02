@@ -469,10 +469,13 @@ test('EE13: the Enhanced pane offers a season/weather test that spawns in a rand
   const from = menu.indexOf('function paneEnhanced(body)');
   const pane = menu.slice(from, menu.indexOf('\n}', from));
   assert.match(pane, /el\('div', 'row-name', 'Test the outdoors'\)/, 'the row exists');
-  assert.match(pane, /for \(const sn of \['winter', 'spring', 'summer', 'fall'\]\)/, 'the four seasons the pin accepts');
+  // EE14: a season is both an archive and a day - the game has three
+  // archive seasons and the field has a calendar, and 'spring' as a bare
+  // name was a pin that ignored it
+  assert.match(pane, /for \(const \[label, , day\] of SEASONS\)/, 'the four seasons, each an archive and a day');
   assert.match(pane, /for \(const wn of \['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'\]\)/, 'the seven weathers the sim has');
-  assert.match(pane, /\['world', ''\], \['spawn', 'random'\], \['season', seasonSel\.value\], \['weather', weatherSel\.value\], \['class', '1'\], \['novideo', ''\]/,
-    'it navigates through the world\u2019s own doors');
+  assert.match(pane, /\['world', ''\], \['spawn', 'random'\], \['season', archive\], \['day', String\(day\)\], \['weather', weatherSel\.value\], \['class', '1'\], \['novideo', ''\]/,
+    'it navigates through the world\u2019s own doors, archive and day both');
   assert.ok(!/setPref\(.*season|setPref\(.*weather/.test(pane), 'a test door stores nothing');
   // and the world honours the door: any town, named in the console
   const w = read('src/scenes/world.js');

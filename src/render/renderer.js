@@ -367,8 +367,21 @@ void main() {
   if (uFieldAmt > 0.0) {
     // textureLod, explicitly: a vertex stage has no derivatives, and an
     // implicit-LOD fetch there crashed the ANGLE/SwiftShader tab outright
-    vec4 f = textureLod(uField, aPos.xz / uFieldSize, 0.0);
-    pos.y += f.g * (1.0 - f.b * 0.55) * uSnowM * uFieldAmt;
+    // EE14 (Mac: roads sit at the snow's height when they should sit at
+    // their own, with the snow ramping down to them). A vertex is shared
+    // by the four tiles around it and rose by the snow at its own point,
+    // so a road's edge vertices rose with the verge and the road rode up
+    // on them. The vertex now takes the MINIMUM depth of the cells around
+    // it, half a tile out: a vertex that touches a road (thin, hard)
+    // stays at the road's level, the next vertex out rises, and the
+    // fragment stage's slope draws the ramp between. Open ground is
+    // unchanged - every neighbour there is as deep.
+    vec2 fuv = aPos.xz / uFieldSize;
+    float e = 3.2 / uFieldSize;
+    vec4 f = textureLod(uField, fuv, 0.0);
+    float depth = min(f.g, min(min(textureLod(uField, fuv + vec2(e, 0.0), 0.0).g, textureLod(uField, fuv - vec2(e, 0.0), 0.0).g),
+                                min(textureLod(uField, fuv + vec2(0.0, e), 0.0).g, textureLod(uField, fuv - vec2(0.0, e), 0.0).g)));
+    pos.y += depth * (1.0 - f.b * 0.55) * uSnowM * uFieldAmt;
   }
   vec4 world = uModel * vec4(pos, 1.0);
   vWorldPos = world.xyz;
@@ -591,6 +604,15 @@ void main() {
     float sL = texture(uField, fuv - vec2(e, 0.0)).g, sR = texture(uField, fuv + vec2(e, 0.0)).g;
     float sD = texture(uField, fuv - vec2(0.0, e)).g, sU = texture(uField, fuv + vec2(0.0, e)).g;
     vec3 snowN = normalize(vec3((sL - sR) * 22.0 * uSnowM, 1.0, (sD - sU) * 22.0 * uSnowM));
+    // EE14 (Mac: no snow deformation): the trench WAS in the field - the
+    // census reads it at a fifth of the surrounding depth - and could not
+    // be seen: a vertex every 6.4m cannot sink a footprint, and the packed
+    // colour alone is a stain. So the fragment stage reads the CAVITY -
+    // how far this texel sits below the snow around it, off the same four
+    // taps the normal uses. A cavity darkens its floor the way a trench's
+    // floor is in shadow, and the rim beside it is lit by contrast, which
+    // is what a trench looks like whatever the geometry is doing.
+    float cavity = clamp(((sL + sR + sD + sU) * 0.25 - f.g) * 6.0, 0.0, 1.0) * uFieldAmt;
     // EE11 (Mac: the snow looks too flat in towns). The field's cells are
     // 1.6m, and between them a uniform depth is a uniform white. Snow is
     // never flat: wind lays it in DRIFTS and combs SASTRUGI across them.
@@ -615,6 +637,7 @@ void main() {
     snowC *= 0.94 + 0.10 * sast;                                                // the comb's crests catch light
     tex = mix(tex, mix(snowC, packed2, f.b), snowCov);
     tex = mix(tex, tex * vec3(0.92, 0.94, 0.98), f.a * snowCov * 0.6);   // wear: the memory of a path
+    tex *= 1.0 - cavity * 0.45 * max(snowCov, f.b);                      // EE14: the trench floor, in its own shadow
     pud = smoothstep(0.05, 0.28, f.r) * (1.0 - snowCov) * uFieldAmt;
     if (pud > 0.001) {
       n = normalize(mix(n, vec3(0.0, 1.0, 0.0), pud * 0.92));
@@ -2145,7 +2168,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** EE7: draw one piece's grass. Same model matrix as its terrain, same
    *  light, same deck, same fog. `wind` is {dir:[x,z], speed}. */
-  drawGrass(grass, modelMatrix, timeSeconds, wind = null, range = 120) {
+  drawGrass(grass, modelMatrix, timeSeconds, wind = null, range = 200) {   // EE14: the proto's range
     if (!grass || !grass.count) return;
     const gl = this.gl;
     const u = this._grassU;

@@ -137,6 +137,22 @@ export class SurfaceField {
    *  cells above it settle toward it, both over hours, in tick(). */
   setBase(depth) { this.base = cl(depth, 0, 1); }
 
+  /** EE14 (Mac: loading is extremely long): the calendar's snow, laid in
+   *  ONE pass instead of forty ticks. The tick converges every cell on
+   *  the same target - base by flatness by hardness, nothing on water -
+   *  so the converged state is written directly. Forty ticks of 262,144
+   *  cells over nine pixels was ninety million cell-updates on the way
+   *  into the world; this is a quarter of a million. */
+  fillToBase() {
+    const d = this.data; const n = this.dim * this.dim;
+    for (let k = 0; k < n; k++) {
+      if (this.wet && this.wet[k]) continue;
+      const hard = this.hard[k];
+      d[k * 4 + 1] = this.base * (0.3 + this.flat[k] * 0.7) * (1 - hard * 0.75);
+    }
+    this.dirtyRows.fill(1);
+  }
+
   /** EE10: mark the travelled cells from the piece's own tilemap. Every
    *  cell of a tile whose record is in `hardRecords` becomes hard; the
    *  edge cells of a hard tile are half-hard, so a road's verge is a

@@ -103,7 +103,11 @@ test('EE9: snow is a HEIGHT in the terrain shader, the grass is buried by it, an
   const vi = r.indexOf('const TERRAIN_VS = `'); const vs = r.slice(vi, r.indexOf('`;', vi));
   assert.match(vs, /uniform sampler2D uField;/, 'declared inside the vertex stage that reads it');
   assert.match(vs, /if \(uFieldAmt > 0\.0\) \{/, 'free when there is no field');
-  assert.match(vs, /textureLod\(uField, aPos\.xz \/ uFieldSize, 0\.0\)/, 'sampled per VERTEX for the displacement');
+  // EE14: sampled per VERTEX still, and now the MINIMUM over the cells
+  // around it, so a vertex touching a road stays at the road's level and
+  // the snow ramps down to it
+  assert.match(vs, /vec4 f = textureLod\(uField, fuv, 0\.0\);/, 'sampled per VERTEX for the displacement');
+  assert.match(vs, /float depth = min\(f\.g, min\(min\(textureLod\(uField, fuv \+ vec2\(e, 0\.0\), 0\.0\)\.g/, 'a road vertex takes the road\u2019s depth, not the verge\u2019s');
   const ti = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(ti, r.indexOf('`;', ti));
   assert.match(fs, /uniform sampler2D uField;/, 'and inside the fragment stage, where the print is carried by colour and normal');
   assert.match(r, /setSurfaceField\(f\) \{ this\._field = f \?\? null; \}/, 'numbers and a texture handle - it binds nothing');
@@ -248,4 +252,32 @@ test('AUDIT 48: the census measures what it means, and the classic skin carries 
   // the debug door that found the truth stays, and is read-only
   const dbg = w.slice(w.indexOf('window.__fieldDebug = () => {'), w.indexOf('window.__fieldCensus = () => {'));
   assert.ok(!/stamp\(|\] = /.test(dbg), 'a debug door reads and never writes');
+});
+
+// ═══ EE14: what Mac saw in play ═════════════════════════════════════
+test('EE14: the season pins the calendar, roads keep their level, the trench shows, and the field fills in one pass', () => {
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /const dayPin = params\.has\('day'\) \? Math\.max\(0, Math\.min\(359, Number\(params\.get\('day'\)\) \|\| 0\)\) : null;/);
+  assert.match(w, /const fieldDay = \(\) => dayPin \?\? Math\.floor\(worldMinutes\(\) \/ 1440\);/);
+  assert.ok(!/const day = Math\.floor\(worldMinutes\(\) \/ 1440\);/.test(w), 'every calendar read goes through the pin');
+  assert.match(w, /sim\.fillToBase\(\);/, 'one pass, not forty ticks');
+  assert.ok(!/for \(let i = 0; i < 40; i\+\+\) sim\.tick\(60/.test(w));
+  const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(menu, /\[\['winter', 'winter', 0\], \['spring', 'rain', 90\], \['summer', 'summer', 180\], \['fall', 'summer', 300\]\]/,
+    'a season is both the archive and the day - spring is the RAIN archive, not a name the pin ignores');
+  assert.match(menu, /\['day', String\(day\)\]/, 'the door sends the day');
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const ti = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(ti, r.indexOf('`;', ti));
+  assert.match(fs, /float cavity = clamp\(\(\(sL \+ sR \+ sD \+ sU\) \* 0\.25 - f\.g\) \* 6\.0, 0\.0, 1\.0\) \* uFieldAmt;/, 'the trench floor is read as a cavity');
+  assert.match(fs, /tex \*= 1\.0 - cavity \* 0\.45 \* max\(snowCov, f\.b\);/, 'and darkened like a floor in shadow');
+  assert.match(r, /range = 200\) \{/, 'the proto\u2019s range');
+  assert.match(w, /: 10;\n/, 'the proto\u2019s density');
+  // fillToBase converges to the tick's own target
+  const dim = 8; const hDim = dim + 1; const heights = new Float32Array(hDim * hDim).fill(100);
+  const a = new SurfaceField({ heights, tileDim: dim }); a.setBase(0.7); a.fillToBase();
+  // (the old forty ticks reached only 73% of the target - the one pass
+  // is where the ticks CONVERGE, which two hundred of them do reach)
+  const b = new SurfaceField({ heights, tileDim: dim }); b.setBase(0.7); for (let i = 0; i < 200; i++) b.tick(60, { warmth: 0.1 });
+  const k = ((4 * a.cells + 1) * a.dim + (4 * a.cells + 1)) * 4 + 1;
+  assert.ok(Math.abs(a.data[k] - b.data[k]) < 0.05, `one pass lands where the ticks converge (${a.data[k].toFixed(2)} vs ${b.data[k].toFixed(2)})`);
 });

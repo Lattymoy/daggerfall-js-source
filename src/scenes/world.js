@@ -262,6 +262,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // world: tickSeason below is DaggerfallLocation.Update's lastSeason
   // test, and applyWeather/weatherSun read this binding live.
   const seasonPin = seasonOverride(params);
+  // EE14 (Mac: spring and sunny, still snow): the FIELD reads the
+  // calendar for its base depth and its warmth, and ?season= only swaps
+  // the ARCHIVE - so a spring test stood on midwinter's snow. ?day=<0..359>
+  // pins the field's calendar; the menu's test door sends the day that
+  // goes with the season it names.
+  const dayPin = params.has('day') ? Math.max(0, Math.min(359, Number(params.get('day')) || 0)) : null;
+  const fieldDay = () => dayPin ?? Math.floor(worldMinutes() / 1440);
   let season = seasonPin ?? climateSeasonFromMinutes(worldMinutes());
 
   audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
@@ -897,7 +904,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const heights = new Float32Array(samples.length);
     for (let i = 0; i < samples.length; i++) heights[i] = samples[i] * scale;
     const sim = new SurfaceField({ heights, tileDim: TERRAIN_TILE_DIM });
-    const day = Math.floor(worldMinutes() / 1440);
+    const day = fieldDay();   // EE14: pinned by ?day= for a test
     sim.setBase(baseSnowDepth({ climateBase: climateType, dayOfYear: day }));
     // EE10: the piece's roads and paths are HARD - they take less snow,
     // sheet the rain, and start trodden. Read off the same tilemap that
@@ -907,7 +914,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // sea plane - holds no snow and pools no rain, because it is water
     if (tilemapBytes) sim.setWater(tilemapBytes, new Set([0]), SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5);
     // the calendar's snow is THERE on the first frame, not built over an hour
-    for (let i = 0; i < 40; i++) sim.tick(60, { warmth: warmthAt({ climateBase: climateType, dayOfYear: day, minuteOfDay: 240 }) });
+    sim.fillToBase();   // EE14: the calendar's snow in one pass, not forty ticks - the load-time cost that was most of the wait
     const tex = renderer.createFieldTexture(FIELD_DIM);
     for (let j = 0; j < sim.dim; j++) sim.dirtyRows[j] = 1;
     const span = sim.flush();
@@ -924,7 +931,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // rasteriser can screenshot inside its timeout
     const door = new URLSearchParams(globalThis.location?.search ?? '').get('grass');
     if (!grassOf || door === 'off') return null;
-    const perTile = door && Number.isFinite(Number(door)) ? Math.max(0.1, Number(door)) : 4;
+    // EE14 (Mac: grass and range maxed out, as the proto): ten a tile is
+    // the proto's density over a lawn; ?grass=<n> still turns it down for
+    // a weak machine or a probe.
+    const perTile = door && Number.isFinite(Number(door)) ? Math.max(0.1, Number(door)) : 10;
     const placed = placeGrass({
       tilemap: tilemapBytes, grassOf, heights: samples, tileDim: TERRAIN_TILE_DIM, tileSize: 6.4,
       heightScale: MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE, seed: (px * 73856093) ^ (py * 19349663), perTile,
@@ -6584,7 +6594,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           fieldLastTick = nowMs;
           const w = currentWeather();
           const rates = { rainRate: w === 'rain' ? 0.6 : w === 'thunder' ? 1 : 0, snowRate: w === 'snow' ? 0.8 : 0 };
-          const day = Math.floor(worldMinutes() / 1440); const minute = worldMinutes() % 1440;
+          const day = fieldDay();   // EE14: pinned by ?day= for a test const minute = worldMinutes() % 1440;
           const cover = sky?.cloudShadow?.cover ?? 0;
           const feet = walkMode ? player.pos : cam.pos;
           // EE9: ROUND-ROBIN. Nine near-ring fields of 262,144 cells each,

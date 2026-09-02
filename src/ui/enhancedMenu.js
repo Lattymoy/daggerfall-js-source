@@ -870,7 +870,11 @@ function paneEnhanced(body) {
   testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
   const testCtl = el('div', 'ctl');
   const seasonSel = el('select', 'act');
-  for (const sn of ['winter', 'spring', 'summer', 'fall']) { const o = el('option', '', sn); o.value = sn; seasonSel.append(o); }
+  // EE14: Daggerfall has three ARCHIVE seasons (winter, rain, summer),
+  // and the field has a CALENDAR. A season here is both: the archive
+  // the world dresses in, and the day of the year the field warms to.
+  const SEASONS = [['winter', 'winter', 0], ['spring', 'rain', 90], ['summer', 'summer', 180], ['fall', 'summer', 300]];
+  for (const [label, , day] of SEASONS) { const o = el('option', '', label); o.value = String(day); seasonSel.append(o); }
   const weatherSel = el('select', 'act');
   for (const wn of ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow']) { const o = el('option', '', wn); o.value = wn; weatherSel.append(o); }
   const go = el('button', 'act primary', 'Spawn');
@@ -879,7 +883,9 @@ function paneEnhanced(body) {
     // the menu already lives at /play/: same page, the world's doors set
     const url = new URL(location.href);
     url.search = '';
-    for (const [k, v] of [['world', ''], ['spawn', 'random'], ['season', seasonSel.value], ['weather', weatherSel.value], ['class', '1'], ['novideo', '']]) url.searchParams.set(k, v);
+    const day = Number(seasonSel.value);
+    const archive = SEASONS.find((x) => x[2] === day)?.[1] ?? 'summer';
+    for (const [k, v] of [['world', ''], ['spawn', 'random'], ['season', archive], ['day', String(day)], ['weather', weatherSel.value], ['class', '1'], ['novideo', '']]) url.searchParams.set(k, v);
     location.href = url.toString().replace(/=(&|$)/g, '$1');
   });
   testCtl.append(seasonSel, weatherSel, go);
