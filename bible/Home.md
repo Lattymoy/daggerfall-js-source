@@ -277,17 +277,17 @@ combat line numbers below are refreshed with it.
 - `src/characters/enemyCasting.js:71` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
 - `src/combat/arrowFlight.js:132` - * the three hosts that call it price one shot one way. (FLAGGED: the
 - `src/scenes/dungeonContext.js:273` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:1538` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1630` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/exterior.js:1030` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1282` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/dungeonContext.js:1539` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1631` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/exterior.js:1031` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1283` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/shared.js:549` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:2766` - landing stands in for it - FLAGGED for the first session with
-- `src/scenes/worldModes.js:1356` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1596` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:2132` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:2964` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/world.js:2767` - landing stands in for it - FLAGGED for the first session with
+- `src/scenes/worldModes.js:1357` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1597` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:2133` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:2965` - with the trade window's own mode flow, the same INTERIM the
 - `src/systems/banking.js:661` - - FLAGGED, alone now: PurchaseShip (:467-486) has no caller. The
 - `src/systems/buildingLocks.js:60` - *                                   (FLAGGED with banking)
 - `src/systems/chargenSession.js:335` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
@@ -317,8 +317,6 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeTalk.js:285` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
-- `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
-- `src/ui/restWindow.js:523` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:114` - FLAGGED, idling loudly: the effect popup's body
 - `src/ui/spellbookWindow.js:955` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/teleportPopUp.js:41` - FLAGGED: the HUD smash-to-black/fade either side of the jump
