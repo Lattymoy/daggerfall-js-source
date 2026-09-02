@@ -11,8 +11,10 @@ import { fileURLToPath } from 'node:url';
 
 import {
   COVEN_RECTS, COVEN_PANEL_W, COVEN_PANEL_H, COVEN_PANEL_X, COVEN_PANEL_Y,
-  CovenWindow,
+  CovenWindow, COVEN_BUTTONS,
 } from '../src/ui/covenWindow.js';
+import { shortcutBinding } from '../src/systems/dialogShortcuts.js';
+import { serviceShortcutButton } from '../src/systems/guildServiceFlow.js';
 import { GuildServiceWindow } from '../src/ui/guildServiceWindow.js';
 import { QuestOfferFlow } from '../src/systems/quest/offerFlow.js';
 import { GUILD_GROUPS } from '../src/formats/factionFile.js';
@@ -127,7 +129,10 @@ test('CW1: the guild popup CHAINS a Yes answer too - the temple summoning\'s res
     onService: () => ({ rows: [{ text: 'sure?', center: true }], buttons: 'YesNo', onYes: () => ({ rows: [{ text: 'no answer', center: true }] }) }),
     onClose: () => {},
   });
-  w.input('KeyS');
+  // D1: the service accelerator is the SERVICE's own - DaedraSummoning
+  // is GuildsDaedraSummon, which DialogShortcuts.txt binds to D. The
+  // flat KeyS this line used to press was right for two of twenty.
+  w.input('KeyD');
   assert.equal(w.top.rows[0].text, 'sure?');
   w.input('KeyY');
   assert.equal(w.top.rows[0].text, 'no answer', 'the result box shows instead of vanishing');
@@ -187,4 +192,94 @@ test('CW1: the host wiring - dispatch, the witch\'s OWN factionID, the shared po
   assert.match(modes, /preloadCovenArt\(\{ renderer, fetchBytes, palette \}\);/);
   // the quest arm hands the NPC's faction and ITS reputation
   assert.match(modes, /questBridge\.offerCovenQuest\(pn\.factionID, getReputation\(store, pn\.factionID\)\)/);
+});
+
+test('D1: the coven hotkeys are the table\'s - SUMMON is D, and S is nobody\'s', () => {
+  // The ctor hangs DaggerfallShortcut.GetBinding on all four buttons
+  // (:84, :90, :96, :102); DialogShortcuts.txt's "-- Witches Covens"
+  // block (:205-209) reads T / D / Q / E. The port had put Summon on
+  // S, a letter this window does not bind at all.
+  assert.deepEqual([...COVEN_BUTTONS],
+    ['WitchesTalk', 'WitchesDaedraSummon', 'WitchesQuest', 'WitchesExit'], 'DFU\'s ctor ADD order');
+  assert.equal(shortcutBinding('WitchesDaedraSummon').code, 'KeyD');
+
+  const s = makeWindow();
+  s.w.input('KeyS');
+  assert.deepEqual(s.log, [], 'S does nothing here');
+  s.w.input('KeyD');
+  assert.deepEqual(s.log, ['summon'], 'WitchesDaedraSummon is D');
+  assert.equal(s.w.done, false, 'and its box keeps the popup up');
+
+  // The keyboard arms fire the SAME handlers the clicks do, in the
+  // same order - Talk closes before it talks (:176-178).
+  const t = makeWindow();
+  t.w.input('KeyT');
+  assert.deepEqual(t.log, ['close', 'talk']);
+
+  const q = makeWindow();
+  q.w.input('KeyQ');
+  assert.deepEqual(q.log, ['quest', 'close']);
+
+  const e = makeWindow();
+  e.w.input('KeyE');
+  assert.deepEqual(e.log, ['close']);
+  assert.equal(e.w.done, true);
+});
+
+test('D1: the guild popup\'s MIDDLE hotkey moves with the SERVICE, and Join only exists for a non-member', () => {
+  // DaggerfallGuildServicePopupWindow.cs:145 hangs
+  // Services.GetServiceShortcutButton(service) on the service button,
+  // so there is no single service letter. The port spelled a flat
+  // KeyS, which is right for exactly two of the twenty.
+  assert.equal(serviceShortcutButton('Training'), 'GuildsTraining');
+  assert.equal(serviceShortcutButton('Quests'), 'GuildsGetQuest', 'not "GuildsQuests" - a second switch, not the label\'s');
+  assert.equal(serviceShortcutButton('CureDisease'), 'GuildsCure');
+  assert.equal(serviceShortcutButton('BuySpellsMages'), 'GuildsBuySpells', 'the two fall into one arm (:433-435)');
+  assert.equal(serviceShortcutButton('Nonsense'), null, 'default: Buttons.None');
+
+  const make = (over = {}) => {
+    const log = [];
+    const w = new GuildServiceWindow({
+      member: () => true,
+      service: () => 'Training',
+      rows: () => [], steps: () => [],
+      onJoin: () => { log.push('join'); return null; },
+      onTalk: () => log.push('talk'),
+      onService: () => { log.push('service'); return { rows: [{ text: 'here', center: true }] }; },
+      onClose: () => log.push('close'),
+      ...over,
+    });
+    return { w, log };
+  };
+
+  // Training is R, so S is dead and R runs the service.
+  const tr = make();
+  tr.w.input('KeyS');
+  assert.deepEqual(tr.log, [], 'the flat KeyS is gone');
+  tr.w.input('KeyR');
+  assert.deepEqual(tr.log, ['service']);
+
+  // ...and Identify on the same window is I, not R.
+  const id = make({ service: () => 'Identify' });
+  id.w.input('KeyR');
+  assert.deepEqual(id.log, []);
+  id.w.input('KeyI');
+  assert.deepEqual(id.log, ['service']);
+
+  // Join (J) exists only while the join ROW does (:127-132) - a
+  // member's panel has no such button to hang a hotkey on.
+  const mem = make();
+  mem.w.input('KeyJ');
+  assert.deepEqual(mem.log, [], 'a member has no Join button');
+  const non = make({ member: () => false });
+  non.w.input('KeyJ');
+  assert.deepEqual(non.log, ['join', 'close']);
+
+  // Talk T and Exit E are the fixed two.
+  const talk = make();
+  talk.w.input('KeyT');
+  assert.deepEqual(talk.log, ['talk', 'close']);
+  const exit = make();
+  exit.w.input('KeyE');
+  assert.deepEqual(exit.log, ['close']);
 });

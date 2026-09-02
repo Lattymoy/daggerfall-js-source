@@ -268,6 +268,46 @@ export const SERVICE_DESTINATION = Object.freeze({
 });
 export const serviceDestination = (service) => SERVICE_DESTINATION[service] ?? null;
 
+/** D1: Services.GetServiceShortcutButton (Services.cs:408-459) - the
+ *  DaggerfallShortcut button whose binding the popup hangs on its
+ *  MIDDLE button, so the service's accelerator changes with the
+ *  service. It is a SECOND switch over the same enum as the label
+ *  table, and it does not track it: BuySpells and BuySpellsMages fall
+ *  into one arm here as they do there (:433-435), but Quests maps to
+ *  `GuildsGetQuest` and CureDisease to `GuildsCure`, neither of which
+ *  is the enum name. Nineteen arms for twenty services, and the
+ *  `default:` answers Buttons.None - which shortcutBinding turns into
+ *  HotkeySequence.None, a button with no accelerator at all.
+ *
+ *  DFU checks `customNpcServiceButtons` first (:411-413), the mod
+ *  registry for services a mod added; there is no mod system here
+ *  (Ledger C, Not planned), so the switch is the whole function. */
+export const SERVICE_SHORTCUT = Object.freeze({
+  Training: 'GuildsTraining',
+  Quests: 'GuildsGetQuest',
+  Repair: 'GuildsRepair',
+  Identify: 'GuildsIdentify',
+  Donate: 'GuildsDonate',
+  CureDisease: 'GuildsCure',
+  BuyPotions: 'GuildsBuyPotions',
+  MakePotions: 'GuildsMakePotions',
+  BuySpells: 'GuildsBuySpells',
+  BuySpellsMages: 'GuildsBuySpells',   // the two share one arm (:433-435)
+  MakeSpells: 'GuildsMakeSpells',
+  BuyMagicItems: 'GuildsBuyMagicItems',
+  MakeMagicItems: 'GuildsMakeMagicItems',
+  SellMagicItems: 'GuildsSellMagicItems',
+  Teleport: 'GuildsTeleport',
+  DaedraSummoning: 'GuildsDaedraSummon',
+  Spymaster: 'GuildsSpymaster',
+  BuySoulgems: 'GuildsBuySoulgems',
+  ReceiveArmor: 'GuildsReceiveArmor',
+  ReceiveHouse: 'GuildsReceiveHouse',
+});
+/** `null` is DFU's `Buttons.None` - the caller must not ask the table
+ *  for a binding it has no row for. */
+export const serviceShortcutButton = (service) => SERVICE_SHORTCUT[service] ?? null;
+
 /** Re-exported so a host wires one import surface (the popup needs
  *  both halves and G3 owns the other one). */
 export { hasGuildService, npcServiceKind };

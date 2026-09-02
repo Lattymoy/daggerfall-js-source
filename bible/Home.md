@@ -303,18 +303,15 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
 - `src/systems/talkTopics.js:346` - * FLAGGED: the walk is still over DOORS, so a building with no
-- `src/systems/tradeModes.js:177` - *  (DaggerfallTradeWindow.cs:960-963). FLAGGED: DFU reads the text
 - `src/systems/useItem.js:318` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/bankWindow.js:28` - law's. The SHIP popup is still FLAGGED - it needs the two fixed
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-- `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/enhancedMenu.js:1722` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/exteriorAutomapWindow.js:66` - - the residence-with-active-quest plate arm (:682-709) is FLAGGED -
 - `src/ui/exteriorAutomapWindow.js:77` - FLAGGED, both awaiting a seam this stage does not own:
 - `src/ui/exteriorAutomapWindow.js:830` - *    marked it - FLAGGED, the port's quest bridge exposes no
 - `src/ui/exteriorAutomapWindow.js:856` - name = b.questName;   // FLAGGED: the port has no locationWasMarkedOnMapByNPC
-- `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
 - `src/ui/hudLarge.js:56` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
 - `src/ui/nativeTalk.js:285` - lands with the Tell-me-about slice (FLAGGED).
@@ -324,7 +321,6 @@ combat line numbers below are refreshed with it.
 - `src/ui/restWindow.js:523` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:114` - FLAGGED, idling loudly: the effect popup's body
 - `src/ui/spellbookWindow.js:955` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
-- `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
 - `src/ui/teleportPopUp.js:41` - FLAGGED: the HUD smash-to-black/fade either side of the jump
 - `src/ui/travelPopUp.js:59` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
 

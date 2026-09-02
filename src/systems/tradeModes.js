@@ -174,18 +174,18 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
 
 /** Internal_Strings.csv:1053 - `totalIdentified,{0} out of {1} identified.` */
 /** AUDIT 26 F067 - DoModeAction's magicka refusal
- *  (DaggerfallTradeWindow.cs:960-963). FLAGGED: DFU reads the text
- *  from the localised string table under the key
- *  `notEnoughSpellpointsLeft`, and that table is not in the source
- *  tree - unlike the two F078 lines, no C# comment quotes it either.
- *  The literal below is the KEY rendered into English, not a quote,
- *  and should be replaced from the string table when one is
- *  available. The REFUSAL itself is the parity law and is exact:
- *  the whole pass returns, nothing is identified, no magicka is
+ *  (DaggerfallTradeWindow.cs:960-963). The string table the old flag
+ *  waited on IS in the reference tree, and it settles the wording:
+ *  `Assets/StreamingAssets/Text/Master Localization CSV Files/
+ *  Internal_Strings.csv:1052` reads
+ *  `notEnoughSpellpointsLeft,You do not have enough spell points left.`
+ *  - so the literal below is now the table's row verbatim, not the key
+ *  rendered into English. The REFUSAL itself is the parity law and is
+ *  exact: the whole pass returns, nothing is identified, no magicka is
  *  spent and Mercantile is not tallied.
  *  (GodMode's `&& !GodMode` arm has no port counterpart, as
  *  motor.js:572 already records for the levitation term.) */
-export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'Not enough spell points left.';
+export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'You do not have enough spell points left.';
 
 export const identifiedTallyText = (successCount, total) =>
   `${successCount} out of ${total} identified.`;
@@ -396,8 +396,10 @@ export function localClickDecision(mode, item, {
   }
 }
 
-/** "doesntNeedIdentify" - Internal_Strings, recovered. */
-export const DOESNT_NEED_IDENTIFY = 'This item does not need to be identified.';
+/** DaggerfallTradeWindow.cs:826's `doesntNeedIdentify`, quoted from
+ *  Internal_Strings.csv:821 - `doesntNeedIdentify,This does not need to
+ *  be identified.` (the row has no "item"). */
+export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
 
 // The three clauses that stood here are all closed:
 //  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
