@@ -40,7 +40,11 @@ globalThis.onmessage = (ev) => {
       if (m.settlements && woods) {
         const net = buildRoadsFromSettlements(m.settlements, woods);
         roads = net ? { roads: net.roads, tracks: net.tracks } : null;
-        globalThis.postMessage({ t: 'roads', stats: net ? net.stats : null });
+        // ROADS 7: the map draws the network too, on this thread's other
+        // side, so the arrays go back ONCE - a copy, transferred - and
+        // the worker keeps its own for the terrain jobs.
+        const back = roads ? { roads: roads.roads.slice(), tracks: roads.tracks.slice() } : null;
+        globalThis.postMessage({ t: 'roads', stats: net ? net.stats : null, net: back }, back ? [back.roads.buffer, back.tracks.buffer] : []);
       }
       return;
     }

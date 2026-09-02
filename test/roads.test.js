@@ -355,3 +355,36 @@ test('ROADS 6: a town between two others is ringed, and a village in the way is 
   assert.ok(!throughV, 'the B-C road did not cut across the village pixel');
   assert.ok(at(V.x, V.y - 1) || at(V.x, V.y + 1), 'it went around instead');
 });
+
+// ROADS 7 (2026-09-01, Mac: "always on"): THE MAP DRAWS THE NETWORK. The
+// enhanced travel map is the overworld relief, one vertex per map pixel,
+// so a road is a tinted vertex and the triangles between neighbours
+// draw it as a thread. The arrays live in the worker after Audit 45 F2,
+// so they come back ONCE for the map and the window rebuilds its grid
+// the first time it opens with them.
+test('ROADS 7: a road vertex on the relief is tinted, a track fainter, water never', async () => {
+  const { buildOverworldGrid, OVERWORLD_ROAD, OVERWORLD_TRACK, overworldTint } = await import('../src/ui/overworldModel.js');
+  const W = 8, H = 4;
+  const bytes = new Uint8Array(W * H).fill(40);
+  bytes[1 * W + 6] = 0;   // a water pixel
+  const path = new Uint8Array(W * H);
+  path[1 * W + 2] = 2; path[1 * W + 3] = 1; path[1 * W + 6] = 2;   // road, track, and a road bit on water
+  const grid = buildOverworldGrid({ heightBytes: bytes, width: W, height: H, climateAt: () => 227, pathAt: (x, y) => path[y * W + x] });
+  const rgb = (x, y) => [0, 1, 2].map((c) => grid.colors[(y * W + x) * 3 + c]);
+  const plain = rgb(1, 1), road = rgb(2, 1), track = rgb(3, 1), water = rgb(6, 1);
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  assert.ok(dist(road, OVERWORLD_ROAD) < dist(plain, OVERWORLD_ROAD), 'the road vertex leans hard toward the road colour');
+  assert.ok(dist(track, OVERWORLD_TRACK) < dist(plain, OVERWORLD_TRACK), 'the track vertex leans toward the track colour');
+  assert.ok(dist(road, OVERWORLD_ROAD) < dist(track, OVERWORLD_ROAD), 'and the track is the fainter of the two');
+  assert.deepEqual(water, overworldTint(227, 0).map((v) => Math.min(255, v | 0)), 'a road bit on water tints nothing - the map shows the terrain');
+
+  const fs = await import('node:fs');
+  const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
+  assert.match(worker, /net: back/, 'the worker posts the arrays back for the map');
+  const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
+  assert.match(client, /roads\(\) \{ return this\._roads; \}/, 'and the client exposes them');
+  const map = fs.readFileSync('src/ui/overworldMap.js', 'utf8');
+  assert.match(map, /grid\.roadsRef !== net/, 'a grid drawn before the network landed is rebuilt with it');
+  const host = fs.readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(host, /roads: \(\) => terrainGen\.roads\(\)/, 'the host hands the accessor through the door');
+});

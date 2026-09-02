@@ -64,7 +64,13 @@ export class TerrainGenClient {
       w.onerror = (e) => this._down(e?.message ?? 'terrain worker failed');
       w.onmessage = (ev) => {
         const m = ev.data ?? {};
-        if (m.t === 'roads') { if (m.stats && this._roadsStats) this._roadsStats(m.stats); return; }
+        if (m.t === 'roads') {
+          // ROADS 7: the arrays come back for the map (and, as it happens,
+          // for the fallback - the lazy build stands down when they do).
+          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks };
+          if (m.stats && this._roadsStats) this._roadsStats(m.stats);
+          return;
+        }
         this._answer(m);
       };
       // a COPY - transferring the reader's own bytes would detach the
@@ -102,6 +108,9 @@ export class TerrainGenClient {
     if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements });
     else if (!this._worker) this._roadsFallback();
   }
+
+  /** ROADS 7: the network for whoever draws it - null until built. */
+  roads() { return this._roads; }
 
   _roadsFallback() {
     if (this._roads || !this._settlements) return;

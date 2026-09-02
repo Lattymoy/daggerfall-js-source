@@ -393,14 +393,23 @@ export class OverworldMapWindow {
       this._ov = new OverworldRenderer(renderer.gl);
       const bytes = this.deps.woods?.heightMapBuffer;
       if (!bytes) throw new Error('no heightmap');
+      // ROADS 7: the network is always on. It may land after the first
+      // grid was built (the worker builds it), so the cache is keyed on
+      // the bytes AND the network it was drawn with, and a grid drawn
+      // without roads is rebuilt the first time the map opens with them.
+      const net = this.deps.roads?.() ?? null;
       let grid = _gridCache.get(bytes);
-      if (!grid) {
+      if (!grid || grid.roadsRef !== net) {
+        const W = this._size.width;
+        const pathAt = net ? (x, y) => (net.roads[y * W + x] ? 2 : (net.tracks[y * W + x] ? 1 : 0)) : null;
         grid = buildOverworldGrid({
           heightBytes: bytes,
           width: this._size.width,
           height: this._size.height,
           climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
+          pathAt,
         });
+        grid.roadsRef = net;
         _gridCache.set(bytes, grid);
       }
       this._grid = grid;

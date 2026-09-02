@@ -177,6 +177,18 @@ The hand's fifth neighbour is its habit of returning to the line after
 the bypass; A* has no reason to when the destination sits on the new
 line, and the pin holds the principle rather than the habit.
 
+## ROADS 7 - the map draws the network (2026-09-01)
+
+Mac: always on. The enhanced travel map is the overworld relief, one
+vertex per map pixel, so a road is a tinted vertex - hard toward a
+packed-earth brown - and a track a fainter dirt; the triangles between
+neighbours draw them as threads. Never on water. The arrays live in
+the terrain worker after Audit 45 F2 and come back once for the map;
+the window keys its grid cache on the network it was drawn with, so a
+grid built before the network landed is rebuilt the first time the map
+opens with it. The classic 2D region map (travelMapWindow.js) does not
+yet draw them - its own slice.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
@@ -186,7 +198,6 @@ cleared by the line that clears them. Four low findings recorded there.
 
 ## Open
 
-- ROADS 5: the travel-map overlay.
 - Rivers and streams: the same painter with water tiles, off by default
   as the original ships them. Their data would also be ours to derive.
 - The heightmap smoothing pass under road tiles, behind a setting.
