@@ -125,10 +125,19 @@ export class ToolTip {
  * the only clock that knows about SuppressToolTip and about the automap's
  * own ToolTipDelay of 1 second (DaggerfallAutomapWindow.cs:22, :492-502).
  * Both draw the SAME box, so the box lives here once. EnableToolTips is
- * checked here because it is the master switch either way.
+ * checked here because it is the master switch for every SHARED tooltip.
+ *
+ * `ignoreEnableSetting` is the one exception DFU itself carries, and it
+ * has exactly one caller: the EXTERIOR automap's building nameplates.
+ * That tooltip is not the window's shared `defaultToolTip` - which
+ * DaggerfallBaseWindow.cs:50-56 only builds when the setting is on -
+ * but a private `nameplateToolTip`, constructed bare
+ * (DaggerfallExteriorAutomapWindow.cs:870-871) and drawn
+ * unconditionally in that window's Draw() (:571-572). Turning tooltips
+ * off in DFU does not silence the town map's plate names.
  */
-export function drawToolTipBox(renderer, m, font, text, vx, vy) {
-  if (!text || !toolTipsEnabled()) return;
+export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSetting = false } = {}) {
+  if (!text || (!ignoreEnableSetting && !toolTipsEnabled())) return;
   const rows = toolTipRows(text);
   // DaggerfallFont.GlyphHeight - the port's own fixedHeight, the
   // same reader messageBox's rowH uses.

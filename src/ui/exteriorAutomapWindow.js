@@ -115,7 +115,8 @@ import {
   exteriorRotate, exteriorRotateAroundPlayerPos, exteriorDragPan, getLocationBorderPos,
 } from './automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
-import { compassScroll, COMPASS_BOX_OUTLINE, COMPASS_BOX_INTERIOR } from './hud.js';
+import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:377-378)
+import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 
 export const BLOCK_PX = 64;                      // blockSizeWidth/Height (ExteriorAutomap.cs:153-154)
@@ -638,6 +639,28 @@ export class ExteriorAutomapWindow {
     }
   }
 
+  /**
+   * OnReturn - the window is uncovered again after something was
+   * pushed over it (windowStack.js's RemoveWindow), and the ONE thing
+   * that pushes over this map is the plate rename box: the double
+   * click that opens it is a press on the RENDER PANEL, so it also
+   * armed the chrome's left panel drag (automapChrome.js's down
+   * branch), and the matching release never arrives - it is routed to
+   * townTalk's slot, which by then holds the input box.
+   *
+   * DFU has no such latch because its release is POLLED, not routed:
+   * BaseScreenComponent.cs:643-648 fires OnMouseUp from the button
+   * STATE ("can release from anywhere"), and the window's own Update
+   * runs base.Update() - and with it panelRenderAutomap's poll - ahead
+   * of the drag block (:581, DaggerfallBaseWindow.cs:98,
+   * UserInterfaceWindow.cs:81, then :729). So the very first frame
+   * after the box pops, PanelAutomap_OnMouseUp (:1343-1347) has
+   * already cleared `leftMouseDownOnPanelAutomap` and the map pans
+   * zero frames. Releasing every flag when the map comes back is the
+   * routed seam's equivalent, and it covers any future push as well.
+   */
+  onReturn() { this.chrome.releaseAll(); }
+
   dispose() {
     const r = this._renderer;
     if (!r) return;
@@ -847,13 +870,27 @@ export class ExteriorAutomapWindow {
     return out;
   }
 
-  /** TextLabel_OnMouseDoubleClick -> SetCustomBuildingName (:857-899):
-   *  a RESIDENCE cannot be renamed (its name is quest-generated and
-   *  temporary), and the input lands on the discovery record. */
+  /**
+   * TextLabel_OnMouseDoubleClick -> SetCustomBuildingName
+   * (ExteriorAutomap.cs:867-899): a RESIDENCE cannot be renamed (its
+   * name is quest-generated and temporary), and the input lands on the
+   * discovery record.
+   *
+   * THE BOX OPENS ON THE DISPLAYED NAME, not the canonical one. DFU
+   * fills the three TextBox fields from two different places (:881,
+   * :887-889): `Name`/`DefaultText` take `renamingLabelRef.Name` - the
+   * canonical - while the EDITABLE `Text` takes `renamingLabelRef.Text`,
+   * which the window set to the custom name whenever one exists
+   * (DaggerfallExteriorAutomapWindow.cs:882-885). `p.text` is that same
+   * `custom || name`. The canonical is only the FALLBACK for an emptied
+   * box (:923 `renamingLabelRef.Text = sender.TextBox.Name`), which
+   * the port reaches through the empty store instead: discovery.js
+   * keeps '' and buildPlates falls back to the canonical.
+   */
   _renameAt(nx, ny) {
     const p = this._hoverPlate;
     if (!p || p.isResidence) return;
-    this.deps.rename?.(p.buildingKey, p.name);
+    this.deps.rename?.(p.buildingKey, p.text ?? p.name);
   }
 
   /** The native chrome: the caption strip's three live swatches
@@ -871,33 +908,46 @@ export class ExteriorAutomapWindow {
     }
     const art = this.deps.compassArt ?? null;
     if (art?.compass && art?.compassBox) {
-      // HUDCompass on the AUTOMAP camera (:459-463) - the strip reads
-      // the MAP's yaw, never the player's
+      // HUDCompass on the AUTOMAP camera (:454-458) - the strip reads
+      // the MAP's yaw, never the player's - through hud.js's ONE strip
+      // drawer, the same call the dungeon window makes
+      // (automapWindow.js). THE DUMMY PANEL GIVES THE POSITION AND
+      // NOTHING ELSE: `compass.Position = dummyPanelCompass.Rectangle.
+      // position` (:456), while HUDCompass sizes the frame from the ART
+      // (`boxRectSize = compassBoxSize * Scale`, HUDCompass.cs:132-135,
+      // COMPBOX.IMG at 69x17). rectDummyPanelCompass' own 76x17 (:433)
+      // is the click/tooltip target only and never reaches the compass.
       const r = CHROME_RECTS.compass;
-      const scroll = compassScroll(compassHeading01(this.cam.yawDeg));
-      renderer.drawScreenQuad(art.compass.tex,
-        {
-          x: m.ox + (r.x + COMPASS_BOX_OUTLINE) * m.s, y: m.oy + (r.y + COMPASS_BOX_OUTLINE) * m.s,
-          w: (r.w - COMPASS_BOX_OUTLINE * 2) * m.s, h: art.compass.h * m.s,
-        },
-        { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
-      renderer.drawScreenQuad(art.compassBox.tex,
-        { x: m.ox + r.x * m.s, y: m.oy + r.y * m.s, w: r.w * m.s, h: r.h * m.s });
+      drawCompassStrip(renderer, art, m.ox + r.x * m.s, m.oy + r.y * m.s, m.s,
+        compassHeading01(this.cam.yawDeg));
     }
     if (!font) return;
     if (!_art) {
       // the keyed fallback shell: the location name and the controls
       drawText(renderer, font, `${this.deps.locationName ?? ''} - ${this.mode} view`, m.ox + 4 * s, m.oy + 191 * s, s, [0.9, 0.9, 0.75, 1]);
     }
-    // the hovered plate's tooltip carries the CANONICAL name even when
-    // a custom one is drawn (:880-885), at ToolTipDelay 0
+    // THE PLATE TOOLTIP, through ui/toolTip.js's ONE box - a real
+    // ToolTip in DFU (window :870-878), so it is ToolTip.Draw's own
+    // sizing, its MouseOffset (0,4) and both edge shifts, and the two
+    // GUI colour settings DFU assigns it by hand (:874-875
+    // `BackgroundColor = Settings.ToolTipBackgroundColor; TextColor =
+    // Settings.ToolTipTextColor`). It carries the CANONICAL name even
+    // when a custom one is drawn (:878, :882-885), at ToolTipDelay 0
+    // (:873) - it shows the instant the pointer is over the label, so
+    // there is no rest clock here at all.
+    //
+    // AND IT IS NOT GATED BY EnableToolTips. `nameplateToolTip` is a
+    // bare `new ToolTip()` built in UpdateAutomapView (:870-871) and
+    // drawn unconditionally in Draw() (:571-572); only
+    // DaggerfallBaseWindow's SHARED `defaultToolTip` - which the eight
+    // chrome buttons point at - sits behind the setting
+    // (DaggerfallBaseWindow.cs:50-56). So this one caller bypasses the
+    // master switch, and routing it through the gate would itself be a
+    // departure.
     const t = this._hoverPlate;
-    if (t) {
-      const w = measureText(font.fnt, t.name) * m.s + 4 * m.s;
-      const x = Math.min(t.x, m.ox + (NATIVE_W - 2) * m.s - w);
-      const y = t.y + 6 * m.s;
-      renderer.drawScreenQuad(null, { x, y, w, h: (font.fnt?.fixedHeight ?? 6) * m.s + 2 * m.s }, undefined, [0, 0, 0, 0.75]);
-      drawText(renderer, font, t.name, x + 2 * m.s, y + 1 * m.s, m.s, [1, 1, 1, 1]);
+    if (t && this._hoverAt) {
+      drawToolTipBox(renderer, m, font, t.name, this._hoverAt[0], this._hoverAt[1],
+        { ignoreEnableSetting: true });
     }
   }
 }

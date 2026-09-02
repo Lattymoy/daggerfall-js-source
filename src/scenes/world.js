@@ -3518,13 +3518,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
    *  double-click raises DFU's DaggerfallInputMessageBox over the open
    *  map (a PUSH, not a replace - the map is still there underneath),
-   *  pre-filled with the canonical name, and the answer lands on the
-   *  discovery record. MaxCharacters 80, WidthOverride 306 (:893-894);
-   *  the "Custom name: " label is Internal_Strings' `customName`. */
-  const renameMapBuilding = (locId, buildingKey, canonical) => {
+   *  pre-filled with the name the player is LOOKING AT - `mb.TextBox
+   *  .Text = renamingLabelRef.Text` (:888), the custom name whenever
+   *  one is set - and the answer lands on the discovery record. The
+   *  canonical is only TextBox.Name/DefaultText (:887, :889), the
+   *  fallback for an emptied box, which the port reaches by storing ''.
+   *  MaxCharacters 80, WidthOverride 306 (:893-894); the
+   *  "Custom name: " label is Internal_Strings' `customName`. */
+  const renameMapBuilding = (locId, buildingKey, displayed) => {
     townTalk.pushOverlay(new ServiceFlowWindow([{
       rows: ['Custom name: '],
-      field: { numeric: false, maxCharacters: 80, initial: canonical ?? '' },
+      field: { numeric: false, maxCharacters: 80, initial: displayed ?? '' },
       onInput: (text) => { setDiscoveredBuildingCustomName(locId, buildingKey, text); return null; },
     }]));
   };

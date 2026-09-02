@@ -1302,9 +1302,12 @@ export async function bootExterior(canvas, renderer, params, status) {
         buildings: () => summaries,
         directory: () => townTalk.directory,
         discovered: () => discoveredBuildings(locId),
-        rename: (buildingKey, name) => townTalk.pushOverlay(new ServiceFlowWindow([{
+        // the box opens on the DISPLAYED name (`mb.TextBox.Text =
+        // renamingLabelRef.Text`, :888); the canonical is only
+        // TextBox.Name/DefaultText (:887, :889)
+        rename: (buildingKey, displayed) => townTalk.pushOverlay(new ServiceFlowWindow([{
           rows: ['Custom name: '],   // Internal_Strings `customName` (:889)
-          field: { numeric: false, maxCharacters: 80, initial: name ?? '' },
+          field: { numeric: false, maxCharacters: 80, initial: displayed ?? '' },
           onInput: (text) => { setDiscoveredBuildingCustomName(locId, buildingKey, text); return null; },
         }])),
       }));

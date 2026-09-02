@@ -33,6 +33,7 @@ import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { EXT_ZOOM_SPEED, EXT_SCROLL_UP_DOWN_SPEED } from '../src/ui/automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc, STAMP_INK } from '../src/ui/meshStamp.js';
+import { measureText } from '../src/ui/text.js';
 import { buildingSummaries, buildingPosition } from '../src/world/buildingSummaries.js';
 import {
   discoverBuilding, discoveredBuildings, setDiscoveredBuildingCustomName,
@@ -531,10 +532,157 @@ test('c2/S10 HALF B: the plates - the discovery gate, the residence arm, the ren
     w._hoverPlate = { buildingKey: house.buildingKey, name: 'House', isResidence: true };
     w._renameAt(0, 0);
     assert.deepEqual(renames, [], 'a residence cannot be renamed - its name is quest-generated and temporary');
-    w._hoverPlate = { buildingKey: shop.buildingKey, name: 'The Odd Blades', isResidence: false };
+    // THE PROMPT OPENS ON THE NAME THE PLAYER IS LOOKING AT. DFU fills
+    // the box's EDITABLE text from the label - `mb.TextBox.Text =
+    // renamingLabelRef.Text` (ExteriorAutomap.cs:888), which
+    // DaggerfallExteriorAutomapWindow.cs:882-885 set to the custom name
+    // whenever one exists - and keeps the canonical only as
+    // TextBox.Name/DefaultText (:887, :889), the fallback for an
+    // emptied box (:923). The hover plate is the REAL row, which
+    // carries both, so the pin cannot pass by reading a fixture that
+    // only has one of them.
+    w._hoverPlate = turned[0];
+    assert.equal(turned[0].text, 'My Smith');
+    assert.equal(turned[0].name, 'The Odd Blades');
     w._renameAt(0, 0);
-    assert.deepEqual(renames, [[shop.buildingKey, 'The Odd Blades']],
-      'and the prompt is pre-filled with the CANONICAL name, never the custom one');
+    assert.deepEqual(renames, [[shop.buildingKey, 'My Smith']],
+      'the box is pre-filled with the DISPLAYED name - confirming it unchanged must not revert the rename');
+    // ...and with no custom name the label's Text IS the canonical, so
+    // that is what the box opens on
+    assert.equal(setDiscoveredBuildingCustomName('r:plate', shop.buildingKey, ''), true);
+    w._hoverPlate = w.buildPlates(FONT, m)[0];
+    w._renameAt(0, 0);
+    assert.deepEqual(renames[1], [shop.buildingKey, 'The Odd Blades'],
+      'an un-renamed building still opens on its canonical name');
+  } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
+});
+
+test('c2/S10 REVIEW: the rename push must not LATCH the panel drag - the uncovered map comes back released (BaseScreenComponent.cs:642-648)', () => {
+  _resetForTests(); _resetZoomForTests();
+  restoreDiscovery(null);
+  try {
+    const summaries = buildingSummaries(
+      [{ buildingType: 9, nameSeed: 1, factionId: 0, quality: 10 }], [FAKE_BLOCK], {});
+    const shop = summaries[0];
+    discoverBuilding('r:latch', { buildingKey: shop.buildingKey, name: 'The Odd Blades', buildingType: 9 });
+    const pushes = [];
+    const w = new ExteriorAutomapWindow({
+      ...deps('r:latch'),
+      buildings: () => summaries,
+      discovered: () => discoveredBuildings('r:latch'),
+      rename: (k, n) => pushes.push([k, n]),
+    });
+    w._hoverPlate = w.buildPlates(FONT, { s: 1, ox: 0, oy: 0 })[0];
+    // the double click is a press ON THE RENDER PANEL, so it arms the
+    // pan drag beside the rename - in DFU too (the nameplate label is a
+    // CHILD of panelRenderAutomap, so PanelAutomap_OnMouseDown fires as
+    // well, window :1332-1341)
+    const P = CHROME_RECTS.panel;
+    const nx = P.x + 100, ny = P.y + 40;
+    w.pointer('down', nx, ny, 0);
+    w.pointer('up', nx, ny, 0);
+    w.pointer('down', nx, ny, 0);
+    assert.deepEqual(pushes, [[shop.buildingKey, 'The Odd Blades']], 'the double click pushed the rename box');
+    assert.equal(w.chrome.inDragMode(), true, 'and that press armed the pan drag, exactly as DFU\'s does');
+    // THE RELEASE NEVER COMES BACK. townTalk.pointer('up') bails at
+    // `if (!overlay?.pointer) return false` because the slot now holds
+    // the ServiceFlowWindow, which has no pointer seam - so what must
+    // clear the latch is OnReturn, fired on the window the pop
+    // uncovers (windowStack.js's RemoveWindow). DFU needs no such hook
+    // because its release is polled off the button STATE and lands on
+    // the first frame after the box pops.
+    assert.match(src('src/ui/windowStack.js'), /const t = top\(\);\n\s*if \(t\) t\.onReturn\?\.\(\);/,
+      'the uncovered window really is told');
+    assert.equal(/function pointer\(phase, e\) \{\n\s*if \(!overlay\?\.pointer\) return false;/.test(src('src/scenes/townTalk.js')), true,
+      'and the release cannot reach a covered window - hence the hook');
+    w.onReturn();
+    assert.equal(w.chrome.inDragMode(), false, 'the map is released the moment it is uncovered');
+    const before = [...w.cam.center];
+    w.hover(nx + 20, ny + 8);
+    assert.deepEqual([...w.cam.center], before, 'a bare mouse move over the returned map does not pan it');
+    // ...and the very next chrome press is not swallowed by
+    // `if (this.inDragMode()) return out`
+    const G = CHROME_RECTS.grid;
+    w.pointer('down', G.x + 2, G.y + 2, 0);
+    w.pointer('up', G.x + 2, G.y + 2, 0);
+    assert.equal(w.mode, VIEW_MODES[1], 'the grid button answers the FIRST press after the rename');
+  } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
+});
+
+test('c2/S10 REVIEW: ONE compass drawer (hud.js) at COMPBOX\'s own 69x17, and the plate tooltip is toolTip.js\'s box in DFU\'s two GUI colours', () => {
+  _resetForTests(); _resetZoomForTests();
+  restoreDiscovery(null);
+  try {
+    const summaries = buildingSummaries(
+      [{ buildingType: 9, nameSeed: 1, factionId: 0, quality: 10 }], [FAKE_BLOCK], {});
+    const shop = summaries[0];
+    discoverBuilding('r:chrome', { buildingKey: shop.buildingKey, name: 'The Odd Blades', buildingType: 9 });
+    // the two colours DFU assigns the nameplate tooltip by hand
+    // (window :874-875), and the master switch OFF - DFU's
+    // nameplateToolTip is a bare `new ToolTip()` (:870-871) drawn
+    // unconditionally (:571-572), so it is not gated by EnableToolTips
+    setValue('GUI', 'EnableToolTips', false);
+    setValue('GUI', 'ToolTipBackgroundColor', '102030C0');
+    setValue('GUI', 'ToolTipTextColor', 'FFEE00FF');
+    const log = [];
+    const r = stubRenderer(log);
+    const F = { ...FONT, tex: 'atlas' };
+    const w = new ExteriorAutomapWindow({
+      ...deps('r:chrome'),
+      compassArt: { compass: { tex: 'COMPASS', w: 322, h: 13 }, compassBox: { tex: 'COMPBOX', w: 69, h: 17 } },
+      buildings: () => summaries,
+      discovered: () => discoveredBuildings('r:chrome'),
+    });
+    // park the plate's anchor dead centre of the render panel, so the
+    // hover point is exact: anchor (96,48) minus half the 128x128 layout
+    w.cam = { ...w.cam, center: [32, 0, -16] };
+    // a 320x200 canvas puts nativeMetrics at scale 1 - every recorded
+    // rect IS a native rect
+    const canvas = { width: 320, height: 200 };
+    w.hover(161, 85);   // over the plate, which sits at the panel centre
+    w.draw(r, canvas, F, 1);
+    const quads = log.filter((l) => l.kind === 'quad');
+
+    // THE COMPASS: dummyPanelCompass gives the POSITION alone (:456
+    // `compass.Position = dummyPanelCompass.Rectangle.position`), and
+    // HUDCompass sizes the frame from the ART (HUDCompass.cs:132-135) -
+    // COMPBOX.IMG is 69x17, NOT the dummy panel's 76x17 (:433).
+    const box = quads.find((q) => q.tex === 'COMPBOX');
+    assert.ok(box, 'the compass frame drew');
+    assert.deepEqual([box.dst.x, box.dst.y, box.dst.w, box.dst.h], [3, 172, 69, 17],
+      'the ART\'s size at the dummy panel\'s position - the same rect the dungeon window and the HUD draw');
+    const strip = quads.find((q) => q.tex === 'COMPASS');
+    assert.deepEqual([strip.dst.x, strip.dst.y, strip.dst.w], [5, 174, 65],
+      'the strip window is the box inset by the 2px outline, so 69-4 - never 76-4');
+    // and it is the SHARED drawer, not a second home for the scroll law
+    const wsrc = src('src/ui/exteriorAutomapWindow.js');
+    assert.match(wsrc, /import \{ drawCompassStrip \} from '\.\/hud\.js';/);
+    assert.equal(/compassScroll|COMPASS_BOX_OUTLINE|COMPASS_BOX_INTERIOR/.test(wsrc), false,
+      'the scroll law and the outline inset live in hud.js and nowhere else');
+
+    // THE PLATE TOOLTIP: ToolTip.Draw's own box (ToolTip.cs:158-179) at
+    // the CURSOR plus MouseOffset (0,4) - not at the plate - sized
+    // widest+4 by glyph*rows+3, in the two settings colours.
+    const bg = [0x10 / 255, 0x20 / 255, 0x30 / 255, 0xc0 / 255];
+    const tip = quads.find((q) => q.tex === null && q.color && q.color.length === 4
+      && Math.abs(q.color[0] - bg[0]) < 1e-9 && Math.abs(q.color[3] - bg[3]) < 1e-9);
+    assert.ok(tip, 'the tooltip drew with tooltips DISABLED - DFU\'s nameplate tooltip is not gated');
+    const tw = measureText(F.fnt, 'The Odd Blades') + 4;
+    assert.deepEqual([tip.dst.x, tip.dst.y, tip.dst.w, tip.dst.h], [161, 89, tw, 9],
+      'cursor + MouseOffset(0,4), widest + 2*margin by glyph*rows + 2*margin - 1');
+    const fg = [1, 0xee / 255, 0, 1];
+    const glyphs = quads.filter((q) => q.tex === 'atlas' && q.color && Math.abs(q.color[1] - fg[1]) < 1e-9);
+    assert.ok(glyphs.length > 0, 'and the text takes GUI/ToolTipTextColor');
+    assert.equal(glyphs[0].dst.y, 89 + 2, 'inset by the 2px top margin');
+    assert.equal(glyphs.every((g) => g.color[0] === 1 && g.color[2] === 0), true);
+    // the canonical name, never the drawn custom one (:878)
+    assert.equal(setDiscoveredBuildingCustomName('r:chrome', shop.buildingKey, 'My Smith'), true);
+    log.length = 0;
+    w.hover(161, 85);
+    w.draw(r, canvas, F, 1);
+    const tip2 = log.filter((l) => l.kind === 'quad').find((q) => q.tex === null && q.color
+      && Math.abs(q.color[3] - bg[3]) < 1e-9);
+    assert.equal(tip2.dst.w, tw, 'the tooltip still measures the CANONICAL name');
   } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
 });
 
