@@ -194,7 +194,7 @@ test('B1: each modal host builds a stack under its slot and reconciles it', () =
 
   // The frame seams read the slot back, or the hand-written
   // `... = null` close paths never become pops.
-  assert.match(wm, /if \(mode === 'interior'\) interiorWindows\.reconcile\(interiorOverlay\);\n\s*const overlayHeld =/,
+  assert.match(wm, /if \(mode === 'interior'\) interiorWindows\.reconcile\(interiorOverlay\);\n(\s*\/\/[^\n]*\n)*\s*const overlayHeld =/,
     'the interior frame reconciles BEFORE anything reads overlayHeld');
   assert.match(wm, /if \(w\.done\) \{ w\.dispose\?\.\(\); if \(interiorOverlay === w\) interiorOverlay = null; \}\n[\s\S]{0,400}interiorWindows\.reconcile\(interiorOverlay\);/,
     'and again after the done-drain, so the uncovered window is what this frame paints');
@@ -212,9 +212,12 @@ test('B1: each modal host builds a stack under its slot and reconciles it', () =
     'and the dungeon key seam');
   assert.match(dc, /overlayClick\(vx, vy, right = false\) \{[\s\S]{0,1000}dungeonWindows\.reconcile\(activeOverlay\);/,
     'and the dungeon click seam');
-  // The getters those handlers feed answer the DEPTH, not just the slot.
-  assert.match(wm, /get overlayHeld\(\) \{ return \(mode === 'interior' && \(!!interiorOverlay \|\| interiorWindows\.depth\(\) > 0\)\)/);
-  assert.match(dc, /get uiOverlayActive\(\) \{ return !!activeOverlay \|\| dungeonWindows\.depth\(\) > 0; \}/);
+  // The getters those handlers feed answer the whole STACK, not just
+  // the slot - and ROAD-tail made that answer the stack's own PAUSE
+  // LATCH rather than a depth count each host re-derived. The law those
+  // pins protect is next door, in roadb_host_pause.test.js.
+  assert.match(wm, /get overlayHeld\(\) \{ return \(mode === 'interior' && interiorPaused\(\)\)/);
+  assert.match(dc, /get uiOverlayActive\(\) \{ return dungeonPaused\(\); \}/);
 
   // A teardown drops the WHOLE stack, disposing each window - OnPop
   // (UserInterfaceManager.cs:189-196), which is where RestWindow

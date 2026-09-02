@@ -714,6 +714,24 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
   });
   townTalk.ensureLoaded();
+  /** THE GAME PAUSE for this host - ONE composition, asked of the
+   *  stacks and never re-derived.
+   *
+   *  DFU has ONE UserInterfaceManager, so the question "is a window
+   *  holding the world?" has one answer there: the pause AddWindow
+   *  raised (UserInterfaceManager.cs:179-186 ->
+   *  GameManager.PauseGame(true), GameManager.cs:600-635) and
+   *  RemoveWindow has not yet lowered (:190-216). The port gives each
+   *  modal host its own stack, so this host's answer is the union of
+   *  the stacks that can be live over its frame: townTalk's street
+   *  window and the mode machine's interior/dungeon window. BOTH terms
+   *  are those hosts' own `paused()` (townTalk's `talkPaused`,
+   *  worldModes' `interiorPaused`, dungeonContext's `dungeonPaused`) -
+   *  the union is all this host adds, and it adds it once.
+   *
+   *  `modes?.` because the mode machine is built further down and the
+   *  event handlers that ask this are bound before it exists. */
+  const gamePaused = () => townTalk.overlayActive || (modes?.overlayHeld ?? false);
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
@@ -1405,7 +1423,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
-    if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
+    if (!gamePaused() && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   // D4: the overlay's KEY-UP edge. This listener has drained the
   // movement Set since the first host and never told the open window
@@ -1416,7 +1434,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD
   // is unreachable, because IsLargeHUDInteractable IS this flag.
-  bindCursorToggle(canvas, () => townTalk.overlayActive || (modes?.overlayHeld ?? false), actionOf);
+  bindCursorToggle(canvas, () => gamePaused(), actionOf);
   // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
   // hoisted so these two listeners can be installed HERE and still reach
   // the mode machine that is not built until ~600 lines below. `var`
@@ -1443,7 +1461,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (routeLargeHudClick(
       (e.clientX - _r.left) * (canvas.width / _r.width),
       (e.clientY - _r.top) * (canvas.height / _r.height),
-      e.button, hudCtx, { windowUp: townTalk.overlayActive || (modes?.overlayHeld ?? false) })) return;
+      e.button, hudCtx, { windowUp: gamePaused() })) return;
     // ROAD-Ar: the click that GRABS the pointer back is a UI gesture,
     // not a world click, and it presses and releases Mouse0 into the
     // gate exactly as a window's close button does - so it takes
@@ -1803,19 +1821,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
-    if (!(townTalk.overlayActive || (modes?.overlayHeld ?? false))) {
+    if (!gamePaused()) {
       if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
     }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
-    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: townTalk.overlayActive || (modes?.overlayHeld ?? false) });
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: gamePaused() });
     // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
     // dip; the position rides player.eye as a world offset, the nod is a
     // per-frame offset on the look (removed and re-applied each frame).
     {
       const bob = headBobber.update(dt, cam, {
-        health: playerEntity.health, paused: townTalk.overlayActive || (modes?.overlayHeld ?? false), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+        health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
         swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
@@ -1823,7 +1841,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
-    lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
+    lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
 
     // Modal frame (worldModes.js): interior/dungeon consume the frame
     // entirely - none of the exterior sky/weather/light path runs.
@@ -2461,7 +2479,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
-        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
+        { font: townTalk.font, cursorActive: gamePaused(),
           detected: _detected, playerXZ: [_dFeet[0], _dFeet[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.

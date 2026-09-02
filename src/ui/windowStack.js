@@ -122,8 +122,12 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     windowCount: () => windows.length - (hud ? 1 : 0),
     /** MessageCount (:62-65). */
     messageCount: () => messages.length,
-    /** The depth the port's hosts ask about: how many windows are on
-     *  top of the HUD, i.e. whether a pop has somewhere to return to. */
+    /** How many windows are on top of the HUD, i.e. whether a pop has
+     *  somewhere to return to. ROAD-tail: this is a WINDOW COUNT and
+     *  no longer the hosts' pause question - counting it to decide
+     *  whether the world is stopped was the per-host arithmetic
+     *  `paused()` replaced, and no host does it now
+     *  (test/roadb_host_pause.test.js sweeps for it). */
     depth: () => windows.length - (hud ? 1 : 0),
 
     /** PushWindow (:79-91). */
@@ -215,7 +219,21 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
      *  Asking it anyway would be worse than redundant - it would read
      *  the top window instead of the latch and so MASK a latch that
      *  failed to rise. If the port ever grows an external PauseGame
-     *  door, DFU's second term comes back with it. */
+     *  door, DFU's second term comes back with it.
+     *
+     *  ROAD-tail: THIS IS WHAT THE HOSTS GATE ON, and each of the four
+     *  that own a stack reads it through exactly one reader of its own
+     *  (`interiorPaused`, `dungeonPaused`, `talkPaused`, `gamePaused`).
+     *  Those readers DO OR in `pauseWhileOpen(slot)`, which reads like
+     *  the second term the paragraph above declines - it is not. DFU's
+     *  :937-939 exists because an EXTERNAL PauseGame(false) can put the
+     *  flag down under a live window; the port has no such door, and
+     *  asking the top window there would still mask a latch that failed
+     *  to rise. The hosts' term answers a state DFU cannot be in at
+     *  all: a slot holding a window the stack has not been told about
+     *  yet, because the host wrote it by hand instead of pushing (the
+     *  seam `reconcile` exists for). It is the SLOT that is asked, and
+     *  only until the next reconcile hands the question back here. */
     paused() {
       return gamePaused;
     },

@@ -200,8 +200,19 @@ the owner's call (the gamepad layer, the pause dropdown's mod rows).
 
 ## The standing watches (not wave work)
 
-- The pause architecture stays per-host; every new host takes the gate
-  by hand. B1's window stack narrows the class.
+- The pause architecture stays per-host - DFU has one
+  UserInterfaceManager and one `isGamePaused`, the port has one window
+  stack per modal host - but a new host no longer takes the GATE by
+  hand. B1 landed the stack; ROAD-tail landed its PAUSE: all four
+  stack-owning hosts (`scenes/worldModes.js`, `scenes/dungeonContext.js`,
+  `scenes/townTalk.js` and the standalone `scenes/interior.js`) answer
+  with ONE reader over `ui/windowStack.js`'s `paused()` latch, and the
+  two outdoor hosts compose the union of those answers once each rather
+  than at every gate. What is left of the watch is that union: a fifth
+  host still has to say which stacks are live over its frame. Swept by
+  `test/roadb_host_pause.test.js` (no file outside the module decides a
+  pause by counting depth; the callers of `paused()` are exactly the
+  stack owners).
 - The FLAGGED/INTERIM ledger (Home.md open flags) - items above
   strike their flags as they land; what remains after Wave C is
   re-triaged.

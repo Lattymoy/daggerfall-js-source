@@ -115,8 +115,10 @@ excluded. **[FIXED]** = closed by the AUDIT-39 wave the same day.
   empty reads.
 - **The pause architecture**: DFU freezes with `timeScale 0`; the port
   pauses per host. The wave closed every found leak (the outer-host
-  slot, interior movers, the swing, arrows), but new hosts must keep
-  taking the gate by hand - the class stays on watch.
+  slot, interior movers, the swing, arrows), and ROAD-tail closed the
+  gate-by-hand half: every stack-owning host now answers its pause with
+  `ui/windowStack.js`'s `paused()` latch through one reader, so what a
+  new host owes is the UNION of the live stacks, not the law.
 - **The voxel rig is editor-only**: the departure lane exists and is
   faithful, but no game host ships it.
 - **The 151 FLAGGED/INTERIM sites** (`Home.md` open flags) and the

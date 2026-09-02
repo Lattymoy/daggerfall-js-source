@@ -53,7 +53,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
-import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
+import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
@@ -771,6 +771,37 @@ export function createWorldModes(host) {
    *  once a frame and turns "the slot went empty" into PopWindow - so
    *  the window the box was laid over comes back. */
   const interiorWindows = makeWindowStack({ onTop: (w) => { interiorOverlay = w; } });
+  /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK.
+   *
+   *  DFU stops the world in exactly one place. AddWindow
+   *  (UserInterfaceManager.cs:179-186) calls
+   *  `GameManager.Instance.PauseGame(true)` for any window whose
+   *  `PauseWhileOpen` is set, and RemoveWindow (:190-216) calls
+   *  `PauseGame(false)` only once the stack is back to the HUD - so the
+   *  pause is a LATCH over the whole stack, not a fold over its top (a
+   *  non-pausing window laid over a pausing one leaves the game
+   *  paused). PauseGame itself (GameManager.cs:600-635) is what sets
+   *  `Time.timeScale = 0` and `InputManager.Instance.IsPaused = true`,
+   *  and that timeScale is every gate in this file: the motor, the
+   *  movers, the tickers, the foes, the weapon, the look.
+   *
+   *  `ui/windowStack.js`'s `paused()` IS that latch, ported whole, so
+   *  this host asks it rather than counting its own depth - which is
+   *  what `overlayHeld` and the frame's local used to do, once each,
+   *  and what every new host used to have to remember.
+   *
+   *  THE SECOND TERM IS THE PORT SEAM, NOT A DFU LAW. A DFU window can
+   *  only reach the stack through PushWindow; ~30 sites in this file
+   *  put a window in `interiorOverlay` by hand, and the stack does not
+   *  hear about it until the next `reconcile`. In that gap the latch is
+   *  honestly down while a window is honestly up, and the readers below
+   *  run in exactly that gap (the getter is read from the outer hosts'
+   *  EVENT handlers, between frames), so the live slot is asked as
+   *  well - through the module's own `pauseWhileOpen`
+   *  (UserInterfaceWindow.cs:141), so DaggerfallHUD's opt-out stays
+   *  true of both terms. Once `reconcile` has run, the latch alone
+   *  answers and it answers for the whole DEPTH. */
+  const interiorPaused = () => interiorWindows.paused() || pauseWhileOpen(interiorOverlay);
   // V2c: THE SUNLIGHT SEAM (THE FOUR HOSTS RULE). This host owns the
   // mode machine for BOTH town pages - world.js and exterior.js each
   // build it at boot - so the one registration here answers
@@ -4388,8 +4419,17 @@ export function createWorldModes(host) {
     // beneath it in the same frame it closed - the motor never sees the
     // gap, and the restored window is what this frame ticks and draws.
     if (mode === 'interior') interiorWindows.reconcile(interiorOverlay);
+    // ROAD-tail: the pause comes from the STACK (interiorPaused, above)
+    // and not from this frame's own arithmetic. The OR is the port's
+    // SHAPE, not a different behaviour: DFU has one
+    // UserInterfaceManager and one `isGamePaused`, the port gives each
+    // modal host its own stack, so the same answer is the union of the
+    // stacks that can be live in this mode - townTalk's (the street
+    // window this host draws over) and either the interior stack here
+    // or the dungeon context's own. Each term is that host's
+    // `paused()`; none of them is re-derived here.
     const overlayHeld = !!townTalk?.overlayActive ||
-      (mode === 'interior' && !!interiorOverlay) ||
+      (mode === 'interior' && interiorPaused()) ||
       (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive);
     // Q4-v: the quest layer's modal frame. Behaviours update every
     // frame (Unity Update runs whatever Time.timeScale is); the
@@ -6383,13 +6423,16 @@ export function createWorldModes(host) {
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this
      *  alongside townTalk.overlayActive). */
-    // ROAD-B B1: `|| depth` because this getter is read from the outer
-    // hosts' EVENT handlers, which run between frames - a window that
-    // closed itself since the last reconcile leaves the slot empty with
-    // another still suspended under it, and answering "no window" for
-    // those few milliseconds would free the cursor and re-grab pointer
-    // lock under the window that is about to be painted again.
-    get overlayHeld() { return (mode === 'interior' && (!!interiorOverlay || interiorWindows.depth() > 0)) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
+    // ROAD-B B1 asked the DEPTH here, because this getter is read from
+    // the outer hosts' EVENT handlers, which run between frames - a
+    // window that closed itself since the last reconcile leaves the
+    // slot empty with another still suspended under it, and answering
+    // "no window" for those few milliseconds would free the cursor and
+    // re-grab pointer lock under the window that is about to be painted
+    // again. ROAD-tail: that is the LATCH's own answer and no longer
+    // this host's arithmetic - `interiorPaused` is the one place the
+    // question is asked (see its note at the stack's construction).
+    get overlayHeld() { return (mode === 'interior' && interiorPaused()) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
     get transitioning() { return transitioning; },
     /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideDungeonCastle (:136-139),
      *  which GameManager.IsPlayerInsideCastle (GameManager.cs:420-423) is

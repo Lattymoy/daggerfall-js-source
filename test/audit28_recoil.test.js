@@ -103,7 +103,10 @@ test('AUDIT 28 W9: the setting is the default source (ships 3), LIVE; the three 
   resetToDefaults();
   assert.equal(LIVE['Controls/CameraRecoilStrength'], 'src/player/cameraRecoiler.js');
   assert.equal(typeof lastHealthLostPercent(), 'number');
-  for (const [host, paused] of [['src/scenes/world.js', "townTalk.overlayActive || (modes?.overlayHeld ?? false)"], ['src/scenes/exterior.js', "townTalk.overlayActive || (modes?.overlayHeld ?? false)"], ['src/scenes/dungeon.js', 'ctx.uiOverlayActive']]) {
+  // ROAD-tail: the paused gate is the host's ONE pause reader now
+  // (`gamePaused()` = the union of its stacks' `paused()`), not the
+  // composition written out again at each call site.
+  for (const [host, paused] of [['src/scenes/world.js', 'gamePaused()'], ['src/scenes/exterior.js', 'gamePaused()'], ['src/scenes/dungeon.js', 'ctx.uiOverlayActive']]) {
     const s = read(host);
     const esc = paused.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     assert.match(s, new RegExp(`cameraRecoiler\\.update\\(dt, cam, \\{ healthLost: lastHealthLost\\(\\), healthLostPercent: lastHealthLostPercent\\(\\), paused: ${esc} \\}\\);`), `${host}: the recoil call`);

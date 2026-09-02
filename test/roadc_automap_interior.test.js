@@ -394,7 +394,9 @@ test('c2/S9 SOURCE PINS: BOTH interior hosts tick the probes and route AutoMap, 
   // movement gate, so an ungated tick both burned up to 93 raycast
   // walks per 200 ms behind the open window and revealed rows into the
   // record the same frame was drawing.
-  assert.match(ij, /if \(!overlay\) ctx\.automapTick\?\.\(dt, cam\.pos, fwd\);/,
+  // ROAD-tail: the gate is this host's ONE pause now - windowStack's
+  // `paused()` latch under its own slot - not a bare read of the slot.
+  assert.match(ij, /if \(!gamePaused\(\)\) ctx\.automapTick\?\.\(dt, cam\.pos, fwd\);/,
     'the standalone interior host ticks them too - and stands the probe down while its map is open');
   assert.match(ij, /CoroutineCheckForNewlyDiscoveredMeshes \(Automap\.cs:1280-1291\)/,
     'and cites the driver that actually carries the gate, not Update');

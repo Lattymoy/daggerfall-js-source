@@ -31,6 +31,7 @@ import { AutomapWindow, preloadAutomapArt } from '../ui/automapWindow.js';   // 
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C c2/S9
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
+import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -112,6 +113,19 @@ export async function bootInterior(canvas, renderer, params, status) {
   // Automap.cs:2482, and there is no entered door here either) and its
   // "player" is the camera. Everything else is the same window.
   let overlay = null;
+  /** ROAD-tail: ...and the stack under it, so THIS host's pause is the
+   *  same primitive the other three ask. UserInterfaceManager.AddWindow
+   *  (:179-186) calls `GameManager.PauseGame(true)` for a
+   *  PauseWhileOpen window and RemoveWindow (:190-216) calls
+   *  `PauseGame(false)` only when the stack drains; PauseGame
+   *  (GameManager.cs:600-635) is the `Time.timeScale = 0` this frame's
+   *  gates read. This scene is the dev route - one window, no depth
+   *  today - and it is exactly the host the standing watch names: it
+   *  took the gate by hand (`if (!overlay)`, and a look gate that was
+   *  written `if (!(false))` and so never closed at all), and now it
+   *  does not. */
+  const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
+  const gamePaused = () => windows.paused() || pauseWhileOpen(overlay);
   let mapFont = null;
   makeFontFor().catch((e) => console.warn('[automap] FONT0003 unavailable:', e?.message ?? e));
   async function makeFontFor() {
@@ -121,7 +135,9 @@ export async function bootInterior(canvas, renderer, params, status) {
     .catch((e) => console.warn('[automap] native map art unavailable; keyed fallback:', e?.message ?? e));
   const toggleAutomap = () => {
     if (overlay) return;
-    overlay = new AutomapWindow({
+    // PushWindow (UserInterfaceManager.cs:79-91) - `onTop` writes the
+    // slot every reader below already uses, and the latch rises with it.
+    windows.pushWindow(new AutomapWindow({
       record: () => ctx.automapRecord(),
       drawList: ctx.drawList, dynamicDraws: ctx.dynamicDraws, texRemap: ctx.texRemap,
       player: () => ({ feet: cam.pos, eye: cam.pos, yaw: cam.yaw }),
@@ -133,7 +149,7 @@ export async function bootInterior(canvas, renderer, params, status) {
       indexSize: ctx.automapModel.length,
       model: ctx.automapModel,
       insideBuilding: true,
-    });
+    }));
   };
   const nativeAt = (e) => {
     const r = canvas.getBoundingClientRect();
@@ -141,7 +157,10 @@ export async function bootInterior(canvas, renderer, params, status) {
       (e.clientX - r.left) * (canvas.width / r.width),
       (e.clientY - r.top) * (canvas.height / r.height));
   };
-  const drainOverlay = () => { if (overlay?.done) { overlay.dispose?.(); overlay = null; } };
+  // ROAD-tail: the slot is nulled by hand here as in every host, and
+  // `reconcile` is what turns that into PopWindow - which is what
+  // lowers the pause latch (RemoveWindow :201-215).
+  const drainOverlay = () => { if (overlay?.done) { overlay.dispose?.(); overlay = null; windows.reconcile(overlay); } };
 
   const keys = new Set();
   addEventListener('keydown', (e) => {
@@ -210,7 +229,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
-    if (!(false)) {
+    if (!gamePaused()) {
       if (false) lookFilter.settle();
       else lookFilter.tick(dt, cam);
     }
@@ -259,7 +278,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // own call at :1001 is the one-shot lazy init, not a per-frame
     // driver. dungeon.js:520 and worldModes.js:4442/:4546 gate the same
     // way; this is that gate for this host.
-    if (!overlay) ctx.automapTick?.(dt, cam.pos, fwd);
+    if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {
       overlay.tick(dt);
       drainOverlay();

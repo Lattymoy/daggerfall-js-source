@@ -40,7 +40,7 @@ import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { overlayAction } from '../ui/input.js';
-import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot
+import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
@@ -139,6 +139,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  quest popup's case, and the reason a rest taken in the street can
    *  now be paused and resumed like DFU's. */
   const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
+  /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK (worldModes'
+   *  `interiorPaused` carries the full note). AddWindow
+   *  (UserInterfaceManager.cs:179-186) raises
+   *  `GameManager.PauseGame(true)`, RemoveWindow (:190-216) lowers it
+   *  only on the drain, and PauseGame (GameManager.cs:600-635) is the
+   *  `Time.timeScale = 0` the two outdoor hosts freeze on. Both doors
+   *  into this slot reconcile, so the latch is the whole answer here
+   *  and `pauseWhileOpen(overlay)` (UserInterfaceWindow.cs:141) only
+   *  keeps the term shape identical to the other hosts' - and would
+   *  catch a future third door that writes the slot without one. */
+  const talkPaused = () => windows.paused() || pauseWhileOpen(overlay);
   /** The close callbacks of the windows currently SUSPENDED, deepest
    *  first - `_onOverlayClosed` belongs to the top window alone, and a
    *  push must not clobber the covered window's. */
@@ -1092,7 +1103,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       hud.tick(dt);
       if (font_) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));
     },
-    get overlayActive() { return !!overlay; },
+    get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
     /** U38: the loaded HUD font, for the components drawHud draws
      *  (the crosshair's mode label). This module already owns the ONE
      *  FONT0003 both exterior hosts use; handing it out beats a second

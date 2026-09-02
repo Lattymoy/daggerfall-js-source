@@ -31,7 +31,7 @@ import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
-import { makeWindowStack } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot
+import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
@@ -986,6 +986,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  hand-written `activeOverlay = null` close paths read as
    *  PopWindow and uncover the window they were laid over. */
   const dungeonWindows = makeWindowStack({ onTop: (w) => { activeOverlay = w; } });
+  /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK (worldModes'
+   *  `interiorPaused` carries the full note; this is the same law for
+   *  this context's stack). AddWindow (UserInterfaceManager.cs:179-186)
+   *  raises `GameManager.PauseGame(true)` for a PauseWhileOpen window,
+   *  RemoveWindow (:190-216) lowers it only when the stack drains, and
+   *  PauseGame (GameManager.cs:600-635) is the `Time.timeScale = 0`
+   *  every gate in the dungeon frame reads. `paused()` is that latch.
+   *  The `pauseWhileOpen(activeOverlay)` term is the PORT SEAM: the ~15
+   *  hand-written slot writes in this file are not PushWindow, so
+   *  between such a write and the next `reconcile` the live slot is the
+   *  only witness - and it is asked through the module's own law
+   *  (UserInterfaceWindow.cs:141), not by truthiness. */
+  const dungeonPaused = () => dungeonWindows.paused() || pauseWhileOpen(activeOverlay);
   /** ROAD-B B5 - THE PUSH DOOR, one home. B1 landed it as
    *  `ctx.showOverlay` and recorded that a scatter of older
    *  `if (!activeOverlay) activeOverlay = ...` REFUSALS was left
@@ -4126,11 +4139,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
-    // ROAD-B B1: `|| depth` for the same reason worldModes' overlayHeld
-    // carries it - this is read from the hosts' event handlers, between
-    // frames, and a window that closed itself since the last reconcile
-    // still has one suspended under it that is about to be painted.
-    get uiOverlayActive() { return !!activeOverlay || dungeonWindows.depth() > 0; },
+    // ROAD-B B1 asked the DEPTH here, for the same reason worldModes'
+    // overlayHeld did - this is read from the hosts' event handlers,
+    // between frames, and a window that closed itself since the last
+    // reconcile still has one suspended under it that is about to be
+    // painted. ROAD-tail: that is what the stack's own pause LATCH
+    // answers, so the question is asked once, in `dungeonPaused`.
+    get uiOverlayActive() { return dungeonPaused(); },
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
