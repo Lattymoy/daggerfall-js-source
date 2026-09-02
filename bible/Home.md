@@ -308,27 +308,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:3203` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:4905` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:5004` - *  FLAGGED null this slice closed. */
-- `src/systems/advancement.js:91` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
-- `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
-- `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
-- `src/systems/buildingLocks.js:56` - *                                   (FLAGGED with banking)
-- `src/systems/chargen.js:9` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
-- `src/systems/chargen.js:24` - INTERIM (loud): the UI distributes the bonus pools by hand; the
-- `src/systems/chargen.js:132` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
-- `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-- `src/systems/chargenSession.js:331` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
-- `src/systems/court.js:28` - FLAGGED loud: execution (punishmentType 1) is unreachable in classic
-- `src/systems/effects.js:48` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:60` - *  Same FLAGGED caveat as the line above: DFU reads these from the
-- `src/systems/effects.js:737` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:1513` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
-- `src/systems/enchantments.js:151` - had been FLAGGED at its own site since S4c - "a magic item still
-- `src/systems/enchantments.js:685` - a MagicRound-FLAGGED row's is the payload callback :1767
+- `src/systems/banking.js:661` - - FLAGGED, alone now: PurchaseShip (:467-486) has no caller. The
+- `src/systems/buildingLocks.js:60` - *                                   (FLAGGED with banking)
+- `src/systems/chargenSession.js:335` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
+- `src/systems/effects.js:742` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:1518` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/encounters.js:79` - :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
-- `src/systems/encounters.js:285` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
-- `src/systems/equip.js:284` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/guildServiceActions.js:195` - *  FLAGGED gap that stood here: the timer is
 - `src/systems/guildServiceFlow.js:239` - *  override's law). Every other arm is FLAGGED with the window it
@@ -348,7 +333,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/systems/potions.js:245` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
 - `src/systems/save.js:167` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)

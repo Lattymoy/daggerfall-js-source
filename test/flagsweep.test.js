@@ -70,22 +70,30 @@ test('FS1: a flag that delegates to another FILE must find a flag in that file',
   assert.deepEqual(dangling, [], 'every "FLAGGED in <file>" points at a file that really is flagged');
 });
 
-test('FS1: the form the guard measures is actually present in the tree', () => {
+test('FS1: the extractor really reads the form, on a fixture', () => {
   // A guard over an empty population is a green light that means
-  // nothing - PY1's lesson in a different shape. This asserts the
-  // sweep has real work to do, so deleting the last delegation (or
-  // breaking the regex) fails loudly instead of passing vacuously.
-  const found = delegations();
-  assert.ok(found.length >= 1, `the guard measures ${found.length} delegations; it is not measuring nothing`);
-  // and it reads the WRAPPED form, which is the common one. CR-35
-  // took that claim off the tree: it was pinned to dungeonContext's
-  // restWindow delegation, so the sentence B5 had already retired
-  // could not be deleted without failing this file. The extractor's
-  // reach is a property of the extractor, so it is measured on a
-  // fixture; the tree only has to carry real work.
+  // nothing - PY1's lesson in a different shape - and this test used
+  // to answer that by requiring the TREE to carry a delegation. CR-35
+  // already showed why the tree is the wrong place to hold it: the
+  // requirement was pinned to dungeonContext's restWindow
+  // delegation, so a sentence B5 had retired could not be deleted
+  // without failing this file, and a guard that PUNISHES retirement
+  // is pointed backwards. The CLOSEOUT retired the last one -
+  // regionConditions.js sent the reader to a banishment flag in
+  // court.js, and the arrest arc had shipped both halves of it - so
+  // the population is now zero and the pin goes where CR-35 said it
+  // belongs: the extractor's reach is a property of the EXTRACTOR,
+  // measured on a fixture, and the sweep above stays armed for the
+  // next delegation anyone writes.
   assert.deepEqual(scan(["// ... a thing is FLAGGED in", "// ui/restWindow.js' header."]),
     [{ line: 1, target: 'restWindow.js' }],
     'the path that lands a line below the words is still resolved');
+  // the single-line form, which the wrapped one must not have cost us
+  assert.deepEqual(scan(['// the timer is FLAGGED in systems/guildServiceActions.js']),
+    [{ line: 1, target: 'guildServiceActions.js' }]);
+  // and a delegation the tree does carry would still be caught: a
+  // dangling target fails the sweep above, which is the whole law.
+  assert.deepEqual(scan(['// FLAGGED in nosuchmodule.js']), [{ line: 1, target: 'nosuchmodule.js' }]);
 });
 
 test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () => {

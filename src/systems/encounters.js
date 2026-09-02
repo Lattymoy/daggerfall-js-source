@@ -282,8 +282,18 @@ export const RESTING_DISTANCE = 12;
  * port had dropped entirely; it is what a caller passes to ask the
  * coarser "is anything alive nearby" question.
  *
- * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
- * carrying a live position.
+ * THE FoeSpawner SWEEP (:720-728) IS NOT A GAP, recorded. DFU walks
+ * ActiveGameObjectDatabase's FoeSpawner MonoBehaviours because those
+ * objects PERSIST - GameObjectHelper.CreateFoeSpawner (:1314-1318)
+ * mounts one and it retries placement across frames, so a spawner
+ * inside spawnDistance is an enemy that is coming. The port has no
+ * such object: world.js places within a SINGLE call and gives up
+ * (LOOSE_FOE_PLACE_ATTEMPTS = 12, :1913, at :1930 and :1959), and a
+ * foe that placed is already in the pool this walks, so there is
+ * nothing pending to count. Nor were quest spawns ever in that sweep
+ * on either side - DFU's CreateFoe is a QuestAction that calls
+ * CreateFoeGameObjects + TryPlacement itself (no CreateFoeSpawner in
+ * CreateFoe.cs), which is systems/quest/actions.js:2283-2305 here.
  */
 export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {

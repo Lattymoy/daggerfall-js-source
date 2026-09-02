@@ -4,10 +4,14 @@
 // THE FOUR HOSTS RULE: chargen used to live entirely inside
 // dungeonContext, so a player who booted straight into a town
 // (either exterior host) never created a character at all - they
-// played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-// 50, Warrior-shaped nothing). The dungeon kept its own copy of the
-// load/apply code, which is exactly the duplication the audit's
-// rules forbid, so both live here now.
+// played the pre-chargen placeholder entity (flat skills 30,
+// maxHealth 50, Warrior-shaped nothing; it is described at
+// characters/playerEntity.js:5). The dungeon kept its own copy of
+// the load/apply code, which is exactly the duplication the audit's
+// rules forbid, so both live here now. FIXED, not pending: world.js:
+// 126/:1364-1366 and exterior.js:95/:782-784 both import and run
+// createChargenFlow + createChargenWindow from here, so a town boot
+// runs the wizard.
 //
 // The returned object is shaped for the exterior hosts' overlay seam
 // (townTalk.showOverlay): isChoiceWindow so it receives RAW key

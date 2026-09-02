@@ -45,8 +45,12 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *   holidayId                     - getHolidayId's answer (shops close
  *                                   on Suns Rest, :1296-1299)
  *   isHouseOwned(buildingKey)     - DaggerfallBankManager.IsHouseOwned
- *                                   (FLAGGED: banking is a ledger row -
- *                                   an absent seam answers false)
+ *                                   (H1 WIRED IT: banking.js:172 over
+ *                                   playerEntity.houses, handed in at
+ *                                   scenes/worldModes.js:3256, so
+ *                                   :69 - PlayerActivate.cs:1261-1262,
+ *                                   the ladder's first test - now has
+ *                                   a real answer instead of false)
  *   isActiveQuestBuilding(building) - the siteLinks walk (:1315-1329)
  *   guildForBuilding(factionId)   - -> { hallAccessAnytime, isMember }
  *                                   booleans resolved by the host's

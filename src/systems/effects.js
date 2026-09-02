@@ -45,8 +45,12 @@ import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.j
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
 /** "Spell was absorbed." - the HUD line DFU prints on every absorbed
- *  effect (:515). FLAGGED: DFU pulls it from the localised string
- *  table; this surface has no text source, so the literal stands. */
+ *  effect: GetLocalizedText("spellAbsorbed") at
+ *  EntityEffectManager.cs:515. NOT A GAP (closeout) - the earlier note
+ *  guessed the table was out of reach, and it is not: the row is
+ *  StreamingAssets/Text/Master Localization CSV Files/
+ *  Internal_Strings.csv:648 `spellAbsorbed,Spell was absorbed.`, which
+ *  is this literal character for character. Nothing is invented. */
 export const SPELL_ABSORBED_TEXT = 'Spell was absorbed.';
 
 /** AUDIT 26 F078 - the two HUD lines the port computed and never
@@ -57,10 +61,11 @@ export const SPELL_ABSORBED_TEXT = 'Spell was absorbed.';
  *  `lastMagnitudeIncreaseAmount > 0`, so it is every magnitude
  *  INCREASE, not every round and not a heal.
  *
- *  Same FLAGGED caveat as the line above: DFU reads these from the
- *  localised string table (keys `youAreRegenerating`, `youFeelDrained`),
- *  which is not in the source tree - the literals stand, and the C#
- *  comments beside both calls quote them. */
+ *  Checked the same way as the line above, and the same answer: the
+ *  keys resolve to Internal_Strings.csv:642
+ *  `youAreRegenerating,You are regenerating.` (Regenerate.cs:51) and
+ *  :638 `youFeelDrained,You feel drained.` (DrainEffect.cs:106), both
+ *  matching these literals verbatim. */
 export const REGENERATING_TEXT = 'You are regenerating.';
 export const FEEL_DRAINED_TEXT = 'You feel drained.';
 

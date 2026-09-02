@@ -642,18 +642,27 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
   };
 }
 
-// FLAGGED, with the slices they wait on:
-//  - H1 RETIRED THE HOUSE HALF OF THIS. The building directory and
-//    the permanent-scene set both exist now, so housesForSale,
-//    allocateHouseToPlayer and sellHouse are above and live. What is
-//    still out is the BUY UI, and it is a specific thing rather than
-//    a missing system: DaggerfallBankPurchasePopUp is a 436-line
-//    window that renders the house's own 3D MODEL on a dedicated
-//    camera and layer beside a price list. Until that lands the bank's
-//    BUY HOUSE button refuses - which is also DFU's own answer when
-//    the directory is missing (:433-434) - and the one path that
-//    grants a house without it, KnightlyOrder.ReceiveHouse, is live.
-//  - PurchaseShip/SellShip (:464-506) need the two fixed ship scenes
-//    at map pixels (2,2) and (5,5), which is a streaming-world seam.
-//  - ReadNativeBankData (:580+) reads a classic .SAV BankAccount
-//    record; the classic save reader is its own unported system.
+// CLOSEOUT: two of the three slices this once waited on have landed,
+// and the block is narrowed to the one that has not.
+//  - THE HOUSE HALF IS WHOLE. H1 brought the building directory and
+//    the permanent-scene set, so housesForSale, allocateHouseToPlayer
+//    and sellHouse above are live; H2/H4 brought the BUY UI itself -
+//    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2135
+//    openPurchase with drawBankModelPreview (:1938) as the dedicated
+//    3D model panel, and ui/bankWindow.js:201-209 routes BUY HOUSE's
+//    'pick' into it (a host without the window still falls back to
+//    DFU's own missing-directory answer, :433-434).
+//  - ReadNativeBankData (:584-614) IS PORTED, verbatim quirks and all:
+//    systems/classicSave.js:250 classicBankAccounts, fed the SaveTree
+//    BankAccount record at classicSave.js:755 and mounted by SAV3
+//    (ui/loadClassicWindow.js -> scenes/menu.js -> world.js's
+//    classicLoadBoot).
+//  - FLAGGED, alone now: PurchaseShip (:467-486) has no caller. The
+//    scenes seam it was said to wait on is here - SHIP_COORDS,
+//    SHIP_INTERIOR_MAP_IDS and assignShipToPlayer are consumed by the
+//    live SELL path (worldModes.js:2198-2201) - so what is actually
+//    out is the purchase window's SHIPS ARM: bankPurchaseWindow.js is
+//    a houses list, and its ship camera distances (SHIP_CAMERA_DIST)
+//    are carried unused for the day that list exists. Until it does,
+//    BUY SHIP answers NOT_PORT_TOWN even in a port (bankWindow.js:212).
