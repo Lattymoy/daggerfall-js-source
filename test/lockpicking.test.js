@@ -12,6 +12,7 @@ import {
 } from '../src/world/actionSystem.js';
 import {
   OPEN_HOURS, CLOSE_HOURS, isBuildingOpen, buildingIsUnlocked, buildingLockValue,
+  LOCKED_EXTERIOR_DOOR_TEXT,
 } from '../src/systems/buildingLocks.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { HOLIDAYS } from '../src/systems/holidays.js';
@@ -130,6 +131,11 @@ test('R1 unlocked ladder: guild bypasses, the quest override, Suns Rest, ships (
   // the lock value is quality/2 (:675 - DFU's own placeholder, cited)
   assert.equal(buildingLockValue(12), 6);
   assert.equal(buildingLockValue(20), 10, 'The Odd Blades stays under the magic-held 20');
+  // THE WORD ITSELF: PlayerActivate.cs:527 pops `lockedExteriorDoor`
+  // verbatim, and the row is Internal_Strings.csv:534 - one word, not
+  // a sentence. Asserting the constant against itself would pin
+  // nothing, so the row's text is written out here.
+  assert.equal(LOCKED_EXTERIOR_DOOR_TEXT, 'Locked.');
 });
 
 test('R1 anti-grind: the discovery record blocks a retry until the skill RISES (PlayerGPS.cs:1099-1126)', () => {

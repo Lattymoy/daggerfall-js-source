@@ -2877,10 +2877,13 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   /** PromptPlayer (:81-98): the 4000 anchor/teleport box, with
    *  AllowCancel - DFU's own QoL, and its own comment says the cast
-   *  is not refunded. Every host routes its Recall arrival here. */
+   *  is not refunded. Every host routes its Recall arrival here.
+   *  `teleportOrSetAnchor` is a TEXT.RSC ID (:32), not a localization
+   *  key, so the box's line is record 4000 verbatim - Internal_RSC.csv
+   *  :4819, whose one [/center] is the centring ChoiceWindow does. */
   function teleportPrompt() {
     townTalk.showOverlay(new ChoiceWindow({
-      lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours
+      lines: ['Do you want to Teleport or Set an Anchor?'],
       options: [
         { code: 'KeyA', label: 'A - set anchor', action: () => setRecallAnchor() },
         { code: 'KeyT', label: 'T - teleport', action: () => { recallToAnchor(); } },

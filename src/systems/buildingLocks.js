@@ -107,8 +107,9 @@ export function buildingIsUnlocked(building, {
   return false;
 }
 
-/** The locked-door popup line ("lockedExteriorDoor" - prose ours,
- *  key cited; the look-at difficulty text follows it from
- *  actionSystem.lookAtLockText, classic's interior-formula oversight
- *  included). */
-export const LOCKED_EXTERIOR_DOOR_TEXT = 'This door is locked.';
+/** The locked-door popup line - `lockedExteriorDoor`, which
+ *  PlayerActivate.cs:527 pops verbatim. The row is one word:
+ *  Internal_Strings.csv:534, "Locked." (the look-at difficulty text
+ *  follows it from actionSystem.lookAtLockText, classic's
+ *  interior-formula oversight included). */
+export const LOCKED_EXTERIOR_DOOR_TEXT = 'Locked.';

@@ -51,6 +51,10 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   assert.ok(hm.includes('if (r.teleport) onTeleport?.();'), 'every player arrival routes the prompt');
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.ok(w.includes("code: 'KeyA', label: 'A - set anchor'"), 'the 4000 box: the anchor arm');
+  // teleportOrSetAnchor is a TEXT.RSC ID, not a localization key, so
+  // the box's words are record 4000's own (Internal_RSC.csv:4819).
+  assert.ok(w.includes("lines: ['Do you want to Teleport or Set an Anchor?'],"),
+    'the 4000 box speaks the record, not a paraphrase');
   assert.ok(w.includes("code: 'KeyT', label: 'T - teleport'"), 'the 4000 box: the teleport arm');
   assert.ok(w.includes("townTalk.say('You must set an anchor first.')"), 'the 4001 refusal');
   assert.ok(w.includes('playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms'),

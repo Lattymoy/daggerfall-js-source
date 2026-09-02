@@ -1474,7 +1474,7 @@ export function createWorldModes(host) {
         for (const it of staged) {
           if (isBeingRepaired(it)) continue;   // already booked; UpdateRepairTimes only stretches it
           leaveForRepair(it, bk, calculateItemRepairTime(it.currentCondition ?? 0, it.maxCondition ?? 0), now);
-          questBridge?.notebook?.addNote?.(`Left ${_itemLabel(it)} to be repaired at ${interiorBuilding?.name ?? 'the shop'}.`);
+          questBridge?.notebook?.addNote?.(`Left my ${_itemLabel(it)} for repair at ${interiorBuilding?.name ?? 'the shop'}.`);
         }
         updateRepairTimes([...staged], { commit: true, nowMinutes: now, buildingKey: bk });
       }
@@ -3165,8 +3165,11 @@ export function createWorldModes(host) {
       const i = playerEntity.items.indexOf(it);
       if (i >= 0) playerEntity.items.splice(i, 1);
       (playerEntity.otherItems ??= []).push(it);
-      // the repairNote (:536-537 - key repairNote, prose ours)
-      questBridge?.notebook?.addNote?.(`Left ${_itemLabel(it)} to be repaired at ${interiorBuilding?.name ?? 'the shop'}.`);
+      // the repairNote (:536-537): `repairNote` is Internal_Strings.csv:820,
+      // "Left my {0} for repair at {1}.", and DFU string.Formats the
+      // item's LongName into {0} and buildingDiscoveryData.displayName
+      // into {1} - the same two fills this line makes.
+      questBridge?.notebook?.addNote?.(`Left my ${_itemLabel(it)} for repair at ${interiorBuilding?.name ?? 'the shop'}.`);
     }
     surfacePlayer();
     showRepairList(0, ctx);
