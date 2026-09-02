@@ -36,12 +36,19 @@ export const TILE = Object.freeze({
 /** Indexed by the ground type under the tile: [water, dirt, grass, stone]
  *  -> the tile to write, or NO_CHANGE. Water is never paved: a road
  *  bit over water is a routing bug and this refuses to hide it. */
+// ROADS 20: THE TABLES ARE THE MOD'S, read from its own painter. A
+// cardinal road is two tiles of 46 with no edge column; 47/55 are the
+// diagonal's flanks. A track's diagonal inner is 51/52, not the
+// cardinal's 11/26; a track's inside 90-degree corner takes 10/25 where
+// a road takes nothing.
 const ROAD_CENTRE = [TILE.NO_CHANGE, TILE.road, TILE.road, TILE.road];
-const ROAD_EDGE = [TILE.NO_CHANGE, TILE.roadDirt, TILE.roadGrass, TILE.roadGrass];
+const ROAD_DIAG_EDGE = [TILE.NO_CHANGE, TILE.roadDirt, TILE.roadGrass, TILE.roadGrass];
 // A track is worn ground: dirt shows through grass, and it leaves stone
 // and dirt alone because a dirt track on dirt is invisible anyway.
 const TRACK_CENTRE = [TILE.NO_CHANGE, TILE.NO_CHANGE, 11, 26];
-const TRACK_EDGE = [TILE.NO_CHANGE, TILE.NO_CHANGE, 12, 27];
+const TRACK_DIAG_CENTRE = [TILE.NO_CHANGE, TILE.NO_CHANGE, 51, 52];
+const TRACK_DIAG_EDGE = [TILE.NO_CHANGE, TILE.NO_CHANGE, 12, 27];
+const TRACK_ICORNER = [TILE.NO_CHANGE, TILE.NO_CHANGE, 10, 25];
 
 const DIM = 128;
 const MID_LO = 63, MID_HI = 64;
@@ -65,17 +72,23 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       let ground = tileData[y * tdDim + x];
       if (ground > TILE.stone) ground = TILE.grass;
       const r = roadMask ? classify(x, y, roadMask) : null;
-      if (r) { if (write(tilemap, i, r, ROAD_CENTRE, ROAD_EDGE, ground)) painted++; continue; }
+      if (r) { if (write(tilemap, i, r, ROAD_CENTRE, ROAD_CENTRE, ROAD_DIAG_EDGE, ground)) painted++; continue; }
+      // ROADS 20: a track's inside 90-degree corner (the mod's ICorner)
+      // decided BEFORE the arm, because with no cardinal outer the
+      // elbow tile IS the arm's centre and the mod overwrites it. Roads
+      // have no corner tile and fall through to the arm.
+      const ic = trackMask ? iCorner(x, y, trackMask) : null;
+      if (ic) { const tile = TRACK_ICORNER[ground]; if (tile !== TILE.NO_CHANGE) { tilemap[i] = tile + (ic.rotate ? TILE.ROTATE : 0) + (ic.flip ? TILE.FLIP : 0); painted++; continue; } }
       const t = trackMask ? classify(x, y, trackMask) : null;
-      if (t && write(tilemap, i, t, TRACK_CENTRE, TRACK_EDGE, ground)) painted++;
+      if (t && write(tilemap, i, t, TRACK_CENTRE, TRACK_DIAG_CENTRE, TRACK_DIAG_EDGE, ground)) painted++;
     }
   }
   // ROADS 5: the ring AFTER the arms, so an arm crossing the ring's edge
   // annulus keeps its road surface and the ring fills in around it.
   if (locationRect) {
     painted += roadMask
-      ? paintRing(tileData, tilemap, locationRect, ROAD_CENTRE, ROAD_EDGE, tdDim)
-      : paintRing(tileData, tilemap, locationRect, TRACK_CENTRE, TRACK_EDGE, tdDim);
+      ? paintRing(tileData, tilemap, locationRect, ROAD_CENTRE, ROAD_DIAG_EDGE, tdDim)
+      : paintRing(tileData, tilemap, locationRect, TRACK_CENTRE, TRACK_DIAG_EDGE, tdDim);
   }
   return painted;
 }
@@ -111,7 +124,7 @@ function paintRing(tileData, tilemap, r, centreTable, edgeTable, tdDim) {
         // the ring's rotate follows the side it runs along; flip is the outer half
         const onEW = y < r.yMin || y > r.yMax;
         const outer = isCentre ? (x === x0 || x === x1 || y === y0 || y === y1) : false;
-        if (write(tilemap, i, { centre: isCentre, rotate: onEW, flip: outer }, centreTable, edgeTable, ground)) n++;
+        if (write(tilemap, i, { centre: isCentre, rotate: onEW, flip: outer }, centreTable, centreTable, edgeTable, ground)) n++;
       }
     }
   };
@@ -124,8 +137,16 @@ function paintRing(tileData, tilemap, r, centreTable, edgeTable, tdDim) {
   return n;
 }
 
-function write(tilemap, i, c, centreTable, edgeTable, ground) {
-  const tile = (c.centre ? centreTable : edgeTable)[ground];
+function iCorner(x, y, mask) {
+  if ((mask & DIR.N) && (mask & DIR.W) && x === MID_LO && y === MID_HI) return { rotate: false, flip: false };
+  if ((mask & DIR.N) && (mask & DIR.E) && x === MID_HI && y === MID_HI) return { rotate: true, flip: true };
+  if ((mask & DIR.S) && (mask & DIR.W) && x === MID_LO && y === MID_LO) return { rotate: true, flip: false };
+  if ((mask & DIR.S) && (mask & DIR.E) && x === MID_HI && y === MID_LO) return { rotate: false, flip: true };
+  return null;
+}
+
+function write(tilemap, i, c, centreTable, diagCentreTable, edgeTable, ground) {
+  const tile = (c.centre ? (c.diag ? diagCentreTable : centreTable) : edgeTable)[ground];
   if (tile === TILE.NO_CHANGE) return false;
   let v = tile;
   if (c.rotate) v += TILE.ROTATE;
@@ -147,7 +168,7 @@ function write(tilemap, i, c, centreTable, edgeTable, ground) {
  */
 export function classify(x, y, mask) {
   let edge = null;
-  const arm = (centre, rotate, flip) => ({ centre, rotate, flip });
+  const arm = (centre, rotate, flip, diag = false) => ({ centre, rotate, flip, diag });
   // AUDIT 45 F4: A DEAD-END ARM GETS A CAP. An arm that arrives alone -
   // N set, S not - would end square on the centre row; the tile just
   // past the centre on the FAR side takes the edge tile instead, so the
@@ -157,31 +178,24 @@ export function classify(x, y, mask) {
   // It is decided LAST - see the bottom - because at a junction the cap
   // position of one arm is the centre of another, and the centre wins.
   // N: rows above the middle; S: rows below. Centre columns 63/64.
-  if (mask & DIR.N && y >= MID_HI) {
-    if (x === MID_LO || x === MID_HI) return arm(true, false, x === MID_HI);
-    if (x === MID_LO - 1 || x === MID_HI + 1) edge = edge || arm(false, false, x === MID_HI + 1);
-  }
-  if (mask & DIR.S && y <= MID_LO) {
-    if (x === MID_LO || x === MID_HI) return arm(true, false, x === MID_HI);
-    if (x === MID_LO - 1 || x === MID_HI + 1) edge = edge || arm(false, false, x === MID_HI + 1);
-  }
-  if (mask & DIR.E && x >= MID_HI) {
-    if (y === MID_LO || y === MID_HI) return arm(true, true, y === MID_HI);
-    if (y === MID_LO - 1 || y === MID_HI + 1) edge = edge || arm(false, true, y === MID_HI + 1);
-  }
-  if (mask & DIR.W && x <= MID_LO) {
-    if (y === MID_LO || y === MID_HI) return arm(true, true, y === MID_HI);
-    if (y === MID_LO - 1 || y === MID_HI + 1) edge = edge || arm(false, true, y === MID_HI + 1);
-  }
+  // ROADS 20 (Mac: "ensure road width matches what the mod has"): TWO
+  // TILES AND NOTHING BESIDE THEM. The mod's cardinal-outer entry is
+  // null for roads and tracks alike; the edge tiles 47/55 flank the
+  // DIAGONAL only. The first draft painted an edge column each side of
+  // every cardinal arm - four tiles across where his are two.
+  if (mask & DIR.N && y >= MID_HI && (x === MID_LO || x === MID_HI)) return arm(true, false, x === MID_HI);
+  if (mask & DIR.S && y <= MID_LO && (x === MID_LO || x === MID_HI)) return arm(true, false, x === MID_HI);
+  if (mask & DIR.E && x >= MID_HI && (y === MID_LO || y === MID_HI)) return arm(true, true, y === MID_HI);
+  if (mask & DIR.W && x <= MID_LO && (y === MID_LO || y === MID_HI)) return arm(true, true, y === MID_HI);
   // NE runs up-right: x == y, above the middle. SW: the same line, below.
   const onNESW = x === y, nearNESW = Math.abs(x - y) === 1;
-  if (mask & DIR.NE && x >= MID_HI) { if (onNESW) return arm(true, false, false); if (nearNESW) edge = edge || arm(false, false, x > y); }
-  if (mask & DIR.SW && x <= MID_LO) { if (onNESW) return arm(true, false, false); if (nearNESW) edge = edge || arm(false, false, x > y); }
+  if (mask & DIR.NE && x >= MID_HI) { if (onNESW) return arm(true, false, false, true); if (nearNESW) edge = edge || arm(false, false, x > y); }
+  if (mask & DIR.SW && x <= MID_LO) { if (onNESW) return arm(true, false, false, true); if (nearNESW) edge = edge || arm(false, false, x > y); }
   // NW runs up-left: x + y == 127.
   const xm = 127 - x;
   const onNWSE = xm === y, nearNWSE = Math.abs(xm - y) === 1;
-  if (mask & DIR.NW && x <= MID_LO) { if (onNWSE) return arm(true, true, false); if (nearNWSE) edge = edge || arm(false, true, xm < y); }
-  if (mask & DIR.SE && x >= MID_HI) { if (onNWSE) return arm(true, true, false); if (nearNWSE) edge = edge || arm(false, true, xm < y); }
+  if (mask & DIR.NW && x <= MID_LO) { if (onNWSE) return arm(true, true, false, true); if (nearNWSE) edge = edge || arm(false, true, xm < y); }
+  if (mask & DIR.SE && x >= MID_HI) { if (onNWSE) return arm(true, true, false, true); if (nearNWSE) edge = edge || arm(false, true, xm < y); }
   // The cap, now that no arm has claimed this tile as its centre.
   const capN = (mask & DIR.N) && !(mask & DIR.S), capS = (mask & DIR.S) && !(mask & DIR.N);
   const capE = (mask & DIR.E) && !(mask & DIR.W), capW = (mask & DIR.W) && !(mask & DIR.E);
@@ -198,7 +212,7 @@ export function classify(x, y, mask) {
 
 /** ROADS 10: the tile indices a road or track leaves in the tilemap,
  *  masked of their rotate/flip bits. The smoother reads these back. */
-export const PATH_TILES = Object.freeze(new Set([TILE.road, TILE.roadDirt, TILE.roadGrass, 11, 12, 26, 27]));
+export const PATH_TILES = Object.freeze(new Set([TILE.road, TILE.roadDirt, TILE.roadGrass, 11, 12, 26, 27, 51, 52, 10, 25]));
 
 /**
  * ROADS 10 (Audit 45's item 7): SMOOTH THE GROUND UNDER THE ROAD. The

@@ -81,7 +81,7 @@ test('ROADS 1: a track stops the moment it touches the road', () => {
   assert.ok(path.length <= 11, 'and did not walk along it into town');
 });
 
-test('ROADS 2: a straight N-S road is two tiles wide down the centre, with edges', () => {
+test('ROADS 2/20: a straight N-S road is two tiles wide down the centre, and only two', () => {
   const tileData = new Uint8Array(129 * 129).fill(TILE.grass);
   const tilemap = new Uint8Array(128 * 128);
   const n = paintRoads(tileData, tilemap, DIR.N | DIR.S, 0);
@@ -89,9 +89,11 @@ test('ROADS 2: a straight N-S road is two tiles wide down the centre, with edges
   for (let y = 0; y < 128; y++) {
     assert.equal(tilemap[y * 128 + 63] & 0x3f, TILE.road, `row ${y} col 63 is road`);
     assert.equal(tilemap[y * 128 + 64] & 0x3f, TILE.road, `row ${y} col 64 is road`);
-    assert.equal(tilemap[y * 128 + 62] & 0x3f, TILE.roadGrass, `row ${y} col 62 is the grass edge`);
-    assert.equal(tilemap[y * 128 + 65] & 0x3f, TILE.roadGrass, `row ${y} col 65 is the grass edge`);
-    assert.equal(tilemap[y * 128 + 61], 0, 'and col 61 is untouched');
+    // ROADS 20: two tiles and NOTHING beside them - the mod's cardinal
+    // outer is null. The first draft painted 47/55 here and read four
+    // tiles across where his read two; Mac saw the difference.
+    assert.equal(tilemap[y * 128 + 62], 0, `row ${y} col 62 is untouched - no cardinal edge`);
+    assert.equal(tilemap[y * 128 + 65], 0, `row ${y} col 65 is untouched`);
   }
   // col 64 carries the FLIP bit so the two halves mirror into one surface.
   assert.ok(tilemap[10 * 128 + 64] & TILE.FLIP);
@@ -143,8 +145,9 @@ test('ROADS 2: classify - the centre of any arm wins over the edge of another', 
   // A crossroads: tile (63,64) is centre of both N and E arms.
   const c = classify(63, 64, DIR.N | DIR.E);
   assert.equal(c.centre, true, 'and F4\'s cap does not steal it - the E arm\'s cap position IS this tile');
-  // (62,64) is the N arm's west edge - and NOT on the E arm.
-  assert.equal(classify(62, 64, DIR.N | DIR.E).centre, false);
+  // (62,64) is beside the N arm - and since ROADS 20 a cardinal has no
+  // edge column, so it is nothing at all.
+  assert.equal(classify(62, 64, DIR.N | DIR.E), null);
   assert.equal(classify(10, 10, DIR.N), null, 'far from any arm');
 });
 
@@ -663,4 +666,29 @@ test('ROADS 19: a job that arrives during the cache lookup waits for it - no chu
   assert.match(src, /if \(m\.t === 'job' && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/,
     'a job behind the lookup queues on it, exactly as it queued behind the synchronous build');
   assert.match(src, /roadsCacheKey\(\{ settlements: m\.settlements, woodsLength: woods\._bytes\?\.byteLength \?\? 0 \}\)/, 'the worker keys on the list and the heightmap');
+});
+
+// ROADS 20: THE TABLES ARE THE MOD'S. A track's diagonal inner is 51/52
+// (not the cardinal's 11/26), and a track's inside 90-degree corner
+// takes 10/25 at the inner elbow where a road takes nothing.
+test('ROADS 20: a track\u2019s diagonal is 51/52, its inside corner 10/25, and a road has no corner tile', () => {
+  const grass = () => new Uint8Array(129 * 129).fill(TILE.grass);
+  const t = new Uint8Array(128 * 128);
+  paintRoads(grass(), t, 0, DIR.NE);
+  assert.equal(t[100 * 128 + 100] & 0x3f, 51, 'the diagonal inner is 51 on grass');
+  assert.equal(t[100 * 128 + 101] & 0x3f, 12, 'its flank is 12');
+  const c = new Uint8Array(128 * 128);
+  paintRoads(grass(), c, 0, DIR.N | DIR.W);
+  assert.equal(c[64 * 128 + 63] & 0x3f, 10, 'N+W: the inner elbow (63,64) is the corner tile');
+  assert.equal(c[64 * 128 + 63] & (TILE.ROTATE | TILE.FLIP), 0, 'unturned, unmirrored');
+  const e = new Uint8Array(128 * 128);
+  paintRoads(grass(), e, 0, DIR.N | DIR.E);
+  assert.ok(e[64 * 128 + 64] & TILE.ROTATE && e[64 * 128 + 64] & TILE.FLIP, 'N+E: turned and mirrored at (64,64)');
+  const r = new Uint8Array(128 * 128);
+  paintRoads(grass(), r, DIR.N | DIR.W, 0);
+  assert.equal(r[64 * 128 + 63] & 0x3f, TILE.road, 'a road\u2019s elbow stays road - no corner tile');
+  // a stone track corner is 25
+  const st = new Uint8Array(129 * 129).fill(TILE.stone), s2 = new Uint8Array(128 * 128);
+  paintRoads(st, s2, 0, DIR.S | DIR.E);
+  assert.equal(s2[63 * 128 + 64] & 0x3f, 25);
 });

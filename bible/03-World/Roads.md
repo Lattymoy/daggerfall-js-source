@@ -255,6 +255,17 @@ network that lands after the panel was opened plots on its next region
 select, which in practice is never - the worker finishes in the first
 second of boot.
 
+## ROADS 20 - the width is the mod's (2026-09-02)
+
+Mac: "ensure road width matches what the mod has." Read from the mod's
+painter: cardinal outer is `null` for roads and tracks - two tiles of
+46 and nothing beside them, the 47/55 edges flanking the diagonal
+only. Ours had painted an edge column each side of every cardinal arm
+since ROADS 2: four tiles across to his two. Fixed, with the track's
+diagonal inner (51/52) and inside corner (10/25) read from the same
+table. Audit 50 has the detail and names the painter's ring road as the
+one remaining departure from the mod.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
