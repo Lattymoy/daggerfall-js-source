@@ -492,8 +492,13 @@ export function createPlayerMagic({
    *  ready is consumed, and the absorb refund cap still reads the
    *  LAST paid cast's cost (lastReadySpellCastingCost is untouched by
    *  item casts). The caster is the player, casterLevel the player's. */
-  function castByItemSelf(spell) {
-    const r = applySpellToPlayer(spell, playerEntity.level, playerCaster(), { bypassSavingThrows: true, bypassChance: true });
+  function castByItemSelf(spell, item = null) {
+    // D9: EntityEffectBundle.CastByItem (CastWhenUsed.cs:136) - the
+    // SOURCE ITEM rides the bundle, and AssignBundle copies it onto
+    // the live bundle (EntityEffectManager.cs:469). Open.CheckCastByItem
+    // is its only reader and it is why the Skeleton's Key can open a
+    // lock above the holder's level at all.
+    const r = applySpellToPlayer(spell, playerEntity.level, playerCaster(), { bypassSavingThrows: true, bypassChance: true, castByItem: item });
     if (r.healed > 0) say(`You are healed ${r.healed} points.`);
     surfacePlayer();
     return r;

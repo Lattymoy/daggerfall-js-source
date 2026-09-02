@@ -12,8 +12,14 @@ import {
   MYSTICISM_EFFECTS, SUPPORTS_MAGNITUDE, isMysticism,
   triggerOpen, triggerLock, triggerExteriorOpen, dispelNearby, SOUL_TRAP_TEMPLATE,
   dispellableBundles, DISPELLABLE_BUNDLE_TYPES, fillEmptyTrap,
-  isSilenced, silenceBlocksCast,
+  isSilenced, silenceBlocksCast, castBySkeletonKey,
 } from '../src/systems/mysticism.js';
+import {
+  artifactTextureIndices, ARTIFACT_TEXTURE_INDEX_MAPPINGS,
+  ARTIFACT_MALE_TEXTURE_ARCHIVE, ARTIFACT_FEMALE_TEXTURE_ARCHIVE,
+} from '../src/systems/loot.js';
+import { applySpell } from '../src/systems/effects.js';
+import { doorSpellFor } from '../src/scenes/shared.js';
 
 const door = (lock = 0, state = 'start') => ({ currentLockValue: lock, state });
 
@@ -257,4 +263,66 @@ test('S27: Open and Lock are NOT wired, and the seams are named', () => {
     assert.ok(!/triggerOpen\(|triggerLock\(/.test(read(host)),
       `${host} does not call the door payload yet - update the record when it does`);
   }
+});
+
+
+// ---------------------------------------------------------------
+// D9 - THE SKELETON'S KEY. Open.CheckCastByItem (Open.cs:172-181)
+// identifies it by the artifact texture indices SetArtifact writes
+// (DaggerfallUnityItem.cs:608-611 from ItemHelper.GetArtifactTexture-
+// Indices :519-523), and TriggerOpenEffect then skips the level test.
+// The port had the law and neither of its two inputs.
+// ---------------------------------------------------------------
+
+test('D9: GetArtifactTextureIndices - the gender archive and the mapping row', () => {
+  assert.equal(ARTIFACT_MALE_TEXTURE_ARCHIVE, 432, 'ItemHelper.cs:50');
+  assert.equal(ARTIFACT_FEMALE_TEXTURE_ARCHIVE, 433, ':51');
+  assert.deepEqual([...ARTIFACT_TEXTURE_INDEX_MAPPINGS],
+    [12, 13, 10, 8, 19, 16, 25, 18, 21, 2, 24, 26, 0, 15, 3, 9, 23, 17, 7, 1, 22, 20, 5],
+    'ItemHelper.cs:43, digit for digit');
+  // Skeletons_Key is ArtifactsSubTypes 21 (ItemEnums.cs:262) and its
+  // mapping row is 20 - the record Open.cs tests for.
+  assert.deepEqual(artifactTextureIndices(21, 'male'), { archive: 432, record: 20 });
+  assert.deepEqual(artifactTextureIndices(21, 'female'), { archive: 433, record: 20 });
+  assert.deepEqual(artifactTextureIndices(12, 'male'), { archive: 432, record: 0 });
+});
+
+test('D9: castBySkeletonKey is all four terms - and a female character\'s key is not one', () => {
+  const key = { artifact: true, worldTextureArchive: 432, worldTextureRecord: 20 };
+  assert.equal(castBySkeletonKey(key), true);
+  assert.equal(castBySkeletonKey(null), false, 'no casting item at all');
+  assert.equal(castBySkeletonKey({ ...key, artifact: false }), false, 'IsArtifact');
+  assert.equal(castBySkeletonKey({ ...key, worldTextureArchive: 433 }), false,
+    'archive 433 is the FEMALE artifact archive - DFU\'s test is 432 only, quirk kept');
+  assert.equal(castBySkeletonKey({ ...key, worldTextureRecord: 21 }), false, 'and the record is the subtype row');
+});
+
+test('D9: the used item rides the armed bundle, and the key opens above the holder\'s level', () => {
+  const openSpell = { effects: [{ type: 17, subType: 255 }], element: 0, rangeType: 0 };
+  const key = { artifact: true, worldTextureArchive: 432, worldTextureRecord: 20 };
+  const arm = (castByItem) => {
+    const e = { level: 3, activeEffects: [] };
+    applySpell(openSpell, 3, e, {}, () => 0, { entity: e },
+      { bypassSavingThrows: true, bypassChance: true, castByItem });
+    return e;
+  };
+  // a plain cast: no casting item, so no key
+  const plain = doorSpellFor(arm(null));
+  assert.equal(plain.kind, 'open');
+  assert.equal(plain.skeletonKey, false);
+  const locked = door(9);
+  assert.deepEqual(triggerOpen(locked, plain.holderLevel, { castBySkeletonKey: plain.skeletonKey }),
+    { unlocked: false, opened: false, alert: 'openFailed' }, 'lock 9 over level 3 refuses');
+
+  // the SAME spell, cast by using the Skeleton's Key
+  const withKey = doorSpellFor(arm(key));
+  assert.equal(withKey.skeletonKey, true, 'CastByItem reached the armed entry');
+  const locked2 = door(9);
+  assert.deepEqual(triggerOpen(locked2, withKey.holderLevel, { castBySkeletonKey: withKey.skeletonKey }),
+    { unlocked: true, opened: true, alert: null }, '"Skeleton\'s Key can open even magical locks"');
+  assert.equal(locked2.currentLockValue, 0);
+
+  // and any OTHER used artifact is still just a cast
+  const other = doorSpellFor(arm({ artifact: true, worldTextureArchive: 432, worldTextureRecord: 12 }));
+  assert.equal(other.skeletonKey, false);
 });

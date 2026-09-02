@@ -301,8 +301,7 @@ const fakeBlock = (types) => ({
 test('AUDIT 39 (#110): the building list holds residences, named or not', () => {
   const types = [BUILDING_TYPES.Tavern, BUILDING_TYPES.House2, BUILDING_TYPES.GeneralStore];
   const blk = fakeBlock(types);
-  const doors = types.map((_, i) => ({ dfBlock: blk.dfBlock, recordIndex: i, position: [1, 0, 1] }));
-  const dir = buildBuildingDirectory([], [blk], doors, { locationName: 'Tulune', regionName: 'Tigonus' });
+  const dir = buildBuildingDirectory([], [blk], { locationName: 'Tulune', regionName: 'Tigonus' });
   assert.equal(dir.length, 3, 'every building with a key is a row - C#\'s only gate');
   const house = dir.find((d) => d.buildingType === BUILDING_TYPES.House2);
   assert.ok(house, 'the residence a quest site would name is resolvable by key now');
@@ -311,10 +310,10 @@ test('AUDIT 39 (#110): the building list holds residences, named or not', () => 
   assert.ok(house.buildingKey > 0);
   // the named rows are untouched: same key, still named
   assert.match(dir.find((d) => d.buildingType === BUILDING_TYPES.Tavern).name, /\S/);
-  // one row per building even when several doors reach it
-  const twice = buildBuildingDirectory([], [blk],
-    [...doors, { dfBlock: blk.dfBlock, recordIndex: 1, position: [2, 0, 2] }], {});
-  assert.equal(twice.length, 3, 'the multi-door dedupe still holds');
+  // D9: one row per building whatever the doors do - the walk no longer
+  // sees them, so the multi-door dedupe is not a rule that can be broken.
+  const twice = buildBuildingDirectory([], [blk], {});
+  assert.equal(twice.length, 3, 'one row per building, doorless block included');
 });
 
 // ---------------------------------------------------------------

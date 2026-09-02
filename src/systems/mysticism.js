@@ -106,6 +106,30 @@ export const isMysticism = (e) => Object.values(MYSTICISM_EFFECTS)
  * flag of its own. This module keeps only what the DOOR needs: the two
  * triggers below and the alert table at the foot of the file. */
 
+/** Open.CheckCastByItem (Open.cs:172-181), verbatim - THE SKELETON'S
+ *  KEY TEST. DFU writes the two texture numbers as literals in this
+ *  method, so the port does too:
+ *
+ *      castBySkeletonKey =
+ *          ParentBundle.castByItem != null &&
+ *          ParentBundle.castByItem.IsArtifact &&
+ *          ParentBundle.castByItem.WorldTextureArchive == 432 &&
+ *          ParentBundle.castByItem.WorldTextureRecord == 20;
+ *
+ *  Archive 432 is the MALE artifact archive (ItemHelper.cs:50) and
+ *  record 20 the mapping row for Skeletons_Key (ArtifactsSubTypes 21,
+ *  ItemHelper.cs:43). A FEMALE character's artifacts are minted at
+ *  archive 433, so her Skeleton's Key fails this test and unlocks only
+ *  to her level - DFU's own quirk, kept.
+ *
+ *  The item reaches here through the bundle: only CastWhenUsed sets
+ *  CastByItem (CastWhenUsed.cs:136), so only a USED item can ever
+ *  arm a key-cast Open. */
+export function castBySkeletonKey(item) {
+  return !!item && item.artifact === true
+    && item.worldTextureArchive === 432 && item.worldTextureRecord === 20;
+}
+
 /** TriggerOpenEffect (:97-131), against the port's ActionSystem door
  *  record ({currentLockValue, state}).
  *

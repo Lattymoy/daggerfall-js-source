@@ -282,7 +282,10 @@ test('ROAD-B B4: the mode host latches both flags at the door and publishes all 
 function guardRig(flags) {
   return createCityGuards({
     renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {}, textures: new Map() },
-    collider: { heightAt: () => 0, raycast: () => Infinity },
+    collider: { heightAt: () => 0, raycast: () => Infinity,
+      // D9: the ring fallback places through FoeSpawner.PlaceFoeFreely,
+      // which asks the collider for a ray HIT and an overlap test
+      raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false },
     fetchBytes: async () => { throw new Error('SPAWNED'); },
     getTexture: async () => ({ getFrameCount: () => 1, getSize: () => ({ width: 1, height: 1 }), getScale: () => ({ width: 0, height: 0 }) }),
     uploadRecordFrame: () => {},

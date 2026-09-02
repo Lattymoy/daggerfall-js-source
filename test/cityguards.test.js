@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import {
   createCityGuards, GUARD_MOBILE_TYPE, MAX_ACTIVE_GUARD_SPAWNS,
   GUARD_NPC_SPAWN_RANGE, GUARD_BEHIND_ANGLE,
+  GUARD_FALLBACK_MIN_DIST, GUARD_FALLBACK_MAX_DIST,
 } from '../src/scenes/cityGuards.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -33,7 +34,10 @@ function makeDeps(rand) {
       destroyBillboardBatch: () => { destroyed.n++; },
       textures: new Map(),
     },
-    collider: { heightAt: () => 0, raycast: () => Infinity },
+    collider: { heightAt: () => 0, raycast: () => Infinity,
+      // D9: the ring fallback places through FoeSpawner.PlaceFoeFreely,
+      // which asks the collider for a ray HIT and an overlap test
+      raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false },
     fetchBytes: async (name) => new Uint8Array(readFileSync(join(ARENA2, name))),
     getTexture: async () => ({
       getFrameCount: () => 4,
@@ -303,14 +307,18 @@ test('CLOSEOUT: SpawnCityGuards does nothing at all inside a dungeon (PlayerEnti
   // dungeon-local feet, where they also ate the 5-guard cap.
   //
   // No ARENA2 needed: the observable is whether a spawn is REACHED at
-  // all - the ring fallback's first act is `collider.heightAt`, and
-  // every spawn's first act is the CLASS18.CFG fetch, which is refused
-  // here so the call cannot hang on a career that never lands.
+  // all - the ring fallback places through PlaceFoeFreely, whose floor
+  // probe reaches `collider.heightAt` (D9), and every spawn's first act
+  // is the CLASS18.CFG fetch, which is refused here so the call cannot
+  // hang on a career that never lands.
   const rig = (flags) => {
     const tried = { n: 0 };
     const g = createCityGuards({
       ...makeDeps(() => 0.5),   // ring count = 2 + floor(0.5 * 4) = 4
-      collider: { heightAt: () => { tried.n++; return 0; }, raycast: () => Infinity },
+      collider: {
+        heightAt: () => { tried.n++; return 0; }, raycast: () => Infinity,
+        raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false,
+      },
       fetchBytes: async () => { tried.n++; throw new Error('no career here'); },
       enterExitFlags: () => flags,
     });
@@ -375,4 +383,62 @@ test('CLOSEOUT: the surrender-dialogue reset counts HOSTILE, non-allied watchmen
     "...and neither is one charmed onto the player's team");
   assert.equal(drive({ dead: true, ai: { isHostile: true }, entity: { team: 'CityWatch' } }), false,
     'a dead one was never counted either way');
+});
+
+
+// ---------------------------------------------------------------
+// D9 - the CreateFoeSpawner fallback (PlayerEntity.cs:687) places
+// through FoeSpawner.PlaceFoeFreely like every other spawner call
+// site, instead of rolling a bare bearing + distance and taking
+// collider.heightAt with no clearance and no occupancy test.
+// ---------------------------------------------------------------
+
+test('D9: the guard ring goes through PlaceFoeFreely - blocked ground stands nobody', async () => {
+  const rig = (colliderOverrides) => {
+    const asked = { n: 0 };
+    const g = createCityGuards({
+      ...makeDeps(() => 0.5),   // ring count = 2 + floor(0.5 * 4) = 4
+      collider: {
+        heightAt: () => 0, raycast: () => Infinity,
+        raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false,
+        ...colliderOverrides,
+      },
+      // the spawn's first act; refused so nothing hangs on a career
+      fetchBytes: async () => { asked.n++; throw new Error('no career here'); },
+    });
+    const call = () => g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: [] })
+      .catch(() => {});
+    return { asked, call };
+  };
+
+  // open ground: the ring places and the spawns are reached
+  const open = rig({});
+  await open.call();
+  assert.ok(open.asked.n > 0, 'an empty pool still takes the ring fallback');
+
+  // EVERY candidate point is occupied - PlaceFoeFreely's own
+  // "Ensure this is open space" (OverlapSphere) refuses all of them,
+  // so not one watchman is stood. The old arm had no such test and
+  // would have spawned its 2..5 into whatever was standing there.
+  const packed = rig({ sphereOverlaps: () => true });
+  await packed.call();
+  assert.equal(packed.asked.n, 0, 'no clear spot, no watchman');
+
+  // no floor within reach either (the ray finds nothing and heightAt
+  // is far below): the same refusal
+  const voidGround = rig({ heightAt: () => -1000 });
+  await voidGround.call();
+  assert.equal(voidGround.asked.n, 0, 'no ground under the point, no watchman');
+});
+
+test('D9: the ring reads the SPAWNER_ARMS row, and the two named constants are that row', async () => {
+  const { SPAWNER_ARMS } = await import('../src/systems/encounters.js');
+  assert.equal(SPAWNER_ARMS.cityGuards.minDistance, 12.8, 'PlayerEntity.cs:687');
+  assert.equal(SPAWNER_ARMS.cityGuards.maxDistance, 51.2);
+  assert.equal(SPAWNER_ARMS.cityGuards.lineOfSightCheck, true, 'the watch converges from outside the FOV');
+  assert.equal(GUARD_FALLBACK_MIN_DIST, SPAWNER_ARMS.cityGuards.minDistance, 'one home');
+  assert.equal(GUARD_FALLBACK_MAX_DIST, SPAWNER_ARMS.cityGuards.maxDistance);
+  const src = readFileSync(new URL('../src/scenes/cityGuards.js', import.meta.url), 'utf8');
+  assert.match(src, /spot = placeFoeFreely\(env, SPAWNER_ARMS\.cityGuards\);/,
+    'the fallback stands its guards through the one placement law');
 });

@@ -38,12 +38,13 @@ test('RE1: the arm table is CreateFoeSpawner\'s arguments, per call site', () =>
   assert.deepEqual({ ...SPAWNER_ARMS.locationNight }, { minDistance: 10, maxDistance: 20, lineOfSightCheck: true });
   assert.deepEqual({ ...SPAWNER_ARMS.wilderness }, { minDistance: 10, maxDistance: 20, lineOfSightCheck: true });
   assert.deepEqual({ ...SPAWNER_ARMS.dungeonRest }, { minDistance: 8, maxDistance: 20, lineOfSightCheck: false });
-  // the guards' row is carried so the table is the WHOLE call-site
-  // list - it is not wired, and the comment says so rather than the
-  // row quietly not existing
+  // D9: the guards' row is READ now - PlayerEntity.cs:687's fallback
+  // stands its 2..5 watchmen through PlaceFoeFreely like every other
+  // row, so the table is the whole call-site list AND every row of it
+  // drives something.
   assert.deepEqual({ ...SPAWNER_ARMS.cityGuards }, { minDistance: 12.8, maxDistance: 51.2, lineOfSightCheck: true });
-  assert.match(read('src/systems/encounters.js'), /port stands guards through the street-person pool/,
-    'the guards row says why it is not wired, rather than quietly not existing');
+  assert.match(read('src/scenes/cityGuards.js'), /placeFoeFreely\(env, SPAWNER_ARMS\.cityGuards\)/,
+    'the guards row is the crime law\'s own band, read from the table');
 });
 
 test('RE1: THE DUNGEON ARM ALONE CLEARS THE LINE-OF-SIGHT CHECK', () => {

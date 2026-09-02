@@ -54,23 +54,51 @@ export function pickRangedSpell(entity, target, rolls = Math.random) {
 }
 
 /**
- * The SELECTION-FREE half of CanCastRangedSpell (EnemyMotor.cs:759-789),
- * for EnemyMotor.DoRangedAttack's band gate.
+ * GetDestination's OWN magic term (EnemyMotor.cs:539-540), which is
+ * NOT CanCastRangedSpell:
+ *
+ *     ClearPathToPosition(...) || (senses.TargetInSight
+ *                              && (hasBowAttack || entity.CurrentMagicka > 0))
+ *
+ * - a bare `CurrentMagicka > 0`, no spell list, no selection, no
+ * veto. D9 split it out: the motor used to serve BOTH that arm and
+ * the stand-off band from one dep, which was harmless while the dep
+ * was the magicka-and-a-ranged-spell half and wrong the moment the
+ * band gate grew CanCastRangedSpell's vetoes.
+ */
+export const hasMagickaToCast = (entity) => (entity?.magicka ?? 0) > 0;
+
+/**
+ * The SELECTION-FREE half of CanCastRangedSpell (EnemyMotor.cs:759-789).
  *
  * AUDIT 24 (wave 35). DFU's CanCastRangedSpell is not a predicate: it
  * picks a spell with `Random.Range(0, count)`, stores it as
  * SelectedSpell, and vetoes on EffectsAlreadyOnTarget and on a clear
  * shooting path - and DoRangedAttack calls it every frame the band
  * condition is evaluated, so it also decides whether the foe STANDS
- * OFF. The port's selection lives in EnemyCaster, one classic tick at a
- * time, and calling pickRangedSpell from the motor as well would draw a
- * second time off the shared stream every frame - the exact fault AUDIT
- * 21 F5 wrote the roll-order law about.
+ * OFF.
  *
- * So the motor asks the half that has no side effect: has this entity
- * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
- * the EffectsAlreadyOnTarget veto and the clear-path test can send a
- * caster back to closing in, where here they gate only the cast.
+ * D9: the stand-off band no longer asks this. EnemyCaster now KEEPS
+ * the tick's SelectedSpell (DFU sets it inside the band condition,
+ * BEFORE the 1/40 roll - :573 then :601) and answers the band from
+ * it, so the EffectsAlreadyOnTarget veto reaches the band exactly as
+ * it does in DFU and a caster whose only pick is already on the
+ * target closes in instead of standing off forever. This half is kept
+ * for probes and for the doctrine it records: the motor must never
+ * call pickRangedSpell itself, because that would draw a SECOND time
+ * off the caster's stream every frame (AUDIT 21 F5's roll-order law).
+ *
+ * FLAGGED, and now exactly one term wide: HasClearPathToShootProjectile
+ * (:788). The port answers it with the senses' own LOS (inSight gates
+ * every decision, as the header says), and DFU's is a different
+ * probe - PredictNextTargetPos(25) as the cast direction, a
+ * CheckSphere of radius 0.45 at transform.position + dir *
+ * DaggerfallMissile.ArmLength, then a SphereCast of that radius over
+ * the remaining distance (:698-740). It is NOT EnemyMotor's
+ * ClearPathToPosition (the port's _clearPathToPosition, :965), which
+ * is a different function with different geometry and which WRITES
+ * obstacleDetected/fallDetected as it goes - borrowing it here would
+ * corrupt the detour state the caller re-probes.
  */
 export const hasRangedSpell = (entity) => ((entity?.magicka ?? 0) > 0)
   && (entity?.spells ?? []).some((sp) => sp.rangeType === 2 || sp.rangeType === 4);
@@ -93,7 +121,21 @@ export class EnemyCaster {
     this.entity = entity;
     this.rolls = rolls;
     this._classicTimer = 0;
+    // D9: EnemyMotor.SelectedSpell. CanCastRangedSpell writes it and
+    // DoRangedAttack's own `Random.value < 1/40f && SetReadySpell(
+    // SelectedSpell)` reads it back (:601), so the selection outlives
+    // the pick by design - and the BAND condition that decides
+    // whether the foe stands off at all is the same call. Null = "the
+    // last classic tick's CanCastRangedSpell answered false".
+    this.selectedSpell = null;
   }
+
+  /** DoRangedAttack's band term, as the motor asks it
+   *  (EnemyMotor.cs:573 `CanShootBow() || CanCastRangedSpell()`).
+   *  DFU re-evaluates it every frame; the port's selection turns once
+   *  per classic update, which is the finest cadence it can offer
+   *  without drawing a second time off this caster's stream. */
+  canCastRangedSpell() { return this.selectedSpell !== null; }
 
   /**
    * @param ai the foe's EnemyAI (senses: _dist, inSight, detected,
@@ -151,15 +193,37 @@ export class EnemyCaster {
     let decision = null;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
+      // D9: DFU's ORDER, restored. DoRangedAttack's band condition is
+      //
+      //   inRange && TargetInSight && DetectedTarget
+      //           && (CanShootBow() || CanCastRangedSpell())
+      //
+      // and the SELECTION happens inside it - before the 1/40 roll,
+      // not after. The port used to roll first and pick second, which
+      // left nothing for the motor's stand-off band to read and made
+      // the EffectsAlreadyOnTarget veto a cast-only gate. Picking here
+      // costs no extra classic stream: this caster's rolls are its own
+      // (DFU's are UnityEngine.Random, not the DFRandom sequence).
+      //
+      // TakeAction's own gates come first: the body sits behind
+      // `if (CanAct)` (:171-172) and HandleNoAction takes over once
+      // the give-up timer is spent (:359-365), so neither reaches
+      // DoRangedAttack and neither leaves a selection behind.
+      // `CanShootBow()` SHORT-CIRCUITS the pick for a bow foe (:573,
+      // and :590 takes the bow branch instead of the spell one).
+      const inBand = dist > MIN_RANGED_DISTANCE && dist < MAX_RANGED_DISTANCE;
+      if (!canAct || ai.giveUpTimer <= 0 || !inBand || !ai.inSight || !ai.detected
+          || attack.rangedAttack) { this.selectedSpell = null; continue; }
+      this.selectedSpell = pickRangedSpell(ent, playerEntity, this.rolls);
+      if (decision || !this.selectedSpell) continue;
       // The RANGED branch keeps its one-shot term - DFU's 1/40 roll
       // sits behind `if (!isPlayingOneShot)` (:588) exactly as the
-      // 1/32 bow roll does; only the TOUCH arm has none.
-      if (decision || attack.rangedAttack || !idle || !canAct || ai.giveUpTimer <= 0) continue;
-      if (dist <= MIN_RANGED_DISTANCE || dist >= MAX_RANGED_DISTANCE) continue;
-      if (!ai.inSight || !ai.detected || !withinYaw(ai.yaw, dx, dz, SPELL_YAW_DEG)) continue;
+      // 1/32 bow roll does; only the TOUCH arm has none. Neither it
+      // nor the yaw gate touches the selection: outside 22.5 degrees
+      // DFU turns to face and still stands off (:603-604).
+      if (!idle || !withinYaw(ai.yaw, dx, dz, SPELL_YAW_DEG)) continue;
       if (this.rolls() >= RANGED_SPELL_CHANCE) continue;
-      const sp = pickRangedSpell(ent, playerEntity, this.rolls);
-      if (sp) decision = { spell: sp, touch: false };
+      decision = { spell: this.selectedSpell, touch: false };
     }
     return decision;
   }

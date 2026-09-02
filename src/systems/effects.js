@@ -621,10 +621,19 @@ function pushPermanent(target, entry) {
  *  kinds. (AUDIT 18: instants used to count as always-absent, so an
  *  instant-only caster - Fire Daedra, whose whole list is (4,0) -
  *  could re-cast every 2.5s where DFU vetoes the pick.) */
-function pushInstantMarker(target, kind, stat = null) {
+function pushInstantMarker(target, kind, effect = null, stat = null) {
   target.activeEffects = target.activeEffects || [];
   const entry = { kind, instant: true, roundsRemaining: 0 };
   if (stat) entry.stat = stat;
+  // D9: the SOURCE EFFECT rides the marker, because a held bundle's
+  // instant effects are re-run every magic round (see the pin block
+  // at the foot of applySpell) and the marker is the only record of
+  // which effect made it. A plain spell's marker carries it unused.
+  // NON-ENUMERABLE, the dungeonContext idiom: this is a back-pointer
+  // into the spell record, not a column of the entry, and every walk
+  // that iterates an entry - copyEffectEntry's spread, the save, a
+  // test's deepEqual - must see the entry it always saw.
+  if (effect) Object.defineProperty(entry, 'effect', { value: effect, enumerable: false, writable: true, configurable: true });
   target.activeEffects.push(entry);
 }
 
@@ -737,10 +746,19 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // discards it silently before either gate can run.
     if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
-    // BundleType == Spell (:509). The port's applySpell is the spell
-    // path only, so the caster check is the whole gate here; item and
-    // enchantment bundles are FLAGGED to their own arc.
-    if (caster) {
+    // BundleType == Spell - repeated on ALL THREE gates (:509, :521,
+    // :525). D9: the enchantment arc arrived (enchantments.js:272
+    // routes CastWhenHeld through this same applySpell with caster
+    // `{ entity }` and ctx.heldItem set), so the caster check alone
+    // stopped being the whole gate: a HeldMagicItem bundle is
+    // BundleTypes.HeldMagicItem (EEM:1052), never Spell, and the
+    // wearer's own IsAbsorbingSpells would otherwise SWALLOW their
+    // own cast-when-held bundle and refund them magicka for it.
+    // bypassSavingThrows already covers reflection and resistance,
+    // but DFU spells the bundle-type test on each of the three and
+    // absorption is not gated on it - so the whole block takes the
+    // test, which is DFU's shape line for line.
+    if (caster && !heldItem) {
       // E1: IsAbsorbingSpells (:1196) is LIVE - the AbsorbsSpells
       // enchantment's constant fold on the target. The caller's own
       // ctx.absorbing (probe surface) still wins when set.
@@ -817,14 +835,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // DFU's own null check.
     if (e.type === 29 && classicSub(e) === 255) {
       ctx.morphSelf?.();
-      pushInstantMarker(target, 'morphSelf');
+      pushInstantMarker(target, 'morphSelf', e);
       continue;
     }
     if (isHealHealth(e)) {
       const n = magnitude(e);
       out.healed += n;
       if (n > 0 && sinks.heal) sinks.heal(n);
-      pushInstantMarker(target, 'healHealth');
+      pushInstantMarker(target, 'healHealth', e);
       continue;
     }
     if (isDamageHealth(e)) {
@@ -835,7 +853,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // amount - the `n > 0` guard above is the port's sink contract, not
       // DFU's, and the concealment break is NOT behind it (:162-169).
       handleAttackFromSource(caster?.entity ?? null);
-      pushInstantMarker(target, 'damageHealth');
+      pushInstantMarker(target, 'damageHealth', e);
       continue;
     }
     if (isContinuousDamage(e)) {
@@ -952,7 +970,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // heals DRAIN damage only, never fortifies past the base.
       const n = magnitude(e);
       if (n > 0) healAttributeDamage(target, STAT_KEYS_ORDER[e.subType], n);
-      pushInstantMarker(target, 'healAttribute', STAT_KEYS_ORDER[e.subType]);
+      pushInstantMarker(target, 'healAttribute', e, STAT_KEYS_ORDER[e.subType]);
       out.attrHealed = (out.attrHealed ?? 0) + 1;
       continue;
     }
@@ -974,7 +992,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
           if (caster.sinks?.heal) caster.sinks.heal(n);
         }
       }
-      pushInstantMarker(target, 'transferHealth');   // added to liveEffects at assignment, caster or not
+      pushInstantMarker(target, 'transferHealth', e);   // added to liveEffects at assignment, caster or not
       continue;
     }
     if (isTransferFatigue(e)) {
@@ -990,14 +1008,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
           out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
         }
       }
-      pushInstantMarker(target, 'transferFatigue');
+      pushInstantMarker(target, 'transferFatigue', e);
       continue;
     }
     if (isHealFatigue(e)) {
       // HealFatigue (10, 9): instant IncreaseFatigue(mag, x64).
       const n = magnitude(e);
       if (n > 0 && sinks.restoreFatigue) sinks.restoreFatigue(n * FATIGUE_MULTIPLIER);
-      pushInstantMarker(target, 'healFatigue');
+      pushInstantMarker(target, 'healFatigue', e);
       out.fatigueHealed = (out.fatigueHealed ?? 0) + 1;
       continue;
     }
@@ -1008,7 +1026,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // returns with potions` the sink list has promised since S15.
       const n = magnitude(e);
       if (n > 0 && sinks.restoreMagicka) sinks.restoreMagicka(n);
-      pushInstantMarker(target, 'healSpellPoints');
+      pushInstantMarker(target, 'healSpellPoints', e);
       out.magickaHealed = (out.magickaHealed ?? 0) + n;
       continue;
     }
@@ -1017,7 +1035,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const n = magnitude(e);
       if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
       handleAttackFromSource(caster?.entity ?? null);
-      pushInstantMarker(target, 'damageFatigue');
+      pushInstantMarker(target, 'damageFatigue', e);
       out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
       continue;
     }
@@ -1038,7 +1056,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       out.magickaDrained = (out.magickaDrained ?? 0) + n;
       if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
       handleAttackFromSource(caster?.entity ?? null);
-      pushInstantMarker(target, 'damageSpellPoints');
+      pushInstantMarker(target, 'damageSpellPoints', e);
       continue;
     }
     if (isContinuousDamageSpellPoints(e)) {
@@ -1116,7 +1134,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         continue;
       }
       cureAllOfKind(target, CURE_KINDS[e.subType]);
-      pushInstantMarker(target, CURE_MARKER_KINDS[e.subType]);   // after the removal pass, as AssignBundle adds before MagicRound cures
+      pushInstantMarker(target, CURE_MARKER_KINDS[e.subType], e);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
       continue;
     }
@@ -1261,7 +1279,15 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // level is latched at cast at all. The port used to store the
       // cast-time casterLevel and refresh it on a recast; both halves
       // of that are gone. The entry is now pure presence.
-      if (!inc) pushPermanent(target, { kind: armedKind, permanent: true });
+      // D9: the bundle's CastByItem rides the armed entry.
+      // AssignBundle copies it from the source bundle onto the live one
+      // (EntityEffectManager.cs:469) and Open reads it back at the door
+      // through CheckCastByItem (Open.cs:172-181) - the port's armed
+      // entry IS that live bundle, so this is where it lives. An
+      // INCUMBENT keeps its own: AddState is empty on both classes and
+      // the like-kind instance never becomes live, so a plain recast
+      // over a key-cast Open does not disarm the key (and vice versa).
+      if (!inc) pushPermanent(target, { kind: armedKind, permanent: true, castByItem: ctx.castByItem ?? null });
       // The HOST speaks the alert (mysticism.js owns the texts; this
       // module cannot import it - mysticism imports effects).
       out.armed = armedKind;
@@ -1514,16 +1540,33 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     out.skipped++;
   }
   // E2: pin the pushed entries to the held item (FromEquippedItem).
-  // Instant MARKERS stay unpinned - they are one-round probe residue,
-  // not the effect itself. FLAGGED (recorded divergence): DFU re-runs
-  // a held bundle's INSTANT effects every magic round too (:1733 - a
-  // cast-when-held Fireball burns its wearer per round); the port's
-  // instant families act inline at apply, so a held instant fires
-  // once per equip. The classic held list is dominated by duration
-  // effects, which re-tick exactly.
-  if (heldItem) {
+  //
+  // D9: THE INSTANT MARKERS ARE PINNED TOO, and they re-fire. DFU's
+  // DoMagicRound runs `effect.MagicRound()` for every effect of a
+  // bundle whose `fromEquippedItem != null` REGARDLESS of
+  // RoundsRemaining (EntityEffectManager.cs:1733, "item effects are
+  // always ticked"), and the instant families do their whole work IN
+  // MagicRound (DamageHealth.cs:42-54) - so a cast-when-held Damage
+  // Health burns its wearer EVERY ROUND for as long as the item is
+  // worn. The port's instant families act inline at apply instead, so
+  // a held instant used to fire once per equip and never again; that
+  // stood as a recorded divergence until this slice.
+  //
+  // The re-fire is the same apply, one effect wide: the marker keeps
+  // its source effect and the tick re-runs applySpell over a
+  // single-effect copy of the bundle. ctx.refire keeps that pass from
+  // pinning anything of its own - the pinned marker already stands,
+  // and the fresh 0-round marker the re-fire pushes expires on the
+  // next tick exactly as a spell's does.
+  if (heldItem && ctx.refire !== true) {
     const list = target.activeEffects ?? [];
-    for (let i = pinStart; i < list.length; i++) if (!list[i].instant) list[i].heldItem = heldItem;
+    for (let i = pinStart; i < list.length; i++) {
+      const a = list[i];
+      a.heldItem = heldItem;
+      if (a.instant && a.effect) {
+        a.refire = { spell: { ...spell, effects: [a.effect] }, casterLevel, caster, heldItem };
+      }
+    }
   }
   // X10: THE BUNDLE TAG. DFU groups live effects into LiveEffectBundles
   // - one per cast, carrying the spell's NAME and its BundleType - and
@@ -1654,6 +1697,7 @@ export function effectsAlreadyOnTarget(spell, target) {
 export function tickActiveEffects(entity, sinks, rolls = Math.random) {
   const list = entity.activeEffects;
   if (!list || !list.length) return;
+  const refires = [];
   entity.activeEffects = list.filter((a) => {
     // E2: an ITEM-PINNED entry (a held bundle's) is "always ticked" -
     // DoMagicRound :1733 `RoundsRemaining > 0 || fromEquippedItem !=
@@ -1666,6 +1710,11 @@ export function tickActiveEffects(entity, sinks, rolls = Math.random) {
     // they just never end the entry.
     if (a.heldItem) {
       if (a.heldItem.equipSlot == null || (a.heldItem.currentCondition ?? 1) <= 0) return false;
+      // D9: an INSTANT effect of a held bundle has its whole body in
+      // MagicRound, so its round IS a re-apply. Collected rather than
+      // run here: applySpell pushes onto entity.activeEffects, and
+      // this callback is inside the filter that is still building it.
+      if (a.refire) refires.push(a.refire);
       runEffectRound(a, entity, sinks, rolls);
       if (a.roundsRemaining > 0) a.roundsRemaining--;
       return true;
@@ -1676,6 +1725,15 @@ export function tickActiveEffects(entity, sinks, rolls = Math.random) {
     a.roundsRemaining--;
     return true;
   });
+  // D9: the held bundles' instant re-fires, after the list has
+  // settled. bypassSavingThrows and the item pin ride the ctx so the
+  // pass takes the same gates the original apply took (a HeldMagicItem
+  // bundle is never absorbed, reflected or resisted), and ctx.refire
+  // stops it pinning a second marker.
+  for (const r of refires) {
+    applySpell(r.spell, r.casterLevel, entity, sinks, rolls, r.caster,
+      { bypassSavingThrows: true, heldItem: r.heldItem, refire: true });
+  }
 }
 
 /** E2: UnequipHeldItem's bundle sweep (EntityEffectManager.cs:

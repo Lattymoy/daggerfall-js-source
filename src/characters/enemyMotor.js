@@ -326,7 +326,7 @@ export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null, hasMagickaToCast = null } = {}) {
     this.collider = collider;
     /** ObstacleCheck's DaggerfallActionDoor arm (:1167-1176). The AI
      *  cannot resolve a collider bucket key to an action object - the
@@ -414,6 +414,10 @@ export class EnemyAI {
      *  components that know the answers. */
     this.hasBowAttack = hasBowAttack;
     this.canCastRangedSpell = canCastRangedSpell ?? (() => false);
+    // D9: GetDestination's magic term is `entity.CurrentMagicka > 0`
+    // (:539-540) and NOTHING else - not CanCastRangedSpell, which is
+    // DoRangedAttack's alone (:573). One dep used to serve both.
+    this.hasMagickaToCast = hasMagickaToCast ?? (() => false);
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
     // Flyers, LEVITATORS and the slaughterfish aim for the target FACE
@@ -1019,7 +1023,7 @@ export class EnemyAI {
     // it heads for the target whether the path is clear or not (:539-540
     // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
     if (this._clearPathToPosition(predictedCentre, prevDist)
-      || (this.inSight && (this.hasBowAttack || this.canCastRangedSpell()))) {
+      || (this.inSight && (this.hasBowAttack || this.hasMagickaToCast()))) {
       const d = [predicted[0], predicted[1], predicted[2]];
       // Flyers, levitators and the slaughterfish aim for the target FACE
       // (:543-544) - `targetController.height * 0.5f`, the TARGET's

@@ -33,6 +33,7 @@ import { RMB_SIDE } from '../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
 import { staticNpcData, isChildNPCData } from '../characters/staticNpc.js';   // QP1: the one SetLayoutData law
 import { collectInteriorPeople } from '../characters/interiorPeople.js';   // QP1: the one people mapper
+import { buildingSummaries } from '../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
 // social groups).
@@ -343,33 +344,44 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
  * hands its recordIndex to a door, which is a phantom shop in every
  * consumer of this directory. Bounded here like everywhere else.
  *
- * FLAGGED: the walk is still over DOORS, so a building with no
- * exterior door is absent where DFU's list holds it.
+ * D9: THE WALK IS OVER BUILDINGS NOW, not doors - which is what DFU
+ * does and what the port could not do when this stood open. C#'s
+ * loop is `blocks[index]` -> `RMBLayout.GetBuildingData(block, x, y)`
+ * -> `for i < buildingsInBlock.Length`; a door is never consulted, so
+ * a building with no exterior door (or with its door on a subrecord
+ * the port never spawned) IS in DFU's list and used to be missing
+ * here. world/buildingSummaries.js is exactly that walk - same
+ * merged pool, same blockBuildingCount bound, plus the Position half
+ * (RMBLayout.cs:570-571) that the door used to supply - so this
+ * function is now its projection into BuildingInfo's four columns
+ * and the multi-door dedupe goes with the doors that needed it.
+ *
+ * THE POSITION IS THE BUILDING'S, block-origin included. DFU's
+ * BuildingInfo.position is an ExteriorAutomap MAP coordinate (block
+ * rect + scaled Position - half the location), and its player term is
+ * converted into that same space at :1215-1223; the port has always
+ * answered the compass hint in LOCATION-LOCAL world units instead
+ * (whereIsAnswer subtracts playerPos in the same space), which is the
+ * same direction under a positive scale. Block origin + the
+ * subrecord's Position keeps that convention exactly where the door's
+ * own world position left it.
+ *
+ * `buildingKey != 0` (:2794) needs no arm here: makeBuildingKey maps
+ * the 0 case to its sentinel, so every merged record is a row.
  */
-export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpts) {
-  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
-  const blockOf = (d) => blockInstanceOf(blocks, d);
-  const blockIdx = new Map(blocks.map((b, i) => [b, i]));
-  const dirs = [];
-  const seen = new Set();
-  for (const d of doors) {
-    const inst = blockOf(d);
-    const list = inst ? merged.get(inst) : null;
-    if (!list) continue;
-    const count = Math.min(list.length, blockBuildingCount(inst.dfBlock) ?? list.length);
-    if (!(d.recordIndex < count)) continue;
-    const data = list[d.recordIndex];
-    if (!data) continue;
-    const key = `${blockIdx.get(inst)}_${d.recordIndex}`;
-    if (seen.has(key)) continue;   // one entry per building (multi-door)
-    seen.add(key);
-    const name = generateBuildingName(data.nameSeed, data.buildingType, { ...nameOpts, factionId: data.factionId });
-    dirs.push({
-      name, buildingType: data.buildingType, factionId: data.factionId, quality: data.quality, position: d.position,
-      buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, d.recordIndex),   // the knowledge roll's per-building term
-    });
-  }
-  return dirs;
+export function buildBuildingDirectory(exteriorBuildings, blocks, nameOpts) {
+  const blockAt = new Map((blocks ?? []).map((b) => [`${b.x ?? 0},${b.y ?? 0}`, b]));
+  return buildingSummaries(exteriorBuildings, blocks, nameOpts).map((s) => {
+    const b = blockAt.get(`${s.blockX},${s.blockY}`);
+    return {
+      name: s.name,
+      buildingType: s.buildingType,
+      factionId: s.factionId,
+      quality: s.quality,
+      position: [(b?.originX ?? 0) + s.position[0], s.position[1], (b?.originZ ?? 0) + s.position[2]],
+      buildingKey: s.buildingKey,   // the knowledge roll's per-building term
+    };
+  });
 }
 
 /** DirectionVector2DirectionHintString over (east, north).

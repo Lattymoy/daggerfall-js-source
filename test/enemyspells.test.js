@@ -118,7 +118,9 @@ test('enemyspells: the casting AI - touch resets the shared melee timer, ranged 
   }
   // RANGED: inside 6..51.2, one classic update, roll UNDER 1/40 casts
   {
-    const caster = new EnemyCaster(ent, seq(0.01, 0.9));   // chance .01 < .025; pick .9 -> rangedSpell
+    // D9: DFU's order - CanCastRangedSpell PICKS inside the band
+    // condition (:573), then the 1/40 roll fires the selection (:601)
+    const caster = new EnemyCaster(ent, seq(0.9, 0.01));   // pick .9 -> rangedSpell; chance .01 < .025
     const dec = caster.update(0.0625, mkAi(20), mkAttack(), [0, 0, 20], player);
     assert.equal(dec?.spell, rangedSpell);
     assert.equal(dec.touch, false);
@@ -137,4 +139,54 @@ test('enemyspells: the casting AI - touch resets the shared melee timer, ranged 
   // selection: magicka 0 refuses; CanCastTouchSpell counts CasterOnly
   assert.equal(pickRangedSpell({ magicka: 0, spells: [rangedSpell] }, player), null);
   assert.equal(pickTouchSpell({ magicka: 10, spells: [selfSpell] }, player, seq(0)), selfSpell);
+});
+
+test('D9: the tick KEEPS SelectedSpell, so EffectsAlreadyOnTarget reaches the stand-off band', () => {
+  // EnemyMotor.cs:759-789. CanCastRangedSpell picks, stores
+  // SelectedSpell, and vetoes on EffectsAlreadyOnTarget - and
+  // DoRangedAttack's band condition (:573) is that same call, so the
+  // veto decides whether the foe stands off at all, not only whether
+  // it casts. The port rolled 1/40 FIRST and picked second, so there
+  // was no selection to read and the band answered "has a ranged
+  // spell" forever.
+  const ranged = mkSpell(3, 2, [{ type: 1, subType: 0 }]);              // Continuous Damage: Health
+  const ent = { level: 5, magicka: 100, spells: [ranged] };
+  const mkAi = (dist) => ({ _dist: dist, inSight: true, detected: true, giveUpTimer: 200, yaw: 0, feet: [0, 0, 0] });
+  const mkAttack = () => ({ machine: { state: 'Idle' }, meleeTimer: 0, playerLevel: 10, reflexes: 2, rangedAttack: false });
+
+  // a clean target: the pick stands, and it stands even though the
+  // 1/40 roll failed (seq .9 picks, then .9 >= 1/40)
+  const clean = { activeEffects: [] };
+  const c1 = new EnemyCaster(ent, seq(0.9));
+  assert.equal(c1.update(0.0625, mkAi(20), mkAttack(), [0, 0, 20], clean), null, 'the roll failed');
+  assert.equal(c1.selectedSpell, ranged, 'but SelectedSpell is set - DFU sets it in the band condition');
+  assert.equal(c1.canCastRangedSpell(), true, 'so the motor stands off');
+
+  // the SAME spell already running on the target: EffectsAlreadyOnTarget
+  // vetoes the pick, so there is no selection and no stand-off - DFU
+  // sends the caster back to closing in.
+  const already = { activeEffects: [{ kind: 'continuousDamage', roundsRemaining: 3 }] };
+  const c2 = new EnemyCaster(ent, seq(0.9));
+  assert.equal(c2.update(0.0625, mkAi(20), mkAttack(), [0, 0, 20], already), null);
+  assert.equal(c2.selectedSpell, null, 'the veto left no selection');
+  assert.equal(c2.canCastRangedSpell(), false, 'and the band gate is false');
+
+  // out of the band, or blind, or bow-armed: no selection either -
+  // DoRangedAttack never reaches CanCastRangedSpell
+  const c3 = new EnemyCaster(ent, seq(0.9));
+  c3.update(0.0625, mkAi(20), mkAttack(), [0, 0, 20], clean);
+  assert.equal(c3.canCastRangedSpell(), true);
+  c3.update(0.0625, mkAi(4), mkAttack(), [0, 0, 4], clean);
+  assert.equal(c3.canCastRangedSpell(), false, 'inside the near edge the selection is dropped');
+  const bow = mkAttack(); bow.rangedAttack = true;
+  const c4 = new EnemyCaster(ent, seq(0.9));
+  c4.update(0.0625, mkAi(20), bow, [0, 0, 20], clean);
+  assert.equal(c4.canCastRangedSpell(), false, 'CanShootBow() short-circuits the pick');
+
+  // a one-shot animation in flight holds the 1/40 roll (:588) but NOT
+  // the band condition - the selection is still refreshed
+  const busy = mkAttack(); busy.machine.state = 'Strike';
+  const c5 = new EnemyCaster(ent, seq(0.001));
+  assert.equal(c5.update(0.0625, mkAi(20), busy, [0, 0, 20], clean), null, 'no cast mid-swing');
+  assert.equal(c5.canCastRangedSpell(), true, 'but the stand-off holds');
 });

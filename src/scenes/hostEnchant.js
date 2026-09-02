@@ -143,7 +143,7 @@ export function createEnchantCtx({
     // machine registers, so they route by LIVE mode in every host.
     inSunlight: () => playerInSunlight(),
     inHolyPlace: () => playerInHolyPlace(),
-    applySpellToSelf: (record) => magic.castByItemSelf(record),
+    applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
     setReadySpell: (record) => magic.readySpell(record, { free: true }),
     applySpellToTarget: (record, attacker, target) => {
       // X11: the caster travels WITH ITS SINKS. Spell Reflection sends

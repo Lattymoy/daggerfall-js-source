@@ -28,11 +28,27 @@ import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
+import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
   Object.entries(book ?? {}).map(([k, m]) => [k, { ...m }]));
+
+/** D9: the LOAD side is not a plain copy - GuildManager
+ *  .RestoreMembershipData rebuilds each guild object and hands it
+ *  its row through the guild's OWN RestoreGuildData (:328), and
+ *  KnightlyOrder overrides that method to back-fill its per-rank
+ *  armour bits (KnightlyOrder.cs:283-295). It is the only override
+ *  with a body beyond `flags = data.flags`, so this door is the
+ *  whole of the difference between saving a book and restoring one. */
+const restoreMembershipBook = (book) => {
+  const out = copyMembershipBook(book);
+  const knightly = out[GUILD_GROUPS.KnightlyOrder];
+  if (knightly) restoreKnightlyOrderFlags(knightly);
+  return out;
+};
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -551,8 +567,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // stays one - activeMemberships reads it as the mortal book.
   entity.guildMemberships = snap.guildMemberships
     ? (isMembershipStore(snap.guildMemberships)
-      ? { mortal: copyMembershipBook(snap.guildMemberships.mortal), vampire: copyMembershipBook(snap.guildMemberships.vampire) }
-      : copyMembershipBook(snap.guildMemberships))
+      ? { mortal: restoreMembershipBook(snap.guildMemberships.mortal), vampire: restoreMembershipBook(snap.guildMemberships.vampire) }
+      : restoreMembershipBook(snap.guildMemberships))
     : {};
   // S1: made spells restore from their own carried record (and re-seed
   // the index mint below the lowest one, so a spell made after this

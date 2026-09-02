@@ -76,12 +76,15 @@ export const SPAWNER_ARMS = Object.freeze({
   wilderness: Object.freeze({ minDistance: MIN_WILDERNESS_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
   // :610 - resting in a dungeon under an alert. THE ONE THAT PASSES FALSE.
   dungeonRest: Object.freeze({ minDistance: MIN_DUNGEON_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: false }),
-  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
-  // port stands guards through the street-person pool (cityGuards'
-  // spawnGuardAt takes a person's own position and facing), which is a
-  // different placement problem from this ring and is not folded in
-  // here. The row is carried so the table is the whole call site list
-  // and a reader can see what is not wired.
+  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. D9 WIRED IT.
+  // The row used to be carried unread, on the grounds that the watch
+  // arrives through the street-person pool; that is true of the pool
+  // arm (spawnGuardAt takes a person's own position and facing, which
+  // is a conversion, not a spawn), but PlayerEntity.cs:687 is the
+  // FALLBACK - "nobody in the pool converted" - and it is a plain
+  // CreateFoeSpawner like every other row here. cityGuards.js now
+  // stands those guards through placeFoeFreely with this band, so the
+  // table is read end to end.
   cityGuards: Object.freeze({ minDistance: 12.8, maxDistance: 51.2, lineOfSightCheck: true }),
 });
 

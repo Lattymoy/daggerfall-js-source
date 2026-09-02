@@ -311,7 +311,10 @@ test('audit18: corpses reach 150 * GlobalScale, not the 128-unit default', () =>
 function makeDeps(rand, playerEntity, audio = null) {
   return {
     renderer: { createBillboardBatch: () => ({}), textures: new Map(), destroyBillboardBatch: () => {} },
-    collider: { heightAt: () => 0, raycast: () => Infinity },
+    collider: { heightAt: () => 0, raycast: () => Infinity,
+      // D9: the ring fallback places through FoeSpawner.PlaceFoeFreely,
+      // which asks the collider for a ray HIT and an overlap test
+      raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false },
     fetchBytes: async (name) => new Uint8Array(readFileSync(join(ARENA2, name))),
     getTexture: async () => ({
       getFrameCount: () => 4,

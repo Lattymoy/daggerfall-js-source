@@ -223,3 +223,71 @@ test('E2 restart: restartHeldEnchantments honours the unknown-key abort per item
   restartHeldEnchantments(w, { spellsByIndex: spellMap(rec) });
   assert.ok(!(w.activeEffects ?? []).length, 'the unknown key before CastWhenHeld aborted the item, DFU\'s own walk');
 });
+
+
+// ---------------------------------------------------------------
+// D9 - "item effects are always ticked" reaches the INSTANT families
+// too. EntityEffectManager.cs:1730-1734 runs MagicRound() for every
+// effect of a bundle with fromEquippedItem != null regardless of
+// RoundsRemaining, and an instant family's whole body IS MagicRound
+// (DamageHealth.cs:42-54) - so a cast-when-held Damage Health burns
+// its wearer once per magic round for as long as the item is worn.
+// The port's instant families act inline at apply, so a held instant
+// used to fire once per equip and never again.
+// ---------------------------------------------------------------
+
+/** Damage Health (4,0), 6 flat, CasterOnly - an INSTANT family. */
+const damageHealthRecord = () => ({
+  index: 7, name: 'Held Damage Health', rangeType: 0, element: 0,
+  effects: [{
+    type: 4, subType: 0, durationBase: 0, durationMod: 0, durationPerLevel: 1,
+    chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
+    magnitudeBaseLow: 6, magnitudeBaseHigh: 6, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
+  }],
+});
+
+test('D9 held: an INSTANT held effect fires EVERY magic round, not once per equip', () => {
+  const rec = damageHealthRecord();
+  const w = wearer([]);
+  const ring = item(T.CastWhenHeld, 7, { equipSlot: 9 });
+  let hurt = 0;
+  const sinks = { hurt: (n) => { hurt += n; } };
+  assignHeldSpell(rec, w, ring, { ctx: { sinks, rolls: () => 0.5 }, recast: true });
+  assert.equal(hurt, 6, 'the equip lands it once (AssignBundle)');
+  const marker = (w.activeEffects ?? []).find((a) => a.kind === 'damageHealth');
+  assert.ok(marker, 'the instant leaves its 0-round marker');
+  assert.equal(marker.heldItem, ring, 'and the marker is PINNED to the item - it is a live bundle effect');
+
+  // three magic rounds: three more 6s
+  for (let i = 0; i < 3; i++) tickActiveEffects(w, sinks, () => 0.5);
+  assert.equal(hurt, 6 + 18, 'MagicRound runs the instant again every round the item is worn');
+  assert.ok((w.activeEffects ?? []).some((a) => a.heldItem === ring && a.instant),
+    'the pinned marker survives - it never expires by rounds');
+
+  // and the item leaving ends it, exactly as it ends a duration pin
+  removeItemPinnedEffects(w, ring);
+  const before = hurt;
+  for (let i = 0; i < 3; i++) tickActiveEffects(w, sinks, () => 0.5);
+  assert.equal(hurt, before, 'unpinned, nothing fires');
+});
+
+test('D9 held: the re-fire pins nothing new and a plain cast still fires once', () => {
+  const rec = damageHealthRecord();
+  const w = wearer([]);
+  const ring = item(T.CastWhenHeld, 7, { equipSlot: 9 });
+  let hurt = 0;
+  const sinks = { hurt: (n) => { hurt += n; } };
+  assignHeldSpell(rec, w, ring, { ctx: { sinks, rolls: () => 0.5 }, recast: true });
+  for (let i = 0; i < 5; i++) tickActiveEffects(w, sinks, () => 0.5);
+  const pinned = (w.activeEffects ?? []).filter((a) => a.heldItem === ring);
+  assert.equal(pinned.length, 1, 'exactly ONE pinned marker however many rounds pass');
+
+  // the same record cast as a SPELL is untouched: instant, once
+  const target = wearer([]);
+  let hit = 0;
+  applySpell(rec, 5, target, { hurt: (n) => { hit += n; } }, () => 0.5);
+  assert.equal(hit, 6);
+  for (let i = 0; i < 4; i++) tickActiveEffects(target, { hurt: (n) => { hit += n; } }, () => 0.5);
+  assert.equal(hit, 6, 'a spell bundle is not fromEquippedItem - its instant fires once');
+  assert.equal(target.activeEffects.length, 0, 'and its 0-round marker is gone after the first tick');
+});

@@ -16,7 +16,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
+import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
@@ -546,12 +546,20 @@ export function doorSpellFor(entity) {
   return {
     kind: open ? 'open' : 'lock',
     holderLevel: entity?.level ?? 1,
-    // FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
-    // 432/20, Open.cs:176-180) bypasses the level test on INTERIOR
-    // doors only - the exterior arm checks the level regardless
-    // (Open.cs:142). The port has no artifact identity yet, so no
-    // item can claim it.
-    skeletonKey: false,
+    // D9: the Skeleton's Key. Open.CheckCastByItem asks the ARMED
+    // BUNDLE's castByItem whether it is the artifact with world
+    // texture 432/20 (Open.cs:176-180) and, if it is, the interior
+    // trigger skips the level test entirely - "Skeleton's Key can open
+    // even magical locks" (:117). The EXTERIOR arm still checks the
+    // level regardless, and says so in as many words
+    // (TriggerExteriorOpenEffect's summary: "for the classic effect,
+    // the player's level is always checked, even for the Skeleton
+    // Key"), so triggerExteriorOpen is not passed this at all.
+    //
+    // What used to be missing was the identity, not the law: the mint
+    // dropped SetArtifact's texture indices and the armed entry
+    // carried no casting item. Both ship at D9, so the key is a key.
+    skeletonKey: castBySkeletonKey(armed.castByItem),
   };
 }
 

@@ -351,15 +351,42 @@ export function legacyArtifactIndexBitfieldCheck(item) {
   return item;
 }
 
+/** ItemHelper.GetArtifactTextureIndices (ItemHelper.cs:519-523), the
+ *  whole of it: the ARCHIVE is the player's gender and nothing else,
+ *  and the RECORD is this table indexed by the artifact subtype
+ *  (ItemHelper.cs:43). Both are static - no ARENA2 read anywhere in
+ *  the call. */
+export const ARTIFACT_MALE_TEXTURE_ARCHIVE = 432;     // ItemHelper.cs:50
+export const ARTIFACT_FEMALE_TEXTURE_ARCHIVE = 433;   // ItemHelper.cs:51
+export const ARTIFACT_TEXTURE_INDEX_MAPPINGS = Object.freeze([
+  12, 13, 10, 8, 19, 16, 25, 18, 21, 2, 24, 26, 0, 15, 3, 9, 23, 17, 7, 1, 22, 20, 5,
+]);
+export function artifactTextureIndices(artifactIndex, gender = 'male') {
+  return {
+    archive: gender === 'female' ? ARTIFACT_FEMALE_TEXTURE_ARCHIVE : ARTIFACT_MALE_TEXTURE_ARCHIVE,
+    record: ARTIFACT_TEXTURE_INDEX_MAPPINGS[artifactIndex] ?? 0,
+  };
+}
+
 /** DaggerfallUnityItem.SetArtifact (DaggerfallUnityItem.cs:580-612)
  *  over the MAGIC.DEF registry: the artifact template (rows with type
  *  ArtifactClass1/2, file order - ItemHelper.cs:1511-1517) expands to
  *  its base group/groupIndex, armor material moves to the plate band
  *  (0x200+), the magic name replaces the base name and the
- *  enchantments ride raw. The artifact texture-index half is the
- *  inventory art's concern (the icons resolve at Q4's quest-item UI).
- *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity. */
-export function createArtifact(templates, artifactIndex) {
+ *  enchantments ride raw.
+ *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity.
+ *
+ *  D9: THE TEXTURE INDICES SHIP. They used to be waved off as "the
+ *  inventory art's concern", but SetArtifact writes all four
+ *  (:608-611, world = player, on DFU's own "not sure about artifact
+ *  world textures" note) and one LAW reads them: Open.CheckCastByItem
+ *  identifies the Skeleton's Key by `IsArtifact && WorldTextureArchive
+ *  == 432 && WorldTextureRecord == 20` (Open.cs:176-180) - so without
+ *  them no item could ever be the key. Note what that means for a
+ *  FEMALE character: her artifacts are archive 433, so her Skeleton's
+ *  Key does NOT bypass the door's level test. That is DFU's, verbatim,
+ *  and it is why the gender rides this call. */
+export function createArtifact(templates, artifactIndex, { gender = 'male' } = {}) {
   const artifacts = templates.filter((t) => t.type === 1 || t.type === 2);
   const magicItem = artifacts[artifactIndex];
   if (!magicItem) throw new Error(`Artifact template index out of range: ArtifactIndex=${artifactIndex}`);
@@ -398,6 +425,11 @@ export function createArtifact(templates, artifactIndex) {
     enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
     maxCondition: magicItem.uses,
     currentCondition: magicItem.uses,
+    // SetArtifact :608-611 - the same pair twice, player and world.
+    playerTextureArchive: artifactTextureIndices(artifactIndex, gender).archive,
+    playerTextureRecord: artifactTextureIndices(artifactIndex, gender).record,
+    worldTextureArchive: artifactTextureIndices(artifactIndex, gender).archive,
+    worldTextureRecord: artifactTextureIndices(artifactIndex, gender).record,
     // SetArtifact's own price (:615) - the MAGIC.DEF row's value, not
     // the mundane base template's (Q2b-ii VERIFY: it was dropped).
     value: magicItem.value,

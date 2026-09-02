@@ -49,7 +49,7 @@ import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
-import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
+import { hasMagickaToCast } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35) / D9: GetDestination's magic term
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_RADIUS } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too   // ROAD-B: PlayerController.radius, for the indoor arm's door clearance
 import { findLowestOuterInteriorDoor } from '../player/enterExit.js';   // ROAD-B: DaggerfallInterior.FindLowestOuterInteriorDoor
@@ -85,6 +85,10 @@ import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
+import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: PlayerEntity.cs:687 spawns through FoeSpawner like everything else
+import { SPAWNER_ARMS } from '../systems/encounters.js';   // the CreateFoeSpawner call-site table - cityGuards is one of its rows
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, the one home the other placement hosts read
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
@@ -97,8 +101,14 @@ export const MAX_ACTIVE_GUARD_SPAWNS = 5;
 export const GUARD_NPC_SPAWN_RANGE = 77.5;
 export const GUARD_BEHIND_ANGLE = 105.469;     // convert non-guards this far behind the player
 export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player within this sees a crime
-export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
-export const GUARD_FALLBACK_MAX_DIST = 51.2;
+/** The ring's band. ONE HOME is encounters.js's SPAWNER_ARMS.cityGuards
+ *  (the table of every CreateFoeSpawner call site); these two are kept
+ *  as the named pair the crime law reads and are asserted equal to it. */
+export const GUARD_FALLBACK_MIN_DIST = SPAWNER_ARMS.cityGuards.minDistance;   // 12.8
+export const GUARD_FALLBACK_MAX_DIST = SPAWNER_ARMS.cityGuards.maxDistance;   // 51.2
+/** DFU's spawner retries next frame forever; the port bounds it, the
+ *  same number world.js's LOOSE_FOE_PLACE_ATTEMPTS uses. */
+export const GUARD_PLACE_ATTEMPTS = 12;
 /** PlayerEntity.cs:634 - `lowestDoorPos += lowestDoorNormal *
  *  (PlayerController.radius + 0.1f)`: the indoor arm stands its
  *  watchmen one player-radius clear of the door plane, the same
@@ -205,7 +215,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // defaulted, beside the same literal, so the two stay together if
         // the table ever changes.
         hasBowAttack: false,
-        canCastRangedSpell: () => hasRangedSpell(entity),
+        canCastRangedSpell: () => false,   // D9: no spell list and no EnemyCaster - CanCastRangedSpell's list half is empty
+        hasMagickaToCast: () => hasMagickaToCast(entity),   // GetDestination's own term (:539-540) still asks the entity
       });
       pending.feet = ai.feet;   // AUDIT-39r: the AI's copy is the live array from here
       // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
@@ -332,15 +343,51 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         }
       }
       if (spawned === 0) {
-        // CreateFoeSpawner(true, CityWatch, Random.Range(2,6), 12.8, 51.2):
-        // a ring of guards converging from out of sight.
+        // CreateFoeSpawner(true, Knight_CityWatch, Random.Range(2, 5+1),
+        // 12.8f, 51.2f) - PlayerEntity.cs:687. D9: the SPAWNER is
+        // FoeSpawner, and FoeSpawner places through PlaceFoeFreely
+        // (FoeSpawner.cs:130-200), which is the same law every other
+        // spawner call site in the port already goes through. This
+        // arm used to roll a uniform bearing over the whole circle and
+        // a uniform distance in the band and take collider.heightAt
+        // with no clearance and no occupancy test - so a fallback
+        // watchman could stand inside a wall, on top of another guard,
+        // or on top of the player.
+        //
+        // Everything the law wants, this pool already holds: its own
+        // collider (it raycasts against it for the crime line), the
+        // player's feet and facing, and the live guard list for the
+        // occupancy term. The FOV is the settings read the other
+        // hosts use, not a host object - one import, same one home.
+        //
+        // lineOfSightCheck TRUE (SPAWNER_ARMS.cityGuards, from the
+        // table that names every DFU call site): the watch converges
+        // from OUTSIDE the field of view - you hear them before you
+        // see them - which is what the spawner's own flag means.
         const count = 2 + Math.floor(rand() * 4);
+        const env = placeFoeEnv({
+          collider,
+          // the ray casts from the controller CENTRE, as every other
+          // placement env in the port does
+          playerFeet: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],
+          playerYawRad: Math.atan2(playerFwd?.[0] ?? 0, playerFwd?.[2] ?? 1),
+          fovDegrees: (fieldOfView() * 180) / Math.PI,   // fieldOfView() answers RADIANS
+          rolls: rand,
+          isOccupied: entityOccupancy((g) => g.ai?.feet, () => guards.filter((g) => !g.dead), playerFeet),
+        });
         for (let i = 0; i < count; i++) {
-          const a = rand() * Math.PI * 2;
-          const dist = GUARD_FALLBACK_MIN_DIST + rand() * (GUARD_FALLBACK_MAX_DIST - GUARD_FALLBACK_MIN_DIST);
-          const x = playerFeet[0] + Math.sin(a) * dist, z = playerFeet[2] + Math.cos(a) * dist;
-          const y = collider.heightAt ? collider.heightAt(x, z) : playerFeet[1];
-          await spawnGuardAt([x, Number.isFinite(y) ? y : playerFeet[1], z], a + Math.PI, playerFeet ?? null);
+          // The law REFUSES a spot DFU would have rejected and DFU's
+          // spawner simply tries again next frame; the port retries in
+          // place, the same budget world.js's loose-foe arm uses.
+          let spot = null;
+          for (let a = 0; a < GUARD_PLACE_ATTEMPTS && !spot; a++) {
+            spot = placeFoeFreely(env, SPAWNER_ARMS.cityGuards);
+          }
+          if (!spot) continue;
+          // FinalizeFoe's LookAt player (FoeSpawner.cs:210-226); the
+          // watch never flies, so there is no lift arm here.
+          await spawnGuardAt([spot.x, spot.y, spot.z],
+            Math.atan2(playerFeet[0] - spot.x, playerFeet[2] - spot.z), playerFeet ?? null);
         }
       }
       return;

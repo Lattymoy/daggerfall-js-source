@@ -226,7 +226,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     try {
       const opts = nameOpts();
       if (!opts) return;
-      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, opts);
+      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, opts);
       // QP1: GetBuildingList's questor half rides the SAME rebuild -
       // C# populates npcsWithWork inside the one building walk
       // (TalkManager.cs:2807-2874). The candidates go out through the
