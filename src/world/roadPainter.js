@@ -130,8 +130,10 @@ function write(tilemap, i, c, centreTable, edgeTable, ground) {
   let v = tile;
   if (c.rotate) v += TILE.ROTATE;
   if (c.flip) v += TILE.FLIP;
-  // 0 is "unset" to the pipeline; water is never the answer here anyway.
-  tilemap[i] = v === 0 ? 0xff : v;
+  // ROADS 11 (Audit 45 F8): no table here holds tile 0 - water is never
+  // paved - so v is never 0 and the guard that used to map it to 0xff
+  // was unreachable. Removed rather than kept as a mystery.
+  tilemap[i] = v;
   return true;
 }
 

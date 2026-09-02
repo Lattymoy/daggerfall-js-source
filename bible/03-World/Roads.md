@@ -218,6 +218,12 @@ and before the grid is built from the samples. The switch rides the
 network object (`smooth`, default on) because the kernel runs in the
 worker with no settings access; surfacing it in Settings is a UI slice.
 
+## ROADS 11 - two audit notes closed (2026-09-01)
+
+F5 corrected rather than fixed: autoDiscard is DFU's own default, the
+sweep holds one region, and the region it found loaded is put back.
+F8 removed: the painter's tables never hold tile 0.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

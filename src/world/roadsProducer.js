@@ -20,6 +20,13 @@ export const WATER_BYTE = SCALED_BEACH_ELEVATION / BASE_HEIGHT_SCALE;
  *  its data can support. */
 export function settlementsOf(maps) {
   const out = [];
+  // ROADS 11 (Audit 45 F5, corrected): MapsFile.autoDiscard is on by
+  // default - DFU's own design - so loadRegion drops the previous region
+  // each time and this sweep holds ONE region, never sixty-two. The
+  // audit's memory concern was a misreading. Its only real cost is that
+  // whichever region was loaded BEFORE the sweep gets dropped and would
+  // reload on its next use, so it is put back afterwards.
+  const before = maps._lastRegion ?? -1;
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region || !region.mapTable) continue;
@@ -32,6 +39,7 @@ export function settlementsOf(maps) {
       out.push({ x: p.x, y: p.y, type: row.locationType, region: r, name: region.mapNames?.[out.length - regionStart] ?? null });
     }
   }
+  if (before >= 0 && maps.loadRegion) maps.loadRegion(before);
   return out;
 }
 

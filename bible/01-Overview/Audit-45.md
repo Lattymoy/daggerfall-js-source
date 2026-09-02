@@ -79,7 +79,7 @@ Roads paints a DiagOut tile at the centre where a cardinal arm ends
 visual refinement for ROADS 4 alongside the enhanced surface, where the
 look is decided.
 
-**F5 - LOW, RECORDED. `settlementsOf` loads all 62 regions at boot.**
+**F5 - LOW, CORRECTED (ROADS 11). `settlementsOf` does NOT hold 62 regions.** MapsFile.autoDiscard is on by default - DFU's own design - so each loadRegion drops the previous one and the sweep holds one region at a time. The finding as first written was a misreading of the reader. Its one real cost, dropping whichever region was loaded before the sweep, is repaired by putting that region back afterwards. Original text follows for the record:
 `getRegion` calls `loadRegion`; the port has `discardRegion` for a
 reason. Each region's table is small and they are needed once; if
 memory says otherwise, the producer can discard as it goes.
@@ -89,7 +89,7 @@ stats say how many; they do not say which town has no road. When Mac's
 first real build reports a non-zero unrouted, the next step is naming
 them, and the settlement rows carry the region index for it.
 
-**F8 - LOW, RECORDED. `write`'s 0xff arm is unreachable.** No tile in
+**F8 - LOW, FIXED (ROADS 11). `write`'s 0xff arm is unreachable - removed.** No tile in
 any table is 0, so `v === 0` never fires. Kept as the guard it is;
 noted so nobody wonders what it protects.
 

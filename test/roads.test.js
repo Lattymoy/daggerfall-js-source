@@ -467,3 +467,23 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   const src = (await import('node:fs')).readFileSync('src/world/terrainGen.js', 'utf8');
   assert.match(src, /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap\);/, 'default on, off only when the network says so');
 });
+
+// ROADS 11 (Audit 45 F5, corrected, and F8): the sweep holds one region
+// at a time under autoDiscard and puts back the one it found loaded;
+// the painter's tables never hold tile 0, so nothing maps to 0xff.
+test('ROADS 11: the settlement sweep restores the region it found loaded', async () => {
+  const { settlementsOf } = await import('../src/world/roadsProducer.js');
+  const loads = [];
+  const maps = {
+    regionCount: 3, _lastRegion: 1,
+    loadRegion(r) { loads.push(r); this._lastRegion = r; return true; },
+    getRegion(r) { this.loadRegion(r); return { mapNames: ['A'], mapTable: [{ longitude: 128, latitude: 128, locationType: LT.TownCity }] }; },
+  };
+  settlementsOf(maps);
+  assert.deepEqual(loads, [0, 1, 2, 1], 'every region once, then the one that was loaded before is put back');
+  assert.equal(maps._lastRegion, 1);
+  // A painter table never yields 0, so no written tile is ever 0xff.
+  const grass = new Uint8Array(129 * 129).fill(TILE.grass), t = new Uint8Array(128 * 128);
+  paintRoads(grass, t, 0xff, 0xff);
+  for (const v of t) assert.notEqual(v, 0xff, 'no 0xff from the painter');
+});
