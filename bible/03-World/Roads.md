@@ -384,3 +384,19 @@ the next slice:
 Everything above is measured, not felt, and the tool re-reads it in
 one command. 44 unrouted pairs on the real map at these dials - names
 in the boot log (ROADS 8) - most of them islands and the far north.
+
+## ROADS 17/18 - a town is entered once, and a join is wide (2026-09-02)
+
+The first structural gap ROADS 16 named, closed and measured. Every
+hairpin in our roads was a town pixel with two spurs arriving from
+adjacent directions, and our right angles were the same convergence a
+step out. Two rules: a road reaching an existing road within
+`mergeNear` (3 px) of its destination town JOINS it there rather than
+laying a second spur - the through-road rule, a town is entered once;
+and a new bit may only join an existing mask if every bit already there
+is at least `joinAngle` compass points away, so a junction is wide the
+way his are (his towns: 55% two bits, 29% three). Measured on the real
+map: right angles 8.1% -> 0.9% (his 1.7%), hairpins 3.2% -> 0.0% (his
+0.0%), junctions 9.2% -> 6.5% (his 4.4%). Road pixels 15.3k -> 14.0k:
+the second spurs were a thousand pixels of duplicate road. The remaining
+gaps are the track webs (dead-ends 29% vs 7%) and road length.

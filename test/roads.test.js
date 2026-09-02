@@ -41,6 +41,9 @@ test('ROADS 1: every road-grade town is reachable - the spanning tree strands no
 
 const D = { climbCost: 40, descentCost: 10, highCost: 0.08, highAbove: 40, roadDiscount: 0.5 };
 const blank = () => new Uint8Array(MAP_W * MAP_H);
+const ORDER8 = [DIR.N, DIR.NE, DIR.E, DIR.SE, DIR.S, DIR.SW, DIR.W, DIR.NW];
+// every pair of compass indices at least three points (135 degrees) apart
+const wide = (idxs) => idxs.every((a, i) => idxs.every((b, j) => i === j || Math.min(Math.abs(a - b), 8 - Math.abs(a - b)) >= 3));
 
 test('ROADS 1: routes refuse water - a lake ON the line is walked around', () => {
   const a = { x: 150, y: 250 }, b = { x: 350, y: 250 };
@@ -325,39 +328,28 @@ test('ROADS 5: the turn cost turns a staircase into stretches', () => {
   assert.ok(legacy && legacy.length === paid.length, 'a missing dial defaults rather than poisoning the cost');
 });
 
-// ROADS 6 (2026-09-01): ROADS RING THE TOWNS THEY PASS. Measured on the
-// hand-drawn network: five-neighbour ARCS around a location are
-// everywhere (890) and full eight-pixel loops essentially never (none).
-// A ring is a through-road detouring around a town on one side, and it
-// falls out of one rule - a settlement's pixel is never an intermediate
-// step. The town on the line between two others gets the arc plus its
-// own two spurs, which IS the ring; and a village on the line between
-// two cities is walked around rather than cut through.
-test('ROADS 6: a town between two others is ringed, and a village in the way is not cut through', () => {
+// ROADS 6, CORRECTED BY ROADS 18 on the real map: HIS ROADS GO THROUGH
+// THE TOWNS. 92% of his 1,610 city and hamlet pixels carry road bits -
+// 55% two bits, 29% junctions AT the town - and only 122 are empty. The
+// 890 "arcs" ROADS 6 measured were around empty pixels that were not
+// towns; his map holds three ringed towns in total. So a ROAD-GRADE
+// town is a waypoint: a road passes through it and junctions at it.
+// What ROADS 6 got right stands: everything else - a village on the
+// line between two cities - is walked around, never painted through,
+// and no corner is cut past it.
+test('ROADS 6/18: a town between two others is passed THROUGH, a village in the way is walked around', () => {
   const A = { x: 200, y: 200, type: LT.TownCity }, B = { x: 230, y: 200, type: LT.TownHamlet }, C = { x: 260, y: 200, type: LT.TownCity };
   const V = { x: 245, y: 200, type: LT.TownVillage };   // on the B-C line
   const { roads } = buildRoadNetwork({ locations: [A, B, C, V], heightAt: flat, isWater: () => false, dials: { neighbours: 3, roadReach: 100 } });
   const at = (x, y) => roads[y * MAP_W + x];
-  // B carries only its own spurs: the A-C through-road did not pass across it.
   const bitsB = at(B.x, B.y);
-  assert.ok(bitsB !== 0, 'B is on the network');
-  // the pixels around B: an arc of road neighbours, five or more
-  let ringB = 0;
-  for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]) if (at(B.x + dx, B.y + dy)) ringB++;
-  // Four is the arc: the side the road came in on, the corner, the far
-  // side, the other corner. The hand-drawn data's fifth is the habit of
-  // returning to the original line after the bypass, which A* has no
-  // reason to do when the destination already sits on the new line.
-  assert.ok(ringB >= 4, `B is ringed by an arc (${ringB} of 8 neighbours carry road)`);
-  // NO CORNER CUTTING: the road did not squeeze diagonally past B - the
-  // arc goes THROUGH a corner pixel (SW or NW) rather than skipping it.
-  assert.ok(at(B.x - 1, B.y + 1) || at(B.x - 1, B.y - 1), 'the bypass passes through a corner pixel, not across it');
-  // the village: a road passes it but never THROUGH it as an intermediate -
-  // its pixel carries at most the bits of its own track (or none).
+  const idxs = ORDER8.filter((b) => bitsB & b).map((b) => ORDER8.indexOf(b));
+  assert.ok(idxs.length >= 2, `B is passed through, not a spur (${idxs.length} bits)`);
+  assert.ok(wide(idxs), 'every pair of B\'s bits is at least 135 degrees apart - through, or a gentle bend, never a corner');
   const bitsV = at(V.x, V.y);
-  const throughV = (bitsV & DIR.E) && (bitsV & DIR.W);
-  assert.ok(!throughV, 'the B-C road did not cut across the village pixel');
+  assert.ok(!((bitsV & DIR.E) && (bitsV & DIR.W)), 'the B-C road did not cut across the village pixel');
   assert.ok(at(V.x, V.y - 1) || at(V.x, V.y + 1), 'it went around instead');
+  assert.ok(at(V.x - 1, V.y + 1) || at(V.x - 1, V.y - 1) || at(V.x + 1, V.y + 1) || at(V.x + 1, V.y - 1), 'through a corner pixel, no corner cut');
 });
 
 // ROADS 7 (2026-09-01, Mac: "always on"): THE MAP DRAWS THE NETWORK. The
@@ -584,4 +576,28 @@ test('ROADS 15: track reach is the answer key\'s, and a far village gets no trac
   assert.ok(tracks[208 * MAP_W + 230] !== 0, 'the near village gets a spur');
   assert.equal(tracks[240 * MAP_W + 230], 0, 'the far one does not');
   assert.equal(stats.trackEdges, 1);
+});
+
+// ROADS 17/18: THE JOIN RULE. On the real map every hairpin and 244 of
+// 266 right angles were town pixels where two of our roads arrived
+// from different sides. A road may enter (or leave) a town only at
+// least 135 degrees from every road already there - straight through
+// and a wide T pass, a hairpin or a right angle into town does not, and
+// the turned-away road joins the existing one outside instead. Real
+// map: hairpins 2.9% -> 0.0% (his 0.0), right angles 8.2% -> 1.0%
+// (his 1.7). A 90-degree rule was tried and rejected: 9.9% right angles.
+test('ROADS 17: a road may not enter a town at a right angle to the road already there', () => {
+  const A = { x: 200, y: 200, type: LT.TownCity }, B = { x: 240, y: 200, type: LT.TownCity }, C = { x: 280, y: 200, type: LT.TownCity };
+  const Dn = { x: 240, y: 170, type: LT.TownCity };   // due north of B: a right angle into B if it entered
+  const { roads, stats } = buildRoadNetwork({ locations: [A, B, C, Dn], heightAt: flat, isWater: () => false, dials: { neighbours: 3, roadReach: 100 } });
+  const at = (x, y) => roads[y * MAP_W + x];
+  const bitsB = at(B.x, B.y);
+  const idxs = ORDER8.filter((b) => bitsB & b).map((b) => ORDER8.indexOf(b));
+  assert.ok(idxs.length >= 2, 'B is passed through');
+  assert.ok(wide(idxs), 'no two roads meet at B closer than 135 degrees - D\'s road joined outside rather than entering at a right angle');
+  assert.ok(at(Dn.x, Dn.y) !== 0 && stats.unrouted === 0, 'D is on the network all the same');
+  // The rule gives way rather than stranding a town that can be neither
+  // entered nor joined.
+  const lone = buildRoadNetwork({ locations: [A, { x: 200, y: 260, type: LT.TownCity }], heightAt: flat, isWater: () => false });
+  assert.equal(lone.stats.unrouted, 0);
 });
