@@ -193,3 +193,54 @@ export function classify(x, y, mask) {
   if ((y === MID_LO || y === MID_HI) && ((capE && x === MID_LO) || (capW && x === MID_HI))) return arm(false, x === y, x === MID_HI);
   return edge;
 }
+
+/** ROADS 10: the tile indices a road or track leaves in the tilemap,
+ *  masked of their rotate/flip bits. The smoother reads these back. */
+export const PATH_TILES = Object.freeze(new Set([TILE.road, TILE.roadDirt, TILE.roadGrass, 11, 12, 26, 27]));
+
+/**
+ * ROADS 10 (Audit 45's item 7): SMOOTH THE GROUND UNDER THE ROAD. The
+ * heightmap carries terrain noise a cart would never tolerate, and a
+ * road painted over it bumps with every sample. The design's own
+ * smoother is rudimentary by its author's description - it looks for
+ * road tiles and blurs the heights under them - and that is what this
+ * is: every corner sample touched by a path tile takes the mean of its
+ * 3x3 neighbourhood, read from the ORIGINAL heights so the blur is one
+ * pass and order-independent. Nothing off a path tile moves, which is
+ * what keeps the terrain around a road the terrain.
+ *
+ * @param {Float32Array} samples - 129x129 corner heights, row-major; mutated.
+ * @param {Uint8Array} tilemap - 128x128 after the painter.
+ * @returns {number} corners smoothed.
+ */
+export function smoothRoadHeights(samples, tilemap, hDim = 129) {
+  const tDim = hDim - 1;
+  const mark = new Uint8Array(hDim * hDim);
+  let any = 0;
+  for (let y = 0; y < tDim; y++) {
+    for (let x = 0; x < tDim; x++) {
+      if (!PATH_TILES.has(tilemap[y * tDim + x] & 0x3f)) continue;
+      mark[y * hDim + x] = mark[y * hDim + x + 1] = mark[(y + 1) * hDim + x] = mark[(y + 1) * hDim + x + 1] = 1;
+      any = 1;
+    }
+  }
+  if (!any) return 0;
+  const src = Float32Array.from(samples);
+  let n = 0;
+  for (let y = 0; y < hDim; y++) {
+    for (let x = 0; x < hDim; x++) {
+      if (!mark[y * hDim + x]) continue;
+      let sum = 0; let cnt = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy; if (yy < 0 || yy >= hDim) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx; if (xx < 0 || xx >= hDim) continue;
+          sum += src[yy * hDim + xx]; cnt++;
+        }
+      }
+      samples[y * hDim + x] = sum / cnt;
+      n++;
+    }
+  }
+  return n;
+}

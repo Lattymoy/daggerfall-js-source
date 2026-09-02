@@ -439,3 +439,31 @@ test('ROADS 9: a dead-end arm is capped, a through road is not, and a turn wears
   assert.equal(v[63 * 128 + 64] & 0x3f, TILE.road, 'the turn\u2019s inner tile is road');
   assert.equal(v[63 * 128 + 63] & 0x3f, TILE.roadGrass, 'its outer tile is the corner edge');
 });
+
+// ROADS 10 (Audit 45's item 7): THE GROUND UNDER THE ROAD IS SMOOTHED.
+// One pass, read from the original heights, only the corners a path
+// tile touches. Off-road terrain does not move.
+test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, and the switch is honoured', async () => {
+  const { smoothRoadHeights } = await import('../src/world/roadPainter.js');
+  const H = 129, T = 128;
+  // noisy ground: alternating high/low samples
+  const mk = () => { const s = new Float32Array(H * H); for (let i = 0; i < s.length; i++) s[i] = (i % 2) ? 50 : 30; return s; };
+  const samples = mk();
+  const tilemap = new Uint8Array(T * T);
+  paintRoads(new Uint8Array(H * H).fill(TILE.grass), tilemap, DIR.N | DIR.S, 0);   // a road down columns 63/64
+  const before = Float32Array.from(samples);
+  const n = smoothRoadHeights(samples, tilemap);
+  assert.ok(n > 0, 'some corners were smoothed');
+  // under the road (column 63/64, plus the edge tiles' corners 62..66): flatter
+  const spread = (x0, x1, s) => { let lo = Infinity, hi = -Infinity; for (let y = 10; y < 118; y++) for (let x = x0; x <= x1; x++) { const v = s[y * H + x]; lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
+  assert.ok(spread(63, 64, samples) < spread(63, 64, before), `the road bed is flatter (${spread(63, 64, samples).toFixed(1)} vs ${spread(63, 64, before)})`);
+  // far from the road: byte-identical
+  for (let y = 0; y < H; y++) for (let x = 0; x < 50; x++) assert.equal(samples[y * H + x], before[y * H + x], `off-road sample ${x},${y} moved`);
+  // no path tiles: nothing happens
+  const plain = mk(); const copy = Float32Array.from(plain);
+  assert.equal(smoothRoadHeights(plain, new Uint8Array(T * T)), 0);
+  assert.deepEqual(plain, copy);
+  // the switch rides the network object, default on
+  const src = (await import('node:fs')).readFileSync('src/world/terrainGen.js', 'utf8');
+  assert.match(src, /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap\);/, 'default on, off only when the network says so');
+});

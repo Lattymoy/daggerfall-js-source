@@ -206,6 +206,18 @@ four arms - kept exactly because it was tuned against the real tile art
 in the field and no fixture here can see that art; a symmetric flip, the
 first draft, would have turned one of every cap's two tiles wrong.
 
+## ROADS 10 - the ground under the road (2026-09-01)
+
+The design's SmoothRoads, by its author's own description rudimentary:
+look for road tiles and blur the heights under them. Ours is that -
+every corner sample a path tile touches takes the mean of its 3x3
+neighbourhood, read from the original heights so it is one pass and
+order-independent, and nothing off a path tile moves, which is what
+keeps the terrain around a road the terrain. It runs after the paint
+and before the grid is built from the samples. The switch rides the
+network object (`smooth`, default on) because the kernel runs in the
+worker with no settings access; surfacing it in Settings is a UI slice.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track
@@ -217,4 +229,3 @@ cleared by the line that clears them. Four low findings recorded there.
 
 - Rivers and streams: the same painter with water tiles, off by default
   as the original ships them. Their data would also be ours to derive.
-- The heightmap smoothing pass under road tiles, behind a setting.

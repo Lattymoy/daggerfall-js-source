@@ -25,7 +25,7 @@ import { generateSamples, ghostSampler } from './terrainSampler.js';
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
-import { paintRoads } from './roadPainter.js';
+import { paintRoads, smoothRoadHeights } from './roadPainter.js';
 import { MAP_W } from './roadNetwork.js';
 
 /**
@@ -65,6 +65,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   if (roads) {
     const i = py * MAP_W + px;
     paintRoads(tileData, tilemap, roads.roads[i], roads.tracks[i], hasLocation ? locationRect : null);
+    // ROADS 10: the ground under the road is smoothed - after the paint,
+    // before the grid is built from the samples. The network carries the
+    // switch (`smooth`, default on, the design's SmoothRoads) so the
+    // worker needs no settings access.
+    if (roads.smooth !== false) smoothRoadHeights(samples, tilemap);
   }
   assignTiles(tileData, tilemap, true);
   const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
