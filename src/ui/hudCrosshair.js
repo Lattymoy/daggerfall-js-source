@@ -112,8 +112,30 @@ export const MODE_LABEL = Object.freeze({
  * `cursorActive` is PlayerMouseLook.cursorActive: true whenever a
  * window is up and the pointer is free.
  */
+/**
+ * ROAD-E E5 - HUDCrosshair.Update's re-centre (:43-52).
+ *
+ *   VerticalAlignment = VerticalAlignment.None;
+ *   float y = (Screen.height - largeHUD.ScreenHeight - crosshairSize.y) / 2;
+ *   Position = new Vector2(0, y);
+ *
+ * That `y` is the crosshair's TOP edge, so its CENTRE is
+ * `y + crosshairSize.y / 2 = (Screen.height - ScreenHeight) / 2` -
+ * the middle of the viewport the docked bar leaves, with the
+ * component's own size cancelling out of the answer. This port draws
+ * its cross about a centre rather than from a top-left rect, so the
+ * cancelled form IS the port's law and the reticle needs no size to
+ * find its place. The horizontal alignment is untouched (:29,
+ * HorizontalAlignment.Center), and the `else` arm at :50-51 puts the
+ * crosshair back on the screen's own middle - which is what
+ * `largeHudHeight` 0 means here.
+ */
+export const crosshairCentreY = (canvasHeight, largeHudHeight = 0) =>
+  (canvasHeight - largeHudHeight) / 2;
+
 export function drawCrosshairAndModeIcon(renderer, canvas, font,
-  { cursorActive = false, scale = 1, border = 10, barWidth = 4, showModeIcon = true } = {}) {
+  { cursorActive = false, scale = 1, border = 10, barWidth = 4, showModeIcon = true,
+    largeHudHeight = 0 } = {}) {
   // Draw (:62-66) - the cursor's activity hides the crosshair
   // outright, before anything else is considered.
   if (cursorActive) return;
@@ -122,7 +144,7 @@ export function drawCrosshairAndModeIcon(renderer, canvas, font,
   const mode = getInteractionMode();
 
   if (crosshairEnabled()) {
-    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const cx = canvas.width / 2, cy = crosshairCentreY(canvas.height, largeHudHeight);
     if (asCrosshair && mode !== 'grab') {
       // the icon IS the crosshair (:76-91); Grab alone keeps the plain
       // one, which is why it is the mode you aim in.

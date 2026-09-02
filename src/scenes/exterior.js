@@ -85,6 +85,7 @@ import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -2163,9 +2164,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : mwv.eye;
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator here, and the sky, which draws
+    // into the same rect, takes the same number.
+    const worldAspect = largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight);
     const proj = mirrorProjectionX(perspective(   // HANDEDNESS (mat4's law)
       fieldOfView(),
-      canvas.clientWidth / canvas.clientHeight,
+      worldAspect,
       0.1,
       Math.max(2000, extentX * 4)
     ));
@@ -2259,13 +2266,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch
       CITY_LIGHT_COLOR_F32
     );
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;
-      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(),
-        canvas.clientWidth / canvas.clientHeight);
+      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(), worldAspect);
       renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
     }
     // EE5: the ground shadows under the SKY'S OWN deck - one field for the

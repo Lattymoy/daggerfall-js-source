@@ -37,6 +37,7 @@ import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowser
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -656,7 +657,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
 
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800));   // HANDEDNESS (mat4's law)
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator. This host draws the bar through
+    // dungeonContext's own drawHud, so it carries the law too.
+    const proj = mirrorProjectionX(perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 800));   // HANDEDNESS (mat4's law)
     // MW-D25: the walk camera rides the Morrowind machine; the free-fly
     // scout keeps its own eye (it has no player body to orbit).
     const mwv = walkMode
@@ -684,6 +690,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);

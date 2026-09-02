@@ -130,6 +130,7 @@ import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   
 import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
 import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
@@ -6275,7 +6276,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     pump();
 
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.2, 6000));   // HANDEDNESS (mat4's law)
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator here, and the sky, which draws
+    // into the same rect, takes the same number.
+    const worldAspect = largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight);
+    const proj = mirrorProjectionX(perspective(fieldOfView(), worldAspect, 0.2, 6000));   // HANDEDNESS (mat4's law)
     // MW-D25: the eye goes through the Morrowind camera machine - in
     // first person it comes back untouched (camera.cpp:165-169), in
     // third it is the reference's focal-and-pull-back with this host's
@@ -6381,8 +6388,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
-    sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
+    sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect);
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
     // world repaints everything nearer). Skipped when exp fog owns
@@ -6408,7 +6416,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
         fogColor, fogEnd: weatherFog.end,
-        fovY: fieldOfView(), aspect: canvas.clientWidth / canvas.clientHeight,
+        // E5: the ring draws INTO the world pass's rect, so it takes
+        // that pass's aspect - a horizon built on the full-canvas ratio
+        // would step against the terrain in front of it under a docked bar.
+        fovY: fieldOfView(), aspect: worldAspect,
       });
     }
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back

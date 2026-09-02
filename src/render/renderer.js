@@ -1275,6 +1275,61 @@ export class Renderer {
     // account for).
     this._lastProgram = null;
     this._lastVao = null;
+    // ROAD-E E5: the WORLD PASS's viewport (ViewportChanger.cs:52-67).
+    // `_worldViewportPending` is the normalized rect the NEXT
+    // beginFrame will take, `_worldViewportPx` the pixel rect it
+    // actually set - null in both slots is the full canvas, which is
+    // DFU's own `standardViewportRect = new Rect(0, 0, 1, 1)`.
+    this._worldViewportPending = null;
+    this._worldViewportPx = null;
+  }
+
+  /**
+   * ROAD-E E5 - the docked large HUD SHRINKS the world pass instead of
+   * covering it. ViewportChanger.Update (:52-67) sets the game
+   * camera's rect every frame from the HUD's height; this is that
+   * rect, in Unity's own normalized BOTTOM-LEFT space, which is also
+   * gl.viewport's - so `{ x: 0, y: hudHeight, w: 1, h: 1 - hudHeight }`
+   * ports digit for digit (ui/hudLarge.js owns the arithmetic).
+   *
+   * CONSUMED BY THE NEXT beginFrame, exactly as DFU recomputes the
+   * rect every frame ("Check size every frame as HUD height can
+   * change"). A host that does not set one gets the standard viewport,
+   * so a menu, the video player or the travel map can never inherit a
+   * world frame's shrunk rect - the EV6 law: the renderer owns GL
+   * state, and state it owns must not leak between scenes.
+   */
+  setWorldViewport(rect) {
+    this._worldViewportPending = rect && (rect.x !== 0 || rect.y !== 0 || rect.w !== 1 || rect.h !== 1)
+      ? { x: rect.x, y: rect.y, w: rect.w, h: rect.h } : null;
+  }
+
+  /** The pixel rect the frame's world pass is drawing into, or null
+   *  for the full canvas. */
+  get worldViewportPx() { return this._worldViewportPx ? [...this._worldViewportPx] : null; }
+
+  /** gl.viewport back to whatever this frame's world pass owns - the
+   *  reduced rect if one is live, the full canvas otherwise. The
+   *  borrow-and-return shape the sprite RT already uses for the clear
+   *  colour. */
+  _restoreWorldViewport() {
+    const gl = this.gl, p = this._worldViewportPx;
+    if (p) gl.viewport(p[0], p[1], p[2], p[3]);
+    else gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  /**
+   * The 2D passes need the FULL canvas back: drawScreenQuad lays out
+   * in canvas pixels, so a reduced viewport would squash the HUD into
+   * the strip the world just drew into. Idempotent, and called by
+   * drawScreenQuad itself, so no host has to remember it - the bar,
+   * the viewmodel and every window land at their own scale whatever
+   * the world pass did.
+   */
+  endWorldPass() {
+    if (!this._worldViewportPx) return;
+    this._worldViewportPx = null;
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
 
   /** EV6: bind `program` unless the shadow says it already is. */
@@ -1542,7 +1597,14 @@ export class Renderer {
     this.drawCharacter(mesh, modelMatrix);
     this._proj = sp; this._view = sv; this._fogMode = sf;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    // ROAD-E E5: the viewport is BORROWED here too. This pass runs in
+    // the middle of the world pass (every voxel character composites
+    // through it), so returning a hardcoded full canvas would undo a
+    // docked large HUD's reduced rect for every draw after the first
+    // character - the same borrow-and-return the clear colour above
+    // has had since AUDIT 26 F034. With no world rect live it is the
+    // full drawing buffer, exactly as before.
+    this._restoreWorldViewport();
     const cc = this._clearColor;
     gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
     return cs.tex;
@@ -1730,6 +1792,12 @@ void main() {
 
   drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1], opts = {}) {
     const gl = this.gl;
+    // ROAD-E E5: THE 2D PASS ENDS THE WORLD PASS. This is the port's
+    // only screen-space primitive, so the first one drawn after a
+    // shrunk world pass is exactly where the full canvas has to come
+    // back - the reduced rect is renderer-owned frame state, not a
+    // call every host has to remember (and forget once).
+    if (this._worldViewportPx) this.endWorldPass();
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2025,6 +2093,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this.canvas.height = h;
     }
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    // ROAD-E E5: ...and then the docked large HUD's rect over it, if a
+    // host set one for this frame. The pending slot is CONSUMED here,
+    // so the next frame must ask again (ViewportChanger.Update does).
+    // The gl.clear below is NOT viewport-clipped (only the scissor
+    // clips a clear), so the strip the bar covers still clears - which
+    // is what Unity does too, the bar simply paints over it.
+    {
+      const r = this._worldViewportPending;
+      this._worldViewportPending = null;
+      const W = this.canvas.width, H = this.canvas.height;
+      this._worldViewportPx = r
+        ? [Math.round(r.x * W), Math.round(r.y * H),
+          Math.max(0, Math.round(r.w * W)), Math.max(0, Math.round(r.h * H))]
+        : null;
+      if (this._worldViewportPx) this._restoreWorldViewport();
+    }
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
@@ -2130,6 +2214,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       view: this._view,
       lightDir: this._lightDir,
       camPos: [this._camPos[0], this._camPos[1], this._camPos[2]],
+      // ROAD-E E5: the world pass's reduced viewport is a global this
+      // pass takes too. Nothing has to CLEAR it here - the beginFrame
+      // below consumes an empty pending slot and nulls it, so the
+      // panel's own clear quad cannot be read as "the 2D pass has
+      // begun" - but it does have to come back, or a window opened
+      // mid-frame would hand the host a full canvas it never asked
+      // for.
+      worldViewportPx: this._worldViewportPx,
       rect,
     };
     this.setScreenOffset(0, 0);
@@ -2199,7 +2291,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     this.clearScreenScissor();
+    this._worldViewportPx = s.worldViewportPx;   // E5: back to the host's world rect (null = full canvas)
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    if (this._worldViewportPx) this._restoreWorldViewport();
     this.setScreenOffset(s.screenOffset[0], s.screenOffset[1]);
     this.markForeignPass();
   }
