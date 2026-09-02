@@ -191,6 +191,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `09-Testing/` - test doctrine, harnesses, data validation
 - `10-UI/` - HUD, menus, native Daggerfall UI reproduction
 - `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc
+- `12-Enhanced-AI/` - the navmesh-driven enemy motor: project-final's navmesh ported whole, opt-in in the Enhanced tab, the arc
 - `03-World/Roads.md` - roads and tracks, OUR network from the player's own map (Basic Roads' design credited, none of its data)
 
 ## Active arcs
@@ -301,7 +302,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
 - `src/ui/chargenArt.js:731` - *  AUDIT 17g NARROWED - FLAGGED: the bar still has no HIT. DFU's
-- `src/ui/enhancedMenu.js:1786` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1794` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/exteriorAutomapWindow.js:96` - FLAGGED, still awaiting a seam this stage does not own:
 - `src/ui/hudLarge.js:75` - FLAGGED (AUDIT 39 F135) - THE DOCKED BAR OCCLUDES, IT DOES NOT
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
