@@ -130,6 +130,7 @@ import {
 import { effectByKey } from '../systems/spellEffects.js';
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
+import { thumbSpan, scrollBarClick, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all
 import { ALT_SHADOW_1 } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed
 import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
 import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
@@ -763,13 +764,13 @@ export class SpellbookWindow {
     // not the port's seam. Recorded in the Ledger's F159/F170/F180
     // row.)
     if (this._rows.length > ROWS_DISPLAYED && hitPanel(SPELLBOOK_RECTS.scrollBar, vx, vy)) {
+      // ROAD-D2: the thumb geometry and the two paging arms are
+      // ui/verticalScrollBar.js's now - the same span the draw uses,
+      // so the trough and the art can never disagree.
       const [, sy, , sh] = SPELLBOOK_RECTS.scrollBar;
-      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
-      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
-      const localY = vy - PANEL_Y - sy;
-      if (localY < ty) this.scrollIndex -= ROWS_DISPLAYED;
-      else if (localY > ty + th) this.scrollIndex += ROWS_DISPLAYED;
-      this._clampScroll();
+      const span = thumbSpan(sh, this._rows.length, ROWS_DISPLAYED, this.scrollIndex);
+      this.scrollIndex = scrollBarClick(vy - PANEL_Y - sy, span,
+        this.scrollIndex, this._rows.length, ROWS_DISPLAYED);
       return true;
     }
     // a click in the list selects that row
@@ -861,14 +862,13 @@ export class SpellbookWindow {
     }
 
     // VerticalScrollBar: Draw() returns early when the list fits
-    // (:135-139), so a book of sixteen spells or fewer has NO thumb.
-    // The geometry is :204-207 verbatim, minimum height included.
-    if (this._rows.length > ROWS_DISPLAYED) {
-      const [sx, sy, sw, sh] = SPELLBOOK_RECTS.scrollBar;
-      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
-      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
-      drawRect(renderer, m, PANEL_X + sx, PANEL_Y + sy + ty, sw, th, SCROLL_THUMB_COLOR);
-    }
+    // (:135-139), so a book of sixteen spells or fewer has NO thumb -
+    // thumbSpan answers null there and drawScrollThumb paints nothing.
+    // The geometry is :204-207 verbatim, minimum height included, and
+    // ROAD-D2 gave it DFU's OWN three art slices (see below).
+    const [sbx, sby, sbw, sbh] = SPELLBOOK_RECTS.scrollBar;
+    drawScrollThumb(renderer, m, [PANEL_X + sbx, PANEL_Y + sby, sbw, sbh],
+      thumbSpan(sbh, this._rows.length, ROWS_DISPLAYED, this.scrollIndex));
 
     const spell = this.selected;
     // The name and the spell-point labels carry
@@ -949,9 +949,16 @@ export class SpellbookWindow {
 /** DaggerfallUI.cs:52's default row colour is nativePanel's
  *  DEFAULT_TEXT_COLOR and :62's dark-red selected row is the list
  *  picker's SELECTED_TEXT_COLOR - both imported, neither rewritten. */
-/** VerticalScrollBar.cs:204-206 - the thumb never shrinks past ten
- *  pixels however long the list gets. Its three-slice art is a
- *  Resources sprite the port has no reader for, so the thumb is
- *  drawn as a flat bar in the panel's own brass - FLAGGED. */
-const SCROLL_THUMB_MIN_H = 10;
-const SCROLL_THUMB_COLOR = Object.freeze([0.42, 0.35, 0.16, 1]);
+/** ROAD-D2 closed this file's thumb note. The "Resources sprite the
+ *  port has no reader for" was stale: ROAD-A7 carried vScrollThumb
+ *  Top/Body/Bottom into the repo as their fifteen literal bytes
+ *  (ui/verticalScrollBar.js:56-58), so the book's thumb is DFU's own
+ *  art - a 77 left edge, a 186 body under a 223 highlight, an all-77
+ *  foot, each strip StretchToFill across the 7-wide rail - drawn by
+ *  drawScrollThumb, and the local 10px floor and the flat brass
+ *  rectangle it used to paint are both gone. THUMB_MIN_H
+ *  (VerticalScrollBar.cs:209) and the whole of :204-221 live in that
+ *  one file; this window states no geometry of its own.
+ *  The DRAG (Update, :101-130) stays unported here and only here -
+ *  no host hands this window a held-button frame - which is the
+ *  Ledger's F159/F170/F180 row, not a thumb-art gap. */
