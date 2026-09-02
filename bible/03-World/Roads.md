@@ -145,6 +145,20 @@ dead - the pre-seeded location tiles were all that kept roads out of
 the streets, and nothing kept them out of the clearance band. The pin
 that covered it sent the same wrong shape and passed.
 
+## ROADS 5 - the turn cost (2026-09-01)
+
+Mac, on the first real-data look: "the roads are extremely jagged."
+Plain A* on an 8-connected grid draws a 1-in-10 slope as nine E steps
+and one NE, over and over, and the painter turns every change into a
+135-degree kink at a pixel centre - a staircase. Hand-drawn data never
+looked like that because a human lays straight stretches. So the search
+carries the HEADING in its state (cell x 8) and every step pays
+`turnCost` per 45 degrees of change; the route prefers "E for a while,
+then NE for a while", the same length and a fraction of the corners.
+Pinned: 7 turns to 2 on the fixture slope. The dial is in ROAD_DIALS
+with the rest; a bigger number lays longer stretches at the cost of
+hugging the terrain less closely.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

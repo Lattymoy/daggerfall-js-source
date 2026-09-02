@@ -291,3 +291,32 @@ test('ROADS 5: a town is RINGED, and the arm joins the ring instead of ending in
   paintRoads(tileData, t2, DIR.S, 0, { xMin: -4, xMax: 20, yMin: 100, yMax: 130 });
   assert.equal(t2[98 * 128 + 10] & 0x3f, TILE.road, 'the south side rings');
 });
+
+// ROADS 5 (2026-09-01, Mac's first real-data look: "the roads are
+// extremely jagged"): A ROAD-BUILDER LAYS STRAIGHT STRETCHES. Plain A*
+// on an 8-connected grid draws a 1-in-10 slope as nine E and one NE,
+// over and over, and the painter turns each change into a 135-degree
+// kink at a pixel centre. With the heading in the search state and a
+// price on every 45 degrees of change, the route prefers "E for a
+// while, then NE for a while" - the same length, a fraction of the
+// corners.
+test('ROADS 5: the turn cost turns a staircase into stretches', () => {
+  const a = { x: 150, y: 250 }, b = { x: 350, y: 270 };   // a 1-in-10 slope
+  const turns = (path) => {
+    let n = 0; let last = null;
+    for (let k = 0; k + 1 < path.length; k++) {
+      const dir = `${path[k + 1].x - path[k].x},${path[k + 1].y - path[k].y}`;
+      if (last !== null && dir !== last) n++;
+      last = dir;
+    }
+    return n;
+  };
+  const free = route(a, b, { heightAt: flat, isWater: () => false, existing: blank(), d: { ...D, turnCost: 0 } });
+  const paid = route(a, b, { heightAt: flat, isWater: () => false, existing: blank(), d: D });
+  assert.ok(turns(free) >= 6, `plain A* staircases a 1-in-10 slope (${turns(free)} turns)`);
+  assert.ok(turns(paid) <= 2, `the turn cost lays it as at most two stretches (${turns(paid)} turns)`);
+  assert.equal(paid.length, free.length, 'and it is no longer - the same 8-connected length');
+  // The dial is a dial: a caller's object that predates it takes the default.
+  const legacy = route(a, b, { heightAt: flat, isWater: () => false, existing: blank(), d: { climbCost: 40, descentCost: 10, highCost: 0.08, highAbove: 40, roadDiscount: 0.5 } });
+  assert.ok(legacy && legacy.length === paid.length, 'a missing dial defaults rather than poisoning the cost');
+});

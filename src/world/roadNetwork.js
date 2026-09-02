@@ -86,6 +86,7 @@ export const ROAD_DIALS = Object.freeze({
   highCost: 0.08,         // per unit of height above `highAbove`, per step
   highAbove: 40,          // small-heightmap value where terrain starts to cost
   roadDiscount: 0.5,      // stepping onto an existing road costs half - roads merge
+  turnCost: 0.7,          // per 45 degrees of heading change, per step (ROADS 5)
 });
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -187,6 +188,10 @@ export function stamp(mask, path) {
  * endpoints' box plus a margin so a 500k-cell grid is never scanned.
  */
 export function route(from, to, opts) {
+  // A caller's dial object may predate a dial; missing ones take the
+  // default rather than poisoning the cost with NaN (ROADS 5 found the
+  // pins' own dials doing exactly that).
+  opts = { ...opts, d: { ...ROAD_DIALS, ...(opts.d ?? {}) } };
   // THE BOX GROWS ON FAILURE. A bay or a range taller than the margin
   // walls the search in and A* reports no route, so the first answer is
   // tried in a tight box for speed and widened twice before giving up.
@@ -198,35 +203,54 @@ export function route(from, to, opts) {
   return null;
 }
 
+/**
+ * ROADS 5 (Mac, first real-data look: "the roads are extremely jagged"):
+ * THE STATE IS THE CELL AND THE HEADING. Plain A* on an 8-connected grid
+ * draws a 1-in-10 slope as nine E steps and one NE, over and over, and
+ * the painter turns every one of those changes into a 135-degree kink
+ * at a pixel centre - a staircase, which is what Mac saw. A road-builder
+ * lays STRAIGHT STRETCHES and turns rarely, so each step now pays
+ * turnCost per 45 degrees of heading change, and the search carries
+ * the heading in its state (cell x 8) so the price is paid where the
+ * turn happens. The result prefers "E for a while, then NE for a while"
+ * to alternating, which is the same length and far fewer corners.
+ */
 function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null }, margin) {
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin), x1 = Math.min(MAP_WIDTH - 1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(0, Math.min(from.y, to.y) - margin), y1 = Math.min(MAP_HEIGHT - 1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+  const cells = bw * bh;
   const idx = (x, y) => (y - y0) * bw + (x - x0);
-  const g = new Float64Array(bw * bh).fill(Infinity);
-  const came = new Int32Array(bw * bh).fill(-1);
-  const closed = new Uint8Array(bw * bh);
+  // state = cell * 8 + heading; heading 8 = "no heading yet" lives on the start alone
+  const g = new Float32Array(cells * 8).fill(Infinity);
+  const came = new Int32Array(cells * 8).fill(-1);
+  const closed = new Uint8Array(cells * 8);
+  const turnOf = (a, b) => (a < 0 ? 0 : Math.min((a - b + 8) % 8, (b - a + 8) % 8));
   // AUDIT ROADS F3: the cheapest step is a discounted one onto an
   // existing path, so the heuristic is scaled by the discount to stay
   // admissible - an overestimating h makes A* skip the merge it exists
   // to find, and the routes stop converging on shared roads.
   const h = (x, y) => Math.hypot(x - to.x, y - to.y) * d.roadDiscount;
   const open = new MinHeap();
-  const s = idx(from.x, from.y);
-  g[s] = 0; open.push(h(from.x, from.y), s);
+  const sc = idx(from.x, from.y);
+  // the start has no heading: seed every heading at 0 so the first step is free to choose
+  for (let k = 0; k < 8; k++) { g[sc * 8 + k] = 0; open.push(h(from.x, from.y), sc * 8 + k); }
   const goal = idx(to.x, to.y);
   let end = -1;
   while (open.size) {
     const cur = open.pop();
     if (closed[cur]) continue;
     closed[cur] = 1;
-    const cx = x0 + (cur % bw), cy = y0 + Math.floor(cur / bw);
-    if (cur === goal || (stopOn && cur !== s && stopOn[cy * MAP_WIDTH + cx] !== 0)) { end = cur; break; }
+    const cell = (cur / 8) | 0, heading = cur % 8;
+    const cx = x0 + (cell % bw), cy = y0 + Math.floor(cell / bw);
+    if (cell === goal || (stopOn && cell !== sc && stopOn[cy * MAP_WIDTH + cx] !== 0)) { end = cur; break; }
     const hc = heightAt(cx, cy);
-    for (const [, dx, dy] of DIR_DELTA) {
+    const atStart = cell === sc;
+    for (let k = 0; k < 8; k++) {
+      const [, dx, dy] = DIR_DELTA[k];
       const nx = cx + dx, ny = cy + dy;
       if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
-      const ni = idx(nx, ny);
+      const ni = idx(nx, ny) * 8 + k;
       if (closed[ni] || isWater(nx, ny)) continue;
       const hn = heightAt(nx, ny);
       const rise = hn - hc;
@@ -234,13 +258,18 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null },
       cost *= 1 + (rise > 0 ? rise * d.climbCost : -rise * d.descentCost) * 0.01;
       if (hn > d.highAbove) cost *= 1 + (hn - d.highAbove) * d.highCost;
       if (existing[ny * MAP_WIDTH + nx]) cost *= d.roadDiscount;
+      if (!atStart) cost += turnOf(heading, k) * d.turnCost;
       const ng = g[cur] + cost;
       if (ng < g[ni]) { g[ni] = ng; came[ni] = cur; open.push(ng + h(nx, ny), ni); }
     }
   }
   if (end < 0) return null;
   const path = [];
-  for (let c = end; c >= 0; c = came[c]) path.push({ x: x0 + (c % bw), y: y0 + Math.floor(c / bw) });
+  for (let c = end; c >= 0; c = came[c]) {
+    const cell = (c / 8) | 0;
+    const pt = { x: x0 + (cell % bw), y: y0 + Math.floor(cell / bw) };
+    if (!path.length || path[path.length - 1].x !== pt.x || path[path.length - 1].y !== pt.y) path.push(pt);
+  }
   return path.reverse();
 }
 
