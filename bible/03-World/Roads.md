@@ -236,6 +236,12 @@ was extracted from scene creation into _ensureTerrain and keys the
 relief grid on the network AND the two flags, so a toggle rebuilds the
 relief and a toggle back finds the cache stale again.
 
+## Audit 46 (2026-09-02)
+
+Everything so far: `01-Overview/Audit-46.md`. 21 mutants, 21 dead. A1
+fixed (the map's stride), A10 cleared and pinned (message order keeps
+every chunk built with the network), four low notes recorded.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

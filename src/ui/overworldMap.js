@@ -1007,9 +1007,16 @@ export class OverworldMapWindow {
     const roadsKey = `${showRoads ? 'r' : '-'}${showTracks ? 't' : '-'}`;
     let grid = _gridCache.get(bytes);
     if (!grid || grid.roadsRef !== net || grid.roadsKey !== roadsKey) {
-      const W = this._size.width;
+      // AUDIT 46 A1: the mask's stride is the WORLD's (MAP_WIDTH), not the
+      // window's - a window built at another mapSize (the tests do) would
+      // otherwise shear the network across the relief. Out of the world,
+      // no path.
       const pathAt = net && (showRoads || showTracks)
-        ? (x, y) => ((showRoads && net.roads[y * W + x]) ? 2 : ((showTracks && net.tracks[y * W + x]) ? 1 : 0))
+        ? (x, y) => {
+          if (x < 0 || y < 0 || x >= MAP_WIDTH || y >= MAP_HEIGHT) return 0;
+          const i = y * MAP_WIDTH + x;
+          return (showRoads && net.roads[i]) ? 2 : ((showTracks && net.tracks[i]) ? 1 : 0);
+        }
         : null;
       grid = buildOverworldGrid({
         heightBytes: bytes,
