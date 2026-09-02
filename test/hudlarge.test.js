@@ -9,8 +9,10 @@ import {
   LARGE_HUD_W, LARGE_HUD_H, COMPASS_FRAME_COUNT, LARGE_HUD_RECTS, MODE_SUBRECT,
   HUD_MODE_CYCLE, hudLargeNextMode, hudLargePrevMode, LARGE_HUD_PANELS,
   largeHudRect, compassFrameIndex, largeHudPoint, largeHudPanelAt, largeHudClick,
-  headArchiveFor,
+  headArchiveFor, horseOffsetHeight, weaponOffsetHeight,
 } from '../src/ui/hudLarge.js';
+import { setValue, resetToDefaults } from '../src/systems/settings.js';
+import { ridingRect } from '../src/systems/riding.js';
 import { MODES, nextInteractionMode } from '../src/player/interactionMode.js';
 import { routeAction } from '../src/ui/input.js';
 
@@ -286,4 +288,66 @@ test('hudLarge: all four hosts draw the bar and offer it the click, and the cros
   assert.match(branch, /drawCrosshairAndModeIcon\(/, 'the crosshair outlives the vitals');
   assert.match(branch, /showModeIcon: false/, 'and the corner mode word does not');
   assert.match(branch, /return;/, 'the small HUD is not also drawn');
+});
+
+// ---------------------------------------------------------------
+// ROAD-D D10: THE TWO OFFSETS. LargeHUDOffsetHorse
+// (TransportManager.cs:304-309) and LargeHUDUndockedOffsetWeapon
+// (FPSWeapon.cs:146-155) both lift by LargeHUD.ScreenHeight - the
+// DRAWN bar's height - and their gates are NOT the same one.
+// ---------------------------------------------------------------
+const barOf = (h) => ({ x: 0, y: 200 - h, w: 320, h, s: 1 });
+
+test('D10: horseOffsetHeight is the drawn bar height, and never asks about docking', () => {
+  resetToDefaults();
+  // no bar drawn at all is DaggerfallHUD == null
+  setValue('GUI', 'LargeHUD', 'True');
+  assert.equal(horseOffsetHeight(null), 0, 'a null bar is a null HUD');
+  // LargeHUDOffsetHorse ships True, "to match classic"
+  assert.equal(horseOffsetHeight(barOf(46)), 46);
+  // ...and it is the ONLY setting the horse arm asks after LargeHUD:
+  // undocked still offsets, where the weapon arm would not
+  setValue('GUI', 'LargeHUDDocked', 'False');
+  assert.equal(horseOffsetHeight(barOf(34.5)), 34, 'the (int) cast in TransportManager.cs:306');
+  setValue('GUI', 'LargeHUDOffsetHorse', 'False');
+  assert.equal(horseOffsetHeight(barOf(46)), 0);
+  setValue('GUI', 'LargeHUDOffsetHorse', 'True');
+  setValue('GUI', 'LargeHUD', 'False');
+  assert.equal(horseOffsetHeight(barOf(46)), 0, 'no large HUD, no offset');
+  resetToDefaults();
+});
+
+test('D10: a DOCKED bar FORCES the weapon offset, whatever the setting says', () => {
+  resetToDefaults();
+  setValue('GUI', 'LargeHUD', 'True');
+  // LargeHUDUndockedOffsetWeapon ships False and LargeHUDDocked True,
+  // so the shipping combination already offsets - FPSWeapon.cs's own
+  // comment: "Weapon is forced to offset when using docked HUD else it
+  // would appear underneath HUD".
+  assert.equal(weaponOffsetHeight(barOf(46)), 46, 'docked forces it');
+  setValue('GUI', 'LargeHUDDocked', 'False');
+  assert.equal(weaponOffsetHeight(barOf(46)), 0, 'undocked, setting off: no offset');
+  setValue('GUI', 'LargeHUDUndockedOffsetWeapon', 'True');
+  assert.equal(weaponOffsetHeight(barOf(46)), 46, 'undocked, setting on');
+  setValue('GUI', 'LargeHUD', 'False');
+  assert.equal(weaponOffsetHeight(barOf(46)), 0);
+  assert.equal(weaponOffsetHeight(null), 0);
+  resetToDefaults();
+});
+
+test('D10: the offset really moves the horse rect and the viewmodel quad', () => {
+  // ridingRect's bottom edge rises by the offset (:310-315)
+  const art = { width: 200, height: 100, frames: [] };
+  const c = canvas(320, 200);
+  const flat = ridingRect(c, art, 0);
+  const lifted = ridingRect(c, art, 46);
+  assert.equal(flat.y - lifted.y, 46);
+  assert.equal(flat.h, lifted.h, 'the sprite is moved, not resized');
+  // and the weapon quad takes the same subtraction - the ONE caller
+  // (combat/weaponRig.js) passes nothing, so the default reads the bar
+  const w = src('combat/fpsWeapon.js');
+  assert.ok(w.includes('offsetHeight = weaponOffsetHeight(),'), 'the default IS the law');
+  assert.ok(w.includes('const y = canvas.height - h - offsetHeight;'), 'OnGUI :388');
+  assert.ok(src('scenes/world.js').includes('ridingRect(canvas, ridingArt, horseOffsetHeight())'),
+    'the world host feeds the horse arm');
 });

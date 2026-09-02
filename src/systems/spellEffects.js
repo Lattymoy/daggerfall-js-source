@@ -213,3 +213,68 @@ export function dfuEffectKeyOf(type, subType) {
   const g = row.group.replace(/ /g, '');
   return row.subgroup ? `${g}-${row.subgroup.replace(/ /g, '')}` : g;
 }
+
+/** ROAD-D D10 - SpellBookDescription (IEntityEffect, EntityEffect.cs
+ *  :78, default null at :395-398), the TEXT.RSC record each effect
+ *  class overrides it with. DaggerfallSpellBookWindow.ShowEffectPopup
+ *  (:651-660) is its only reader: it puts THOSE tokens in a
+ *  click-anywhere message box, and nothing else - not the group name,
+ *  not the subgroup.
+ *
+ *  In DFU the id is a per-CLASS property rather than a catalogue
+ *  column, so it lives here as its own table keyed by the port's
+ *  classic key. 87 effect classes carry one; the two VARIANT families
+ *  compute theirs from the variant index instead of declaring one per
+ *  subgroup, and both are expanded below at their own base:
+ *  ElementalResistance is `1227 + currentVariant`
+ *  (ElementalResistance.cs:94, key 8,v) and PacifyEffect is
+ *  `1285 + currentVariant` (PacifyEffect.cs:79, key 33,v).
+ *
+ *  MorphSelf keeps its 1279 even though the maker never offers it -
+ *  the spellbook reads the whole registry, the same reason its ROWS
+ *  entry exists. */
+export const SPELLBOOK_DESCRIPTION_IDS = new Map([
+  ['0,255', 1202],                                       // Paralyze
+  ['1,0', 1204], ['1,1', 1205], ['1,2', 1206],           // Continuous Damage
+  ['2,255', 1207],                                       // Create Item
+  ['3,0', 1209], ['3,1', 1210], ['3,2', 1211],           // Cure
+  ['4,0', 1212], ['4,1', 1213], ['4,2', 1214],           // Damage
+  ['5,255', 1215],                                       // Disintegrate
+  ['6,0', 1216], ['6,1', 1217], ['6,2', 1218],           // Dispel
+  ['7,0', 1219], ['7,1', 1220], ['7,2', 1221], ['7,3', 1222],
+  ['7,4', 1223], ['7,5', 1225], ['7,6', 1224], ['7,7', 1226],   // Drain{Attribute} - Personality 1225 BEFORE Speed 1224, the classic subType order
+  ['8,0', 1227], ['8,1', 1228], ['8,2', 1229], ['8,3', 1230], ['8,4', 1231],   // Elemental Resistance, 1227 + variant
+  ['9,0', 1232], ['9,1', 1233], ['9,2', 1234], ['9,3', 1235],
+  ['9,4', 1236], ['9,5', 1237], ['9,6', 1238], ['9,7', 1239],   // Fortify Attribute
+  ['10,0', 1240], ['10,1', 1241], ['10,2', 1242], ['10,3', 1243], ['10,4', 1244],
+  ['10,5', 1245], ['10,6', 1246], ['10,7', 1247], ['10,8', 1248], ['10,9', 1249],   // Heal{...}, Health 8 / Fatigue 9
+  ['11,0', 1250], ['11,1', 1251], ['11,2', 1252], ['11,3', 1253], ['11,4', 1254],
+  ['11,5', 1255], ['11,6', 1256], ['11,7', 1257], ['11,8', 1258], ['11,9', 1259],   // Transfer{...}
+  ['12,255', 1303],                                      // Soul Trap
+  ['13,0', 1260], ['13,1', 1261],                        // Invisibility
+  ['14,255', 1262],                                      // Levitate
+  ['15,255', 1263],                                      // Light
+  ['16,255', 1264], ['17,255', 1265],                    // Lock / Open
+  ['18,255', 1266],                                      // Regenerate
+  ['19,255', 1267],                                      // Silence
+  ['20,255', 1268], ['21,255', 1269], ['22,255', 1270],  // Absorption / Reflection / Resistance
+  ['23,0', 1271], ['23,1', 1272],                        // Chameleon
+  ['24,0', 1273], ['24,1', 1274],                        // Shadow
+  ['25,255', 1275],                                      // Slowfall
+  ['26,255', 1276],                                      // Free Action
+  ['27,255', 1277], ['28,255', 1278],                    // Jumping / Climbing
+  ['29,255', 1279],                                      // Morph Self (registry only)
+  ['30,255', 1282], ['31,255', 1283],                    // Water Breathing / Walking
+  ['33,0', 1285], ['33,1', 1286], ['33,2', 1287], ['33,3', 1288],   // Pacify, 1285 + variant
+  ['34,255', 1289],                                      // Charm
+  ['35,255', 1290],                                      // Shield
+  ['39,0', 1296], ['39,1', 1297], ['39,2', 1298],        // Detect
+  ['40,255', 1299],                                      // Identify
+  ['43,255', 1302],                                      // Teleport
+  ['44,255', 1305],                                      // Comprehend Languages
+]);
+
+/** The record ShowEffectPopup would read for this classic key, or
+ *  null where the effect class declares none (EntityEffect's default
+ *  is a null token array, and the box is then empty). */
+export const spellBookDescriptionId = (key) => SPELLBOOK_DESCRIPTION_IDS.get(key) ?? null;

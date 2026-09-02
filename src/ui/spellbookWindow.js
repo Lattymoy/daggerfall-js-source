@@ -111,12 +111,20 @@
 //   pass both (:262). The port has one castCost hook for both, so
 //   the offer's price rides the player's live skills either way.
 //
-// FLAGGED, idling loudly: the effect popup's body
-// (ShowEffectPopup reads each effect's own SpellBookDescription
-// tokens, which the port's effect table does not carry yet, so the
-// box shows the group/subgroup pair alone); and DFU's
-// double-click-to-buy on the list (the port's list picks straight
-// through, U24's own recorded departure).
+// ROAD-D D10 gave the effect popup its BODY. ShowEffectPopup
+// (:651-660) puts one thing in its click-anywhere box - the effect's
+// own SpellBookDescription tokens - and the port had no per-effect
+// text id, so the box carried the group/subgroup pair instead. The
+// ids are systems/spellEffects.js's SPELLBOOK_DESCRIPTION_IDS now
+// (EntityEffect.cs:78/:395, overridden by 85 effect classes and
+// computed from the variant index by the two variant families), read
+// through the TEXT.RSC seam this window already had one method down.
+// The group/subgroup line remains the FALLBACK for a host with no
+// record source and for an effect DFU gives no description - never a
+// box with nothing in it.
+//
+// STILL DEPARTED: DFU's double-click-to-buy on the list (the port's
+// list picks straight through, U24's own recorded departure).
 
 import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
@@ -127,7 +135,7 @@ import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId } from '../systems/spellEffects.js';
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { thumbSpan, scrollBarClick, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all
@@ -747,8 +755,10 @@ export class SpellbookWindow {
       const [group, subgroup] = this.effectLabels(i);
       if (!group) return true;
       this.top = 'note';
-      this._noteRows = [subgroup ? `${group} ${subgroup}` : group,
-        ...(this._effectDescription(i) ?? [])];
+      // SetTextTokens(effect.SpellBookDescription) and nothing else
+      // (:658) - the group/subgroup line is the port's fallback for a
+      // record the host cannot read, not a header DFU draws.
+      this._noteRows = this._effectDescription(i) ?? [subgroup ? `${group} ${subgroup}` : group];
       return true;
     }
     // F180: VerticalScrollBar.MouseClick (:142-150) - a trough click
@@ -787,10 +797,17 @@ export class SpellbookWindow {
     return true;
   }
 
-  /** ShowEffectPopup (:651-660) reads the effect's own
-   *  SpellBookDescription; the port has no per-effect description
-   *  text source yet, so the box carries the name alone and says so. */
-  _effectDescription() { return null; }
+  /** ShowEffectPopup (:651-660): the box is the effect's own
+   *  SpellBookDescription. Null when the effect declares none
+   *  (EntityEffect's default) or the host has no TEXT.RSC seam. */
+  _effectDescription(slot) {
+    const e = spellEffects(this.selected)[slot];
+    if (!e) return null;
+    const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
+    if (id == null) return null;
+    const rows = this._boxText(id);
+    return rows.length ? rows : null;
+  }
 
   _rowHeight() { return (this._font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 

@@ -305,7 +305,14 @@ export function getReactionToPlayer(faction, player) {
  *  has no host arm yet: formulas.js's CalculatePickpocketingChance
  *  already takes targetLevel, so it is one call away from whatever
  *  gives the enemy activate ladder a steal mode.
- *  Returns { success, gold, message } for the scene's UI routing.
+ *  Returns { success, gold, message, modal } for the scene's UI
+ *  routing. ROAD-D D10 added `modal`, and it is DFU's own split, not
+ *  a convenience: BOTH success arms raise a real parchment
+ *  (`DaggerfallUI.MessageBox(gotGold)` :1630 and
+ *  `DaggerfallUI.MessageBox(noGoldFound, true)` :1645) while the
+ *  FAILURE is a HUD line (`DaggerfallUI.Instance.PopupMessage(
+ *  notSuccessfulMessage)` :1650) - the one arm that has to stay out
+ *  of the way, because the guards are spawning behind it.
  *  rolls: Math.random-compatible (Random.Range + Dice100). */
 export function pickpocketTownsperson(player, { rolls = Math.random, nothingText = () => 'You found nothing valuable.' } = {}) {
   tallySkill(player, SKILLS.Pickpocket, 1);
@@ -322,16 +329,16 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
       // "nothing to steal" arm below is a successful pickpocket that
       // stole nothing, and DFU's call sits inside the gold branch.
       tallyCrimeGuildRequirements(player, true, 1);
-      return { success: true, gold, message: gold === 1 ? 'You pinched 1 gold piece.' : `You pinched ${gold} gold pieces.` };
+      return { success: true, gold, modal: true, message: gold === 1 ? 'You pinched 1 gold piece.' : `You pinched ${gold} gold pieces.` };
     }
-    return { success: true, gold: 0, message: nothingText() };
+    return { success: true, gold: 0, modal: true, message: nothingText() };
   }
   // PlayerEntity.Crimes, verbatim state. V4: the SuppressCrime gate
   // rides inline here - court.js imports THIS module, so the one
   // setter cannot be (a transformed werewolf cannot reach this window
   // anyway; the talk door refuses first).
   if (!racialSuppressCrime(player)) player.crimeCommitted = 'Pickpocketing';
-  return { success: false, gold: 0, message: 'You are not successful.' };
+  return { success: false, gold: 0, modal: false, message: 'You are not successful.' };
 }
 
 // ── TN1: THE LORD'S NAME (MacroHelper.cs:310-331, verbatim) ──────

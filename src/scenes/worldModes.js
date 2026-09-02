@@ -220,6 +220,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: Finaliz
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
+import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js';   // ROAD-D D10: GetPortraitIndexFromStaticNPCBillboard
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -1613,22 +1614,47 @@ export function createWorldModes(host) {
   //     ?interior and ?dungeon scenes lay out ONE building interior /
   //     one dungeon and never an RMB block's exterior.
   //
-  // FLAGGED, above ground only, each with the DFU line it owes:
+  // FLAGGED, above ground only, each with the DFU line it owes.
+  // ROAD-D D10 re-examined both and NARROWED them to what is really
+  // open; neither shrank to a one-file swap.
+  //
   //   - QuestMachine.SetupIndividualStaticNPC (RMBLayout.cs:376/:447),
-  //     the third thing layout does to an exterior NPC. The interior
-  //     path runs it at DFU's own moment (interiorContext's people
-  //     walk) because the interior is built long after the quest
-  //     bridge exists; the exterior blocks are laid out BEFORE it in
-  //     both hosts (world.js builds the start pixel first), so there
-  //     is no machine to ask yet and doing it at click time would be
-  //     the wrong moment - the away arm's SetActive(false) has to take
-  //     the billboard out of the batch at layout. The click still
-  //     stamps LastNPCClicked and still honours a faction listener.
+  //     the third thing layout does to an exterior NPC. The LAW is
+  //     ported and idle (systems/quest/machine.js:708-730, the away
+  //     arm's setActive(false) included); what is missing is a moment
+  //     to run it. The interior path runs it at DFU's own moment
+  //     (interiorContext's people walk) because the interior is built
+  //     long after the quest bridge exists; the exterior blocks are
+  //     laid out BEFORE it in both hosts (world.js builds the start
+  //     pixel first), so there is no machine to ask yet, and doing it
+  //     at click time would be the wrong moment - the away arm has to
+  //     take the billboard out of the batch AT LAYOUT. Closing it is a
+  //     MULTI-HOST slice in world.js and exterior.js: either defer the
+  //     exterior block's NPC pass until the bridge exists, or re-run
+  //     one pass over every already-laid pixel when it lands. The
+  //     click still stamps LastNPCClicked and still honours a faction
+  //     listener.
   //   - the GUILD SERVICE popup, if a street NPC ever carries a guild
   //     service faction: its window and every window it dispatches to
   //     mount in `interiorOverlay`, which only the interior/dungeon
   //     frame draws. Talk, the quest offer and the refusals all mount
   //     where the current mode draws.
+  //
+  //     WHY THE EXISTING PAIR IS NOT THE FIX (checked, D10):
+  //     mountSpellWindow refuses an OCCUPIED interior slot on purpose
+  //     (`if (interiorOverlay) return false`, :793) so a hotkey cannot
+  //     stack a second window - but every site in this chain is a
+  //     DISPATCH from the popup that is already in the slot, which is
+  //     exactly the case that must replace. So the swap needs a
+  //     replace-mode door beside the two, not just the two. And the
+  //     chain does not stop at openGuildService/openServiceFlow's ~24
+  //     sites: guildServiceRepair reaches openRepairService ->
+  //     showRepairList, which the interior-only repair MERCHANT shares,
+  //     and the keyed trade/spell/item/book windows under it, none of
+  //     which the exterior frame draws or ticks either. The honest
+  //     shape is one door plus a sweep of that whole subtree, and a
+  //     street NPC with a guild-service faction is the only caller it
+  //     would serve - so it stays recorded rather than half-swapped.
   //
   // The routing law is systems/guildServiceFlow.js; this end owns only
   // the geometry, the faction lookups and the window.
@@ -1882,7 +1908,7 @@ export function createWorldModes(host) {
       // after the session's first question opened on the follow-up
       // record. talkToNpc is TalkToNpc alone; this is the other member.
       npcSession?.startNewConversation();
-      townTalk.openTalkWindow(talk.greeting, { npcSeed: npcData.nameSeed, npcName: displayName });   // the DERIVED seed (StaticNPC.Data), as the engine's own reads are
+      townTalk.openTalkWindow(talk.greeting, { npcSeed: npcData.nameSeed, npcName: displayName, portrait: staticNpcPortrait(npcData) });   // the DERIVED seed (StaticNPC.Data), as the engine's own reads are
       return;
     }
     townTalk?.say?.('You get no response.');
@@ -2371,6 +2397,19 @@ export function createWorldModes(host) {
    *  seam can answer - so every NPC reached through the popup was
    *  stamped Nord and drew a different generated name than the same
    *  NPC clicked directly. */
+  /** ROAD-D D10: SetTargetNPC's portrait half for a STATIC NPC
+   *  (TalkManager.cs:845-849). The index law is
+   *  portraitIndexFromStaticNPCBillboard (systems/npcSession.js); this
+   *  is the host wiring it needs - the faction record from townTalk's
+   *  FACTION.TXT and FLATS.CFG's faceIndex column from the data
+   *  pipeline (dataPipeline.js:41, loaded for the captions already). */
+  function staticNpcPortrait(npcData) {
+    return portraitIndexFromStaticNPCBillboard(npcData, {
+      factionData: townTalk?.factionDict?.get(npcData?.factionID ?? 0) ?? null,
+      flatFaceIndex: pipeline.flatFaceIndex,
+    });
+  }
+
   function popupTalkToStaticNpc(npcData, { isSpyMaster = false } = {}) {
     const dict2 = townTalk?.factionDict ?? null;
     const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
@@ -2380,7 +2419,7 @@ export function createWorldModes(host) {
     if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
       interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
       npcSession?.startNewConversation();   // #108: the same OnPush reset - this door is a push too
-      townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2 });
+      townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2, portrait: staticNpcPortrait(npcData) });
       return;
     }
     if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line

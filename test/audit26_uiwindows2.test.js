@@ -53,10 +53,14 @@ test('F159: the conversation scroll PERSISTS - pinned to the newest row only on 
   w._scrollConversationBy(999);
   assert.equal(w.conversationScroll, 74, '...and at the bottom');
   assert.equal(conversationScroll(200, 126), 74, 'the pin value is UpdateScrollBarConversation\'s');
-  // new content re-pins: both push sites null the field
+  // new content re-pins. ROAD-D D10 folded the two push sites into
+  // the ONE _pushQA helper - which is DFU's own shape, since
+  // SetQuestionAnswerPairInConversationListbox (:1290-1293) is the
+  // single writer both the topic ask and ButtonOkay's Work arm reach.
   const s = src('ui/nativeTalk.js');
-  assert.equal((s.match(/this\.conversationScroll = null;\s+\/\/ F159/g) ?? []).length, 2,
-    'both conversation writers reset to the newest row');
+  assert.equal((s.match(/this\.conversationScroll = null;\s+\/\/ F159/g) ?? []).length, 1,
+    'the one conversation writer resets to the newest row');
+  assert.equal((s.match(/this\._pushQA\(/g) ?? []).length, 2, 'and both askers go through it');
   // ...and draw() itself HOLDS the player's position - pin-once on
   // null, clamp otherwise - never a per-frame recompute.
   assert.ok(s.includes('else this.conversationScroll = clampScrollPixels(this.conversationScroll, contentH, R.conversation[3]);'),

@@ -142,10 +142,13 @@ test('population audit pins: single tick, range gate, RandomiseNPC per spawn + g
   // RandomiseNPC at EVERY spawn: roll 0 on the 1/32 -> a guard (399);
   // a recycled item re-rolls into a townsperson next spawn.
   {
-    // draws per spawn: spawnX, spawnY, guardRoll[, gender, variant]
+    // draws per spawn: spawnX, spawnY, guardRoll[, gender, variant],
+    // face variant. ROAD-D D10 added the last one - SetPerson's
+    // Random.Range(0, 24) portrait draw (MobilePersonNPC.cs:220),
+    // which BOTH arms of RandomiseNPC reach.
     const rolls = seq(
-      0.5, 0.5, 0.0,             // spawn 1: guard (floor(0*32) === 0)
-      0.5, 0.5, 0.9, 0.9, 0.0,   // spawn 2 (reuses the item): female table, variant 0
+      0.5, 0.5, 0.0, 0.0,             // spawn 1: guard (floor(0*32) === 0), face variant 0
+      0.5, 0.5, 0.9, 0.9, 0.0, 0.5,   // spawn 2 (reuses the item): female table, variant 0, face variant 12
     );
     const pop = new TownPopulation(nav, {
       totalBlocks: 16, race: 'Breton', rand: rolls,
@@ -155,6 +158,9 @@ test('population audit pins: single tick, range gate, RandomiseNPC per spawn + g
     const it = pop.pool[0];
     assert.equal(it.person.archive, GUARD_TEXTURE);
     assert.equal(it.person.guard, true);
+    // ROAD-D D10: the guard arm is male outfit variant 0, so its talk
+    // portrait is maleBretonFaceRecordIndex[0] + 0 = 192.
+    assert.equal(it.person.personFaceRecordId, 192);
     // recycle by hand, then the next tick re-rolls the SAME item
     it.person.release();
     it.active = false; it.scheduleEnable = false; it.visible = false;
@@ -162,6 +168,8 @@ test('population audit pins: single tick, range gate, RandomiseNPC per spawn + g
     assert.equal(pop.pool.length, 1, 'the shell is reused');
     assert.equal(it.person.archive, 453, 'Breton female variant 0 after the re-roll');
     assert.equal(it.person.guard, false);
+    // femaleBretonFaceRecordIndex[0] 72 + floor(0.5 * 24) 12 = 84
+    assert.equal(it.person.personFaceRecordId, 84, 'the TFAC00I0.RCI record the talk window portraits her from');
   }
 });
 

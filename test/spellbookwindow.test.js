@@ -29,6 +29,7 @@ import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { cureOfferMessageOffset } from '../src/systems/guildServiceActions.js';
 import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from '../src/ui/spellIcons.js';
+import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
@@ -1112,4 +1113,60 @@ test('U42: the live probe surface exists on both exterior hosts, and castProbe r
   const reopen = sortLeg.indexOf("await page.keyboard.press('Backspace');");
   const ready = sortLeg.indexOf("await page.keyboard.press('Enter');");
   assert.ok(reopen > 0 && reopen < ready, 'castProbe reopens the book before readying');
+});
+
+// ---------------------------------------------------------------
+// ROAD-D D10: the effect popup's BODY. ShowEffectPopup (:651-660)
+// shows the effect's own SpellBookDescription tokens and nothing
+// else; the ids are per-effect-class properties in DFU
+// (EntityEffect.cs:78, :395-398 for the null default).
+// ---------------------------------------------------------------
+test('D10: SpellBookDescription ids are the effect classes own, and every catalogue row has one', () => {
+  // spot pins straight off the classes, including the two the
+  // Personality/Speed subType order swaps (DrainPersonality is 1225
+  // at subType 5, DrainSpeed 1224 at subType 6)
+  assert.equal(spellBookDescriptionId('4,0'), 1212);    // DamageHealth.cs:41
+  assert.equal(spellBookDescriptionId('7,0'), 1219);    // DrainStrength.cs:41
+  assert.equal(spellBookDescriptionId('7,5'), 1225);    // DrainPersonality
+  assert.equal(spellBookDescriptionId('7,6'), 1224);    // DrainSpeed
+  assert.equal(spellBookDescriptionId('11,4'), 1254);   // TransferEndurance.cs:41
+  assert.equal(spellBookDescriptionId('12,255'), 1303);  // SoulTrap.cs
+  assert.equal(spellBookDescriptionId('44,255'), 1305); // ComprehendLanguages
+  // the two VARIANT families compute theirs from the variant index
+  for (let v = 0; v < 5; v++) assert.equal(spellBookDescriptionId(`8,${v}`), 1227 + v);   // ElementalResistance.cs:94
+  for (let v = 0; v < 4; v++) assert.equal(spellBookDescriptionId(`33,${v}`), 1285 + v);  // PacifyEffect.cs:79
+  // an effect DFU gives no description reads null (EntityEffect's
+  // default is a null token array)
+  assert.equal(spellBookDescriptionId('99,255'), null);
+  // and every registry row the spellbook can print an effect panel
+  // for has an id, so the popup is never empty on real data
+  for (const e of SPELL_MAKER_EFFECTS) {
+    assert.ok(SPELLBOOK_DESCRIPTION_IDS.has(e.key), `${e.key} (${e.group}) has a SpellBookDescription`);
+  }
+});
+
+test('D10: clicking an effect panel pops that effect SpellBookDescription record', () => {
+  const entity = { name: 'Nyra Sunborn', magicka: 20, maxMagicka: 40, items: [], stats: { personality: 50 } };
+  const asked = [];
+  const w = new SpellbookWindow({
+    spells: () => [spell('Wildfire', 12)],   // effects[0] is Damage Health, key 4,0
+    entity,
+    castCost: (sp) => sp.cost,
+    rows: (id) => { asked.push(id); return [`record ${id}`]; },
+  });
+  w.selectedIndex = 0;
+  const [ex, ey, ew, eh] = SPELLBOOK_RECTS.effect[0];
+  assert.equal(w.click(PX + ex + 2, PY + ey + 2), true);
+  assert.equal(w.top, 'note');
+  assert.deepEqual(asked, [1212], 'DamageHealth SpellBookDescription, not the group name');
+  assert.deepEqual(w._noteRows, ['record 1212']);
+  assert.ok(ew > 0 && eh > 0);
+  // a host with NO record source keeps the group/subgroup fallback -
+  // an empty parchment would be worse than the name.
+  const bare = new SpellbookWindow({
+    spells: () => [spell('Wildfire', 12)], entity, castCost: (sp) => sp.cost, rows: () => [],
+  });
+  bare.selectedIndex = 0;
+  bare.click(PX + ex + 2, PY + ey + 2);
+  assert.deepEqual(bare._noteRows, ['Damage Health']);
 });

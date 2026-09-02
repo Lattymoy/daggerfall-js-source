@@ -47,7 +47,13 @@ test('B5: Tell me about opens the flat engine list and a pick asks through the s
   assert.ok(w.click(...at(TALK_RECTS.tellMeAbout)));
   assert.equal(w.topicMode, 'topics');
   assert.equal(w.topics.length, 2);
+  // ROAD-D D10: one click SELECTS row 0 and fills the player-says
+  // label; the pair needs the double click (or OKAY).
   w.click(...at(TALK_RECTS.topicList));   // row 0: Any news?
+  assert.equal(w.conversation.length, 1, 'one click asks nothing');
+  assert.equal(w.question, 'About Any news?...');
+  w.click(...at(TALK_RECTS.topicList), false, 1000);
+  w.click(...at(TALK_RECTS.topicList), false, 1100);
   assert.equal(w.conversation.length, 3);   // greeting + question + answer
   assert.equal(w.conversation[1].kind, 'question');
   assert.equal(w.conversation[2].text, 'Any news?: an answer');
@@ -73,10 +79,14 @@ test('B6: Work clears the list, shows the question, and OKAY asks it (ButtonOkay
   w.click(...at(TALK_RECTS.okay));
   assert.equal(h.state.workAsked, 1);
   assert.equal(w.conversation.at(-1).text, 'You might try the Odd Blades.');
-  // OKAY outside the Work page stays the recorded no-op
+  // ROAD-D D10: OKAY off the Work page asks the SELECTED topic
+  // (ButtonOkay's else arm, SelectTopicFromTopicList :1547) - it was
+  // a recorded no-op only while the window had no selection.
   w.click(...at(TALK_RECTS.tellMeAbout));
+  assert.equal(w.selected, 0);
   w.click(...at(TALK_RECTS.okay));
-  assert.equal(h.state.workAsked, 1);
+  assert.equal(h.state.workAsked, 1, 'the Work hook is not asked again');
+  assert.equal(w.conversation.at(-1).text, 'Any news?: an answer');
 });
 
 test('B5-6: a page whose hook is absent consumes the click and opens nothing (the pre-engine host)', () => {
@@ -116,7 +126,10 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   // through SetStartConversation (:654) on EVERY push, and the static
   // door ran none of it - the deferred topic-list rebuild was never
   // spent and numQuestionsAsked never returned to 0.
-  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{[\s\S]*?npcSession\?\.startNewConversation\(\);\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: displayName \}\);/);
+  // ROAD-D D10 added the third thing SetTargetNPC does before the
+  // push: SetNPCPortrait (TalkManager.cs:845-849), which rides the
+  // same call as the portrait option.
+  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{[\s\S]*?npcSession\?\.startNewConversation\(\);\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: displayName, portrait: staticNpcPortrait\(npcData\) \}\);/);
   // the guild popup's TALK button routes TalkToStaticNPC with menu TRUE
   // (DaggerfallGuildServicePopupWindow.cs:294) and yields to the window
   // G6 gave that door a SECOND caller, so the pin follows the law
@@ -129,8 +142,10 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
     'and the 402 greeting\'s dismissal is');
   assert.match(modes, /interiorOverlay = null;\s*\/\/ the popup yields to the conversation/);
   // ONE window-opener - the mobile path and the static path share it
-  assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '' \} = \{\}\)/);
-  assert.match(town, /openTalkWindow\(t\.text, \{ npcSeed: _talkNpc\?\._talkSeed \?\? 0, npcName: _talkNpc\?\.nameNPC \?\? '' \}\);/);
+  assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '', portrait = null \} = \{\}\)/);
+  // ROAD-D D10: the mobile arm carries its portrait too - always
+  // CommonFaces, at SetPerson's record (TalkManager.cs:817).
+  assert.match(town, /openTalkWindow\(t\.text, \{\n\s*npcSeed: _talkNpc\?\._talkSeed \?\? 0, npcName: _talkNpc\?\.nameNPC \?\? '',\n\s*portrait: \{ archive: 'CommonFaces', record: _talkNpc\?\.personFaceRecordId \?\? 0 \},\n\s*\}\);/);
   // and the Work answer rides the session's own pool flag
   assert.match(town, /workAvailable: eng\.session\?\.workAvailable \?\? false,/);
 });

@@ -39,6 +39,20 @@ export const PERSON_TEXTURES = Object.freeze({
   Breton: { male: [385, 386, 391, 394], female: [453, 454, 455, 456] },
 });
 export const GUARD_TEXTURE = 399;
+/** ROAD-D D10 - SetPerson's face tables (MobilePersonNPC.cs:30-39),
+ *  digit for digit and in the SAME outfit-variant order as
+ *  PERSON_TEXTURES above (DFU's own comments pair them off texture by
+ *  texture: maleRedguard 336/312/336/312 match 381-384, and so on).
+ *  A walker's talk portrait is `recordIndices[personOutfitVariant] +
+ *  Random.Range(0, 24)` (:219-221) into TFAC00I0.RCI. The GUARD arm
+ *  is outfit variant 0 and male (:145-150), so it reads the male
+ *  table's first entry for its race like anyone else. */
+export const NUM_PERSON_FACE_VARIANTS = 24;
+export const PERSON_FACE_RECORDS = Object.freeze({
+  Redguard: { male: [336, 312, 336, 312], female: [144, 144, 120, 96] },
+  Nord: { male: [240, 264, 168, 192], female: [72, 0, 48, 0] },
+  Breton: { male: [192, 216, 288, 240], female: [72, 72, 24, 72] },
+});
 
 // ---- MobilePersonMotor.Update's POLITENESS GATE (:216-230) ----------
 
@@ -148,6 +162,10 @@ export class MobilePerson {
   /** RandomiseNPC identity re-roll (the pool re-rolls EVERY spawn -
    *  recycled walkers come back as someone else). */
   setIdentity(archive, guard) { this.archive = archive; this.guard = guard; }
+
+  /** SetPerson's tail (:218-224): the TFAC00I0.RCI record the talk
+   *  window portraits this walker from. Set by RandomiseNPC. */
+  personFaceRecordId = 0;
 
   /** The person's facing as a world yaw (G1: guard spawns inherit it). */
   get facingYaw() { return DIR_YAW[this.dir] ?? 0; }

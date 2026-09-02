@@ -19,7 +19,7 @@ import { srand, randomRangeInclusive } from '../src/formats/dfRandom.js';
 import { BOOK_ID_TITLES } from '../src/systems/booksData.js';
 import { getBookFileName, getRandomBookID, bookTitle, CLASSIC_BOOK_COUNT } from '../src/systems/books.js';
 import { parseBookMapping } from '../scripts/bakeBooks.mjs';
-import { BookReaderWindow, layoutBookLines, SCROLL_AMOUNT, PAGE_PANEL, BOOK_RECTS } from '../src/ui/bookReader.js';
+import { BookReaderWindow, layoutBookLines, SCROLL_AMOUNT, PAGE_PANEL, BOOK_RECTS, placeBookLabels, bookLabelVisible, bookFontName, BOOK_FONT_NAMES } from '../src/ui/bookReader.js';
 import { useItem } from '../src/systems/useItem.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
@@ -274,6 +274,12 @@ test('books: handing off to the reader RUNS the inventory close law (the dropped
   assert.equal(closed, true, 'the loot container released');
 });
 
+/** ROAD-D D10: a synthetic face - TextLabel measures rows in the
+ *  label's OWN font, so the pins carry two of them. glyphWidth 5 plus
+ *  the FNT glyph spacing gives 6 px a character. */
+const fakeFont = (fixedHeight) => ({ fnt: { fixedHeight, fixedWidth: 6, glyphWidth: () => 5 } });
+const FONT10 = fakeFont(10);
+
 test('books: the reader window - open sound, the verbatim scroll clamps, page-turn boundaries, exit', () => {
   const bf = new BookFile();
   // 40 one-line pages -> 400px of book against the 159px panel
@@ -282,6 +288,13 @@ test('books: the reader window - open sound, the verbatim scroll clamps, page-tu
   let w;
   const opened = capturePlays(() => { w = new BookReaderWindow(bf); });
   assert.deepEqual(opened, [SOUND.OpenBook]);
+  // ROAD-D D10: maxHeight is MEASURED (LayoutBookLabels' `y +=
+  // label.Size.y`, :317-328), so it exists once the window has been
+  // laid out against a font. This face's glyph height is 10, and
+  // every one of the 40 lines fits one row, so the sum is the old
+  // fixed-row 400 - now for DFU's reason rather than by assumption.
+  assert.equal(w.maxHeight, 0, 'nothing is scrollable before the first layout');
+  w.layout(FONT10);
   assert.equal(w.maxHeight, 400);
 
   // Up at zero is a no-op (the C# clamp)
@@ -349,4 +362,73 @@ test('books: ARENA2 corpus sweep - every classic book parses (gated)', (t) => {
     count++;
   }
   assert.ok(count > 0, 'books found');
+});
+
+
+// ---------------------------------------------------------------
+// ROAD-D D10: the book reader's rows are MEASURED, not assumed.
+// LayoutBookLabels stacks wrapping labels by their own Size.y
+// (DaggerfallBookReaderWindow.cs:317-328, TextLabel.cs:708), the
+// FontPrefix token switches the face (:235-237), and ScrollBook
+// enables a label that merely OVERLAPS the panel (:193-194).
+// ---------------------------------------------------------------
+test('D10: a wrapped label advances by rows x GlyphHeight, in its own face', () => {
+  // 6 px a character in FONT10, so 60 characters is 360 - past the
+  // 300 wrap width, and the label is two rows tall, not one.
+  const long = 'w '.repeat(30).trim();
+  const lines = [
+    { text: 'short', center: false, font: 0 },
+    { text: long, center: false, font: 0 },
+    { text: '', center: false, font: 0 },
+  ];
+  const { placed, maxHeight } = placeBookLabels(lines, () => FONT10);
+  assert.equal(placed[0].rows.length, 1);
+  assert.equal(placed[0].h, 10);
+  assert.ok(placed[1].rows.length > 1, 'the long token wraps');
+  assert.equal(placed[1].y, 10, 'the next label starts where the last ended');
+  assert.equal(placed[1].h, placed[1].rows.length * 10);
+  // an empty line still measures one row (TextLabel always pushes a
+  // final row, TextLabel.cs:701-704)
+  assert.equal(placed[2].h, 10);
+  assert.equal(placed[2].y, 10 + placed[1].h);
+  assert.equal(maxHeight, placed[2].y + 10);
+});
+
+test('D10: FontPrefix names a FontName, and a taller face advances further', () => {
+  // (FontName)token.x - 1: 1 is FONT0000 ... 5 is FONT0004, and 0 -
+  // no prefix seen - is the default font.
+  assert.deepEqual([...BOOK_FONT_NAMES], ['FONT0000', 'FONT0001', 'FONT0002', 'FONT0003', 'FONT0004']);
+  assert.equal(bookFontName(1), 'FONT0000');
+  assert.equal(bookFontName(4), 'FONT0003');
+  assert.equal(bookFontName(5), 'FONT0004');
+  assert.equal(bookFontName(0), null, 'no prefix: the default font');
+  assert.equal(bookFontName(6), null);
+  const tall = fakeFont(20);
+  const lines = [{ text: 'a', center: false, font: 0 }, { text: 'b', center: false, font: 1 }];
+  const { placed, maxHeight } = placeBookLabels(lines, (x) => (x === 1 ? tall : FONT10));
+  assert.equal(placed[0].h, 10);
+  assert.equal(placed[1].h, 20, 'the FontPrefix row is measured in ITS face');
+  assert.equal(maxHeight, 30);
+});
+
+test('D10: a partially visible label is enabled - overlap, not containment', () => {
+  // ScrollBook (:193-194): Position.y < panel.h && Position.y + Size.y > 0
+  assert.equal(bookLabelVisible(0, 10, 159), true);
+  assert.equal(bookLabelVisible(-9, 10, 159), true, 'sliding off the top still draws');
+  assert.equal(bookLabelVisible(-10, 10, 159), false, 'wholly above');
+  assert.equal(bookLabelVisible(158, 10, 159), true, 'the boundary row draws and the scissor cuts it');
+  assert.equal(bookLabelVisible(159, 10, 159), false, 'wholly below');
+});
+
+test('D10: layoutBookLines records the FontPrefix token on every row it governs', () => {
+  const bf = new BookFile();
+  bf.load(buildBook({ pages: [new Uint8Array([
+    ...text('plain'), RSC.NewLine,
+    RSC.FontPrefix, 3, 0,
+    ...text('small'), RSC.NewLine,
+  ])] }), 'BOK00000.TXT');
+  const lines = layoutBookLines(bf);
+  assert.equal(lines[0].text, 'plain');
+  assert.equal(lines[0].font, 0);
+  assert.equal(lines.find((l) => l.text === 'small').font, 3, 'sticky until the next prefix');
 });

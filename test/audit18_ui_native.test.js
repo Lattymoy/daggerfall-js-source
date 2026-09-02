@@ -265,7 +265,9 @@ test('audit18 ui-native F7b: the topic hit test reads scrollIndex + clickY', () 
   });
   w.click(10, 15);
   w.scroll = 21;                          // three rows off the top
-  w.click(10, 71);                        // the very top of the list band
+  // ROAD-D D10: two presses, because MouseDoubleClick is what descends
+  w.click(10, 71, false, 1000);           // the very top of the list band
+  w.click(10, 71, false, 1100);
   assert.equal(w.topicMode, 'buildings');
   assert.equal(w.topics[0].label, 'b3', 'ListBox.MouseClick: floor((21 + 0) / 7) = 3');
 });

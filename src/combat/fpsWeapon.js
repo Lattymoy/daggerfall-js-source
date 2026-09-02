@@ -61,6 +61,7 @@ export const ALIGN = Object.freeze({ Left: 0, Center: 1, Right: 2 });
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
 // ui/nativePanel.js.
 import { NATIVE_W, NATIVE_H } from '../ui/nativePanel.js';
+import { weaponOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
 
 export { NATIVE_W, NATIVE_H };
 
@@ -248,9 +249,9 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
 
 /**
  * FPSWeapon.UpdateWeapon + OnGUI placement, verbatim (right-hand,
- * point filtering, no large-HUD offset): the weapon image overlays a
- * 320x200 design surface stretched to the canvas, bottom-anchored,
- * aligned per the state's table row.
+ * point filtering): the weapon image overlays a 320x200 design
+ * surface stretched to the canvas, bottom-anchored above the large
+ * HUD's offset, aligned per the state's table row.
  */
 /** FPSWeapon :378, :459: FlipHorizontal mirrors only the states whose
  *  art is hand-symmetric - Idle, StrikeDown, StrikeUp. A left or right
@@ -259,6 +260,11 @@ export const FLIP_STATES = Object.freeze(['Idle', 'StrikeDown', 'StrikeUp']);
 
 export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
+  // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
+  // through the ONE home for the large HUD's laws rather than
+  // recomputed - and DEFAULTED here, so the single caller
+  // (combat/weaponRig.js) does not have to know the bar exists.
+  offsetHeight = weaponOffsetHeight(),
 } = {}) {
   if (!art) return;
   const flip = flipHorizontal && FLIP_STATES.includes(state);
@@ -280,7 +286,8 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   if (alignment === ALIGN.Left) x = canvas.width * anim.Offset;
   else if (alignment === ALIGN.Center) x = canvas.width / 2 - w / 2;
   else x = canvas.width * (1 - anim.Offset) - w;
-  const y = canvas.height - h;   // weaponOffsetHeight 0 (no large HUD)
+  // OnGUI's rect (:388): `screenRect.height - height - weaponOffsetHeight`.
+  const y = canvas.height - h - offsetHeight;
   // The mirror: rect.xMax .. -width (:388), i.e. u from 1 to 0.
   const src = flip ? { u0: 1, v0: 0, u1: 0, v1: 1 } : undefined;
   renderer.drawScreenQuad(tex, { x, y, w, h }, src);

@@ -119,6 +119,7 @@ import { TransportWindow, preloadTransportArt, transportArtLoaded } from '../ui/
 import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
+import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
@@ -6444,7 +6445,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           // while the 3D horse actually stands under you (the cart,
           // the classic skin, and every failed load keep it).
           if (!pegasUp) {
-            const rect = ridingRect(canvas, ridingArt);
+            // ROAD-D D10: horseOffsetHeight (TransportManager.cs
+            // :304-309) - the bar the LAST drawHud drew, lifted out
+            // from under the mount. Docking is not asked here; DFU's
+            // horse arm never asks it.
+            const rect = ridingRect(canvas, ridingArt, horseOffsetHeight());
             renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
           }
         }

@@ -13,13 +13,23 @@
 // FACTION.TXT + TEXT.RSC + FONT0003 through the host's fetchBytes.
 // Overlay active = the motor holds (the U3 seam shape).
 //
-// FLAGGED loud: Info mode opens the same talk window (DFU routes
-// Info/Grab/Talk on mobiles identically); the TFAC portrait art is
-// the one T3c piece still open (guards-on-pickpocket, topics and
-// tones all SHIPPED - AUDIT 23 retired those clauses); pickpocket
-// gold/nothing land as HUD lines where DFU raises a modal MessageBox
-// ("not successful" IS a HUD popup in DFU too) - the box swap rides
-// the U-arc message-box rollout to these hosts.
+// ROAD-D D10 closed the last of this header's open clauses, and each
+// deserves its record:
+//   - Info mode opening the same talk window was never a gap:
+//     PlayerActivate.cs:775-783 falls Info, Grab and Talk on a mobile
+//     through to the same TalkToMobileNPC call.
+//   - THE TFAC PORTRAIT SHIPPED. SetNPCPortrait
+//     (DaggerfallTalkWindow.cs:360-385) is called from SetTargetNPC,
+//     before the push, so it rides openTalkWindow's `portrait` option
+//     below - CommonFaces (TFAC00I0.RCI) at SetPerson's minted record
+//     for a mobile (TalkManager.cs:817, systems/townPopulation.js's
+//     _setFaceRecord), and GetPortraitIndexFromStaticNPCBillboard's
+//     archive/record pair for a static NPC (:849, the law in
+//     systems/npcSession.js, wired at scenes/worldModes.js).
+//   - THE PICKPOCKET BOX SWAPPED. Pickpocket (PlayerActivate.cs:
+//     1611-1660) raises a real MessageBox for both success arms and
+//     leaves only the failure on the HUD, which systems/talk.js now
+//     reports as `modal` and the steal arm below routes on.
 
 import { FactionFile } from '../formats/factionFile.js';
 import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
@@ -45,7 +55,8 @@ import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
-import { NativeTalkWindow, preloadTalkArt, talkArtLoaded } from '../ui/nativeTalk.js';   // U8b
+import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
+import { NativeTalkWindow, preloadTalkArt, talkArtLoaded, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
 import { preloadExteriorAutomapArt } from '../ui/exteriorAutomapWindow.js';   // ROAD-C c2/S10: the town map's native art
 
@@ -539,7 +550,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         rolls,
         nothingText: () => randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),   // F046: GetRandomText(8999)
       });
-      hud.add(r.message);
+      // ROAD-D D10: the box swap the header pended. Pickpocket
+      // (PlayerActivate.cs:1611-1660) raises a MESSAGE BOX for both
+      // success arms - the pinched purse (:1630) and the 8999
+      // nothing-valuable record (:1645) - and leaves only the failure
+      // on the HUD (`PopupMessage`, :1650), which is right: the
+      // failure is the arm that spawns the watch behind it.
+      if (r.modal) showOverlay(new ActionTextBox(String(r.message).split('\n')));
+      else hud.add(r.message);
       // G1: the caught pickpocket IS the crime - SpawnCityGuards(true)
       if (!r.success) onCrime?.();
       return;
@@ -581,6 +599,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       _questionsAsked = 0;
       openTalkWindow(talk.greeting, {
         npcSeed: target.person._talkSeed, npcName: target.person.nameNPC ?? '',
+        // TalkManager.cs:817 - a mobile ALWAYS portraits from
+        // TFAC00I0.RCI, at the record SetPerson minted for it.
+        portrait: { archive: 'CommonFaces', record: target.person.personFaceRecordId ?? 0 },
       });
       return;
     }
@@ -615,7 +636,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _questionsAsked = 0;
     // U8b: the native TALK01I0 window when the art is up (clicks/taps
     // through the verbatim hit rects; the keyed chain is the fallback)
-    openTalkWindow(t.text, { npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '' });
+    openTalkWindow(t.text, {
+      npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '',
+      portrait: { archive: 'CommonFaces', record: _talkNpc?.personFaceRecordId ?? 0 },
+    });
   }
 
   /** B7: THE ONE WINDOW-OPENER. The mobile path above and
@@ -626,7 +650,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  resets are NOT here: the mobile path runs its own above, and
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
-  function openTalkWindow(greeting, { npcSeed = 0, npcName = '' } = {}) {
+  function openTalkWindow(greeting, { npcSeed = 0, npcName = '', portrait = null } = {}) {
+    // ROAD-D D10: SetNPCPortrait (DaggerfallTalkWindow.cs:360-385).
+    // DFU sets it from SetTargetNPC, BEFORE the push (TalkManager.cs
+    // :817 for a mobile, :849 for a static NPC), so it lands here -
+    // the port's one window door. A caller with no portrait clears
+    // the last one rather than inheriting a stranger's face.
+    if (portrait) setNpcPortrait(portrait.archive, portrait.record);
+    else clearNpcPortrait();
     _talkSeed = npcSeed;   // F043: whoever we are talking to now
     // V4: GetSuppressTalk (LycanthropyEffect.cs:423-437) - every
     // conversation door lands here (B7's one-opener law), so the
@@ -651,13 +682,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
           // (TK-iv owns it); no work in town = record 8078 verbatim
           workAvailable: eng.session?.workAvailable ?? false,
         }),
-        answer: (row) => (row.listItem
-          ? eng.pipeline.getAnswerText(row.listItem, { npcSeed })
-          : answerText(row)),
-        question: (row) => {
-          if (row.listItem) return eng.pipeline.getQuestionText(row.listItem, tone);
-          const q = questionText(row); _questionsAsked++; return q;   // AUDIT 17e F13 (the engine's counter climbs in getAnswerText)
+        answer: (row) => {
+          if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
+          const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
         },
+        // ROAD-D D10: the counter climbs in the ANSWER, not here.
+        // UpdateQuestion now runs on every SELECTION (the window's
+        // shipped selection model), and DFU's GetQuestionText has
+        // never touched numQuestionsAsked - GetAnswerText does, which
+        // is where the engine path already had it.
+        question: (row) => (row.listItem
+          ? eng.pipeline.getQuestionText(row.listItem, tone)
+          : questionText(row)),
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName,   // AUDIT 18 F5: the NPC's OWN name, not the People faction

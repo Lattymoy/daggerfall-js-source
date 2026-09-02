@@ -11,8 +11,8 @@
 //   Okay (4,186,107,10); Goodbye (118,183,67,10);
 //   topic list (6,71) 94x104; conversation (189,65) 114x126;
 //   player-says label (123,8) 124x38; NPC name (117,52) 197x10;
-//   portrait (119,65) 64x64 (TFAC faces PEND - the art's frame
-//   shows); tone radios (258, 18/28/38) 6x6 - the selection marker is
+//   portrait (119,65) 64x64 (panelPortraitPos/Size :158-159);
+//   tone radios (258, 18/28/38) 6x6 - the selection marker is
 //   panelTone, a flat 6x6 toggleColor (162,36,12) fill moved between
 //   those three positions by UpdateCheckboxes (:916-930); no art is
 //   involved.
@@ -21,9 +21,17 @@
 //   :1418-1428) - both listboxes are VerticalScrollModes.PixelWise,
 //   so the scroll index is a pixel offset, never a row count.
 //
-// Interaction: clicks/taps through the hit rects (the phone path),
-// with the session's keyboard accelerators preserved - W opens
-// Where-is > Location, T cycles tone, digits pick visible rows,
+// Interaction: clicks/taps through the hit rects (the phone path).
+// ROAD-D D10 shipped the SELECTION model the window is built around:
+// a click on a topic row only selects it and fills the player-says
+// label (ListBox.MouseClick -> OnSelectItem -> UpdateQuestion,
+// :549-550/:1381-1387), a DOUBLE click uses it (MouseDoubleClick ->
+// OnUseSelectedItem -> SelectTopicFromTopicList), OKAY asks whatever
+// is selected (ButtonOkay_OnMouseClick :1534-1548), and the selected
+// row draws in ListBox's selectedTextColor with no shadow. The
+// session's keyboard accelerators are preserved - W opens
+// Where-is > Location, T cycles tone, digits USE a visible row
+// (OURS: DFU has no keyboard here, so one press does both halves),
 // N/P page (OURS: DFU has no keyboard scroll here, so they step a
 // full listbox height), Esc/E goodbye. B5-6: Tell me about, People,
 // Things and Work are LIVE pages over the engine's own lists
@@ -31,7 +39,9 @@
 // each stays a consumed no-op on a host with no engine mounted.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
-import { drawScreenDimBackdrop } from './chargenArt.js';
+import { CifRciFile } from '../formats/cifRciFile.js';
+import { bitmapToColor32 } from './hud.js';
+import { drawScreenDimBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversationStyleInTalkWindow
 import { measureText } from './text.js';
@@ -71,6 +81,19 @@ export const ROW_H = 7;                          // FONT0003 fixedHeight
 export const ROW_SPACING = 4;                    // ListBox RowSpacing, per ITEM
 export const CONV_LINE_H = ROW_H + ROW_SPACING;  // kept: one single-line entry to the next
 export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI selectedTextColor (the newest row)
+/** ROAD-D D10: the TOPIC listbox's selected row. listboxTopic sets no
+ *  colour of its own (DaggerfallTalkWindow.cs:535-551), so it keeps
+ *  ListBox's default selectedTextColor = DaggerfallUI.cs:62's
+ *  DaggerfallDefaultSelectedTextColor (162,36,12) - the same dark red
+ *  ui/listPicker.js already draws its selection in. */
+export const TOPIC_SELECTED_TEXT_COLOR = [162 / 255, 36 / 255, 12 / 255, 1];
+/** DecideTextColor (ListBox.cs:360-380) as this listbox reaches it.
+ *  The talk window assigns no highlight colours, so the two hover
+ *  arms collapse away and only the SELECTED arm remains - and that
+ *  arm hands the label selectedShadowPosition = Vector2.zero (:41),
+ *  which TextLabel's zero-position guard turns into no shadow pass at
+ *  all (the ui/listPicker.js rowShadowOffset law, same source). */
+export const topicRowStyle = (selected) => (selected ? { color: TOPIC_SELECTED_TEXT_COLOR, shadowOffset: 0 } : {});
 // AUDIT 17e F19: DFU's PixelWise ListBox DRAWS the partially-clipped
 // last row (104/7 = 14.857 -> 15 rows, the last one cut) and its hit
 // test selects it. AUDIT 18 folded that law into layoutPixelRows -
@@ -125,11 +148,79 @@ export const conversationScroll = (contentH, panelH) => Math.max(0, contentH - p
 
 let _art = null;
 export async function preloadTalkArt(deps) {
+  _portraitDeps = deps;   // ROAD-D D10: SetNPCPortrait reads through the same host seam
   if (_art) return;
   try { _art = await loadImg(deps, 'TALK01I0.IMG'); }
   catch { console.warn('[talk] TALK01I0.IMG unavailable; the text talk chain stands in'); }
 }
 export const talkArtLoaded = () => !!_art;
+
+// ---- ROAD-D D10: THE NPC PORTRAIT (SetNPCPortrait, :360-385) -------
+// DFU has ONE talk window and texturePortrait is its field, set from
+// TalkManager.SetTargetNPC BEFORE the window is pushed (:817, :849) -
+// so this state is module-level, exactly as HUDEscortingNPCFaces'
+// panel list is, and for the same reason.
+//
+// The two archives are DaggerfallTalkWindow's own constants (:37-38):
+// CommonFaces = TFAC00I0.RCI (mobile NPCs and common static NPCs),
+// SpecialFaces = FACES.CIF (story and special NPCs). Both are RCI
+// grids of 64x64 records in this port's reader (cifRciFile.js:33-41),
+// which is the panel's size (:158-159) - no fit is involved.
+//
+// RECORDED DEPARTURE (async art), the same one hudEscortFaces.js
+// carries: DFU loads the record synchronously and CLOSES THE WINDOW
+// when it fails (:375-379). The port's art is fetched through the
+// host's async seam, so the portrait draws from the frame it lands
+// and a missing record costs the portrait (warned once), never the
+// conversation.
+export const PORTRAIT_ARCHIVE = Object.freeze({ CommonFaces: 'TFAC00I0.RCI', SpecialFaces: 'FACES.CIF' });
+export const PORTRAIT_RECT = Object.freeze([119, 65, 64, 64]);
+
+let _portraitDeps = null;
+let _portrait = null;            // { tex, w, h } once the record has landed
+let _portraitKey = null;         // `${file}#${record}` - what _portrait holds or is loading
+let _portraitWarned = false;
+const _portraitFiles = new Map();   // file -> Promise<CifRciFile>
+const _portraitTex = new Map();     // key -> { tex, w, h }
+
+function _loadPortraitFile(file) {
+  let pr = _portraitFiles.get(file);
+  if (!pr) {
+    pr = (async () => {
+      const cif = new CifRciFile();
+      cif.load(await _portraitDeps.fetchBytes(file), file, _portraitDeps.palette);
+      return cif;
+    })();
+    _portraitFiles.set(file, pr);
+  }
+  return pr;
+}
+
+/** SetNPCPortrait(FacePortraitArchive, recordId) (:360-385). */
+export function setNpcPortrait(archive, recordId) {
+  const file = PORTRAIT_ARCHIVE[archive] ?? PORTRAIT_ARCHIVE.CommonFaces;
+  const key = `${file}#${recordId}`;
+  _portraitKey = key;
+  _portrait = _portraitTex.get(key) ?? null;
+  if (_portrait || !_portraitDeps) return;
+  _loadPortraitFile(file).then((cif) => {
+    if (!_portraitTex.has(key)) {
+      const bmp = cif.getDFBitmap(recordId, 0);
+      _portraitTex.set(key, {
+        tex: _portraitDeps.renderer.uploadTexture('cif', key, bitmapToColor32(bmp, _portraitDeps.palette)),
+        w: bmp.width, h: bmp.height,
+      });
+    }
+    if (_portraitKey === key) _portrait = _portraitTex.get(key);
+  }).catch((e) => {
+    if (!_portraitWarned) { _portraitWarned = true; console.warn('[talk] portrait art unavailable:', e?.message ?? e); }
+  });
+}
+
+/** ClearNPCPortrait - the port's own: a session with no portrait set
+ *  must not inherit the last NPC's face. */
+export function clearNpcPortrait() { _portrait = null; _portraitKey = null; }
+export const npcPortraitKey = () => _portraitKey;
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
@@ -167,12 +258,65 @@ export class NativeTalkWindow {
     // Tell-me-about is selected the greyed-out category buttons do
     // nothing AND make no sound. The window still swallows the click.
     this._talkOption = 'whereIs';
+    // ROAD-D D10: listboxTopic.SelectedIndex. DFU splits the topic
+    // list in two (DaggerfallTalkWindow.cs:549-550): OnSelectItem
+    // (:1381-1387) only moves this index and refreshes the
+    // player-says label through UpdateQuestion, and OnUseSelectedItem
+    // (:1389-1392) is what asks. -1 = nothing selected (SelectNone).
+    this.selected = -1;
+    this._lastRowClick = null;   // BaseScreenComponent's double-click clock
+  }
+
+  /** SetListboxTopics' tail (:893-905): a freshly filled list SELECTS
+   *  its first row - index 1 when row 0 is the NavigationBack
+   *  "previous" row, which this port's flattened lists never carry
+   *  (treeCategories drops them, townTalk.js:658) - and SelectIndex
+   *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
+   *  label is filled before the player clicks anything. An EMPTY list
+   *  returns before that (`if (listTopic.Count <= 0) return;`), which
+   *  is why Things leaves the previous question standing. */
+  _setListboxTopics(rows, mode) {
+    this.topics = rows;
+    this.topicMode = mode;
+    this.scroll = 0;
+    if (!rows.length) return;
+    this.selected = -1;
+    this._selectIndex(0);
+  }
+
+  /** ListBox.MouseClick (:465-505) -> SelectIndex -> OnSelectItem. */
+  _selectIndex(idx) {
+    if (idx < 0 || idx >= this.topics.length) return;
+    if (idx === this.selected) return;   // ListboxTopic_OnSelectItem's selectionIndexLastUsed guard (:1383-1386)
+    this.selected = idx;
+    this._updateQuestion(idx);
+  }
+
+  /** UpdateQuestion (:1222-1249). The Work page answers from a FAKE
+   *  ListItem with no list behind it; otherwise an out-of-range index
+   *  CLEARS the label, an ItemGroup row leaves currentQuestion "" (it
+   *  is not a question), and only an Item asks GetQuestionText for the
+   *  currently selected tone. */
+  _updateQuestion(index) {
+    if (this.topicMode === 'work') { this.question = this.hooks.workQuestion?.() ?? this.question; return; }
+    const it = this.topics[index];
+    if (!it) { this.question = ''; return; }
+    if (this.topicMode === 'categories') { this.question = ''; return; }   // ListItemType.ItemGroup
+    this.question = this.hooks.question?.(it) ?? `Where is ${it.label ?? it.name}?`;
+  }
+
+  /** SetQuestionAnswerPairInConversationListbox (:1290-1293): the
+   *  ButtonClick belongs to the PAIR, which is why
+   *  ButtonOkay_OnMouseClick (:1534-1548) plays none of its own. */
+  _pushQA(question, answer) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.conversation.push({ text: question, kind: 'question' });
+    this.conversation.push({ text: answer, kind: 'answer' });
+    this.conversationScroll = null;   // F159: UpdateScrollBarConversation on new content
   }
 
   _openCategories() {
-    this.topics = this.hooks.categories();
-    this.topicMode = 'categories';
-    this.scroll = 0;
+    this._setListboxTopics(this.hooks.categories(), 'categories');
   }
   /** B5-6: the OTHER pages. Tell me about (SetTalkModeTellMeAbout,
    *  DaggerfallTalkWindow.cs:935-958: ListTopicTellMeAbout, a FLAT
@@ -186,9 +330,7 @@ export class NativeTalkWindow {
    *  (the pre-engine fallback host) stays the old no-op. */
   _openFlat(rows) {
     if (!rows) return false;
-    this.topics = rows;
-    this.topicMode = 'topics';
-    this.scroll = 0;
+    this._setListboxTopics(rows, 'topics');
     return true;
   }
   _openWork() {
@@ -197,6 +339,7 @@ export class NativeTalkWindow {
     this.topics = [];
     this.topicMode = 'work';
     this.scroll = 0;
+    this.selected = -1;
     this.question = q;   // the player-says panel shows it; OKAY asks
     return true;
   }
@@ -209,22 +352,26 @@ export class NativeTalkWindow {
   }
   _askWork() {
     if (this.topicMode !== 'work' || !this.hooks.askWork) return;
-    this.conversation.push({ text: this.question, kind: 'question' });
-    this.conversation.push({ text: this.hooks.askWork(), kind: 'answer' });
-    this.conversationScroll = null;   // F159: UpdateScrollBarConversation on new content
+    this._pushQA(this.question, this.hooks.askWork());
   }
   /** The index of the first row ListBox.Draw renders at this pixel
    *  scroll - what the port's digit accelerators address. */
   _firstVisible() { return Math.max(0, Math.ceil(this.scroll / TOPIC_ROW_H) - 1); }
   _pick(i) { this._pickIndex(this._firstVisible() + i); }
+  /** SelectTopicFromTopicList (:1290-1340) - DFU's USE arm. It moves
+   *  the selection first (`listboxTopic.SelectedIndex = index`,
+   *  :1307), then walks the row's type: a group descends into its
+   *  children with a ButtonClick of its own (:1318-1330), an Item
+   *  pushes the Q/A pair and RE-RUNS UpdateQuestion for the row that
+   *  is still selected under it (:1333). */
   _pickIndex(idx) {
     const it = this.topics[idx];
     if (!it) return;
+    this.selected = idx;
     if (this.topicMode === 'categories') {
       this._category = it;
-      this.topics = it.buildings;
-      this.topicMode = 'buildings';
-      this.scroll = 0;
+      audio.playOneShot(SOUND.ButtonClick, 1);   // the ItemGroup arm's own click (:1329)
+      this._setListboxTopics(it.buildings, 'buildings');
     } else if (this.topicMode === 'buildings' || this.topicMode === 'topics') {
       // AUDIT 17e F13: the question is a TEXT.RSC record chosen by
       // tone, not an English literal. F-addendum: DFU pushes the
@@ -234,10 +381,9 @@ export class NativeTalkWindow {
       // B5-6: the flat pages (Tell me about, People) ask through the
       // SAME pair - their rows carry listItems and the hooks already
       // speak them.
-      this.question = this.hooks.question?.(it) ?? `Where is ${it.label ?? it.name}?`;
-      this.conversation.push({ text: this.question, kind: 'question' });
-      this.conversation.push({ text: this.hooks.answer(it), kind: 'answer' });
-      this.conversationScroll = null;   // F159
+      this._updateQuestion(idx);
+      this._pushQA(this.question, this.hooks.answer(it));
+      this._updateQuestion(idx);   // :1333 - "and get new question text for textlabel"
     }
   }
   /** VerticalScrollBar.ScrollIndex +/- dPx, clamped. */
@@ -276,21 +422,29 @@ export class NativeTalkWindow {
     if (d) this._pick(Number(d[1]) - 1);
   }
 
-  /** Pointer path (phone taps + mouse): virtual-space hit rects. */
-  click(vx, vy) {
+  /** Pointer path (phone taps + mouse): virtual-space hit rects.
+   *  The third slot is the host's right-button boolean
+   *  (townTalk.js:914) and is not read here; `now` is the
+   *  double-click clock, injectable for the pins. */
+  click(vx, vy, _rightButton = false, now = null) {
     const R = TALK_RECTS;
     // AUDIT 17e F12: GOODBYE closes. OKAY is DFU's "ask the selected
     // topic" button (DaggerfallTalkWindow) - it never closed the
-    // window. Consumed as a no-op until the highlight/selection model
-    // lands with the Tell-me-about slice (FLAGGED).
+    // window.
     // Every talk-window button assigns ButtonClick (DaggerfallTalkWindow
     // :1315-1605); the topic ask itself clicks at the Q&A pair (:1253).
     if (inRect(R.goodbye, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
-    // B6: OKAY asks the WORK question when the Work page is up
-    // (ButtonOkay_OnMouseClick :1534-1543); everywhere else it stays
-    // the recorded no-op (the port's one-click-asks idiom has no
-    // selected topic for it to ask).
-    if (inRect(R.okay, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._askWork(); return true; }
+    // ROAD-D D10: OKAY, whole. ButtonOkay_OnMouseClick (:1534-1548)
+    // has TWO arms and the port only ever had one: the Work page asks
+    // its fake ListItem, and EVERY other page asks
+    // SelectTopicFromTopicList(listboxTopic.SelectedIndex) - the
+    // selected topic, which is what makes OKAY the button its art
+    // says it is. It plays no sound of its own (the pair does).
+    if (inRect(R.okay, vx, vy)) {
+      if (this.topicMode === 'work') this._askWork();
+      else this._pickIndex(this.selected);
+      return true;
+    }
     if (inRect(R.whereIs, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'whereIs'; this._reopenCategory(); return true; }
     if (inRect(R.categoryLocation, vx, vy)) {
       if (this._talkOption !== 'whereIs') return true;   // greyed out: silent, per the gate above
@@ -306,7 +460,20 @@ export class NativeTalkWindow {
     if (inRect(R.conversationDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(CONVERSATION_ARROW_SCROLL); return true; }
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
-    if (inRect(R.topicList, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
+    // ROAD-D D10: and it only SELECTS (ListBox.cs:465-505). Reaching
+    // UseSelectedItem takes MouseDoubleClick (:507-512), the same law
+    // ui/listPicker.js carries; the test is on TIME alone
+    // (BaseScreenComponent.cs:691) because MouseClick has already
+    // moved the selection under the second press. The listbox itself
+    // plays no ButtonClick - the navigation arms and the Q/A pair do.
+    if (inRect(R.topicList, vx, vy)) {
+      const t = now ?? Date.now();
+      const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
+      this._selectIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H));
+      this._lastRowClick = t;
+      if (wasDouble) { this._lastRowClick = null; this._pickIndex(this.selected); }
+      return true;
+    }
     // B5-6: the four pages are live at :313-327 - tellMeAbout, then
     // people/things/work behind the whereIs gate - with three of the
     // hooks supplied at scenes/townTalk.js:612-614 and Work's OKAY
@@ -349,6 +516,9 @@ export class NativeTalkWindow {
     // which is Color.clear - the letterbox is NOT painted.
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
+    // panelPortrait (:417-418) - the BackgroundTexture at its own
+    // 64x64 over the art's frame, before the labels.
+    if (_portrait) drawImg(renderer, _portrait, m, PORTRAIT_RECT[0], PORTRAIT_RECT[1], PORTRAIT_RECT[2], PORTRAIT_RECT[3]);
     const R = TALK_RECTS;
     // NPC name CENTRED in its 197-wide panel (labelNameNPC
     // HorizontalAlignment.Center; seed-named persons pend - the
@@ -365,9 +535,14 @@ export class NativeTalkWindow {
     // topic rows, truncated to the listbox width (ListBox.AddItem sets
     // MaxWidth = Size.x), laid out at the listbox origin
     const fit = (t, w) => { let s = t; while (s.length > 1 && measureText(font.fnt, s) > w) s = s.slice(0, -1); return s; };
+    // ROAD-D D10: DecideTextColor (ListBox.cs:360-380) - the SELECTED
+    // row draws in selectedTextColor and, because
+    // selectedShadowPosition is Vector2.zero (:41), carries NO shadow.
+    // This listbox has no hover highlight: the talk window never
+    // assigns highlightedIndex's colours the way the picker does.
     layoutPixelRows(this.topics.map(() => TOPIC_ROW_H), this.scroll, R.topicList[3]).forEach(({ index, y }) => {
       const it = this.topics[index];
-      shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2]), m, R.topicList[0], R.topicList[1] + y);
+      shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2]), m, R.topicList[0], R.topicList[1] + y, topicRowStyle(index === this.selected));
     });
     // conversation - AUDIT 17e F11/F18. Two laws were wrong here:
     // UI6: the modern conversation style, read once for the whole
