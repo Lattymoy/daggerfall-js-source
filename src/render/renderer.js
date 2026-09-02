@@ -624,6 +624,26 @@ void main() {
     float fres = pow(1.0 - max(dot(V, vec3(0.0, 1.0, 0.0)), 0.0), 4.0);
     lit = mix(lit, uFogColor * 1.05 + uAmbient * 0.5, pud * (0.10 + fres * 0.72));
   }
+  // EE10: RAIN-SHINE ON THE ROAD. A road is hard: rain does not soak in,
+  // it SHEETS, and a wet sheet of stone is darker and shinier at once -
+  // water fills the pores (absorbs more) and lies flat on top (reflects
+  // sharper). Either alone looks wrong; the pair reads as rain-soaked.
+  // The road is known here by its RECORD - the same three the painter
+  // writes and the field marks hard - so the shine lives exactly where
+  // the road is. It rises with the rain falling and with water standing,
+  // and it is 0 on dry stone and off the road entirely.
+  bool road = (layer == 46 || layer == 47 || layer == 55);
+  if (road && uFieldAmt > 0.0) {
+    float wet = clamp(max(uRainAmt * 0.8, smoothstep(0.02, 0.20, texture(uField, vLocalXZ / uFieldSize).r) * 1.2), 0.0, 1.0) * (1.0 - snowCov);
+    if (wet > 0.001) {
+      vec3 V3 = normalize(uCamPos - vWorldPos);
+      vec3 H3 = normalize(uLightDir + V3);
+      float grazeR = pow(1.0 - max(dot(V3, n), 0.0), 3.0);
+      lit *= mix(1.0, 0.68, wet);                                                            // darker: the pores fill
+      lit += uSunColor * uSunScale * pow(max(dot(n, H3), 0.0), 90.0) * wet * 0.9;            // shinier: a tight sun highlight
+      lit += (uFogColor * 0.9 + uAmbient * 0.4) * grazeR * wet * 0.35;                       // and the sky, at a grazing angle
+    }
+  }
   if (snowCov > 0.001) {
     // a sparse sharp sparkle on FRESH snow only - snow scatters, it does
     // not shine, and trodden snow is dull

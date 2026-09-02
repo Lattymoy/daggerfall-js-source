@@ -854,7 +854,7 @@ function paneEnhanced(body) {
     + 'three-dimensional grass standing in the meadows, bending in the wind; and rain and snow '
     + 'that fall through the world around you, driven by the wind, rather than across the screen; '
     + 'and snow that gathers on the ground through a storm, takes your footprints, and melts away '
-    + 'as the season warms. '
+    + 'as the season warms, while the roads stay walked and wet-shining in the rain. '
     + 'Off returns Daggerfall\u2019s SKY*.DAT panorama and its own 64-pixel ground. '
     + 'Takes effect when the world next loads.'));
   body.append(live);

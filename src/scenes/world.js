@@ -16,7 +16,7 @@ import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixe
 import { settlementsOf } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
-import { placeGrass } from '../render/groundSurfaces.js';   // EE7: the grass placer
+import { placeGrass, ROAD_RECORDS } from '../render/groundSurfaces.js';   // EE7: the grass placer; EE10: the road records the field reads
 import { SurfaceField, warmthAt, baseSnowDepth, FIELD_DIM, SNOW_DEPTH_M } from '../world/surfaceField.js';   // EE9: the surface field   // FD1: PlayerTileMapIndex == 0; EV4: the far ring's skirt depth
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
@@ -610,7 +610,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own heightmap (scaled to world units, as the terrain grid is) and
     // a texture the draw will read. The calendar's base is set at once so
     // a midwinter mountain is white on the first frame.
-    const field = stride === 1 ? buildFieldFor(px, py, samples, climateBase) : null;
+    const field = stride === 1 ? buildFieldFor(px, py, samples, climateBase, tilemapBytes) : null;
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -880,7 +880,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** EE7: place and upload one pixel's grass, or null when the mode
    *  places none or ?grass=off. */
   /** EE9: a pixel's surface field. ?field=off is the kill switch. */
-  function buildFieldFor(px, py, samples, climateType) {
+  function buildFieldFor(px, py, samples, climateType, tilemapBytes = null) {
     if (!(isEnhanced() && getPref('enhancedEnvironments'))) return null;
     if (new URLSearchParams(globalThis.location?.search ?? '').get('field') === 'off') return null;
     const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
@@ -889,6 +889,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const sim = new SurfaceField({ heights, tileDim: TERRAIN_TILE_DIM });
     const day = Math.floor(worldMinutes() / 1440);
     sim.setBase(baseSnowDepth({ climateBase: climateType, dayOfYear: day }));
+    // EE10: the piece's roads and paths are HARD - they take less snow,
+    // sheet the rain, and start trodden. Read off the same tilemap that
+    // draws them, so the field's road is exactly the tile's road.
+    if (tilemapBytes) sim.setHard(tilemapBytes, ROAD_RECORDS);
     // the calendar's snow is THERE on the first frame, not built over an hour
     for (let i = 0; i < 40; i++) sim.tick(60, { warmth: warmthAt({ climateBase: climateType, dayOfYear: day, minuteOfDay: 240 }) });
     const tex = renderer.createFieldTexture(FIELD_DIM);
@@ -923,7 +927,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EE7: the grass follows the ring - born when the pixel comes near,
     // gone when it recedes
     if (stride === 1 && !p.grass) p.grass = buildGrassFor(p.px, p.py, p.groundArchive, p.tilemapBytes, p.samples);
-    if (stride === 1 && !p.field) p.field = buildFieldFor(p.px, p.py, p.samples, p.climateBase);   // EE9
+    if (stride === 1 && !p.field) p.field = buildFieldFor(p.px, p.py, p.samples, p.climateBase, p.tilemapBytes);   // EE9 (EE10: with its roads)
     else if (stride !== 1 && p.field) { renderer.gl.deleteTexture(p.field.tex); p.field = null; }
     else if (stride !== 1 && p.grass) { renderer.destroyGrass(p.grass); p.grass = null; }
     p._stride = stride;

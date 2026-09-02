@@ -122,3 +122,43 @@ test('EE9: snow is a HEIGHT in the terrain shader, the grass is buried by it, an
   assert.match(w, /get\('field'\) === 'off'\) return null;/, 'the kill switch');
   assert.match(w, /window\.__fieldCensus = \(\) => \{/, 'the census the probe reads');
 });
+
+// ═══ EE10: roads under weather ══════════════════════════════════════
+test('EE10: a walked road holds less snow than the field beside it, and sheets the rain', () => {
+  const dim = 8; const hDim = dim + 1;
+  const heights = new Float32Array(hDim * hDim).fill(100);          // flat, so only hardness differs
+  const tilemap = new Uint8Array(dim * dim);
+  for (let k = 0; k < dim * dim; k++) tilemap[k] = 2 << 2;          // lawn everywhere...
+  for (let tx = 0; tx < dim; tx++) tilemap[3 * dim + tx] = 46 << 2; // ...and one road across row 3
+  const mk = () => { const f = new SurfaceField({ heights, tileDim: dim }); f.setHard(tilemap, new Set([46, 47, 55])); return f; };
+  const cellOf = (f, tx, tz) => ((tz * f.cells + 1) * f.dim + (tx * f.cells + 1)) * 4;   // an interior cell of the tile
+  // roads start TRODDEN
+  const f0 = mk();
+  assert.ok(f0.data[cellOf(f0, 4, 3) + 2] >= 0.5, 'a road is packed before anyone walks it today');
+  assert.equal(f0.data[cellOf(f0, 4, 5) + 2], 0, 'the lawn is not');
+  // a midwinter base, filled in: the road holds a fraction of the lawn's
+  const f1 = mk(); f1.setBase(1);
+  for (let i = 0; i < 60; i++) f1.tick(60, { warmth: 0.1 });
+  const roadSnow = f1.data[cellOf(f1, 4, 3) + 1]; const lawnSnow = f1.data[cellOf(f1, 4, 5) + 1];
+  assert.ok(lawnSnow > 0.3, `the lawn fills toward the base (${lawnSnow.toFixed(2)})`);
+  assert.ok(roadSnow < lawnSnow * 0.45, `the road holds far less (${roadSnow.toFixed(2)} vs ${lawnSnow.toFixed(2)})`);
+  // a storm on both: the road still takes less
+  // ONE REAL TICK - six world-seconds, the host's own 100ms slot - of
+  // a storm and of a rain, before either surface reaches the cap. Snow:
+  // the lawn takes over four times what the travelled road does. Rain:
+  // the road wets twice as fast, because nothing soaks into stone.
+  const f2 = mk(); f2.tick(6, { snowRate: 0.8, warmth: 0.1 });
+  const rs = f2.data[cellOf(f2, 4, 3) + 1]; const ls = f2.data[cellOf(f2, 4, 5) + 1];
+  assert.ok(ls > rs * 3, `a fall settles on the lawn (${ls.toFixed(3)}) and not on the road (${rs.toFixed(3)})`);
+  const f3 = mk(); f3.tick(6, { rainRate: 0.6, warmth: 0.5 });
+  const rw = f3.data[cellOf(f3, 4, 3)]; const lw = f3.data[cellOf(f3, 4, 5)];
+  assert.ok(rw > lw * 1.5, `rain sheets on the road (${rw.toFixed(3)}) faster than it soaks the lawn (${lw.toFixed(3)})`);
+  // and the shader's shine lives on the road's own records
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const ti = r.indexOf('const TERRAIN_FS = `'); const fs = r.slice(ti, r.indexOf('`;', ti));
+  assert.match(fs, /bool road = \(layer == 46 \|\| layer == 47 \|\| layer == 55\);/, 'the shine is keyed by the painter\u2019s three records');
+  assert.match(fs, /lit \*= mix\(1\.0, 0\.68, wet\);/, 'darker: the pores fill');
+  assert.match(fs, /pow\(max\(dot\(n, H3\), 0\.0\), 90\.0\) \* wet \* 0\.9;/, 'shinier: a tight sun highlight');
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(w, /if \(tilemapBytes\) sim\.setHard\(tilemapBytes, ROAD_RECORDS\);/, 'the field\u2019s road is the tile\u2019s road');
+});

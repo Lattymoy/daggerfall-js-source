@@ -98,6 +98,13 @@ export class SurfaceField {
     this.pool = new Float32Array(n);
     this.flat = new Float32Array(n);
     this.dirtyRows = new Uint8Array(this.dim);  // rows that changed since the last upload
+    /** EE10: HARDNESS per cell, 0..1 - a road or a path is 1. Mac: a
+     *  walked path holds less snow. A travelled surface is packed from
+     *  the start, takes less of a fall, and sheds nothing into the ground
+     *  - so rain SHEETS on it and pools in its dips, which is where the
+     *  rain-shine and the puddles on a road come from. Set from the
+     *  tilemap by setHard; zero until then, which is the field as it was. */
+    this.hard = new Float32Array(this.dim * this.dim);
     this.base = 0;                               // the calendar's snow depth, 0..1
     this._readTerrain(heights, tileDim + 1, tileSize);
   }
@@ -129,6 +136,29 @@ export class SurfaceField {
    *  cells above it settle toward it, both over hours, in tick(). */
   setBase(depth) { this.base = cl(depth, 0, 1); }
 
+  /** EE10: mark the travelled cells from the piece's own tilemap. Every
+   *  cell of a tile whose record is in `hardRecords` becomes hard; the
+   *  edge cells of a hard tile are half-hard, so a road's verge is a
+   *  gradient and not a cliff. Roads start PACKED, because they are. */
+  setHard(tilemap, hardRecords) {
+    const c = this.cells; const dim = this.dim;
+    this.hard.fill(0);
+    for (let tz = 0; tz < this.tileDim; tz++) {
+      for (let tx = 0; tx < this.tileDim; tx++) {
+        if (!hardRecords.has(tilemap[tz * this.tileDim + tx] >> 2)) continue;
+        for (let dz = 0; dz < c; dz++) {
+          for (let dx = 0; dx < c; dx++) {
+            const edge = dx === 0 || dz === 0 || dx === c - 1 || dz === c - 1;
+            const k = (tz * c + dz) * dim + (tx * c + dx);
+            this.hard[k] = edge ? 0.5 : 1;
+            this.data[k * 4 + 2] = Math.max(this.data[k * 4 + 2], this.hard[k] * 0.55);   // trodden from the start
+          }
+        }
+      }
+    }
+    this.dirtyRows.fill(1);
+  }
+
   /**
    * One step of the laws. `dt` in seconds of world time. Rates are per
    * second: rainRate and snowRate 0..1 from the weather, warmth from
@@ -146,11 +176,15 @@ export class SurfaceField {
       let water = d[o]; let snow = d[o + 1]; let pack = d[o + 2]; let wear = d[o + 3];
       const w0 = water; const s0 = snow; const p0 = pack; const e0 = wear;
       // 1. rain fills, where water actually goes
-      if (rainRate > 0) water += rainRate * dt * (0.15 + pool[k] * 1.5) * 0.02;
+      const hard = this.hard[k];
+      // EE10: rain SHEETS on a hard surface - nothing soaks in - so a road
+      // wets faster than the ground beside it and pools in its dips
+      if (rainRate > 0) water += rainRate * dt * (0.15 + pool[k] * 1.5 + hard * 0.9) * 0.02;
       // 2. snow lies on the flat, and packed snow takes less
-      if (snowRate > 0) snow += snowRate * dt * (0.25 + flat[k] * 1.4) * (1 - pack * 0.45) * 0.02;
+      // EE10: a travelled road takes a fraction of a fall - Mac's walked path
+      if (snowRate > 0) snow += snowRate * dt * (0.25 + flat[k] * 1.4) * (1 - pack * 0.45) * (1 - hard * 0.7) * 0.02;
       // the calendar: fill toward the base where the cold holds, settle toward it otherwise
-      const target = base * (0.3 + flat[k] * 0.7);
+      const target = base * (0.3 + flat[k] * 0.7) * (1 - hard * 0.75);   // EE10: the calendar's base is thin on a road too
       if (snow < target && cold > 0) snow += (target - snow) * relax * (0.5 + cold);
       else if (snow > target && melt === 0) snow += (target - snow) * relax * 0.5;
       // 5. melt is a CONVERSION: the snow becomes the water
@@ -164,9 +198,9 @@ export class SurfaceField {
       // thaw makes it, or the melt never pools and the lab's chain
       // (snow -> puddles -> ground) loses its middle. Measured: at 0.006
       // the sun outran the melt 3.6 to 1 and no thaw ever left a puddle.
-      water = Math.max(0, water - Math.max(0, warmth) * dt * 0.0016 * (1.1 - pool[k] * 0.6));
+      water = Math.max(0, water - Math.max(0, warmth) * dt * 0.0016 * (1.1 - pool[k] * 0.6) * (1 + hard * 0.4));   // EE10: a thin sheet on stone dries sooner than a soaked field
       // wind and fresh fall heal a print; wear outlasts it
-      pack = Math.max(0, pack - dt * (0.0006 + snowRate * 0.02));
+      pack = Math.max(hard * 0.55, pack - dt * (0.0006 + snowRate * 0.02));   // EE10: a road never un-treads
       wear = Math.max(0, wear - dt * 0.00015);
       water = Math.min(1, water); snow = Math.min(1, snow); pack = Math.min(1, pack); wear = Math.min(1, wear);
       if (water !== w0 || snow !== s0 || pack !== p0 || wear !== e0) {
