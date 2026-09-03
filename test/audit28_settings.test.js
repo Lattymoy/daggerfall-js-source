@@ -88,7 +88,7 @@ test('AUDIT 28 W1: NightAmbientLightScale reaches exteriorAmbient in BOTH exteri
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const h = read(host);
     assert.equal((h.match(/exteriorAmbient\(minute, /g) || []).length, 1, `${host}: one exterior ambient call`);
-    assert.match(h, /exteriorAmbient\(minute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), weatherSun\)/,
+    assert.match(h, /exteriorAmbient\(minute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), wxNow\.sun\)/,   // WX2: the weather scale rides the front
       `${host}: the night scale is not read`);
   }
 });

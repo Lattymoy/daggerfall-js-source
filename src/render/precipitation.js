@@ -300,6 +300,11 @@ export class PrecipitationRenderer {
      *  frame that rain drew, in the pass whose header claims zero
      *  per-frame CPU. */
     this.countCap = opts.countCap ?? null;
+    /** WX2: the front's intensity, 0..1 - the fraction of the profile's
+     *  drops on screen. 1 is the whole profile (WX1's volume). The hosts
+     *  walk it on the front under the enhanced environments; the classic
+     *  draw never reads it and never sets it. */
+    this.intensity = 1;
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     const vb = gl.createBuffer();
@@ -360,8 +365,13 @@ export class PrecipitationRenderer {
     const gl = this.gl;
     if (!this.labProgram) this._buildLab();
     const kind = mode === 'snow' ? 1 : 0;
-    const full = LAB_COUNTS[mode] ?? LAB_COUNTS.rain;
+    // WX2: the lab's own scaling - `Math.round(wx.n * wsky.fall)` in
+    // grass-proto.html's frame() - the profile times the front's
+    // intensity, so a sprinkle is a few thousand drops and a front
+    // fills the volume in rather than switching it on.
+    const full = Math.round((LAB_COUNTS[mode] ?? LAB_COUNTS.rain) * Math.min(1, Math.max(0, this.intensity)));
     const count = this.countCap ? Math.min(full, this.countCap) : full;
+    if (count <= 0) return;
     if (!this._vp) this._vp = new Float32Array(16);
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.labProgram);

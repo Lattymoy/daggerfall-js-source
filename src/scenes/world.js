@@ -165,6 +165,7 @@ import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 
 import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
+import { createWeatherFront, blendTerms, soundWeather } from '../systems/weatherFront.js';   // WX2: the front reaches the ground
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 54: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
@@ -230,7 +231,7 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -462,6 +463,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
+  // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's
+  // cut is instant, as DFU's is; under the enhanced environments what the
+  // GROUND shows of it - the drops, the sun scale, the fog row, the grass
+  // dim, the rain loop - crosses on WIND1's front, as the sky already
+  // does. `wxNow` is what is on screen this frame, `wxFrom` what was on
+  // screen at the last cut. The classic path takes `weatherTerms()`
+  // whole, every frame: the row's own numbers, untouched.
+  const weatherFront = createWeatherFront({ seed: Number(params.get('wseed')) || 7 });
+  const weatherTerms = () => ({ sun: weatherSun, dim: LAB_DIM[weather] ?? 1, fog: weatherFog });
+  let wxNow = weatherTerms();
+  let wxFrom = wxNow;
+  let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
     weatherFog = scaleFogForDistance(fogForWeather(w), fogDistance);   // EV4
@@ -613,7 +626,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return flying;
   }
 
-  async function buildPixelNow(px, py) {
+  async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     const key = `${px},${py}`;
     const dfLocation = locationIndex.get(key) || null;
     // EV7: the LOCATION half stays here - setLocationTiles reads
@@ -961,7 +974,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     // was painted without it and arrives AFTER the sweep. It goes straight
     // back for a rebuild - the worker has the network by now, since the
     // message order is kept.
-    if (!withRoads && terrainGen.hasRoads) { destroyPixel(px, py, { collectLoose: false }); return; }
+    // ROADS 25a (Mac: "boot failed: can't access property centerHeight"):
+    // the rebuild is THIS call's to make, not a caller's to notice. The
+    // first cut tore the pixel down and returned nothing, and the boot
+    // path - which awaits the PLAYER's pixel and stands the camera on its
+    // centreHeight - read a property off undefined whenever the network
+    // landed during that first build, which on a fast connection is
+    // every boot. The teleport landing awaited the same nothing. So the
+    // roadless pixel is rebuilt here and the rebuilt entry returned;
+    // once, because the worker's message order guarantees the second
+    // paint has the network, and a network that vanished again is not a
+    // reason to loop.
+    if (!withRoads && terrainGen.hasRoads) {
+      destroyPixel(px, py, { collectLoose: false });
+      if (roadsRetry) console.warn(`[roads] pixel ${key} painted without the network twice - kept as painted`);
+      else return buildPixelNow(px, py, { roadsRetry: true });
+    }
     const entry = built.get(key);
     // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
     // the player may have crossed during the worker round trip - and
@@ -6505,10 +6533,31 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this host's derived lets - re-derive whenever they disagree
       if (currentWeather() !== weather) applyWeather(currentWeather());
     }
+    // WX2: the front's word for this frame. Under the enhanced sky the
+    // arrival is WIND1's front, read off the controller; under the
+    // classic sky it is 1 and the terms are the weather's own.
+    // ?front=off is the slice's kill switch (the arc's rule: every slice
+    // has one) - the row's numbers whole and DFU's cap on the cut, under
+    // the enhanced sky, for gates and shots that want WX1's volume.
+    const enhancedFront = !!sky?.cloudShadow && params.get('front') !== 'off';
+    // WX2a (AUDIT 57): a change the player was not PRESENT for - a load,
+    // a travel landing, a respawn roll, a day rolled while underground -
+    // is a jump, not a front. The sim stamps it; the sky drops its eased
+    // row and the wind its front, and the ground takes the word whole.
+    const jump = weatherJumpStamp() !== seenJump;
+    seenJump = weatherJumpStamp();
+    if (jump) sky.weatherJump();
+    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
+    if (fx.changed) wxFrom = wxNow;
+    wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
     // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
     // weather/time preset per WeatherManager.SetAmbientEffects.
     audio.setListener(cam.pos, fwd);
-    ambience.setPreset(presetForExterior(weather, isNight(minute)));
+    // WX2: under the front the ear follows what is FALLING - the loop
+    // fades with the drops and holds off with them; a rain word with
+    // nothing down yet is a cloudy day. Classic: the word, verbatim.
+    ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
+    ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: cam.pos, inside: false });   // AUDIT 54: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
@@ -6517,19 +6566,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so the storm is sound-only, and the line this models sets an
     // absolute intensity on that separate light, not the sun). The
     // player ticks on both skins: the clip schedule is the Audio arc's.
-    const strobe = lightning ? lightning.tick(dt) : 1;
+    const strobeNow = lightning ? lightning.tick(dt) : 1;   // the player keeps ticking on both skins - the schedule is its own
+    // WX2a (AUDIT 57): under the front the FLASH waits for the storm to be
+    // HERE. The player was built at the sim's cut, so the strobe lit a
+    // sky that was still mostly clear for the whole three-hour lead, and
+    // went on after the storm had cleared while the last drops drained.
+    // The thunder one-shots already follow the shown mode through the
+    // ambience preset; the flash now follows the same word.
+    const lightningShown = !enhancedFront || fx.shown === 'storm' ? lightning : null;
+    const strobe = lightningShown ? strobeNow : 1;
     const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
     renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), moonNow), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
+      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), sunScale(minute) * wxNow.sun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).
     {
-      const iScale = indirectLightScale(minute) * weatherSun;
+      const iScale = indirectLightScale(minute) * wxNow.sun;   // WX2: the front's scale
       renderer.setIndirectLight(cam.pos, INDIRECT_LIGHT_RANGE, new Float32Array([
         INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
       ]));
@@ -6551,11 +6608,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
     // heavy rain fogs to Color.gray, not to the sky tint.
-    const fogColor = outdoorFogColor(weatherFog, sky.renderer.clearColor);
-    renderer.setFog(weatherFog.mode,
-      weatherFog.density, weatherFog.start, weatherFog.end, fogColor);
+    const fogNow = wxNow.fog;   // WX2: the row on the front (the table's own row, classic and settled)
+    const fogColor = outdoorFogColor(fogNow, sky.renderer.clearColor);
+    renderer.setFog(fogNow.mode,
+      fogNow.density, fogNow.start, fogNow.end, fogColor);
     sky.renderer.fogColor = fogColor;
-    sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
+    sky.renderer.fogMix = fogNow.excludeSky ? 0 : 1 - fogFactor(fogNow, 800);
 
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
@@ -6591,7 +6649,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the air (rain, snow, heavy fog); its light state is the frame's
     // own, already installed by setLighting/beginFrame above. It
     // shares the EV6 seam mark below - one foreign span, two passes.
-    if (farRing && weatherFog.mode === 'linear') {
+    if (farRing && fogNow.mode === 'linear') {
       if (farRing.needsRebuild(state.current.x, state.current.y)) {
         farRing.build({
           heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
@@ -6609,7 +6667,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
-        fogColor, fogEnd: weatherFog.end,
+        fogColor, fogEnd: fogNow.end,
         // E5: the ring draws INTO the world pass's rect, so it takes
         // that pass's aspect - a horizon built on the full-canvas ratio
         // would step against the terrain in front of it under a docked bar.
@@ -6801,13 +6859,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     hitEffects.tick(dt);
     livePersonBatches.push(...hitEffects.batches());
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
-    if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
+    // WX2: what falls is what the front SHOWS - under the enhanced sky the
+    // outgoing rain tapers after the sim has cleared and the incoming
+    // holds off until the deck is in. Classic: the sim's mode, as W1.
+    const precipShown = enhancedFront ? fx.shown : precipMode;
+    if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up
       // EE8: the enhanced profile rides the switch, and the wind that drives
       // its rain is the SKY'S OWN - the deck's wind from the eased weather
       // row - INTEGRATED here as travel, so a change in the wind moves what
       // falls next and never what has already fallen.
       precip.enhanced = !!sky?.cloudShadow;
       if (precip.enhanced) {
+        precip.intensity = fx.intensity;   // WX2: the front's share of the profile
         // WX1: THE LAB'S WIND LAW, term for term. The sky's eased row gives
         // a direction and a speed (its wind vector, in the deck's units,
         // times 260 for the lab's slider units); a slow three-sine GUST
@@ -6827,7 +6890,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         precip.windOff[1] += dir[1] * slider * gust * 0.16 * dtp;
       }
       precip._lastNow = now;
-      precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
+      precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
       renderer.markForeignPass();   // EV6: so did the rain
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
@@ -6896,7 +6959,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // above already carries the front; this carries its temper.
       const gustG = sky.gustAt?.(tsec) ?? (0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4));
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
-        { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: LAB_DIM[weather] ?? 1 },
+        { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim },   // WX2: the dim crosses on the front
         { dir, speed: slider * gustG, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }

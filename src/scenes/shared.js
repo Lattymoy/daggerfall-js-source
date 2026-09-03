@@ -168,7 +168,7 @@ export function createSkyController(gl, params) {
   if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
-  const windModel = createWindModel();   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it)
+  const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
   const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds
   let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
@@ -281,6 +281,20 @@ export function createSkyController(gl, params) {
     /** WIND1: 0..1 - the front's height, for anything that wants to
      *  arrive behind the wind. */
     frontProgress() { return windModel.frontProgress(); },
+    /** WX2: 0..1 - how far the incoming weather has ARRIVED (1 from the
+     *  front's landing on, and 1 with no front up), for the ground's
+     *  terms and the drops to cross on. Under the classic sky the model
+     *  never ticks and this answers 1: no front, nothing to cross. */
+    frontArrival() { return windModel.arrival(); },
+    /** WX2a (AUDIT 57): the sim's word changed by a JUMP - a load, a
+     *  travel landing, a respawn roll, a stale drain - not by weather
+     *  arriving. The eased row is dropped so the next use() takes the
+     *  new row whole (the first-call law), and the wind builds no front.
+     *  A no-op under the classic sky, which eases nothing. */
+    weatherJump() {
+      weatherRowNow = null;
+      windModel.jump();
+    },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a

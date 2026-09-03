@@ -67,8 +67,13 @@ test('AUDIT 39 #14: the storm strobe is enhanced-skin only in both hosts', () =>
       `${host}: the flash multiplier is not gated on the skin`);
     // The player still ticks on both skins - it is the clip schedule
     // the Audio arc reads, not just the strobe.
-    assert.match(text, /const strobe = lightning \? lightning\.tick\(dt\) : 1;/,
+    // WX2a (AUDIT 57): the tick is `strobeNow` now - the player still
+    // ticks every frame on both skins; the FLASH is withheld under the
+    // enhanced front until the storm is shown
+    assert.match(text, /const strobeNow = lightning \? lightning\.tick\(dt\) : 1;/,
       `${host}: the lightning player stopped ticking`);
+    assert.match(text, /const lightningShown = !enhancedFront \|\| fx\.shown === 'storm' \? lightning : null;\s*\n\s*const strobe = lightningShown \? strobeNow : 1;/,
+      `${host}: the flash waits for the storm under the front, and is the player's on classic`);
   }
 });
 

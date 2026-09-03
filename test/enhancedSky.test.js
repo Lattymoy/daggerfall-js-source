@@ -361,8 +361,10 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
   assert.match(read('src/scenes/shared.js'), /return 1 - CLOUD_SHADOW \* occ;/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(host);
-    assert.match(src, /sunScale\(minute\) \* weatherSun \* flash \* sky\.sunFactor\(\)/, `${host} dims the key light`);
-    assert.doesNotMatch(src, /exteriorAmbient\(minute, 1, weatherSun \* sky\.sunFactor/, `${host} does NOT dim the ambient`);
+    // WX2: the weather's sun scale reaches the light as `wxNow.sun` - the
+    // row's own number under the classic sky, the front's under the enhanced
+    assert.match(src, /sunScale\(minute\) \* wxNow\.sun \* flash \* sky\.sunFactor\(\)/, `${host} dims the key light`);
+    assert.doesNotMatch(src, /exteriorAmbient\(minute, 1, (weatherSun|wxNow\.sun) \* sky\.sunFactor/, `${host} does NOT dim the ambient`);
   }
 });
 

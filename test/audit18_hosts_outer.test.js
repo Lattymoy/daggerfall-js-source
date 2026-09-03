@@ -526,7 +526,7 @@ test('audit18 hosts: outdoorFogColor is SetSkyFogColor, threshold included', () 
 test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law', () => {
   for (const host of EXTERIOR_HOSTS) {
     const s = src(host);
-    assert.match(s, /const fogColor = outdoorFogColor\(weatherFog, sky\.renderer\.clearColor\)/,
+    assert.match(s, /const fogColor = outdoorFogColor\(fogNow, sky\.renderer\.clearColor\)/,   // WX2: the row on the front
       `${host} passes the sky colour unconditionally - a blizzard fogs to a blue tint`);
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }

@@ -111,6 +111,7 @@ export function createWindModel({ seed = 7 } = {}) {
   let last = null;        // the weather word at the last tick
   let front = null;       // { at, strength, turn } or null
   let nowMin = 0;
+  let jumpPending = false;   // WX2a: the next change of word is a jump, not a front
 
   const rollDay = (d) => {
     const r = seededRng(seed * 1000003 + d);
@@ -126,7 +127,12 @@ export function createWindModel({ seed = 7 } = {}) {
       const d = Math.floor(nowMinutes / 1440);
       if (d !== day) rollDay(d);
       if (weather !== last) {
-        if (last !== null) {
+        if (jumpPending) {
+          // WX2a (AUDIT 57): THE PLAYER ARRIVED, NOT THE WEATHER - a load,
+          // a travel landing, a respawn roll, a day rolled out of sight.
+          // No front builds: the sky they stand under is already this one.
+          front = null;
+        } else if (last !== null) {
           // THE CHANGE IS THE FRONT. Strength from the incoming weather's
           // violence, times a roll: some storms arrive wild, some barely
           // stir. It leads by FRONT_LEAD_MIN, which from the ground reads
@@ -141,7 +147,16 @@ export function createWindModel({ seed = 7 } = {}) {
         }
         last = weather;
       }
+      jumpPending = false;
       if (front && nowMinutes - front.at > FRONT_HOLD_MIN + FRONT_TAIL_MIN) front = null;
+    },
+
+    /** WX2a: the host saw the sim's jump stamp move this frame. Any
+     *  front up is dropped now - the world it belonged to is gone - and
+     *  the change the next tick sees (if any) builds none. */
+    jump() {
+      front = null;
+      jumpPending = true;
     },
 
     /** 0..1: the day's calm, with the front on top of it. */
@@ -160,6 +175,16 @@ export function createWindModel({ seed = 7 } = {}) {
     /** Where the front is: 0 before and after, 1 at its height. */
     frontProgress() {
       return front ? frontFactor(nowMin - front.at) : 0;
+    },
+
+    /** WX2: how far the INCOMING weather has arrived, 0..1 - the front's
+     *  rise, and 1 from its arrival on, through the hold and the tail,
+     *  where frontProgress falls back to 0 because the WIND is leaving
+     *  while the weather stays. 1 with no front up: a boot into rain is
+     *  rain. The ground's terms and the drops cross on this
+     *  (systems/weatherFront.js), as the sky's ease already does. */
+    arrival() {
+      return front && nowMin < front.at ? frontFactor(nowMin - front.at) : 1;
     },
 
     /** WIND2: true from the weather change until the front ARRIVES - the
@@ -190,6 +215,6 @@ export function createWindModel({ seed = 7 } = {}) {
     },
 
     /** For the record and the tests. */
-    state() { return { day, calm, prevCalm, heading, front: front ? { ...front } : null, last }; },
+    state() { return { day, calm, prevCalm, heading, front: front ? { ...front } : null, last, jumpPending }; },
   };
 }
