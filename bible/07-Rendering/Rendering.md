@@ -59,7 +59,22 @@ directory by `test/audit18_bible_docs.test.js`:
   THE LAB and the game copied it, string for string - the GR1 pin holds.
   Period-correct, as it happens: Daggerfall and Comanche are the same
   year. Seen in the lab before/after; the GAME side is a never-rendered
-  path and goes to Mac's eyes by the Incident's law.
+  path and goes to Mac's eyes by the Incident's law. **GR5 (2026-09-03,
+  Mac: "it sometimes hitches and switches while walking, a slight pop
+  in/pop out"): THE FIELD IS ANCHORED TO THE WORLD.** Both were one
+  design: GR2 placed every blade relative to the EYE from one seed, so
+  when the eye moved 60m and the scatter rebuilt, every blade in the
+  field moved with it (the switch) and the rebuild's finish uploaded
+  all 1.2M blades in one call (the hitch). Now the world is cut into
+  30-unit CELLS, each seeded from its own coordinates, so a patch of
+  ground grows the same blades whoever is looking; walking fills cells
+  at the leading edge and frees them at the trailing one, two a frame,
+  inside the range fade. Each cell owns a fixed SLOT in the buffers
+  (padded with zero-height blades), so a cell arrives by one
+  bufferSubData and leaves by one write of zeros - no repack, no
+  whole-field upload, ever. The blade laws are unchanged. Measured
+  headless: five metres of walking touches nothing; forty frees one
+  edge column of 15 cells and fills the other, of 225 live.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the
