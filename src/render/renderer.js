@@ -972,7 +972,7 @@ export class Renderer {
     // file funnels through _use/_bindVao, which skip the call when the
     // shadow says it is already bound - a city frame ran ~1045
     // useProgram calls for a handful of distinct programs. The shadows
-    // reset at beginFrame and at markForeignPass (the five passes
+    // reset at beginFrame and at markForeignPass (the six passes
     // that change programs behind the renderer's back: both skies,
     // precipitation, the overworld map since AUDIT 39 F55, and the
     // lab's grass since GR1 - the R9
