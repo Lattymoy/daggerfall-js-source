@@ -401,7 +401,11 @@ test('AUDIT 54 talk: the mode keys are ACTIONS, and a window shuts them down (Pl
 
 test('AUDIT 54 talk: the dungeon host carries the same two halves', () => {
   const d = src('src/scenes/dungeon.js');
-  assert.ok(d.includes('const im = MODE_ACTIONS[actionOf(e, keys)];'), 'the registry (with the held-keys Set the combo arm needs), not e.code');
+  // the held-keys Set is the input lane's combo arm (InputManager.cs:
+  // 1666-1712), which met this read in the integration - actionOf's
+  // second argument is that Set, and the law pinned here is still the
+  // REGISTRY read rather than a literal e.code table.
+  assert.ok(d.includes('const im = MODE_ACTIONS[actionOf(e, keys)];'), 'the registry, not e.code');
   assert.ok(d.includes('if (!ctx.uiOverlayActive && im !== getInteractionMode())'),
     'and no mode change under an open window');
   assert.equal(/\{ F1: 'steal'/.test(d), false, 'the literal table is gone');

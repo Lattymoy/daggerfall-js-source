@@ -933,7 +933,9 @@ hosts' door path):
   inside interiors/dungeons and every probe frame-sync starved.
 
 FLAGGED loud: selling + the offer/counteroffer haggle UI pend
-(CalculateTradePrice's selling branch is ported + pinned); shop
+(CalculateTradePrice's selling branch is ported, and AUDIT 54 gave it
+the numeric anchors it had never had - it carried only inequalities, so
+its 51*dp and 179*dm coefficients both mutated freely); shop
 OPEN HOURS pend (shelves answer at any hour); Library/Guild/Temple
 bookshelves + owned-house storage pend; restock pends the calendar.
 

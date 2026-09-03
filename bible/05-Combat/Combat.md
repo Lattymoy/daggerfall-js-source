@@ -662,7 +662,12 @@ pre-chargen INTERIM_WEAPON cannot be minted a condition
 (Object.isExtensible) and a 0-max item cannot break - the first
 swing of a fresh boot would otherwise have thrown a TypeError.
 
-4 pins (conditiondamage.test.js), 3 mutations run, 3 killed.
+4 pins (conditiondamage.test.js), 3 mutations run, 3 killed. AUDIT 54:
+the 20% floor roll's THRESHOLD was not one of them - the drives 0.99
+and 0.1 agree for every value from 11 to 99, so the one number the
+test names in its own title was the one it could not see. It is
+straddled at 0.195/0.205 in audit54_pins.test.js now: 6 pins, 6
+mutations run, 6 killed.
 
 ## C19 (2026-08-20): the C2-slice - audio arms, the poison hook, roll-order parity, COMBAT VOICES - SHIPPED
 

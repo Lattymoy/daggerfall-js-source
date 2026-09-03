@@ -290,6 +290,14 @@ test('c2/S1 identity: rows walk DFU block -> element -> model order (Automap.cs:
 });
 
 test('c2/S1 the hash grid answers the same set as a linear scan, over 500 random points', () => {
+  // AUDIT 54: the skin's magnitude, so a change to it is a deliberate,
+  // reviewed edit rather than a silent one. DFU has no analogue constant
+  // (it resolves a reveal by hit.collider), so the value's only anchor is
+  // its reason: the probe's hit point sits ON a surface and an exact test
+  // is a coin flip against float error. The BEHAVIOUR it buys - which
+  // model an in-bounds probe credits, and whether an off-geometry hit
+  // reveals at all - is pinned in test/audit54_pins.test.js.
+  assert.equal(AABB_TOLERANCE, 0.05);
   let seed = 20260901;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   const rows = [];
@@ -302,8 +310,14 @@ test('c2/S1 the hash grid answers the same set as a linear scan, over 500 random
   const model = buildAutomapModel(rows);
   for (let i = 0; i < 500; i++) {
     const p = [rnd() * 70 - 35, rnd() * 24 - 12, rnd() * 70 - 35];
-    const linear = model.rows.filter((r) => aabbContains(r.aabb, p, AABB_TOLERANCE)).map((r) => r.key).sort();
-    const grid = model.queryPoint(p).map((r) => r.key).sort();
+    // AUDIT 54: an EXPLICIT literal tolerance on both sides. This read
+    // AABB_TOLERANCE on the left and took queryPoint's default on the
+    // right, so it moved with the constant and looked like coverage of
+    // it - a tenfold widening to 0.5 left it green. It is a pure
+    // grid-vs-linear index check; the skin itself is pinned in
+    // test/audit54_pins.test.js.
+    const linear = model.rows.filter((r) => aabbContains(r.aabb, p, 0.05)).map((r) => r.key).sort();
+    const grid = model.queryPoint(p, 0.05).map((r) => r.key).sort();
     assert.deepEqual(grid, linear, `point ${i} disagrees`);
   }
   // resolveAt is a FUNCTION of the point: the tightest enclosing box

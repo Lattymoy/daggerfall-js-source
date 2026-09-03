@@ -68,11 +68,18 @@ test('V2b: the advantages are the VAMPIRE\'S seven and six - Anthotis minds alon
   vampirismMagicRound(p, { nowMinutes: 1 });
   for (const stat of VAMPIRE_STATS) assert.equal(liveStat(p, stat), 70, `${stat} +20`);
   assert.equal(liveStat(p, 'intelligence'), 50, 'a Vraseth mind is untouched');
+  // AUDIT 54: this read `skillValue(baseline) + VAMPIRE_SKILL_MOD` - the
+  // port's own constant on BOTH sides of the equals, so the equation held
+  // for any value and 30 -> 25 survived the whole suite while its twin was
+  // doubly pinned. The base fixture's skills are {}, so the vampire's are
+  // the LITERAL VampirismEffect.cs:362 `const int skillModAmount = 30;`.
   for (const skill of VAMPIRE_SKILLS) {
-    assert.equal(skillValue(p, skill), skillValue({ ...p, activeEffects: [] }, skill) + VAMPIRE_SKILL_MOD);
+    assert.equal(skillValue({ ...p, activeEffects: [] }, skill), 0, 'the base fixture has no skills');
+    assert.equal(skillValue(p, skill), 30, `${skill} +30`);
   }
   assert.ok(!VAMPIRE_SKILLS.includes(SKILLS.Swimming), 'the dead do not float better - no Swimming, unlike the werewolf');
-  assert.equal(VAMPIRE_STAT_MOD, 20);
+  assert.equal(VAMPIRE_STAT_MOD, 20);      // VampirismEffect.cs:352
+  assert.equal(VAMPIRE_SKILL_MOD, 30);     // VampirismEffect.cs:362
   assert.equal(p.minMetalToHit, WEAPON_MATERIALS.Silver, 'silver ALWAYS - there is no untransformed vampire');
   assert.equal(isEntityImmuneToParalysis(p), true, 'the compound race is immune');
 

@@ -303,8 +303,14 @@ test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', 
   const player = { legalRep: {} };
 
   // Push one faction off zero, then normalize and confirm it moved back.
-  // The faction side goes through changeReputation, so unlike the legal
-  // side it PROPAGATES - that asymmetry is DFU's, not an accident.
+  // AUDIT 54: this comment used to say the faction side PROPAGATES. It
+  // does not - PlayerEntity.cs:2239/:2241 calls the TWO-argument
+  // ChangeReputation and PersistentFactionData.cs:390 defaults propagate
+  // to false, which is what court.js:175-179 records AUDIT 23 as having
+  // corrected. The ONLY asymmetry is direct increment (legal) vs clamped
+  // ChangeReputation (faction); neither side fans out. The pin that can
+  // actually see the flag needs a hierarchy this one-record fixture does
+  // not have, and lives in test/audit54_pins.test.js.
   const id = [...store.dict.keys()][0];
   setReputation(store, id, 20);
   assert.equal(store.dict.get(id).rep, 20);
