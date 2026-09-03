@@ -324,7 +324,7 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   // straightening exists for. The reference-faithful half of the fix
   // is to pass the arrival minute rather than to move RaiseTime.
   const world = read('src/scenes/world.js');
-  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null \} = \{\}\)/,
+  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None \} = \{\}\)/,
     'the core takes the arrival clock');
   assert.match(world, /refreshSeason\(arriveMinutes \?\? worldMinutes\(\)\);/,
     'and straightens from it, falling back to the live clock for every other caller');

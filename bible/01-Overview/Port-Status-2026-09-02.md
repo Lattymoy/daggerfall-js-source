@@ -45,7 +45,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **12** | `node tools/regenOpenFlags.mjs --check` answers 12 ("12 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **11** | `node tools/regenOpenFlags.mjs --check` answers 11 ("11 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -415,12 +415,26 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - data, an asset, or a layer the port does not have.**
 
-- **`src/scenes/world.js:2662`** - the port's default landing stands in
-  for `GetPlayerTravelPosition`, flagged for the first session with
-  ARENA2. *Needs MAPS.BSA, which Port-Doctrine keeps out of the repo
-  permanently. Nobody can check map pixels (2,2) and (5,5) here. The
-  `REPOSITION.None` fallback is correct either way; only the data claim
-  is unverifiable.*
+- ~~**`src/scenes/world.js:2662`** - the port's default landing stands
+  in for `GetPlayerTravelPosition`, flagged for the first session with
+  ARENA2.~~ **SHIPPED (ship landing, 2026-09-03).** *The owner supplied
+  the real MAPS.BSA and the claim it rested on was FALSE: map pixel
+  (2,2) carries region 31 ("High Rock sea coast") index 1, "Your Ship",
+  mapId 1050578, `LocationTypes.HomeYourShips` (14), 1x1, block
+  SHIPAA00.RMB, and pixel (5,5) carries region 31 index 2, "Your Ship",
+  mapId 2102157, block SHIPAA01.RMB - the two `SHIP_INTERIOR_MAP_IDS`
+  exactly, and nothing else in the 62 regions stands on either pixel.
+  So the terrain-origin fallback never runs: the boarding is an
+  ORDINARY location arrival and takes StreamingWorld's
+  `PositionPlayerToLocation` (:1437-1467) like any other pixel with a
+  location, landing on the ship's deck. `world/locationEntrance.js`
+  gained `locationArrivalLanding` (the outer overload), the teleport
+  core gained the `reposition` argument DFU's `TeleportToMapPixel`
+  stores (:1076-1095) and applies once the destination pixel is built
+  (:266-295), and the court release now reaches the same seam. Pinned
+  by `tr4_ship.test.js`'s TR4-SHIPLAND trio, two of them a MAPS.BSA
+  data gate that runs the moment `ARENA2_PATH` holds that one file -
+  the file itself stays out of the repo, as Port-Doctrine requires.*
 - **`src/systems/playerTorch.js:12`** and
   **`src/systems/playerTorch.js:51`** - the else-arm's range and the
   base `torchIntensity`. *Both live in `PlayerTorch.prefab`.
@@ -536,8 +550,9 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   rather than to a live flag.*
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
-when this was measured, over the 19 the list then held. **As of Wave E
-`node tools/regenOpenFlags.mjs --check` answers 12**, and no count in
+when this was measured, over the 19 the list then held. **As of Wave E and
+the ship landing, `node tools/regenOpenFlags.mjs --check` answers 11**,
+and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
 it. The E-group retired SIX flags, not two - one per lane, and no lane
@@ -815,12 +830,14 @@ into a module-and-host one costs.
 
 What is genuinely left is small, and it is now named to the line.
 
-**Ten sites carry a blocker.** Five cannot move at all while the
+**Nine sites carry a blocker.** Four cannot move at all while the
 surrounding decisions stand: there is no standalone dungeon scene in
 DFU to port `?dungeon`'s window seams from, there is no
-`PlayerTorch.prefab` anywhere in the reference tree (twice), there is
-no MAPS.BSA in this repo by doctrine, and there is no mod system for
-`PauseOptionsDropdown` to list. Two are host scope on the port's own
+`PlayerTorch.prefab` anywhere in the reference tree (twice), and there
+is no mod system for `PauseOptionsDropdown` to list. The fifth - the
+ship pixels no one could check without MAPS.BSA - closed on 2026-09-03
+when the owner supplied the file; the data gate that reads it lives in
+the suite and skips itself when it is absent. Two are host scope on the port's own
 dev routes. One is an owner's design call - focus order across the
 enhanced menu's rail. One is a layer the port does not have, the
 gamepad, and it takes the two input-config windows with it. One - the
