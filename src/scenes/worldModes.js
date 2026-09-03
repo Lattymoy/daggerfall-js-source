@@ -71,7 +71,7 @@ import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBlo
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
-import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
+import { sensesContext, subscribeFoePools } from './shared.js';   // IF: the one senses builder every pool is handed; AUDIT 54: and the magic-round fan-out both of them owe
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
 import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
@@ -580,7 +580,7 @@ export function createWorldModes(host) {
         playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
         playerYawRad: cam.yaw,
         fovDegrees: fieldOfView() * 180 / Math.PI,
-        isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoes.foes, feet),
+        isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 54 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
         rolls,
       });
       const spot = placeFoeFreely(env, { minDistance, maxDistance });
@@ -619,7 +619,7 @@ export function createWorldModes(host) {
       playerFeet: [feet[0], feet[1] + 0.9, feet[2]],   // the controller centre, not the feet
       playerYawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,       // the law speaks DEGREES
-      isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoes.foes, feet),
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 54 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
     });
     const spot = placeFoeFreely(env);
     if (!spot) return false;
@@ -729,6 +729,53 @@ export function createWorldModes(host) {
    *  at each reader). */
   const interiorFoePool = () => [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])];
   const interiorEnemyDatabase = () => interiorFoePool().filter((f) => !f.dead);
+  /** AUDIT 54 (review): THE DAMAGE/DRAIN DOORS for a record from either
+   *  of this host's pools, written where the ticker can reach them.
+   *  This body was inlined in `insideFoeSinksFor` below - the enchant
+   *  ctx's one consumer - and the returned literal is built after the
+   *  frame loop, so the fan-out beneath this could not have called it.
+   *  The public method is now a door onto this, so both consumers ask
+   *  ONE definition which set of sinks an interior record owns.
+   *
+   *  The split is world.js's own (`_encounter` marks a
+   *  createExteriorFoes record; a watchman carries no such field), so
+   *  the damage lands in the pool that owns the billboard - a record
+   *  from a building must knock back and die against THAT building's
+   *  collider and death chain, never the street's. */
+  const insideFoeSinks = (foe) => ({
+    hurt: (n) => {
+      if (n <= 0) return;
+      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos);
+      else interiorGuards?.hurtGuard(foe, n, player.pos);
+    },
+    heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
+    drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
+    restoreMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.min(foe.entity.maxMagicka ?? Infinity, (foe.entity.magicka ?? 0) + n); },
+    drainFatigue: (n) => { if (n > 0) foe.entity.fatigue = Math.max(0, (foe.entity.fatigue ?? 0) - n); },
+    restoreFatigue: (n) => { if (n > 0) foe.entity.fatigue = Math.min(maxFatigue(foe.entity), (foe.entity.fatigue ?? 0) + n); },
+  });
+  /** AUDIT 24 (wave 32)'s law, for the host that never took it:
+   *  EntityEffectBroker.OnNewMagicRound is GLOBAL and every peered
+   *  EntityEffectManager handles it (EntityEffectManager.cs:191-206
+   *  RaiseOnNewMagicRoundEvent -> :1213 DoMagicRound), so DFU has no
+   *  host that owns a live enemy it never magic-rounds.
+   *
+   *  This host owned two pools and ran NO fan-out at all - no
+   *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
+   *  (worldTick.js:186-187), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:440-441 and
+   *  cityGuards.js:663-664 each take `entityIsParalyzed` +
+   *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
+   *  Continuous Damage bundle on a foe in a shop never took a round,
+   *  a poison inflicted at this host's own onInflictPoison never
+   *  fired, and a paralysed foe stayed paralysed for the life of the
+   *  interior. AUDIT 54 opened the door that lands those payloads
+   *  here (the enchant ctx answers `insideFoes()` in interior mode
+   *  now), so the gap stopped being latent. Same call shape as
+   *  world.js and exterior.js, on the window `interiorTicker.tick`
+   *  already claims - no second clock. The thunks are null-safe: both
+   *  pools are minted per interior and nulled at exit. */
+  subscribeFoePools(interiorTicker, [() => interiorFoes?.foes ?? [], () => interiorGuards?.guards ?? []], insideFoeSinks);
   /** IF/ROAD-B: the interior's senses context, built once per frame
    *  and handed to BOTH pools. `candidates` is this host's whole
    *  active-enemy database (MT's join): a watchman called into a shop
@@ -4951,11 +4998,27 @@ export function createWorldModes(host) {
         }
         addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
       },
-      foeTargets: (interiorFoes?.foes ?? []).filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      // AUDIT 54 (review): BOTH pools, through the one join. This read
+      // `interiorFoes.foes` alone, so a shaft loosed at a watchman
+      // `spawnCityGuardsInside` had stood in the room met nothing and
+      // died on geometry (arrowFlight.js:102-112 is a shaft's ONLY
+      // foe-contact path) - after the loose had already spent the
+      // Arrow and tallied Archery, and while this host's MELEE ray hit
+      // the same watchman. DFU makes no pool distinction: DoCollision
+      // (DaggerfallMissile.cs:357-395) takes whatever
+      // DaggerfallEntityBehaviour the struck collider carries and
+      // AssignBowDamageToTarget (:661-688) hands it on. Both sibling
+      // hosts already feed both of theirs.
+      foeTargets: interiorFoePool().filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
       onFoeHit: (m, t) => interiorFoes?.arrowHitFoe(m, t),
       onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
         playerEntity, playerWeapon: interiorWeapon.playerWeapon, playerFeet: player.pos,
-        dealDamage: (f, d) => interiorFoes?.damageFoe(f, d, player.pos, m.dir),
+        // ...and the damage door splits by pool the same way this
+        // host's sinks do (`insideFoeSinks`), so a killed watchman
+        // runs the crime and the corpse in the pool that owns it.
+        dealDamage: (f, d) => (f._encounter
+          ? interiorFoes?.damageFoe(f, d, player.pos, m.dir)
+          : interiorGuards?.hurtGuard(f, d, player.pos, m.dir)),
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
       }),
@@ -6446,22 +6509,43 @@ export function createWorldModes(host) {
      *  street's `foeSinks` would knock back and kill against the
      *  EXTERIOR collider and death chain.
      *
-     *  The split inside is world.js's own (`_encounter` marks a
-     *  createExteriorFoes record; a watchman carries no such field),
-     *  so the damage lands in the pool that owns the billboard. */
-    insideFoeSinksFor(foe) {
-      return {
-        hurt: (n) => {
-          if (n <= 0) return;
-          if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos);
-          else interiorGuards?.hurtGuard(foe, n, player.pos);
-        },
-        heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
-        drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
-        restoreMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.min(foe.entity.maxMagicka ?? Infinity, (foe.entity.magicka ?? 0) + n); },
-        drainFatigue: (n) => { if (n > 0) foe.entity.fatigue = Math.max(0, (foe.entity.fatigue ?? 0) - n); },
-        restoreFatigue: (n) => { if (n > 0) foe.entity.fatigue = Math.min(maxFatigue(foe.entity), (foe.entity.fatigue ?? 0) + n); },
-      };
+     *  The BODY lifted to `insideFoeSinks` (beside interiorFoePool) at
+     *  the review: this literal is built after the frame loop, so the
+     *  magic-round fan-out the ticker needs could not have reached it
+     *  here, and two spellings of one pool's damage doors is exactly
+     *  the drift the join above was written to end. This is the door
+     *  onto that one definition. */
+    insideFoeSinksFor(foe) { return insideFoeSinks(foe); },
+    /** AUDIT 54 (review): THE WABBAJACK'S TRANSFORM over this host's
+     *  pools - dungeonContext.js's twin, for the host that had none.
+     *  world.js's `replaceFoe` deletes the struck record and stands
+     *  its replacement, and it did both through `exteriorFoes` with
+     *  no question asked about whose record it held. That was a
+     *  no-op indoors only because the enchant ctx's pool answered
+     *  `[]` there; the moment `insideFoes()` started answering it,
+     *  the street pool's remover destroyed a foe standing in a shop
+     *  outright - no corpse, no loot, no interior death chain - and
+     *  spawned the new monster into a pool this frame never ticks,
+     *  at the building's coordinates, against the street's collider.
+     *  So the door is routed by POOL MEMBERSHIP exactly as the sinks
+     *  above are, and this is the interior host's arm of it.
+     *
+     *  WabbajackEffect.cs:63-95 removes the struck enemy
+     *  (`SetActive(false)`) and CreateEnemy's the new career at its
+     *  localPosition, under the same parent transform - which is
+     *  `interiorFoes`' own remove/spawn pair here.
+     *
+     *  THE WATCH IS REFUSED, and that is a departure written down
+     *  rather than a mis-route: DFU transforms any `EnemyEntity`, and
+     *  Knight_CityWatch is one, but `createCityGuards` exposes no
+     *  remove/spawn pair (cityGuards.js:1065's returned surface), so
+     *  the only reaches available would be the encounter pool's -
+     *  which is the very confusion this door exists to end. Leaving
+     *  the watchman standing is the smaller departure. */
+    insideReplaceFoe(foe, mobileType, feet) {
+      if (!foe?._encounter || !interiorFoes) return null;
+      interiorFoes.removeFoe(foe);
+      return interiorFoes.spawnFoe(mobileType, feet);
     },
     tryPlaceQuestFoe(handle) {
       if (mode === 'interior') return tryPlaceInteriorQuestFoe(handle);

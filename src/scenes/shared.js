@@ -1690,7 +1690,36 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
  *  dungeon is mounted, and that record belongs to the dungeon's
  *  sinks. */
 export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks) {
-  if (dungeonCtx?.foes?.includes(foe)) return dungeonCtx.foeSinksFor(foe);
-  if (insidePool?.()?.includes(foe)) return insideSinks(foe);
+  const host = enchantFoeHost(foe, dungeonCtx, insidePool);
+  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe);
+  if (host === 'inside') return insideSinks(foe);
   return exteriorSinks(foe);
+}
+
+/** WHOSE RECORD IS THIS - the membership question by itself, because
+ *  the sinks are not the only door the enchant ctx opens over a foe.
+ *
+ *  AUDIT 54 (review): the Wabbajack's `replaceFoe` REMOVES the struck
+ *  record and stands its replacement, and the host was answering that
+ *  question by not asking it - both reaches were the exterior pool's,
+ *  over a getter that had just been widened to hand out dungeon and
+ *  interior records. A record removed through the wrong pool is
+ *  destroyed with no corpse, no loot and no death chain, and its
+ *  replacement stands in a world the player is not in.
+ *
+ *  Asked in HOST ORDER, dungeon first, and the order is load-bearing
+ *  rather than defensive: `insideFoes()` answers the DUNGEON's own
+ *  pool while a dungeon is mounted, so a membership test that asked
+ *  the inside pool first would hand every dungeon record to the
+ *  interior host's doors.
+ *
+ *  DFU asks nothing, because it has nothing to ask: every enemy is a
+ *  DaggerfallEntityBehaviour in ONE scene, and WabbajackEffect
+ *  (:85-88) re-parents the new career under the struck enemy's own
+ *  transform. The port needs the question only because it keeps one
+ *  pool per host. */
+export function enchantFoeHost(foe, dungeonCtx, insidePool) {
+  if (dungeonCtx?.foes?.includes(foe)) return 'dungeon';
+  if (insidePool?.()?.includes(foe)) return 'inside';
+  return 'exterior';
 }

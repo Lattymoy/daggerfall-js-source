@@ -24,7 +24,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { liveEnchantFoes, liveEnchantFoeSinks } from '../src/scenes/shared.js';
+import { liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from '../src/scenes/shared.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (rel) => readFileSync(join(HERE, '..', rel), 'utf8');
@@ -122,6 +122,75 @@ test('EC1: sinks route by POOL MEMBERSHIP, and the mode is not consulted', () =>
     'foe, dungeonCtx, exteriorSinks, insidePool, insideSinks - and nothing else');
 });
 
+test('AUDIT 54: WHOSE RECORD IS THIS - one membership answer, and the sinks are not its only reader', () => {
+  // The sinks were routed by pool membership and the WABBAJACK DOOR in
+  // the same mount was not: `replaceFoe` found its record through the
+  // widened getter and then reached `exteriorFoes.removeFoe` /
+  // `.spawnFoe` unconditionally. Over a foe standing in a shop that is
+  // destruction, not transformation - releaseFoeBatch + `dead = true`
+  // in a pool that owns neither its billboard nor its death chain -
+  // with the new monster stood at the building's coordinates in the
+  // street's pool, which the interior frame never ticks. So the
+  // question moved into a law of its own, with two readers.
+  const f = fixture();
+  assert.equal(enchantFoeHost(f.dFoe, f.dungeonCtx, f.insidePool), 'dungeon');
+  assert.equal(enchantFoeHost(f.iFoe, f.dungeonCtx, f.insidePool), 'inside');
+  assert.equal(enchantFoeHost(f.iWatch, f.dungeonCtx, f.insidePool), 'inside',
+    'the indoor watch is the interior host\'s record too - one building, one door');
+  assert.equal(enchantFoeHost(f.xFoe, f.dungeonCtx, f.insidePool), 'exterior');
+  // THE ORDER IS LOAD-BEARING, not defensive: worldModes' insideFoes()
+  // answers the DUNGEON's own pool while a dungeon is mounted, so a
+  // test that asked the inside pool first would send every dungeon
+  // record to the interior host's remover.
+  assert.equal(enchantFoeHost(f.dFoe, f.dungeonCtx, () => [f.dFoe]), 'dungeon',
+    'a record in BOTH answers is the dungeon\'s - membership is asked in host order');
+  // and a host mid-transition answers exterior rather than throwing
+  assert.equal(enchantFoeHost(f.xFoe, null, null), 'exterior');
+  assert.equal(enchantFoeHost(f.xFoe, {}, () => undefined), 'exterior');
+  // ...and the sinks router is that same answer, not a second copy of it
+  const src = read('src/scenes/shared.js');
+  assert.match(src, /const host = enchantFoeHost\(foe, dungeonCtx, insidePool\);/,
+    'liveEnchantFoeSinks asks the one law');
+  assert.equal(liveEnchantFoeSinks.length, 5, 'and its signature is unchanged');
+});
+
+test('AUDIT 54: the WABBAJACK re-stands a foe in the pool that owns it', () => {
+  // world.js's door, worldModes' interior arm, and dungeonContext's own
+  // - three arms, asked in the one order, each removing and re-standing
+  // through the pool that owns the record's billboard and collider.
+  // WabbajackEffect.cs:85-88 CreateEnemy's the new career under the
+  // struck enemy's OWN parent transform, which is what "its own pool"
+  // means here.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /const enchantReplaceFoe = \(targetEntity, mobileType\) => \{/,
+    'the body is out of the mount, so the mount names no pool');
+  const body = world.slice(world.indexOf('const enchantReplaceFoe ='), world.indexOf('/** SD1: stand a loose foe'));
+  assert.match(body, /const host = enchantFoeHost\(f, modes\?\.dungeonCtx \?\? null, _insidePool\);/,
+    'it asks the SAME membership law the sinks ask');
+  assert.match(body, /if \(host === 'dungeon'\) \{ modes\?\.dungeonCtx\.replaceFoe\?\.\(targetEntity, mobileType\); return; \}/);
+  assert.match(body, /if \(host === 'inside'\) \{ Promise\.resolve\(modes\?\.insideReplaceFoe\?\.\(f, mobileType, feet\)\)\.then\(stamp\)\.catch\(\(\) => \{\}\); return; \}/);
+  // the exterior arm survives EXACTLY as it was - this is a router, not
+  // a rewrite of the path that already worked
+  assert.match(body, /exteriorFoes\.removeFoe\(f\);\n\s+exteriorFoes\.spawnFoe\(mobileType, feet\)\.then\(stamp\)\.catch\(\(\) => \{\}\);/);
+  // and the two DFU laws are still on the way in, once
+  assert.match(body, /if \(f\.questBehaviour && !f\.questBehaviour\.isFoeDead\) return;/, 'WabbajackEffect.cs:70-73');
+  assert.match(body, /nf\.entity\.wabbajackActive = true;/, 'WabbajackEffect.cs:68');
+  assert.match(body, /nf\.entity\.health -= missing;/, 'WabbajackEffect.cs:94');
+  assert.equal(/exteriorFoes\.removeFoe\(f\);/.test(body.slice(0, body.indexOf("if (host === 'inside')"))), false,
+    'no reach into the street pool happens BEFORE the question is asked');
+
+  // the interior host's arm, over its own remove/spawn pair
+  const wm = read('src/scenes/worldModes.js');
+  assert.match(wm, /insideReplaceFoe\(foe, mobileType, feet\) \{\n\s+if \(!foe\?\._encounter \|\| !interiorFoes\) return null;\n\s+interiorFoes\.removeFoe\(foe\);\n\s+return interiorFoes\.spawnFoe\(mobileType, feet\);\n\s+\},/,
+    'the interior arm removes and re-stands through THIS building\'s pool');
+  // ...and the departure it carries is written down: createCityGuards
+  // exposes no remove/spawn pair, so an indoor watchman is left
+  // standing rather than mis-routed through the encounter pool.
+  assert.match(wm, /THE WATCH IS REFUSED, and that is a departure written down/);
+  // the dungeon host's arm is reachable from the hosted route at all
+  assert.match(read('src/scenes/dungeonContext.js'), /\n    replaceFoe: replaceFoeInPool,   \/\/ AUDIT 54/);
+});
+
 test('EC1: an exterior record is untouched by the new branch, ctx or no ctx', () => {
   const f = fixture();
   liveEnchantFoeSinks(f.xFoe, f.dungeonCtx, f.exteriorSinks).hurt(4);
@@ -139,6 +208,20 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
     'AUDIT 54: the interior pool is the host\'s own join, not a third spelling of it');
   assert.match(world, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], _insidePool\);/);
   assert.match(world, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
+  // AUDIT 54 (review): and the MOUNT'S OWN HEADER no longer states the
+  // opposite of what the mount does. The parenthetical forty lines
+  // above it said the interior mode's foes list is empty "so the scan
+  // arms answer none" - the exact premise this lane falsified, struck
+  // in its two twins (shared.js, worldModes.js) in the same commit and
+  // left standing here. A false sentence in the file the change lands
+  // in is how the next reader re-derives the gate.
+  assert.equal(/its foes list is empty, so the scan arms answer/.test(world), false,
+    'the falsified clause is not still asserted');
+  const head = world.slice(world.indexOf('// E2: THE ENCHANTCTX MOUNT'), world.indexOf('const enchantFeet ='));
+  assert.match(head, /the clause\n\s*\/\/ that stood here said "its foes list is empty, so the scan arms\n\s*\/\/ answer none", which stopped being true/,
+    'it is STRUCK where it stood, not deleted - the record is the point');
+  assert.match(head, /answer worldModes' own insideFoes join now, through _insidePool/,
+    'and the header says what the arms answer instead');
   // and the interior host really answers that sinks door, over its own
   // two pools, with world.js's own _encounter split
   const wm = read('src/scenes/worldModes.js');
@@ -161,6 +244,18 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
   assert.match(mount, /foeSinks: \(f\) => enchantFoeSinks\(f\),/);
   assert.equal(/[^t]foeSinks\(/.test(mount.replace('foeSinks: (f) => enchantFoeSinks(f),', '')), false,
     'no other site inside the mount reaches the exterior sinks directly');
+  // AUDIT 54 (review): and NO site in the mount reaches a host pool at
+  // all. The grep above was structurally blind to the door that got
+  // through - `replaceFoe` sat in this same literal calling
+  // `exteriorFoes.removeFoe` / `.spawnFoe` unconditionally over a
+  // getter the lane had just widened, so the Wabbajack destroyed a
+  // foe standing in a shop with the STREET pool's remover (no corpse,
+  // no loot, no interior death chain) and stood its replacement
+  // outdoors. A pin that greps for one door's name cannot hold a
+  // router; this asks the law instead - every foe door in the mount
+  // is a thunk over something that routes by pool membership.
+  assert.equal(/exteriorFoes\.|cityGuards\.|dungeonCtx\./.test(mount), false,
+    'no site inside the mount names a host pool directly - EVERY foe door routes by membership');
   const body = read('src/scenes/hostEnchant.js');
   const ctx = body.slice(body.indexOf('export function createEnchantCtx'));
   assert.equal((ctx.match(/foeSinks\(/g) ?? []).length, 3,

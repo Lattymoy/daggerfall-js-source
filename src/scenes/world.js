@@ -163,7 +163,7 @@ import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 
 import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 54: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -2048,8 +2048,33 @@ export async function bootWorld(canvas, renderer, params, status) {
     // release.
     startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
     surfacePlayer,
-    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
-    foeSinks,
+    // X-slice: encounter foes are spell targets too.
+    //
+    // AUDIT 54 (review): and this list kept the exact interior SCENE
+    // GATE the lane struck from its enchant twin below. This is the
+    // only cast engine indoors - worldModes takes this instance (`M2:
+    // the one cast engine + SPELLS.STD ride into the interior arm`),
+    // drives firePending/update on every interior frame and routes the
+    // interior attack click into `magic.interceptAttack` - and every
+    // target read in the engine goes through this one thunk:
+    // explodeAt's sweep, ByTouch's pick, the release-frame area arm
+    // and the missile/foe impact (hostMagic.js). Answering `[]` meant
+    // a Fireball cast in a shop swept nobody, a ByTouch spell picked
+    // nobody, and a missile passed through a Knight_CityWatch the
+    // MELEE ray would have hit. DFU has no such gate: the explosion is
+    // `Physics.OverlapSphereNonAlloc` and the touch pick a raycast
+    // (DaggerfallMissile.cs:481/:409-455) - whatever is in the scene.
+    // The dungeon arm stays empty because dungeonContext builds its
+    // OWN engine and this one never runs in that mode.
+    foes: () => (_mode() === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes]
+      : _mode() === 'interior' ? _insidePool()
+        : []),
+    // ...and the sinks follow the RECORD, not the mode. A foe handed
+    // out by the interior arm must knock back and die against THAT
+    // building's collider and death chain, so this is the same
+    // pool-membership router the enchant mount takes - one law, and
+    // it still answers `foeSinks` for every exterior record.
+    foeSinks: (f) => enchantFoeSinks(f),
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
@@ -2101,8 +2126,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // spell points), applySpellToTarget CastWhenStrikes' landing with
   // saves rolled. nearbyFoes serves the affinity scans off the live
   // pools; spawnFoe is SoulBound's break release. The interior mode
-  // shares this mount (its foes list is empty, so the scan arms answer
-  // none); the dungeon-mode ctx is dungeonContext's to mount. FS1:
+  // shares this mount, and AUDIT 54 gave it a REAL pool: the clause
+  // that stood here said "its foes list is empty, so the scan arms
+  // answer none", which stopped being true when IF mounted
+  // interiorFoes and ROAD-B stood the watch beside it - the arms
+  // answer worldModes' own insideFoes join now, through _insidePool
+  // below. The dungeon-mode ctx is dungeonContext's to mount. FS1:
   // that used to read "FLAGGED there with the rest of its enchant
   // wiring", and there was no flag there - setDefaultEnchantCtx HAD
   // exactly one caller in the tree, this one, so the standalone
@@ -2159,6 +2188,43 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _insidePool = () => modes?.insideFoes?.() ?? [];
   const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes], _insidePool);
   const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
+  /** AUDIT 54 (review): THE WABBAJACK'S TRANSFORM, routed by the same
+   *  POOL MEMBERSHIP the sinks are. This body sat inside the mount
+   *  below and reached `exteriorFoes.removeFoe` / `.spawnFoe`
+   *  UNCONDITIONALLY, over a record the getter above had just widened.
+   *  A foe struck in a shop was destroyed by the STREET pool's remover
+   *  - releaseFoeBatch + `dead = true`, so no corpse, no loot, no
+   *  interior death chain - and its replacement stood in a pool the
+   *  interior frame never ticks, at the building's coordinates,
+   *  against the wrong collider. The dungeon arm was the same defect
+   *  one widening older (EC1's), and dungeonContext's own door was
+   *  unreachable from the hosted route until it went on that host's
+   *  api beside `spawnLooseFoe`.
+   *
+   *  The order is `enchantFoeHost`'s, dungeon first, for the reason
+   *  liveEnchantFoeSinks gives: `insideFoes()` answers the DUNGEON's
+   *  own pool while a dungeon is mounted, so an unordered membership
+   *  test would hand a dungeon record to the interior host's door.
+   *  Each host removes and re-stands through the pool that owns the
+   *  billboard - WabbajackEffect.cs:85-88 CreateEnemy's the new
+   *  career under the struck enemy's OWN parent transform. */
+  const enchantReplaceFoe = (targetEntity, mobileType) => {
+    const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
+    if (!f) return;
+    if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+    const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+    const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
+    const stamp = (nf) => {
+      if (!nf?.entity) return;
+      nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
+      nf.entity.health -= missing;        // carry over damage (:94)
+    };
+    const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
+    if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }   // wave 37: `modes?.` above the declaration, guarded on the OBJECT
+    if (host === 'inside') { Promise.resolve(modes?.insideReplaceFoe?.(f, mobileType, feet)).then(stamp).catch(() => {}); return; }
+    exteriorFoes.removeFoe(f);
+    exteriorFoes.spawnFoe(mobileType, feet).then(stamp).catch(() => {});
+  };
   /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
    *  Rose's Daedroth - through DFU's OWN placement law, in whichever
    *  world the player is actually standing in.
@@ -2284,19 +2350,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
       },
       openCharacterSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
-      replaceFoe: (targetEntity, mobileType) => {
-        const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
-        if (!f) return;
-        if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-        const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
-        const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
-        exteriorFoes.removeFoe(f);
-        exteriorFoes.spawnFoe(mobileType, feet).then((nf) => {
-          if (!nf?.entity) return;
-          nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
-          nf.entity.health -= missing;        // carry over damage (:94)
-        }).catch(() => {});
-      },
+      replaceFoe: (targetEntity, mobileType) => enchantReplaceFoe(targetEntity, mobileType),
     }));
   }
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.

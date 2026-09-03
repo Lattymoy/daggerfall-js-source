@@ -176,6 +176,24 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
     'and the join itself has exactly one home');
   assert.equal((WM.match(/\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)/g) ?? []).length, 1,
     'the spread is spelled out ONCE - every reader calls the join');
+  // AUDIT 54 (review): "every reader" was wider than what this held.
+  // Two readers were still asking the narrowed question when it was
+  // written: DFU's PLACEMENT OCCUPANCY test - `Physics.OverlapSphere
+  // (testPoint, 0.65f); if (colliders.Length > 0) return;`
+  // (CreateFoe.cs:317-321), ANY collider - which let a quest foe or a
+  // summoned daedra be stood overlapping a watchman, and the interior
+  // arrow's target list (pinned in audit39_worldmodes). Both call the
+  // join now, so the message is true.
+  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => interiorFoePool\(\), feet\)/g) ?? []).length, 2,
+    'both placements - the quest foe and the daedric punishment wave - test the WHOLE database for occupancy');
+  assert.equal(/\(\) => interiorFoes\.foes, feet\)/.test(WM), false,
+    'and neither is still asking the encounter pool alone');
+  // the only two surviving reaches for a RAW pool list are the join
+  // itself and the magic-round fan-out, which subscribes each pool as
+  // its own subscriber exactly as the exterior host does
+  assert.equal((WM.match(/interiorFoes\?\.foes \?\? \[\]/g) ?? []).length, 2);
+  assert.match(WM, /subscribeFoePools\(interiorTicker, \[\(\) => interiorFoes\?\.foes \?\? \[\], \(\) => interiorGuards\?\.guards \?\? \[\]\], insideFoeSinks\);/,
+    'and the second is the fan-out, one thunk per pool');
   assert.match(WM, /const _interiorSenses = \(\) => sensesContext\(playerEntity, interiorTicker\.classicMinutes, \{/,
     'through the ONE senses builder');
 assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,

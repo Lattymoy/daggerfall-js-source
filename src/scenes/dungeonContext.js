@@ -1848,6 +1848,32 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeSinks,
     absorbCtx: () => ({ inside: true, day: false }),
   });
+  /** V3: the Wabbajack's transform over this host's own pool. The
+   *  old foe leaves through questPoolOps.removeFoe (which is
+   *  GameObject.Destroy - no corpse, no loot, no death, and it
+   *  notifies the quest resource) and the new type stands at its
+   *  feet with the damage taken carried over. A quest foe still in
+   *  use is left alone - QuestResourceBehaviour's own check.
+   *
+   *  AUDIT 54 (review): lifted out of the ctx literal below and put
+   *  on the api, because that literal is mounted ONLY on the
+   *  standalone route (`opts.enchantCtx !== false`) while the hosted
+   *  route leaves world.js's mount as the session singleton - so a
+   *  dungeon record reaching that mount's replaceFoe had nowhere but
+   *  the street pool to go. One body, both routes. */
+  function replaceFoeInPool(targetEntity, mobileType) {
+    const f = foes.find((x) => !x.dead && x.entity === targetEntity);
+    if (!f) return;
+    if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+    const at = f.ai?.feet ? [...f.ai.feet] : (lastPlayerFeet ?? [0, 0, 0]);
+    const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
+    questPoolOps.removeFoe(f);
+    Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {
+      if (!nf?.entity) return;
+      nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
+      nf.entity.health -= missing;        // carry over damage (:94)
+    }).catch(() => {});
+  }
   // FS1 (wave D): the mount itself. `enchantCtx: false` is the
   // `chargen: false` shape exactly - AN OUTER HOST ALREADY OWNS IT.
   // setDefaultEnchantCtx is a session singleton, and EC1 already made
@@ -1894,25 +1920,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // sheet construction, free-slot guard included - the Oghma opens
       // that, never a second bag built here.
       openCharacterSheet: () => api.toggleCharSheet(),
-      // V3: the Wabbajack's transform over this host's own pool. The
-      // old foe leaves through questPoolOps.removeFoe (which is
-      // GameObject.Destroy - no corpse, no loot, no death, and it
-      // notifies the quest resource) and the new type stands at its
-      // feet with the damage taken carried over. A quest foe still in
-      // use is left alone - QuestResourceBehaviour's own check.
-      replaceFoe: (targetEntity, mobileType) => {
-        const f = foes.find((x) => !x.dead && x.entity === targetEntity);
-        if (!f) return;
-        if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-        const at = f.ai?.feet ? [...f.ai.feet] : (lastPlayerFeet ?? [0, 0, 0]);
-        const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
-        questPoolOps.removeFoe(f);
-        Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {
-          if (!nf?.entity) return;
-          nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
-          nf.entity.health -= missing;        // carry over damage (:94)
-        }).catch(() => {});
-      },
+      replaceFoe: replaceFoeInPool,
     }));
   }
   // AUDIT 24: `chargen: false` says an OUTER host already owns the
@@ -3975,6 +3983,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
     spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
+    replaceFoe: replaceFoeInPool,   // AUDIT 54 (review): the hosted route's enchant mount routes the Wabbajack here by pool membership
     drawFoes,
     playerAttackInput,
     spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate

@@ -235,10 +235,25 @@ test('wave D: the dungeon host hands the ctx its OWN doors', () => {
     'Azura\'s box goes through PushWindow, so an open window does not swallow it');
   assert.match(mount, /openCharacterSheet: \(\) => api\.toggleCharSheet\(\),/,
     'the Oghma opens this host\'s one sheet construction, not a second bag');
-  // the Wabbajack over this host's own pool, with DFU's quest guard
-  assert.match(mount, /if \(f\.questBehaviour && !f\.questBehaviour\.isFoeDead\) return;/);
-  assert.match(mount, /questPoolOps\.removeFoe\(f\);/);
-  assert.match(mount, /nf\.entity\.health -= missing;/);
+  // the Wabbajack over this host's own pool, with DFU's quest guard.
+  //
+  // AUDIT 54 (review): the BODY moved out of this literal onto the api,
+  // and the mount takes it by name. It had to: this literal is mounted
+  // only on the STANDALONE route (`enchantCtx: false` from worldModes),
+  // so on the hosted route world.js's mount was the session singleton
+  // and a dungeon record reaching its replaceFoe had nowhere but the
+  // street pool to go - removed by a remover that owns neither its
+  // billboard nor its death chain, re-stood outdoors. One body, both
+  // routes, and world.js asks pool membership which one to call.
+  assert.match(mount, /replaceFoe: replaceFoeInPool,/);
+  assert.match(DC, /function replaceFoeInPool\(targetEntity, mobileType\) \{/);
+  assert.match(DC, /replaceFoe: replaceFoeInPool,   \/\/ AUDIT 54/,
+    'and the api carries it, so the hosted route can reach this pool at all');
+  const body = DC.slice(DC.indexOf('function replaceFoeInPool('), DC.indexOf('// FS1 (wave D): the mount itself.'));
+  assert.match(body, /if \(f\.questBehaviour && !f\.questBehaviour\.isFoeDead\) return;/);
+  assert.match(body, /questPoolOps\.removeFoe\(f\);/);
+  assert.match(body, /nf\.entity\.health -= missing;/);
+  assert.equal(/exteriorFoes|cityGuards/.test(body), false, 'over this host\'s OWN pool, and no other');
 });
 
 // ── 4. chargen through the one construction seam ──────────────────

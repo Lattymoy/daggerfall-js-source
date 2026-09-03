@@ -304,8 +304,23 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.ok(!WM.includes('interiorArrows.update(dt);'), 'the bare geometry call is gone');
   assert.match(call, /playerFeet: player\.pos,/);
   assert.match(call, /onPlayerHit: \(m\) => \{/);
-  assert.match(call, /foeTargets: \(interiorFoes\?\.foes \?\? \[\]\)/);
+  // AUDIT 54 (review): the target list is the HOST'S WHOLE DATABASE,
+  // not the encounter pool alone. It read `interiorFoes?.foes` here,
+  // so a shaft loosed at a watchman `spawnCityGuardsInside` had stood
+  // in the room met nothing and died on geometry - arrowFlight.js's
+  // `if (foeImpact && foeTargets)` walk is a shaft's only foe contact -
+  // after the loose had spent the Arrow and tallied Archery, while
+  // this host's MELEE ray hit that same watchman. Both sibling hosts
+  // already fed both of theirs.
+  assert.match(call, /foeTargets: interiorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\),/);
+  assert.equal(/foeTargets: \(interiorFoes\?\.foes \?\? \[\]\)/.test(call), false,
+    'the narrowed spelling is gone, not merely joined');
   assert.match(call, /onFoeHit: \(m, t\) => interiorFoes\?\.arrowHitFoe\(m, t\),/);
+  // ...and the PLAYER's shaft damages through the pool that owns the
+  // billboard, the same `_encounter` split this host's sinks take -
+  // world.js:6788's own law, so a killed watchman still runs the crime
+  // and the corpse.
+  assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir\)\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call
   assert.match(call, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(m, t, \{/);
   // the enemy hit runs the melee arm's own payload: pain voice, sound,
