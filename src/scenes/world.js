@@ -88,7 +88,6 @@ import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROA
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
-import { TreeModelRenderer } from '../render/treeModels.js';   // TR1: our partner's tree meshes, wearing the player's own sprite
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
@@ -324,10 +323,25 @@ export async function bootWorld(canvas, renderer, params, status) {
   // as the world loads - SmoothRoads on, RiversAndStreams off, as the
   // mod ships them - and carried on the network object into the kernel.
   const roadSwitches = { smooth: modSetting('roads-hazelnut', 'SmoothRoads'), water: modSetting('roads-hazelnut', 'RiversAndStreams') };
+  // ROADS 25 (Mac: "some roads are missing even though they show on
+  // the map"): the network arrives AFTER the world has started
+  // building, so the first pixels - the ones around the spawn - were
+  // painted with no network and then kept. The map rebuilt itself on
+  // arrival; the terrain never did. Every pixel painted without a
+  // network is torn down here, and the stream rebuilds it with one.
+  // Called on BOTH arrival paths - the mod's data and our own network.
+  function rebuildRoadless() {
+    let roadless = 0;
+    for (const [, p] of [...built]) {
+      if (!p.withRoads) { destroyPixel(p.px, p.py, { collectLoose: false }); roadless++; }
+    }
+    if (roadless) console.log(`[roads] ${roadless} pixel(s) built before the network landed - rebuilt with roads`);
+  }
   loadModRoads().then((his) => {
-    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); return; }
+    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
     terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
+    rebuildRoadless();
   });
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
@@ -413,11 +427,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   const groundMeanColour = new Map();   // GR4: archive -> [record] -> mean rgb 0..1
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
-  // TR1: the trees ride the grass's switch and add their own escape.
-  // A record with no model stays a billboard, so the flag only ever
-  // swaps a tree for a tree.
-  const treeModels = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('trees') !== 'off'
-    ? new TreeModelRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
@@ -592,7 +601,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
     });
     // WM3: this pixel's climate law, bound once - the one argument the
@@ -857,33 +866,12 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     const flatAnims = new FlatAnimator();   // FA1
     const batches = [];
-    const treeBatches = [];   // TR1: this pixel's tree keys, freed with the pixel
-    if (treeModels) await treeModels.load(natureArchive);
     for (const [k, centers] of groups) {
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
       if (record >= t.recordCount) continue;
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-      // TR1: a nature flat with a mesh is drawn as one. The billboard's
-      // centres are the flat's CENTRE; the tree's instance base is its
-      // bottom edge, half the height down, so the mesh stands where the
-      // flat stood. Anything that fails here falls through to the flat.
-      const rec = treeModels && archive === natureArchive ? treeModels.modelFor(archive, record) : null;
-      if (rec) {
-        try {
-          const bases = centers.map(([cx, cy, cz]) => [cx, cy - size[1] / 2, cz]);
-          const bm = t.getDFBitmap(record, 0);
-          const tb = treeModels.build(archive, record, rec, bases, size[1], bm, {
-            // TR2: the crown-top is remade from the record's own RGBA and
-            // uploaded under `record#top`, the frame-key shape
-            // uploadRecordFrame already mints
-            color32: t.getColor32(bm, 0),
-            upload: (k, raster) => renderer.uploadTexture(archive, k, raster),
-          });
-          if (tb) { treeBatches.push(tb.key); continue; }
-        } catch (e) { console.warn('[trees] fell back to the flat:', k, e?.message ?? e); }
-      }
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       unionBox(batch._box);
@@ -922,8 +910,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     models.sort((a, b) => a._order - b._order);
 
     built.set(key, {
-      px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, treeBatches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
+      withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
@@ -936,6 +925,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    // ROADS 25: a pixel that was already in flight when the network landed
+    // was painted without it and arrives AFTER the sweep. It goes straight
+    // back for a rebuild - the worker has the network by now, since the
+    // message order is kept.
+    if (!withRoads && terrainGen.hasRoads) { destroyPixel(px, py, { collectLoose: false }); return; }
     const entry = built.get(key);
     // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
     // the player may have crossed during the worker round trip - and
@@ -1057,7 +1051,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.destroyMesh(p.terrain);
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
-    if (treeModels) for (const k of p.treeBatches ?? []) treeModels.dispose(k);   // TR1
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
@@ -2716,7 +2709,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  Null is DFU's "No location found, fail back to terrain origin"
    *  (:1441-1446) - the caller's own default landing stands in for it. */
-  function locationLandingFor(px, py) {
+  function locationLandingFor(px, py, { noMarkers = false } = {}) {
     const key = `${px},${py}`;
     const dfLoc = locationIndex.get(key);
     if (!dfLoc?.exterior?.exteriorData) return null;
@@ -2725,7 +2718,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const origin = b?.locOrigin
       ? [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]]
       : [tilePos.x * tileSide, 2.0 * 0.025, tilePos.y * tileSide];
-    const startMarkers = b?.locBlocks
+    const startMarkers = b?.locBlocks && !noMarkers
       ? locationStartMarkers(b.locBlocks.map((bl) => ({
         originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
       })))
@@ -2741,6 +2734,14 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  every built pixel, re-origin the streamer (its own verbatim
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
+  // TL1: how far an ARRIVAL looks for its floor - up and down - against
+  // the ten units an ordinary door step uses. A location's flat and the
+  // terrain ten units past its edge can differ by far more on a steep site.
+  const ARRIVAL_LIFT = 40;
+  const ARRIVAL_REACH = 240;
+  // TL2: a floor this far ABOVE the location's flat is a roof, not the
+  // ground - a step or a doorsill is under a unit; a house is many.
+  const OBSTRUCTED_ABOVE = 3;
   async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
@@ -2808,7 +2809,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     // plane and FixStanding drops it onto whatever the terrain actually
     // is; a landing WITHOUT grounded stands exactly where it was told -
     // the ship's deck, which is above the water the terrain would give.
-    const pos = walkMode && (!local || ground) ? floorLanding(collider, raw) : raw;
+    // TL1: the arrival's ray starts well above the raw and reaches well
+    // below it - a hillside village's edge is not within ten units of
+    // the flat, in either direction. The first hit is still the surface.
+    let pos = walkMode && (!local || ground) ? floorLanding(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT) : raw;
+    // TL2 (Mac: "you can spawn inside the building geometry"): the floor
+    // the ray found is checked against the location's own flat. A
+    // marker standing in a building's footprint puts a ROOF under the
+    // ray - a floor well above the flat - and the player was placed on
+    // or in the geometry. That landing is refused, and the arrival
+    // falls back to the edge landing, which stands outside the blocks
+    // by construction. On a valid marker the floor IS the flat and
+    // nothing changes.
+    if (walkMode && landing && pos[1] - raw[1] > OBSTRUCTED_ABOVE) {
+      const edge = locationLandingFor(px, py, { noMarkers: true });
+      if (edge) {
+        const eraw = edge.pos;
+        pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
+        console.warn(`[travel] start marker at ${raw[0].toFixed(1)},${raw[2].toFixed(1)} stands in geometry (floor ${(pos[1] - raw[1]).toFixed(1)} above the flat) - landing at the edge instead`);
+      }
+    }
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
     // PositionPlayerToLocation sets the facing itself, through
@@ -6629,26 +6649,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // than 60m from the scatter's centre. Drawn with the lab's own draw:
     // the game's sun, ambient and colour in the lab's uniforms, the same
     // integrated wind the rain reads, and the lab's weather dim.
-    // The scene's wind as the grass and the trees consume it - ONE
-    // object, built at most once a frame, so a gust is one thing moving
-    // through both. Was inline in the grass block; hoisted for TR1 so
-    // `?grass=off` cannot take the trees' wind with it.
-    let _sceneWind = null;
-    const sceneWind = () => {
-      if (_sceneWind) return _sceneWind;
-      const w = sky?.cloudShadow?.wind ?? [0, 0];
-      const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
-      const slider = labWindSlider(w);   // GR2: the sky's row on the lab's slider - a sunny day is the lab's 70
-      // AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the gust;
-      // uWindV is the rate without it - the same pair the rain is fed
-      const tsec = now / 1000;
-      // WIND1: the gust envelope is the WIND'S, shaped by its strength -
-      // a light wind breathes slow, a strong one gusts sharp and often -
-      // rather than one fixed sine stack for every weather. The vector
-      // above already carries the front; this carries its temper.
-      const gustG = sky.gustAt?.(tsec) ?? (0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4));
-      return (_sceneWind = { dir, speed: slider * gustG, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
-    };
     if (labGrass) {
       const ex = cam.pos[0]; const ez = cam.pos[2];
       // GR5: THE FIELD IS ANCHORED TO THE WORLD. GR2's walk placed every
@@ -6695,23 +6695,21 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground });
       labGrassField.update(ex, ez, keep, ground);
       window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
+      const w = sky?.cloudShadow?.wind ?? [0, 0];
+      const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
+      const slider = labWindSlider(w);   // GR2: the sky's row on the lab's slider - a sunny day is the lab's 70
+      // AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the gust;
+      // uWindV is the rate without it - the same pair the rain is fed
+      const tsec = now / 1000;
+      // WIND1: the gust envelope is the WIND'S, shaped by its strength -
+      // a light wind breathes slow, a strong one gusts sharp and often -
+      // rather than one fixed sine stack for every weather. The vector
+      // above already carries the front; this carries its temper.
+      const gustG = sky.gustAt?.(tsec) ?? (0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4));
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: LAB_DIM[weather] ?? 1 },
-        sceneWind());
+        { dir, speed: slider * gustG, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
-    }
-    // TR1: the trees, in the same wind, with the billboard's own tint -
-    // ambient plus the Lambert-average half of the sun and the moon
-    // (drawBillboards' law), full-bright in a clockless scene.
-    if (treeModels && treeModels.meshes.size) {
-      const r = renderer;
-      const tint = r._clockLit
-        ? [r._ambient[0] + r._sunColor[0] * r._sunScale * 0.5 + r._moonColor[0] * r._moonScale * 0.5,
-          r._ambient[1] + r._sunColor[1] * r._sunScale * 0.5 + r._moonColor[1] * r._moonScale * 0.5,
-          r._ambient[2] + r._sunColor[2] * r._sunScale * 0.5 + r._moonColor[2] * r._moonScale * 0.5]
-        : [1, 1, 1];
-      treeModels.draw(r, proj, view, now / 1000, sceneWind(), tint);
-      renderer.markForeignPass();
     }
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn

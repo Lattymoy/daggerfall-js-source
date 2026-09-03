@@ -285,7 +285,17 @@ export function exteriorLanding(playerPos, buildingDoors) {
  * (landing already at/below floor or nothing beneath) returns the
  * landing unchanged - gravity remains the fallback.
  */
-export function floorLanding(collider, pos, maxDist = 10) {
+export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
+  // TL1 (Mac: "you don't remain on the ground after traveling, you
+  // spawn in the air and drop"): the ARRIVAL raw is the location's
+  // flattened height, and the edge landing stands ten units OUTSIDE the
+  // location, on terrain the blend has not fully flattened. A steep site
+  // puts that terrain more than ten units below the raw - the ray found
+  // nothing and the raw stood, in the air - or ABOVE it, so the ray
+  // started inside the hill and found nothing either. StreamingWorld's
+  // FixStanding starts its ray `extraHeight` up and reaches further
+  // down for exactly this; the arrival now passes both.
+  pos = [pos[0], pos[1] + extraHeight, pos[2]];
   // Verbatim PlayerEnterExit.SetStanding shape: a downward ray finds
   // the floor and the body is placed relative to hit.point. DFU casts
   // ONE ray from transform.position - but a marker floating over a
