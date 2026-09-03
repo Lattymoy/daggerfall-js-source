@@ -74,7 +74,8 @@ import {
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
-import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
+import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
@@ -100,7 +101,7 @@ import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
-import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
+import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 54: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
@@ -2630,6 +2631,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // inside the third `else`, after the other two arms have
       // returned.
       preventedMessage: getPreventedRestMessage,
+      // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+      // a pending `give pc ... notify` offer takes this press and
+      // the rest window stays shut (ui/pendingOffer.js).
+      giveOffer,
       racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
@@ -2638,6 +2643,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
+      // AUDIT 54: the offer took the press - the item was handed
+      // over inside GiveOffer() and there is nothing to say.
+      if (d.kind === 'offer') return;
       if (d.kind === 'blocked') {
         // V2b: the override's OWN refusal - the unfed vampire's box
         const lines = plainLines(townTalk.lines(rb.textId));
@@ -3727,6 +3735,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT);
       return;
     }
+    // AUDIT 54: the rung the comment above already named and the code
+    // did not carry - `if (!GiveOffer())` (DaggerfallUI.cs:612) sits
+    // between AreEnemiesNearby and the sun-damage box. A pending
+    // `give pc _item_ notify` offer is handed over HERE and the press
+    // is spent: the map does not open, and the next press travels.
+    if (giveOffer()) return;
     // V2b: CheckFastTravel at the map's own door, where DFU calls it
     // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
     // travel by day, and the refusal is the override's own line.
@@ -4994,8 +5008,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     rolls: Math.random,
   });
   /** NameHelper.FullName for the current region's bank - the two name
-   *  macros (%fn, %mn) and %n's random-name fallback all draw it. */
-  const talkFullName = (gender) => nameHelperFullName(getNameBankOfRegion(_questLoc()?.regionIndex ?? -1), gender);
+   *  macros (%fn, %mn) draw it (TalkManagerMCP.cs:60-71).
+   *  AUDIT 54: the bank is PlayerGPS.CurrentRegionIndex's, which is
+   *  the POLITIC-derived index _questRegionIndex answers - the current
+   *  LOCATION's regionIndex is -1 across the whole wilderness and fell
+   *  through getNameBankOfRegion to Breton, the same drift AUDIT 24
+   *  fixed on the quest side. */
+  const talkFullName = (gender) => nameHelperFullName(getNameBankOfRegion(_questRegionIndex()), gender);
 
   /** TalkManagerMCP's context: the two engine objects plus the host
    *  data the thirteen handlers read. Built lazily because the
@@ -5009,7 +5028,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // variant with a space is not that - %oth read all eight oaths at
     // once, in one breath.
     randomText: (id) => townTalk.randomText(id),
-    randomFullName: () => talkFullName(GENDERS.Male),
+    // TalkManagerMCP.Name (:51-58): an empty GreetingNameNPC falls
+    // through to MacroHelper.GetRandomFullName, whose gender is a coin
+    // flip on the DFRandom stream (:333-341) - not Male. One home, in
+    // nameHelper.js beside its GetRandomNameBank sibling.
+    randomFullName: () => getRandomFullName(_questRegionIndex()),
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
     // ROAD-E E7: THE ONE GAMEMANAGER. MacroHelper's GLOBAL rows read

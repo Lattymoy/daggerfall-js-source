@@ -45,6 +45,7 @@
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 54: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
@@ -524,8 +525,22 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  watchman, an ungated crime FRAMES THE PLAYER for a murder they
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
-  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {}) {
-    g.entity.health -= damage;
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {}) {
+    // AUDIT 54: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(g.entity, damage);
+    g.entity.health -= healthDamage;
     if (g.entity.health <= 0) {
       g.dead = true;
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)

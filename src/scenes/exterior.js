@@ -14,6 +14,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES } from '../formats/mapsFile.js';   // QX1: GetRaceOfCurrentRegion
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
@@ -1100,6 +1101,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       // inside the third `else`, after the other two arms have
       // returned.
       preventedMessage: getPreventedRestMessage,
+      // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+      // a pending `give pc ... notify` offer takes this press and
+      // the rest window stays shut (ui/pendingOffer.js).
+      giveOffer,
       racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
@@ -1108,6 +1113,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
+      // AUDIT 54: the offer took the press - the item was handed
+      // over inside GiveOffer() and there is nothing to say.
+      if (d.kind === 'offer') return;
       if (d.kind === 'blocked') {
         const lines = plainLines(townTalk.lines(rb.textId));   // V2b: the unfed vampire's own box
         if (lines) townTalk.showOverlay(new ActionTextBox(lines));

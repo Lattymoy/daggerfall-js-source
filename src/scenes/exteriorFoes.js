@@ -15,6 +15,7 @@
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 54: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
@@ -239,7 +240,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f.dead = true;
       f.questBehaviour?.notifyDestroyed();
     },
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
+    // AUDIT 54: the SetHealth(0) door, not a damage source - like
+    // hurtPlayer's bypassShield it must not be mitigated.
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
     spellsByIndex: () => spellsByIndex?.(),
     foeSinks: (f) => foeSinks(f),
     rolls,
@@ -316,12 +319,26 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
   }
 
-  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
+  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
     markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
     if (fromPlayer && f.ai) {
       handleAttackFromPlayer(f, playerFeet);
     }
-    f.entity.health -= damage;
+    // AUDIT 54: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);
+    f.entity.health -= healthDamage;
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.

@@ -33,9 +33,12 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // The hurtPlayer(bypassShield) idiom: one door, and the caller says
   // where the blow came from. Defaulting true leaves every player
   // blow and spell exactly as it was.
-  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {})'));
-  assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {})'));
-  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {})'));
+  // AUDIT 54: the three doors also take bypassShield now, the same
+  // idiom for the same reason - Shield mitigates DAMAGE, and the
+  // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
+  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
 });
 
 test('F035: the Murder crime is gated on the player being the source', () => {

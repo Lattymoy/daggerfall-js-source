@@ -66,7 +66,9 @@ test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () 
   // ROAD-E6 split CastReadySpell from its release frame, so the four
   // arms no longer each hold a spend: DecreaseMagicka (:423-425) is ONE
   // line at the cast and the four tallies sit in the release handler.
-  assert.equal((src.match(/playerEntity\.magicka -= cost;/g) ?? []).length, 1,
+  // AUDIT 54: the spend is DecreaseMagicka -> SetMagicka, which CLAMPS
+  // at 0 (DaggerfallEntity.cs:374-381) rather than refusing the cast.
+  assert.equal((src.match(/playerEntity\.magicka = Math\.max\(0, \(playerEntity\.magicka \?\? 0\) - cost\);/g) ?? []).length, 1,
     'the spend is CastReadySpell\'s single DecreaseMagicka, five frames before the release');
   assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 4,
     'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');

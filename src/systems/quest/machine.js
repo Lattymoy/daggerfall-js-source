@@ -155,6 +155,14 @@
 //   regionPriceAdjustment()    - RegionData[region].PriceAdjustment
 //   isPlayerInTown()           - PlayerGPS.IsPlayerInTown(true, true)
 //                                (GivePc's notify gate)
+//   onOfferPending(givePc)     - GivePc.RaiseOnOfferPendingEvent
+//                                (GivePc.cs:96, :238-244): a deferred
+//                                notify/silently offer has become
+//                                eligible and rolled its delay.
+//                                DaggerfallUI is the one subscriber
+//                                (DaggerfallUI.cs:352) and latches the
+//                                sender for the next rest / fast-travel
+//                                press (ui/pendingOffer.js)
 //   addGold(amount) / addHUDText(text) - GetItem's gold arm
 //   giveItemToPlayer(dfItem, front) - ItemCollection.AddItem
 //   removeItemFromPlayer(dfItem)    - ItemCollection.RemoveItem
@@ -375,6 +383,8 @@ export class QuestMachine {
       makeHeldQuestItemsPermanent: (questUID, symbol) => this.deps.makeHeldQuestItemsPermanent?.(questUID, symbol),
       offerReward: (q, dfItem) => this.deps.offerReward?.(q, dfItem),
       isPlayerInTown: () => this.deps.isPlayerInTown?.() ?? false,
+      // GivePc.cs:96's static event, through the deps to the UI latch.
+      onOfferPending: (givePc) => this.deps.onOfferPending?.(givePc),
       // StartQuest schedules child quests through the machine's own
       // data seam (QuestListsManager.GetQuest -> ScheduleQuest).
       startQuest: (questName) => this.scheduleQuestByName(questName),

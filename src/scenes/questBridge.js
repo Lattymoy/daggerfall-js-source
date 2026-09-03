@@ -58,6 +58,7 @@ import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { getBool } from '../systems/settings.js';
+import { noteOfferPending } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI's GivePc.OnOfferPending subscription
 import { getTitle } from '../systems/guilds.js';
 import { addQuestResourceObjects } from '../systems/quest/sceneMount.js';
 
@@ -177,6 +178,14 @@ export function createQuestBridge(ctx) {
     makeHeldQuestItemsPermanent: (uid, sym) => ctx.makeHeldQuestItemsPermanent?.(uid, sym),
     offerReward: (q, item) => ctx.offerReward?.(q, item),
     isPlayerInTown: () => ctx.isPlayerInTown?.() ?? false,
+    // AUDIT 54: DaggerfallUI.Awake's one subscription to GivePc's
+    // static OnOfferPending event (DaggerfallUI.cs:352) - the handler
+    // latches the sender and nothing else (:1731-1735). The two key
+    // presses that spend the latch live in the hosts' rest and
+    // fast-travel doors, through ui/pendingOffer.js's giveOffer().
+    // That is the WHOLE of the subscription - no host fan-out to
+    // forget to mount, because DFU has no second subscriber.
+    onOfferPending: (givePc) => noteOfferPending(givePc),
     // H1: DaggerfallBankManager.IsHouseOwned. place.js has read this
     // since the quest arc landed (:439 - a house you own is never
     // handed out as a quest site) and nothing could answer it, so it

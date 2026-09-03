@@ -34,7 +34,7 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 54: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -117,6 +117,7 @@ import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../syste
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // the scene-free open gate, one home   // ROAD-B B5: GetPreventedRestMessage
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
@@ -901,7 +902,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.questBehaviour?.notifyDestroyed();
       dropCandidate(f);
     },
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
+    // AUDIT 54: this is the SetHealth(0) door, not a damage source -
+    // like hurtPlayer's bypassShield it must not be mitigated, or a
+    // quest that removes a foe would be eaten by its own Shield.
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
     spellsByIndex: () => spellsByIndex,
     foeSinks: (f) => foeSinks(f),
     rolls: Math.random,
@@ -2855,7 +2859,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
-  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {}) {
+  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
     markFoeStruck(foe, { fromPlayer });   // PX30: the enhanced HUD's target frame
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
     // re-hostiles it (and pre-loads the pursuit, the G1 shape). F041:
@@ -2872,7 +2876,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (fromPlayer && foe.ai) {
       handleAttackFromPlayer(foe, playerFeet);
     }
-    foe.entity.health -= damage;
+    // AUDIT 54: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(foe.entity, damage);
+    foe.entity.health -= healthDamage;
     if (foe.entity.health <= 0) {
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
       // EnemyEntity.SetHealth override does (:157-177) - before the
@@ -4152,6 +4170,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // inside the third `else`, after the other two arms have
         // returned.
         preventedMessage: getPreventedRestMessage,
+        // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+        // a pending `give pc ... notify` offer takes this press and
+        // the rest window stays shut (ui/pendingOffer.js).
+        giveOffer,
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
@@ -4159,6 +4181,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // enemies arm (DaggerfallUI.cs:655, not the rest window's
         // :655), which is what arms this host's rest-encounter roll.
         if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);
+        // AUDIT 54: the offer took the press - the item was handed
+        // over inside GiveOffer() and there is nothing to say.
+        if (d.kind === 'offer') return;
         if (d.kind === 'blocked') {
           const lines2 = rscLines(rb.textId);   // V2b: the unfed vampire's own box
           if (lines2) activeOverlay = new ActionTextBox(lines2);

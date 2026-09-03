@@ -145,6 +145,7 @@ import { guildOfFaction, isMember } from '../systems/guilds.js';
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession.js';
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
@@ -6115,6 +6116,10 @@ export function createWorldModes(host) {
         // inside the third `else`, after the other two arms have
         // returned.
         preventedMessage: getPreventedRestMessage,
+        // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+        // a pending `give pc ... notify` offer takes this press and
+        // the rest window stays shut (ui/pendingOffer.js).
+        giveOffer,
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
@@ -6128,6 +6133,9 @@ export function createWorldModes(host) {
         // (dungeonContext.js) raised it, so an interior refusal never
         // armed the flag intermittentEnemySpawn rolls on.
         if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(interiorTicker.classicMinutes));
+        // AUDIT 54: the offer took the press - the item was handed
+        // over inside GiveOffer() and there is nothing to say.
+        if (d.kind === 'offer') return;
         if (d.kind === 'blocked') {
           const lines = plainLines(townTalk?.lines?.(rb.textId));   // V2b: the unfed vampire's own box
           if (lines) mountInterior(new ActionTextBox(lines));
