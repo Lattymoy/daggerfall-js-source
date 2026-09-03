@@ -66,10 +66,11 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
-import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
+import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 54: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
+  addPermanentScene, interiorSceneName,   // AUDIT 54: the two names AssignShipToPlayer makes permanent (DaggerfallBankManager.cs:103-110)
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
@@ -143,8 +144,8 @@ import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, 
 import { testPresetById, applyTestCharacter } from '../systems/testRoom.js';   // TR3: the Test Room's one home
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
-import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key
-import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
+import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 54: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
+import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 54: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
@@ -1763,7 +1764,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (dmg <= 0) return;
       const apply = () => {
         hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
-        audio.playOneShot(hitSoundFor(wpn), 1.1);
+        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
         // AUDIT 24 (wave 46): PlayerFootsteps hears the same
         // RemoveHealth the flash does - a 40% cry in the player's own
         // race and gender.
@@ -1788,7 +1789,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       hurtPlayer(playerEntity, dmg);
-      audio.playOneShot(hitSoundFor(wpn), 1.1);
+      audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
       // EnemyAttack.SendDamageToPlayer (:404-406) SendMessages
       // "RemoveHealth" for EVERY attacker, and PlayerFootsteps
       // .RemoveHealth (:348-364) answers with the 40% pain cry.
@@ -2144,7 +2145,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1703 mounts the same one, gated on
+  // and dungeonContext.js:1905 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4047
@@ -3677,6 +3678,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
     if (!extras) return false;
+    // AUDIT 54: StartFromClassicSave.cs:616 -
+    // `Banking.DaggerfallBankManager.AssignShipToPlayer(saveVars
+    // .PlayerOwnedShip)`, and AssignShipToPlayer is TWO statements
+    // (DaggerfallBankManager.cs:488-497): the deed AND both of the
+    // ship's scenes on the permanent list. The converter carries only
+    // the deed (classicSave.js's `ownedShip`, with `sceneCache: null`),
+    // and restorePlayer mints an EMPTY permanent set from that null -
+    // so an imported ship's two scenes were ordinary, and the first
+    // world move past its pixel threw away everything left aboard,
+    // where a ship BOUGHT in the same session kept it. The ordering is
+    // DFU's too: NewCharacterCleanup's ClearSceneCache(true) (:468)
+    // runs first and the ship's scenes are added after (:616), which
+    // here is after restorePlayer has minted the cache.
+    assignShipToPlayer(playerEntity, playerEntity.ownedShip, {
+      addPermanentScene: (s) => {
+        addPermanentScene(playerEntity.sceneCache, worldSceneName(SHIP_COORDS[s].x, SHIP_COORDS[s].y));
+        addPermanentScene(playerEntity.sceneCache, interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
+      },
+    });
     setWorldMinutes(extras.classicMinutes ?? worldMinutes());
     // The quest machine's 64 classic globals, SET in place -
     // machine.hooks captured the Map reference at construction, so
@@ -4515,7 +4535,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6309-6321 -
+  // worldModes answers it in BOTH modes (worldModes.js:6310-6322 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5408,9 +5428,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     // The stamp is returned WHENEVER the source was idle, even if the
     // clip itself failed to start: DFU stamps it beside PlayOneShot,
     // which swallows a missing clip in silence.
+    // AUDIT 54: the id is the Quests-Sounds table's `id` column, a
+    // DAGGER.SND record ID - PlaySound.cs:74-75 resolves it through
+    // SoundReader.GetSoundIndex before :112 plays the INT overload.
+    // The port moved the resolution behind this hook (Ledger A), and
+    // the hook never did it: `386, vengence` rang record INDEX 386
+    // (MaleGasp) instead of the record whose id is 386, and the
+    // table's out-of-range ids (`11146, halt`) rang nothing at all.
     playSound: (id) => {
       if (questAudioSource.isPlaying()) return false;
-      questAudioSource.playOneShot(id);
+      questAudioSource.playOneShotId(id);
       return true;
     },
     // PlaySong hands a MIDI.BSA record name; the SongFiles member was
@@ -6218,7 +6245,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // is only cleared by update(), so billing it on a frame the motor
         // never ran would charge the same fall once per held frame.
         if (!_seasonHeld) applyFallLanding(playerEntity, player.landedFallDistance, {
-          sound: (id) => audio.playOneShot(id),
+          sound: (id, vol) => audio.playOneShot(id, vol),   // AUDIT 54: the caller's FootstepVolumeScale rides through
           inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),
         });
         // ROAD-B (b3): the exterior surface model, recomputed every
@@ -6471,7 +6498,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // weather/time preset per WeatherManager.SetAmbientEffects.
     audio.setListener(cam.pos, fwd);
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
-    ambience.update(dt, { playerPos: cam.pos });
+    ambience.update(dt, { playerPos: cam.pos, inside: false });   // AUDIT 54: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
     // shipped DFU renders no flash (PlayLightningEffect is 0 on both
@@ -6885,7 +6912,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         }) : 0;
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
-          audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
           // AUDIT 24 (wave 46): an arrow reaches the player through
           // BowDamage -> ApplyDamageToPlayer -> SendDamageToPlayer,
           // the same door as a blow, so it owes the flash and the cry
@@ -6975,7 +7002,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // response; wandering guard NPC -> Assault + conversion with
         // the swing carried onto the fresh foe).
         const lookFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-        const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 });
+        const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
         // AUDIT 23 (combat-4): the host-side double tallies are gone -
         // resolvePlayerHit runs DFU's tally arm itself.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

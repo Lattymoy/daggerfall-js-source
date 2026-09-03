@@ -1808,10 +1808,12 @@ export class ChargenFlow {
    *  testable without art, the way chargenHit already is. */
   /** CreateCharRaceSelect (:115) plays RaceTemplate.ClipID - a BSA
    *  sound id resolved through SndFile.GetRecordIndex, the verbatim
-   *  path ("From high in the Wrothgarian mountains..."). */
+   *  path ("From high in the Wrothgarian mountains...").
+   *  AUDIT 54: through the engine's own ID door now
+   *  (DaggerfallAudioSource.PlayOneShot(uint), :232-238) rather than a
+   *  private getRecordIndex here - ONE DFU MEMBER, ONE EXPORT. */
   _playRaceClip() {
-    const idx = audio.snd?.getRecordIndex(RACE_TEMPLATES[this.raceIndex]?.clipId) ?? -1;
-    if (idx >= 0) audio.playOneShot(idx, 1);
+    audio.playOneShotId(RACE_TEMPLATES[this.raceIndex]?.clipId, 1);
   }
 
   applyHit(hit) {

@@ -35,7 +35,7 @@
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
 // which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:1107). When friendly fire lands, its splash is
+// and dungeonContext.js:1108). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond

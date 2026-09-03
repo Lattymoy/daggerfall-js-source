@@ -269,7 +269,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-      playCastSound: (element, from) => audio?.play3d?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      // AUDIT 54: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
+      playCastSound: (element, from) => audio?.play3dId?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       explodeAt: magicHooks?.explodeAt,
       fireMissile: magicHooks?.fireMissile,
@@ -622,7 +623,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
             audio?.play3d?.(enemyMissSound(fwpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const fv = enemyAttackVoice(f);   // :216-226 fires whatever the target
-          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + fv.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
           continue;   // the player arm below is the ELSE
         }
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
@@ -671,7 +672,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // C2-slice (combat-17): the 20% enemy-class attack voice at
         // the damage frame, whatever the outcome.
         const v = enemyAttackVoice(f);
-        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16 });
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
       }
       // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
       // returns at the top while paralysed (:91-94), so MeleeDamage and
@@ -712,7 +713,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (this path is melee-only, never a bow).
     const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 54: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
@@ -730,7 +731,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck class foe cries out 40%
         const pain = enemyPainVoice(foe, damage);
-        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
         damageFoe(foe, damage, playerFeet, lookDir);
       } else {
         const snd = zeroDamageHitSound({

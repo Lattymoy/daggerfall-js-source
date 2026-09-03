@@ -68,7 +68,7 @@ import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-poo
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
-import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
+import { hitSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors   // AUDIT 54: DFU's two hit volumes
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
 import { sensesContext, subscribeFoePools } from './shared.js';   // IF: the one senses builder every pool is handed; AUDIT 54: and the magic-round fan-out both of them owe
@@ -668,7 +668,7 @@ export function createWorldModes(host) {
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
         hurtPlayer(playerEntity, dmg);
-        audio.playOneShot(hitSoundFor(wpn), 1.1);
+        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
         playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
         surfacePlayer();
       },
@@ -764,7 +764,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:186-187), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:440-441 and
+   *  READ the effect list every frame (exteriorFoes.js:441-442 and
    *  cityGuards.js:663-664 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -802,7 +802,7 @@ export function createWorldModes(host) {
         if (dmg <= 0) return;
         const apply = () => {
           hurtPlayer(playerEntity, dmg);
-          audio.playOneShot(hitSoundFor(wpn), 1.1);
+          audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
           playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
           surfacePlayer();
         };
@@ -1043,10 +1043,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1325 states), so the same visual
+   *  the C11 law dungeonContext.js:1336 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1243, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1254, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4841,7 +4841,7 @@ export function createWorldModes(host) {
       // IsBadInteriorModel's own comment is about "trapping player
       // upstairs". AcrobatMotor.CheckFallingDamage has exactly one
       // exemption and it is the outdoor water tile, never an interior.
-      if (!overlayHeld) applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+      if (!overlayHeld) applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id, vol) => audio.playOneShot(id, vol) });
       // AUDIT 18: and the interior owed the same world clock the exterior
       // and dungeon hosts run - inside a building, effects, diseases,
       // poisons, fatigue and skill advancement had all stopped.
@@ -5088,11 +5088,11 @@ export function createWorldModes(host) {
         }) : 0;
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
-          audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5470's own wave-46 note); the interior
+          // a blow (world.js:5497's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -5231,11 +5231,12 @@ export function createWorldModes(host) {
       // encounter pool) - killing a watchman indoors is the same
       // Murder it is in the street, and only its own pool knows that.
       if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
-        makeInView(proj, view, multiply), (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 }))) {
+        makeInView(proj, view, multiply), (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 }))) {
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
       }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
-        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), 1.1))) {
+        // AUDIT 54: the PLAYER's blow landing on a foe - EnemySounds.cs:125's 1.1, not PlayerFootsteps' 1
+        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME))) {
         tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
         continue;
       }

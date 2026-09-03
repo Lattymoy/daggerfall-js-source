@@ -153,6 +153,27 @@ export function swingSoundFor(weapon) {
   return SOUND.None;   // DFU's `default:` - anything that is not a weapon rings nothing
 }
 
+/** AUDIT 54: THE TWO VOLUME SCALES A HIT SOUND IS PLAYED AT. The clip
+ *  FAMILIES are shared - EnemySounds.PlayHitSound and PlayerFootsteps'
+ *  PlayWeaponHitSound/PlayWeaponlessHitSound roll the same Hit1
+ *  ranges - but the volumes are not, and the port had EnemySounds'
+ *  constant serving both, so every blow that landed on the player rang
+ *  10% louder than DFU's.
+ *
+ *  ENEMY side (the player strikes): EnemySounds.cs:116-130 ends
+ *  `dfAudioSource.PlayOneShot(sound, 1, 1.1f)` - spatialBlend 1
+ *  (positional, at the foe), volumeScale 1.1.
+ *
+ *  PLAYER side (a blow lands on the player): EnemyAttack
+ *  .SendDamageToPlayer (:404-415) SendMessages PlayWeaponHitSound /
+ *  PlayWeaponlessHitSound to the PLAYER object - the only senders in
+ *  the tree - and those land on PlayerFootsteps.cs:330-344, which play
+ *  `PlayOneShot(..., 0, 1f)`: spatialBlend 0 (flat, at the listener),
+ *  volumeScale 1. Which law a call site is under is now visible at the
+ *  call. */
+export const ENEMY_HIT_VOLUME = 1.1;    // EnemySounds.cs:125
+export const PLAYER_HIT_VOLUME = 1;     // PlayerFootsteps.cs:334, :342
+
 /** PlayHitSound verbatim (EnemySounds.cs): weapon -> Hit1 + [0,5),
  *  barehanded -> Hit1 + [2,4). Same families for the player taking
  *  hits (PlayerFootsteps.cs). */

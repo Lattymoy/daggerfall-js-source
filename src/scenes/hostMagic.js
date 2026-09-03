@@ -309,7 +309,9 @@ export function createPlayerMagic({
       if (!EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]) continue;
       tallySkill(playerEntity, effectSchool(e), 1);
     }
-    audio.playOneShot(SPELL_CAST_SOUND[sp.element] ?? SPELL_CAST_SOUND[4], 1);
+    // AUDIT 54: the ID door - PlayCastSound's `(uint)castSoundID`
+    // (EntityEffectManager.cs:1958 -> DaggerfallAudioSource.cs:232-238)
+    audio.playOneShotId(SPELL_CAST_SOUND[sp.element] ?? SPELL_CAST_SOUND[4], 1);
   }
 
   /** ByTouch's target pick - the 0.25-radius sphere-cast 3.0 ALONG THE
@@ -651,7 +653,7 @@ export function createPlayerMagic({
       if (!bundle) return null;
       applySpellToPlayer(bundle, playerEntity.level, null,
         { bypassSavingThrows: true, bypassChance: true });
-      audio.playOneShot(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);
+      audio.playOneShotId(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);   // AUDIT 54: the same ID door
       return bundle.name;
     },
     /** WeaponManager's HasReadySpell leg - the weapon hides while a

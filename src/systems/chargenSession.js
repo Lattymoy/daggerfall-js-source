@@ -393,7 +393,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // the wizard already routes a mousemove here: world.js and
     // exterior.js through `townTalk.hover` (townTalk.js:1027-1039),
     // dungeonContext.js through `overlayHover` (:4292), which
-    // dungeon.js:328 and worldModes.js:6063 both feed. Hovering never
+    // dungeon.js:328 and worldModes.js:6064 both feed. Hovering never
     // advances the flow, so no done check.
     hover(vx, vy, e = null) { if (!_fired) flow.hover?.(vx, vy, e); },
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,

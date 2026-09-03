@@ -779,7 +779,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
             audio?.play3d?.(enemyMissSound(fwpn), [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const gv = enemyAttackVoice(g);   // :216-226 fires whatever the target
-          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
+          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + gv.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
           continue;
         }
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
@@ -815,7 +815,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // C2-slice (combat-17): the 20% attack voice - the watch is
         // the Knight_CityWatch class, whose voice is FORCED male.
         const v = enemyAttackVoice(g);
-        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16 });
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
       }
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
       // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
@@ -866,7 +866,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (melee-only path).
     const grunt = playerAttackGrunt(playerEntity, false, rand);   // ENGINE-PRNG RULE: the pool's seam - the bare default leaked Math.random into the parry pin (the recurring suite flake, root-caused)
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 54: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, rand); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
     // had no backstab at all where the dungeon host computes facing
@@ -885,7 +885,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
-        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
         damageGuard(foe, damage, playerFeet, lookDir);
       } else {
         // WeaponManager.cs:609-615: a connecting swing that dealt

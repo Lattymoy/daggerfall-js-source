@@ -12,7 +12,7 @@ import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLo
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES } from '../formats/mapsFile.js';   // QX1: GetRaceOfCurrentRegion
+import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';   // QX1: GetRaceOfCurrentRegion   // AUDIT 54: LOCATION_TYPES for the graveyard ambient arm
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
@@ -101,7 +101,7 @@ import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, 
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
-import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
+import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 54: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup's box
@@ -618,7 +618,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     re-running the pass idempotently when its bridge lands - and it
   //     can only do that because it keeps the NPC flats OUT of the
   //     pixel's billboard batches on purpose (`if (npcFlatSet.has(flat))
-  //     continue;`, world.js:801) and stands them in batches of their
+  //     continue;`, world.js:802) and stands them in batches of their
   //     own over the ACTIVE set. THIS host builds one batch per
   //     (archive, record) for the WHOLE city, up front, with every
   //     street NPC's center already inside it (the batch loop above), and
@@ -992,7 +992,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (dmg <= 0) return;
       const apply = () => {
         hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
-        audio.playOneShot(hitSoundFor(wpn), 1.1);
+        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
         // AUDIT 24 (wave 46): PlayerFootsteps hears the same
         // RemoveHealth the flash does - a 40% cry in the player's own
         // race and gender.
@@ -1352,7 +1352,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   /** AUDIT 54 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
-   *  (effects.js:828/:842) - world.js:2016 hoisted its copy for exactly
+   *  (effects.js:828/:842) - world.js:2017 hoisted its copy for exactly
    *  that reason when reflection was wired, and this host's stayed
    *  inline only because nothing else had asked for it. */
   const playerSpellSinks = {
@@ -1524,7 +1524,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (chronicleDoor.js:68 `if (!questJournalArtLoaded()) return null`),
     // so a readiness test placed AHEAD of the preload that satisfies it
     // made the classic skin answer null for ever - the warm behind the
-    // gate could never run. dungeonContext.js:1122-1124 is the shape:
+    // gate could never run. dungeonContext.js:1123-1125 is the shape:
     // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
@@ -2069,14 +2069,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:4706 is the same line.
+    // other. world.js:4726 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4719-4722. */
+     *  %rn/%rt's producer - world.js:4739-4742. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -2136,7 +2136,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:4739's line
+     *  mode-aware (worldModes:1258), so this is world.js:4759's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
@@ -2144,7 +2144,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:4747's call verbatim. */
+     *  Bridge-only, no host state - world.js:4767's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
     /** CreateFoe.TryPlacement (:183-211). The INSIDE arms are live on
      *  this route - worldModes.tryPlaceQuestFoe places in a dungeon and
@@ -2199,9 +2199,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       onButton: (b) => { respond(b); return []; },
     }),
     // E6: PlaySound's busy skip over the ONE source (PlaySound.cs:110-116).
+    // AUDIT 54: the table id goes through the ID door, as
+    // PlaySound.cs:74-75 does at create - the four-hosts twin of the
+    // world host's hook.
     playSound: (id) => {
       if (_questAudioSource.isPlaying()) return false;
-      _questAudioSource.playOneShot(id);
+      _questAudioSource.playOneShotId(id);
       return true;
     },
     // GivePc.cs:84 and its siblings ask IsPlayerInTown(TRUE, TRUE) -
@@ -2210,7 +2213,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:5416's line.
+    // closure S40 gave this host, and world.js:5443's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -2662,6 +2665,15 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  // AUDIT 54 (F089's other host): AmbientEffectsPlayer.Start subscribes
+  // PlayerGPS.OnEnterLocationRect on EVERY instance (:89), and the
+  // handler arms IsCemeteryNearby when the entered location is a
+  // Graveyard and the player is outside (:518-529). This host loads ONE
+  // location and stands in it - `_musicInLocationRect()` is constantly
+  // true (:751) - so the rect is entered exactly once, at load, and the
+  // arming edge is here rather than on a poll. Without it a graveyard
+  // opened as ?exterior was silent while the streaming host howled.
+  ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
@@ -2855,7 +2867,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // uses, so the two hosts cannot answer differently for the same
       // ground.
       applyFallLanding(playerEntity, player.landedFallDistance, {
-        sound: (id) => audio.playOneShot(id),
+        sound: (id, vol) => audio.playOneShot(id, vol),   // AUDIT 54: the caller's FootstepVolumeScale rides through
         inOutdoorWater: isOutdoorWaterTile(playerGroundTileRaw()),
       });
       // ROAD-B (b3): the exterior surface model, recomputed where
@@ -3014,7 +3026,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
-    ambience.update(dt, { playerPos: eye });
+    ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 54: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -3330,7 +3342,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // G4: no guard hit -> WANDERING townsfolk (civilian one-hit
         // Murder + response; wandering guard NPC -> Assault +
         // conversion with the swing carried onto the fresh foe).
-        const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 });
+        const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
         // AUDIT 23 (combat-4): the host-side WEAPON_SKILL tallies are
         // GONE - cityGuards.resolvePlayerHit already runs DFU's tally
         // arm (tallySwingSkills), so every connecting swing was

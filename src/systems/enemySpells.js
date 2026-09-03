@@ -55,7 +55,17 @@ export const ENEMY_MAGIC_SKILL = 80;
 
 /** EntityEffectManager cast sounds, element-indexed (our classic
  *  order fire/cold/poison/shock/magic): fire 352, cold 353,
- *  poison 350, shock 351, magic 349. */
+ *  poison 350, shock 351, magic 349.
+ *
+ *  AUDIT 54: these are DAGGER.SND record IDs, not record indices.
+ *  EntityEffectManager.cs:44-48 names every one of them `...SoundID`,
+ *  and PlayCastSound (:1948-1961) spends them through
+ *  `audioSource.PlayOneShot((uint)castSoundID)` - the UINT overload
+ *  (DaggerfallAudioSource.cs:232-238), which resolves the id through
+ *  SoundReader.GetSoundIndex first. Every consumer must therefore go
+ *  through audio.playOneShotId / audio.play3dId, never the raw index
+ *  entry points; spent as indices these five ring StormLightningThunder
+ *  and SwingMediumPitch2 instead of the cast. */
 export const SPELL_CAST_SOUND = Object.freeze([352, 353, 350, 351, 349]);
 
 /** EnemyEntity.SetEnemySpells, verbatim. */

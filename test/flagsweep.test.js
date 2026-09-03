@@ -217,7 +217,7 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1703 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1905 mounts the same one/,
     'and the header names the shipped shape instead');
 });
 

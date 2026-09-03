@@ -30,7 +30,11 @@
 // 100 adds AmbientWaterBubbles flat. doNotPlayInCastle gates the
 // dungeon one-shots (deps.inCastle - LIVE since AUDIT 21 music F3, fed from
 // the block the player stands in; it was read here and written by nobody);
-// the cemetery howl/bird layer pends locations (routed).
+// the cemetery howl/bird layer is WIRED in both exterior hosts
+// (AUDIT 54: world.js's rect edge and exterior.js's once-at-load arm -
+// DFU subscribes OnEnterLocationRect on every instance, :89). The two
+// interior hosts do not arm it and must not: the handler sets it only
+// when `!playerEnterExit.IsPlayerInside` (:518-529).
 
 import { audio as defaultAudio } from './audio.js';
 import { rand } from '../formats/dfRandom.js';

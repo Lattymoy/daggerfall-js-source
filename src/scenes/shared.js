@@ -30,6 +30,7 @@ import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 54: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
@@ -837,9 +838,16 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
     // trigger. A fall flashes the screen; a poison does not.
     flashPlayerDamage();
-    sound?.(SOUND.FallDamage);
+    // AUDIT 54: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
+    // is `PlayOneShot((int)FallDamageSound, 0, FootstepVolumeScale)`
+    // (PlayerFootsteps.cs:307-311) and HardFallAlert the same for
+    // FallHardSound (:315-319) - the 0.7 is CHOSEN on these, not an
+    // inherited default: PlayWeaponHitSound in the same component
+    // (:331-337) deliberately passes 1f. The stride already carried it
+    // (footsteps.js:26); its three siblings rang 43% too loud.
+    sound?.(SOUND.FallDamage, FOOTSTEP_VOLUME);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
-    sound?.(SOUND.FallHard);   // BadFallDetected
+    sound?.(SOUND.FallHard, FOOTSTEP_VOLUME);   // BadFallDetected, PlayerFootsteps.cs:315-319
   }
 }
 

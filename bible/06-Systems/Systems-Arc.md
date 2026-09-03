@@ -545,7 +545,15 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
   plays the element cast sound (EntityEffectManager constants: fire
   352, cold 353, poison 350, shock 351, magic 349 - element-indexed
   in enemySpells.SPELL_CAST_SOUND) from the caster at the enemy 3D
-  profile (max 16), then CasterOnly self-assigns through the foe's
+  profile (max 16). AUDIT 54: those five numbers are DAGGER.SND record
+  IDs, not record indices - EntityEffectManager.cs:44-48 names every
+  one of them `...SoundID` and PlayCastSound spends them through
+  `PlayOneShot((uint)castSoundID)` (:1958), the UINT overload
+  (DaggerfallAudioSource.cs:232-238), which resolves the id through
+  SoundReader.GetSoundIndex first. Every consumer goes through the
+  engine's `playOneShotId` / `play3dId`; spent as indices they rang
+  StormLightningThunder and SwingMediumPitch2 instead of the cast.
+  Then CasterOnly self-assigns through the foe's
   own sinks and everything else looses a missile on the shared
   trap-missile shape (aimed at the player mid-capsule at fire time).
   Enemy missiles carry casterLevel + the caster pair, so an enemy
@@ -3186,7 +3194,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:409`, `world.js:626`), fired
+`playerTicker.advance(60)` (`exterior.js:409`, `world.js:627`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4466,7 +4474,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1373` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1374` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host

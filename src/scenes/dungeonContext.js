@@ -133,10 +133,11 @@ import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
-  SOUND, hitSoundFor, swingSoundFor,
+  SOUND, hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME,   // AUDIT 54: DFU's two hit volumes
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
   ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD,
 } from '../systems/soundClips.js';
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 54: PlayerFootsteps.FootstepVolumeScale (:30) - the stride's 0.7, which its three one-shots carry too
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
@@ -1234,12 +1235,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     loot: () => nearbyLootRecords({ piles: [...lootPiles, ...droppedLoot._piles], foes }),
     feet: () => lastPlayerFeet ?? [0, 0, 0],
   });
-  // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
+  // A2: DaggerfallAction.Play's sound - the RDB sound field fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
+  // AUDIT 54: it is a sound ID, not a record index. RDBLayout names
+  // the parameter `int soundID_and_index` (:951) and stores it as
+  // action.Index (:964), whose own comment calls it "the raw sound
+  // index from daggerfall" (DaggerfallAction.cs:42) - but the wiring
+  // is unambiguous: AddActionAudioSource casts it to uint
+  // (RDBLayout.cs:1075) so that `c.SetSound(id)` binds the UINT
+  // overload (DaggerfallAudioSource.cs:170-181), which is the only one
+  // of the three that runs GetSoundIndex. Played as an index, every
+  // RDB action in every dungeon rang a different clip from the one the
+  // block asked for.
   actions.onActionSound = (o) => {
     const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
-    if (p) audio.play3d(o.index, p);
+    if (p) audio.play3dId(o.index, p);
   };
   // AttemptBash's PlayerDoorBash (clip 7) from the door - the A1 seam
   // family (2026-08-16 audit: the hook existed unwired since the bash
@@ -2084,7 +2095,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeDeps.castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-      playCastSound: (element, from) => audio.play3d(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      // AUDIT 54: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
+      playCastSound: (element, from) => audio.play3dId(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       explodeAt: magic.explodeAt,
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       fireMissile: (from, spell2, casterLevel, foe) =>
@@ -2349,7 +2361,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // C2-slice (combat-17): the player's 20% attack grunt fires once
     // per hit frame, never for a bow (this path is melee-only).
     const grunt = playerAttackGrunt(playerEntity, false, Math.random);   // explicit: this path's resolveHit rides Math.random too (no injected seam here)
-    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1);
+    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 54: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, Math.random); if (v != null) audio.playOneShot(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
@@ -2380,7 +2392,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
-      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
+      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });   // rides the foe's source shape
       // WeaponManager.cs:569-573 - the splash sits right beside the hit
       // sound and takes the struck foe's OWN BloodIndex. DFU has a
       // raycast impactPosition here; the port resolves melee by yaw
@@ -2391,7 +2403,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
-      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
+      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
     // combat-14: the no-entity fallback - only a swing that connected
@@ -2532,8 +2544,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6376,
-              // exterior.js:2428 and worldModes.js:4627 already ran;
+              // playerArrowHitFoe is the one copy world.js:6403,
+              // exterior.js:2431 and worldModes.js:4627 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2625,7 +2637,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // PlayWeaponHitSound's family, NOT PlayArrowSound - which
             // has no sender anywhere in the DFU tree and is dead.
             if (dmg > 0) {
-              audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+              audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
               flashPlayerDamage();
               playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
             } else if (m.shooterFoe) {
@@ -2967,7 +2979,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  melee damage frame, whatever the outcome (MeleeDamage's tail). */
   function foeAttackVoice(f) {
     const v = enemyAttackVoice(f);
-    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
   }
 
   /** MT-iv: MeleeDamage's TWO-ARM SPLIT (EnemyAttack.cs:199-209) -
@@ -3041,7 +3053,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
       say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
     });
-    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
+    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
     // C2-slice (combat-9): a connected attack that LOST the roll
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
     else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -4213,7 +4225,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tally once per jump), and the state the per-minute fatigue
     // drain reads.
     reportActivity({ running = false, swimming = false, climbing = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
-      if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
+      // AUDIT 54: PlayLargeSplash is PlayOneShot(SplashLargeSound, 0,
+      // FootstepVolumeScale) - PlayerFootsteps.cs:323-326.
+      if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge, FOOTSTEP_VOLUME);   // PlayLargeSplash on entry
       _activity.running = running;
       _activity.swimming = swimming;
       _activity.climbing = climbing;   // AUDIT 26 F083: ClimbingFatigueLoss's live flag
@@ -4238,9 +4252,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (fell > FALL_DAMAGE_THRESHOLD) {
         hurtPlayer(Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD)));
         flashPlayerDamage();
-        audio.playOneShot(SOUND.FallDamage);
+        audio.playOneShot(SOUND.FallDamage, FOOTSTEP_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:307-311
       } else if (fell > FALL_DAMAGE_THRESHOLD / 2) {
-        audio.playOneShot(SOUND.FallHard);
+        audio.playOneShot(SOUND.FallHard, FOOTSTEP_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:315-319
       }
     },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
@@ -4344,7 +4358,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:772) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:773) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with

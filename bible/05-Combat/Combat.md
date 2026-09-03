@@ -621,7 +621,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:1488 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:1499 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -702,7 +702,15 @@ the 40% pain voice on a landed player hit (heavyDamage = a quarter
 of max health), the CityWatch knight forced male, and the player's
 own 20% attack grunt at the hit frame, never for a bow, reading the
 PLAYER's race and gender. All behind the CombatVoices setting,
-shipping enabled.
+shipping enabled. AUDIT 54: the pitch lift is APPLIED now - it was
+returned on the voice object and dropped at every one of the thirteen
+play sites, because `audio.playOneShot` and `audio.play3d` took no
+pitch. Both carry one (WebAudio's playbackRate is Unity's
+AudioSource.pitch, and a per-shot source dying with its clip IS
+EnemySounds.cs:172-175's save/restore), and each site plays
+`1 + pitchLift`. The vampire override arm keeps its hard 0, which is
+DFU's: PlayAttackVoice lifts only in the `customSound == None` arm
+(FPSWeapon.cs:313-320).
 
 5 pins + 4 backstab fixtures moved to the lazy signature; 5
 mutations run, 5 killed. Suite 1444 across 189, green both modes.

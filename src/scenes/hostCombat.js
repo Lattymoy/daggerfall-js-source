@@ -21,7 +21,7 @@ import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../co
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 54: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
-import { swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
+import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
@@ -268,6 +268,10 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
   if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
   const vamp = vampireAttackVoice(playerEntity, rolls);
+  // AUDIT 54: the hard 0 is DFU's. PlayAttackVoice applies the lift in
+  // the `customSound == SoundClips.None` arm only (FPSWeapon.cs:313
+  // -320); the override arm at :323 is a bare
+  // `PlayOneShot(customSound, 0, 1f)` at the source's own pitch.
   if (vamp != null) return { clip: vamp, pitchLift: 0 };
   // AUDIT 24 (wave 46): playerVoice, not combatVoice. FPSWeapon
   // .PlayAttackVoice:315 calls GetRaceGenderAttackSound DIRECTLY and
@@ -320,13 +324,16 @@ export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
 }
 
 /** The two player-voice sites play the same way - one shot, at the
- *  listener, pitch-lifted. `audio.playOneShot` takes no pitch yet, so
- *  the lift is RECORDED on the returned object and dropped here; when
- *  the audio seam grows a pitch argument this is the one place that
- *  has to learn it. */
+ *  listener, pitch-lifted. AUDIT 54: the lift is APPLIED here now.
+ *  FPSWeapon.cs:316-319 (the attack grunt) and PlayerFootsteps.cs:359
+ *  -362 (the pain cry) both read the source's pitch, add
+ *  Random.Range(0, 0.3f), play the one shot and put the pitch back -
+ *  so the played rate is `1 + pitchLift`. The engine's one-shot took
+ *  no pitch until this audit, and the value was computed at both
+ *  producers and dropped at every one of the thirteen play sites. */
 export function playPlayerVoice(audio, voice) {
   if (!voice || !(voice.clip >= 0)) return null;
-  audio?.playOneShot?.(voice.clip, 1);
+  audio?.playOneShot?.(voice.clip, 1, 1 + (voice.pitchLift ?? 0));
   return voice.clip;
 }
 
@@ -461,7 +468,7 @@ export function applyDamageToNonPlayer(attacker, target, {
     // :323 PlayHitSound at the TARGET (hitSoundFor is the port's one
     // home for EnemySounds.PlayHitSound's weapon-aware clip), then
     // :325-333 the blood splash at the target's centre + height/8.
-    audio?.play3d?.(hitSoundFor(weapon), at, 1.1, { maxDistance: 16 });
+    audio?.play3d?.(hitSoundFor(weapon), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
     hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0,
       [at[0], at[1] + (target.ai?.height ?? 1.8) / 8, at[2]]);
     // :336-350 - the knockback, on the ATTACKER-class guard
