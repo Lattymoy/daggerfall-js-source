@@ -324,10 +324,25 @@ export async function bootWorld(canvas, renderer, params, status) {
   // as the world loads - SmoothRoads on, RiversAndStreams off, as the
   // mod ships them - and carried on the network object into the kernel.
   const roadSwitches = { smooth: modSetting('roads-hazelnut', 'SmoothRoads'), water: modSetting('roads-hazelnut', 'RiversAndStreams') };
+  // ROADS 25 (Mac: "some roads are missing even though they show on
+  // the map"): the network arrives AFTER the world has started
+  // building, so the first pixels - the ones around the spawn - were
+  // painted with no network and then kept. The map rebuilt itself on
+  // arrival; the terrain never did. Every pixel painted without a
+  // network is torn down here, and the stream rebuilds it with one.
+  // Called on BOTH arrival paths - the mod's data and our own network.
+  function rebuildRoadless() {
+    let roadless = 0;
+    for (const [, p] of [...built]) {
+      if (!p.withRoads) { destroyPixel(p.px, p.py, { collectLoose: false }); roadless++; }
+    }
+    if (roadless) console.log(`[roads] ${roadless} pixel(s) built before the network landed - rebuilt with roads`);
+  }
   loadModRoads().then((his) => {
-    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); return; }
+    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
     terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
+    rebuildRoadless();
   });
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
@@ -592,7 +607,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
     });
     // WM3: this pixel's climate law, bound once - the one argument the
@@ -924,6 +939,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     built.set(key, {
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, treeBatches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
+      withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
       population, locOrigin, personBatches,   // T2 towns
@@ -936,6 +952,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    // ROADS 25: a pixel that was already in flight when the network landed
+    // was painted without it and arrives AFTER the sweep. It goes straight
+    // back for a rebuild - the worker has the network by now, since the
+    // message order is kept.
+    if (!withRoads && terrainGen.hasRoads) { destroyPixel(px, py, { collectLoose: false }); return; }
     const entry = built.get(key);
     // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
     // the player may have crossed during the worker round trip - and

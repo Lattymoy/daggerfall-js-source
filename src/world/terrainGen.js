@@ -87,5 +87,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     climateType,
     locationRect,
   });
-  return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature };
+  return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
+    // ROADS 25: whether a network was PRESENT when this pixel was painted.
+    // The network loads asynchronously and the world starts building at
+    // once, so the first pixels can be painted with none - and were then
+    // kept, roadless, while the map (rebuilt on arrival) showed the roads.
+    withRoads: !!roads,
+  };
 }
