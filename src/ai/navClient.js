@@ -10,7 +10,7 @@
 // it rides the cache metadata and is put back on the hydrated chf, so a
 // cached dungeon answers the same heights as a fresh bake. No change to
 // his file for it.
-import { navInputFromCollider } from './navBake.js';
+import { navInputFromCollider, regionAnchor } from './navBake.js';
 import { trianglesToColliders } from './triRaster.js';
 import { AGENT, coarsenAgent, hydrateBakedNav, buildNav, buildCompact, buildRegions, buildContours, buildPolyMesh, buildPolyMeshDetail, bakeNavData } from './navmesh.js';
 import { idbStore } from '../world/roadsCache.js';
@@ -30,7 +30,7 @@ export function bakeHere(input, anchor, agent = AGENT) {
   const floor = input.minY - 10;
   const nav = buildNav(cols, ag, [], { at: () => floor, min: floor });
   const chf = buildCompact(nav, ag);
-  buildRegions(chf, { anchor: { x: anchor[0], z: anchor[2] } });
+  buildRegions(chf, { anchor: regionAnchor(anchor) });   // WITH its y - see regionAnchor
   buildContours(chf); buildPolyMesh(chf); buildPolyMeshDetail(chf, cols);
   return { baked: bakeNavData(chf), cs: ag.cs, stats: { boxes: cols.length, cs: ag.cs, polys: chf.mesh?.polys?.length ?? 0 } };
 }

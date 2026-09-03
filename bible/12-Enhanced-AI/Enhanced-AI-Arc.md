@@ -208,3 +208,35 @@ made in the lazy block. Pinned by ORDER in the source - the only pin
 available, since no node test can run this host without ARENA2. Which
 is also the honest gap: AI 4 shipped with "nothing here has been seen
 in a real dungeon", and the first thing seeing it found was this.
+
+### ENHANCED AI 4b-pre: the bake was not height-invariant (2026-09-03, Mac's playtest)
+
+Mac: foes that disappear, foes that clump, one in a ceiling (that last
+with the switch off too - not this arc's).
+
+Chasing the disappearance found a bake defect that outranks it.
+`buildRegions` elects the kept component by the span NEAREST THE
+ANCHOR'S HEIGHT - his FOUNDRY S3 rule, "an abyss floor 22m down is the
+column's first span" - and defaults the anchor's y to 0 when none is
+given. AI 3 passed `{ x, z }` at all three bake sites. Every bake was
+anchored at y = 0. Our rooms were at 0, so the real floor won by
+accident; a room at y = 25 elected the PHANTOM ground (minY - 10 = 15,
+nearer to 0 than 25), culled every real floor - the walls' included, so
+the walls read as walkable - and the route ran straight through the
+divider. Real dungeons are not at 0. `regionAnchor` builds the anchor
+with its y at all three sites and a pin reads all three; a room at 0,
+25 and -40 now bakes the same mesh and the same corners.
+
+Two more, and the disappearance is most likely the first: the live chf
+is hydrated without colliders (3b, by design), so `findPath` has no
+surface to sample and every waypoint sat at y = 0; a flyer moves along
+`_dir3(destination)` and never comes inside stopDistance of a point
+ten metres above or below it. The route supplies x and z now; a
+corner's y is the foe's own and the goal's is the predicted target's -
+the y classic's destination carries. And the stuck nudge asks classic's
+`_fallCheck` on its own heading before it moves; a nudge that skipped
+it could side-step a foe off a ledge the nav's cells never saw.
+
+Clumping is expected until 4b: every foe now solves the same optimal
+route, and nothing pushes them apart. That is his `separation` and RVO
+`avoidHeading`, next.

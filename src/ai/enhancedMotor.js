@@ -54,6 +54,37 @@
 // the route is dropped either way, exactly as his does when both sides
 // are walls.
 //
+// ── ADAPTATION 3: THE ROUTE SUPPLIES X AND Z; THE Y IS CLASSIC'S ──
+//
+// findPath's waypoints carry y = surfH(chf.colliders, ...) ONLY when the
+// chf has colliders, and otherwise y = 0. The port's live chf never
+// does: it is hydrated on the main thread from a worker bake or the
+// IndexedDB cache (3b), and hydrateBakedNav carries a constant floor,
+// not the collider list. So every waypoint sat at y = 0 wherever the
+// dungeon actually was. A walker ignores y. A flyer or swimmer moves
+// along _dir3(destination), a 3D heading pitched toward y = 0 - down
+// into the floor-lift clause, or up into the ceiling - and its
+// out-of-sight stop check, hypot(dx, 0 - feet.y, dz), never comes
+// inside stopDistance, so it never arrives. Mac's report: foes that
+// disappear, and one in a ceiling.
+//
+// The nav has no vertical information to offer here - its heights are
+// a flat floor - so it is not asked. A corner takes the FOE'S OWN y
+// (level along the corridor, which for a walker is a no-op and for a
+// flyer is the only honest guess) and the goal takes the GOAL'S real y,
+// the predicted target position's, which is precisely the y classic's
+// destination carries. The route bends x and z; nothing else changes.
+//
+// ── ADAPTATION 4: THE NUDGE RUNS THE FALL CHECK ─────────────────
+//
+// His nudge gates on walkable(). The nav's cell is walkable if it has a
+// floor span; it says nothing about the DROP to the next cell, and at
+// 0.5 m cells a ledge is a rounding error. Every classic move runs
+// _fallCheck first (AttemptMove :978); a nudge that skipped it could
+// side-step a foe off an edge classic would never step off. The nudge
+// asks the port's own fall check on its own direction and takes the
+// other side, or none.
+//
 // ── NEVER TRAPS ─────────────────────────────────────────────────
 //
 // The bake lands asynchronously (3b) and may never land. `nav()` is a
@@ -158,8 +189,14 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.stuckT = 0;
     const hl = Math.hypot(hx, hz) || 1, side = ((this.navSeed >>> 7) & 1) ? 1 : -1;
     for (const s of [side, -side]) {
-      const nx = this.feet[0] + (-hz / hl) * s * STUCK_NUDGE, nz = this.feet[2] + (hx / hl) * s * STUCK_NUDGE;
-      if (navWalkable(chf, nx, nz)) { this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2]); break; }
+      const ox = (-hz / hl) * s, oz = (hx / hl) * s;
+      const nx = this.feet[0] + ox * STUCK_NUDGE, nz = this.feet[2] + oz * STUCK_NUDGE;
+      if (!navWalkable(chf, nx, nz)) continue;
+      // adaptation 4: classic's own drop test, on the nudge's heading
+      this._fallCheck([ox, 0, oz]);
+      if (this.fallDetected) { this.fallDetected = false; continue; }
+      this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2]);
+      break;
     }
     this.path = null; this.repathT = 0;
     this.navStats.stuckFires++;
@@ -200,11 +237,13 @@ export class EnhancedEnemyAI extends EnemyAI {
     let wp = this.path[this.pathI];
     while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH) wp = this.path[++this.pathI];
     const last = this.pathI === this.path.length - 1;
+    // adaptation 3: the goal's y is the goal's, a corner's is the foe's
+    const y = last ? this._navGoal(targetFeet)[1] : this.feet[1];
     const dx = wp[0] - this.feet[0], dz = wp[2] - this.feet[2];
     const d = Math.hypot(dx, dz);
     const reach = this.stopDistance + PROJECT_MARGIN;
-    if (last || d <= 1e-6 || d >= reach) { this.destination = [wp[0], wp[1], wp[2]]; return; }
+    if (last || d <= 1e-6 || d >= reach) { this.destination = [wp[0], y, wp[2]]; return; }
     const k = reach / d;
-    this.destination = [this.feet[0] + dx * k, wp[1], this.feet[2] + dz * k];
+    this.destination = [this.feet[0] + dx * k, y, this.feet[2] + dz * k];
   }
 }

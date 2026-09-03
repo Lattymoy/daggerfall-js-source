@@ -5,6 +5,7 @@
 // hydrates. The compact heightfield the motor queries every tick lives
 // on the main thread, because findPath is synchronous by his design.
 import { trianglesToColliders } from './triRaster.js';
+import { regionAnchor } from './navBake.js';
 import {
   AGENT, coarsenAgent, buildNav, buildCompact, buildRegions, buildContours,
   buildPolyMesh, buildPolyMeshDetail, bakeNavData,
@@ -23,7 +24,7 @@ globalThis.onmessage = (ev) => {
     const floor = m.floor;
     const nav = buildNav(cols, ag, [], { at: () => floor, min: floor });
     const chf = buildCompact(nav, ag);
-    buildRegions(chf, { anchor: { x: m.anchor[0], z: m.anchor[2] } });
+    buildRegions(chf, { anchor: regionAnchor(m.anchor) });   // WITH its y - see regionAnchor
     buildContours(chf); buildPolyMesh(chf); buildPolyMeshDetail(chf, cols);
     const baked = bakeNavData(chf);
     const ms = Math.round((globalThis.performance ?? Date).now() - t0);
