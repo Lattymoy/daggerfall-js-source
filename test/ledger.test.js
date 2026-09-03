@@ -204,3 +204,52 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
     /The port has no gamepad layer \(Ledger\)\./,
     'the JOYSTICK tab note that sends the reader to this row must still be there');
 });
+
+test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A row, and the removal row stops saying nothing ships', () => {
+  // The file's only roads row said the system was "REMOVED WHOLE" and
+  // "Nothing of this departure ships". Five modules, 2 MB of vendored
+  // third-party data and an ungated call in the classic lane say
+  // otherwise. Both halves are pinned two ways: rip the row out and the
+  // doc half fails; rip the wiring out and the tree half does.
+  const A = LEDGER.slice(
+    LEDGER.indexOf('## A. Approved departures from DFU'),
+    LEDGER.indexOf('## A-note (H1)'),
+  );
+  assert.ok(A.length > 1000, 'section A was not found');
+  assert.ok(!/Nothing of this departure ships/.test(A),
+    'the struck ROADS row still asserts that nothing of it ships');
+  assert.match(A, /~~ROADS \(R1-R7, RA1, RF1\)~~/, 'the removal row is still there, struck');
+
+  const row = A.split('\n').find((l) => l.startsWith('| **ROADS 22-25'));
+  assert.ok(row, 'section A carries no approved-departure row for the re-integrated road system');
+  assert.match(row, /Supersedes the struck row above/, 'the new row cites the removal row it supersedes');
+  assert.match(row, /vendor\/roads-hazelnut\//, 'it names the vendored data');
+  assert.match(row, /FALLBACK/, 'and says the port’s own network is what falls back');
+  assert.match(row, /ALWAYS ON, IN BOTH LANES/, 'it states which lane ships what');
+  assert.match(row, /Roads\.md:194/, 'and cites Mac’s always-on call');
+  assert.match(row, /`systems\/travel\.js` stays the verbatim port/, 'and what stayed removed');
+
+  // The tree half: the row's claims are true of this checkout.
+  const rootFile = (p) => readFileSync(join(ROOT, p), 'utf8');
+  for (const f of ['roadData.bytes', 'trackData.bytes', 'riverData.bytes', 'streamData.bytes']) {
+    assert.equal(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)).length, 500000, `${f} is his 500,000-byte array`);
+  }
+  for (const m of ['roadNetwork.js', 'roadPainter.js', 'roadsProducer.js', 'roadsCache.js']) {
+    assert.ok(rootFile(`src/world/${m}`).length > 0, `src/world/${m} ships`);
+  }
+  const host = rootFile('src/scenes/world.js');
+  const wiring = host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l));
+  assert.equal(wiring.length, 2, 'both road wires are in world.js');
+  for (const l of wiring) assert.ok(!/isEnhanced/.test(l), `the road wiring is ungated: ${l.trim()}`);
+  assert.match(rootFile('src/world/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
+  const travel = rootFile('src/systems/travel.js');
+  assert.ok(!/roadAt\(|path\.roadAt|byRoad/.test(travel), 'travel.js is still the verbatim port - the road term and its two deps stayed gone');
+  assert.match(rootFile('src/ui/overworldMap.js'), /byRoad: false,/, 'and byRoad is still the permanent false the trip card reads');
+
+  // ...and the two pages that repeated the stale claim were corrected.
+  const status = rootFile('bible/01-Overview/Port-Status-2026-09-02.md');
+  assert.ok(!/\*\*Removed whole:\*\* the road system/.test(status), 'the status page still says removed whole');
+  assert.match(status, /Removed, then re-integrated/, 'and says what actually happened');
+  assert.ok(!/Basic Roads' design credited, none of its data/.test(rootFile('bible/Home.md')),
+    'Home.md still says none of his data ships');
+});

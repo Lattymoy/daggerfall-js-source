@@ -42,7 +42,11 @@ function handle(m) {
       roads = null;
       // ROADS 22: his arrays arrive ready-made and ride every job from
       // now on; no build, no cache, nothing to wait for.
-      if (m.net) { roads = { roads: m.net.roads, tracks: m.net.tracks, rivers: m.net.rivers ?? null, streams: m.net.streams ?? null, water: !!m.net.water }; globalThis.postMessage({ t: 'roads', stats: m.stats ?? null, net: null }); return; }
+      // AUDIT 54 F3: `smooth` rides his data on this arm too - it was
+      // dropped here (and at both of the client's rebuilds) while `water`
+      // survived, so the Mods pane's SmoothRoads switch was inert on the
+      // path the game actually takes.
+      if (m.net) { roads = { roads: m.net.roads, tracks: m.net.tracks, rivers: m.net.rivers ?? null, streams: m.net.streams ?? null, water: !!m.net.water, smooth: m.net.smooth !== false }; globalThis.postMessage({ t: 'roads', stats: m.stats ?? null, net: null }); return; }
       if (m.settlements && woods) {
         // ROADS 19: through the cache. The key is everything that shapes
         // the network; a hit skips the 4.4-second build, a miss pays it

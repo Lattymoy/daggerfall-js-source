@@ -82,6 +82,7 @@ import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e:
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
+import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 54 F4
 import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
@@ -301,6 +302,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   maps.load(mapsBytes, climateBytes, politicBytes);
   const woods = new WoodsFile();
   if (!woods.load(woodsBytes)) throw new Error('WOODS.WLD failed to load');
+  // W1: the window reads the map through ContentReader's own
+  // dictionary - one MapSummary per location, keyed by map pixel.
+  // AUDIT 54 F4: hoisted here from the travel block below because
+  // SmoothLocationNeighbourhood is HasLocation's other caller and has
+  // to run before the first pixel streams.
+  const mapDict = buildMapDict(maps);
+  // AUDIT 54 F4: StreamingWorld.ReadyCheck's two runtime data repairs
+  // (StreamingWorld.cs:1676-1685), which had no port. Both mutate the
+  // in-memory reader buffers ONCE, before anything streams: the
+  // dilation hides the raised square coastline by pushing land climate
+  // into the ocean pixels beside it, the smoothing flattens a steep
+  // location's 3x3 neighbourhood. Classic-lane law, no gate.
+  const dilated = dilateCoastalClimate(maps, 2);
+  const smoothedLocations = smoothLocationNeighbourhood(mapDict, woods);
+  // ...and the worker builds its OWN reader from the raw bytes, so the
+  // smoothed heights go back into them BEFORE the client copies them.
+  woods.syncHeightMapBytes();
+  console.log(`[terrain] ${dilated} coastal ocean pixel(s) dilated, ${smoothedLocations} location neighbourhood(s) smoothed`);
   // EV7: the pixel kernel's off-thread home - a COPY of the WOODS
   // bytes crosses once; this thread's `woods` stays the fallback law.
   const terrainGen = new TerrainGenClient({ woods, woodsBytes });
@@ -2579,9 +2598,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // deduct, teleport, cautious restores, RaiseTime, the clamps. The
   // teleport is the streamer's OWN re-init (verbatim
   // ResetStreamingWorld) after tearing the built pixels down.
-  // W1: the window reads the map through ContentReader's own
-  // dictionary - one MapSummary per location, keyed by map pixel.
-  const mapDict = buildMapDict(maps);
+  // W1: the map dictionary the window reads is built at the top of
+  // this boot, with the terrain repairs that also need HasLocation.
   let _travelMap = null;   // the live window, for the probe surface
   /** ItemCollection.Contains(ItemGroups.Transportation, template) -
    *  the same one-line test ui/nativeInventory.js's wagon gate uses. */

@@ -121,10 +121,15 @@ export class TerrainGenClient {
 
   setRoadsData(net, onStats = null) {
     this._settlements = null;
-    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water };
+    // AUDIT 54 F3: `smooth` rides his data too. It was dropped by all three
+    // rebuilds of the network object below while `water` survived them, so the
+    // Mods pane's SmoothRoads switch reached the kernel only on the fallback
+    // path and read `undefined` - i.e. ON - on the path the game takes.
+    // `!== false` keeps the kernel's default-on gate for a caller that omits it.
+    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false };
     this._roadsStats = onStats;
     if (this._worker) {
-      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water };
+      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water, smooth: net.smooth !== false };
       const xfer = [copy.roads.buffer, copy.tracks.buffer]; if (copy.rivers) xfer.push(copy.rivers.buffer); if (copy.streams) xfer.push(copy.streams.buffer);
       this._worker.postMessage({ t: 'roads', net: copy, stats: net.stats ?? null }, xfer);
     } else if (onStats) onStats(net.stats ?? { source: 'basic-roads' });

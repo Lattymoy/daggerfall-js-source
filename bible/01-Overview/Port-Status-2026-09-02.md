@@ -165,7 +165,7 @@ which **63 are cited in `src/`**.
 
 The two that are not: **`DaggerfallJoystickControlsWindow`** and
 **`DaggerfallUnityMouseControlsWindow`**. Both are recorded pending in
-the same place - `Port-Ledger.md:567`, the struck keybinding-registry
+the same place - `Port-Ledger.md:568`, the struck keybinding-registry
 row, whose surviving clause reads "STILL PENDING: the mouse/advanced and
 joystick sub-windows (both answer with a note - no gamepad layer)". The
 other half of that clause, key combos, shipped at ROAD-A A8.
@@ -312,7 +312,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:451` runs `updateHudVitals` and `:456` `drawNearDeathFlicker`, both above the enhanced branch at `:459` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:470`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:451` runs `updateHudVitals` and `:457` `drawNearDeathFlicker`, both above the enhanced branch at `:460` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:471`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:759` over `RECTS.pickScroll`, `spellbookWindow.js:887` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/lootHover.js:64` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
@@ -462,7 +462,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching
-  sub-windows are recorded pending at `Port-Ledger.md:567`. The flag's
+  sub-windows are recorded pending at `Port-Ledger.md:568`. The flag's
   second bullet - the port's own key departures - was retired as stale
   by I2 and the table now carries DFU's defaults.*
 
@@ -661,8 +661,8 @@ held there by `test/citedrift.test.js` - the wave that wrote this
 section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
-Section C's table is **247 rows** between `Port-Ledger.md:453` and
-`:699` (`awk '/^\|/ && !/^\|---/'`). **226 are struck.** Of the 21 that
+Section C's table is **247 rows** between `Port-Ledger.md:454` and
+`:700` (`awk '/^\|/ && !/^\|---/'`). **226 are struck.** Of the 21 that
 are not, four are VidFile quirks filed under the wrong section
 (ported-as-is, no route), three carry a **Kept** verdict (the climate
 swap dimensions, the secondary picker's cancel path, the rep window's
@@ -675,7 +675,7 @@ their own text that they are closed (`RegionPowerAndConditionsUpdate`,
 vampirism/lycanthropy).
 
 That accounts for 17 of the 21, leaving **4 unstruck rows that carry a
-route** - plus `:570`, struck at its head but carrying a live PENDING
+route** - plus `:571`, struck at its head but carrying a live PENDING
 clause in its tail, for **six rows that still owe work: items 1-6
 below** (item 7 was the seventh, and DR1 struck it). The measurement this section was first written over read 246
 rows, 216 struck and fourteen still owing; what closed the gap is the
@@ -687,7 +687,7 @@ ships, which is the warning the section's own preamble opens with.
 
 *Genuinely open:*
 
-1. **`:488` FaceUVTool's 1,803-UV residual at matched precision** ->
+1. **`:489` FaceUVTool's 1,803-UV residual at matched precision** ->
    Readers arc. **NARROWED (E-group, 2026-09-02), not closed.** The
    surface is fenced from DFU's own sources: `API/Vector3.cs` is double
    throughout, so the whole basis walk was already matched and cannot
@@ -700,32 +700,32 @@ ships, which is the warning the section's own preamble opens with.
    widening the measurement was taken against was never a committed
    patch. It is one now (`tools/parity/patches/FaceUVTool.cs.patch`).
    The 1,803 itself still needs ARENA2 plus mono to re-measure.
-2. **`:501` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
+2. **`:502` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
    the row says "the port has no keybinding registry to hang it on", and
    `systems/dialogShortcuts.js:194`/`:311` carries `ResetBonusPool` with
    its `Ctrl-U` default since A8. Nothing in `ui/chargen.js`,
    `ui/chargenArt.js` or `systems/customClass.js` consumes it. This is
    the smallest open row in the section.
-3. **`:471` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
+3. **`:472` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
    the thumb drag and the picker's double-click law; the port has no
    overlay mouse-up seam, so the latch drops on the first hover after
    the button comes up (`ListPickerWindow.release()`,
    `ui/listPicker.js:263`, exists and is unwired). The spellbook's own
    drag stays the F159/F170/F180 departure; the closeout narrowed its
    superseded REASON without removing the departure.
-4. ~~**`:514` the quest machine** -> `playSound`'s busy-skip, the one
+4. ~~**`:515` the quest machine** -> `playSound`'s busy-skip, the one
    recorded delta, because the port's one-shot engine has no busy
    state.~~ **CLOSED (E-group, 2026-09-02):** `systems/audio.js` grew
    the `QuestAudioSource` DFU's QuestMachine carries, IsPlaying reading
    the end time of the clip `playOneShot` already reported, and the
    world host's hook is PlaySound.cs:110-116 line for line.
-5. **`:567` the classic `.SAV` reader** -> the phone path: no zip arm in
+5. **`:568` the classic `.SAV` reader** -> the phone path: no zip arm in
    the saves picker, a desktop-first charter call.
-6. **`:570` (struck, with a live clause) the keybinding registry** ->
+6. **`:571` (struck, with a live clause) the keybinding registry** ->
    the mouse/advanced and joystick sub-windows, the two of DFU's 65
    game windows the port does not cite.
-7. ~~**`:579` the standalone dungeon host has no trade window** -> a
+7. ~~**`:580` the standalone dungeon host has no trade window** -> a
    dungeon-host lane. **Adjudicated by the closeout as BLOCKED** (see
    list 1): there is no DFU original for a standalone dungeon scene, so
    this is an owner decision about a dev route, not a routed gap.~~
@@ -743,7 +743,7 @@ ships, which is the warning the section's own preamble opens with.
    mount omits is one of DFU's own Buy/Repair/Sell mode gates, named in
    the struck row. Three DR1 pins in `x11b.test.js`, each red when its
    arm's mount is reverted to the PR1 refusal.
-8. ~~**`:580` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
+8. ~~**`:581` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
    `tools/shopProbe.mjs` is RETIRED - it drove the keyed browse window
    U8c/U40 replaced, and its subject is covered twice over by
    `tradeModeProbe`/`nativeTradeProbe`. `tools/toneProbe.mjs` and
@@ -757,15 +757,15 @@ ships, which is the warning the section's own preamble opens with.
 
 *Stale - the row is a claim the tree has outrun:*
 
-9. **`:466` UseItem's unbuilt destinations.** Every arm the row names is
+9. **`:467` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:570`, `:607`, `scenes/world.js:2083`), the
+   (`ui/nativeInventory.js:570`, `:608`, `scenes/world.js:2083`), the
    quest-item click (`useItem.js:199`, `:212-213`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
    is now `LayoutBookLabels` in each label's own face.
-10. **`:516` fast-travel residue.** Its three named survivors are spent:
+10. **`:517` fast-travel residue.** Its three named survivors are spent:
     the horse and cart mint on the general store's own shelf
     (`systems/shopStock.js:10`, "general stores always shelve a Horse
     and a Small Cart"), the ship purchase shipped at D6
@@ -773,9 +773,9 @@ ships, which is the warning the section's own preamble opens with.
     over the shared `openBankMarket` mount, with `purchaseShip` finally
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
     `scenes/world.js:1598` and `:1667`.
-11. **`:521` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
+11. **`:522` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
     `src/formats/mapsFile.js:104`, with the C# line range cited.
-12. **`:565` the magic crafting windows.** The row's FLAGGED residue is
+12. **`:566` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
     drawn (`ui/spellIcons.js`, imported at
     `ui/spellbookWindow.js:135-137`, drawn at `:921`), the icon picker
@@ -785,21 +785,21 @@ ships, which is the warning the section's own preamble opens with.
     window is a keyed text window here.~~ **THAT SHIPPED TOO (E-group,
     2026-09-02): the window is native, and the row's last unstruck
     clause goes with it.**
-13. **`:515` the talk manager.** The row's own tail already says both
+13. **`:516` the talk manager.** The row's own tail already says both
     named PENDING gaps closed at TK-vi; A9 then took the questor name
     bank behind `%pqn`, which the row's parent list still implies is
     owed. `AddNonQuestRumor`'s producer - the regional faction sim -
     shipped at S41-S44/RS1.
-14. **`:545` the small-residue trio** (biography GP arm, arrow roll
+14. **`:546` the small-residue trio** (biography GP arm, arrow roll
     notes, the faceUV zero-length guard) -> their arcs. The biography GP
     arm has a Ledger A row of its own and is inert on all 18 shipping
-    `BIOG*.TXT` files; the faceUV guard rides row `:488`.
+    `BIOG*.TXT` files; the faceUV guard rides row `:489`.
 
 ## 3. The deliberate departures, which are not on the road
 
 `Road-To-1-1.md` names these at its head so nobody re-opens them, and
-`Port-Ledger.md` section A carries **66 rows, 7 struck - 59 standing
-approved departures** (the 65th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree) plus the slot-0 reroll bullet and the
+`Port-Ledger.md` section A carries **67 rows, 7 struck - 60 standing
+approved departures** (the 65th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 67th is the re-integrated road system, added by AUDIT 54 F5) plus the slot-0 reroll bullet and the
 houses-for-sale A-note. They are design choices, each internally
 faithful to whatever reference it does have, and none of them is a gap.
 
@@ -861,11 +861,18 @@ faithful to whatever reference it does have, and none of them is a gap.
   already double, so the basis walk is not part of this departure at
   all. Measured once against stock DFU over the whole ARCH3D corpus:
   52,505 of 1,917,087 UVs (2.74%) differ. The 1,803 that survive matched
-  precision are ledger row `:488`, narrowed at E8 and the only part of
+  precision are ledger row `:489`, narrowed at E8 and the only part of
   this that is still open work.
-- **Removed whole:** the road system (2026-08-29, ~5,200 lines), which
-  retired the only departure that ever touched the travel law -
-  `systems/travel.js` is the verbatim port again.
+- **Removed, then re-integrated (AUDIT 54 F5 corrects this bullet):** the
+  port's own road system was removed whole on 2026-08-29 (~5,200 lines),
+  which retired the only departure that ever touched the travel law -
+  `systems/travel.js` is the verbatim port again and `byRoad` is a
+  permanent false. But on 2026-09-02 Hazelnut gave permission and ROADS
+  22-25 brought roads BACK on the ground and on both maps: his four
+  vendored arrays with the port's own generated network as the fallback,
+  painted in the shared terrain kernel, ALWAYS ON IN BOTH LANES by Mac's
+  call. It has its own Port-Ledger section A row; the travel half is
+  still gone.
 
 ---
 

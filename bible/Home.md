@@ -191,7 +191,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `09-Testing/` - test doctrine, harnesses, data validation
 - `10-UI/` - HUD, menus, native Daggerfall UI reproduction
 - `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc
-- `03-World/Roads.md` - roads and tracks, OUR network from the player's own map (Basic Roads' design credited, none of its data)
+- `03-World/Roads.md` - roads and tracks: HIS DATA, 1:1 with permission (2026-09-02) - Basic Roads' four arrays vendored in `vendor/roads-hazelnut/` and credited - with OUR network from the player's own map as the fallback. Always on in both lanes; Port-Ledger section A carries the row
 
 ## Active arcs
 
