@@ -22,7 +22,6 @@ directory by `test/audit18_bible_docs.test.js`:
   CHAR_SPRITE_RT_SIZE target).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
-- `treeModels.js` - TR1 THE TREES: our partner's leaf-card meshes, one per nature flat, drawn instanced in the classic record's own texture (the billboard's upload) with the billboard's fog and light law, leaning in the grass's wind
   verbatim, its placer law, and a renderer of its own beside the world's,
   drawn on grass records of the near ring outside winter. GR2 darkened
   it, billboarded the blades, time-sliced the walk and rescaled the
